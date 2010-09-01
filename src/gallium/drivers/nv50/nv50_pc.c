@@ -220,6 +220,7 @@ edge_name(ubyte type)
    case CFG_EDGE_BACK: return "back";
    case CFG_EDGE_LOOP_ENTER: return "loop";
    case CFG_EDGE_LOOP_LEAVE: return "break";
+   case CFG_EDGE_FAKE: return "fake";
    default:
       return "?";
    }
@@ -247,6 +248,7 @@ nv_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f, void *priv)
          case CFG_EDGE_BACK:
             continue;
          case CFG_EDGE_FORWARD:
+         case CFG_EDGE_FAKE:
             if (++b->out[j]->priv == b->out[j]->num_in)
                bb[p++] = b->out[j];
             break;
@@ -264,9 +266,11 @@ nv_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f, void *priv)
 
       f(priv, b);
 
-      if (!p)
-         while (pp > 0)
-            bb[p++] = bbb[--pp];
+      if (!p) {
+         p = pp;
+         for (; pp > 0; --pp)
+            bb[pp - 1] = bbb[pp - 1];
+      }
    }
 }
 
@@ -366,11 +370,17 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ret = nv_pc_exec_pass0(pc);
    if (ret)
       goto out;
+#ifdef NV50PC_DEBUG
+   nv_print_program(pc->root);
+#endif
 
    /* register allocation */
    ret = nv_pc_exec_pass1(pc);
    if (ret)
       goto out;
+#ifdef NV50PC_DEBUG
+   nv_print_program(pc->root);
+#endif
 
    /* prepare for emission */
    ret = nv_pc_exec_pass2(pc);
@@ -580,10 +590,10 @@ nvbb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
    if (bp == bt)
       return FALSE;
 
-   if (bp->out[0] && bp->out_kind[0] != CFG_EDGE_BACK &&
+   if (bp->out[0] && !IS_WALL_EDGE(bp->out_kind[0]) &&
        nvbb_reachable_by(bf, bp->out[0], bt))
       return TRUE;
-   if (bp->out[1] && bp->out_kind[1] != CFG_EDGE_BACK &&
+   if (bp->out[1] && !IS_WALL_EDGE(bp->out_kind[1]) &&
        nvbb_reachable_by(bf, bp->out[1], bt))
       return TRUE;
    return FALSE;

@@ -22,6 +22,10 @@
 
 /* #define NV50PC_DEBUG */
 
+/* #define NV50_RA_DEBUG_LIVEI */
+/* #define NV50_RA_DEBUG_LIVE_SETS */
+/* #define NV50_RA_DEBUG_JOIN */
+
 #include "nv50_context.h"
 #include "nv50_pc.h"
 
@@ -119,7 +123,7 @@ add_range(struct nv_value *val, struct nv_basic_block *b, int end)
    add_range_ex(val, bgn, end, NULL);
 }
 
-#ifdef NV50_RA_DEBUG_JOIN
+#if defined(NV50_RA_DEBUG_JOIN) || defined(NV50_RA_DEBUG_LIVEI)
 static void
 livei_print(struct nv_value *a)
 {
@@ -359,16 +363,37 @@ need_new_else_block(struct nv_basic_block *b, struct nv_basic_block *p)
    int i = 0, n = 0;
 
    for (; i < 2; ++i)
-      if (p->out[i] && p->out_kind[i] != CFG_EDGE_LOOP_LEAVE)
+      if (p->out[i] && !IS_LOOP_EDGE(p->out_kind[i]))
          ++n;
 
    return (b->num_in > 1) && (n == 2);
+}
+
+static int
+phi_opnd_for_bb(struct nv_instruction *phi, struct nv_basic_block *b,
+                struct nv_basic_block *tb)
+{
+   int i, j;
+
+   for (j = -1, i = 0; i < 4 && phi->src[i]; ++i) {
+      if (!nvbb_reachable_by(b, phi->src[i]->value->insn->bb, tb))
+         continue;
+      /* NOTE: back-edges are ignored by the reachable-by check */
+      if (j < 0 || !nvbb_reachable_by(phi->src[j]->value->insn->bb,
+                                      phi->src[i]->value->insn->bb, tb))
+         j = i;
+   }
+   return j;
 }
 
 /* For each operand of each PHI in b, generate a new value by inserting a MOV
  * at the end of the block it is coming from and replace the operand with its
  * result. This eliminates liveness conflicts and enables us to let values be
  * copied to the right register if such a conflict exists nonetheless.
+ *
+ * These MOVs are also crucial in making sure the live intervals of phi srces
+ * are extended until the end of the loop, since they are not included in the
+ * live-in sets.
  */
 static int
 pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
@@ -404,13 +429,16 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       ctx->pc->current_block = pn;
 
       for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
-         for (j = 0; j < 4 && i->src[j]; ++j) {
-            if (nvbb_reachable_by(p, i->src[j]->value->insn->bb, b))
-               break;
-         }
-         if (j >= 4 || !i->src[j])
+         if ((j = phi_opnd_for_bb(i, p, b)) < 0)
             continue;
          val = i->src[j]->value;
+
+         if (i->src[j]->flags) {
+            val = val->insn->src[0]->value;
+            while (j < 4 && i->src[j])
+               ++j;
+            assert(j < 4);
+         }
 
          ni = new_instruction(ctx->pc, NV_OP_MOV);
 
@@ -423,6 +451,8 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
          ni->src[0] = new_ref(ctx->pc, val);
 
          nv_reference(ctx->pc, &i->src[j], ni->def[0]);
+
+         i->src[j]->flags = 1;
       }
 
       if (pn != p && pn->exit) {
@@ -452,8 +482,8 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
       case NV_OP_PHI:
          if (!iter)
             continue;
-         try_join_values(ctx, i->src[0]->value, i->src[1]->value);
-         try_join_values(ctx, i->def[0], i->src[0]->value);
+         for (c = 0; c < 4 && i->src[c]; ++c)
+            try_join_values(ctx, i->def[0], i->src[c]->value);
          break;
       case NV_OP_MOV:
          if (iter && i->src[0]->value->insn &&
@@ -576,22 +606,6 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
          for (j = 0; j < (ctx->pc->num_values + 31) / 32; ++j)
             b->live_set[j] |= b->out[n]->live_set[j];
       }
-
-      /* Kick values out of our live set that are created in incoming
-       * blocks of our successors that are not us.
-       */
-      for (i = b->out[n]->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
-         for (j = 0; j < 4; ++j) {
-            if (!i->src[j])
-               break;
-            assert(i->src[j]->value->insn);
-
-            if (nvbb_reachable_by(b, i->src[j]->value->insn->bb, b->out[n]))
-               live_set_add(b, i->src[j]->value);
-            else
-               live_set_rem(b, i->src[j]->value);
-         }
-      }
    }
 
    if (!b->entry)
@@ -599,7 +613,7 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 
    bb_live_set_print(ctx->pc, b);
 
-   for (i = b->exit; i; i = i->prev) {
+   for (i = b->exit; i != b->entry->prev; i = i->prev) {
       for (j = 0; j < 4; j++) {
          if (!i->def[j])
             break;
@@ -617,6 +631,9 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       if (i->flags_src)
          live_set_add(b, i->flags_src->value);
    }
+   for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next)
+      live_set_rem(b, i->def[0]);
+
    bb_live_set_print(ctx->pc, b);
 
    return 0;
@@ -680,10 +697,12 @@ pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       for (j = 0; j < ctx->pc->num_values; ++j) {
          if (!(b->live_set[j / 32] & (1 << (j % 32))))
             continue;
-#ifdef NV50_RA_DEBUG_LIVEI
-         debug_printf("adding range for live value %i\n", j);
-#endif
          add_range(&ctx->pc->values[j], b, b->exit->serial + 1);
+#ifdef NV50_RA_DEBUG_LIVEI
+         debug_printf("adding range for live value %i: ", j);
+         livei_print(&ctx->pc->values[j]);
+#endif
+
       }
    }
 
@@ -702,20 +721,22 @@ pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       for (j = 0; j < 5; ++j) {
          if (i->src[j] && !live_set_test(b, i->src[j])) {
             live_set_add(b, i->src[j]->value);
-#ifdef NV50_RA_DEBUG_LIVEI
-            debug_printf("adding range for source that ends living: %i\n",
-                         i->src[j]->value->n);
-#endif
             add_range(i->src[j]->value, b, i->serial);
+#ifdef NV50_RA_DEBUG_LIVEI
+            debug_printf("adding range for source %i (ends living): ",
+                         i->src[j]->value->n);
+            livei_print(i->src[j]->value);
+#endif
          }
       }
       if (i->flags_src && !live_set_test(b, i->flags_src)) {
          live_set_add(b, i->flags_src->value);
-#ifdef NV50_RA_DEBUG_LIVEI
-         debug_printf("adding range for source that ends living: %i\n",
-                      i->flags_src->value->n);
-#endif
          add_range(i->flags_src->value, b, i->serial);
+#ifdef NV50_RA_DEBUG_LIVEI
+         debug_printf("adding range for source %i (ends living): ",
+                      i->flags_src->value->n);
+         livei_print(i->flags_src->value);
+#endif
       }
    }
 

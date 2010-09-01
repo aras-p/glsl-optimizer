@@ -120,6 +120,8 @@ struct bld_context {
    struct nv_basic_block *brkt_bb[BLD_MAX_LOOP_NESTING];
    int loop_lvl;
 
+   ubyte out_kind; /* CFG_EDGE_FORWARD, or FAKE in case of BREAK/CONT */
+
    struct bld_value_stack tvs[BLD_MAX_TEMPS][4]; /* TGSI_FILE_TEMPORARY */
    struct bld_value_stack avs[BLD_MAX_ADDRS][4]; /* TGSI_FILE_ADDRESS */
    struct bld_value_stack pvs[BLD_MAX_PREDS][4]; /* TGSI_FILE_PREDICATE */
@@ -268,7 +270,7 @@ fetch_by_bb(struct bld_value_stack *stack,
       return;
    }
    for (i = 0; i < b->num_in; ++i)
-      if (b->in_kind[i] != CFG_EDGE_BACK)
+      if (!IS_WALL_EDGE(b->in_kind[i]))
          fetch_by_bb(stack, vals, n, b->in[i]);
 }
 
@@ -362,18 +364,31 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
    return phi->def[0];
 }
 
+/* Insert a phi function in the loop header.
+ * For nested loops, we need to insert phi functions in all the outer
+ * loop headers if they don't have one yet.
+ *
+ * @def: redefinition from inside loop, or NULL if to be replaced later
+ */
 static struct nv_value *
 bld_loop_phi(struct bld_context *bld, struct bld_value_stack *stack,
              struct nv_value *def)
 {
-   struct nv_basic_block *bb = bld->pc->current_block;
    struct nv_instruction *phi;
-   struct nv_value *val;
+   struct nv_basic_block *bb = bld->pc->current_block;
+   struct nv_value *val = NULL;
 
-   val = bld_phi(bld, bld->pc->current_block, stack);
+   if (bld->loop_lvl > 1) {
+      --bld->loop_lvl;
+      if (!((stack->loop_def | stack->loop_use) & (1 << bld->loop_lvl)))
+         val = bld_loop_phi(bld, stack, NULL);
+      ++bld->loop_lvl;
+   }
+
+   if (!val)
+      val = bld_phi(bld, bld->pc->current_block, stack); /* old definition */
    if (!val) {
       bld->pc->current_block = bld->loop_bb[bld->loop_lvl - 1]->in[0];
-
       val = bld_undef(bld, bld_stack_file(bld, stack));
    }
 
@@ -449,10 +464,11 @@ bld_replace_value(struct nv_pc *, struct nv_basic_block *, struct nv_value *,
 static void
 bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
 {
+   struct nv_basic_block *save = bld->pc->current_block;
    struct nv_instruction *phi, *next;
    struct nv_value *val;
    struct bld_value_stack *stk;
-   int s;
+   int i, s, n;
 
    for (phi = bb->phi; phi && phi->opcode == NV_OP_PHI; phi = next) {
       next = phi->next;
@@ -460,19 +476,33 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
       stk = (struct bld_value_stack *)phi->target;
       phi->target = NULL;
 
-      val = bld_fetch_global(bld, stk);
+      for (s = 1, n = 0; n < bb->num_in; ++n) {
+         if (bb->in_kind[n] != CFG_EDGE_BACK)
+            continue;
 
-      nv_reference(bld->pc, &phi->src[1], val);
+         assert(s < 4);
+         bld->pc->current_block = bb->in[n];
+         val = bld_fetch_global(bld, stk);
 
-      s = -1;
+         for (i = 0; i < 4; ++i)
+            if (phi->src[i] && phi->src[i]->value == val)
+               break;
+         if (i == 4)
+            nv_reference(bld->pc, &phi->src[s++], val);
+      }
+      bld->pc->current_block = save;
+
       if (phi->src[0]->value == phi->def[0] ||
           phi->src[0]->value == phi->src[1]->value)
          s = 1;
       else
       if (phi->src[1]->value == phi->def[0])
          s = 0;
+      else
+         continue;
 
       if (s >= 0) {
+         /* eliminate the phi */
          bld_vals_del_val(stk, phi->def[0]);
 
          ++bld->pc->pass_seq;
@@ -915,6 +945,8 @@ bld_new_block(struct bld_context *bld, struct nv_basic_block *b)
 
    for (i = 0; i < 128; ++i)
       bld->saved_inputs[i] = NULL;
+
+   bld->out_kind = CFG_EDGE_FORWARD;
 }
 
 static struct nv_value *
@@ -1366,7 +1398,7 @@ bld_instruction(struct bld_context *bld,
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
       --bld->cond_lvl;
-      nvbb_attach_block(bld->pc->current_block, b, CFG_EDGE_FORWARD);
+      nvbb_attach_block(bld->pc->current_block, b, bld->out_kind);
       nvbb_attach_block(bld->cond_bb[bld->cond_lvl], b, CFG_EDGE_FORWARD);
 
       bld->cond_bb[bld->cond_lvl]->exit->target = b;
@@ -1407,8 +1439,10 @@ bld_instruction(struct bld_context *bld,
 
       bld_flow(bld, NV_OP_BREAK, NV_CC_TR, NULL, bb, FALSE);
 
-      /* XXX: don't do this for redundant BRKs */
-      nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_LOOP_LEAVE);
+      if (bld->out_kind == CFG_EDGE_FORWARD) /* else we already had BRK/CONT */
+         nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_LOOP_LEAVE);
+
+      bld->out_kind = CFG_EDGE_FAKE;
    }
       break;
    case TGSI_OPCODE_CONT:
@@ -1418,11 +1452,17 @@ bld_instruction(struct bld_context *bld,
       bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
 
       nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_BACK);
+
+      if ((bb = bld->join_bb[bld->cond_lvl - 1])) {
+         bld->join_bb[bld->cond_lvl - 1] = NULL;
+         nv_nvi_delete(bb->exit->prev);
+      }
+      bld->out_kind = CFG_EDGE_FAKE;
    }
       break;
    case TGSI_OPCODE_ENDLOOP:
    {
-      struct nv_basic_block *bb = bld->loop_bb[--bld->loop_lvl];
+      struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
       bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
 
@@ -1430,7 +1470,7 @@ bld_instruction(struct bld_context *bld,
 
       bld_loop_end(bld, bb); /* replace loop-side operand of the phis */
 
-      bld_new_block(bld, bld->brkt_bb[bld->loop_lvl]);
+      bld_new_block(bld, bld->brkt_bb[--bld->loop_lvl]);
    }
       break;
    case TGSI_OPCODE_ABS:
@@ -1651,7 +1691,7 @@ bld_replace_value(struct nv_pc *pc, struct nv_basic_block *b,
 {
    struct nv_instruction *nvi;
 
-   for (nvi = b->entry; nvi; nvi = nvi->next) {
+   for (nvi = b->phi ? b->phi : b->entry; nvi; nvi = nvi->next) {
       int s;
       for (s = 0; s < 5; ++s) {
          if (!nvi->src[s])

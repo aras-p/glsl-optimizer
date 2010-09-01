@@ -257,6 +257,12 @@ struct nv_instruction {
 #define CFG_EDGE_BACK        1
 #define CFG_EDGE_LOOP_ENTER  2
 #define CFG_EDGE_LOOP_LEAVE  4
+#define CFG_EDGE_FAKE        8
+
+/* 'WALL' edge means where reachability check doesn't follow */
+/* 'LOOP' edge means just having to do with loops */
+#define IS_LOOP_EDGE(k) ((k) & 7)
+#define IS_WALL_EDGE(k) ((k) & 9)
 
 struct nv_basic_block {
    struct nv_instruction *entry; /* first non-phi instruction */

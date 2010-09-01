@@ -362,6 +362,9 @@ nv_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
          nv_reference(ctx->pc, &nvi->src[j], ld->src[0]->value);
          if (ld->src[4])
             nv_reference(ctx->pc, &nvi->src[4], ld->src[4]->value);
+
+         if (!nv_nvi_refcount(ld))
+            nv_nvi_delete(ld);
       }
    }
    DESCEND_ARBITRARY(j, nv_pass_fold_loads);
@@ -504,7 +507,7 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
    u1.u32 = src1->reg.imm.u32;
 
    modifiers_apply(&u0.u32, type, nvi->src[0]->mod);
-   modifiers_apply(&u0.u32, type, nvi->src[1]->mod);
+   modifiers_apply(&u1.u32, type, nvi->src[1]->mod);
 
    switch (nvi->opcode) {
    case NV_OP_MAD:
@@ -951,7 +954,9 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
          if (b->exit && b->exit->opcode == NV_OP_JOINAT)
             nv_nvi_delete(b->exit);
 
-         if ((nvi = b->out[0]->out[0]->entry)) {
+         i = (b->out[0]->out_kind[0] == CFG_EDGE_LOOP_LEAVE) ? 1 : 0;
+
+         if ((nvi = b->out[0]->out[i]->entry)) {
             nvi->is_join = 0;
             if (nvi->opcode == NV_OP_JOIN)
                nv_nvi_delete(nvi);
@@ -980,7 +985,8 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
             if (ir->opcode != ik->opcode)
                continue;
 
-            if (ik->opcode == NV_OP_LDA ||
+            if (!ir->def[0] || !ik->def[0] ||
+                ik->opcode == NV_OP_LDA ||
                 ik->opcode == NV_OP_STA ||
                 ik->opcode == NV_OP_MOV ||
                 nv_is_vector_op(ik->opcode))
@@ -992,8 +998,6 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
             if (ik->flags_src || ir->flags_src ||
                 ik->flags_def || ir->flags_def)
                continue; /* and also not with flags, for now */
-
-            assert(ik->def[0] && ir->def[0]);
 
             if (ik->def[0]->reg.file == NV_FILE_OUT ||
                 ir->def[0]->reg.file == NV_FILE_OUT ||
