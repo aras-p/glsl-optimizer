@@ -429,43 +429,14 @@ process_array_constructor(exec_list *instructions,
  */
 static ir_constant *
 constant_record_constructor(const glsl_type *constructor_type,
-			    YYLTYPE *loc, exec_list *parameters,
-			    struct _mesa_glsl_parse_state *state)
+			    exec_list *parameters, void *mem_ctx)
 {
-   void *ctx = state;
-   bool all_parameters_are_constant = true;
-
-   exec_node *node = parameters->head;
-   for (unsigned i = 0; i < constructor_type->length; i++) {
-      ir_instruction *ir = (ir_instruction *) node;
-
-      if (node->is_tail_sentinel()) {
-	 _mesa_glsl_error(loc, state,
-			  "insufficient parameters to constructor for `%s'",
-			  constructor_type->name);
+   foreach_list(node, parameters) {
+      if (((ir_instruction *) node)->as_constant() == NULL)
 	 return NULL;
-      }
-
-      if (ir->type != constructor_type->fields.structure[i].type) {
-	 _mesa_glsl_error(loc, state,
-			  "parameter type mismatch in constructor for `%s' "
-			  " (%s vs %s)",
-			  constructor_type->name,
-			  ir->type->name,
-			  constructor_type->fields.structure[i].type->name);
-	 return NULL;
-      }
-
-      if (ir->as_constant() == NULL)
-	 all_parameters_are_constant = false;
-
-      node = node->next;
    }
 
-   if (!all_parameters_are_constant)
-      return NULL;
-
-   return new(ctx) ir_constant(constructor_type, parameters);
+   return new(mem_ctx) ir_constant(constructor_type, parameters);
 }
 
 
@@ -949,6 +920,39 @@ emit_inline_matrix_constructor(const glsl_type *type,
 
 
 ir_rvalue *
+emit_inline_record_constructor(const glsl_type *type,
+			       exec_list *instructions,
+			       exec_list *parameters,
+			       void *mem_ctx)
+{
+   ir_variable *const var =
+      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary);
+   ir_dereference_variable *const d = new(mem_ctx) ir_dereference_variable(var);
+
+   instructions->push_tail(var);
+
+   exec_node *node = parameters->head;
+   for (unsigned i = 0; i < type->length; i++) {
+      assert(!node->is_tail_sentinel());
+
+      ir_dereference *const lhs =
+	 new(mem_ctx) ir_dereference_record(d->clone(mem_ctx, NULL),
+					    type->fields.structure[i].name);
+
+      ir_rvalue *const rhs = ((ir_instruction *) node)->as_rvalue();
+      assert(rhs != NULL);
+
+      ir_instruction *const assign = new(mem_ctx) ir_assignment(lhs, rhs, NULL);
+
+      instructions->push_tail(assign);
+      node = node->next;
+   }
+
+   return d;
+}
+
+
+ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
@@ -988,6 +992,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 return process_array_constructor(instructions, constructor_type,
 					  & loc, &this->expressions, state);
       }
+
 
       /* There are two kinds of constructor call.  Constructors for built-in
        * language types, such as mat4 and vec2, are free form.  The only
@@ -1176,11 +1181,39 @@ ast_function_expression::hir(exec_list *instructions,
 	 state->symbols->get_type(id->primary_expression.identifier);
 
       if ((type != NULL) && type->is_record()) {
-	 ir_constant *constant =
-	    constant_record_constructor(type, &loc, &actual_parameters, state);
+	 exec_node *node = actual_parameters.head;
+	 for (unsigned i = 0; i < type->length; i++) {
+	    ir_instruction *ir = (ir_instruction *) node;
 
-	 if (constant != NULL)
-	    return constant;
+	    if (node->is_tail_sentinel()) {
+	       _mesa_glsl_error(&loc, state,
+				"insufficient parameters to constructor "
+				"for `%s'",
+				type->name);
+	       return ir_call::get_error_instruction(ctx);
+	    }
+
+	    if (ir->type != type->fields.structure[i].type) {
+	       _mesa_glsl_error(&loc, state,
+				"parameter type mismatch in constructor "
+				"for `%s.%s' (%s vs %s)",
+				type->name,
+				type->fields.structure[i].name,
+				ir->type->name,
+				type->fields.structure[i].type->name);
+	       return ir_call::get_error_instruction(ctx);;
+	    }
+
+	    node = node->next;
+	 }
+
+	 ir_rvalue *const constant =
+	    constant_record_constructor(type, &actual_parameters, state);
+
+	 return (constant != NULL)
+	    ? constant
+	    : emit_inline_record_constructor(type, instructions,
+					     &actual_parameters, state);
       }
 
       return match_function_by_name(instructions, 
