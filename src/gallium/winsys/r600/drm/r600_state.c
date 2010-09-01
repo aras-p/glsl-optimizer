@@ -80,7 +80,7 @@ struct radeon_stype_info r600_stypes[] = {
 	{ R600_STATE_QUERY_BEGIN, 1, 0, r600_state_pm4_query_begin, SUB_NONE(VGT_EVENT) },
 	{ R600_STATE_QUERY_END, 1, 0, r600_state_pm4_query_end, SUB_NONE(VGT_EVENT) },
 	{ R600_STATE_DB, 1, 0, r600_state_pm4_db, SUB_NONE(DB) },
-	{ R600_STATE_CLIP, 6, 0, r600_state_pm4_generic, SUB_NONE(UCP) },
+	{ R600_STATE_UCP, 1, 0, r600_state_pm4_generic, SUB_NONE(UCP) },
 	{ R600_STATE_VGT, 1, 0, r600_state_pm4_vgt, SUB_NONE(VGT) },
 	{ R600_STATE_DRAW, 1, 0, r600_state_pm4_draw, SUB_NONE(DRAW) },
 };
@@ -381,13 +381,6 @@ static int r600_state_pm4_draw(struct radeon_state *state)
 		if (r)
 			return r;
 		state->pm4[state->cpm4++] = state->bo[0]->handle;
-	} else if  (state->nimmd) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX_IMMD, state->nimmd + 1);
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DRAW_INITIATOR];
-		for (i = 0; i < state->nimmd; i++) {
-			state->pm4[state->cpm4++] = state->immd[i];
-		}
 	} else {
 		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
 		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];

@@ -80,13 +80,57 @@ struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 stype, u32 i
 	state->refcount = 1;
 	state->npm4 = found->npm4;
 	state->nstates = found->reginfo[shader_index].nstates;
-	state->states = calloc(1, state->nstates * 4);
-	state->pm4 = calloc(1, found->npm4 * 4);
-	if (state->states == NULL || state->pm4 == NULL) {
-		radeon_state_decref(state);
-		return NULL;
-	}
 	return state;
+}
+
+int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shader_type)
+{
+	struct radeon_stype_info *found = NULL;
+	int i, j, shader_index = -1;
+
+	if (state == NULL)
+		return 0;
+	/* traverse the stype array */
+	for (i = 0; i < state->radeon->nstype; i++) {
+		/* if the type doesn't match, if the shader doesn't match */
+		if (stype != state->radeon->stype[i].stype)
+			continue;
+		if (shader_type) {
+			for (j = 0; j < 4; j++) {
+				if (state->radeon->stype[i].reginfo[j].shader_type == shader_type) {
+					shader_index = j;
+					break;
+				}
+			}
+			if (shader_index == -1)
+				continue;
+		} else {
+			if (state->radeon->stype[i].reginfo[0].shader_type)
+				continue;
+			else
+				shader_index = 0;
+		}
+		if (id > state->radeon->stype[i].num)
+			continue;
+		
+		found = &state->radeon->stype[i];
+		break;
+	}
+
+	if (!found) {
+		fprintf(stderr, "%s invalid type %d/id %d/shader class %d\n", __func__, stype, id, shader_type);
+		return -EINVAL;
+	}
+
+	if (found->reginfo[shader_index].nstates != state->nstates) {
+		fprintf(stderr, "invalid type change from (%d %d %d) to (%d %d %d)\n",
+			state->stype->stype, state->id, state->shader_index, stype, id, shader_index);
+	}
+
+	state->stype = found;
+	state->id = id;
+	state->shader_index = shader_index;
+	return radeon_state_pm4(state);
 }
 
 struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id)
@@ -134,9 +178,6 @@ struct radeon_state *radeon_state_decref(struct radeon_state *state)
 	for (i = 0; i < state->nbo; i++) {
 		state->bo[i] = radeon_bo_decref(state->radeon, state->bo[i]);
 	}
-	free(state->immd);
-	free(state->states);
-	free(state->pm4);
 	memset(state, 0, sizeof(*state));
 	free(state);
 	return NULL;
@@ -179,8 +220,9 @@ int radeon_state_pm4(struct radeon_state *state)
 {
 	int r;
 
-	if (state == NULL || state->cpm4)
+	if (state == NULL)
 		return 0;
+	state->cpm4 = 0;
 	r = state->stype->pm4(state);
 	if (r) {
 		fprintf(stderr, "%s failed to build PM4 for state(%d %d)\n",
