@@ -718,7 +718,7 @@ static void r600_ucp(struct r600_context *rctx, struct radeon_state *rstate,
 }
 
 static void r600_cb(struct r600_context *rctx, struct radeon_state *rstate,
-			struct pipe_framebuffer_state *state, int cb)
+			const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
