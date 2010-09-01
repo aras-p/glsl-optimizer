@@ -1470,6 +1470,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	unsigned src_gpr;
 	int r, i;
+	int opcode;
+	boolean src_not_temp = inst->Src[0].Register.File != TGSI_FILE_TEMPORARY;
+	uint32_t lit_vals[4];
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
 
@@ -1477,7 +1480,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		/* Add perspective divide */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE;
-		alu.src[0].sel = src_gpr;
+		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+		if (r)
+			return r;
+
 		alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 3;
@@ -1492,7 +1498,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
 			alu.src[0].sel = ctx->temp_reg;
 			alu.src[0].chan = 3;
-			alu.src[1].sel = src_gpr;
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[1]);
+			if (r)
+				return r;
 			alu.src[1].chan = tgsi_chan(&inst->Src[0], i);
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = i;
@@ -1512,8 +1520,122 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
+		src_not_temp = false;
 		src_gpr = ctx->temp_reg;
-	} else if (inst->Src[0].Register.File != TGSI_FILE_TEMPORARY) {
+	}
+
+	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
+		int src_chan, src2_chan;
+
+		/* tmp1.xyzw = CUBE(R0.zzxy, R0.yxzz) */
+		for (i = 0; i < 4; i++) {
+			memset(&alu, 0, sizeof(struct r600_bc_alu));
+			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
+			switch (i) {
+			case 0:
+				src_chan = 2;
+				src2_chan = 1;
+				break;
+			case 1:
+				src_chan = 2;
+				src2_chan = 0;
+				break;
+			case 2:
+				src_chan = 0;
+				src2_chan = 2;
+				break;
+			case 3:
+				src_chan = 1;
+				src2_chan = 2;
+				break;
+			}
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+			if (r)
+				return r;
+			alu.src[0].chan = tgsi_chan(&inst->Src[0], src_chan);
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[1]);
+			if (r)
+				return r;
+			alu.src[1].chan = tgsi_chan(&inst->Src[0], src2_chan);
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = i;
+			if (i == 3)
+				alu.last = 1;
+			alu.dst.write = 1;
+			r = r600_bc_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+
+		/* tmp1.z = RCP_e(|tmp1.z|) */
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 2;
+		alu.src[0].abs = 1;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 2;
+		alu.dst.write = 1;
+		alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		
+		/* MULADD R0.x,  R0.x,  PS1,  (0x3FC00000, 1.5f).x
+		 * MULADD R0.y,  R0.y,  PS1,  (0x3FC00000, 1.5f).x
+		 * muladd has no writemask, have to use another temp 
+		 */
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD;
+		alu.is_op3 = 1;
+
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 0;
+		alu.src[1].sel = ctx->temp_reg;
+		alu.src[1].chan = 2;
+		
+		alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[2].chan = 0;
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 0;
+		alu.dst.write = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD;
+		alu.is_op3 = 1;
+
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 1;
+		alu.src[1].sel = ctx->temp_reg;
+		alu.src[1].chan = 2;
+		
+		alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[2].chan = 0;
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+
+		alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		lit_vals[0] = fui(1.5f);
+
+		r = r600_bc_add_literal(ctx->bc, lit_vals);
+		if (r)
+			return r;
+		src_not_temp = false;
+		src_gpr = ctx->temp_reg;
+	}
+
+	if (src_not_temp) {
 		for (i = 0; i < 4; i++) {
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
@@ -1530,9 +1652,14 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 		src_gpr = ctx->temp_reg;
 	}
+	
+	opcode = ctx->inst_info->r600_opcode;
+	if (opcode == SQ_TEX_INST_SAMPLE &&
+	    (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D))
+		opcode = SQ_TEX_INST_SAMPLE_C;
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
-	tex.inst = ctx->inst_info->r600_opcode;
+	tex.inst = opcode;
 	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
 	tex.sampler_id = tex.resource_id;
 	tex.src_gpr = src_gpr;
@@ -1546,13 +1673,30 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.src_sel_z = 2;
 	tex.src_sel_w = 3;
 
+	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
+		tex.src_sel_x = 1;
+		tex.src_sel_y = 0;
+		tex.src_sel_z = 3;
+		tex.src_sel_w = 1;
+	}
+
 	if (inst->Texture.Texture != TGSI_TEXTURE_RECT) {
 		tex.coord_type_x = 1;
 		tex.coord_type_y = 1;
 		tex.coord_type_z = 1;
 		tex.coord_type_w = 1;
 	}
-	return r600_bc_add_tex(ctx->bc, &tex);
+
+	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D)
+		tex.coord_type_w = 2;
+
+	r = r600_bc_add_tex(ctx->bc, &tex);
+	if (r)
+		return r;
+
+	/* add shadow ambient support  - gallium doesn't do it yet */
+	return 0;
+	
 }
 
 static int tgsi_lrp(struct r600_shader_ctx *ctx)
