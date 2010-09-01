@@ -247,9 +247,10 @@ static char *to_texop(int val)
   return NULL;
 }
 
-void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
+void r500FragmentProgramDump(struct radeon_compiler *c, void *user)
 {
-  struct r500_fragment_program_code *code = &c->code.r500;
+  struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
+  struct r500_fragment_program_code *code = &compiler->code->code.r500;
   fprintf(stderr, "R500 Fragment Program:\n--------\n");
 
   int n, i;

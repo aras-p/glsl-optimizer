@@ -292,8 +292,9 @@ static void alloc_input(void * data, unsigned int input, unsigned int hwreg)
 
 }
 
-void rc_pair_regalloc(struct r300_fragment_program_compiler *c)
+void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	unsigned maxtemps = c->Base.max_temp_regs;
 	struct regalloc_state s;
 

@@ -446,7 +446,7 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 		constant_folding_add(inst);
 }
 
-void rc_optimize(struct radeon_compiler * c)
+void rc_optimize(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst = c->Program.Instructions.Next;
 	while(inst != &c->Program.Instructions) {

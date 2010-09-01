@@ -60,6 +60,7 @@ int radeonTransformDeriv(
 	struct rc_instruction * inst,
 	void*);
 
-void radeonTransformKILP(struct radeon_compiler * c);
+void rc_transform_KILP(struct radeon_compiler * c,
+		       void *user);
 
 #endif /* __RADEON_PROGRAM_ALU_H_ */

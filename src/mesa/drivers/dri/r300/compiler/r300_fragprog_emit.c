@@ -328,8 +328,9 @@ static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
  * Final compilation step: Turn the intermediate radeon_program into
  * machine-readable instructions.
  */
-void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
+void r300BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 {
+	struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
 	struct r300_emit_state emit;
 	struct r300_fragment_program_code *code = &compiler->code->code.r300;
 

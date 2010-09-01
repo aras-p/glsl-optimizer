@@ -546,8 +546,9 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 	}
 }
 
-void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
+void r500BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 {
+	struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
 	struct emit_state s;
 	struct r500_fragment_program_code *code = &compiler->code->code.r500;
 

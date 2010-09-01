@@ -529,8 +529,9 @@ static int is_controlflow(struct rc_instruction * inst)
 	return 0;
 }
 
-void rc_pair_schedule(struct r300_fragment_program_compiler *c)
+void rc_pair_schedule(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	struct rc_instruction * inst = c->Base.Program.Instructions.Next;
 	while(inst != &c->Base.Program.Instructions) {
 		if (is_controlflow(inst)) {

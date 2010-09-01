@@ -487,7 +487,7 @@ void rc_transform_loops(struct radeon_compiler *c, void *user)
 	}
 }
 
-void rc_unroll_loops(struct radeon_compiler *c)
+void rc_unroll_loops(struct radeon_compiler *c, void *user)
 {
 	struct rc_instruction * inst;
 	struct loop_info loop;
@@ -503,7 +503,7 @@ void rc_unroll_loops(struct radeon_compiler *c)
 	}
 }
 
-void rc_emulate_loops(struct radeon_compiler *c)
+void rc_emulate_loops(struct radeon_compiler *c, void *user)
 {
 	struct emulate_loop_state * s = &c->loop_state;
 	int i;

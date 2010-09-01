@@ -32,7 +32,7 @@
 #include "radeon_opcodes.h"
 #include "radeon_program_constants.h"
 
-struct r300_fragment_program_compiler;
+struct radeon_compiler;
 
 
 /**
@@ -118,9 +118,9 @@ int rc_pair_alloc_source(struct rc_pair_instruction *pair,
 /*@{*/
 struct radeon_pair_handler;
 
-void rc_pair_translate(struct r300_fragment_program_compiler *c);
-void rc_pair_schedule(struct r300_fragment_program_compiler *c);
-void rc_pair_regalloc(struct r300_fragment_program_compiler *c);
+void rc_pair_translate(struct radeon_compiler *cc, void *user);
+void rc_pair_schedule(struct radeon_compiler *cc, void *user);
+void rc_pair_regalloc(struct radeon_compiler *cc, void *user);
 /*@}*/
 
 #endif /* __RADEON_PROGRAM_PAIR_H_ */

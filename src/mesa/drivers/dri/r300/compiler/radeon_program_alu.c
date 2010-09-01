@@ -1081,7 +1081,7 @@ int radeonTransformDeriv(struct radeon_compiler* c,
  * This needs to be done in its own pass, because it modifies the instructions
  * before and after KILP.
  */
-void radeonTransformKILP(struct radeon_compiler * c)
+void rc_transform_KILP(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst;
 	for (inst = c->Program.Instructions.Next;

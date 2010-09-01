@@ -87,7 +87,7 @@ static void rename_all(
  * This function assumes all the instructions are still of type
  * RC_INSTRUCTION_NORMAL.
  */
-void rc_rename_regs(struct radeon_compiler * c)
+void rc_rename_regs(struct radeon_compiler *c, void *user)
 {
 	unsigned int cur_index = 0;
 	unsigned int icount;

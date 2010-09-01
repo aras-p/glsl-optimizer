@@ -262,8 +262,10 @@ static void check_opcode_support(struct r300_fragment_program_compiler *c,
  * Translate all ALU instructions into corresponding pair instructions,
  * performing no other changes.
  */
-void rc_pair_translate(struct r300_fragment_program_compiler *c)
+void rc_pair_translate(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
+
 	for(struct rc_instruction * inst = c->Base.Program.Instructions.Next;
 	    inst != &c->Base.Program.Instructions;
 	    inst = inst->Next) {
