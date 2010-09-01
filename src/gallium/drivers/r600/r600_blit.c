@@ -670,7 +670,7 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (r) {
 		return r;
 	}
-	r = r600_texture_cb(ctx, rtexture, 0, level);
+	r = r600_texture_cb0(ctx, rtexture, level);
 	if (r) {
 		return r;
 	}
@@ -772,7 +772,7 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (r) {
 		goto out;
 	}
-	r = radeon_draw_set(draw, rtexture->cb[0][level]);
+	r = radeon_draw_set(draw, rtexture->cb0[level]);
 	if (r) {
 		goto out;
 	}

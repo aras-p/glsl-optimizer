@@ -284,30 +284,10 @@ static const struct radeon_register R600_names_VS_CONSTANT[] = {
 };
 
 static const struct radeon_register R600_names_UCP[] = {
-	{0x00028E20, 0, 0, "PA_CL_UCP0_X"},
-	{0x00028E24, 0, 0, "PA_CL_UCP0_Y"},
-	{0x00028E28, 0, 0, "PA_CL_UCP0_Z"},
-	{0x00028E2C, 0, 0, "PA_CL_UCP0_W"},
-	{0x00028E30, 0, 0, "PA_CL_UCP1_X"},
-	{0x00028E34, 0, 0, "PA_CL_UCP1_Y"},
-	{0x00028E38, 0, 0, "PA_CL_UCP1_Z"},
-	{0x00028E3C, 0, 0, "PA_CL_UCP1_W"},
-	{0x00028E40, 0, 0, "PA_CL_UCP2_X"},
-	{0x00028E44, 0, 0, "PA_CL_UCP2_Y"},
-	{0x00028E48, 0, 0, "PA_CL_UCP2_Z"},
-	{0x00028E4C, 0, 0, "PA_CL_UCP2_W"},
-	{0x00028E50, 0, 0, "PA_CL_UCP3_X"},
-	{0x00028E54, 0, 0, "PA_CL_UCP3_Y"},
-	{0x00028E58, 0, 0, "PA_CL_UCP3_Z"},
-	{0x00028E5C, 0, 0, "PA_CL_UCP3_W"},
-	{0x00028E60, 0, 0, "PA_CL_UCP4_X"},
-	{0x00028E64, 0, 0, "PA_CL_UCP4_Y"},
-	{0x00028E68, 0, 0, "PA_CL_UCP4_Z"},
-	{0x00028E6C, 0, 0, "PA_CL_UCP4_W"},
-	{0x00028E70, 0, 0, "PA_CL_UCP5_X"},
-	{0x00028E74, 0, 0, "PA_CL_UCP5_Y"},
-	{0x00028E78, 0, 0, "PA_CL_UCP5_Z"},
-	{0x00028E7C, 0, 0, "PA_CL_UCP5_W"},
+	{0x00028e20, 0, 0, "PA_CL_UCP0_X"},
+	{0x00028e24, 0, 0, "PA_CL_UCP0_Y"},
+	{0x00028e28, 0, 0, "PA_CL_UCP0_Z"},
+	{0x00028e2c, 0, 0, "PA_CL_UCP0_W"},
 };
 
 static const struct radeon_register R600_names_PS_RESOURCE[] = {

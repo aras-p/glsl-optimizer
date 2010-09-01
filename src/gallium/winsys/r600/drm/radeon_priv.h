@@ -38,19 +38,19 @@ struct radeon_register {
 };
 
 struct radeon_sub_type {
-	int				shader_type;
-	const struct radeon_register	*regs;
-	unsigned			nstates;
+	int shader_type;
+	const struct radeon_register *regs;
+	unsigned nstates;
 };
 
 struct radeon_stype_info {
-	unsigned			stype;
-	unsigned			num;
-	unsigned			stride;
-	radeon_state_pm4_t		pm4;
-	struct radeon_sub_type		reginfo[R600_SHADER_MAX];
-	unsigned			base_id;
-	unsigned			npm4;
+	unsigned stype;
+	unsigned num;
+	unsigned stride;
+	radeon_state_pm4_t pm4;
+	struct radeon_sub_type reginfo[R600_SHADER_MAX];
+	unsigned base_id;
+	unsigned npm4;
 };
 
 struct radeon {
