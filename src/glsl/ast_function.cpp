@@ -1063,7 +1063,7 @@ ast_function_expression::hir(exec_list *instructions,
        *    "It is an error to construct matrices from other matrices. This
        *    is reserved for future use."
        */
-      if ((state->language_version <= 110) && (matrix_parameters > 0)
+      if (state->language_version == 110 && matrix_parameters > 0
 	  && constructor_type->is_matrix()) {
 	 _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			  "matrix in GLSL 1.10",
