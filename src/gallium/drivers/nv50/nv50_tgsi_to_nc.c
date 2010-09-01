@@ -1791,12 +1791,12 @@ bld_instruction(struct bld_context *bld,
             dst0[3] = bld_imm_f32(bld, 1.0f);
             break;
          }
-         src0 = emit_fetch(bld, insn, 0, (c + 1) % 3);
-         src1 = emit_fetch(bld, insn, 1, (c + 2) % 3);
+         src0 = emit_fetch(bld, insn, 1, (c + 1) % 3);
+         src1 = emit_fetch(bld, insn, 0, (c + 2) % 3);
          dst0[c] = bld_insn_2(bld, NV_OP_MUL, src0, src1);
 
-         src0 = emit_fetch(bld, insn, 0, (c + 2) % 3);
-         src1 = emit_fetch(bld, insn, 1, (c + 1) % 3);
+         src0 = emit_fetch(bld, insn, 0, (c + 1) % 3);
+         src1 = emit_fetch(bld, insn, 1, (c + 2) % 3);
          dst0[c] = bld_insn_3(bld, NV_OP_MAD, src0, src1, dst0[c]);
 
          dst0[c]->insn->src[2]->mod ^= NV_MOD_NEG;
