@@ -1704,7 +1704,7 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
       /* using shaders */
       if (!ctx->Shader.CurrentProgram->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(shader not linked), where");
+                     "%s(shader not linked)", where);
          return GL_FALSE;
       }
 #if 0 /* not normally enabled */

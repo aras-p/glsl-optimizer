@@ -475,7 +475,8 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
 
    if (offset + size >= bufObj->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBufferRange(offset + size > buffer size)", size);
+                  "glBindBufferRange(offset + size %d > buffer size %d)",
+		  offset + size, bufObj->Size);
       return;
    }  
 
