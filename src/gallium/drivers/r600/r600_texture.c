@@ -455,6 +455,8 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	};
 	desc = util_format_description(format);
 
+	word4 |= r600_get_swizzle_combined(desc->swizzle, swizzle_view);
+
 	/* Colorspace (return non-RGB formats directly). */
 	switch (desc->colorspace) {
 		/* Depth stencil formats */
@@ -493,8 +495,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		break;
 	}
 	
-	word4 |= r600_get_swizzle_combined(desc->swizzle, swizzle_view);
-
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
 		goto out_unknown;
