@@ -432,8 +432,10 @@ constant_record_constructor(const glsl_type *constructor_type,
 			    exec_list *parameters, void *mem_ctx)
 {
    foreach_list(node, parameters) {
-      if (((ir_instruction *) node)->as_constant() == NULL)
+      ir_constant *constant = ((ir_instruction *) node)->as_constant();
+      if (constant == NULL)
 	 return NULL;
+      node->replace_with(constant);
    }
 
    return new(mem_ctx) ir_constant(constructor_type, parameters);
