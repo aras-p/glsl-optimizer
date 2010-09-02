@@ -220,6 +220,18 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 	unsigned has_temp_reladdr_src = 0;
 	rc_dataflow_mark_outputs_fn dce = (rc_dataflow_mark_outputs_fn)user;
 
+	/* Give up if there is relative addressing of destination operands. */
+	for(struct rc_instruction * inst = c->Program.Instructions.Next;
+	    inst != &c->Program.Instructions;
+	    inst = inst->Next) {
+		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+		if (opcode->HasDstReg &&
+		    inst->U.I.DstReg.WriteMask &&
+		    inst->U.I.DstReg.RelAddr) {
+			return;
+		}
+	}
+
 	memset(&s, 0, sizeof(s));
 	s.C = c;
 
@@ -316,6 +328,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 						for (struct rc_instruction *ptr = inst->Prev;
 						     ptr != &c->Program.Instructions;
 						     ptr = ptr->Prev) {
+							opcode = rc_get_opcode_info(ptr->U.I.Opcode);
 							if (opcode->HasDstReg &&
 							    ptr->U.I.DstReg.File == RC_FILE_TEMPORARY &&
 							    ptr->U.I.DstReg.WriteMask) {
@@ -327,6 +340,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 						}
 
 						has_temp_reladdr_src = 1;
+						break;
 					}
 				}
 			}
