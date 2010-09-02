@@ -321,7 +321,6 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 	bof_decref(device_id);
 	device_id = NULL;
 	/* dump relocs */
-printf("%d relocs\n", ctx->nreloc);
 	blob = bof_blob(ctx->nreloc * 16, ctx->reloc);
 	if (blob == NULL)
 		goto out_err;
@@ -330,7 +329,6 @@ printf("%d relocs\n", ctx->nreloc);
 	bof_decref(blob);
 	blob = NULL;
 	/* dump cs */
-printf("%d pm4\n", ctx->cdwords);
 	blob = bof_blob(ctx->cdwords * 4, ctx->pm4);
 	if (blob == NULL)
 		goto out_err;
@@ -377,7 +375,6 @@ printf("%d pm4\n", ctx->cdwords);
 	if (bof_object_set(root, "bo", array))
 		goto out_err;
 	bof_dump_file(root, file);
-printf("done dump\n");
 out_err:
 	bof_decref(blob);
 	bof_decref(array);
