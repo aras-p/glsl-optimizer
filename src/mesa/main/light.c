@@ -599,7 +599,7 @@ _mesa_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
          bitmask |= MAT_BIT_FRONT_INDEXES  | MAT_BIT_BACK_INDEXES;
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, where );
+         _mesa_error( ctx, GL_INVALID_ENUM, "%s", where );
          return 0;
    }
 
@@ -610,12 +610,12 @@ _mesa_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
       bitmask &= BACK_MATERIAL_BITS;
    }
    else if (face != GL_FRONT_AND_BACK) {
-      _mesa_error( ctx, GL_INVALID_ENUM, where );
+      _mesa_error( ctx, GL_INVALID_ENUM, "%s", where );
       return 0;
    }
 
    if (bitmask & ~legal) {
-      _mesa_error( ctx, GL_INVALID_ENUM, where );
+      _mesa_error( ctx, GL_INVALID_ENUM, "%s", where );
       return 0;
    }
 

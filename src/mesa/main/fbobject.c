@@ -1022,7 +1022,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 
    rb = ctx->CurrentRenderbuffer;
    if (!rb) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, func);
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s", func);
       return;
    }
 

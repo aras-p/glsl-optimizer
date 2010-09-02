@@ -6818,7 +6818,7 @@ _mesa_compile_error(GLcontext *ctx, GLenum error, const char *s)
    if (ctx->CompileFlag)
       save_error(ctx, error, s);
    if (ctx->ExecuteFlag)
-      _mesa_error(ctx, error, s);
+      _mesa_error(ctx, error, "%s", s);
 }
 
 
@@ -6885,7 +6885,7 @@ execute_list(GLcontext *ctx, GLuint list)
       else {
          switch (opcode) {
          case OPCODE_ERROR:
-            _mesa_error(ctx, n[1].e, (const char *) n[2].data);
+            _mesa_error(ctx, n[1].e, "%s", (const char *) n[2].data);
             break;
          case OPCODE_ACCUM:
             CALL_Accum(ctx->Exec, (n[1].e, n[2].f));
@@ -7917,7 +7917,7 @@ execute_list(GLcontext *ctx, GLuint list)
                char msg[1000];
                _mesa_snprintf(msg, sizeof(msg), "Error in execute_list: opcode=%d",
                              (int) opcode);
-               _mesa_problem(ctx, msg);
+               _mesa_problem(ctx, "%s", msg);
             }
             done = GL_TRUE;
          }

@@ -907,7 +907,7 @@ static struct ureg get_zero( struct texenv_fragment_program *p )
 
 static void program_error( struct texenv_fragment_program *p, const char *msg )
 {
-   _mesa_problem(NULL, msg);
+   _mesa_problem(NULL, "%s", msg);
    p->error = 1;
 }
 

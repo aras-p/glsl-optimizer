@@ -1405,7 +1405,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
          char message[100];
          _mesa_snprintf(message, sizeof(message),
                         "glTexImage%dD(format/type YCBCR mismatch", dimensions);
-         _mesa_error(ctx, GL_INVALID_ENUM, message);
+         _mesa_error(ctx, GL_INVALID_ENUM, "%s", message);
          return GL_TRUE; /* error */
       }
       if (target != GL_TEXTURE_2D &&
@@ -1422,7 +1422,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
             _mesa_snprintf(message, sizeof(message),
                            "glTexImage%dD(format=GL_YCBCR_MESA and border=%d)",
                            dimensions, border);
-            _mesa_error(ctx, GL_INVALID_VALUE, message);
+            _mesa_error(ctx, GL_INVALID_VALUE, "%s", message);
          }
          return GL_TRUE;
       }
