@@ -650,6 +650,8 @@ enum ir_expression_operation {
    ir_unop_dFdy,
    /*@}*/
 
+   ir_unop_noise,
+
    ir_binop_add,
    ir_binop_sub,
    ir_binop_mul,

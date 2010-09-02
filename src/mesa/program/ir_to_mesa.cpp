@@ -1154,6 +1154,16 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_op1(ir, OPCODE_DDY, result_dst, op[0]);
       break;
 
+   case ir_unop_noise: {
+      const enum prog_opcode opcode =
+	 prog_opcode(OPCODE_NOISE1
+		     + (ir->operands[0]->type->vector_elements) - 1);
+      assert((opcode >= OPCODE_NOISE1) && (opcode <= OPCODE_NOISE4));
+
+      ir_to_mesa_emit_op1(ir, opcode, result_dst, op[0]);
+      break;
+   }
+
    case ir_binop_add:
       ir_to_mesa_emit_op2(ir, OPCODE_ADD, result_dst, op[0], op[1]);
       break;

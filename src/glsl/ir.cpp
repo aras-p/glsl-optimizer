@@ -196,6 +196,8 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_dFdx */
       1, /* ir_unop_dFdy */
 
+      1, /* ir_unop_noise */
+
       2, /* ir_binop_add */
       2, /* ir_binop_sub */
       2, /* ir_binop_mul */
@@ -261,6 +263,7 @@ static const char *const operator_strs[] = {
    "cos",
    "dFdx",
    "dFdy",
+   "noise",
    "+",
    "-",
    "*",
