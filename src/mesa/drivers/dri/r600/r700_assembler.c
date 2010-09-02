@@ -7659,8 +7659,6 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
                          GLuint starting_register_number,
                          GLboolean is_depth_export)
 {
-    unsigned char ucWriteMask;
-
     check_current_clause(pAsm, CF_EMPTY_CLAUSE);
     check_current_clause(pAsm, CF_EXPORT_CLAUSE); //alloc the cf_current_export_clause_ptr
 
@@ -7740,42 +7738,20 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     {
         assert(starting_register_number >= pAsm->starting_export_register_number);
 
-        ucWriteMask = 0x0F;
 	/* exports Z as a float into Red channel */
 	if (GL_TRUE == is_depth_export)
-	    ucWriteMask = 0x1;
-
-        if( (ucWriteMask & 0x1) != 0)
+        {
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_Z;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_MASK;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_MASK;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_MASK;
+        }
+        else
         {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_X;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>1) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_Y;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>2) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_Z;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>3) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_W;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_MASK;
         }
     }
     else 
@@ -7792,53 +7768,12 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     return GL_TRUE;
 }
 
-GLboolean Move_Depth_Exports_To_Correct_Channels(r700_AssemblerBase *pAsm, BITS depth_channel_select)
-{
-	gl_inst_opcode Opcode_save = pAsm->pILInst[pAsm->uiCurInst].Opcode; //Should be OPCODE_END
-    pAsm->pILInst[pAsm->uiCurInst].Opcode = OPCODE_MOV;
-
-    // MOV depth_export_register.hw_depth_channel, depth_export_register.depth_channel_select
-
-    pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
-
-    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg   = pAsm->depth_export_register_number;
-
-    pAsm->D.dst.writex = 1;   // depth          goes in R channel for HW                       
-
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    pAsm->S[0].src.rtype = DST_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = pAsm->depth_export_register_number;
-
-    setswizzle_PVSSRC(&(pAsm->S[0].src), depth_channel_select);
-
-    noneg_PVSSRC(&(pAsm->S[0].src));
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    pAsm->pILInst[pAsm->uiCurInst].Opcode = Opcode_save;
-
-    return GL_TRUE;
-}
- 
 GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
                                    GLbitfield          OutputsWritten)  
 { 
     unsigned int unBit;
     GLuint export_count = 0;
     unsigned int i;
-
-    if(pR700AsmCode->depth_export_register_number >= 0) 
-    {
-        if( GL_FALSE == Move_Depth_Exports_To_Correct_Channels(pR700AsmCode, SQ_SEL_Z) )  // depth
-		{
-			return GL_FALSE;
-		}
-    }
 
     for (i = 0; i < FRAG_RESULT_MAX; ++i)
     {
