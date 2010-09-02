@@ -131,6 +131,7 @@ struct r600_context {
 	struct radeon_state		config;
 	/* FIXME get rid of those vs_resource,vs/ps_constant */
 	struct radeon_state		vs_resource[160];
+	unsigned			vs_nresource;
 	struct radeon_state		vs_constant[256];
 	struct radeon_state		ps_constant[256];
 	/* hw states */

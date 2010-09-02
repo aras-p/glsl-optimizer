@@ -121,8 +121,7 @@ void radeon_ctx_fini(struct radeon_ctx *ctx)
 	free(ctx->bo);
 	free(ctx->pm4);
 	free(ctx->reloc);
-	memset(ctx, 0, sizeof(*ctx));
-	free(ctx);
+	memset(ctx, 0, sizeof(struct radeon_ctx));
 }
 
 static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *state)

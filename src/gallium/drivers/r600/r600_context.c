@@ -39,6 +39,21 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = r600_context(context);
 
+	rctx->rasterizer = r600_context_state_decref(rctx->rasterizer);
+	rctx->poly_stipple = r600_context_state_decref(rctx->poly_stipple);
+	rctx->scissor = r600_context_state_decref(rctx->scissor);
+	rctx->clip = r600_context_state_decref(rctx->clip);
+	rctx->ps_shader = r600_context_state_decref(rctx->ps_shader);
+	rctx->vs_shader = r600_context_state_decref(rctx->vs_shader);
+	rctx->depth = r600_context_state_decref(rctx->depth);
+	rctx->stencil = r600_context_state_decref(rctx->stencil);
+	rctx->alpha = r600_context_state_decref(rctx->alpha);
+	rctx->dsa = r600_context_state_decref(rctx->dsa);
+	rctx->blend = r600_context_state_decref(rctx->blend);
+	rctx->stencil_ref = r600_context_state_decref(rctx->stencil_ref);
+	rctx->viewport = r600_context_state_decref(rctx->viewport);
+	rctx->framebuffer = r600_context_state_decref(rctx->framebuffer);
+	radeon_ctx_fini(&rctx->ctx);
 	FREE(rctx);
 }
 

@@ -94,6 +94,9 @@ static int r600_draw_common(struct r600_draw *draw)
 	radeon_draw_bind(&rctx->draw, &rctx->vs_shader->rstate[0]);
 	radeon_draw_bind(&rctx->draw, &rctx->ps_shader->rstate[0]);
 
+	for (i = 0 ; i < rctx->vs_nresource; i++) {
+		radeon_state_fini(&rctx->vs_resource[i]);
+	}
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		vs_resource = &rctx->vs_resource[i];
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
@@ -120,6 +123,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		}
 		radeon_draw_bind(&rctx->draw, vs_resource);
 	}
+	rctx->vs_nresource = rctx->vertex_elements->count;
 	/* FIXME start need to change winsys */
 	radeon_state_init(&draw->draw, rscreen->rw, R600_STATE_DRAW, 0, 0);
 	draw->draw.states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
