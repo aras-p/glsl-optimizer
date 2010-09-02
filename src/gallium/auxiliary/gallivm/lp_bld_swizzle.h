@@ -60,7 +60,7 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
  * all four channel.
  */
 LLVMValueRef
-lp_build_broadcast_aos(struct lp_build_context *bld,
+lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
                        LLVMValueRef a,
                        unsigned channel);
 

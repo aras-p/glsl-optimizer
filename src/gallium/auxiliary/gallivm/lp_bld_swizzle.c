@@ -95,10 +95,13 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
 }
 
 
+/**
+ * Swizzle one channel into all other three channels.
+ */
 LLVMValueRef
-lp_build_broadcast_aos(struct lp_build_context *bld,
-                       LLVMValueRef a,
-                       unsigned channel)
+lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
+                            LLVMValueRef a,
+                            unsigned channel)
 {
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
@@ -203,7 +206,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       case PIPE_SWIZZLE_GREEN:
       case PIPE_SWIZZLE_BLUE:
       case PIPE_SWIZZLE_ALPHA:
-         return lp_build_broadcast_aos(bld, a, swizzles[0]);
+         return lp_build_swizzle_scalar_aos(bld, a, swizzles[0]);
       case PIPE_SWIZZLE_ZERO:
          return bld->zero;
       case PIPE_SWIZZLE_ONE:

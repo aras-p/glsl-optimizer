@@ -197,7 +197,7 @@ lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
       swizzled_rgb = rgb;
       break;
    case LP_BUILD_BLEND_SWIZZLE_AAAA:
-      swizzled_rgb = lp_build_broadcast_aos(&bld->base, rgb, alpha_swizzle);
+      swizzled_rgb = lp_build_swizzle_scalar_aos(&bld->base, rgb, alpha_swizzle);
       break;
    default:
       assert(0);
