@@ -121,6 +121,7 @@ struct radeon_pair_handler;
 void rc_pair_translate(struct radeon_compiler *cc, void *user);
 void rc_pair_schedule(struct radeon_compiler *cc, void *user);
 void rc_pair_regalloc(struct radeon_compiler *cc, void *user);
+void rc_pair_regalloc_inputs_only(struct radeon_compiler *cc, void *user);
 /*@}*/
 
 #endif /* __RADEON_PROGRAM_PAIR_H_ */

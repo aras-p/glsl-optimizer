@@ -189,8 +189,17 @@ static void scan_callback(void * data, struct rc_instruction * inst,
 		reg->Live.End = inst->IP;
 }
 
-static void compute_live_intervals(struct regalloc_state * s)
+static void compute_live_intervals(struct radeon_compiler *c,
+				   struct regalloc_state *s)
 {
+	memset(s, 0, sizeof(*s));
+	s->C = c;
+	s->NumHwTemporaries = c->max_temp_regs;
+	s->HwTemporary =
+		memory_pool_malloc(&c->Pool,
+				   s->NumHwTemporaries * sizeof(struct hardware_register));
+	memset(s->HwTemporary, 0, s->NumHwTemporaries * sizeof(struct hardware_register));
+
 	rc_recompute_ips(s->C);
 
 	for(struct rc_instruction * inst = s->C->Program.Instructions.Next;
@@ -295,18 +304,50 @@ static void alloc_input(void * data, unsigned int input, unsigned int hwreg)
 void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 {
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
-	unsigned maxtemps = c->Base.max_temp_regs;
 	struct regalloc_state s;
 
-	memset(&s, 0, sizeof(s));
-	s.C = &c->Base;
-	s.NumHwTemporaries = maxtemps;
-	s.HwTemporary = memory_pool_malloc(&s.C->Pool, maxtemps*sizeof(struct hardware_register));
-	memset(s.HwTemporary, 0, maxtemps*sizeof(struct hardware_register));
-
-	compute_live_intervals(&s);
+	compute_live_intervals(cc, &s);
 
 	c->AllocateHwInputs(c, &alloc_input, &s);
 
 	do_regalloc(&s);
+}
+
+/* This functions offsets the temporary register indices by the number
+ * of input registers, because input registers are actually temporaries and
+ * should not occupy the same space.
+ *
+ * This pass is supposed to be used to maintain correct allocation of inputs
+ * if the standard register allocation is disabled. */
+void rc_pair_regalloc_inputs_only(struct radeon_compiler *cc, void *user)
+{
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
+	struct regalloc_state s;
+
+	compute_live_intervals(cc, &s);
+
+	c->AllocateHwInputs(c, &alloc_input, &s);
+
+	int temp_reg_offset = 0;
+	for (unsigned i = 0; i < RC_REGISTER_MAX_INDEX; i++) {
+		if (s.Input[i].Allocated && temp_reg_offset <= s.Input[i].Index)
+			temp_reg_offset = s.Input[i].Index + 1;
+	}
+
+	if (temp_reg_offset) {
+		for (unsigned i = 0; i < RC_REGISTER_MAX_INDEX; i++) {
+			if (s.Temporary[i].Used) {
+				s.Temporary[i].Allocated = 1;
+				s.Temporary[i].File = RC_FILE_TEMPORARY;
+				s.Temporary[i].Index = i + temp_reg_offset;
+			}
+		}
+
+		/* Rewrite all registers. */
+		for (struct rc_instruction *inst = cc->Program.Instructions.Next;
+		    inst != &cc->Program.Instructions;
+		    inst = inst->Next) {
+			rc_remap_registers(inst, &remap_register, &s);
+		}
+	}
 }

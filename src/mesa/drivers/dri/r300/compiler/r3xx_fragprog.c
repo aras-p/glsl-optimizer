@@ -141,6 +141,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
 		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
 		{"register allocation",		1, opt,		rc_pair_regalloc,		NULL},
+		{"dumb register allocation",	1, !opt,	rc_pair_regalloc_inputs_only,	NULL},
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
 		{"machine code generation",	0, is_r500,	r500BuildFragmentProgramHwCode,	NULL},
 		{"machine code generation",	0, !is_r500,	r300BuildFragmentProgramHwCode,	NULL},
