@@ -1015,8 +1015,10 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	const struct pipe_stencil_ref *stencil_ref = &rctx->stencil_ref->state.stencil_ref;
 	struct r600_screen *rscreen = rctx->screen;
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
-	unsigned stencil_ref_mask, stencil_ref_mask_bf;
+	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
 	struct r600_shader *rshader;
+	struct r600_query *rquery;
+	boolean query_running;
 	int i;
 
 	if (rctx->ps_shader == NULL) {
@@ -1069,6 +1071,26 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 		alpha_ref = fui(state->alpha.ref_value);
 	}
 
+	db_render_control = S_028D0C_STENCIL_COMPRESS_DISABLE(1) |
+		S_028D0C_DEPTH_COMPRESS_DISABLE(1);
+	db_render_override = S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
+
+	query_running = false;
+
+	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
+		if (rquery->state & R600_QUERY_STATE_STARTED) {
+			query_running = true;
+		}
+	}
+
+	if (query_running) {
+		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
+		if (rscreen->chip_class == R700)
+			db_render_control |= S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
+	}
+
 	rstate->states[R600_DSA__DB_STENCIL_CLEAR] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
 	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = alpha_test_control;
@@ -1080,8 +1102,9 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_DSA__SPI_FOG_CNTL] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CONTROL] = db_depth_control;
 	rstate->states[R600_DSA__DB_SHADER_CONTROL] = db_shader_control;
-	rstate->states[R600_DSA__DB_RENDER_CONTROL] = 0x00000060;
-	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = 0x0000002A;
+	rstate->states[R600_DSA__DB_RENDER_CONTROL] = db_render_control;
+	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = db_render_override;
+	  
 	rstate->states[R600_DSA__DB_SRESULTS_COMPARE_STATE1] = 0x00000000;
 	rstate->states[R600_DSA__DB_PRELOAD_CONTROL] = 0x00000000;
 	rstate->states[R600_DSA__DB_ALPHA_TO_MASK] = 0x0000AA00;

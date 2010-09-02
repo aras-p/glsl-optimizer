@@ -589,7 +589,14 @@
 #define   S_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) & 0x3FF) << 0)
 #define   G_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) >> 0) & 0x3FF)
 #define   C_028D34_DEPTH_HEIGHT_TILE_MAX               0xFFFFFC00
+#define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
+#define   S_028D0C_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
+#define   S_028D0C_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028D0C_R700_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
 #define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
+#define   V_028D10_FORCE_OFF                         0
+#define   V_028D10_FORCE_ENABLE                      1
+#define   V_028D10_FORCE_DISABLE                     2
 #define   S_028D10_FORCE_HIZ_ENABLE(x)                 (((x) & 0x3) << 0)
 #define   G_028D10_FORCE_HIZ_ENABLE(x)                 (((x) >> 0) & 0x3)
 #define   C_028D10_FORCE_HIZ_ENABLE                    0xFFFFFFFC
