@@ -1207,6 +1207,12 @@ ast_function_expression::hir(exec_list *instructions,
 	    node = node->next;
 	 }
 
+	 if (!node->is_tail_sentinel()) {
+	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
+			     "for `%s'", type->name);
+	    return ir_call::get_error_instruction(ctx);
+	 }
+
 	 ir_rvalue *const constant =
 	    constant_record_constructor(type, &actual_parameters, state);
 
