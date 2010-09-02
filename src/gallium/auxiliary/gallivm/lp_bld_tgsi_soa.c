@@ -612,7 +612,6 @@ emit_fetch(
       break;
 
    case TGSI_UTIL_SIGN_SET:
-      /* TODO: Use bitwese OR for floating point */
       res = lp_build_abs( &bld->base, res );
       /* fall through */
    case TGSI_UTIL_SIGN_TOGGLE:
@@ -2063,11 +2062,16 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          {
             /* save expanded instruction */
             if (num_instructions == bld.max_instructions) {
-               bld.instructions = REALLOC(bld.instructions,
-                                          bld.max_instructions
-                                          * sizeof(struct tgsi_full_instruction),
-                                          (bld.max_instructions + LP_MAX_INSTRUCTIONS)
-                                          * sizeof(struct tgsi_full_instruction));
+               struct tgsi_full_instruction *instructions;
+               instructions = REALLOC(bld.instructions,
+                                      bld.max_instructions
+                                      * sizeof(struct tgsi_full_instruction),
+                                      (bld.max_instructions + LP_MAX_INSTRUCTIONS)
+                                      * sizeof(struct tgsi_full_instruction));
+               if (!instructions) {
+                  break;
+               }
+               bld.instructions = instructions;
                bld.max_instructions += LP_MAX_INSTRUCTIONS;
             }
 
