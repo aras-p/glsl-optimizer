@@ -382,9 +382,12 @@ lp_build_const_aos(struct lp_type type,
 }
 
 
+/**
+ * @param mask TGSI_WRITEMASK_xxx
+ */
 LLVMValueRef
 lp_build_const_mask_aos(struct lp_type type,
-                        const boolean cond[4])
+                        unsigned mask)
 {
    LLVMTypeRef elem_type = LLVMIntType(type.width);
    LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];
@@ -392,9 +395,13 @@ lp_build_const_mask_aos(struct lp_type type,
 
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   for(j = 0; j < type.length; j += 4)
-      for(i = 0; i < 4; ++i)
-         masks[j + i] = LLVMConstInt(elem_type, cond[i] ? ~0 : 0, 0);
+   for (j = 0; j < type.length; j += 4) {
+      for( i = 0; i < 4; ++i) {
+         masks[j + i] = LLVMConstInt(elem_type,
+                                     mask & (1 << i) ? ~0ULL : 0,
+                                     1);
+      }
+   }
 
    return LLVMConstVector(masks, type.length);
 }

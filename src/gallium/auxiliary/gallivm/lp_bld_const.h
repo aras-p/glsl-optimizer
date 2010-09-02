@@ -104,7 +104,7 @@ lp_build_const_aos(struct lp_type type,
 
 LLVMValueRef
 lp_build_const_mask_aos(struct lp_type type,
-                        const boolean cond[4]);
+                        unsigned mask);
 
 
 static INLINE LLVMValueRef

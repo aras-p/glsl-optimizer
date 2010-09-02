@@ -139,13 +139,10 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
          { 1, -2},
          {-1, -2}
       };
-      boolean cond[4];
       unsigned i;
 
-      memset(cond, 0, sizeof cond);
-      cond[channel] = 1;
-
-      a = LLVMBuildAnd(bld->builder, a, lp_build_const_mask_aos(type, cond), "");
+      a = LLVMBuildAnd(bld->builder, a,
+                       lp_build_const_mask_aos(type, 1 << channel), "");
 
       /*
        * Build a type where each element is an integer that cover the four
@@ -282,7 +279,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
        */
       LLVMValueRef res;
       struct lp_type type4;
-      boolean cond[4];
+      unsigned cond = 0;
       unsigned chan;
       int shift;
 
@@ -290,9 +287,11 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
        * Start with a mixture of 1 and 0.
        */
       for (chan = 0; chan < 4; ++chan) {
-         cond[chan] = swizzles[chan] == PIPE_SWIZZLE_ONE ? TRUE : FALSE;
+         if (swizzles[chan] == PIPE_SWIZZLE_ONE) {
+            cond |= 1 << chan;
+         }
       }
-      res = lp_build_select_aos(bld, bld->one, bld->zero, cond);
+      res = lp_build_select_aos(bld, cond, bld->one, bld->zero);
 
       /*
        * Build a type where each element is an integer that cover the four
