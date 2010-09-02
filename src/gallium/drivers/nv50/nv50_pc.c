@@ -631,6 +631,7 @@ nvbb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
 static struct nv_basic_block *
 nvbb_find_dom_frontier(struct nv_basic_block *b, struct nv_basic_block *df)
 {
+   struct nv_basic_block *out;
    int i;
 
    if (!nvbb_dominated_by(df, b)) {
@@ -641,11 +642,11 @@ nvbb_find_dom_frontier(struct nv_basic_block *b, struct nv_basic_block *df)
             return df;
       }
    }
-   for (i = 0; i < 2 && b->out[i]; ++i) {
-      if (b->out_kind[i] == CFG_EDGE_BACK)
+   for (i = 0; i < 2 && df->out[i]; ++i) {
+      if (df->out_kind[i] == CFG_EDGE_BACK)
          continue;
-      if ((df = nvbb_find_dom_frontier(b, b->out[i])))
-         return df;
+      if ((out = nvbb_find_dom_frontier(b, df->out[i])))
+         return out;
    }
    return NULL;
 }
