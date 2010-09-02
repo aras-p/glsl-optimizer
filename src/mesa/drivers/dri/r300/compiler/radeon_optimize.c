@@ -89,6 +89,12 @@ static void peephole_scan_read(void * data, struct rc_instruction * inst,
 {
 	struct peephole_state * s = data;
 
+	/* XXX This could probably be handled better. */
+	if (file == RC_FILE_ADDRESS) {
+		s->Conflict = 1;
+		return;
+	}
+
 	if (file != RC_FILE_TEMPORARY || index != s->Mov->U.I.DstReg.Index)
 		return;
 
@@ -144,7 +150,9 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 {
 	struct peephole_state s;
 
-	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY || inst_mov->U.I.WriteALUResult)
+	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY ||
+	    inst_mov->U.I.DstReg.RelAddr ||
+	    inst_mov->U.I.WriteALUResult)
 		return;
 
 	memset(&s, 0, sizeof(s));
