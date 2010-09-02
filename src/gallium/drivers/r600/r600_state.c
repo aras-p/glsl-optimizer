@@ -1319,7 +1319,7 @@ static void r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 	}
 
 	if (pbs->logicop_enable) {
-		color_control |= (pbs->logicop_func) << 16;
+		color_control |= (pbs->logicop_func << 16) | (pbs->logicop_func << 20);
 	} else {
 		color_control |= (0xcc << 16);
 	}
