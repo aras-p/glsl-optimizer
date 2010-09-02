@@ -414,8 +414,6 @@ typedef struct r700_AssemblerBase
 	unsigned char ucVP_AttributeMap[VERT_ATTRIB_MAX];
 	unsigned char ucVP_OutputMap[VERT_RESULT_MAX];
 
-    unsigned char * pucOutMask;
-
 	//-----------------------------------------------------------------------------------
 	// flow control members
 	//-----------------------------------------------------------------------------------

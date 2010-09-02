@@ -1413,17 +1413,6 @@ static GLboolean next_ins(r700_AssemblerBase *pAsm)
     if (pAsm->D.dst.rtype == DST_REG_OUT)
     {
         assert(pAsm->D.dst.reg >= pAsm->starting_export_register_number);
-
-        if (pAsm->D.dst.op3)
-        {
-            // There is no mask for OP3 instructions, so all channels are written
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
-        }
-        else
-        {
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number]
-               |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
-        }
     }
 
     //reset for next inst.
@@ -7751,7 +7740,7 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     {
         assert(starting_register_number >= pAsm->starting_export_register_number);
 
-        ucWriteMask = pAsm->pucOutMask[starting_register_number - pAsm->starting_export_register_number];
+        ucWriteMask = 0x0F;
 	/* exports Z as a float into Red channel */
 	if (GL_TRUE == is_depth_export)
 	    ucWriteMask = 0x1;
@@ -8087,7 +8076,6 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
 
 GLboolean Clean_Up_Assembler(r700_AssemblerBase *pR700AsmCode)
 {
-    FREE(pR700AsmCode->pucOutMask);
     FREE(pR700AsmCode->pInstDeps);
 
     if(NULL != pR700AsmCode->subs)

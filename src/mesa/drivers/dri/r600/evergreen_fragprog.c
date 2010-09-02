@@ -99,7 +99,6 @@ void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 {
 	unsigned int unBit;
     unsigned int i;
-    GLuint       ui;
 
     /* match fp inputs with vp exports. */
     struct evergreen_vertex_program_cont *vpc =
@@ -245,12 +244,6 @@ void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->number_of_colorandz_exports++;
 		pAsm->pR700Shader->depthIsExported = 1;
 	}
-
-    pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
-    for(ui=0; ui<pAsm->number_of_exports; ui++)
-    {
-        pAsm->pucOutMask[ui] = 0x0;
-    }
 
     pAsm->flag_reg_index = pAsm->number_used_registers++;
 

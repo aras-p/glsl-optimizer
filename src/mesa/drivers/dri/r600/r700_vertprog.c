@@ -201,7 +201,6 @@ void Map_Vertex_Program(GLcontext *ctx,
                         struct r700_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
-    GLuint ui;
     r700_AssemblerBase *pAsm = &(vp->r700AsmCode);
 	unsigned int num_inputs;
 
@@ -226,13 +225,6 @@ void Map_Vertex_Program(GLcontext *ctx,
 	pAsm->starting_export_register_number = pAsm->number_used_registers;
 
 	pAsm->number_used_registers += pAsm->number_of_exports;
-
-    pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
-
-    for(ui=0; ui<pAsm->number_of_exports; ui++)
-    {
-        pAsm->pucOutMask[ui] = 0x0;
-    }
 
     /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
