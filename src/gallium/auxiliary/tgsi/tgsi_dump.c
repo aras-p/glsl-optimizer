@@ -90,7 +90,8 @@ static const char *processor_type_names[] =
    "GEOM"
 };
 
-static const char *file_names[TGSI_FILE_COUNT] =
+const char *
+tgsi_file_names[TGSI_FILE_COUNT] =
 {
    "NULL",
    "CONST",
@@ -135,7 +136,8 @@ static const char *immediate_type_names[] =
    "INT32"
 };
 
-static const char *swizzle_names[] =
+const char *
+tgsi_swizzle_names[] =
 {
    "x",
    "y",
@@ -143,7 +145,8 @@ static const char *swizzle_names[] =
    "w"
 };
 
-static const char *texture_names[] =
+const char *
+tgsi_texture_names[] =
 {
    "UNKNOWN",
    "1D",
@@ -201,15 +204,15 @@ _dump_register_src(
    struct dump_ctx *ctx,
    const struct tgsi_full_src_register *src )
 {
-   ENM(src->Register.File, file_names);
+   ENM(src->Register.File, tgsi_file_names);
    if (src->Register.Dimension) {
       if (src->Dimension.Indirect) {
          CHR( '[' );
-         ENM( src->DimIndirect.File, file_names );
+         ENM( src->DimIndirect.File, tgsi_file_names );
          CHR( '[' );
          SID( src->DimIndirect.Index );
          TXT( "]." );
-         ENM( src->DimIndirect.SwizzleX, swizzle_names );
+         ENM( src->DimIndirect.SwizzleX, tgsi_swizzle_names );
          if (src->Dimension.Index != 0) {
             if (src->Dimension.Index > 0)
                CHR( '+' );
@@ -224,11 +227,11 @@ _dump_register_src(
    }
    if (src->Register.Indirect) {
       CHR( '[' );
-      ENM( src->Indirect.File, file_names );
+      ENM( src->Indirect.File, tgsi_file_names );
       CHR( '[' );
       SID( src->Indirect.Index );
       TXT( "]." );
-      ENM( src->Indirect.SwizzleX, swizzle_names );
+      ENM( src->Indirect.SwizzleX, tgsi_swizzle_names );
       if (src->Register.Index != 0) {
          if (src->Register.Index > 0)
             CHR( '+' );
@@ -248,15 +251,15 @@ _dump_register_dst(
    struct dump_ctx *ctx,
    const struct tgsi_full_dst_register *dst )
 {
-   ENM(dst->Register.File, file_names);
+   ENM(dst->Register.File, tgsi_file_names);
    if (dst->Register.Dimension) {
       if (dst->Dimension.Indirect) {
          CHR( '[' );
-         ENM( dst->DimIndirect.File, file_names );
+         ENM( dst->DimIndirect.File, tgsi_file_names );
          CHR( '[' );
          SID( dst->DimIndirect.Index );
          TXT( "]." );
-         ENM( dst->DimIndirect.SwizzleX, swizzle_names );
+         ENM( dst->DimIndirect.SwizzleX, tgsi_swizzle_names );
          if (dst->Dimension.Index != 0) {
             if (dst->Dimension.Index > 0)
                CHR( '+' );
@@ -271,11 +274,11 @@ _dump_register_dst(
    }
    if (dst->Register.Indirect) {
       CHR( '[' );
-      ENM( dst->Indirect.File, file_names );
+      ENM( dst->Indirect.File, tgsi_file_names );
       CHR( '[' );
       SID( dst->Indirect.Index );
       TXT( "]." );
-      ENM( dst->Indirect.SwizzleX, swizzle_names );
+      ENM( dst->Indirect.SwizzleX, tgsi_swizzle_names );
       if (dst->Register.Index != 0) {
          if (dst->Register.Index > 0)
             CHR( '+' );
@@ -351,7 +354,7 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   ENM(decl->Declaration.File, file_names);
+   ENM(decl->Declaration.File, tgsi_file_names);
 
    /* all geometry shader inputs are two dimensional */
    if (decl->Declaration.File == TGSI_FILE_INPUT &&
@@ -585,10 +588,10 @@ iter_instruction(
           inst->Predicate.SwizzleZ != TGSI_SWIZZLE_Z ||
           inst->Predicate.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
-         ENM( inst->Predicate.SwizzleX, swizzle_names );
-         ENM( inst->Predicate.SwizzleY, swizzle_names );
-         ENM( inst->Predicate.SwizzleZ, swizzle_names );
-         ENM( inst->Predicate.SwizzleW, swizzle_names );
+         ENM( inst->Predicate.SwizzleX, tgsi_swizzle_names );
+         ENM( inst->Predicate.SwizzleY, tgsi_swizzle_names );
+         ENM( inst->Predicate.SwizzleZ, tgsi_swizzle_names );
+         ENM( inst->Predicate.SwizzleW, tgsi_swizzle_names );
       }
 
       TXT( ") " );
@@ -641,10 +644,10 @@ iter_instruction(
           src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
           src->Register.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
-         ENM( src->Register.SwizzleX, swizzle_names );
-         ENM( src->Register.SwizzleY, swizzle_names );
-         ENM( src->Register.SwizzleZ, swizzle_names );
-         ENM( src->Register.SwizzleW, swizzle_names );
+         ENM( src->Register.SwizzleX, tgsi_swizzle_names );
+         ENM( src->Register.SwizzleY, tgsi_swizzle_names );
+         ENM( src->Register.SwizzleZ, tgsi_swizzle_names );
+         ENM( src->Register.SwizzleW, tgsi_swizzle_names );
       }
 
       if (src->Register.Absolute)
@@ -655,7 +658,7 @@ iter_instruction(
 
    if (inst->Instruction.Texture) {
       TXT( ", " );
-      ENM( inst->Texture.Texture, texture_names );
+      ENM( inst->Texture.Texture, tgsi_texture_names );
    }
 
    switch (inst->Instruction.Opcode) {
