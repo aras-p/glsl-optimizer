@@ -122,6 +122,7 @@ xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
 
 /**
  * Remove outdated textures and create the requested ones.
+ * This is a helper used during framebuffer validation.
  */
 static boolean
 xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
@@ -193,6 +194,10 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
    return TRUE;
 }
 
+
+/**
+ * Called via st_framebuffer_iface::validate()
+ */
 static boolean 
 xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                               const enum st_attachment_type *statts,
@@ -249,6 +254,9 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    return TRUE;
 }
 
+/**
+ * Called via st_framebuffer_iface::flush_front()
+ */
 static boolean
 xmesa_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
                                  enum st_attachment_type statt)
