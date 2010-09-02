@@ -5589,7 +5589,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
 
    err_str = make_error_string("glProgramStringARB(%s)\n", s);
    if (err_str) {
-      _mesa_error(state->ctx, GL_INVALID_OPERATION, err_str);
+      _mesa_error(state->ctx, GL_INVALID_OPERATION, "%s", err_str);
       free(err_str);
    }
 
