@@ -347,9 +347,10 @@ struct nv_pc {
 };
 
 void nvbb_insert_tail(struct nv_basic_block *, struct nv_instruction *);
+void nvi_insert_after(struct nv_instruction *, struct nv_instruction *);
 
 static INLINE struct nv_instruction *
-new_instruction(struct nv_pc *pc, uint opcode)
+nv_alloc_instruction(struct nv_pc *pc, uint opcode)
 {
    struct nv_instruction *insn;
 
@@ -359,7 +360,24 @@ new_instruction(struct nv_pc *pc, uint opcode)
    insn->cc = NV_CC_TR;
    insn->opcode = opcode;
 
+   return insn;
+}
+
+static INLINE struct nv_instruction *
+new_instruction(struct nv_pc *pc, uint opcode)
+{
+   struct nv_instruction *insn = nv_alloc_instruction(pc, opcode);
+
    nvbb_insert_tail(pc->current_block, insn);
+   return insn;
+}
+
+static INLINE struct nv_instruction *
+new_instruction_at(struct nv_pc *pc, struct nv_instruction *at, uint opcode)
+{
+   struct nv_instruction *insn = nv_alloc_instruction(pc, opcode);
+
+   nvi_insert_after(at, insn);
    return insn;
 }
 

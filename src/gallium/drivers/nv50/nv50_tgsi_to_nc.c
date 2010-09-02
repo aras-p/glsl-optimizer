@@ -625,21 +625,33 @@ bld_get_address(struct bld_context *bld, int id, struct nv_value *indirect)
 static struct nv_value *
 bld_predicate(struct bld_context *bld, struct nv_value *src, boolean bool_only)
 {
-   struct nv_instruction *nvi = src->insn;
+   struct nv_instruction *s0i, *nvi = src->insn;
 
-   if (nvi->opcode == NV_OP_LDA ||
-       nvi->opcode == NV_OP_PHI ||
-       nvi->bb != bld->pc->current_block) {
-      nvi = new_instruction(bld->pc, NV_OP_CVT);
-      nv_reference(bld->pc, &nvi->src[0], src);
+   if (!nvi) {
+      nvi = bld_insn_1(bld,
+                       (src->reg.file == NV_FILE_IMM) ? NV_OP_MOV : NV_OP_LDA,
+                       src)->insn;
+      src = nvi->def[0];
    } else
    if (bool_only) {
-      while (nvi->opcode == NV_OP_ABS || nvi->opcode == NV_OP_CVT ||
-             nvi->opcode == NV_OP_NEG) {
-         /* TGSI SET gets conversion to f32, we only need source 0/~0 */
-         if (!nvi->def[0]->insn->flags_src)
-            nvi = nvi->src[0]->value->insn;
+      while (nvi->opcode == NV_OP_ABS || nvi->opcode == NV_OP_NEG ||
+             nvi->opcode == NV_OP_CVT) {
+         s0i = nvi->src[0]->value->insn;
+         if (!s0i ||
+             s0i->opcode == NV_OP_LDA ||
+             s0i->opcode == NV_OP_MOV ||
+             s0i->opcode == NV_OP_PHI)
+            break;
+         nvi = s0i;
+         assert(!nvi->flags_src);
       }
+   }
+
+   if (nvi->opcode == NV_OP_LDA ||
+       nvi->opcode == NV_OP_MOV ||
+       nvi->opcode == NV_OP_PHI || nvi->bb != bld->pc->current_block) {
+      nvi = new_instruction(bld->pc, NV_OP_CVT);
+      nv_reference(bld->pc, &nvi->src[0], src);
    }
 
    if (!nvi->flags_def) {

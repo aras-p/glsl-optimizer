@@ -121,7 +121,7 @@ nv50_nvi_can_load(struct nv_instruction *nvi, int s, struct nv_value *value)
       return FALSE;
    case NV_OP_MOV:
       assert(s == 0);
-      return TRUE;
+      return /* TRUE */ FALSE; /* don't turn MOVs into loads */
    default:
       return FALSE;
    }
@@ -505,6 +505,19 @@ nvbb_insert_tail(struct nv_basic_block *b, struct nv_instruction *i)
 
    i->bb = b;
    b->num_instructions++;
+}
+
+void
+nvi_insert_after(struct nv_instruction *at, struct nv_instruction *ni)
+{
+   if (!at->next) {
+      nvbb_insert_tail(at->bb, ni);
+      return;
+   }
+   ni->next = at->next;
+   ni->prev = at;
+   ni->next->prev = ni;
+   ni->prev->next = ni;
 }
 
 void

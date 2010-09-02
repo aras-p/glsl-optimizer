@@ -636,6 +636,15 @@ constant_operand(struct nv_pc *pc,
    default:
       break;
    }
+
+   if (nvi->opcode == NV_OP_MOV && nvi->flags_def) {
+      struct nv_instruction *cvt = new_instruction_at(pc, nvi, NV_OP_CVT);
+
+      nv_reference(pc, &cvt->src[0], nvi->def[0]);
+
+      cvt->flags_def = nvi->flags_def;
+      nvi->flags_def = NULL;
+   }
 }
 
 static int
