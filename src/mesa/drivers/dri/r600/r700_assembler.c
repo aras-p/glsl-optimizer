@@ -619,7 +619,7 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
 GLboolean IsTex(gl_inst_opcode Opcode)
 {
     if( (OPCODE_TEX==Opcode) || (OPCODE_TXP==Opcode) || (OPCODE_TXB==Opcode) ||
-        (OPCODE_DDX==Opcode) || (OPCODE_DDY==Opcode) )
+        (OPCODE_DDX==Opcode) || (OPCODE_DDY==Opcode) || (OPCODE_TXL==Opcode) )
     {
         return GL_TRUE;
     }
@@ -923,9 +923,10 @@ GLboolean add_tex_instruction(r700_AssemblerBase*     pAsm,
         }
     }
 
-    // If this clause constains any TEX instruction that is dependent on a previous instruction, 
-    // set the barrier bit
-    if( pAsm->pInstDeps[pAsm->uiCurInst].nDstDep > (-1) || pAsm->need_tex_barrier == GL_TRUE )
+    // If this clause constains any TEX instruction that is dependent on a 
+    // previous instruction, set the barrier bit, also always set for vert 
+    // programs as tex deps are not(yet) computed for them
+    if( pAsm->currentShaderType == SPT_VP || pAsm->pInstDeps[pAsm->uiCurInst].nDstDep > (-1) || pAsm->need_tex_barrier == GL_TRUE )
     {
         pAsm->cf_current_tex_clause_ptr->m_Word1.f.barrier = 0x1;  
     }
@@ -5277,6 +5278,11 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             pAsm->D.dst.opcode = SQ_TEX_INST_GET_GRADIENTS_V;
             break;
         case OPCODE_TXB:
+	    /* this should actually be SAMPLE_LB but that needs bias to be 
+             * embedded in the instruction - cant do here */ 
+            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
+            break;
+        case OPCODE_TXL:
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
             break;
         default:
@@ -7104,7 +7110,8 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         case OPCODE_DDX:
         case OPCODE_DDY:
         case OPCODE_TEX: 
-        case OPCODE_TXB:  
+        case OPCODE_TXB:
+        case OPCODE_TXL:
         case OPCODE_TXP: 
             if ( GL_FALSE == assemble_TEX(pR700AsmCode) ) 
                 return GL_FALSE;
