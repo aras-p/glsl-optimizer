@@ -33,6 +33,7 @@
 #ifndef U_LINEAR_H
 #define U_LINEAR_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
 struct u_linear_format_block
