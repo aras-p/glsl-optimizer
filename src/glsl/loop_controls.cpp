@@ -204,12 +204,12 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 	  * which.
 	  */
 	 ir_rvalue *counter = cond->operands[0]->as_dereference_variable();
-	 ir_constant *limit = cond->operands[1]->constant_expression_value();
+	 ir_constant *limit = cond->operands[1]->as_constant();
 	 enum ir_expression_operation cmp = cond->operation;
 
 	 if (limit == NULL) {
 	    counter = cond->operands[1]->as_dereference_variable();
-	    limit = cond->operands[0]->constant_expression_value();
+	    limit = cond->operands[0]->as_constant();
 
 	    switch (cmp) {
 	    case ir_binop_less:    cmp = ir_binop_gequal;  break;

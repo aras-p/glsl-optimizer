@@ -433,7 +433,7 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
 
    ir_rvalue *inc = (op0 == var) ? rhs->operands[1] : rhs->operands[0];
 
-   if (inc->constant_expression_value() == NULL) {
+   if (inc->as_constant() == NULL) {
       ir_variable *const inc_var = inc->variable_referenced();
       if (inc_var != NULL) {
 	 loop_variable *lv =
