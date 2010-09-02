@@ -168,6 +168,7 @@ void st_init_limits(struct st_context *st)
     * subtract the 2 colors to get the maximum number of varyings (generic
     * attributes) supported by a driver. */
    c->MaxVarying = screen->get_param(screen, PIPE_CAP_MAX_FS_INPUTS) - 2;
+   c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
 }
 
 
