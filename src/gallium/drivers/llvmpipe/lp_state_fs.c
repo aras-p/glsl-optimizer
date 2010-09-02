@@ -238,9 +238,9 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef zs_value = NULL;
    LLVMValueRef stencil_refs[2];
    struct lp_build_mask_context mask;
-   boolean simple_shader = (shader->info.file_count[TGSI_FILE_SAMPLER] == 0 &&
-                            shader->info.num_inputs < 3 &&
-                            shader->info.num_instructions < 8);
+   boolean simple_shader = (shader->info.base.file_count[TGSI_FILE_SAMPLER] == 0 &&
+                            shader->info.base.num_inputs < 3 &&
+                            shader->info.base.num_instructions < 8);
    unsigned attrib;
    unsigned chan;
    unsigned cbuf;
@@ -253,8 +253,8 @@ generate_fs(struct llvmpipe_context *lp,
       zs_format_desc = util_format_description(key->zsbuf_format);
       assert(zs_format_desc);
 
-      if (!shader->info.writes_z) {
-         if (key->alpha.enabled || shader->info.uses_kill)
+      if (!shader->info.base.writes_z) {
+         if (key->alpha.enabled || shader->info.base.uses_kill)
             /* With alpha test and kill, can do the depth test early
              * and hopefully eliminate some quads.  But need to do a
              * special deferred depth write once the final mask value
@@ -334,12 +334,12 @@ generate_fs(struct llvmpipe_context *lp,
    /* Build the actual shader */
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
-                     outputs, sampler, &shader->info);
+                     outputs, sampler, &shader->info.base);
 
 
    /* Alpha test */
    if (key->alpha.enabled) {
-      int color0 = find_output_by_semantic(&shader->info,
+      int color0 = find_output_by_semantic(&shader->info.base,
                                            TGSI_SEMANTIC_COLOR,
                                            0);
 
@@ -358,7 +358,7 @@ generate_fs(struct llvmpipe_context *lp,
 
    /* Late Z test */
    if (depth_mode & LATE_DEPTH_TEST) { 
-      int pos0 = find_output_by_semantic(&shader->info,
+      int pos0 = find_output_by_semantic(&shader->info.base,
                                          TGSI_SEMANTIC_POSITION,
                                          0);
          
@@ -399,11 +399,11 @@ generate_fs(struct llvmpipe_context *lp,
 
 
    /* Color write  */
-   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib)
+   for (attrib = 0; attrib < shader->info.base.num_outputs; ++attrib)
    {
-      if (shader->info.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR)
+      if (shader->info.base.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR)
       {
-         unsigned cbuf = shader->info.output_semantic_index[attrib];
+         unsigned cbuf = shader->info.base.output_semantic_index[attrib];
          for(chan = 0; chan < NUM_CHANNELS; ++chan)
          {
             /* XXX: just initialize outputs to point at colors[] and
@@ -728,7 +728,7 @@ generate_fragment(struct llvmpipe_context *lp,
           */
          boolean do_branch = ((key->depth.enabled || key->stencil[0].enabled) &&
                               !key->alpha.enabled &&
-                              !shader->info.uses_kill);
+                              !shader->info.base.uses_kill);
 
          generate_blend(&key->blend,
                         rt,
@@ -917,7 +917,7 @@ generate_variant(struct llvmpipe_context *lp,
          !key->stencil[0].enabled &&
          !key->alpha.enabled &&
          !key->depth.enabled &&
-         !shader->info.uses_kill
+         !shader->info.base.uses_kill
          ? TRUE : FALSE;
 
 
@@ -954,7 +954,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    make_empty_list(&shader->variants);
 
    /* get/save the summary info for this shader */
-   tgsi_scan_shader(templ->tokens, &shader->info);
+   lp_build_tgsi_info(templ->tokens, &shader->info);
 
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
@@ -966,7 +966,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       return NULL;
    }
 
-   nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+   nr_samplers = shader->info.base.file_max[TGSI_FILE_SAMPLER] + 1;
 
    shader->variant_key_size = Offset(struct lp_fragment_shader_variant_key,
 				     sampler[nr_samplers]);
@@ -976,8 +976,8 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       debug_printf("llvmpipe: Create fragment shader #%u %p:\n", shader->no, (void *) shader);
       tgsi_dump(templ->tokens, 0);
       debug_printf("usage masks:\n");
-      for (attrib = 0; attrib < shader->info.num_inputs; ++attrib) {
-         unsigned usage_mask = shader->info.input_usage_mask[attrib];
+      for (attrib = 0; attrib < shader->info.base.num_inputs; ++attrib) {
+         unsigned usage_mask = shader->info.base.input_usage_mask[attrib];
          debug_printf("  IN[%u].%s%s%s%s\n",
                       attrib,
                       usage_mask & TGSI_WRITEMASK_X ? "x" : "",
@@ -1206,10 +1206,10 @@ make_variant_key(struct llvmpipe_context *lp,
 
    /* This value will be the same for all the variants of a given shader:
     */
-   key->nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+   key->nr_samplers = shader->info.base.file_max[TGSI_FILE_SAMPLER] + 1;
 
    for(i = 0; i < key->nr_samplers; ++i) {
-      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
+      if(shader->info.base.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
          lp_sampler_static_state(&key->sampler[i],
 				 lp->fragment_sampler_views[i],
 				 lp->sampler[i]);

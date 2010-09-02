@@ -239,8 +239,8 @@ setup_point_coefficients( struct lp_setup_context *setup,
          /* check if the sprite coord flag is set for this attribute.
           * If so, set it up so it up so x and y vary from 0 to 1.
           */
-         if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
-            unsigned semantic_index = shader->info.input_semantic_index[slot];
+         if (shader->info.base.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
+            unsigned semantic_index = shader->info.base.input_semantic_index[slot];
             /* Note that sprite_coord enable is a bitfield of
              * PIPE_MAX_SHADER_OUTPUTS bits.
              */

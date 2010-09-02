@@ -66,14 +66,14 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
 
-   for (i = 0; i < lpfs->info.num_inputs; i++) {
+   for (i = 0; i < lpfs->info.base.num_inputs; i++) {
       /*
        * Search for each input in current vs output:
        */
 
       vs_index = draw_find_shader_output(llvmpipe->draw,
-                                         lpfs->info.input_semantic_name[i],
-                                         lpfs->info.input_semantic_index[i]);
+                                         lpfs->info.base.input_semantic_name[i],
+                                         lpfs->info.base.input_semantic_index[i]);
       if (vs_index < 0) {
          /*
           * This can happen with sprite coordinates - the vertex
@@ -86,9 +86,9 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
       /* This can be pre-computed, except for flatshade:
        */
-      inputs[i].usage_mask = lpfs->info.input_usage_mask[i];
+      inputs[i].usage_mask = lpfs->info.base.input_usage_mask[i];
 
-      switch (lpfs->info.input_interpolate[i]) {
+      switch (lpfs->info.base.input_interpolate[i]) {
       case TGSI_INTERPOLATE_CONSTANT:
          inputs[i].interp = LP_INTERP_CONSTANT;
          break;
@@ -103,7 +103,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
          break;
       }
 
-      switch (lpfs->info.input_semantic_name[i]) {
+      switch (lpfs->info.base.input_semantic_name[i]) {
       case TGSI_SEMANTIC_FACE:
          inputs[i].interp = LP_INTERP_FACING;
          break;
@@ -145,7 +145,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    }
 
-   llvmpipe->num_inputs = lpfs->info.num_inputs;
+   llvmpipe->num_inputs = lpfs->info.base.num_inputs;
 
    draw_compute_vertex_size(vinfo);
 
@@ -153,7 +153,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
    lp_setup_set_fs_inputs(llvmpipe->setup,
                           inputs,
-                          lpfs->info.num_inputs);
+                          lpfs->info.base.num_inputs);
 }
 
 

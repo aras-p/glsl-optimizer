@@ -34,6 +34,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h" /* for tgsi_shader_info */
 #include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
+#include "gallivm/lp_bld_tgsi.h" /* for lp_tgsi_info */
 
 
 struct tgsi_token;
@@ -96,7 +97,7 @@ struct lp_fragment_shader
 {
    struct pipe_shader_state base;
 
-   struct tgsi_shader_info info;
+   struct lp_tgsi_info info;
 
    struct lp_fs_variant_list_item variants;
 
