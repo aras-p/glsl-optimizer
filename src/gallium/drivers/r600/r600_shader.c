@@ -1684,7 +1684,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D)
-		tex.coord_type_w = 2;
+		tex.src_sel_w = 2;
 
 	r = r600_bc_add_tex(ctx->bc, &tex);
 	if (r)
