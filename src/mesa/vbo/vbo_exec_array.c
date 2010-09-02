@@ -785,7 +785,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                        start, end, count, type, indices,
                        ctx->Array.ArrayObj->_MaxElement - 1,
                        ctx->Array.ElementArrayBufferObj->Name,
-                       ctx->Array.ElementArrayBufferObj->Size);
+                       (int) ctx->Array.ElementArrayBufferObj->Size);
       }
 
       if (0)
@@ -811,7 +811,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              start, end, count, type, indices, max,
                              ctx->Array.ArrayObj->_MaxElement - 1,
                              ctx->Array.ElementArrayBufferObj->Name,
-                             ctx->Array.ElementArrayBufferObj->Size);
+                             (int) ctx->Array.ElementArrayBufferObj->Size);
             }
          }
          /* XXX we could also find the min index and compare to 'start'

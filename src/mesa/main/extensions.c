@@ -969,7 +969,7 @@ _mesa_get_extension_count(GLcontext *ctx)
 
    if (0)
       _mesa_debug(ctx, "%u of %d extensions enabled\n", ctx->Extensions.Count,
-                  Elements(default_extensions));
+                  (int) Elements(default_extensions));
 
    return ctx->Extensions.Count;
 }

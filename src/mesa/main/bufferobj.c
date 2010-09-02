@@ -1553,27 +1553,27 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
 
    if (readOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(readOffset = %d)", readOffset);
+                  "glCopyBuffserSubData(readOffset = %d)", (int) readOffset);
       return;
    }
 
    if (writeOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(writeOffset = %d)", writeOffset);
+                  "glCopyBuffserSubData(writeOffset = %d)", (int) writeOffset);
       return;
    }
 
    if (readOffset + size > src->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyBuffserSubData(readOffset + size = %d)",
-                  readOffset + size);
+                  (int) (readOffset + size));
       return;
    }
 
    if (writeOffset + size > dst->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyBuffserSubData(writeOffset + size = %d)",
-                  writeOffset + size);
+                  (int) (writeOffset + size));
       return;
    }
 
