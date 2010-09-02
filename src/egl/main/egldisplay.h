@@ -24,6 +24,7 @@ enum _egl_resource_type {
    _EGL_RESOURCE_CONTEXT,
    _EGL_RESOURCE_SURFACE,
    _EGL_RESOURCE_IMAGE,
+   _EGL_RESOURCE_SYNC,
 
    _EGL_NUM_RESOURCES
 };
@@ -53,6 +54,8 @@ struct _egl_extensions
    EGLBoolean MESA_screen_surface;
    EGLBoolean MESA_copy_context;
    EGLBoolean MESA_drm_display;
+   EGLBoolean MESA_drm_image;
+
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;
    EGLBoolean KHR_vg_parent_image;
@@ -60,9 +63,14 @@ struct _egl_extensions
    EGLBoolean KHR_gl_texture_cubemap_image;
    EGLBoolean KHR_gl_texture_3D_image;
    EGLBoolean KHR_gl_renderbuffer_image;
+
+   EGLBoolean KHR_reusable_sync;
+   EGLBoolean KHR_fence_sync;
+
    EGLBoolean KHR_surfaceless_gles1;
    EGLBoolean KHR_surfaceless_gles2;
    EGLBoolean KHR_surfaceless_opengl;
+
    EGLBoolean NOK_swap_region;
    EGLBoolean NOK_texture_from_pixmap;
 

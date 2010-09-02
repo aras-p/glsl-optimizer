@@ -1,0 +1,20 @@
+Import('*')
+
+if env['platform'] != 'windows':
+    Return()
+
+env = env.Clone()
+
+talloc = env.SharedLibrary(
+    target = 'talloc',
+    source = ['talloc.c', 'talloc.def'],
+)
+
+env.InstallSharedLibrary(talloc)
+
+if env['platform'] == 'windows':
+    talloc = env.FindIxes(talloc, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    talloc = env.FindIxes(talloc, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+
+Export('talloc')

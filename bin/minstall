@@ -31,7 +31,7 @@ if [ $# -ge 2 ] ; then
 
 	# Last cmd line arg is the dest dir
 	for FILE in $@ ; do
-		DEST="$FILE"
+		DESTDIR="$FILE"
 	done
 
 	# Loop over args, moving them to DEST directory
@@ -41,6 +41,25 @@ if [ $# -ge 2 ] ; then
 			# stop, don't want to install $DEST into $DEST
 			exit 0
 		fi
+
+                DEST=$DESTDIR
+
+                # On CYGWIN, because DLLs are loaded by the native Win32 loader,
+                # they are installed in the executable path.  Stub libraries used
+                # only for linking are installed in the library path
+                case `uname` in
+                    CYGWIN*)
+                        case $FILE in
+                            *.dll)
+                                DEST="$DEST/../bin"
+                                ;;
+                            *)
+                                ;;
+                        esac
+	                ;;
+                    *)
+                        ;;
+                esac
 
 		PWDSAVE=`pwd`
 

@@ -235,6 +235,7 @@ struct rX00_fragment_program_code {
 	unsigned writes_depth:1;
 
 	struct rc_constant_list constants;
+	unsigned *constants_remap_table;
 };
 
 
@@ -266,6 +267,7 @@ struct r300_vertex_program_code {
 	int outputs[VSF_MAX_OUTPUTS];
 
 	struct rc_constant_list constants;
+	unsigned *constants_remap_table;
 
 	uint32_t InputsRead;
 	uint32_t OutputsWritten;

@@ -56,7 +56,6 @@
 #include "xm_api.h"
 #include "xm_st.h"
 
-#include "main/context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -72,10 +71,35 @@
 static struct xm_driver driver;
 static struct st_api *stapi;
 
+/* Default strict invalidate to false.  This means we will not call
+ * XGetGeometry after every swapbuffers, which allows swapbuffers to
+ * remain asynchronous.  For apps running at 100fps with synchronous
+ * swapping, a 10% boost is typical.  For gears, I see closer to 20%
+ * speedup.
+ *
+ * Note that the work of copying data on swapbuffers doesn't disappear
+ * - this change just allows the X server to execute the PutImage
+ * asynchronously without us effectively blocked until its completion.
+ *
+ * This speeds up even llvmpipe's threaded rasterization as the
+ * swapbuffers operation was a large part of the serial component of
+ * an llvmpipe frame.
+ *
+ * The downside of this is correctness - applications which don't call
+ * glViewport on window resizes will get incorrect rendering.  A
+ * better solution would be to have per-frame but asynchronous
+ * invalidation.  Xcb almost looks as if it could provide this, but
+ * the API doesn't seem to quite be there.
+ */
+boolean xmesa_strict_invalidate = FALSE;
+
 void xmesa_set_driver( const struct xm_driver *templ )
 {
    driver = *templ;
    stapi = driver.create_st_api();
+
+   xmesa_strict_invalidate =
+      debug_get_bool_option("XMESA_STRICT_INVALIDATE", FALSE);
 }
 
 
@@ -91,7 +115,12 @@ static int
 xmesa_get_param(struct st_manager *smapi,
                 enum st_manager_param param)
 {
-   return 0;
+   switch(param) {
+   case ST_MANAGER_BROKEN_INVALIDATE:
+      return !xmesa_strict_invalidate;
+   default:
+      return 0;
+   }
 }
 
 static XMesaDisplay
@@ -263,7 +292,6 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
    Status stat;
 
    pipe_mutex_lock(xmdpy->mutex);
-   XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->ws.drawable, width, height);
    pipe_mutex_unlock(xmdpy->mutex);
 
@@ -726,15 +754,39 @@ XMesaVisual XMesaCreateVisual( Display *display,
       alpha_bits = v->mesa_visual.alphaBits;
    }
 
-   _mesa_initialize_visual( &v->mesa_visual,
-                            db_flag, stereo_flag,
-                            red_bits, green_bits,
-                            blue_bits, alpha_bits,
-                            depth_size,
-                            stencil_size,
-                            accum_red_size, accum_green_size,
-                            accum_blue_size, accum_alpha_size,
-                            0 );
+   /* initialize visual */
+   {
+      __GLcontextModes *vis = &v->mesa_visual;
+
+      vis->rgbMode          = GL_TRUE;
+      vis->doubleBufferMode = db_flag;
+      vis->stereoMode       = stereo_flag;
+
+      vis->redBits          = red_bits;
+      vis->greenBits        = green_bits;
+      vis->blueBits         = blue_bits;
+      vis->alphaBits        = alpha_bits;
+      vis->rgbBits          = red_bits + green_bits + blue_bits;
+
+      vis->indexBits      = 0;
+      vis->depthBits      = depth_size;
+      vis->stencilBits    = stencil_size;
+
+      vis->accumRedBits   = accum_red_size;
+      vis->accumGreenBits = accum_green_size;
+      vis->accumBlueBits  = accum_blue_size;
+      vis->accumAlphaBits = accum_alpha_size;
+
+      vis->haveAccumBuffer   = accum_red_size > 0;
+      vis->haveDepthBuffer   = depth_size > 0;
+      vis->haveStencilBuffer = stencil_size > 0;
+
+      vis->numAuxBuffers = 0;
+      vis->level = 0;
+      vis->pixmapMode = 0;
+      vis->sampleBuffers = 0;
+      vis->samples = 0;
+   }
 
    v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
    if (db_flag)
@@ -1154,7 +1206,7 @@ void XMesaFlush( XMesaContext c )
          xmdpy->screen->fence_finish(xmdpy->screen, fence, 0);
          xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
       }
-      XSync( c->xm_visual->display, False );
+      XFlush( c->xm_visual->display );
    }
 }
 

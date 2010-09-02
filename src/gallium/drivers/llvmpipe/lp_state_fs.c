@@ -808,7 +808,7 @@ generate_variant(struct llvmpipe_context *lp,
    variant->list_item_local.base = variant;
    variant->no = shader->variants_created++;
 
-   memcpy(&variant->key, key, sizeof *key);
+   memcpy(&variant->key, key, shader->variant_key_size);
 
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: Creating fragment shader #%u variant #%u:\n", 
@@ -840,6 +840,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
    struct lp_fragment_shader *shader;
+   int nr_samplers;
 
    shader = CALLOC_STRUCT(lp_fragment_shader);
    if (!shader)
@@ -853,6 +854,11 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
+
+   nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+
+   shader->variant_key_size = Offset(struct lp_fragment_shader_variant_key,
+				     sampler[nr_samplers]);
 
    if (LP_DEBUG & DEBUG_TGSI) {
       unsigned attrib;
@@ -921,7 +927,6 @@ static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct pipe_fence_handle *fence = NULL;
    struct lp_fragment_shader *shader = fs;
    struct lp_fs_variant_list_item *li;
 
@@ -934,12 +939,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
     * Flushing alone might not sufficient we need to wait on it too.
     */
 
-   llvmpipe_flush(pipe, 0, &fence);
-
-   if (fence) {
-      pipe->screen->fence_finish(pipe->screen, fence, 0);
-      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-   }
+   llvmpipe_finish(pipe, __FUNCTION__);
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
@@ -1027,7 +1027,7 @@ make_variant_key(struct llvmpipe_context *lp,
 {
    unsigned i;
 
-   memset(key, 0, sizeof *key);
+   memset(key, 0, shader->variant_key_size);
 
    if (lp->framebuffer.zsbuf) {
       if (lp->depth_stencil->depth.enabled) {
@@ -1097,9 +1097,17 @@ make_variant_key(struct llvmpipe_context *lp,
       }
    }
 
-   for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
-         lp_sampler_static_state(&key->sampler[i], lp->fragment_sampler_views[i], lp->sampler[i]);
+   /* This value will be the same for all the variants of a given shader:
+    */
+   key->nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+
+   for(i = 0; i < key->nr_samplers; ++i) {
+      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
+         lp_sampler_static_state(&key->sampler[i],
+				 lp->fragment_sampler_views[i],
+				 lp->sampler[i]);
+      }
+   }
 }
 
 /**
@@ -1118,7 +1126,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
-      if(memcmp(&li->base->key, &key, sizeof key) == 0) {
+      if(memcmp(&li->base->key, &key, shader->variant_key_size) == 0) {
          variant = li->base;
          break;
       }
@@ -1134,19 +1142,14 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       unsigned i;
       if (lp->nr_fs_variants >= LP_MAX_SHADER_VARIANTS) {
          struct pipe_context *pipe = &lp->pipe;
-         struct pipe_fence_handle *fence = NULL;
 
          /*
           * XXX: we need to flush the context until we have some sort of reference
           * counting in fragment shaders as they may still be binned
           * Flushing alone might not be sufficient we need to wait on it too.
           */
-         llvmpipe_flush(pipe, 0, &fence);
+         llvmpipe_finish(pipe, __FUNCTION__);
 
-         if (fence) {
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
-            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-         }
          for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
             struct lp_fs_variant_list_item *item = last_elem(&lp->fs_variants_list);
             remove_shader_variant(lp, item->base);

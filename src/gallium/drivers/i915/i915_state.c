@@ -294,8 +294,6 @@ static void i915_bind_sampler_states(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    unsigned i;
 
-   assert(num <= PIPE_MAX_SAMPLERS);
-
    /* Check for no-op */
    if (num == i915->num_samplers &&
        !memcmp(i915->sampler, sampler, num * sizeof(void *)))
@@ -528,9 +526,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    draw_flush(i915->draw);
-
-   assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
 
    /* Make a copy of shader constants.
     * During fragment program translation we may add additional
@@ -822,7 +817,8 @@ static void i915_set_index_buffer(struct pipe_context *pipe,
    else
       memset(&i915->index_buffer, 0, sizeof(i915->index_buffer));
 
-   /* TODO make this more like a state */
+   /* pass-through to draw module */
+   draw_set_index_buffer(i915->draw, ib);
 }
 
 static void

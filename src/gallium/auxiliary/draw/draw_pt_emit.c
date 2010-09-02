@@ -120,9 +120,6 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
-
-   /* even number */
-   *max_vertices = *max_vertices & ~1;
 }
 
 
@@ -146,11 +143,6 @@ void draw_pt_emit( struct pt_emit *emit,
 
    if (vertex_count == 0)
       return;
-
-   if (vertex_count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
 
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...
@@ -225,9 +217,6 @@ void draw_pt_emit_linear(struct pt_emit *emit,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
-
-   if (count >= UNDEFINED_VERTEX_ID)
-      goto fail;
 
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...

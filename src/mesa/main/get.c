@@ -1661,16 +1661,22 @@ check_extra(GLcontext *ctx, const char *func, const struct value_desc *d)
    for (e = d->extra; *e != EXTRA_END; e++)
       switch (*e) {
       case EXTRA_VERSION_30:
-	 if (version < 30)
-	    return GL_FALSE;
+	 if (version >= 30) {
+	    total++;
+	    enabled++;
+	 }
 	 break;
       case EXTRA_VERSION_31:
-	 if (version < 31)
-	    return GL_FALSE;
+	 if (version >= 31) {
+	    total++;
+	    enabled++;
+	 }
 	 break;
       case EXTRA_VERSION_32:
-	 if (version < 32)
-	    return GL_FALSE;
+	 if (version >= 32) {
+	    total++;
+	    enabled++;
+	 }
 	 break;
       case EXTRA_NEW_BUFFERS:
 	 if (ctx->NewState & _NEW_BUFFERS)

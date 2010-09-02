@@ -34,6 +34,7 @@
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
+#include "egl_g3d_sync.h"
 #include "egl_g3d_st.h"
 #include "egl_g3d_loader.h"
 #include "native.h"
@@ -103,7 +104,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi,
-         &gconf->stvis, (gshare) ? gshare->stctxi : NULL);
+         (gconf) ? &gconf->stvis : NULL, (gshare) ? gshare->stctxi : NULL);
    if (!gctx->stctxi) {
       FREE(gctx);
       return NULL;
@@ -437,16 +438,19 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
       ok = gctx->stapi->make_current(gctx->stapi, gctx->stctxi,
             (gdraw) ? gdraw->stfbi : NULL, (gread) ? gread->stfbi : NULL);
       if (ok) {
-         gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gdraw->stfbi);
-         if (gread != gdraw) {
+         if (gdraw) {
+            gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
+                  gdraw->stfbi);
+
+            if (gdraw->base.Type == EGL_WINDOW_BIT) {
+               gctx->base.WindowRenderBuffer =
+                  (gdraw->stvis.render_buffer == ST_ATTACHMENT_FRONT_LEFT) ?
+                  EGL_SINGLE_BUFFER : EGL_BACK_BUFFER;
+            }
+         }
+         if (gread && gread != gdraw) {
             gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
                   gread->stfbi);
-         }
-
-         if (gdraw->base.Type == EGL_WINDOW_BIT) {
-            gctx->base.WindowRenderBuffer =
-               (gdraw->stvis.render_buffer == ST_ATTACHMENT_FRONT_LEFT) ?
-               EGL_SINGLE_BUFFER : EGL_BACK_BUFFER;
          }
       }
    }
@@ -805,6 +809,17 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 
    drv->API.CreateImageKHR = egl_g3d_create_image;
    drv->API.DestroyImageKHR = egl_g3d_destroy_image;
+#ifdef EGL_MESA_drm_image
+   drv->API.CreateDRMImageMESA = egl_g3d_create_drm_image;
+   drv->API.ExportDRMImageMESA = egl_g3d_export_drm_image;
+#endif
+
+#ifdef EGL_KHR_reusable_sync
+   drv->API.CreateSyncKHR = egl_g3d_create_sync;
+   drv->API.DestroySyncKHR = egl_g3d_destroy_sync;
+   drv->API.ClientWaitSyncKHR = egl_g3d_client_wait_sync;
+   drv->API.SignalSyncKHR = egl_g3d_signal_sync;
+#endif
 
 #ifdef EGL_MESA_screen_surface
    drv->API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;

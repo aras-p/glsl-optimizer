@@ -93,6 +93,8 @@ delete_dummy_framebuffer(struct gl_framebuffer *fb)
 void
 _mesa_init_fbobjects(GLcontext *ctx)
 {
+   _glthread_INIT_MUTEX(DummyFramebuffer.Mutex);
+   _glthread_INIT_MUTEX(DummyRenderbuffer.Mutex);
    DummyFramebuffer.Delete = delete_dummy_framebuffer;
    DummyRenderbuffer.Delete = delete_dummy_renderbuffer;
 }

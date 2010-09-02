@@ -32,7 +32,7 @@
 
 
 /**
- * Prototype for a 7 plane rasterizer function.  Will codegenerate
+ * Prototype for a 8 plane rasterizer function.  Will codegenerate
  * several of these.
  *
  * XXX: Varients for more/fewer planes.
@@ -81,11 +81,14 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
    for (j = 0; j < NR_PLANES; j++) {
       const int dcdx = -plane[j].dcdx * 4;
       const int dcdy = plane[j].dcdy * 4;
-      const int cox = c[j] + plane[j].eo * 4;
-      const int cio = c[j] + plane[j].ei * 4 - 1;
+      const int cox = plane[j].eo * 4;
+      const int cio = plane[j].ei * 4 - 1;
 
-      outmask |= build_mask_linear(cox, dcdx, dcdy);
-      partmask |= build_mask_linear(cio, dcdx, dcdy);
+      build_masks(c[j] + cox,
+		  cio - cox,
+		  dcdx, dcdy, 
+		  &outmask,   /* sign bits from c[i][0..15] + cox */
+		  &partmask); /* sign bits from c[i][0..15] + cio */
    }
 
    if (outmask == 0xffff)
@@ -102,6 +105,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
 
    assert((partial_mask & inmask) == 0);
 
+   LP_COUNT_ADD(nr_empty_4, util_bitcount(0xffff & ~(partial_mask | inmask)));
+
    /* Iterate over partials:
     */
    while (partial_mask) {
@@ -113,6 +118,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
       int cx[NR_PLANES];
 
       partial_mask &= ~(1 << i);
+
+      LP_COUNT(nr_partially_covered_4);
 
       for (j = 0; j < NR_PLANES; j++)
          cx[j] = (c[j] 
@@ -133,6 +140,7 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
 
       inmask &= ~(1 << i);
 
+      LP_COUNT(nr_fully_covered_4);
       block_full_4(task, tri, px, py);
    }
 }
@@ -166,11 +174,14 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
       {
 	 const int dcdx = -plane[j].dcdx * 16;
 	 const int dcdy = plane[j].dcdy * 16;
-	 const int cox = c[j] + plane[j].eo * 16;
-	 const int cio = c[j] + plane[j].ei * 16 - 1;
+	 const int cox = plane[j].eo * 16;
+	 const int cio = plane[j].ei * 16 - 1;
 
-	 outmask |= build_mask_linear(cox, dcdx, dcdy);
-	 partmask |= build_mask_linear(cio, dcdx, dcdy);
+	 build_masks(c[j] + cox,
+		     cio - cox,
+		     dcdx, dcdy, 
+		     &outmask,   /* sign bits from c[i][0..15] + cox */
+		     &partmask); /* sign bits from c[i][0..15] + cio */
       }
 
       j++;
@@ -189,6 +200,8 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    partial_mask = partmask & ~outmask;
 
    assert((partial_mask & inmask) == 0);
+
+   LP_COUNT_ADD(nr_empty_16, util_bitcount(0xffff & ~(partial_mask | inmask)));
 
    /* Iterate over partials:
     */

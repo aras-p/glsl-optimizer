@@ -215,6 +215,10 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #ifdef IN_DRI_DRIVER
 #define _GLAPI_USE_REMAP_TABLE
 #endif
+/* glapi uses GLAPIENTRY while GLES headers define GL_APIENTRY */
+#ifndef GLAPIENTRY
+#define GLAPIENTRY GL_APIENTRY
+#endif
 #include "%sapi/glapi/glapitable.h"
 #include "%sapi/glapi/glapioffsets.h"
 #include "%sapi/glapi/glapidispatch.h"
@@ -603,13 +607,15 @@ for funcName in keys:
     # are complete; remove the extra ", " at the front of each.
     passthroughDeclarationString = passthroughDeclarationString[2:]
     passthroughCallString = passthroughCallString[2:]
+    if not passthroughDeclarationString:
+        passthroughDeclarationString = "void"
 
     # The Mesa functions are scattered across all the Mesa
     # header files.  The easiest way to manage declarations
     # is to create them ourselves.
     if funcName in allSpecials:
         print "/* this function is special and is defined elsewhere */"
-    print "extern %s GLAPIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
+    print "extern %s GL_APIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
 
     # A function may be a core function (i.e. it exists in
     # the core specification), a core addition (extension
@@ -662,7 +668,7 @@ for funcName in keys:
             print
             continue
 
-        print "static %s %s(%s)" % (returnType, fullFuncName, declarationString)
+        print "static %s GL_APIENTRY %s(%s)" % (returnType, fullFuncName, declarationString)
         print "{"
 
         # Start printing our code pieces.  Start with any local

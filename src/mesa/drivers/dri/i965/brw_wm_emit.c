@@ -668,6 +668,28 @@ void emit_cmp(struct brw_compile *p,
    }
 }
 
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0)
+{
+   GLuint i;
+
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_MOV(p, dst[i], brw_imm_f(0.0));
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(-1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      }
+   }
+}
+
 void emit_max(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -706,6 +728,27 @@ void emit_min(struct brw_compile *p,
 	 brw_set_predicate_control_flag_value(p, 0xff);
       }
    }
+}
+
+
+void emit_dp2(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
+{
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code */
+
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
+   brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
+
+   brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
+   brw_MAC(p, dst[dst_chan], arg0[1], arg1[1]);
+   brw_set_saturate(p, 0);
 }
 
 
@@ -809,20 +852,27 @@ void emit_math1(struct brw_wm_compile *c,
 		const struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
    GLuint saturate = ((mask & SATURATE) ?
 		      BRW_MATH_SATURATE_SATURATE :
 		      BRW_MATH_SATURATE_NONE);
+   struct brw_reg src;
+
+   if (intel->gen >= 6 && arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+      /* Gen6 math requires that source and dst horizontal stride be 1.
+       *
+       */
+      src = *dst;
+      brw_MOV(p, src, arg0[0]);
+   } else {
+      src = arg0[0];
+   }
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-   /* If compressed, this will write message reg 2,3 from arg0.x's 16
-    * channels.
-    */
-   brw_MOV(p, brw_message_reg(2), arg0[0]);
 
    /* Send two messages to perform all 16 operations:
     */
@@ -833,7 +883,7 @@ void emit_math1(struct brw_wm_compile *c,
 	    function,
 	    saturate,
 	    2,
-	    brw_null_reg(),
+	    src,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
@@ -844,7 +894,7 @@ void emit_math1(struct brw_wm_compile *c,
 	       function,
 	       saturate,
 	       3,
-	       brw_null_reg(),
+	       sechalf(src),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
    }
@@ -873,13 +923,6 @@ void emit_math2(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_MOV(p, brw_message_reg(2), arg0[0]);
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_MOV(p, brw_message_reg(4), sechalf(arg0[0]));
-   }
-
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_MOV(p, brw_message_reg(3), arg1[0]);
    if (c->dispatch_width == 16) {
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -892,7 +935,7 @@ void emit_math2(struct brw_wm_compile *c,
 	    function,
 	    saturate,
 	    2,
-	    brw_null_reg(),
+	    arg0[0],
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
@@ -905,7 +948,7 @@ void emit_math2(struct brw_wm_compile *c,
 	       function,
 	       saturate,
 	       4,
-	       brw_null_reg(),
+	       sechalf(arg0[0]),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
    }
@@ -1199,6 +1242,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
 			   GLuint eot )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg dst;
 
    if (c->dispatch_width == 16)
@@ -1209,6 +1253,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
    /* Pass through control information:
     */
 /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
+   if (intel->gen < 6) /* gen6, use headerless for fb write */
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE); /* ? */
@@ -1222,6 +1267,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
    /* Send framebuffer write message: */
 /*  send (16) null.0<1>:uw m0               r0.0<8;8,1>:uw   0x85a04000:ud    { Align1 EOT } */
    brw_fb_WRITE(p,
+		c->dispatch_width,
 		dst,
 		base_reg,
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
@@ -1263,8 +1309,10 @@ void emit_fb_write(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
+   int base_reg; /* For gen6 fb write with no header, starting from color payload directly!. */
 
    /* Reserve a space for AA - may not be needed:
     */
@@ -1276,9 +1324,40 @@ void emit_fb_write(struct brw_wm_compile *c,
     */
    brw_push_insn_state(p);
 
+   if (intel->gen >= 6)
+	base_reg = nr;
+   else
+	base_reg = 0;
+
    for (channel = 0; channel < 4; channel++) {
-      if (c->dispatch_width == 16 && brw->has_compr4) {
-	 /* By setting the high bit of the MRF register number, we indicate
+      if (intel->gen >= 6) {
+	 /* gen6 SIMD16 single source DP write looks like:
+	  * m + 0: r0
+	  * m + 1: r1
+	  * m + 2: g0
+	  * m + 3: g1
+	  * m + 4: b0
+	  * m + 5: b1
+	  * m + 6: a0
+	  * m + 7: a1
+	  */
+	 if (c->dispatch_width == 16) {
+	    brw_MOV(p, brw_message_reg(nr + channel * 2), arg0[channel]);
+	 } else {
+	    brw_MOV(p, brw_message_reg(nr + channel), arg0[channel]);
+	 }
+      } else if (c->dispatch_width == 16 && brw->has_compr4) {
+	 /* pre-gen6 SIMD16 single source DP write looks like:
+	  * m + 0: r0
+	  * m + 1: g0
+	  * m + 2: b0
+	  * m + 3: a0
+	  * m + 4: r1
+	  * m + 5: g1
+	  * m + 6: b1
+	  * m + 7: a1
+	  *
+	  * By setting the high bit of the MRF register number, we indicate
 	  * that we want COMPR4 mode - instead of doing the usual destination
 	  * + 1 for the second half we get destination + 4.
 	  */
@@ -1303,7 +1382,11 @@ void emit_fb_write(struct brw_wm_compile *c,
    }
    /* skip over the regs populated above:
     */
-   nr += 8;
+   if (c->dispatch_width == 16)
+      nr += 8;
+   else
+      nr += 4;
+
    brw_pop_insn_state(p);
 
    if (c->key.source_depth_to_render_target)
@@ -1336,11 +1419,16 @@ void emit_fb_write(struct brw_wm_compile *c,
       nr += 2;
    }
 
+   if (intel->gen >= 6) {
+      /* Subtract off the message header, since we send headerless. */
+      nr -= 2;
+   }
+
    if (!c->key.runtime_check_aads_emit) {
       if (c->key.aa_dest_stencil_reg)
 	 emit_aa(c, arg1, 2);
 
-      fire_fb_write(c, 0, nr, target, eot);
+      fire_fb_write(c, base_reg, nr, target, eot);
    }
    else {
       struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
@@ -1562,6 +1650,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
 	 break;
 
+      case OPCODE_DP2:
+	 emit_dp2(p, dst, dst_flags, args[0], args[1]);
+	 break;
+
       case OPCODE_DP3:
 	 emit_dp3(p, dst, dst_flags, args[0], args[1]);
 	 break;
@@ -1673,6 +1765,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 emit_sne(p, dst, dst_flags, args[0], args[1]);
 	break;
 
+      case OPCODE_SSG:
+	 emit_sign(p, dst, dst_flags, args[0]);
+	 break;
+
       case OPCODE_LIT:
 	 emit_lit(c, dst, dst_flags, args[0]);
 	 break;
@@ -1724,7 +1820,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
      printf("wm-native:\n");
      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], p->brw->intel.gen);
+	 brw_disasm(stdout, &p->store[i], p->brw->intel.gen);
       printf("\n");
    }
 }

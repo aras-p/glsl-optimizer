@@ -68,6 +68,7 @@ struct dri_screen
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
+   enum pipe_texture_target target;
 };
 
 /** cast wrapper */

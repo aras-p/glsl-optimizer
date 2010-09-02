@@ -73,7 +73,13 @@ llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
                    llvmpipe->rasterizer->gl_rasterization_rules);
       lp_setup_set_flatshade_first( llvmpipe->setup,
                    llvmpipe->rasterizer->flatshade_first);
-   }
+      lp_setup_set_line_state( llvmpipe->setup,
+                   llvmpipe->rasterizer->line_width);
+      lp_setup_set_point_state( llvmpipe->setup,
+                   llvmpipe->rasterizer->point_size,
+                   llvmpipe->rasterizer->point_size_per_vertex,
+                   llvmpipe->rasterizer->sprite_coord_enable);
+       }
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
 }

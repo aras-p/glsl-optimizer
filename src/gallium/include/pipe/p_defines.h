@@ -28,7 +28,7 @@
 #ifndef PIPE_DEFINES_H
 #define PIPE_DEFINES_H
 
-#include "p_format.h"
+#include "p_compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -135,13 +135,15 @@ enum pipe_error {
 #define PIPE_STENCIL_OP_DECR_WRAP  6
 #define PIPE_STENCIL_OP_INVERT     7
 
-/** Texture types */
+/** Texture types.
+ * See the documentation for info on PIPE_TEXTURE_RECT vs PIPE_TEXTURE_2D */
 enum pipe_texture_target {
    PIPE_BUFFER       = 0,
    PIPE_TEXTURE_1D   = 1,
    PIPE_TEXTURE_2D   = 2,
    PIPE_TEXTURE_3D   = 3,
    PIPE_TEXTURE_CUBE = 4,
+   PIPE_TEXTURE_RECT = 5,
    PIPE_MAX_TEXTURE_TYPES
 };
 

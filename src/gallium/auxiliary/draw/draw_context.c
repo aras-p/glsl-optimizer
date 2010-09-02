@@ -34,6 +34,7 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
@@ -41,6 +42,25 @@
 #if HAVE_LLVM
 #include "gallivm/lp_bld_init.h"
 #include "draw_llvm.h"
+
+static boolean
+draw_get_option_use_llvm(void)
+{
+   static boolean first = TRUE;
+   static boolean value;
+   if (first) {
+      first = FALSE;
+      value = debug_get_bool_option("DRAW_USE_LLVM", TRUE);
+
+#ifdef PIPE_ARCH_X86
+      util_cpu_detect();
+      /* require SSE2 due to LLVM PR6960. */
+      if (!util_cpu_caps.has_sse2)
+         value = FALSE;
+#endif
+   }
+   return value;
+}
 #endif
 
 struct draw_context *draw_create( struct pipe_context *pipe )
@@ -50,10 +70,13 @@ struct draw_context *draw_create( struct pipe_context *pipe )
       goto fail;
 
 #if HAVE_LLVM
-   lp_build_init();
-   assert(lp_build_engine);
-   draw->engine = lp_build_engine;
-   draw->llvm = draw_llvm_create(draw);
+   if(draw_get_option_use_llvm())
+   {
+      lp_build_init();
+      assert(lp_build_engine);
+      draw->engine = lp_build_engine;
+      draw->llvm = draw_llvm_create(draw);
+   }
 #endif
 
    if (!draw_init(draw))
@@ -83,6 +106,8 @@ boolean draw_init(struct draw_context *draw)
    ASSIGN_4V( draw->plane[4],  0,  0,  1, 1 ); /* yes these are correct */
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
+   draw->clip_xy = 1;
+   draw->clip_z = 1;
 
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
@@ -135,7 +160,8 @@ void draw_destroy( struct draw_context *draw )
    draw_vs_destroy( draw );
    draw_gs_destroy( draw );
 #ifdef HAVE_LLVM
-   draw_llvm_destroy( draw->llvm );
+   if(draw->llvm)
+      draw_llvm_destroy( draw->llvm );
 #endif
 
    FREE( draw );
@@ -162,6 +188,14 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
 }
 
 
+static void update_clip_flags( struct draw_context *draw )
+{
+   draw->clip_xy = !draw->driver.bypass_clip_xy;
+   draw->clip_z = (!draw->driver.bypass_clip_z &&
+                   !draw->depth_clamp);
+   draw->clip_user = (draw->nr_planes > 6);
+}
+
 /**
  * Register new primitive rasterization/rendering state.
  * This causes the drawing pipeline to be rebuilt.
@@ -176,18 +210,25 @@ void draw_set_rasterizer_state( struct draw_context *draw,
       draw->rasterizer = raster;
       draw->rast_handle = rast_handle;
 
-      draw->bypass_clipping = draw->driver.bypass_clipping;
-   }
+  }
 }
 
-
+/* With a little more work, llvmpipe will be able to turn this off and
+ * do its own x/y clipping.  
+ *
+ * Some hardware can turn off clipping altogether - in particular any
+ * hardware with a TNL unit can do its own clipping, even if it is
+ * relying on the draw module for some other reason.
+ */
 void draw_set_driver_clipping( struct draw_context *draw,
-                               boolean bypass_clipping )
+                               boolean bypass_clip_xy,
+                               boolean bypass_clip_z )
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   draw->driver.bypass_clipping = bypass_clipping;
-   draw->bypass_clipping = draw->driver.bypass_clipping;
+   draw->driver.bypass_clip_xy = bypass_clip_xy;
+   draw->driver.bypass_clip_z = bypass_clip_z;
+   update_clip_flags(draw);
 }
 
 
@@ -217,6 +258,8 @@ void draw_set_clip_state( struct draw_context *draw,
    memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
    draw->nr_planes = 6 + clip->nr;
    draw->depth_clamp = clip->depth_clamp;
+
+   update_clip_flags(draw);
 }
 
 
@@ -472,47 +515,28 @@ void draw_set_render( struct draw_context *draw,
 }
 
 
+void
+draw_set_index_buffer(struct draw_context *draw,
+                      const struct pipe_index_buffer *ib)
+{
+   if (ib)
+      memcpy(&draw->pt.index_buffer, ib, sizeof(draw->pt.index_buffer));
+   else
+      memset(&draw->pt.index_buffer, 0, sizeof(draw->pt.index_buffer));
+}
+
 
 /**
- * Tell the drawing context about the index/element buffer to use
- * (ala glDrawElements)
- * If no element buffer is to be used (i.e. glDrawArrays) then this
- * should be called with eltSize=0 and elements=NULL.
- *
- * \param draw  the drawing context
- * \param eltSize  size of each element (1, 2 or 4 bytes)
- * \param elements  the element buffer ptr
+ * Tell drawing context where to find mapped index/element buffer.
  */
 void
-draw_set_mapped_element_buffer_range( struct draw_context *draw,
-                                      unsigned eltSize,
-                                      int eltBias,
-                                      unsigned min_index,
-                                      unsigned max_index,
-                                      const void *elements )
+draw_set_mapped_index_buffer(struct draw_context *draw,
+                             const void *elements)
 {
-   draw->pt.user.elts = elements;
-   draw->pt.user.eltSize = eltSize;
-   draw->pt.user.eltBias = eltBias;
-   draw->pt.user.min_index = min_index;
-   draw->pt.user.max_index = max_index;
+    draw->pt.user.elts = elements;
 }
 
 
-void
-draw_set_mapped_element_buffer( struct draw_context *draw,
-                                unsigned eltSize,
-                                int eltBias,
-                                const void *elements )
-{
-   draw->pt.user.elts = elements;
-   draw->pt.user.eltSize = eltSize;
-   draw->pt.user.eltBias = eltBias;
-   draw->pt.user.min_index = 0;
-   draw->pt.user.max_index = 0xffffffff;
-}
-
- 
 /* Revamp me please:
  */
 void draw_do_flush( struct draw_context *draw, unsigned flags )
@@ -659,7 +683,8 @@ draw_set_mapped_texture(struct draw_context *draw,
                         const void *data[DRAW_MAX_TEXTURE_LEVELS])
 {
 #ifdef HAVE_LLVM
-   draw_llvm_set_mapped_texture(draw,
+   if(draw->llvm)
+      draw_llvm_set_mapped_texture(draw,
                                 sampler_idx,
                                 width, height, depth, last_level,
                                 row_stride, img_stride, data);

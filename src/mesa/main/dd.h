@@ -36,7 +36,7 @@
 struct gl_pixelstore_attrib;
 struct gl_display_list;
 
-#if FEATURE_ARB_vertex_buffer_object
+/* GL_ARB_vertex_buffer_object */
 /* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
  * NULL) if buffer is unavailable for immediate mapping.
  *
@@ -49,7 +49,6 @@ struct gl_display_list;
  * respect the contents of already referenced data.
  */
 #define MESA_MAP_NOWAIT_BIT       0x0040
-#endif
 
 
 /**
@@ -595,6 +594,27 @@ struct dd_function_table {
    
    /*@}*/
 
+   /**
+    * \name GLSL shader/program functions.
+    */
+   /*@{*/
+   /**
+    * Called when a shader is compiled.
+    *
+    * Note that not all shader objects get ShaderCompile called on
+    * them.  Notably, the shaders containing builtin functions do not
+    * have CompileShader() called, so if lowering passes are done they
+    * need to also be performed in LinkShader().
+    */
+   GLboolean (*CompileShader)(GLcontext *ctx, struct gl_shader *shader);
+   /**
+    * Called when a shader program is linked.
+    *
+    * This gives drivers an opportunity to clone the IR and make their
+    * own transformations on it for the purposes of code generation.
+    */
+   GLboolean (*LinkShader)(GLcontext *ctx, struct gl_shader_program *shader);
+   /*@}*/
 
    /**
     * \name State-changing functions.
@@ -709,7 +729,6 @@ struct dd_function_table {
    /**
     * \name Vertex/pixel buffer object functions
     */
-#if FEATURE_ARB_vertex_buffer_object
    /*@{*/
    void (*BindBuffer)( GLcontext *ctx, GLenum target,
 		       struct gl_buffer_object *obj );
@@ -753,12 +772,10 @@ struct dd_function_table {
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
    /*@}*/
-#endif
 
    /**
     * \name Functions for GL_APPLE_object_purgeable
     */
-#if FEATURE_APPLE_object_purgeable
    /*@{*/
    /* variations on ObjectPurgeable */
    GLenum (*BufferObjectPurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
@@ -770,12 +787,10 @@ struct dd_function_table {
    GLenum (*RenderObjectUnpurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
    GLenum (*TextureObjectUnpurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
    /*@}*/
-#endif
 
    /**
-    * \name Functions for GL_EXT_framebuffer_object
+    * \name Functions for GL_EXT_framebuffer_{object,blit}.
     */
-#if FEATURE_EXT_framebuffer_object
    /*@{*/
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
@@ -794,13 +809,10 @@ struct dd_function_table {
    void (*ValidateFramebuffer)(GLcontext *ctx,
                                struct gl_framebuffer *fb);
    /*@}*/
-#endif
-#if FEATURE_EXT_framebuffer_blit
    void (*BlitFramebuffer)(GLcontext *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
-#endif
 
    /**
     * \name Query objects
@@ -955,7 +967,6 @@ struct dd_function_table {
    void (*EndCallList)( GLcontext *ctx );
 
 
-#if FEATURE_ARB_sync
    /**
     * \name GL_ARB_sync interfaces
     */
@@ -969,14 +980,12 @@ struct dd_function_table {
    void (*ServerWaitSync)(GLcontext *, struct gl_sync_object *,
 			  GLbitfield, GLuint64);
    /*@}*/
-#endif
 
    /** GL_NV_conditional_render */
    void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
                                   GLenum mode);
    void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
 
-#if FEATURE_OES_draw_texture
    /**
     * \name GL_OES_draw_texture interface
     */
@@ -984,9 +993,10 @@ struct dd_function_table {
    void (*DrawTex)(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
                    GLfloat width, GLfloat height);
    /*@}*/
-#endif
 
-#if FEATURE_OES_EGL_image
+   /**
+    * \name GL_OES_EGL_image interface
+    */
    void (*EGLImageTargetTexture2D)(GLcontext *ctx, GLenum target,
 				   struct gl_texture_object *texObj,
 				   struct gl_texture_image *texImage,
@@ -994,9 +1004,10 @@ struct dd_function_table {
    void (*EGLImageTargetRenderbufferStorage)(GLcontext *ctx,
 					     struct gl_renderbuffer *rb,
 					     void *image_handle);
-#endif
 
-#if FEATURE_EXT_transform_feedback
+   /**
+    * \name GL_EXT_transform_feedback interface
+    */
    struct gl_transform_feedback_object *
         (*NewTransformFeedback)(GLcontext *ctx, GLuint name);
    void (*DeleteTransformFeedback)(GLcontext *ctx,
@@ -1011,7 +1022,6 @@ struct dd_function_table {
                                    struct gl_transform_feedback_object *obj);
    void (*DrawTransformFeedback)(GLcontext *ctx, GLenum mode,
                                  struct gl_transform_feedback_object *obj);
-#endif
 };
 
 
@@ -1094,7 +1104,7 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
-#if FEATURE_ARB_vertex_program
+   /* GL_ARB_vertex_program */
    void (GLAPIENTRYP VertexAttrib1fARB)( GLuint index, GLfloat x );
    void (GLAPIENTRYP VertexAttrib1fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib2fARB)( GLuint index, GLfloat x, GLfloat y );
@@ -1103,7 +1113,6 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvARB)( GLuint index, const GLfloat *v );
-#endif
    /*@}*/
 
    void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );

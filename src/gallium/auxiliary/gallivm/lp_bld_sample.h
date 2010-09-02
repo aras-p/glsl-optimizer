@@ -36,6 +36,8 @@
 #define LP_BLD_SAMPLE_H
 
 
+#include "pipe/p_format.h"
+
 #include "gallivm/lp_bld.h"
 
 struct pipe_resource;
@@ -144,6 +146,15 @@ void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler);
+
+
+void
+lp_build_sample_partial_offset(struct lp_build_context *bld,
+                               unsigned block_length,
+                               LLVMValueRef coord,
+                               LLVMValueRef stride,
+                               LLVMValueRef *out_offset,
+                               LLVMValueRef *out_i);
 
 
 void

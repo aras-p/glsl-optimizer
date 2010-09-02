@@ -190,6 +190,9 @@ _mesa_get_format_block_size(gl_format format, GLuint *bw, GLuint *bh);
 extern GLboolean
 _mesa_is_format_compressed(gl_format format);
 
+extern GLboolean
+_mesa_is_format_packed_depth_stencil(gl_format format);
+
 extern GLenum
 _mesa_get_format_color_encoding(gl_format format);
 

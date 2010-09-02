@@ -5,6 +5,9 @@ if 'egl' in env['statetrackers']:
     SConscript('egl/main/SConscript')
 
 if 'mesa' in env['statetrackers']:
+    if platform == 'windows':
+        SConscript('talloc/SConscript')
+
     SConscript('glsl/SConscript')
     SConscript('mapi/glapi/SConscript')
     SConscript('mesa/SConscript')

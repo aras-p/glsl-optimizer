@@ -258,6 +258,7 @@ nouveau_screen_fini(struct nouveau_screen *screen)
 {
 	struct pipe_winsys *ws = screen->base.winsys;
 	nouveau_channel_free(&screen->channel);
-	ws->destroy(ws);
+	if (ws)
+		ws->destroy(ws);
 }
 

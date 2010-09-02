@@ -1,11 +1,12 @@
 # -*-makefile-*-
 
+
 ifeq ($(MESA_LLVM),1)
 PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 LDFLAGS += $(LLVM_LDFLAGS)
-LD = g++
 DRIVER_EXTRAS = $(LLVM_LIBS)
-USE_CXX=1
+else
+LDFLAGS += -lstdc++
 endif
 
 MESA_MODULES = \
@@ -75,15 +76,11 @@ default: depend symlinks $(TOP)/$(LIB_DIR)/gallium $(LIBNAME) $(LIBNAME_STAGING)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
-	$(MKLIB) -o $@.tmp -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(PIPE_DRIVERS) \
                 -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \
                  $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
-	if [ "x${USE_CXX}" == "x" ]; then \
-		$(CC) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS); \
-	else \
-		$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS); \
-	fi
+	$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS);
 	@rm -f $@.test
 	mv -f $@.tmp $@
 

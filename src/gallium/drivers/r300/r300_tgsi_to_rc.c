@@ -97,13 +97,13 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_BRA: return RC_OPCODE_BRA; */
      /* case TGSI_OPCODE_CAL: return RC_OPCODE_CAL; */
      /* case TGSI_OPCODE_RET: return RC_OPCODE_RET; */
-     /* case TGSI_OPCODE_SSG: return RC_OPCODE_SSG; */
+        case TGSI_OPCODE_SSG: return RC_OPCODE_SSG;
         case TGSI_OPCODE_CMP: return RC_OPCODE_CMP;
         case TGSI_OPCODE_SCS: return RC_OPCODE_SCS;
         case TGSI_OPCODE_TXB: return RC_OPCODE_TXB;
      /* case TGSI_OPCODE_NRM: return RC_OPCODE_NRM; */
      /* case TGSI_OPCODE_DIV: return RC_OPCODE_DIV; */
-     /* case TGSI_OPCODE_DP2: return RC_OPCODE_DP2; */
+        case TGSI_OPCODE_DP2: return RC_OPCODE_DP2;
         case TGSI_OPCODE_TXL: return RC_OPCODE_TXL;
         case TGSI_OPCODE_BRK: return RC_OPCODE_BRK;
         case TGSI_OPCODE_IF: return RC_OPCODE_IF;

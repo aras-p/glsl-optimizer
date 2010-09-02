@@ -53,6 +53,8 @@ _mesa_init_colortable_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_colortable */
 
+#include "main/compiler.h"
+
 #define _MESA_INIT_COLORTABLE_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void GLAPIENTRY

@@ -254,8 +254,8 @@ struct r300_ztop_state {
 struct r300_constant_buffer {
     /* Buffer of constants */
     uint32_t *ptr;
-    /* Total number of vec4s */
-    unsigned count;
+    /* Remapping table. */
+    unsigned *remap_table;
 };
 
 /* Query object.
@@ -449,6 +449,7 @@ struct r300_context {
     struct r300_screen *screen;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    size_t draw_vbo_size;
     /* Accelerated blit support. */
     struct blitter_context* blitter;
     /* Stencil two-sided reference value fallback. */
@@ -648,6 +649,11 @@ void r300_translate_index_buffer(struct r300_context *r300,
 
 /* r300_render_stencilref.c */
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
+
+/* r300_render.c */
+void r300_draw_flush_vbuf(struct r300_context *r300);
+boolean r500_index_bias_supported(struct r300_context *r300);
+void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 
 /* r300_state.c */
 enum r300_fb_state_change {

@@ -30,8 +30,7 @@
  */
 
 
-#include "main/context.h"
-#include "main/imports.h"
+#include "main/core.h"
 #include <GL/glx.h>
 
 

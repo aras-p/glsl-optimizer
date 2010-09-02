@@ -1,18 +1,13 @@
 import os
 Import('*')
-	
+
 # Compatibility with old build scripts:
 #
 if 'mesa' in env['statetrackers']:
-	if 'xlib' in env['winsys']:
-		SConscript([
-			'libgl-xlib/SConscript',
-		])
-
-	if 'gdi' in env['winsys']:
-		SConscript([
-			'libgl-gdi/SConscript',
-		])
+    if 'xlib' in env['winsys'] and 'libgl-xlib' not in env['targets']:
+        env['targets'].append('libgl-xlib')
+    if 'gdi' in env['winsys'] and 'libgl-gdi' not in env['targets']:
+        env['targets'].append('libgl-gdi')
 
 if not 'graw-xlib' in env['targets'] and not 'graw-null' in env['targets'] and not env['msvc']:
         # XXX: disable until MSVC can link correctly

@@ -61,7 +61,7 @@ struct brw_wm_prog_key {
    GLuint source_depth_reg:3;
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
-   GLuint nr_depth_regs:3;
+   GLuint nr_payload_regs:4;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;
    GLuint flat_shade:1;
@@ -306,6 +306,7 @@ void brw_wm_lookup_iz( GLuint line_aa,
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,
@@ -343,6 +344,11 @@ void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
 		   GLuint mask,
 		   const struct brw_reg *arg0);
+void emit_dp2(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
 void emit_dp3(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -425,6 +431,10 @@ void emit_sop(struct brw_compile *p,
 	      GLuint cond,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0);
 void emit_tex(struct brw_wm_compile *c,
 	      struct brw_reg *dst,
 	      GLuint dst_flags,
@@ -449,5 +459,14 @@ void emit_xpd(struct brw_compile *p,
 	      GLuint mask,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+
+GLboolean brw_compile_shader(GLcontext *ctx,
+			     struct gl_shader *shader);
+GLboolean brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
+struct gl_shader *brw_new_shader(GLcontext *ctx, GLuint name, GLuint type);
+struct gl_shader_program *brw_new_shader_program(GLcontext *ctx, GLuint name);
+
+GLboolean brw_do_channel_expressions(struct exec_list *instructions);
+GLboolean brw_do_vector_splitting(struct exec_list *instructions);
 
 #endif

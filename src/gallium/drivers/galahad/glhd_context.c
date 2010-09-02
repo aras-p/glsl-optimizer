@@ -185,6 +185,12 @@ galahad_bind_fragment_sampler_states(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
+   if (num_samplers > PIPE_MAX_SAMPLERS) {
+      glhd_error("%u fragment samplers requested, "
+         "but only %u are permitted by API",
+         num_samplers, PIPE_MAX_SAMPLERS);
+   }
+
    pipe->bind_fragment_sampler_states(pipe,
                                       num_samplers,
                                       samplers);
@@ -197,6 +203,12 @@ galahad_bind_vertex_sampler_states(struct pipe_context *_pipe,
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
+
+   if (num_samplers > PIPE_MAX_VERTEX_SAMPLERS) {
+      glhd_error("%u vertex samplers requested, "
+         "but only %u are permitted by API",
+         num_samplers, PIPE_MAX_VERTEX_SAMPLERS);
+   }
 
    pipe->bind_vertex_sampler_states(pipe,
                                     num_samplers,
@@ -446,6 +458,19 @@ galahad_set_constant_buffer(struct pipe_context *_pipe,
    struct pipe_context *pipe = glhd_pipe->pipe;
    struct pipe_resource *unwrapped_resource;
    struct pipe_resource *resource = NULL;
+
+   if (shader >= PIPE_SHADER_TYPES) {
+      glhd_error("Unknown shader type %u", shader);
+   }
+
+   if (index &&
+      index >=
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS)) {
+      glhd_error("Access to constant buffer %u requested, "
+         "but only %d are supported",
+         index,
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS));
+   }
 
    /* XXX hmm? unwrap the input state */
    if (_resource) {
@@ -971,6 +996,8 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.transfer_inline_write = galahad_context_transfer_inline_write;
 
    glhd_pipe->pipe = pipe;
+
+   glhd_warn("Created context %p", glhd_pipe);
 
    return &glhd_pipe->base;
 }

@@ -83,6 +83,9 @@ nv50_tex_construct(struct nv50_sampler_view *view)
 	case PIPE_TEXTURE_2D:
 		tic[2] |= NV50TIC_0_2_TARGET_2D;
 		break;
+	case PIPE_TEXTURE_RECT:
+		tic[2] |= NV50TIC_0_2_TARGET_RECT;
+		break;
 	case PIPE_TEXTURE_3D:
 		tic[2] |= NV50TIC_0_2_TARGET_3D;
 		break;

@@ -102,7 +102,7 @@ cell_set_index_buffer(struct pipe_context *pipe,
    else
       memset(&cell->index_buffer, 0, sizeof(cell->index_buffer));
 
-   /* TODO make this more like a state */
+   draw_set_index_buffer(cell->draw, ib);
 }
 
 

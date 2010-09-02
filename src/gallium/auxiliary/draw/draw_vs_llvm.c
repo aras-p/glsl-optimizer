@@ -28,6 +28,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_screen.h"
 
 #include "draw_private.h"
 #include "draw_context.h"
@@ -108,6 +109,11 @@ draw_create_vs_llvm(struct draw_context *draw,
    }
 
    tgsi_scan_shader(state->tokens, &vs->base.info);
+
+   vs->variant_key_size = 
+      draw_llvm_variant_key_size(
+	 vs->base.info.file_max[TGSI_FILE_INPUT]+1,
+	 vs->base.info.file_max[TGSI_FILE_SAMPLER]+1);
 
    vs->base.draw = draw;
    vs->base.prepare = vs_llvm_prepare;

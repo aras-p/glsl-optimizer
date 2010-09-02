@@ -169,35 +169,27 @@ static void do_triangle( struct draw_context *draw,
 /*
  * Set up macros for draw_pt_decompose.h template code.
  * This code uses vertex indexes / elements.
- *
- * Flags are needed by the stipple and unfilled stages.  When the two stages
- * are active, vcache_run_extras is called and the flags are stored in the
- * higher bits of i0.  Otherwise, flags do not matter.
  */
 
 #define TRIANGLE(flags,i0,i1,i2)                                  \
    do {                                                           \
-      assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
-      assert(!((i2) & DRAW_PIPE_FLAG_MASK));                      \
       do_triangle( draw,                                          \
-                   i0,  /* flags */                               \
-                   verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),  \
+                   flags,                                         \
+                   verts + stride * (i0),                         \
                    verts + stride * (i1),                         \
                    verts + stride * (i2) );                       \
    } while (0)
 
 #define LINE(flags,i0,i1)                                         \
    do {                                                           \
-      assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
       do_line( draw,                                              \
-               i0, /* flags */                                    \
-               verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),      \
+               flags,                                             \
+               verts + stride * (i0),                             \
                verts + stride * (i1) );                           \
    } while (0)
 
 #define POINT(i0)                               \
    do {                                         \
-      assert(!((i0) & DRAW_PIPE_FLAG_MASK));    \
       do_point( draw, verts + stride * (i0) );  \
    } while (0)
 
@@ -207,6 +199,7 @@ static void do_triangle( struct draw_context *draw,
 #define FUNC_VARS                               \
     struct draw_context *draw,                  \
     unsigned prim,                              \
+    unsigned prim_flags,                        \
     struct vertex_header *vertices,             \
     unsigned stride,                            \
     const ushort *elts,                         \
@@ -245,22 +238,27 @@ void draw_pipeline_run( struct draw_context *draw,
       const unsigned count = prim_info->primitive_lengths[i];
 
 #if DEBUG
-      /* make sure none of the element indexes go outside the vertex buffer */
+      /* Warn if one of the element indexes go outside the vertex buffer */
       {
          unsigned max_index = 0x0, i;
          /* find the largest element index */
          for (i = 0; i < count; i++) {
-            unsigned int index = (prim_info->elts[start + i]
-                                  & ~DRAW_PIPE_FLAG_MASK);
+            unsigned int index = prim_info->elts[start + i];
             if (index > max_index)
                max_index = index;
          }
-         assert(max_index <= vert_info->count);
+         if (max_index >= vert_info->count) {
+            debug_printf("%s: max_index (%u) outside vertex buffer (%u)\n",
+                         __FUNCTION__,
+                         max_index,
+                         vert_info->count);
+         }
       }
 #endif
 
       pipe_run_elts(draw,
                     prim_info->prim,
+                    prim_info->flags,
                     vert_info->verts,
                     vert_info->stride,
                     prim_info->elts + start,
@@ -298,6 +296,7 @@ void draw_pipeline_run( struct draw_context *draw,
 #define FUNC_VARS                      \
     struct draw_context *draw,         \
     unsigned prim,                     \
+    unsigned prim_flags,               \
     struct vertex_header *vertices,    \
     unsigned stride,                   \
     unsigned count
@@ -330,6 +329,7 @@ void draw_pipeline_run_linear( struct draw_context *draw,
 
       pipe_run_linear(draw,
                       prim_info->prim,
+                      prim_info->flags,
                       (struct vertex_header*)verts,
                       vert_info->stride,
                       count);

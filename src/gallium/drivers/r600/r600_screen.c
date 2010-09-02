@@ -69,6 +69,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+	case PIPE_CAP_DEPTH_CLAMP:
 		return 1;
 
 	/* Unsupported features (boolean caps). */
@@ -77,7 +78,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_GEOMETRY_SHADER4:
-	case PIPE_CAP_DEPTH_CLAMP: /* FIXME allow this */
 		return 0;
 
 	/* Texturing. */
@@ -234,9 +234,32 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 struct pipe_screen *r600_screen_create(struct radeon *rw)
 {
 	struct r600_screen* rscreen;
+	enum radeon_family family = radeon_get_family(rw);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
+		return NULL;
+	}
+
+	switch (family) {
+	case CHIP_R600:
+	case CHIP_RV610:
+	case CHIP_RV630:
+	case CHIP_RV670:
+	case CHIP_RV620:
+	case CHIP_RV635:
+	case CHIP_RS780:
+	case CHIP_RS880:
+		rscreen->chip_class = R600;
+		break;
+	case CHIP_RV770:
+	case CHIP_RV730:
+	case CHIP_RV710:
+	case CHIP_RV740:
+		rscreen->chip_class = R700;
+		break;
+	default:
+		FREE(rscreen);
 		return NULL;
 	}
 	rscreen->rw = rw;

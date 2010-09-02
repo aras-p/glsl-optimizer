@@ -288,6 +288,10 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 {
    GLuint i;
 
+   /* Free the dummy/fallback texture object */
+   if (shared->FallbackTex)
+      ctx->Driver.DeleteTexture(ctx, shared->FallbackTex);
+
    /*
     * Free display lists
     */

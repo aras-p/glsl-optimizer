@@ -145,7 +145,9 @@ struct radeon_bo *radeon_bo_decref(struct radeon *radeon, struct radeon_bo *bo)
 		return NULL;
 	}
 
-	munmap(bo->data, bo->size);
+	if (bo->map_count) {
+		munmap(bo->data, bo->size);
+	}
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
 	drmIoctl(radeon->fd, DRM_IOCTL_GEM_CLOSE, &args);

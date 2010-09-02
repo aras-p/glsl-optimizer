@@ -513,7 +513,11 @@ struct __DRIscreenRec {
      * 
      * This pointer is never touched by the DRI layer.
      */
+#ifdef __cplusplus
+    void *priv;
+#else
     void *private;
+#endif
 
     /* Extensions provided by the loader. */
     const __DRIgetDrawableInfoExtension *getDrawableInfo;
@@ -532,6 +536,7 @@ struct __DRIscreenRec {
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
 
+    driOptionCache optionInfo;
     driOptionCache optionCache;
    unsigned int api_mask;
 };

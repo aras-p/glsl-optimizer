@@ -23,7 +23,7 @@
 
 #include "draw/draw_context.h"
 
-#include "util/u_blitter.h"
+#include "util/u_framebuffer.h"
 #include "util/u_math.h"
 #include "util/u_mm.h"
 #include "util/u_memory.h"
@@ -748,7 +748,7 @@ static void
     /* The tiling flags are dependent on the surface miplevel, unfortunately. */
     r300_fb_set_tiling_flags(r300, state);
 
-    util_assign_framebuffer_state(r300->fb_state.state, state);
+    util_copy_framebuffer_state(r300->fb_state.state, state);
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
@@ -865,6 +865,9 @@ void r300_mark_fs_code_dirty(struct r300_context *r300)
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 5;
         r300->fs_constants.size = fs->shader->externals_count * 4 + 1;
     }
+
+    ((struct r300_constant_buffer*)r300->fs_constants.state)->remap_table =
+            fs->shader->code.constants_remap_table;
 }
 
 /* Bind fragment shader state. */
@@ -937,15 +940,20 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
 
     /* Point sprites texture coordinates, 0: lower left, 1: upper right */
-    float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
+    float point_texcoord_left = 0;  /* R300_GA_POINT_S0: 0x4200 */
     float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
-    float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
+    float point_texcoord_right = 1; /* R300_GA_POINT_S1: 0x4208 */
     float point_texcoord_top = 0;   /* R300_GA_POINT_T1: 0x420c */
     CB_LOCALS;
 
     /* Copy rasterizer state. */
     rs->rs = *state;
     rs->rs_draw = *state;
+
+    /* Generate point sprite texture coordinates in GENERIC0
+     * if point_quad_rasterization is TRUE. */
+    rs->rs.sprite_coord_enable = state->point_quad_rasterization *
+                                 (state->sprite_coord_enable | 1);
 
     /* Override some states for Draw. */
     rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
@@ -1048,16 +1056,13 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* Point sprites */
     stuffing_enable = 0;
-    if (state->sprite_coord_enable) {
+    if (rs->rs.sprite_coord_enable) {
         stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
-	for (i = 0; i < 8; i++) {
-	    if (state->sprite_coord_enable & (1 << i))
+        for (i = 0; i < 8; i++) {
+            if (rs->rs.sprite_coord_enable & (1 << i))
                 stuffing_enable |=
                     R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
-	}
-
-        point_texcoord_left = 0.0f;
-        point_texcoord_right = 1.0f;
+        }
 
         switch (state->sprite_coord_mode) {
             case PIPE_SPRITE_COORD_UPPER_LEFT:
@@ -1208,8 +1213,8 @@ static void*
 
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
     /* We must pass these to the merge function to clamp them properly. */
-    sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
-    sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
+    sampler->min_lod = (unsigned)MAX2(state->min_lod, 0);
+    sampler->max_lod = (unsigned)MAX2(ceilf(state->max_lod), 0);
 
     lod_bias = CLAMP((int)(state->lod_bias * 32 + 1), -(1 << 9), (1 << 9) - 1);
 
@@ -1548,7 +1553,12 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
     }
 
-    /* TODO make this more like a state */
+    if (r300->screen->caps.has_tcl) {
+       /* TODO make this more like a state */
+    }
+    else {
+       draw_set_index_buffer(r300->draw, ib);
+    }
 }
 
 /* Initialize the PSC tables. */
@@ -1765,6 +1775,9 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
             r300->vs_constants.size = 0;
         }
 
+        ((struct r300_constant_buffer*)r300->vs_constants.state)->remap_table =
+                vs->code.constants_remap_table;
+
         r300->pvs_flush.dirty = TRUE;
     } else {
         draw_bind_vertex_shader(r300->draw,
@@ -1779,6 +1792,8 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
     if (r300->screen->caps.has_tcl) {
         rc_constants_destroy(&vs->code.constants);
+        if (vs->code.constants_remap_table)
+            FREE(vs->code.constants_remap_table);
     } else {
         draw_delete_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)vs->draw_vs);
@@ -1795,47 +1810,28 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
     uint32_t *mapped = r300_buffer(buf)->user_buffer;
-    int max_size = 0, max_size_bytes = 0, clamped_size = 0;
 
     switch (shader) {
         case PIPE_SHADER_VERTEX:
             cbuf = (struct r300_constant_buffer*)r300->vs_constants.state;
-            max_size = 256;
             break;
         case PIPE_SHADER_FRAGMENT:
             cbuf = (struct r300_constant_buffer*)r300->fs_constants.state;
-            if (r300->screen->caps.is_r500) {
-                max_size = 256;
-            } else {
-                max_size = 32;
-            }
             break;
         default:
             assert(0);
             return;
     }
-    max_size_bytes = max_size * 4 * sizeof(float);
 
     if (buf == NULL || buf->width0 == 0 ||
         (mapped = r300_buffer(buf)->constant_buffer) == NULL) {
-        cbuf->count = 0;
         return;
     }
 
     if (shader == PIPE_SHADER_FRAGMENT ||
         (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
         assert((buf->width0 % (4 * sizeof(float))) == 0);
-
-        /* Check the size of the constant buffer. */
-        /* XXX Subtract immediates and RC_STATE_* variables. */
-        if (buf->width0 > max_size_bytes) {
-            fprintf(stderr, "r300: Max size of the constant buffer is "
-                          "%i*4 floats.\n", max_size);
-        }
-
-        clamped_size = MIN2(buf->width0, max_size_bytes);
-        cbuf->count = clamped_size / (4 * sizeof(float));
-        cbuf->ptr = mapped;
+        cbuf->ptr = mapped + index*4;
     }
 
     if (shader == PIPE_SHADER_VERTEX) {

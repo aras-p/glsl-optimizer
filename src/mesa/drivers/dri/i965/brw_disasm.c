@@ -159,6 +159,11 @@ char *saturate[2] = {
     [1] = ".sat"
 };
 
+char *accwr[2] = {
+    [0] = "",
+    [1] = "AccWrEnable"
+};
+
 char *exec_size[8] = {
     [0] = "1",
     [1] = "2",
@@ -206,6 +211,7 @@ char *compr_ctrl[4] = {
     [0] = "",
     [1] = "sechalf",
     [2] = "compr",
+    [3] = "compr4",
 };
 
 char *dep_ctrl[4] = {
@@ -233,6 +239,16 @@ char *reg_encoding[8] = {
     [4] = "UB",
     [5] = "B",
     [7] = "F"
+};
+
+int reg_type_size[8] = {
+    [0] = 4,
+    [1] = 4,
+    [2] = 2,
+    [3] = 2,
+    [4] = 1,
+    [5] = 1,
+    [7] = 4
 };
 
 char *imm_encoding[8] = {
@@ -423,6 +439,11 @@ static int print_opcode (FILE *file, int id)
 static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 {
     int	err = 0;
+
+    /* Clear the Compr4 instruction compression bit. */
+    if (_reg_file == BRW_MESSAGE_REGISTER_FILE)
+       _reg_nr &= ~(1 << 7);
+
     if (_reg_file == BRW_ARCHITECTURE_REGISTER_FILE) {
 	switch (_reg_nr & 0xf0) {
 	case BRW_ARF_NULL:
@@ -476,7 +497,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da1.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da1.dest_reg_type]);
 	    format (file, "<%d>", inst->bits1.da1.dest_horiz_stride);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da1.dest_reg_type, NULL);
 	}
@@ -484,7 +506,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	{
 	    string (file, "g[a0");
 	    if (inst->bits1.ia1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr /
+					reg_type_size[inst->bits1.ia1.dest_reg_type]);
 	    if (inst->bits1.ia1.dest_indirect_offset)
 		format (file, " %d", inst->bits1.ia1.dest_indirect_offset);
 	    string (file, "]");
@@ -500,7 +523,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da16.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da16.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da16.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da16.dest_reg_type]);
 	    string (file, "<1>");
 	    err |= control (file, "writemask", writemask, inst->bits1.da16.dest_writemask, NULL);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da16.dest_reg_type, NULL);
@@ -541,7 +565,7 @@ static int src_da1 (FILE *file, GLuint type, GLuint _reg_file,
     if (err == -1)
 	return 0;
     if (sub_reg_num)
-	format (file, ".%d", sub_reg_num);
+	format (file, ".%d", sub_reg_num / reg_type_size[type]); /* use formal style like spec */
     src_align1_region (file, _vert_stride, _width, _horiz_stride);
     err |= control (file, "src reg encoding", reg_encoding, type, NULL);
     return err;
@@ -595,11 +619,12 @@ static int src_da16 (FILE *file,
     if (err == -1)
 	return 0;
     if (_subreg_nr)
-	format (file, ".%d", _subreg_nr);
+	/* bit4 for subreg number byte addressing. Make this same meaning as
+	   in da1 case, so output looks consistent. */
+	format (file, ".%d", 16 / reg_type_size[_reg_type]);
     string (file, "<");
     err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
     string (file, ",4,1>");
-    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
@@ -863,12 +888,25 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.math.precision, &space);
 	    break;
 	case BRW_MESSAGE_TARGET_SAMPLER:
-	    format (file, " (%d, %d, ",
-		    inst->bits3.sampler.binding_table_index,
-		    inst->bits3.sampler.sampler);
-	    err |= control (file, "sampler target format", sampler_target_format,
-			    inst->bits3.sampler.return_format, NULL);
-	    string (file, ")");
+	    if (gen >= 5) {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.sampler_gen5.binding_table_index,
+			inst->bits3.sampler_gen5.sampler,
+			inst->bits3.sampler_gen5.msg_type,
+			inst->bits3.sampler_gen5.simd_mode);
+	    } else if (0 /* FINISHME: is_g4x */) {
+		format (file, " (%d, %d)",
+			inst->bits3.sampler_g4x.binding_table_index,
+			inst->bits3.sampler_g4x.sampler);
+	    } else {
+		format (file, " (%d, %d, ",
+			inst->bits3.sampler.binding_table_index,
+			inst->bits3.sampler.sampler);
+		err |= control (file, "sampler target format",
+				sampler_target_format,
+				inst->bits3.sampler.return_format, NULL);
+		string (file, ")");
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_READ:
 	    if (gen >= 6) {
@@ -929,6 +967,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.urb.used, &space);
 	    err |= control (file, "urb complete", urb_complete,
 			    inst->bits3.urb.complete, &space);
+	    if (gen >= 5) {
+		format (file, " mlen %d, rlen %d\n",
+			inst->bits3.urb_gen5.msg_length,
+			inst->bits3.urb_gen5.response_length);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_THREAD_SPAWNER:
 	    break;
@@ -957,8 +1000,19 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
 	err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
-	err |= control (file, "compression control", compr_ctrl, inst->header.compression_control, &space);
+
+	if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
+	    opcode[inst->header.opcode].ndst > 0 &&
+	    inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
+	    inst->bits1.da1.dest_reg_nr & (1 << 7)) {
+	   format (file, " compr4");
+	} else {
+	   err |= control (file, "compression control", compr_ctrl,
+			   inst->header.compression_control, &space);
+	}
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
+	if (gen >= 6)
+	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
 	if (inst->header.opcode == BRW_OPCODE_SEND)
 	    err |= control (file, "end of thread", end_of_thread,
 			    inst->bits3.generic.end_of_thread, &space);

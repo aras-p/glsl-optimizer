@@ -27,8 +27,22 @@
 #define SHADEROBJ_H
 
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+#include "program/ir_to_mesa.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**
+ * Internal functions
+ */
+
+extern void
+_mesa_init_shader_state(GLcontext * ctx);
+
+extern void
+_mesa_free_shader_state(GLcontext *ctx);
 
 
 extern void
@@ -47,6 +61,14 @@ extern void
 _mesa_reference_shader_program(GLcontext *ctx,
                                struct gl_shader_program **ptr,
                                struct gl_shader_program *shProg);
+extern void
+_mesa_init_shader(GLcontext *ctx, struct gl_shader *shader);
+
+extern struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+extern void
+_mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog);
 
 extern struct gl_shader_program *
 _mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
@@ -74,5 +96,8 @@ _mesa_init_shader_state(GLcontext *ctx);
 extern void
 _mesa_free_shader_state(GLcontext *ctx);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SHADEROBJ_H */

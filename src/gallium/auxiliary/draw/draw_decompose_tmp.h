@@ -54,10 +54,10 @@ FUNC(FUNC_VARS)
 
    FUNC_ENTER;
 
-   /* prim, count, and last_vertex_last should have been defined */
+   /* prim, prim_flags, count, and last_vertex_last should have been defined */
    if (0) {
-      debug_printf("%s: prim 0x%x, count %d, last_vertex_last %d\n",
-            __FUNCTION__, prim, count, last_vertex_last);
+      debug_printf("%s: prim 0x%x, prim_flags 0x%x, count %d, last_vertex_last %d\n",
+            __FUNCTION__, prim, prim_flags, count, last_vertex_last);
    }
 
    switch (prim) {
@@ -80,7 +80,7 @@ FUNC(FUNC_VARS)
    case PIPE_PRIM_LINE_LOOP:
    case PIPE_PRIM_LINE_STRIP:
       if (count >= 2) {
-         flags = DRAW_PIPE_RESET_STIPPLE;
+         flags = (prim_flags & DRAW_SPLIT_BEFORE) ? 0 : DRAW_PIPE_RESET_STIPPLE;
          idx[1] = GET_ELT(0);
          idx[2] = idx[1];
 
@@ -90,7 +90,7 @@ FUNC(FUNC_VARS)
             LINE(flags, idx[0], idx[1]);
          }
          /* close the loop */
-         if (prim == PIPE_PRIM_LINE_LOOP)
+         if (prim == PIPE_PRIM_LINE_LOOP && !prim_flags)
             LINE(flags, idx[1], idx[2]);
       }
       break;
@@ -255,17 +255,23 @@ FUNC(FUNC_VARS)
 
          if (last_vertex_last) {
             flags = (DRAW_PIPE_RESET_STIPPLE |
-                     DRAW_PIPE_EDGE_FLAG_2 |
                      DRAW_PIPE_EDGE_FLAG_0);
+            if (!(prim_flags & DRAW_SPLIT_BEFORE))
+               flags |= DRAW_PIPE_EDGE_FLAG_2;
+
             edge_next = DRAW_PIPE_EDGE_FLAG_0;
-            edge_finish = DRAW_PIPE_EDGE_FLAG_1;
+            edge_finish =
+               (prim_flags & DRAW_SPLIT_AFTER) ? 0 : DRAW_PIPE_EDGE_FLAG_1;
          }
          else {
             flags = (DRAW_PIPE_RESET_STIPPLE |
-                     DRAW_PIPE_EDGE_FLAG_0 |
                      DRAW_PIPE_EDGE_FLAG_1);
+            if (!(prim_flags & DRAW_SPLIT_BEFORE))
+               flags |= DRAW_PIPE_EDGE_FLAG_0;
+
             edge_next = DRAW_PIPE_EDGE_FLAG_1;
-            edge_finish = DRAW_PIPE_EDGE_FLAG_2;
+            edge_finish =
+               (prim_flags & DRAW_SPLIT_AFTER) ? 0 : DRAW_PIPE_EDGE_FLAG_2;
          }
 
          idx[0] = GET_ELT(0);
@@ -300,7 +306,7 @@ FUNC(FUNC_VARS)
 
    case PIPE_PRIM_LINE_STRIP_ADJACENCY:
       if (count >= 4) {
-         flags = DRAW_PIPE_RESET_STIPPLE;
+         flags = (prim_flags & DRAW_SPLIT_BEFORE) ? 0 : DRAW_PIPE_RESET_STIPPLE;
          idx[1] = GET_ELT(0);
          idx[2] = GET_ELT(1);
          idx[3] = GET_ELT(2);

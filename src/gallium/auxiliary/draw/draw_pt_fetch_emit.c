@@ -191,15 +191,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
-
-   /* Return an even number of verts.
-    * This prevents "parity" errors when splitting long triangle strips which
-    * can lead to front/back culling mix-ups.
-    * Every other triangle in a strip has an alternate front/back orientation
-    * so splitting at an odd position can cause the orientation of subsequent
-    * triangles to get reversed.
-    */
-   *max_vertices = *max_vertices & ~1;
 }
 
 
@@ -210,7 +201,8 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
                             const unsigned *fetch_elts,
                             unsigned fetch_count,
                             const ushort *draw_elts,
-                            unsigned draw_count )
+                            unsigned draw_count,
+                            unsigned prim_flags )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
@@ -219,11 +211,6 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
-
-   if (fetch_count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
 
    draw->render->allocate_vertices( draw->render,
                                     (ushort)feme->translate->key.output_stride,
@@ -273,7 +260,8 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 
 static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
                                    unsigned start,
-                                   unsigned count )
+                                   unsigned count,
+                                   unsigned prim_flags )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
@@ -282,9 +270,6 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
-
-   if (count >= UNDEFINED_VERTEX_ID) 
-      goto fail;
 
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)feme->translate->key.output_stride,
@@ -334,7 +319,8 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
                                         unsigned start,
                                         unsigned count,
                                         const ushort *draw_elts,
-                                        unsigned draw_count )
+                                        unsigned draw_count,
+                                        unsigned prim_flags )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
@@ -343,9 +329,6 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
-
-   if (count >= UNDEFINED_VERTEX_ID)
-      return FALSE;
 
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)feme->translate->key.output_stride,

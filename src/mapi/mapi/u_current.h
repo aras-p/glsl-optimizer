@@ -1,93 +1,102 @@
 #ifndef _U_CURRENT_H_
 #define _U_CURRENT_H_
 
+#ifdef MAPI_GLAPI_CURRENT
+
+#include "glapi/glapi.h"
+
+/* ugly renames to match glapi.h */
+#define mapi_table _glapi_table
+
+#define u_current_table_tls _glapi_tls_Dispatch
+#define u_current_user_tls _glapi_tls_Context
+#define u_current_table _glapi_Dispatch
+#define u_current_user _glapi_Context
+
+#define u_current_destroy _glapi_destroy_multithread
+#define u_current_init _glapi_check_multithread
+#define u_current_set_internal _glapi_set_dispatch
+#define u_current_get_internal _glapi_get_dispatch
+#define u_current_set_user_internal _glapi_set_context
+#define u_current_get_user_internal _glapi_get_context
+
+#define u_current_table_tsd _gl_DispatchTSD
+
+#else /* MAPI_GLAPI_CURRENT */
+
 #include "u_compiler.h"
 
-#ifdef MAPI_GLAPI_CURRENT
-#define GLAPI_EXPORT PUBLIC
-#else
-#define GLAPI_EXPORT
-#endif
-
-/*
- * Unlike other utility functions, we need to keep the old names (_glapi_*) for
- * ABI compatibility.  The desired functions are wrappers to the old ones.
- */
-
-struct _glapi_table;
+struct mapi_table;
 
 #ifdef GLX_USE_TLS
 
-GLAPI_EXPORT extern __thread struct _glapi_table *_glapi_tls_Dispatch
+extern __thread struct mapi_table *u_current_table_tls
     __attribute__((tls_model("initial-exec")));
 
-GLAPI_EXPORT extern __thread void *_glapi_tls_Context
+extern __thread void *u_current_user_tls
     __attribute__((tls_model("initial-exec")));
 
-GLAPI_EXPORT extern const struct _glapi_table *_glapi_Dispatch;
-GLAPI_EXPORT extern const void *_glapi_Context;
+extern const struct mapi_table *u_current_table;
+extern const void *u_current_user;
 
 #else /* GLX_USE_TLS */
 
-GLAPI_EXPORT extern struct _glapi_table *_glapi_Dispatch;
-GLAPI_EXPORT extern void *_glapi_Context;
+extern struct mapi_table *u_current_table;
+extern void *u_current_user;
 
 #endif /* GLX_USE_TLS */
 
-GLAPI_EXPORT void
-_glapi_check_multithread(void);
-
-GLAPI_EXPORT void
-_glapi_set_context(void *context);
-
-GLAPI_EXPORT void *
-_glapi_get_context(void);
-
-GLAPI_EXPORT void
-_glapi_set_dispatch(struct _glapi_table *dispatch);
-
-GLAPI_EXPORT struct _glapi_table *
-_glapi_get_dispatch(void);
+void
+u_current_init(void);
 
 void
-_glapi_destroy_multithread(void);
+u_current_destroy(void);
 
+void
+u_current_set_internal(struct mapi_table *tbl);
 
-struct mapi_table;
+struct mapi_table *
+u_current_get_internal(void);
+
+void
+u_current_set_user_internal(void *ptr);
+
+void *
+u_current_get_user_internal(void);
 
 static INLINE void
 u_current_set(const struct mapi_table *tbl)
 {
-   _glapi_check_multithread();
-   _glapi_set_dispatch((struct _glapi_table *) tbl);
+   u_current_set_internal((struct mapi_table *) tbl);
 }
 
 static INLINE const struct mapi_table *
 u_current_get(void)
 {
 #ifdef GLX_USE_TLS
-   return (const struct mapi_table *) _glapi_tls_Dispatch;
+   return (const struct mapi_table *) u_current_table_tls;
 #else
-   return (const struct mapi_table *) (likely(_glapi_Dispatch) ?
-      _glapi_Dispatch : _glapi_get_dispatch());
+   return (likely(u_current_table) ?
+         (const struct mapi_table *) u_current_table : u_current_get_internal());
 #endif
 }
 
 static INLINE void
 u_current_set_user(void *ptr)
 {
-   _glapi_check_multithread();
-   _glapi_set_context(ptr);
+   u_current_set_internal(ptr);
 }
 
 static INLINE void *
 u_current_get_user(void)
 {
 #ifdef GLX_USE_TLS
-   return _glapi_tls_Context;
+   return u_current_user_tls;
 #else
-   return likely(_glapi_Context) ? _glapi_Context : _glapi_get_context();
+   return likely(u_current_user) ? u_current_user : u_current_get_user_internal();
 #endif
 }
 
-#endif /* GLX_USE_TLS */
+#endif /* MAPI_GLAPI_CURRENT */
+
+#endif /* _U_CURRENT_H_ */

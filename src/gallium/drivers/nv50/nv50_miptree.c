@@ -238,7 +238,8 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
 	unsigned stride;
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
-	if (template->target != PIPE_TEXTURE_2D ||
+	if ((template->target != PIPE_TEXTURE_2D &&
+	      template->target != PIPE_TEXTURE_RECT) ||
 	    template->last_level != 0 ||
 	    template->depth0 != 1)
 		return NULL;

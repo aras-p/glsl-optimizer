@@ -383,6 +383,11 @@ dri_init_screen_helper(struct dri_screen *screen,
    if (!screen->st_api)
       return NULL;
 
+   if(pscreen->get_param(pscreen, PIPE_CAP_NPOT_TEXTURES))
+      screen->target = PIPE_TEXTURE_2D;
+   else
+      screen->target = PIPE_TEXTURE_RECT;
+
    driParseOptionInfo(&screen->optionCache,
                       __driConfigOptions, __driNConfigOptions);
 

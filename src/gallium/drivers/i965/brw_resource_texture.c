@@ -66,6 +66,7 @@ static GLuint translate_tex_target( unsigned target )
       return BRW_SURFACE_1D;
 
    case PIPE_TEXTURE_2D: 
+   case PIPE_TEXTURE_RECT:
       return BRW_SURFACE_2D;
 
    case PIPE_TEXTURE_3D: 
@@ -498,7 +499,8 @@ brw_texture_from_handle(struct pipe_screen *screen,
    unsigned pitch;
    GLuint format;
 
-   if (template->target != PIPE_TEXTURE_2D ||
+   if ((template->target != PIPE_TEXTURE_2D
+         && template->target != PIPE_TEXTURE_RECT)  ||
        template->last_level != 0 ||
        template->depth0 != 1)
       return NULL;

@@ -275,9 +275,10 @@ set_scene_state( struct lp_setup_context *setup,
 void
 lp_setup_flush( struct lp_setup_context *setup,
                 unsigned flags,
-                struct pipe_fence_handle **fence)
+                struct pipe_fence_handle **fence,
+                const char *reason)
 {
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s %s\n", __FUNCTION__, reason);
 
    if (setup->scene) {
       if (fence) {
@@ -287,6 +288,8 @@ lp_setup_flush( struct lp_setup_context *setup,
          *fence = lp_setup_fence( setup );
       }
 
+      if (setup->scene->fence)
+         setup->scene->fence->issued = TRUE;
    }
 
    set_scene_state( setup, SETUP_FLUSHED );
@@ -312,6 +315,11 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
     * scene.
     */
    util_copy_framebuffer_state(&setup->fb, fb);
+   setup->framebuffer.x0 = 0;
+   setup->framebuffer.y0 = 0;
+   setup->framebuffer.x1 = fb->width-1;
+   setup->framebuffer.y1 = fb->height-1;
+   setup->dirty |= LP_SETUP_NEW_SCISSOR;
 }
 
 
@@ -469,11 +477,35 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
-   setup->scissor_test = scissor;
    setup->pixel_offset = gl_rasterization_rules ? 0.5f : 0.0f;
+
+   if (setup->scissor_test != scissor) {
+      setup->dirty |= LP_SETUP_NEW_SCISSOR;
+      setup->scissor_test = scissor;
+   }
 }
 
+void 
+lp_setup_set_line_state( struct lp_setup_context *setup,
+			 float line_width)
+{
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
+   setup->line_width = line_width;
+}
+
+void 
+lp_setup_set_point_state( struct lp_setup_context *setup,
+                          float point_size,                          
+                          boolean point_size_per_vertex,
+                          uint sprite)
+{
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   setup->point_size = point_size;
+   setup->sprite = sprite;
+   setup->point_size_per_vertex = point_size_per_vertex;
+}
 
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,
@@ -559,10 +591,11 @@ lp_setup_set_scissor( struct lp_setup_context *setup,
 
    assert(scissor);
 
-   if (memcmp(&setup->scissor.current, scissor, sizeof(*scissor)) != 0) {
-      setup->scissor.current = *scissor; /* struct copy */
-      setup->dirty |= LP_SETUP_NEW_SCISSOR;
-   }
+   setup->scissor.x0 = scissor->minx;
+   setup->scissor.x1 = scissor->maxx-1;
+   setup->scissor.y0 = scissor->miny;
+   setup->scissor.y1 = scissor->maxy-1;
+   setup->dirty |= LP_SETUP_NEW_SCISSOR;
 }
 
 
@@ -713,6 +746,12 @@ lp_setup_update_state( struct lp_setup_context *setup )
     */
    {
       struct llvmpipe_context *lp = llvmpipe_context(scene->pipe);
+
+      /* Will probably need to move this somewhere else, just need  
+       * to know about vertex shader point size attribute.
+       */
+      setup->psize = lp->psize_slot;
+
       if (lp->dirty) {
          llvmpipe_update_derived(lp);
       }
@@ -806,6 +845,14 @@ lp_setup_update_state( struct lp_setup_context *setup )
       }
    }
 
+   if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
+      setup->draw_region = setup->framebuffer;
+      if (setup->scissor_test) {
+         u_rect_possible_intersection(&setup->scissor,
+                                      &setup->draw_region);
+      }
+   }
+                                      
    setup->dirty = 0;
 
    assert(setup->fs.stored);

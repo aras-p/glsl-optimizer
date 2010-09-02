@@ -64,8 +64,7 @@ struct gl_program_parameter
     * The next program parameter's Size will be Size-4 of this parameter.
     */
    GLuint Size;
-   GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
-   GLboolean Initialized;   /**< Has the ParameterValue[] been set? */
+   GLboolean Initialized;   /**< debug: Has the ParameterValue[] been set? */
    GLbitfield Flags;        /**< Bitmask of PROG_PARAM_*_BIT */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
@@ -130,19 +129,6 @@ extern GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                            const GLfloat values[4], GLuint size,
                            GLuint *swizzleOut);
-
-extern GLint
-_mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype,
-                  const GLfloat *values);
-
-extern void
-_mesa_use_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name);
-
-extern GLint
-_mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype);
 
 extern GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,

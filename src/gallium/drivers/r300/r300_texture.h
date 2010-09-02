@@ -23,11 +23,14 @@
 #ifndef R300_TEXTURE_H
 #define R300_TEXTURE_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
 struct pipe_screen;
 struct pipe_resource;
 struct winsys_handle;
+struct r300_texture_format_state;
+struct r300_texture_desc;
 struct r300_texture;
 struct r300_screen;
 
@@ -50,6 +53,10 @@ boolean r300_is_zs_format_supported(enum pipe_format format);
 
 boolean r300_is_sampler_format_supported(enum pipe_format format);
 
+void r300_texture_setup_format_state(struct r300_screen *screen,
+                                     struct r300_texture_desc *desc,
+                                     unsigned level,
+                                     struct r300_texture_format_state *out);
 
 struct pipe_resource*
 r300_texture_from_handle(struct pipe_screen* screen,

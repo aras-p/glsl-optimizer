@@ -173,7 +173,6 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 {
     context_t *context = R700_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
-    unsigned int nVBsize;
     BATCH_LOCALS(&context->radeon);
 
     unsigned int uSQ_VTX_CONSTANT_WORD0_0;
@@ -194,18 +193,8 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     else
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
-    if(0 == pStreamDesc->stride)
-    {
-        nVBsize = paos->count * pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-    else
-    {
-        nVBsize = (paos->count - 1) * pStreamDesc->stride
-                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
-    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize - 1;
+    uSQ_VTX_CONSTANT_WORD1_0 = paos->bo->size - paos->offset - 1;
 
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 0, BASE_ADDRESS_HI_shift, BASE_ADDRESS_HI_mask); /* TODO */
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, pStreamDesc->stride, SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift,
@@ -721,6 +710,7 @@ static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
     struct radeon_bo * pbo;
+    struct radeon_bo * pbo_const;
     BATCH_LOCALS(&context->radeon);
     radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
@@ -750,6 +740,9 @@ static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
     R600_OUT_BATCH_REGVAL(SQ_LOOP_CONST_0, 0x01000FFF);
     END_BATCH();
 
+    pbo_const = (struct radeon_bo *)r700GetActiveFpShaderConstBo(GL_CONTEXT(context));
+    //TODO : set up shader const
+
     COMMIT_BATCH();
 
 }
@@ -759,13 +752,14 @@ static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
     struct radeon_bo * pbo;
+    struct radeon_bo * pbo_const;
     BATCH_LOCALS(&context->radeon);
     radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
 
     if (!pbo)
-	    return;
+        return;
 
     r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
@@ -788,6 +782,29 @@ static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
     //R600_OUT_BATCH_REGVAL((SQ_LOOP_CONST_0 + (SQ_LOOP_CONST_vs<2)), 0x0100000F);
     END_BATCH();
 
+    /* TODO : handle 4 bufs */
+    if(GL_TRUE == r700->bShaderUseMemConstant)
+    {
+	    pbo_const = (struct radeon_bo *)r700GetActiveVpShaderConstBo(GL_CONTEXT(context));
+        if(NULL != pbo_const)
+        {
+            r700SyncSurf(context, pbo_const, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit); /* TODO : Check kc bit. */
+
+            BEGIN_BATCH_NO_AUTOSTATE(3);            
+            R600_OUT_BATCH_REGVAL(SQ_ALU_CONST_BUFFER_SIZE_VS_0, (r700->vs.num_consts * 4)/16 );    
+            END_BATCH();
+
+            BEGIN_BATCH_NO_AUTOSTATE(3 + 2);            
+            R600_OUT_BATCH_REGSEQ(SQ_ALU_CONST_CACHE_VS_0, 1);
+            R600_OUT_BATCH(r700->vs.SQ_ALU_CONST_CACHE_VS_0.u32All);
+            R600_OUT_BATCH_RELOC(r700->vs.SQ_ALU_CONST_CACHE_VS_0.u32All,
+                         pbo_const,
+                         r700->vs.SQ_ALU_CONST_CACHE_VS_0.u32All,
+                         RADEON_GEM_DOMAIN_GTT, 0, 0);
+            END_BATCH();
+        }
+    }
+    
     COMMIT_BATCH();
 }
 
@@ -1558,45 +1575,55 @@ static void r600_init_query_stateobj(radeonContextPtr radeon, int SZ)
 
 void r600InitAtoms(context_t *context)
 {
-	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s %p\n", __func__, context);
-	context->radeon.hw.max_state_size = 10 + 5 + 14; /* start 3d, idle, cb/db flush */
+    R700_CHIP_CONTEXT *r700    = (R700_CHIP_CONTEXT*)(&context->hw);
+    radeon_print(RADEON_STATE, RADEON_NORMAL, "%s %p\n", __func__, context);
+    context->radeon.hw.max_state_size = 10 + 5 + 14; /* start 3d, idle, cb/db flush */
 
-	/* Setup the atom linked list */
-	make_empty_list(&context->radeon.hw.atomlist);
-	context->radeon.hw.atomlist.name = "atom-list";
+    /* Setup the atom linked list */
+    make_empty_list(&context->radeon.hw.atomlist);
+    context->radeon.hw.atomlist.name = "atom-list";
 
-	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
-	ALLOC_STATE(db, always, 17, r700SendDBState);
-	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
-	ALLOC_STATE(db_target, always, 16, r700SendDepthTargetState);
-	ALLOC_STATE(sc, always, 15, r700SendSCState);
-	ALLOC_STATE(scissor, always, 22, r700SendScissorState);
-	ALLOC_STATE(aa, always, 12, r700SendAAState);
-	ALLOC_STATE(cl, always, 12, r700SendCLState);
-	ALLOC_STATE(gb, always, 6, r700SendGBState);
-	ALLOC_STATE(ucp, ucp, (R700_MAX_UCP * 6), r700SendUCPState);
-	ALLOC_STATE(su, always, 9, r700SendSUState);
-	ALLOC_STATE(poly, always, 10, r700SendPolyState);
-	ALLOC_STATE(cb, cb, 18, r700SendCBState);
-	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
-	ALLOC_STATE(cb_target, always, 31, r700SendRenderTargetState);
-	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
-	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
-	ALLOC_STATE(sx, always, 9, r700SendSXState);
-	ALLOC_STATE(vgt, always, 41, r700SendVGTState);
-	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
-	ALLOC_STATE(vpt, always, 16, r700SendViewportState);
-	ALLOC_STATE(fs, always, 18, r700SendFSState);
-	ALLOC_STATE(vs, always, 21, r700SendVSState);
-	ALLOC_STATE(ps, always, 24, r700SendPSState);
-	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
-	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
-	ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
-	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
-	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
-	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);
-	r600_init_query_stateobj(&context->radeon, 6 * 2);
+    ALLOC_STATE(sq, always, 34, r700SendSQConfig);
+    ALLOC_STATE(db, always, 17, r700SendDBState);
+    ALLOC_STATE(stencil, always, 4, r700SendStencilState);
+    ALLOC_STATE(db_target, always, 16, r700SendDepthTargetState);
+    ALLOC_STATE(sc, always, 15, r700SendSCState);
+    ALLOC_STATE(scissor, always, 22, r700SendScissorState);
+    ALLOC_STATE(aa, always, 12, r700SendAAState);
+    ALLOC_STATE(cl, always, 12, r700SendCLState);
+    ALLOC_STATE(gb, always, 6, r700SendGBState);
+    ALLOC_STATE(ucp, ucp, (R700_MAX_UCP * 6), r700SendUCPState);
+    ALLOC_STATE(su, always, 9, r700SendSUState);
+    ALLOC_STATE(poly, always, 10, r700SendPolyState);
+    ALLOC_STATE(cb, cb, 18, r700SendCBState);
+    ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
+    ALLOC_STATE(cb_target, always, 31, r700SendRenderTargetState);
+    ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
+    ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
+    ALLOC_STATE(sx, always, 9, r700SendSXState);
+    ALLOC_STATE(vgt, always, 41, r700SendVGTState);
+    ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
+    ALLOC_STATE(vpt, always, 16, r700SendViewportState);
+    ALLOC_STATE(fs, always, 18, r700SendFSState);
+    if(GL_TRUE == r700->bShaderUseMemConstant)
+    {
+        ALLOC_STATE(vs, always, 36, r700SendVSState);
+	    ALLOC_STATE(ps, always, 24, r700SendPSState); /* TODO : not imp yet, fix later. */
+    }
+    else
+    {
+        ALLOC_STATE(vs, always, 21, r700SendVSState);
+        ALLOC_STATE(ps, always, 24, r700SendPSState);
+        ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
+        ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
+    }
 
-	context->radeon.hw.is_dirty = GL_TRUE;
-	context->radeon.hw.all_dirty = GL_TRUE;
+    ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
+    ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
+    ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
+    ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);
+    r600_init_query_stateobj(&context->radeon, 6 * 2);
+
+    context->radeon.hw.is_dirty = GL_TRUE;
+    context->radeon.hw.all_dirty = GL_TRUE;
 }

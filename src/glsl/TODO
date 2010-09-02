@@ -1,0 +1,50 @@
+- Handle constant expressions of (struct == struct)
+
+- Handle constant expressions of (struct != struct)
+
+- Treat built-in functions with constant parameters as constant expressions.
+  - Rewrite all built-in functions return a single expression.
+  - Modify the HIR generator for functions to automatically inline built-in
+    functions durning translation.
+  - Care must be taken to handle both the 1.10 rules and the 1.20+ rules.  In
+    1.10, built-in functions cannot be constant expressions.
+
+- Detect code paths in non-void functions that don't reach a return statement
+
+- Handle over-riding built-in functions
+  - Is the overload per-compilation unit or per-linked shader?
+
+- Handle redeclaration of built-in variables
+  - Handle addition of qualifiers such as 'invariant' or 'centroid'.
+  - Handle resizing of arrays.
+  - Other?  We'll have to look at the spec.
+
+- Improve handling of constants and their initializers.  Constant initializers
+  should never generate any code.  This is trival for scalar constants.  It is
+  also trivial for arrays, matrices, and vectors that are accessed with
+  constant index values.  For others it is more complicated.  Perhaps these
+  cases should be silently converted to uniforms?
+
+1.30 features:
+
+- Implement AST-to-HIR conversion of bit-shift operators.
+
+- Implement AST-to-HIR conversion of bit-wise {&,|,^,!} operators.
+
+- Implement AST-to-HIR conversion of switch-statements
+  - switch
+  - case
+  - Update break to correcly handle mixed nexting of switch-statements
+    and loops.
+
+- Handle currently unsupported constant expression types
+  - ir_unop_bit_not
+  - ir_binop_mod
+  - ir_binop_lshift
+  - ir_binop_rshift
+  - ir_binop_bit_and
+  - ir_binop_bit_xor
+  - ir_binop_bit_or
+
+- Implement support for 1.30 style shadow compares which only return a float
+  instead of a vec4.

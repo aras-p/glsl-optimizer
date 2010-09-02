@@ -160,18 +160,11 @@ void draw_set_vertex_elements(struct draw_context *draw,
 			      unsigned count,
                               const struct pipe_vertex_element *elements);
 
-void
-draw_set_mapped_element_buffer_range( struct draw_context *draw,
-                                      unsigned eltSize,
-                                      int eltBias,
-                                      unsigned min_index,
-                                      unsigned max_index,
-                                      const void *elements );
+void draw_set_index_buffer(struct draw_context *draw,
+                           const struct pipe_index_buffer *ib);
 
-void draw_set_mapped_element_buffer( struct draw_context *draw,
-                                     unsigned eltSize, 
-                                     int eltBias,
-                                     const void *elements );
+void draw_set_mapped_index_buffer(struct draw_context *draw,
+                                  const void *elements);
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);
@@ -196,6 +189,9 @@ draw_set_so_state(struct draw_context *draw,
  * draw_pt.c 
  */
 
+void draw_vbo(struct draw_context *draw,
+              const struct pipe_draw_info *info);
+
 void draw_arrays(struct draw_context *draw, unsigned prim,
 		 unsigned start, unsigned count);
 
@@ -216,7 +212,8 @@ void draw_set_render( struct draw_context *draw,
 		      struct vbuf_render *render );
 
 void draw_set_driver_clipping( struct draw_context *draw,
-                               boolean bypass_clipping );
+                               boolean bypass_clip_xy,
+                               boolean bypass_clip_z );
 
 void draw_set_force_passthrough( struct draw_context *draw, 
                                  boolean enable );

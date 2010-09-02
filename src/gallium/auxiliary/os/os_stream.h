@@ -50,6 +50,9 @@ struct os_stream
 
    void
    (*flush)(struct os_stream *stream);
+
+   int
+   (*vprintf)(struct os_stream *stream, const char* format, va_list ap);
 };
 
 
@@ -90,6 +93,27 @@ os_stream_flush(struct os_stream *stream)
    stream->flush(stream);
 }
 
+int
+os_default_stream_vprintf (struct os_stream* stream, const char *format, va_list ap);
+
+static INLINE int
+os_stream_vprintf (struct os_stream* stream, const char *format, va_list ap)
+{
+   return stream->vprintf(stream, format, ap);
+}
+
+static INLINE int
+os_stream_printf (struct os_stream* stream, const char *format, ...)
+{
+   int retval;
+   va_list args;
+
+   va_start (args, format);
+   retval = stream->vprintf(stream, format, args);
+   va_end (args);
+
+   return retval;
+}
 
 struct os_stream *
 os_file_stream_create(const char *filename);
@@ -117,6 +141,5 @@ os_str_stream_get_and_close(struct os_stream *stream);
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #define os_file_stream_create(_filename) os_null_stream_create()
 #endif
-
 
 #endif /* _OS_STREAM_H_ */

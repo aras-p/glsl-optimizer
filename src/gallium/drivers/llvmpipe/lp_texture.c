@@ -67,6 +67,7 @@ resource_is_texture(const struct pipe_resource *resource)
       return FALSE;
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_3D:
    case PIPE_TEXTURE_CUBE:
       return TRUE;
@@ -583,7 +584,8 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
                                    0, /* flush_flags */
                                    read_only,
                                    TRUE, /* cpu_access */
-                                   do_not_block)) {
+                                   do_not_block,
+                                   "transfer dest")) {
          /*
           * It would have blocked, but state tracker requested no to.
           */

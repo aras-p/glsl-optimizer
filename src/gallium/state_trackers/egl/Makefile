@@ -24,7 +24,7 @@ x11_SOURCES = $(wildcard x11/*.c) \
 x11_OBJECTS = $(x11_SOURCES:.c=.o)
 
 
-kms_INCLUDES = $(shell pkg-config --cflags-only-I libdrm)
+kms_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm)
 kms_SOURCES = $(wildcard kms/*.c)
 kms_OBJECTS = $(kms_SOURCES:.c=.o)
 

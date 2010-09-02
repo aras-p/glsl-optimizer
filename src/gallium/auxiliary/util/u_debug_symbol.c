@@ -33,9 +33,12 @@
  */
 
 #include "pipe/p_compiler.h"
+#include "os/os_thread.h"
+#include "u_string.h"
 
 #include "u_debug.h"
 #include "u_debug_symbol.h"
+#include "u_hash_table.h"
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
    
@@ -113,8 +116,8 @@ BOOL WINAPI j_SymGetSymFromAddr(HANDLE hProcess, DWORD Address, PDWORD Displacem
 }
 
 
-static INLINE boolean
-debug_symbol_print_imagehlp(const void *addr)
+static INLINE void
+debug_symbol_name_imagehlp(const void *addr, char* buf, unsigned size)
 {
    HANDLE hProcess;
    BYTE symbolBuffer[1024];
@@ -131,25 +134,95 @@ debug_symbol_print_imagehlp(const void *addr)
       if(j_SymInitialize(hProcess, NULL, TRUE))
          bSymInitialized = TRUE;
    }
-      
+
    if(!j_SymGetSymFromAddr(hProcess, (DWORD)addr, &dwDisplacement, pSymbol))
-      return FALSE;
-
-   debug_printf("\t%s\n", pSymbol->Name);
-
-   return TRUE;
-   
+      buf[0] = 0;
+   else
+   {
+      strncpy(buf, pSymbol->Name, size);
+      buf[size - 1] = 0;
+   }
 }
 #endif
 
+#ifdef __GLIBC__
+#include <execinfo.h>
+
+/* This can only provide dynamic symbols, or binary offsets into a file.
+ *
+ * To fix this, post-process the output with tools/addr2line.sh
+ */
+static INLINE void
+debug_symbol_name_glibc(const void *addr, char* buf, unsigned size)
+{
+   char** syms = backtrace_symbols((void**)&addr, 1);
+   strncpy(buf, syms[0], size);
+   buf[size - 1] = 0;
+   free(syms);
+}
+#endif
+
+void
+debug_symbol_name(const void *addr, char* buf, unsigned size)
+{
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
+   debug_symbol_name_imagehlp(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+#ifdef __GLIBC__
+   debug_symbol_name_glibc(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+   util_snprintf(buf, size, "%p", addr);
+   buf[size - 1] = 0;
+}
 
 void
 debug_symbol_print(const void *addr)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
-   if(debug_symbol_print_imagehlp(addr))
-      return;
-#endif
-   
-   debug_printf("\t%p\n", addr);
+   char buf[1024];
+   debug_symbol_name(addr, buf, sizeof(buf));
+   debug_printf("\t%s\n", buf);
+}
+
+struct util_hash_table* symbols_hash;
+pipe_mutex symbols_mutex;
+
+static unsigned hash_ptr(void* p)
+{
+   return (unsigned)(uintptr_t)p;
+}
+
+static int compare_ptr(void* a, void* b)
+{
+   if(a == b)
+      return 0;
+   else if(a < b)
+      return -1;
+   else
+      return 1;
+}
+
+const char*
+debug_symbol_name_cached(const void *addr)
+{
+   const char* name;
+   pipe_mutex_lock(symbols_mutex);
+   if(!symbols_hash)
+      symbols_hash = util_hash_table_create(hash_ptr, compare_ptr);
+   name = util_hash_table_get(symbols_hash, (void*)addr);
+   if(!name)
+   {
+      char buf[1024];
+      debug_symbol_name(addr, buf, sizeof(buf));
+      name = strdup(buf);
+
+      util_hash_table_set(symbols_hash, (void*)addr, (void*)name);
+   }
+   pipe_mutex_unlock(symbols_mutex);
+   return name;
 }

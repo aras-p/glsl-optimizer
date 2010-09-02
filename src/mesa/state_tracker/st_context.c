@@ -125,6 +125,11 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_generate_mipmap(st);
    st_init_blit(st);
 
+   if(pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
+      st->internal_target = PIPE_TEXTURE_2D;
+   else
+      st->internal_target = PIPE_TEXTURE_RECT;
+
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
 

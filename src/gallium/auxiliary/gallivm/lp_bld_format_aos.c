@@ -388,7 +388,7 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
    if (format_matches_type(format_desc, type) &&
        format_desc->block.bits <= type.width * 4 &&
-       util_is_pot(format_desc->block.bits)) {
+       util_is_power_of_two(format_desc->block.bits)) {
       LLVMValueRef packed;
 
       /*
@@ -416,7 +416,7 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
         format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) &&
        format_desc->block.width == 1 &&
        format_desc->block.height == 1 &&
-       util_is_pot(format_desc->block.bits) &&
+       util_is_power_of_two(format_desc->block.bits) &&
        format_desc->block.bits <= 32 &&
        format_desc->is_bitmask &&
        !format_desc->is_mixed &&

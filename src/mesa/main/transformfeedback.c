@@ -455,14 +455,14 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
 
    if ((size <= 0) || (size & 0x3)) {
       /* must be positive and multiple of four */
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size%d)", size);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size%d)", (int) size);
       return;
    }  
 
    if (offset & 0x3) {
       /* must be multiple of four */
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBufferRange(offset=%d)", offset);
+                  "glBindBufferRange(offset=%d)", (int) offset);
       return;
    }  
 
@@ -475,7 +475,8 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
 
    if (offset + size >= bufObj->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBufferRange(offset + size > buffer size)", size);
+                  "glBindBufferRange(offset + size %d > buffer size %d)",
+		  (int) (offset + size), (int) (bufObj->Size));
       return;
    }  
 

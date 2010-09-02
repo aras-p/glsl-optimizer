@@ -303,13 +303,13 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->first_free_grf = 0;
 
     for (i = 0; i < 4; i++) {
-        if (i < c->key.nr_depth_regs) 
+	if (i < (c->key.nr_payload_regs + 1) / 2)
             reg = brw_vec8_grf(i * 2, 0);
         else
             reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
-    reg_index += 2 * c->key.nr_depth_regs;
+    reg_index += c->key.nr_payload_regs;
 
     /* constants */
     {
@@ -380,7 +380,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
        }
     }
 
-    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
+    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
     c->prog_data.urb_read_length = urb_read_length;
     c->prog_data.curb_read_length = c->nr_creg;
     c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, reg_index, 0);
@@ -1803,11 +1803,14 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
     struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
+    int if_depth_in_loop[MAX_LOOP_DEPTH];
     GLuint i, if_depth = 0, loop_depth = 0;
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
 
     c->out_of_regs = GL_FALSE;
+
+    if_depth_in_loop[loop_depth] = 0;
 
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1903,6 +1906,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_SWZ:
 		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_DP2:
+		emit_dp2(p, dst, dst_flags, args[0], args[1]);
+		break;
 	    case OPCODE_DP3:
 		emit_dp3(p, dst, dst_flags, args[0], args[1]);
 		break;
@@ -1971,6 +1977,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_sop(p, dst, dst_flags,
 			 BRW_CONDITIONAL_NEQ, args[0], args[1]);
 		break;
+	    case OPCODE_SSG:
+		emit_sign(p, dst, dst_flags, args[0]);
+		break;
 	    case OPCODE_MUL:
 		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 		break;
@@ -2014,6 +2023,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_IF:
 		assert(if_depth < MAX_IF_DEPTH);
 		if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
+		if_depth_in_loop[loop_depth]++;
 		break;
 	    case OPCODE_ELSE:
 		assert(if_depth > 0);
@@ -2022,6 +2032,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_ENDIF:
 		assert(if_depth > 0);
 		brw_ENDIF(p, if_inst[--if_depth]);
+		if_depth_in_loop[loop_depth]--;
 		break;
 	    case OPCODE_BGNSUB:
 		brw_save_label(p, inst->Comment, p->nr_insn);
@@ -2056,13 +2067,14 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_BGNLOOP:
                 /* XXX may need to invalidate the current_constant regs */
 		loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
+		if_depth_in_loop[loop_depth] = 0;
 		break;
 	    case OPCODE_BRK:
-		brw_BREAK(p);
+		brw_BREAK(p, if_depth_in_loop[loop_depth]);
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_CONT:
-		brw_CONT(p);
+		brw_CONT(p, if_depth_in_loop[loop_depth]);
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_ENDLOOP: 
@@ -2082,12 +2094,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                      if (inst0->header.opcode == BRW_OPCODE_BREAK &&
 			 inst0->bits3.if_else.jump_count == 0) {
 			inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
-			inst0->bits3.if_else.pop_count = 0;
                      }
                      else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
 			      inst0->bits3.if_else.jump_count == 0) {
                         inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
-                        inst0->bits3.if_else.pop_count = 0;
                      }
                   }
                }
@@ -2111,7 +2121,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     if (INTEL_DEBUG & DEBUG_WM) {
       printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], intel->gen);
+	 brw_disasm(stdout, &p->store[i], intel->gen);
       printf("\n");
     }
 }

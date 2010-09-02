@@ -15,6 +15,7 @@ Contents:
    debugging
    tgsi
    screen
+   resources
    context
    cso
    distro

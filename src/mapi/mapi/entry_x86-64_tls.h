@@ -33,7 +33,7 @@
 __asm__(".text");
 
 __asm__("x86_64_current_tls:\n\t"
-	"movq _glapi_tls_Dispatch@GOTTPOFF(%rip), %rax\n\t"
+	"movq u_current_table_tls@GOTTPOFF(%rip), %rax\n\t"
 	"ret");
 
 #define STUB_ASM_ENTRY(func)                             \
@@ -43,7 +43,7 @@ __asm__("x86_64_current_tls:\n\t"
    func ":"
 
 #define STUB_ASM_CODE(slot)                              \
-   "movq _glapi_tls_Dispatch@GOTTPOFF(%rip), %rax\n\t"   \
+   "movq u_current_table_tls@GOTTPOFF(%rip), %rax\n\t"   \
    "movq %fs:(%rax), %r11\n\t"                           \
    "jmp *(8 * " slot ")(%r11)"
 

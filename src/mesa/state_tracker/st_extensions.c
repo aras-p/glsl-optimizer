@@ -161,6 +161,13 @@ void st_init_limits(struct st_context *st)
    pc->MaxNativeTemps           = screen->get_param(screen, PIPE_CAP_MAX_VS_TEMPS);
    pc->MaxNativeAddressRegs     = screen->get_param(screen, PIPE_CAP_MAX_VS_ADDRS);
    pc->MaxNativeParameters      = screen->get_param(screen, PIPE_CAP_MAX_VS_CONSTS);
+
+   /* PIPE_CAP_MAX_FS_INPUTS specifies the number of COLORn + GENERICn inputs
+    * and is set in MaxNativeAttribs. It's always 2 colors + N generic
+    * attributes. The GLSL compiler never uses COLORn for varyings, so we
+    * subtract the 2 colors to get the maximum number of varyings (generic
+    * attributes) supported by a driver. */
+   c->MaxVarying = screen->get_param(screen, PIPE_CAP_MAX_FS_INPUTS) - 2;
 }
 
 

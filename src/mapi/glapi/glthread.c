@@ -1,4 +1,4 @@
-#include "glthread.h"
+#include "glapi/glapi.h"
 
 unsigned long
 _glthread_GetID(void)

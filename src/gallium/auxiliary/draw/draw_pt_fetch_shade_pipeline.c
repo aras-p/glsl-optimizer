@@ -100,8 +100,10 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
     * but gl vs dx9 clip spaces.
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
-			    (boolean)draw->bypass_clipping,
-			    (boolean)draw->identity_viewport,
+			    draw->clip_xy,
+			    draw->clip_z,
+			    draw->clip_user,
+			    draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
@@ -112,15 +114,12 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    gs_out_prim,
                             max_vertices );
 
-      *max_vertices = MAX2( *max_vertices,
-                            DRAW_PIPE_MAX_VERTICES );
+      *max_vertices = MAX2( *max_vertices, 4096 );
    }
    else {
-      *max_vertices = DRAW_PIPE_MAX_VERTICES; 
+      /* limit max fetches by limiting max_vertices */
+      *max_vertices = 4096;
    }
-
-   /* return even number */
-   *max_vertices = *max_vertices & ~1;
 
    /* No need to prepare the shader.
     */
@@ -295,7 +294,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                                 const unsigned *fetch_elts,
                                 unsigned fetch_count,
                                 const ushort *draw_elts,
-                                unsigned draw_count )
+                                unsigned draw_count,
+                                unsigned prim_flags )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -311,6 +311,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 
@@ -320,7 +321,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 
 static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
                                        unsigned start,
-                                       unsigned count)
+                                       unsigned count,
+                                       unsigned prim_flags)
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -336,6 +338,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    prim_info.count = count;
    prim_info.elts = NULL;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
 
@@ -348,7 +351,8 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
                                                unsigned start,
                                                unsigned count,
                                                const ushort *draw_elts,
-                                               unsigned draw_count )
+                                               unsigned draw_count,
+                                               unsigned prim_flags )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -364,6 +368,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 

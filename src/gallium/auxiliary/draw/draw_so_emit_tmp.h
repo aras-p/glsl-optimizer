@@ -7,11 +7,9 @@
 
 #define FUNC_ENTER                                                \
    /* declare more local vars */                                  \
-   struct draw_context *draw = so->draw;                          \
    const unsigned prim = input_prims->prim;                       \
-   const boolean last_vertex_last =                               \
-      !(draw->rasterizer->flatshade &&                            \
-        draw->rasterizer->flatshade_first);                       \
+   const unsigned prim_flags = input_prims->flags;                \
+   const boolean last_vertex_last = TRUE;                         \
    do {                                                           \
       debug_assert(input_prims->primitive_count == 1);            \
       switch (prim) {                                             \

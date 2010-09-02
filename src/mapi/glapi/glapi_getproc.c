@@ -30,15 +30,6 @@
  */
 
 
-#ifdef HAVE_DIX_CONFIG_H
-#include <dix-config.h>
-#include "glapi/mesa.h"
-#else
-#include "main/glheader.h"
-#include "main/compiler.h"
-#endif
-
-#include "glapi/glapi.h"
 #include "glapi/glapi_priv.h"
 #include "glapi/glapitable.h"
 #include "glapi/glapioffsets.h"

@@ -120,7 +120,7 @@ struct lp_rast_triangle {
    float v[3][2];
 #endif
 
-   struct lp_rast_plane plane[7]; /* NOTE: may allocate fewer planes */
+   struct lp_rast_plane plane[8]; /* NOTE: may allocate fewer planes */
 };
 
 
@@ -236,6 +236,8 @@ void lp_rast_triangle_6( struct lp_rasterizer_task *,
                          const union lp_rast_cmd_arg );
 void lp_rast_triangle_7( struct lp_rasterizer_task *, 
                          const union lp_rast_cmd_arg );
+void lp_rast_triangle_8( struct lp_rasterizer_task *, 
+                         const union lp_rast_cmd_arg );
 
 void lp_rast_shade_tile( struct lp_rasterizer_task *,
                          const union lp_rast_cmd_arg );
@@ -255,6 +257,10 @@ void lp_rast_begin_query(struct lp_rasterizer_task *,
 
 void lp_rast_end_query(struct lp_rasterizer_task *,
                        const union lp_rast_cmd_arg );
+
+void
+lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg);
 
 
 #endif

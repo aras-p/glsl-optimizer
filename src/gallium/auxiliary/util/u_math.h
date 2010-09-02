@@ -361,16 +361,6 @@ util_is_inf_or_nan(float x)
 
 
 /**
- * Test whether x is a power of two.
- */
-static INLINE boolean
-util_is_pot(unsigned x)
-{
-   return (x & (x - 1)) == 0;
-}
-
-
-/**
  * Find first bit set in word.  Least significant bit is 1.
  * Return 0 if no bits set.
  */
@@ -565,6 +555,9 @@ util_bswap16(uint16_t n)
 
 #define MIN3( A, B, C ) MIN2( MIN2( A, B ), C )
 #define MAX3( A, B, C ) MAX2( MAX2( A, B ), C )
+
+#define MIN4( A, B, C, D ) MIN2( MIN2( A, B ), MIN2(C, D) )
+#define MAX4( A, B, C, D ) MAX2( MAX2( A, B ), MAX2(C, D) )
 
 
 /**

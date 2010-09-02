@@ -23,8 +23,7 @@ INCLUDE_DIRS = \
 CORE_MESA = \
 	$(TOP)/src/mesa/libmesa.a \
 	$(TOP)/src/mapi/glapi/libglapi.a \
-	$(TOP)/src/glsl/cl/libglslcl.a \
-	$(TOP)/src/glsl/pp/libglslpp.a
+	$(TOP)/src/glsl/libglsl.a
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -37,9 +36,9 @@ default: $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 # sources. We can also build libOSMesa16/libOSMesa32 by setting
 # -DCHAN_BITS=16/32.
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OBJECTS) $(CORE_MESA)
-	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-install $(TOP)/$(LIB_DIR) -cplusplus $(MKLIB_OPTIONS) \
 		-id $(INSTALL_LIB_DIR)/lib$(OSMESA_LIB).$(MESA_MAJOR).dylib \
 		$(OSMESA_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 

@@ -1,5 +1,12 @@
 /* Originally written by Ben Skeggs for the nv50 driver*/
-#include <pipe/p_defines.h>
+
+#ifndef U_SPLIT_PRIM_H
+#define U_SPLIT_PRIM_H
+
+#include "pipe/p_defines.h"
+#include "pipe/p_compiler.h"
+
+#include "util/u_debug.h"
 
 struct util_split_prim {
    void *priv;
@@ -48,7 +55,7 @@ util_split_prim_next(struct util_split_prim *s, unsigned max_verts)
       }
    }
 
-   if (s->p_start + s->close_first + max_verts >= s->p_end) {
+   if ((s->p_end - s->p_start) + s->close_first <= max_verts) {
       s->emit(s->priv, s->p_start, s->p_end - s->p_start);
       if (s->close_first)
          s->emit(s->priv, s->start, 1);
@@ -103,3 +110,5 @@ util_split_prim_next(struct util_split_prim *s, unsigned max_verts)
    s->p_start += (max_verts - repeat);
    return FALSE;
 }
+
+#endif /* U_SPLIT_PRIM_H */

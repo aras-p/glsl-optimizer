@@ -32,7 +32,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_state.h"
-
+#include "main/formats.h"
 
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
@@ -68,6 +68,7 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
    case OPCODE_RCP:
    case OPCODE_RSQ:
    case OPCODE_SIN:
+   case OPCODE_DP2:
    case OPCODE_DP3:
    case OPCODE_DP4:
    case OPCODE_DPH:
@@ -177,17 +178,19 @@ static void do_wm_prog( struct brw_context *brw,
    /* temporary sanity check assertion */
    ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
 
-   /*
-    * Shader which use GLSL features such as flow control are handled
-    * differently from "simple" shaders.
-    */
-   if (fp->isGLSL) {
-      c->dispatch_width = 8;
-      brw_wm_glsl_emit(brw, c);
-   }
-   else {
-      c->dispatch_width = 16;
-      brw_wm_non_glsl_emit(brw, c);
+   if (!brw_wm_fs_emit(brw, c)) {
+      /*
+       * Shader which use GLSL features such as flow control are handled
+       * differently from "simple" shaders.
+       */
+      if (fp->isGLSL) {
+	 c->dispatch_width = 8;
+	 brw_wm_glsl_emit(brw, c);
+      }
+      else {
+	 c->dispatch_width = 16;
+	 brw_wm_non_glsl_emit(brw, c);
+      }
    }
 
    if (INTEL_DEBUG & DEBUG_WM)

@@ -611,7 +611,7 @@ _mesa_update_depth_buffer(GLcontext *ctx,
 
    depthRb = fb->Attachment[attIndex].Renderbuffer;
 
-   if (depthRb && depthRb->_BaseFormat == GL_DEPTH_STENCIL) {
+   if (depthRb && _mesa_is_format_packed_depth_stencil(depthRb->Format)) {
       /* The attached depth buffer is a GL_DEPTH_STENCIL renderbuffer */
       if (!fb->_DepthBuffer
           || fb->_DepthBuffer->Wrapped != depthRb
@@ -652,7 +652,7 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 
    stencilRb = fb->Attachment[attIndex].Renderbuffer;
 
-   if (stencilRb && stencilRb->_BaseFormat == GL_DEPTH_STENCIL) {
+   if (stencilRb && _mesa_is_format_packed_depth_stencil(stencilRb->Format)) {
       /* The attached stencil buffer is a GL_DEPTH_STENCIL renderbuffer */
       if (!fb->_StencilBuffer
           || fb->_StencilBuffer->Wrapped != stencilRb

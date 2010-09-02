@@ -30,6 +30,7 @@
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
 #include "main/enums.h"
+#include "main/formats.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -136,7 +137,7 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
    }
 
-   mt->region = intel_region_alloc(intel,
+   mt->region = intel_region_alloc(intel->intelScreen,
 				   tiling,
 				   mt->cpp,
 				   mt->total_width,

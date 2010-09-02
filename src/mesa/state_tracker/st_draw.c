@@ -691,9 +691,6 @@ st_draw_vbo(GLcontext *ctx,
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
    cso_set_vertex_elements(st->cso_context, num_velements, velements);
 
-   if (num_vbuffers == 0 || num_velements == 0)
-      return;
-
    setup_index_buffer(ctx, ib, &ibuffer);
    pipe->set_index_buffer(pipe, &ibuffer);
 

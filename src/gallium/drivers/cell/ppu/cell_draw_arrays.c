@@ -78,20 +78,13 @@ cell_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
-   if (info->indexed && cell->index_buffer.buffer) {
+   if (info->indexed && cell->index_buffer.buffer)
       mapped_indices = cell_resource(cell->index_buffer.buffer)->data;
-      mapped_indices += cell->index_buffer.offset;
-   }
 
-   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
-                                        lp->index_buffer.index_size : 0,
-                                        info->index_bias,
-                                        info->min_index,
-                                        info->max_index,
-                                        mapped_indices);
+   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    /* draw! */
-   draw_arrays(draw, info->mode, info->start, info->count);
+   draw_vbo(draw, info);
 
    /*
     * unmap vertex/index buffers - will cause draw module to flush
@@ -100,7 +93,7 @@ cell_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (mapped_indices) {
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+      draw_set_mapped_index_buffer(draw, NULL);
    }
 
    /*

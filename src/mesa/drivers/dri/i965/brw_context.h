@@ -179,6 +179,16 @@ struct brw_fragment_program {
    GLbitfield tex_units_used;
 };
 
+struct brw_shader {
+   struct gl_shader base;
+
+   /** Shader IR transformed for native compile, at link time. */
+   struct exec_list *ir;
+};
+
+struct brw_shader_program {
+   struct gl_shader_program base;
+};
 
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state
@@ -654,7 +664,13 @@ struct brw_context
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;
-      drm_intel_bo *const_bo;
+      drm_intel_bo *const_bo; /* pull constant buffer. */
+      /**
+       *  This is the push constant BO on gen6.
+       *
+       * Pre-gen6, push constants live in the CURBE.
+       */
+      drm_intel_bo *push_const_bo;
    } wm;
 
 
@@ -686,7 +702,13 @@ struct brw_context
 
 #define BRW_PACKCOLOR8888(r,g,b,a)  ((r<<24) | (g<<16) | (b<<8) | a)
 
-
+struct brw_instruction_info {
+    char    *name;
+    int	    nsrc;
+    int	    ndst;
+    GLboolean is_arith;
+};
+extern const struct brw_instruction_info brw_opcodes[128];
 
 /*======================================================================
  * brw_vtbl.c

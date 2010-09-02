@@ -33,7 +33,7 @@
 
 /* for _mesa_share_state */
 #include "state_tracker/st_context.h"
-#include "main/context.h"
+#include "main/core.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"

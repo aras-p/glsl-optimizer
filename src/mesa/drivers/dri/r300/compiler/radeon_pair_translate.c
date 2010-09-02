@@ -230,6 +230,34 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 }
 
 
+static void check_opcode_support(struct r300_fragment_program_compiler *c,
+				 struct rc_sub_instruction *inst)
+{
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
+
+	if (opcode->HasDstReg) {
+		if (inst->DstReg.RelAddr) {
+			rc_error(&c->Base, "Fragment program does not support relative addressing "
+				 "of destination operands.\n");
+			return;
+		}
+
+		if (inst->SaturateMode == RC_SATURATE_MINUS_PLUS_ONE) {
+			rc_error(&c->Base, "Fragment program does not support signed Saturate.\n");
+			return;
+		}
+	}
+
+	for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
+		if (inst->SrcReg[i].RelAddr) {
+			rc_error(&c->Base, "Fragment program does not support relative addressing "
+				 " of source operands.\n");
+			return;
+		}
+	}
+}
+
+
 /**
  * Translate all ALU instructions into corresponding pair instructions,
  * performing no other changes.
@@ -248,6 +276,8 @@ void rc_pair_translate(struct r300_fragment_program_compiler *c)
 			continue;
 
 		struct rc_sub_instruction copy = inst->U.I;
+
+		check_opcode_support(c, &copy);
 
 		final_rewrite(&copy);
 		inst->Type = RC_INSTRUCTION_PAIR;

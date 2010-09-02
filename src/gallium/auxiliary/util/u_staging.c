@@ -1,3 +1,29 @@
+/**************************************************************************
+ *
+ * Copyright 2010 Luca Barbieri
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
 #include "util/u_staging.h"
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
@@ -8,7 +34,7 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
 {
    memset(template, 0, sizeof(struct pipe_resource));
    if(pt->target != PIPE_BUFFER && depth <= 1)
-      template->target = PIPE_TEXTURE_2D;
+      template->target = PIPE_TEXTURE_RECT;
    else
       template->target = pt->target;
    template->format = pt->format;
@@ -23,20 +49,16 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
 }
 
 struct util_staging_transfer *
-util_staging_transfer_new(struct pipe_context *pipe,
+util_staging_transfer_init(struct pipe_context *pipe,
            struct pipe_resource *pt,
            struct pipe_subresource sr,
            unsigned usage,
            const struct pipe_box *box,
-           bool direct)
+           bool direct, struct util_staging_transfer *tx)
 {
    struct pipe_screen *pscreen = pipe->screen;
-   struct util_staging_transfer *tx;
-   struct pipe_resource staging_resource_template;
 
-   tx = CALLOC_STRUCT(util_staging_transfer);
-   if (!tx)
-      return NULL;
+   struct pipe_resource staging_resource_template;
 
    pipe_resource_reference(&tx->base.resource, pt);
    tx->base.sr = sr;

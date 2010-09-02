@@ -354,7 +354,12 @@ void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf
     /* We currently don't handle decompression for 3D textures and cubemaps
      * correctly. */
     if (tex->desc.b.b.target != PIPE_TEXTURE_1D &&
-        tex->desc.b.b.target != PIPE_TEXTURE_2D)
+        tex->desc.b.b.target != PIPE_TEXTURE_2D &&
+        tex->desc.b.b.target != PIPE_TEXTURE_RECT)
+        return;
+
+    /* Cannot flush zmask of 16-bit zbuffers. */
+    if (util_format_get_blocksizebits(tex->desc.b.b.format) == 16)
         return;
 
     if (tex->zmask_mem[level])
@@ -373,23 +378,36 @@ void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf
     return;
 }
 
-void r300_hyperz_init_mm(struct r300_context *r300)
+boolean r300_hyperz_init_mm(struct r300_context *r300)
 {
     struct r300_screen* r300screen = r300->screen;
     int frag_pipes = r300screen->caps.num_frag_pipes;
 
-    if (r300screen->caps.hiz_ram)
-      r300->hiz_mm = u_mmInit(0, r300screen->caps.hiz_ram * frag_pipes);
-
     r300->zmask_mm = u_mmInit(0, r300screen->caps.zmask_ram * frag_pipes);
+    if (!r300->zmask_mm)
+      return FALSE;
+
+    if (r300screen->caps.hiz_ram) {
+      r300->hiz_mm = u_mmInit(0, r300screen->caps.hiz_ram * frag_pipes);
+      if (!r300->hiz_mm) {
+        u_mmDestroy(r300->zmask_mm);
+        r300->zmask_mm = NULL;
+        return FALSE;
+      }
+    }
+
+    return TRUE;
 }
 
 void r300_hyperz_destroy_mm(struct r300_context *r300)
 {
     struct r300_screen* r300screen = r300->screen;
 
-    if (r300screen->caps.hiz_ram)
+    if (r300screen->caps.hiz_ram) {
       u_mmDestroy(r300->hiz_mm);
+      r300->hiz_mm = NULL;
+    }
 
     u_mmDestroy(r300->zmask_mm);
+    r300->zmask_mm = NULL;
 }

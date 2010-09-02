@@ -55,6 +55,8 @@ _mesa_init_accum_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_accum */
 
+#include "main/compiler.h"
+
 #define _MESA_INIT_ACCUM_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void

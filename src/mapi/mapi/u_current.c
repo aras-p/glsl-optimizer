@@ -99,25 +99,25 @@ extern void (*__glapi_noop_table[])(void);
 /*@{*/
 #if defined(GLX_USE_TLS)
 
-__thread struct _glapi_table *_glapi_tls_Dispatch
+__thread struct mapi_table *u_current_table_tls
     __attribute__((tls_model("initial-exec")))
-    = (struct _glapi_table *) table_noop_array;
+    = (struct mapi_table *) table_noop_array;
 
-__thread void * _glapi_tls_Context
+__thread void *u_current_user_tls
     __attribute__((tls_model("initial-exec")));
 
-const struct _glapi_table *_glapi_Dispatch;
-const void *_glapi_Context;
+const struct mapi_table *u_current_table;
+const void *u_current_user;
 
 #else
 
-struct _glapi_table *_glapi_Dispatch =
-   (struct _glapi_table *) table_noop_array;
-void *_glapi_Context;
+struct mapi_table *u_current_table =
+   (struct mapi_table *) table_noop_array;
+void *u_current_user;
 
 #ifdef THREADS
-struct u_tsd _gl_DispatchTSD;
-static struct u_tsd ContextTSD;
+struct u_tsd u_current_table_tsd;
+static struct u_tsd u_current_user_tsd;
 static int ThreadSafe;
 #endif /* THREADS */
 
@@ -126,11 +126,11 @@ static int ThreadSafe;
 
 
 void
-_glapi_destroy_multithread(void)
+u_current_destroy(void)
 {
 #if defined(THREADS) && defined(WIN32_THREADS)
-   u_tsd_destroy(&_gl_DispatchTSD);
-   u_tsd_destroy(&ContextTSD);
+   u_tsd_destroy(&u_current_table_tsd);
+   u_tsd_destroy(&u_current_user_tsd);
 #endif
 }
 
@@ -138,10 +138,10 @@ _glapi_destroy_multithread(void)
 #if defined(THREADS) && !defined(GLX_USE_TLS)
 
 static void
-_glapi_init_multithread(void)
+u_current_init_tsd(void)
 {
-   u_tsd_init(&_gl_DispatchTSD);
-   u_tsd_init(&ContextTSD);
+   u_tsd_init(&u_current_table_tsd);
+   u_tsd_init(&u_current_user_tsd);
 }
 
 /**
@@ -162,7 +162,7 @@ u_mutex_declare_static(ThreadCheckMutex);
  * in order to test if multiple threads are being used.
  */
 void
-_glapi_check_multithread(void)
+u_current_init(void)
 {
    static unsigned long knownID;
    static int firstCall = 1;
@@ -172,15 +172,15 @@ _glapi_check_multithread(void)
 
    CHECK_MULTITHREAD_LOCK();
    if (firstCall) {
-      _glapi_init_multithread();
+      u_current_init_tsd();
 
       knownID = u_thread_self();
       firstCall = 0;
    }
    else if (knownID != u_thread_self()) {
       ThreadSafe = 1;
-      _glapi_set_dispatch(NULL);
-      _glapi_set_context(NULL);
+      u_current_set_internal(NULL);
+      u_current_set_user_internal(NULL);
    }
    CHECK_MULTITHREAD_UNLOCK();
 }
@@ -188,7 +188,7 @@ _glapi_check_multithread(void)
 #else
 
 void
-_glapi_check_multithread(void)
+u_current_init(void)
 {
 }
 
@@ -202,15 +202,17 @@ _glapi_check_multithread(void)
  * void from the real context pointer type.
  */
 void
-_glapi_set_context(void *context)
+u_current_set_user_internal(void *ptr)
 {
+   u_current_init();
+
 #if defined(GLX_USE_TLS)
-   _glapi_tls_Context = context;
+   u_current_user_tls = ptr;
 #elif defined(THREADS)
-   u_tsd_set(&ContextTSD, context);
-   _glapi_Context = (ThreadSafe) ? NULL : context;
+   u_tsd_set(&u_current_user_tsd, ptr);
+   u_current_user = (ThreadSafe) ? NULL : ptr;
 #else
-   _glapi_Context = context;
+   u_current_user = ptr;
 #endif
 }
 
@@ -220,16 +222,16 @@ _glapi_set_context(void *context)
  * void to the real context pointer type.
  */
 void *
-_glapi_get_context(void)
+u_current_get_user_internal(void)
 {
 #if defined(GLX_USE_TLS)
-   return _glapi_tls_Context;
+   return u_current_user_tls;
 #elif defined(THREADS)
    return (ThreadSafe)
-      ? u_tsd_get(&ContextTSD)
-      : _glapi_Context;
+      ? u_tsd_get(&u_current_user_tsd)
+      : u_current_user;
 #else
-   return _glapi_Context;
+   return u_current_user;
 #endif
 }
 
@@ -239,36 +241,37 @@ _glapi_get_context(void)
  * table (__glapi_noop_table).
  */
 void
-_glapi_set_dispatch(struct _glapi_table *dispatch)
+u_current_set_internal(struct mapi_table *tbl)
 {
+   u_current_init();
+
    stub_init_once();
 
-   if (!dispatch)
-      dispatch = (struct _glapi_table *) table_noop_array;
+   if (!tbl)
+      tbl = (struct mapi_table *) table_noop_array;
 
 #if defined(GLX_USE_TLS)
-   _glapi_tls_Dispatch = dispatch;
+   u_current_table_tls = tbl;
 #elif defined(THREADS)
-   u_tsd_set(&_gl_DispatchTSD, (void *) dispatch);
-   _glapi_Dispatch = (ThreadSafe) ? NULL : dispatch;
+   u_tsd_set(&u_current_table_tsd, (void *) tbl);
+   u_current_table = (ThreadSafe) ? NULL : tbl;
 #else
-   _glapi_Dispatch = dispatch;
+   u_current_table = tbl;
 #endif
 }
 
 /**
  * Return pointer to current dispatch table for calling thread.
  */
-struct _glapi_table *
-_glapi_get_dispatch(void)
+struct mapi_table *
+u_current_get_internal(void)
 {
 #if defined(GLX_USE_TLS)
-   return _glapi_tls_Dispatch;
+   return u_current_table_tls;
 #elif defined(THREADS)
-   return (ThreadSafe)
-      ? (struct _glapi_table *) u_tsd_get(&_gl_DispatchTSD)
-      : _glapi_Dispatch;
+   return (struct mapi_table *) ((ThreadSafe) ?
+         u_tsd_get(&u_current_table_tsd) : (void *) u_current_table);
 #else
-   return _glapi_Dispatch;
+   return u_current_table;
 #endif
 }

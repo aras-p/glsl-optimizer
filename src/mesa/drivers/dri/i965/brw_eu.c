@@ -85,6 +85,12 @@ void brw_set_saturate( struct brw_compile *p, GLuint value )
    p->current->header.saturate = value;
 }
 
+void brw_set_acc_write_control(struct brw_compile *p, GLuint value)
+{
+   if (p->brw->intel.gen >= 6)
+      p->current->header.acc_wr_control = value;
+}
+
 void brw_push_insn_state( struct brw_compile *p )
 {
    assert(p->current != &p->stack[BRW_EU_MAX_INSN_STACK-1]);

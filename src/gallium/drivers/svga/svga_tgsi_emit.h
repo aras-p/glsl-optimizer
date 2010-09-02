@@ -353,6 +353,7 @@ static INLINE ubyte svga_tgsi_sampler_type( struct svga_shader_emitter *emit,
    case PIPE_TEXTURE_1D:
       return SVGA3DSAMP_2D;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       return SVGA3DSAMP_2D;
    case PIPE_TEXTURE_3D:
       return SVGA3DSAMP_VOLUME;

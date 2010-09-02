@@ -35,9 +35,8 @@
 #include "util/u_memory.h"
 #include "lp_context.h"
 #include "lp_flush.h"
+#include "lp_fence.h"
 #include "lp_query.h"
-#include "lp_rast.h"
-#include "lp_rast_priv.h"
 #include "lp_state.h"
 
 
@@ -69,12 +68,7 @@ llvmpipe_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
    struct llvmpipe_query *pq = llvmpipe_query(q);
    /* query might still be in process if we never waited for the result */
    if (!pq->done) {
-     struct pipe_fence_handle *fence = NULL;
-     llvmpipe_flush(pipe, 0, &fence);
-     if (fence) {
-         pipe->screen->fence_finish(pipe->screen, fence, 0);
-         pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-      }
+      llvmpipe_finish(pipe, __FUNCTION__);
    }
 
    pipe_mutex_destroy(pq->mutex);
@@ -93,16 +87,11 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 
    if (!pq->done) {
       if (wait) {
-         struct pipe_fence_handle *fence = NULL;
-         llvmpipe_flush(pipe, 0, &fence);
-         if (fence) {
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
-            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-         }
+         llvmpipe_finish(pipe, __FUNCTION__);
       }
       /* this is a bit inconsequent but should be ok */
       else {
-         llvmpipe_flush(pipe, 0, NULL);
+         llvmpipe_flush(pipe, 0, NULL, __FUNCTION__);
       }
    }
 
@@ -125,12 +114,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
     * frame of rendering.
     */
    if (pq->binned) {
-      struct pipe_fence_handle *fence;
-      llvmpipe_flush(pipe, 0, &fence);
-      if (fence) {
-         pipe->screen->fence_finish(pipe->screen, fence, 0);
-         pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-      }
+      llvmpipe_finish(pipe, __FUNCTION__);
    }
 
    lp_setup_begin_query(llvmpipe->setup, pq);

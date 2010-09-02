@@ -33,6 +33,7 @@
 
 #include "r300_defines.h"
 
+struct winsys_handle;
 struct r300_winsys_screen;
 
 struct r300_winsys_buffer;

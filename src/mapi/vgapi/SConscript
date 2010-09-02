@@ -18,6 +18,7 @@ if env['platform'] != 'winddk':
 
 	env.Append(CPPDEFINES = [
 		'MAPI_ABI_HEADER=\\"vgapi/vgapi_tmp.h\\"',
+		'MAPI_DLL_EXPORTS',
 		'KHRONOS_DLL_EXPORTS',
 	])
 

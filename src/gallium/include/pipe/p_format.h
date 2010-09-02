@@ -29,8 +29,6 @@
 #ifndef PIPE_FORMAT_H
 #define PIPE_FORMAT_H
 
-#include "p_compiler.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

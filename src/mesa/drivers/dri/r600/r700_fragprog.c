@@ -362,6 +362,9 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 							     struct gl_fragment_program   *mesa_fp,
                                  GLcontext *ctx) 
 {
+    context_t *context = R700_CONTEXT(ctx);      
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
 	GLuint    unBit, shadow_unit;
@@ -372,6 +375,17 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
+
+    if(GL_TRUE == r700->bShaderUseMemConstant)
+    {
+        fp->r700AsmCode.bUseMemConstant = GL_TRUE;
+    }
+    else
+    {
+        fp->r700AsmCode.bUseMemConstant = GL_FALSE;
+    }
+
+    fp->r700AsmCode.unAsic = 7;
 
     if(mesa_fp->Base.InputsRead & FRAG_BIT_WPOS)
     {
@@ -479,6 +493,14 @@ void * r700GetActiveFpShaderBo(GLcontext * ctx)
 	                                   (ctx->FragmentProgram._Current);
 
     return fp->shaderbo;
+}
+
+void * r700GetActiveFpShaderConstBo(GLcontext * ctx)
+{
+    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+	                                   (ctx->FragmentProgram._Current);
+
+    return fp->constbo0;
 }
 
 GLboolean r700SetupFragmentProgram(GLcontext * ctx)
@@ -768,6 +790,17 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		        r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
 		        r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
 	    }
+
+        /* Load fp constants to gpu */
+        if( (GL_TRUE == r700->bShaderUseMemConstant) && (unNumParamData > 0) )
+        {
+            r600EmitShader(ctx,
+                           &(fp->constbo0),
+                           (GLvoid *)&(paramList->ParameterValues[0][0]),
+                           unNumParamData * 4,
+                           "FS Const");
+        }
+
     } else
 	    r700->ps.num_consts = 0;
 

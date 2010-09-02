@@ -305,11 +305,16 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 						      struct gl_vertex_program *mesa_vp)
 {
 	context_t *context = R700_CONTEXT(ctx);
+
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
 	struct r700_vertex_program *vp;
 	unsigned int i;
 
 	vp = calloc(1, sizeof(*vp));
 	vp->mesa_program = _mesa_clone_vertex_program(ctx, mesa_vp);
+
+    vp->constbo0 = NULL;
 
 	if (mesa_vp->IsPositionInvariant)
 	{
@@ -331,6 +336,18 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 
 	//Init_Program
 	Init_r700_AssemblerBase(SPT_VP, &(vp->r700AsmCode), &(vp->r700Shader) );
+
+    if(GL_TRUE == r700->bShaderUseMemConstant)
+    {
+        vp->r700AsmCode.bUseMemConstant = GL_TRUE;
+    }
+    else
+    {
+        vp->r700AsmCode.bUseMemConstant = GL_FALSE;
+    }
+
+    vp->r700AsmCode.unAsic = 7;
+
 	Map_Vertex_Program(ctx, vp, vp->mesa_program );
 
 	if(GL_FALSE == Find_Instruction_Dependencies_vp(vp, vp->mesa_program))
@@ -576,6 +593,17 @@ void * r700GetActiveVpShaderBo(GLcontext * ctx)
 	return NULL;
 }
 
+void * r700GetActiveVpShaderConstBo(GLcontext * ctx)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    struct r700_vertex_program *vp = context->selected_vp;;
+
+    if (vp)
+	return vp->constbo0;
+    else
+	return NULL;
+}
+
 GLboolean r700SetupVertexProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
@@ -600,6 +628,19 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
                        vp->r700Shader.uShaderBinaryDWORDSize,
                        "VS");
 
+        if(GL_TRUE == r700->bShaderUseMemConstant)
+        {
+            paramList = vp->mesa_program->Base.Parameters;
+            if(NULL != paramList)
+            {
+                unNumParamData = paramList->NumParameters;
+                r600AllocShaderConsts(ctx,
+                               &(vp->constbo0),                       
+                               unNumParamData *4*4,
+                               "VSCON");
+            }
+        }        
+
         vp->loaded = GL_TRUE;
     }
 
@@ -616,7 +657,9 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     r700->vs.SQ_PGM_RESOURCES_VS.u32All = 0;
     SETbit(r700->vs.SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
 
-    r700->vs.SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */
+    r700->vs.SQ_ALU_CONST_CACHE_VS_0.u32All = 0; /* set from buffer object. */
+    
+    r700->vs.SQ_PGM_START_VS.u32All = 0;
 
     SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
@@ -687,6 +730,16 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 		        r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
             }
 	    }
+
+        /* Load vp constants to gpu */
+        if(GL_TRUE == r700->bShaderUseMemConstant)
+        {
+            r600EmitShaderConsts(ctx,
+                           vp->constbo0,
+                           0,
+                           (GLvoid *)&(r700->vs.consts[0][0]),
+                           unNumParamData * 4 * 4);
+        }
     } else
 	    r700->vs.num_consts = 0;
 

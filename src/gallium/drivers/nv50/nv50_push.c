@@ -108,8 +108,9 @@ emit_vertex(struct push_context *ctx, unsigned n)
    int i;
 
    if (ctx->edgeflag_attr < 16) {
-      float *edgeflag = (uint8_t *)ctx->attr[ctx->edgeflag_attr].map +
-                        ctx->attr[ctx->edgeflag_attr].stride * n;
+      float *edgeflag = (float *)
+         ((uint8_t *)ctx->attr[ctx->edgeflag_attr].map +
+          ctx->attr[ctx->edgeflag_attr].stride * n);
 
       if (*edgeflag != ctx->edgeflag) {
          BEGIN_RING(chan, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);

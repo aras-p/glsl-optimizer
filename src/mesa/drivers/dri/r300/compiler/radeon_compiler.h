@@ -39,8 +39,11 @@ struct radeon_compiler {
 	char * ErrorMsg;
 
 	/* Hardware specification. */
-	unsigned is_r500;
+	unsigned is_r500:1;
 	unsigned max_temp_regs;
+
+	/* Whether to remove unused constants and empty holes in constant space. */
+	unsigned remove_unused_constants:1;
 
 	/**
 	 * Variables used internally, not be touched by callers

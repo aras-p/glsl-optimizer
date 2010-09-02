@@ -43,15 +43,18 @@ static int emit_framebuffer( struct svga_context *svga,
 {
    const struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
+   boolean reemit = !!(dirty & SVGA_NEW_COMMAND_BUFFER);
    unsigned i;
    enum pipe_error ret;
 
-   /* XXX: Need shadow state in svga->hw to eliminate redundant
-    * uploads, especially of NULL buffers.
+   /*
+    * We need to reemit non-null surface bindings, even when they are not
+    * dirty, to ensure that the resources are paged in.
     */
    
    for(i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {
-      if (curr->cbufs[i] != hw->cbufs[i]) {
+      if (curr->cbufs[i] != hw->cbufs[i] ||
+          (reemit && hw->cbufs[i])) {
          if (svga->curr.nr_fbs++ > 8)
             return PIPE_ERROR_OUT_OF_MEMORY;
 
@@ -64,7 +67,8 @@ static int emit_framebuffer( struct svga_context *svga,
    }
 
    
-   if (curr->zsbuf != hw->zsbuf) {
+   if (curr->zsbuf != hw->zsbuf ||
+       (reemit && hw->zsbuf)) {
       ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_DEPTH, curr->zsbuf);
       if (ret != PIPE_OK)
          return ret;
@@ -92,7 +96,8 @@ static int emit_framebuffer( struct svga_context *svga,
 struct svga_tracked_state svga_hw_framebuffer = 
 {
    "hw framebuffer state",
-   SVGA_NEW_FRAME_BUFFER,
+   SVGA_NEW_FRAME_BUFFER |
+   SVGA_NEW_COMMAND_BUFFER,
    emit_framebuffer
 };
 

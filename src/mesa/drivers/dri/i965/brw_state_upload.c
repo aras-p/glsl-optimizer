@@ -35,7 +35,6 @@
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_chipset.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which
@@ -129,7 +128,7 @@ const struct brw_tracked_state *gen6_atoms[] =
    &gen6_cc_state_pointers,
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
-   &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
+   &gen6_wm_constants, /* Before wm_surfaces and constant_buffer */
 
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
@@ -351,7 +350,7 @@ void brw_validate_state( struct brw_context *brw )
 
    brw_add_validated_bo(brw, intel->batch->buf);
 
-   if (IS_GEN6(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {
@@ -425,7 +424,7 @@ void brw_upload_state(struct brw_context *brw)
    const struct brw_tracked_state **atoms;
    int num_atoms;
 
-   if (IS_GEN6(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {

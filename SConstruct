@@ -206,28 +206,6 @@ Export('env')
 # TODO: Build several variants at the same time?
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
-if env['platform'] != common.default_platform:
-    # GLSL code has to be built twice -- one for the host OS, another for the target OS...
-
-    host_env = Environment(
-        # options are ignored
-        # default tool is used
-        tools = ['default', 'custom'],
-        toolpath = ['#scons'],	
-        ENV = os.environ,
-    )
-
-    host_env['platform'] = common.default_platform
-    host_env['machine'] = common.default_machine
-    host_env['debug'] = env['debug']
-
-    SConscript(
-        'src/glsl/SConscript',
-        variant_dir = os.path.join(env['build'], 'host'),
-        duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-        exports={'env':host_env},
-    )
-
 SConscript(
 	'src/SConscript',
 	variant_dir = env['build'],

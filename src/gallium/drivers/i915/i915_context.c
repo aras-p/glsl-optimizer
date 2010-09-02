@@ -66,18 +66,9 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    /*
     * Map index buffer, if present
     */
-   if (info->indexed && i915->index_buffer.buffer) {
-      char *indices = (char *) i915_buffer(i915->index_buffer.buffer)->data;
-      mapped_indices = (void *) (indices + i915->index_buffer.offset);
-   }
-
-   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
-                                        i915->index_buffer.index_size : 0,
-                                        info->index_bias,
-                                        info->min_index,
-                                        info->max_index,
-                                        mapped_indices);
-
+   if (info->indexed && i915->index_buffer.buffer)
+      mapped_indices = i915_buffer(i915->index_buffer.buffer)->data;
+   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
@@ -87,7 +78,7 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    /*
     * Do the drawing
     */
-   draw_arrays(i915->draw, info->mode, info->start, info->count);
+   draw_vbo(i915->draw, info);
 
    /*
     * unmap vertex/index buffers
@@ -96,9 +87,8 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
 
-   if (mapped_indices) {
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
-   }
+   if (mapped_indices)
+      draw_set_mapped_index_buffer(draw, NULL);
 }
 
 

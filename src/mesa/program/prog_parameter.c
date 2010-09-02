@@ -284,93 +284,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
    return pos;
 }
 
-
-/**
- * Add a uniform to the parameter list.
- * Note that if the uniform is an array, size may be greater than
- * what's implied by the datatype.
- * \param name  uniform's name
- * \param size  number of floats to allocate
- * \param datatype  GL_FLOAT_VEC3, GL_FLOAT_MAT4, etc.
- */
-GLint
-_mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype,
-                  const GLfloat *values)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   ASSERT(datatype != GL_NONE);
-   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_UNIFORM) {
-      ASSERT(paramList->Parameters[i].Size == size);
-      ASSERT(paramList->Parameters[i].DataType == datatype);
-      /* already in list */
-      return i;
-   }
-   else {
-      i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size, datatype, values, NULL, 0x0);
-      return i;
-   }
-}
-
-
-/**
- * Mark the named uniform as 'used'.
- */
-void
-_mesa_use_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name)
-{
-   GLuint i;
-   for (i = 0; i < paramList->NumParameters; i++) {
-      struct gl_program_parameter *p = paramList->Parameters + i;
-      if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) &&
-          strcmp(p->Name, name) == 0) {
-         p->Used = GL_TRUE;
-         /* Note that large uniforms may occupy several slots so we're
-          * not done searching yet.
-          */
-      }
-   }
-}
-
-
-/**
- * Add a sampler to the parameter list.
- * \param name  uniform's name
- * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
- * \param index  the sampler number (as seen in TEX instructions)
- * \return  sampler index (starting at zero) or -1 if error
- */
-GLint
-_mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
-      ASSERT(paramList->Parameters[i].Size == 1);
-      ASSERT(paramList->Parameters[i].DataType == datatype);
-      /* already in list */
-      return (GLint) paramList->ParameterValues[i][0];
-   }
-   else {
-      GLuint i;
-      const GLint size = 1; /* a sampler is basically a texture unit number */
-      GLfloat value[4];
-      GLint numSamplers = 0;
-      for (i = 0; i < paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Type == PROGRAM_SAMPLER)
-            numSamplers++;
-      }
-      value[0] = (GLfloat) numSamplers;
-      value[1] = value[2] = value[3] = 0.0F;
-      (void) _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                                 size, datatype, value, NULL, 0x0);
-      return numSamplers;
-   }
-}
-
-
 /**
  * Add parameter representing a varying variable.
  */
@@ -569,8 +482,10 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
    assert(vSize >= 1);
    assert(vSize <= 4);
 
-   if (!list)
-      return -1;
+   if (!list) {
+      *posOut = -1;
+      return GL_FALSE;
+   }
 
    for (i = 0; i < list->NumParameters; i++) {
       if (list->Parameters[i].Type == PROGRAM_CONSTANT) {
@@ -591,7 +506,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
              if (vSize == 1) {
                 /* look for v[0] anywhere within float[4] value */
                 GLuint j;
-                for (j = 0; j < 4; j++) {
+                for (j = 0; j < list->Parameters[i].Size; j++) {
                    if (list->ParameterValues[i][j] == v[0]) {
                       /* found it */
                       *posOut = i;
@@ -657,7 +572,6 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
                                     list->ParameterValues[i], NULL, 0x0);
       ASSERT(j >= 0);
       pCopy = clone->Parameters + j;
-      pCopy->Used = p->Used;
       pCopy->Flags = p->Flags;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {

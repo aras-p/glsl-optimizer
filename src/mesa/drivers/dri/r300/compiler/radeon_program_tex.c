@@ -117,8 +117,8 @@ int radeonTransformTEX(
 			struct rc_instruction * inst_rcp = NULL;
 			struct rc_instruction * inst_mad;
 			struct rc_instruction * inst_cmp;
-			unsigned tmp_texsample = rc_find_free_temporary(c);
-			unsigned tmp_sum = rc_find_free_temporary(c);
+			unsigned tmp_texsample;
+			unsigned tmp_sum;
 			unsigned tmp_recip_w = 0;
 			int pass, fail, tex;
 
@@ -126,6 +126,7 @@ int radeonTransformTEX(
 			struct rc_dst_register output_reg = inst->U.I.DstReg;
 
 			/* Redirect TEX to a new temp. */
+			tmp_texsample = rc_find_free_temporary(c);
 			inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst->U.I.DstReg.Index = tmp_texsample;
 			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
@@ -144,6 +145,7 @@ int radeonTransformTEX(
 			}
 
 			/* Perspective-divide r by W (if it's TXP) and add the texture sample (see below). */
+			tmp_sum = rc_find_free_temporary(c);
 			inst_mad = rc_insert_new_instruction(c, inst_rcp ? inst_rcp : inst);
 			inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst_mad->U.I.DstReg.Index = tmp_sum;
@@ -199,6 +201,8 @@ int radeonTransformTEX(
 			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
 			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
 			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
+
+			assert(tmp_texsample != tmp_sum && tmp_sum != tmp_recip_w);
 		}
 	}
 

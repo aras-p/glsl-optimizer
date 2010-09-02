@@ -149,7 +149,7 @@ struct st_context
    /** for glBitmap */
    struct {
       struct pipe_rasterizer_state rasterizer;
-      struct pipe_sampler_state sampler;
+      struct pipe_sampler_state samplers[2];
       enum pipe_format tex_format;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
@@ -182,6 +182,7 @@ struct st_context
 
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
+   enum pipe_texture_target internal_target;
    struct gen_mipmap_state *gen_mipmap;
    struct blit_state *blit;
 

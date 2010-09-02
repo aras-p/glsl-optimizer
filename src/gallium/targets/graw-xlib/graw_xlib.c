@@ -1,5 +1,6 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "pipe/p_screen.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "target-helpers/wrap_screen.h"

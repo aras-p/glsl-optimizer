@@ -316,43 +316,6 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 }
 
 
-/**
- * Load tile color from the framebuffer surface.
- * This is a bin command called during bin processing.
- */
-#if 0
-void
-lp_rast_load_color(struct lp_rasterizer_task *task,
-                   const union lp_rast_cmd_arg arg)
-{
-   struct lp_rasterizer *rast = task->rast;
-   unsigned buf;
-   enum lp_texture_usage usage;
-
-   LP_DBG(DEBUG_RAST, "%s at %u, %u\n", __FUNCTION__, x, y);
-
-   if (scene->has_color_clear)
-      usage = LP_TEX_USAGE_WRITE_ALL;
-   else
-      usage = LP_TEX_USAGE_READ_WRITE;
-
-   /* Get pointers to color tile(s).
-    * This will convert linear data to tiled if needed.
-    */
-   for (buf = 0; buf < rast->state.nr_cbufs; buf++) {
-      struct pipe_surface *cbuf = rast->curr_scene->fb.cbufs[buf];
-      struct llvmpipe_texture *lpt;
-      assert(cbuf);
-      lpt = llvmpipe_texture(cbuf->texture);
-      task->color_tiles[buf] = llvmpipe_get_texture_tile(lpt,
-                                                         cbuf->face + cbuf->zslice,
-                                                         cbuf->level,
-                                                         usage,
-                                                         task->x, task->y);
-      assert(task->color_tiles[buf]);
-   }
-}
-#endif
 
 
 /**

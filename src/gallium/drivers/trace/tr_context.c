@@ -885,7 +885,7 @@ trace_sampler_view_destroy(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, view);
 
-   pipe->sampler_view_destroy(pipe, view);
+   pipe_sampler_view_reference(&tr_view->sampler_view, NULL);
 
    trace_dump_call_end();
 
@@ -1002,7 +1002,7 @@ trace_context_set_index_buffer(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "set_index_buffer");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(index_buffer, ib);
+   trace_dump_arg(index_buffer, _ib);
 
    pipe->set_index_buffer(pipe, ib);
 
@@ -1063,7 +1063,10 @@ trace_context_clear(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, buffers);
-   trace_dump_arg_array(float, rgba, 4);
+   if (rgba)
+      trace_dump_arg_array(float, rgba, 4);
+   else
+      trace_dump_null();
    trace_dump_arg(float, depth);
    trace_dump_arg(uint, stencil);
 

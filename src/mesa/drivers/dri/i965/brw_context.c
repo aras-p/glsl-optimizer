@@ -144,7 +144,8 @@ GLboolean brwCreateContext( int api,
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
-      brw->has_compr4 = GL_TRUE;
+      if (intel->gen < 6)
+	  brw->has_compr4 = GL_TRUE;
       brw->has_aa_line_parameters = GL_TRUE;
       brw->has_pln = GL_TRUE;
   } else {
@@ -153,7 +154,11 @@ GLboolean brwCreateContext( int api,
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (intel->gen == 5) {
+   if (intel->gen >= 6) {
+      brw->urb.size = 1024;
+      brw->vs_max_threads = 60;
+      brw->wm_max_threads = 80;
+   } else if (intel->gen == 5) {
       brw->urb.size = 1024;
       brw->vs_max_threads = 72;
       brw->wm_max_threads = 12 * 6;

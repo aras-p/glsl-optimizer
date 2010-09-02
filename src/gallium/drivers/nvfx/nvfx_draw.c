@@ -9,6 +9,7 @@
 #include "draw/draw_pipe.h"
 
 #include "nvfx_context.h"
+#include "nvfx_resource.h"
 
 /* Simple, but crappy, swtnl path, hopefully we wont need to hit this very
  * often at all.  Uses "quadro style" vertex submission + a fixed vertex
@@ -39,30 +40,21 @@ nvfx_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 		unsigned idx = nvfx->swtnl.draw[i];
 		unsigned hw = nvfx->swtnl.hw[i];
 
+		WAIT_RING(chan, 5);
 		switch (nvfx->swtnl.emit[i]) {
 		case EMIT_OMIT:
 			break;
 		case EMIT_1F:
-			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_1F(hw), 1);
-			OUT_RING  (chan, fui(v->data[idx][0]));
+			nvfx_emit_vtx_attr(chan, hw, v->data[idx], 1);
 			break;
 		case EMIT_2F:
-			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_2F_X(hw), 2);
-			OUT_RING  (chan, fui(v->data[idx][0]));
-			OUT_RING  (chan, fui(v->data[idx][1]));
+			nvfx_emit_vtx_attr(chan, hw, v->data[idx], 2);
 			break;
 		case EMIT_3F:
-			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_3F_X(hw), 3);
-			OUT_RING  (chan, fui(v->data[idx][0]));
-			OUT_RING  (chan, fui(v->data[idx][1]));
-			OUT_RING  (chan, fui(v->data[idx][2]));
+			nvfx_emit_vtx_attr(chan, hw, v->data[idx], 3);
 			break;
 		case EMIT_4F:
-			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_4F_X(hw), 4);
-			OUT_RING  (chan, fui(v->data[idx][0]));
-			OUT_RING  (chan, fui(v->data[idx][1]));
-			OUT_RING  (chan, fui(v->data[idx][2]));
-			OUT_RING  (chan, fui(v->data[idx][3]));
+			nvfx_emit_vtx_attr(chan, hw, v->data[idx], 4);
 			break;
 		case 0xff:
 			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_4F_X(hw), 4);
@@ -231,15 +223,9 @@ nvfx_draw_render_stage(struct nvfx_context *nvfx)
 }
 
 void
-nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-			 struct pipe_resource *idxbuf,
-			 unsigned idxbuf_size, int idxbuf_bias,
-			 unsigned mode, unsigned start, unsigned count)
+nvfx_draw_vbo_swtnl(struct pipe_context *pipe, const struct pipe_draw_info* info)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-	struct pipe_transfer *ib_transfer = NULL;
-	struct pipe_transfer *cb_transfer = NULL;
 	unsigned i;
 	void *map;
 
@@ -247,47 +233,28 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 		return;
 	nvfx_state_emit(nvfx);
 
+	/* these must be passed without adding the offsets */
 	for (i = 0; i < nvfx->vtxbuf_nr; i++) {
-		map = pipe_buffer_map(pipe, nvfx->vtxbuf[i].buffer,
-                                      PIPE_TRANSFER_READ,
-				      &vb_transfer[i]);
+		map = nvfx_buffer(nvfx->vtxbuf[i].buffer)->data;
 		draw_set_mapped_vertex_buffer(nvfx->draw, i, map);
 	}
 
-	if (idxbuf) {
-		map = pipe_buffer_map(pipe, idxbuf,
-				      PIPE_TRANSFER_READ,
-				      &ib_transfer);
-		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, idxbuf_bias, map);
-	} else {
-		draw_set_mapped_element_buffer(nvfx->draw, 0, 0, NULL);
-	}
+	map = NULL;
+	if (info->indexed && nvfx->idxbuf.buffer)
+		map = nvfx_buffer(nvfx->idxbuf.buffer)->data;
+	draw_set_mapped_index_buffer(nvfx->draw, map);
 
 	if (nvfx->constbuf[PIPE_SHADER_VERTEX]) {
 		const unsigned nr = nvfx->constbuf_nr[PIPE_SHADER_VERTEX];
 
-		map = pipe_buffer_map(pipe,
-				      nvfx->constbuf[PIPE_SHADER_VERTEX],
-				      PIPE_TRANSFER_READ,
-				      &cb_transfer);
+		map = nvfx_buffer(nvfx->constbuf[PIPE_SHADER_VERTEX])->data;
 		draw_set_mapped_constant_buffer(nvfx->draw, PIPE_SHADER_VERTEX, 0,
                                                 map, nr);
 	}
 
-	draw_arrays(nvfx->draw, mode, start, count);
-
-	for (i = 0; i < nvfx->vtxbuf_nr; i++)
-		pipe_buffer_unmap(pipe, nvfx->vtxbuf[i].buffer, vb_transfer[i]);
-
-	if (idxbuf)
-		pipe_buffer_unmap(pipe, idxbuf, ib_transfer);
-
-	if (nvfx->constbuf[PIPE_SHADER_VERTEX])
-		pipe_buffer_unmap(pipe, nvfx->constbuf[PIPE_SHADER_VERTEX],
-				  cb_transfer);
+	draw_vbo(nvfx->draw, info);
 
 	draw_flush(nvfx->draw);
-	pipe->flush(pipe, 0, NULL);
 }
 
 static INLINE void
@@ -305,19 +272,19 @@ emit_attrib(struct nvfx_context *nvfx, unsigned hw, unsigned emit,
 void
 nvfx_vtxfmt_validate(struct nvfx_context *nvfx)
 {
-	struct nvfx_fragment_program *fp = nvfx->fragprog;
+	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	unsigned colour = 0, texcoords = 0, fog = 0, i;
 
 	/* Determine needed fragprog inputs */
-	for (i = 0; i < fp->info.num_inputs; i++) {
-		switch (fp->info.input_semantic_name[i]) {
+	for (i = 0; i < pfp->info.num_inputs; i++) {
+		switch (pfp->info.input_semantic_name[i]) {
 		case TGSI_SEMANTIC_POSITION:
 			break;
 		case TGSI_SEMANTIC_COLOR:
-			colour |= (1 << fp->info.input_semantic_index[i]);
+			colour |= (1 << pfp->info.input_semantic_index[i]);
 			break;
 		case TGSI_SEMANTIC_GENERIC:
-			texcoords |= (1 << fp->info.input_semantic_index[i]);
+			texcoords |= (1 << pfp->info.input_semantic_index[i]);
 			break;
 		case TGSI_SEMANTIC_FOG:
 			fog = 1;

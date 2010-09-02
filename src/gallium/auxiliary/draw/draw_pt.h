@@ -35,8 +35,6 @@
 
 #include "pipe/p_compiler.h"
 
-typedef unsigned (*pt_elt_func)( const void *elts, unsigned idx );
-
 struct draw_pt_middle_end;
 struct draw_context;
 struct draw_prim_info;
@@ -52,13 +50,18 @@ struct draw_vertex_info;
 /* The "front end" - prepare sets of fetch, draw elements for the
  * middle end.
  *
- * Currenly one version of this:
- *    - vcache - catchall implementation, decomposes to TRI/LINE/POINT prims
- * Later:
- *    - varray, varray_split
- *    - velement, velement_split
+ * The fetch elements are indices to the vertices.  The draw elements are
+ * indices to the fetched vertices.  When both arrays of elements are both
+ * linear, middle->run_linear is called;  When only the fetch elements are
+ * linear, middle->run_linear_elts is called;  Otherwise, middle->run is
+ * called.
  *
- * Currenly only using the vcache version.
+ * When the number of the draw elements exceeds max_vertex of the middle end,
+ * the draw elements (as well as the fetch elements) are splitted and the
+ * middle end is called multiple times.
+ *
+ * Currenly there is:
+ *    - vsplit - catchall implementation, splits big prims
  */
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
@@ -67,9 +70,7 @@ struct draw_pt_front_end {
 		    unsigned opt );
 
    void (*run)( struct draw_pt_front_end *,
-                pt_elt_func elt_func,
-                const void *elt_ptr,
-                int elt_bias,
+                unsigned start,
                 unsigned count );
 
    void (*finish)( struct draw_pt_front_end * );
@@ -79,6 +80,8 @@ struct draw_pt_front_end {
 
 /* The "middle end" - prepares actual hardware vertices for the
  * hardware backend.
+ *
+ * prim_flags is as defined by pipe_draw_info::flags.
  *
  * Currently two versions of this:
  *     - fetch, vertex shade, cliptest, prim-pipeline
@@ -94,11 +97,13 @@ struct draw_pt_middle_end {
                 const unsigned *fetch_elts,
                 unsigned fetch_count,
                 const ushort *draw_elts,
-                unsigned draw_count );
+                unsigned draw_count,
+                unsigned prim_flags );
 
    void (*run_linear)(struct draw_pt_middle_end *,
                       unsigned start,
-                      unsigned count);
+                      unsigned count,
+                      unsigned prim_flags );
 
    /* Transform all vertices in a linear range and then draw them with
     * the supplied element list.  May fail and return FALSE.
@@ -107,7 +112,8 @@ struct draw_pt_middle_end {
                             unsigned fetch_start,
                             unsigned fetch_count,
                             const ushort *draw_elts,
-                            unsigned draw_count );
+                            unsigned draw_count,
+                            unsigned prim_flags );
 
    int (*get_max_vertex_count)( struct draw_pt_middle_end * );
 
@@ -122,19 +128,11 @@ struct vbuf_render;
 struct vertex_header;
 
 
-/* Helper functions.
- */
-pt_elt_func draw_pt_elt_func( struct draw_context *draw );
-const void *draw_pt_elt_ptr( struct draw_context *draw,
-                             unsigned start );
-
 /* Frontends: 
  *
- * Currently only the general-purpose vcache implementation, could add
- * a special case for tiny vertex buffers.
+ * Currently only the general-purpose vsplit implementation.
  */
-struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
-struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
+struct draw_pt_front_end *draw_pt_vsplit(struct draw_context *draw);
 
 
 /* Middle-ends:
@@ -223,7 +221,9 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 			     struct draw_vertex_info *info );
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
-			      boolean bypass_clipping,
+			      boolean clip_xy,
+			      boolean clip_z,
+			      boolean clip_user,
 			      boolean bypass_viewport,
 			      boolean opengl,
 			      boolean need_edgeflags );
@@ -237,6 +237,7 @@ void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
  * Utils: 
  */
 void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr);
+unsigned draw_pt_trim_count(unsigned count, unsigned first, unsigned incr);
 
 
 #endif

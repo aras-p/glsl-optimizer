@@ -359,7 +359,7 @@ _mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
           dsrb->Format == MESA_FORMAT_X8_Z24);
    ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT);
 
-   z24rb = _mesa_new_renderbuffer(ctx, 0);
+   z24rb = ctx->Driver.NewRenderbuffer(ctx, 0);
    if (!z24rb)
       return NULL;
 
@@ -645,7 +645,7 @@ _mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx, struct gl_renderbuffer *dsrb)
           dsrb->Format == MESA_FORMAT_S8_Z24);
    ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT);
 
-   s8rb = _mesa_new_renderbuffer(ctx, 0);
+   s8rb = ctx->Driver.NewRenderbuffer(ctx, 0);
    if (!s8rb)
       return NULL;
 

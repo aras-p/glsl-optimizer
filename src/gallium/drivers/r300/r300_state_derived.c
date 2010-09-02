@@ -211,7 +211,7 @@ static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
 static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
                               enum r300_rs_col_write_type type)
 {
-    assert(type != WRITE_COLOR);
+    assert(type == WRITE_COLOR);
     rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
                     R300_RS_INST_COL_ADDR(fp_offset);
 }
@@ -592,6 +592,25 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->filter1 = sampler->filter1;
             texstate->border_color = sampler->border_color;
 
+            /* determine min/max levels */
+            max_level = MIN3(sampler->max_lod + view->base.first_level,
+                             tex->desc.b.b.last_level, view->base.last_level);
+            min_level = MIN2(sampler->min_lod + view->base.first_level,
+                             max_level);
+
+            if (tex->desc.is_npot && min_level > 0) {
+                /* Even though we do not implement mipmapping for NPOT
+                 * textures, we should at least honor the minimum level
+                 * which is allowed to be displayed. We do this by setting up
+                 * an i-th mipmap level as the zero level. */
+                r300_texture_setup_format_state(r300->screen, &tex->desc,
+                                                min_level,
+                                                &texstate->format);
+                texstate->format.tile_config |=
+                        tex->desc.offset_in_bytes[min_level] & 0xffffffe0;
+                assert((tex->desc.offset_in_bytes[min_level] & 0x1f) == 0);
+            }
+
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
@@ -654,12 +673,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                     texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
                 }
             } else {
-                /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
-                max_level = MIN3(sampler->max_lod + view->base.first_level,
-                                 tex->desc.b.b.last_level, view->base.last_level);
-                min_level = MIN2(sampler->min_lod + view->base.first_level,
-                                 max_level);
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
                 texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
             }

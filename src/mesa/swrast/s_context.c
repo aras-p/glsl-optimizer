@@ -950,7 +950,7 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
                   v->attrib[FRAG_ATTRIB_COL1][2],
                   v->attrib[FRAG_ATTRIB_COL1][3]);
       _mesa_debug(ctx, "fog %f\n", v->attrib[FRAG_ATTRIB_FOGC][0]);
-      _mesa_debug(ctx, "index %d\n", v->attrib[FRAG_ATTRIB_CI][0]);
+      _mesa_debug(ctx, "index %f\n", v->attrib[FRAG_ATTRIB_CI][0]);
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");
    }

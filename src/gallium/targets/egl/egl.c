@@ -155,24 +155,23 @@ load_pipe_module(struct pipe_module *pmod, const char *name)
    if (!pmod->name)
       return FALSE;
 
+   _eglLog(_EGL_DEBUG, "searching for pipe module %s", pmod->name);
    _eglSearchPathForEach(dlopen_pipe_module_cb, (void *) pmod);
    if (pmod->lib) {
       pmod->drmdd = (const struct drm_driver_descriptor *)
          util_dl_get_proc_address(pmod->lib, "driver_descriptor");
-      if (pmod->drmdd) {
-         if (pmod->drmdd->driver_name) {
-            /* driver name mismatch */
-            if (strcmp(pmod->drmdd->driver_name, pmod->name) != 0)
-               pmod->drmdd = NULL;
-         }
-         else {
-            /* swrast */
-            pmod->swrast_create_screen =
-               (struct pipe_screen *(*)(struct sw_winsys *))
-               util_dl_get_proc_address(pmod->lib, "swrast_create_screen");
-            if (!pmod->swrast_create_screen)
-               pmod->drmdd = NULL;
-         }
+
+      /* sanity check on the name */
+      if (pmod->drmdd && strcmp(pmod->drmdd->name, pmod->name) != 0)
+         pmod->drmdd = NULL;
+
+      /* swrast */
+      if (pmod->drmdd && !pmod->drmdd->driver_name) {
+         pmod->swrast_create_screen =
+            (struct pipe_screen *(*)(struct sw_winsys *))
+            util_dl_get_proc_address(pmod->lib, "swrast_create_screen");
+         if (!pmod->swrast_create_screen)
+            pmod->drmdd = NULL;
       }
 
       if (!pmod->drmdd) {

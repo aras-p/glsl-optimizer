@@ -199,6 +199,7 @@
 #define     V_0280A0_COLOR_16_16_16_16_FLOAT           0x00000020
 #define     V_0280A0_COLOR_32_32_32_32                 0x00000022
 #define     V_0280A0_COLOR_32_32_32_32_FLOAT           0x00000023
+#define     V_0280A0_COLOR_32_32_32_FLOAT              0x00000030
 #define   S_0280A0_ARRAY_MODE(x)                       (((x) & 0xF) << 8)
 #define   G_0280A0_ARRAY_MODE(x)                       (((x) >> 8) & 0xF)
 #define   C_0280A0_ARRAY_MODE                          0xFFFFF0FF
@@ -1316,4 +1317,11 @@
 #define   G_0286D4_PNT_SPRITE_TOP_1(x)                 (((x) >> 14) & 0x1)
 #define   C_0286D4_PNT_SPRITE_TOP_1                    0xFFFFBFFF
 
+#define SQ_TEX_INST_LD 0x03
+#define SQ_TEX_INST_GET_GRADIENTS_H 0x7
+#define SQ_TEX_INST_GET_GRADIENTS_V 0x8
+
+#define SQ_TEX_INST_SAMPLE 0x10
+#define SQ_TEX_INST_SAMPLE_L 0x11
+#define SQ_TEX_INST_SAMPLE_C 0x18
 #endif

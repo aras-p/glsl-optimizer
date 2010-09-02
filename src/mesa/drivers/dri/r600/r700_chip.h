@@ -43,6 +43,8 @@
 #define SETbit(x, bit)                 ( (x) |= (bit) )
 #define CLEARbit(x, bit)               ( (x) &= ~(bit) )
 
+#define GETbits(x, shift, mask)  ( ((x) & (mask)) >> (shift) )
+
 #define R700_TEXTURE_NUMBERUNITS 16
 #define R700_MAX_RENDER_TARGETS  8
 #define R700_MAX_VIEWPORTS       16
@@ -238,6 +240,9 @@ typedef struct _VS_STATE_STRUCT
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_VS       ;  /* 0xA234 */
 	GLboolean                         dirty;
 	int                             num_consts;
+
+    union UINT_FLOAT                SQ_ALU_CONST_CACHE_VS_0;
+
 	union UINT_FLOAT                consts[R700_MAX_DX9_CONSTS][4];
 } VS_STATE_STRUCT;
 
@@ -498,6 +503,8 @@ typedef struct _R700_CHIP_CONTEXT
 	radeonTexObj*                   textures[R700_TEXTURE_NUMBERUNITS];
 
 	GLboolean                       bEnablePerspective;
+
+    GLboolean                       bShaderUseMemConstant;
 
 } R700_CHIP_CONTEXT;
 

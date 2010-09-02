@@ -31,26 +31,36 @@
 
 #include "u_compiler.h"
 
+#ifdef _WIN32
+#ifdef MAPI_DLL_EXPORTS
+#define MAPI_EXPORT __declspec(dllexport)
+#else
+#define MAPI_EXPORT __declspec(dllimport)
+#endif
+#else /* _WIN32 */
+#define MAPI_EXPORT PUBLIC
+#endif
+
 typedef void (*mapi_proc)(void);
 
 struct mapi_table;
 
-PUBLIC void
+MAPI_EXPORT void
 mapi_init(const char *spec);
 
-PUBLIC mapi_proc
+MAPI_EXPORT mapi_proc
 mapi_get_proc_address(const char *name);
 
-PUBLIC struct mapi_table *
+MAPI_EXPORT struct mapi_table *
 mapi_table_create(void);
 
-PUBLIC void
+MAPI_EXPORT void
 mapi_table_destroy(struct mapi_table *tbl);
 
-PUBLIC void
+MAPI_EXPORT void
 mapi_table_fill(struct mapi_table *tbl, const mapi_proc *procs);
 
-PUBLIC void
+MAPI_EXPORT void
 mapi_table_make_current(const struct mapi_table *tbl);
 
 #endif /* _MAPI_H_ */

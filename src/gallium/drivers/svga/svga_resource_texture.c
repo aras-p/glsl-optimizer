@@ -583,7 +583,8 @@ svga_texture_from_handle(struct pipe_screen *screen,
    assert(screen);
 
    /* Only supports one type */
-   if (template->target != PIPE_TEXTURE_2D ||
+   if ((template->target != PIPE_TEXTURE_2D &&
+       template->target != PIPE_TEXTURE_RECT) ||
        template->last_level != 0 ||
        template->depth0 != 1) {
       return NULL;

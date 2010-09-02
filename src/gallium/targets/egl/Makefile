@@ -90,12 +90,19 @@ nouveau_LIBS := \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 
-# radeon pipe driver
-radeon_CPPFLAGS :=
-radeon_SYS := -ldrm -ldrm_radeon
-radeon_LIBS := \
+# r300 pipe driver
+r300_CPPFLAGS :=
+r300_SYS := -ldrm -ldrm_radeon
+r300_LIBS := \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
+
+# r600 pipe driver
+r600_CPPFLAGS :=
+r600_SYS := -ldrm -ldrm_radeon
+r600_LIBS := \
+	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
+	$(TOP)/src/gallium/drivers/r600/libr600.a
 
 # vmwgfx pipe driver
 vmwgfx_CPPFLAGS :=
@@ -119,17 +126,17 @@ endif
 
 # OpenGL state tracker
 GL_CPPFLAGS := -I$(TOP)/src/mesa $(API_DEFINES)
-GL_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
+GL_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 
 # OpenGL ES 1.x state tracker
 GLESv1_CM_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv1_CM_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
+GLESv1_CM_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
 GLESv1_CM_LIBS := $(TOP)/src/mesa/libes1gallium.a
 
 # OpenGL ES 2.x state tracker
 GLESv2_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv2_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
+GLESv2_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
 GLESv2_LIBS := $(TOP)/src/mesa/libes2gallium.a
 
 # OpenVG state tracker
@@ -151,7 +158,10 @@ ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += nouveau
 endif
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
-OUTPUTS += radeon
+OUTPUTS += r300
+endif
+ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
+OUTPUTS += r600
 endif
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += vmwgfx
@@ -188,8 +198,11 @@ $(OUTPUT_PATH)/$(PIPE_PREFIX)i965.so: pipe_i965.o $(i965_LIBS)
 $(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o $(nouveau_LIBS)
 	$(call mklib,nouveau)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)radeon.so: pipe_radeon.o $(radeon_LIBS)
-	$(call mklib,radeon)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)r300.so: pipe_r300.o $(r300_LIBS)
+	$(call mklib,r300)
+
+$(OUTPUT_PATH)/$(PIPE_PREFIX)r600.so: pipe_r600.o $(r600_LIBS)
+	$(call mklib,r600)
 
 $(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o $(vmwgfx_LIBS)
 	$(call mklib,vmwgfx)

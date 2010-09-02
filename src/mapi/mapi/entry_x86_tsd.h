@@ -41,12 +41,12 @@ __asm__(".text");
    func ":"
 
 #define STUB_ASM_CODE(slot)         \
-   "movl _glapi_Dispatch, %eax\n\t" \
+   "movl u_current_table, %eax\n\t" \
    "testl %eax, %eax\n\t"           \
    "je 1f\n\t"                      \
    "jmp *(4 * " slot ")(%eax)\n"    \
    "1:\n\t"                         \
-   "call _glapi_get_dispatch\n\t"   \
+   "call u_current_get_internal\n\t"\
    "jmp *(4 * " slot ")(%eax)"
 
 #define MAPI_TMP_STUB_ASM_GCC

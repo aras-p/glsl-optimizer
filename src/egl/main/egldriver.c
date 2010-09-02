@@ -21,6 +21,7 @@
 #include "eglstring.h"
 #include "eglsurface.h"
 #include "eglimage.h"
+#include "eglsync.h"
 #include "eglmutex.h"
 
 #if defined(_EGL_OS_UNIX)
@@ -722,6 +723,14 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.CreateImageKHR = _eglCreateImageKHR;
    drv->API.DestroyImageKHR = _eglDestroyImageKHR;
 #endif /* EGL_KHR_image_base */
+
+#ifdef EGL_KHR_reusable_sync
+   drv->API.CreateSyncKHR = _eglCreateSyncKHR;
+   drv->API.DestroySyncKHR = _eglDestroySyncKHR;
+   drv->API.ClientWaitSyncKHR = _eglClientWaitSyncKHR;
+   drv->API.SignalSyncKHR = _eglSignalSyncKHR;
+   drv->API.GetSyncAttribKHR = _eglGetSyncAttribKHR;
+#endif /* EGL_KHR_reusable_sync */
 }
 
 

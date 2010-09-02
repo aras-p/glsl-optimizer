@@ -46,8 +46,7 @@
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_uniform.h"
-#include "slang/slang_compile.h"
-#include "slang/slang_link.h"
+#include "talloc.h"
 
 
 /** Define this to enable shader substitution (see below) */
@@ -99,6 +98,7 @@ _mesa_init_shader_state(GLcontext *ctx)
    ctx->Shader.EmitContReturn = GL_TRUE;
    ctx->Shader.EmitCondCodes = GL_FALSE;
    ctx->Shader.EmitComments = GL_FALSE;
+   ctx->Shader.EmitNoIfs = GL_FALSE;
    ctx->Shader.Flags = get_shader_flags();
 
    /* Default pragma settings */
@@ -800,7 +800,7 @@ compile_shader(GLcontext *ctx, GLuint shaderObj)
    /* this call will set the sh->CompileStatus field to indicate if
     * compilation was successful.
     */
-   (void) _slang_compile(ctx, sh);
+   _mesa_glsl_compile_shader(ctx, sh);
 }
 
 
@@ -826,7 +826,7 @@ link_program(GLcontext *ctx, GLuint program)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   _slang_link(ctx, program, shProg);
+   _mesa_glsl_link_shader(ctx, shProg);
 
    /* debug code */
    if (0) {
@@ -1051,9 +1051,9 @@ validate_program(GLcontext *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         free(shProg->InfoLog);
+         talloc_free(shProg->InfoLog);
       }
-      shProg->InfoLog = _mesa_strdup(errMsg);
+      shProg->InfoLog = talloc_strdup(shProg, errMsg);
    }
 }
 

@@ -140,6 +140,10 @@
 #include "sparc/sparc.h"
 #endif
 
+#include "glsl_parser_extras.h"
+
+
+
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0;
 #endif
@@ -339,16 +343,16 @@ _mesa_destroy_visual( GLvisual *vis )
 static void
 dummy_enum_func(void)
 {
-   gl_buffer_index bi;
-   gl_colortable_index ci;
-   gl_face_index fi;
-   gl_frag_attrib fa;
-   gl_frag_result fr;
-   gl_texture_index ti;
-   gl_vert_attrib va;
-   gl_vert_result vr;
-   gl_geom_attrib ga;
-   gl_geom_result gr;
+   gl_buffer_index bi = BUFFER_FRONT_LEFT;
+   gl_colortable_index ci = COLORTABLE_PRECONVOLUTION;
+   gl_face_index fi = FACE_POS_X;
+   gl_frag_attrib fa = FRAG_ATTRIB_WPOS;
+   gl_frag_result fr = FRAG_RESULT_DEPTH;
+   gl_texture_index ti = TEXTURE_2D_ARRAY_INDEX;
+   gl_vert_attrib va = VERT_ATTRIB_POS;
+   gl_vert_result vr = VERT_RESULT_HPOS;
+   gl_geom_attrib ga = GEOM_ATTRIB_POSITION;
+   gl_geom_result gr = GEOM_RESULT_POS;
 
    (void) bi;
    (void) ci;
@@ -433,6 +437,11 @@ one_time_init( GLcontext *ctx )
       alreadyCalled = GL_TRUE;
    }
    _glthread_UNLOCK_MUTEX(OneTimeLock);
+
+   /* Hopefully atexit() is widely available.  If not, we may need some
+    * #ifdef tests here.
+    */
+   atexit(_mesa_destroy_shader_compiler);
 
    dummy_enum_func();
 }
@@ -1695,7 +1704,7 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
       /* using shaders */
       if (!ctx->Shader.CurrentProgram->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(shader not linked), where");
+                     "%s(shader not linked)", where);
          return GL_FALSE;
       }
 #if 0 /* not normally enabled */

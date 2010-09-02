@@ -214,6 +214,11 @@ void svga_context_flush( struct svga_context *svga,
 
    svga_screen_cache_flush(svgascreen, fence);
 
+   /* To force the reemission of rendertargets and texture bindings at
+    * the beginning of every command buffer.
+    */
+   svga->dirty |= SVGA_NEW_COMMAND_BUFFER;
+
    if (SVGA_DEBUG & DEBUG_SYNC) {
       if (fence)
          svga->pipe.screen->fence_finish( svga->pipe.screen, fence, 0);

@@ -30,6 +30,7 @@
 #include <radeon_drm.h>
 #include "radeon.h"
 #include "util/u_transfer.h"
+#include "r600_resource.h"
 
 /* Texture transfer. */
 struct r600_transfer {
@@ -38,11 +39,19 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
+	struct pipe_resource		*linear_texture;
+};
+
+enum chip_class {
+	R600,
+	R700,
+	EVERGREEN,
 };
 
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;
+	enum chip_class			chip_class;
 };
 
 static INLINE struct r600_screen *r600_screen(struct pipe_screen *screen)
@@ -62,7 +71,7 @@ unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 
-/* Texture transfer functions. */
+/* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
 						struct pipe_subresource sr,
@@ -74,7 +83,14 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer);
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
+int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
+int r600_texture_cb(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned cb, unsigned level);
+int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
+int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
+int r600_texture_viewport(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
 
+/* r600_blit.c */
+int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
 
 /* helpers */
 int r600_conv_pipe_format(unsigned pformat, unsigned *format);

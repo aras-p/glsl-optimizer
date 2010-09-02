@@ -30,6 +30,7 @@
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
 #include "radeon_rename_regs.h"
+#include "radeon_remove_constants.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -180,6 +181,13 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after dataflow passes");
 
+	if (c->Base.remove_unused_constants) {
+		rc_remove_unused_constants(&c->Base,
+					   &c->code->constants_remap_table);
+
+		debug_program_log(c, "after constants cleanup");
+	}
+
 	if(!c->Base.is_r500) {
 		/* This pass makes it easier for the scheduler to group TEX
 		 * instructions and reduces the chances of creating too
@@ -222,6 +230,16 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			r500FragmentProgramDump(c->code);
 		} else {
 			r300FragmentProgramDump(c->code);
+		}
+	}
+
+	/* Check the number of constants. */
+	if (!c->Base.Error) {
+		unsigned max = c->Base.is_r500 ? R500_PFS_NUM_CONST_REGS : R300_PFS_NUM_CONST_REGS;
+
+		if (c->Base.Program.Constants.Count > max) {
+			rc_error(&c->Base, "Too many constants. Max: %i, Got: %i\n",
+				 max, c->Base.Program.Constants.Count);
 		}
 	}
 }

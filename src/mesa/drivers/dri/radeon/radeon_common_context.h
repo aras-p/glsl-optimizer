@@ -244,6 +244,8 @@ struct radeon_tex_obj {
 	GLuint SQ_TEX_RESOURCE5;
 	GLuint SQ_TEX_RESOURCE6;
 
+    GLuint SQ_TEX_RESOURCE7;
+
 	GLuint SQ_TEX_SAMPLER0;
 	GLuint SQ_TEX_SAMPLER1;
 	GLuint SQ_TEX_SAMPLER2;

@@ -42,12 +42,18 @@
 #include "util/u_math.h"
 
 
-
+/**
+ * Helper union for packing pixel values.
+ * Will often contain values in formats which are too complex to be described
+ * in simple terms, hence might just effectively contain a number of bytes.
+ * Must be big enough to hold data for all formats (currently 256 bits).
+ */
 union util_color {
    ubyte ub;
    ushort us;
    uint ui;
    float f[4];
+   double d[4];
 };
 
 /**

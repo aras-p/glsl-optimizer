@@ -31,6 +31,7 @@
 #include "radeon_swizzle.h"
 #include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"
+#include "radeon_remove_constants.h"
 
 struct loop {
 	int BgnLoop;
@@ -465,7 +466,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 {
 	struct rc_instruction *rci;
 
-	struct loop * loops;
+	struct loop * loops = NULL;
 	int current_loop_depth = 0;
 	int loops_reserved = 0;
 
@@ -483,6 +484,21 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		/* Skip instructions writing to non-existing destination */
 		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
+
+		if (rc_get_opcode_info(vpi->Opcode)->HasDstReg) {
+			/* Relative addressing of destination operands is not supported yet. */
+			if (vpi->DstReg.RelAddr) {
+				rc_error(&compiler->Base, "Vertex program does not support relative "
+					 "addressing of destination operands (yet).\n");
+				return;
+			}
+
+			/* Neither is Saturate. */
+			if (vpi->SaturateMode != RC_SATURATE_NONE) {
+				rc_error(&compiler->Base, "Vertex program does not support the Saturate "
+					 "modifier (yet).\n");
+			}
+		}
 
 		if (compiler->code->length >= R500_VS_MAX_ALU_DWORDS ||
 		    (compiler->code->length >= R300_VS_MAX_ALU_DWORDS && !compiler->Base.is_r500)) {
@@ -543,10 +559,16 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		}
 		case RC_OPCODE_ENDLOOP:
 		{
-			struct loop * l = &loops[current_loop_depth - 1];
-			unsigned int act_addr = l->BgnLoop - 1;
-			unsigned int last_addr = (compiler->code->length / 4) - 1;
-			unsigned int ret_addr = l->BgnLoop;
+			struct loop * l;
+			unsigned int act_addr;
+			unsigned int last_addr;
+			unsigned int ret_addr;
+
+			assert(loops);
+			l = &loops[current_loop_depth - 1];
+			act_addr = l->BgnLoop - 1;
+			last_addr = (compiler->code->length / 4) - 1;
+			ret_addr = l->BgnLoop;
 
 			if (loops_reserved >= R300_VS_MAX_FC_OPS) {
 				rc_error(&compiler->Base,
@@ -624,10 +646,9 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	struct temporary_allocation * ta;
 	unsigned int i, j;
 
-	compiler->code->num_temporaries = 0;
 	memset(hwtemps, 0, sizeof(hwtemps));
 
-	/* Pass 1: Count original temporaries and allocate structures */
+	/* Pass 1: Count original temporaries. */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -645,12 +666,30 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 			}
 		}
 	}
+	compiler->code->num_temporaries = num_orig_temps;
 
+	/* Pass 2: If there is relative addressing of temporaries, we cannot change register indices. Give up. */
+	for (inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
+		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		if (opcode->HasDstReg)
+			if (inst->U.I.DstReg.RelAddr)
+				return;
+
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY &&
+			    inst->U.I.SrcReg[i].RelAddr) {
+				return;
+			}
+		}
+	}
+
+	compiler->code->num_temporaries = 0;
 	ta = (struct temporary_allocation*)memory_pool_malloc(&compiler->Base.Pool,
 			sizeof(struct temporary_allocation) * num_orig_temps);
 	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
 
-	/* Pass 2: Determine original temporary lifetimes */
+	/* Pass 3: Determine original temporary lifetimes */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		/* Instructions inside of loops need to use the ENDLOOP
@@ -685,7 +724,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 		}
 	}
 
-	/* Pass 3: Register allocation */
+	/* Pass 4: Register allocation */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -853,6 +892,76 @@ static int swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	return 1;
 }
 
+static void transform_negative_addressing(struct r300_vertex_program_compiler *c,
+					  struct rc_instruction *arl,
+					  struct rc_instruction *end,
+					  int min_offset)
+{
+	struct rc_instruction *inst, *add;
+	unsigned const_swizzle;
+
+	/* Transform ARL */
+	add = rc_insert_new_instruction(&c->Base, arl->Prev);
+	add->U.I.Opcode = RC_OPCODE_ADD;
+	add->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	add->U.I.DstReg.Index = rc_find_free_temporary(&c->Base);
+	add->U.I.DstReg.WriteMask = RC_MASK_X;
+	add->U.I.SrcReg[0] = arl->U.I.SrcReg[0];
+	add->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+	add->U.I.SrcReg[1].Index = rc_constants_add_immediate_scalar(&c->Base.Program.Constants,
+								     min_offset, &const_swizzle);
+	add->U.I.SrcReg[1].Swizzle = const_swizzle;
+
+	arl->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	arl->U.I.SrcReg[0].Index = add->U.I.DstReg.Index;
+	arl->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XXXX;
+
+	/* Rewrite offsets up to and excluding inst. */
+	for (inst = arl->Next; inst != end; inst = inst->Next) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		for (unsigned i = 0; i < opcode->NumSrcRegs; i++)
+			if (inst->U.I.SrcReg[i].RelAddr)
+				inst->U.I.SrcReg[i].Index -= min_offset;
+	}
+}
+
+static void rc_emulate_negative_addressing(struct r300_vertex_program_compiler *c)
+{
+	struct rc_instruction *inst, *lastARL = NULL;
+	int min_offset = 0;
+
+	for (inst = c->Base.Program.Instructions.Next; inst != &c->Base.Program.Instructions; inst = inst->Next) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		if (inst->U.I.Opcode == RC_OPCODE_ARL) {
+			if (lastARL != NULL && min_offset < 0)
+				transform_negative_addressing(c, lastARL, inst, min_offset);
+
+			lastARL = inst;
+			min_offset = 0;
+			continue;
+		}
+
+		for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
+			if (inst->U.I.SrcReg[i].RelAddr &&
+			    inst->U.I.SrcReg[i].Index < 0) {
+				/* ARL must precede any indirect addressing. */
+				if (lastARL == NULL) {
+					rc_error(&c->Base, "Vertex shader: Found relative addressing without ARL.");
+					return;
+				}
+
+				if (inst->U.I.SrcReg[i].Index < min_offset)
+					min_offset = inst->U.I.SrcReg[i].Index;
+			}
+		}
+	}
+
+	if (lastARL != NULL && min_offset < 0)
+		transform_negative_addressing(c, lastARL, inst, min_offset);
+}
+
 static void debug_program_log(struct r300_vertex_program_compiler* c, const char * where)
 {
 	if (c->Base.Debug) {
@@ -868,44 +977,56 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 };
 
 
-void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
+void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
 	struct emulate_loop_state loop_state;
 
-	compiler->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
+	c->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
-	addArtificialOutputs(compiler);
+	addArtificialOutputs(c);
 
-	debug_program_log(compiler, "before compilation");
+	debug_program_log(c, "before compilation");
 
-	if (compiler->Base.is_r500)
-		rc_transform_loops(&compiler->Base, &loop_state, R500_VS_MAX_ALU);
+	if (c->Base.is_r500)
+		rc_transform_loops(&c->Base, &loop_state, R500_VS_MAX_ALU);
 	else
-		rc_transform_loops(&compiler->Base, &loop_state, R300_VS_MAX_ALU);
+		rc_transform_loops(&c->Base, &loop_state, R300_VS_MAX_ALU);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after emulate loops");
+	debug_program_log(c, "after emulate loops");
 
-	if (!compiler->Base.is_r500) {
-		rc_emulate_branches(&compiler->Base);
-		debug_program_log(compiler, "after emulate branches");
+	if (!c->Base.is_r500) {
+		rc_emulate_branches(&c->Base);
+		if (c->Base.Error)
+			return;
+		debug_program_log(c, "after emulate branches");
 	}
 
-	if (compiler->Base.is_r500) {
+	rc_emulate_negative_addressing(c);
+
+	debug_program_log(c, "after negative addressing emulation");
+
+	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &r300_transform_trig_scale_vertex, 0 }
 		};
-		radeonLocalTransform(&compiler->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after native rewrite");
+		debug_program_log(c, "after native rewrite");
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(&compiler->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after native rewrite");
+		debug_program_log(c, "after native rewrite");
 
 		/* Note: This pass has to be done seperately from ALU rewrite,
 		 * because it needs to check every instruction.
@@ -913,9 +1034,11 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		struct radeon_program_transformation transformations2[] = {
 			{ &transform_nonnative_modifiers, 0 },
 		};
-		radeonLocalTransform(&compiler->Base, 1, transformations2);
+		radeonLocalTransform(&c->Base, 1, transformations2);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after emulate modifiers");
+		debug_program_log(c, "after emulate modifiers");
 	}
 
 	{
@@ -926,30 +1049,58 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		struct radeon_program_transformation transformations[] = {
 			{ &transform_source_conflicts, 0 },
 		};
-		radeonLocalTransform(&compiler->Base, 1, transformations);
+		radeonLocalTransform(&c->Base, 1, transformations);
+		if (c->Base.Error)
+			return;
 	}
 
-	debug_program_log(compiler, "after source conflict resolve");
+	debug_program_log(c, "after source conflict resolve");
 
-	rc_dataflow_deadcode(&compiler->Base, &dataflow_outputs_mark_used, compiler);
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_used, c);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after deadcode");
+	debug_program_log(c, "after deadcode");
 
-	rc_dataflow_swizzles(&compiler->Base);
+	rc_dataflow_swizzles(&c->Base);
+	if (c->Base.Error)
+		return;
 
-	allocate_temporary_registers(compiler);
+	debug_program_log(c, "after dataflow");
 
-	debug_program_log(compiler, "after dataflow");
+	allocate_temporary_registers(c);
+	if (c->Base.Error)
+		return;
 
-	translate_vertex_program(compiler);
+	debug_program_log(c, "after register allocation");
 
-	rc_constants_copy(&compiler->code->constants, &compiler->Base.Program.Constants);
+	if (c->Base.remove_unused_constants) {
+		rc_remove_unused_constants(&c->Base,
+					   &c->code->constants_remap_table);
+		if (c->Base.Error)
+			return;
 
-	compiler->code->InputsRead = compiler->Base.Program.InputsRead;
-	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
+		debug_program_log(c, "after constants cleanup");
+	}
 
-	if (compiler->Base.Debug) {
+	translate_vertex_program(c);
+	if (c->Base.Error)
+		return;
+
+	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
+
+	c->code->InputsRead = c->Base.Program.InputsRead;
+	c->code->OutputsWritten = c->Base.Program.OutputsWritten;
+
+	if (c->Base.Debug) {
 		fprintf(stderr, "Final vertex program code:\n");
-		r300_vertex_program_dump(compiler);
+		r300_vertex_program_dump(c);
+	}
+
+	/* Check the number of constants. */
+	if (!c->Base.Error &&
+	    c->Base.Program.Constants.Count > 256) {
+		rc_error(&c->Base, "Too many constants. Max: 256, Got: %i\n",
+			 c->Base.Program.Constants.Count);
 	}
 }

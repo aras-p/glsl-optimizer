@@ -3239,6 +3239,8 @@ exec_instruction(
 
          if (mach->CallStackTop == 0) {
             /* returning from main() */
+            mach->CondStackTop = 0;
+            mach->LoopStackTop = 0;
             *pc = -1;
             return;
          }
@@ -3767,6 +3769,9 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    }
 #endif
 
+   /* Strictly speaking, these assertions aren't really needed but they
+    * can potentially catch some bugs in the control flow code.
+    */
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);

@@ -30,18 +30,20 @@
 #define U_BLIT_H
 
 
+#include "pipe/p_compiler.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
    
-struct pipe_context;
-struct pipe_surface;
-struct pipe_resource;
 struct cso_context;
-
-
-struct blit_state;
+struct pipe_context;
+struct pipe_resource;
+struct pipe_sampler_view;
+struct pipe_subresource;
+struct pipe_surface;
 
 
 extern struct blit_state *

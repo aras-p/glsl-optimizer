@@ -101,6 +101,7 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
    dri_bo_release(&brw->wm.const_bo);
+   dri_bo_release(&brw->wm.push_const_bo);
    dri_bo_release(&brw->cc.prog_bo);
    dri_bo_release(&brw->cc.state_bo);
    dri_bo_release(&brw->cc.vp_bo);

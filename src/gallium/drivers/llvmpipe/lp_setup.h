@@ -85,7 +85,8 @@ lp_setup_fence( struct lp_setup_context *setup );
 void
 lp_setup_flush( struct lp_setup_context *setup,
                 unsigned flags,
-                struct pipe_fence_handle **fence);
+                struct pipe_fence_handle **fence,
+                const char *reason);
 
 
 void
@@ -98,6 +99,16 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              boolean front_is_ccw,
                              boolean scissor,
                              boolean gl_rasterization_rules );
+
+void 
+lp_setup_set_line_state( struct lp_setup_context *setup,
+                         float line_width);
+
+void 
+lp_setup_set_point_state( struct lp_setup_context *setup,
+                          float point_size,                          
+                          boolean point_size_per_vertex,
+                          uint sprite);
 
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,

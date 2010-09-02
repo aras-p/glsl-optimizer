@@ -108,7 +108,7 @@ typedef enum AddressMode
 typedef enum SrcRegisterType 
 {
     SRC_REG_TEMPORARY      = 0,
-    SRC_REG_INPUT          = 1,
+    SRC_REG_GPR            = 1,
     SRC_REG_CONSTANT       = 2,
     SRC_REG_ALT_TEMPORARY  = 3,
     SRC_REC_LITERAL        = 4, 
@@ -464,6 +464,10 @@ typedef struct r700_AssemblerBase
     GLuint             uiCurInst;
     GLubyte SamplerUnits[MAX_SAMPLERS];
     GLboolean   bR6xx;
+
+    /* TODO : merge bR6xx */
+    GLuint  unAsic;
+
     /* helper to decide which type of instruction to assemble */
     GLboolean is_tex;
     /* we inserted helper intructions and need barrier on next TEX ins */ 
@@ -489,6 +493,9 @@ typedef struct r700_AssemblerBase
 
     GLuint    shadow_regs[R700_MAX_TEXTURE_UNITS];
 
+    GLboolean bUseMemConstant;
+    GLuint    kcacheUsed;        
+
 } r700_AssemblerBase;
 
 //Internal use
@@ -511,6 +518,8 @@ GLboolean is_reduction_opcode(PVSDWORD * dest);
 GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size);
 
 unsigned int r700GetNumOperands(GLuint opcode, GLuint nIsOp3);
+
+unsigned int EG_GetNumOperands(GLuint opcode, GLuint nIsOp3);
 
 GLboolean IsTex(gl_inst_opcode Opcode);
 GLboolean IsAlu(gl_inst_opcode Opcode);
@@ -535,6 +544,18 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
                                        GLboolean           normalize,
                                        GLenum              format,
                                        VTX_FETCH_METHOD  * pFetchMethod);
+
+GLboolean EG_assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
+                                       GLuint              destination_register,								       
+                                       GLenum              type,
+                                       GLint               size,
+                                       GLubyte             element,
+                                       GLuint              _signed,
+                                       GLboolean           normalize,
+                                       GLenum              format,
+                                       VTX_FETCH_METHOD  * pFetchMethod);
+//-----------------------
+
 GLboolean cleanup_vfetch_instructions(r700_AssemblerBase* pAsm);
 GLuint gethelpr(r700_AssemblerBase* pAsm);
 void resethelpr(r700_AssemblerBase* pAsm);
@@ -553,8 +574,10 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
 void initialize(r700_AssemblerBase *pAsm);
 GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
                            int                  source_index,
-                           PVSSRC*              pSource,
-                           BITS                 scalar_channel_index);
+                           PVSSRC*              pSource,                           
+                           BITS                 scalar_channel_index,
+                           r700_AssemblerBase  *pAsm);
+
 GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
                               R700ALUInstruction* alu_instruction_ptr,
                               GLuint              contiguous_slots_needed);
@@ -625,6 +648,7 @@ GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode);
 GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode);
 
 GLboolean assemble_SLT(r700_AssemblerBase *pAsm);
+GLboolean assemble_SSG(r700_AssemblerBase *pAsm);
 GLboolean assemble_STP(r700_AssemblerBase *pAsm);
 GLboolean assemble_TEX(r700_AssemblerBase *pAsm);
 GLboolean assemble_XPD(r700_AssemblerBase *pAsm);
@@ -663,6 +687,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
                      COMPILED_SUB * pCompiledSub,                                            
                      GLshort uOutReg,
                      GLshort uNumValidSrc);
+GLboolean EG_add_ps_interp(r700_AssemblerBase* pAsm);
 
 //Interface
 GLboolean AssembleInstr(GLuint uiFirstInst,

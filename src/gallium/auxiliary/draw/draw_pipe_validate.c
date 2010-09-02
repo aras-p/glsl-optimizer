@@ -265,7 +265,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
 
    /* Clip stage
     */
-   if (!draw->bypass_clipping)
+   if (draw->clip_xy || draw->clip_z || draw->clip_user)
    {
       draw->pipeline.clip->next = next;
       next = draw->pipeline.clip;

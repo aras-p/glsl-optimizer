@@ -149,7 +149,6 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
    }
    if (dxtlibhandle) {
       ctx->Mesa_DXTn = GL_TRUE;
-      _mesa_warning(ctx, "software DXTn compression/decompression available");
    }
 #else
    (void) ctx;

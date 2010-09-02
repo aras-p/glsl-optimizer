@@ -200,8 +200,10 @@ static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
    }
    mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
    assert(LLVMTypeOf(val) == mask->int_vec_type);
-   mask->cond_mask = val;
-
+   mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
+                                  mask->cond_mask,
+                                  val,
+                                  "");
    lp_exec_mask_update(mask);
 }
 
@@ -802,7 +804,7 @@ emit_store(
 
    case TGSI_FILE_PREDICATE:
       lp_exec_mask_store(&bld->exec_mask, pred, value,
-                         bld->preds[index][chan_index]);
+                         bld->preds[reg->Register.Index][chan_index]);
       break;
 
    default:

@@ -73,6 +73,7 @@
 
 #define PCI_CHIP_SANDYBRIDGE		0x0102
 #define PCI_CHIP_SANDYBRIDGE_M		0x0106
+#define PCI_CHIP_SANDYBRIDGE_M_D0	0x0126
 
 #define IS_MOBILE(devid)	(devid == PCI_CHIP_I855_GM || \
 				 devid == PCI_CHIP_I915_GM || \
@@ -119,7 +120,8 @@
 #define IS_IRONLAKE(devid)	IS_GEN5(devid)
 
 #define IS_GEN6(devid)		(devid == PCI_CHIP_SANDYBRIDGE || \
-				 devid == PCI_CHIP_SANDYBRIDGE_M)
+				 devid == PCI_CHIP_SANDYBRIDGE_M || \
+				 devid == PCI_CHIP_SANDYBRIDGE_M_D0)
 
 #define IS_965(devid)		(IS_GEN4(devid) || \
 				 IS_G4X(devid) || \

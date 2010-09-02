@@ -31,6 +31,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "pipe/p_state.h"
 
 
 static INLINE void

@@ -36,6 +36,7 @@
 #include "program/program.h"
 #include "program/programopt.h"
 #include "tnl/tnl.h"
+#include "talloc.h"
 
 #include "brw_context.h"
 #include "brw_wm.h"
@@ -114,10 +115,7 @@ shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
    shader = _mesa_lookup_shader_program(ctx, prog->Id);
 
    if (shader) {
-      if (shader->InfoLog) {
-	 free(shader->InfoLog);
-      }
-      shader->InfoLog = _mesa_strdup(msg);
+      shader->InfoLog = talloc_strdup_append(shader->InfoLog, msg);
       shader->LinkStatus = GL_FALSE;
    }
 }
@@ -170,6 +168,9 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
     * See piglit glsl-{vs,fs}-functions-[23] tests.
     */
    for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      int r;
+
       if (prog->Instructions[i].Opcode == OPCODE_CAL) {
 	 shader_error(ctx, prog,
 		      "i965 driver doesn't yet support uninlined function "
@@ -177,16 +178,28 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 		      "the end of the function to work around it.\n");
 	 return GL_FALSE;
       }
-      if (prog->Instructions[i].DstReg.RelAddr &&
-	  prog->Instructions[i].DstReg.File == PROGRAM_INPUT) {
+
+      if (prog->Instructions[i].Opcode == OPCODE_RET) {
 	 shader_error(ctx, prog,
-		      "Variable indexing of shader inputs unsupported\n");
+		      "i965 driver doesn't yet support \"return\" "
+		      "from main().\n");
 	 return GL_FALSE;
       }
-      if (prog->Instructions[i].DstReg.RelAddr &&
+
+      for (r = 0; r < _mesa_num_inst_src_regs(inst->Opcode); r++) {
+	 if (prog->Instructions[i].SrcReg[r].RelAddr &&
+	     prog->Instructions[i].SrcReg[r].File == PROGRAM_INPUT) {
+	    shader_error(ctx, prog,
+			 "Variable indexing of shader inputs unsupported\n");
+	    return GL_FALSE;
+	 }
+      }
+
+      if (target == GL_FRAGMENT_PROGRAM_ARB &&
+	  prog->Instructions[i].DstReg.RelAddr &&
 	  prog->Instructions[i].DstReg.File == PROGRAM_OUTPUT) {
 	 shader_error(ctx, prog,
-		      "Variable indexing of shader outputs unsupported\n");
+		      "Variable indexing of FS outputs unsupported\n");
 	 return GL_FALSE;
       }
       if (target == GL_FRAGMENT_PROGRAM_ARB) {
@@ -218,5 +231,10 @@ void brwInitFragProgFuncs( struct dd_function_table *functions )
    functions->DeleteProgram = brwDeleteProgram;
    functions->IsProgramNative = brwIsProgramNative;
    functions->ProgramStringNotify = brwProgramStringNotify;
+
+   functions->NewShader = brw_new_shader;
+   functions->NewShaderProgram = brw_new_shader_program;
+   functions->CompileShader = brw_compile_shader;
+   functions->LinkShader = brw_link_shader;
 }
 

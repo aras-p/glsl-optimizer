@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 #include "util/u_string.h"
 #include "draw/draw_context.h"
 #include "lp_flush.h"
@@ -45,14 +46,15 @@
 void
 llvmpipe_flush( struct pipe_context *pipe,
                 unsigned flags,
-                struct pipe_fence_handle **fence )
+                struct pipe_fence_handle **fence,
+                const char *reason)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    draw_flush(llvmpipe->draw);
 
    /* ask the setup module to flush */
-   lp_setup_flush(llvmpipe->setup, flags, fence);
+   lp_setup_flush(llvmpipe->setup, flags, fence, reason);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
@@ -76,6 +78,17 @@ llvmpipe_flush( struct pipe_context *pipe,
    }
 }
 
+void
+llvmpipe_finish( struct pipe_context *pipe,
+                 const char *reason )
+{
+   struct pipe_fence_handle *fence = NULL;
+   llvmpipe_flush(pipe, 0, &fence, reason);
+   if (fence) {
+      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+   }
+}
 
 /**
  * Flush context if necessary.
@@ -93,7 +106,8 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
-                        boolean do_not_block)
+                        boolean do_not_block,
+                        const char *reason)
 {
    unsigned referenced;
 
@@ -106,31 +120,16 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
          /*
           * Flush and wait.
           */
-
-         struct pipe_fence_handle *fence = NULL;
-
          if (do_not_block)
             return FALSE;
 
-         /*
-          * Do the unswizzling in parallel.
-          *
-          * XXX: Don't abuse the PIPE_FLUSH_FRAME flag for this.
-          */
-         flush_flags |= PIPE_FLUSH_FRAME;
-
-         llvmpipe_flush(pipe, flush_flags, &fence);
-
-         if (fence) {
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
-            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-         }
+         llvmpipe_finish(pipe, reason);
       } else {
          /*
           * Just flush.
           */
 
-         llvmpipe_flush(pipe, flush_flags, NULL);
+         llvmpipe_flush(pipe, flush_flags, NULL, reason);
       }
    }
 

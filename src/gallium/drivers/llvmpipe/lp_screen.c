@@ -61,6 +61,8 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "show_tiles",    DEBUG_SHOW_TILES, NULL },
    { "show_subtiles", DEBUG_SHOW_SUBTILES, NULL },
    { "counters", DEBUG_COUNTERS, NULL },
+   { "scene", DEBUG_SCENE, NULL },
+   { "fence", DEBUG_FENCE, NULL },
    DEBUG_NAMED_VALUE_END
 };
 #endif
@@ -87,7 +89,14 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_VERTEX_SAMPLERS;
+      /* At this time, the draw module and llvmpipe driver only
+       * support vertex shader texture lookups when LLVM is enabled in
+       * the draw module.
+       */
+      if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
+         return PIPE_MAX_VERTEX_SAMPLERS;
+      else
+         return 0;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
@@ -230,6 +239,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    assert(target == PIPE_BUFFER ||
           target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
+          target == PIPE_TEXTURE_RECT ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 
@@ -314,6 +324,51 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
 
 
 
+
+/**
+ * Fence reference counting.
+ */
+static void
+llvmpipe_fence_reference(struct pipe_screen *screen,
+                         struct pipe_fence_handle **ptr,
+                         struct pipe_fence_handle *fence)
+{
+   struct lp_fence **old = (struct lp_fence **) ptr;
+   struct lp_fence *f = (struct lp_fence *) fence;
+
+   lp_fence_reference(old, f);
+}
+
+
+/**
+ * Has the fence been executed/finished?
+ */
+static int
+llvmpipe_fence_signalled(struct pipe_screen *screen,
+                         struct pipe_fence_handle *fence,
+                         unsigned flag)
+{
+   struct lp_fence *f = (struct lp_fence *) fence;
+   return lp_fence_signalled(f);
+}
+
+
+/**
+ * Wait for the fence to finish.
+ */
+static int
+llvmpipe_fence_finish(struct pipe_screen *screen,
+                      struct pipe_fence_handle *fence_handle,
+                      unsigned flag)
+{
+   struct lp_fence *f = (struct lp_fence *) fence_handle;
+
+   lp_fence_wait(f);
+   return 0;
+}
+
+
+
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no llvmpipe_screen).
@@ -351,9 +406,11 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
+   screen->base.fence_reference = llvmpipe_fence_reference;
+   screen->base.fence_signalled = llvmpipe_fence_signalled;
+   screen->base.fence_finish = llvmpipe_fence_finish;
 
    llvmpipe_init_screen_resource_funcs(&screen->base);
-   llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
 

@@ -143,6 +143,20 @@ src_vector(struct i915_fragment_program *p,
       }
       break;
 
+   case PROGRAM_OUTPUT:
+      switch (source->Index) {
+      case FRAG_RESULT_COLOR:
+	 src = UREG(REG_TYPE_OC, 0);
+	 break;
+      case FRAG_RESULT_DEPTH:
+	 src = UREG(REG_TYPE_OD, 0);
+	 break;
+      default:
+	 i915_program_error(p, "Bad source->Index: %d", source->Index);
+	 return 0;
+      }
+      break;
+
       /* Various paramters and env values.  All emitted to
        * hardware as program constants.
        */
@@ -470,6 +484,18 @@ upload_program(struct i915_fragment_program *p)
 			 swizzle(consts1, W, W, W, W),
 			 swizzle(tmp, Y, Y, Y, Y),
 			 swizzle(tmp, X, X, X, X));
+         break;
+
+      case OPCODE_DP2:
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+         src1 = src_vector(p, &inst->SrcReg[1], program);
+	 i915_emit_arith(p,
+			 A0_DP3,
+                         get_result_vector(p, inst),
+                         get_result_flags(inst), 0,
+			 swizzle(src0, X, Y, ZERO, ZERO),
+			 swizzle(src1, X, Y, ZERO, ZERO),
+			 0);
          break;
 
       case OPCODE_DP3:
@@ -955,6 +981,41 @@ upload_program(struct i915_fragment_program *p)
 			 dst,
 			 tmp,
 			 0);
+         break;
+
+      case OPCODE_SSG:
+	 dst = get_result_vector(p, inst);
+	 flags = get_result_flags(inst);
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+	 tmp = i915_get_utemp(p);
+
+	 /* tmp = (src < 0.0) */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 tmp,
+			 flags, 0,
+			 src0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+			 0);
+
+	 /* dst = (0.0 < src) */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 dst,
+			 flags, 0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+			 src0,
+			 0);
+
+	 /* dst = (src > 0.0) - (src < 0.0) */
+	 i915_emit_arith(p,
+			 A0_ADD,
+			 dst,
+			 flags, 0,
+			 dst,
+			 negate(tmp, 1, 1, 1, 1),
+			 0);
+
          break;
 
       case OPCODE_SUB:

@@ -31,8 +31,6 @@
 #ifndef __SSE_H__
 #define __SSE_H__
 
-#include "math/m_xform.h"
-
 void _mesa_init_sse_transform_asm( void );
 
 #endif

@@ -301,37 +301,10 @@ static struct pipe_resource *
 alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
               enum pipe_format texFormat)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_resource *pt;
-   int ptw, pth;
 
-   ptw = width;
-   pth = height;
-
-   /* Need to use POT texture? */
-   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
-      int l2pt, maxSize;
-
-      l2pt = util_logbase2(width);
-      if (1 << l2pt != width) {
-         ptw = 1 << (l2pt + 1);
-      }
-
-      l2pt = util_logbase2(height);
-      if (1 << l2pt != height) {
-         pth = 1 << (l2pt + 1);
-      }
-
-      /* Check against maximum texture size */
-      maxSize = 1 << (pipe->screen->get_param(pipe->screen,
-                               PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
-      assert(ptw <= maxSize);
-      assert(pth <= maxSize);
-   }
-
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, texFormat, 0,
-                          ptw, pth, 1, PIPE_BIND_SAMPLER_VIEW);
+   pt = st_texture_create(st, st->internal_target, texFormat, 0,
+                          width, height, 1, PIPE_BIND_SAMPLER_VIEW);
 
    return pt;
 }
@@ -536,6 +509,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    struct cso_context *cso = st->cso_context;
    GLfloat x0, y0, x1, y1;
    GLsizei maxSize;
+   boolean normalized = sv->texture->target != PIPE_TEXTURE_RECT;
 
    /* limit checks */
    /* XXX if DrawPixels image is larger than max texture size, break
@@ -579,7 +553,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.normalized_coords = 1;
+      sampler.normalized_coords = normalized;
 
       cso_single_sampler(cso, 0, &sampler);
       if (st->pixel_xfer.pixelmap_enabled) {
@@ -635,8 +609,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-             (GLfloat) width / sv->texture->width0,
-             (GLfloat) height / sv->texture->height0);
+             normalized ? ((GLfloat) width / sv->texture->width0) : (GLfloat)width,
+             normalized ? ((GLfloat) height / sv->texture->height0) : (GLfloat)height);
 
    /* restore state */
    cso_restore_rasterizer(cso);
@@ -1002,7 +976,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE_2D, sample_count,
+   if (screen->is_format_supported(screen, srcFormat, st->internal_target, sample_count,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       texFormat = srcFormat;
    }
@@ -1010,13 +984,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
-                                      PIPE_TEXTURE_2D, sample_count,
+                                      st->internal_target, sample_count,
                                       PIPE_BIND_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(screen, GL_RGBA, PIPE_TEXTURE_2D, 
+         texFormat = st_choose_format(screen, GL_RGBA, st->internal_target,
                                       sample_count, PIPE_BIND_SAMPLER_VIEW);
          assert(texFormat != PIPE_FORMAT_NONE);
       }

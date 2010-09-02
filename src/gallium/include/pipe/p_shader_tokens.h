@@ -33,8 +33,6 @@
 extern "C" {
 #endif
 
-#include "p_compiler.h"
-
 
 struct tgsi_header
 {

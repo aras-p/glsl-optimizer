@@ -750,7 +750,7 @@ struct gen6_depth_stencil_state
    } ds1;
 
    struct {
-      GLuint pad0:25;
+      GLuint pad0:26;
       GLuint depth_write_enable:1;
       GLuint depth_test_func:3;
       GLuint pad1:1;
@@ -1305,13 +1305,14 @@ struct brw_instruction
       GLuint access_mode:1;
       GLuint mask_control:1;
       GLuint dependency_control:2;
-      GLuint compression_control:2;
+      GLuint compression_control:2; /* gen6: quater control */
       GLuint thread_control:2;
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
       GLuint execution_size:3;
       GLuint destreg__conditionalmod:4; /* destreg - send, conditionalmod - others */
-      GLuint pad0:2;
+      GLuint acc_wr_control:1;
+      GLuint cmpt_control:1;
       GLuint debug_control:1;
       GLuint saturate:1;
    } header;
@@ -1359,7 +1360,7 @@ struct brw_instruction
 	 GLuint dest_writemask:4;
 	 GLuint dest_subreg_nr:1;
 	 GLuint dest_reg_nr:8;
-	 GLuint pad1:2;
+	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } da16;
 
@@ -1373,7 +1374,7 @@ struct brw_instruction
 	 GLuint dest_writemask:4;
 	 GLint dest_indirect_offset:6;
 	 GLuint dest_subreg_nr:3;
-	 GLuint pad1:2;
+	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } ia16;
    } bits1;

@@ -771,6 +771,13 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = a[2] < 0.0F ? b[2] : c[2];
             result[3] = a[3] < 0.0F ? b[3] : c[3];
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("CMP (%g %g %g %g) = (%g %g %g %g) < 0 ? (%g %g %g %g) : (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3],
+                      c[0], c[1], c[2], c[3]);
+            }
          }
          break;
       case OPCODE_COS:
@@ -1679,6 +1686,22 @@ _mesa_execute_program(GLcontext * ctx,
             store_vector4(inst, machine, color);
          }
          break;
+      case OPCODE_TXL:
+         /* Texel lookup with explicit LOD */
+         {
+            GLfloat texcoord[4], color[4], lod;
+
+            fetch_vector4(&inst->SrcReg[0], machine, texcoord);
+
+            /* texcoord[3] is the LOD */
+            lod = texcoord[3];
+
+	    machine->FetchTexelLod(ctx, texcoord, lod,
+				   machine->Samplers[inst->TexSrcUnit], color);
+
+            store_vector4(inst, machine, color);
+         }
+         break;
       case OPCODE_TXP:         /* GL_ARB_fragment_program only */
          /* Texture lookup w/ projective divide */
          {
@@ -1842,7 +1865,11 @@ _mesa_execute_program(GLcontext * ctx,
 
       numExec++;
       if (numExec > maxExec) {
-         _mesa_problem(ctx, "Infinite loop detected in fragment program");
+	 static GLboolean reported = GL_FALSE;
+	 if (!reported) {
+	    _mesa_problem(ctx, "Infinite loop detected in fragment program");
+	    reported = GL_TRUE;
+	 }
          return GL_TRUE;
       }
 

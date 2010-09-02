@@ -206,6 +206,26 @@
 #define   S_SQ_ALU_WORD0_SRC0_SEL(x)                                 (((x) & 0x1FF) << 0)
 #define   G_SQ_ALU_WORD0_SRC0_SEL(x)                                 (((x) >> 0) & 0x1FF)
 #define   C_SQ_ALU_WORD0_SRC0_SEL                                    0xFFFFFE00
+/*
+ * 244  ALU_SRC_1_DBL_L: special constant 1.0 double-float, LSW. (RV670+)
+ * 245  ALU_SRC_1_DBL_M: special constant 1.0 double-float, MSW. (RV670+)
+ * 246  ALU_SRC_0_5_DBL_L: special constant 0.5 double-float, LSW. (RV670+)
+ * 247  ALU_SRC_0_5_DBL_M: special constant 0.5 double-float, MSW. (RV670+)
+ * 248  SQ_ALU_SRC_0: special constant 0.0.
+ * 249  SQ_ALU_SRC_1: special constant 1.0 float.
+ * 250  SQ_ALU_SRC_1_INT: special constant 1 integer.
+ * 251  SQ_ALU_SRC_M_1_INT: special constant -1 integer.
+ * 252  SQ_ALU_SRC_0_5: special constant 0.5 float.
+ * 253  SQ_ALU_SRC_LITERAL: literal constant.
+ * 254  SQ_ALU_SRC_PV: previous vector result.
+ * 255  SQ_ALU_SRC_PS: previous scalar result.
+ */
+#define     V_SQ_ALU_SRC_0                                           0x000000F8
+#define     V_SQ_ALU_SRC_1                                           0x000000F9
+#define     V_SQ_ALU_SRC_1_INT                                       0x000000FA
+#define     V_SQ_ALU_SRC_M_1_INT                                     0x000000FB
+#define     V_SQ_ALU_SRC_0_5                                         0x000000FC
+#define     V_SQ_ALU_SRC_LITERAL                                     0x000000FD
 #define   S_SQ_ALU_WORD0_SRC0_REL(x)                                 (((x) & 0x1) << 9)
 #define   G_SQ_ALU_WORD0_SRC0_REL(x)                                 (((x) >> 9) & 0x1)
 #define   C_SQ_ALU_WORD0_SRC0_REL                                    0xFFFFFDFF
@@ -583,4 +603,11 @@
 #define   G_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) >> 29) & 0x7)
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
 
+#define V_SQ_CF_COND_ACTIVE                             0x00
+#define V_SQ_CF_COND_FALSE                              0x01
+#define V_SQ_CF_COND_BOOL                               0x02
+#define V_SQ_CF_COND_NOT_BOOL                           0x03
+
+#define V_SQ_REL_ABSOLUTE 0
+#define V_SQ_REL_RELATIVE 1
 #endif

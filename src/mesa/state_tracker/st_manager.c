@@ -42,6 +42,7 @@
 #include "main/texstate.h"
 #include "main/texfetch.h"
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 #include "main/renderbuffer.h"
 #include "st_texture.h"
 
@@ -247,6 +248,9 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
    int samples;
    boolean sw;
 
+   if (!stfb->iface)
+      return FALSE;
+
    /* do not distinguish depth/stencil buffers */
    if (idx == BUFFER_STENCIL)
       idx = BUFFER_DEPTH;
@@ -298,6 +302,10 @@ st_visual_to_context_mode(const struct st_visual *visual,
                           __GLcontextModes *mode)
 {
    memset(mode, 0, sizeof(*mode));
+
+   /* FBO-only context */
+   if (!visual)
+      return;
 
    if (st_visual_have_buffers(visual, ST_ATTACHMENT_BACK_LEFT_MASK))
       mode->doubleBufferMode = GL_TRUE;
@@ -421,6 +429,15 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    stfb = CALLOC_STRUCT(st_framebuffer);
    if (!stfb)
       return NULL;
+
+   /* for FBO-only context */
+   if (!stfbi) {
+      GLframebuffer *base = _mesa_get_incomplete_framebuffer();
+
+      stfb->Base = *base;
+
+      return stfb;
+   }
 
    st_visual_to_context_mode(stfbi->visual, &mode);
    _mesa_initialize_window_framebuffer(&stfb->Base, &mode);
@@ -693,10 +710,14 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
             st_framebuffer_validate(stread, st);
 
          /* modify the draw/read buffers of the context */
-         st_visual_to_default_buffer(stdraw->iface->visual,
-               &st->ctx->Color.DrawBuffer[0], NULL);
-         st_visual_to_default_buffer(stread->iface->visual,
-               &st->ctx->Pixel.ReadBuffer, NULL);
+         if (stdraw->iface) {
+            st_visual_to_default_buffer(stdraw->iface->visual,
+                  &st->ctx->Color.DrawBuffer[0], NULL);
+         }
+         if (stread->iface) {
+            st_visual_to_default_buffer(stread->iface->visual,
+                  &st->ctx->Pixel.ReadBuffer, NULL);
+         }
 
          ret = _mesa_make_current(st->ctx, &stdraw->Base, &stread->Base);
       }
@@ -748,6 +769,8 @@ st_manager_flush_frontbuffer(struct st_context *st)
    if (!strb)
       return;
 
+   /* never a dummy fb */
+   assert(stfb->iface);
    stfb->iface->flush_front(stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
 }
 

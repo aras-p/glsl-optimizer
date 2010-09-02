@@ -36,6 +36,10 @@ struct hash_table;
 typedef unsigned (*hash_func_t)(const void *key);
 typedef int (*hash_compare_func_t)(const void *key1, const void *key2);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Hash table constructor
  *
@@ -88,6 +92,10 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
 extern void hash_table_insert(struct hash_table *ht, void *data,
     const void *key);
 
+/**
+ * Remove a specific element from a hash table.
+ */
+extern void hash_table_remove(struct hash_table *ht, const void *key);
 
 /**
  * Compute hash value of a string
@@ -112,4 +120,31 @@ extern unsigned hash_table_string_hash(const void *key);
  */
 #define hash_table_string_compare ((hash_compare_func_t) strcmp)
 
+
+/**
+ * Compute hash value of a pointer
+ *
+ * \param key  Pointer to be used as a hash key
+ *
+ * \note
+ * The memory pointed to by \c key is \b never accessed.  The value of \c key
+ * itself is used as the hash key
+ *
+ * \sa hash_table_pointer_compare
+ */
+unsigned
+hash_table_pointer_hash(const void *key);
+
+
+/**
+ * Compare two pointers used as keys
+ *
+ * \sa hash_table_pointer_hash
+ */
+int
+hash_table_pointer_compare(const void *key1, const void *key2);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* HASH_TABLE_H */

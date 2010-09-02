@@ -377,7 +377,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	  intel_region_reference(&region, depth_region);
        }
        else
-          region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
+          region = intel_region_alloc_for_handle(intel->intelScreen,
+						 buffers[i].cpp,
 						 drawable->w,
 						 drawable->h,
 						 buffers[i].pitch / buffers[i].cpp,
@@ -719,6 +720,8 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSize = 255.0;
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
+
+   ctx->Const.MaxSamples = 1.0;
 
    /* reinitialize the context point state.
     * It depend on constants in __GLcontextRec::Const

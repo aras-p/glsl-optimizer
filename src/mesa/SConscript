@@ -10,6 +10,7 @@ if env['platform'] != 'winddk':
 	
 	env.Append(CPPPATH = [
 		'#/src/mapi',
+		'#/src/glsl',
 		'#/src/mesa',
 	])
 	
@@ -19,6 +20,7 @@ if env['platform'] != 'winddk':
 			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
 			'WIN32_THREADS', # use Win32 thread API
 		])	 
+        env.Prepend(CPPPATH = ['#src/talloc'])
 
 	#
 	# Source files
@@ -51,6 +53,7 @@ if env['platform'] != 'winddk':
 		'main/dlist.c',
 		'main/dlopen.c',
 		'main/drawpix.c',
+		'main/drawtex.c',
 		'main/enable.c',
 		'main/enums.c',
 		'main/eval.c',
@@ -104,6 +107,7 @@ if env['platform'] != 'winddk':
 		'main/texgetimage.c',
 		'main/teximage.c',
 		'main/texobj.c',
+		'main/texpal.c',
 		'main/texparam.c',
 		'main/texrender.c',
 		'main/texstate.c',
@@ -174,6 +178,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_condrender.c',
 		'state_tracker/st_cb_flush.c',
 		'state_tracker/st_cb_drawpixels.c',
+		'state_tracker/st_cb_drawtex.c',
 		'state_tracker/st_cb_eglimage.c',
 		'state_tracker/st_cb_fbo.c',
 		'state_tracker/st_cb_feedback.c',
@@ -201,6 +206,7 @@ if env['platform'] != 'winddk':
 	program_sources = [
 		'program/arbprogparse.c',
 		'program/hash_table.c',
+        'program/ir_to_mesa.cpp',
 		'program/lex.yy.c',
 		'program/nvfragparse.c',
 		'program/nvvertparse.c',
@@ -221,36 +227,13 @@ if env['platform'] != 'winddk':
 		'program/symbol_table.c',
 	]
 	
-	slang_sources = [
-		'slang/slang_builtin.c',
-		'slang/slang_codegen.c',
-		'slang/slang_compile.c',
-		'slang/slang_compile_function.c',
-		'slang/slang_compile_operation.c',
-		'slang/slang_compile_struct.c',
-		'slang/slang_compile_variable.c',
-		'slang/slang_emit.c',
-		'slang/slang_ir.c',
-		'slang/slang_label.c',
-		'slang/slang_link.c',
-		'slang/slang_log.c',
-		'slang/slang_mem.c',
-		'slang/slang_print.c',
-		'slang/slang_simplify.c',
-		'slang/slang_storage.c',
-		'slang/slang_typeinfo.c',
-		'slang/slang_vartable.c',
-		'slang/slang_utility.c',
-	]
-	
 	mesa_sources = (
 		main_sources +
 		math_sources +
 		program_sources +
 		vbo_sources +
 		vf_sources +
-		statetracker_sources +
-		slang_sources
+		statetracker_sources
 	)
 
 	#
@@ -327,8 +310,6 @@ if env['platform'] != 'winddk':
 		# Add the dir containing the generated header (somewhere inside  the
 		# build dir) to the include path  
 		env.Append(CPPPATH = [matypes[0].dir])
-
-	SConscript('slang/library/SConscript')
 
 	#
 	# Libraries

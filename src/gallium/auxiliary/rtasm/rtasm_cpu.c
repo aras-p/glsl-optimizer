@@ -30,7 +30,7 @@
 #include "rtasm_cpu.h"
 
 
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 static boolean rtasm_sse_enabled(void)
 {
    static boolean firsttime = 1;
@@ -49,7 +49,7 @@ static boolean rtasm_sse_enabled(void)
 int rtasm_cpu_has_sse(void)
 {
    /* FIXME: actually detect this at run-time */
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    return rtasm_sse_enabled();
 #else
    return 0;
@@ -59,7 +59,7 @@ int rtasm_cpu_has_sse(void)
 int rtasm_cpu_has_sse2(void) 
 {
    /* FIXME: actually detect this at run-time */
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    return rtasm_sse_enabled();
 #else
    return 0;

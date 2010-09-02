@@ -76,8 +76,23 @@ typedef _EGLImage *(*CreateImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLCo
 typedef EGLBoolean (*DestroyImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
 #endif /* EGL_KHR_image_base */
 
+
+#ifdef EGL_KHR_reusable_sync
+typedef _EGLSync *(*CreateSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum type, const EGLint *attrib_list);
+typedef EGLBoolean (*DestroySyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync);
+typedef EGLint (*ClientWaitSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLint flags, EGLTimeKHR timeout);
+typedef EGLBoolean (*SignalSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLenum mode);
+typedef EGLBoolean (*GetSyncAttribKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLint attribute, EGLint *value);
+#endif /* EGL_KHR_reusable_sync */
+
+
 #ifdef EGL_NOK_swap_region
 typedef EGLBoolean (*SwapBuffersRegionNOK_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint numRects, const EGLint *rects);
+#endif
+
+#ifdef EGL_MESA_drm_image
+typedef _EGLImage *(*CreateDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attr_list);
+typedef EGLBoolean (*ExportDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img, EGLint *name, EGLint *handle, EGLint *stride);
 #endif
 
 /**
@@ -138,8 +153,21 @@ struct _egl_api
    DestroyImageKHR_t DestroyImageKHR;
 #endif /* EGL_KHR_image_base */
 
+#ifdef EGL_KHR_reusable_sync
+   CreateSyncKHR_t CreateSyncKHR;
+   DestroySyncKHR_t DestroySyncKHR;
+   ClientWaitSyncKHR_t ClientWaitSyncKHR;
+   SignalSyncKHR_t SignalSyncKHR;
+   GetSyncAttribKHR_t GetSyncAttribKHR;
+#endif /* EGL_KHR_reusable_sync */
+
 #ifdef EGL_NOK_swap_region
    SwapBuffersRegionNOK_t SwapBuffersRegionNOK;
+#endif
+
+#ifdef EGL_MESA_drm_image
+   CreateDRMImageMESA_t CreateDRMImageMESA;
+   ExportDRMImageMESA_t ExportDRMImageMESA;
 #endif
 };
 

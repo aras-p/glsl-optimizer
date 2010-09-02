@@ -6070,8 +6070,15 @@ exec_GetAttribLocationARB(GLuint program, const GLchar *name)
    FLUSH_VERTICES(ctx, 0);
    return CALL_GetAttribLocationARB(ctx->Exec, (program, name));
 }
-/* XXX more shader functions needed here */
 
+static GLint GLAPIENTRY
+exec_GetUniformLocationARB(GLuint program, const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return CALL_GetUniformLocationARB(ctx->Exec, (program, name));
+}
+/* XXX more shader functions needed here */
 
 
 #if FEATURE_EXT_framebuffer_blit
@@ -9491,6 +9498,7 @@ _mesa_create_save_table(void)
    /* ARB 30/31/32. GL_ARB_shader_objects, GL_ARB_vertex/fragment_shader */
    SET_BindAttribLocationARB(table, exec_BindAttribLocationARB);
    SET_GetAttribLocationARB(table, exec_GetAttribLocationARB);
+   SET_GetUniformLocationARB(table, exec_GetUniformLocationARB);
    /* XXX additional functions need to be implemented here! */
 
    /* 299. GL_EXT_blend_equation_separate */

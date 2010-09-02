@@ -940,6 +940,18 @@ _mesa_is_format_compressed(gl_format format)
 
 
 /**
+ * Determine if the given format represents a packed depth/stencil buffer.
+ */
+GLboolean
+_mesa_is_format_packed_depth_stencil(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+
+   return info->BaseFormat == GL_DEPTH_STENCIL;
+}
+
+
+/**
  * Return color encoding for given format.
  * \return GL_LINEAR or GL_SRGB
  */

@@ -17,7 +17,4 @@
 typedef struct u_tsd _glthread_TSD;
 typedef u_mutex _glthread_Mutex;
 
-PUBLIC unsigned long
-_glthread_GetID(void);
-
-#endif /* THREADS_H */
+#endif /* GLTHREAD_H */

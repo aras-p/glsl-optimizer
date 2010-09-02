@@ -68,16 +68,20 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    ubyte *stmap;
    GLint j;
 
+   if (strb->Base.Wrapped) {
+      strb = st_renderbuffer(strb->Base.Wrapped);
+   }
+
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       y = ctx->DrawBuffer->Height - y - height;
    }
 
    /* Create a read transfer from the renderbuffer's texture */
 
-   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
-				       0, 0, 0,
-				       PIPE_TRANSFER_READ, x, y,
-				       width, height);
+   pt = pipe_get_transfer(pipe, strb->texture,
+                          0, 0, 0,  /* face, level, zslice */
+                          PIPE_TRANSFER_READ,
+                          x, y, width, height);
 
    /* map the stencil buffer */
    stmap = pipe_transfer_map(pipe, pt);
@@ -230,10 +234,10 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          y = strb->texture->height0 - y - height;
       }
 
-      trans = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
-					     0, 0, 0,
-					     PIPE_TRANSFER_READ, x, y,
-					     width, height);
+      trans = pipe_get_transfer(pipe, strb->texture,
+                                0, 0, 0,  /* face, level, zslice */
+                                PIPE_TRANSFER_READ,
+                                x, y, width, height);
       if (!trans) {
          return GL_FALSE;
       }
@@ -359,6 +363,9 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else if (format == GL_DEPTH_COMPONENT) {
       strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+      if (strb->Base.Wrapped) {
+         strb = st_renderbuffer(strb->Base.Wrapped);
+      }
    }
    else {
       /* Read color buffer */
@@ -394,10 +401,10 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    /* Create a read transfer from the renderbuffer's texture */
-   trans = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
-					  0, 0, 0,
-					  PIPE_TRANSFER_READ, x, y,
-					  width, height);
+   trans = pipe_get_transfer(pipe, strb->texture,
+                             0, 0, 0,  /* face, level, zslice */
+                             PIPE_TRANSFER_READ,
+                             x, y, width, height);
 
    /* determine bottom-to-top vs. top-to-bottom order */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {

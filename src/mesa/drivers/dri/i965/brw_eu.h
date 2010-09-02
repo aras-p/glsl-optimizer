@@ -633,6 +633,8 @@ static INLINE struct brw_reg brw_swizzle( struct brw_reg reg,
 					    GLuint z,
 					    GLuint w)
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
+
    reg.dw1.bits.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(reg.dw1.bits.swizzle, x),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
@@ -650,6 +652,7 @@ static INLINE struct brw_reg brw_swizzle1( struct brw_reg reg,
 static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 					      GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask &= mask;
    return reg;
 }
@@ -657,6 +660,7 @@ static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 static INLINE struct brw_reg brw_set_writemask( struct brw_reg reg,
 						  GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = mask;
    return reg;
 }
@@ -766,6 +770,7 @@ void brw_set_compression_control( struct brw_compile *p, GLboolean control );
 void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value );
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
+void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
 void brw_init_compile( struct brw_context *, struct brw_compile *p );
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
@@ -840,6 +845,7 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLboolean eot);
 
 void brw_fb_WRITE(struct brw_compile *p,
+		  int dispatch_width,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
@@ -925,8 +931,8 @@ struct brw_instruction *brw_DO(struct brw_compile *p,
 struct brw_instruction *brw_WHILE(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn);
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p);
-struct brw_instruction *brw_CONT(struct brw_compile *p);
+struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count);
+struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, 

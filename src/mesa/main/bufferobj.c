@@ -590,7 +590,7 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
 
    bindTarget = get_buffer_target(ctx, target);
    if (!bindTarget) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target 0x%x)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target 0x%x)", target);
       return;
    }
 
@@ -1553,27 +1553,27 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
 
    if (readOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(readOffset = %d)", readOffset);
+                  "glCopyBuffserSubData(readOffset = %d)", (int) readOffset);
       return;
    }
 
    if (writeOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(writeOffset = %d)", writeOffset);
+                  "glCopyBuffserSubData(writeOffset = %d)", (int) writeOffset);
       return;
    }
 
    if (readOffset + size > src->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyBuffserSubData(readOffset + size = %d)",
-                  readOffset, size);
+                  (int) (readOffset + size));
       return;
    }
 
    if (writeOffset + size > dst->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyBuffserSubData(writeOffset + size = %d)",
-                  writeOffset, size);
+                  (int) (writeOffset + size));
       return;
    }
 
@@ -1617,13 +1617,13 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
 
    if (offset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(offset = %ld)", offset);
+                  "glMapBufferRange(offset = %ld)", (long)offset);
       return NULL;
    }
 
    if (length < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(length = %ld)", length);
+                  "glMapBufferRange(length = %ld)", (long)length);
       return NULL;
    }
 
@@ -1708,13 +1708,13 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
 
    if (offset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(offset = %ld)", offset);
+                  "glMapBufferRange(offset = %ld)", (long)offset);
       return;
    }
 
    if (length < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(length = %ld)", length);
+                  "glMapBufferRange(length = %ld)", (long)length);
       return;
    }
 
@@ -1746,8 +1746,8 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
 
    if (offset + length > bufObj->Length) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-             "glMapBufferRange(offset %ld + length %ld > mapped length %ld)",
-             offset, length, bufObj->Length);
+		  "glMapBufferRange(offset %ld + length %ld > mapped length %ld)",
+		  (long)offset, (long)length, (long)bufObj->Length);
       return;
    }
 
