@@ -132,6 +132,7 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
       struct brw_fragment_program *newFP = brw_fragment_program(fprog);
       const struct brw_fragment_program *curFP =
          brw_fragment_program_const(brw->fragment_program);
+      struct gl_shader_program *shader_program;
 
       if (fprog->FogOption) {
          _mesa_append_fog_code(ctx, fprog);
@@ -142,6 +143,21 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
       newFP->isGLSL = brw_wm_is_glsl(fprog);
+
+      /* Don't reject fragment shaders for their Mesa IR state when we're
+       * using the new FS backend.
+       */
+      shader_program = _mesa_lookup_shader_program(ctx, prog->Id);
+      if (shader_program) {
+	 for (i = 0; i < shader_program->_NumLinkedShaders; i++) {
+	    struct brw_shader *shader;
+
+	    shader = (struct brw_shader *)shader_program->_LinkedShaders[i];
+	    if (shader->base.Type == GL_FRAGMENT_SHADER && shader->ir) {
+	       return GL_TRUE;
+	    }
+	 }
+      }
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
