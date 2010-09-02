@@ -82,6 +82,24 @@ struct lp_build_sampler_soa
 };
 
 
+struct lp_build_sampler_aos
+{
+   void
+   (*destroy)( struct lp_build_sampler_aos *sampler );
+
+   LLVMValueRef
+   (*emit_fetch_texel)( const struct lp_build_sampler_aos *sampler,
+                        LLVMBuilderRef builder,
+                        struct lp_type type,
+                        unsigned target, /* TGSI_TEXTURE_* */
+                        unsigned unit,
+                        LLVMValueRef coords,
+                        LLVMValueRef ddx,
+                        LLVMValueRef ddy,
+                        enum lp_build_tex_modifier modifier);
+};
+
+
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
@@ -92,6 +110,17 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
                   struct lp_build_sampler_soa *sampler,
+                  const struct tgsi_shader_info *info);
+
+
+void
+lp_build_tgsi_aos(LLVMBuilderRef builder,
+                  const struct tgsi_token *tokens,
+                  struct lp_type type,
+                  LLVMValueRef consts_ptr,
+                  const LLVMValueRef *inputs,
+                  LLVMValueRef *outputs,
+                  struct lp_build_sampler_aos *sampler,
                   const struct tgsi_shader_info *info);
 
 
