@@ -8076,20 +8076,27 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
 
 GLboolean Clean_Up_Assembler(r700_AssemblerBase *pR700AsmCode)
 {
-    FREE(pR700AsmCode->pInstDeps);
+    if(NULL != pR700AsmCode->pInstDeps)
+    {
+        FREE(pR700AsmCode->pInstDeps);
+        pR700AsmCode->pInstDeps = NULL;
+    }
 
     if(NULL != pR700AsmCode->subs)
     {
         FREE(pR700AsmCode->subs);
+        pR700AsmCode->subs = NULL;
     }
     if(NULL != pR700AsmCode->callers)
     {
         FREE(pR700AsmCode->callers);
+        pR700AsmCode->callers = NULL;
     }
 
     if(NULL != pR700AsmCode->presubs)
     {
         FREE(pR700AsmCode->presubs);
+         pR700AsmCode->presubs = NULL;
     }
 
     return GL_TRUE;
