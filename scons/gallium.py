@@ -271,24 +271,24 @@ def generate(env):
             ccflags += [
                 '-m32',
                 #'-march=pentium4',
-                #'-mfpmath=sse',
             ]
-            if platform != 'windows':
-                # XXX: -mstackrealign causes stack corruption on MinGW. Ditto
-                # for -mincoming-stack-boundary=2.  Still enable it on other
-                # platforms for now, but we can't rely on it for cross platform
-                # code. We have to use __attribute__((force_align_arg_pointer))
-                # instead.
+            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+                # NOTE: We need to ensure stack is realigned given that we
+                # produce shared objects, and have no control over the stack
+                # alignment policy of the application. Therefore we need
+                # -mstackrealign ore -mincoming-stack-boundary=2.
+                #
+                # XXX: We could have SSE without -mstackrealign if we always used
+                # __attribute__((force_align_arg_pointer)), but that's not
+                # always the case.
                 ccflags += [
+                    '-mstackrealign', # ensure stack is aligned
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                    #'-mfpmath=sse',
                 ]
             if platform in ['windows', 'darwin']:
                 # Workaround http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216
                 ccflags += ['-fno-common']
-            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
-                ccflags += [
-                    '-mstackrealign', # ensure stack is aligned
-                ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
             if platform == 'darwin':
