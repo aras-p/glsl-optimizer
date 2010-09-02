@@ -235,14 +235,23 @@ static void r600_bind_ps_sampler(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->ps_nsampler; i++) {
-		rctx->ps_sampler[i] = r600_context_state_decref(rctx->ps_sampler[i]);
+	for (i = 0; i < count; i++) {
+		rstate = (struct r600_context_state *)states[i];
+		if (rstate) {
+			rstate->nrstate = 0;
+		}
 	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)states[i];
-		rctx->ps_sampler[i] = r600_context_state_incref(rstate);
 		if (rstate) {
-			radeon_state_convert(&rstate->rstate[0], R600_STATE_SAMPLER, i, R600_SHADER_PS);
+			if (rstate->nrstate >= R600_MAX_RSTATE)
+				continue;
+			if (rstate->nrstate) {
+				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
+			}
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, R600_SHADER_PS);
+			rctx->ps_sampler[i] = &rstate->rstate[rstate->nrstate];
+			rstate->nrstate++;
 		}
 	}
 	rctx->ps_nsampler = count;
@@ -255,14 +264,23 @@ static void r600_bind_vs_sampler(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->vs_nsampler; i++) {
-		rctx->vs_sampler[i] = r600_context_state_decref(rctx->vs_sampler[i]);
+	for (i = 0; i < count; i++) {
+		rstate = (struct r600_context_state *)states[i];
+		if (rstate) {
+			rstate->nrstate = 0;
+		}
 	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)states[i];
-		rctx->vs_sampler[i] = r600_context_state_incref(rstate);
 		if (rstate) {
-			radeon_state_convert(&rstate->rstate[0], R600_STATE_SAMPLER, i, R600_SHADER_VS);
+			if (rstate->nrstate >= R600_MAX_RSTATE)
+				continue;
+			if (rstate->nrstate) {
+				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
+			}
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, R600_SHADER_VS);
+			rctx->vs_sampler[i] = &rstate->rstate[rstate->nrstate];
+			rstate->nrstate++;
 		}
 	}
 	rctx->vs_nsampler = count;
@@ -349,14 +367,23 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->ps_nsampler_view; i++) {
-		rctx->ps_sampler_view[i] = r600_context_state_decref(rctx->ps_sampler_view[i]);
+	for (i = 0; i < count; i++) {
+		rstate = (struct r600_context_state *)views[i];
+		if (rstate) {
+			rstate->nrstate = 0;
+		}
 	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)views[i];
-		rctx->ps_sampler_view[i] = r600_context_state_incref(rstate);
 		if (rstate) {
-			radeon_state_convert(&rstate->rstate[0], R600_STATE_RESOURCE, i, R600_SHADER_PS);
+			if (rstate->nrstate >= R600_MAX_RSTATE)
+				continue;
+			if (rstate->nrstate) {
+				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
+			}
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_RESOURCE, i, R600_SHADER_PS);
+			rctx->ps_sampler_view[i] = &rstate->rstate[rstate->nrstate];
+			rstate->nrstate++;
 		}
 	}
 	rctx->ps_nsampler_view = count;
@@ -370,14 +397,23 @@ static void r600_set_vs_sampler_view(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->vs_nsampler_view; i++) {
-		rctx->vs_sampler_view[i] = r600_context_state_decref(rctx->vs_sampler_view[i]);
+	for (i = 0; i < count; i++) {
+		rstate = (struct r600_context_state *)views[i];
+		if (rstate) {
+			rstate->nrstate = 0;
+		}
 	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)views[i];
-		rctx->vs_sampler_view[i] = r600_context_state_incref(rstate);
 		if (rstate) {
-			radeon_state_convert(&rstate->rstate[0], R600_STATE_RESOURCE, i, R600_SHADER_VS);
+			if (rstate->nrstate >= R600_MAX_RSTATE)
+				continue;
+			if (rstate->nrstate) {
+				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
+			}
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_RESOURCE, i, R600_SHADER_VS);
+			rctx->vs_sampler_view[i] = &rstate->rstate[rstate->nrstate];
+			rstate->nrstate++;
 		}
 	}
 	rctx->vs_nsampler_view = count;
@@ -1354,12 +1390,12 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	}
 	for (i = 0; i < rctx->ps_nsampler; i++) {
 		if (rctx->ps_sampler[i]) {
-			radeon_draw_bind(&rctx->draw, &rctx->ps_sampler[i]->rstate[0]);
+			radeon_draw_bind(&rctx->draw, rctx->ps_sampler[i]);
 		}
 	}
 	for (i = 0; i < rctx->ps_nsampler_view; i++) {
 		if (rctx->ps_sampler_view[i]) {
-			radeon_draw_bind(&rctx->draw, &rctx->ps_sampler_view[i]->rstate[0]);
+			radeon_draw_bind(&rctx->draw, rctx->ps_sampler_view[i]);
 		}
 	}
 	return 0;

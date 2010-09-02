@@ -95,13 +95,16 @@ enum pipe_state_type {
 	pipe_type_count
 };
 
+#define R600_MAX_RSTATE		16
+
 struct r600_context_state {
 	union pipe_states		state;
 	unsigned			refcount;
 	unsigned			type;
-	struct radeon_state		rstate[16];
+	struct radeon_state		rstate[R600_MAX_RSTATE];
 	struct r600_shader		shader;
 	struct radeon_bo		*bo;
+	unsigned			nrstate;
 };
 
 struct r600_vertex_element
@@ -153,10 +156,10 @@ struct r600_context {
 	struct r600_context_state	*stencil_ref;
 	struct r600_context_state	*viewport;
 	struct r600_context_state	*framebuffer;
-	struct r600_context_state	*ps_sampler[PIPE_MAX_ATTRIBS];
-	struct r600_context_state	*vs_sampler[PIPE_MAX_ATTRIBS];
-	struct r600_context_state	*ps_sampler_view[PIPE_MAX_ATTRIBS];
-	struct r600_context_state	*vs_sampler_view[PIPE_MAX_ATTRIBS];
+	struct radeon_state		*ps_sampler[PIPE_MAX_ATTRIBS];
+	struct radeon_state		*vs_sampler[PIPE_MAX_ATTRIBS];
+	struct radeon_state		*ps_sampler_view[PIPE_MAX_ATTRIBS];
+	struct radeon_state		*vs_sampler_view[PIPE_MAX_ATTRIBS];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_index_buffer	index_buffer;
