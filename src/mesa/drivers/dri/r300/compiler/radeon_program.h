@@ -150,11 +150,6 @@ struct rc_program {
 	struct rc_constant_list Constants;
 };
 
-enum {
-	OPCODE_REPL_ALPHA = MAX_RC_OPCODE /**< used in paired instructions */
-};
-
-
 static inline rc_swizzle get_swz(unsigned int swz, rc_swizzle idx)
 {
 	if (idx & 0x4)
