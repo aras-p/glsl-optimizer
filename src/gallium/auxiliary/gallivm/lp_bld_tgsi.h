@@ -36,6 +36,9 @@
 #define LP_BLD_TGSI_H
 
 #include "gallivm/lp_bld.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+#include "tgsi/tgsi_scan.h"
 
 
 struct tgsi_token;
@@ -53,6 +56,75 @@ enum lp_build_tex_modifier {
    LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV
 };
 
+
+/**
+ * Describe a channel of a register.
+ *
+ * The value can be a:
+ * - immediate value (i.e. derived from a IMM register)
+ * - CONST[n].x/y/z/w
+ * - IN[n].x/y/z/w
+ * - undetermined (when .file == TGSI_FILE_NULL)
+ *
+ * This is one of the analysis results, and is used to described
+ * the output color in terms of inputs.
+ */
+struct lp_tgsi_channel_info
+{
+   unsigned file:4; /* TGSI_FILE_* */
+   unsigned swizzle:3; /* PIPE_SWIZZLE_x */
+   union {
+      uint32_t index;
+      float value; /* for TGSI_FILE_IMMEDIATE */
+   };
+};
+
+
+/**
+ * Describe a texture sampler interpolator.
+ *
+ * The interpolation is described in terms of regular inputs.
+ */
+struct lp_tgsi_texture_info
+{
+   struct lp_tgsi_channel_info coord[4];
+   unsigned target:8; /* TGSI_TEXTURE_* */
+   unsigned unit:8;  /* Sampler unit */
+   unsigned modifier:8; /* LP_BLD_TEX_MODIFIER_* */
+};
+
+
+struct lp_tgsi_info
+{
+   struct tgsi_shader_info base;
+
+   /*
+    * Whether any of the texture opcodes access a register file other than
+    * TGSI_FILE_INPUT.
+    *
+    * We could also handle TGSI_FILE_CONST/IMMEDIATE here, but there is little
+    * benefit.
+    */
+   unsigned indirect_textures:1;
+
+   /*
+    * Texture opcode description. Aimed at detecting and described direct
+    * texture opcodes.
+    */
+   unsigned num_texs;
+   struct lp_tgsi_texture_info tex[PIPE_MAX_SAMPLERS];
+
+   /*
+    * Output description. Aimed at detecting and describing simple blit
+    * shaders.
+    */
+   struct lp_tgsi_channel_info output[PIPE_MAX_SHADER_OUTPUTS][4];
+
+   /*
+    * Shortcut pointers into the above (for fragment shaders).
+    */
+   const struct lp_tgsi_channel_info *cbuf[PIPE_MAX_COLOR_BUFS];
+};
 
 /**
  * Sampler code generation interface.
@@ -94,6 +166,11 @@ struct lp_build_sampler_aos
                         LLVMValueRef ddy,
                         enum lp_build_tex_modifier modifier);
 };
+
+
+void
+lp_build_tgsi_info(const struct tgsi_token *tokens,
+                   struct lp_tgsi_info *info);
 
 
 void

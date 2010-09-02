@@ -176,6 +176,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_struct.c \
         gallivm/lp_bld_swizzle.c \
         gallivm/lp_bld_tgsi_aos.c \
+        gallivm/lp_bld_tgsi_info.c \
         gallivm/lp_bld_tgsi_soa.c \
         gallivm/lp_bld_type.c \
         draw/draw_llvm.c \
