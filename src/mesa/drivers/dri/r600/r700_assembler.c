@@ -1645,10 +1645,17 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
     }
     else 
     {
+        if (1 == pILInst->SrcReg[src].RelAddr)
+        {
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_RELATIVE_A0);
+        }
+        else
+        {
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
+        }
         switch (pILInst->SrcReg[src].File)
         {
         case PROGRAM_TEMPORARY:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
             pAsm->S[fld].src.rtype = SRC_REG_TEMPORARY;
             pAsm->S[fld].src.reg = pILInst->SrcReg[src].Index + pAsm->starting_temp_register_number;
             break;
@@ -1657,15 +1664,6 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
         case PROGRAM_ENV_PARAM:
         case PROGRAM_STATE_VAR:
         case PROGRAM_UNIFORM:
-            if (1 == pILInst->SrcReg[src].RelAddr)
-            {
-                setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_RELATIVE_A0);
-            }
-            else
-            {
-                setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);              
-            }
-
             pAsm->S[fld].src.rtype = SRC_REG_CONSTANT;
             if(pILInst->SrcReg[src].Index < 0)
             {
@@ -1678,7 +1676,6 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             }
             break;      
         case PROGRAM_INPUT:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE); 
             pAsm->S[fld].src.rtype = SRC_REG_GPR;
             switch (pAsm->currentShaderType)
             {
@@ -1691,7 +1688,6 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             }
             break;      
         case PROGRAM_OUTPUT:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
             pAsm->S[fld].src.rtype = SRC_REG_GPR;
             switch (pAsm->currentShaderType)
             {
@@ -1728,7 +1724,14 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
     switch (pILInst->DstReg.File) 
     {
     case PROGRAM_TEMPORARY:
+        if (1 == pILInst->DstReg.RelAddr)
+        {
+            setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_RELATIVE_A0);
+        }
+        else
+        {
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        }
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
         pAsm->D.dst.reg = pILInst->DstReg.Index + pAsm->starting_temp_register_number;
         break;
@@ -1738,7 +1741,14 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
         pAsm->D.dst.reg = 0;
         break;
     case PROGRAM_OUTPUT:
+        if (1 == pILInst->DstReg.RelAddr)
+        {
+            setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_RELATIVE_A0);
+        }
+        else
+        {
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        }
         pAsm->D.dst.rtype = DST_REG_OUT;
         switch (pAsm->currentShaderType)
         {
@@ -3026,7 +3036,14 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             return GL_FALSE;
         }
 
-        alu_instruction_ptr->m_Word1.f.dst_rel  = SQ_ABSOLUTE;  //D.rtype
+        if ( ADDR_RELATIVE_A0 == addrmode_PVSDST(&(pAsm->D.dst)) )
+        {
+            alu_instruction_ptr->m_Word1.f.dst_rel = SQ_RELATIVE;
+        }
+        else
+        {
+            alu_instruction_ptr->m_Word1.f.dst_rel = SQ_ABSOLUTE;
+        }
 
         if ( is_single_scalar_operation == GL_TRUE ) 
         {
