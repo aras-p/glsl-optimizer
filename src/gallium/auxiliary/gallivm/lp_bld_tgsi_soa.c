@@ -816,18 +816,10 @@ emit_store(
  * High-level instruction translators.
  */
 
-enum tex_modifier {
-   TEX_MODIFIER_NONE = 0,
-   TEX_MODIFIER_PROJECTED,
-   TEX_MODIFIER_LOD_BIAS,
-   TEX_MODIFIER_EXPLICIT_LOD,
-   TEX_MODIFIER_EXPLICIT_DERIV
-};
-
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
-          enum tex_modifier modifier,
+          enum lp_build_tex_modifier modifier,
           LLVMValueRef *texel)
 {
    unsigned unit;
@@ -867,11 +859,11 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if (modifier == TEX_MODIFIER_LOD_BIAS) {
+   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
       lod_bias = emit_fetch( bld, inst, 0, 3 );
       explicit_lod = NULL;
    }
-   else if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
+   else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
       lod_bias = NULL;
       explicit_lod = emit_fetch( bld, inst, 0, 3 );
    }
@@ -880,21 +872,21 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       explicit_lod = NULL;
    }
 
-   if (modifier == TEX_MODIFIER_PROJECTED) {
+   if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED) {
       oow = emit_fetch( bld, inst, 0, 3 );
       oow = lp_build_rcp(&bld->base, oow);
    }
 
    for (i = 0; i < num_coords; i++) {
       coords[i] = emit_fetch( bld, inst, 0, i );
-      if (modifier == TEX_MODIFIER_PROJECTED)
+      if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
    for (i = num_coords; i < 3; i++) {
       coords[i] = bld->base.undef;
    }
 
-   if (modifier == TEX_MODIFIER_EXPLICIT_DERIV) {
+   if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
       for (i = 0; i < num_coords; i++) {
          ddx[i] = emit_fetch( bld, inst, 1, i );
          ddy[i] = emit_fetch( bld, inst, 2, i );
@@ -1627,11 +1619,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex( bld, inst, TEX_MODIFIER_NONE, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_NONE, dst0 );
       break;
 
    case TGSI_OPCODE_TXD:
-      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_DERIV, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV, dst0 );
       break;
 
    case TGSI_OPCODE_UP2H:
@@ -1735,7 +1727,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex( bld, inst, TEX_MODIFIER_LOD_BIAS, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_LOD_BIAS, dst0 );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -1840,11 +1832,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_LOD, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD, dst0 );
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex( bld, inst, TEX_MODIFIER_PROJECTED, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_PROJECTED, dst0 );
       break;
 
    case TGSI_OPCODE_BRK:

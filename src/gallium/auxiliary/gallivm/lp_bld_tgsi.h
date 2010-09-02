@@ -45,6 +45,15 @@ struct lp_build_context;
 struct lp_build_mask_context;
 
 
+enum lp_build_tex_modifier {
+   LP_BLD_TEX_MODIFIER_NONE = 0,
+   LP_BLD_TEX_MODIFIER_PROJECTED,
+   LP_BLD_TEX_MODIFIER_LOD_BIAS,
+   LP_BLD_TEX_MODIFIER_EXPLICIT_LOD,
+   LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV
+};
+
+
 /**
  * Sampler code generation interface.
  *
