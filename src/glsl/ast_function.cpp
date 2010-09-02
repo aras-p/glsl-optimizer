@@ -30,6 +30,10 @@
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type);
 
+bool
+apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
+                          struct _mesa_glsl_parse_state *state);
+
 static unsigned
 process_parameters(exec_list *instructions, exec_list *actual_parameters,
 		   exec_list *parameters,
@@ -1185,7 +1189,7 @@ ast_function_expression::hir(exec_list *instructions,
       if ((type != NULL) && type->is_record()) {
 	 exec_node *node = actual_parameters.head;
 	 for (unsigned i = 0; i < type->length; i++) {
-	    ir_instruction *ir = (ir_instruction *) node;
+	    ir_rvalue *ir = (ir_rvalue *) node;
 
 	    if (node->is_tail_sentinel()) {
 	       _mesa_glsl_error(&loc, state,
@@ -1195,7 +1199,10 @@ ast_function_expression::hir(exec_list *instructions,
 	       return ir_call::get_error_instruction(ctx);
 	    }
 
-	    if (ir->type != type->fields.structure[i].type) {
+	    if (apply_implicit_conversion(type->fields.structure[i].type, ir,
+					  state)) {
+	       node->replace_with(ir);
+	    } else {
 	       _mesa_glsl_error(&loc, state,
 				"parameter type mismatch in constructor "
 				"for `%s.%s' (%s vs %s)",

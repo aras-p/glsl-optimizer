@@ -97,7 +97,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
  * If a conversion is possible (or unnecessary), \c true is returned.
  * Otherwise \c false is returned.
  */
-static bool
+bool
 apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 			  struct _mesa_glsl_parse_state *state)
 {
