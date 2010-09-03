@@ -217,6 +217,7 @@ enum r600_stype {
 };
 
 #include "r600_states_inc.h"
+#include "eg_states_inc.h"
 
 /* R600 QUERY BEGIN/END */
 #define R600_QUERY__OFFSET			0

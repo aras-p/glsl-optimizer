@@ -34,7 +34,6 @@
 #include "r600_resource.h"
 #include "r600d.h"
 
-
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = r600_context(context);
@@ -115,7 +114,10 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->screen = rscreen;
 	rctx->rw = rscreen->rw;
 
-	rctx->vtbl = &r600_hw_state_vtbl;
+	if (rscreen->chip_class == EVERGREEN)
+		rctx->vtbl = &eg_hw_state_vtbl;
+	else
+		rctx->vtbl = &r600_hw_state_vtbl;
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);

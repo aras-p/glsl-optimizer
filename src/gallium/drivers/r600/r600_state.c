@@ -509,10 +509,14 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_vs_state = r600_delete_state;
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_clip_state = r600_set_clip_state;
-	if (rctx->screen->use_mem_constant)
+
+	if (rctx->screen->chip_class == EVERGREEN)
+		rctx->context.set_constant_buffer = eg_set_constant_buffer;
+	else if (rctx->screen->use_mem_constant)
 		rctx->context.set_constant_buffer = r600_set_constant_buffer_mem;
 	else
 		rctx->context.set_constant_buffer = r600_set_constant_buffer_file;
+
 	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_view;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
@@ -625,7 +629,6 @@ static int setup_db_flush(struct r600_context *rctx, struct radeon_state *flush)
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
 	struct pipe_surface *surf;
-	int i;
 
 	surf = rctx->framebuffer->state.framebuffer.zsbuf;
 
@@ -647,7 +650,7 @@ int r600_context_hw_states(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	unsigned i;
-
+	
 	/* build new states */
 	rctx->vtbl->rasterizer(rctx, &rctx->hw_states.rasterizer);
 	rctx->vtbl->scissor(rctx, &rctx->hw_states.scissor);
@@ -659,12 +662,15 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	setup_cb_flush(rctx, &rctx->hw_states.cb_flush);
 
 	/* bind states */
+	radeon_draw_bind(&rctx->draw, &rctx->config);
+
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.rasterizer);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.scissor);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.dsa);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_cntl);
 
-	radeon_draw_bind(&rctx->draw, &rctx->config);
+	radeon_draw_bind(&rctx->draw, &rctx->hw_states.db_flush);
+	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_flush);
 
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.db_flush);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_flush);

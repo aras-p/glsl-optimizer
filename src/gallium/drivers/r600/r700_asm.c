@@ -26,6 +26,7 @@
 #include "r700_sq.h"
 #include <stdio.h>
 
+
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {
 	unsigned i;

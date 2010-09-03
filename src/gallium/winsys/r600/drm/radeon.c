@@ -79,6 +79,11 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
 		if (r600_init(radeon)) {
 			return radeon_decref(radeon);
 		}
@@ -110,11 +115,6 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_RV560:
 	case CHIP_RV570:
 	case CHIP_R580:
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
 			__func__, radeon->device);

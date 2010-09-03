@@ -46,8 +46,10 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 
 	if (family >= CHIP_R600 && family < CHIP_RV770)
 		return "R600 (HD2XXX,HD3XXX)";
-	else
+	else if (family < CHIP_CEDAR)
 		return "R700 (HD4XXX)";
+	else
+		return "EVERGREEN";
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
@@ -260,6 +262,14 @@ struct pipe_screen *r600_screen_create(struct radeon *rw)
 	case CHIP_RV710:
 	case CHIP_RV740:
 		rscreen->chip_class = R700;
+		break;
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		rscreen->chip_class = EVERGREEN;
+		rscreen->use_mem_constant = TRUE;
 		break;
 	default:
 		FREE(rscreen);

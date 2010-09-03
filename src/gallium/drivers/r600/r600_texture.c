@@ -523,7 +523,7 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			if (desc->channel[0].size == 5 &&
 			    desc->channel[1].size == 6 &&
 			    desc->channel[2].size == 5) {
-				result |= V_0280A0_COLOR_5_6_5;
+				result = V_0280A0_COLOR_5_6_5;
 				goto out_word4;
 			}
 			goto out_unknown;
@@ -532,14 +532,14 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			    desc->channel[1].size == 5 &&
 			    desc->channel[2].size == 5 &&
 			    desc->channel[3].size == 1) {
-				result |= V_0280A0_COLOR_1_5_5_5;
+				result = V_0280A0_COLOR_1_5_5_5;
 				goto out_word4;
 			}
 			if (desc->channel[0].size == 10 &&
 			    desc->channel[1].size == 10 &&
 			    desc->channel[2].size == 10 &&
 			    desc->channel[3].size == 2) {
-				result |= V_0280A0_COLOR_10_10_10_2;
+				result = V_0280A0_COLOR_10_10_10_2;
 				goto out_word4;
 			}
 			goto out_unknown;
@@ -560,36 +560,36 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		case 4:
 			switch (desc->nr_channels) {
 			case 2:
-				result |= V_0280A0_COLOR_4_4;
+				result = V_0280A0_COLOR_4_4;
 				goto out_word4;
 			case 4:
-				result |= V_0280A0_COLOR_4_4_4_4;
+				result = V_0280A0_COLOR_4_4_4_4;
 				goto out_word4;
 			}
 			goto out_unknown;
 		case 8:
 			switch (desc->nr_channels) {
 			case 1:
-				result |= V_0280A0_COLOR_8;
+				result = V_0280A0_COLOR_8;
 				goto out_word4;
 			case 2:
-				result |= V_0280A0_COLOR_8_8;
+				result = V_0280A0_COLOR_8_8;
 				goto out_word4;
 			case 4:
-				result |= V_0280A0_COLOR_8_8_8_8;
+				result = V_0280A0_COLOR_8_8_8_8;
 				goto out_word4;
 			}
 			goto out_unknown;
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result |= V_0280A0_COLOR_16;
+				result = V_0280A0_COLOR_16;
 				goto out_word4;
 			case 2:
-				result |= V_0280A0_COLOR_16_16;
+				result = V_0280A0_COLOR_16_16;
 				goto out_word4;
 			case 4:
-				result |= V_0280A0_COLOR_16_16_16_16;
+				result = V_0280A0_COLOR_16_16_16_16;
 				goto out_word4;
 			}
 		}
@@ -600,26 +600,26 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result |= V_0280A0_COLOR_16_FLOAT;
+				result = V_0280A0_COLOR_16_FLOAT;
 				goto out_word4;
 			case 2:
-				result |= V_0280A0_COLOR_16_16_FLOAT;
+				result = V_0280A0_COLOR_16_16_FLOAT;
 				goto out_word4;
 			case 4:
-				result |= V_0280A0_COLOR_16_16_16_16_FLOAT;
+				result = V_0280A0_COLOR_16_16_16_16_FLOAT;
 				goto out_word4;
 			}
 			goto out_unknown;
 		case 32:
 			switch (desc->nr_channels) {
 			case 1:
-				result |= V_0280A0_COLOR_32_FLOAT;
+				result = V_0280A0_COLOR_32_FLOAT;
 				goto out_word4;
 			case 2:
-				result |= V_0280A0_COLOR_32_32_FLOAT;
+				result = V_0280A0_COLOR_32_32_FLOAT;
 				goto out_word4;
 			case 4:
-				result |= V_0280A0_COLOR_32_32_32_32_FLOAT;
+				result = V_0280A0_COLOR_32_32_32_32_FLOAT;
 				goto out_word4;
 			}
 		}
