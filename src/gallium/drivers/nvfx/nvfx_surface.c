@@ -187,15 +187,18 @@ nv04_scaled_image_format(enum pipe_format format)
 	}
 }
 
-// XXX: must save index buffer too!
+// don't save index buffer because blitter doesn't setit
 static struct blitter_context*
 nvfx_get_blitter(struct pipe_context* pipe, int copy)
 {
 	struct nvfx_context* nvfx = nvfx_context(pipe);
 
-	struct blitter_context* blitter = nvfx->blitter;
-	if(!blitter)
-		nvfx->blitter = blitter = util_blitter_create(pipe);
+	assert(nvfx->blitters_in_use < Elements(nvfx->blitter));
+
+	struct blitter_context** pblitter = &nvfx->blitter[nvfx->blitters_in_use++];
+	if(!*pblitter)
+		*pblitter = util_blitter_create(pipe);
+	struct blitter_context* blitter = *pblitter;
 
 	util_blitter_save_blend(blitter, nvfx->blend);
 	util_blitter_save_depth_stencil_alpha(blitter, nvfx->zsa);
@@ -216,6 +219,14 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 	}
 
 	return blitter;
+}
+
+static inline void
+nvfx_put_blitter(struct pipe_context* pipe, struct blitter_context* blitter)
+{
+	struct nvfx_context* nvfx = nvfx_context(pipe);
+	--nvfx->blitters_in_use;
+	assert(nvfx->blitters_in_use >= 0);
 }
 
 static unsigned
@@ -279,6 +290,7 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 	{
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 1);
 		util_blitter_copy_region(blitter, dstr, subdst, dstx, dsty, dstz, srcr, subsrc, srcx, srcy, srcz, w, h, TRUE);
+		nvfx_put_blitter(pipe, blitter);
 	}
 	else
 	{
@@ -459,6 +471,7 @@ nvfx_clear_render_target(struct pipe_context *pipe,
 		// TODO: probably should use hardware clear here instead if possible
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 0);
 		util_blitter_clear_render_target(blitter, dst, rgba, dstx, dsty, width, height);
+		nvfx_put_blitter(pipe, blitter);
 	}
 }
 
@@ -477,6 +490,7 @@ nvfx_clear_depth_stencil(struct pipe_context *pipe,
 		// TODO: probably should use hardware clear here instead if possible
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 0);
 		util_blitter_clear_depth_stencil(blitter, dst, clear_flags, depth, stencil, dstx, dsty, width, height);
+		nvfx_put_blitter(pipe, blitter);
 	}
 }
 

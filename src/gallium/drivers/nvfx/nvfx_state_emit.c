@@ -296,9 +296,6 @@ nvfx_state_validate(struct nvfx_context *nvfx)
 	if(!nvfx_state_validate_common(nvfx))
 		return FALSE;
 
-	if (was_sw)
-		NOUVEAU_ERR("swtnl->hw\n");
-
 	return TRUE;
 }
 

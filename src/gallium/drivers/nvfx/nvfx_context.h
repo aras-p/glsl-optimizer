@@ -144,7 +144,9 @@ struct nvfx_context {
 	boolean use_vp_clipping;
 
 	struct draw_context *draw;
-	struct blitter_context* blitter;
+	/* one is for user-requested operations, the other is for temporary copying inside them */
+	struct blitter_context* blitter[2];
+	unsigned blitters_in_use;
 	struct list_head render_cache;
 
 	/* HW state derived from pipe states */
