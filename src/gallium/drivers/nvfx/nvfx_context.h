@@ -199,8 +199,8 @@ struct nvfx_context {
 	int use_vertex_buffers;
 
 	unsigned hw_vtxelt_nr;
-	uint8_t hw_samplers;
-	uint32_t hw_txf[8];
+	unsigned hw_samplers;
+	uint32_t hw_txf[16];
 	struct nvfx_render_target hw_rt[4];
 	struct nvfx_render_target hw_zeta;
 	int hw_pointsprite_control;
