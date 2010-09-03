@@ -42,6 +42,8 @@ struct galahad_resource
    struct pipe_resource base;
 
    struct pipe_resource *resource;
+
+   int map_count;
 };
 
 
