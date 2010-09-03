@@ -70,7 +70,6 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 static void *r600_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 
 	rstate = r600_new_context_state(pipe_dsa_type);
@@ -81,7 +80,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 static void *r600_create_rs_state(struct pipe_context *ctx,
 					const struct pipe_rasterizer_state *state)
 {
-	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 
 	rstate = r600_new_context_state(pipe_rasterizer_type);
@@ -113,7 +111,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
-	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 
 	rstate = r600_new_context_state(pipe_sampler_view_type);
@@ -246,69 +243,38 @@ static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	}
 }
 
-static void r600_bind_state(struct pipe_context *ctx, void *state)
+static void r600_bind_rasterizer_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate = (struct r600_context_state *)state;
 
 	if (state == NULL)
 		return;
-	switch (rstate->type) {
-	case pipe_rasterizer_type:
-		rctx->rasterizer = r600_context_state_decref(rctx->rasterizer);
-		rctx->rasterizer = r600_context_state_incref(rstate);
-		break;
-	case pipe_poly_stipple_type:
-		rctx->poly_stipple = r600_context_state_decref(rctx->poly_stipple);
-		rctx->poly_stipple = r600_context_state_incref(rstate);
-		break;
-	case pipe_scissor_type:
-		rctx->scissor = r600_context_state_decref(rctx->scissor);
-		rctx->scissor = r600_context_state_incref(rstate);
-		break;
-	case pipe_clip_type:
-		rctx->clip = r600_context_state_decref(rctx->clip);
-		rctx->clip = r600_context_state_incref(rstate);
-		break;
-	case pipe_depth_type:
-		rctx->depth = r600_context_state_decref(rctx->depth);
-		rctx->depth = r600_context_state_incref(rstate);
-		break;
-	case pipe_stencil_type:
-		rctx->stencil = r600_context_state_decref(rctx->stencil);
-		rctx->stencil = r600_context_state_incref(rstate);
-		break;
-	case pipe_alpha_type:
-		rctx->alpha = r600_context_state_decref(rctx->alpha);
-		rctx->alpha = r600_context_state_incref(rstate);
-		break;
-	case pipe_dsa_type:
-		rctx->dsa = r600_context_state_decref(rctx->dsa);
-		rctx->dsa = r600_context_state_incref(rstate);
-		break;
-	case pipe_blend_type:
-		rctx->blend = r600_context_state_decref(rctx->blend);
-		rctx->blend = r600_context_state_incref(rstate);
-		break;
-	case pipe_framebuffer_type:
-		rctx->framebuffer = r600_context_state_decref(rctx->framebuffer);
-		rctx->framebuffer = r600_context_state_incref(rstate);
-		break;
-	case pipe_stencil_ref_type:
-		rctx->stencil_ref = r600_context_state_decref(rctx->stencil_ref);
-		rctx->stencil_ref = r600_context_state_incref(rstate);
-		break;
-	case pipe_viewport_type:
-		rctx->viewport = r600_context_state_decref(rctx->viewport);
-		rctx->viewport = r600_context_state_incref(rstate);
-		break;
-	case pipe_shader_type:
-	case pipe_sampler_type:
-	case pipe_sampler_view_type:
-	default:
-		R600_ERR("invalid type %d\n", rstate->type);
+	rctx->rasterizer = r600_context_state_decref(rctx->rasterizer);
+	rctx->rasterizer = r600_context_state_incref(rstate);
+}
+
+static void r600_bind_blend_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = r600_context(ctx);
+	struct r600_context_state *rstate = (struct r600_context_state *)state;
+
+	if (state == NULL)
 		return;
-	}
+	rctx->blend = r600_context_state_decref(rctx->blend);
+	rctx->blend = r600_context_state_incref(rstate);
+
+}
+
+static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = r600_context(ctx);
+	struct r600_context_state *rstate = (struct r600_context_state *)state;
+
+	if (state == NULL)
+		return;
+	rctx->dsa = r600_context_state_decref(rctx->dsa);
+	rctx->dsa = r600_context_state_incref(rstate);
 }
 
 static void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
@@ -417,9 +383,7 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 	rstate = r600_new_context_state(pipe_clip_type);
 	rstate->state.clip = *state;
 	r600_ucp(rctx, &rstate->rstate[0], &rstate->state.clip);
-	r600_bind_state(ctx, rstate);
-	/* refcount is taken care of this */
-	r600_delete_state(ctx, rstate);
+	rctx->clip = rstate;
 }
 
 static void r600_set_constant_buffer(struct pipe_context *ctx,
@@ -483,14 +447,14 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	pipe_surface_reference(&rstate->state.framebuffer.zsbuf,
 			       state->zsbuf);
-	r600_bind_state(ctx, rstate);
+	rctx->framebuffer = rstate;
 	for (i = 0; i < state->nr_cbufs; i++) {
 		r600_cb(rctx, &rstate->rstate[i+1], state, i);
 	}
 	if (state->zsbuf) {
 		r600_db(rctx, &rstate->rstate[0], state);
 	}
-	return rstate;
+	return;
 }
 
 static void r600_set_polygon_stipple(struct pipe_context *ctx,
@@ -510,9 +474,7 @@ static void r600_set_scissor_state(struct pipe_context *ctx,
 
 	rstate = r600_new_context_state(pipe_scissor_type);
 	rstate->state.scissor = *state;
-	r600_bind_state(ctx, rstate);
-	/* refcount is taken care of this */
-	r600_delete_state(ctx, rstate);
+	rctx->scissor = rstate;
 }
 
 static void r600_set_stencil_ref(struct pipe_context *ctx,
@@ -523,9 +485,7 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 
 	rstate = r600_new_context_state(pipe_stencil_ref_type);
 	rstate->state.stencil_ref = *state;
-	r600_bind_state(ctx, rstate);
-	/* refcount is taken care of this */
-	r600_delete_state(ctx, rstate);
+	rctx->stencil_ref = rstate;
 }
 
 static void r600_set_vertex_buffers(struct pipe_context *ctx,
@@ -571,8 +531,7 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 	rstate = r600_new_context_state(pipe_viewport_type);
 	rstate->state.viewport = *state;
 	r600_viewport(rctx, &rstate->rstate[0], &rstate->state.viewport);
-	r600_bind_state(ctx, rstate);
-	r600_delete_state(ctx, rstate);
+	rctx->viewport = rstate;
 }
 
 void r600_init_state_functions(struct r600_context *rctx)
@@ -585,11 +544,11 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = r600_create_sampler_view;
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.create_vs_state = r600_create_shader_state;
-	rctx->context.bind_blend_state = r600_bind_state;
-	rctx->context.bind_depth_stencil_alpha_state = r600_bind_state;
+	rctx->context.bind_blend_state = r600_bind_blend_state;
+	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = r600_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
-	rctx->context.bind_rasterizer_state = r600_bind_state;
+	rctx->context.bind_rasterizer_state = r600_bind_rasterizer_state;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = r600_bind_vs_sampler;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
