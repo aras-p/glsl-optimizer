@@ -74,7 +74,7 @@ struct lp_build_tgsi_aos_context
    const LLVMValueRef *inputs;
    LLVMValueRef *outputs;
 
-   const struct lp_build_sampler_aos *sampler;
+   struct lp_build_sampler_aos *sampler;
 
    LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES];
    LLVMValueRef temps[LP_MAX_TGSI_TEMPS];
@@ -398,8 +398,7 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
    }
 
    return bld->sampler->emit_fetch_texel(bld->sampler,
-                                         bld->base.builder,
-                                         bld->base.type,
+                                         &bld->base,
                                          target, unit,
                                          coords, ddx, ddy,
                                          modifier);

@@ -84,13 +84,9 @@ struct lp_build_sampler_soa
 
 struct lp_build_sampler_aos
 {
-   void
-   (*destroy)( struct lp_build_sampler_aos *sampler );
-
    LLVMValueRef
-   (*emit_fetch_texel)( const struct lp_build_sampler_aos *sampler,
-                        LLVMBuilderRef builder,
-                        struct lp_type type,
+   (*emit_fetch_texel)( struct lp_build_sampler_aos *sampler,
+                        struct lp_build_context *bld,
                         unsigned target, /* TGSI_TEXTURE_* */
                         unsigned unit,
                         LLVMValueRef coords,
