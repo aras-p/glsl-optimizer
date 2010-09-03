@@ -344,19 +344,6 @@ nvfx_screen_get_vertex_buffer_flags(struct nvfx_screen* screen)
 		vram_hack_default = 1;
 	vram_hack = debug_get_bool_option("NOUVEAU_VTXIDX_IN_VRAM", vram_hack_default);
 
-#ifdef DEBUG
-	if(!vram_hack)
-	{
-		fprintf(stderr, "Some systems may experience graphics corruption due to randomly misplaced vertices.\n"
-			"If this is happening, export NOUVEAU_VTXIDX_IN_VRAM=1 may reduce or eliminate the problem\n");
-	}
-	else
-	{
-		fprintf(stderr, "A performance reducing hack is being used to help avoid graphics corruption.\n"
-			"You can try export NOUVEAU_VTXIDX_IN_VRAM=0 to disable it.\n");
-	}
-#endif
-
 	return vram_hack ? NOUVEAU_BO_VRAM : NOUVEAU_BO_GART;
 }
 
