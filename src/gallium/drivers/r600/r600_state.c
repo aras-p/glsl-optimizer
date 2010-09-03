@@ -1042,14 +1042,14 @@ static void r600_sampler_border(struct r600_context *rctx, struct radeon_state *
 
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_SAMPLER_BORDER, id, R600_SHADER_PS);
 	if (uc.ui) {
-		radeon_state_init(rstate, rscreen->rw, R600_STATE_SAMPLER_BORDER, id, R600_SHADER_PS);
 		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_RED] = fui(state->border_color[0]);
 		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_GREEN] = fui(state->border_color[1]);
 		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_BLUE] = fui(state->border_color[2]);
 		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_ALPHA] = fui(state->border_color[3]);
-		radeon_state_pm4(rstate);
 	}
+	radeon_state_pm4(rstate);
 }
 
 static void r600_sampler(struct r600_context *rctx, struct radeon_state *rstate,
