@@ -70,3 +70,49 @@ lp_build_struct_get(LLVMBuilderRef builder,
    lp_build_name(res, "%s.%s", LLVMGetValueName(ptr), name);
    return res;
 }
+
+
+LLVMValueRef
+lp_build_array_get_ptr(LLVMBuilderRef builder,
+                       LLVMValueRef ptr,
+                       LLVMValueRef index)
+{
+   LLVMValueRef indices[2];
+   LLVMValueRef element_ptr;
+   indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indices[1] = index;
+   element_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
+#ifdef DEBUG
+   lp_build_name(element_ptr, "&%s[%s]",
+                 LLVMGetValueName(ptr), LLVMGetValueName(index));
+#endif
+   return element_ptr;
+}
+
+
+LLVMValueRef
+lp_build_array_get(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index)
+{
+   LLVMValueRef element_ptr;
+   LLVMValueRef res;
+   element_ptr = lp_build_array_get_ptr(builder, ptr, index);
+   res = LLVMBuildLoad(builder, element_ptr, "");
+#ifdef DEBUG
+   lp_build_name(res, "%s[%s]", LLVMGetValueName(ptr), LLVMGetValueName(index));
+#endif
+   return res;
+}
+
+
+void
+lp_build_array_set(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index,
+                   LLVMValueRef value)
+{
+   LLVMValueRef element_ptr;
+   element_ptr = lp_build_array_get_ptr(builder, ptr, index);
+   LLVMBuildStore(builder, value, element_ptr);
+}
