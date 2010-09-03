@@ -49,6 +49,8 @@ lp_build_struct_get_ptr(LLVMBuilderRef builder,
 {
    LLVMValueRef indices[2];
    LLVMValueRef member_ptr;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind);
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indices[1] = LLVMConstInt(LLVMInt32Type(), member, 0);
    member_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
@@ -65,6 +67,8 @@ lp_build_struct_get(LLVMBuilderRef builder,
 {
    LLVMValueRef member_ptr;
    LLVMValueRef res;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind);
    member_ptr = lp_build_struct_get_ptr(builder, ptr, member, name);
    res = LLVMBuildLoad(builder, member_ptr, "");
    lp_build_name(res, "%s.%s", LLVMGetValueName(ptr), name);
@@ -79,6 +83,8 @@ lp_build_array_get_ptr(LLVMBuilderRef builder,
 {
    LLVMValueRef indices[2];
    LLVMValueRef element_ptr;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMArrayTypeKind);
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indices[1] = index;
    element_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
@@ -97,6 +103,8 @@ lp_build_array_get(LLVMBuilderRef builder,
 {
    LLVMValueRef element_ptr;
    LLVMValueRef res;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMArrayTypeKind);
    element_ptr = lp_build_array_get_ptr(builder, ptr, index);
    res = LLVMBuildLoad(builder, element_ptr, "");
 #ifdef DEBUG
@@ -113,6 +121,37 @@ lp_build_array_set(LLVMBuilderRef builder,
                    LLVMValueRef value)
 {
    LLVMValueRef element_ptr;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMArrayTypeKind);
    element_ptr = lp_build_array_get_ptr(builder, ptr, index);
+   LLVMBuildStore(builder, value, element_ptr);
+}
+
+
+LLVMValueRef
+lp_build_pointer_get(LLVMBuilderRef builder,
+                     LLVMValueRef ptr,
+                     LLVMValueRef index)
+{
+   LLVMValueRef element_ptr;
+   LLVMValueRef res;
+   assert(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
+   element_ptr = LLVMBuildGEP(builder, ptr, &index, 1, "");
+   res = LLVMBuildLoad(builder, element_ptr, "");
+#ifdef DEBUG
+   lp_build_name(res, "%s[%s]", LLVMGetValueName(ptr), LLVMGetValueName(index));
+#endif
+   return res;
+}
+
+
+void
+lp_build_pointer_set(LLVMBuilderRef builder,
+                     LLVMValueRef ptr,
+                     LLVMValueRef index,
+                     LLVMValueRef value)
+{
+   LLVMValueRef element_ptr;
+   element_ptr = LLVMBuildGEP(builder, ptr, &index, 1, "");
    LLVMBuildStore(builder, value, element_ptr);
 }

@@ -96,4 +96,21 @@ lp_build_array_set(LLVMBuilderRef builder,
                    LLVMValueRef index,
                    LLVMValueRef value);
 
+/**
+ * Get the value of an array element.
+ */
+LLVMValueRef
+lp_build_pointer_get(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index);
+
+/**
+ * Set the value of an array element.
+ */
+void
+lp_build_pointer_set(LLVMBuilderRef builder,
+                     LLVMValueRef ptr,
+                     LLVMValueRef index,
+                     LLVMValueRef value);
+
 #endif /* !LP_BLD_STRUCT_H */
