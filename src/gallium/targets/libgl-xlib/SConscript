@@ -48,6 +48,10 @@ if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
 
+if True:
+    env.Append(CPPDEFINES = 'GALLIUM_GALAHAD')
+    env.Prepend(LIBS = [galahad])
+
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Tool('udis86')
