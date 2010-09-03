@@ -169,7 +169,7 @@ struct exec_node {
    /**
     * Insert another list in the list before the current node
     */
-   void insert_before(class exec_list *before);
+   void insert_before(struct exec_list *before);
 
    /**
     * Replace the current node with the given node.
