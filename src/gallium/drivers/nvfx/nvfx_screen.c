@@ -110,7 +110,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VS_INPUTS:
 		return 16;
 	case PIPE_CAP_MAX_VS_CONSTS:
-		return 256;
+		/* XXX: currently more don't work, but it should be possible to make it work */
+		return 212 - 6;
 	case PIPE_CAP_MAX_VS_TEMPS:
 		return screen->is_nv4x ? 32 : 13;
 	case PIPE_CAP_MAX_VS_ADDRS:
@@ -487,7 +488,13 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Vtxprog resources */
 	if (nouveau_resource_init(&screen->vp_exec_heap, 0, screen->is_nv4x ? 512 : 256) ||
-	    nouveau_resource_init(&screen->vp_data_heap, 0, 256)) {
+	    /* XXX: this should actually be 468 or 256, but apparently indirect addressing
+	     * cannot read consts starting from 212 on nv40.
+	     * It looks like 44 slots are reserved for something, and there is a "mode switch"
+	     * from 256 slots to 512 slots that we are setting to "256 mode" on nv40, leading
+	     * to 212 = 256 - 44 instead of 468 = 512 - 44 usable slots.
+	     */
+	    nouveau_resource_init(&screen->vp_data_heap, 0, 212)) {
 		nvfx_screen_destroy(pscreen);
 		return NULL;
 	}

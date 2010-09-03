@@ -46,6 +46,7 @@ struct nvfx_vpc {
 	struct nvfx_reg r_result[PIPE_MAX_SHADER_OUTPUTS];
 	struct nvfx_reg *r_address;
 	struct nvfx_reg *r_temp;
+	struct nvfx_reg *r_const;
 
 	struct nvfx_reg *imm;
 	unsigned nr_imm;
@@ -151,6 +152,18 @@ emit_src(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int pos,
 	       (src.swz[1] << NVFX_VP(SRC_SWZ_Y_SHIFT)) |
 	       (src.swz[2] << NVFX_VP(SRC_SWZ_Z_SHIFT)) |
 	       (src.swz[3] << NVFX_VP(SRC_SWZ_W_SHIFT)));
+
+	if(src.indirect) {
+		if(src.reg.type == NVFXSR_CONST)
+			hw[3] |= NVFX_VP(INST_INDEX_CONST);
+		else if(src.reg.type == NVFXSR_INPUT)
+			hw[0] |= NVFX_VP(INST_INDEX_INPUT);
+		else
+			assert(0);
+		if(src.indirect_reg)
+			hw[0] |= NVFX_VP(INST_ADDR_REG_SELECT_1);
+		hw[0] |= src.indirect_swz << NVFX_VP(INST_ADDR_SWZ_SHIFT);
+	}
 
 	switch (pos) {
 	case 0:
@@ -317,6 +330,9 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 	emit_src(nvfx, vpc, hw, 0, insn.src[0]);
 	emit_src(nvfx, vpc, hw, 1, insn.src[1]);
 	emit_src(nvfx, vpc, hw, 2, insn.src[2]);
+
+//	if(insn.src[0].indirect || op == NVFX_VP_INST_VEC_OP_ARL)
+//		hw[3] |= NV40_VP_INST_SCA_RESULT;
 }
 
 static inline struct nvfx_src
@@ -328,7 +344,7 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 		src.reg = nvfx_reg(NVFXSR_INPUT, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src.reg = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
+		src.reg = vpc->r_const[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_IMMEDIATE:
 		src.reg = vpc->imm[fsrc->Register.Index];
@@ -339,7 +355,7 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	default:
 		NOUVEAU_ERR("bad src file\n");
 		src.reg.index = 0;
-		src.reg.type = 0;
+		src.reg.type = -1;
 		break;
 	}
 
@@ -349,6 +365,22 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	src.swz[1] = fsrc->Register.SwizzleY;
 	src.swz[2] = fsrc->Register.SwizzleZ;
 	src.swz[3] = fsrc->Register.SwizzleW;
+	src.indirect = 0;
+
+	if(fsrc->Register.Indirect) {
+		if(fsrc->Indirect.File == TGSI_FILE_ADDRESS &&
+				(fsrc->Register.File == TGSI_FILE_CONSTANT || fsrc->Register.File == TGSI_FILE_INPUT))
+		{
+			src.indirect = 1;
+			src.indirect_reg = fsrc->Indirect.Index;
+			src.indirect_swz = fsrc->Indirect.SwizzleX;
+		}
+		else
+		{
+			src.reg.index = 0;
+			src.reg.type = -1;
+		}
+	}
 	return src;
 }
 
@@ -460,6 +492,15 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 			return FALSE;
 		}
 	}
+
+	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
+		if(src[i].reg.type < 0)
+			return FALSE;
+	}
+
+	if(finst->Dst[0].Register.File == TGSI_FILE_ADDRESS &&
+			finst->Instruction.Opcode != TGSI_OPCODE_ARL)
+		return FALSE;
 
 	dst  = tgsi_dst(vpc, &finst->Dst[0]);
 	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
@@ -761,7 +802,7 @@ static boolean
 nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 {
 	struct tgsi_parse_context p;
-	int high_temp = -1, high_addr = -1, nr_imm = 0, i;
+	int high_const = -1, high_temp = -1, high_addr = -1, nr_imm = 0, i;
 	struct util_semantic_set set;
 	unsigned char sem_layout[8];
 	unsigned num_outputs;
@@ -814,14 +855,18 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 						fdec->Range.Last;
 				}
 				break;
-#if 0 /* this would be nice.. except gallium doesn't track it */
 			case TGSI_FILE_ADDRESS:
 				if (fdec->Range.Last > high_addr) {
 					high_addr =
 						fdec->Range.Last;
 				}
 				break;
-#endif
+			case TGSI_FILE_CONSTANT:
+				if (fdec->Range.Last > high_const) {
+					high_const =
+							fdec->Range.Last;
+				}
+				break;
 			case TGSI_FILE_OUTPUT:
 				if (!nvfx_vertprog_parse_decl_output(nvfx, vpc, fdec))
 					return FALSE;
@@ -831,23 +876,6 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 			}
 		}
 			break;
-#if 1 /* yay, parse instructions looking for address regs instead */
-		case TGSI_TOKEN_TYPE_INSTRUCTION:
-		{
-			const struct tgsi_full_instruction *finst;
-			const struct tgsi_full_dst_register *fdst;
-
-			finst = &p.FullToken.FullInstruction;
-			fdst = &finst->Dst[0];
-
-			if (fdst->Register.File == TGSI_FILE_ADDRESS) {
-				if (fdst->Register.Index > high_addr)
-					high_addr = fdst->Register.Index;
-			}
-
-		}
-			break;
-#endif
 		default:
 			break;
 		}
@@ -868,7 +896,13 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	if (++high_addr) {
 		vpc->r_address = CALLOC(high_addr, sizeof(struct nvfx_reg));
 		for (i = 0; i < high_addr; i++)
-			vpc->r_address[i] = temp(vpc);
+			vpc->r_address[i] = nvfx_reg(NVFXSR_TEMP, i);
+	}
+
+	if(++high_const) {
+		vpc->r_const = CALLOC(high_const, sizeof(struct nvfx_reg));
+		for (i = 0; i < high_const; i++)
+			vpc->r_const[i] = constant(vpc, i, 0, 0, 0, 0);
 	}
 
 	vpc->r_temps_discard = 0;
@@ -1037,6 +1071,8 @@ out_err:
 		FREE(vpc->r_temp);
 	if (vpc->r_address)
 		FREE(vpc->r_address);
+	if (vpc->r_const)
+		FREE(vpc->r_const);
 	if (vpc->imm)
 		FREE(vpc->imm);
 	FREE(vpc);
@@ -1116,6 +1152,8 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
                         }
 		}
 
+		//printf("start at %u nc %u\n", vp->data->start, vp->nr_consts);
+
 		/*XXX: handle this some day */
 		assert(vp->data->start >= vp->data_start_min);
 
@@ -1161,6 +1199,8 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			struct nvfx_relocation* reloc = (struct nvfx_relocation*)((char*)vp->const_relocs.data + i);
 			struct nvfx_vertex_program_exec *vpi = &vp->insns[reloc->location];
 
+			//printf("reloc %i to %i + %i\n", reloc->location, vp->data->start, reloc->target);
+
 			vpi->data[1] &= ~NVFX_VP(INST_CONST_SRC_MASK);
 			vpi->data[1] |=
 					(reloc->target + vp->data->start) <<
@@ -1178,6 +1218,16 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		if (constbuf)
 			map = (float*)nvfx_buffer(constbuf)->data;
 
+		/*
+		for (i = 0; i < 512; i++) {
+			float v[4] = {0.1, 0,2, 0.3, 0.4};
+			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (chan, i);
+			OUT_RINGp (chan, (uint32_t *)v, 4);
+			printf("frob %i\n", i);
+		}
+		*/
+
 		for (i = nvfx->use_vp_clipping ? 6 : 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
 
@@ -1189,6 +1239,8 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 				memcpy(vpd->value, &map[vpd->index * 4],
 				       4 * sizeof(float));
 			}
+
+			//printf("upload into %i + %i: %f %f %f %f\n", vp->data->start, i, vpd->value[0], vpd->value[1], vpd->value[2], vpd->value[3]);
 
 			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (chan, i + vp->data->start);
@@ -1202,6 +1254,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
 			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_INST(0), 4);
+			//printf("%08x %08x %08x %08x\n", vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
 			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 		vp->clip_nr = -1;

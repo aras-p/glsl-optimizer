@@ -60,6 +60,9 @@
 
 /* DWORD 0 */
 
+/* guess that this is the same as nv40 */
+#define NV30_VP_INST_INDEX_INPUT                                        (1 << 27)
+
 #define NV30_VP_INST_ADDR_REG_SELECT_1        (1 << 24)
 #define NV30_VP_INST_SRC2_ABS           (1 << 23) /* guess */
 #define NV30_VP_INST_SRC1_ABS           (1 << 22) /* guess */
@@ -135,6 +138,9 @@
 #  define NV30_VP_INST_DEST_PSZ   6
 #  define NV30_VP_INST_DEST_TC(n)  (8+(n))
 #  define NV30_VP_INST_DEST_CLP(n) (17 + (n))
+
+/* guess that this is the same as nv40 */
+#define NV30_VP_INST_INDEX_CONST                                        (1 << 1)
 
 /* Useful to split the source selection regs into their pieces */
 #define NV30_VP_SRC0_HIGH_SHIFT                                                6

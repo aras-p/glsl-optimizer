@@ -414,14 +414,16 @@
 #define abs(s) nvfx_src_abs((s))
 
 struct nvfx_reg {
-	uint8_t type;
+	int8_t type;
 	uint32_t index;
 };
 
 struct nvfx_src {
 	struct nvfx_reg reg;
 
-	/* src only */
+	uint8_t indirect : 1;
+	uint8_t indirect_reg : 1;
+	uint8_t indirect_swz : 2;
 	uint8_t negate : 1;
 	uint8_t abs : 1;
 	uint8_t swz[4];
@@ -483,6 +485,7 @@ nvfx_src(struct nvfx_reg reg)
 		.abs = 0,
 		.negate = 0,
 		.swz = { 0, 1, 2, 3 },
+		.indirect = 0,
 	};
 	return temp;
 }
