@@ -728,6 +728,9 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
 
    debug_printf("fs variant %p:\n", (void *) key);
 
+   for (i = 0; i < key->nr_cbufs; ++i) {
+      debug_printf("cbuf_format[%u] = %s\n", i, util_format_name(key->cbuf_format[i]));
+   }
    if (key->depth.enabled) {
       debug_printf("depth.format = %s\n", util_format_name(key->zsbuf_format));
       debug_printf("depth.func = %s\n", util_dump_func(key->depth.func, TRUE));
@@ -798,6 +801,7 @@ generate_variant(struct llvmpipe_context *lp,
                  const struct lp_fragment_shader_variant_key *key)
 {
    struct lp_fragment_shader_variant *variant;
+   boolean fullcolormask;
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
    if(!variant)
@@ -820,11 +824,23 @@ generate_variant(struct llvmpipe_context *lp,
    generate_fragment(lp, shader, variant, RAST_WHOLE);
    generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
 
-   /* TODO: most of these can be relaxed, in particular the colormask */
+   /*
+    * Determine whether we are touching all channels in the color buffer.
+    */
+   fullcolormask = FALSE;
+   if (key->nr_cbufs == 1) {
+      const struct util_format_description *format_desc;
+      format_desc = util_format_description(key->cbuf_format[0]);
+      if ((~key->blend.rt[0].colormask &
+           util_format_colormask(format_desc)) == 0) {
+         fullcolormask = TRUE;
+      }
+   }
+
    variant->opaque =
          !key->blend.logicop_enable &&
          !key->blend.rt[0].blend_enable &&
-         key->blend.rt[0].colormask == 0xf &&
+         fullcolormask &&
          !key->stencil[0].enabled &&
          !key->alpha.enabled &&
          !key->depth.enabled &&
@@ -1056,25 +1072,22 @@ make_variant_key(struct llvmpipe_context *lp,
 
    key->nr_cbufs = lp->framebuffer.nr_cbufs;
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
+      enum pipe_format format = lp->framebuffer.cbufs[i]->format;
       struct pipe_rt_blend_state *blend_rt = &key->blend.rt[i];
       const struct util_format_description *format_desc;
-      unsigned chan;
 
-      format_desc = util_format_description(lp->framebuffer.cbufs[i]->format);
+      key->cbuf_format[i] = format;
+
+      format_desc = util_format_description(format);
       assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
              format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB);
 
       blend_rt->colormask = lp->blend->rt[i].colormask;
 
-      /* mask out color channels not present in the color buffer.
-       * Should be simple to incorporate per-cbuf writemasks:
+      /*
+       * Mask out color channels not present in the color buffer.
        */
-      for(chan = 0; chan < 4; ++chan) {
-         enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-
-         if(swizzle > UTIL_FORMAT_SWIZZLE_W)
-            blend_rt->colormask &= ~(1 << chan);
-      }
+      blend_rt->colormask &= util_format_colormask(format_desc);
 
       /*
        * Our swizzled render tiles always have an alpha channel, but the linear
