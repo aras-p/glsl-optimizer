@@ -121,6 +121,9 @@ struct r600_context_hw_states {
 	struct radeon_state	cb_cntl;
 };
 
+#define R600_MAX_CONSTANT 256 /* magic */
+#define R600_MAX_RESOURCE 160 /* magic */
+
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
@@ -130,10 +133,10 @@ struct r600_context {
 	struct radeon_draw		draw;
 	struct radeon_state		config;
 	/* FIXME get rid of those vs_resource,vs/ps_constant */
-	struct radeon_state		vs_resource[160];
+	struct radeon_state		*vs_resource;
 	unsigned			vs_nresource;
-	struct radeon_state		vs_constant[256];
-	struct radeon_state		ps_constant[256];
+	struct radeon_state		*vs_constant;
+	struct radeon_state		*ps_constant;
 	/* hw states */
 	struct r600_context_hw_states	hw_states;
 	/* pipe states */

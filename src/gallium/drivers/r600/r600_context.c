@@ -53,6 +53,11 @@ static void r600_destroy_context(struct pipe_context *context)
 	rctx->stencil_ref = r600_context_state_decref(rctx->stencil_ref);
 	rctx->viewport = r600_context_state_decref(rctx->viewport);
 	rctx->framebuffer = r600_context_state_decref(rctx->framebuffer);
+
+	free(rctx->ps_constant);
+	free(rctx->vs_constant);
+	free(rctx->vs_resource);
+
 	radeon_ctx_fini(&rctx->ctx);
 	FREE(rctx);
 }
@@ -353,6 +358,24 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	}
 
 	r600_init_config(rctx);
+
+	rctx->vs_constant = (struct radeon_state *)calloc(R600_MAX_CONSTANT, sizeof(struct radeon_state));
+	if (!rctx->vs_constant) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->ps_constant = (struct radeon_state *)calloc(R600_MAX_CONSTANT, sizeof(struct radeon_state));
+	if (!rctx->ps_constant) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->vs_resource = (struct radeon_state *)calloc(R600_MAX_RESOURCE, sizeof(struct radeon_state));
+	if (!rctx->vs_resource) {
+		FREE(rctx);
+		return NULL;
+	}						   
 
 	radeon_ctx_init(&rctx->ctx, rscreen->rw);
 	radeon_draw_init(&rctx->draw, rscreen->rw);
