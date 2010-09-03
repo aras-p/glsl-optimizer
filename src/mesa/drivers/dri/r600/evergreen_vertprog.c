@@ -733,4 +733,7 @@ GLboolean evergreenSetupVPconstants(GLcontext * ctx)
         }
         unConstOffset += pCompiledSub->NumParameters;
     }
+
+    return GL_TRUE;
 }
+
