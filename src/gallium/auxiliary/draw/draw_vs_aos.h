@@ -32,6 +32,8 @@
 #define DRAW_VS_AOS_H
 
 #include "pipe/p_config.h"
+#include "tgsi/tgsi_exec.h"
+#include "draw_vs.h"
 
 #ifdef PIPE_ARCH_X86
 
