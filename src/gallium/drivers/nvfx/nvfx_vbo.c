@@ -527,7 +527,7 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 
 	cso->translate = translate_create(&transkey);
 	cso->vertex_length = transkey.output_stride >> 2;
-	cso->max_vertices_per_packet = 2047 / cso->vertex_length;
+	cso->max_vertices_per_packet = 2047 / MAX2(cso->vertex_length, 1);
 
 	return (void *)cso;
 }
