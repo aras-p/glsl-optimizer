@@ -1,3 +1,4 @@
+#include <float.h>
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -629,7 +630,28 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_LG2:
 		nvfx_fp_emit(fpc, arith(sat, LG2, dst, mask, src[0], none, none));
 		break;
-//	case TGSI_OPCODE_LIT:
+	case TGSI_OPCODE_LIT:
+		if(!nvfx->is_nv4x)
+			nvfx_fp_emit(fpc, arith(sat, LIT_NV30, dst, mask, src[0], src[1], src[2]));
+		else {
+			/* we use FLT_MIN, so that log2 never gives -infinity, and thus multiplication by
+			 * specular 0 always gives 0, so that ex2 gives 1, to satisfy the 0^0 = 1 requirement
+			 *
+			 * NOTE: if we start using half precision, we might need an fp16 FLT_MIN here instead
+			 */
+			float maxv[4] = {0, FLT_MIN, 0, 0};
+			struct nvfx_src maxs = nvfx_src(constant(fpc, -1, maxv));
+			tmp = nvfx_src(temp(fpc));
+			if (ci>= 0 || ii >= 0) {
+				nvfx_fp_emit(fpc, arith(0, MOV, tmp.reg, NVFX_FP_MASK_X | NVFX_FP_MASK_Y, maxs, none, none));
+				maxs = tmp;
+			}
+			nvfx_fp_emit(fpc, arith(0, MAX, tmp.reg, NVFX_FP_MASK_Y | NVFX_FP_MASK_W, swz(src[0], X, X, X, Y), swz(maxs, X, X, Y, Y), none));
+			nvfx_fp_emit(fpc, arith(0, LG2, tmp.reg, NVFX_FP_MASK_W, swz(tmp, W, W, W, W), none, none));
+			nvfx_fp_emit(fpc, arith(0, MUL, tmp.reg, NVFX_FP_MASK_W, swz(tmp, W, W, W, W), swz(src[0], W, W, W, W), none));
+			nvfx_fp_emit(fpc, arith(sat, LITEX2_NV40, dst, mask, swz(tmp, Y, Y, W, W), none, none));
+		}
+		break;
 	case TGSI_OPCODE_LRP:
 		if(!nvfx->is_nv4x)
 			nvfx_fp_emit(fpc, arith(sat, LRP_NV30, dst, mask, src[0], src[1], src[2]));
