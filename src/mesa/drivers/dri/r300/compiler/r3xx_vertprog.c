@@ -391,7 +391,7 @@ static void ei_if(struct r300_vertex_program_compiler * compiler,
 	/* Reserve a temporary to use as our predicate stack counter, if we
 	 * don't already have one. */
 	if (!compiler->PredicateMask) {
-		unsigned int writemasks[R300_VS_MAX_TEMPS];
+		unsigned int writemasks[RC_REGISTER_MAX_INDEX];
 		memset(writemasks, 0, sizeof(writemasks));
 		struct rc_instruction * inst;
 		unsigned int i;
@@ -400,7 +400,7 @@ static void ei_if(struct r300_vertex_program_compiler * compiler,
 							inst = inst->Next) {
 			rc_for_all_writes_mask(inst, mark_write, writemasks);
 		}
-		for(i = 0; i < R300_VS_MAX_TEMPS; i++) {
+		for(i = 0; i < compiler->Base.max_temp_regs; i++) {
 			unsigned int mask = ~writemasks[i] & RC_MASK_XYZW;
 			/* Only the W component can be used fo the predicate
 			 * stack counter. */
@@ -410,7 +410,7 @@ static void ei_if(struct r300_vertex_program_compiler * compiler,
 				break;
 			}
 		}
-		if (i == R300_VS_MAX_TEMPS) {
+		if (i == compiler->Base.max_temp_regs) {
 			rc_error(&compiler->Base, "No free temporary to use for"
 					" predicate stack counter.\n");
 			return;
@@ -503,8 +503,7 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 			}
 		}
 
-		if (compiler->code->length >= R500_VS_MAX_ALU_DWORDS ||
-		    (compiler->code->length >= R300_VS_MAX_ALU_DWORDS && !compiler->Base.is_r500)) {
+		if (compiler->code->length >= c->max_alu_insts) {
 			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
 			return;
 		}
