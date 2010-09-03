@@ -665,11 +665,14 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 	struct rc_instruction *inst;
 	struct rc_instruction *end_loop = NULL;
 	unsigned int num_orig_temps = 0;
-	char hwtemps[R300_VS_MAX_TEMPS];
+	char hwtemps[RC_REGISTER_MAX_INDEX];
 	struct temporary_allocation * ta;
 	unsigned int i, j;
+	struct rc_instruction *last_inst_src_reladdr = NULL;
 
 	memset(hwtemps, 0, sizeof(hwtemps));
+
+	rc_recompute_ips(c);
 
 	/* Pass 1: Count original temporaries. */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
@@ -690,7 +693,8 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 		}
 	}
 
-	/* Pass 2: If there is relative addressing of temporaries, we cannot change register indices. Give up. */
+	/* Pass 2: If there is relative addressing of dst temporaries, we cannot change register indices. Give up.
+	 * For src temporaries, save the last instruction which uses relative addressing. */
 	for (inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -701,7 +705,7 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
 			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY &&
 			    inst->U.I.SrcReg[i].RelAddr) {
-				return;
+				last_inst_src_reladdr = inst;
 			}
 		}
 	}
@@ -739,9 +743,26 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 		}
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY)
-				ta[inst->U.I.SrcReg[i].Index].LastRead =
-						end_loop ? end_loop : inst;
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+				struct rc_instruction *last_read;
+
+				/* From "last_inst_src_reladdr", "end_loop", and "inst",
+				 * select the instruction with the highest instruction index (IP).
+				 * Note that "end_loop", if available, has always a higher index than "inst". */
+				if (last_inst_src_reladdr) {
+					if (end_loop) {
+						last_read = last_inst_src_reladdr->IP > end_loop->IP ?
+							    last_inst_src_reladdr : end_loop;
+					} else {
+						last_read = last_inst_src_reladdr->IP > inst->IP ?
+							    last_inst_src_reladdr : inst;
+					}
+				} else {
+					last_read = end_loop ? end_loop : inst;
+				}
+
+				ta[inst->U.I.SrcReg[i].Index].LastRead = last_read;
+			}
 		}
 	}
 
@@ -749,13 +770,15 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
-				unsigned int orig = inst->U.I.SrcReg[i].Index;
-				inst->U.I.SrcReg[i].Index = ta[orig].HwTemp;
+		if (!last_inst_src_reladdr || last_inst_src_reladdr->IP < inst->IP) {
+			for (i = 0; i < opcode->NumSrcRegs; ++i) {
+				if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+					unsigned int orig = inst->U.I.SrcReg[i].Index;
+					inst->U.I.SrcReg[i].Index = ta[orig].HwTemp;
 
-				if (ta[orig].Allocated && inst == ta[orig].LastRead)
-					hwtemps[ta[orig].HwTemp] = 0;
+					if (ta[orig].Allocated && inst == ta[orig].LastRead)
+						hwtemps[ta[orig].HwTemp] = 0;
+				}
 			}
 		}
 
@@ -764,16 +787,22 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 				unsigned int orig = inst->U.I.DstReg.Index;
 
 				if (!ta[orig].Allocated) {
-					for(j = 0; j < R300_VS_MAX_TEMPS; ++j) {
+					for(j = 0; j < c->max_temp_regs; ++j) {
 						if (!hwtemps[j])
 							break;
 					}
-					if (j >= R300_VS_MAX_TEMPS) {
-						fprintf(stderr, "Out of hw temporaries\n");
+					if (j >= c->max_temp_regs) {
+						rc_error(c, "Too many temporaries\n");
+						return;
 					} else {
 						ta[orig].Allocated = 1;
-						ta[orig].HwTemp = j;
-						hwtemps[j] = 1;
+						if (last_inst_src_reladdr &&
+						    last_inst_src_reladdr->IP > inst->IP) {
+							ta[orig].HwTemp = orig;
+						} else {
+							ta[orig].HwTemp = j;
+						}
+						hwtemps[ta[orig].HwTemp] = 1;
 					}
 				}
 
