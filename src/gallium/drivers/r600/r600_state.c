@@ -128,17 +128,20 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	return &rstate->state.sampler_view;
 }
 
-static void r600_set_ps_sampler_view(struct pipe_context *ctx,
-					unsigned count,
-					struct pipe_sampler_view **views)
+static void r600_set_sampler_view(struct pipe_context *ctx,
+				  unsigned count,
+				  struct pipe_sampler_view **views,
+				  struct r600_shader_sampler_states *sampler,
+				  unsigned shader_id)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->ps_nsampler_view; i++) {
-		radeon_draw_unbind(&rctx->draw, rctx->ps_sampler_view[i]);
+	for (i = 0; i < sampler->nview; i++) {
+		radeon_draw_unbind(&rctx->draw, sampler->view[i]);
 	}
+
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)views[i];
 		if (rstate) {
@@ -153,12 +156,20 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx,
 			if (rstate->nrstate) {
 				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
 			}
-			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_RESOURCE, i, R600_SHADER_PS);
-			rctx->ps_sampler_view[i] = &rstate->rstate[rstate->nrstate];
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_RESOURCE, i, shader_id);
+			sampler->view[i] = &rstate->rstate[rstate->nrstate];
 			rstate->nrstate++;
 		}
 	}
-	rctx->ps_nsampler_view = count;
+	sampler->nview = count;
+}
+
+static void r600_set_ps_sampler_view(struct pipe_context *ctx,
+					unsigned count,
+					struct pipe_sampler_view **views)
+{
+	struct r600_context *rctx = r600_context(ctx);
+	r600_set_sampler_view(ctx, count, views, &rctx->ps_sampler, R600_SHADER_PS);
 }
 
 static void r600_set_vs_sampler_view(struct pipe_context *ctx,
@@ -166,32 +177,7 @@ static void r600_set_vs_sampler_view(struct pipe_context *ctx,
 					struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = r600_context(ctx);
-	struct r600_context_state *rstate;
-	unsigned i;
-
-	for (i = 0; i < rctx->vs_nsampler_view; i++) {
-		radeon_draw_unbind(&rctx->draw, rctx->vs_sampler_view[i]);
-	}
-	for (i = 0; i < count; i++) {
-		rstate = (struct r600_context_state *)views[i];
-		if (rstate) {
-			rstate->nrstate = 0;
-		}
-	}
-	for (i = 0; i < count; i++) {
-		rstate = (struct r600_context_state *)views[i];
-		if (rstate) {
-			if (rstate->nrstate >= R600_MAX_RSTATE)
-				continue;
-			if (rstate->nrstate) {
-				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
-			}
-			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_RESOURCE, i, R600_SHADER_VS);
-			rctx->vs_sampler_view[i] = &rstate->rstate[rstate->nrstate];
-			rstate->nrstate++;
-		}
-	}
-	rctx->vs_nsampler_view = count;
+	r600_set_sampler_view(ctx, count, views, &rctx->vs_sampler, R600_SHADER_VS);
 }
 
 static void *r600_create_shader_state(struct pipe_context *ctx,
@@ -299,18 +285,19 @@ static void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 	rctx->vs_shader = r600_context_state_incref(rstate);
 }
 
-static void r600_bind_ps_sampler(struct pipe_context *ctx,
-					unsigned count, void **states)
+static void r600_bind_sampler_shader(struct pipe_context *ctx,
+				     unsigned count, void **states,
+				     struct r600_shader_sampler_states *sampler, unsigned shader_id)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 	unsigned i;
 
-	for (i = 0; i < rctx->ps_nsampler; i++) {
-		radeon_draw_unbind(&rctx->draw, rctx->ps_sampler[i]);
+	for (i = 0; i < sampler->nsampler; i++) {
+		radeon_draw_unbind(&rctx->draw, sampler->sampler[i]);
 	}
-	for (i = 0; i < rctx->ps_nsampler_border; i++) {
-		radeon_draw_unbind(&rctx->draw, rctx->ps_sampler_border[i]);
+	for (i = 0; i < sampler->nborder; i++) {
+		radeon_draw_unbind(&rctx->draw, sampler->border[i]);
 	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)states[i];
@@ -327,47 +314,29 @@ static void r600_bind_ps_sampler(struct pipe_context *ctx,
 				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
 				memcpy(&rstate->rstate[rstate->nrstate+1], &rstate->rstate[1], sizeof(struct radeon_state));
 			}
-			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, R600_SHADER_PS);
-			radeon_state_convert(&rstate->rstate[rstate->nrstate + 1], R600_STATE_SAMPLER_BORDER, i, R600_SHADER_PS);
-			rctx->ps_sampler[i] = &rstate->rstate[rstate->nrstate];
-			rctx->ps_sampler_border[i] = &rstate->rstate[rstate->nrstate + 1];
+			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, shader_id);
+			radeon_state_convert(&rstate->rstate[rstate->nrstate + 1], R600_STATE_SAMPLER_BORDER, i, shader_id);
+			sampler->sampler[i] = &rstate->rstate[rstate->nrstate];
+			sampler->border[i] = &rstate->rstate[rstate->nrstate + 1];
 			rstate->nrstate += 2;
 		}
 	}
-	rctx->ps_nsampler = count;
-	rctx->ps_nsampler_border = count;
+	sampler->nsampler = count;
+	sampler->nborder = count;
+}
+
+static void r600_bind_ps_sampler(struct pipe_context *ctx,
+					unsigned count, void **states)
+{
+	struct r600_context *rctx = r600_context(ctx);
+	r600_bind_sampler_shader(ctx, count, states, &rctx->ps_sampler, R600_SHADER_PS);	
 }
 
 static void r600_bind_vs_sampler(struct pipe_context *ctx,
 					unsigned count, void **states)
 {
 	struct r600_context *rctx = r600_context(ctx);
-	struct r600_context_state *rstate;
-	unsigned i;
-
-	for (i = 0; i < rctx->vs_nsampler; i++) {
-		radeon_draw_unbind(&rctx->draw, rctx->vs_sampler[i]);
-	}
-	for (i = 0; i < count; i++) {
-		rstate = (struct r600_context_state *)states[i];
-		if (rstate) {
-			rstate->nrstate = 0;
-		}
-	}
-	for (i = 0; i < count; i++) {
-		rstate = (struct r600_context_state *)states[i];
-		if (rstate) {
-			if (rstate->nrstate >= R600_MAX_RSTATE)
-				continue;
-			if (rstate->nrstate) {
-				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
-			}
-			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, R600_SHADER_VS);
-			rctx->vs_sampler[i] = &rstate->rstate[rstate->nrstate];
-			rstate->nrstate++;
-		}
-	}
-	rctx->vs_nsampler = count;
+	r600_bind_sampler_shader(ctx, count, states, &rctx->vs_sampler, R600_SHADER_VS);	
 }
 
 static void r600_delete_state(struct pipe_context *ctx, void *state)
@@ -1244,6 +1213,26 @@ static void r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 	radeon_state_pm4(rstate);
 }
 
+static void r600_bind_shader_sampler(struct r600_context *rctx, struct r600_shader_sampler_states *sampler)
+{
+	int i;
+
+	for (i = 0; i < sampler->nsampler; i++) {
+		if (sampler->sampler[i])
+			radeon_draw_bind(&rctx->draw, sampler->sampler[i]);
+	}
+
+	for (i = 0; i < sampler->nborder; i++) {
+		if (sampler->border[i])
+			radeon_draw_bind(&rctx->draw, sampler->border[i]);
+	}
+
+	for (i = 0; i < sampler->nview; i++) {
+		if (sampler->view[i])
+			radeon_draw_bind(&rctx->draw, sampler->view[i]);
+	}
+}
+
 int r600_context_hw_states(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = r600_context(ctx);
@@ -1278,20 +1267,9 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	if (rctx->framebuffer->state.framebuffer.zsbuf) {
 		radeon_draw_bind(&rctx->draw, &rctx->framebuffer->rstate[0]);
 	}
-	for (i = 0; i < rctx->ps_nsampler; i++) {
-		if (rctx->ps_sampler[i]) {
-			radeon_draw_bind(&rctx->draw, rctx->ps_sampler[i]);
-		}
-	}
-	for (i = 0; i < rctx->ps_nsampler_border; i++) {
-		if (rctx->ps_sampler_border[i]) {
-			radeon_draw_bind(&rctx->draw, rctx->ps_sampler_border[i]);
-		}
-	}
-	for (i = 0; i < rctx->ps_nsampler_view; i++) {
-		if (rctx->ps_sampler_view[i]) {
-			radeon_draw_bind(&rctx->draw, rctx->ps_sampler_view[i]);
-		}
-	}
+
+	r600_bind_shader_sampler(rctx, &rctx->vs_sampler);
+	r600_bind_shader_sampler(rctx, &rctx->ps_sampler);
+
 	return 0;
 }
