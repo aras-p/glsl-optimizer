@@ -148,10 +148,35 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 		fprintf(f, "|");
 }
 
-static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
+static unsigned update_branch_depth(rc_opcode opcode, unsigned *branch_depth)
+{
+	switch (opcode) {
+	case RC_OPCODE_IF:
+	case RC_OPCODE_BGNLOOP:
+		return (*branch_depth)++ * 2;
+
+	case RC_OPCODE_ENDIF:
+	case RC_OPCODE_ENDLOOP:
+		assert(*branch_depth > 0);
+		return --(*branch_depth) * 2;
+
+	case RC_OPCODE_ELSE:
+		assert(*branch_depth > 0);
+		return (*branch_depth - 1) * 2;
+
+	default:
+		return *branch_depth * 2;
+	}
+}
+
+static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst, unsigned *branch_depth)
 {
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int reg;
+	unsigned spaces = update_branch_depth(inst->U.I.Opcode, branch_depth);
+
+	for (unsigned i = 0; i < spaces; i++)
+		fprintf(f, " ");
 
 	fprintf(f, "%s", opcode->Name);
 
@@ -196,10 +221,15 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
 	fprintf(f, "\n");
 }
 
-static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst)
+static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst, unsigned *branch_depth)
 {
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 	int printedsrc = 0;
+	unsigned spaces = update_branch_depth(inst->RGB.Opcode != RC_OPCODE_NOP ?
+					      inst->RGB.Opcode : inst->Alpha.Opcode, branch_depth);
+
+	for (unsigned i = 0; i < spaces; i++)
+		fprintf(f, " ");
 
 	for(unsigned int src = 0; src < 3; ++src) {
 		if (inst->RGB.Src[src].Used) {
@@ -221,6 +251,9 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 
 	if (inst->RGB.Opcode != RC_OPCODE_NOP) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->RGB.Opcode);
+
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
 
 		fprintf(f, "     %s%s", opcode->Name, inst->RGB.Saturate ? "_SAT" : "");
 		if (inst->RGB.WriteMask)
@@ -251,6 +284,9 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 	if (inst->Alpha.Opcode != RC_OPCODE_NOP) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Alpha.Opcode);
 
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
+
 		fprintf(f, "     %s%s", opcode->Name, inst->Alpha.Saturate ? "_SAT" : "");
 		if (inst->Alpha.WriteMask)
 			fprintf(f, " temp[%i].w", inst->Alpha.DestIndex);
@@ -271,6 +307,9 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 	}
 
 	if (inst->WriteALUResult) {
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
+
 		fprintf(f, "      [aluresult = (");
 		rc_print_comparefunc(f, "result", inst->ALUResultCompare, "0");
 		fprintf(f, ")]\n");
@@ -283,6 +322,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 void rc_print_program(const struct rc_program *prog)
 {
 	unsigned int linenum = 0;
+	unsigned branch_depth = 0;
 	struct rc_instruction *inst;
 
 	fprintf(stderr, "# Radeon Compiler Program\n");
@@ -291,9 +331,9 @@ void rc_print_program(const struct rc_program *prog)
 		fprintf(stderr, "%3d: ", linenum);
 
 		if (inst->Type == RC_INSTRUCTION_PAIR)
-			rc_print_pair_instruction(stderr, inst);
+			rc_print_pair_instruction(stderr, inst, &branch_depth);
 		else
-			rc_print_normal_instruction(stderr, inst);
+			rc_print_normal_instruction(stderr, inst, &branch_depth);
 
 		linenum++;
 	}
