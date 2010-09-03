@@ -1000,6 +1000,7 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
 {
    const struct tgsi_full_src_register *src = &insn->Src[s];
    struct nv_value *res;
+   struct nv_value *ptr = NULL;
    unsigned idx, swz, dim_idx, ind_idx, ind_swz;
    ubyte type = infer_src_type(insn->Instruction.Opcode);
 
@@ -1012,7 +1013,11 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    if (src->Register.Indirect) {
       ind_idx = src->Indirect.Index;
       ind_swz = tgsi_util_get_src_register_swizzle(&src->Indirect, 0);
+
+      ptr = FETCH_ADDR(ind_idx, ind_swz);
    }
+   if (idx >= (128 / 4) && src->Register.File == TGSI_FILE_CONSTANT)
+      ptr = bld_get_address(bld, (idx * 16) & ~0x1ff, ptr);
 
    switch (src->Register.File) {
    case TGSI_FILE_CONSTANT:
@@ -1025,11 +1030,8 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       res->reg.id = (idx * 4 + swz) & 127;
       res = bld_insn_1(bld, NV_OP_LDA, res);
 
-      if (src->Register.Indirect)
-         res->insn->src[4] = new_ref(bld->pc, FETCH_ADDR(ind_idx, ind_swz));
-      if (idx >= (128 / 4))
-         res->insn->src[4] =
-            new_ref(bld->pc, bld_get_address(bld, (idx * 16) & ~0x1ff, NULL));
+      if (ptr)
+         res->insn->src[4] = new_ref(bld->pc, ptr);
       break;
    case TGSI_FILE_IMMEDIATE:
       assert(idx < bld->ti->immd32_nr);
