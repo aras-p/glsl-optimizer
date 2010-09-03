@@ -142,6 +142,7 @@ struct r600_context {
 	unsigned			vs_nsampler;
 	unsigned			ps_nsampler_view;
 	unsigned			vs_nsampler_view;
+	unsigned			ps_nsampler_border;
 	unsigned			nvertex_buffer;
 	struct r600_context_state	*rasterizer;
 	struct r600_context_state	*poly_stipple;
@@ -161,6 +162,7 @@ struct r600_context {
 	struct radeon_state		*vs_sampler[PIPE_MAX_ATTRIBS];
 	struct radeon_state		*ps_sampler_view[PIPE_MAX_ATTRIBS];
 	struct radeon_state		*vs_sampler_view[PIPE_MAX_ATTRIBS];
+	struct radeon_state		*ps_sampler_border[PIPE_MAX_ATTRIBS];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_index_buffer	index_buffer;

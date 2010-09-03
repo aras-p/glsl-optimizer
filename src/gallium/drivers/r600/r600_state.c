@@ -28,6 +28,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
@@ -38,6 +39,8 @@ static void r600_blend(struct r600_context *rctx, struct radeon_state *rstate, c
 static void r600_viewport(struct r600_context *rctx, struct radeon_state *rstate, const struct pipe_viewport_state *state);
 static void r600_ucp(struct r600_context *rctx, struct radeon_state *rstate, const struct pipe_clip_state *state);
 static void r600_sampler(struct r600_context *rctx, struct radeon_state *rstate, const struct pipe_sampler_state *state, unsigned id);
+static void r600_sampler_border(struct r600_context *rctx, struct radeon_state *rstate,
+				const struct pipe_sampler_state *state, unsigned id);
 static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate, const struct pipe_sampler_view *view, unsigned id);
 static void r600_cb(struct r600_context *rctx, struct radeon_state *rstate,
 			const struct pipe_framebuffer_state *state, int cb);
@@ -96,6 +99,7 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	rstate = r600_new_context_state(pipe_sampler_type);
 	rstate->state.sampler = *state;
 	r600_sampler(rctx, &rstate->rstate[0], &rstate->state.sampler, 0);
+	r600_sampler_border(rctx, &rstate->rstate[1], &rstate->state.sampler, 0);
 	return rstate;
 }
 
@@ -305,6 +309,9 @@ static void r600_bind_ps_sampler(struct pipe_context *ctx,
 	for (i = 0; i < rctx->ps_nsampler; i++) {
 		radeon_draw_unbind(&rctx->draw, rctx->ps_sampler[i]);
 	}
+	for (i = 0; i < rctx->ps_nsampler_border; i++) {
+		radeon_draw_unbind(&rctx->draw, rctx->ps_sampler_border[i]);
+	}
 	for (i = 0; i < count; i++) {
 		rstate = (struct r600_context_state *)states[i];
 		if (rstate) {
@@ -318,13 +325,17 @@ static void r600_bind_ps_sampler(struct pipe_context *ctx,
 				continue;
 			if (rstate->nrstate) {
 				memcpy(&rstate->rstate[rstate->nrstate], &rstate->rstate[0], sizeof(struct radeon_state));
+				memcpy(&rstate->rstate[rstate->nrstate+1], &rstate->rstate[1], sizeof(struct radeon_state));
 			}
 			radeon_state_convert(&rstate->rstate[rstate->nrstate], R600_STATE_SAMPLER, i, R600_SHADER_PS);
+			radeon_state_convert(&rstate->rstate[rstate->nrstate + 1], R600_STATE_SAMPLER_BORDER, i, R600_SHADER_PS);
 			rctx->ps_sampler[i] = &rstate->rstate[rstate->nrstate];
-			rstate->nrstate++;
+			rctx->ps_sampler_border[i] = &rstate->rstate[rstate->nrstate + 1];
+			rstate->nrstate += 2;
 		}
 	}
 	rctx->ps_nsampler = count;
+	rctx->ps_nsampler_border = count;
 }
 
 static void r600_bind_vs_sampler(struct pipe_context *ctx,
@@ -1054,10 +1065,31 @@ static INLINE u32 S_FIXED(float value, u32 frac_bits)
 	return value * (1 << frac_bits);
 }
 
+static void r600_sampler_border(struct r600_context *rctx, struct radeon_state *rstate,
+				const struct pipe_sampler_state *state, unsigned id)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	union util_color uc;
+
+	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+
+	if (uc.ui) {
+		radeon_state_init(rstate, rscreen->rw, R600_STATE_SAMPLER_BORDER, id, R600_SHADER_PS);
+		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_RED] = fui(state->border_color[0]);
+		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_GREEN] = fui(state->border_color[1]);
+		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_BLUE] = fui(state->border_color[2]);
+		rstate->states[R600_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_ALPHA] = fui(state->border_color[3]);
+		radeon_state_pm4(rstate);
+	}
+}
+
 static void r600_sampler(struct r600_context *rctx, struct radeon_state *rstate,
 			const struct pipe_sampler_state *state, unsigned id)
 {
 	struct r600_screen *rscreen = rctx->screen;
+	union util_color uc;
+
+	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_SAMPLER, id, R600_SHADER_PS);
 	rstate->states[R600_PS_SAMPLER__SQ_TEX_SAMPLER_WORD0_0] =
@@ -1067,7 +1099,8 @@ static void r600_sampler(struct r600_context *rctx, struct radeon_state *rstate,
 			S_03C000_XY_MAG_FILTER(r600_tex_filter(state->mag_img_filter)) |
 			S_03C000_XY_MIN_FILTER(r600_tex_filter(state->min_img_filter)) |
 			S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
-			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func));
+	                S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
+	                S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0);
 	/* FIXME LOD it depends on texture base level ... */
 	rstate->states[R600_PS_SAMPLER__SQ_TEX_SAMPLER_WORD1_0] =
 			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
@@ -1248,6 +1281,11 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	for (i = 0; i < rctx->ps_nsampler; i++) {
 		if (rctx->ps_sampler[i]) {
 			radeon_draw_bind(&rctx->draw, rctx->ps_sampler[i]);
+		}
+	}
+	for (i = 0; i < rctx->ps_nsampler_border; i++) {
+		if (rctx->ps_sampler_border[i]) {
+			radeon_draw_bind(&rctx->draw, rctx->ps_sampler_border[i]);
 		}
 	}
 	for (i = 0; i < rctx->ps_nsampler_view; i++) {
