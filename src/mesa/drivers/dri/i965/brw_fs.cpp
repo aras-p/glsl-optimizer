@@ -456,8 +456,8 @@ public:
 
    void emit_dummy_fs();
    void emit_fragcoord_interpolation(ir_variable *ir);
-   void emit_interpolation();
-   void emit_pinterp(int location);
+   void emit_general_interpolation(ir_variable *ir);
+   void emit_interpolation_setup();
    void emit_fb_writes();
 
    struct brw_reg interp_reg(int location, int channel);
@@ -495,7 +495,6 @@ public:
    fs_reg pixel_w;
    fs_reg delta_x;
    fs_reg delta_y;
-   fs_reg interp_attrs[64];
 
    int grf_used;
 
@@ -652,6 +651,57 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    hash_table_insert(this->variable_ht, reg, ir);
 }
 
+
+void
+fs_visitor::emit_general_interpolation(ir_variable *ir)
+{
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   /* Interpolation is always in floating point regs. */
+   reg->type = BRW_REGISTER_TYPE_F;
+   fs_reg attr = *reg;
+
+   unsigned int array_elements;
+   const glsl_type *type;
+
+   if (ir->type->is_array()) {
+      array_elements = ir->type->length;
+      if (array_elements == 0) {
+	 this->fail = true;
+      }
+      type = ir->type->fields.array;
+   } else {
+      array_elements = 1;
+      type = ir->type;
+   }
+
+   int location = ir->location;
+   for (unsigned int i = 0; i < array_elements; i++) {
+      for (unsigned int j = 0; j < type->matrix_columns; j++) {
+	 for (unsigned int c = 0; c < type->vector_elements; c++) {
+	    struct brw_reg interp = interp_reg(location, c);
+	    emit(fs_inst(FS_OPCODE_LINTERP,
+			 attr,
+			 this->delta_x,
+			 this->delta_y,
+			 fs_reg(interp)));
+	    attr.reg_offset++;
+	 }
+	 attr.reg_offset -= type->vector_elements;
+
+	 for (unsigned int c = 0; c < type->vector_elements; c++) {
+	    emit(fs_inst(BRW_OPCODE_MUL,
+			 attr,
+			 attr,
+			 this->pixel_w));
+	    attr.reg_offset++;
+	 }
+	 location++;
+      }
+   }
+
+   hash_table_insert(this->variable_ht, reg, ir);
+}
+
 void
 fs_visitor::visit(ir_variable *ir)
 {
@@ -685,7 +735,8 @@ fs_visitor::visit(ir_variable *ir)
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 	 emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
       } else {
-	 reg = &this->interp_attrs[ir->location];
+	 emit_general_interpolation(ir);
+	 return;
       }
    }
 
@@ -1416,14 +1467,9 @@ fs_visitor::interp_reg(int location, int channel)
 
 /** Emits the interpolation for the varying inputs. */
 void
-fs_visitor::emit_interpolation()
+fs_visitor::emit_interpolation_setup()
 {
    struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
-   /* For now, the source regs for the setup URB data will be unset,
-    * since we don't know until codegen how many push constants we'll
-    * use, and therefore what the setup URB offset is.
-    */
-   fs_reg src_reg = reg_undef;
 
    this->current_annotation = "compute pixel centers";
    this->pixel_x = fs_reg(this, glsl_type::uint_type);
@@ -1461,55 +1507,7 @@ fs_visitor::emit_interpolation()
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
-
-   foreach_iter(exec_list_iterator, iter, *this->shader->ir) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      ir_variable *var = ir->as_variable();
-
-      if (!var)
-	 continue;
-
-      if (var->mode != ir_var_in)
-	 continue;
-
-      /* If it's already set up (WPOS), skip. */
-      if (var->location == 0)
-	 continue;
-
-      this->current_annotation = talloc_asprintf(this->mem_ctx,
-						 "interpolate %s "
-						 "(FRAG_ATTRIB[%d])",
-						 var->name,
-						 var->location);
-      emit_pinterp(var->location);
-   }
    this->current_annotation = NULL;
-}
-
-void
-fs_visitor::emit_pinterp(int location)
-{
-   fs_reg interp_attr = fs_reg(this, glsl_type::vec4_type);
-   this->interp_attrs[location] = interp_attr;
-
-   for (unsigned int i = 0; i < 4; i++) {
-      struct brw_reg interp = interp_reg(location, i);
-      emit(fs_inst(FS_OPCODE_LINTERP,
-		   interp_attr,
-		   this->delta_x,
-		   this->delta_y,
-		   fs_reg(interp)));
-      interp_attr.reg_offset++;
-   }
-   interp_attr.reg_offset -= 4;
-
-   for (unsigned int i = 0; i < 4; i++) {
-      emit(fs_inst(BRW_OPCODE_MUL,
-		   interp_attr,
-		   interp_attr,
-		   this->pixel_w));
-      interp_attr.reg_offset++;
-   }
 }
 
 void
@@ -2200,7 +2198,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    if (0) {
       v.emit_dummy_fs();
    } else {
-      v.emit_interpolation();
+      v.emit_interpolation_setup();
 
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
