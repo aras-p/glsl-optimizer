@@ -581,8 +581,7 @@ static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   const unsigned list_length = list->length();
-   if (list_length < 4 || list_length > 5) {
+   if (list->length() != 5) {
       ir_read_error(st, list, "expected (assign <condition> (<write mask>) "
 			      "<lhs> <rhs>)");
       return NULL;
@@ -590,8 +589,7 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 
    s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
    s_list       *mask_list = SX_AS_LIST(cond_expr->next);
-   s_expression *lhs_expr  = (s_expression*)
-      (list_length == 4 ? cond_expr->next : cond_expr->next->next);
+   s_expression *lhs_expr  = (s_expression*) cond_expr->next->next;
    s_expression *rhs_expr  = (s_expression*) lhs_expr->next;
 
    ir_rvalue *condition = read_rvalue(st, cond_expr);
@@ -600,13 +598,13 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   if (list_length == 5 && mask_list == NULL || mask_list->length() > 1) {
+   if (mask_list == NULL || mask_list->length() > 1) {
       ir_read_error(st, mask_list, "expected () or (<write mask>)");
       return NULL;
    }
 
    unsigned mask = 0;
-   if (list_length == 5 && mask_list->length() == 1) {
+   if (mask_list->length() == 1) {
       s_symbol *mask_symbol = SX_AS_SYMBOL(mask_list->subexpressions.head);
       if (mask_symbol == NULL) {
 	 ir_read_error(st, list, "expected a write mask; found non-symbol");
