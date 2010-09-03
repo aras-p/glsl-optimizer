@@ -440,6 +440,39 @@ util_format_is_depth_and_stencil(enum pipe_format format)
            desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
 }
 
+
+/**
+ * Give the RGBA colormask of the channels that can be represented in this
+ * format.
+ *
+ * That is, the channels whose values are preserved.
+ */
+static INLINE unsigned
+util_format_colormask(const struct util_format_description *desc)
+{
+   unsigned colormask;
+   unsigned chan;
+
+   switch (desc->colorspace) {
+   case UTIL_FORMAT_COLORSPACE_RGB:
+   case UTIL_FORMAT_COLORSPACE_SRGB:
+   case UTIL_FORMAT_COLORSPACE_YUV:
+      colormask = 0;
+      for (chan = 0; chan < 4; ++chan) {
+         if (desc->swizzle[chan] < 4) {
+            colormask |= (1 << chan);
+         }
+      }
+      return colormask;
+   case UTIL_FORMAT_COLORSPACE_ZS:
+      return 0;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
 /**
  * Whether this format is a rgab8 variant.
  *
