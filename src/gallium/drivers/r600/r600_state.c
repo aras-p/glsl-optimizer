@@ -380,6 +380,8 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 
+	r600_context_state_decref(rctx->clip);
+
 	rstate = r600_new_context_state(pipe_clip_type);
 	rstate->state.clip = *state;
 	r600_ucp(rctx, &rstate->rstate[0], &rstate->state.clip);
@@ -439,6 +441,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	int i;
 
+	r600_context_state_decref(rctx->framebuffer);
+
 	rstate = r600_new_context_state(pipe_framebuffer_type);
 	rstate->state.framebuffer = *state;
 	for (i = 0; i < rstate->state.framebuffer.nr_cbufs; i++) {
@@ -472,6 +476,8 @@ static void r600_set_scissor_state(struct pipe_context *ctx,
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 
+	r600_context_state_decref(rctx->scissor);
+
 	rstate = r600_new_context_state(pipe_scissor_type);
 	rstate->state.scissor = *state;
 	rctx->scissor = rstate;
@@ -482,6 +488,8 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
+
+	r600_context_state_decref(rctx->stencil_ref);
 
 	rstate = r600_new_context_state(pipe_stencil_ref_type);
 	rstate->state.stencil_ref = *state;
@@ -527,6 +535,8 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
+
+	r600_context_state_decref(rctx->viewport);
 
 	rstate = r600_new_context_state(pipe_viewport_type);
 	rstate->state.viewport = *state;
