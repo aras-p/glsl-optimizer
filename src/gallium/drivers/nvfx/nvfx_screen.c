@@ -143,7 +143,7 @@ nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
 		return screen->is_nv4x ? 16.0 : 8.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return screen->is_nv4x ? 16.0 : 4.0;
+		return 15.0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0.0;
