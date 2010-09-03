@@ -34,7 +34,7 @@ default_statetrackers = 'mesa'
 default_targets = 'graw-null'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
+	default_drivers = 'softpipe,galahad,failover,svga,i915,i965,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
@@ -51,7 +51,7 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg', 'egl']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'r600', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
+                     ['softpipe', 'galahad', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'r600', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'r600', 'graw-xlib']))
 
