@@ -179,7 +179,6 @@ static INLINE struct r600_query* r600_query(struct pipe_query* q)
     return (struct r600_query*)q;
 }
 
-struct r600_context_state *r600_context_state(struct r600_context *rctx, unsigned type, const void *state);
 struct r600_context_state *r600_context_state_incref(struct r600_context_state *rstate);
 struct r600_context_state *r600_context_state_decref(struct r600_context_state *rstate);
 void r600_flush(struct pipe_context *ctx, unsigned flags,
