@@ -4,8 +4,8 @@
        (declare (in) vec2 arg0)
        (declare (in) vec2 arg1))
      ((declare () bvec2 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec3
@@ -13,9 +13,9 @@
        (declare (in) vec3 arg0)
        (declare (in) vec3 arg1))
      ((declare () bvec3 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec4
@@ -23,10 +23,10 @@
        (declare (in) vec4 arg0)
        (declare (in) vec4 arg1))
      ((declare () bvec4 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz w (var_ref temp)) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
+      (assign (constant bool (1)) (w) (var_ref temp) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec2
@@ -34,8 +34,8 @@
        (declare (in) ivec2 arg0)
        (declare (in) ivec2 arg1))
      ((declare () bvec2 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec3
@@ -43,9 +43,9 @@
        (declare (in) ivec3 arg0)
        (declare (in) ivec3 arg1))
      ((declare () bvec3 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec4
@@ -53,10 +53,10 @@
        (declare (in) ivec4 arg0)
        (declare (in) ivec4 arg1))
      ((declare () bvec4 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz w (var_ref temp)) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
+      (assign (constant bool (1)) (w) (var_ref temp) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec2
@@ -64,8 +64,8 @@
        (declare (in) uvec2 arg0)
        (declare (in) uvec2 arg1))
      ((declare () bvec2 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec3
@@ -73,9 +73,9 @@
        (declare (in) uvec3 arg0)
        (declare (in) uvec3 arg1))
      ((declare () bvec3 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
       (return (var_ref temp))))
 
    (signature bvec4
@@ -83,9 +83,9 @@
        (declare (in) uvec4 arg0)
        (declare (in) uvec4 arg1))
      ((declare () bvec4 temp)
-      (assign (constant bool (1)) (swiz x (var_ref temp)) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz y (var_ref temp)) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz z (var_ref temp)) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1)))) 
-      (assign (constant bool (1)) (swiz w (var_ref temp)) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1)))) 
+      (assign (constant bool (1)) (x) (var_ref temp) (expression bool <= (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
+      (assign (constant bool (1)) (y) (var_ref temp) (expression bool <= (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
+      (assign (constant bool (1)) (z) (var_ref temp) (expression bool <= (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
+      (assign (constant bool (1)) (w) (var_ref temp) (expression bool <= (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
       (return (var_ref temp))))
 ))

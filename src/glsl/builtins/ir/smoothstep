@@ -6,7 +6,7 @@
        (declare (in) float x))
      ((declare () float t)
 
-      (assign (constant bool (1)) (var_ref t)
+      (assign (constant bool (1)) (x) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (var_ref x) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
@@ -22,21 +22,21 @@
      ((declare () vec2 t)
       (declare () vec2 retval)
 
-      (assign (constant bool (1)) (swiz x (var_ref t))
+      (assign (constant bool (1)) (x) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz x (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz x (var_ref retval)) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
+      (assign (constant bool (1)) (x) (var_ref retval) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz y (var_ref t))
+      (assign (constant bool (1)) (y) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz y (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz y (var_ref retval)) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
+      (assign (constant bool (1)) (y) (var_ref retval) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
       (return (var_ref retval))
       ))
 
@@ -48,29 +48,29 @@
      ((declare () vec3 t)
       (declare () vec3 retval)
 
-      (assign (constant bool (1)) (swiz x (var_ref t))
+      (assign (constant bool (1)) (x) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz x (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz x (var_ref retval)) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
+      (assign (constant bool (1)) (x) (var_ref retval) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz y (var_ref t))
+      (assign (constant bool (1)) (y) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz y (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz y (var_ref retval)) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
+      (assign (constant bool (1)) (y) (var_ref retval) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz z (var_ref t))
+      (assign (constant bool (1)) (z) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz z (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz z (var_ref retval)) (expression float * (swiz z (var_ref t)) (expression float * (swiz z (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz z (var_ref t)))))))
+      (assign (constant bool (1)) (z) (var_ref retval) (expression float * (swiz z (var_ref t)) (expression float * (swiz z (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz z (var_ref t)))))))
       (return (var_ref retval))
       ))
 
@@ -83,37 +83,37 @@
      ((declare () vec4 t)
       (declare () vec4 retval)
 
-      (assign (constant bool (1)) (swiz x (var_ref t))
+      (assign (constant bool (1)) (x) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz x (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz x (var_ref retval)) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
+      (assign (constant bool (1)) (x) (var_ref retval) (expression float * (swiz x (var_ref t)) (expression float * (swiz x (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz x (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz y (var_ref t))
+      (assign (constant bool (1)) (y) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz y (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz y (var_ref retval)) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
+      (assign (constant bool (1)) (y) (var_ref retval) (expression float * (swiz y (var_ref t)) (expression float * (swiz y (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz y (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz z (var_ref t))
+      (assign (constant bool (1)) (z) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz z (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz z (var_ref retval)) (expression float * (swiz z (var_ref t)) (expression float * (swiz z (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz z (var_ref t)))))))
+      (assign (constant bool (1)) (z) (var_ref retval) (expression float * (swiz z (var_ref t)) (expression float * (swiz z (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz z (var_ref t)))))))
 
-      (assign (constant bool (1)) (swiz w (var_ref t))
+      (assign (constant bool (1)) (w) (var_ref t)
               (expression float max
 	                  (expression float min
 	                              (expression float / (expression float - (swiz w (var_ref x)) (var_ref edge0)) (expression float - (var_ref edge1) (var_ref edge0)))
 	                              (constant float (1.0)))
 	                  (constant float (0.0))))
-      (assign (constant bool (1)) (swiz w (var_ref retval)) (expression float * (swiz w (var_ref t)) (expression float * (swiz w (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz w (var_ref t)))))))
+      (assign (constant bool (1)) (w) (var_ref retval) (expression float * (swiz w (var_ref t)) (expression float * (swiz w (var_ref t)) (expression float - (constant float (3.000000)) (expression float * (constant float (2.000000)) (swiz w (var_ref t)))))))
       (return (var_ref retval))
       ))
 
