@@ -202,63 +202,56 @@ public:
       return node;
    }
 
+   void init()
+   {
+      this->reg = 0;
+      this->reg_offset = 0;
+      this->negate = 0;
+      this->abs = 0;
+      this->hw_reg = -1;
+   }
+
    /** Generic unset register constructor. */
    fs_reg()
    {
+      init();
       this->file = BAD_FILE;
-      this->reg = 0;
-      this->reg_offset = 0;
-      this->hw_reg = -1;
-      this->negate = 0;
-      this->abs = 0;
    }
 
    /** Immediate value constructor. */
    fs_reg(float f)
    {
+      init();
       this->file = IMM;
-      this->reg = 0;
-      this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_F;
       this->imm.f = f;
-      this->negate = 0;
-      this->abs = 0;
    }
 
    /** Immediate value constructor. */
    fs_reg(int32_t i)
    {
+      init();
       this->file = IMM;
-      this->reg = 0;
-      this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_D;
       this->imm.i = i;
-      this->negate = 0;
-      this->abs = 0;
    }
 
    /** Immediate value constructor. */
    fs_reg(uint32_t u)
    {
+      init();
       this->file = IMM;
-      this->reg = 0;
-      this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_UD;
       this->imm.u = u;
-      this->negate = 0;
-      this->abs = 0;
    }
 
    /** Fixed brw_reg Immediate value constructor. */
    fs_reg(struct brw_reg fixed_hw_reg)
    {
+      init();
       this->file = FIXED_HW_REG;
       this->fixed_hw_reg = fixed_hw_reg;
-      this->reg = 0;
-      this->hw_reg = 0;
       this->type = fixed_hw_reg.type;
-      this->negate = 0;
-      this->abs = 0;
    }
 
    fs_reg(enum register_file file, int hw_reg);
@@ -482,25 +475,21 @@ public:
 /** Fixed HW reg constructor. */
 fs_reg::fs_reg(enum register_file file, int hw_reg)
 {
+   init();
    this->file = file;
-   this->reg = 0;
-   this->reg_offset = 0;
    this->hw_reg = hw_reg;
    this->type = BRW_REGISTER_TYPE_F;
-   this->negate = 0;
-   this->abs = 0;
 }
 
 /** Automatic reg constructor. */
 fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
 {
+   init();
+
    this->file = GRF;
    this->reg = v->next_abstract_grf;
    this->reg_offset = 0;
    v->next_abstract_grf += type_size(type);
-   this->hw_reg = -1;
-   this->negate = 0;
-   this->abs = 0;
 
    switch (type->base_type) {
    case GLSL_TYPE_FLOAT:
