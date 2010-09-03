@@ -898,9 +898,6 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
     R600_OUT_BATCH(evergreen->DB_DEPTH_VIEW.u32All);                             
     R600_OUT_BATCH(evergreen->DB_RENDER_OVERRIDE.u32All);                        
     R600_OUT_BATCH(evergreen->DB_RENDER_OVERRIDE2.u32All);  
-    /*
-    R600_OUT_BATCH(evergreen->DB_HTILE_DATA_BASE.u32All); 
-    */
     END_BATCH();
 
     //4
@@ -943,6 +940,16 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
     rrb = radeon_get_depthbuffer(&context->radeon);
 	if( (rrb != NULL) && (rrb->bo != NULL) )
     {
+
+	/* make the hw happy */
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	EVERGREEN_OUT_BATCH_REGVAL(EG_DB_HTILE_DATA_BASE, evergreen->DB_HTILE_DATA_BASE.u32All);
+	R600_OUT_BATCH_RELOC(evergreen->DB_HTILE_DATA_BASE.u32All,
+			     rrb->bo,
+			     evergreen->DB_HTILE_DATA_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+	END_BATCH();
+
         //5
         BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
         EVERGREEN_OUT_BATCH_REGVAL(EG_DB_Z_INFO, evergreen->DB_Z_INFO.u32All);
@@ -1277,7 +1284,7 @@ void evergreenInitAtoms(context_t *context)
     EVERGREEN_ALLOC_STATE(spi,       always,        59,  evergreenSendSPI);
     EVERGREEN_ALLOC_STATE(sx,        always,        9,   evergreenSendSX);
     EVERGREEN_ALLOC_STATE(tx,        evergreen_tx,  (R700_TEXTURE_NUMBERUNITS * (21+5) + 6), evergreenSendTexState); /* 21 for resource, 5 for sampler */
-    EVERGREEN_ALLOC_STATE(db,        always,        60,  evergreenSendDB); 
+    EVERGREEN_ALLOC_STATE(db,        always,        65,  evergreenSendDB); 
     EVERGREEN_ALLOC_STATE(cb,        always,        35,  evergreenSendCB);	
     EVERGREEN_ALLOC_STATE(vgt,       always,        29,  evergreenSendVGT);
     EVERGREEN_ALLOC_STATE(timestamp, always,        3,   evergreenSendTIMESTAMP);
