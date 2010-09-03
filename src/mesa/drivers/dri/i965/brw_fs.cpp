@@ -1871,9 +1871,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 ir->accept(&v);
       }
 
-      if (v.fail)
-	 return GL_FALSE;
-
       v.emit_fb_writes();
       v.assign_curb_setup();
       v.assign_urb_setup();
@@ -1881,6 +1878,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    }
 
    v.generate_code();
+
+   assert(!v.fail); /* FINISHME: Cleanly fail, tested at link time, etc. */
+
+   if (v.fail)
+      return GL_FALSE;
 
    if (INTEL_DEBUG & DEBUG_WM) {
       const char *last_annotation_string = NULL;
