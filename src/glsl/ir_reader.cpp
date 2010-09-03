@@ -581,23 +581,58 @@ static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 4) {
-      ir_read_error(st, list, "expected (assign <condition> <lhs> <rhs>)");
+   const unsigned list_length = list->length();
+   if (list_length < 4 || list_length > 5) {
+      ir_read_error(st, list, "expected (assign <condition> (<write mask>) "
+			      "<lhs> <rhs>)");
       return NULL;
    }
 
    s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
-   s_expression *lhs_expr  = (s_expression*) cond_expr->next;
+   s_list       *mask_list = SX_AS_LIST(cond_expr->next);
+   s_expression *lhs_expr  = (s_expression*)
+      (list_length == 4 ? cond_expr->next : cond_expr->next->next);
    s_expression *rhs_expr  = (s_expression*) lhs_expr->next;
 
-   // FINISHME: Deal with "true" condition
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
       ir_read_error(st, NULL, "when reading condition of assignment");
       return NULL;
    }
 
-   ir_rvalue *lhs = read_rvalue(st, lhs_expr);
+   if (list_length == 5 && mask_list == NULL || mask_list->length() > 1) {
+      ir_read_error(st, mask_list, "expected () or (<write mask>)");
+      return NULL;
+   }
+
+   unsigned mask = 0;
+   if (list_length == 5 && mask_list->length() == 1) {
+      s_symbol *mask_symbol = SX_AS_SYMBOL(mask_list->subexpressions.head);
+      if (mask_symbol == NULL) {
+	 ir_read_error(st, list, "expected a write mask; found non-symbol");
+	 return NULL;
+      }
+
+      const char *mask_str = mask_symbol->value();
+      unsigned mask_length = strlen(mask_str);
+      if (mask_length > 4) {
+	 ir_read_error(st, list, "invalid write mask: %s", mask_str);
+	 return NULL;
+      }
+
+      const unsigned idx_map[] = { 3, 0, 1, 2 }; /* w=bit 3, x=0, y=1, z=2 */
+
+      for (unsigned i = 0; i < mask_length; i++) {
+	 if (mask_str[i] < 'w' || mask_str[i] > 'z') {
+	    ir_read_error(st, list, "write mask contains invalid character: %c",
+			  mask_str[i]);
+	    return NULL;
+	 }
+	 mask |= 1 << idx_map[mask_str[i] - 'w'];
+      }
+   }
+
+   ir_dereference *lhs = read_dereference(st, lhs_expr);
    if (lhs == NULL) {
       ir_read_error(st, NULL, "when reading left-hand side of assignment");
       return NULL;
@@ -609,7 +644,12 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new(ctx) ir_assignment(lhs, rhs, condition);
+   if (mask == 0 && (lhs->type->is_vector() || lhs->type->is_scalar())) {
+      ir_read_error(st, list, "non-zero write mask required.");
+      return NULL;
+   }
+
+   return new(ctx) ir_assignment(lhs, rhs, condition, mask);
 }
 
 static ir_call *
