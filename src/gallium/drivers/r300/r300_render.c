@@ -617,6 +617,9 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
+    if (!r300->velems->count || !r300->vertex_buffer_count)
+	    return;
+
     if (info->indexed && r300->index_buffer.buffer) {
         unsigned offset;
 
