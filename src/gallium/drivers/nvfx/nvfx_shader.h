@@ -379,8 +379,9 @@
 #define NVFXSR_OUTPUT	1
 #define NVFXSR_INPUT	2
 #define NVFXSR_TEMP	3
-#define NVFXSR_CONST	4
-#define NVFXSR_RELOCATED	5
+#define NVFXSR_CONST	5
+#define NVFXSR_IMM	6
+#define NVFXSR_RELOCATED	7
 
 #define NVFX_COND_FL  0
 #define NVFX_COND_LT  1

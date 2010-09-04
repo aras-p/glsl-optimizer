@@ -15,9 +15,6 @@
 #include "nvfx_shader.h"
 #include "nvfx_resource.h"
 
-#define MAX_CONSTS 128
-#define MAX_IMM 32
-
 struct nvfx_fpc {
 	struct nvfx_pipe_fragment_program* pfp;
 	struct nvfx_fragment_program *fp;
@@ -34,13 +31,9 @@ struct nvfx_fpc {
 	unsigned inst_offset;
 	unsigned have_const;
 
-	struct {
-		int pipe;
-		float vals[4];
-	} consts[MAX_CONSTS];
-	int nr_consts;
+	struct util_dynarray imm_data;
 
-	struct nvfx_reg imm[MAX_IMM];
+	struct nvfx_reg* r_imm;
 	unsigned nr_imm;
 
 	unsigned char generic_to_slot[256]; /* semantic idx for each input semantic */
@@ -73,19 +66,14 @@ release_temps(struct nvfx_fpc *fpc)
 	fpc->r_temps_discard = 0ULL;
 }
 
-static INLINE struct nvfx_reg
-constant(struct nvfx_fpc *fpc, int pipe, float vals[4])
+static inline struct nvfx_reg
+nvfx_fp_imm(struct nvfx_fpc *fpc, float a, float b, float c, float d)
 {
-	int idx;
+	float v[4] = {a, b, c, d};
+	int idx = fpc->imm_data.size >> 4;
 
-	if (fpc->nr_consts == MAX_CONSTS)
-		assert(0);
-	idx = fpc->nr_consts++;
-
-	fpc->consts[idx].pipe = pipe;
-	if (pipe == -1)
-		memcpy(fpc->consts[idx].vals, vals, 4 * sizeof(float));
-	return nvfx_reg(NVFXSR_CONST, idx);
+	memcpy(util_dynarray_grow(&fpc->imm_data, sizeof(float) * 4), v, 4 * sizeof(float));
+	return nvfx_reg(NVFXSR_IMM, idx);
 }
 
 static void
@@ -122,26 +110,35 @@ emit_src(struct nvfx_fpc *fpc, int pos, struct nvfx_src src)
 		//printf("adding relocation at %x for %x\n", fpc->inst_offset, src.index);
 		util_dynarray_append(&fpc->fp->slot_relocations[src.reg.index], unsigned, fpc->inst_offset + pos + 1);
 		break;
-	case NVFXSR_CONST:
+	case NVFXSR_IMM:
 		if (!fpc->have_const) {
 			grow_insns(fpc, 4);
+			hw = &fp->insn[fpc->inst_offset];
 			fpc->have_const = 1;
 		}
 
-		hw = &fp->insn[fpc->inst_offset];
-		if (fpc->consts[src.reg.index].pipe >= 0) {
+		memcpy(&fp->insn[fpc->inst_offset + 4],
+				(float*)fpc->imm_data.data + src.reg.index * 4,
+				sizeof(uint32_t) * 4);
+
+		sr |= (NVFX_FP_REG_TYPE_CONST << NVFX_FP_REG_TYPE_SHIFT);
+		break;
+	case NVFXSR_CONST:
+		if (!fpc->have_const) {
+			grow_insns(fpc, 4);
+			hw = &fp->insn[fpc->inst_offset];
+			fpc->have_const = 1;
+		}
+
+		{
 			struct nvfx_fragment_program_data *fpd;
 
 			fp->consts = realloc(fp->consts, ++fp->nr_consts *
 					     sizeof(*fpd));
 			fpd = &fp->consts[fp->nr_consts - 1];
 			fpd->offset = fpc->inst_offset + 4;
-			fpd->index = fpc->consts[src.reg.index].pipe;
+			fpd->index = src.reg.index;
 			memset(&fp->insn[fpd->offset], 0, sizeof(uint32_t) * 4);
-		} else {
-			memcpy(&fp->insn[fpc->inst_offset + 4],
-				fpc->consts[src.reg.index].vals,
-				sizeof(uint32_t) * 4);
 		}
 
 		sr |= (NVFX_FP_REG_TYPE_CONST << NVFX_FP_REG_TYPE_SHIFT);
@@ -409,11 +406,11 @@ tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 		}
 		break;
 	case TGSI_FILE_CONSTANT:
-		src.reg = constant(fpc, fsrc->Register.Index, NULL);
+		src.reg = nvfx_reg(NVFXSR_CONST, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_IMMEDIATE:
 		assert(fsrc->Register.Index < fpc->nr_imm);
-		src.reg = fpc->imm[fsrc->Register.Index];
+		src.reg = fpc->r_imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
 		src.reg = fpc->r_temp[fsrc->Register.Index];
@@ -639,8 +636,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 			 *
 			 * NOTE: if we start using half precision, we might need an fp16 FLT_MIN here instead
 			 */
-			float maxv[4] = {0, FLT_MIN, 0, 0};
-			struct nvfx_src maxs = nvfx_src(constant(fpc, -1, maxv));
+			struct nvfx_src maxs = nvfx_src(nvfx_fp_imm(fpc, 0, FLT_MIN, 0, 0));
 			tmp = nvfx_src(temp(fpc));
 			if (ci>= 0 || ii >= 0) {
 				nvfx_fp_emit(fpc, arith(0, MOV, tmp.reg, NVFX_FP_MASK_X | NVFX_FP_MASK_Y, maxs, none, none));
@@ -758,8 +754,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		break;
 	case TGSI_OPCODE_SSG:
 	{
-		float minonesv[4] = {-1.0, -1.0, -1.0, -1.0};
-		struct nvfx_src minones = swz(nvfx_src(constant(fpc, -1, minonesv)), X, X, X, X);
+		struct nvfx_src minones = swz(nvfx_src(nvfx_fp_imm(fpc, -1, -1, -1, -1)), X, X, X, X);
 
 		insn = arith(sat, MOV, dst, mask, src[0], none, none);
 		insn.cc_update = 1;
@@ -959,8 +954,6 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	struct tgsi_parse_context p;
 	int high_temp = -1, i;
 	struct util_semantic_set set;
-	float const0v[4] = {0, 0, 0, 0};
-	struct nvfx_reg const0;
 	unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
 
 	fpc->fp->num_slots = util_semantic_set_from_program_file(&set, fpc->pfp->pipe.tokens, TGSI_FILE_INPUT);
@@ -971,8 +964,7 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 
 	memset(fpc->fp->slot_to_fp_input, 0xff, sizeof(fpc->fp->slot_to_fp_input));
 
-	const0 = constant(fpc, -1, const0v);
-	assert(const0.index == 0);
+	fpc->r_imm = CALLOC(fpc->pfp->info.immediate_count, sizeof(struct nvfx_reg));
 
 	tgsi_parse_init(&p, fpc->pfp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
@@ -1003,19 +995,14 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 		{
 			struct tgsi_full_immediate *imm;
-			float vals[4];
 
 			imm = &p.FullToken.FullImmediate;
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
-			assert(fpc->nr_imm < MAX_IMM);
+			assert(fpc->nr_imm < fpc->pfp->info.immediate_count);
 
-			vals[0] = imm->u[0].Float;
-			vals[1] = imm->u[1].Float;
-			vals[2] = imm->u[2].Float;
-			vals[3] = imm->u[3].Float;
-			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
-		}
+			fpc->r_imm[fpc->nr_imm++] = nvfx_fp_imm(fpc, imm->u[0].Float, imm->u[1].Float, imm->u[2].Float, imm->u[3].Float);
 			break;
+		}
 		default:
 			break;
 		}
@@ -1086,8 +1073,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	{
 		struct nvfx_reg reg = temp(fpc);
 		struct nvfx_src sprite_input = nvfx_src(nvfx_reg(NVFXSR_RELOCATED, fp->num_slots));
-		float v[4] = {1, -1, 0, 0};
-		struct nvfx_src imm = nvfx_src(constant(fpc, -1, v));
+		struct nvfx_src imm = nvfx_src(nvfx_fp_imm(fpc, 1, -1, 0, 0));
 
 		fpc->sprite_coord_temp = reg.index;
 		fpc->r_temps_discard = 0ULL;
@@ -1165,6 +1151,7 @@ out:
 			FREE(fpc->r_temp);
 		util_dynarray_fini(&fpc->if_stack);
 		util_dynarray_fini(&fpc->label_relocs);
+		util_dynarray_fini(&fpc->imm_data);
 		//util_dynarray_fini(&fpc->loop_stack);
 		FREE(fpc);
 	}
