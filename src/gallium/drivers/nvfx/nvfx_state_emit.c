@@ -351,14 +351,18 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	{
 		for(int i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)
 		{
-			if(render_temps & (1 << i))
+			if(render_temps & (1 << i)) {
+				assert(((struct nvfx_surface*)nvfx->framebuffer.cbufs[i])->temp);
 				util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.cbufs[i]),
 						(struct util_dirty_surface*)nvfx->framebuffer.cbufs[i]);
+			}
 		}
 
-		if(render_temps & 0x80)
+		if(render_temps & 0x80) {
+			assert(((struct nvfx_surface*)nvfx->framebuffer.zsbuf)->temp);
 			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.zsbuf),
 					(struct util_dirty_surface*)nvfx->framebuffer.zsbuf);
+		}
 	}
 
 	return TRUE;

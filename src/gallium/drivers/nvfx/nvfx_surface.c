@@ -384,6 +384,10 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 	struct pipe_subresource tempsr, surfsr;
 	struct nvfx_context* nvfx = nvfx_context(pipe);
 
+	/* temporarily detach the temp, so it isn't used in place of the actual resource */
+	struct nvfx_miptree* temp = ns->temp;
+	ns->temp = 0;
+
 	// TODO: we really should do this validation before setting these variable in draw calls
 	unsigned use_vertex_buffers = nvfx->use_vertex_buffers;
 	boolean use_index_buffer = nvfx->use_index_buffer;
@@ -395,9 +399,16 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 	surfsr.level = surf->level;
 
 	if(to_temp)
-		nvfx_resource_copy_region(pipe, &ns->temp->base.base, tempsr, 0, 0, 0, surf->texture, surfsr, 0, 0, surf->zslice, surf->width, surf->height);
+		nvfx_resource_copy_region(pipe, &temp->base.base, tempsr, 0, 0, 0, surf->texture, surfsr, 0, 0, surf->zslice, surf->width, surf->height);
 	else
-		nvfx_resource_copy_region(pipe, surf->texture, surfsr, 0, 0, surf->zslice, &ns->temp->base.base, tempsr, 0, 0, 0, surf->width, surf->height);
+		nvfx_resource_copy_region(pipe, surf->texture, surfsr, 0, 0, surf->zslice, &temp->base.base, tempsr, 0, 0, 0, surf->width, surf->height);
+
+	/* If this triggers, it probably means we attempted to use the blitter
+	 * but failed due to non-renderability of the target.
+	 * Obviously, this would lead to infinite recursion if supported. */
+	assert(!ns->temp);
+
+	ns->temp = temp;
 
 	nvfx->use_vertex_buffers = use_vertex_buffers;
 	nvfx->use_index_buffer = use_index_buffer;
@@ -421,6 +432,8 @@ nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf)
 	template.nr_samples = surf->texture->nr_samples;
 	template.flags = NVFX_RESOURCE_FLAG_LINEAR;
 
+	assert(!ns->temp && !util_dirty_surface_is_dirty(&ns->base));
+
 	ns->temp = (struct nvfx_miptree*)nvfx_miptree_create(pipe->screen, &template);
 	nvfx_surface_copy_temp(pipe, surf, 1);
 }
@@ -432,10 +445,9 @@ nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf)
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
 	boolean bound = FALSE;
 
-	/* must be done before the copy, otherwise the copy will use the temp as destination */
-	util_dirty_surface_set_clean(nvfx_surface_get_dirty_surfaces(surf), &ns->base);
-
 	nvfx_surface_copy_temp(pipe, surf, 0);
+
+	util_dirty_surface_set_clean(nvfx_surface_get_dirty_surfaces(surf), &ns->base);
 
 	if(nvfx->framebuffer.zsbuf == surf)
 		bound = TRUE;

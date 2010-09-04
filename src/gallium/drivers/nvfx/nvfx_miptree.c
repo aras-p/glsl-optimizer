@@ -214,6 +214,7 @@ nvfx_miptree_surface_del(struct pipe_surface *ps)
 
 	if(!ns->temp)
 	{
+		assert(!util_dirty_surface_is_dirty(&ns->base));
 		util_surfaces_detach(&((struct nvfx_miptree*)ps->texture)->surfaces, ps);
 		pipe_resource_reference(&ps->texture, 0);
 		FREE(ps);
