@@ -3,6 +3,99 @@
 #include "nvfx_resource.h"
 #include "draw/draw_context.h"
 
+void
+nvfx_state_viewport_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct pipe_viewport_state *vpt = &nvfx->viewport;
+
+	WAIT_RING(chan, 11);
+	if(nvfx->render_mode == HW) {
+		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_TRANSLATE_X, 8));
+		OUT_RINGf(chan, vpt->translate[0]);
+		OUT_RINGf(chan, vpt->translate[1]);
+		OUT_RINGf(chan, vpt->translate[2]);
+		OUT_RINGf(chan, vpt->translate[3]);
+		OUT_RINGf(chan, vpt->scale[0]);
+		OUT_RINGf(chan, vpt->scale[1]);
+		OUT_RINGf(chan, vpt->scale[2]);
+		OUT_RINGf(chan, vpt->scale[3]);
+		OUT_RING(chan, RING_3D(0x1d78, 1));
+		OUT_RING(chan, 1);
+	} else {
+		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_TRANSLATE_X, 8));
+		OUT_RINGf(chan, 0.0f);
+		OUT_RINGf(chan, 0.0f);
+		OUT_RINGf(chan, 0.0f);
+		OUT_RINGf(chan, 0.0f);
+		OUT_RINGf(chan, 1.0f);
+		OUT_RINGf(chan, 1.0f);
+		OUT_RINGf(chan, 1.0f);
+		OUT_RINGf(chan, 1.0f);
+		OUT_RING(chan, RING_3D(0x1d78, 1));
+		OUT_RING(chan, nvfx->is_nv4x ? 0x110 : 1);
+	}
+}
+
+void
+nvfx_state_scissor_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct pipe_rasterizer_state *rast = &nvfx->rasterizer->pipe;
+	struct pipe_scissor_state *s = &nvfx->scissor;
+
+	if ((rast->scissor == 0 && nvfx->state.scissor_enabled == 0))
+		return;
+	nvfx->state.scissor_enabled = rast->scissor;
+
+	WAIT_RING(chan, 3);
+	OUT_RING(chan, RING_3D(NV34TCL_SCISSOR_HORIZ, 2));
+	if (nvfx->state.scissor_enabled) {
+		OUT_RING(chan, ((s->maxx - s->minx) << 16) | s->minx);
+		OUT_RING(chan, ((s->maxy - s->miny) << 16) | s->miny);
+	} else {
+		OUT_RING(chan, 4096 << 16);
+		OUT_RING(chan, 4096 << 16);
+	}
+}
+
+void
+nvfx_state_sr_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct pipe_stencil_ref *sr = &nvfx->stencil_ref;
+
+	WAIT_RING(chan, 4);
+	OUT_RING(chan, RING_3D(NV34TCL_STENCIL_FRONT_FUNC_REF, 1));
+	OUT_RING(chan, sr->ref_value[0]);
+	OUT_RING(chan, RING_3D(NV34TCL_STENCIL_BACK_FUNC_REF, 1));
+	OUT_RING(chan, sr->ref_value[1]);
+}
+
+void
+nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct pipe_blend_color *bcol = &nvfx->blend_colour;
+
+	WAIT_RING(chan, 2);
+	OUT_RING(chan, RING_3D(NV34TCL_BLEND_COLOR, 1));
+	OUT_RING(chan, ((float_to_ubyte(bcol->color[3]) << 24) |
+		       (float_to_ubyte(bcol->color[0]) << 16) |
+		       (float_to_ubyte(bcol->color[1]) <<  8) |
+		       (float_to_ubyte(bcol->color[2]) <<  0)));
+}
+
+void
+nvfx_state_stipple_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
+
+	WAIT_RING(chan, 33);
+	OUT_RING(chan, RING_3D(NV34TCL_POLYGON_STIPPLE_PATTERN(0), 32));
+	OUT_RINGp(chan, nvfx->stipple, 32);
+}
+
 static void
 nvfx_coord_conventions_validate(struct nvfx_context* nvfx)
 {
