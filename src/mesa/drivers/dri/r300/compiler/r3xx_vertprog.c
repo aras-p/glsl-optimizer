@@ -503,7 +503,7 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 			}
 		}
 
-		if (compiler->code->length >= c->max_alu_insts) {
+		if (compiler->code->length >= c->max_alu_insts * 4) {
 			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
 			return;
 		}
