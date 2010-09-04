@@ -107,7 +107,7 @@ static inline unsigned log2i(unsigned i)
 //#define NV04_REGION_DEBUG
 
 // Yes, we really want to inline everything, since all the functions are used only once
-#if defined(__GNUC__) && defined(DEBUG)
+#if defined(__GNUC__) && !defined(DEBUG)
 #define inline __attribute__((always_inline)) inline
 #endif
 
