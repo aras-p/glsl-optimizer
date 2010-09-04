@@ -153,6 +153,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
 
       if (st->error) {
          printf("error reading builtin: %.35s ...\\n", functions[i]);
+         printf("Info log:\\n%s\\n", st->info_log);
          talloc_free(sh);
          return NULL;
       }
