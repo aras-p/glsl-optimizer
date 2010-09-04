@@ -306,6 +306,9 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, screen->base.channel->vram->handle);
 	OUT_RING(chan, screen->base.channel->vram->handle);
 
+	OUT_RING(chan, RING_3D(0x1450, 1));
+	OUT_RING(chan, 0x00000004);
+
 	OUT_RING(chan, RING_3D(0x1ea4, 3));
 	OUT_RING(chan, 0x00000010);
 	OUT_RING(chan, 0x01000100);
