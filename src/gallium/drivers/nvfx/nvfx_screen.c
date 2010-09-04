@@ -328,6 +328,9 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, 0x00d30000);
 	OUT_RING(chan, RING_3D(0x1e94, 1));
 	OUT_RING(chan, 0x00000001);
+
+	OUT_RING(chan, RING_3D(NV40TCL_MIPMAP_ROUNDING, 1));
+	OUT_RING(chan, NV40TCL_MIPMAP_ROUNDING_DOWN);
 }
 
 static unsigned
