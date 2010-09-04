@@ -110,8 +110,9 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VS_INPUTS:
 		return 16;
 	case PIPE_CAP_MAX_VS_CONSTS:
-		/* XXX: currently more don't work, but it should be possible to make it work */
-		return 212 - 6;
+		/* - 6 is for clip planes; Gallium should be fixed to put
+		 * them in the vertex shader itself, so we don't need to reserve these */
+		return (screen->is_nv4x ? 468 : 256) - 6;
 	case PIPE_CAP_MAX_VS_TEMPS:
 		return screen->is_nv4x ? 32 : 13;
 	case PIPE_CAP_MAX_VS_ADDRS:
@@ -325,7 +326,7 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, RING_3D(0x1ef8, 1));
 	OUT_RING(chan, 0x0020ffff);
 	OUT_RING(chan, RING_3D(0x1d64, 1));
-	OUT_RING(chan, 0x00d30000);
+	OUT_RING(chan, 0x01d300d4);
 	OUT_RING(chan, RING_3D(0x1e94, 1));
 	OUT_RING(chan, 0x00000001);
 
@@ -478,13 +479,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Vtxprog resources */
 	if (nouveau_resource_init(&screen->vp_exec_heap, 0, screen->is_nv4x ? 512 : 256) ||
-	    /* XXX: this should actually be 468 or 256, but apparently indirect addressing
-	     * cannot read consts starting from 212 on nv40.
-	     * It looks like 44 slots are reserved for something, and there is a "mode switch"
-	     * from 256 slots to 512 slots that we are setting to "256 mode" on nv40, leading
-	     * to 212 = 256 - 44 instead of 468 = 512 - 44 usable slots.
-	     */
-	    nouveau_resource_init(&screen->vp_data_heap, 0, 212)) {
+	    nouveau_resource_init(&screen->vp_data_heap, 0, screen->is_nv4x ? 468 : 256)) {
 		nvfx_screen_destroy(pscreen);
 		return NULL;
 	}
