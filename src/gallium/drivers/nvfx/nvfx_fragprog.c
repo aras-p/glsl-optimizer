@@ -948,12 +948,13 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	struct util_semantic_set set;
 	float const0v[4] = {0, 0, 0, 0};
 	struct nvfx_reg const0;
+	unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
 
 	fpc->fp->num_slots = util_semantic_set_from_program_file(&set, fpc->pfp->pipe.tokens, TGSI_FILE_INPUT);
-	if(fpc->fp->num_slots > 8)
+	if(fpc->fp->num_slots > num_texcoords)
 		return FALSE;
-	util_semantic_layout_from_set(fpc->fp->slot_to_generic, &set, 0, 8);
-	util_semantic_table_from_layout(fpc->generic_to_slot, fpc->fp->slot_to_generic, 0, 8);
+	util_semantic_layout_from_set(fpc->fp->slot_to_generic, &set, 0, num_texcoords);
+	util_semantic_table_from_layout(fpc->generic_to_slot, fpc->fp->slot_to_generic, 0, num_texcoords);
 
 	memset(fpc->fp->slot_to_fp_input, 0xff, sizeof(fpc->fp->slot_to_fp_input));
 

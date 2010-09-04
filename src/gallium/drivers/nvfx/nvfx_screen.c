@@ -87,7 +87,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		   value (nv30:0/nv40:4) ? */
 		return screen->is_nv4x ? 4 : 0;
 	case PIPE_CAP_MAX_FS_INPUTS:
-		return 10;
+		return screen->is_nv4x ? 12 : 10;
 	case PIPE_CAP_MAX_FS_CONSTS:
 		return screen->is_nv4x ? 224 : 32;
 	case PIPE_CAP_MAX_FS_TEMPS:
@@ -319,7 +319,7 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, 0x06144321);
 	OUT_RING(chan, RING_3D(0x1fc8, 2));
 	OUT_RING(chan, 0xedcba987);
-	OUT_RING(chan, 0x00000021);
+	OUT_RING(chan, 0x0000006f);
 	OUT_RING(chan, RING_3D(0x1fd0, 1));
 	OUT_RING(chan, 0x00171615);
 	OUT_RING(chan, RING_3D(0x1fd4, 1));

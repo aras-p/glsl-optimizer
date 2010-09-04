@@ -782,8 +782,13 @@ nvfx_vertprog_parse_decl_output(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		hw = NVFX_VP(INST_DEST_PSZ);
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		hw = (vpc->vp->generic_to_fp_input[fdec->Semantic.Index] & 0xf)
-			+ NVFX_VP(INST_DEST_TC(0)) - NVFX_FP_OP_INPUT_SRC_TC(0);
+		hw = (vpc->vp->generic_to_fp_input[fdec->Semantic.Index] & 0xf) - NVFX_FP_OP_INPUT_SRC_TC(0);
+		if(hw <= 8)
+			hw = NVFX_VP(INST_DEST_TC(hw));
+		else if(hw == 9) /* TODO: this is correct, but how does this overlapping work exactly? */
+			hw = NV40_VP_INST_DEST_PSZ;
+		else
+			assert(0);
 		break;
 	case TGSI_SEMANTIC_EDGEFLAG:
 		/* not really an error just a fallback */
@@ -804,20 +809,21 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	struct tgsi_parse_context p;
 	int high_const = -1, high_temp = -1, high_addr = -1, nr_imm = 0, i;
 	struct util_semantic_set set;
-	unsigned char sem_layout[8];
+	unsigned char sem_layout[10];
 	unsigned num_outputs;
+	unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
 
 	num_outputs = util_semantic_set_from_program_file(&set, vpc->vp->pipe.tokens, TGSI_FILE_OUTPUT);
 
-	if(num_outputs > 8) {
+	if(num_outputs > num_texcoords) {
 		NOUVEAU_ERR("too many vertex program outputs: %i\n", num_outputs);
 		return FALSE;
 	}
-	util_semantic_layout_from_set(sem_layout, &set, 8, 8);
+	util_semantic_layout_from_set(sem_layout, &set, num_texcoords, num_texcoords);
 
 	/* hope 0xf is (0, 0, 0, 1) initialized; otherwise, we are _probably_ not required to do this */
 	memset(vpc->vp->generic_to_fp_input, 0x0f, sizeof(vpc->vp->generic_to_fp_input));
-	for(int i = 0; i < 8; ++i) {
+	for(int i = 0; i < 10; ++i) {
 		if(sem_layout[i] == 0xff)
 			continue;
 		//printf("vp: GENERIC[%i] to fpreg %i\n", sem_layout[i], NVFX_FP_OP_INPUT_SRC_TC(0) + i);
@@ -825,7 +831,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	}
 
 	vpc->vp->sprite_fp_input = -1;
-	for(int i = 0; i < 8; ++i)
+	for(int i = 0; i < 10; ++i)
 	{
 		if(sem_layout[i] == 0xff)
 		{
