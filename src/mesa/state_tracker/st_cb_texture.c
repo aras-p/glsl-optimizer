@@ -996,6 +996,8 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
    dest = (GLubyte *) pixels;
 
+   _mesa_set_fetch_functions(texImage, get_texture_dims(target));
+
    for (i = 0; i < depth; i++) {
       if (compressed_dst) {
 	 _mesa_get_compressed_teximage(ctx, target, level, dest,
