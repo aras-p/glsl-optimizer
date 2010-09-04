@@ -1476,7 +1476,7 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
 
    assign_uniform_locations(prog);
 
-   if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER) {
+   if (prog->_NumLinkedShaders && prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER) {
       /* FINISHME: The value of the max_attribute_index parameter is
        * FINISHME: implementation dependent based on the value of
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
