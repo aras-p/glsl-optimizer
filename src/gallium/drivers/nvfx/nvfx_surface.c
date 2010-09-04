@@ -251,8 +251,15 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 		ret = nv04_region_copy_2d(ctx, &dst, &src, w, h, dst_to_gpu, src_on_gpu);
 	if(!ret)
 	{}
-	else if(ret > 0 && dstr->bind & PIPE_BIND_RENDER_TARGET && srcr->bind & PIPE_BIND_SAMPLER_VIEW)
+	else if(ret > 0
+			&& dstr->bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL)
+			&& srcr->bind & PIPE_BIND_SAMPLER_VIEW)
 	{
+		/* this currently works because we hack the bind flags on resource creation to be
+		 * the maximum set that the resource type actually supports
+		 *
+		 * TODO: perhaps support reinterpreting the formats
+		 */
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 1);
 		util_blitter_copy_region(blitter, dstr, subdst, dstx, dsty, dstz, srcr, subsrc, srcx, srcy, srcz, w, h, TRUE);
 		nvfx_put_blitter(pipe, blitter);
