@@ -758,18 +758,6 @@ struct pipe_resource *r300_texture_create(struct pipe_screen *screen,
     struct r300_screen *rscreen = r300_screen(screen);
     enum r300_buffer_tiling microtile, macrotile;
 
-    /* Refuse to create a texture with size 0. */
-    if (!base->width0 ||
-        (!base->height0 && (base->target == PIPE_TEXTURE_2D ||
-                            base->target == PIPE_TEXTURE_CUBE ||
-                            base->target == PIPE_TEXTURE_RECT)) ||
-        (!base->depth0 && base->target == PIPE_TEXTURE_3D)) {
-        fprintf(stderr, "r300: texture_create: "
-                "Got invalid texture dimensions: %ix%ix%i\n",
-                base->width0, base->height0, base->depth0);
-        return NULL;
-    }
-
     if ((base->flags & R300_RESOURCE_FLAG_TRANSFER) ||
         (base->bind & PIPE_BIND_SCANOUT)) {
         microtile = R300_BUFFER_LINEAR;
