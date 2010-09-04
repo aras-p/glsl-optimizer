@@ -1514,6 +1514,14 @@ fs_visitor::assign_curb_setup()
    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
 
+   if (intel->gen == 5 && (c->prog_data.first_curbe_grf +
+			   c->prog_data.curb_read_length) & 1) {
+      /* Align the start of the interpolation coefficients so that we can use
+       * the PLN instruction.
+       */
+      c->prog_data.first_curbe_grf++;
+   }
+
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
