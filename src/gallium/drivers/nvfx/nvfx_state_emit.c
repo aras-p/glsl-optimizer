@@ -3,6 +3,21 @@
 #include "nvfx_resource.h"
 #include "draw/draw_context.h"
 
+static void
+nvfx_coord_conventions_validate(struct nvfx_context* nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	unsigned value = 0;
+	if(nvfx->hw_fragprog->coord_conventions & NV34TCL_COORD_CONVENTIONS_ORIGIN_INVERTED)
+		value |= nvfx->framebuffer.height << NV34TCL_COORD_CONVENTIONS_HEIGHT_SHIFT;
+
+	value |= nvfx->hw_fragprog->coord_conventions;
+
+	WAIT_RING(chan, 2);
+	OUT_RING(chan, RING_3D(NV34TCL_COORD_CONVENTIONS, 1));
+	OUT_RING(chan, value);
+}
+
 static boolean
 nvfx_state_validate_common(struct nvfx_context *nvfx)
 {
@@ -211,6 +226,9 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.writemask);
 	        OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
 	}
+
+	if((all_swizzled >= 0) || (dirty & NVFX_NEW_FRAGPROG))
+		nvfx_coord_conventions_validate(nvfx);
 
 	if(flush_tex_cache)
 	{

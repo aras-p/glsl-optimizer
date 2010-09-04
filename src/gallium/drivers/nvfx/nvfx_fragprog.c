@@ -1052,6 +1052,16 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	fpc->fp = fp;
 	fpc->num_regs = 2;
 
+	for (unsigned i = 0; i < pfp->info.num_properties; ++i) {
+		if (pfp->info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN) {
+			if(pfp->info.properties[i].data[0])
+				fp->coord_conventions |= NV34TCL_COORD_CONVENTIONS_ORIGIN_INVERTED;
+		} else if (pfp->info.properties[i].name == TGSI_PROPERTY_FS_COORD_PIXEL_CENTER) {
+			if(pfp->info.properties[i].data[0])
+				fp->coord_conventions |= NV34TCL_COORD_CONVENTIONS_CENTER_INTEGER;
+		}
+	}
+
 	if (!nvfx_fragprog_prepare(nvfx, fpc))
 		goto out_err;
 

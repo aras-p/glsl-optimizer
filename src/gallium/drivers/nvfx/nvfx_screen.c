@@ -74,10 +74,9 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
-		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-		return 0;
+		return 1;
 	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
 	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
 	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:

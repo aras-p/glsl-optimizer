@@ -62,6 +62,7 @@ struct nvfx_fragment_program {
 	unsigned samplers;
 	unsigned point_sprite_control;
 	unsigned or;
+	unsigned coord_conventions;
 
 	uint32_t *insn;
 	int       insn_len;

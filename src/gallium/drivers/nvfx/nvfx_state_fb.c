@@ -167,7 +167,7 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	else
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z24S8;
 
-	MARK_RING(chan, 44, 10);
+	MARK_RING(chan, 42, 10);
 
 	if ((rt_enable & NV34TCL_RT_ENABLE_COLOR0) || fb->zsbuf) {
 		struct nvfx_render_target *rt0 = &nvfx->hw_rt[0];
@@ -271,8 +271,6 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_CLIP_HORIZ(0), 2));
 	OUT_RING(chan, ((w - 1) << 16) | 0);
 	OUT_RING(chan, ((h - 1) << 16) | 0);
-	OUT_RING(chan, RING_3D(0x1d88, 1));
-	OUT_RING(chan, (1 << 12) | h);
 
 	if(!nvfx->is_nv4x) {
 		/* Wonder why this is needed, context should all be set to zero on init */
