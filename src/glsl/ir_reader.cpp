@@ -337,8 +337,17 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
    foreach_iter(exec_list_iterator, it, list->subexpressions) {
       s_expression *sub = (s_expression*) it.get();
       ir_instruction *ir = read_instruction(st, sub, loop_ctx);
-      if (ir != NULL)
-	 instructions->push_tail(ir);
+      if (ir != NULL) {
+	 /* Global variable declarations should be moved to the top, before
+	  * any functions that might use them.  Functions are added to the
+	  * instruction stream when scanning for prototypes, so without this
+	  * hack, they always appear before variable declarations.
+	  */
+	 if (st->current_function == NULL && ir->as_variable() != NULL)
+	    instructions->push_head(ir);
+	 else
+	    instructions->push_tail(ir);
+      }
    }
 }
 
