@@ -757,12 +757,25 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		nvfx_fp_emit(fpc, arith(sat, SNE, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SSG:
-		tmp = nvfx_src(temp(fpc));
-		tmp2 = nvfx_src(temp(fpc));
-		nvfx_fp_emit(fpc, arith(0, SGT, tmp.reg, mask, src[0], nvfx_src(nvfx_reg(NVFXSR_CONST, 0)), none));
-		nvfx_fp_emit(fpc, arith(0, SLT, tmp.reg, mask, src[0], nvfx_src(nvfx_reg(NVFXSR_CONST, 0)), none));
-		nvfx_fp_emit(fpc, arith(sat, ADD, dst, mask, tmp, neg(tmp2), none));
+	{
+		float minonesv[4] = {-1.0, -1.0, -1.0, -1.0};
+		struct nvfx_src minones = swz(nvfx_src(constant(fpc, -1, minonesv)), X, X, X, X);
+
+		insn = arith(sat, MOV, dst, mask, src[0], none, none);
+		insn.cc_update = 1;
+		nvfx_fp_emit(fpc, insn);
+
+		insn = arith(0, STR, dst, mask, none, none, none);
+		insn.cc_test = NVFX_COND_GT;
+		nvfx_fp_emit(fpc, insn);
+
+		if(!sat) {
+			insn = arith(0, MOV, dst, mask, minones, none, none);
+			insn.cc_test = NVFX_COND_LT;
+			nvfx_fp_emit(fpc, insn);
+		}
 		break;
+	}
 	case TGSI_OPCODE_STR:
 		nvfx_fp_emit(fpc, arith(sat, STR, dst, mask, src[0], src[1], none));
 		break;
