@@ -5,6 +5,7 @@
 static inline boolean
 nvfx_surface_linear_renderable(struct pipe_surface* surf)
 {
+	/* TODO: precompute this in nvfx_surface creation */
 	return (surf->texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
 		&& !(surf->offset & 63)
 		&& !(((struct nvfx_surface*)surf)->pitch & 63);
@@ -13,13 +14,14 @@ nvfx_surface_linear_renderable(struct pipe_surface* surf)
 static inline boolean
 nvfx_surface_swizzled_renderable(struct pipe_framebuffer_state* fb, struct pipe_surface* surf)
 {
-	/* TODO: return FALSE if we have a format not supporting swizzled rendering (e.g. r8); currently those are not supported at all */
+	/* TODO: precompute this in nvfx_surface creation */
 	return !((struct nvfx_miptree*)surf->texture)->linear_pitch
 		&& (surf->texture->target != PIPE_TEXTURE_3D || u_minify(surf->texture->depth0, surf->level) <= 1)
 		&& !(surf->offset & 127)
 		&& (surf->width == fb->width)
 		&& (surf->height == fb->height)
-		&& !((struct nvfx_surface*)surf)->temp;
+		&& !((struct nvfx_surface*)surf)->temp
+		&& (surf->format == PIPE_FORMAT_B8G8R8A8_UNORM || surf->format == PIPE_FORMAT_B8G8R8X8_UNORM || surf->format == PIPE_FORMAT_B5G6R5_UNORM);
 }
 
 static boolean
