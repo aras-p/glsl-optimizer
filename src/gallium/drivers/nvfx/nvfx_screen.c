@@ -95,7 +95,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_FS_ADDRS:
 		return screen->is_nv4x ? 1 : 0;
 	case PIPE_CAP_MAX_FS_PREDS:
-		return screen->is_nv4x ? 1 : 0;
+		return 0; /* we could expose these, but nothing uses them */
 	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
 		return screen->is_nv4x ? 512 : 256;
@@ -117,7 +117,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VS_ADDRS:
 		return 2;
 	case PIPE_CAP_MAX_VS_PREDS:
-		return screen->is_nv4x ? 1 : 0;
+		return 0; /* we could expose these, but nothing uses them */
 	case PIPE_CAP_GEOMETRY_SHADER4:
 		return 0;
 	case PIPE_CAP_DEPTH_CLAMP:
