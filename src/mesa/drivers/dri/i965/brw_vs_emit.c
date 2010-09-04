@@ -1069,6 +1069,12 @@ move_to_reladdr_dst(struct brw_vs_compile *c,
    struct brw_reg indirect = brw_vec4_indirect(0,0);
    struct brw_reg acc = retype(vec1(get_tmp(c)), BRW_REGISTER_TYPE_UW);
 
+   /* Because destination register indirect addressing can only use
+    * one index, we'll write each vertex's vec4 value separately.
+    */
+   val.width = BRW_WIDTH_4;
+   val.vstride = BRW_VERTICAL_STRIDE_4;
+
    brw_push_insn_state(p);
    brw_set_access_mode(p, BRW_ALIGN_1);
 
