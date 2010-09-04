@@ -121,6 +121,54 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
 
 
 boolean
+util_is_format_compatible(const struct util_format_description *src_desc,
+                          const struct util_format_description *dst_desc)
+{
+   unsigned chan;
+
+   if (src_desc->format == dst_desc->format) {
+      return TRUE;
+   }
+
+   if (src_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
+       dst_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
+      return FALSE;
+   }
+
+   if (src_desc->block.bits != dst_desc->block.bits ||
+       src_desc->nr_channels != dst_desc->nr_channels ||
+       src_desc->colorspace != dst_desc->colorspace) {
+      return FALSE;
+   }
+
+   for (chan = 0; chan < 4; ++chan) {
+      if (src_desc->channel[chan].size !=
+          dst_desc->channel[chan].size) {
+         return FALSE;
+      }
+   }
+
+   for (chan = 0; chan < 4; ++chan) {
+      enum util_format_swizzle swizzle = dst_desc->swizzle[chan];
+
+      if (swizzle < 4) {
+         if (src_desc->swizzle[chan] != swizzle) {
+            return FALSE;
+         }
+         if ((src_desc->channel[swizzle].type !=
+              dst_desc->channel[swizzle].type) ||
+             (src_desc->channel[swizzle].normalized !=
+              dst_desc->channel[swizzle].normalized)) {
+            return FALSE;
+         }
+      }
+   }
+
+   return TRUE;
+}
+
+
+boolean
 util_format_fits_8unorm(const struct util_format_description *format_desc)
 {
    unsigned chan;
@@ -193,7 +241,10 @@ util_format_translate(enum pipe_format dst_format,
    unsigned dst_step;
    unsigned src_step;
 
-   if (dst_format == src_format) {
+   dst_format_desc = util_format_description(dst_format);
+   src_format_desc = util_format_description(src_format);
+
+   if (util_is_format_compatible(src_format_desc, dst_format_desc)) {
       /*
        * Trivial case.
        */
@@ -203,9 +254,6 @@ util_format_translate(enum pipe_format dst_format,
                      src_x, src_y);
       return;
    }
-
-   dst_format_desc = util_format_description(dst_format);
-   src_format_desc = util_format_description(src_format);
 
    assert(dst_x % dst_format_desc->block.width == 0);
    assert(dst_y % dst_format_desc->block.height == 0);

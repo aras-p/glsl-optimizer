@@ -474,6 +474,15 @@ util_format_colormask(const struct util_format_description *desc)
 
 
 /**
+ * Whether the src format can be blitted to destation format with a simple
+ * memcpy.
+ */
+boolean
+util_is_format_compatible(const struct util_format_description *src_desc,
+                          const struct util_format_description *dst_desc);
+
+
+/**
  * Whether this format is a rgab8 variant.
  *
  * That is, any format that matches the
