@@ -47,6 +47,7 @@ static INLINE void
 nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 {
 	unsigned bits = util_format_get_blocksizebits(format);
+	unsigned shift = 0;
 	switch(bits)
 	{
 	case 8:
@@ -58,39 +59,20 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 	case 32:
 		rgn->bpps = 2;
 		break;
-	default:
-		{
-			int shift;
-			assert(util_is_power_of_two(bits));
-			shift = util_logbase2(bits) - 3;
-			assert(shift >= 2);
-			rgn->bpps = 2;
-			shift -= 2;
-
-			rgn->x = util_format_get_nblocksx(format, rgn->x) << shift;
-			rgn->y = util_format_get_nblocksy(format, rgn->y);
-		}
+	case 64:
+		rgn->bpps = 2;
+		shift = 1;
+		break;
+	case 128:
+		rgn->bpps = 2;
+		shift = 2;
+		break;
 	}
-}
 
-static INLINE void
-nvfx_region_fixup_swizzled(struct nv04_region* rgn, unsigned zslice, unsigned width, unsigned height, unsigned depth)
-{
-	// TODO: move this code to surface creation?
-	if((depth <= 1) && (height <= 1 || width <= 2))
-		rgn->pitch = width << rgn->bpps;
-	else if(depth > 1 && height <= 2 && width <= 2)
-	{
-		rgn->pitch = width << rgn->bpps;
-		rgn->offset += (zslice * width * height) << rgn->bpps;
-	}
-	else
-	{
-		rgn->pitch = 0;
-		rgn->z = zslice;
-		rgn->w = width;
-		rgn->h = height;
-		rgn->d = depth;
+	if(shift) {
+		rgn->x = util_format_get_nblocksx(format, rgn->x) << shift;
+		rgn->y = util_format_get_nblocksy(format, rgn->y);
+		rgn->w <<= shift;
 	}
 }
 
@@ -100,7 +82,6 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 	rgn->x = x;
 	rgn->y = y;
 	rgn->z = 0;
-	nvfx_region_set_format(rgn, surf->base.base.format);
 
 	if(surf->temp)
 	{
@@ -113,11 +94,22 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 	} else {
 		rgn->bo = ((struct nvfx_resource*)surf->base.base.texture)->bo;
 		rgn->offset = surf->base.base.offset;
-		rgn->pitch = surf->pitch;
 
-	        if(!(surf->base.base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR))
-		        nvfx_region_fixup_swizzled(rgn, surf->base.base.zslice, surf->base.base.width, surf->base.base.height, u_minify(surf->base.base.texture->depth0, surf->base.base.level));
+		if(surf->base.base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
+			rgn->pitch = surf->pitch;
+	        else
+	        {
+		        rgn->pitch = 0;
+		        rgn->z = surf->base.base.zslice;
+		        rgn->w = surf->base.base.width;
+		        rgn->h = surf->base.base.height;
+		        rgn->d = u_minify(surf->base.base.texture->depth0, surf->base.base.level);
+	        }
 	}
+
+	nvfx_region_set_format(rgn, surf->base.base.format);
+	if(!rgn->pitch)
+		nv04_region_try_to_linearize(rgn);
 }
 
 static INLINE void
@@ -135,14 +127,26 @@ nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* 
 
 	rgn->bo = ((struct nvfx_resource*)pt)->bo;
 	rgn->offset = nvfx_subresource_offset(pt, sub.face, sub.level, z);
-	rgn->pitch = nvfx_subresource_pitch(pt, sub.level);
 	rgn->x = x;
 	rgn->y = y;
-	rgn->z = 0;
+
+	if(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)
+	{
+		rgn->pitch = nvfx_subresource_pitch(pt, sub.level);
+		rgn->z = 0;
+	}
+	else
+	{
+		rgn->pitch = 0;
+		rgn->z = z;
+		rgn->w = u_minify(pt->width0, sub.level);
+		rgn->h = u_minify(pt->height0, sub.level);
+		rgn->d = u_minify(pt->depth0, sub.level);
+	}
 
 	nvfx_region_set_format(rgn, pt->format);
-	if(!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR))
-		nvfx_region_fixup_swizzled(rgn, z, u_minify(pt->width0, sub.level), u_minify(pt->height0, sub.level), u_minify(pt->depth0, sub.level));
+	if(!rgn->pitch)
+		nv04_region_try_to_linearize(rgn);
 }
 
 // TODO: actually test this for all formats, it's probably wrong for some...

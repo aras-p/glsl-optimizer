@@ -47,6 +47,26 @@ struct nv04_region {
 	unsigned w, h, d;
 };
 
+static inline void
+nv04_region_try_to_linearize(struct nv04_region* rgn)
+{
+	assert(!rgn->pitch);
+
+	if(rgn->d <= 1)
+	{
+		if(rgn->h <= 1 || rgn->w <= 2)
+			rgn->pitch = rgn->w << rgn->bpps;
+	}
+	else
+	{
+		if(rgn->h <= 2 && rgn->w <= 2)
+		{
+			rgn->pitch = rgn->w << rgn->bpps;
+			rgn->offset += rgn->z * rgn->h * rgn->pitch;
+		}
+	}
+}
+
 void
 nv04_memcpy(struct nv04_2d_context *ctx,
 		struct nouveau_bo* dstbo, int dstoff,
