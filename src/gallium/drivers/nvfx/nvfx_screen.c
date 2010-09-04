@@ -168,6 +168,14 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
 			break;
+		case PIPE_FORMAT_R16G16B16A16_FLOAT:
+			if(!screen->advertise_fp16)
+				return FALSE;
+			break;
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+			if(!screen->advertise_fp32)
+				return FALSE;
+			break;
 		default:
 			return FALSE;
 		}
@@ -188,7 +196,10 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 		struct nvfx_texture_format* tf = &nvfx_texture_formats[format];
 		if(util_format_is_s3tc(format) && !util_format_s3tc_enabled)
 			return FALSE;
-
+		if(format == PIPE_FORMAT_R16G16B16A16_FLOAT && !screen->advertise_fp16)
+			return FALSE;
+		if(format == PIPE_FORMAT_R32G32B32A32_FLOAT && !screen->advertise_fp32)
+			return FALSE;
 		if(screen->is_nv4x)
 		{
 			if(tf->fmt[4] < 0)
@@ -427,6 +438,13 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	screen->buffer_allocation_cost = debug_get_num_option("NVFX_BUFFER_ALLOCATION_COST", 16384);
 	screen->inline_cost_per_hardware_cost = atof(debug_get_option("NVFX_INLINE_COST_PER_HARDWARE_COST", "1.0"));
 	screen->static_reuse_threshold = atof(debug_get_option("NVFX_STATIC_REUSE_THRESHOLD", "2.0"));
+
+	/* We don't advertise these by default because filtering and blending doesn't work as
+	 * it should, due to several restrictions.
+	 * The only exception is fp16 on nv40.
+	 */
+	screen->advertise_fp16 = debug_get_bool_option("NVFX_FP16", !!screen->is_nv4x);
+	screen->advertise_fp32 = debug_get_bool_option("NVFX_FP32", 0);
 
 	screen->vertex_buffer_reloc_flags = nvfx_screen_get_vertex_buffer_flags(screen);
 

@@ -143,6 +143,12 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		case PIPE_FORMAT_B5G6R5_UNORM:
 			rt_format |= NV34TCL_RT_FORMAT_COLOR_R5G6B5;
 			break;
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+			rt_format |= NV34TCL_RT_FORMAT_COLOR_A32B32G32R32_FLOAT;
+			break;
+		case PIPE_FORMAT_R16G16B16A16_FLOAT:
+			rt_format |= NV34TCL_RT_FORMAT_COLOR_A16B16G16R16_FLOAT;
+			break;
 		default:
 			assert(0);
 		}

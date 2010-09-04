@@ -19,6 +19,8 @@ struct nvfx_screen {
 	boolean trace_draw;
 	unsigned vertex_buffer_reloc_flags;
 	unsigned index_buffer_reloc_flags;
+	unsigned advertise_fp16;
+	unsigned advertise_fp32;
 
 	/* HW graphics objects */
 	struct nouveau_grobj *eng3d;
