@@ -94,6 +94,10 @@ ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
 
    state->error = true;
 
+   if (state->current_function != NULL)
+      state->info_log = talloc_asprintf_append(state->info_log,
+			   "In function %s:\n",
+			   state->current_function->function_name());
    state->info_log = talloc_strdup_append(state->info_log, "error: ");
 
    va_start(ap, fmt);
@@ -310,7 +314,9 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 	 ir_read_error(st, list, "function %s redefined", f->name);
 	 return;
       }
+      st->current_function = sig;
       read_instructions(st, &sig->body, body_list, NULL);
+      st->current_function = NULL;
       sig->is_defined = true;
    }
 
