@@ -365,19 +365,21 @@ nv04_region_do_align_offset(struct nv04_region* rgn, unsigned w, unsigned h, int
 {
 	if(rgn->pitch > 0)
 	{
-		int delta;
-
 		assert(!(rgn->offset & ((1 << rgn->bpps) - 1))); // fatal!
-		delta = rgn->offset & ((1 << shift) - 1);
 
 		if(h <= 1)
 		{
-			rgn->x += delta >> rgn->bpps;
+			int delta;
+			rgn->offset += rgn->y * rgn->pitch + (rgn->x << rgn->bpps);
+			delta = rgn->offset & ((1 << shift) - 1);
+			rgn->y = 0;
+			rgn->x = delta >> rgn->bpps;
 			rgn->offset -= delta;
 			rgn->pitch = align((rgn->x + w) << rgn->bpps, 1 << shift);
 		}
 		else
 		{
+			int delta = rgn->offset & ((1 << shift) - 1);
 			int newxo = (rgn->x << rgn->bpps) + delta;
 			int dy = newxo / rgn->pitch;
 			newxo -= dy * rgn->pitch;
