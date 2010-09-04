@@ -84,6 +84,8 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 
    read_instructions(state, instructions, expr, NULL);
    talloc_free(expr);
+
+   validate_ir_tree(instructions);
 }
 
 static void
