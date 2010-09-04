@@ -725,15 +725,58 @@ ms:
 	nouveau_bo_unmap(dst->bo);
 }
 
+static inline int
+nv04_region_cs2d_format(struct nv04_region* rgn)
+{
+	switch(rgn->bpps) {
+	case 0:
+		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
+	case 1:
+		if(rgn->one_bits >= 1)
+			return NV04_CONTEXT_SURFACES_2D_FORMAT_X1R5G5B5_X1R5G5B5;
+		else
+			return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
+	case 2:
+		if(rgn->one_bits >= 8)
+			return NV04_CONTEXT_SURFACES_2D_FORMAT_X8R8G8B8_X8R8G8B8;
+		else
+			return NV04_CONTEXT_SURFACES_2D_FORMAT_A8R8G8B8;
+	default:
+		return -1;
+	}
+}
+
+static inline int
+nv04_region_sifm_format(struct nv04_region* rgn)
+{
+	switch(rgn->bpps) {
+	case 0:
+		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_Y8;
+	case 1:
+		if(rgn->one_bits >= 1)
+			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_X1R5G5B5;
+		else
+			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_R5G6B5;
+	case 2:
+		if(rgn->one_bits >= 8)
+			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_X8R8G8B8;
+		else
+			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A8R8G8B8;
+	default:
+		return -1;
+	}
+}
 static void
 nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 			  struct nv04_region* dst,
 			  struct nv04_region* src,
-			  int w, int h, int cs2d_format, int sifm_format)
+			  int w, int h)
 {
 	struct nouveau_channel *chan = ctx->swzsurf->channel;
 	struct nouveau_grobj *swzsurf = ctx->swzsurf;
 	struct nouveau_grobj *sifm = ctx->sifm;
+	int cs2d_format = nv04_region_cs2d_format(dst);
+	int sifm_format = nv04_region_sifm_format(src);
 	/* Max width & height may not be the same on all HW, but must be POT */
 	unsigned max_shift = 10;
 	unsigned cw = 1 << max_shift;
@@ -951,11 +994,12 @@ nv04_region_copy_m2mf(struct nv04_2d_context *ctx, struct nv04_region *dst, stru
 }
 
 static inline void
-nv04_region_copy_blit(struct nv04_2d_context *ctx, struct nv04_region* dst, struct nv04_region* src, int w, int h, int format)
+nv04_region_copy_blit(struct nv04_2d_context *ctx, struct nv04_region* dst, struct nv04_region* src, int w, int h)
 {
 	struct nouveau_channel *chan = ctx->surf2d->channel;
 	struct nouveau_grobj *surf2d = ctx->surf2d;
 	struct nouveau_grobj *blit = ctx->blit;
+	int cs2d_format = nv04_region_cs2d_format(dst);
 
 #ifdef NV04_REGION_DEBUG
 	fprintf(stderr, "\tRGN_COPY_BLIT [%i, %i: %i] ", w, h, dst->bpps);
@@ -976,7 +1020,7 @@ nv04_region_copy_blit(struct nv04_2d_context *ctx, struct nv04_region* dst, stru
 	OUT_RELOCo(chan, src->bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCo(chan, dst->bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
-	OUT_RING  (chan, format);
+	OUT_RING  (chan, cs2d_format);
 	OUT_RING  (chan, (dst->pitch << 16) | src->pitch);
 	OUT_RELOCl(chan, src->bo, src->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCl(chan, dst->bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -1003,12 +1047,12 @@ nv04_region_copy_blit(struct nv04_2d_context *ctx, struct nv04_region* dst, stru
 // dst and src may be modified, and the possibly modified version should be passed to nv04_region_cpu if necessary
 int
 nv04_region_copy_2d(struct nv04_2d_context *ctx, struct nv04_region* dst, struct nv04_region* src,
-		int w, int h, int cs2d_format, int sifm_format, int dst_to_gpu, int src_on_gpu)
+		int w, int h, int dst_to_gpu, int src_on_gpu)
 {
 	assert(src->bpps == dst->bpps);
 
 #ifdef NV04_REGION_DEBUG
-	fprintf(stderr, "RGN_COPY%s [%i, %i: %i] ", (cs2d_format >= 0) ? "_2D" : "_NO2D", w, h, dst->bpps);
+	fprintf(stderr, "RGN_COPY [%i, %i: %i] ", w, h, dst->bpps);
 	for(int i = 0; i < 2; ++i)
 	{
 		int gpu = i ? src_on_gpu : dst_to_gpu;
@@ -1061,7 +1105,7 @@ nv04_region_copy_2d(struct nv04_2d_context *ctx, struct nv04_region* dst, struct
 	{
 		if (!dst->pitch)
 		{
-			if(cs2d_format < 0 || sifm_format < 0 || !dst_to_gpu)
+			if(!dst_to_gpu)
 			{
 #ifdef NV04_REGION_DEBUG
 				fprintf(stderr, "\tCOPY_ENG3D\n");
@@ -1072,7 +1116,7 @@ nv04_region_copy_2d(struct nv04_2d_context *ctx, struct nv04_region* dst, struct
 			{
 				assert(!nv04_region_align(dst, w, h, 6));
 
-				nv04_region_copy_swizzle(ctx, dst, src, w, h, cs2d_format, sifm_format);
+				nv04_region_copy_swizzle(ctx, dst, src, w, h);
 				return 0;
 			}
 		}
@@ -1081,16 +1125,20 @@ nv04_region_copy_2d(struct nv04_2d_context *ctx, struct nv04_region* dst, struct
 			/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
 			 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 			 * TODO: is this also true for the source? possibly not
+			 * TODO: should we just always use m2mf?
+			 * TODO: if not, add support for multiple operations to copy_blit
 			 */
 
-			if ((cs2d_format < 0)
-				|| !dst_to_gpu
+			if (!dst_to_gpu
+				|| w > 2047
+				|| h > 2047
+				|| (w & 1)
 				|| nv04_region_align(src, w, h, 6)
 				|| nv04_region_align(dst, w, h, 6)
 				)
 				nv04_region_copy_m2mf(ctx, dst, src, w, h);
 			else
-				nv04_region_copy_blit(ctx, dst, src, w, h, cs2d_format);
+				nv04_region_copy_blit(ctx, dst, src, w, h);
 
 			return 0;
 		}
@@ -1112,26 +1160,25 @@ nv04_region_fill_gdirect(struct nv04_2d_context *ctx, struct nv04_region* dst, i
 	assert(!(dst->pitch & 63) && dst->pitch);
 	nv04_region_assert(dst, w, h);
 
-	if(dst->bpps == 0)
+	switch(dst->bpps)
 	{
+	case 0:
 		gdirect_format = NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 		cs2d_format = NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
-	}
-	else if(dst->bpps == 1)
-	{
+		break;
+	case 1:
 		gdirect_format = NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
 		cs2d_format = NV04_CONTEXT_SURFACES_2D_FORMAT_Y16;
-	}
-	else if(dst->bpps == 2)
-	{
+		break;
+	case 2:
 		gdirect_format = NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 		cs2d_format = NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
-	}
-	else
-	{
+		break;
+	default:
 		assert(0);
 		gdirect_format = 0;
 		cs2d_format = 0;
+		break;
 	}
 
 	MARK_RING (chan, 15, 4);

@@ -48,6 +48,8 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 {
 	unsigned bits = util_format_get_blocksizebits(format);
 	unsigned shift = 0;
+	rgn->one_bits = 0;
+
 	switch(bits)
 	{
 	case 8:
@@ -55,9 +57,13 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 		break;
 	case 16:
 		rgn->bpps = 1;
+		if(format == PIPE_FORMAT_B5G5R5X1_UNORM)
+			rgn->one_bits = 1;
 		break;
 	case 32:
 		rgn->bpps = 2;
+		if(format == PIPE_FORMAT_R8G8B8X8_UNORM || format == PIPE_FORMAT_B8G8R8X8_UNORM)
+			rgn->one_bits = 8;
 		break;
 	case 64:
 		rgn->bpps = 2;
@@ -147,48 +153,6 @@ nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* 
 	nvfx_region_set_format(rgn, pt->format);
 	if(!rgn->pitch)
 		nv04_region_try_to_linearize(rgn);
-}
-
-// TODO: actually test this for all formats, it's probably wrong for some...
-
-static INLINE int
-nvfx_surface_format(enum pipe_format format)
-{
-	switch(util_format_get_blocksize(format)) {
-	case 1:
-		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
-	case 2:
-		//return NV04_CONTEXT_SURFACES_2D_FORMAT_Y16;
-		return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
-	case 4:
-		//if(format == PIPE_FORMAT_B8G8R8X8_UNORM || format == PIPE_FORMAT_B8G8R8A8_UNORM)
-			return NV04_CONTEXT_SURFACES_2D_FORMAT_A8R8G8B8;
-		//else
-		//	return NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
-	default:
-		return -1;
-	}
-}
-
-static INLINE int
-nv04_scaled_image_format(enum pipe_format format)
-{
-	switch(util_format_get_blocksize(format)) {
-	case 1:
-		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_Y8;
-	case 2:
-		//if(format == PIPE_FORMAT_B5G5R5A1_UNORM)
-		//	return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A1R5G5B5;
-		//else
-			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_R5G6B5;
-	case 4:
-		if(format == PIPE_FORMAT_B8G8R8X8_UNORM)
-			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_X8R8G8B8;
-		else
-			return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A8R8G8B8;
-	default:
-		return -1;
-	}
 }
 
 // don't save index buffer because blitter doesn't setit
@@ -284,10 +248,7 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 	if((!dst_to_gpu || !src_on_gpu) && small)
 		ret = -1; /* use the CPU */
 	else
-		ret = nv04_region_copy_2d(ctx, &dst, &src, w, h,
-			dstr->target == PIPE_BUFFER ? -1 : nvfx_surface_format(dstr->format),
-			dstr->target == PIPE_BUFFER ? -1 : nv04_scaled_image_format(dstr->format),
-			dst_to_gpu, src_on_gpu);
+		ret = nv04_region_copy_2d(ctx, &dst, &src, w, h, dst_to_gpu, src_on_gpu);
 	if(!ret)
 	{}
 	else if(ret > 0 && dstr->bind & PIPE_BIND_RENDER_TARGET && srcr->bind & PIPE_BIND_SAMPLER_VIEW)
