@@ -167,6 +167,8 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	else
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z24S8;
 
+	MARK_RING(chan, 44, 10);
+
 	if ((rt_enable & NV34TCL_RT_ENABLE_COLOR0) || fb->zsbuf) {
 		struct nvfx_render_target *rt0 = &nvfx->hw_rt[0];
 		uint32_t pitch;
