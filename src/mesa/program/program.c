@@ -876,12 +876,16 @@ _mesa_find_used_registers(const struct gl_program *prog,
       const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
 
       if (inst->DstReg.File == file) {
-         used[inst->DstReg.Index] = GL_TRUE;
+         ASSERT(inst->DstReg.Index < usedSize);
+         if(inst->DstReg.Index < usedSize)
+            used[inst->DstReg.Index] = GL_TRUE;
       }
 
       for (j = 0; j < n; j++) {
          if (inst->SrcReg[j].File == file) {
-            used[inst->SrcReg[j].Index] = GL_TRUE;
+            ASSERT(inst->SrcReg[j].Index < usedSize);
+            if(inst->SrcReg[j].Index < usedSize)
+               used[inst->SrcReg[j].Index] = GL_TRUE;
          }
       }
    }
