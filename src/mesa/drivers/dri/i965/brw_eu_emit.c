@@ -103,6 +103,8 @@ static void brw_set_dest( struct brw_instruction *insn,
    guess_execution_size(insn, dest);
 }
 
+extern int reg_type_size[];
+
 static void
 validate_reg(struct brw_instruction *insn, struct brw_reg reg)
 {
@@ -112,8 +114,18 @@ validate_reg(struct brw_instruction *insn, struct brw_reg reg)
    int execsize_for_reg[] = {1, 2, 4, 8, 16};
    int width, hstride, vstride, execsize;
 
-   if (reg.file == BRW_IMMEDIATE_VALUE)
+   if (reg.file == BRW_IMMEDIATE_VALUE) {
+      /* 3.3.6: Region Parameters.  Restriction: Immediate vectors
+       * mean the destination has to be 128-bit aligned and the
+       * destination horiz stride has to be a word.
+       */
+      if (reg.type == BRW_REGISTER_TYPE_V) {
+	 assert(hstride_for_reg[insn->bits1.da1.dest_horiz_stride] *
+		reg_type_size[insn->bits1.da1.dest_reg_type] == 2);
+      }
+
       return;
+   }
 
    if (reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
        reg.file == BRW_ARF_NULL)
