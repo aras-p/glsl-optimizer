@@ -104,6 +104,7 @@ struct nv50_subroutine {
 struct nv50_translation_info {
    struct nv50_program *p;
    unsigned inst_nr;
+   struct tgsi_full_instruction *insns;
    ubyte input_file;
    ubyte output_file;
    ubyte input_map[PIPE_MAX_SHADER_INPUTS][4];

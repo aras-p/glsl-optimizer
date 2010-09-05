@@ -499,6 +499,8 @@ nv50_prog_scan(struct nv50_translation_info *ti)
    ti->immd32 = (uint32_t *)MALLOC(ti->scan.immediate_count * 16);
    ti->immd32_ty = (ubyte *)MALLOC(ti->scan.immediate_count * sizeof(ubyte));
 
+   ti->insns = MALLOC(ti->scan.num_instructions * sizeof(ti->insns[0]));
+
    tgsi_parse_init(&parse, p->pipe.tokens);
    while (!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
@@ -511,6 +513,7 @@ nv50_prog_scan(struct nv50_translation_info *ti)
          prog_decl(ti, &parse.FullToken.FullDeclaration);
          break;
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         ti->insns[ti->inst_nr] = parse.FullToken.FullInstruction;
          prog_inst(ti, &parse.FullToken.FullInstruction, ++ti->inst_nr);
          break;
       }
@@ -567,6 +570,8 @@ out:
       FREE(ti->immd32);
    if (ti->immd32_ty)
       FREE(ti->immd32_ty);
+   if (ti->insns)
+      FREE(ti->insns);
    FREE(ti);
    return ret ? FALSE : TRUE;
 }
