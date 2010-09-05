@@ -32,6 +32,8 @@ extern "C" {
 #include "glsl_types.h"
 #include "s_expression.h"
 
+const static bool debug = false;
+
 static void ir_read_error(_mesa_glsl_parse_state *, s_expression *,
 			  const char *fmt, ...);
 static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
@@ -85,7 +87,8 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
    read_instructions(state, instructions, expr, NULL);
    talloc_free(expr);
 
-   validate_ir_tree(instructions);
+   if (debug)
+      validate_ir_tree(instructions);
 }
 
 static void
