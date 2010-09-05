@@ -38,6 +38,7 @@
 #define NV40_VP_INST_COND_UPDATE_ENABLE                        ((1 << 14)|1<<29)
 /* use address reg as index into attribs */
 #define NV40_VP_INST_INDEX_INPUT                                       (1 << 27)
+#define NV40_VP_INST_SATURATE                                          (1 << 26)
 #define NV40_VP_INST_COND_REG_SELECT_1                                 (1 << 25)
 #define NV40_VP_INST_ADDR_REG_SELECT_1                                 (1 << 24)
 #define NV40_VP_INST_SRC2_ABS                                          (1 << 23)
