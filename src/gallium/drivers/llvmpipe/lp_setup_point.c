@@ -36,6 +36,7 @@
 #include "lp_setup_context.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 #include "tgsi/tgsi_scan.h"
 
 #define NUM_CHANNELS 4
@@ -152,17 +153,18 @@ setup_point_coefficients( struct lp_setup_context *setup,
                           struct lp_rast_triangle *point,
                           const struct point_info *info)
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
-      unsigned vert_attr = setup->fs.input[slot].src_index;
-      unsigned usage_mask = setup->fs.input[slot].usage_mask;
+   for (slot = 0; slot < key->num_inputs; slot++) {
+      unsigned vert_attr = key->inputs[slot].src_index;
+      unsigned usage_mask = key->inputs[slot].usage_mask;
       unsigned i;
       
-      switch (setup->fs.input[slot].interp) {
+      switch (key->inputs[slot].interp) {
       case LP_INTERP_POSITION:
          /*
           * The generated pixel interpolators will pick up the coeffs from
@@ -215,6 +217,7 @@ try_setup_point( struct lp_setup_context *setup,
                  const float (*v0)[4] )
 {
    /* x/y positions in fixed point */
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    const int sizeAttr = setup->psize;
    const float size
       = (setup->point_size_per_vertex && sizeAttr > 0) ? v0[sizeAttr][0]
@@ -266,7 +269,7 @@ try_setup_point( struct lp_setup_context *setup,
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
    point = lp_setup_alloc_triangle(scene,
-                                   setup->fs.nr_inputs,
+                                   key->num_inputs,
                                    nr_planes,
                                    &bytes);
    if (!point)

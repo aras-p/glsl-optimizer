@@ -34,6 +34,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h" /* for tgsi_shader_info */
 #include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
+#include "lp_bld_interp.h" /* for struct lp_shader_input */
 
 
 struct tgsi_token;
@@ -105,6 +106,9 @@ struct lp_fragment_shader
    unsigned no;
    unsigned variants_created;
    unsigned variants_cached;
+
+   /** Fragment shader input interpolation info */
+   struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 };
 
 

@@ -32,6 +32,7 @@
 
 struct pipe_context;
 struct pipe_fence_handle;
+struct pipe_resource;
 
 void
 llvmpipe_flush(struct pipe_context *pipe,

@@ -35,6 +35,7 @@
 #include "lp_setup_context.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 
 #define NUM_CHANNELS 4
 
@@ -162,19 +163,20 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
                                      struct lp_rast_triangle *tri,
                                      struct lp_line_info *info)
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
-      unsigned vert_attr = setup->fs.input[slot].src_index;
-      unsigned usage_mask = setup->fs.input[slot].usage_mask;
+   for (slot = 0; slot < key->num_inputs; slot++) {
+      unsigned vert_attr = key->inputs[slot].src_index;
+      unsigned usage_mask = key->inputs[slot].usage_mask;
       unsigned i;
            
-      switch (setup->fs.input[slot].interp) {
+      switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
-         if (setup->flatshade_first) {
+         if (key->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
                   constant_coef(setup, tri, slot+1, info->v1[vert_attr][i], i);
@@ -235,14 +237,15 @@ print_line(struct lp_setup_context *setup,
            const float (*v1)[4],
            const float (*v2)[4])
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    uint i;
 
    debug_printf("llvmpipe line\n");
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
+   for (i = 0; i < 1 + key->num_inputs; i++) {
       debug_printf("  v1[%d]:  %f %f %f %f\n", i,
                    v1[i][0], v1[i][1], v1[i][2], v1[i][3]);
    }
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
+   for (i = 0; i < 1 + key->num_inputs; i++) {
       debug_printf("  v2[%d]:  %f %f %f %f\n", i,
                    v2[i][0], v2[i][1], v2[i][2], v2[i][3]);
    }
@@ -269,6 +272,7 @@ try_setup_line( struct lp_setup_context *setup,
                const float (*v2)[4])
 {
    struct lp_scene *scene = setup->scene;
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *line;
    struct lp_line_info info;
    float width = MAX2(1.0, setup->line_width);
@@ -548,7 +552,7 @@ try_setup_line( struct lp_setup_context *setup,
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
    line = lp_setup_alloc_triangle(scene,
-                                  setup->fs.nr_inputs,
+                                  key->num_inputs,
                                   nr_planes,
                                   &tri_bytes);
    if (!line)

@@ -255,8 +255,7 @@ generate_quad_mask(LLVMBuilderRef builder,
  * \param partial_mask  if 1, do mask_input testing
  */
 static void
-generate_fs(struct llvmpipe_context *lp,
-            struct lp_fragment_shader *shader,
+generate_fs(struct lp_fragment_shader *shader,
             const struct lp_fragment_shader_variant_key *key,
             LLVMBuilderRef builder,
             struct lp_type type,
@@ -468,13 +467,13 @@ generate_blend(const struct pipe_blend_state *blend,
  * 2x2 pixels.
  */
 static void
-generate_fragment(struct llvmpipe_context *lp,
+generate_fragment(struct llvmpipe_screen *screen,
                   struct lp_fragment_shader *shader,
                   struct lp_fragment_shader_variant *variant,
                   unsigned partial_mask)
 {
-   struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    const struct lp_fragment_shader_variant_key *key = &variant->key;
+   struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
    char func_name[256];
    struct lp_type fs_type;
    struct lp_type blend_type;
@@ -506,6 +505,18 @@ generate_fragment(struct llvmpipe_context *lp,
    unsigned i;
    unsigned chan;
    unsigned cbuf;
+
+   /* Adjust color input interpolation according to flatshade state:
+    */
+   memcpy(inputs, shader->inputs, shader->info.num_inputs * sizeof inputs[0]);
+   for (i = 0; i < shader->info.num_inputs; i++) {
+      if (inputs[i].interp == LP_INTERP_COLOR) {
+	 if (key->flatshade)
+	    inputs[i].interp = LP_INTERP_CONSTANT;
+	 else
+	    inputs[i].interp = LP_INTERP_LINEAR;
+      }
+   }
 
 
    /* TODO: actually pick these based on the fs and color buffer
@@ -558,7 +569,6 @@ generate_fragment(struct llvmpipe_context *lp,
 
    variant->function[partial_mask] = function;
 
-
    /* XXX: need to propagate noalias down into color param now we are
     * passing a pointer-to-pointer?
     */
@@ -606,8 +616,8 @@ generate_fragment(struct llvmpipe_context *lp,
     * already included in the shader key.
     */
    lp_build_interp_soa_init(&interp, 
-                            lp->num_inputs,
-                            lp->inputs,
+                            shader->info.num_inputs,
+                            inputs,
                             builder, fs_type,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x, y);
@@ -626,7 +636,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");
 
-      generate_fs(lp, shader, key,
+      generate_fs(shader, key,
                   builder,
                   fs_type,
                   context_ptr,
@@ -823,7 +833,7 @@ lp_debug_fs_variant(const struct lp_fragment_shader_variant *variant)
 }
 
 static struct lp_fragment_shader_variant *
-generate_variant(struct llvmpipe_context *lp,
+generate_variant(struct llvmpipe_screen *screen,
                  struct lp_fragment_shader *shader,
                  const struct lp_fragment_shader_variant_key *key)
 {
@@ -869,11 +879,11 @@ generate_variant(struct llvmpipe_context *lp,
       lp_debug_fs_variant(variant);
    }
 
-   generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
+   generate_fragment(screen, shader, variant, RAST_EDGE_TEST);
 
    if (variant->opaque) {
       /* Specialized shader, which doesn't need to read the color buffer. */
-      generate_fragment(lp, shader, variant, RAST_WHOLE);
+      generate_fragment(screen, shader, variant, RAST_WHOLE);
    } else {
       variant->jit_function[RAST_WHOLE] = variant->jit_function[RAST_EDGE_TEST];
    }
@@ -888,6 +898,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 {
    struct lp_fragment_shader *shader;
    int nr_samplers;
+   int i;
 
    shader = CALLOC_STRUCT(lp_fragment_shader);
    if (!shader)
@@ -906,6 +917,46 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    shader->variant_key_size = Offset(struct lp_fragment_shader_variant_key,
 				     sampler[nr_samplers]);
+
+   for (i = 0; i < shader->info.num_inputs; i++) {
+      shader->inputs[i].usage_mask = shader->info.input_usage_mask[i];
+
+      switch (shader->info.input_interpolate[i]) {
+      case TGSI_INTERPOLATE_CONSTANT:
+	 shader->inputs[i].interp = LP_INTERP_CONSTANT;
+	 break;
+      case TGSI_INTERPOLATE_LINEAR:
+	 shader->inputs[i].interp = LP_INTERP_LINEAR;
+	 break;
+      case TGSI_INTERPOLATE_PERSPECTIVE:
+	 shader->inputs[i].interp = LP_INTERP_PERSPECTIVE;
+	 break;
+      default:
+	 assert(0);
+	 break;
+      }
+
+      switch (shader->info.input_semantic_name[i]) {
+      case TGSI_SEMANTIC_COLOR:
+         /* Colors may be either linearly or constant interpolated in
+	  * the fragment shader, but that information isn't available
+	  * here.  Mark color inputs and fix them up later.
+          */
+	 shader->inputs[i].interp = LP_INTERP_COLOR;
+         break;
+      case TGSI_SEMANTIC_FACE:
+	 shader->inputs[i].interp = LP_INTERP_FACING;
+	 break;
+      case TGSI_SEMANTIC_POSITION:
+	 /* Position was already emitted above
+	  */
+	 shader->inputs[i].interp = LP_INTERP_POSITION;
+	 shader->inputs[i].src_index = 0;
+	 continue;
+      }
+
+      shader->inputs[i].src_index = i+1;
+   }
 
    if (LP_DEBUG & DEBUG_TGSI) {
       unsigned attrib;
@@ -1161,6 +1212,7 @@ make_variant_key(struct llvmpipe_context *lp,
 void 
 llvmpipe_update_fs(struct llvmpipe_context *lp)
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    struct lp_fragment_shader *shader = lp->fs;
    struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant = NULL;
@@ -1201,7 +1253,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       }
       t0 = os_time_get();
 
-      variant = generate_variant(lp, shader, &key);
+      variant = generate_variant(screen, shader, &key);
 
       t1 = os_time_get();
       dt = t1 - t0;
@@ -1218,6 +1270,10 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 
    lp_setup_set_fs_variant(lp->setup, variant);
 }
+
+
+
+
 
 
 

@@ -34,9 +34,9 @@
 #include "util/u_rect.h"
 #include "lp_perf.h"
 #include "lp_setup_context.h"
-#include "lp_setup_coef.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 
 #define NUM_CHANNELS 4
 
@@ -65,16 +65,16 @@ fixed_to_float(int a)
  * immediately after it.
  * The memory is allocated from the per-scene pool, not per-tile.
  * \param tri_size  returns number of bytes allocated
- * \param nr_inputs  number of fragment shader inputs
+ * \param num_inputs  number of fragment shader inputs
  * \return pointer to triangle space
  */
 struct lp_rast_triangle *
 lp_setup_alloc_triangle(struct lp_scene *scene,
-                        unsigned nr_inputs,
+                        unsigned num_inputs,
                         unsigned nr_planes,
                         unsigned *tri_size)
 {
-   unsigned input_array_sz = NUM_CHANNELS * (nr_inputs + 1) * sizeof(float);
+   unsigned input_array_sz = NUM_CHANNELS * (num_inputs + 1) * sizeof(float);
    struct lp_rast_triangle *tri;
    unsigned tri_bytes, bytes;
    char *inputs;
@@ -101,25 +101,26 @@ lp_setup_print_vertex(struct lp_setup_context *setup,
                       const char *name,
                       const float (*v)[4])
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    int i, j;
 
    debug_printf("   wpos (%s[0]) xyzw %f %f %f %f\n",
                 name,
                 v[0][0], v[0][1], v[0][2], v[0][3]);
 
-   for (i = 0; i < setup->fs.nr_inputs; i++) {
-      const float *in = v[setup->fs.input[i].src_index];
+   for (i = 0; i < key->num_inputs; i++) {
+      const float *in = v[key->inputs[i].src_index];
 
       debug_printf("  in[%d] (%s[%d]) %s%s%s%s ",
                    i, 
-                   name, setup->fs.input[i].src_index,
-                   (setup->fs.input[i].usage_mask & 0x1) ? "x" : " ",
-                   (setup->fs.input[i].usage_mask & 0x2) ? "y" : " ",
-                   (setup->fs.input[i].usage_mask & 0x4) ? "z" : " ",
-                   (setup->fs.input[i].usage_mask & 0x8) ? "w" : " ");
+                   name, key->inputs[i].src_index,
+                   (key->inputs[i].usage_mask & 0x1) ? "x" : " ",
+                   (key->inputs[i].usage_mask & 0x2) ? "y" : " ",
+                   (key->inputs[i].usage_mask & 0x4) ? "z" : " ",
+                   (key->inputs[i].usage_mask & 0x8) ? "w" : " ");
 
       for (j = 0; j < 4; j++)
-         if (setup->fs.input[i].usage_mask & (1<<j))
+         if (key->inputs[i].usage_mask & (1<<j))
             debug_printf("%.5f ", in[j]);
 
       debug_printf("\n");
@@ -224,6 +225,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 		boolean frontfacing )
 {
    struct lp_scene *scene = setup->scene;
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
@@ -288,7 +290,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
    tri = lp_setup_alloc_triangle(scene,
-                                 setup->fs.nr_inputs,
+                                 key->num_inputs,
                                  nr_planes,
                                  &tri_bytes);
    if (!tri)
@@ -328,13 +330,25 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    /* Setup parameter interpolants:
     */
-   lp_setup_tri_coef( setup, &tri->inputs, v0, v1, v2, frontfacing );
+   setup->setup.variant->jit_function( v0,
+				       v1,
+				       v2,
+				       frontfacing,
+				       tri->inputs.a0,
+				       tri->inputs.dadx,
+				       tri->inputs.dady,
+				       &setup->setup.variant->key );
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
    tri->inputs.state = setup->fs.stored;
 
+   if (0)
+      lp_dump_setup_coef(&setup->setup.variant->key,
+			 (const float (*)[4])tri->inputs.a0,
+			 (const float (*)[4])tri->inputs.dadx,
+			 (const float (*)[4])tri->inputs.dady);
   
    for (i = 0; i < 3; i++) {
       struct lp_rast_plane *plane = &tri->plane[i];
