@@ -218,11 +218,7 @@ translation_unit:
 	;
 
 version_statement:
-	/* blank - no #version specified */
-	{
-	   state->language_version = 110;
-	   state->symbols->language_version = 110;
-	}
+	/* blank - no #version specified: defaults are already set */
 	| VERSION INTCONSTANT EOL
 	{
 	   switch ($2) {
@@ -231,7 +227,6 @@ version_statement:
 	   case 130:
 	      /* FINISHME: Check against implementation support versions. */
 	      state->language_version = $2;
-	      state->symbols->language_version = $2;
 	      break;
 	   default:
 	      _mesa_glsl_error(& @2, state, "Shading language version"

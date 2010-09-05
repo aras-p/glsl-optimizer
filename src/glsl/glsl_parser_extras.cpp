@@ -51,6 +51,9 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
    this->info_log = talloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_or_switch_nesting = NULL;
+
+   /* Set default language version and extensions */
+   this->language_version = 110;
    this->ARB_texture_rectangle_enable = true;
 
    if (ctx != NULL) {
