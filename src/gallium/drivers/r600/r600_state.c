@@ -103,11 +103,28 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
+static void r600_remove_sampler_view(struct r600_shader_sampler_states *sampler,
+				     struct r600_context_state *rstate)
+{
+	int i, j;
+	
+	for (i = 0; i < sampler->nview; i++) {
+		for (j = 0; j < rstate->nrstate; j++) {
+			if (sampler->view[i] == &rstate->rstate[j])
+				sampler->view[i] = NULL;
+		}
+	}
+}
 static void r600_sampler_view_destroy(struct pipe_context *ctx,
 				      struct pipe_sampler_view *state)
 {
 	struct r600_context_state *rstate = (struct r600_context_state *)state;
+	struct r600_context *rctx = r600_context(ctx);
+	int i;
 
+	/* need to search list of vs/ps sampler views and remove it from any - uggh */
+	r600_remove_sampler_view(&rctx->ps_sampler, rstate);
+	r600_remove_sampler_view(&rctx->vs_sampler, rstate);
 	r600_context_state_decref(rstate);
 }
 
