@@ -56,6 +56,7 @@ static void create_vertex_program(struct r300_context *r300)
     struct r300_vertex_program_compiler compiler;
     struct rc_instruction *inst;
 
+    memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
 
     inst = rc_insert_new_instruction(&compiler.Base, compiler.Base.Program.Instructions.Prev);
