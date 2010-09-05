@@ -342,6 +342,9 @@ public:
    /** Whether or not this function has a body (which may be empty). */
    unsigned is_defined:1;
 
+   /** Whether or not this function signature is a built-in. */
+   unsigned is_builtin:1;
+
    /** Body of instructions in the function. */
    struct exec_list body;
 
@@ -407,8 +410,8 @@ public:
     */
    const char *name;
 
-   /** Whether or not this function is a built-in. */
-   unsigned is_builtin:1;
+   /** Whether or not this function has a signature that is a built-in. */
+   bool has_builtin_signature();
 
    /**
     * List of ir_function_signature for each overloaded function with this name.

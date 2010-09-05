@@ -740,14 +740,14 @@ link_intrastage_shaders(GLcontext *ctx,
 	       ir_function_signature *sig =
 		  (ir_function_signature *) iter.get();
 
-	       if (!sig->is_defined || f->is_builtin)
+	       if (!sig->is_defined || sig->is_builtin)
 		  continue;
 
 	       ir_function_signature *other_sig =
 		  other->exact_matching_signature(& sig->parameters);
 
 	       if ((other_sig != NULL) && other_sig->is_defined
-		   && !other_sig->function()->is_builtin) {
+		   && !other_sig->is_builtin) {
 		  linker_error_printf(prog,
 				      "function `%s' is multiply defined",
 				      f->name);

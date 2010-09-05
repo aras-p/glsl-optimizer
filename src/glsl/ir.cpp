@@ -1073,6 +1073,7 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false), _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
+   this->is_builtin = false;
 }
 
 
@@ -1124,7 +1125,18 @@ ir_function::ir_function(const char *name)
 {
    this->ir_type = ir_type_function;
    this->name = talloc_strdup(this, name);
-   this->is_builtin = false;
+}
+
+
+bool
+ir_function::has_builtin_signature()
+{
+   foreach_list(n, &this->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *) n;
+      if (sig->is_builtin)
+	 return true;
+   }
+   return false;
 }
 
 
