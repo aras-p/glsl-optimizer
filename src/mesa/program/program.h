@@ -167,5 +167,37 @@ _mesa_find_free_register(const GLboolean used[],
 extern void
 _mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog);
 
+/* keep these in the same order as TGSI_PROCESSOR_* */
+
+static INLINE GLuint
+_mesa_program_target_to_index(GLenum v)
+{
+   switch(v)
+   {
+   case GL_VERTEX_PROGRAM_ARB:
+      return MESA_SHADER_VERTEX;
+   case GL_FRAGMENT_PROGRAM_ARB:
+      return MESA_SHADER_FRAGMENT;
+   case GL_GEOMETRY_PROGRAM_NV:
+      return MESA_SHADER_GEOMETRY;
+   default:
+      ASSERT(0);
+      return ~0;
+   }
+}
+
+static INLINE GLenum
+_mesa_program_index_to_target(GLuint i)
+{
+   GLenum enums[MESA_SHADER_TYPES] = {
+         GL_VERTEX_PROGRAM_ARB,
+         GL_FRAGMENT_PROGRAM_ARB,
+         GL_GEOMETRY_PROGRAM_NV,
+   };
+   if(i >= MESA_SHADER_TYPES)
+      return 0;
+   else
+      return enums[i];
+}
 
 #endif /* PROGRAM_H */

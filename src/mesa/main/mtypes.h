@@ -41,6 +41,15 @@
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "main/simple_list.h"	/* struct simple_node */
 
+/* Shader stages. Note that these will become 5 with tessellation.
+ * These MUST have the same values as PIPE_SHADER_*
+ */
+#define MESA_SHADER_VERTEX   0
+#define MESA_SHADER_FRAGMENT 1
+#define MESA_SHADER_GEOMETRY 2
+#define MESA_SHADER_TYPES    3
+
+
 /**
  * Internal token
  *  Must be simply different than GL_VERTEX_PROGRAM
