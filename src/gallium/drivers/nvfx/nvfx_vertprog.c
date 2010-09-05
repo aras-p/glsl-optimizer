@@ -8,6 +8,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "draw/draw_context.h"
 
@@ -37,6 +38,7 @@ struct nvfx_loop_entry
 
 struct nvfx_vpc {
 	struct nvfx_context* nvfx;
+	struct pipe_shader_state pipe;
 	struct nvfx_vertex_program *vp;
 
 	struct nvfx_vertex_program_exec *vpi;
@@ -813,7 +815,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	unsigned num_outputs;
 	unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
 
-	num_outputs = util_semantic_set_from_program_file(&set, vpc->vp->pipe.tokens, TGSI_FILE_OUTPUT);
+	num_outputs = util_semantic_set_from_program_file(&set, vpc->pipe.tokens, TGSI_FILE_OUTPUT);
 
 	if(num_outputs > num_texcoords) {
 		NOUVEAU_ERR("too many vertex program outputs: %i\n", num_outputs);
@@ -840,7 +842,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 		}
 	}
 
-	tgsi_parse_init(&p, vpc->vp->pipe.tokens);
+	tgsi_parse_init(&p, vpc->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
 		const union tgsi_full_token *tok = &p.FullToken;
 
@@ -917,21 +919,35 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
 
-static void
-nvfx_vertprog_translate(struct nvfx_context *nvfx,
-			struct nvfx_vertex_program *vp)
+static struct nvfx_vertex_program*
+nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps)
 {
 	struct tgsi_parse_context parse;
+	struct nvfx_vertex_program* vp = NULL;
 	struct nvfx_vpc *vpc = NULL;
 	struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	struct util_dynarray insns;
 	int i;
 
-	vpc = CALLOC(1, sizeof(struct nvfx_vpc));
+	tgsi_parse_init(&parse, vps->tokens);
+
+	vp = CALLOC_STRUCT(nvfx_vertex_program);
+	if(!vp)
+		goto out_err;
+
+	vpc = CALLOC_STRUCT(nvfx_vpc);
 	if (!vpc)
-		return;
+		goto out_err;
+
 	vpc->nvfx = nvfx;
 	vpc->vp = vp;
+	vpc->pipe = *vps;
+
+	{
+		// TODO: use a 64-bit atomic here!
+		static unsigned long long id = 0;
+		vp->id = ++id;
+	}
 
 	/* reserve space for ucps */
 	if(nvfx->use_vp_clipping)
@@ -942,7 +958,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 
 	if (!nvfx_vertprog_prepare(nvfx, vpc)) {
 		FREE(vpc);
-		return;
+		return NULL;
 	}
 
 	/* Redirect post-transform vertex position to a temp if user clip
@@ -954,8 +970,6 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		vpc->r_result[vpc->hpos_idx] = temp(vpc);
 		vpc->r_temps_discard = 0;
 	}
-
-	tgsi_parse_init(&parse, vp->pipe.tokens);
 
 	util_dynarray_init(&insns);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
@@ -1058,7 +1072,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	if(debug_get_option_nvfx_dump_vp())
 	{
 		debug_printf("\n");
-		tgsi_dump(vp->pipe.tokens, 0);
+		tgsi_dump(vpc->pipe.tokens, 0);
 
 		debug_printf("\n%s vertex program:\n", nvfx->is_nv4x ? "nv4x" : "nv3x");
 		for (i = 0; i < vp->nr_insns; i++)
@@ -1068,20 +1082,49 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 
 	vp->clip_nr = -1;
 	vp->exec_start = -1;
-	vp->translated = TRUE;
-out_err:
+
+out:
 	tgsi_parse_free(&parse);
-	util_dynarray_fini(&vpc->label_relocs);
-	util_dynarray_fini(&vpc->loop_stack);
-	if (vpc->r_temp)
+	if(vpc) {
+		util_dynarray_fini(&vpc->label_relocs);
+		util_dynarray_fini(&vpc->loop_stack);
 		FREE(vpc->r_temp);
-	if (vpc->r_address)
 		FREE(vpc->r_address);
-	if (vpc->r_const)
 		FREE(vpc->r_const);
-	if (vpc->imm)
 		FREE(vpc->imm);
-	FREE(vpc);
+		FREE(vpc);
+	}
+	return vp;
+
+out_err:
+	FREE(vp);
+	vp = NULL;
+	goto out;
+}
+
+static struct nvfx_vertex_program*
+nvfx_vertprog_translate_draw_vp(struct nvfx_context *nvfx, struct nvfx_pipe_vertex_program* pvp)
+{
+	struct nvfx_vertex_program* vp = NULL;
+	struct pipe_shader_state vps;
+	struct ureg_program *ureg = NULL;
+	unsigned num_outputs = MIN2(pvp->info.num_outputs, 16);
+
+	ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
+	if(ureg == NULL)
+		return 0;
+
+	for (unsigned i = 0; i < num_outputs; i++)
+		ureg_MOV(ureg, ureg_DECL_output(ureg, pvp->info.output_semantic_name[i], pvp->info.output_semantic_index[i]), ureg_DECL_vs_input(ureg, i));
+
+	ureg_END( ureg );
+
+	vps.tokens = ureg_get_tokens(ureg, 0);
+	vp = nvfx_vertprog_translate(nvfx, &vps);
+	ureg_free_tokens(vps.tokens);
+	ureg_destroy(ureg);
+
+	return vp;
 }
 
 boolean
@@ -1090,29 +1133,43 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
-	struct nvfx_vertex_program *vp;
+	struct nvfx_pipe_vertex_program *pvp = nvfx->vertprog;
+	struct nvfx_vertex_program* vp;
 	struct pipe_resource *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
 	if (nvfx->render_mode == HW) {
-		vp = nvfx->vertprog;
-		constbuf = nvfx->constbuf[PIPE_SHADER_VERTEX];
-	} else {
-		vp = nvfx->swtnl.vertprog;
-		constbuf = NULL;
-	}
-
-	/* Translate TGSI shader into hw bytecode */
-	if (!vp->translated)
-	{
 		nvfx->fallback_swtnl &= ~NVFX_NEW_VERTPROG;
-		nvfx_vertprog_translate(nvfx, vp);
-		if (!vp->translated) {
+		vp = pvp->vp;
+
+		if(!vp) {
+			vp = nvfx_vertprog_translate(nvfx, &pvp->pipe);
+			if(!vp)
+				vp = NVFX_VP_FAILED;
+			pvp->vp = vp;
+		}
+
+		if(vp == NVFX_VP_FAILED) {
 			nvfx->fallback_swtnl |= NVFX_NEW_VERTPROG;
 			return FALSE;
 		}
+
+		constbuf = nvfx->constbuf[PIPE_SHADER_VERTEX];
+	} else {
+		vp = pvp->draw_vp;
+		if(!vp)
+		{
+			pvp->draw_vp = vp = nvfx_vertprog_translate_draw_vp(nvfx, pvp);
+			if(!vp) {
+				_debug_printf("Error: unable to create a swtnl passthrough vertex shader: aborting.");
+				abort();
+			}
+		}
+		constbuf = NULL;
 	}
+
+	nvfx->hw_vertprog = vp;
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
@@ -1294,24 +1351,22 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 
 	util_dynarray_fini(&vp->branch_relocs);
 	util_dynarray_fini(&vp->const_relocs);
+	FREE(vp);
 }
 
 static void *
-nvfx_vp_state_create(struct pipe_context *pipe,
-                     const struct pipe_shader_state *cso)
+nvfx_vp_state_create(struct pipe_context *pipe, const struct pipe_shader_state *cso)
 {
         struct nvfx_context *nvfx = nvfx_context(pipe);
-        struct nvfx_vertex_program *vp;
+        struct nvfx_pipe_vertex_program *pvp;
 
-        // TODO: use a 64-bit atomic here!
-        static unsigned long long id = 0;
+        pvp = CALLOC(1, sizeof(struct nvfx_pipe_vertex_program));
+        pvp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+        tgsi_scan_shader(pvp->pipe.tokens, &pvp->info);
+        pvp->draw_elements = MAX2(1, MIN2(pvp->info.num_outputs, 16));
+        pvp->draw_no_elements = pvp->info.num_outputs == 0;
 
-        vp = CALLOC(1, sizeof(struct nvfx_vertex_program));
-        vp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
-        vp->draw = draw_create_vertex_shader(nvfx->draw, &vp->pipe);
-        vp->id = ++id;
-
-        return (void *)vp;
+        return (void *)pvp;
 }
 
 static void
@@ -1327,13 +1382,17 @@ nvfx_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nvfx_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-        struct nvfx_context *nvfx = nvfx_context(pipe);
-        struct nvfx_vertex_program *vp = hwcso;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_pipe_vertex_program *pvp = hwcso;
 
-        draw_delete_vertex_shader(nvfx->draw, vp->draw);
-        nvfx_vertprog_destroy(nvfx, vp);
-        FREE((void*)vp->pipe.tokens);
-        FREE(vp);
+	if(pvp->draw_vs)
+		draw_delete_vertex_shader(nvfx->draw, pvp->draw_vs);
+	if(pvp->vp && pvp->vp != NVFX_VP_FAILED)
+		nvfx_vertprog_destroy(nvfx, pvp->vp);
+	if(pvp->draw_vp)
+		nvfx_vertprog_destroy(nvfx, pvp->draw_vp);
+	FREE((void*)pvp->pipe.tokens);
+	FREE(pvp);
 }
 
 void

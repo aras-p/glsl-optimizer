@@ -151,14 +151,6 @@ struct nvfx_context {
 
 	/* HW state derived from pipe states */
 	struct nvfx_state state;
-	struct {
-		struct nvfx_vertex_program *vertprog;
-
-		unsigned nr_attribs;
-		unsigned hw[PIPE_MAX_SHADER_INPUTS];
-		unsigned draw[PIPE_MAX_SHADER_INPUTS];
-		unsigned emit[PIPE_MAX_SHADER_INPUTS];
-	} swtnl;
 
 	enum {
 		HW, SWTNL, SWRAST
@@ -170,7 +162,7 @@ struct nvfx_context {
 	struct pipe_scissor_state scissor;
 	unsigned stipple[32];
 	struct pipe_clip_state clip;
-	struct nvfx_vertex_program *vertprog;
+	struct nvfx_pipe_vertex_program *vertprog;
 	struct nvfx_pipe_fragment_program *fragprog;
 	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	unsigned constbuf_nr[PIPE_SHADER_TYPES];
@@ -208,6 +200,7 @@ struct nvfx_context {
 	int hw_pointsprite_control;
 	int hw_vp_output;
 	struct nvfx_fragment_program* hw_fragprog;
+	struct nvfx_vertex_program* hw_vertprog;
 
 	unsigned relocs_needed;
 };
@@ -326,6 +319,7 @@ extern void nvfx_init_transfer_functions(struct pipe_context *pipe);
 
 /* nvfx_vbo.c */
 extern boolean nvfx_vbo_validate(struct nvfx_context *nvfx);
+extern void nvfx_vbo_swtnl_validate(struct nvfx_context *nvfx);
 extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
 extern void nvfx_idxbuf_validate(struct nvfx_context* nvfx);
 extern void nvfx_idxbuf_relocate(struct nvfx_context* nvfx);

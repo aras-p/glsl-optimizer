@@ -145,7 +145,7 @@ nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	unsigned i;
-	struct nvfx_vertex_program* vp = nvfx->vertprog;
+	struct nvfx_vertex_program* vp = nvfx->hw_vertprog;
 	if(nvfx->clip.nr != vp->clip_nr)
 	{
 		unsigned idx;
@@ -230,7 +230,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 
 	if(nvfx->render_mode == HW)
 	{
-		if(dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_VERTCONST | NVFX_NEW_UCP))
+		if(dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_VERTCONST))
 		{
 			if(!nvfx_vertprog_validate(nvfx))
 				return FALSE;
@@ -252,12 +252,10 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	}
 	else
 	{
-		/* TODO: this looks a bit misdesigned */
-		if(dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_UCP))
-			nvfx_vertprog_validate(nvfx);
-
-		if(dirty & (NVFX_NEW_ARRAYS | NVFX_NEW_INDEX | NVFX_NEW_FRAGPROG))
-			nvfx_vtxfmt_validate(nvfx);
+		if(dirty & NVFX_NEW_VERTPROG) {
+			assert(nvfx_vertprog_validate(nvfx));
+			nvfx_vbo_swtnl_validate(nvfx);
+		}
 	}
 
 	if(dirty & NVFX_NEW_RAST)
@@ -284,7 +282,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 
 	if(nvfx->is_nv4x)
 	{
-		unsigned vp_output = nvfx->vertprog->or | nvfx->hw_fragprog->or;
+		unsigned vp_output = nvfx->hw_vertprog->or | nvfx->hw_fragprog->or;
 		vp_output |= (1 << (nvfx->clip.nr + 6)) - (1 << 6);
 
 		if(vp_output != nvfx->hw_vp_output)
@@ -399,8 +397,6 @@ nvfx_state_relocate(struct nvfx_context *nvfx, unsigned relocs)
 boolean
 nvfx_state_validate(struct nvfx_context *nvfx)
 {
-	boolean was_sw = nvfx->fallback_swtnl ? TRUE : FALSE;
-
 	if (nvfx->render_mode != HW) {
 		/* Don't even bother trying to go back to hw if none
 		 * of the states that caused swtnl previously have changed.
@@ -429,7 +425,11 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 
 	/* Setup for swtnl */
 	if (nvfx->render_mode == HW) {
-		NOUVEAU_ERR("hw->swtnl 0x%08x\n", nvfx->fallback_swtnl);
+		static boolean warned = FALSE;
+		if(!warned) {
+			NOUVEAU_ERR("hw->swtnl 0x%08x\n", nvfx->fallback_swtnl);
+			warned = TRUE;
+		}
 		nvfx->pipe.flush(&nvfx->pipe, 0, NULL);
 		nvfx->dirty |= (NVFX_NEW_VIEWPORT |
 				NVFX_NEW_VERTPROG |
@@ -437,8 +437,11 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 		nvfx->render_mode = SWTNL;
 	}
 
-	if (nvfx->draw_dirty & NVFX_NEW_VERTPROG)
-		draw_bind_vertex_shader(draw, nvfx->vertprog->draw);
+	if (nvfx->draw_dirty & NVFX_NEW_VERTPROG) {
+		if(!nvfx->vertprog->draw_vs)
+			nvfx->vertprog->draw_vs = draw_create_vertex_shader(draw, &nvfx->vertprog->pipe);
+		draw_bind_vertex_shader(draw, nvfx->vertprog->draw_vs);
+	}
 
 	if (nvfx->draw_dirty & NVFX_NEW_RAST)
            draw_set_rasterizer_state(draw, &nvfx->rasterizer->pipe,

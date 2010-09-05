@@ -432,7 +432,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	screen->force_swtnl = debug_get_bool_option("NOUVEAU_SWTNL", FALSE);
+	screen->force_swtnl = debug_get_bool_option("NVFX_SWTNL", FALSE);
 	screen->trace_draw = debug_get_bool_option("NVFX_TRACE_DRAW", FALSE);
 
 	screen->buffer_allocation_cost = debug_get_num_option("NVFX_BUFFER_ALLOCATION_COST", 16384);

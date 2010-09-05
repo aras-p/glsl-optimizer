@@ -339,6 +339,44 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 }
 
 void
+nvfx_vbo_swtnl_validate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	unsigned num_outputs = nvfx->vertprog->draw_elements;
+	int elements = MAX2(num_outputs, nvfx->hw_vtxelt_nr);
+
+	if (!elements)
+		return;
+
+	WAIT_RING(chan, (1 + 6 + 1 + 2) + elements * 2);
+
+	OUT_RING(chan, RING_3D(NV34TCL_VTXFMT(0), elements));
+	for(unsigned i = 0; i < num_outputs; ++i)
+		OUT_RING(chan, (4 << NV34TCL_VTXFMT_SIZE_SHIFT) | NV34TCL_VTXFMT_TYPE_32_FLOAT);
+	for(unsigned i = num_outputs; i < elements; ++i)
+		OUT_RING(chan, NV34TCL_VTXFMT_TYPE_32_FLOAT);
+
+	if(nvfx->is_nv4x) {
+		unsigned i;
+		/* seems to be some kind of cache flushing */
+		for(i = 0; i < 3; ++i) {
+			OUT_RING(chan, RING_3D(0x1718, 1));
+			OUT_RING(chan, 0);
+		}
+	}
+
+	OUT_RING(chan, RING_3D(NV34TCL_VTXBUF_ADDRESS(0), elements));
+	for (unsigned i = 0; i < elements; i++)
+		OUT_RING(chan, 0);
+
+	OUT_RING(chan, RING_3D(0x1710, 1));
+	OUT_RING(chan, 0);
+
+	nvfx->hw_vtxelt_nr = num_outputs;
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_VTXBUF;
+}
+
+void
 nvfx_vbo_relocate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan;

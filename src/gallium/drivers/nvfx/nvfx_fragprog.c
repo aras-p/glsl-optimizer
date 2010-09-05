@@ -1263,7 +1263,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		pfp->fps[key] = fp;
 	}
 
-	vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
+	vp = nvfx->hw_vertprog;
 
 	if (fp->last_vp_id != vp->id || fp->last_sprite_coord_enable != sprite_coord_enable) {
 		int sprite_real_input = -1;

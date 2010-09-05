@@ -17,12 +17,7 @@ struct nvfx_vertex_program_data {
 };
 
 struct nvfx_vertex_program {
-	struct pipe_shader_state pipe;
 	unsigned long long id;
-
-	struct draw_vertex_shader *draw;
-
-	boolean translated;
 
 	struct nvfx_vertex_program_exec *insns;
 	unsigned nr_insns;
@@ -44,6 +39,20 @@ struct nvfx_vertex_program {
 
 	struct util_dynarray branch_relocs;
 	struct util_dynarray const_relocs;
+};
+
+#define NVFX_VP_FAILED ((struct nvfx_vertex_program*)-1)
+
+struct nvfx_pipe_vertex_program {
+	struct pipe_shader_state pipe;
+	struct tgsi_shader_info info;
+
+	unsigned draw_elements;
+	boolean draw_no_elements;
+	struct draw_vertex_shader *draw_vs;
+	struct nvfx_vertex_program* draw_vp;
+
+	struct nvfx_vertex_program* vp;
 };
 
 struct nvfx_fragment_program_data {
