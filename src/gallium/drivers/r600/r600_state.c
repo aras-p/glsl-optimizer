@@ -443,11 +443,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rstate = r600_new_context_state(pipe_framebuffer_type);
 	rstate->state.framebuffer = *state;
 	for (i = 0; i < rstate->state.framebuffer.nr_cbufs; i++) {
-		pipe_surface_reference(&rstate->state.framebuffer.cbufs[i],
-				       state->cbufs[i]);
+		pipe_reference(NULL, &state->cbufs[i]->reference);
 	}
-	pipe_surface_reference(&rstate->state.framebuffer.zsbuf,
-			       state->zsbuf);
+	pipe_reference(NULL, &state->zsbuf->reference);
 	rctx->framebuffer = rstate;
 	for (i = 0; i < state->nr_cbufs; i++) {
 		r600_cb(rctx, &rstate->rstate[i+1], state, i);
