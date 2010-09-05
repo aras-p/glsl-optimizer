@@ -216,7 +216,6 @@ static void compute_live_intervals(struct radeon_compiler *c,
 					tmp = tmp->Next) {
 				if (tmp->U.I.Opcode == RC_OPCODE_BGNLOOP) {
 					loops++;
-					break;
 				} else if (tmp->U.I.Opcode
 							== RC_OPCODE_ENDLOOP) {
 					if(!--loops) {
