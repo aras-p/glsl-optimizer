@@ -1158,7 +1158,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nvfx_pipe_vertex_program *pvp = nvfx->vertprog;
 	struct nvfx_vertex_program* vp;
 	struct pipe_resource *constbuf;
@@ -1308,15 +1307,17 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			map = (float*)nvfx_buffer(constbuf)->data;
 
 		/*
+		 * WAIT_RING(chan, 512 * 6);
 		for (i = 0; i < 512; i++) {
 			float v[4] = {0.1, 0,2, 0.3, 0.4};
-			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (chan, i);
-			OUT_RINGp (chan, (uint32_t *)v, 4);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+			OUT_RING(chan, i);
+			OUT_RINGp(chan, (uint32_t *)v, 4);
 			printf("frob %i\n", i);
 		}
 		*/
 
+		WAIT_RING(chan, 6 * vp->nr_consts);
 		for (i = nvfx->use_vp_clipping ? 6 : 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
 
@@ -1331,20 +1332,21 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 			//printf("upload into %i + %i: %f %f %f %f\n", vp->data->start, i, vpd->value[0], vpd->value[1], vpd->value[2], vpd->value[3]);
 
-			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (chan, i + vp->data->start);
-			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+			OUT_RING(chan, i + vp->data->start);
+			OUT_RINGp(chan, (uint32_t *)vpd->value, 4);
 		}
 	}
 
 	/* Upload vtxprog */
 	if (upload_code) {
-		BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (chan, vp->exec->start);
+		WAIT_RING(chan, 2 + 5 * vp->nr_insns);
+		OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+		OUT_RING(chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_INST(0), 4);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
 			//printf("%08x %08x %08x %08x\n", vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
-			OUT_RINGp (chan, vp->insns[i].data, 4);
+			OUT_RINGp(chan, vp->insns[i].data, 4);
 		}
 		vp->clip_nr = -1;
 	}

@@ -17,10 +17,11 @@ nvfx_flush(struct pipe_context *pipe, unsigned flags,
 
 	/* XXX: we need to actually be intelligent here */
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
-		OUT_RING  (chan, 2);
-		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
-		OUT_RING  (chan, 1);
+		WAIT_RING(chan, 4);
+		OUT_RING(chan, RING_3D(0x1fd8, 1));
+		OUT_RING(chan, 2);
+		OUT_RING(chan, RING_3D(0x1fd8, 1));
+		OUT_RING(chan, 1);
 	}
 
 	FIRE_RING(chan);
