@@ -1211,6 +1211,8 @@ fs_visitor::emit_interpolation()
    this->current_annotation = "compute pixel centers";
    this->pixel_x = fs_reg(this, glsl_type::uint_type);
    this->pixel_y = fs_reg(this, glsl_type::uint_type);
+   this->pixel_x.type = BRW_REGISTER_TYPE_UW;
+   this->pixel_y.type = BRW_REGISTER_TYPE_UW;
    emit(fs_inst(BRW_OPCODE_ADD,
 		this->pixel_x,
 		fs_reg(stride(suboffset(g1_uw, 4), 2, 4, 0)),
