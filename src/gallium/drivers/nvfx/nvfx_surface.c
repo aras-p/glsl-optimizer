@@ -163,6 +163,14 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 
 	assert(nvfx->blitters_in_use < Elements(nvfx->blitter));
 
+	if(nvfx->query && !nvfx->blitters_in_use)
+	{
+		struct nouveau_channel* chan = nvfx->screen->base.channel;
+		WAIT_RING(chan, 2);
+		OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+		OUT_RING(chan, 0);
+	}
+
 	struct blitter_context** pblitter = &nvfx->blitter[nvfx->blitters_in_use++];
 	if(!*pblitter)
 		*pblitter = util_blitter_create(pipe);
@@ -195,6 +203,14 @@ nvfx_put_blitter(struct pipe_context* pipe, struct blitter_context* blitter)
 	struct nvfx_context* nvfx = nvfx_context(pipe);
 	--nvfx->blitters_in_use;
 	assert(nvfx->blitters_in_use >= 0);
+
+	if(nvfx->query && !nvfx->blitters_in_use)
+	{
+		struct nouveau_channel* chan = nvfx->screen->base.channel;
+		WAIT_RING(chan, 2);
+		OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+		OUT_RING(chan, 1);
+	}
 }
 
 static unsigned

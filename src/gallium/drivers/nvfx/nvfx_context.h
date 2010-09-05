@@ -177,6 +177,7 @@ struct nvfx_context {
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
 	struct nvfx_pipe_fragment_program* dummy_fs;
+	struct pipe_query* query;
 
 	unsigned nr_samplers;
 	unsigned nr_textures;
