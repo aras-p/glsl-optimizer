@@ -337,6 +337,9 @@ static void r600ParseOptions(context_t *r600, radeonScreenPtr screen)
 static void r600InitGLExtensions(GLcontext *ctx)
 {
 	context_t *r600 = R700_CONTEXT(ctx);
+#ifdef R600_ENABLE_GLSL_TEST
+	unsigned i;
+#endif
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	if (r600->radeon.radeonScreen->kernel_mm)
@@ -346,8 +349,9 @@ static void r600InitGLExtensions(GLcontext *ctx)
     driInitExtensions(ctx, gl_20_extension, GL_TRUE);
     _mesa_enable_2_0_extensions(ctx);
     
-    /* glsl compiler has problem if this is not GL_TRUE */
-    ctx->Shader.EmitCondCodes = GL_TRUE;
+	/* glsl compiler has problem if this is not GL_TRUE */
+	for (i = 0; i <= MESA_SHADER_FRAGMENT; i++)
+		ctx->ShaderCompilerOptions[i].EmitCondCodes = GL_TRUE;
 #endif /* R600_ENABLE_GLSL_TEST */
 
 	if (driQueryOptionb

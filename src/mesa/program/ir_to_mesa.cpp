@@ -186,6 +186,7 @@ public:
    GLcontext *ctx;
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
+   struct gl_shader_compiler_options *options;
 
    int next_temp;
 
@@ -2096,7 +2097,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    ir->condition->accept(this);
    assert(this->result.file != PROGRAM_UNDEFINED);
 
-   if (ctx->Shader.EmitCondCodes) {
+   if (this->options->EmitCondCodes) {
       cond_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
 
       /* See if we actually generated any instruction for generating
@@ -2526,6 +2527,8 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    GLenum target;
    const char *target_string;
    GLboolean progress;
+   struct gl_shader_compiler_options *options =
+         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
 
    switch (shader->Type) {
    case GL_VERTEX_SHADER:
@@ -2552,6 +2555,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    v.ctx = ctx;
    v.prog = prog;
    v.shader_program = shader_program;
+   v.options = options;
 
    add_uniforms_to_parameters_list(shader_program, shader, prog);
 
@@ -2629,7 +2633,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
 
-      if (ctx->Shader.EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
+      if (options->EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
 	 fail_link(shader_program, "Couldn't flatten if statement\n");
       }
 
@@ -2703,6 +2707,8 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
+      struct gl_shader_compiler_options *options =
+            &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(prog->_LinkedShaders[i]->Type)];
 
       do {
 	 progress = false;
@@ -2715,7 +2721,7 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
 	 progress = do_common_optimization(ir, true) || progress;
 
-	 if (ctx->Shader.EmitNoIfs)
+	 if (options->EmitNoIfs)
 	    progress = do_if_to_cond_assign(ir) || progress;
 
 	 progress = do_vec_index_to_cond_assign(ir) || progress;

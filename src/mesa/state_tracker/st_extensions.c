@@ -68,6 +68,7 @@ void st_init_limits(struct st_context *st)
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
    struct gl_program_constants *pc;
+   unsigned i;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -136,8 +137,9 @@ void st_init_limits(struct st_context *st)
 
    /* Is TGSI_OPCODE_CONT supported? */
    /* XXX separate query for early function return? */
-   st->ctx->Shader.EmitContReturn =
-      screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
+   for(i = 0; i < MESA_SHADER_TYPES; ++i)
+      st->ctx->ShaderCompilerOptions[i].EmitContReturn =
+            screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
 
    /* Quads always follow GL provoking rules. */
    c->QuadsFollowProvokingVertexConvention = GL_FALSE;
