@@ -15,12 +15,15 @@ struct nvfx_screen {
 	struct nvfx_context *cur_ctx;
 
 	unsigned is_nv4x; /* either 0 or ~0 */
+	unsigned use_nv4x; /* either 0 or ~0 */
 	boolean force_swtnl;
 	boolean trace_draw;
 	unsigned vertex_buffer_reloc_flags;
 	unsigned index_buffer_reloc_flags;
 	unsigned advertise_fp16;
 	unsigned advertise_fp32;
+	unsigned advertise_npot;
+	unsigned advertise_blend_equation_separate;
 
 	/* HW graphics objects */
 	struct nouveau_grobj *eng3d;

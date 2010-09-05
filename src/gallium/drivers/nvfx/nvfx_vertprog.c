@@ -297,8 +297,8 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 
 	if(insn.sat)
 	{
-		assert(nvfx->is_nv4x);
-		if(nvfx->is_nv4x)
+		assert(nvfx->use_nv4x);
+		if(nvfx->use_nv4x)
 			hw[0] |= NV40_VP_INST_SATURATE;
 	}
 
@@ -519,7 +519,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE)
 	{
 		assert(finst->Instruction.Opcode != TGSI_OPCODE_ARL);
-		if(nvfx->is_nv4x)
+		if(nvfx->use_nv4x)
 			sat = TRUE;
 		else if(dst.type != NVFXSR_TEMP)
 			dst = temp(vpc);
@@ -757,7 +757,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		return FALSE;
 	}
 
-	if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE && !nvfx->is_nv4x)
+	if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE && !nvfx->use_nv4x)
 	{
 		if(!vpc->r_0_1.type)
 			vpc->r_0_1 = constant(vpc, -1, 0, 1, 0, 0);

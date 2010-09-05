@@ -77,6 +77,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.flush = nvfx_flush;
 
 	nvfx->is_nv4x = screen->is_nv4x;
+	nvfx->use_nv4x = screen->use_nv4x;
 	/* TODO: it seems that nv30 might have fixed function clipping usable with vertex programs
 	 * However, my code for that doesn't work, so use vp clipping for all cards, which works.
 	 */

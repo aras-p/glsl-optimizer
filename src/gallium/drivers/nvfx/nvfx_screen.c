@@ -27,7 +27,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 16;
 	case PIPE_CAP_NPOT_TEXTURES:
-		return !!screen->is_nv4x;
+		return screen->advertise_npot;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
@@ -37,7 +37,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_POINT_SPRITE:
 		return 1;
 	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return screen->is_nv4x ? 4 : 2;
+		return screen->use_nv4x ? 4 : 2;
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
         case PIPE_CAP_TIMER_QUERY:
@@ -53,7 +53,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 13;
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-		return !!screen->is_nv4x;
+		return !!screen->use_nv4x;
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 		return 1;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
@@ -61,7 +61,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_CONT_SUPPORTED:
 		return 0;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-		return !!screen->is_nv4x;
+		return screen->advertise_blend_equation_separate;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -85,35 +85,35 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
 		/* FIXME: is it the dynamic (nv30:0/nv40:24) or the static
 		   value (nv30:0/nv40:4) ? */
-		return screen->is_nv4x ? 4 : 0;
+		return screen->use_nv4x ? 4 : 0;
 	case PIPE_CAP_MAX_FS_INPUTS:
-		return screen->is_nv4x ? 12 : 10;
+		return screen->use_nv4x ? 12 : 10;
 	case PIPE_CAP_MAX_FS_CONSTS:
-		return screen->is_nv4x ? 224 : 32;
+		return screen->use_nv4x ? 224 : 32;
 	case PIPE_CAP_MAX_FS_TEMPS:
 		return 32;
 	case PIPE_CAP_MAX_FS_ADDRS:
-		return screen->is_nv4x ? 1 : 0;
+		return screen->use_nv4x ? 1 : 0;
 	case PIPE_CAP_MAX_FS_PREDS:
 		return 0; /* we could expose these, but nothing uses them */
 	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
-		return screen->is_nv4x ? 512 : 256;
+		return screen->use_nv4x ? 512 : 256;
 	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
-		return screen->is_nv4x ? 512 : 0;
+		return screen->use_nv4x ? 512 : 0;
 	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
 		/* FIXME: is it the dynamic (nv30:24/nv40:24) or the static
 		   value (nv30:1/nv40:4) ? */
-		return screen->is_nv4x ? 4 : 1;
+		return screen->use_nv4x ? 4 : 1;
 	case PIPE_CAP_MAX_VS_INPUTS:
 		return 16;
 	case PIPE_CAP_MAX_VS_CONSTS:
 		/* - 6 is for clip planes; Gallium should be fixed to put
 		 * them in the vertex shader itself, so we don't need to reserve these */
-		return (screen->is_nv4x ? 468 : 256) - 6;
+		return (screen->use_nv4x ? 468 : 256) - 6;
 	case PIPE_CAP_MAX_VS_TEMPS:
-		return screen->is_nv4x ? 32 : 13;
+		return screen->use_nv4x ? 32 : 13;
 	case PIPE_CAP_MAX_VS_ADDRS:
 		return 2;
 	case PIPE_CAP_MAX_VS_PREDS:
@@ -141,7 +141,7 @@ nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_POINT_WIDTH_AA:
 		return 64.0;
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return screen->is_nv4x ? 16.0 : 8.0;
+		return screen->use_nv4x ? 16.0 : 8.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 15.0;
 	default:
@@ -200,7 +200,7 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 			return FALSE;
 		if(format == PIPE_FORMAT_R32G32B32A32_FLOAT && !screen->advertise_fp32)
 			return FALSE;
-		if(screen->is_nv4x)
+		if(screen->use_nv4x)
 		{
 			if(tf->fmt[4] < 0)
 				return FALSE;
@@ -432,6 +432,19 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	screen->advertise_npot = !!screen->is_nv4x;
+	screen->advertise_blend_equation_separate = !!screen->is_nv4x;
+	screen->use_nv4x = screen->is_nv4x;
+
+	if(screen->is_nv4x) {
+		if(debug_get_bool_option("NVFX_SIMULATE_NV30", FALSE))
+			screen->use_nv4x = 0;
+		if(!debug_get_bool_option("NVFX_NPOT", TRUE))
+			screen->advertise_npot = 0;
+		if(!debug_get_bool_option("NVFX_BLEND_EQ_SEP", TRUE))
+			screen->advertise_blend_equation_separate = 0;
+	}
+
 	screen->force_swtnl = debug_get_bool_option("NVFX_SWTNL", FALSE);
 	screen->trace_draw = debug_get_bool_option("NVFX_TRACE_DRAW", FALSE);
 
@@ -443,7 +456,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	 * it should, due to several restrictions.
 	 * The only exception is fp16 on nv40.
 	 */
-	screen->advertise_fp16 = debug_get_bool_option("NVFX_FP16", !!screen->is_nv4x);
+	screen->advertise_fp16 = debug_get_bool_option("NVFX_FP16", !!screen->use_nv4x);
 	screen->advertise_fp32 = debug_get_bool_option("NVFX_FP32", 0);
 
 	screen->vertex_buffer_reloc_flags = nvfx_screen_get_vertex_buffer_flags(screen);
@@ -498,8 +511,8 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	LIST_INITHEAD(&screen->query_list);
 
 	/* Vtxprog resources */
-	if (nouveau_resource_init(&screen->vp_exec_heap, 0, screen->is_nv4x ? 512 : 256) ||
-	    nouveau_resource_init(&screen->vp_data_heap, 0, screen->is_nv4x ? 468 : 256)) {
+	if (nouveau_resource_init(&screen->vp_exec_heap, 0, screen->use_nv4x ? 512 : 256) ||
+	    nouveau_resource_init(&screen->vp_data_heap, 0, screen->use_nv4x ? 468 : 256)) {
 		nvfx_screen_destroy(pscreen);
 		return NULL;
 	}

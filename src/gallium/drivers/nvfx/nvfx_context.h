@@ -141,6 +141,7 @@ struct nvfx_context {
 	struct nvfx_screen *screen;
 
 	unsigned is_nv4x; /* either 0 or ~0 */
+	unsigned use_nv4x; /* either 0 or ~0 */
 	boolean use_vp_clipping;
 
 	struct draw_context *draw;
