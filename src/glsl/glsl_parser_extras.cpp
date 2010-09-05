@@ -685,7 +685,7 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
 }
 
 bool
-do_common_optimization(exec_list *ir, bool linked)
+do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations)
 {
    GLboolean progress = GL_FALSE;
 
@@ -718,7 +718,7 @@ do_common_optimization(exec_list *ir, bool linked)
 
    loop_state *ls = analyze_loop_variables(ir);
    progress = set_loop_controls(ir, ls) || progress;
-   progress = unroll_loops(ir, ls) || progress;
+   progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
    delete ls;
 
    return progress;

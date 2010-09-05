@@ -1471,7 +1471,7 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
     * some of that unused.
     */
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-      while (do_common_optimization(prog->_LinkedShaders[i]->ir, true))
+      while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;
    }
 

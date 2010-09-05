@@ -215,7 +215,7 @@ compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
 	 loop_state *ls = analyze_loop_variables(shader->ir);
 	 progress = set_loop_controls(shader->ir, ls) || progress;
-	 progress = unroll_loops(shader->ir, ls) || progress;
+	 progress = unroll_loops(shader->ir, ls, 32) || progress;
 	 delete ls;
       } while (progress);
 

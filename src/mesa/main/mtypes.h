@@ -2187,7 +2187,6 @@ struct gl_shader_compiler_options
 {
    /** Driver-selectable options: */
    GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
-   GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
@@ -2196,6 +2195,12 @@ struct gl_shader_compiler_options
     * support control flow.
     */
    GLboolean EmitNoIfs;
+   GLboolean EmitNoLoops;
+   GLboolean EmitNoFunctions;
+   GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
+   GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
+
+   GLuint MaxUnrollIterations;
 
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };

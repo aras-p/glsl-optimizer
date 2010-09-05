@@ -57,7 +57,7 @@ set_loop_controls(exec_list *instructions, loop_state *ls);
 
 
 extern bool
-unroll_loops(exec_list *instructions, loop_state *ls);
+unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations);
 
 
 /**

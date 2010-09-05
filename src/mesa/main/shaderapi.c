@@ -97,10 +97,14 @@ _mesa_init_shader_state(GLcontext *ctx)
    struct gl_shader_compiler_options options;
    GLuint i;
    options.EmitHighLevelInstructions = GL_TRUE;
-   options.EmitContReturn = GL_TRUE;
    options.EmitCondCodes = GL_FALSE;
    options.EmitComments = GL_FALSE;
    options.EmitNoIfs = GL_FALSE;
+   options.EmitNoLoops = GL_FALSE;
+   options.EmitNoFunctions = GL_FALSE;
+   options.EmitNoCont = GL_FALSE;
+   options.EmitNoMainReturn = GL_FALSE;
+   options.MaxUnrollIterations = 32;
 
    /* Default pragma settings */
    options.DefaultPragmas.IgnoreOptimize = GL_FALSE;

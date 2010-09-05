@@ -27,10 +27,11 @@
 
 class loop_unroll_visitor : public ir_hierarchical_visitor {
 public:
-   loop_unroll_visitor(loop_state *state)
+   loop_unroll_visitor(loop_state *state, unsigned max_iterations)
    {
       this->state = state;
       this->progress = false;
+      this->max_iterations = max_iterations;
    }
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
@@ -38,6 +39,7 @@ public:
    loop_state *state;
 
    bool progress;
+   unsigned max_iterations;
 };
 
 
@@ -62,7 +64,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    /* Don't try to unroll loops that have zillions of iterations either.
     */
-   if (ls->max_iterations > 32)
+   if (ls->max_iterations > max_iterations)
       return visit_continue;
 
    if (ls->num_loop_jumps > 0)
@@ -90,9 +92,9 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
 
 bool
-unroll_loops(exec_list *instructions, loop_state *ls)
+unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations)
 {
-   loop_unroll_visitor v(ls);
+   loop_unroll_visitor v(ls, max_iterations);
 
    v.run(instructions);
 
