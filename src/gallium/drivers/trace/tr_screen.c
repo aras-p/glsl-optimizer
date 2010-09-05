@@ -106,6 +106,30 @@ trace_screen_get_param(struct pipe_screen *_screen,
 }
 
 
+static int
+trace_screen_get_shader_param(struct pipe_screen *_screen, unsigned shader,
+                       enum pipe_shader_cap param)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   int result;
+
+   trace_dump_call_begin("pipe_screen", "get_shader_param");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(int, shader);
+   trace_dump_arg(int, param);
+
+   result = screen->get_shader_param(screen, shader, param);
+
+   trace_dump_ret(int, result);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
 static float
 trace_screen_get_paramf(struct pipe_screen *_screen,
                         enum pipe_cap param)
@@ -547,6 +571,7 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.get_name = trace_screen_get_name;
    tr_scr->base.get_vendor = trace_screen_get_vendor;
    tr_scr->base.get_param = trace_screen_get_param;
+   tr_scr->base.get_shader_param = trace_screen_get_shader_param;
    tr_scr->base.get_paramf = trace_screen_get_paramf;
    tr_scr->base.is_format_supported = trace_screen_is_format_supported;
    assert(screen->context_create);

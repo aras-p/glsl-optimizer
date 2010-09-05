@@ -79,6 +79,17 @@ galahad_screen_get_param(struct pipe_screen *_screen,
                             param);
 }
 
+static int
+galahad_screen_get_shader_param(struct pipe_screen *_screen,
+                          unsigned shader, enum pipe_shader_cap param)
+{
+   struct galahad_screen *glhd_screen = galahad_screen(_screen);
+   struct pipe_screen *screen = glhd_screen->screen;
+
+   return screen->get_shader_param(screen, shader,
+                            param);
+}
+
 static float
 galahad_screen_get_paramf(struct pipe_screen *_screen,
                            enum pipe_cap param)
@@ -341,6 +352,7 @@ galahad_screen_create(struct pipe_screen *screen)
    glhd_screen->base.get_name = galahad_screen_get_name;
    glhd_screen->base.get_vendor = galahad_screen_get_vendor;
    glhd_screen->base.get_param = galahad_screen_get_param;
+   glhd_screen->base.get_shader_param = galahad_screen_get_shader_param;
    glhd_screen->base.get_paramf = galahad_screen_get_paramf;
    glhd_screen->base.is_format_supported = galahad_screen_is_format_supported;
    glhd_screen->base.context_create = galahad_screen_context_create;

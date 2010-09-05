@@ -75,6 +75,13 @@ util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out)
             return FALSE;
          }
          break;
+      case UTIL_CAPS_CHECK_SHADER:
+         tmpi = screen->get_shader_param(screen, list[i] >> 24, list[i] & ((1 << 24) - 1));
+         ++i;
+         if (tmpi < (int)list[i++]) {
+            *out = i - 3;
+            return FALSE;
+         }
       case UTIL_CAPS_CHECK_UNIMPLEMENTED:
          *out = i - 1;
          return FALSE;
@@ -188,17 +195,17 @@ static unsigned caps_opengl_2_1[] = {
 
 /* Shader Model 3 */
 static unsigned caps_sm3[] = {
-    UTIL_CHECK_INT(MAX_FS_INSTRUCTIONS, 512),
-    UTIL_CHECK_INT(MAX_FS_INPUTS, 10),
-    UTIL_CHECK_INT(MAX_FS_TEMPS, 32),
-    UTIL_CHECK_INT(MAX_FS_ADDRS, 1),
-    UTIL_CHECK_INT(MAX_FS_CONSTS, 224),
+    UTIL_CHECK_SHADER(FRAGMENT, MAX_INSTRUCTIONS, 512),
+    UTIL_CHECK_SHADER(FRAGMENT, MAX_INPUTS, 10),
+    UTIL_CHECK_SHADER(FRAGMENT, MAX_TEMPS, 32),
+    UTIL_CHECK_SHADER(FRAGMENT, MAX_ADDRS, 1),
+    UTIL_CHECK_SHADER(FRAGMENT, MAX_CONSTS, 224),
 
-    UTIL_CHECK_INT(MAX_VS_INSTRUCTIONS, 512),
-    UTIL_CHECK_INT(MAX_VS_INPUTS, 16),
-    UTIL_CHECK_INT(MAX_VS_TEMPS, 32),
-    UTIL_CHECK_INT(MAX_VS_ADDRS, 2),
-    UTIL_CHECK_INT(MAX_VS_CONSTS, 256),
+    UTIL_CHECK_SHADER(VERTEX, MAX_INSTRUCTIONS, 512),
+    UTIL_CHECK_SHADER(VERTEX, MAX_INPUTS, 16),
+    UTIL_CHECK_SHADER(VERTEX, MAX_TEMPS, 32),
+    UTIL_CHECK_SHADER(VERTEX, MAX_ADDRS, 2),
+    UTIL_CHECK_SHADER(VERTEX, MAX_CONSTS, 256),
 
     UTIL_CHECK_TERMINATE
 };

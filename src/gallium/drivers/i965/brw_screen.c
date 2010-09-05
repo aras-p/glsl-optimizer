@@ -197,6 +197,49 @@ brw_get_param(struct pipe_screen *screen, enum pipe_cap param)
    }
 }
 
+static int
+brw_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+{
+   switch(shader) {
+   case PIPE_SHADER_VERTEX:
+   case PIPE_SHADER_FRAGMENT:
+   case PIPE_SHADER_GEOMETRY:
+      break;
+   default:
+      return 0;
+   }
+
+   /* XXX: these are just shader model 4.0 values, fix this! */
+   switch(param) {
+      case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+         return 65536;
+      case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+         return 65536;
+      case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+         return 65536;
+      case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+         return 65536;
+      case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+         return 65536;
+      case PIPE_SHADER_CAP_MAX_INPUTS:
+         return 32;
+      case PIPE_SHADER_CAP_MAX_CONSTS:
+         return 4096;
+      case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+         return PIPE_MAX_CONSTANT_BUFFERS;
+      case PIPE_SHADER_CAP_MAX_TEMPS:
+         return 4096;
+      case PIPE_SHADER_CAP_MAX_ADDRS:
+         return 0;
+      case PIPE_SHADER_CAP_MAX_PREDS:
+         return 0;
+      case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+         return 1;
+      default:
+              break;
+      }
+}
+
 static float
 brw_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
@@ -410,6 +453,7 @@ brw_screen_create(struct brw_winsys_screen *sws)
    bscreen->base.get_name = brw_get_name;
    bscreen->base.get_vendor = brw_get_vendor;
    bscreen->base.get_param = brw_get_param;
+   bscreen->base.get_shader_param = brw_get_shader_param;
    bscreen->base.get_paramf = brw_get_paramf;
    bscreen->base.is_format_supported = brw_is_format_supported;
    bscreen->base.context_create = brw_create_context;

@@ -116,6 +116,7 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.get_name = hw->get_name;
    failover->pipe.get_vendor = hw->get_vendor;
    failover->pipe.get_param = hw->get_param;
+   failover->pipe.get_shader_param = hw->get_shader_param;
    failover->pipe.get_paramf = hw->get_paramf;
 #endif
 

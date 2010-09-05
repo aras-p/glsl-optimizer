@@ -142,8 +142,6 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 		return 1;
-	case PIPE_CAP_TGSI_CONT_SUPPORTED:
-		return 1;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -158,38 +156,51 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
-	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
-	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
-	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
-	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
-	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS: /* arbitrary limit */
-		return 16384;
-	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
-	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH: /* need stack bo */
-		return 4;
-	case PIPE_CAP_MAX_VS_INPUTS:
-		return 16;
-	case PIPE_CAP_MAX_FS_INPUTS: /* 128 / 4 with GP */
-		return 64 / 4;
-	case PIPE_CAP_MAX_VS_CONSTS:
-	case PIPE_CAP_MAX_FS_CONSTS:
-		return 65536 / 16;
-	case PIPE_CAP_MAX_VS_ADDRS:
-	case PIPE_CAP_MAX_FS_ADDRS: /* no spilling atm */
-		return 1;
-	case PIPE_CAP_MAX_VS_PREDS:
-	case PIPE_CAP_MAX_FS_PREDS: /* not yet handled */
-		return 0;
-	case PIPE_CAP_MAX_VS_TEMPS:
-	case PIPE_CAP_MAX_FS_TEMPS: /* no spilling atm */
-		return 128 / 4;
 	case PIPE_CAP_DEPTH_CLAMP:
 		return 1;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
+		return 0;
+	}
+}
+
+static int
+nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum pipe_shader_cap param)
+{
+	switch(shader)
+	{
+	case PIPE_SHADER_FRAGMENT:
+	case PIPE_SHADER_VERTEX:
+	case PIPE_SHADER_GEOMETRY:
+		break;
+	default:
+		return 0;
+	}
+
+	switch(param) {
+	case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS: /* arbitrary limit */
+		return 16384;
+	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH: /* need stack bo */
+		return 4;
+	case PIPE_SHADER_CAP_MAX_INPUTS: /* 128 / 4 with GP */
+		if(shader == PIPE_SHADER_GEOMETRY)
+			return 128 / 4;
+		else
+			return 64 / 4;
+	case PIPE_SHADER_CAP_MAX_CONSTS:
+		return 65536 / 16;
+	case PIPE_SHADER_CAP_MAX_ADDRS: /* no spilling atm */
+		return 1;
+	case PIPE_SHADER_CAP_MAX_PREDS: /* not yet handled */
+		return 0;
+	case PIPE_SHADER_CAP_MAX_TEMPS: /* no spilling atm */
+		return 128 / 4;
+	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+		return 1;
+	default:
 		return 0;
 	}
 }
@@ -315,6 +326,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->winsys = ws;
 	pscreen->destroy = nv50_screen_destroy;
 	pscreen->get_param = nv50_screen_get_param;
+	pscreen->get_shader_param = nv50_screen_get_shader_param;
 	pscreen->get_paramf = nv50_screen_get_paramf;
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
 	pscreen->context_create = nv50_create;

@@ -139,6 +139,49 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap param)
    }
 }
 
+static int
+i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+{
+   switch(shader) {
+   case PIPE_SHADER_VERTEX:
+      return draw_get_shader_param(shader, param);
+   case PIPE_SHADER_FRAGMENT:
+      break;
+   default:
+      return 0;
+   }
+
+   /* XXX: these are just shader model 2.0 values, fix this! */
+   switch(param) {
+      case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+         return 96;
+      case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+         return 64;
+      case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+         return 32;
+      case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+         return 8;
+      case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+         return 0;
+      case PIPE_SHADER_CAP_MAX_INPUTS:
+         return 10;
+      case PIPE_SHADER_CAP_MAX_CONSTS:
+         return 32;
+      case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+         return 1;
+      case PIPE_SHADER_CAP_MAX_TEMPS:
+         return 12; /* XXX: 12 -> 32 ? */
+      case PIPE_SHADER_CAP_MAX_ADDRS:
+         return 0;
+      case PIPE_SHADER_CAP_MAX_PREDS:
+         return 0;
+      case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+         return 0;
+      default:
+              break;
+   }
+}
+
 static float
 i915_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
@@ -320,6 +363,7 @@ i915_screen_create(struct i915_winsys *iws)
    is->base.get_name = i915_get_name;
    is->base.get_vendor = i915_get_vendor;
    is->base.get_param = i915_get_param;
+   is->base.get_shader_param = i915_get_shader_param;
    is->base.get_paramf = i915_get_paramf;
    is->base.is_format_supported = i915_is_format_supported;
 

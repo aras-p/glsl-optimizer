@@ -58,8 +58,6 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 1;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		return 0; /* We have 4 on nv40 - but unsupported currently */
-	case PIPE_CAP_TGSI_CONT_SUPPORTED:
-		return 0;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return screen->advertise_blend_equation_separate;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
@@ -77,55 +75,85 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 1;
-	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
-	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
-		return 4096;
-	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
-		/* FIXME: is it the dynamic (nv30:0/nv40:24) or the static
-		   value (nv30:0/nv40:4) ? */
-		return screen->use_nv4x ? 4 : 0;
-	case PIPE_CAP_MAX_FS_INPUTS:
-		return screen->use_nv4x ? 12 : 10;
-	case PIPE_CAP_MAX_FS_CONSTS:
-		return screen->use_nv4x ? 224 : 32;
-	case PIPE_CAP_MAX_FS_TEMPS:
-		return 32;
-	case PIPE_CAP_MAX_FS_ADDRS:
-		return screen->use_nv4x ? 1 : 0;
-	case PIPE_CAP_MAX_FS_PREDS:
-		return 0; /* we could expose these, but nothing uses them */
-	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
-	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
-		return screen->use_nv4x ? 512 : 256;
-	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
-	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
-		return screen->use_nv4x ? 512 : 0;
-	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
-		/* FIXME: is it the dynamic (nv30:24/nv40:24) or the static
-		   value (nv30:1/nv40:4) ? */
-		return screen->use_nv4x ? 4 : 1;
-	case PIPE_CAP_MAX_VS_INPUTS:
-		return 16;
-	case PIPE_CAP_MAX_VS_CONSTS:
-		/* - 6 is for clip planes; Gallium should be fixed to put
-		 * them in the vertex shader itself, so we don't need to reserve these */
-		return (screen->use_nv4x ? 468 : 256) - 6;
-	case PIPE_CAP_MAX_VS_TEMPS:
-		return screen->use_nv4x ? 32 : 13;
-	case PIPE_CAP_MAX_VS_ADDRS:
-		return 2;
-	case PIPE_CAP_MAX_VS_PREDS:
-		return 0; /* we could expose these, but nothing uses them */
-	case PIPE_CAP_GEOMETRY_SHADER4:
-		return 0;
 	case PIPE_CAP_DEPTH_CLAMP:
 		return 0; // TODO: implement depth clamp
 	default:
 		NOUVEAU_ERR("Warning: unknown PIPE_CAP %d\n", param);
 		return 0;
 	}
+}
+
+static int
+nvfx_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum pipe_shader_cap param)
+{
+	struct nvfx_screen *screen = nvfx_screen(pscreen);
+
+	switch(shader) {
+	case PIPE_SHADER_FRAGMENT:
+		switch(param) {
+		case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+		case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+		case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+		case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+			return 4096;
+		case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+			/* FIXME: is it the dynamic (nv30:0/nv40:24) or the static
+			 value (nv30:0/nv40:4) ? */
+			return screen->use_nv4x ? 4 : 0;
+		case PIPE_SHADER_CAP_MAX_INPUTS:
+			return screen->use_nv4x ? 12 : 10;
+		case PIPE_SHADER_CAP_MAX_CONSTS:
+			return screen->use_nv4x ? 224 : 32;
+		case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+		    return 1;
+		case PIPE_SHADER_CAP_MAX_TEMPS:
+			return 32;
+		case PIPE_SHADER_CAP_MAX_ADDRS:
+			return screen->use_nv4x ? 1 : 0;
+		case PIPE_SHADER_CAP_MAX_PREDS:
+			return 0; /* we could expose these, but nothing uses them */
+		case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+		    return 0;
+		default:
+			break;
+		}
+		break;
+	case PIPE_SHADER_VERTEX:
+		switch(param) {
+		case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+		case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+			return screen->use_nv4x ? 512 : 256;
+		case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+		case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+			return screen->use_nv4x ? 512 : 0;
+		case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+			/* FIXME: is it the dynamic (nv30:24/nv40:24) or the static
+			 value (nv30:1/nv40:4) ? */
+			return screen->use_nv4x ? 4 : 1;
+		case PIPE_SHADER_CAP_MAX_INPUTS:
+			return 16;
+		case PIPE_SHADER_CAP_MAX_CONSTS:
+			/* - 6 is for clip planes; Gallium should be fixed to put
+			 * them in the vertex shader itself, so we don't need to reserve these */
+			return (screen->use_nv4x ? 468 : 256) - 6;
+	             case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+	                    return 1;
+		case PIPE_SHADER_CAP_MAX_TEMPS:
+			return screen->use_nv4x ? 32 : 13;
+		case PIPE_SHADER_CAP_MAX_ADDRS:
+			return 2;
+		case PIPE_SHADER_CAP_MAX_PREDS:
+			return 0; /* we could expose these, but nothing uses them */
+		case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+                        return 1;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
 }
 
 static float
@@ -400,6 +428,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->winsys = ws;
 	pscreen->destroy = nvfx_screen_destroy;
 	pscreen->get_param = nvfx_screen_get_param;
+	pscreen->get_shader_param = nvfx_screen_get_shader_param;
 	pscreen->get_paramf = nvfx_screen_get_paramf;
 	pscreen->is_format_supported = nvfx_screen_is_format_supported;
 	pscreen->context_create = nvfx_create;

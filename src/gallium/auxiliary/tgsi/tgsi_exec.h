@@ -377,6 +377,36 @@ tgsi_exec_set_constant_buffers(struct tgsi_exec_machine *mach,
                                const unsigned *buf_sizes);
 
 
+static INLINE int
+tgsi_exec_get_shader_param(enum pipe_shader_cap param)
+{
+   switch(param) {
+   case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+   case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+   case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+   case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+      return INT_MAX;
+   case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+      return TGSI_EXEC_MAX_NESTING;
+   case PIPE_SHADER_CAP_MAX_INPUTS:
+      return TGSI_EXEC_MAX_INPUT_ATTRIBS;
+   case PIPE_SHADER_CAP_MAX_CONSTS:
+      return TGSI_EXEC_MAX_CONST_BUFFER;
+   case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+      return PIPE_MAX_CONSTANT_BUFFERS;
+   case PIPE_SHADER_CAP_MAX_TEMPS:
+      return TGSI_EXEC_NUM_TEMPS;
+   case PIPE_SHADER_CAP_MAX_ADDRS:
+      return TGSI_EXEC_NUM_ADDRS;
+   case PIPE_SHADER_CAP_MAX_PREDS:
+      return TGSI_EXEC_NUM_PREDS;
+   case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+      return 1;
+   default:
+      return 0;
+   }
+}
+
 #if defined __cplusplus
 } /* extern "C" */
 #endif

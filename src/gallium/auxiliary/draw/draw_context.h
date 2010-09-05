@@ -39,6 +39,7 @@
 
 
 #include "pipe/p_state.h"
+#include "tgsi/tgsi_exec.h"
 
 struct pipe_context;
 struct draw_context;
@@ -224,5 +225,17 @@ void draw_set_force_passthrough( struct draw_context *draw,
 boolean draw_need_pipeline(const struct draw_context *draw,
                            const struct pipe_rasterizer_state *rasterizer,
                            unsigned prim );
+
+static INLINE int
+draw_get_shader_param(unsigned shader, enum pipe_cap param)
+{
+   switch(shader) {
+   case PIPE_SHADER_VERTEX:
+   case PIPE_SHADER_GEOMETRY:
+      return tgsi_exec_get_shader_param(param);
+   default:
+      return 0;
+   }
+}
 
 #endif /* DRAW_CONTEXT_H */

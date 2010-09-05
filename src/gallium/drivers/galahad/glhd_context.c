@@ -469,11 +469,11 @@ galahad_set_constant_buffer(struct pipe_context *_pipe,
 
    if (index &&
       index >=
-         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS)) {
+         pipe->screen->get_shader_param(pipe->screen, shader, PIPE_SHADER_CAP_MAX_CONST_BUFFERS)) {
       glhd_error("Access to constant buffer %u requested, "
          "but only %d are supported",
          index,
-         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS));
+         pipe->screen->get_shader_param(pipe->screen, shader, PIPE_SHADER_CAP_MAX_CONST_BUFFERS));
    }
 
    /* XXX hmm? unwrap the input state */

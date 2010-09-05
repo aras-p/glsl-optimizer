@@ -67,12 +67,23 @@ identity_screen_get_vendor(struct pipe_screen *_screen)
 
 static int
 identity_screen_get_param(struct pipe_screen *_screen,
-                          enum pipe_cap param)
+                          unsigned shader, enum pipe_cap param)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
 
    return screen->get_param(screen,
+                            param);
+}
+
+static int
+identity_screen_get_shader_param(struct pipe_screen *_screen,
+                          unsigned shader, enum pipe_shader_cap param)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct pipe_screen *screen = id_screen->screen;
+
+   return screen->get_shader_param(screen, shader,
                             param);
 }
 
@@ -304,6 +315,7 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.get_name = identity_screen_get_name;
    id_screen->base.get_vendor = identity_screen_get_vendor;
    id_screen->base.get_param = identity_screen_get_param;
+   id_screen->base.get_shader_param = identity_screen_get_shader_param;
    id_screen->base.get_paramf = identity_screen_get_paramf;
    id_screen->base.is_format_supported = identity_screen_is_format_supported;
    id_screen->base.context_create = identity_screen_context_create;

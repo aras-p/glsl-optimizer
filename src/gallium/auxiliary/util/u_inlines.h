@@ -399,7 +399,6 @@ static INLINE boolean util_get_offset(
    }
 }
 
-
 #ifdef __cplusplus
 }
 #endif

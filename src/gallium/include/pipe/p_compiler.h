@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <limits.h>
 
 
 #if defined(_WIN32) && !defined(__WIN32__)

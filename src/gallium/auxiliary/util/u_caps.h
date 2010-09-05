@@ -38,6 +38,7 @@ enum u_caps_check_enum {
    UTIL_CAPS_CHECK_INT,
    UTIL_CAPS_CHECK_FLOAT,
    UTIL_CAPS_CHECK_FORMAT,
+   UTIL_CAPS_CHECK_SHADER,
    UTIL_CAPS_CHECK_UNIMPLEMENTED,
 };
 
@@ -53,6 +54,9 @@ enum u_caps_check_enum {
 
 #define UTIL_CHECK_FORMAT(format) \
    UTIL_CAPS_CHECK_FORMAT, PIPE_FORMAT_##format
+
+#define UTIL_CHECK_SHADER(shader, cap, higher) \
+   UTIL_CAPS_CHECK_SHADER, (PIPE_SHADER_##shader << 24) | PIPE_SHADER_CAP_##cap, (unsigned)(higher)
 
 #define UTIL_CHECK_UNIMPLEMENTED \
    UTIL_CAPS_CHECK_UNIMPLEMENTED

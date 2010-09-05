@@ -79,6 +79,17 @@ rbug_screen_get_param(struct pipe_screen *_screen,
                             param);
 }
 
+static int
+rbug_screen_get_shader_param(struct pipe_screen *_screen,
+                      unsigned shader, enum pipe_cap param)
+{
+   struct rbug_screen *rb_screen = rbug_screen(_screen);
+   struct pipe_screen *screen = rb_screen->screen;
+
+   return screen->get_shader_param(screen, shader,
+                            param);
+}
+
 static float
 rbug_screen_get_paramf(struct pipe_screen *_screen,
                        enum pipe_cap param)
@@ -317,6 +328,7 @@ rbug_screen_create(struct pipe_screen *screen)
    rb_screen->base.get_name = rbug_screen_get_name;
    rb_screen->base.get_vendor = rbug_screen_get_vendor;
    rb_screen->base.get_param = rbug_screen_get_param;
+   rb_screen->base.get_shader_param = rbug_screen_get_shader_param;
    rb_screen->base.get_paramf = rbug_screen_get_paramf;
    rb_screen->base.is_format_supported = rbug_screen_is_format_supported;
    rb_screen->base.context_create = rbug_screen_context_create;
