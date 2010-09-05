@@ -46,6 +46,16 @@
       }								 \
    } while (0)
 
+/* Handle reserved words in GLSL ES (version 100) */
+#define TOKEN_OR_IDENTIFIER_ES(version, token)			\
+   do {								\
+      if (yyextra->es_shader) {					\
+	return token;						\
+      } else {							\
+	TOKEN_OR_IDENTIFIER(version, token);			\
+      }								\
+   } while (0)
+
 #define RESERVED_WORD(version, token)					\
    do {									\
       if (yyextra->language_version >= version) {			\
@@ -190,9 +200,9 @@ inout		return INOUT_TOK;
 uniform		return UNIFORM;
 varying		return VARYING;
 centroid	TOKEN_OR_IDENTIFIER(120, CENTROID);
-invariant	TOKEN_OR_IDENTIFIER(120, INVARIANT);
+invariant	TOKEN_OR_IDENTIFIER_ES(120, INVARIANT);
 
-flat		TOKEN_OR_IDENTIFIER(130, FLAT);
+flat		TOKEN_OR_IDENTIFIER_ES(130, FLAT);
 smooth		TOKEN_OR_IDENTIFIER(130, SMOOTH);
 noperspective	TOKEN_OR_IDENTIFIER(130, NOPERSPECTIVE);
 
@@ -327,16 +337,16 @@ namespace	RESERVED_WORD(999, NAMESPACE);
 using		RESERVED_WORD(999, USING);
 
     /* Additional reserved words in GLSL 1.20. */
-lowp		TOKEN_OR_IDENTIFIER(120, LOWP);
-mediump		TOKEN_OR_IDENTIFIER(120, MEDIUMP);
-highp		TOKEN_OR_IDENTIFIER(120, HIGHP);
-precision	TOKEN_OR_IDENTIFIER(120, PRECISION);
+lowp		TOKEN_OR_IDENTIFIER_ES(120, LOWP);
+mediump		TOKEN_OR_IDENTIFIER_ES(120, MEDIUMP);
+highp		TOKEN_OR_IDENTIFIER_ES(120, HIGHP);
+precision	TOKEN_OR_IDENTIFIER_ES(120, PRECISION);
 
     /* Additional reserved words in GLSL 1.30. */
 common		TOKEN_OR_IDENTIFIER(130, COMMON);
 partition	TOKEN_OR_IDENTIFIER(130, PARTITION);
 active		TOKEN_OR_IDENTIFIER(130, ACTIVE);
-superp		TOKEN_OR_IDENTIFIER(130, SUPERP);
+superp		TOKEN_OR_IDENTIFIER_ES(130, SUPERP);
 samplerBuffer	TOKEN_OR_IDENTIFIER(130, SAMPLERBUFFER);
 filter		TOKEN_OR_IDENTIFIER(130, FILTER);
 image1D		TOKEN_OR_IDENTIFIER(130, IMAGE1D);

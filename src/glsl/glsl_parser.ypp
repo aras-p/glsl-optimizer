@@ -1149,39 +1149,39 @@ basic_type_specifier_nonarray:
 	;
 
 precision_qualifier:
-	HIGHP		{
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& @1, state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+	HIGHP	  {
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& @1, state,
+				         "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   $$ = ast_precision_high;
-			}
-	| MEDIUMP	{
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& @1, state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+		     $$ = ast_precision_high;
+		  }
+	| MEDIUMP {
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& @1, state,
+					 "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   $$ = ast_precision_medium;
-			}
-	| LOWP		{
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& @1, state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+		     $$ = ast_precision_medium;
+		  }
+	| LOWP	  {
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& @1, state,
+					 "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   $$ = ast_precision_low;
-			}
+		     $$ = ast_precision_low;
+		  }
 	;
 
 struct_specifier:

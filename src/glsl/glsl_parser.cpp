@@ -4529,16 +4529,16 @@ yyreduce:
 /* Line 1464 of yacc.c  */
 #line 1152 "glsl_parser.ypp"
     {
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& (yylsp[(1) - (1)]), state,
+				         "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   (yyval.n) = ast_precision_high;
-			;}
+		     (yyval.n) = ast_precision_high;
+		  ;}
     break;
 
   case 217:
@@ -4546,16 +4546,16 @@ yyreduce:
 /* Line 1464 of yacc.c  */
 #line 1163 "glsl_parser.ypp"
     {
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& (yylsp[(1) - (1)]), state,
+					 "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   (yyval.n) = ast_precision_medium;
-			;}
+		     (yyval.n) = ast_precision_medium;
+		  ;}
     break;
 
   case 218:
@@ -4563,16 +4563,16 @@ yyreduce:
 /* Line 1464 of yacc.c  */
 #line 1174 "glsl_parser.ypp"
     {
-			   if (state->language_version < 130)
-			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precision qualifier forbidden "
-					       "in GLSL %d.%d (1.30 or later "
-					       "required)\n",
-					       state->language_version / 100,
-					       state->language_version % 100);
+		     if (!state->es_shader && state->language_version < 130)
+			_mesa_glsl_error(& (yylsp[(1) - (1)]), state,
+					 "precision qualifier forbidden "
+					 "in GLSL %d.%d (1.30 or later "
+					 "required)\n",
+					 state->language_version / 100,
+					 state->language_version % 100);
 
-			   (yyval.n) = ast_precision_low;
-			;}
+		     (yyval.n) = ast_precision_low;
+		  ;}
     break;
 
   case 219:
