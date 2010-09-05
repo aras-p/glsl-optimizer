@@ -45,23 +45,16 @@ int rc_pair_alloc_source(struct rc_pair_instruction *pair,
 	if ((!rgb && !alpha) || file == RC_FILE_NONE)
 		return 0;
 
-	if (rgb && pair->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
-		if (file == RC_FILE_PRESUB) {
-			if (index != pair->RGB.Src[RC_PAIR_PRESUB_SRC].Index) {
+	/* Make sure only one presubtract operation is used per instruction. */
+	if (file == RC_FILE_PRESUB) {
+		if (rgb && pair->RGB.Src[RC_PAIR_PRESUB_SRC].Used
+			&& index != pair->RGB.Src[RC_PAIR_PRESUB_SRC].Index) {
 				return -1;
-			}
-		} else {
-			rgb_used++;
 		}
-	}
 
-	if (alpha && pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
-		if (file == RC_FILE_PRESUB) {
-			if (index != pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Index) {
+		if (alpha && pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Used
+			&& index != pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Index) {
 				return -1;
-			}
-		} else {
-			alpha_used++;
 		}
 	}
 
@@ -92,16 +85,15 @@ int rc_pair_alloc_source(struct rc_pair_instruction *pair,
 			candidate = i;
 		}
 	}
-	if (candidate < 0 || (rgb && rgb_used > 2) || (alpha && alpha_used > 2))
+
+	if (file == RC_FILE_PRESUB) {
+		candidate = RC_PAIR_PRESUB_SRC;
+	} else if (candidate < 0 || (rgb && rgb_used > 2)
+			|| (alpha && alpha_used > 2)) {
 		return -1;
+	}
 
 	/* candidate >= 0 */
-
-	/* Even if we have a presub src, the above loop needs to run,
-	 * because we still need to make sure there is a free source.
-	 */
-	if (file == RC_FILE_PRESUB)
-		candidate = RC_PAIR_PRESUB_SRC;
 
 	if (rgb) {
 		pair->RGB.Src[candidate].Used = 1;
