@@ -223,7 +223,7 @@ extern "C" {
 #endif
 
 extern int preprocess(void *ctx, const char **shader, char **info_log,
-                      const struct gl_extensions *extensions);
+                      const struct gl_extensions *extensions, int api);
 
 extern void _mesa_destroy_shader_compiler();
 extern void _mesa_destroy_shader_compiler_caches();

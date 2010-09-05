@@ -30,6 +30,7 @@
 
 #include "glcpp.h"
 #include "main/core.h" /* for struct gl_extensions */
+#include "main/mtypes.h" /* for gl_api enum */
 
 #define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
 #define glcpp_printf(stream, fmt, args, ...) \
@@ -309,6 +310,9 @@ control_line:
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	}
 |	HASH_VERSION integer_constant NEWLINE {
+		if ($2 == 100)
+			add_builtin_define (parser, "GL_ES", 1);
+
 		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 		if (macro) {
 			hash_table_remove (parser->defines, "__VERSION__");
@@ -1048,7 +1052,7 @@ static void add_builtin_define(glcpp_parser_t *parser,
 }
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions)
+glcpp_parser_create (const struct gl_extensions *extensions, int api)
 {
 	glcpp_parser_t *parser;
 	int language_version;
@@ -1077,6 +1081,9 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 	/* Add pre-defined macros. */
 	add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
+
+	if (api == API_OPENGLES2)
+		add_builtin_define(parser, "GL_ES", 1);
 
 	if (extensions != NULL) {
 	   if (extensions->EXT_texture_array) {

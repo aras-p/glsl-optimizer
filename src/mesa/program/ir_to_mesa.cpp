@@ -2769,7 +2769,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    }
 
    state->error = preprocess(state, &source, &state->info_log,
-			     &ctx->Extensions);
+			     &ctx->Extensions, ctx->API);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("GLSL source for shader %d:\n", shader->Name);
