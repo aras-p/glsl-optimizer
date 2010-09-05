@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <nouveau/nouveau_class.h>
 #include <nouveau/nouveau_device.h>
 #include <nouveau/nouveau_pushbuf.h>
 #include <nouveau/nouveau_channel.h>
@@ -41,6 +40,10 @@
 #include <nouveau/nouveau_notifier.h>
 #include <nouveau/nouveau_grobj.h>
 #include "nv04_2d.h"
+
+#include "nouveau/nv_object.xml.h"
+#include "nouveau/nv_m2mf.xml.h"
+#include "nv01_2d.xml.h"
 
 /* avoid depending on Mesa/Gallium */
 #ifdef __GNUC__
@@ -813,8 +816,8 @@ nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
 	OUT_RING  (chan, cs2d_format |
-			 log2i(cw) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
-			 log2i(ch) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
+			 log2i(cw) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U__SHIFT |
+			 log2i(ch) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V__SHIFT);
 
 	BEGIN_RING(chan, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, src->bo,
@@ -841,19 +844,19 @@ nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 	    OUT_RELOCl(chan, dst->bo, dst_offset,
 			    NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
-	    BEGIN_RING(chan, sifm, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
-	    OUT_RING  (chan, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
+	    BEGIN_RING(chan, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
+	    OUT_RING  (chan, NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	    OUT_RING  (chan, sifm_format);
 	    OUT_RING  (chan, NV03_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, rx | (ry << NV03_SCALED_IMAGE_FROM_MEMORY_CLIP_POINT_Y_SHIFT));
-	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_CLIP_SIZE_H_SHIFT | rw);
-	    OUT_RING  (chan, rx | (ry << NV03_SCALED_IMAGE_FROM_MEMORY_OUT_POINT_Y_SHIFT));
-	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_OUT_SIZE_H_SHIFT | rw);
+	    OUT_RING  (chan, rx | (ry << NV03_SCALED_IMAGE_FROM_MEMORY_CLIP_POINT_Y__SHIFT));
+	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_CLIP_SIZE_H__SHIFT | rw);
+	    OUT_RING  (chan, rx | (ry << NV03_SCALED_IMAGE_FROM_MEMORY_OUT_POINT_Y__SHIFT));
+	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_OUT_SIZE_H__SHIFT | rw);
 	    OUT_RING  (chan, 1 << 20);
 	    OUT_RING  (chan, 1 << 20);
 
 	    BEGIN_RING(chan, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
-	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_SIZE_H_SHIFT | align(rw, 8));
+	    OUT_RING  (chan, rh << NV03_SCALED_IMAGE_FROM_MEMORY_SIZE_H__SHIFT | align(rw, 8));
 	    OUT_RING  (chan, src->pitch |
 			     NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
@@ -873,7 +876,7 @@ nv04_copy_m2mf_begin(struct nv04_2d_context *ctx, struct nouveau_bo* dstbo, stru
 	struct nouveau_channel *chan = ctx->m2mf->channel;
 	struct nouveau_grobj *m2mf = ctx->m2mf;
 	MARK_RING (chan, 3 + commands * 9, 2 + commands * 2);
-	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
+	BEGIN_RING(chan, m2mf, NV04_M2MF_DMA_BUFFER_IN, 2);
 	OUT_RELOCo(chan, srcbo,
 		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCo(chan, dstbo,
@@ -890,7 +893,7 @@ nv04_copy_m2mf_body(struct nv04_2d_context *ctx, struct nouveau_bo* dstbo, int* 
 	fprintf(stderr, "\t\t\tCOPY_M2MF_BODY [%i, %i] <%i[%u]> lin %u <- <%i[%u]> lin %u\n", size, lines, dstbo->handle, *pdstoff, dstpitch, srcbo->handle, *psrcoff, srcpitch);
 #endif
 
-	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
+	BEGIN_RING(chan, m2mf, NV04_M2MF_OFFSET_IN, 8);
 	OUT_RELOCl(chan, srcbo, *psrcoff,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	OUT_RELOCl(chan, dstbo, *pdstoff,
@@ -1123,7 +1126,7 @@ nv04_region_copy_2d(struct nv04_2d_context *ctx, struct nv04_region* dst, struct
 		else
 		{
 			/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
-			 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
+			 * to NV_M2MF in this case.
 			 * TODO: is this also true for the source? possibly not
 			 * TODO: should we just always use m2mf?
 			 * TODO: if not, add support for multiple operations to copy_blit
@@ -1274,7 +1277,7 @@ nv04_2d_context_init(struct nouveau_channel* chan)
 		return NULL;
 	}
 
-	BEGIN_RING(chan, ctx->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
+	BEGIN_RING(chan, ctx->m2mf, NV04_M2MF_DMA_NOTIFY, 1);
 	OUT_RING  (chan, ctx->ntfy->handle);
 
 	if (chan->device->chipset < 0x10)
@@ -1296,7 +1299,7 @@ nv04_2d_context_init(struct nouveau_channel* chan)
 	if (chan->device->chipset < 0x10)
 		class = NV04_IMAGE_BLIT;
 	else
-		class = NV12_IMAGE_BLIT;
+		class = NV11_IMAGE_BLIT;
 
 	ret = nouveau_grobj_alloc(chan, handle++, class, &ctx->blit);
 	if (ret) {
@@ -1306,7 +1309,7 @@ nv04_2d_context_init(struct nouveau_channel* chan)
 
 	BEGIN_RING(chan, ctx->blit, NV01_IMAGE_BLIT_DMA_NOTIFY, 1);
 	OUT_RING  (chan, ctx->ntfy->handle);
-	BEGIN_RING(chan, ctx->blit, NV04_IMAGE_BLIT_SURFACE, 1);
+	BEGIN_RING(chan, ctx->blit, NV04_IMAGE_BLIT_SURFACES, 1);
 	OUT_RING  (chan, ctx->surf2d->handle);
 	BEGIN_RING(chan, ctx->blit, NV01_IMAGE_BLIT_OPERATION, 1);
 	OUT_RING  (chan, NV01_IMAGE_BLIT_OPERATION_SRCCOPY);
@@ -1334,7 +1337,7 @@ nv04_2d_context_init(struct nouveau_channel* chan)
 		class = NV04_SWIZZLED_SURFACE;
 		break;
 	case 0x20:
-		class = NV20_SWIZZLED_SURFACE;
+		class = NV11_SWIZZLED_SURFACE;
 		break;
 	case 0x30:
 		class = NV30_SWIZZLED_SURFACE;
