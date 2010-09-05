@@ -94,55 +94,6 @@ v4sf sin_ps(v4sf x);
 v4sf cos_ps(v4sf x);
 void sincos_ps(v4sf x, v4sf *s, v4sf *c);
 
-#if defined (__MINGW32__)
-
-/* the ugly part below: many versions of gcc used to be completely buggy with respect to some intrinsics
-   The movehl_ps is fixed in mingw 3.4.5, but I found out that all the _mm_cmp* intrinsics were completely
-   broken on my mingw gcc 3.4.5 ...
-
-   Note that the bug on _mm_cmp* does occur only at -O0 optimization level
-*/
-
-inline __m128 my_movehl_ps(__m128 a, const __m128 b) {
-	asm (
-			"movhlps %2,%0\n\t"
-			: "=x" (a)
-			: "0" (a), "x"(b)
-	    );
-	return a;                                 }
-#warning "redefined _mm_movehl_ps (see gcc bug 21179)"
-#define _mm_movehl_ps my_movehl_ps
-
-inline __m128 my_cmplt_ps(__m128 a, const __m128 b) {
-	asm (
-			"cmpltps %2,%0\n\t"
-			: "=x" (a)
-			: "0" (a), "x"(b)
-	    );
-	return a;               
-                  }
-inline __m128 my_cmpgt_ps(__m128 a, const __m128 b) {
-	asm (
-			"cmpnleps %2,%0\n\t"
-			: "=x" (a)
-			: "0" (a), "x"(b)
-	    );
-	return a;               
-}
-inline __m128 my_cmpeq_ps(__m128 a, const __m128 b) {
-	asm (
-			"cmpeqps %2,%0\n\t"
-			: "=x" (a)
-			: "0" (a), "x"(b)
-	    );
-	return a;               
-}
-#warning "redefined _mm_cmpxx_ps functions..."
-#define _mm_cmplt_ps my_cmplt_ps
-#define _mm_cmpgt_ps my_cmpgt_ps
-#define _mm_cmpeq_ps my_cmpeq_ps
-#endif
-
 #ifndef USE_SSE2
 typedef union xmm_mm_union {
   __m128 xmm;
