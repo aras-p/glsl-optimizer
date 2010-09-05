@@ -6,7 +6,6 @@
 
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_channel.h"
-#include "nouveau/nouveau_class.h"
 #include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
