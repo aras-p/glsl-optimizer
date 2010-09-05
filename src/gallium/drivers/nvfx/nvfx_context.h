@@ -18,7 +18,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-
+#include "nv30-40_3d.xml.h"
 #include "nvfx_state.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
@@ -343,25 +343,25 @@ static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan, unsigned att
 {
 	switch (ncomp) {
 	case 4:
-		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_4F_X(attrib), 4));
+		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_4F_X(attrib), 4));
 		OUT_RING(chan, fui(v[0]));
 		OUT_RING(chan, fui(v[1]));
 		OUT_RING(chan,  fui(v[2]));
 		OUT_RING(chan,  fui(v[3]));
 		break;
 	case 3:
-		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_3F_X(attrib), 3));
+		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_3F_X(attrib), 3));
 		OUT_RING(chan,  fui(v[0]));
 		OUT_RING(chan,  fui(v[1]));
 		OUT_RING(chan,  fui(v[2]));
 		break;
 	case 2:
-		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_2F_X(attrib), 2));
+		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_2F_X(attrib), 2));
 		OUT_RING(chan,  fui(v[0]));
 		OUT_RING(chan,  fui(v[1]));
 		break;
 	case 1:
-		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_1F(attrib), 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_1F(attrib), 1));
 		OUT_RING(chan,  fui(v[0]));
 		break;
 	}

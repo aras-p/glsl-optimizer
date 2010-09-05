@@ -12,12 +12,12 @@ nvfx_sampler_state_create(struct pipe_context *pipe,
 	ps = MALLOC(sizeof(struct nvfx_sampler_state));
 
 	/* on nv30, we use this as an internal flag */
-	ps->fmt = cso->normalized_coords ? 0 : NV40TCL_TEX_FORMAT_RECT;
+	ps->fmt = cso->normalized_coords ? 0 : NV40_3D_TEX_FORMAT_RECT;
 	ps->en = 0;
 	ps->filt = nvfx_tex_filter(cso) | 0x2000; /*voodoo*/
-	ps->wrap = (nvfx_tex_wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
-		    (nvfx_tex_wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
-		    (nvfx_tex_wrap_mode(cso->wrap_r) << NV34TCL_TX_WRAP_R_SHIFT);
+	ps->wrap = (nvfx_tex_wrap_mode(cso->wrap_s) << NV30_3D_TEX_WRAP_S__SHIFT) |
+		    (nvfx_tex_wrap_mode(cso->wrap_t) << NV30_3D_TEX_WRAP_T__SHIFT) |
+		    (nvfx_tex_wrap_mode(cso->wrap_r) << NV30_3D_TEX_WRAP_R__SHIFT);
 	ps->compare = FALSE;
 
 	if(cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE)
@@ -80,21 +80,21 @@ nvfx_create_sampler_view(struct pipe_context *pipe,
 	pipe_resource_reference(&sv->base.texture, pt);
 	sv->base.context = pipe;
 
-	txf = NV34TCL_TX_FORMAT_NO_BORDER;
+	txf = NV30_3D_TEX_FORMAT_NO_BORDER;
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_CUBE:
-		txf |= NV34TCL_TX_FORMAT_CUBIC;
+		txf |= NV30_3D_TEX_FORMAT_CUBIC;
 		/* fall-through */
 	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_RECT:
-		txf |= NV34TCL_TX_FORMAT_DIMS_2D;
+		txf |= NV30_3D_TEX_FORMAT_DIMS_2D;
 		break;
 	case PIPE_TEXTURE_3D:
-		txf |= NV34TCL_TX_FORMAT_DIMS_3D;
+		txf |= NV30_3D_TEX_FORMAT_DIMS_3D;
 		break;
 	case PIPE_TEXTURE_1D:
-		txf |= NV34TCL_TX_FORMAT_DIMS_1D;
+		txf |= NV30_3D_TEX_FORMAT_DIMS_1D;
 		break;
 	default:
 		assert(0);
@@ -102,14 +102,14 @@ nvfx_create_sampler_view(struct pipe_context *pipe,
 	sv->u.init_fmt = txf;
 
 	sv->swizzle = 0
-			| (tf->src[sv->base.swizzle_r] << NV34TCL_TX_SWIZZLE_S0_Z_SHIFT)
-			| (tf->src[sv->base.swizzle_g] << NV34TCL_TX_SWIZZLE_S0_Y_SHIFT)
-			| (tf->src[sv->base.swizzle_b] << NV34TCL_TX_SWIZZLE_S0_X_SHIFT)
-			| (tf->src[sv->base.swizzle_a] << NV34TCL_TX_SWIZZLE_S0_W_SHIFT)
-			| (tf->comp[sv->base.swizzle_r] << NV34TCL_TX_SWIZZLE_S1_Z_SHIFT)
-			| (tf->comp[sv->base.swizzle_g] << NV34TCL_TX_SWIZZLE_S1_Y_SHIFT)
-			| (tf->comp[sv->base.swizzle_b] << NV34TCL_TX_SWIZZLE_S1_X_SHIFT)
-			| (tf->comp[sv->base.swizzle_a] << NV34TCL_TX_SWIZZLE_S1_W_SHIFT);
+			| (tf->src[sv->base.swizzle_r] << NV30_3D_TEX_SWIZZLE_S0_Z__SHIFT)
+			| (tf->src[sv->base.swizzle_g] << NV30_3D_TEX_SWIZZLE_S0_Y__SHIFT)
+			| (tf->src[sv->base.swizzle_b] << NV30_3D_TEX_SWIZZLE_S0_X__SHIFT)
+			| (tf->src[sv->base.swizzle_a] << NV30_3D_TEX_SWIZZLE_S0_W__SHIFT)
+			| (tf->comp[sv->base.swizzle_r] << NV30_3D_TEX_SWIZZLE_S1_Z__SHIFT)
+			| (tf->comp[sv->base.swizzle_g] << NV30_3D_TEX_SWIZZLE_S1_Y__SHIFT)
+			| (tf->comp[sv->base.swizzle_b] << NV30_3D_TEX_SWIZZLE_S1_X__SHIFT)
+			| (tf->comp[sv->base.swizzle_a] << NV30_3D_TEX_SWIZZLE_S1_W__SHIFT);
 
 	sv->filt = tf->sign;
 	sv->wrap = tf->wrap;
@@ -118,18 +118,18 @@ nvfx_create_sampler_view(struct pipe_context *pipe,
 	if (pt->target == PIPE_TEXTURE_CUBE)
 	{
 		sv->offset = 0;
-		sv->npot_size = (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) | pt->height0;
+		sv->npot_size = (pt->width0 << NV30_3D_TEX_NPOT_SIZE_W__SHIFT) | pt->height0;
 	}
 	else
 	{
 		sv->offset = nvfx_subresource_offset(pt, 0, sv->base.first_level, 0);
-		sv->npot_size = (u_minify(pt->width0, sv->base.first_level) << NV34TCL_TX_NPOT_SIZE_W_SHIFT) | u_minify(pt->height0, sv->base.first_level);
+		sv->npot_size = (u_minify(pt->width0, sv->base.first_level) << NV30_3D_TEX_NPOT_SIZE_W__SHIFT) | u_minify(pt->height0, sv->base.first_level);
 
 		/* apparently, we need to ignore the t coordinate for 1D textures to fix piglit tex1d-2dborder */
 		if(pt->target == PIPE_TEXTURE_1D)
 		{
-			sv->wrap_mask &=~ NV34TCL_TX_WRAP_T_MASK;
-			sv->wrap |= NV34TCL_TX_WRAP_T_REPEAT;
+			sv->wrap_mask &=~ NV30_3D_TEX_WRAP_T__MASK;
+			sv->wrap |= NV30_3D_TEX_WRAP_T_REPEAT;
 		}
 	}
 
@@ -199,7 +199,7 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 		} else {
 			WAIT_RING(chan, 2);
 			/* this is OK for nv40 too */
-			OUT_RING(chan, RING_3D(NV34TCL_TX_ENABLE(unit), 1));
+			OUT_RING(chan, RING_3D(NV30_3D_TEX_ENABLE(unit), 1));
 			OUT_RING(chan, 0);
 			nvfx->hw_samplers &= ~(1 << unit);
 		}
@@ -227,10 +227,10 @@ nvfx_fragtex_relocate(struct nvfx_context *nvfx)
 		bo = mt->base.bo;
 
 		MARK_RING(chan, 3, 3);
-		OUT_RELOC(chan, bo, RING_3D(NV34TCL_TX_OFFSET(unit), 2), tex_flags | NOUVEAU_BO_DUMMY, 0, 0);
+		OUT_RELOC(chan, bo, RING_3D(NV30_3D_TEX_OFFSET(unit), 2), tex_flags | NOUVEAU_BO_DUMMY, 0, 0);
 		OUT_RELOC(chan, bo, 0, tex_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_DUMMY, 0, 0);
 		OUT_RELOC(chan, bo, nvfx->hw_txf[unit], tex_flags | NOUVEAU_BO_OR | NOUVEAU_BO_DUMMY,
-				NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+				NV30_3D_TEX_FORMAT_DMA0, NV30_3D_TEX_FORMAT_DMA1);
 	}
 	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGTEX;
 }
@@ -246,32 +246,32 @@ nvfx_init_sampling_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.sampler_view_destroy = nvfx_sampler_view_destroy;
 }
 
-#define NV34TCL_TX_FORMAT_FORMAT_DXT1_RECT NV34TCL_TX_FORMAT_FORMAT_DXT1
-#define NV34TCL_TX_FORMAT_FORMAT_DXT3_RECT NV34TCL_TX_FORMAT_FORMAT_DXT3
-#define NV34TCL_TX_FORMAT_FORMAT_DXT5_RECT NV34TCL_TX_FORMAT_FORMAT_DXT5
+#define NV30_3D_TEX_FORMAT_FORMAT_DXT1_RECT NV30_3D_TEX_FORMAT_FORMAT_DXT1
+#define NV30_3D_TEX_FORMAT_FORMAT_DXT3_RECT NV30_3D_TEX_FORMAT_FORMAT_DXT3
+#define NV30_3D_TEX_FORMAT_FORMAT_DXT5_RECT NV30_3D_TEX_FORMAT_FORMAT_DXT5
 
-#define NV40TCL_TEX_FORMAT_FORMAT_HILO16 NV40TCL_TEX_FORMAT_FORMAT_A16L16
+#define NV40_3D_TEX_FORMAT_FORMAT_HILO16 NV40_3D_TEX_FORMAT_FORMAT_A16L16
 
-#define NV34TCL_TX_FORMAT_FORMAT_RGBA16F 0x00004a00
-#define NV34TCL_TX_FORMAT_FORMAT_RGBA16F_RECT NV34TCL_TX_FORMAT_FORMAT_RGBA16F
-#define NV34TCL_TX_FORMAT_FORMAT_RGBA32F 0x00004b00
-#define NV34TCL_TX_FORMAT_FORMAT_RGBA32F_RECT NV34TCL_TX_FORMAT_FORMAT_RGBA32F
-#define NV34TCL_TX_FORMAT_FORMAT_R32F 0x00004c00
-#define NV34TCL_TX_FORMAT_FORMAT_R32F_RECT NV34TCL_TX_FORMAT_FORMAT_R32F
+#define NV30_3D_TEX_FORMAT_FORMAT_RGBA16F 0x00004a00
+#define NV30_3D_TEX_FORMAT_FORMAT_RGBA16F_RECT NV30_3D_TEX_FORMAT_FORMAT_RGBA16F
+#define NV30_3D_TEX_FORMAT_FORMAT_RGBA32F 0x00004b00
+#define NV30_3D_TEX_FORMAT_FORMAT_RGBA32F_RECT NV30_3D_TEX_FORMAT_FORMAT_RGBA32F
+#define NV30_3D_TEX_FORMAT_FORMAT_R32F 0x00004c00
+#define NV30_3D_TEX_FORMAT_FORMAT_R32F_RECT NV30_3D_TEX_FORMAT_FORMAT_R32F
 
 // TODO: guess!
-#define NV40TCL_TEX_FORMAT_FORMAT_R32F 0x00001c00
+#define NV40_3D_TEX_FORMAT_FORMAT_R32F 0x00001c00
 
 #define SRGB 0x00700000
 
 #define __(m,tf,tfc,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w,sign,wrap) \
 [PIPE_FORMAT_##m] = { \
-  {NV34TCL_TX_FORMAT_FORMAT_##tf, \
-  NV34TCL_TX_FORMAT_FORMAT_##tfc, \
-  NV34TCL_TX_FORMAT_FORMAT_##tf##_RECT, \
-  NV34TCL_TX_FORMAT_FORMAT_##tfc##_RECT, \
-  NV40TCL_TEX_FORMAT_FORMAT_##tf, \
-  NV40TCL_TEX_FORMAT_FORMAT_##tfc}, \
+  {NV30_3D_TEX_FORMAT_FORMAT_##tf, \
+  NV30_3D_TEX_FORMAT_FORMAT_##tfc, \
+  NV30_3D_TEX_FORMAT_FORMAT_##tf##_RECT, \
+  NV30_3D_TEX_FORMAT_FORMAT_##tfc##_RECT, \
+  NV40_3D_TEX_FORMAT_FORMAT_##tf, \
+  NV40_3D_TEX_FORMAT_FORMAT_##tfc}, \
   sign, wrap, \
   {ts0z, ts0y, ts0x, ts0w, 0, 1}, {ts1z, ts1y, ts1x, ts1w, 0, 0} \
 }
@@ -293,7 +293,7 @@ nvfx_init_sampling_functions(struct nvfx_context *nvfx)
 #define Z 1
 #define W 0
 
-#define SNORM ((NV34TCL_TX_FILTER_SIGNED_RED) | (NV34TCL_TX_FILTER_SIGNED_GREEN) | (NV34TCL_TX_FILTER_SIGNED_BLUE) | (NV34TCL_TX_FILTER_SIGNED_ALPHA))
+#define SNORM ((NV30_3D_TEX_FILTER_SIGNED_RED) | (NV30_3D_TEX_FILTER_SIGNED_GREEN) | (NV30_3D_TEX_FILTER_SIGNED_BLUE) | (NV30_3D_TEX_FILTER_SIGNED_ALPHA))
 #define UNORM 0
 
 struct nvfx_texture_format

@@ -14,11 +14,11 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 	if (cso->max_anisotropy >= 2)
 	{
 		if (cso->max_anisotropy >= 8)
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_8X;
+			ps->en |= NV30_3D_TEX_ENABLE_ANISO_8X;
 		else if (cso->max_anisotropy >= 4)
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_4X;
+			ps->en |= NV30_3D_TEX_ENABLE_ANISO_4X;
 		else if (cso->max_anisotropy >= 2)
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
+			ps->en |= NV30_3D_TEX_ENABLE_ANISO_2X;
 	}
 
 	limit = CLAMP(cso->lod_bias, -16.0, 15.0 + (255.0 / 256.0));
@@ -27,7 +27,7 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 	ps->max_lod = (int)CLAMP(cso->max_lod, 0.0, 15.0);
 	ps->min_lod = (int)CLAMP(cso->min_lod, 0.0, 15.0);
 
-	ps->en |= NV34TCL_TX_ENABLE_ENABLE;
+	ps->en |= NV30_3D_TEX_ENABLE_ENABLE;
 }
 
 void
@@ -42,10 +42,10 @@ nv30_sampler_view_init(struct pipe_context *pipe,
 	assert(tf->fmt[0] >= 0);
 
 	txf = sv->u.init_fmt;
-	txf |= (level != sv->base.last_level ? NV34TCL_TX_FORMAT_MIPMAP : 0);
-	txf |= util_logbase2(u_minify(pt->width0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
-	txf |= util_logbase2(u_minify(pt->height0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
-	txf |= util_logbase2(u_minify(pt->depth0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
+	txf |= (level != sv->base.last_level ? NV30_3D_TEX_FORMAT_MIPMAP : 0);
+	txf |= util_logbase2(u_minify(pt->width0, level)) << NV30_3D_TEX_FORMAT_BASE_SIZE_U__SHIFT;
+	txf |= util_logbase2(u_minify(pt->height0, level)) << NV30_3D_TEX_FORMAT_BASE_SIZE_V__SHIFT;
+	txf |= util_logbase2(u_minify(pt->depth0, level)) << NV30_3D_TEX_FORMAT_BASE_SIZE_W__SHIFT;
 	txf |=  0x10000;
 
 	sv->u.nv30.fmt[0] = tf->fmt[0] | txf;
@@ -53,7 +53,7 @@ nv30_sampler_view_init(struct pipe_context *pipe,
 	sv->u.nv30.fmt[2] = tf->fmt[2] | txf;
 	sv->u.nv30.fmt[3] = tf->fmt[3] | txf;
 
-	sv->swizzle  |= (nvfx_subresource_pitch(pt, 0) << NV34TCL_TX_SWIZZLE_RECT_PITCH_SHIFT);
+	sv->swizzle  |= (nvfx_subresource_pitch(pt, 0) << NV30_3D_TEX_SWIZZLE_RECT_PITCH__SHIFT);
 
 	if(pt->height0 <= 1 || util_format_is_compressed(sv->base.format))
 		sv->u.nv30.rect = -1;
@@ -102,13 +102,13 @@ nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 	txf = sv->u.nv30.fmt[ps->compare + (use_rect ? 2 : 0)];
 
 	MARK_RING(chan, 9, 2);
-	OUT_RING(chan, RING_3D(NV34TCL_TX_OFFSET(unit), 8));
+	OUT_RING(chan, RING_3D(NV30_3D_TEX_OFFSET(unit), 8));
 	OUT_RELOC(chan, bo, sv->offset, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	OUT_RELOC(chan, bo, txf,
 		tex_flags | NOUVEAU_BO_OR,
-		NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+		NV30_3D_TEX_FORMAT_DMA0, NV30_3D_TEX_FORMAT_DMA1);
 	OUT_RING(chan, (ps->wrap & sv->wrap_mask) | sv->wrap);
-	OUT_RING(chan, ps->en | (min_lod << NV34TCL_TX_ENABLE_MIPMAP_MIN_LOD_SHIFT) | (max_lod << NV34TCL_TX_ENABLE_MIPMAP_MAX_LOD_SHIFT));
+	OUT_RING(chan, ps->en | (min_lod << NV30_3D_TEX_ENABLE_MIPMAP_MIN_LOD__SHIFT) | (max_lod << NV30_3D_TEX_ENABLE_MIPMAP_MAX_LOD__SHIFT));
 	OUT_RING(chan, sv->swizzle);
 	OUT_RING(chan, ps->filt | sv->filt);
 	OUT_RING(chan, sv->npot_size);

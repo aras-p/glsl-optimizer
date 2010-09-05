@@ -20,26 +20,26 @@ nvfx_blend_state_create(struct pipe_context *pipe,
 	struct nouveau_statebuf_builder sb = sb_init(bso->sb);
 
 	if (cso->rt[0].blend_enable) {
-		sb_method(sb, NV34TCL_BLEND_FUNC_ENABLE, 3);
+		sb_method(sb, NV30_3D_BLEND_FUNC_ENABLE, 3);
 		sb_data(sb, 1);
 		sb_data(sb, (nvgl_blend_func(cso->rt[0].alpha_src_factor) << 16) |
 			       nvgl_blend_func(cso->rt[0].rgb_src_factor));
 		sb_data(sb, nvgl_blend_func(cso->rt[0].alpha_dst_factor) << 16 |
 			      nvgl_blend_func(cso->rt[0].rgb_dst_factor));
 		if(nvfx->screen->base.device->chipset < 0x40) {
-			sb_method(sb, NV34TCL_BLEND_EQUATION, 1);
+			sb_method(sb, NV30_3D_BLEND_EQUATION, 1);
 			sb_data(sb, nvgl_blend_eqn(cso->rt[0].rgb_func));
 		} else {
-			sb_method(sb, NV40TCL_BLEND_EQUATION, 1);
+			sb_method(sb, NV40_3D_BLEND_EQUATION, 1);
 			sb_data(sb, nvgl_blend_eqn(cso->rt[0].alpha_func) << 16 |
 			      nvgl_blend_eqn(cso->rt[0].rgb_func));
 		}
 	} else {
-		sb_method(sb, NV34TCL_BLEND_FUNC_ENABLE, 1);
+		sb_method(sb, NV30_3D_BLEND_FUNC_ENABLE, 1);
 		sb_data(sb, 0);
 	}
 
-	sb_method(sb, NV34TCL_COLOR_MASK, 1);
+	sb_method(sb, NV30_3D_COLOR_MASK, 1);
 	sb_data(sb, (((cso->rt[0].colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
 	       ((cso->rt[0].colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
 	       ((cso->rt[0].colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
@@ -48,15 +48,15 @@ nvfx_blend_state_create(struct pipe_context *pipe,
 	/* TODO: add NV40 MRT color mask */
 
 	if (cso->logicop_enable) {
-		sb_method(sb, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		sb_method(sb, NV30_3D_COLOR_LOGIC_OP_ENABLE, 2);
 		sb_data(sb, 1);
 		sb_data(sb, nvgl_logicop_func(cso->logicop_func));
 	} else {
-		sb_method(sb, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		sb_method(sb, NV30_3D_COLOR_LOGIC_OP_ENABLE, 1);
 		sb_data(sb, 0);
 	}
 
-	sb_method(sb, NV34TCL_DITHER_ENABLE, 1);
+	sb_method(sb, NV30_3D_DITHER_ENABLE, 1);
 	sb_data(sb, cso->dither ? 1 : 0);
 
 	bso->sb_len = sb_len(sb, bso->sb);
@@ -94,64 +94,64 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	 *     sprite_coord_origin
 	 */
 
-	sb_method(sb, NV34TCL_SHADE_MODEL, 1);
-	sb_data(sb, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
-				       NV34TCL_SHADE_MODEL_SMOOTH);
+	sb_method(sb, NV30_3D_SHADE_MODEL, 1);
+	sb_data(sb, cso->flatshade ? NV30_3D_SHADE_MODEL_FLAT :
+				       NV30_3D_SHADE_MODEL_SMOOTH);
 
-	sb_method(sb, NV34TCL_VERTEX_TWO_SIDE_ENABLE, 1);
+	sb_method(sb, NV30_3D_VERTEX_TWO_SIDE_ENABLE, 1);
 	sb_data(sb, cso->light_twoside);
 
-	sb_method(sb, NV34TCL_LINE_WIDTH, 2);
+	sb_method(sb, NV30_3D_LINE_WIDTH, 2);
 	sb_data(sb, (unsigned char)(cso->line_width * 8.0) & 0xff);
 	sb_data(sb, cso->line_smooth ? 1 : 0);
-	sb_method(sb, NV34TCL_LINE_STIPPLE_ENABLE, 2);
+	sb_method(sb, NV30_3D_LINE_STIPPLE_ENABLE, 2);
 	sb_data(sb, cso->line_stipple_enable ? 1 : 0);
 	sb_data(sb, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	sb_method(sb, NV34TCL_POINT_SIZE, 1);
+	sb_method(sb, NV30_3D_POINT_SIZE, 1);
 	sb_data(sb, fui(cso->point_size));
 
-	sb_method(sb, NV34TCL_POLYGON_MODE_FRONT, 6);
+	sb_method(sb, NV30_3D_POLYGON_MODE_FRONT, 6);
         sb_data(sb, nvgl_polygon_mode(cso->fill_front));
         sb_data(sb, nvgl_polygon_mode(cso->fill_back));
 	switch (cso->cull_face) {
 	case PIPE_FACE_FRONT:
-		sb_data(sb, NV34TCL_CULL_FACE_FRONT);
+		sb_data(sb, NV30_3D_CULL_FACE_FRONT);
 		break;
 	case PIPE_FACE_BACK:
-		sb_data(sb, NV34TCL_CULL_FACE_BACK);
+		sb_data(sb, NV30_3D_CULL_FACE_BACK);
 		break;
 	case PIPE_FACE_FRONT_AND_BACK:
-		sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
+		sb_data(sb, NV30_3D_CULL_FACE_FRONT_AND_BACK);
 		break;
 	default:
-		sb_data(sb, NV34TCL_CULL_FACE_BACK);
+		sb_data(sb, NV30_3D_CULL_FACE_BACK);
 		break;
 	}
 	if (cso->front_ccw) {
-		sb_data(sb, NV34TCL_FRONT_FACE_CCW);
+		sb_data(sb, NV30_3D_FRONT_FACE_CCW);
 	} else {
-		sb_data(sb, NV34TCL_FRONT_FACE_CW);
+		sb_data(sb, NV30_3D_FRONT_FACE_CW);
 	}
 	sb_data(sb, cso->poly_smooth ? 1 : 0);
 	sb_data(sb, (cso->cull_face != PIPE_FACE_NONE) ? 1 : 0);
 
-	sb_method(sb, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
+	sb_method(sb, NV30_3D_POLYGON_STIPPLE_ENABLE, 1);
 	sb_data(sb, cso->poly_stipple_enable ? 1 : 0);
 
-	sb_method(sb, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
+	sb_method(sb, NV30_3D_POLYGON_OFFSET_POINT_ENABLE, 3);
         sb_data(sb, cso->offset_point);
         sb_data(sb, cso->offset_line);
         sb_data(sb, cso->offset_tri);
 
 	if (cso->offset_point || cso->offset_line || cso->offset_tri) {
-		sb_method(sb, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
+		sb_method(sb, NV30_3D_POLYGON_OFFSET_FACTOR, 2);
 		sb_data(sb, fui(cso->offset_scale));
 		sb_data(sb, fui(cso->offset_units * 2));
 	}
 
-	sb_method(sb, NV34TCL_FLATSHADE_FIRST, 1);
+	sb_method(sb, NV30_3D_FLATSHADE_FIRST, 1);
 	sb_data(sb, cso->flatshade_first);
 
 	rsso->pipe = *cso;
@@ -201,41 +201,41 @@ nvfx_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nvfx_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_statebuf_builder sb = sb_init(zsaso->sb);
 
-	sb_method(sb, NV34TCL_DEPTH_FUNC, 1);
+	sb_method(sb, NV30_3D_DEPTH_FUNC, 1);
 	sb_data  (sb, nvgl_comparison_op(cso->depth.func));
 
-	sb_method(sb, NV34TCL_ALPHA_FUNC_ENABLE, 3);
+	sb_method(sb, NV30_3D_ALPHA_FUNC_ENABLE, 3);
 	sb_data  (sb, cso->alpha.enabled ? 1 : 0);
 	sb_data  (sb, nvgl_comparison_op(cso->alpha.func));
 	sb_data  (sb, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
-		sb_method(sb, NV34TCL_STENCIL_FRONT_ENABLE, 3);
+		sb_method(sb, NV30_3D_STENCIL_ENABLE(0), 3);
 		sb_data  (sb, cso->stencil[0].enabled ? 1 : 0);
 		sb_data  (sb, cso->stencil[0].writemask);
 		sb_data  (sb, nvgl_comparison_op(cso->stencil[0].func));
-		sb_method(sb, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
+		sb_method(sb, NV30_3D_STENCIL_FUNC_MASK(0), 4);
 		sb_data  (sb, cso->stencil[0].valuemask);
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].fail_op));
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		sb_method(sb, NV34TCL_STENCIL_FRONT_ENABLE, 1);
+		sb_method(sb, NV30_3D_STENCIL_ENABLE(0), 1);
 		sb_data  (sb, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		sb_method(sb, NV34TCL_STENCIL_BACK_ENABLE, 3);
+		sb_method(sb, NV30_3D_STENCIL_ENABLE(1), 3);
 		sb_data  (sb, cso->stencil[1].enabled ? 1 : 0);
 		sb_data  (sb, cso->stencil[1].writemask);
 		sb_data  (sb, nvgl_comparison_op(cso->stencil[1].func));
-		sb_method(sb, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
+		sb_method(sb, NV30_3D_STENCIL_FUNC_MASK(1), 4);
 		sb_data  (sb, cso->stencil[1].valuemask);
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].fail_op));
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		sb_method(sb, NV34TCL_STENCIL_BACK_ENABLE, 1);
+		sb_method(sb, NV30_3D_STENCIL_ENABLE(1), 1);
 		sb_data  (sb, 0);
 	}
 

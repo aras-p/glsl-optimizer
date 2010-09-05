@@ -11,7 +11,7 @@ nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 
 	WAIT_RING(chan, 11);
 	if(nvfx->render_mode == HW) {
-		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_TRANSLATE_X, 8));
+		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_TRANSLATE_X, 8));
 		OUT_RINGf(chan, vpt->translate[0]);
 		OUT_RINGf(chan, vpt->translate[1]);
 		OUT_RINGf(chan, vpt->translate[2]);
@@ -23,7 +23,7 @@ nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 		OUT_RING(chan, RING_3D(0x1d78, 1));
 		OUT_RING(chan, 1);
 	} else {
-		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_TRANSLATE_X, 8));
+		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_TRANSLATE_X, 8));
 		OUT_RINGf(chan, 0.0f);
 		OUT_RINGf(chan, 0.0f);
 		OUT_RINGf(chan, 0.0f);
@@ -49,7 +49,7 @@ nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 	nvfx->state.scissor_enabled = rast->scissor;
 
 	WAIT_RING(chan, 3);
-	OUT_RING(chan, RING_3D(NV34TCL_SCISSOR_HORIZ, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_SCISSOR_HORIZ, 2));
 	if (nvfx->state.scissor_enabled) {
 		OUT_RING(chan, ((s->maxx - s->minx) << 16) | s->minx);
 		OUT_RING(chan, ((s->maxy - s->miny) << 16) | s->miny);
@@ -66,9 +66,9 @@ nvfx_state_sr_validate(struct nvfx_context *nvfx)
 	struct pipe_stencil_ref *sr = &nvfx->stencil_ref;
 
 	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV34TCL_STENCIL_FRONT_FUNC_REF, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_STENCIL_FUNC_REF(0), 1));
 	OUT_RING(chan, sr->ref_value[0]);
-	OUT_RING(chan, RING_3D(NV34TCL_STENCIL_BACK_FUNC_REF, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_STENCIL_FUNC_REF(1), 1));
 	OUT_RING(chan, sr->ref_value[1]);
 }
 
@@ -79,7 +79,7 @@ nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 	struct pipe_blend_color *bcol = &nvfx->blend_colour;
 
 	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV34TCL_BLEND_COLOR, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_BLEND_COLOR, 1));
 	OUT_RING(chan, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
@@ -92,7 +92,7 @@ nvfx_state_stipple_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
 
 	WAIT_RING(chan, 33);
-	OUT_RING(chan, RING_3D(NV34TCL_POLYGON_STIPPLE_PATTERN(0), 32));
+	OUT_RING(chan, RING_3D(NV30_3D_POLYGON_STIPPLE_PATTERN(0), 32));
 	OUT_RINGp(chan, nvfx->stipple, 32);
 }
 
@@ -101,11 +101,11 @@ nvfx_coord_conventions_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	unsigned value = nvfx->hw_fragprog->coord_conventions;
-	if(value & NV34TCL_COORD_CONVENTIONS_ORIGIN_INVERTED)
-		value |= nvfx->framebuffer.height << NV34TCL_COORD_CONVENTIONS_HEIGHT_SHIFT;
+	if(value & NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED)
+		value |= nvfx->framebuffer.height << NV30_3D_COORD_CONVENTIONS_HEIGHT__SHIFT;
 
 	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV34TCL_COORD_CONVENTIONS, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_COORD_CONVENTIONS, 1));
 	OUT_RING(chan, value);
 }
 
@@ -116,27 +116,27 @@ nvfx_ucp_validate(struct nvfx_context* nvfx)
 	unsigned enables[7] =
 	{
 			0,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4,
-			NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE5,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE4,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE4 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE5,
 	};
 
 	if(!nvfx->use_vp_clipping)
 	{
 		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANES_ENABLE, 1));
 		OUT_RING(chan, 0);
 
 		WAIT_RING(chan, 6 * 4 + 1);
-		OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANE_A(0), nvfx->clip.nr * 4));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANE(0, 0), nvfx->clip.nr * 4));
 		OUT_RINGp(chan, &nvfx->clip.ucp[0][0], nvfx->clip.nr * 4);
 	}
 
 	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANES_ENABLE, 1));
 	OUT_RING(chan, enables[nvfx->clip.nr]);
 }
 
@@ -155,17 +155,17 @@ nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 		if(vp->clip_nr >= 0)
 		{
 			idx = vp->nr_insns - 7 + vp->clip_nr;
-			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
 			OUT_RING(chan,  vp->exec->start + idx);
-			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
+			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
 			OUT_RINGp (chan, vp->insns[idx].data, 4);
 		}
 
 		 /* set last instruction bit */
 		idx = vp->nr_insns - 7 + nvfx->clip.nr;
-		OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
 		OUT_RING(chan,  vp->exec->start + idx);
-		OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
 		OUT_RINGp(chan, vp->insns[idx].data, 3);
 		OUT_RING(chan, vp->insns[idx].data[3] | 1);
 		vp->clip_nr = nvfx->clip.nr;
@@ -175,7 +175,7 @@ nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 	WAIT_RING(chan, 6 * 6);
 	for(i = 0; i < nvfx->clip.nr; ++i)
 	{
-		OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_CONST_ID, 5));
 		OUT_RING(chan, vp->data->start + i);
 		OUT_RINGp (chan, nvfx->clip.ucp[i], 4);
 	}
@@ -288,7 +288,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		if(vp_output != nvfx->hw_vp_output)
 		{
 			WAIT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV40TCL_VP_RESULT_EN, 1));
+			OUT_RING(chan, RING_3D(NV40_3D_VP_RESULT_EN, 1));
 			OUT_RING(chan, vp_output);
 			nvfx->hw_vp_output = vp_output;
 		}
@@ -321,7 +321,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_ZSA || (new_fb_mode >= 0))
 	{
 		WAIT_RING(chan, 3);
-		OUT_RING(chan, RING_3D(NV34TCL_DEPTH_WRITE_ENABLE, 2));
+		OUT_RING(chan, RING_3D(NV30_3D_DEPTH_WRITE_ENABLE, 2));
 		OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.writemask);
 	        OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
 	}
@@ -335,9 +335,9 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		if(nvfx->is_nv4x)
 		{
 			WAIT_RING(chan, 4);
-			OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+			OUT_RING(chan, RING_3D(NV40_3D_TEX_CACHE_CTL, 1));
 			OUT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+			OUT_RING(chan, RING_3D(NV40_3D_TEX_CACHE_CTL, 1));
 			OUT_RING(chan, 1);
 		}
 	}

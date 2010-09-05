@@ -4,15 +4,15 @@
 #include "util/u_simple_screen.h"
 
 #include "nouveau/nouveau_screen.h"
-
+#include "nouveau/nv_object.xml.h"
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
 #include "nvfx_tex.h"
 
-#define NV30TCL_CHIPSET_3X_MASK 0x00000003
-#define NV34TCL_CHIPSET_3X_MASK 0x00000010
-#define NV35TCL_CHIPSET_3X_MASK 0x000001e0
+#define NV30_3D_CHIPSET_3X_MASK 0x00000003
+#define NV34_3D_CHIPSET_3X_MASK 0x00000010
+#define NV35_3D_CHIPSET_3X_MASK 0x000001e0
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
@@ -256,9 +256,9 @@ static void nv30_screen_init(struct nvfx_screen *screen)
 
 	/* TODO: perhaps we should do some of this on nv40 too? */
 	for (i=1; i<8; i++) {
-		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_CLIP_HORIZ(i), 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_CLIP_HORIZ(i), 1));
 		OUT_RING(chan, 0);
-		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_CLIP_VERT(i), 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_CLIP_VERT(i), 1));
 		OUT_RING(chan, 0);
 	}
 
@@ -294,14 +294,14 @@ static void nv30_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, RING_3D(0x1d88, 1));
 	OUT_RING(chan, 0x00001200);
 
-	OUT_RING(chan, RING_3D(NV34TCL_RC_ENABLE, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_RC_ENABLE, 1));
 	OUT_RING(chan, 0);
 
-	OUT_RING(chan, RING_3D(NV34TCL_DEPTH_RANGE_NEAR, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DEPTH_RANGE_NEAR, 2));
 	OUT_RING(chan, fui(0.0));
 	OUT_RING(chan, fui(1.0));
 
-	OUT_RING(chan, RING_3D(NV34TCL_MULTISAMPLE_CONTROL, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_MULTISAMPLE_CONTROL, 1));
 	OUT_RING(chan, 0xffff0000);
 
 	/* enables use of vp rather than fixed-function somehow */
@@ -313,7 +313,7 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 {
 	struct nouveau_channel *chan = screen->base.channel;
 
-	OUT_RING(chan, RING_3D(NV40TCL_DMA_COLOR2, 2));
+	OUT_RING(chan, RING_3D(NV40_3D_DMA_COLOR2, 2));
 	OUT_RING(chan, screen->base.channel->vram->handle);
 	OUT_RING(chan, screen->base.channel->vram->handle);
 
@@ -343,8 +343,8 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, RING_3D(0x1e94, 1));
 	OUT_RING(chan, 0x00000001);
 
-	OUT_RING(chan, RING_3D(NV40TCL_MIPMAP_ROUNDING, 1));
-	OUT_RING(chan, NV40TCL_MIPMAP_ROUNDING_DOWN);
+	OUT_RING(chan, RING_3D(NV40_3D_MIPMAP_ROUNDING, 1));
+	OUT_RING(chan, NV40_3D_MIPMAP_ROUNDING_MODE_DOWN);
 }
 
 static unsigned
@@ -406,23 +406,23 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	switch (dev->chipset & 0xf0) {
 	case 0x30:
-		if (NV30TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = 0x0397;
-		else if (NV34TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = 0x0697;
-		else if (NV35TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = 0x0497;
+		if (NV30_3D_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
+			eng3d_class = NV30_3D;
+		else if (NV34_3D_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
+			eng3d_class = NV34_3D;
+		else if (NV35_3D_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
+			eng3d_class = NV35_3D;
 		break;
 	case 0x40:
 		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = NV40TCL;
+			eng3d_class = NV40_3D;
 		else if (NV4X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = NV44TCL;
+			eng3d_class = NV44_3D;
 		screen->is_nv4x = ~0;
 		break;
 	case 0x60:
 		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			eng3d_class = NV44TCL;
+			eng3d_class = NV44_3D;
 		screen->is_nv4x = ~0;
 		break;
 	}
@@ -449,7 +449,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	screen->vertex_buffer_reloc_flags = nvfx_screen_get_vertex_buffer_flags(screen);
 
 	/* surely both nv3x and nv44 support index buffers too: find out how and test that */
-	if(eng3d_class == NV40TCL)
+	if(eng3d_class == NV40_3D)
 		screen->index_buffer_reloc_flags = screen->vertex_buffer_reloc_flags;
 
 	if(!screen->force_swtnl && screen->vertex_buffer_reloc_flags == screen->index_buffer_reloc_flags)
@@ -508,25 +508,25 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Static eng3d initialisation */
 	/* note that we just started using the channel, so we must have space in the pushbuffer */
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_NOTIFY, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_NOTIFY, 1));
 	OUT_RING(chan, screen->sync->handle);
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_TEXTURE0, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_TEXTURE0, 2));
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->gart->handle);
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_COLOR1, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR1, 1));
 	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_COLOR0, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR0, 2));
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_VTXBUF0, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_VTXBUF0, 2));
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->gart->handle);
 
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_FENCE, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_FENCE, 2));
 	OUT_RING(chan, 0);
 	OUT_RING(chan, screen->query->handle);
 
-	OUT_RING(chan, RING_3D(NV34TCL_DMA_IN_MEMORY7, 2));
+	OUT_RING(chan, RING_3D(NV30_3D_DMA_UNK1AC, 2));
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->vram->handle);
 

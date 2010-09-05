@@ -14,19 +14,19 @@ nv40_sampler_state_init(struct pipe_context *pipe,
 		ps->wrap |= (1 << 5);
 
 		if (cso->max_anisotropy >= 16)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_16X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_16X;
 		else if (cso->max_anisotropy >= 12)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_12X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_12X;
 		else if (cso->max_anisotropy >= 10)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_10X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_10X;
 		else if (cso->max_anisotropy >= 8)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_8X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_8X;
 		else if (cso->max_anisotropy >= 6)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_6X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_6X;
 		else if (cso->max_anisotropy >= 4)
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_4X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_4X;
 		else
-			ps->en |= NV40TCL_TEX_ENABLE_ANISO_2X;
+			ps->en |= NV40_3D_TEX_ENABLE_ANISO_2X;
 	}
 
 	limit = CLAMP(cso->lod_bias, -16.0, 15.0 + (255.0 / 256.0));
@@ -35,7 +35,7 @@ nv40_sampler_state_init(struct pipe_context *pipe,
 	ps->max_lod = (int)(CLAMP(cso->max_lod, 0.0, 15.0 + (255.0 / 256.0)) * 256.0);
 	ps->min_lod = (int)(CLAMP(cso->min_lod, 0.0, 15.0 + (255.0 / 256.0)) * 256.0);
 
-	ps->en |= NV40TCL_TEX_ENABLE_ENABLE;
+	ps->en |= NV40_3D_TEX_ENABLE_ENABLE;
 }
 
 void
@@ -52,21 +52,21 @@ nv40_sampler_view_init(struct pipe_context *pipe,
 	txf = sv->u.init_fmt;
 	txf |= 0x8000;
 	if(pt->target == PIPE_TEXTURE_CUBE)
-		txf |= ((pt->last_level + 1) << NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
+		txf |= ((pt->last_level + 1) << NV40_3D_TEX_FORMAT_MIPMAP_COUNT__SHIFT);
 	else
-		txf |= (((sv->base.last_level - sv->base.first_level) + 1) << NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
+		txf |= (((sv->base.last_level - sv->base.first_level) + 1) << NV40_3D_TEX_FORMAT_MIPMAP_COUNT__SHIFT);
 
 	if (!mt->linear_pitch)
 		sv->u.nv40.npot_size2 = 0;
 	else {
 		sv->u.nv40.npot_size2  = mt->linear_pitch;
-		txf |= NV40TCL_TEX_FORMAT_LINEAR;
+		txf |= NV40_3D_TEX_FORMAT_LINEAR;
 	}
 
 	sv->u.nv40.fmt[0] = tf->fmt[4] | txf;
 	sv->u.nv40.fmt[1] = tf->fmt[5] | txf;
 
-	sv->u.nv40.npot_size2 |= (u_minify(pt->depth0, level) << NV40TCL_TEX_SIZE1_DEPTH_SHIFT);
+	sv->u.nv40.npot_size2 |= (u_minify(pt->depth0, level) << NV40_3D_TEX_SIZE1_DEPTH__SHIFT);
 
 	sv->lod_offset = (sv->base.first_level - level) * 256;
 	sv->max_lod_limit = (sv->base.last_level - level) * 256;
@@ -87,17 +87,17 @@ nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 	txf = sv->u.nv40.fmt[ps->compare] | ps->fmt;
 
 	MARK_RING(chan, 11, 2);
-	OUT_RING(chan, RING_3D(NV34TCL_TX_OFFSET(unit), 8));
+	OUT_RING(chan, RING_3D(NV30_3D_TEX_OFFSET(unit), 8));
 	OUT_RELOC(chan, bo, sv->offset, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	OUT_RELOC(chan, bo, txf, tex_flags | NOUVEAU_BO_OR,
-			NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+			NV30_3D_TEX_FORMAT_DMA0, NV30_3D_TEX_FORMAT_DMA1);
 	OUT_RING(chan, (ps->wrap & sv->wrap_mask) | sv->wrap);
 	OUT_RING(chan, ps->en | (min_lod << 19) | (max_lod << 7));
 	OUT_RING(chan, sv->swizzle);
 	OUT_RING(chan, ps->filt | sv->filt);
 	OUT_RING(chan, sv->npot_size);
 	OUT_RING(chan, ps->bcol);
-	OUT_RING(chan, RING_3D(NV40TCL_TEX_SIZE1(unit), 1));
+	OUT_RING(chan, RING_3D(NV40_3D_TEX_SIZE1(unit), 1));
 	OUT_RING(chan, sv->u.nv40.npot_size2);
 
 	nvfx->hw_txf[unit] = txf;

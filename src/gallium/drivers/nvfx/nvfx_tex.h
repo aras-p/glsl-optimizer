@@ -4,7 +4,7 @@
 #include "util/u_math.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include <nouveau/nouveau_class.h>
+
 
 static inline unsigned
 nvfx_tex_wrap_mode(unsigned wrap) {
@@ -12,36 +12,36 @@ nvfx_tex_wrap_mode(unsigned wrap) {
 
 	switch (wrap) {
 	case PIPE_TEX_WRAP_REPEAT:
-		ret = NV34TCL_TX_WRAP_S_REPEAT;
+		ret = NV30_3D_TEX_WRAP_S_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
-		ret = NV34TCL_TX_WRAP_S_MIRRORED_REPEAT;
+		ret = NV30_3D_TEX_WRAP_S_MIRRORED_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-		ret = NV34TCL_TX_WRAP_S_CLAMP_TO_EDGE;
+		ret = NV30_3D_TEX_WRAP_S_CLAMP_TO_EDGE;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-		ret = NV34TCL_TX_WRAP_S_CLAMP_TO_BORDER;
+		ret = NV30_3D_TEX_WRAP_S_CLAMP_TO_BORDER;
 		break;
 	case PIPE_TEX_WRAP_CLAMP:
-		ret = NV34TCL_TX_WRAP_S_CLAMP;
+		ret = NV30_3D_TEX_WRAP_S_CLAMP;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP_TO_EDGE;
+		ret = NV40_3D_TEX_WRAP_S_MIRROR_CLAMP_TO_EDGE;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP_TO_BORDER;
+		ret = NV40_3D_TEX_WRAP_S_MIRROR_CLAMP_TO_BORDER;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP:
-		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP;
+		ret = NV40_3D_TEX_WRAP_S_MIRROR_CLAMP;
 		break;
 	default:
 		assert(0);
-		ret = NV34TCL_TX_WRAP_S_REPEAT;
+		ret = NV30_3D_TEX_WRAP_S_REPEAT;
 		break;
 	}
 
-	return ret >> NV34TCL_TX_WRAP_S_SHIFT;
+	return ret >> NV30_3D_TEX_WRAP_S__SHIFT;
 }
 
 static inline unsigned
@@ -49,21 +49,21 @@ nvfx_tex_wrap_compare_mode(unsigned func)
 {
 	switch (func) {
 	case PIPE_FUNC_NEVER:
-		return NV34TCL_TX_WRAP_RCOMP_NEVER;
+		return NV30_3D_TEX_WRAP_RCOMP_NEVER;
 	case PIPE_FUNC_GREATER:
-		return NV34TCL_TX_WRAP_RCOMP_GREATER;
+		return NV30_3D_TEX_WRAP_RCOMP_GREATER;
 	case PIPE_FUNC_EQUAL:
-		return NV34TCL_TX_WRAP_RCOMP_EQUAL;
+		return NV30_3D_TEX_WRAP_RCOMP_EQUAL;
 	case PIPE_FUNC_GEQUAL:
-		return NV34TCL_TX_WRAP_RCOMP_GEQUAL;
+		return NV30_3D_TEX_WRAP_RCOMP_GEQUAL;
 	case PIPE_FUNC_LESS:
-		return NV34TCL_TX_WRAP_RCOMP_LESS;
+		return NV30_3D_TEX_WRAP_RCOMP_LESS;
 	case PIPE_FUNC_NOTEQUAL:
-		return NV34TCL_TX_WRAP_RCOMP_NOTEQUAL;
+		return NV30_3D_TEX_WRAP_RCOMP_NOTEQUAL;
 	case PIPE_FUNC_LEQUAL:
-		return NV34TCL_TX_WRAP_RCOMP_LEQUAL;
+		return NV30_3D_TEX_WRAP_RCOMP_LEQUAL;
 	case PIPE_FUNC_ALWAYS:
-		return NV34TCL_TX_WRAP_RCOMP_ALWAYS;
+		return NV30_3D_TEX_WRAP_RCOMP_ALWAYS;
 	default:
 		assert(0);
 		return 0;
@@ -75,11 +75,11 @@ static inline unsigned nvfx_tex_filter(const struct pipe_sampler_state* cso)
 	unsigned filter = 0;
 	switch (cso->mag_img_filter) {
 	case PIPE_TEX_FILTER_LINEAR:
-		filter |= NV34TCL_TX_FILTER_MAGNIFY_LINEAR;
+		filter |= NV30_3D_TEX_FILTER_MAG_LINEAR;
 		break;
 	case PIPE_TEX_FILTER_NEAREST:
 	default:
-		filter |= NV34TCL_TX_FILTER_MAGNIFY_NEAREST;
+		filter |= NV30_3D_TEX_FILTER_MAG_NEAREST;
 		break;
 	}
 
@@ -87,14 +87,14 @@ static inline unsigned nvfx_tex_filter(const struct pipe_sampler_state* cso)
 	case PIPE_TEX_FILTER_LINEAR:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
+			filter |= NV30_3D_TEX_FILTER_MIN_LINEAR_MIPMAP_NEAREST;
 			break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
+			filter |= NV30_3D_TEX_FILTER_MIN_LINEAR_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR;
+			filter |= NV30_3D_TEX_FILTER_MIN_LINEAR;
 			break;
 		}
 		break;
@@ -102,14 +102,14 @@ static inline unsigned nvfx_tex_filter(const struct pipe_sampler_state* cso)
 	default:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
+			filter |= NV30_3D_TEX_FILTER_MIN_NEAREST_MIPMAP_NEAREST;
 		break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
+			filter |= NV30_3D_TEX_FILTER_MIN_NEAREST_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST;
+			filter |= NV30_3D_TEX_FILTER_MIN_NEAREST;
 			break;
 		}
 		break;

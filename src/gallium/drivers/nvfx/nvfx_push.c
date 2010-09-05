@@ -29,7 +29,7 @@ emit_edgeflag(void *priv, boolean enabled)
 	struct push_context* ctx = priv;
 	struct nouveau_channel *chan = ctx->chan;
 
-	OUT_RING(chan, RING_3D(NV34TCL_EDGEFLAG_ENABLE, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_EDGEFLAG, 1));
 	OUT_RING(chan, enabled ? 1 : 0);
 }
 
@@ -44,7 +44,7 @@ emit_vertices_lookup8(void *priv, unsigned start, unsigned count)
                 unsigned push = MIN2(count, ctx->max_vertices_per_packet);
                 unsigned length = push * ctx->vertex_length;
 
-                OUT_RING(ctx->chan, RING_3D_NI(NV34TCL_VERTEX_DATA, length));
+                OUT_RING(ctx->chan, RING_3D_NI(NV30_3D_VERTEX_DATA, length));
                 ctx->translate->run_elts8(ctx->translate, elts, push, 0, ctx->chan->cur);
                 ctx->chan->cur += length;
 
@@ -64,7 +64,7 @@ emit_vertices_lookup16(void *priv, unsigned start, unsigned count)
                 unsigned push = MIN2(count, ctx->max_vertices_per_packet);
                 unsigned length = push * ctx->vertex_length;
 
-                OUT_RING(ctx->chan, RING_3D_NI(NV34TCL_VERTEX_DATA, length));
+                OUT_RING(ctx->chan, RING_3D_NI(NV30_3D_VERTEX_DATA, length));
                 ctx->translate->run_elts16(ctx->translate, elts, push, 0, ctx->chan->cur);
                 ctx->chan->cur += length;
 
@@ -84,7 +84,7 @@ emit_vertices_lookup32(void *priv, unsigned start, unsigned count)
                 unsigned push = MIN2(count, ctx->max_vertices_per_packet);
                 unsigned length = push * ctx->vertex_length;
 
-                OUT_RING(ctx->chan, RING_3D_NI(NV34TCL_VERTEX_DATA, length));
+                OUT_RING(ctx->chan, RING_3D_NI(NV30_3D_VERTEX_DATA, length));
                 ctx->translate->run_elts(ctx->translate, elts, push, 0, ctx->chan->cur);
                 ctx->chan->cur += length;
 
@@ -103,7 +103,7 @@ emit_vertices(void *priv, unsigned start, unsigned count)
 		unsigned push = MIN2(count, ctx->max_vertices_per_packet);
 		unsigned length = push * ctx->vertex_length;
 
-		OUT_RING(ctx->chan, RING_3D_NI(NV34TCL_VERTEX_DATA, length));
+		OUT_RING(ctx->chan, RING_3D_NI(NV30_3D_VERTEX_DATA, length));
 		ctx->translate->run(ctx->translate, start, push, 0, ctx->chan->cur);
 		ctx->chan->cur += length;
 
@@ -141,13 +141,13 @@ emit_ranges(void* priv, unsigned start, unsigned vc, unsigned reg)
 static void
 emit_ib_ranges(void* priv, unsigned start, unsigned vc)
 {
-	emit_ranges(priv, start, vc, NV34TCL_VB_INDEX_BATCH);
+	emit_ranges(priv, start, vc, NV30_3D_VB_INDEX_BATCH);
 }
 
 static void
 emit_vb_ranges(void* priv, unsigned start, unsigned vc)
 {
-	emit_ranges(priv, start, vc, NV34TCL_VB_VERTEX_BATCH);
+	emit_ranges(priv, start, vc, NV30_3D_VB_VERTEX_BATCH);
 }
 
 static INLINE void
@@ -159,7 +159,7 @@ emit_elt8(void* priv, unsigned start, unsigned vc)
 	int idxbias = ctx->idxbias;
 
 	if (vc & 1) {
-		OUT_RING(chan, RING_3D(NV34TCL_VB_ELEMENT_U32, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VB_ELEMENT_U32, 1));
 		OUT_RING  (chan, elts[0]);
 		elts++; vc--;
 	}
@@ -168,7 +168,7 @@ emit_elt8(void* priv, unsigned start, unsigned vc)
 		unsigned i;
 		unsigned push = MIN2(vc, 2047 * 2);
 
-		OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U16, push >> 1));
+		OUT_RING(chan, RING_3D_NI(NV30_3D_VB_ELEMENT_U16, push >> 1));
 		for (i = 0; i < push; i+=2)
 			OUT_RING(chan, ((elts[i+1] + idxbias) << 16) | (elts[i] + idxbias));
 
@@ -186,7 +186,7 @@ emit_elt16(void* priv, unsigned start, unsigned vc)
 	int idxbias = ctx->idxbias;
 
 	if (vc & 1) {
-		OUT_RING(chan, RING_3D(NV34TCL_VB_ELEMENT_U32, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VB_ELEMENT_U32, 1));
 		OUT_RING  (chan, elts[0]);
 		elts++; vc--;
 	}
@@ -195,7 +195,7 @@ emit_elt16(void* priv, unsigned start, unsigned vc)
 		unsigned i;
 		unsigned push = MIN2(vc, 2047 * 2);
 
-		OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U16, push >> 1));
+		OUT_RING(chan, RING_3D_NI(NV30_3D_VB_ELEMENT_U16, push >> 1));
 		for (i = 0; i < push; i+=2)
 			OUT_RING(chan, ((elts[i+1] + idxbias) << 16) | (elts[i] + idxbias));
 
@@ -215,7 +215,7 @@ emit_elt32(void* priv, unsigned start, unsigned vc)
 	while (vc) {
 		unsigned push = MIN2(vc, 2047);
 
-		OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U32, push));
+		OUT_RING(chan, RING_3D_NI(NV30_3D_VB_ELEMENT_U32, push));
 		assert(AVAIL_RING(chan) >= push);
 		if(idxbias)
 		{
@@ -379,10 +379,10 @@ nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 					}
 				}
 
-				OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
+				OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
 				OUT_RING(chan, hw_mode);
 				done = util_split_prim_next(&s, max_verts);
-				OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
+				OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
 				OUT_RING(chan, 0);
 
 				if(done)

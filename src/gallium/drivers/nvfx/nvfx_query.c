@@ -73,9 +73,9 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	nouveau_notifier_reset(nvfx->screen->query, q->object->start);
 
 	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV34TCL_QUERY_RESET, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_RESET, 1));
 	OUT_RING(chan, 1);
-	OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
 	OUT_RING(chan, 1);
 
 	q->ready = FALSE;
@@ -93,10 +93,10 @@ nvfx_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 	assert(nvfx->query == pq);
 
 	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV34TCL_QUERY_GET, 1));
-	OUT_RING  (chan, (0x01 << NV34TCL_QUERY_GET_UNK24_SHIFT) |
-		   ((q->object->start * 32) << NV34TCL_QUERY_GET_OFFSET_SHIFT));
-	OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_GET, 1));
+	OUT_RING  (chan, (0x01 << NV30_3D_QUERY_GET_UNK24__SHIFT) |
+		   ((q->object->start * 32) << NV30_3D_QUERY_GET_OFFSET__SHIFT));
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
 	OUT_RING(chan, 0);
 	FIRE_RING(chan);
 

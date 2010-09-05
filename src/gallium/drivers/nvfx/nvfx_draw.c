@@ -29,11 +29,11 @@ nvfx_render_flush(struct draw_stage *stage, unsigned flags)
 	struct nvfx_context *nvfx = rs->nvfx;
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
 
-	if (rs->prim != NV34TCL_VERTEX_BEGIN_END_STOP) {
+	if (rs->prim != NV30_3D_VERTEX_BEGIN_END_STOP) {
 		assert(AVAIL_RING(chan) >= 2);
-		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
-		OUT_RING(chan, NV34TCL_VERTEX_BEGIN_END_STOP);
-		rs->prim = NV34TCL_VERTEX_BEGIN_END_STOP;
+		OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
+		OUT_RING(chan, NV30_3D_VERTEX_BEGIN_END_STOP);
+		rs->prim = NV30_3D_VERTEX_BEGIN_END_STOP;
 	}
 }
 
@@ -62,9 +62,9 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 
 	/* Switch primitive modes if necessary */
 	if (rs->prim != mode) {
-		if (rs->prim != NV34TCL_VERTEX_BEGIN_END_STOP) {
-			OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
-			OUT_RING(chan, NV34TCL_VERTEX_BEGIN_END_STOP);
+		if (rs->prim != NV30_3D_VERTEX_BEGIN_END_STOP) {
+			OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
+			OUT_RING(chan, NV30_3D_VERTEX_BEGIN_END_STOP);
 		}
 
 		/* XXX: any command a lot of times seems to (mostly) fix corruption that would otherwise happen */
@@ -79,12 +79,12 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			}
 		}
 
-		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, mode);
 		rs->prim = mode;
 	}
 
-	OUT_RING(chan, RING_3D_NI(NV34TCL_VERTEX_DATA, num_attribs * 4 * count));
+	OUT_RING(chan, RING_3D_NI(NV30_3D_VERTEX_DATA, num_attribs * 4 * count));
 	if(no_elements) {
 		OUT_RING(chan, 0);
 		OUT_RING(chan, 0);
@@ -107,19 +107,19 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 static void
 nvfx_render_point(struct draw_stage *draw, struct prim_header *prim)
 {
-	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_POINTS, 1);
+	nvfx_render_prim(draw, prim, NV30_3D_VERTEX_BEGIN_END_POINTS, 1);
 }
 
 static void
 nvfx_render_line(struct draw_stage *draw, struct prim_header *prim)
 {
-	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_LINES, 2);
+	nvfx_render_prim(draw, prim, NV30_3D_VERTEX_BEGIN_END_LINES, 2);
 }
 
 static void
 nvfx_render_tri(struct draw_stage *draw, struct prim_header *prim)
 {
-	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_TRIANGLES, 3);
+	nvfx_render_prim(draw, prim, NV30_3D_VERTEX_BEGIN_END_TRIANGLES, 3);
 }
 
 static void

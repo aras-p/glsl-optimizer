@@ -205,7 +205,7 @@ nvfx_fp_emit(struct nvfx_fpc *fpc, struct nvfx_insn insn)
 	memset(hw, 0, sizeof(uint32_t) * 4);
 
 	if (insn.op == NVFX_FP_OP_OPCODE_KIL)
-		fp->fp_control |= NV34TCL_FP_CONTROL_USES_KIL;
+		fp->fp_control |= NV30_3D_FP_CONTROL_USES_KIL;
 	hw[0] |= (insn.op << NVFX_FP_OP_OPCODE_SHIFT);
 	hw[0] |= (insn.mask << NVFX_FP_OP_OUTMASK_SHIFT);
 	hw[2] |= (insn.scale << NVFX_FP_OP_DST_SCALE_SHIFT);
@@ -1070,10 +1070,10 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	for (unsigned i = 0; i < pfp->info.num_properties; ++i) {
 		if (pfp->info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN) {
 			if(pfp->info.properties[i].data[0])
-				fp->coord_conventions |= NV34TCL_COORD_CONVENTIONS_ORIGIN_INVERTED;
+				fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED;
 		} else if (pfp->info.properties[i].name == TGSI_PROPERTY_FS_COORD_PIXEL_CENTER) {
 			if(pfp->info.properties[i].data[0])
-				fp->coord_conventions |= NV34TCL_COORD_CONVENTIONS_CENTER_INTEGER;
+				fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_CENTER_INTEGER;
 		}
 	}
 
@@ -1124,7 +1124,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	if(!nvfx->is_nv4x)
 		fp->fp_control |= (fpc->num_regs-1)/2;
 	else
-		fp->fp_control |= fpc->num_regs << NV40TCL_FP_CONTROL_TEMP_COUNT_SHIFT;
+		fp->fp_control |= fpc->num_regs << NV40_3D_FP_CONTROL_TEMP_COUNT__SHIFT;
 
 	/* Terminate final instruction */
 	if(fp->insn)
@@ -1497,17 +1497,17 @@ update:
 		nvfx->hw_fragprog = fp;
 
 		MARK_RING(chan, 8, 1);
-		OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_FP_ACTIVE_PROGRAM, 1));
 		OUT_RELOC(chan, fp->fpbo->bo, offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
-			      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
-			      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
-		OUT_RING(chan, RING_3D(NV34TCL_FP_CONTROL, 1));
+			      NOUVEAU_BO_OR, NV30_3D_FP_ACTIVE_PROGRAM_DMA0,
+			      NV30_3D_FP_ACTIVE_PROGRAM_DMA1);
+		OUT_RING(chan, RING_3D(NV30_3D_FP_CONTROL, 1));
 		OUT_RING(chan, fp->fp_control);
 		if(!nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV34TCL_FP_REG_CONTROL, 1));
+			OUT_RING(chan, RING_3D(NV30_3D_FP_REG_CONTROL, 1));
 			OUT_RING(chan, (1<<16)|0x4);
-			OUT_RING(chan, RING_3D(NV34TCL_TX_UNITS_ENABLE, 1));
+			OUT_RING(chan, RING_3D(NV30_3D_TEX_UNITS_ENABLE, 1));
 			OUT_RING(chan, fp->samplers);
 		}
 	}
@@ -1517,7 +1517,7 @@ update:
 		if(pointsprite_control != nvfx->hw_pointsprite_control)
 		{
 			WAIT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV34TCL_POINT_SPRITE, 1));
+			OUT_RING(chan, RING_3D(NV30_3D_POINT_SPRITE, 1));
 			OUT_RING(chan, pointsprite_control);
 			nvfx->hw_pointsprite_control = pointsprite_control;
 		}
@@ -1536,10 +1536,10 @@ nvfx_fragprog_relocate(struct nvfx_context *nvfx)
 	unsigned fp_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD; // TODO: GART?
 	fp_flags |= NOUVEAU_BO_DUMMY;
 	MARK_RING(chan, 2, 2);
-	OUT_RELOC(chan, bo, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1), fp_flags, 0, 0);
+	OUT_RELOC(chan, bo, RING_3D(NV30_3D_FP_ACTIVE_PROGRAM, 1), fp_flags, 0, 0);
 	OUT_RELOC(chan, bo, offset, fp_flags | NOUVEAU_BO_LOW |
-		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
-		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+		      NOUVEAU_BO_OR, NV30_3D_FP_ACTIVE_PROGRAM_DMA0,
+		      NV30_3D_FP_ACTIVE_PROGRAM_DMA1);
 	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGPROG;
 }
 

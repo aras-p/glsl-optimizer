@@ -1310,7 +1310,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		 * WAIT_RING(chan, 512 * 6);
 		for (i = 0; i < 512; i++) {
 			float v[4] = {0.1, 0,2, 0.3, 0.4};
-			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_CONST_ID, 5));
 			OUT_RING(chan, i);
 			OUT_RINGp(chan, (uint32_t *)v, 4);
 			printf("frob %i\n", i);
@@ -1332,7 +1332,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 			//printf("upload into %i + %i: %f %f %f %f\n", vp->data->start, i, vpd->value[0], vpd->value[1], vpd->value[2], vpd->value[3]);
 
-			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_CONST_ID, 5));
 			OUT_RING(chan, i + vp->data->start);
 			OUT_RINGp(chan, (uint32_t *)vpd->value, 4);
 		}
@@ -1341,10 +1341,10 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	/* Upload vtxprog */
 	if (upload_code) {
 		WAIT_RING(chan, 2 + 5 * vp->nr_insns);
-		OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
 		OUT_RING(chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
+			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
 			//printf("%08x %08x %08x %08x\n", vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
 			OUT_RINGp(chan, vp->insns[i].data, 4);
 		}
@@ -1354,10 +1354,10 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	if(nvfx->dirty & (NVFX_NEW_VERTPROG))
 	{
 		WAIT_RING(chan, 6);
-		OUT_RING(chan, RING_3D(NV34TCL_VP_START_FROM_ID, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_VP_START_FROM_ID, 1));
 		OUT_RING(chan, vp->exec->start);
 		if(nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV40TCL_VP_ATTRIB_EN, 1));
+			OUT_RING(chan, RING_3D(NV40_3D_VP_ATTRIB_EN, 1));
 			OUT_RING(chan, vp->ir);
 		}
 	}

@@ -9,7 +9,7 @@
 #include "nvfx_resource.h"
 
 #include "nouveau/nouveau_channel.h"
-#include "nouveau/nouveau_class.h"
+
 #include "nouveau/nouveau_pushbuf.h"
 
 static inline unsigned
@@ -266,7 +266,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	}
 
 
-	OUT_RING(chan, RING_3D(NV34TCL_VTXFMT(0), elements));
+	OUT_RING(chan, RING_3D(NV30_3D_VTXFMT(0), elements));
 	if(nvfx->use_vertex_buffers)
 	{
 		unsigned idx = 0;
@@ -281,7 +281,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 				idx = ve->idx;
 			}
 
-			OUT_RING(chan, nvfx->vtxelt->vtxfmt[idx] | (vb->stride << NV34TCL_VTXFMT_STRIDE_SHIFT));
+			OUT_RING(chan, nvfx->vtxelt->vtxfmt[idx] | (vb->stride << NV30_3D_VTXFMT_STRIDE__SHIFT));
 			++idx;
 		}
 		if(idx != nvfx->vtxelt->num_elements)
@@ -291,7 +291,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 		OUT_RINGp(chan, nvfx->vtxelt->vtxfmt, nvfx->vtxelt->num_elements);
 
 	for(i = nvfx->vtxelt->num_elements; i < elements; ++i)
-		OUT_RING(chan, NV34TCL_VTXFMT_TYPE_32_FLOAT);
+		OUT_RING(chan, NV30_3D_VTXFMT_TYPE_V32_FLOAT);
 
 	if(nvfx->is_nv4x) {
 		unsigned i;
@@ -302,7 +302,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 		}
 	}
 
-	OUT_RING(chan, RING_3D(NV34TCL_VTXBUF_ADDRESS(0), elements));
+	OUT_RING(chan, RING_3D(NV30_3D_VTXBUF(0), elements));
 	if(nvfx->use_vertex_buffers)
 	{
 		unsigned idx = 0;
@@ -317,7 +317,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 			OUT_RELOC(chan, bo,
 					vb->buffer_offset + ve->src_offset + nvfx->base_vertex * vb->stride,
 					vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-					0, NV34TCL_VTXBUF_ADDRESS_DMA1);
+					0, NV30_3D_VTXBUF_DMA1);
 			++idx;
 		}
 
@@ -350,11 +350,11 @@ nvfx_vbo_swtnl_validate(struct nvfx_context *nvfx)
 
 	WAIT_RING(chan, (1 + 6 + 1 + 2) + elements * 2);
 
-	OUT_RING(chan, RING_3D(NV34TCL_VTXFMT(0), elements));
+	OUT_RING(chan, RING_3D(NV30_3D_VTXFMT(0), elements));
 	for(unsigned i = 0; i < num_outputs; ++i)
-		OUT_RING(chan, (4 << NV34TCL_VTXFMT_SIZE_SHIFT) | NV34TCL_VTXFMT_TYPE_32_FLOAT);
+		OUT_RING(chan, (4 << NV30_3D_VTXFMT_SIZE__SHIFT) | NV30_3D_VTXFMT_TYPE_V32_FLOAT);
 	for(unsigned i = num_outputs; i < elements; ++i)
-		OUT_RING(chan, NV34TCL_VTXFMT_TYPE_32_FLOAT);
+		OUT_RING(chan, NV30_3D_VTXFMT_TYPE_V32_FLOAT);
 
 	if(nvfx->is_nv4x) {
 		unsigned i;
@@ -365,7 +365,7 @@ nvfx_vbo_swtnl_validate(struct nvfx_context *nvfx)
 		}
 	}
 
-	OUT_RING(chan, RING_3D(NV34TCL_VTXBUF_ADDRESS(0), elements));
+	OUT_RING(chan, RING_3D(NV30_3D_VTXBUF(0), elements));
 	for (unsigned i = 0; i < elements; i++)
 		OUT_RING(chan, 0);
 
@@ -395,11 +395,11 @@ nvfx_vbo_relocate(struct nvfx_context *nvfx)
                 struct pipe_vertex_buffer *vb = &nvfx->vtxbuf[ve->vertex_buffer_index];
                 struct nouveau_bo* bo = nvfx_resource(vb->buffer)->bo;
 
-                OUT_RELOC(chan, bo, RING_3D(NV34TCL_VTXBUF_ADDRESS(ve->idx), 1),
+                OUT_RELOC(chan, bo, RING_3D(NV30_3D_VTXBUF(ve->idx), 1),
 				vb_flags, 0, 0);
                 OUT_RELOC(chan, bo, vb->buffer_offset + ve->src_offset + nvfx->base_vertex * vb->stride,
 				vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-				0, NV34TCL_VTXBUF_ADDRESS_DMA1);
+				0, NV30_3D_VTXBUF_DMA1);
 	}
         nvfx->relocs_needed &=~ NVFX_RELOCATE_VTXBUF;
 }
@@ -408,7 +408,7 @@ static void
 nvfx_idxbuf_emit(struct nvfx_context* nvfx, unsigned ib_flags)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	unsigned ib_format = (nvfx->idxbuf.index_size == 2) ? NV34TCL_IDXBUF_FORMAT_TYPE_U16 : NV34TCL_IDXBUF_FORMAT_TYPE_U32;
+	unsigned ib_format = (nvfx->idxbuf.index_size == 2) ? NV30_3D_IDXBUF_FORMAT_TYPE_U16 : NV30_3D_IDXBUF_FORMAT_TYPE_U32;
 	struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf.buffer)->bo;
 	ib_flags |= nvfx->screen->index_buffer_reloc_flags | NOUVEAU_BO_RD;
 
@@ -416,12 +416,12 @@ nvfx_idxbuf_emit(struct nvfx_context* nvfx, unsigned ib_flags)
 
 	MARK_RING(chan, 3, 3);
 	if(ib_flags & NOUVEAU_BO_DUMMY)
-		OUT_RELOC(chan, bo, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2), ib_flags, 0, 0);
+		OUT_RELOC(chan, bo, RING_3D(NV30_3D_IDXBUF_OFFSET, 2), ib_flags, 0, 0);
 	else
-		OUT_RING(chan, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2));
+		OUT_RING(chan, RING_3D(NV30_3D_IDXBUF_OFFSET, 2));
 	OUT_RELOC(chan, bo, nvfx->idxbuf.offset + 1, ib_flags | NOUVEAU_BO_LOW, 0, 0);
 	OUT_RELOC(chan, bo, ib_format, ib_flags | NOUVEAU_BO_OR,
-			0, NV34TCL_IDXBUF_FORMAT_DMA1);
+			0, NV30_3D_IDXBUF_FORMAT_DMA1);
 	nvfx->relocs_needed &=~ NVFX_RELOCATE_IDXBUF;
 }
 
@@ -439,27 +439,27 @@ nvfx_idxbuf_relocate(struct nvfx_context* nvfx)
 
 unsigned nvfx_vertex_formats[PIPE_FORMAT_COUNT] =
 {
-	[PIPE_FORMAT_R32_FLOAT] = NV34TCL_VTXFMT_TYPE_32_FLOAT,
-	[PIPE_FORMAT_R32G32_FLOAT] = NV34TCL_VTXFMT_TYPE_32_FLOAT,
-	[PIPE_FORMAT_R32G32B32A32_FLOAT] = NV34TCL_VTXFMT_TYPE_32_FLOAT,
-	[PIPE_FORMAT_R32G32B32_FLOAT] = NV34TCL_VTXFMT_TYPE_32_FLOAT,
-	[PIPE_FORMAT_R16_FLOAT] = NV34TCL_VTXFMT_TYPE_16_FLOAT,
-	[PIPE_FORMAT_R16G16_FLOAT] = NV34TCL_VTXFMT_TYPE_16_FLOAT,
-	[PIPE_FORMAT_R16G16B16_FLOAT] = NV34TCL_VTXFMT_TYPE_16_FLOAT,
-	[PIPE_FORMAT_R16G16B16A16_FLOAT] = NV34TCL_VTXFMT_TYPE_16_FLOAT,
-	[PIPE_FORMAT_R8_UNORM] = NV34TCL_VTXFMT_TYPE_8_UNORM,
-	[PIPE_FORMAT_R8G8_UNORM] = NV34TCL_VTXFMT_TYPE_8_UNORM,
-	[PIPE_FORMAT_R8G8B8_UNORM] = NV34TCL_VTXFMT_TYPE_8_UNORM,
-	[PIPE_FORMAT_R8G8B8A8_UNORM] = NV34TCL_VTXFMT_TYPE_8_UNORM,
-	[PIPE_FORMAT_R8G8B8A8_USCALED] = NV34TCL_VTXFMT_TYPE_8_USCALED,
-	[PIPE_FORMAT_R16_SNORM] = NV34TCL_VTXFMT_TYPE_16_SNORM,
-	[PIPE_FORMAT_R16G16_SNORM] = NV34TCL_VTXFMT_TYPE_16_SNORM,
-	[PIPE_FORMAT_R16G16B16_SNORM] = NV34TCL_VTXFMT_TYPE_16_SNORM,
-	[PIPE_FORMAT_R16G16B16A16_SNORM] = NV34TCL_VTXFMT_TYPE_16_SNORM,
-	[PIPE_FORMAT_R16_SSCALED] = NV34TCL_VTXFMT_TYPE_16_SSCALED,
-	[PIPE_FORMAT_R16G16_SSCALED] = NV34TCL_VTXFMT_TYPE_16_SSCALED,
-	[PIPE_FORMAT_R16G16B16_SSCALED] = NV34TCL_VTXFMT_TYPE_16_SSCALED,
-	[PIPE_FORMAT_R16G16B16A16_SSCALED] = NV34TCL_VTXFMT_TYPE_16_SSCALED,
+	[PIPE_FORMAT_R32_FLOAT] = NV30_3D_VTXFMT_TYPE_V32_FLOAT,
+	[PIPE_FORMAT_R32G32_FLOAT] = NV30_3D_VTXFMT_TYPE_V32_FLOAT,
+	[PIPE_FORMAT_R32G32B32_FLOAT] = NV30_3D_VTXFMT_TYPE_V32_FLOAT,
+	[PIPE_FORMAT_R32G32B32A32_FLOAT] = NV30_3D_VTXFMT_TYPE_V32_FLOAT,
+	[PIPE_FORMAT_R16_FLOAT] = NV30_3D_VTXFMT_TYPE_V16_FLOAT,
+	[PIPE_FORMAT_R16G16_FLOAT] = NV30_3D_VTXFMT_TYPE_V16_FLOAT,
+	[PIPE_FORMAT_R16G16B16_FLOAT] = NV30_3D_VTXFMT_TYPE_V16_FLOAT,
+	[PIPE_FORMAT_R16G16B16A16_FLOAT] = NV30_3D_VTXFMT_TYPE_V16_FLOAT,
+	[PIPE_FORMAT_R8_UNORM] = NV30_3D_VTXFMT_TYPE_U8_UNORM,
+	[PIPE_FORMAT_R8G8_UNORM] = NV30_3D_VTXFMT_TYPE_U8_UNORM,
+	[PIPE_FORMAT_R8G8B8_UNORM] = NV30_3D_VTXFMT_TYPE_U8_UNORM,
+	[PIPE_FORMAT_R8G8B8A8_UNORM] = NV30_3D_VTXFMT_TYPE_U8_UNORM,
+	[PIPE_FORMAT_R8G8B8A8_USCALED] = NV30_3D_VTXFMT_TYPE_U8_USCALED,
+	[PIPE_FORMAT_R16_SNORM] = NV30_3D_VTXFMT_TYPE_V16_SNORM,
+	[PIPE_FORMAT_R16G16_SNORM] = NV30_3D_VTXFMT_TYPE_V16_SNORM,
+	[PIPE_FORMAT_R16G16B16_SNORM] = NV30_3D_VTXFMT_TYPE_V16_SNORM,
+	[PIPE_FORMAT_R16G16B16A16_SNORM] = NV30_3D_VTXFMT_TYPE_V16_SNORM,
+	[PIPE_FORMAT_R16_SSCALED] = NV30_3D_VTXFMT_TYPE_V16_SSCALED,
+	[PIPE_FORMAT_R16G16_SSCALED] = NV30_3D_VTXFMT_TYPE_V16_SSCALED,
+	[PIPE_FORMAT_R16G16B16_SSCALED] = NV30_3D_VTXFMT_TYPE_V16_SSCALED,
+	[PIPE_FORMAT_R16G16B16A16_SSCALED] = NV30_3D_VTXFMT_TYPE_V16_SSCALED,
 };
 
 static void *
@@ -514,7 +514,7 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 		if(ve->instance_divisor)
 		{
 			struct nvfx_low_frequency_element* lfve;
-			cso->vtxfmt[i] = NV34TCL_VTXFMT_TYPE_32_FLOAT;
+			cso->vtxfmt[i] = NV30_3D_VTXFMT_TYPE_V32_FLOAT;
 
 			//if(ve->frequency == PIPE_ELEMENT_FREQUENCY_CONSTANT)
 			if(0)
@@ -549,14 +549,14 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 			if(type)
 			{
 				transkey.element[idx].output_format = ve->src_format;
-				cso->vtxfmt[i] = (ncomp << NV34TCL_VTXFMT_SIZE_SHIFT) | type;
+				cso->vtxfmt[i] = (ncomp << NV30_3D_VTXFMT_SIZE__SHIFT) | type;
 			}
 			else
 			{
 				unsigned float32[4] = {PIPE_FORMAT_R32_FLOAT, PIPE_FORMAT_R32G32_FLOAT, PIPE_FORMAT_R32G32B32_FLOAT, PIPE_FORMAT_R32G32B32A32_FLOAT};
 				transkey.element[idx].output_format = float32[ncomp - 1];
 				cso->needs_translate = TRUE;
-				cso->vtxfmt[i] = (ncomp << NV34TCL_VTXFMT_SIZE_SHIFT) | NV34TCL_VTXFMT_TYPE_32_FLOAT;
+				cso->vtxfmt[i] = (ncomp << NV30_3D_VTXFMT_SIZE__SHIFT) | NV30_3D_VTXFMT_TYPE_V32_FLOAT;
 			}
 			transkey.element[idx].output_offset = transkey.output_stride;
 			transkey.output_stride += (util_format_get_stride(transkey.element[idx].output_format, 1) + 3) & ~3;

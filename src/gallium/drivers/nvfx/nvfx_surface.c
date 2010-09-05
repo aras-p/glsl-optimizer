@@ -167,7 +167,7 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 	{
 		struct nouveau_channel* chan = nvfx->screen->base.channel;
 		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
 		OUT_RING(chan, 0);
 	}
 
@@ -208,7 +208,7 @@ nvfx_put_blitter(struct pipe_context* pipe, struct blitter_context* blitter)
 	{
 		struct nouveau_channel* chan = nvfx->screen->base.channel;
 		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV34TCL_QUERY_ENABLE, 1));
+		OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
 		OUT_RING(chan, 1);
 	}
 }
