@@ -661,8 +661,6 @@ ALU2(SHL)
 ALU2(RSR)
 ALU2(RSL)
 ALU2(ASR)
-ALU2(ADD)
-ALU2(MUL)
 ALU1(FRC)
 ALU1(RNDD)
 ALU1(RNDZ)
@@ -676,6 +674,63 @@ ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
 
+struct brw_instruction *brw_ADD(struct brw_compile *p,
+				struct brw_reg dest,
+				struct brw_reg src0,
+				struct brw_reg src1)
+{
+   /* 6.2.2: add */
+   if (src0.type == BRW_REGISTER_TYPE_F ||
+       (src0.file == BRW_IMMEDIATE_VALUE &&
+	src0.type == BRW_REGISTER_TYPE_VF)) {
+      assert(src1.type != BRW_REGISTER_TYPE_UD);
+      assert(src1.type != BRW_REGISTER_TYPE_D);
+   }
+
+   if (src1.type == BRW_REGISTER_TYPE_F ||
+       (src1.file == BRW_IMMEDIATE_VALUE &&
+	src1.type == BRW_REGISTER_TYPE_VF)) {
+      assert(src0.type != BRW_REGISTER_TYPE_UD);
+      assert(src0.type != BRW_REGISTER_TYPE_D);
+   }
+
+   return brw_alu2(p, BRW_OPCODE_ADD, dest, src0, src1);
+}
+
+struct brw_instruction *brw_MUL(struct brw_compile *p,
+				struct brw_reg dest,
+				struct brw_reg src0,
+				struct brw_reg src1)
+{
+   /* 6.32.38: mul */
+   if (src0.type == BRW_REGISTER_TYPE_D ||
+       src0.type == BRW_REGISTER_TYPE_UD ||
+       src1.type == BRW_REGISTER_TYPE_D ||
+       src1.type == BRW_REGISTER_TYPE_UD) {
+      assert(dest.type != BRW_REGISTER_TYPE_F);
+   }
+
+   if (src0.type == BRW_REGISTER_TYPE_F ||
+       (src0.file == BRW_IMMEDIATE_VALUE &&
+	src0.type == BRW_REGISTER_TYPE_VF)) {
+      assert(src1.type != BRW_REGISTER_TYPE_UD);
+      assert(src1.type != BRW_REGISTER_TYPE_D);
+   }
+
+   if (src1.type == BRW_REGISTER_TYPE_F ||
+       (src1.file == BRW_IMMEDIATE_VALUE &&
+	src1.type == BRW_REGISTER_TYPE_VF)) {
+      assert(src0.type != BRW_REGISTER_TYPE_UD);
+      assert(src0.type != BRW_REGISTER_TYPE_D);
+   }
+
+   assert(src0.file != BRW_ARCHITECTURE_REGISTER_FILE ||
+	  src0.nr != BRW_ARF_ACCUMULATOR);
+   assert(src1.file != BRW_ARCHITECTURE_REGISTER_FILE ||
+	  src1.nr != BRW_ARF_ACCUMULATOR);
+
+   return brw_alu2(p, BRW_OPCODE_MUL, dest, src0, src1);
+}
 
 
 void brw_NOP(struct brw_compile *p)
