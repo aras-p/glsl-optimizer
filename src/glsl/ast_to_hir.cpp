@@ -2279,7 +2279,7 @@ ast_function::hir(exec_list *instructions,
     * that the previously seen signature does not have an associated definition.
     */
    f = state->symbols->get_function(name);
-   if (f != NULL && !f->has_builtin_signature()) {
+   if (f != NULL && (state->es_shader || !f->has_builtin_signature())) {
       sig = f->exact_matching_signature(&hir_parameters);
       if (sig != NULL) {
 	 const char *badvar = sig->qualifiers_match(&hir_parameters);
