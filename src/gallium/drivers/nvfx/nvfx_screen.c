@@ -123,7 +123,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_DEPTH_CLAMP:
 		return 0; // TODO: implement depth clamp
 	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
+		NOUVEAU_ERR("Warning: unknown PIPE_CAP %d\n", param);
 		return 0;
 	}
 }
