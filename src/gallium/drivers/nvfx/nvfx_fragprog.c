@@ -493,7 +493,21 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 
 		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
-			if (ai == -1 || ai == fsrc->Register.Index) {
+			if(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_FOG && (0
+					|| fsrc->Register.SwizzleX == PIPE_SWIZZLE_ALPHA
+					|| fsrc->Register.SwizzleY == PIPE_SWIZZLE_ALPHA
+					|| fsrc->Register.SwizzleZ == PIPE_SWIZZLE_ALPHA
+					|| fsrc->Register.SwizzleW == PIPE_SWIZZLE_ALPHA
+					)) {
+				/* hardware puts 0 in fogcoord.w, but GL/Gallium want 1 there */
+				struct nvfx_src addend = nvfx_src(nvfx_fp_imm(fpc, 0, 0, 0, 1));
+				addend.swz[0] = fsrc->Register.SwizzleX;
+				addend.swz[1] = fsrc->Register.SwizzleY;
+				addend.swz[2] = fsrc->Register.SwizzleZ;
+				addend.swz[3] = fsrc->Register.SwizzleW;
+				src[i] = nvfx_src(temp(fpc));
+				nvfx_fp_emit(fpc, arith(0, ADD, src[i].reg, NVFX_FP_MASK_ALL, tgsi_src(fpc, fsrc), addend, none));
+			} else if (ai == -1 || ai == fsrc->Register.Index) {
 				ai = fsrc->Register.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
