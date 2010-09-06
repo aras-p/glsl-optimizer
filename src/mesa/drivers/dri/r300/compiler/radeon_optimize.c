@@ -597,19 +597,32 @@ static int presub_helper(
 	return can_remove;
 }
 
+/* This function assumes that s->Inst->U.I.SrcReg[0] and
+ * s->Inst->U.I.SrcReg[1] aren't both negative. */
 static void presub_replace_add(struct peephole_state *s,
 						struct rc_instruction * inst,
 						unsigned int src_index)
 {
-	inst->U.I.PreSub.SrcReg[0] = s->Inst->U.I.SrcReg[0];
-	inst->U.I.PreSub.SrcReg[1] = s->Inst->U.I.SrcReg[1];
+	rc_presubtract_op presub_opcode;
+	if (s->Inst->U.I.SrcReg[1].Negate || s->Inst->U.I.SrcReg[0].Negate)
+		presub_opcode = RC_PRESUB_SUB;
+	else
+		presub_opcode = RC_PRESUB_ADD;
+
+	if (s->Inst->U.I.SrcReg[1].Negate) {
+		inst->U.I.PreSub.SrcReg[0] = s->Inst->U.I.SrcReg[1];
+		inst->U.I.PreSub.SrcReg[1] = s->Inst->U.I.SrcReg[0];
+	} else {
+		inst->U.I.PreSub.SrcReg[0] = s->Inst->U.I.SrcReg[0];
+		inst->U.I.PreSub.SrcReg[1] = s->Inst->U.I.SrcReg[1];
+	}
 	inst->U.I.PreSub.SrcReg[0].Negate = 0;
 	inst->U.I.PreSub.SrcReg[1].Negate = 0;
-	inst->U.I.PreSub.Opcode = RC_PRESUB_ADD;
+	inst->U.I.PreSub.Opcode = presub_opcode;
 	inst->U.I.SrcReg[src_index] = chain_srcregs(inst->U.I.SrcReg[src_index],
 						inst->U.I.PreSub.SrcReg[0]);
 	inst->U.I.SrcReg[src_index].File = RC_FILE_PRESUB;
-	inst->U.I.SrcReg[src_index].Index = RC_PRESUB_ADD;
+	inst->U.I.SrcReg[src_index].Index = presub_opcode;
 }
 
 static int peephole_add_presub_add(
@@ -646,10 +659,6 @@ static int peephole_add_presub_add(
 	}
 
 	if (!src1)
-		return 0;
-
-	/* XXX Only do add for now. */
-	if (src0->Negate)
 		return 0;
 
 	s.Inst = inst_add;
