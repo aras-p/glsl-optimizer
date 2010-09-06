@@ -30,35 +30,40 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {
 	unsigned i;
 
+	bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
+		S_SQ_ALU_WORD0_SRC0_REL(alu->src[0].rel) |
+		S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
+		S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
+		S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
+		S_SQ_ALU_WORD0_SRC0_REL(alu->src[1].rel) |
+		S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
+		S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
+		S_SQ_ALU_WORD0_LAST(alu->last);
+
 	/* don't replace gpr by pv or ps for destination register */
 	if (alu->is_op3) {
-		bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
-					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
-					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
-					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
-					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+			                S_SQ_ALU_WORD1_DST_REL(alu->dst.rel) |
+			                S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP3_SRC2_SEL(alu->src[2].sel) |
+					S_SQ_ALU_WORD1_OP3_SRC2_REL(alu->src[2].rel) |
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
 					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
 	} else {
-		bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
-					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
-					S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
-					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
-					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
-					S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
-					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+			                S_SQ_ALU_WORD1_DST_REL(alu->dst.rel) |
+			                S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(0) |
+			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
+		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}
 	if (alu->last) {
 		for (i = 0; i < alu->nliteral; i++) {
