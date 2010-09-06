@@ -162,7 +162,16 @@ void st_init_limits(struct st_context *st)
       pc->MaxNativeAddressRegs     = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_ADDRS);
       pc->MaxNativeParameters      = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONSTS);
 
+      /* TODO: make these more fine-grained if anyone needs it */
+      options->EmitNoIfs = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
+      options->EmitNoFunctions = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
+      options->EmitNoLoops = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
+      options->EmitNoMainReturn = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
+
       options->EmitNoCont = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED);
+
+      if(options->EmitNoLoops)
+         options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
    }
 
    /* PIPE_CAP_MAX_FS_INPUTS specifies the number of COLORn + GENERICn inputs
