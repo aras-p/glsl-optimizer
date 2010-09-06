@@ -767,7 +767,7 @@ fs_visitor::visit(ir_expression *ir)
       emit(fs_inst(BRW_OPCODE_MOV, this->result, op[0]));
       break;
    case ir_unop_f2i:
-      emit(fs_inst(BRW_OPCODE_RNDZ, this->result, op[0]));
+      emit(fs_inst(BRW_OPCODE_MOV, this->result, op[0]));
       break;
    case ir_unop_f2b:
    case ir_unop_i2b:
