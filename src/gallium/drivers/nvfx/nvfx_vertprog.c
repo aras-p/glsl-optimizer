@@ -40,6 +40,7 @@ struct nvfx_vpc {
 	struct nvfx_context* nvfx;
 	struct pipe_shader_state pipe;
 	struct nvfx_vertex_program *vp;
+	struct tgsi_shader_info* info;
 
 	struct nvfx_vertex_program_exec *vpi;
 
@@ -448,9 +449,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	int mask;
 	int ai = -1, ci = -1, ii = -1;
 	int i;
-
-	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
-		return TRUE;
+	unsigned sub_depth = 0;
 
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
@@ -705,13 +704,24 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		break;
 
 	case TGSI_OPCODE_RET:
-		tmp = none;
-		tmp.swz[0] = tmp.swz[1] = tmp.swz[2] = tmp.swz[3] = 0;
-		nvfx_vp_emit(vpc, arith(0, SCA, RET, none.reg, 0, none, none, tmp));
+		if(sub_depth || !nvfx->use_vp_clipping) {
+			tmp = none;
+			tmp.swz[0] = tmp.swz[1] = tmp.swz[2] = tmp.swz[3] = 0;
+			nvfx_vp_emit(vpc, arith(0, SCA, RET, none.reg, 0, none, none, tmp));
+		} else {
+			reloc.location = vpc->vp->nr_insns;
+			reloc.target = vpc->info->num_instructions;
+			util_dynarray_append(&vpc->label_relocs, struct nvfx_relocation, reloc);
+			nvfx_vp_emit(vpc, arith(0, SCA, BRA, none.reg, 0, none, none, none));
+		}
 		break;
 
 	case TGSI_OPCODE_BGNSUB:
+		++sub_depth;
+		break;
 	case TGSI_OPCODE_ENDSUB:
+		--sub_depth;
+		break;
 	case TGSI_OPCODE_ENDIF:
 		/* nothing to do here */
 		break;
@@ -750,6 +760,23 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		util_dynarray_append(&vpc->label_relocs, struct nvfx_relocation, reloc);
 
 		nvfx_vp_emit(vpc, arith(0, SCA, BRA, none.reg, 0, none, none, none));
+		break;
+
+	case TGSI_OPCODE_END:
+		assert(!sub_depth);
+		if(nvfx->use_vp_clipping) {
+			if(idx != (vpc->info->num_instructions - 1)) {
+				reloc.location = vpc->vp->nr_insns;
+				reloc.target = vpc->info->num_instructions;
+				util_dynarray_append(&vpc->label_relocs, struct nvfx_relocation, reloc);
+				nvfx_vp_emit(vpc, arith(0, SCA, BRA, none.reg, 0, none, none, none));
+			}
+		} else {
+			if(vpc->vp->nr_insns)
+				vpc->vp->insns[vpc->vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+			nvfx_vp_emit(vpc, arith(0, VEC, NOP, none.reg, 0, none, none, none));
+			vpc->vp->insns[vpc->vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+		}
 		break;
 
 	default:
@@ -946,7 +973,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
 
 static struct nvfx_vertex_program*
-nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps)
+nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps, const struct tgsi_shader_info* info)
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_vertex_program* vp = NULL;
@@ -968,6 +995,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_stat
 	vpc->nvfx = nvfx;
 	vpc->vp = vp;
 	vpc->pipe = *vps;
+	vpc->info = info;
 
 	{
 		// TODO: use a 64-bit atomic here!
@@ -1086,14 +1114,6 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_stat
 			nvfx_vp_emit(vpc, arith(0, VEC, DP4, cdst, mask, htmp, ceqn, none));
 		}
 	}
-	else
-	{
-		if(vp->nr_insns)
-			vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
-
-		nvfx_vp_emit(vpc, arith(0, VEC, NOP, none.reg, 0, none, none, none));
-		vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
-	}
 
 	if(debug_get_option_nvfx_dump_vp())
 	{
@@ -1133,6 +1153,7 @@ nvfx_vertprog_translate_draw_vp(struct nvfx_context *nvfx, struct nvfx_pipe_vert
 {
 	struct nvfx_vertex_program* vp = NULL;
 	struct pipe_shader_state vps;
+	struct tgsi_shader_info info;
 	struct ureg_program *ureg = NULL;
 	unsigned num_outputs = MIN2(pvp->info.num_outputs, 16);
 
@@ -1146,7 +1167,8 @@ nvfx_vertprog_translate_draw_vp(struct nvfx_context *nvfx, struct nvfx_pipe_vert
 	ureg_END( ureg );
 
 	vps.tokens = ureg_get_tokens(ureg, 0);
-	vp = nvfx_vertprog_translate(nvfx, &vps);
+	tgsi_scan_shader(vps.tokens, &info);
+	vp = nvfx_vertprog_translate(nvfx, &vps, &info);
 	ureg_free_tokens(vps.tokens);
 	ureg_destroy(ureg);
 
@@ -1169,7 +1191,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		vp = pvp->vp;
 
 		if(!vp) {
-			vp = nvfx_vertprog_translate(nvfx, &pvp->pipe);
+			vp = nvfx_vertprog_translate(nvfx, &pvp->pipe, &pvp->info);
 			if(!vp)
 				vp = NVFX_VP_FAILED;
 			pvp->vp = vp;
