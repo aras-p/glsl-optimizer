@@ -191,7 +191,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 
 		/* It is possible to do copy propigation in this situation,
 		 * just not right now, see peephole_add_presub_inv() */
-		if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE &&
+		if (inst_mov->U.I.PreSub.Opcode != RC_PRESUB_NONE &&
 						info->NumSrcRegs > 2) {
 			return;
 		}
