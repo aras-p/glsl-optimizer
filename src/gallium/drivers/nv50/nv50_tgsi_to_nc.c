@@ -1849,6 +1849,7 @@ nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
 {
    struct bld_context *bld = CALLOC_STRUCT(bld_context);
    int c;
+   unsigned ip;
 
    pc->root[0] = pc->current_block = new_basic_block(pc);
 
@@ -1865,21 +1866,8 @@ nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
       bld->frgcrd[3] = bld_insn_1(bld, NV_OP_RCP, bld->frgcrd[3]);
    }
 
-   tgsi_parse_init(&bld->parse[0], ti->p->pipe.tokens);
-
-   while (!tgsi_parse_end_of_tokens(&bld->parse[bld->call_lvl])) {
-      const union tgsi_full_token *tok = &bld->parse[bld->call_lvl].FullToken;
-
-      tgsi_parse_token(&bld->parse[bld->call_lvl]);
-
-      switch (tok->Token.Type) {
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         bld_instruction(bld, &tok->FullInstruction);
-         break;
-      default:
-         break;
-      }
-   }
+   for (ip = 0; ip < ti->inst_nr; ++ip)
+      bld_instruction(bld, &ti->insns[ip]);
 
    bld_free_value_trackers(&bld->tvs[0][0], BLD_MAX_TEMPS);
    bld_free_value_trackers(&bld->avs[0][0], BLD_MAX_ADDRS);
