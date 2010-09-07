@@ -307,7 +307,7 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
       ir_dereference *const op1 = get_column(b_var, i);
 
       ir_expression *const cmp =
-	 new(this->mem_ctx) ir_expression(ir_binop_nequal,
+	 new(this->mem_ctx) ir_expression(ir_binop_any_nequal,
 					  glsl_type::bool_type, op0, op1);
 
       ir_rvalue *const swiz =
@@ -473,10 +473,10 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
       }
       break;
 
-   case ir_binop_equal:
-   case ir_binop_nequal:
+   case ir_binop_all_equal:
+   case ir_binop_any_nequal:
       do_equal_mat_mat(result_var, op_var[1], op_var[0],
-		       (orig_expr->operation == ir_binop_equal));
+		       (orig_expr->operation == ir_binop_all_equal));
       break;
 
    default:

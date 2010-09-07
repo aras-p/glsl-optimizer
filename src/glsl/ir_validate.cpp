@@ -293,24 +293,30 @@ ir_validate::visit_leave(ir_expression *ir)
 	 assert(ir->operands[0]->type == ir->type);
       }
       break;
+
    case ir_binop_less:
    case ir_binop_greater:
    case ir_binop_lequal:
    case ir_binop_gequal:
-      /* GLSL < > <= >= operators take scalar floats/ints, but in the
-       * IR we may want to do them for vectors instead to support the
-       * lessEqual() and friends builtins.
-       */
-      assert(ir->type == glsl_type::bool_type);
-      assert(ir->operands[0]->type == ir->operands[1]->type);
-      break;
-
    case ir_binop_equal:
    case ir_binop_nequal:
-      /* GLSL == and != operate on vectors and return a bool, and the
-       * IR matches that.  We may want to switch up the IR to work on
-       * vectors and return a bvec and make the operators break down
-       * to ANDing/ORing the results of the vector comparison.
+      /* The semantics of the IR operators differ from the GLSL <, >, <=, >=,
+       * ==, and != operators.  The IR operators perform a component-wise
+       * comparison on scalar or vector types and return a boolean scalar or
+       * vector type of the same size.
+       */
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      assert(ir->operands[0]->type->is_vector()
+	     || ir->operands[0]->type->is_scalar());
+      assert(ir->operands[0]->type->vector_elements
+	     == ir->type->vector_elements);
+      break;
+
+   case ir_binop_all_equal:
+   case ir_binop_any_nequal:
+      /* GLSL == and != operate on scalars, vectors, matrices and arrays, and
+       * return a scalar boolean.  The IR matches that.
        */
       assert(ir->type == glsl_type::bool_type);
       assert(ir->operands[0]->type == ir->operands[1]->type);

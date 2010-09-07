@@ -270,6 +270,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       case ir_binop_gequal:  new_op = ir_binop_less;    break;
       case ir_binop_equal:   new_op = ir_binop_nequal;  break;
       case ir_binop_nequal:  new_op = ir_binop_equal;   break;
+      case ir_binop_all_equal:   new_op = ir_binop_any_nequal;  break;
+      case ir_binop_any_nequal:  new_op = ir_binop_all_equal;   break;
 
       default:
 	 /* The default case handler is here to silence a warning from GCC.
