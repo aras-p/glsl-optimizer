@@ -154,7 +154,7 @@ loop_analysis::visit(ir_dereference_variable *ir)
    /* If we're not somewhere inside a loop, there's nothing to do.
     */
    if (this->state.is_empty())
-      return visit_continue_with_parent;
+      return visit_continue;
 
    loop_variable_state *const ls =
       (loop_variable_state *) this->state.get_head();
