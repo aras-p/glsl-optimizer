@@ -53,7 +53,7 @@
 */
 
 static GLubyte dummyBuffer[__GLX_BUFFER_LIMIT_SIZE];
-
+static struct glx_context_vtable dummyVtable;
 /*
 ** Dummy context used by small commands when there is no current context.
 ** All the
@@ -66,6 +66,7 @@ struct glx_context dummyContext = {
    &dummyBuffer[0],
    &dummyBuffer[__GLX_BUFFER_LIMIT_SIZE],
    sizeof(dummyBuffer),
+   &dummyVtable
 };
 
 /*

@@ -481,7 +481,7 @@ glXWaitGL(void)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc && gc->vtable && gc->vtable->wait_gl)
+   if (gc && gc->vtable->wait_gl)
       gc->vtable->wait_gl(gc);
 }
 
@@ -494,7 +494,7 @@ glXWaitX(void)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc && gc->vtable && gc->vtable->wait_x)
+   if (gc && gc->vtable->wait_x)
       gc->vtable->wait_x(gc);
 }
 
@@ -503,7 +503,7 @@ glXUseXFont(Font font, int first, int count, int listBase)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc && gc->vtable && gc->vtable->use_x_font)
+   if (gc && gc->vtable->use_x_font)
       gc->vtable->use_x_font(gc, font, first, count, listBase);
 }
 
@@ -2338,7 +2338,7 @@ __glXBindTexImageEXT(Display * dpy,
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc == NULL || gc->vtable == NULL || gc->vtable->bind_tex_image == NULL)
+   if (gc == NULL || gc->vtable->bind_tex_image == NULL)
       return;
 
    gc->vtable->bind_tex_image(dpy, drawable, buffer, attrib_list);
@@ -2349,7 +2349,7 @@ __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc == NULL || gc->vtable == NULL || gc->vtable->release_tex_image == NULL)
+   if (gc == NULL || gc->vtable->release_tex_image == NULL)
       return;
 
    gc->vtable->release_tex_image(dpy, drawable, buffer);
