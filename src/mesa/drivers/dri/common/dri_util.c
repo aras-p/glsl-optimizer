@@ -635,6 +635,7 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
 			   __DRIcontext *shared, void *data)
 {
     __DRIcontext *context;
+    const __GLcontextModes *modes = (config != NULL) ? &config->modes : NULL;
     void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
     gl_api mesa_api;
 
@@ -663,7 +664,7 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
     context->driDrawablePriv = NULL;
     context->loaderPrivate = data;
     
-    if (!(*screen->DriverAPI.CreateContext)(mesa_api, &config->modes,
+    if (!(*screen->DriverAPI.CreateContext)(mesa_api, modes,
 					    context, shareCtx) ) {
         free(context);
         return NULL;
