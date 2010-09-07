@@ -213,23 +213,36 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
    pc->bin_size += b->bin_size *= 4;
 }
 
-int
-nv_pc_exec_pass2(struct nv_pc *pc)
+static int
+nv_pc_pass2(struct nv_pc *pc, struct nv_basic_block *root)
 {
    struct nv_pass pass;
 
    pass.pc = pc;
 
    pc->pass_seq++;
-   nv_pass_flatten(&pass, pc->root);
+
+   nv_pass_flatten(&pass, root);
+
+   nv_pc_pass_in_order(root, nv_pc_pass_pre_emission, pc);
+
+   return 0;
+}
+
+int
+nv_pc_exec_pass2(struct nv_pc *pc)
+{
+   int i, ret;
 
    NV50_DBGMSG("preparing %u blocks for emission\n", pc->num_blocks);
 
-   pc->bb_list = CALLOC(pc->num_blocks, sizeof(struct nv_basic_block *));
+   pc->bb_list = CALLOC(pc->num_blocks, sizeof(pc->bb_list[0]));
+
    pc->num_blocks = 0;
 
-   nv_pc_pass_in_order(pc->root, nv_pc_pass_pre_emission, pc);
-
+   for (i = 0; i < pc->num_subroutines + 1; ++i)
+      if (pc->root[i] && (ret = nv_pc_pass2(pc, pc->root[i])))
+         return ret;
    return 0;
 }
 
@@ -1032,8 +1045,8 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
-int
-nv_pc_exec_pass0(struct nv_pc *pc)
+static int
+nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
 {
    struct nv_pass_reld_elim *reldelim;
    struct nv_pass pass;
@@ -1047,35 +1060,35 @@ nv_pc_exec_pass0(struct nv_pc *pc)
     * to whether sources are supported memory loads.
     */
    pc->pass_seq++;
-   ret = nv_pass_lower_arith(&pass, pc->root);
+   ret = nv_pass_lower_arith(&pass, root);
    if (ret)
       return ret;
 
    pc->pass_seq++;
-   ret = nv_pass_fold_loads(&pass, pc->root);
+   ret = nv_pass_fold_loads(&pass, root);
    if (ret)
       return ret;
 
    pc->pass_seq++;
-   ret = nv_pass_fold_stores(&pass, pc->root);
+   ret = nv_pass_fold_stores(&pass, root);
    if (ret)
       return ret;
 
    reldelim = CALLOC_STRUCT(nv_pass_reld_elim);
    reldelim->pc = pc;
    pc->pass_seq++;
-   ret = nv_pass_reload_elim(reldelim, pc->root);
+   ret = nv_pass_reload_elim(reldelim, root);
    FREE(reldelim);
    if (ret)
       return ret;
 
    pc->pass_seq++;
-   ret = nv_pass_cse(&pass, pc->root);
+   ret = nv_pass_cse(&pass, root);
    if (ret)
       return ret;
 
    pc->pass_seq++;
-   ret = nv_pass_lower_mods(&pass, pc->root);
+   ret = nv_pass_lower_mods(&pass, root);
    if (ret)
       return ret;
 
@@ -1083,14 +1096,25 @@ nv_pc_exec_pass0(struct nv_pc *pc)
    do {
       dce.removed = 0;
       pc->pass_seq++;
-      ret = nv_pass_dce(&dce, pc->root);
+      ret = nv_pass_dce(&dce, root);
       if (ret)
          return ret;
    } while (dce.removed);
 
-   ret = nv_pass_tex_mask(&pass, pc->root);
+   ret = nv_pass_tex_mask(&pass, root);
    if (ret)
       return ret;
 
    return ret;
+}
+
+int
+nv_pc_exec_pass0(struct nv_pc *pc)
+{
+   int i, ret;
+
+   for (i = 0; i < pc->num_subroutines + 1; ++i)
+      if (pc->root[i] && (ret = nv_pc_pass0(pc, pc->root[i])))
+         return ret;
+   return 0;
 }

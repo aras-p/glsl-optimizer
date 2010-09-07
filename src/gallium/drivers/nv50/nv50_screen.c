@@ -26,6 +26,7 @@
 #include "nv50_context.h"
 #include "nv50_screen.h"
 #include "nv50_resource.h"
+#include "nv50_program.h"
 
 #include "nouveau/nouveau_stateobj.h"
 
@@ -152,7 +153,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0;
 	case PIPE_CAP_MAX_VS_TEMPS:
 	case PIPE_CAP_MAX_FS_TEMPS: /* no spilling atm */
-		return 128 / 4;
+		return NV50_CAP_MAX_PROGRAM_TEMPS;
 	case PIPE_CAP_DEPTH_CLAMP:
 		return 1;
 	default:

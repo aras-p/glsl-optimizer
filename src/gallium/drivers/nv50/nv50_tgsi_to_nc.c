@@ -1850,7 +1850,7 @@ nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
    struct bld_context *bld = CALLOC_STRUCT(bld_context);
    int c;
 
-   pc->root = pc->current_block = new_basic_block(pc);
+   pc->root[0] = pc->current_block = new_basic_block(pc);
 
    bld->pc = pc;
    bld->ti = ti;

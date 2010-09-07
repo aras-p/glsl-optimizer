@@ -874,8 +874,8 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
    return 0;
 }
 
-int
-nv_pc_exec_pass1(struct nv_pc *pc)
+static int
+nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
 {
    struct nv_pc_pass *ctx;
    int i, ret;
@@ -890,12 +890,12 @@ nv_pc_exec_pass1(struct nv_pc *pc)
    ctx->insns = CALLOC(NV_PC_MAX_INSTRUCTIONS, sizeof(struct nv_instruction *));
 
    pc->pass_seq++;
-   ret = pass_generate_phi_movs(ctx, pc->root);
+   ret = pass_generate_phi_movs(ctx, root);
    assert(!ret);
 
    for (i = 0; i < pc->loop_nesting_bound; ++i) {
       pc->pass_seq++;
-      ret = pass_build_live_sets(ctx, pc->root);
+      ret = pass_build_live_sets(ctx, root);
       assert(!ret && "live sets");
       if (ret) {
          NOUVEAU_ERR("failed to build live sets (iteration %d)\n", i);
@@ -904,10 +904,10 @@ nv_pc_exec_pass1(struct nv_pc *pc)
    }
 
    pc->pass_seq++;
-   nv_pc_pass_in_order(pc->root, pass_order_instructions, ctx);
+   nv_pc_pass_in_order(root, pass_order_instructions, ctx);
 
    pc->pass_seq++;
-   ret = pass_build_intervals(ctx, pc->root);
+   ret = pass_build_intervals(ctx, root);
    assert(!ret && "build intervals");
    if (ret) {
       NOUVEAU_ERR("failed to build live intervals\n");
@@ -943,4 +943,15 @@ nv_pc_exec_pass1(struct nv_pc *pc)
 out:
    FREE(ctx);
    return ret;
+}
+
+int
+nv_pc_exec_pass1(struct nv_pc *pc)
+{
+   int i, ret;
+
+   for (i = 0; i < pc->num_subroutines + 1; ++i)
+      if (pc->root[i] && (ret = nv_pc_pass1(pc, pc->root[i])))
+         return ret;
+   return 0;
 }

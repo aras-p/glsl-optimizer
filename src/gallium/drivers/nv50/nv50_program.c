@@ -147,10 +147,17 @@ prog_inst(struct nv50_translation_info *ti,
    int s, c, k;
    unsigned mask;
 
+   if (inst->Instruction.Opcode == TGSI_OPCODE_BGNSUB) {
+      ti->subr[ti->subr_nr].pos = id - 1;
+      ti->subr[ti->subr_nr].id = ti->subr_nr + 1; /* id 0 is main program */
+      ++ti->subr_nr;
+   }
+
    if (inst->Dst[0].Register.File == TGSI_FILE_OUTPUT) {
+      dst = &inst->Dst[0].Register;
+
       for (c = 0; c < 4; ++c) {
-         dst = &inst->Dst[0].Register;
-         if (inst->Dst[0].Register.Indirect)
+         if (dst->Indirect)
             nv50_indirect_outputs(ti, id);
          if (!(dst->WriteMask & (1 << c)))
             continue;
@@ -179,6 +186,44 @@ prog_inst(struct nv50_translation_info *ti,
          if (k <= TGSI_SWIZZLE_W)
             ti->input_access[src->Index][k] = id;
       }
+   }
+}
+
+/* Probably should introduce something like struct tgsi_function_declaration
+ * instead of trying to guess inputs/outputs.
+ */
+static void
+prog_subroutine_inst(struct nv50_subroutine *subr,
+                     const struct tgsi_full_instruction *inst)
+{
+   const struct tgsi_dst_register *dst;
+   const struct tgsi_src_register *src;
+   int s, c, k;
+   unsigned mask;
+
+   for (s = 0; s < inst->Instruction.NumSrcRegs; ++s) {
+      src = &inst->Src[s].Register;
+      if (src->File != TGSI_FILE_TEMPORARY)
+         continue;
+      mask = nv50_tgsi_src_mask(inst, s);
+
+      assert(!inst->Src[s].Register.Indirect);
+
+      for (c = 0; c < 4; ++c) {
+         k = tgsi_util_get_full_src_register_swizzle(&inst->Src[s], c);
+
+         if ((mask & (1 << c)) && k < TGSI_SWIZZLE_W)
+            if (!(subr->retv[src->Index / 32][k] & (1 << (src->Index % 32))))
+               subr->argv[src->Index / 32][k] |= 1 << (src->Index % 32);
+      }
+   }
+
+   if (inst->Dst[0].Register.File == TGSI_FILE_TEMPORARY) {
+      dst = &inst->Dst[0].Register;
+
+      for (c = 0; c < 4; ++c)
+         if (dst->WriteMask & (1 << c))
+            subr->retv[dst->Index / 32][c] |= 1 << (dst->Index % 32);
    }
 }
 
@@ -482,7 +527,7 @@ nv50_prog_scan(struct nv50_translation_info *ti)
 {
    struct nv50_program *p = ti->p;
    struct tgsi_parse_context parse;
-   int ret;
+   int ret, i;
 
    p->vp.edgeflag = 0x40;
    p->vp.psiz = 0x40;
@@ -495,6 +540,9 @@ nv50_prog_scan(struct nv50_translation_info *ti)
 #ifdef NV50_PROGRAM_DEBUG
    tgsi_dump(p->pipe.tokens, 0);
 #endif
+
+   ti->subr =
+      CALLOC(ti->scan.opcode_count[TGSI_OPCODE_BGNSUB], sizeof(ti->subr[0]));
 
    ti->immd32 = (uint32_t *)MALLOC(ti->scan.immediate_count * 16);
    ti->immd32_ty = (ubyte *)MALLOC(ti->scan.immediate_count * sizeof(ubyte));
@@ -517,6 +565,13 @@ nv50_prog_scan(struct nv50_translation_info *ti)
          prog_inst(ti, &parse.FullToken.FullInstruction, ++ti->inst_nr);
          break;
       }
+   }
+
+   /* Scan to determine which registers are inputs/outputs of a subroutine. */
+   for (i = 0; i < ti->subr_nr; ++i) {
+      int pc = ti->subr[i].id;
+      while (ti->insns[pc].Instruction.Opcode != TGSI_OPCODE_ENDSUB)
+         prog_subroutine_inst(&ti->subr[i], &ti->insns[pc++]);
    }
 
    p->in_nr = ti->scan.file_max[TGSI_FILE_INPUT] + 1;
@@ -572,6 +627,8 @@ out:
       FREE(ti->immd32_ty);
    if (ti->insns)
       FREE(ti->insns);
+   if (ti->subr)
+      FREE(ti->subr);
    FREE(ti);
    return ret ? FALSE : TRUE;
 }

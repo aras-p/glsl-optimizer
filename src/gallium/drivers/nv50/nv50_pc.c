@@ -304,7 +304,7 @@ nv_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f, void *priv)
 }
 
 static void
-nv_do_print_program(void *priv, struct nv_basic_block *b)
+nv_do_print_function(void *priv, struct nv_basic_block *b)
 {
    struct nv_instruction *i = b->phi;
 
@@ -323,11 +323,23 @@ nv_do_print_program(void *priv, struct nv_basic_block *b)
 }
 
 void
-nv_print_program(struct nv_basic_block *root)
+nv_print_function(struct nv_basic_block *root)
 {
-   nv_pc_pass_in_order(root, nv_do_print_program, root);
+   if (root->subroutine)
+      debug_printf("SUBROUTINE %i\n", root->subroutine);
+   else
+      debug_printf("MAIN\n");
 
-   debug_printf("END\n\n");
+   nv_pc_pass_in_order(root, nv_do_print_function, root);
+}
+
+void
+nv_print_program(struct nv_pc *pc)
+{
+   int i;
+   for (i = 0; i < pc->num_subroutines + 1; ++i)
+      if (pc->root[i])
+         nv_print_function(pc->root[i]);
 }
 
 static INLINE void
@@ -388,11 +400,18 @@ nv50_generate_code(struct nv50_translation_info *ti)
    if (!pc)
       return 1;
 
+   pc->root = CALLOC(ti->subr_nr + 1, sizeof(pc->root[0]));
+   if (!pc->root) {
+      FREE(pc);
+      return 1;
+   }
+   pc->num_subroutines = ti->subr_nr;
+
    ret = nv50_tgsi_to_nc(pc, ti);
    if (ret)
       goto out;
 #ifdef NV50PC_DEBUG
-   nv_print_program(pc->root);
+   nv_print_program(pc);
 #endif
 
    /* optimization */
@@ -400,7 +419,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
    if (ret)
       goto out;
 #ifdef NV50PC_DEBUG
-   nv_print_program(pc->root);
+   nv_print_program(pc);
 #endif
 
    /* register allocation */
@@ -408,7 +427,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
    if (ret)
       goto out;
 #ifdef NV50PC_DEBUG
-   nv_print_program(pc->root);
+   nv_print_program(pc);
 #endif
 
    /* prepare for emission */
@@ -441,16 +460,19 @@ nv50_generate_code(struct nv50_translation_info *ti)
 
 out:
    nv_pc_free_refs(pc);
-   if (ret) {
-      if (pc->emit)
-         free(pc->emit);
-      if (pc->immd_buf)
-         free(pc->immd_buf);
-      if (pc->fixups)
-         free(pc->fixups);
-   }
-   free(pc);
 
+   if (pc->bb_list)
+      FREE(pc->bb_list);
+
+   if (ret) { /* on success, these will be referenced by nv50_program */
+      if (pc->emit)
+         FREE(pc->emit);
+      if (pc->immd_buf)
+         FREE(pc->immd_buf);
+      if (pc->fixups)
+         FREE(pc->fixups);
+   }
+   FREE(pc);
    return ret;
 }
 

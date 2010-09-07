@@ -27,6 +27,8 @@
 #include "tgsi/tgsi_scan.h"
 #include "nouveau/nouveau_class.h"
 
+#define NV50_CAP_MAX_PROGRAM_TEMPS (128 / 4)
+
 struct nv50_varying {
    uint8_t id; /* tgsi index */
    uint8_t hw; /* hw index, nv50 wants flat FP inputs last */
@@ -92,13 +94,13 @@ struct nv50_program {
 #define NV50_INTERP_FLAT     (1 << 1)
 #define NV50_INTERP_CENTROID (1 << 2)
 
-#define NV50_PROG_MAX_SUBROUTINES 8
-
 /* analyze TGSI and see which TEMP[] are used as subroutine inputs/outputs */
 struct nv50_subroutine {
-   int id;
-   uint32_t argv[4][1]; /* 4 bitmasks, for each of xyzw, only allow 32 TEMPs */
-   uint32_t retv[4][1];
+   unsigned id;
+   unsigned pos;
+   /* function inputs and outputs */
+   uint32_t argv[NV50_CAP_MAX_PROGRAM_TEMPS][4];
+   uint32_t retv[NV50_CAP_MAX_PROGRAM_TEMPS][4];
 };
 
 struct nv50_translation_info {
@@ -119,8 +121,8 @@ struct nv50_translation_info {
    unsigned immd32_nr;
    ubyte *immd32_ty;
    ubyte edgeflag_out;
-   struct nv50_subroutine subr[NV50_PROG_MAX_SUBROUTINES];
-   int subr_nr;
+   struct nv50_subroutine *subr;
+   unsigned subr_nr;
 };
 
 int nv50_generate_code(struct nv50_translation_info *ti);

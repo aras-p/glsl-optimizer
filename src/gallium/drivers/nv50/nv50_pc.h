@@ -282,7 +282,7 @@ struct nv_basic_block {
    ubyte in_kind[8];
 
    int id;
-   struct nv_basic_block *last_visitor;
+   int subroutine;
    uint priv;
    uint pass_seq;
 
@@ -314,10 +314,10 @@ nv_fixup_apply(uint32_t *bin, struct nv_fixup *fixup, uint32_t data)
    bin[fixup->offset / 4] = val;
 }
 
-struct nv_pc {
-   struct nv50_translation_info *ti;
+struct nv50_translation_info;
 
-   struct nv_basic_block *root;
+struct nv_pc {
+   struct nv_basic_block **root;
    struct nv_basic_block *current_block;
    struct nv_basic_block *parent_block;
 
@@ -332,6 +332,7 @@ struct nv_pc {
    int num_instructions;
    int num_refs;
    int num_blocks;
+   int num_subroutines;
 
    int max_reg[4];
 
@@ -463,7 +464,8 @@ void nv_print_instruction(struct nv_instruction *);
 
 /* nv50_pc.c */
 
-void nv_print_program(struct nv_basic_block *b);
+void nv_print_function(struct nv_basic_block *root);
+void nv_print_program(struct nv_pc *);
 
 boolean nv_op_commutative(uint opcode);
 int nv50_indirect_opnd(struct nv_instruction *);
