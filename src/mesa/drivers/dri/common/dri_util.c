@@ -651,6 +651,8 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
     case __DRI_API_GLES2:
 	    mesa_api = API_OPENGLES2;
 	    break;
+    default:
+	    return NULL;
     }
 
     context = malloc(sizeof *context);
@@ -661,7 +663,7 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
     context->driDrawablePriv = NULL;
     context->loaderPrivate = data;
     
-    if (!(*screen->DriverAPI.CreateContext)(api, &config->modes,
+    if (!(*screen->DriverAPI.CreateContext)(mesa_api, &config->modes,
 					    context, shareCtx) ) {
         free(context);
         return NULL;
