@@ -224,7 +224,11 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			}
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
-			assert(source != -1);
+			if (source < 0) {
+				rc_error(c, "Failed to translate "
+							"rgb instruction.\n");
+				return;
+			}
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
@@ -240,7 +244,11 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 				srcalpha = 1;
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
-			assert(source != -1);
+			if (source < 0) {
+				rc_error(c, "Failed to translate "
+							"alpha instruction.\n");
+				return;
+			}
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
