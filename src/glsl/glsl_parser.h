@@ -1,10 +1,9 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.4.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2009, 2010 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -236,7 +235,7 @@
 typedef union YYSTYPE
 {
 
-/* Line 1676 of yacc.c  */
+/* Line 1685 of yacc.c  */
 #line 52 "glsl_parser.ypp"
 
    int n;
@@ -265,10 +264,15 @@ typedef union YYSTYPE
       ast_expression *rest;
    } for_rest_statement;
 
+   struct {
+      ast_node *then_statement;
+      ast_node *else_statement;
+   } selection_rest_statement;
 
 
-/* Line 1676 of yacc.c  */
-#line 272 "glsl_parser.h"
+
+/* Line 1685 of yacc.c  */
+#line 276 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

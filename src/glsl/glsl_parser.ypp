@@ -75,6 +75,11 @@
       ast_node *cond;
       ast_expression *rest;
    } for_rest_statement;
+
+   struct {
+      ast_node *then_statement;
+      ast_node *else_statement;
+   } selection_rest_statement;
 }
 
 %token ATTRIBUTE CONST_TOK BOOL_TOK FLOAT_TOK INT_TOK UINT_TOK
@@ -130,8 +135,6 @@
 %type <node> statement
 %type <node> statement_list
 %type <node> simple_statement
-%type <node> statement_matched
-%type <node> statement_unmatched
 %type <n> precision_qualifier
 %type <type_qualifier> type_qualifier
 %type <type_qualifier> storage_qualifier
@@ -197,8 +200,8 @@
 %type <declarator_list> struct_declaration
 %type <declaration> struct_declarator
 %type <declaration> struct_declarator_list
-%type <node> selection_statement_matched
-%type <node> selection_statement_unmatched
+%type <node> selection_statement
+%type <selection_rest_statement> selection_rest_statement
 %type <node> iteration_statement
 %type <node> condition
 %type <node> conditionopt
@@ -1266,23 +1269,14 @@ declaration_statement:
 	// Grammar Note: labeled statements for SWITCH only; 'goto' is not
 	// supported.
 statement:
-	statement_matched
-	| statement_unmatched
-	;
-
-statement_matched:
 	compound_statement	{ $$ = (ast_node *) $1; }
 	| simple_statement
-	;
-
-statement_unmatched:
-	selection_statement_unmatched
 	;
 
 simple_statement:
 	declaration_statement
 	| expression_statement
-	| selection_statement_matched
+	| selection_statement
 	| switch_statement		{ $$ = NULL; }
 	| case_label			{ $$ = NULL; }
 	| iteration_statement
@@ -1361,33 +1355,25 @@ expression_statement:
 	}
 	;
 
-selection_statement_matched:
-	IF '(' expression ')' statement_matched ELSE statement_matched
+selection_statement:
+	IF '(' expression ')' selection_rest_statement
 	{
-	   void *ctx = state;
-	   $$ = new(ctx) ast_selection_statement($3, $5, $7);
+	   $$ = new(state) ast_selection_statement($3, $5.then_statement,
+						   $5.else_statement);
 	   $$->set_location(yylloc);
 	}
 	;
 
-selection_statement_unmatched:
-	IF '(' expression ')' statement_matched
+selection_rest_statement:
+	statement ELSE statement
 	{
-	   void *ctx = state;
-	   $$ = new(ctx) ast_selection_statement($3, $5, NULL);
-	   $$->set_location(yylloc);
+	   $$.then_statement = $1;
+	   $$.else_statement = $3;
 	}
-	| IF '(' expression ')' statement_unmatched
+	| statement
 	{
-	   void *ctx = state;
-	   $$ = new(ctx) ast_selection_statement($3, $5, NULL);
-	   $$->set_location(yylloc);
-	}
-	| IF '(' expression ')' statement_matched ELSE statement_unmatched
-	{
-	   void *ctx = state;
-	   $$ = new(ctx) ast_selection_statement($3, $5, $7);
-	   $$->set_location(yylloc);
+	   $$.then_statement = $1;
+	   $$.else_statement = NULL;
 	}
 	;
 
