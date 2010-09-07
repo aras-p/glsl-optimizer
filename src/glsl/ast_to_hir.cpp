@@ -516,6 +516,12 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
 	 error_emitted = true;
       }
+
+      if (state->es_shader && lhs->type->is_array()) {
+	 _mesa_glsl_error(&lhs_loc, state, "whole array assignment is not "
+			  "allowed in GLSL ES 1.00.");
+	 error_emitted = true;
+      }
    }
 
    ir_rvalue *new_rhs = validate_assignment(state, lhs->type, rhs);
@@ -1624,7 +1630,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       qual_string);
    }
 
-   if (var->type->is_array() && (state->language_version >= 120)) {
+   if (var->type->is_array() && state->language_version != 110) {
       var->array_lvalue = true;
    }
 }
