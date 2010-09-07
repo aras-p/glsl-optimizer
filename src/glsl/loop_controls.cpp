@@ -182,7 +182,14 @@ loop_control_visitor::visit_leave(ir_loop *ir)
     * i is a loop induction variable, c is a constant, and < is any relative
     * operator.
     */
-   int max_iterations = (ls->max_iterations < 0) ? INT_MAX : ls->max_iterations;
+   int max_iterations = ls->max_iterations;
+
+   if(ir->from && ir->to && ir->increment)
+      max_iterations = calculate_iterations(ir->from, ir->to, ir->increment, (ir_expression_operation)ir->cmp);
+
+   if(max_iterations < 0)
+      max_iterations = INT_MAX;
+
    foreach_list(node, &ls->terminators) {
       loop_terminator *t = (loop_terminator *) node;
       ir_if *if_stmt = t->ir;
