@@ -590,6 +590,8 @@ static int presub_helper(
 		if (inst->U.I.DstReg.WriteMask &
 				src_reads_dst_mask(s->Inst->U.I.SrcReg[1],
 							inst->U.I.DstReg)
+				|| src_reads_dst_mask(s->Inst->U.I.SrcReg[0],
+							inst->U.I.DstReg)
 				|| info->IsFlowControl) {
 			cant_sub = 1;
 		}
