@@ -260,5 +260,11 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 extern void r600_queries_resume(struct pipe_context *ctx);
 extern void r600_queries_suspend(struct pipe_context *ctx);
 
+void r600_set_constant_buffer_file(struct pipe_context *ctx,
+				   uint shader, uint index,
+				   struct pipe_resource *buffer);
+void r600_set_constant_buffer_mem(struct pipe_context *ctx,
+				  uint shader, uint index,
+				  struct pipe_resource *buffer);
 
 #endif

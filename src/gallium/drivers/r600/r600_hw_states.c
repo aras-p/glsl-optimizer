@@ -789,7 +789,8 @@ static void r600_init_config(struct r600_context *rctx)
 		break;
 	}
 
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_DX9_CONSTS(1);
+	if (!rctx->screen->use_mem_constant)
+		rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_DX9_CONSTS(1);
 
 	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_ALU_INST_PREFER_VECTOR(1);
 	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_PS_PRIO(ps_prio);
@@ -1033,3 +1034,96 @@ struct r600_context_hw_state_vtbl r600_hw_state_vtbl = {
 	.ps_shader = r600_ps_shader,
 	.init_config = r600_init_config,
 };
+
+void r600_set_constant_buffer_file(struct pipe_context *ctx,
+				   uint shader, uint index,
+				   struct pipe_resource *buffer)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_context *rctx = r600_context(ctx);
+	unsigned nconstant = 0, i, type, shader_class;
+	struct radeon_state *rstate, *rstates;
+	struct pipe_transfer *transfer;
+	u32 *ptr;
+
+	type = R600_STATE_CONSTANT;
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		shader_class = R600_SHADER_VS;
+		rstates = rctx->vs_constant;
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		shader_class = R600_SHADER_PS;
+		rstates = rctx->ps_constant;
+		break;
+	default:
+		R600_ERR("unsupported %d\n", shader);
+		return;
+	}
+	if (buffer && buffer->width0 > 0) {
+		nconstant = buffer->width0 / 16;
+		ptr = pipe_buffer_map(ctx, buffer, PIPE_TRANSFER_READ, &transfer);
+		if (ptr == NULL)
+			return;
+		for (i = 0; i < nconstant; i++) {
+			rstate = &rstates[i];
+			radeon_state_init(rstate, rscreen->rw, type, i, shader_class);
+			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT0_0] = ptr[i * 4 + 0];
+			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT1_0] = ptr[i * 4 + 1];
+			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT2_0] = ptr[i * 4 + 2];
+			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT3_0] = ptr[i * 4 + 3];
+			if (radeon_state_pm4(rstate))
+				return;
+			radeon_draw_bind(&rctx->draw, rstate);
+		}
+		pipe_buffer_unmap(ctx, buffer, transfer);
+	}
+}
+
+void r600_set_constant_buffer_mem(struct pipe_context *ctx,
+				  uint shader, uint index,
+				  struct pipe_resource *buffer)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_context *rctx = r600_context(ctx);
+	unsigned nconstant = 0, i, type, shader_class, size;
+	struct radeon_state *rstate, *rstates;
+	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
+	u32 *ptr;
+
+	type = R600_STATE_CBUF;
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		shader_class = R600_SHADER_VS;
+		rstates = rctx->vs_constant;
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		shader_class = R600_SHADER_PS;
+		rstates = rctx->ps_constant;
+		break;
+	default:
+		R600_ERR("unsupported %d\n", shader);
+		return;
+	}
+
+	rstate = &rstates[0];
+
+#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+	nconstant = buffer->width0 / 16;
+	size = ALIGN_DIVUP(nconstant, 16);
+		
+	radeon_state_init(rstate, rscreen->rw, type, 0, shader_class);
+	rstate->states[R600_VS_CBUF__ALU_CONST_BUFFER_SIZE_VS_0] = size;
+	rstate->states[R600_VS_CBUF__ALU_CONST_CACHE_VS_0] = 0;
+
+	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	rstate->nbo = 1;
+	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
+	if (radeon_state_pm4(rstate))
+		return;
+	radeon_draw_bind(&rctx->draw, rstate);
+}
+

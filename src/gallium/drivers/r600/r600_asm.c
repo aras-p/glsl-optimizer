@@ -180,6 +180,10 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	/* each alu use 2 dwords */
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
+
+	if (bc->use_mem_constant)
+		bc->cf_last->kcache0_mode = 2;
+
 	return 0;
 }
 
@@ -392,7 +396,9 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	switch (cf->inst) {
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
-		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1);
+		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
+			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode);
+
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);

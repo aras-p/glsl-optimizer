@@ -194,6 +194,7 @@ enum r600_stype {
 	R600_STATE_DSA,
 	R600_STATE_SHADER,          /* has PS,VS,GS,FS variants */
 	R600_STATE_CONSTANT,        /* has PS,VS,GS,FS variants */
+	R600_STATE_CBUF,        /* has PS,VS,GS,FS variants */
 	R600_STATE_RESOURCE,        /* has PS,VS,GS,FS variants */
 	R600_STATE_SAMPLER,         /* has PS,VS,GS,FS variants */
 	R600_STATE_SAMPLER_BORDER,  /* has PS,VS,GS,FS variants */

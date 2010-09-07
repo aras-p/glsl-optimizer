@@ -240,6 +240,9 @@ struct pipe_screen *r600_screen_create(struct radeon *rw)
 	if (rscreen == NULL) {
 		return NULL;
 	}
+	
+	/* don't enable mem constant for r600 yet */
+	rscreen->use_mem_constant = FALSE;
 
 	switch (family) {
 	case CHIP_R600:

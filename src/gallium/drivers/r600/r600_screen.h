@@ -52,6 +52,7 @@ struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;
 	enum chip_class			chip_class;
+	boolean use_mem_constant;
 };
 
 static INLINE struct r600_screen *r600_screen(struct pipe_screen *screen)

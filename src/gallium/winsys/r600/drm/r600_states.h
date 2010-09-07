@@ -269,6 +269,16 @@ static const struct radeon_register R600_names_PS_SHADER[] = {
 	{0x000288CC, 0, 0, "SQ_PGM_CF_OFFSET_PS"},
 };
 
+static const struct radeon_register R600_names_VS_CBUF[] = {
+	{0x00028180, 0, 0, "ALU_CONST_BUFFER_SIZE_VS_0"},
+	{0x00028980, 1, 0, "ALU_CONST_CACHE_VS_0"},
+};
+
+static const struct radeon_register R600_names_PS_CBUF[] = {
+	{0x00028140, 0, 0, "ALU_CONST_BUFFER_SIZE_PS_0"},
+	{0x00028940, 1, 0, "ALU_CONST_CACHE_PS_0"},
+};
+
 static const struct radeon_register R600_names_PS_CONSTANT[] = {
 	{0x00030000, 0, 0, "SQ_ALU_CONSTANT0_0"},
 	{0x00030004, 0, 0, "SQ_ALU_CONSTANT1_0"},

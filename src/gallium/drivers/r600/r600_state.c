@@ -374,52 +374,6 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 	rctx->clip = rstate;
 }
 
-static void r600_set_constant_buffer(struct pipe_context *ctx,
-					uint shader, uint index,
-					struct pipe_resource *buffer)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-	unsigned nconstant = 0, i, type, shader_class;
-	struct radeon_state *rstate, *rstates;
-	struct pipe_transfer *transfer;
-	u32 *ptr;
-
-	type = R600_STATE_CONSTANT;
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		shader_class = R600_SHADER_VS;
-		rstates = rctx->vs_constant;
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		shader_class = R600_SHADER_PS;
-		rstates = rctx->ps_constant;
-		break;
-	default:
-		R600_ERR("unsupported %d\n", shader);
-		return;
-	}
-	if (buffer && buffer->width0 > 0) {
-		nconstant = buffer->width0 / 16;
-		ptr = pipe_buffer_map(ctx, buffer, PIPE_TRANSFER_READ, &transfer);
-		if (ptr == NULL)
-			return;
-		for (i = 0; i < nconstant; i++) {
-			rstate = &rstates[i];
-			radeon_state_init(rstate, rscreen->rw, type, i, shader_class);
-			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT0_0] = ptr[i * 4 + 0];
-			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT1_0] = ptr[i * 4 + 1];
-			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT2_0] = ptr[i * 4 + 2];
-			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT3_0] = ptr[i * 4 + 3];
-			if (radeon_state_pm4(rstate))
-				return;
-			radeon_draw_bind(&rctx->draw, rstate);
-		}
-		pipe_buffer_unmap(ctx, buffer, transfer);
-	}
-}
-
 static void r600_set_framebuffer_state(struct pipe_context *ctx,
 					const struct pipe_framebuffer_state *state)
 {
@@ -555,7 +509,10 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_vs_state = r600_delete_state;
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_clip_state = r600_set_clip_state;
-	rctx->context.set_constant_buffer = r600_set_constant_buffer;
+	if (rctx->screen->use_mem_constant)
+		rctx->context.set_constant_buffer = r600_set_constant_buffer_mem;
+	else
+		rctx->context.set_constant_buffer = r600_set_constant_buffer_file;
 	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_view;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;

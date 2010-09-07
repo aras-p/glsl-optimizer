@@ -65,6 +65,7 @@ struct radeon_stype_info r600_stypes[] = {
 	{ R600_STATE_BLEND, 1, 0, r600_state_pm4_generic, SUB_NONE(BLEND), },
 	{ R600_STATE_DSA, 1, 0, r600_state_pm4_generic, SUB_NONE(DSA), },
 	{ R600_STATE_SHADER, 1, 0, r600_state_pm4_shader, { SUB_PS(PS_SHADER), SUB_VS(VS_SHADER) } },
+	{ R600_STATE_CBUF, 1, 0, r600_state_pm4_shader,  { SUB_PS(PS_CBUF), SUB_VS(VS_CBUF) } },
 	{ R600_STATE_CONSTANT, 256, 0x10, r600_state_pm4_generic,  { SUB_PS(PS_CONSTANT), SUB_VS(VS_CONSTANT) } },
 	{ R600_STATE_RESOURCE, 160, 0x1c, r600_state_pm4_resource, { SUB_PS(PS_RESOURCE), SUB_VS(VS_RESOURCE), SUB_GS(GS_RESOURCE), SUB_FS(FS_RESOURCE)} },
 	{ R600_STATE_SAMPLER, 18, 0xc, r600_state_pm4_generic, { SUB_PS(PS_SAMPLER), SUB_VS(VS_SAMPLER), SUB_GS(GS_SAMPLER) } },

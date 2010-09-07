@@ -43,6 +43,7 @@ struct r600_shader {
 	struct r600_shader_io	output[32];
 	enum radeon_family	family;
 	boolean                 uses_kill;
+	boolean                 use_mem_constant;
 };
 
 #endif

@@ -56,6 +56,9 @@ u32 r600_domain_from_usage(unsigned usage)
 	if (usage & PIPE_BIND_INDEX_BUFFER) {
 	    domain |= RADEON_GEM_DOMAIN_GTT;
 	}
+	if (usage & PIPE_BIND_CONSTANT_BUFFER) {
+	    domain |= RADEON_GEM_DOMAIN_VRAM;
+	}
 
 	return domain;
 }
@@ -79,7 +82,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->base.b.screen = screen;
 	rbuffer->base.vtbl = &r600_buffer_vtbl;
 
-	if (rbuffer->base.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
+	if ((rscreen->use_mem_constant == FALSE) && (rbuffer->base.b.bind & PIPE_BIND_CONSTANT_BUFFER)) {
 		desc.alignment = alignment;
 		desc.usage = rbuffer->base.b.bind;
 		rbuffer->pb = pb_malloc_buffer_create(rbuffer->base.b.width0,

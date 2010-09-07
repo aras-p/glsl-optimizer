@@ -120,6 +120,7 @@ struct r600_bc_cf {
 	unsigned                        cond;
 	unsigned                        pop_count;
 	unsigned                        cf_addr; /* control flow addr */
+	unsigned                        kcache0_mode;
 	struct list_head		alu;
 	struct list_head		tex;
 	struct list_head		vtx;
@@ -151,6 +152,7 @@ struct r600_cf_callstack {
 struct r600_bc {
 	enum radeon_family		family;
 	int chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
+	unsigned                        use_mem_constant; 
 	struct list_head		cf;
 	struct r600_bc_cf		*cf_last;
 	unsigned			ndw;
