@@ -53,7 +53,7 @@ struct lp_scene_queue;
 
 /* Scene temporary storage is clamped to this size:
  */
-#define LP_SCENE_MAX_SIZE (1024*1024)
+#define LP_SCENE_MAX_SIZE (4*1024*1024)
 
 /* The maximum amount of texture storage referenced by a scene is
  * clamped ot this size:
