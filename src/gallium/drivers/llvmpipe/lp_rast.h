@@ -236,13 +236,14 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_TRIANGLE_6        0x7
 #define LP_RAST_OP_TRIANGLE_7        0x8
 #define LP_RAST_OP_TRIANGLE_8        0x9
-#define LP_RAST_OP_TRIANGLE_3_16     0xa
-#define LP_RAST_OP_SHADE_TILE        0xb
-#define LP_RAST_OP_SHADE_TILE_OPAQUE 0xc
-#define LP_RAST_OP_BEGIN_QUERY       0xd
-#define LP_RAST_OP_END_QUERY         0xe
+#define LP_RAST_OP_TRIANGLE_3_4      0xa
+#define LP_RAST_OP_TRIANGLE_3_16     0xb
+#define LP_RAST_OP_SHADE_TILE        0xc
+#define LP_RAST_OP_SHADE_TILE_OPAQUE 0xd
+#define LP_RAST_OP_BEGIN_QUERY       0xe
+#define LP_RAST_OP_END_QUERY         0xf
 
-#define LP_RAST_OP_MAX               0xf
+#define LP_RAST_OP_MAX               0x10
 #define LP_RAST_OP_MASK              0xff
 
 void
@@ -251,5 +252,6 @@ void
 lp_debug_draw_bins_by_cmd_length( struct lp_scene *scene );
 void
 lp_debug_draw_bins_by_coverage( struct lp_scene *scene );
+
 
 #endif

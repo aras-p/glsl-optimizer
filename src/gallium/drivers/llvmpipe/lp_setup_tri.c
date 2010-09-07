@@ -487,6 +487,18 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 		     (bbox->y1 - (bbox->y0 & ~3)));
 
    if (nr_planes == 3) {
+      if (sz < 4 && dx < 64)
+      {
+	 /* Triangle is contained in a single 4x4 stamp:
+	  */
+	 int mask = (bbox->x0 & 63 & ~3) | ((bbox->y0 & 63 & ~3) << 8);
+
+	 return lp_scene_bin_command( scene,
+				      bbox->x0/64, bbox->y0/64,
+				      LP_RAST_OP_TRIANGLE_3_4,
+				      lp_rast_arg_triangle(tri, mask) );
+      }
+
       if (sz < 16 && dx < 64)
       {
 	 int mask = (bbox->x0 & 63 & ~3) | ((bbox->y0 & 63 & ~3) << 8);

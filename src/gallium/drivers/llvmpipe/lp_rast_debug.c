@@ -40,6 +40,7 @@ static const char *cmd_names[LP_RAST_OP_MAX] =
    "triangle_6",
    "triangle_7",
    "triangle_8",
+   "triangle_3_4",
    "triangle_3_16",
    "shade_tile",
    "shade_tile_opaque",
