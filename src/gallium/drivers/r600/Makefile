@@ -19,6 +19,7 @@ C_SOURCES = \
 	r600_state.c \
 	r600_texture.c \
 	r600_asm.c \
-	r700_asm.c
+	r700_asm.c \
+	r600_hw_states.c
 
 include ../../Makefile.template

@@ -133,6 +133,46 @@ struct r600_shader_sampler_states {
 	struct radeon_state		*border[PIPE_MAX_ATTRIBS];
 };
 
+struct r600_context;
+struct r600_resource;
+
+struct r600_context_hw_state_vtbl {
+	void (*blend)(struct r600_context *rctx,
+		      struct radeon_state *rstate,
+		      const struct pipe_blend_state *state);
+	void (*ucp)(struct r600_context *rctx, struct radeon_state *rstate,
+		    const struct pipe_clip_state *state);
+	void (*cb)(struct r600_context *rctx, struct radeon_state *rstate,
+		   const struct pipe_framebuffer_state *state, int cb);
+	void (*db)(struct r600_context *rctx, struct radeon_state *rstate,
+		   const struct pipe_framebuffer_state *state);
+	void (*rasterizer)(struct r600_context *rctx, struct radeon_state *rstate);
+	void (*scissor)(struct r600_context *rctx, struct radeon_state *rstate);
+	void (*viewport)(struct r600_context *rctx, struct radeon_state *rstate, const struct pipe_viewport_state *state);
+	void (*dsa)(struct r600_context *rctx, struct radeon_state *rstate);
+	void (*sampler_border)(struct r600_context *rctx, struct radeon_state *rstate,
+			       const struct pipe_sampler_state *state, unsigned id);
+	void (*sampler)(struct r600_context *rctx, struct radeon_state *rstate,
+			const struct pipe_sampler_state *state, unsigned id);
+	void (*resource)(struct pipe_context *ctx, struct radeon_state *rstate,
+			 const struct pipe_sampler_view *view, unsigned id);
+	void (*cb_cntl)(struct r600_context *rctx, struct radeon_state *rstate);
+	int (*vs_resource)(struct r600_context *rctx, int id, struct r600_resource *rbuffer, uint32_t offset,
+			   uint32_t stride, uint32_t format);
+	int (*vgt_init)(struct r600_context *rctx, struct radeon_state *draw,
+			struct r600_resource *rbuffer,
+			uint32_t count, int vgt_draw_initiator);
+	int (*vgt_prim)(struct r600_context *rctx, struct radeon_state *vgt,
+			uint32_t prim, uint32_t start, uint32_t vgt_dma_index_type);
+
+	int (*ps_shader)(struct r600_context *rctx, struct r600_context_state *rshader,
+			 struct radeon_state *state);
+	int (*vs_shader)(struct r600_context *rctx, struct r600_context_state *rpshader,
+			 struct radeon_state *state);
+	void (*init_config)(struct r600_context *rctx);
+};
+extern struct r600_context_hw_state_vtbl r600_hw_state_vtbl;
+
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
@@ -140,6 +180,7 @@ struct r600_context {
 	struct radeon_ctx		ctx;
 	struct blitter_context		*blitter;
 	struct radeon_draw		draw;
+	struct r600_context_hw_state_vtbl *vtbl;
 	struct radeon_state		config;
 	/* FIXME get rid of those vs_resource,vs/ps_constant */
 	struct radeon_state		*vs_resource;

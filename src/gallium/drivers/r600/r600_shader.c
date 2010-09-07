@@ -129,92 +129,24 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 
 static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_shader *rshader = &rpshader->shader;
+	struct r600_context *rctx = r600_context(ctx);
 	struct radeon_state *state;
-	unsigned i, tmp;
 
 	state = &rpshader->rstate[0];
 	radeon_state_fini(&rpshader->rstate[0]);
-	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
-	for (i = 0; i < 10; i++) {
-		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i] = 0;
-	}
-	/* so far never got proper semantic id from tgsi */
-	for (i = 0; i < 32; i++) {
-		tmp = i << ((i & 3) * 8);
-		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i / 4] |= tmp;
-	}
-	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
-	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
-		S_028868_STACK_SIZE(rshader->bc.nstack);
-	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	state->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	state->nbo = 2;
-	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	state->placement[2] = RADEON_GEM_DOMAIN_GTT;
-	return radeon_state_pm4(state);
+
+	return rctx->vtbl->vs_shader(rctx, rpshader, state);
 }
 
 static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
-	const struct pipe_rasterizer_state *rasterizer;
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_shader *rshader = &rpshader->shader;
 	struct r600_context *rctx = r600_context(ctx);
 	struct radeon_state *state;
-	unsigned i, tmp, exports_ps, num_cout;
-	boolean have_pos = FALSE;
 
 	state = &rpshader->rstate[0];
-	rasterizer = &rctx->rasterizer->state.rasterizer;
 	radeon_state_fini(state);
-	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
-	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(i);
-		tmp |= S_028644_SEL_CENTROID(1);
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
-			have_pos = TRUE;
-		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
-			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
-		}
-		if (rasterizer->sprite_coord_enable & (1 << i)) {
-			tmp |= S_028644_PT_SPRITE_TEX(1);
-		}
-		state->states[R600_PS_SHADER__SPI_PS_INPUT_CNTL_0 + i] = tmp;
-	}
 
-	exports_ps = 0;
-	num_cout = 0;
-	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			exports_ps |= 1;
-		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			exports_ps |= (1 << (num_cout+1));
-			num_cout++;
-		}
-	}
-	if (!exports_ps) {
-		/* always at least export 1 component per pixel */
-		exports_ps = 2;
-	}
-	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
-							S_0286CC_PERSP_GRADIENT_ENA(1);
-	if (have_pos) {
-		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1) |
-		                                                       S_0286CC_BARYC_SAMPLE_CNTL(1);
-		state->states[R600_PS_SHADER__SPI_INPUT_Z] |= 1;
-	}
-	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
-	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
-		S_028868_STACK_SIZE(rshader->bc.nstack);
-	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
-	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	state->nbo = 1;
-	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	return radeon_state_pm4(state);
+	return rctx->vtbl->ps_shader(rctx, rpshader, state);
 }
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_context_state *rpshader)
