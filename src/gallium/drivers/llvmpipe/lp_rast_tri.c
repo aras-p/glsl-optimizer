@@ -68,36 +68,6 @@ block_full_16(struct lp_rasterizer_task *task,
 }
 
 #if !defined(PIPE_ARCH_SSE)
-static INLINE unsigned
-build_mask(int c, int dcdx, int dcdy)
-{
-   int mask = 0;
-
-   int c0 = c;
-   int c1 = c0 + dcdx;
-   int c2 = c1 + dcdx;
-   int c3 = c2 + dcdx;
-
-   mask |= ((c0 + 0 * dcdy) >> 31) & (1 << 0);
-   mask |= ((c0 + 1 * dcdy) >> 31) & (1 << 2);
-   mask |= ((c0 + 2 * dcdy) >> 31) & (1 << 8);
-   mask |= ((c0 + 3 * dcdy) >> 31) & (1 << 10);
-   mask |= ((c1 + 0 * dcdy) >> 31) & (1 << 1);
-   mask |= ((c1 + 1 * dcdy) >> 31) & (1 << 3);
-   mask |= ((c1 + 2 * dcdy) >> 31) & (1 << 9);
-   mask |= ((c1 + 3 * dcdy) >> 31) & (1 << 11); 
-   mask |= ((c2 + 0 * dcdy) >> 31) & (1 << 4);
-   mask |= ((c2 + 1 * dcdy) >> 31) & (1 << 6);
-   mask |= ((c2 + 2 * dcdy) >> 31) & (1 << 12);
-   mask |= ((c2 + 3 * dcdy) >> 31) & (1 << 14);
-   mask |= ((c3 + 0 * dcdy) >> 31) & (1 << 5);
-   mask |= ((c3 + 1 * dcdy) >> 31) & (1 << 7);
-   mask |= ((c3 + 2 * dcdy) >> 31) & (1 << 13);
-   mask |= ((c3 + 3 * dcdy) >> 31) & (1 << 15);
-  
-   return mask;
-}
-
 
 static INLINE unsigned
 build_mask_linear(int c, int dcdx, int dcdy)
@@ -219,42 +189,6 @@ build_mask_linear(int c, int dcdx, int dcdy)
    return _mm_movemask_epi8(result);
 }
 
-static INLINE unsigned
-build_mask(int c, int dcdx, int dcdy)
-{
-   __m128i step = _mm_setr_epi32(0, dcdx, dcdy, dcdx + dcdy);
-   __m128i c0 = _mm_set1_epi32(c);
-
-   /* Get values across the quad
-    */
-   __m128i cstep0 = _mm_add_epi32(c0, step);
-
-   /* Scale up step for moving between quads.
-    */
-   __m128i step4 = _mm_add_epi32(step, step);
-
-   /* Get values for the remaining quads:
-    */
-   __m128i cstep1 = _mm_add_epi32(cstep0, 
-				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(1,1,1,1)));
-   __m128i cstep2 = _mm_add_epi32(cstep0,
-				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(2,2,2,2)));
-   __m128i cstep3 = _mm_add_epi32(cstep2,
-				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(1,1,1,1)));
-
-   /* pack pairs of results into epi16
-    */
-   __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
-   __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
-
-   /* pack into epi8, preserving sign bits
-    */
-   __m128i result = _mm_packs_epi16(cstep01, cstep23);
-
-   /* extract sign bits to create mask
-    */
-   return _mm_movemask_epi8(result);
-}
 
 #endif
 

@@ -50,9 +50,9 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
    int j;
 
    for (j = 0; j < NR_PLANES; j++) {
-      mask &= ~build_mask(c[j] - 1, 
-			  -plane[j].dcdx,
-			  plane[j].dcdy);
+      mask &= ~build_mask_linear(c[j] - 1, 
+				 -plane[j].dcdx,
+				 plane[j].dcdy);
    }
 
    /* Now pass to the shader:

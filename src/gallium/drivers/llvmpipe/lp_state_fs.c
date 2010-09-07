@@ -186,6 +186,7 @@ generate_quad_mask(LLVMBuilderRef builder,
    LLVMTypeRef i32t = LLVMInt32Type();
    LLVMValueRef bits[4];
    LLVMValueRef mask;
+   int shift;
 
    /*
     * XXX: We'll need a different path for 16 x u8
@@ -197,10 +198,25 @@ generate_quad_mask(LLVMBuilderRef builder,
    /*
     * mask_input >>= (quad * 4)
     */
+   
+   switch (quad) {
+   case 0:
+      shift = 0;
+      break;
+   case 1:
+      shift = 2;
+      break;
+   case 2:
+      shift = 8;
+      break;
+   case 3:
+      shift = 10;
+      break;
+   }
 
    mask_input = LLVMBuildLShr(builder,
                               mask_input,
-                              LLVMConstInt(i32t, quad * 4, 0),
+                              LLVMConstInt(i32t, shift, 0),
                               "");
 
    /*
@@ -211,9 +227,9 @@ generate_quad_mask(LLVMBuilderRef builder,
 
    bits[0] = LLVMConstInt(i32t, 1 << 0, 0);
    bits[1] = LLVMConstInt(i32t, 1 << 1, 0);
-   bits[2] = LLVMConstInt(i32t, 1 << 2, 0);
-   bits[3] = LLVMConstInt(i32t, 1 << 3, 0);
-
+   bits[2] = LLVMConstInt(i32t, 1 << 4, 0);
+   bits[3] = LLVMConstInt(i32t, 1 << 5, 0);
+   
    mask = LLVMBuildAnd(builder, mask, LLVMConstVector(bits, 4), "");
 
    /*
