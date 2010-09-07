@@ -494,13 +494,13 @@ struct glx_screen
 
    struct glx_display *display;
 
+   Display *dpy;
+   int scr;
+
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
      * Per screen direct rendering interface functions and data.
      */
-   Display *dpy;
-   int scr;
-
    __GLXDRIscreen *driScreen;
 #endif
 
