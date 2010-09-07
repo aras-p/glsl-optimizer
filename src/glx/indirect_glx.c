@@ -137,10 +137,12 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
 
-   if (old != &dummyContext && !old->isDirect && old->psc->dpy == dpy)
+   if (old != &dummyContext && !old->isDirect && old->psc->dpy == dpy) {
       tag = old->currentContextTag;
-   else
-      tag = None;
+      old->currentContextTag = 0;
+   } else {
+      tag = 0;
+   }
 
    SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read, &reply);
 
@@ -170,10 +172,11 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
     * context to a direct context or from one dpy to another and have
     * to send a request to the dpy to unbind the previous context.
     */
-   if (!new || new->isDirect || new->psc->dpy != dpy)
+   if (!new || new->isDirect || new->psc->dpy != dpy) {
       SendMakeCurrentRequest(dpy, opcode, None,
 			     gc->currentContextTag, None, None, &reply);
-   gc->currentContextTag = 0;
+      gc->currentContextTag = 0;
+   }
 }
 
 static void
