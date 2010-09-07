@@ -585,7 +585,7 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
                                    read_only,
                                    TRUE, /* cpu_access */
                                    do_not_block,
-                                   "transfer dest")) {
+                                   __FUNCTION__)) {
          /*
           * It would have blocked, but state tracker requested no to.
           */

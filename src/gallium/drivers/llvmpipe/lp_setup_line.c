@@ -268,7 +268,7 @@ try_setup_line( struct lp_setup_context *setup,
                const float (*v1)[4],
                const float (*v2)[4])
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *line;
    struct lp_line_info info;
    float width = MAX2(1.0, setup->line_width);
@@ -585,6 +585,8 @@ try_setup_line( struct lp_setup_context *setup,
 
    line->inputs.facing = 1.0F;
    line->inputs.state = setup->fs.stored;
+   line->inputs.disable = FALSE;
+   line->inputs.opaque = FALSE;
 
    for (i = 0; i < 4; i++) {
       struct lp_rast_plane *plane = &line->plane[i];

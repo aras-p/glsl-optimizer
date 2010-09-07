@@ -229,7 +229,7 @@ try_setup_point( struct lp_setup_context *setup,
    const int x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
    const int y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
      
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *point;
    unsigned bytes;
    struct u_rect bbox;
@@ -289,6 +289,8 @@ try_setup_point( struct lp_setup_context *setup,
 
    point->inputs.facing = 1.0F;
    point->inputs.state = setup->fs.stored;
+   point->inputs.disable = FALSE;
+   point->inputs.opaque = FALSE;
 
    {
       point->plane[0].dcdx = -1;

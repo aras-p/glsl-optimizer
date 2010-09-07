@@ -30,10 +30,10 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_list.h"
+#include "util/u_format.h"
 #include "lp_scene.h"
-#include "lp_debug.h"
-#include "lp_scene_queue.h"
 #include "lp_fence.h"
+#include "lp_debug.h"
 
 
 #define RESOURCE_REF_SZ 32
@@ -51,15 +51,14 @@ struct resource_ref {
  * \param queue  the queue to put newly rendered/emptied scenes into
  */
 struct lp_scene *
-lp_scene_create( struct pipe_context *pipe,
-                 struct lp_scene_queue *queue )
+lp_scene_create( struct pipe_context *pipe )
 {
    struct lp_scene *scene = CALLOC_STRUCT(lp_scene);
    if (!scene)
       return NULL;
 
    scene->pipe = pipe;
-   scene->empty_queue = queue;
+   scene->data.head = &scene->data.first;
 
    pipe_mutex_init(scene->mutex);
 
@@ -73,9 +72,8 @@ lp_scene_create( struct pipe_context *pipe,
 void
 lp_scene_destroy(struct lp_scene *scene)
 {
-   lp_scene_reset(scene);
-
    pipe_mutex_destroy(scene->mutex);
+   assert(scene->data.head == &scene->data.first);
    FREE(scene);
 }
 
@@ -92,8 +90,7 @@ lp_scene_is_empty(struct lp_scene *scene )
    for (y = 0; y < TILES_Y; y++) {
       for (x = 0; x < TILES_X; x++) {
          const struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
-         const struct cmd_block_list *list = &bin->commands;
-         if (list->head) {
+         if (bin->head) {
             return FALSE;
          }
       }
@@ -103,8 +100,8 @@ lp_scene_is_empty(struct lp_scene *scene )
 
 
 /* Returns true if there has ever been a failed allocation attempt in
- * this scene.  Used in triangle/rectangle emit to avoid having to
- * check success at each bin.
+ * this scene.  Used in triangle emit to avoid having to check success
+ * at each bin.
  */
 boolean
 lp_scene_is_oom(struct lp_scene *scene)
@@ -120,31 +117,90 @@ void
 lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 {
    struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
-   struct cmd_block_list *list = &bin->commands;
 
-   list->head = list->tail;
-   if (list->tail) {
-      list->tail->next = NULL;
-      list->tail->count = 0;
+   bin->head = bin->tail;
+   if (bin->tail) {
+      bin->tail->next = NULL;
+      bin->tail->count = 0;
    }
 }
 
 
+void
+lp_scene_begin_rasterization(struct lp_scene *scene)
+{
+   const struct pipe_framebuffer_state *fb = &scene->fb;
+   int i;
+
+   //LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+   
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      struct pipe_surface *cbuf = scene->fb.cbufs[i];
+      scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
+                                                        cbuf->level);
+
+      scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
+                                                  cbuf->face,
+                                                  cbuf->level,
+                                                  cbuf->zslice,
+                                                  LP_TEX_USAGE_READ_WRITE,
+                                                  LP_TEX_LAYOUT_LINEAR);
+   }
+
+   if (fb->zsbuf) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
+      scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->level);
+      scene->zsbuf.blocksize = 
+         util_format_get_blocksize(zsbuf->texture->format);
+
+      scene->zsbuf.map = llvmpipe_resource_map(zsbuf->texture,
+                                               zsbuf->face,
+                                               zsbuf->level,
+                                               zsbuf->zslice,
+                                               LP_TEX_USAGE_READ_WRITE,
+                                               LP_TEX_LAYOUT_NONE);
+   }
+}
+
+
+
+
 /**
- * Free all the temporary data in a scene.  May be called from the
- * rasterizer thread(s).
+ * Free all the temporary data in a scene.
  */
 void
-lp_scene_reset(struct lp_scene *scene )
+lp_scene_end_rasterization(struct lp_scene *scene )
 {
    int i, j;
+
+   /* Unmap color buffers */
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      if (scene->cbufs[i].map) {
+         struct pipe_surface *cbuf = scene->fb.cbufs[i];
+         llvmpipe_resource_unmap(cbuf->texture,
+                                 cbuf->face,
+                                 cbuf->level,
+                                 cbuf->zslice);
+         scene->cbufs[i].map = NULL;
+      }
+   }
+
+   /* Unmap z/stencil buffer */
+   if (scene->zsbuf.map) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
+      llvmpipe_resource_unmap(zsbuf->texture,
+                             zsbuf->face,
+                             zsbuf->level,
+                             zsbuf->zslice);
+      scene->zsbuf.map = NULL;
+   }
 
    /* Reset all command lists:
     */
    for (i = 0; i < scene->tiles_x; i++) {
       for (j = 0; j < scene->tiles_y; j++) {
          struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         memset(bin, 0, sizeof *bin);
+         bin->head = bin->tail = NULL;
       }
    }
 
@@ -186,10 +242,12 @@ lp_scene_reset(struct lp_scene *scene )
 
       for (block = list->head; block; block = tmp) {
          tmp = block->next;
-         FREE(block);
+         if (block != &list->first)
+            FREE(block);
       }
 
-      list->head = NULL;
+      list->head = &list->first;
+      list->head->next = NULL;
    }
 
    lp_fence_reference(&scene->fence, NULL);
@@ -200,6 +258,8 @@ lp_scene_reset(struct lp_scene *scene )
 
    scene->has_depthstencil_clear = FALSE;
    scene->alloc_failed = FALSE;
+
+   util_unreference_framebuffer_state( &scene->fb );
 }
 
 
@@ -213,13 +273,13 @@ lp_scene_new_cmd_block( struct lp_scene *scene,
 {
    struct cmd_block *block = lp_scene_alloc(scene, sizeof(struct cmd_block));
    if (block) {
-      if (bin->commands.tail) {
-         bin->commands.tail->next = block;
-         bin->commands.tail = block;
+      if (bin->tail) {
+         bin->tail->next = block;
+         bin->tail = block;
       }
       else {
-         bin->commands.head = block;
-         bin->commands.tail = block;
+         bin->head = block;
+         bin->tail = block;
       }
       //memset(block, 0, sizeof *block);
       block->next = NULL;
@@ -269,27 +329,14 @@ lp_scene_data_size( const struct lp_scene *scene )
 }
 
 
-/** Return number of bytes used for a single bin */
-static unsigned
-lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
-{
-   struct cmd_bin *bin = lp_scene_get_bin((struct lp_scene *) scene, x, y);
-   const struct cmd_block *cmd;
-   unsigned size = 0;
-   for (cmd = bin->commands.head; cmd; cmd = cmd->next) {
-      size += (cmd->count *
-               (sizeof(lp_rast_cmd) + sizeof(union lp_rast_cmd_arg)));
-   }
-   return size;
-}
-
 
 /**
  * Add a reference to a resource by the scene.
  */
 boolean
 lp_scene_add_resource_reference(struct lp_scene *scene,
-                                struct pipe_resource *resource)
+                                struct pipe_resource *resource,
+                                boolean initializing_scene)
 {
    struct resource_ref *ref, **last = &scene->resources;
    int i;
@@ -327,7 +374,17 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
 add_new_ref:
    pipe_resource_reference(&ref->resource[ref->count++], resource);
    scene->resource_reference_size += llvmpipe_resource_size(resource);
-   return scene->resource_reference_size < LP_SCENE_MAX_RESOURCE_SIZE;
+
+   /* Heuristic to advise scene flushes.  This isn't helpful in the
+    * initial setup of the scene, but after that point flush on the
+    * next resource added which exceeds 64MB in referenced texture
+    * data.
+    */
+   if (!initializing_scene &&
+       scene->resource_reference_size < LP_SCENE_MAX_RESOURCE_SIZE)
+      return FALSE;
+
+   return TRUE;
 }
 
 
@@ -384,7 +441,7 @@ lp_scene_bin_iter_begin( struct lp_scene *scene )
  * of work (a bin) to work on.
  */
 struct cmd_bin *
-lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y )
+lp_scene_bin_iter_next( struct lp_scene *scene )
 {
    struct cmd_bin *bin = NULL;
 
@@ -401,8 +458,6 @@ lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y )
    }
 
    bin = lp_scene_get_bin(scene, scene->curr_x, scene->curr_y);
-   *bin_x = scene->curr_x;
-   *bin_y = scene->curr_y;
 
 end:
    /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/
@@ -426,34 +481,13 @@ void lp_scene_begin_binning( struct lp_scene *scene,
 }
 
 
-void lp_scene_rasterize( struct lp_scene *scene,
-                         struct lp_rasterizer *rast )
+void lp_scene_end_binning( struct lp_scene *scene )
 {
-   if (0) {
-      unsigned x, y;
+   if (LP_DEBUG & DEBUG_SCENE) {
       debug_printf("rasterize scene:\n");
-      debug_printf("  data size: %u\n", lp_scene_data_size(scene));
-      for (y = 0; y < scene->tiles_y; y++) {
-         for (x = 0; x < scene->tiles_x; x++) {
-            debug_printf("  bin %u, %u size: %u\n", x, y,
-                         lp_scene_bin_size(scene, x, y));
-         }
-      }
+      debug_printf("  scene_size: %u\n",
+                   scene->scene_size);
+      debug_printf("  data size: %u\n",
+                   lp_scene_data_size(scene));
    }
-
-   /* Enqueue the scene for rasterization, then immediately wait for
-    * it to finish.
-    */
-   lp_rast_queue_scene( rast, scene );
-
-   /* Currently just wait for the rasterizer to finish.  Some
-    * threading interactions need to be worked out, particularly once
-    * transfers become per-context:
-    */
-   lp_rast_finish( rast );
-
-   util_unreference_framebuffer_state( &scene->fb );
-
-   /* put scene into the empty list */
-   lp_scene_enqueue( scene->empty_queue, scene );
 }

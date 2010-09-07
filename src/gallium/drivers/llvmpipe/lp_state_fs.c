@@ -824,13 +824,6 @@ generate_variant(struct llvmpipe_context *lp,
 
    memcpy(&variant->key, key, shader->variant_key_size);
 
-   if (gallivm_debug & GALLIVM_DEBUG_IR) {
-      lp_debug_fs_variant(variant);
-   }
-
-   generate_fragment(lp, shader, variant, RAST_WHOLE);
-   generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
-
    /*
     * Determine whether we are touching all channels in the color buffer.
     */
@@ -853,6 +846,14 @@ generate_variant(struct llvmpipe_context *lp,
          !key->depth.enabled &&
          !shader->info.uses_kill
          ? TRUE : FALSE;
+
+
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      lp_debug_fs_variant(variant);
+   }
+
+   generate_fragment(lp, shader, variant, RAST_WHOLE);
+   generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
 
    return variant;
 }
@@ -899,6 +900,9 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       }
       debug_printf("\n");
    }
+
+   /* Keep a copy of the tokens in shader->base.tokens */
+   shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
    return shader;
 }

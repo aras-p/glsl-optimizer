@@ -160,16 +160,17 @@ lp_setup_print_triangle(struct lp_setup_context *setup,
 }
 
 
-lp_rast_cmd lp_rast_tri_tab[9] = {
-   NULL,               /* should be impossible */
-   lp_rast_triangle_1,
-   lp_rast_triangle_2,
-   lp_rast_triangle_3,
-   lp_rast_triangle_4,
-   lp_rast_triangle_5,
-   lp_rast_triangle_6,
-   lp_rast_triangle_7,
-   lp_rast_triangle_8
+static unsigned
+lp_rast_tri_tab[9] = {
+   0,               /* should be impossible */
+   LP_RAST_OP_TRIANGLE_1,
+   LP_RAST_OP_TRIANGLE_2,
+   LP_RAST_OP_TRIANGLE_3,
+   LP_RAST_OP_TRIANGLE_4,
+   LP_RAST_OP_TRIANGLE_5,
+   LP_RAST_OP_TRIANGLE_6,
+   LP_RAST_OP_TRIANGLE_7,
+   LP_RAST_OP_TRIANGLE_8
 };
 
 
@@ -199,12 +200,12 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
 
       LP_COUNT(nr_shade_opaque_64);
       return lp_scene_bin_command( scene, tx, ty,
-                                  lp_rast_shade_tile_opaque,
-                                  lp_rast_arg_inputs(inputs) );
+                                   LP_RAST_OP_SHADE_TILE_OPAQUE,
+                                   lp_rast_arg_inputs(inputs) );
    } else {
       LP_COUNT(nr_shade_64);
       return lp_scene_bin_command( scene, tx, ty,
-                                   lp_rast_shade_tile,
+                                   LP_RAST_OP_SHADE_TILE,
                                    lp_rast_arg_inputs(inputs) );
    }
 }
@@ -222,8 +223,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 		const float (*v2)[4],
 		boolean frontfacing )
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
-   struct lp_fragment_shader_variant *variant = setup->fs.current.variant;
+   struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
@@ -236,7 +236,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    unsigned tri_bytes;
    int i;
    int nr_planes = 3;
-      
+
    if (0)
       lp_setup_print_triangle(setup, v0, v1, v2);
 
@@ -280,13 +280,13 @@ do_triangle_ccw(struct lp_setup_context *setup,
        bbox.y1 < bbox.y0) {
       if (0) debug_printf("empty bounding box\n");
       LP_COUNT(nr_culled_tris);
-      return FALSE;
+      return TRUE;
    }
 
    if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
-      return FALSE;
+      return TRUE;
    }
 
    u_rect_find_intersection(&setup->draw_region, &bbox);
@@ -355,10 +355,9 @@ do_triangle_ccw(struct lp_setup_context *setup,
    lp_setup_tri_coef( setup, &tri->inputs, &info );
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
-   tri->inputs.opaque = variant->opaque;
    tri->inputs.disable = FALSE;
+   tri->inputs.opaque = setup->fs.current.variant->opaque;
    tri->inputs.state = setup->fs.stored;
-
 
   
    for (i = 0; i < 3; i++) {
@@ -496,7 +495,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 	 int mask = (ix0 & 3) | ((iy0 & 3) << 4);
 
 	 return lp_scene_bin_command( scene, ix0/4, iy0/4,
-                                      lp_rast_triangle_3_16,
+                                      LP_RAST_OP_TRIANGLE_3_16,
                                       lp_rast_arg_triangle(tri, mask) );
       }
    }

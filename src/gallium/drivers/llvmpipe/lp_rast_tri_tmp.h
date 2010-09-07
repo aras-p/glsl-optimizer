@@ -162,6 +162,11 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    unsigned outmask, inmask, partmask, partial_mask;
    unsigned j = 0;
 
+   if (tri->inputs.disable) {
+      /* This triangle was partially binned and has been disabled */
+      return;
+   }
+
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 

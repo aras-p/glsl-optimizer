@@ -49,8 +49,6 @@
 #define LP_SETUP_NEW_SCISSOR     0x08
 
 
-struct lp_scene_queue;
-
 
 /** Max number of scenes */
 #define MAX_SCENES 2
@@ -84,9 +82,9 @@ struct lp_setup_context
     */
    struct draw_stage *vbuf;
    unsigned num_threads;
+   unsigned scene_idx;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
-   struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
 
    struct lp_fence *last_fence;
    struct llvmpipe_query *active_query;
@@ -115,7 +113,6 @@ struct lp_setup_context
 
    enum setup_state {
       SETUP_FLUSHED,    /**< scene is null */
-      SETUP_EMPTY,      /**< scene exists but has only state changes */
       SETUP_CLEARED,    /**< scene exists but has only clears */
       SETUP_ACTIVE      /**< scene exists and has at least one draw/query */
    } state;
@@ -161,13 +158,14 @@ void lp_setup_choose_triangle( struct lp_setup_context *setup );
 void lp_setup_choose_line( struct lp_setup_context *setup );
 void lp_setup_choose_point( struct lp_setup_context *setup );
 
-struct lp_scene *lp_setup_get_current_scene(struct lp_setup_context *setup);
-
 void lp_setup_init_vbuf(struct lp_setup_context *setup);
 
-void lp_setup_update_state( struct lp_setup_context *setup );
+void lp_setup_update_state( struct lp_setup_context *setup,
+                            boolean update_scene);
 
 void lp_setup_destroy( struct lp_setup_context *setup );
+
+void lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 void
 lp_setup_print_triangle(struct lp_setup_context *setup,
@@ -196,4 +194,3 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 void lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 #endif
-

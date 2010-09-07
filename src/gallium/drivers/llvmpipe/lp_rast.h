@@ -79,8 +79,8 @@ struct lp_rast_state {
  */
 struct lp_rast_shader_inputs {
    float facing;     /** Positive for front-facing, negative for back-facing */
-   boolean opaque:1;   /** Is opaque */
    boolean disable:1;  /** Partially binned, disable this command */
+   boolean opaque:1;   /** Is opaque */
 
    float (*a0)[4];
    float (*dadx)[4];
@@ -205,18 +205,18 @@ lp_rast_arg_clearzs( unsigned value, unsigned mask )
 
 
 static INLINE union lp_rast_cmd_arg
-lp_rast_arg_null( void )
-{
-   union lp_rast_cmd_arg arg;
-   arg.set_state = NULL;
-   return arg;
-}
-
-static INLINE union lp_rast_cmd_arg
 lp_rast_arg_query( struct llvmpipe_query *pq )
 {
    union lp_rast_cmd_arg arg;
    arg.query_obj = pq;
+   return arg;
+}
+
+static INLINE union lp_rast_cmd_arg
+lp_rast_arg_null( void )
+{
+   union lp_rast_cmd_arg arg;
+   arg.set_state = NULL;
    return arg;
 }
 
@@ -226,54 +226,23 @@ lp_rast_arg_query( struct llvmpipe_query *pq )
  * These get put into bins by the setup code and are called when
  * the bins are executed.
  */
+#define LP_RAST_OP_CLEAR_COLOR       0x0
+#define LP_RAST_OP_CLEAR_ZSTENCIL    0x1
+#define LP_RAST_OP_TRIANGLE_1        0x2
+#define LP_RAST_OP_TRIANGLE_2        0x3
+#define LP_RAST_OP_TRIANGLE_3        0x4
+#define LP_RAST_OP_TRIANGLE_4        0x5
+#define LP_RAST_OP_TRIANGLE_5        0x6
+#define LP_RAST_OP_TRIANGLE_6        0x7
+#define LP_RAST_OP_TRIANGLE_7        0x8
+#define LP_RAST_OP_TRIANGLE_8        0x9
+#define LP_RAST_OP_TRIANGLE_3_16     0xa
+#define LP_RAST_OP_SHADE_TILE        0xb
+#define LP_RAST_OP_SHADE_TILE_OPAQUE 0xc
+#define LP_RAST_OP_BEGIN_QUERY       0xd
+#define LP_RAST_OP_END_QUERY         0xe
 
-void lp_rast_clear_color( struct lp_rasterizer_task *, 
-                          const union lp_rast_cmd_arg );
-
-void lp_rast_clear_zstencil( struct lp_rasterizer_task *, 
-                             const union lp_rast_cmd_arg );
-
-void lp_rast_triangle_1( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_2( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_3( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_4( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_5( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_6( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_7( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-void lp_rast_triangle_8( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-
-void lp_rast_shade_tile( struct lp_rasterizer_task *,
-                         const union lp_rast_cmd_arg );
-
-void lp_rast_shade_tile_opaque( struct lp_rasterizer_task *,
-                                const union lp_rast_cmd_arg );
-
-void lp_rast_fence( struct lp_rasterizer_task *,
-                    const union lp_rast_cmd_arg );
-
-void lp_rast_store_linear_color( struct lp_rasterizer_task *);
-
-
-void lp_rast_begin_query(struct lp_rasterizer_task *,
-                         const union lp_rast_cmd_arg );
-
-void lp_rast_restart_query(struct lp_rasterizer_task *,
-                         const union lp_rast_cmd_arg );
-
-void lp_rast_end_query(struct lp_rasterizer_task *,
-                       const union lp_rast_cmd_arg );
-
-void
-lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
-                      const union lp_rast_cmd_arg arg);
-
+#define LP_RAST_OP_MAX               0xf
+#define LP_RAST_OP_MASK              0xff
 
 #endif
