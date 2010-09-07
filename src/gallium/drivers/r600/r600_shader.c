@@ -1850,6 +1850,10 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -1905,6 +1909,10 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 		if (i == 3)
 			alu.last = 1;
 		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
 		if (r)
 			return r;
 	}
