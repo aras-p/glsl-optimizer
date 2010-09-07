@@ -59,6 +59,9 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    struct st_context_iface *st_share = NULL;
    struct st_visual stvis;
 
+   if (api != API_OPENGL)
+      return GL_FALSE;
+
    if (sharedContextPrivate) {
       st_share = ((struct dri_context *)sharedContextPrivate)->st;
    }
@@ -90,7 +93,7 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
       ctx->st->destroy(ctx->st);
 
    FREE(ctx);
-   return FALSE;
+   return GL_FALSE;
 }
 
 void
