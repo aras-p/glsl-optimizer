@@ -2729,6 +2729,8 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 do_div_to_mul_rcp(ir);
 	 do_explog_to_explog2(ir);
 
+	 progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
+
 	 progress = do_common_optimization(ir, true, options->MaxUnrollIterations) || progress;
 
 	 if (options->EmitNoIfs)
