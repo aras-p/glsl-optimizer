@@ -1248,7 +1248,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                       4 * span->end * sizeof(GLchan));
             }
 
-            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+		   rb->_BaseFormat == GL_ALPHA);
 
             if (ctx->Color._LogicOpEnabled) {
                _swrast_logicop_rgba_span(ctx, rb, span);
@@ -1346,7 +1347,8 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
 
       ASSERT(rb);
       ASSERT(rb->GetRow);
-      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
+      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA ||
+	     rb->_BaseFormat == GL_ALPHA);
 
       if (rb->DataType == dstType) {
          rb->GetRow(ctx, rb, length, x + skip, y,

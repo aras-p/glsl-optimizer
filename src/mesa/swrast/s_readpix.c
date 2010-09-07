@@ -191,7 +191,8 @@ fast_read_rgba_pixels( GLcontext *ctx,
    if (!rb)
       return GL_FALSE;
 
-   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+	  rb->_BaseFormat == GL_ALPHA);
 
    /* clipping should have already been done */
    ASSERT(x + width <= (GLint) rb->Width);

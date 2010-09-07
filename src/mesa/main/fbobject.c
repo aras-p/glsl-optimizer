@@ -925,6 +925,12 @@ GLenum
 _mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
+   case GL_ALPHA:
+   case GL_ALPHA4:
+   case GL_ALPHA8:
+   case GL_ALPHA12:
+   case GL_ALPHA16:
+      return GL_ALPHA;
    case GL_RGB:
    case GL_R3_G3_B2:
    case GL_RGB4:
