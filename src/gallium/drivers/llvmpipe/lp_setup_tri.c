@@ -439,6 +439,32 @@ do_triangle_ccw(struct lp_setup_context *setup,
    return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
 }
 
+/*
+ * __fls: find last set bit in word
+ * @word: The word to search
+ *
+ * Undefined if no zero exists, so code should check against ~0UL first.
+ */
+#if defined(PIPE_ARCH_X86)
+static inline unsigned fls(unsigned word)
+{
+        asm("bsr %1,%0"
+            : "=r" (word)
+            : "rm" (word));
+        return word;
+}
+#else
+static inline unsigned fls(unsigned n)
+{
+    n |= (n >>  1);
+    n |= (n >>  2);
+    n |= (n >>  4);
+    n |= (n >>  8);
+    n |= (n >> 16);
+    return n - (n >> 1);
+}
+#endif
+
 
 boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
@@ -447,52 +473,44 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                        int nr_planes )
 {
    struct lp_scene *scene = setup->scene;
-   int ix0, ix1, iy0, iy1;
    int i;
 
-   /*
-    * All fields of 'tri' are now set.  The remaining code here is
-    * concerned with binning.
+   /* What is the largest power-of-two boundary this triangle crosses:
     */
+   int dx = 1 << fls((bbox->x0 ^ bbox->x1) |
+		     (bbox->y0 ^ bbox->y1));
 
-   /* Convert to tile coordinates, and inclusive ranges:
+   /* The largest dimension of the rasterized area of the triangle
+    * (aligned to a 4x4 grid), rounded up to the next power of two:
     */
+   int sz = 1 << fls((bbox->x1 - (bbox->x0 & ~3)) |
+		     (bbox->y1 - (bbox->y0 & ~3)));
+
    if (nr_planes == 3) {
-      int ix0 = bbox->x0 / 16;
-      int iy0 = bbox->y0 / 16;
-      int ix1 = bbox->x1 / 16;
-      int iy1 = bbox->y1 / 16;
-      
-      if (iy0 == iy1 && ix0 == ix1)
+      if (sz < 16 && dx < 64)
       {
+	 int mask = (bbox->x0 & 63 & ~3) | ((bbox->y0 & 63 & ~3) << 8);
 
 	 /* Triangle is contained in a single 16x16 block:
 	  */
-	 int mask = (ix0 & 3) | ((iy0 & 3) << 4);
-
-	 return lp_scene_bin_command( scene, ix0/4, iy0/4,
+	 return lp_scene_bin_command( scene,
+				      bbox->x0/64, bbox->y0/64,
                                       LP_RAST_OP_TRIANGLE_3_16,
                                       lp_rast_arg_triangle(tri, mask) );
       }
    }
 
-   ix0 = bbox->x0 / TILE_SIZE;
-   iy0 = bbox->y0 / TILE_SIZE;
-   ix1 = bbox->x1 / TILE_SIZE;
-   iy1 = bbox->y1 / TILE_SIZE;
-
-   /*
-    * Clamp to framebuffer size
-    */
-   assert(ix0 == MAX2(ix0, 0));
-   assert(iy0 == MAX2(iy0, 0));
-   assert(ix1 == MIN2(ix1, scene->tiles_x - 1));
-   assert(iy1 == MIN2(iy1, scene->tiles_y - 1));
 
    /* Determine which tile(s) intersect the triangle's bounding box
     */
-   if (iy0 == iy1 && ix0 == ix1)
+   if (dx < TILE_SIZE)
    {
+      int ix0 = bbox->x0 / TILE_SIZE;
+      int iy0 = bbox->y0 / TILE_SIZE;
+
+      assert(iy0 == bbox->y1 / TILE_SIZE &&
+	     ix0 == bbox->x1 / TILE_SIZE);
+
       /* Triangle is contained in a single tile:
        */
       return lp_scene_bin_command( scene, ix0, iy0,
@@ -507,6 +525,11 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       int xstep[7];
       int ystep[7];
       int x, y;
+
+      int ix0 = bbox->x0 / TILE_SIZE;
+      int iy0 = bbox->y0 / TILE_SIZE;
+      int ix1 = bbox->x1 / TILE_SIZE;
+      int iy1 = bbox->y1 / TILE_SIZE;
       
       for (i = 0; i < nr_planes; i++) {
          c[i] = (tri->plane[i].c + 
