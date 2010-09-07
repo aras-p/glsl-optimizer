@@ -65,6 +65,7 @@ struct pipe_framebuffer_state;
 struct lp_fragment_shader_variant;
 struct lp_jit_context;
 struct llvmpipe_query;
+struct pipe_fence_handle;
 
 
 struct lp_setup_context *
