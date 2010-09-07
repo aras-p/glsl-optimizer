@@ -1125,6 +1125,17 @@ ast_expression::hir(exec_list *instructions,
 	 type = op[1]->type;
       }
 
+      /* From page 33 (page 39 of the PDF) of the GLSL 1.10 spec:
+       *
+       *    "The second and third expressions must be the same type, but can
+       *    be of any type other than an array."
+       */
+      if ((state->language_version <= 110) && type->is_array()) {
+	 _mesa_glsl_error(& loc, state, "Second and third operands of ?: "
+			  "operator must not be arrays.");
+	 error_emitted = true;
+      }
+
       ir_constant *cond_val = op[0]->constant_expression_value();
       ir_constant *then_val = op[1]->constant_expression_value();
       ir_constant *else_val = op[2]->constant_expression_value();
