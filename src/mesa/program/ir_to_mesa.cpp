@@ -703,6 +703,10 @@ static struct statevar_element gl_Fog_elements[] = {
    {"scale", {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
 };
 
+static struct statevar_element gl_NormalScale_elements[] = {
+   {NULL, {STATE_NORMAL_SCALE}, SWIZZLE_XXXX},
+};
+
 #define MATRIX(name, statevar, modifier)			\
    static struct statevar_element name ## _elements[] = {		\
       { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
@@ -808,6 +812,7 @@ static const struct statevar {
    STATEVAR(gl_TextureMatrixInverseTranspose),
 
    STATEVAR(gl_NormalMatrix),
+   STATEVAR(gl_NormalScale),
 };
 
 void

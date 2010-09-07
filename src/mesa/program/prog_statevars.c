@@ -1052,6 +1052,8 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
       append_token(str, state[1]);
       append_index(str, state[2]);
       break;
+   case STATE_NORMAL_SCALE:
+      break;
    case STATE_INTERNAL:
       append_token(str, state[1]);
       if (state[1] == STATE_CURRENT_ATTRIB)
