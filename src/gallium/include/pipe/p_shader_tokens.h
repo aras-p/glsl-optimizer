@@ -199,7 +199,7 @@ struct tgsi_property_data {
  * 
  * For more information on semantics of opcodes and
  * which APIs are known to use which opcodes, see
- * auxiliary/tgsi/tgsi-instruction-set.txt
+ * gallium/docs/source/tgsi.rst
  */
 #define TGSI_OPCODE_ARL                 0
 #define TGSI_OPCODE_MOV                 1
