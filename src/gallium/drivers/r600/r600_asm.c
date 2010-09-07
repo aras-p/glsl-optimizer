@@ -24,6 +24,7 @@
 #include "r600_context.h"
 #include "util/u_memory.h"
 #include "r600_sq.h"
+#include "r600_opcodes.h"
 #include <stdio.h>
 #include <errno.h>
 
