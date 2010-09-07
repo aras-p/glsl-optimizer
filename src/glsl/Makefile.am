@@ -67,6 +67,7 @@ glsl_SOURCES = \
 	loop_controls.cpp \
 	loop_unroll.cpp \
 	lower_noise.cpp \
+	lower_variable_index_to_cond_assign.cpp \
 	opt_redundant_jumps.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
