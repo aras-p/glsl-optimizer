@@ -892,7 +892,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	       if (storage->index == -1) {
 		  storage->index = index;
 	       } else {
-		  assert(index == (storage->index +
+		  assert(index == ((int)storage->index +
 				   a * statevar->num_elements + i));
 	       }
 	    } else {
