@@ -361,6 +361,9 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height);
 
 extern void
+xmesa_notify_invalid_buffer(XMesaBuffer b);
+
+extern void
 xmesa_check_buffer_size(XMesaBuffer b);
 
 extern void

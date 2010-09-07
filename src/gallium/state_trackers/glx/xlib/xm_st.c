@@ -339,6 +339,10 @@ xmesa_swap_st_framebuffer(struct st_framebuffer_iface *stfbi)
          tmp = *front;
          *front = *back;
          *back = tmp;
+
+         /* the current context should validate the buffer after swapping */
+         if (!xmesa_strict_invalidate)
+            xmesa_notify_invalid_buffer(xstfb->buffer);
       }
 
       if (xmesa_strict_invalidate)
