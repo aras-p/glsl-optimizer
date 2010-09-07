@@ -2065,15 +2065,9 @@ __glxGetMscRate(__GLXDRIdrawable *glxDraw,
       return True;
    }
    else
-      return False;
-#else
-   (void) draw;
-   (void) numerator;
-   (void) denominator;
-   (void) private;
+#endif
 
    return False;
-#endif
 }
 #endif
 
