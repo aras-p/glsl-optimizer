@@ -259,8 +259,7 @@ void lp_rast_shade_tile_opaque( struct lp_rasterizer_task *,
 void lp_rast_fence( struct lp_rasterizer_task *,
                     const union lp_rast_cmd_arg );
 
-void lp_rast_store_linear_color( struct lp_rasterizer_task *,
-                          const union lp_rast_cmd_arg );
+void lp_rast_store_linear_color( struct lp_rasterizer_task *);
 
 
 void lp_rast_begin_query(struct lp_rasterizer_task *,

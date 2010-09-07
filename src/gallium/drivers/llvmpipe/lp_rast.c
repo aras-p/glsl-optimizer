@@ -327,8 +327,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
  * This is a bin command which is stored in all bins.
  */
 void
-lp_rast_store_linear_color( struct lp_rasterizer_task *task,
-                            const union lp_rast_cmd_arg arg)
+lp_rast_store_linear_color( struct lp_rasterizer_task *task )
 {
    struct lp_rasterizer *rast = task->rast;
    struct lp_scene *scene = rast->curr_scene;
@@ -490,6 +489,38 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
 
 
 /**
+ * Begin a new occlusion query.
+ * This is a bin command put in all bins.
+ * Called per thread.
+ */
+void
+lp_rast_begin_query(struct lp_rasterizer_task *task,
+                    const union lp_rast_cmd_arg arg)
+{
+   struct llvmpipe_query *pq = arg.query_obj;
+
+   assert(task->query == NULL);
+   task->vis_counter = 0;
+   task->query = pq;
+}
+
+
+/**
+ * End the current occlusion query.
+ * This is a bin command put in all bins.
+ * Called per thread.
+ */
+void
+lp_rast_end_query(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
+{
+   task->query->count[task->thread_index] += task->vis_counter;
+   task->query = NULL;
+}
+
+
+
+/**
  * Set top row and left column of the tile's pixels to white.  For debugging.
  */
 static void
@@ -567,10 +598,7 @@ lp_rast_tile_end(struct lp_rasterizer_task *task)
    (void) outline_subtiles;
 #endif
 
-   {
-      union lp_rast_cmd_arg dummy = {0};
-      lp_rast_store_linear_color(task, dummy);
-   }
+   lp_rast_store_linear_color(task);
 
    if (task->query) {
       union lp_rast_cmd_arg dummy = {0};
@@ -583,64 +611,6 @@ lp_rast_tile_end(struct lp_rasterizer_task *task)
 }
 
 
-
-/**
- * Signal on a fence.  This is called during bin execution/rasterization.
- * Called per thread.
- */
-void
-lp_rast_fence(struct lp_rasterizer_task *task,
-              const union lp_rast_cmd_arg arg)
-{
-   struct lp_fence *fence = arg.fence;
-   lp_fence_signal(fence);
-}
-
-
-/**
- * Begin a new occlusion query.
- * This is a bin command put in all bins.
- * Called per thread.
- */
-void
-lp_rast_begin_query(struct lp_rasterizer_task *task,
-                    const union lp_rast_cmd_arg arg)
-{
-   struct llvmpipe_query *pq = arg.query_obj;
-
-   assert(task->query == NULL);
-   task->vis_counter = 0;
-   task->query = pq;
-   pq->count[task->thread_index] = 0;
-}
-
-
-/* Much like begin_query, but don't reset the counter to zero.
- */
-void
-lp_rast_restart_query(struct lp_rasterizer_task *task,
-                      const union lp_rast_cmd_arg arg)
-{
-   struct llvmpipe_query *pq = arg.query_obj;
-
-   assert(task->query == NULL);
-   task->vis_counter = 0;
-   task->query = pq;
-}
- 
-
-/**
- * End the current occlusion query.
- * This is a bin command put in all bins.
- * Called per thread.
- */
-void
-lp_rast_end_query(struct lp_rasterizer_task *task,
-                  const union lp_rast_cmd_arg arg)
-{
-   task->query->count[task->thread_index] += task->vis_counter;
-   task->query = NULL;
-}
 
 
 
@@ -672,50 +642,6 @@ rasterize_bin(struct lp_rasterizer_task *task,
 }
 
 
-#define RAST(x) { lp_rast_##x, #x }
-
-static struct {
-   lp_rast_cmd cmd;
-   const char *name;
-} cmd_names[] = 
-{
-   RAST(clear_color),
-   RAST(clear_zstencil),
-   RAST(triangle_1),
-   RAST(triangle_2),
-   RAST(triangle_3),
-   RAST(triangle_4),
-   RAST(triangle_5),
-   RAST(triangle_6),
-   RAST(triangle_7),
-   RAST(shade_tile),
-   RAST(shade_tile_opaque),
-   RAST(store_linear_color),
-   RAST(fence),
-   RAST(begin_query),
-   RAST(restart_query),
-   RAST(end_query),
-};
-
-static void
-debug_bin( const struct cmd_bin *bin )
-{
-   const struct cmd_block *head = bin->commands.head;
-   int i, j;
-
-   for (i = 0; i < head->count; i++) {
-      debug_printf("%d: ", i);
-      for (j = 0; j < Elements(cmd_names); j++) {
-         if (head->cmd[i] == cmd_names[j].cmd) {
-            debug_printf("%s\n", cmd_names[j].name);
-            break;
-         }
-      }
-      if (j == Elements(cmd_names))
-         debug_printf("...other\n");
-   }
-
-}
 
 /* An empty bin is one that just loads the contents of the tile and
  * stores them again unchanged.  This typically happens when bins have
@@ -727,7 +653,6 @@ debug_bin( const struct cmd_bin *bin )
 static boolean
 is_empty_bin( const struct cmd_bin *bin )
 {
-   if (0) debug_bin(bin);
    return bin->commands.head == NULL;
 }
 
@@ -766,7 +691,7 @@ rasterize_scene(struct lp_rasterizer_task *task,
 #endif
 
    if (scene->fence) {
-      lp_rast_fence(task, lp_rast_arg_fence(scene->fence));
+      lp_fence_signal(scene->fence);
    }
 }
 

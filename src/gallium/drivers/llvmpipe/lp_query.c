@@ -123,6 +123,16 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    struct llvmpipe_query *pq = llvmpipe_query(q);
 
+   /* Check if the query is already in the scene.  If so, we need to
+    * flush the scene now.  Real apps shouldn't re-use a query in a
+    * frame of rendering.
+    */
+   if (pq->fence && !lp_fence_issued(pq->fence)) {
+      llvmpipe_finish(pipe, __FUNCTION__);
+   }
+
+
+   memset(pq->count, 0, sizeof(pq->count));
    lp_setup_begin_query(llvmpipe->setup, pq);
 
    llvmpipe->active_query_count++;

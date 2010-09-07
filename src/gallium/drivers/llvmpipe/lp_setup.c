@@ -155,10 +155,13 @@ begin_binning( struct lp_setup_context *setup )
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    boolean need_zsload = FALSE;
 
-   /* Always create a fence when threads are active:
+   assert(scene);
+   assert(scene->fence == NULL);
+
+   /* Always create a fence:
     */
-   if (setup->num_threads)
-      scene->fence = lp_fence_create(setup->num_threads);
+   scene->fence = lp_fence_create(MAX2(1, setup->num_threads));
+
 
    if (setup->fb.zsbuf &&
        ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
@@ -193,7 +196,7 @@ begin_binning( struct lp_setup_context *setup )
 
    if (setup->active_query) {
       ok = lp_scene_bin_everywhere( scene,
-                                    lp_rast_restart_query,
+                                    lp_rast_begin_query,
                                     lp_rast_arg_query(setup->active_query) );
       assert(ok);
    }
