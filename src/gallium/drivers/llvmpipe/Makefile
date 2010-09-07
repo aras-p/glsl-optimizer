@@ -22,6 +22,7 @@ C_SOURCES = \
 	lp_perf.c \
 	lp_query.c \
 	lp_rast.c \
+	lp_rast_debug.c \
 	lp_rast_tri.c \
 	lp_scene.c \
 	lp_scene_queue.c \
