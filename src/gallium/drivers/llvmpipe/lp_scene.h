@@ -38,6 +38,7 @@
 #include "os/os_thread.h"
 #include "lp_tile_soa.h"
 #include "lp_rast.h"
+#include "lp_debug.h"
 
 struct lp_scene_queue;
 
@@ -205,6 +206,11 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
    assert(size <= DATA_BLOCK_SIZE);
    assert(block != NULL);
 
+   if (LP_DEBUG & DEBUG_MEM)
+      debug_printf("alloc %d block %d/%d tot %d/%d\n",
+		   size, block->used, DATA_BLOCK_SIZE,
+		   scene->scene_size, LP_SCENE_MAX_SIZE);
+
    if (block->used + size > DATA_BLOCK_SIZE) {
       block = lp_scene_new_data_block( scene );
       if (!block) {
@@ -232,6 +238,12 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
    struct data_block *block = list->head;
 
    assert(block != NULL);
+
+   if (LP_DEBUG & DEBUG_MEM)
+      debug_printf("alloc %d block %d/%d tot %d/%d\n",
+		   size + alignment - 1,
+		   block->used, DATA_BLOCK_SIZE,
+		   scene->scene_size, LP_SCENE_MAX_SIZE);
        
    if (block->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
       block = lp_scene_new_data_block( scene );
