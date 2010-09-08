@@ -103,7 +103,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 
       /* Ignore swap events if we're not looking for them */
       pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);
-      if (!(pdraw->eventMask & GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK))
+      if (!pdraw || !(pdraw->eventMask & GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK))
 	 return False;
 
       aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
