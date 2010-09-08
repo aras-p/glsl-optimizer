@@ -338,6 +338,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_dot:
       assert(ir->type == glsl_type::float_type);
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type->is_vector());
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
