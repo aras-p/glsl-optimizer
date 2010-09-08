@@ -2084,7 +2084,6 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 static int tgsi_log(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bc_alu_src r600_src[3];
 	struct r600_bc_alu alu;
 	int r;
 
@@ -2129,13 +2128,99 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 			return r;
 	}
 
-	/* result.y = FIXME; */
+	/* result.y = src.x / (2 ^ floor(log2(src.x))); */
 	if ((inst->Dst[0].Register.WriteMask >> 1) & 1) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 
-		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
-		alu.src[0].sel = V_SQ_ALU_SRC_1;
-		alu.src[0].chan = 0;
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE);
+		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+		if (r)
+			return r;
+
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR);
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 1;
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE);
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 1;
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 1;
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
+
+		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+		if (r)
+			return r;
+
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+
+		alu.src[1].sel = ctx->temp_reg;
+		alu.src[1].chan = 1;
 
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 1;
