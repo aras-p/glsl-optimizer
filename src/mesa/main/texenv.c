@@ -320,14 +320,8 @@ set_combiner_operand(GLcontext *ctx,
       alpha = GL_FALSE;
       break;
    case GL_OPERAND2_RGB:
-      if (ctx->Extensions.ARB_texture_env_combine) {
-         term = 2;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = 2;
+      alpha = GL_FALSE;
       break;
    case GL_OPERAND3_RGB_NV:
       if (ctx->Extensions.NV_texture_env_combine4) {
@@ -348,14 +342,8 @@ set_combiner_operand(GLcontext *ctx,
       alpha = GL_TRUE;
       break;
    case GL_OPERAND2_ALPHA:
-      if (ctx->Extensions.ARB_texture_env_combine) {
-         term = 2;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = 2;
+      alpha = GL_TRUE;
       break;
    case GL_OPERAND3_ALPHA_NV:
       if (ctx->Extensions.NV_texture_env_combine4) {
@@ -380,10 +368,23 @@ set_combiner_operand(GLcontext *ctx,
    switch (param) {
    case GL_SRC_COLOR:
    case GL_ONE_MINUS_SRC_COLOR:
-      legal = !alpha;
+      /* The color input can only be used with GL_OPERAND[01]_RGB in the EXT
+       * version.  In the ARB and NV versions they can be used for any RGB
+       * operand.
+       */
+      legal = !alpha
+	 && ((term < 2) || ctx->Extensions.ARB_texture_env_combine
+	     || ctx->Extensions.NV_texture_env_combine4);
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      /* GL_ONE_MINUS_SRC_ALPHA can only be used with
+       * GL_OPERAND[01]_(RGB|ALPHA) in the EXT version.  In the ARB and NV
+       * versions it can be used for any operand.
+       */
+      legal = (term < 2) || ctx->Extensions.ARB_texture_env_combine
+	 || ctx->Extensions.NV_texture_env_combine4;
       break;
    case GL_SRC_ALPHA:
-   case GL_ONE_MINUS_SRC_ALPHA:
       legal = GL_TRUE;
       break;
    default:
