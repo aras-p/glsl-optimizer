@@ -310,15 +310,16 @@ control_line:
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	}
 |	HASH_VERSION integer_constant NEWLINE {
-		if ($2 == 100)
-			add_builtin_define (parser, "GL_ES", 1);
-
 		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 		if (macro) {
 			hash_table_remove (parser->defines, "__VERSION__");
 			talloc_free (macro);
 		}
 		add_builtin_define (parser, "__VERSION__", $2);
+
+		if ($2 == 100)
+			add_builtin_define (parser, "GL_ES", 1);
+
 		glcpp_printf(parser->output, "#version %" PRIiMAX, $2);
 	}
 |	HASH NEWLINE
