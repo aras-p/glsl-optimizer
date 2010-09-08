@@ -4,7 +4,7 @@
        (declare (in) float N)
        (declare (in) float I)
        (declare (in) float Nref))
-     ((if (expression bool < (expression float dot (var_ref Nref) (var_ref I)) (constant float (0)))
+     ((if (expression bool < (expression float * (var_ref Nref) (var_ref I)) (constant float (0)))
           ((return (var_ref N)))
 	  ((return (expression float neg (var_ref N)))))))
 

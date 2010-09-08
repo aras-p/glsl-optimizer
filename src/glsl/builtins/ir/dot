@@ -3,7 +3,7 @@
      (parameters
        (declare (in) float arg0)
        (declare (in) float arg1))
-     ((return (expression float dot (var_ref arg0) (var_ref arg1)))))
+     ((return (expression float * (var_ref arg0) (var_ref arg1)))))
 
    (signature float
      (parameters
