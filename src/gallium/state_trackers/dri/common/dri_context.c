@@ -99,7 +99,15 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    ctx->st->st_manager_private = (void *) ctx;
    ctx->stapi = stapi;
 
-   dri_init_extensions(ctx);
+   /*
+    * libmesagallium.a that this state tracker will be linked to expects
+    * OpenGL's _glapi_table.  That is, it expects libGL.so instead of
+    * libGLESv1_CM.so or libGLESv2.so.  As there is no clean way to know the
+    * shared library the app links to, use the api as a simple check.
+    * It might be as well to simply remove this function call though.
+    */
+   if (api == API_OPENGL)
+      dri_init_extensions(ctx);
 
    return GL_TRUE;
 
