@@ -57,63 +57,28 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
    this->es_shader = false;
    this->ARB_texture_rectangle_enable = true;
 
-   if (ctx != NULL) {
-      /* OpenGL ES 2.0 has different defaults from desktop GL. */
-      if (ctx->API == API_OPENGLES2) {
-	 this->language_version = 100;
-	 this->es_shader = true;
-	 this->ARB_texture_rectangle_enable = false;
-      }
-
-      this->extensions = &ctx->Extensions;
-
-      this->Const.MaxLights = ctx->Const.MaxLights;
-      this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
-      this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
-      this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
-      this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
-      this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
-      this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
-      this->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
-      this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
-      this->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
-      this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
-
-      this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
-   } else {
-      /* If there is no GL context (standalone compiler), fill in constants
-       * with the minimum required values.
-       */
-      static struct gl_extensions null_extensions;
-
-      memset(&null_extensions, 0, sizeof(null_extensions));
-      null_extensions.ARB_draw_buffers = GL_TRUE;
-      null_extensions.ARB_fragment_coord_conventions = GL_TRUE;
-      null_extensions.EXT_texture_array = GL_TRUE;
-      null_extensions.NV_texture_rectangle = GL_TRUE;
-
-      this->extensions = &null_extensions;
-
-      /* 1.10 minimums. */
-      this->Const.MaxLights = 8;
-      this->Const.MaxClipPlanes = 8;
-      this->Const.MaxTextureUnits = 2;
-
-      /* More than the 1.10 minimum to appease parser tests taken from
-       * apps that (hopefully) already checked the number of coords.
-       */
-      this->Const.MaxTextureCoords = 4;
-
-      this->Const.MaxVertexAttribs = 16;
-      this->Const.MaxVertexUniformComponents = 512;
-      this->Const.MaxVaryingFloats = 32;
-      this->Const.MaxVertexTextureImageUnits = 0;
-      this->Const.MaxCombinedTextureImageUnits = 2;
-      this->Const.MaxTextureImageUnits = 2;
-      this->Const.MaxFragmentUniformComponents = 64;
-
-      this->Const.MaxDrawBuffers = 2;
+   /* OpenGL ES 2.0 has different defaults from desktop GL. */
+   if (ctx->API == API_OPENGLES2) {
+      this->language_version = 100;
+      this->es_shader = true;
+      this->ARB_texture_rectangle_enable = false;
    }
+
+   this->extensions = &ctx->Extensions;
+
+   this->Const.MaxLights = ctx->Const.MaxLights;
+   this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
+   this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
+   this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
+   this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
+   this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
+   this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
+   this->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
+   this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
+   this->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+   this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
+
+   this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 }
 
 const char *
