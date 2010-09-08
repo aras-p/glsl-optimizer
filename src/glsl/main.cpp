@@ -144,12 +144,14 @@ usage_fail(const char *name)
 }
 
 
+int glsl_es = 0;
 int dump_ast = 0;
 int dump_hir = 0;
 int dump_lir = 0;
 int do_link = 0;
 
 const struct option compiler_opts[] = {
+   { "glsl-es",  0, &glsl_es,  1 },
    { "dump-ast", 0, &dump_ast, 1 },
    { "dump-hir", 0, &dump_hir, 1 },
    { "dump-lir", 0, &dump_lir, 1 },
@@ -262,7 +264,7 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   initialize_context(ctx, API_OPENGL);
+   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL);
 
    struct gl_shader_program *whole_program;
 
