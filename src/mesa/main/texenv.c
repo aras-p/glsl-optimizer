@@ -196,53 +196,30 @@ set_combiner_source(GLcontext *ctx,
 
    /*
     * Translate pname to (term, alpha).
+    *
+    * The enums were given sequential values for a reason.
     */
    switch (pname) {
    case GL_SOURCE0_RGB:
-      term = 0;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE1_RGB:
-      term = 1;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE2_RGB:
-      term = 2;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_SOURCE0_RGB;
+      alpha = GL_FALSE;
       break;
    case GL_SOURCE0_ALPHA:
-      term = 0;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE1_ALPHA:
-      term = 1;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE2_ALPHA:
-      term = 2;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_SOURCE0_ALPHA;
+      alpha = GL_TRUE;
       break;
    default:
+      TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+      return;
+   }
+
+   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
@@ -310,52 +287,29 @@ set_combiner_operand(GLcontext *ctx,
       return;
    }
 
+   /* The enums were given sequential values for a reason.
+    */
    switch (pname) {
    case GL_OPERAND0_RGB:
-      term = 0;
-      alpha = GL_FALSE;
-      break;
    case GL_OPERAND1_RGB:
-      term = 1;
-      alpha = GL_FALSE;
-      break;
    case GL_OPERAND2_RGB:
-      term = 2;
-      alpha = GL_FALSE;
-      break;
    case GL_OPERAND3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_OPERAND0_RGB;
+      alpha = GL_FALSE;
       break;
    case GL_OPERAND0_ALPHA:
-      term = 0;
-      alpha = GL_TRUE;
-      break;
    case GL_OPERAND1_ALPHA:
-      term = 1;
-      alpha = GL_TRUE;
-      break;
    case GL_OPERAND2_ALPHA:
-      term = 2;
-      alpha = GL_TRUE;
-      break;
    case GL_OPERAND3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_OPERAND0_ALPHA;
+      alpha = GL_TRUE;
       break;
    default:
+      TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+      return;
+   }
+
+   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
