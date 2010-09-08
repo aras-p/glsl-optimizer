@@ -3141,7 +3141,7 @@ static const char *builtin_step =
    "     ((declare () vec4 t)\n"
    "      (assign (constant bool (1)) (x) (var_ref t) (expression float b2f (expression bool >= (swiz x (var_ref x))(swiz x (var_ref edge)))))\n"
    "      (assign (constant bool (1)) (y) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(swiz y (var_ref edge)))))\n"
-   "      (assign (constant bool (1)) (z) (var_ref t) (expression float b2f (expression bool >= (swiz y (var_ref x))(swiz z (var_ref edge)))))\n"
+   "      (assign (constant bool (1)) (z) (var_ref t) (expression float b2f (expression bool >= (swiz z (var_ref x))(swiz z (var_ref edge)))))\n"
    "      (assign (constant bool (1)) (w) (var_ref t) (expression float b2f (expression bool >= (swiz w (var_ref x))(swiz w (var_ref edge)))))\n"
    "      (return (var_ref t))))\n"
    "))\n"
