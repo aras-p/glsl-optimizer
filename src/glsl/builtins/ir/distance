@@ -3,7 +3,7 @@
      (parameters
        (declare (in) float p0)
        (declare (in) float p1))
-     ((return (expression float - (var_ref p0) (var_ref p1)))))
+     ((return (expression float abs (expression float - (var_ref p0) (var_ref p1))))))
 
    (signature float
      (parameters
