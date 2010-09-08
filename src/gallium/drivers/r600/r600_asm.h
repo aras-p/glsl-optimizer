@@ -26,6 +26,9 @@
 #include "radeon.h"
 #include "util/u_double_list.h"
 
+#define NUM_OF_CYCLES 3
+#define NUM_OF_COMPONENTS 4
+
 struct r600_bc_alu_src {
 	unsigned			sel;
 	unsigned			chan;
@@ -44,6 +47,7 @@ struct r600_bc_alu_dst {
 
 struct r600_bc_alu {
 	struct list_head		list;
+	struct list_head		bs_list; /* bank swizzle list */
 	struct r600_bc_alu_src		src[3];
 	struct r600_bc_alu_dst		dst;
 	unsigned			inst;
@@ -52,7 +56,9 @@ struct r600_bc_alu {
 	unsigned                        predicate;
 	unsigned			nliteral;
 	unsigned			literal_added;
+	unsigned                        bank_swizzle;
 	u32				value[4];
+	int hw_gpr[NUM_OF_CYCLES][NUM_OF_COMPONENTS];
 };
 
 struct r600_bc_tex {
@@ -125,6 +131,7 @@ struct r600_bc_cf {
 	struct list_head		tex;
 	struct list_head		vtx;
 	struct r600_bc_output		output;
+	struct r600_bc_alu *curr_bs_head;
 };
 
 #define FC_NONE 0

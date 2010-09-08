@@ -51,7 +51,7 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
 					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle);
 	} else {
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
@@ -61,7 +61,7 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0) |
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
 		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}

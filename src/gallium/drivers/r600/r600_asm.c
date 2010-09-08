@@ -28,6 +28,57 @@
 #include <stdio.h>
 #include <errno.h>
 
+static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
+{
+	if(alu->is_op3)
+		return 3;
+
+	switch (alu->inst) {
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
+		return 0;
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
+		return 2;  
+		
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
+		return 1;
+        
+	default: R600_ERR(
+		"Need instruction operand number for 0x%x.\n", alu->inst); 
+	};
+	
+	return 3;
+}
+
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);
 
 static struct r600_bc_cf *r600_bc_cf(void)
@@ -50,6 +101,7 @@ static struct r600_bc_alu *r600_bc_alu(void)
 	if (alu == NULL)
 		return NULL;
 	LIST_INITHEAD(&alu->list);
+	LIST_INITHEAD(&alu->bs_list);
 	return alu;
 }
 
@@ -129,10 +181,219 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 	return 0;
 }
 
+const unsigned bank_swizzle_vec[8] = {SQ_ALU_VEC_210,  //000
+				      SQ_ALU_VEC_120,  //001
+				      SQ_ALU_VEC_102,  //010
+
+				      SQ_ALU_VEC_201,  //011
+				      SQ_ALU_VEC_012,  //100
+				      SQ_ALU_VEC_021,  //101
+
+				      SQ_ALU_VEC_012,  //110
+				      SQ_ALU_VEC_012}; //111
+
+const unsigned bank_swizzle_scl[8] = {SQ_ALU_SCL_210,  //000
+				      SQ_ALU_SCL_122,  //001 
+				      SQ_ALU_SCL_122,  //010
+				      
+				      SQ_ALU_SCL_221,  //011
+				      SQ_ALU_SCL_212,  //100
+				      SQ_ALU_SCL_122,  //101
+
+				      SQ_ALU_SCL_122,  //110
+				      SQ_ALU_SCL_122}; //111
+
+static int init_gpr(struct r600_bc_alu *alu)
+{
+	int cycle, component;
+	/* set up gpr use */
+	for (cycle = 0; cycle < NUM_OF_CYCLES; cycle++)
+		for (component = 0; component < NUM_OF_COMPONENTS; component++)
+			 alu->hw_gpr[cycle][component] = -1;
+	return 0;
+}
+
+static int reserve_gpr(struct r600_bc_alu *alu, unsigned sel, unsigned chan, unsigned cycle)
+{
+	if (alu->hw_gpr[cycle][chan] < 0)
+		alu->hw_gpr[cycle][chan] = sel;
+	else if (alu->hw_gpr[cycle][chan] != (int)sel) {
+		R600_ERR("Another scalar operation has already used GPR read port for channel\n");
+		return -1;
+	}
+	return 0;
+}
+
+static int cycle_for_scalar_bank_swizzle(const int swiz, const int sel, unsigned *p_cycle)
+{
+	int table[3];
+	int ret = 0;
+	switch (swiz) {
+	case SQ_ALU_SCL_210:
+		table[0] = 2; table[1] = 1; table[2] = 0;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_SCL_122:
+		table[0] = 1; table[1] = 2; table[2] = 2;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_SCL_212:
+		table[0] = 2; table[1] = 1; table[2] = 2;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_SCL_221:
+		table[0] = 2; table[1] = 2; table[2] = 1;
+		*p_cycle = table[sel];
+                break;
+		break;
+	default:
+		R600_ERR("bad scalar bank swizzle value\n");
+		ret = -1;
+		break;
+	}
+	return ret;
+}
+
+static int cycle_for_vector_bank_swizzle(const int swiz, const int sel, unsigned *p_cycle)
+{
+	int table[3];
+	int ret;
+
+	switch (swiz) {
+	case SQ_ALU_VEC_012:
+		table[0] = 0; table[1] = 1; table[2] = 2;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_VEC_021:
+		table[0] = 0; table[1] = 2; table[2] = 1;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_VEC_120:
+		table[0] = 1; table[1] = 2; table[2] = 0;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_VEC_102:
+		table[0] = 1; table[1] = 0; table[2] = 2;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_VEC_201:
+		table[0] = 2; table[1] = 0; table[2] = 1;
+                *p_cycle = table[sel];
+                break;
+	case SQ_ALU_VEC_210:
+		table[0] = 2; table[1] = 1; table[2] = 0;
+                *p_cycle = table[sel];
+                break;
+	default:
+		R600_ERR("bad vector bank swizzle value\n");
+		ret = -1;
+		break;
+	}
+	return ret;
+}
+
+static int is_const(int sel)
+{
+	if (sel > 255 && sel < 512)
+		return 1;
+	if (sel >= V_SQ_ALU_SRC_0 && sel <= V_SQ_ALU_SRC_LITERAL)
+		return 1;
+	return 0;
+}
+
+static void update_chan_counter(struct r600_bc_alu *alu, int *chan_counter)
+{
+	int num_src;
+	int i;
+	int channel_swizzle;
+
+	num_src = r600_bc_get_num_operands(alu);
+
+	for (i = 0; i < num_src; i++) {
+		channel_swizzle = alu->src[i].chan;
+		if ((alu->src[i].sel > 0 && alu->src[i].sel < 128) && channel_swizzle <= 3)
+			chan_counter[channel_swizzle]++;
+	}
+}
+
+#if 0
+/* we need something like this I think - but this is bogus */
+int check_read_slots(struct r600_bc *bc, struct r600_bc_alu *alu_first)
+{
+	struct r600_bc_alu *alu;
+	int chan_counter[4]  = { 0 };
+
+	update_chan_counter(alu_first, chan_counter);
+
+	LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
+		update_chan_counter(alu, chan_counter);
+	}
+
+	if (chan_counter[0] > 3 ||
+	    chan_counter[1] > 3 ||
+	    chan_counter[2] > 3 ||
+	    chan_counter[3] > 3) {
+		R600_ERR("needed to split instruction for input ran out of banks %x %d %d %d %d\n",
+			 alu_first->inst, chan_counter[0], chan_counter[1], chan_counter[2], chan_counter[3]);
+		return -1;
+	}
+	return 0;
+}
+#endif
+
+static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu)
+{
+	unsigned swizzle_key;
+
+	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
+		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
+		(is_const(alu->src[2].sel) ? 1 : 0 );
+
+	alu->bank_swizzle = bank_swizzle_scl[swizzle_key];
+	return 0;
+}
+
+static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu)
+{
+	unsigned swizzle_key;
+
+	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
+		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
+		(is_const(alu->src[2].sel) ? 1 : 0 );
+
+	alu->bank_swizzle = bank_swizzle_vec[swizzle_key];
+	return 0;
+}
+
+static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
+{
+	struct r600_bc_alu *alu;
+	int num_instr = 1;
+
+	init_gpr(alu_first);
+
+	LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
+		num_instr++;
+	}
+
+	if (num_instr == 1) {
+		check_scalar(bc, alu_first);
+		
+	} else {
+/*		check_read_slots(bc, bc->cf_last->curr_bs_head);*/
+		check_vector(bc, alu_first);
+		LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
+			check_vector(bc, alu);
+		}
+	}
+	return 0;
+}
+
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type)
 {
 	struct r600_bc_alu *nalu = r600_bc_alu();
 	struct r600_bc_alu *lalu;
+	struct r600_bc_alu *curr_bs_head;
 	int i, r;
 
 	if (nalu == NULL)
@@ -150,6 +411,12 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 			return r;
 		}
 		bc->cf_last->inst = (type << 3);
+	}
+	if (!bc->cf_last->curr_bs_head) {
+		bc->cf_last->curr_bs_head = nalu;
+		LIST_INITHEAD(&nalu->bs_list);
+	} else {
+		LIST_ADDTAIL(&nalu->bs_list, &bc->cf_last->curr_bs_head->bs_list);
 	}
 	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
 		bc->force_add_cf = 1;
@@ -185,6 +452,11 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (bc->use_mem_constant)
 		bc->cf_last->kcache0_mode = 2;
 
+	/* process cur ALU instructions for bank swizzle */
+	if (alu->last) {
+		check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
+		bc->cf_last->curr_bs_head = NULL;
+	}
 	return 0;
 }
 
@@ -365,7 +637,7 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
 					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle);
 	} else {
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
@@ -375,7 +647,7 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0) |
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
 		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}

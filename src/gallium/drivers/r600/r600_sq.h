@@ -455,4 +455,16 @@
 
 #define V_SQ_REL_ABSOLUTE 0
 #define V_SQ_REL_RELATIVE 1
+
+#define SQ_ALU_VEC_012                                0x00
+#define SQ_ALU_VEC_021                                0x01
+#define SQ_ALU_VEC_120                                0x02
+#define SQ_ALU_VEC_102                                0x03
+#define SQ_ALU_VEC_201                                0x04
+#define SQ_ALU_VEC_210                                0x05
+
+#define SQ_ALU_SCL_210                           0x00000000
+#define SQ_ALU_SCL_122                           0x00000001
+#define SQ_ALU_SCL_212                           0x00000002
+#define SQ_ALU_SCL_221                           0x00000003
 #endif
