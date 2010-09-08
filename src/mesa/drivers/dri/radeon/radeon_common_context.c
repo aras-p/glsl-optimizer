@@ -363,6 +363,9 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 		fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
 			radeon->glCtx);
 
+	/* Unset current context and dispath table */
+	_mesa_make_current(NULL, NULL, NULL);
+
 	return GL_TRUE;
 }
 

@@ -873,6 +873,9 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontext * driContextPriv)
 {
+   /* Unset current context and dispath table */
+   _mesa_make_current(NULL, NULL, NULL);
+
    return GL_TRUE;
 }
 

@@ -713,6 +713,10 @@ dri_unbind_context(__DRIcontext * cPriv)
 {
     TRACE;
     (void) cPriv;
+
+    /* Unset current context and dispath table */
+    _mesa_make_current(NULL, NULL, NULL);
+
     return GL_TRUE;
 }
 

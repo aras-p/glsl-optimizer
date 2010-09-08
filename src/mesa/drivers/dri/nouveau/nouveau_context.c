@@ -306,6 +306,9 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 GLboolean
 nouveau_context_unbind(__DRIcontext *dri_ctx)
 {
+	/* Unset current context and dispath table */
+	_mesa_make_current(NULL, NULL, NULL);
+
 	return GL_TRUE;
 }
 
