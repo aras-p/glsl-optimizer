@@ -440,11 +440,11 @@ dri2_init_screen(__DRIscreen * sPriv)
       goto fail;
 
    sPriv->api_mask = 0;
-   if (screen->st_api[API_OPENGL])
+   if (screen->st_api[ST_API_OPENGL])
       sPriv->api_mask |= 1 << __DRI_API_OPENGL;
-   if (screen->st_api[API_OPENGLES1])
+   if (screen->st_api[ST_API_OPENGL_ES1])
       sPriv->api_mask |= 1 << __DRI_API_GLES;
-   if (screen->st_api[API_OPENGLES2])
+   if (screen->st_api[ST_API_OPENGL_ES2])
       sPriv->api_mask |= 1 << __DRI_API_GLES2;
 
    screen->auto_fake_front = dri_with_format(sPriv);

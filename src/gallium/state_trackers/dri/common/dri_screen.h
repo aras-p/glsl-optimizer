@@ -47,7 +47,7 @@ struct dri_screen
 {
    /* st_api */
    struct st_manager base;
-   struct st_api *st_api[1+API_OPENGLES2]; /* GL, GLES1, GLES2 */
+   struct st_api *st_api[ST_API_COUNT];
 
    /* on old libGL's invalidate doesn't get called as it should */
    boolean broken_invalidate;

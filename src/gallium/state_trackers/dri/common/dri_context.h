@@ -37,7 +37,8 @@
 
 struct pipe_context;
 struct pipe_fence;
-struct st_context;
+struct st_api;
+struct st_context_iface;
 struct dri_drawable;
 
 struct dri_context
@@ -58,7 +59,7 @@ struct dri_context
    unsigned int bind_count;
 
    /* gallium */
-   gl_api api;
+   struct st_api *stapi;
    struct st_context_iface *st;
 
    /* hooks filled in by dri2 & drisw */

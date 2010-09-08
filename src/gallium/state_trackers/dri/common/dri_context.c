@@ -59,8 +59,20 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    struct st_context_iface *st_share = NULL;
    struct st_visual stvis;
 
-   assert(api <= API_OPENGLES2);
-   stapi = screen->st_api[api];
+   switch (api) {
+   case API_OPENGL:
+      stapi = screen->st_api[ST_API_OPENGL];
+      break;
+   case API_OPENGLES:
+      stapi = screen->st_api[ST_API_OPENGL_ES1];
+      break;
+   case API_OPENGLES2:
+      stapi = screen->st_api[ST_API_OPENGL_ES2];
+      break;
+   default:
+      stapi = NULL;
+      break;
+   }
    if (!stapi)
       return GL_FALSE;
 
@@ -73,7 +85,6 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
       goto fail;
 
    cPriv->driverPrivate = ctx;
-   ctx->api = api;
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
    ctx->lock = screen->drmLock;
@@ -86,6 +97,7 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    if (ctx->st == NULL)
       goto fail;
    ctx->st->st_manager_private = (void *) ctx;
+   ctx->stapi = stapi;
 
    dri_init_extensions(ctx);
 
@@ -125,14 +137,12 @@ GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
    /* dri_util.c ensures cPriv is not null */
-   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
-   struct st_api *stapi = screen->st_api[ctx->api];
 
    if (--ctx->bind_count == 0) {
-      if (ctx->st == stapi->get_current(stapi)) {
+      if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
          ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-         stapi->make_current(stapi, NULL, NULL, NULL);
+         ctx->stapi->make_current(ctx->stapi, NULL, NULL, NULL);
       }
    }
 
@@ -145,12 +155,10 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driReadPriv)
 {
    /* dri_util.c ensures cPriv is not null */
-   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
-   struct st_api *stapi = screen->st_api[ctx->api];
    struct dri_drawable *draw = dri_drawable(driDrawPriv);
    struct dri_drawable *read = dri_drawable(driReadPriv);
-   struct st_context_iface *old_st = stapi->get_current(stapi);
+   struct st_context_iface *old_st = ctx->stapi->get_current(ctx->stapi);
 
    if (old_st && old_st != ctx->st)
       old_st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -166,7 +174,7 @@ dri_make_current(__DRIcontext * cPriv,
       read->texture_stamp = driReadPriv->lastStamp - 1;
    }
 
-   stapi->make_current(stapi, ctx->st, &draw->base, &read->base);
+   ctx->stapi->make_current(ctx->stapi, ctx->st, &draw->base, &read->base);
 
    return GL_TRUE;
 }
