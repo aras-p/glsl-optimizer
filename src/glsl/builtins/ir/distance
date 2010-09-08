@@ -3,9 +3,7 @@
      (parameters
        (declare (in) float p0)
        (declare (in) float p1))
-     ((declare () float p)
-      (assign (constant bool (1)) (x) (var_ref p) (expression float - (var_ref p0) (var_ref p1)))
-      (return (expression float sqrt (expression float dot (var_ref p) (var_ref p))))))
+     ((return (expression float - (var_ref p0) (var_ref p1)))))
 
    (signature float
      (parameters
