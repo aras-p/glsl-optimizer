@@ -155,6 +155,13 @@ fi
 if test "x$GXX" = xyes; then
     CXXFLAGS="$CXXFLAGS -Wall"
 
+    # Enable -fvisibility=hidden if using a gcc that supports it
+    save_CXXFLAGS="$CXXFLAGS"
+    AC_MSG_CHECKING([whether $CXX supports -fvisibility=hidden])
+    CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
+		   [CXXFLAGS="$save_CXXFLAGS" ; AC_MSG_RESULT([no])]);
+
     # Work around aliasing bugs - developers should comment this out
     CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
