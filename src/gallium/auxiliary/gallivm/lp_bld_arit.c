@@ -56,6 +56,7 @@
 #include "lp_bld_intr.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
 
 
@@ -1850,9 +1851,11 @@ lp_build_pow(struct lp_build_context *bld,
              LLVMValueRef y)
 {
    /* TODO: optimize the constant case */
-   if(LLVMIsConstant(x) && LLVMIsConstant(y))
+   if (gallivm_debug & GALLIVM_DEBUG_PERF &&
+       LLVMIsConstant(x) && LLVMIsConstant(y)) {
       debug_printf("%s: inefficient/imprecise constant arithmetic\n",
                    __FUNCTION__);
+   }
 
    return lp_build_exp2(bld, lp_build_mul(bld, lp_build_log2(bld, x), y));
 }
@@ -1907,9 +1910,11 @@ lp_build_polynomial(struct lp_build_context *bld,
    assert(lp_check_value(bld->type, x));
 
    /* TODO: optimize the constant case */
-   if(LLVMIsConstant(x))
+   if (gallivm_debug & GALLIVM_DEBUG_PERF &&
+       LLVMIsConstant(x)) {
       debug_printf("%s: inefficient/imprecise constant arithmetic\n",
                    __FUNCTION__);
+   }
 
    for (i = num_coeffs; i--; ) {
       LLVMValueRef coeff;
@@ -1981,9 +1986,11 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
    if(p_exp2_int_part || p_frac_part || p_exp2) {
       /* TODO: optimize the constant case */
-      if(LLVMIsConstant(x))
+      if (gallivm_debug & GALLIVM_DEBUG_PERF &&
+          LLVMIsConstant(x)) {
          debug_printf("%s: inefficient/imprecise constant arithmetic\n",
                       __FUNCTION__);
+      }
 
       assert(type.floating && type.width == 32);
 
@@ -2096,9 +2103,11 @@ lp_build_log2_approx(struct lp_build_context *bld,
 
    if(p_exp || p_floor_log2 || p_log2) {
       /* TODO: optimize the constant case */
-      if(LLVMIsConstant(x))
+      if (gallivm_debug & GALLIVM_DEBUG_PERF &&
+          LLVMIsConstant(x)) {
          debug_printf("%s: inefficient/imprecise constant arithmetic\n",
                       __FUNCTION__);
+      }
 
       assert(type.floating && type.width == 32);
 

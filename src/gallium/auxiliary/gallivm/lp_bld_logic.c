@@ -40,6 +40,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_logic.h"
 
 
@@ -325,8 +326,10 @@ lp_build_compare(LLVMBuilderRef builder,
 
          res = LLVMGetUndef(int_vec_type);
 
-         debug_printf("%s: warning: using slow element-wise int"
-                      " vector comparison\n", __FUNCTION__);
+         if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+            debug_printf("%s: using slow element-wise int"
+                         " vector comparison\n", __FUNCTION__);
+         }
 
          for(i = 0; i < type.length; ++i) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);

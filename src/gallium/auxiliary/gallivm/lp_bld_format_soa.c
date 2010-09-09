@@ -37,6 +37,7 @@
 #include "lp_bld_conv.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_gather.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_format.h"
 
 
@@ -386,6 +387,11 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
    {
       unsigned k, chan;
       struct lp_type tmp_type;
+
+      if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+         debug_printf("%s: scalar unpacking of %s\n",
+                      __FUNCTION__, format_desc->short_name);
+      }
 
       tmp_type = type;
       tmp_type.length = 4;

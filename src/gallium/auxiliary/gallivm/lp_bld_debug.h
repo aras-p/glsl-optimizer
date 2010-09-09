@@ -40,6 +40,7 @@
 #define GALLIVM_DEBUG_IR        0x2
 #define GALLIVM_DEBUG_ASM       0x4
 #define GALLIVM_DEBUG_NO_OPT    0x8
+#define GALLIVM_DEBUG_PERF      0x10
 
 
 #ifdef DEBUG

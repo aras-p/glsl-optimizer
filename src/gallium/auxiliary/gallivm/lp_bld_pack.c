@@ -111,8 +111,6 @@ lp_build_const_pack_shuffle(unsigned n)
 
    assert(n <= LP_MAX_VECTOR_LENGTH);
 
-   /* TODO: cache results in a static table */
-
    for(i = 0; i < n; ++i)
       elems[i] = LLVMConstInt(LLVMInt32Type(), 2*i, 0);
 

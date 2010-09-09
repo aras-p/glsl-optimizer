@@ -46,6 +46,7 @@
 #include "lp_bld_conv.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_gather.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_format.h"
 
 
@@ -449,6 +450,11 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
        * integer conversions.
        */
 
+      if (gallivm_debug & GALLIVM_DEBUG_PERF && !type.floating) {
+         debug_printf("%s: unpacking %s with floating point\n",
+                      __FUNCTION__, format_desc->short_name);
+      }
+
       lp_build_conv(builder,
                     lp_float32_vec4_type(),
                     type,
@@ -512,6 +518,10 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
       util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_8unorm",
                     format_desc->short_name);
+
+      if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+         debug_printf("%s: falling back to %s\n", __FUNCTION__, name);
+      }
 
       /*
        * Declare and bind format_desc->fetch_rgba_8unorm().
@@ -611,6 +621,10 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
       util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_float",
                     format_desc->short_name);
+
+      if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+         debug_printf("%s: falling back to %s\n", __FUNCTION__, name);
+      }
 
       /*
        * Declare and bind format_desc->fetch_rgba_float().
