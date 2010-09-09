@@ -555,6 +555,34 @@ bld_insn_3(struct bld_context *bld, uint opcode,
    return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.as_type));
 }
 
+static struct nv_value *
+bld_duplicate_insn(struct bld_context *bld, struct nv_instruction *nvi)
+{
+   struct nv_instruction *dupi = new_instruction(bld->pc, nvi->opcode);
+   int c;
+
+   if (nvi->def[0])
+      bld_def(dupi, 0, new_value_like(bld->pc, nvi->def[0]));
+
+   if (nvi->flags_def) {
+      dupi->flags_def = new_value_like(bld->pc, nvi->flags_def);
+      dupi->flags_def->insn = dupi;
+   }
+
+   for (c = 0; c < 5; ++c)
+      if (nvi->src[c])
+         nv_reference(bld->pc, &dupi->src[c], nvi->src[c]->value);
+   if (nvi->flags_src)
+      nv_reference(bld->pc, &dupi->flags_src, nvi->flags_src->value);
+
+   dupi->cc = nvi->cc;
+   dupi->saturate = nvi->saturate;
+   dupi->centroid = nvi->centroid;
+   dupi->flat = nvi->flat;
+
+   return dupi->def[0];
+}
+
 static void
 bld_lmem_store(struct bld_context *bld, struct nv_value *ptr, int ofst,
                struct nv_value *val)
@@ -1232,6 +1260,7 @@ load_proj_tex_coords(struct bld_context *bld,
    t[3] = emit_fetch(bld, insn, 0, 3);
 
    if (t[3]->insn->opcode == NV_OP_PINTERP) {
+      t[3] = bld_duplicate_insn(bld, t[3]->insn);
       t[3]->insn->opcode = NV_OP_LINTERP;
       nv_reference(bld->pc, &t[3]->insn->src[1], NULL);
    }
@@ -1240,13 +1269,15 @@ load_proj_tex_coords(struct bld_context *bld,
 
    for (c = 0; c < dim; ++c) {
       t[c] = emit_fetch(bld, insn, 0, c);
-      if (t[c]->insn->opcode == NV_OP_LINTERP)
-         t[c]->insn->opcode = NV_OP_PINTERP;
 
-      if (t[c]->insn->opcode == NV_OP_PINTERP)
+      if (t[c]->insn->opcode == NV_OP_LINTERP ||
+          t[c]->insn->opcode == NV_OP_PINTERP) {
+         t[c] = bld_duplicate_insn(bld, t[c]->insn);
+         t[c]->insn->opcode = NV_OP_PINTERP;
          nv_reference(bld->pc, &t[c]->insn->src[1], t[3]);
-      else
+      } else {
          mask |= 1 << c;
+      }
    }
 
    for (c = 0; mask; ++c, mask >>= 1) {
