@@ -222,10 +222,10 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (pdraw != NULL) {
-      if (destroy_xdrawable)
-         XFreePixmap(pdraw->psc->dpy, pdraw->xDrawable);
       (*pdraw->destroyDrawable) (pdraw);
       __glxHashDelete(priv->drawHash, drawable);
+      if (destroy_xdrawable)
+         XFreePixmap(pdraw->psc->dpy, pdraw->xDrawable);
    }
 }
 
