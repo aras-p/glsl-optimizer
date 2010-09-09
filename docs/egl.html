@@ -139,6 +139,10 @@ binaries.</p>
 specified EGL driver to be loaded.  It comes in handy when one wants to test a
 specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
+<p><code>egl_gallium</code> dynamically loads hardware drivers and client API
+modules found in <code>EGL_DRIVERS_PATH</code>.  Thus, specifying this variable
+alone is not sufficient for <code>egl_gallium</code> for uninstalled build.</p>
+
 </li>
 
 <li><code>EGL_PLATFORM</code>
@@ -291,8 +295,12 @@ should as well lock the display before using it.
 
 <ul>
 <li>Pass the conformance tests</li>
-<li>Better automatic driver selection: <code>EGL_PLATFORM</code> loads all
-drivers and might eat too much memory.</li>
+<li>Reference counting in main library?</li>
+<li>Mixed use of OpenGL, OpenGL ES 1.1, and OpenGL ES 2.0 is supported.  But
+which one of <code>libGL.so</code>, <code>libGLESv1_CM.so</code>, and
+<code>libGLESv2.so</code> should an application link to?  Bad things may happen
+when, say, an application is linked to <code>libGLESv2.so</code> and
+<code>libcairo</code>, which is linked to <code>libGL.so</code> instead.</li>
 
 </ul>
 
