@@ -405,7 +405,7 @@ eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
    if (config)
       _EGL_CHECK_CONFIG(disp, conf, EGL_NO_CONTEXT, drv);
    else
-      drv = _eglCheckDisplay(disp, __FUNCTION__);
+      _EGL_CHECK_DISPLAY(disp, EGL_NO_CONTEXT, drv);
 
    if (!share && share_list != EGL_NO_CONTEXT)
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_NO_CONTEXT);
