@@ -129,7 +129,7 @@ _glapi_enable_logging(void (*func)(void *data, const char *fmt, ...),
 int
 _glapi_logging_available(void)
 {
-   return 0
+   return 0;
 }
 
 void
