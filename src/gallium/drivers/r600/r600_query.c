@@ -77,7 +77,6 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 		return NULL;
 
 	q->type = query_type;
-	LIST_ADDTAIL(&q->list, &rctx->query_list);
 	q->buffer_size = 4096;
 
 	q->buffer = radeon_bo(rscreen->rw, 0, q->buffer_size, 1, NULL);
@@ -85,6 +84,9 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 		FREE(q);
 		return NULL;
 	}
+
+	LIST_ADDTAIL(&q->list, &rctx->query_list);
+
 	return (struct pipe_query *)q;
 }
 
