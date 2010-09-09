@@ -680,21 +680,6 @@ upload_program(struct i915_fragment_program *p)
          EMIT_2ARG_ARITH(A0_MUL);
          break;
 
-      case OPCODE_NOISE1:
-      case OPCODE_NOISE2:
-      case OPCODE_NOISE3:
-      case OPCODE_NOISE4:
-	 /* Don't implement noise because we just don't have the instructions
-	  * to spare.  We aren't the first vendor to do so.
-	  */
-	 i915_program_error(p, "Stubbed-out noise functions");
-	 i915_emit_arith(p,
-			 A0_MOV,
-			 get_result_vector(p, inst),
-			 get_result_flags(inst), 0,
-			 swizzle(tmp, ZERO, ZERO, ZERO, ZERO), 0, 0);
-	 break;
-
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          src1 = src_vector(p, &inst->SrcReg[1], program);
