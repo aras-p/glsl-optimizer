@@ -551,8 +551,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
     * General solution
     */
    {
-      const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
-         || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
       const GLbitfield interpMask = span.interpMask;
       const GLbitfield arrayMask = span.arrayMask;
       const GLint srcStride
@@ -575,24 +573,21 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_unpack_color_span_float(ctx, spanWidth, GL_RGBA, rgba,
                                      format, type, source, unpack,
                                      transferOps);
-            /* draw the span */
-            if (!sink) {
-               /* Set these for each row since the _swrast_write_* functions
-                * may change them while clipping/rendering.
-                */
-               span.array->ChanType = GL_FLOAT;
-               span.x = x + skipPixels;
-               span.y = y + row;
-               span.end = spanWidth;
-               span.arrayMask = arrayMask;
-               span.interpMask = interpMask;
-               if (zoom) {
-                  _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, rgba);
-               }
-               else {
-                  _swrast_write_rgba_span(ctx, &span);
-               }
-            }
+	    /* Set these for each row since the _swrast_write_* functions
+	     * may change them while clipping/rendering.
+	     */
+	    span.array->ChanType = GL_FLOAT;
+	    span.x = x + skipPixels;
+	    span.y = y + row;
+	    span.end = spanWidth;
+	    span.arrayMask = arrayMask;
+	    span.interpMask = interpMask;
+	    if (zoom) {
+	       _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, rgba);
+	    }
+	    else {
+	       _swrast_write_rgba_span(ctx, &span);
+	    }
 
             source += srcStride;
          } /* for row */

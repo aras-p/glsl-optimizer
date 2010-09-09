@@ -812,34 +812,6 @@ struct gl_hint_attrib
 
 
 /**
- * Histogram attributes.
- */
-struct gl_histogram_attrib
-{
-   GLuint Width;                            /**< number of table entries */
-   GLint Format;                            /**< GL_ALPHA, GL_RGB, etc */
-   GLuint Count[HISTOGRAM_TABLE_SIZE][4];   /**< the histogram */
-   GLboolean Sink;                          /**< terminate image transfer? */
-   GLubyte RedSize;                         /**< Bits per counter */
-   GLubyte GreenSize;
-   GLubyte BlueSize;
-   GLubyte AlphaSize;
-   GLubyte LuminanceSize;
-};
-
-
-/**
- * Color Min/max state.
- */
-struct gl_minmax_attrib
-{
-   GLenum Format;
-   GLboolean Sink;
-   GLfloat Min[4], Max[4];   /**< RGBA */
-};
-
-
-/**
  * Image convolution state.
  */
 struct gl_convolution_attrib
@@ -1012,11 +984,6 @@ struct gl_pixel_attrib
    /* Note: the color matrix is not part of this attrib group */
    GLfloat PostColorMatrixScale[4];  /**< RGBA */
    GLfloat PostColorMatrixBias[4];   /**< RGBA */
-
-   /* Histogram & minmax (GL_EXT_histogram) */
-   /* Note: histogram and minmax data are not part of this attrib group */
-   GLboolean HistogramEnabled;
-   GLboolean MinMaxEnabled;
 
    /*--- End Pixel Transfer State ---*/
 
@@ -2717,7 +2684,6 @@ struct gl_extensions
    GLboolean EXT_framebuffer_object;
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
-   GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
@@ -2831,8 +2797,6 @@ struct gl_matrix_stack
 #define IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT    0x40
 #define IMAGE_COLOR_MATRIX_BIT                    0x80
 #define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
-#define IMAGE_HISTOGRAM_BIT                       0x200
-#define IMAGE_MIN_MAX_BIT                         0x400
 #define IMAGE_CLAMP_BIT                           0x800
 
 
@@ -2846,9 +2810,7 @@ struct gl_matrix_stack
 #define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
                                      IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
                                      IMAGE_COLOR_MATRIX_BIT |                 \
-                                     IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |\
-                                     IMAGE_HISTOGRAM_BIT |                    \
-                                     IMAGE_MIN_MAX_BIT)
+                                     IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT)
 /*@}*/
 
 
@@ -3206,8 +3168,6 @@ struct __GLcontextRec
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
    struct gl_pixelmaps          PixelMaps;
-   struct gl_histogram_attrib	Histogram;
-   struct gl_minmax_attrib	MinMax;
    struct gl_convolution_attrib Convolution1D;
    struct gl_convolution_attrib Convolution2D;
    struct gl_convolution_attrib Separable2D;

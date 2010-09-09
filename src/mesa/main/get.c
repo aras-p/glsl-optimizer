@@ -277,7 +277,6 @@ EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
 EXTRA_EXT(NV_light_max_exponent);
 EXTRA_EXT(EXT_convolution);
-EXTRA_EXT(EXT_histogram);
 EXTRA_EXT(SGI_color_table);
 EXTRA_EXT(SGI_texture_color_table);
 EXTRA_EXT(EXT_depth_bounds_test);
@@ -937,11 +936,6 @@ static const struct value_desc values[] = {
    { GL_POST_CONVOLUTION_ALPHA_BIAS_EXT,
      CONTEXT_FLOAT(Pixel.PostConvolutionBias[3]),
      extra_EXT_convolution },
-
-   /* GL_EXT_histogram */
-   { GL_HISTOGRAM, CONTEXT_BOOL(Pixel.HistogramEnabled),
-     extra_EXT_histogram },
-   { GL_MINMAX, CONTEXT_BOOL(Pixel.MinMaxEnabled), extra_EXT_histogram },
 
    /* GL_SGI_color_table */
    { GL_COLOR_TABLE_SGI,

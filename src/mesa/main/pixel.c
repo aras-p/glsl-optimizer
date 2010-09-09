@@ -738,12 +738,6 @@ update_image_transfer_state(GLcontext *ctx)
    if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX])
       mask |= IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT;
 
-   if (ctx->Pixel.HistogramEnabled)
-      mask |= IMAGE_HISTOGRAM_BIT;
-
-   if (ctx->Pixel.MinMaxEnabled)
-      mask |= IMAGE_MIN_MAX_BIT;
-
    ctx->_ImageTransferState = mask;
 }
 
@@ -829,8 +823,6 @@ _mesa_init_pixel( GLcontext *ctx )
    init_pixelmap(&ctx->PixelMaps.GtoG);
    init_pixelmap(&ctx->PixelMaps.BtoB);
    init_pixelmap(&ctx->PixelMaps.AtoA);
-   ctx->Pixel.HistogramEnabled = GL_FALSE;
-   ctx->Pixel.MinMaxEnabled = GL_FALSE;
    ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
    for (i = 0; i < COLORTABLE_MAX; i++) {

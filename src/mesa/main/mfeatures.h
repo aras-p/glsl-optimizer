@@ -100,7 +100,6 @@
 #define FEATURE_drawpix                   FEATURE_GL
 #define FEATURE_evaluators                FEATURE_GL
 #define FEATURE_feedback                  FEATURE_GL
-#define FEATURE_histogram                 FEATURE_GL
 #define FEATURE_pixel_transfer            FEATURE_GL
 #define FEATURE_queryobj                  FEATURE_GL
 #define FEATURE_rastpos                   FEATURE_GL

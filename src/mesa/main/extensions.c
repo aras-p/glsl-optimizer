@@ -128,7 +128,6 @@ static const struct {
    { OFF, "GL_EXT_framebuffer_sRGB",           F(EXT_framebuffer_sRGB) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_gpu_program_parameters",     F(EXT_gpu_program_parameters) },
-   { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
    { ON,  "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_EXT_packed_depth_stencil",       F(EXT_packed_depth_stencil) },
    { OFF, "GL_EXT_packed_float",               F(EXT_packed_float) },
@@ -319,7 +318,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
 #endif
-   ctx->Extensions.EXT_histogram = GL_TRUE;
    /*ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;*/
    ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    ctx->Extensions.EXT_paletted_texture = GL_TRUE;
@@ -400,7 +398,6 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_convolution = GL_TRUE;
-   ctx->Extensions.EXT_histogram = GL_TRUE;
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGI_color_table = GL_TRUE;
 }

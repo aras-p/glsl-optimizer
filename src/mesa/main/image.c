@@ -1876,69 +1876,6 @@ _mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
    }
 }
 
-
-
-/*
- * Update the min/max values from an array of fragment colors.
- */
-static void
-update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4])
-{
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      /* update mins */
-      if (rgba[i][RCOMP] < ctx->MinMax.Min[RCOMP])
-         ctx->MinMax.Min[RCOMP] = rgba[i][RCOMP];
-      if (rgba[i][GCOMP] < ctx->MinMax.Min[GCOMP])
-         ctx->MinMax.Min[GCOMP] = rgba[i][GCOMP];
-      if (rgba[i][BCOMP] < ctx->MinMax.Min[BCOMP])
-         ctx->MinMax.Min[BCOMP] = rgba[i][BCOMP];
-      if (rgba[i][ACOMP] < ctx->MinMax.Min[ACOMP])
-         ctx->MinMax.Min[ACOMP] = rgba[i][ACOMP];
-
-      /* update maxs */
-      if (rgba[i][RCOMP] > ctx->MinMax.Max[RCOMP])
-         ctx->MinMax.Max[RCOMP] = rgba[i][RCOMP];
-      if (rgba[i][GCOMP] > ctx->MinMax.Max[GCOMP])
-         ctx->MinMax.Max[GCOMP] = rgba[i][GCOMP];
-      if (rgba[i][BCOMP] > ctx->MinMax.Max[BCOMP])
-         ctx->MinMax.Max[BCOMP] = rgba[i][BCOMP];
-      if (rgba[i][ACOMP] > ctx->MinMax.Max[ACOMP])
-         ctx->MinMax.Max[ACOMP] = rgba[i][ACOMP];
-   }
-}
-
-
-/*
- * Update the histogram values from an array of fragment colors.
- */
-static void
-update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4])
-{
-   const GLint max = ctx->Histogram.Width - 1;
-   GLfloat w = (GLfloat) max;
-   GLuint i;
-
-   if (ctx->Histogram.Width == 0)
-      return;
-
-   for (i = 0; i < n; i++) {
-      GLint ri = IROUND(rgba[i][RCOMP] * w);
-      GLint gi = IROUND(rgba[i][GCOMP] * w);
-      GLint bi = IROUND(rgba[i][BCOMP] * w);
-      GLint ai = IROUND(rgba[i][ACOMP] * w);
-      ri = CLAMP(ri, 0, max);
-      gi = CLAMP(gi, 0, max);
-      bi = CLAMP(bi, 0, max);
-      ai = CLAMP(ai, 0, max);
-      ctx->Histogram.Count[ri][RCOMP]++;
-      ctx->Histogram.Count[gi][GCOMP]++;
-      ctx->Histogram.Count[bi][BCOMP]++;
-      ctx->Histogram.Count[ai][ACOMP]++;
-   }
-}
-
-
 /**
  * Apply various pixel transfer operations to an array of RGBA pixels
  * as indicated by the transferOps bitmask
@@ -1991,14 +1928,6 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
    /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
    if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
       _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_POSTCOLORMATRIX], n, rgba);
-   }
-   /* update histogram count */
-   if (transferOps & IMAGE_HISTOGRAM_BIT) {
-      update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
-   }
-   /* update min/max values */
-   if (transferOps & IMAGE_MIN_MAX_BIT) {
-      update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
    }
    /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {
@@ -2132,9 +2061,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (transferOps) {
       _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
-      if ((transferOps & IMAGE_MIN_MAX_BIT) && ctx->MinMax.Sink) {
-         return;
-      }
    }
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {

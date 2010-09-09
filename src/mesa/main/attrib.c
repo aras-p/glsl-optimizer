@@ -78,7 +78,6 @@ struct gl_enable_attrib
    GLboolean DepthTest;
    GLboolean Dither;
    GLboolean Fog;
-   GLboolean Histogram;
    GLboolean Light[MAX_LIGHTS];
    GLboolean Lighting;
    GLboolean LineSmooth;
@@ -107,7 +106,6 @@ struct gl_enable_attrib
    GLboolean Map2Vertex4;
    GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
 
-   GLboolean MinMax;
    GLboolean Normalize;
    GLboolean PixelTexture;
    GLboolean PointSmooth;
@@ -279,8 +277,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Lighting = ctx->Light.Enabled;
       attr->LineSmooth = ctx->Line.SmoothFlag;
       attr->LineStipple = ctx->Line.StippleFlag;
-      attr->Histogram = ctx->Pixel.HistogramEnabled;
-      attr->MinMax = ctx->Pixel.MinMaxEnabled;
       attr->IndexLogicOp = ctx->Color.IndexLogicOpEnabled;
       attr->ColorLogicOp = ctx->Color.ColorLogicOpEnabled;
       attr->Map1Color4 = ctx->Eval.Map1Color4;

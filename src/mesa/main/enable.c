@@ -363,13 +363,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.Enabled = state;
          break;
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram, cap);
-         if (ctx->Pixel.HistogramEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.HistogramEnabled = state;
-         break;
       case GL_LIGHT0:
       case GL_LIGHT1:
       case GL_LIGHT2:
@@ -533,12 +526,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_EVAL);
          ctx->Eval.Map2Vertex4 = state;
-         break;
-      case GL_MINMAX:
-         if (ctx->Pixel.MinMaxEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.MinMaxEnabled = state;
          break;
       case GL_NORMALIZE:
          if (ctx->Transform.Normalize == state)
@@ -1355,14 +1342,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POINT_SIZE_ARRAY_OES:
          return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
 #endif
-
-      /* GL_EXT_histogram */
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.HistogramEnabled;
-      case GL_MINMAX:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.MinMaxEnabled;
 
       /* GL_SGI_color_table */
       case GL_COLOR_TABLE_SGI:

@@ -103,8 +103,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLint row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLbitfield transferOps = ctx->_ImageTransferState;
-   const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
-      || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
    GLfloat *dest, *tmpImage, *convImage;
    SWspan span;
 
@@ -160,30 +158,28 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                     width, rgba);
    }
 
-   if (!sink) {
-      /* write the new image */
-      for (row = 0; row < height; row++) {
-         const GLfloat *src = convImage + row * width * 4;
-         GLfloat *rgba = (GLfloat *) span.array->attribs[FRAG_ATTRIB_COL0];
+   /* write the new image */
+   for (row = 0; row < height; row++) {
+      const GLfloat *src = convImage + row * width * 4;
+      GLfloat *rgba = (GLfloat *) span.array->attribs[FRAG_ATTRIB_COL0];
 
-         /* copy convolved colors into span array */
-         memcpy(rgba, src, width * 4 * sizeof(GLfloat));
+      /* copy convolved colors into span array */
+      memcpy(rgba, src, width * 4 * sizeof(GLfloat));
 
-         /* write span */
-         span.x = destx;
-         span.y = desty + row;
-         span.end = width;
-         span.array->ChanType = GL_FLOAT;
-         if (zoom) {
-            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, rgba);
-         }
-         else {
-            _swrast_write_rgba_span(ctx, &span);
-         }
+      /* write span */
+      span.x = destx;
+      span.y = desty + row;
+      span.end = width;
+      span.array->ChanType = GL_FLOAT;
+      if (zoom) {
+	 _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, rgba);
       }
-      /* restore this */
-      span.array->ChanType = CHAN_TYPE;
+      else {
+	 _swrast_write_rgba_span(ctx, &span);
+      }
    }
+   /* restore this */
+   span.array->ChanType = CHAN_TYPE;
 
    free(convImage);
 }
