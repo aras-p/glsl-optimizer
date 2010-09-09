@@ -31,16 +31,19 @@ struct vertex {
    float color[4];
 };
 
-static struct vertex vertices[4] =
+static struct vertex vertices[3] =
 {
-   { { 0.0f, -0.9f, 0.0f, 1.0f },
-     { 1.0f, 0.0f, 0.0f, 1.0f }
+   {
+      { 0.0f, -0.9f, 0.0f, 1.0f },
+      { 1.0f, 0.0f, 0.0f, 1.0f }
    },
-   { { -0.9f, 0.9f, 0.0f, 1.0f },
-     { 0.0f, 1.0f, 0.0f, 1.0f }
+   {
+      { -0.9f, 0.9f, 0.0f, 1.0f },
+      { 0.0f, 1.0f, 0.0f, 1.0f }
    },
-   { { 0.9f, 0.9f, 0.0f, 1.0f },
-     { 0.0f, 0.0f, 1.0f, 1.0f }
+   {
+      { 0.9f, 0.9f, 0.0f, 1.0f },
+      { 0.0f, 0.0f, 1.0f, 1.0f }
    }
 };
 
