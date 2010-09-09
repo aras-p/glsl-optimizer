@@ -122,6 +122,9 @@ static int r600_draw_common(struct r600_draw *draw)
 		r600_flush(draw->ctx, 0, NULL);
 		r = radeon_ctx_set_draw(&rctx->ctx, &rctx->draw);
 	}
+
+	radeon_state_fini(&draw->draw);
+
 	return r;
 }
 
@@ -132,6 +135,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	int r;
 
 	assert(info->index_bias == 0);
+
+	memset(&draw, 0, sizeof(draw));
 
 	draw.ctx = ctx;
 	draw.mode = info->mode;
