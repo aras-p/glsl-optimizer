@@ -548,7 +548,6 @@ st_TexImage(GLcontext * ctx,
    /* The Mesa/Gallium state tracker does not implement the imaging extensions
     * such as convolution.
     */
-   assert(!ctx->Extensions.ARB_imaging);
    assert(!ctx->Extensions.EXT_convolution);
 
    /* switch to "normal" */

@@ -2658,7 +2658,6 @@ struct gl_extensions
    GLboolean ARB_geometry_shader4;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
-   GLboolean ARB_imaging;
    GLboolean ARB_instanced_arrays;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;

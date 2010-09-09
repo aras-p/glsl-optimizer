@@ -938,12 +938,12 @@ static const struct value_desc values[] = {
      CONTEXT_FLOAT(Pixel.PostConvolutionBias[3]),
      extra_EXT_convolution },
 
-   /* GL_EXT_histogram / GL_ARB_imaging */
+   /* GL_EXT_histogram */
    { GL_HISTOGRAM, CONTEXT_BOOL(Pixel.HistogramEnabled),
      extra_EXT_histogram },
    { GL_MINMAX, CONTEXT_BOOL(Pixel.MinMaxEnabled), extra_EXT_histogram },
 
-   /* GL_SGI_color_table / GL_ARB_imaging */
+   /* GL_SGI_color_table */
    { GL_COLOR_TABLE_SGI,
      CONTEXT_BOOL(Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]),
      extra_SGI_color_table },
