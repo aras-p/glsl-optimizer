@@ -414,6 +414,8 @@ nv50_generate_code(struct nv50_translation_info *ti)
    nv_print_program(pc);
 #endif
 
+   pc->opt_reload_elim = ti->store_to_memory ? FALSE : TRUE;
+
    /* optimization */
    ret = nv_pc_exec_pass0(pc);
    if (ret)

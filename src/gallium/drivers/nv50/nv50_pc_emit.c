@@ -412,25 +412,25 @@ emit_form_IMM(struct nv_pc *pc, struct nv_instruction *i, ubyte mod_mask)
 }
 
 static void
-set_ld_st_size(struct nv_pc *pc, ubyte type)
+set_ld_st_size(struct nv_pc *pc, int s, ubyte type)
 {
    switch (type) {
    case NV_TYPE_F64:
-      pc->emit[1] |= 0x8000;
+      pc->emit[1] |= 0x8000 << s;
       break;
    case NV_TYPE_F32:
    case NV_TYPE_S32:
    case NV_TYPE_U32:
-      pc->emit[1] |= 0xc000;
+      pc->emit[1] |= 0xc000 << s;
       break;
    case NV_TYPE_S16:
-      pc->emit[1] |= 0x6000;
+      pc->emit[1] |= 0x6000 << s;
       break;
    case NV_TYPE_U16:
-      pc->emit[1] |= 0x4000;
+      pc->emit[1] |= 0x4000 << s;
       break;
    case NV_TYPE_S8:
-      pc->emit[1] |= 0x2000;
+      pc->emit[1] |= 0x2000 << s;
       break;
    default:
       break;
@@ -473,12 +473,14 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
    if (sf == NV_FILE_MEM_L) {
       pc->emit[0] = 0xd0000001;
       pc->emit[1] = 0x40000000;
+
+      set_addr(pc, i);
    } else {
       NOUVEAU_ERR("invalid ld source file\n");
       abort();
    }
 
-   set_ld_st_size(pc, STYPE(i, 0));
+   set_ld_st_size(pc, (sf == NV_FILE_MEM_L) ? 8 : 0, STYPE(i, 0));
 
    set_dst(pc, i->def[0]);
    set_pred_wr(pc, i);
@@ -495,7 +497,19 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_st(struct nv_pc *pc, struct nv_instruction *i)
 {
+   assert(SFILE(i, 1) == NV_FILE_GPR);
+   assert(SFILE(i, 0) == NV_FILE_MEM_L);
 
+   pc->emit[0] = 0xd0000001;
+   pc->emit[1] = 0x60000000;
+
+   SID(pc, i->src[1], 2);
+   SID(pc, i->src[0], 9);
+
+   set_ld_st_size(pc, 8, STYPE(i, 1));
+
+   set_addr(pc, i);
+   set_pred(pc, i);
 }
 
 static int

@@ -345,6 +345,9 @@ struct nv_pc {
 
    struct nv_fixup *fixups;
    int num_fixups;
+
+   /* optimization enables */
+   boolean opt_reload_elim;
 };
 
 void nvbb_insert_tail(struct nv_basic_block *, struct nv_instruction *);

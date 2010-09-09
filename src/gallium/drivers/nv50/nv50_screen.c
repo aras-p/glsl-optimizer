@@ -274,7 +274,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	uint64_t value;
 	unsigned chipset = dev->chipset;
 	unsigned tesla_class = 0;
-	unsigned stack_size;
+	unsigned stack_size, local_size, max_warps;
 	int ret, i;
 	const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
@@ -495,9 +495,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	/* shader stack */
 	nouveau_device_get_param(dev, NOUVEAU_GETPARAM_GRAPH_UNITS, &value);
 
-	stack_size  = util_bitcount(value & 0xffff);
-	stack_size *= util_bitcount((value >> 24) & 0xf);
-	stack_size *= 32 * 64 * 8;
+	max_warps  = util_bitcount(value & 0xffff);
+	max_warps *= util_bitcount((value >> 24) & 0xf) * 32;
+
+	stack_size = max_warps * 64 * 8;
 
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
 			     stack_size, &screen->stack_bo);
@@ -509,6 +510,22 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RELOCh(chan, screen->stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCl(chan, screen->stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, 4);
+
+	local_size = (NV50_CAP_MAX_PROGRAM_TEMPS * 16) * max_warps * 32;
+
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
+			     local_size, &screen->local_bo);
+	if (ret) {
+		nv50_screen_destroy(pscreen);
+		return NULL;
+	}
+
+	local_size = NV50_CAP_MAX_PROGRAM_TEMPS * 16;
+
+	BEGIN_RING(chan, screen->tesla, NV50TCL_LOCAL_ADDRESS_HIGH, 3);
+	OUT_RELOCh(chan, screen->local_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, screen->local_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, util_unsigned_logbase2(local_size / 8));
 
 	/* Vertex array limits - max them out */
 	for (i = 0; i < 16; i++) {

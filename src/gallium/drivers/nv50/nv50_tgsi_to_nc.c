@@ -558,6 +558,38 @@ bld_insn_3(struct bld_context *bld, uint opcode,
    return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.type));
 }
 
+static void
+bld_lmem_store(struct bld_context *bld, struct nv_value *ptr, int ofst,
+               struct nv_value *val)
+{
+   struct nv_instruction *insn = new_instruction(bld->pc, NV_OP_STA);
+   struct nv_value *loc;
+
+   loc = new_value(bld->pc, NV_FILE_MEM_L, NV_TYPE_U32);
+
+   loc->reg.id = ofst * 4;
+
+   nv_reference(bld->pc, &insn->src[0], loc);
+   nv_reference(bld->pc, &insn->src[1], val);
+   nv_reference(bld->pc, &insn->src[4], ptr);
+}
+
+static struct nv_value *
+bld_lmem_load(struct bld_context *bld, struct nv_value *ptr, int ofst)
+{
+   struct nv_value *loc, *val;
+
+   loc = new_value(bld->pc, NV_FILE_MEM_L, NV_TYPE_U32);
+
+   loc->reg.id = ofst * 4;
+
+   val = bld_insn_1(bld, NV_OP_LDA, loc);
+
+   nv_reference(bld->pc, &val->insn->src[4], ptr);
+
+   return val;
+}
+
 #define BLD_INSN_1_EX(d, op, dt, s0, s0t)           \
    do {                                             \
       (d) = bld_insn_1(bld, (NV_OP_##op), (s0));    \
@@ -854,9 +886,17 @@ infer_dst_type(unsigned opcode)
 
 static void
 emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
-	   unsigned chan, struct nv_value *value)
+           unsigned chan, struct nv_value *value)
 {
+   struct nv_value *ptr;
    const struct tgsi_full_dst_register *reg = &inst->Dst[0];
+
+   if (reg->Register.Indirect) {
+      ptr = FETCH_ADDR(reg->Indirect.Index,
+                       tgsi_util_get_src_register_swizzle(&reg->Indirect, 0));
+   } else {
+      ptr = NULL;
+   }
 
    assert(chan < 4);
 
@@ -893,7 +933,11 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
       value->reg.file = NV_FILE_GPR;
       if (value->insn->bb != bld->pc->current_block)
          value = bld_insn_1(bld, NV_OP_MOV, value);
-      STORE_TEMP(reg->Register.Index, chan, value);
+
+      if (bld->ti->store_to_memory)
+         bld_lmem_store(bld, ptr, reg->Register.Index * 4 + chan, value);
+      else
+         STORE_TEMP(reg->Register.Index, chan, value);
       break;
    case TGSI_FILE_ADDRESS:
       assert(reg->Register.Index < BLD_MAX_ADDRS);
@@ -1064,8 +1108,10 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       bld->saved_inputs[bld->ti->input_map[idx][swz]] = res;
       break;
    case TGSI_FILE_TEMPORARY:
-      /* this should be load from l[], with reload elimination later on */
-      res = bld_fetch_global(bld, &bld->tvs[idx][swz]);
+      if (bld->ti->store_to_memory)
+         res = bld_lmem_load(bld, ptr, idx * 4 + swz);
+      else
+         res = bld_fetch_global(bld, &bld->tvs[idx][swz]);
       break;
    case TGSI_FILE_ADDRESS:
       res = bld_fetch_global(bld, &bld->avs[idx][swz]);

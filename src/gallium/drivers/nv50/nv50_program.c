@@ -168,10 +168,17 @@ prog_inst(struct nv50_translation_info *ti,
           inst->Src[0].Register.File == TGSI_FILE_INPUT &&
           dst->Index == ti->edgeflag_out)
          ti->p->vp.edgeflag = inst->Src[0].Register.Index;
+   } else
+   if (inst->Dst[0].Register.File == TGSI_FILE_TEMPORARY) {
+      if (inst->Dst[0].Register.Indirect)
+         ti->store_to_memory = TRUE;
    }
 
    for (s = 0; s < inst->Instruction.NumSrcRegs; ++s) {
       src = &inst->Src[s].Register;
+      if (src->File == TGSI_FILE_TEMPORARY)
+         if (inst->Src[s].Register.Indirect)
+            ti->store_to_memory = TRUE;
       if (src->File != TGSI_FILE_INPUT)
          continue;
       mask = nv50_tgsi_src_mask(inst, s);

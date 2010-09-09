@@ -82,6 +82,8 @@ inst_commutation_legal(struct nv_instruction *a,
 static INLINE boolean
 inst_cullable(struct nv_instruction *nvi)
 {
+   if (nvi->opcode == NV_OP_STA)
+      return FALSE;
    return (!(nvi->is_terminator || nvi->is_join ||
              nvi->target ||
              nvi->fixed ||
@@ -739,6 +741,7 @@ struct nv_pass_reld_elim {
    int alloc;
 };
 
+/* TODO: properly handle loads from l[] memory in the presence of stores */
 static int
 nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
 {
@@ -1074,13 +1077,15 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
    if (ret)
       return ret;
 
-   reldelim = CALLOC_STRUCT(nv_pass_reld_elim);
-   reldelim->pc = pc;
-   pc->pass_seq++;
-   ret = nv_pass_reload_elim(reldelim, root);
-   FREE(reldelim);
-   if (ret)
-      return ret;
+   if (pc->opt_reload_elim) {
+      reldelim = CALLOC_STRUCT(nv_pass_reld_elim);
+      reldelim->pc = pc;
+      pc->pass_seq++;
+      ret = nv_pass_reload_elim(reldelim, root);
+      FREE(reldelim);
+      if (ret)
+         return ret;
+   }
 
    pc->pass_seq++;
    ret = nv_pass_cse(&pass, root);

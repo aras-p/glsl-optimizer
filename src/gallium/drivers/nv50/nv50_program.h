@@ -116,6 +116,7 @@ struct nv50_translation_info {
    int output_access[PIPE_MAX_SHADER_OUTPUTS][4];
    boolean indirect_inputs;
    boolean indirect_outputs;
+   boolean store_to_memory;
    struct tgsi_shader_info scan;
    uint32_t *immd32;
    unsigned immd32_nr;

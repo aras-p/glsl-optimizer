@@ -25,7 +25,8 @@ struct nv50_screen {
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
 
-	struct nouveau_bo *stack_bo;
+	struct nouveau_bo *stack_bo; /* control flow stack */
+	struct nouveau_bo *local_bo; /* l[] memory */
 
 	boolean force_push;
 };
