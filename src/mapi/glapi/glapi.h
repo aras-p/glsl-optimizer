@@ -94,7 +94,7 @@ _GLAPI_EXPORT extern __thread void * _glapi_tls_Context
 _GLAPI_EXPORT extern const struct _glapi_table *_glapi_Dispatch;
 _GLAPI_EXPORT extern const void *_glapi_Context;
 
-# define GET_DISPATCH(t) _glapi_tls_Dispatch
+# define GET_DISPATCH() _glapi_tls_Dispatch
 # define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_tls_Context
 
 #else
@@ -167,12 +167,6 @@ _glapi_get_proc_name(unsigned int offset);
 _GLAPI_EXPORT unsigned long
 _glthread_GetID(void);
 
-_GLAPI_EXPORT int
-_glapi_logging_available(void);
-
-_GLAPI_EXPORT void
-_glapi_enable_logging(void (*func)(void *data, const char *fmt, ...),
-		      void *data);
 
 /*
  * These stubs are kept so that the old DRI drivers still load.

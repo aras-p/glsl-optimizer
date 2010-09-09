@@ -1370,38 +1370,7 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
    }
 }
 
-#ifdef DEBUG
 
-static void
-dispatch_logger(void *data, const char *fmt, ...)
-{
-   va_list ap;
-
-   va_start(ap, fmt);
-   vfprintf(stderr, fmt, ap);
-   va_end(ap);
-}
-
-void
-_mesa_set_dispatch(void *table)
-{
-   if (table && (MESA_VERBOSE & VERBOSE_DISPATCH)) {
-      _glapi_set_dispatch(table);
-      _glapi_enable_logging(dispatch_logger, stderr);
-   } else {
-      _glapi_set_dispatch(table);
-   }
-}
-
-#else
-
-void
-_mesa_set_dispatch(void *table)
-{
-   _glapi_set_dispatch(table);
-}
-
-#endif
 /**
  * Bind the given context to the given drawBuffer and readBuffer and
  * make it the current context for the calling thread.
@@ -1445,10 +1414,10 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    ASSERT(_mesa_get_current_context() == newCtx);
 
    if (!newCtx) {
-      _mesa_set_dispatch(NULL);  /* none current */
+      _glapi_set_dispatch(NULL);  /* none current */
    }
    else {
-      _mesa_set_dispatch(newCtx->CurrentDispatch);
+      _glapi_set_dispatch(newCtx->CurrentDispatch);
 
       if (drawBuffer && readBuffer) {
 	 /* TODO: check if newCtx and buffer's visual match??? */

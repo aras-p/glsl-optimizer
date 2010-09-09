@@ -8062,7 +8062,7 @@ _mesa_NewList(GLuint name, GLenum mode)
    ctx->Driver.NewList(ctx, name, mode);
 
    ctx->CurrentDispatch = ctx->Save;
-   _mesa_set_dispatch(ctx->CurrentDispatch);
+   _glapi_set_dispatch(ctx->CurrentDispatch);
 }
 
 
@@ -8109,7 +8109,7 @@ _mesa_EndList(void)
    ctx->CompileFlag = GL_FALSE;
 
    ctx->CurrentDispatch = ctx->Exec;
-   _mesa_set_dispatch(ctx->CurrentDispatch);
+   _glapi_set_dispatch(ctx->CurrentDispatch);
 }
 
 
@@ -8143,7 +8143,7 @@ _mesa_CallList(GLuint list)
    /* also restore API function pointers to point to "save" versions */
    if (save_compile_flag) {
       ctx->CurrentDispatch = ctx->Save;
-      _mesa_set_dispatch(ctx->CurrentDispatch);
+      _glapi_set_dispatch(ctx->CurrentDispatch);
    }
 }
 
@@ -8195,7 +8195,7 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    /* also restore API function pointers to point to "save" versions */
    if (save_compile_flag) {
       ctx->CurrentDispatch = ctx->Save;
-      _mesa_set_dispatch(ctx->CurrentDispatch);
+      _glapi_set_dispatch(ctx->CurrentDispatch);
    }
 }
 

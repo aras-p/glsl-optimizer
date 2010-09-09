@@ -145,9 +145,6 @@ extern GLboolean
 _mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer );
 
-extern void
-_mesa_set_dispatch(void *table);
-
 extern GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);
 

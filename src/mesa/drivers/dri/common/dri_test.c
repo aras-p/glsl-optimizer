@@ -82,18 +82,6 @@ _glthread_GetID(void)
    return 0;
 }
 
-PUBLIC int
-_glapi_logging_available(void)
-{
-   return 0;
-}
-
-PUBLIC void
-_glapi_enable_logging(void (*func)(void *data, const char *fmt, ...),
-		      void *data)
-{
-}
-
 int main(int argc, char** argv)
 {
    void* p = __driDriverExtensions;

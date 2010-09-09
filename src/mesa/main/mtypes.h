@@ -3346,8 +3346,7 @@ enum _verbose
    VERBOSE_VERTS		= 0x0800,
    VERBOSE_DISASSEM		= 0x1000,
    VERBOSE_DRAW                 = 0x2000,
-   VERBOSE_SWAPBUFFERS          = 0x4000,
-   VERBOSE_DISPATCH             = 0x8000
+   VERBOSE_SWAPBUFFERS          = 0x4000
 };
 
 
