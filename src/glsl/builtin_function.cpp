@@ -2138,7 +2138,7 @@ static const char *builtin_normalize =
    "   (signature float\n"
    "     (parameters\n"
    "       (declare (in) float arg0))\n"
-   "     ((return (constant float (1.0)))))\n"
+   "     ((return (expression float sign (var_ref arg0)))))\n"
    "\n"
    "   (signature vec2\n"
    "     (parameters\n"

@@ -2,7 +2,7 @@
    (signature float
      (parameters
        (declare (in) float arg0))
-     ((return (constant float (1.0)))))
+     ((return (expression float sign (var_ref arg0)))))
 
    (signature vec2
      (parameters
