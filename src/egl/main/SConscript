@@ -24,7 +24,6 @@ if env['platform'] != 'winddk':
 		'eglapi.c',
 		'eglarray.c',
 		'eglconfig.c',
-		'eglconfigutil.c',
 		'eglcontext.c',
 		'eglcurrent.c',
 		'egldisplay.c',

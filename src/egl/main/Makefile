@@ -12,7 +12,6 @@ INCLUDE_DIRS = -I$(TOP)/include
 HEADERS = \
 	eglcompiler.h \
 	eglconfig.h \
-	eglconfigutil.h \
 	eglcontext.h \
 	eglcurrent.h \
 	egldefines.h \
@@ -33,7 +32,6 @@ SOURCES = \
 	eglapi.c \
 	eglarray.c \
 	eglconfig.c \
-	eglconfigutil.c \
 	eglcontext.c \
 	eglcurrent.c \
 	egldisplay.c \
