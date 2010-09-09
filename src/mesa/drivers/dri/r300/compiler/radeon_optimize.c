@@ -192,7 +192,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 		/* It is possible to do copy propigation in this situation,
 		 * just not right now, see peephole_add_presub_inv() */
 		if (inst_mov->U.I.PreSub.Opcode != RC_PRESUB_NONE &&
-						info->NumSrcRegs > 2) {
+				(info->NumSrcRegs > 2 || info->HasTexture)) {
 			return;
 		}
 
@@ -555,6 +555,11 @@ static int presub_helper(
 			 * instructions that could potentially use the
 			 * presubtract source. */
 			if (info->NumSrcRegs > 2) {
+				can_remove = 0;
+				break;
+			}
+
+			if (info->HasTexture) {
 				can_remove = 0;
 				break;
 			}
