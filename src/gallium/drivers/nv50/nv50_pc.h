@@ -189,6 +189,7 @@ struct nv_reg {
    int id;
    ubyte file;
    ubyte type; /* type of generating instruction's result */
+   ubyte as_type; /* default type for new references to this value */
    union {
       float f32;
       double f64;
@@ -396,14 +397,16 @@ new_value(struct nv_pc *pc, ubyte file, ubyte type)
    value->join = value;
    value->reg.id = -1;
    value->reg.file = file;
-   value->reg.type = type;
+   value->reg.type = value->reg.as_type = type;
    return value;
 }
 
 static INLINE struct nv_value *
 new_value_like(struct nv_pc *pc, struct nv_value *like)
 {
-   return new_value(pc, like->reg.file, like->reg.type);
+   struct nv_value *val = new_value(pc, like->reg.file, like->reg.type);
+   val->reg.as_type = like->reg.as_type;
+   return val;
 }
 
 static INLINE struct nv_ref *
@@ -425,7 +428,7 @@ new_ref(struct nv_pc *pc, struct nv_value *val)
 
    ref = pc->refs[pc->num_refs++];
    ref->value = val;
-   ref->typecast = val->reg.type;
+   ref->typecast = val->reg.as_type;
 
    ++val->refc;
    return ref;

@@ -22,8 +22,6 @@
 
 /* #define NV50_TGSI2NC_DEBUG */
 
-/* XXX: need to clean this up so we get the typecasting right more naturally */
-
 #include <unistd.h>
 
 #include "nv50_context.h"
@@ -519,17 +517,16 @@ bld_imm_f32(struct bld_context *bld, float f)
    return bld_imm_u32(bld, fui(f));
 }
 
-#define SET_TYPE(v, t) ((v)->reg.type = NV_TYPE_##t)
+#define SET_TYPE(v, t) ((v)->reg.type = (v)->reg.as_type = (t))
 
 static struct nv_value *
 bld_insn_1(struct bld_context *bld, uint opcode, struct nv_value *src0)
 {
    struct nv_instruction *insn = new_instruction(bld->pc, opcode);
-   assert(insn);
 
-   nv_reference(bld->pc, &insn->src[0], src0); /* NOTE: new_ref would suffice */
+   nv_reference(bld->pc, &insn->src[0], src0);
    
-   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.type));
+   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.as_type));
 }
 
 static struct nv_value *
@@ -541,7 +538,7 @@ bld_insn_2(struct bld_context *bld, uint opcode,
    nv_reference(bld->pc, &insn->src[0], src0);
    nv_reference(bld->pc, &insn->src[1], src1);
 
-   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.type));
+   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.as_type));
 }
 
 static struct nv_value *
@@ -555,7 +552,7 @@ bld_insn_3(struct bld_context *bld, uint opcode,
    nv_reference(bld->pc, &insn->src[1], src1);
    nv_reference(bld->pc, &insn->src[2], src2);
 
-   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.type));
+   return bld_def(insn, 0, new_value(bld->pc, NV_FILE_GPR, src0->reg.as_type));
 }
 
 static void
@@ -593,14 +590,14 @@ bld_lmem_load(struct bld_context *bld, struct nv_value *ptr, int ofst)
 #define BLD_INSN_1_EX(d, op, dt, s0, s0t)           \
    do {                                             \
       (d) = bld_insn_1(bld, (NV_OP_##op), (s0));    \
-      (d)->reg.type = NV_TYPE_##dt;                 \
+      SET_TYPE(d, NV_TYPE_##dt);                    \
       (d)->insn->src[0]->typecast = NV_TYPE_##s0t;  \
    } while(0)
 
 #define BLD_INSN_2_EX(d, op, dt, s0, s0t, s1, s1t)       \
    do {                                                  \
       (d) = bld_insn_2(bld, (NV_OP_##op), (s0), (s1));   \
-      (d)->reg.type = NV_TYPE_##dt;                      \
+      SET_TYPE(d, NV_TYPE_##dt);                         \
       (d)->insn->src[0]->typecast = NV_TYPE_##s0t;       \
       (d)->insn->src[1]->typecast = NV_TYPE_##s1t;       \
    } while(0)
@@ -910,9 +907,9 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
       BLD_INSN_1_EX(value, SAT, F32, value, F32);
       break;
    case TGSI_SAT_MINUS_PLUS_ONE:
+      value->reg.as_type = NV_TYPE_F32;
       value = bld_insn_2(bld, NV_OP_MAX, value, bld_load_imm_f32(bld, -1.0f));
       value = bld_insn_2(bld, NV_OP_MIN, value, bld_load_imm_f32(bld, 1.0f));
-      value->reg.type = NV_TYPE_F32;
       break;
    }
 
@@ -1070,7 +1067,7 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       assert(dim_idx == 1); /* for now */
 
       res = new_value(bld->pc, NV_FILE_MEM_C(dim_idx), type);
-      res->reg.type = type;
+      SET_TYPE(res, type);
       res->reg.id = (idx * 4 + swz) & 127;
       res = bld_insn_1(bld, NV_OP_LDA, res);
 
@@ -1082,11 +1079,11 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       res = bld_load_imm_u32(bld, bld->ti->immd32[idx * 4 + swz]);
 
       switch (bld->ti->immd32_ty[idx]) {
-      case TGSI_IMM_FLOAT32: res->reg.type = NV_TYPE_F32; break;
-      case TGSI_IMM_UINT32: res->reg.type = NV_TYPE_U32; break;
-      case TGSI_IMM_INT32: res->reg.type = NV_TYPE_S32; break;
+      case TGSI_IMM_FLOAT32: SET_TYPE(res, NV_TYPE_F32); break;
+      case TGSI_IMM_UINT32: SET_TYPE(res, NV_TYPE_U32); break;
+      case TGSI_IMM_INT32: SET_TYPE(res, NV_TYPE_S32); break;
       default:
-         res->reg.type = type;
+         SET_TYPE(res, type);
          break;
       }
       break;
@@ -1126,6 +1123,9 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    }
    if (!res)
       return bld_undef(bld, NV_FILE_GPR);
+
+   if (insn->Instruction.Opcode != TGSI_OPCODE_MOV)
+      res->reg.as_type = type;
 
    switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
    case TGSI_UTIL_SIGN_KEEP:
@@ -1305,7 +1305,7 @@ emit_tex(struct bld_context *bld, uint opcode,
    /* the inputs to a tex instruction must be separate values */
    for (c = 0; c < argc; ++c) {
       t[c] = bld_insn_1(bld, NV_OP_MOV, t_in[c]);
-      t[c]->reg.type = NV_TYPE_F32;
+      SET_TYPE(t[c], NV_TYPE_F32);
       t[c]->insn->fixed = 1;
    }
 
@@ -1363,7 +1363,7 @@ bld_texbias_sequence(struct bld_context *bld,
       cr[l] = bld_cmov(bld, bit[l], NV_CC_EQ, val->insn->flags_def);
 
       cr[l]->reg.file = NV_FILE_FLAGS;
-      cr[l]->reg.type = NV_TYPE_U16;
+      SET_TYPE(cr[l], NV_TYPE_U16);
    }
 
    sel = new_instruction(bld->pc, NV_OP_SELECT);
@@ -1510,7 +1510,8 @@ bld_instruction(struct bld_context *bld,
       src1 = bld_imm_u32(bld, 4);
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
-         (temp = bld_insn_1(bld, NV_OP_FLOOR, src0))->reg.type = NV_TYPE_S32;
+         temp = bld_insn_1(bld, NV_OP_FLOOR, src0);
+         SET_TYPE(temp, NV_TYPE_S32);
          dst0[c] = bld_insn_2(bld, NV_OP_SHL, temp, src1);
       }
       break;
@@ -1791,7 +1792,7 @@ bld_instruction(struct bld_context *bld,
          src1 = emit_fetch(bld, insn, 1, c);
          dst0[c] = bld_insn_2(bld, NV_OP_SET, src0, src1);
          dst0[c]->insn->set_cond = translate_setcc(insn->Instruction.Opcode);
-         dst0[c]->reg.type = infer_dst_type(insn->Instruction.Opcode);
+         SET_TYPE(dst0[c], infer_dst_type(insn->Instruction.Opcode));
 
          dst0[c]->insn->src[0]->typecast =
          dst0[c]->insn->src[1]->typecast =
@@ -1799,11 +1800,10 @@ bld_instruction(struct bld_context *bld,
 
          if (dst0[c]->reg.type != NV_TYPE_F32)
             break;
+         dst0[c]->reg.as_type = NV_TYPE_S32;
          dst0[c] = bld_insn_1(bld, NV_OP_ABS, dst0[c]);
-         dst0[c]->insn->src[0]->typecast = NV_TYPE_S32;
-         dst0[c]->reg.type = NV_TYPE_S32;
          dst0[c] = bld_insn_1(bld, NV_OP_CVT, dst0[c]);
-         dst0[c]->reg.type = NV_TYPE_F32;
+         SET_TYPE(dst0[c], NV_TYPE_F32);
       }
       break;
    case TGSI_OPCODE_SCS:
