@@ -41,7 +41,6 @@
 #include "glapi/glapitable.h"
 #include "glapi/glapidispatch.h"
 
-
 #if !(defined(USE_X86_ASM) || defined(USE_X86_64_ASM) || defined(USE_SPARC_ASM))
 
 #if defined(WIN32)
@@ -58,26 +57,11 @@
 #define NAME(func)  gl##func
 #endif
 
-#if 0  /* Use this to log GL calls to stdout (for DEBUG only!) */
-
-#define F stdout
-#define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   fprintf MESSAGE;				\
-   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
-
-#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
-   fprintf MESSAGE;				\
-   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
-
-#else
-
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
    CALL_ ## FUNC(GET_DISPATCH(), ARGS);
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
    return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
-
-#endif /* logging */
 
 
 #ifndef GLAPIENTRY
@@ -91,3 +75,67 @@
 #include "glapi/glapitemp.h"
 
 #endif /* USE_X86_ASM */
+
+
+#ifdef DEBUG
+
+static void *logger_data;
+static void (*logger_func)(void *data, const char *fmt, ...);
+static struct _glapi_table *real_dispatch; /* FIXME: This need to be TLS etc */
+
+#define KEYWORD1 static
+#define KEYWORD1_ALT static
+#define KEYWORD2
+#define NAME(func)  log_##func
+#define F logger_data
+
+static void
+log_Unused(void)
+{
+}
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)		\
+   logger_func MESSAGE;				\
+   CALL_ ## FUNC(real_dispatch, ARGS);
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
+   logger_func MESSAGE;			\
+   return CALL_ ## FUNC(real_dispatch, ARGS);
+
+#define DISPATCH_TABLE_NAME __glapi_logging_table
+
+#define TABLE_ENTRY(func) (_glapi_proc) log_##func
+
+#include "glapi/glapitemp.h"
+
+int
+_glapi_logging_available(void)
+{
+   return 1;
+}
+
+void
+_glapi_enable_logging(void (*func)(void *data, const char *fmt, ...),
+		      void *data)
+{
+   real_dispatch = GET_DISPATCH();
+   logger_func = func;
+   logger_data = data;
+   _glapi_set_dispatch(&__glapi_logging_table);
+}
+
+#else
+
+int
+_glapi_logging_available(void)
+{
+   return 0
+}
+
+void
+_glapi_enable_logging(void (*func)(void *data, const char *fmt, ...),
+		      void *data)
+{
+}
+
+#endif

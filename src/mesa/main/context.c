@@ -1367,6 +1367,26 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
    }
 }
 
+static void
+dispatch_logger(void *data, const char *fmt, ...)
+{
+   va_list ap;
+
+   va_start(ap, fmt);
+   vfprintf(stderr, fmt, ap);
+   va_end(ap);
+}
+
+void
+_mesa_set_dispatch(void *table)
+{
+   if (table && (MESA_VERBOSE & VERBOSE_DISPATCH)) {
+      _glapi_set_dispatch(table);
+      _glapi_enable_logging(dispatch_logger, stderr);
+   } else {
+      _glapi_set_dispatch(table);
+   }
+}
 
 /**
  * Bind the given context to the given drawBuffer and readBuffer and
@@ -1411,10 +1431,10 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    ASSERT(_mesa_get_current_context() == newCtx);
 
    if (!newCtx) {
-      _glapi_set_dispatch(NULL);  /* none current */
+      _mesa_set_dispatch(NULL);  /* none current */
    }
    else {
-      _glapi_set_dispatch(newCtx->CurrentDispatch);
+      _mesa_set_dispatch(newCtx->CurrentDispatch);
 
       if (drawBuffer && readBuffer) {
 	 /* TODO: check if newCtx and buffer's visual match??? */

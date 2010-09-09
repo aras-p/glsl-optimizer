@@ -201,7 +201,8 @@ static void add_debug_flags( const char *debug )
       { "lighting",  VERBOSE_LIGHTING },
       { "disassem",  VERBOSE_DISASSEM },
       { "draw",      VERBOSE_DRAW },
-      { "swap",      VERBOSE_SWAPBUFFERS }
+      { "swap",      VERBOSE_SWAPBUFFERS },
+      { "dispatch",  VERBOSE_DISPATCH }
    };
    GLuint i;
 
@@ -210,6 +211,9 @@ static void add_debug_flags( const char *debug )
       if (strstr(debug, debug_opt[i].name))
          MESA_VERBOSE |= debug_opt[i].flag;
    }
+
+   if ((MESA_VERBOSE & VERBOSE_DISPATCH) && !_glapi_logging_available())
+      _mesa_debug(NULL, "dispatch logging not available in this buidl\n");
 
    /* Debug flag:
     */
