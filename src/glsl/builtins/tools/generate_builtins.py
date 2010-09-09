@@ -182,6 +182,7 @@ _mesa_glsl_release_functions(void)
 {
    talloc_free(builtin_mem_ctx);
    builtin_mem_ctx = NULL;
+   memset(builtin_profiles, 0, sizeof(builtin_profiles));
 }
 
 static void
