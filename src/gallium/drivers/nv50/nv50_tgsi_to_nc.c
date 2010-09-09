@@ -674,6 +674,7 @@ bld_get_address(struct bld_context *bld, int id, struct nv_value *indirect)
 
    bld->saved_addr[i][0] = bld_load_imm_u32(bld, id);
    bld->saved_addr[i][0]->reg.file = NV_FILE_ADDR;
+   bld->saved_addr[i][0]->reg.type = NV_TYPE_U16;
    bld->saved_addr[i][1] = indirect;
    return bld->saved_addr[i][0];
 }
@@ -967,6 +968,7 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
    case TGSI_FILE_ADDRESS:
       assert(reg->Register.Index < BLD_MAX_ADDRS);
       value->reg.file = NV_FILE_ADDR;
+      value->reg.type = NV_TYPE_U16;
       STORE_ADDR(reg->Register.Index, chan, value);
       break;
    }

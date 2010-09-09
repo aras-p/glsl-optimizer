@@ -171,12 +171,14 @@ nv_value_allocated(struct nv_value *value)
 static INLINE void
 nv_print_address(const char c, int buf, struct nv_value *a, int offset)
 {
+   const char ac =  (a && nv_value_allocated(a)) ? '$' : '%';
+
    if (buf >= 0)
       PRINT(" %s%c%i[", cyan, c, buf);
    else
       PRINT(" %s%c[", cyan, c);
    if (a)
-      PRINT("%s$a%i%s+", mgta, nv_value_id(a), cyan);
+      PRINT("%s%ca%i%s+", mgta, ac, nv_value_id(a), cyan);
    PRINT("%s0x%x%s]", orng, offset, cyan);
 }
 
