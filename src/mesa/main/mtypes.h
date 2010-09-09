@@ -2199,6 +2199,7 @@ struct gl_shader_compiler_options
    GLboolean EmitNoFunctions;
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
    GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
+   GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
 
    GLuint MaxUnrollIterations;
 

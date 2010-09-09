@@ -96,21 +96,12 @@ _mesa_init_shader_state(GLcontext *ctx)
     */
    struct gl_shader_compiler_options options;
    GLuint i;
-   options.EmitHighLevelInstructions = GL_TRUE;
-   options.EmitCondCodes = GL_FALSE;
-   options.EmitComments = GL_FALSE;
-   options.EmitNoIfs = GL_FALSE;
-   options.EmitNoLoops = GL_FALSE;
-   options.EmitNoFunctions = GL_FALSE;
-   options.EmitNoCont = GL_FALSE;
-   options.EmitNoMainReturn = GL_FALSE;
+
+   memset(&options, 0, sizeof(options));
    options.MaxUnrollIterations = 32;
 
    /* Default pragma settings */
-   options.DefaultPragmas.IgnoreOptimize = GL_FALSE;
-   options.DefaultPragmas.IgnoreDebug = GL_FALSE;
    options.DefaultPragmas.Optimize = GL_TRUE;
-   options.DefaultPragmas.Debug = GL_FALSE;
 
    for(i = 0; i < MESA_SHADER_TYPES; ++i)
       memcpy(&ctx->ShaderCompilerOptions[i], &options, sizeof(options));

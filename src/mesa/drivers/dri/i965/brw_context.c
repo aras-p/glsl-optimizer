@@ -114,6 +114,7 @@ GLboolean brwCreateContext( int api,
    for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
       ctx->ShaderCompilerOptions[i].EmitCondCodes = GL_TRUE;
       ctx->ShaderCompilerOptions[i].EmitNVTempInitialization = GL_TRUE;
+      ctx->ShaderCompilerOptions[i].EmitNoNoise = GL_TRUE;
    }
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
