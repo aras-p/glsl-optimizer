@@ -242,6 +242,10 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return False;
    }
 
+   if (oldGC == gc &&
+       gc->currentDrawable == draw && gc->currentReadable == read)
+      return True;
+
    if (oldGC != &dummyContext) {
       oldGC->vtable->unbind(oldGC, gc);
       oldGC->currentDpy = 0;
