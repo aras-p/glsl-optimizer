@@ -199,11 +199,6 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	struct r600_resource *resource;
 	struct radeon_bo *bo = NULL;
 
-	bo = radeon_bo(rw, whandle->handle, 0, 0, NULL);
-	if (bo == NULL) {
-		return NULL;
-	}
-
 	/* Support only 2D textures without mipmaps */
 	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
 	      templ->depth0 != 1 || templ->last_level != 0)
@@ -212,6 +207,12 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (rtex == NULL)
 		return NULL;
+
+	bo = radeon_bo(rw, whandle->handle, 0, 0, NULL);
+	if (bo == NULL) {
+		FREE(rtex);
+		return NULL;
+	}
 
 	resource = &rtex->resource;
 	resource->base.b = *templ;
