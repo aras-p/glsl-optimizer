@@ -25,7 +25,7 @@ _eglLookupMode(EGLModeMESA mode, _EGLDisplay *disp)
 {
    EGLint scrnum;
 
-   if (!disp->Screens)
+   if (!disp || !disp->Screens)
       return NULL;
 
    /* loop over all screens on the display */

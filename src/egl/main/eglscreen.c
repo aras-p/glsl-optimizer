@@ -69,7 +69,7 @@ _eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *display)
 {
    EGLint i;
 
-   if (!display->Screens)
+   if (!display || !display->Screens)
       return NULL;
 
    for (i = 0; i < display->Screens->Size; i++) {

@@ -117,7 +117,7 @@ static INLINE _EGLConfig *
 _eglLookupConfig(EGLConfig config, _EGLDisplay *dpy)
 {
    _EGLConfig *conf = (_EGLConfig *) config;
-   if (!_eglCheckConfigHandle(config, dpy))
+   if (!dpy || !_eglCheckConfigHandle(config, dpy))
       conf = NULL;
    return conf;
 }
