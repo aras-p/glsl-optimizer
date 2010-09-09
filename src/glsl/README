@@ -156,10 +156,10 @@ for the 965 fragment shader backend when that is developed.
 Q: How should I expand instructions that take multiple backend instructions?
 
 Sometimes you'll have to do the expansion in your code generation --
-see, for example, ir_to_mesa.cpp's handling of ir_binop_mul for
-matrices.  However, in many cases you'll want to do a pass over the IR
-to convert non-native instructions to a series of native instructions.
-For example, for the Mesa backend we have ir_div_to_mul_rcp.cpp because
+see, for example, ir_to_mesa.cpp's handling of ir_unop_sqrt.  However,
+in many cases you'll want to do a pass over the IR to convert
+non-native instructions to a series of native instructions.  For
+example, for the Mesa backend we have ir_div_to_mul_rcp.cpp because
 Mesa IR (and many hardware backends) only have a reciprocal
 instruction, not a divide.  Implementing non-native instructions this
 way gives the chance for constant folding to occur, so (a / 2.0)
