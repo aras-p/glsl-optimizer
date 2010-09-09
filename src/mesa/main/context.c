@@ -1300,6 +1300,9 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
    if (ctxvis == bufvis)
       return GL_TRUE;
 
+   if (buffer == _mesa_get_incomplete_framebuffer())
+      return GL_TRUE;
+
 #if 0
    /* disabling this fixes the fgl_glxgears pbuffer demo */
    if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)

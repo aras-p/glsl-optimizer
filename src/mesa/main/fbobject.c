@@ -71,6 +71,10 @@
 static struct gl_framebuffer DummyFramebuffer;
 static struct gl_renderbuffer DummyRenderbuffer;
 
+/* We bind this framebuffer when applications pass a NULL
+ * drawable/surface in make current. */
+static struct gl_framebuffer IncompleteFramebuffer;
+
 
 #define IS_CUBE_FACE(TARGET) \
    ((TARGET) >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && \
@@ -95,14 +99,16 @@ _mesa_init_fbobjects(GLcontext *ctx)
 {
    _glthread_INIT_MUTEX(DummyFramebuffer.Mutex);
    _glthread_INIT_MUTEX(DummyRenderbuffer.Mutex);
+   _glthread_INIT_MUTEX(IncompleteFramebuffer.Mutex);
    DummyFramebuffer.Delete = delete_dummy_framebuffer;
    DummyRenderbuffer.Delete = delete_dummy_renderbuffer;
+   IncompleteFramebuffer.Delete = delete_dummy_framebuffer;
 }
 
 struct gl_framebuffer *
 _mesa_get_incomplete_framebuffer(void)
 {
-   return &DummyFramebuffer;
+   return &IncompleteFramebuffer;
 }
 
 /**
