@@ -71,6 +71,7 @@ __glElementsPerGroup(GLenum format, GLenum type)
    case GL_422_REV_EXT:
    case GL_422_AVERAGE_EXT:
    case GL_422_REV_AVERAGE_EXT:
+   case GL_DEPTH_STENCIL_NV:
    case GL_YCBCR_422_APPLE:
    case GL_LUMINANCE_ALPHA:
       return 2;
