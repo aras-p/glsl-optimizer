@@ -1370,6 +1370,8 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
    }
 }
 
+#ifdef DEBUG
+
 static void
 dispatch_logger(void *data, const char *fmt, ...)
 {
@@ -1391,6 +1393,15 @@ _mesa_set_dispatch(void *table)
    }
 }
 
+#else
+
+void
+_mesa_set_dispatch(void *table)
+{
+   _glapi_set_dispatch(table);
+}
+
+#endif
 /**
  * Bind the given context to the given drawBuffer and readBuffer and
  * make it the current context for the calling thread.
