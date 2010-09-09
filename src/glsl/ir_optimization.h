@@ -55,3 +55,4 @@ bool do_swizzle_swizzle(exec_list *instructions);
 bool do_tree_grafting(exec_list *instructions);
 bool do_vec_index_to_cond_assign(exec_list *instructions);
 bool do_vec_index_to_swizzle(exec_list *instructions);
+bool lower_noise(exec_list *instructions);

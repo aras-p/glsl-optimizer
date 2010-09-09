@@ -75,6 +75,7 @@ CXX_SOURCES = \
 	loop_analysis.cpp \
 	loop_controls.cpp \
 	loop_unroll.cpp \
+	lower_noise.cpp \
 	s_expression.cpp
 
 LIBS = \

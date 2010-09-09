@@ -65,7 +65,8 @@ glsl_SOURCES = \
 	linker.cpp \
 	loop_analysis.cpp \
 	loop_controls.cpp \
-	loop_unroll.cpp
+	loop_unroll.cpp \
+	lower_noise.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
