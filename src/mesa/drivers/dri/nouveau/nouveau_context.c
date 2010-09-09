@@ -60,6 +60,7 @@ static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_EXT_stencil_wrap",	NULL },
 	{ "GL_EXT_texture_lod_bias",	NULL },
 	{ "GL_NV_blend_square",         NULL },
+	{ "GL_NV_texture_env_combine4",	NULL },
 	{ "GL_SGIS_generate_mipmap",	NULL },
 	{ NULL,				NULL }
 };
