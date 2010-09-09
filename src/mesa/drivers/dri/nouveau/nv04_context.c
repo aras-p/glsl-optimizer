@@ -39,6 +39,7 @@ nv04_context_engine(GLcontext *ctx)
 	struct nouveau_grobj *fahrenheit;
 
 	if (ctx->Texture.Unit[0].EnvMode == GL_COMBINE ||
+	    ctx->Texture.Unit[0].EnvMode == GL_COMBINE4_NV ||
 	    ctx->Texture.Unit[0].EnvMode == GL_BLEND ||
 	    ctx->Texture.Unit[0].EnvMode == GL_ADD ||
 	    ctx->Texture.Unit[1]._ReallyEnabled ||
