@@ -341,7 +341,6 @@ static void
 dummy_enum_func(void)
 {
    gl_buffer_index bi = BUFFER_FRONT_LEFT;
-   gl_colortable_index ci = COLORTABLE_PRECONVOLUTION;
    gl_face_index fi = FACE_POS_X;
    gl_frag_attrib fa = FRAG_ATTRIB_WPOS;
    gl_frag_result fr = FRAG_RESULT_DEPTH;
@@ -352,7 +351,6 @@ dummy_enum_func(void)
    gl_geom_result gr = GEOM_RESULT_POS;
 
    (void) bi;
-   (void) ci;
    (void) fi;
    (void) fa;
    (void) fr;

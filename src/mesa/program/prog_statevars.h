@@ -67,7 +67,6 @@ typedef enum gl_state_index_ {
    STATE_MVP_MATRIX,
    STATE_TEXTURE_MATRIX,
    STATE_PROGRAM_MATRIX,
-   STATE_COLOR_MATRIX,
    STATE_MATRIX_INVERSE,
    STATE_MATRIX_TRANSPOSE,
    STATE_MATRIX_INVTRANS,
@@ -116,8 +115,6 @@ typedef enum gl_state_index_ {
    STATE_LIGHT_HALF_VECTOR,           /* object vs eye space */
    STATE_PT_SCALE,              /**< Pixel transfer RGBA scale */
    STATE_PT_BIAS,               /**< Pixel transfer RGBA bias */
-   STATE_PCM_SCALE,             /**< Post color matrix RGBA scale */
-   STATE_PCM_BIAS,              /**< Post color matrix RGBA bias */
    STATE_SHADOW_AMBIENT,        /**< ARB_shadow_ambient fail value; token[2] is texture unit index */
    STATE_FB_SIZE,               /**< (width-1, height-1, 0, 0) */
    STATE_ROT_MATRIX_0,          /**< ATI_envmap_bumpmap, rot matrix row 0 */

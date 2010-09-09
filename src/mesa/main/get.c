@@ -874,35 +874,11 @@ static const struct value_desc values[] = {
      extra_EXT_compiled_vertex_array },
 
    /* GL_ARB_transpose_matrix */
-   { GL_TRANSPOSE_COLOR_MATRIX_ARB, CONTEXT_MATRIX_T(ColorMatrixStack.Top), NO_EXTRA },
    { GL_TRANSPOSE_MODELVIEW_MATRIX_ARB,
      CONTEXT_MATRIX_T(ModelviewMatrixStack), NO_EXTRA },
    { GL_TRANSPOSE_PROJECTION_MATRIX_ARB,
      CONTEXT_MATRIX_T(ProjectionMatrixStack.Top), NO_EXTRA },
    { GL_TRANSPOSE_TEXTURE_MATRIX_ARB, CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA },
-
-   /* GL_SGI_color_matrix (also in 1.2 imaging) */
-   { GL_COLOR_MATRIX_SGI, CONTEXT_MATRIX(ColorMatrixStack.Top), NO_EXTRA },
-   { GL_COLOR_MATRIX_STACK_DEPTH_SGI, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, ColorMatrixStack.Depth), NO_EXTRA },
-   { GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI,
-     CONST(MAX_COLOR_STACK_DEPTH), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_RED_SCALE_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixScale[0]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixScale[1]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixScale[2]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixScale[3]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_RED_BIAS_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixBias[0]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixBias[1]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixBias[2]), NO_EXTRA },
-   { GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI,
-     CONTEXT_FLOAT(Pixel.PostColorMatrixBias[3]), NO_EXTRA },
 
    /* GL_EXT_convolution (also in 1.2 imaging) */
    { GL_CONVOLUTION_1D_EXT, CONTEXT_BOOL(Pixel.Convolution1DEnabled),
@@ -1449,7 +1425,6 @@ find_custom_value(GLcontext *ctx, const struct value_desc *d, union value *v)
 
    case GL_MODELVIEW_STACK_DEPTH:
    case GL_PROJECTION_STACK_DEPTH:
-   case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
       v->value_int = *(GLint *) ((char *) ctx + d->offset) + 1;
       break;
 

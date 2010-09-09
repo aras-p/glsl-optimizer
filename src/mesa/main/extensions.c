@@ -206,7 +206,6 @@ static const struct {
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },
    { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
    { ON,  "GL_OES_read_format",                F(OES_read_format) },
-   { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
    { OFF, "GL_SGI_texture_color_table",        F(SGI_texture_color_table) },
    { OFF, "GL_SGIS_generate_mipmap",           F(SGIS_generate_mipmap) },
    { OFF, "GL_SGIS_texture_border_clamp",      F(ARB_texture_border_clamp) },
@@ -366,7 +365,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_NV_fragment_program && FEATURE_ARB_fragment_program
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
 #endif
-   ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGI_texture_color_table = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
    ctx->Extensions.SGIS_texture_edge_clamp = GL_TRUE;
@@ -396,7 +394,6 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_convolution = GL_TRUE;
-   ctx->Extensions.SGI_color_matrix = GL_TRUE;
 }
 
 

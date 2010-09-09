@@ -1552,7 +1552,6 @@ save_ColorTableParameterfv(GLenum target, GLenum pname,
       n[3].f = params[0];
       if (pname == GL_COLOR_TABLE_SGI ||
           pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
-          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI ||
           pname == GL_TEXTURE_COLOR_TABLE_SGI) {
          n[4].f = params[1];
          n[5].f = params[2];
@@ -1581,7 +1580,6 @@ save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
       n[3].i = params[0];
       if (pname == GL_COLOR_TABLE_SGI ||
           pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
-          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI ||
           pname == GL_TEXTURE_COLOR_TABLE_SGI) {
          n[4].i = params[1];
          n[5].i = params[2];

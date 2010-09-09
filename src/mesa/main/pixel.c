@@ -566,54 +566,6 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
 	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.DepthBias = param;
 	 break;
-      case GL_POST_COLOR_MATRIX_RED_SCALE:
-         if (ctx->Pixel.PostColorMatrixScale[0] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixScale[0] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_RED_BIAS:
-         if (ctx->Pixel.PostColorMatrixBias[0] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixBias[0] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_GREEN_SCALE:
-         if (ctx->Pixel.PostColorMatrixScale[1] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixScale[1] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_GREEN_BIAS:
-         if (ctx->Pixel.PostColorMatrixBias[1] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixBias[1] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_BLUE_SCALE:
-         if (ctx->Pixel.PostColorMatrixScale[2] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixScale[2] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_BLUE_BIAS:
-         if (ctx->Pixel.PostColorMatrixBias[2] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixBias[2] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_ALPHA_SCALE:
-         if (ctx->Pixel.PostColorMatrixScale[3] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixScale[3] = param;
-	 break;
-      case GL_POST_COLOR_MATRIX_ALPHA_BIAS:
-         if (ctx->Pixel.PostColorMatrixBias[3] == param)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixBias[3] = param;
-	 break;
       case GL_POST_CONVOLUTION_RED_SCALE:
          if (ctx->Pixel.PostConvolutionScale[0] == param)
 	    return;
@@ -718,17 +670,6 @@ update_image_transfer_state(GLcontext *ctx)
       }
    }
 
-   if (ctx->ColorMatrixStack.Top->type != MATRIX_IDENTITY ||
-       ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[1]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[2] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[2]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[3] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[3]  != 0.0F)
-      mask |= IMAGE_COLOR_MATRIX_BIT;
-
    ctx->_ImageTransferState = mask;
 }
 
@@ -738,11 +679,6 @@ update_image_transfer_state(GLcontext *ctx)
  */
 void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
 {
-   if (new_state & _NEW_COLOR_MATRIX)
-      _math_matrix_analyse( ctx->ColorMatrixStack.Top );
-
-   /* References ColorMatrix.type (derived above).
-    */
    if (new_state & _MESA_NEW_TRANSFER_STATE)
       update_image_transfer_state(ctx);
 }
@@ -814,8 +750,6 @@ _mesa_init_pixel( GLcontext *ctx )
    init_pixelmap(&ctx->PixelMaps.GtoG);
    init_pixelmap(&ctx->PixelMaps.BtoB);
    init_pixelmap(&ctx->PixelMaps.AtoA);
-   ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
    ctx->Pixel.Convolution1DEnabled = GL_FALSE;
    ctx->Pixel.Convolution2DEnabled = GL_FALSE;
    ctx->Pixel.Separable2DEnabled = GL_FALSE;

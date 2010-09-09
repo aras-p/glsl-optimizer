@@ -1525,36 +1525,6 @@ _mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
    }
 }
 
-
-/*
- * Apply the color matrix and post color matrix scaling and biasing.
- */
-void
-_mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
-{
-   const GLfloat rs = ctx->Pixel.PostColorMatrixScale[0];
-   const GLfloat rb = ctx->Pixel.PostColorMatrixBias[0];
-   const GLfloat gs = ctx->Pixel.PostColorMatrixScale[1];
-   const GLfloat gb = ctx->Pixel.PostColorMatrixBias[1];
-   const GLfloat bs = ctx->Pixel.PostColorMatrixScale[2];
-   const GLfloat bb = ctx->Pixel.PostColorMatrixBias[2];
-   const GLfloat as = ctx->Pixel.PostColorMatrixScale[3];
-   const GLfloat ab = ctx->Pixel.PostColorMatrixBias[3];
-   const GLfloat *m = ctx->ColorMatrixStack.Top->m;
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      const GLfloat r = rgba[i][RCOMP];
-      const GLfloat g = rgba[i][GCOMP];
-      const GLfloat b = rgba[i][BCOMP];
-      const GLfloat a = rgba[i][ACOMP];
-      rgba[i][RCOMP] = (m[0] * r + m[4] * g + m[ 8] * b + m[12] * a) * rs + rb;
-      rgba[i][GCOMP] = (m[1] * r + m[5] * g + m[ 9] * b + m[13] * a) * gs + gb;
-      rgba[i][BCOMP] = (m[2] * r + m[6] * g + m[10] * b + m[14] * a) * bs + bb;
-      rgba[i][ACOMP] = (m[3] * r + m[7] * g + m[11] * b + m[15] * a) * as + ab;
-   }
-}
-
-
 /**
  * Apply a color table lookup to an array of floating point RGBA colors.
  */
@@ -1912,10 +1882,6 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
                                 ctx->Pixel.PostConvolutionBias[GCOMP],
                                 ctx->Pixel.PostConvolutionBias[BCOMP],
                                 ctx->Pixel.PostConvolutionBias[ACOMP]);
-   }
-   /* color matrix transform */
-   if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
-      _mesa_transform_rgba(ctx, n, rgba);
    }
    /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {

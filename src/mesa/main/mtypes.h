@@ -454,16 +454,6 @@ typedef enum
                             BUFFER_BIT_COLOR7)
 
 
-/** The pixel transfer path has three color tables: */
-typedef enum
-{
-   COLORTABLE_PRECONVOLUTION,
-   COLORTABLE_POSTCONVOLUTION,
-   COLORTABLE_POSTCOLORMATRIX,
-   COLORTABLE_MAX
-} gl_colortable_index;
-
-
 /**
  * Data structure for color tables
  */
@@ -974,11 +964,6 @@ struct gl_pixel_attrib
    GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
    GLfloat PostConvolutionScale[4];  /**< RGBA */
    GLfloat PostConvolutionBias[4];   /**< RGBA */
-
-   /* Color matrix (GL_SGI_color_matrix) */
-   /* Note: the color matrix is not part of this attrib group */
-   GLfloat PostColorMatrixScale[4];  /**< RGBA */
-   GLfloat PostColorMatrixBias[4];   /**< RGBA */
 
    /*--- End Pixel Transfer State ---*/
 
@@ -2748,7 +2733,6 @@ struct gl_extensions
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
    GLboolean OES_read_format;
-   GLboolean SGI_color_matrix;
    GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
@@ -2787,7 +2771,6 @@ struct gl_matrix_stack
 #define IMAGE_MAP_COLOR_BIT                       0x4
 #define IMAGE_CONVOLUTION_BIT                     0x10
 #define IMAGE_POST_CONVOLUTION_SCALE_BIAS         0x20
-#define IMAGE_COLOR_MATRIX_BIT                    0x80
 #define IMAGE_CLAMP_BIT                           0x800
 
 
@@ -2797,8 +2780,7 @@ struct gl_matrix_stack
                                     IMAGE_MAP_COLOR_BIT)
 
 /** Pixel transfer ops after convolution */
-#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
-                                     IMAGE_COLOR_MATRIX_BIT)
+#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS)
 /*@}*/
 
 
@@ -2811,7 +2793,6 @@ struct gl_matrix_stack
 #define _NEW_MODELVIEW		0x1        /**< __GLcontextRec::ModelView */
 #define _NEW_PROJECTION		0x2        /**< __GLcontextRec::Projection */
 #define _NEW_TEXTURE_MATRIX	0x4        /**< __GLcontextRec::TextureMatrix */
-#define _NEW_COLOR_MATRIX	0x8        /**< __GLcontextRec::ColorMatrix */
 #define _NEW_ACCUM		0x10       /**< __GLcontextRec::Accum */
 #define _NEW_COLOR		0x20       /**< __GLcontextRec::Color */
 #define _NEW_DEPTH		0x40       /**< __GLcontextRec::Depth */
@@ -2934,8 +2915,7 @@ struct gl_matrix_stack
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
                                            _NEW_TEXTURE)
 
-#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL |		\
-                                           _NEW_COLOR_MATRIX)
+#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL)
 /*@}*/
 
 
@@ -3083,7 +3063,6 @@ struct __GLcontextRec
    /*@{*/
    struct gl_matrix_stack ModelviewMatrixStack;
    struct gl_matrix_stack ProjectionMatrixStack;
-   struct gl_matrix_stack ColorMatrixStack;
    struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_UNITS];
    struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
    struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */

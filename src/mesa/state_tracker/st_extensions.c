@@ -271,7 +271,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif
 
-   ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 
    /*
