@@ -112,13 +112,11 @@ nv50_nvi_can_load(struct nv_instruction *nvi, int s, struct nv_value *value)
       if (s == 0 && (value->reg.file == NV_FILE_MEM_S ||
                      value->reg.file == NV_FILE_MEM_P))
          return TRUE;
-      if (s == 1 &&
-          value->reg.file >= NV_FILE_MEM_C(0) &&
-          value->reg.file <= NV_FILE_MEM_C(15))
-         return TRUE;
-      if (s == 2 && nvi->src[1]->value->reg.file == NV_FILE_GPR)
-         return TRUE;
-      return FALSE;
+      if (value->reg.file < NV_FILE_MEM_C(0) ||
+          value->reg.file > NV_FILE_MEM_C(15))
+         return FALSE;
+      return (s == 1) ||
+         ((s == 2) && (nvi->src[1]->value->reg.file == NV_FILE_GPR));
    case NV_OP_MOV:
       assert(s == 0);
       return /* TRUE */ FALSE; /* don't turn MOVs into loads */
