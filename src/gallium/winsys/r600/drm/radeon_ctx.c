@@ -34,7 +34,7 @@ static int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo)
 {
 	if (ctx->nbo >= RADEON_CTX_MAX_PM4)
 		return -EBUSY;
-	ctx->bo[ctx->nbo] = bo;
+	ctx->bo[ctx->nbo] = radeon_bo_incref(ctx->radeon, bo);
 	ctx->nbo++;
 	return 0;
 }
@@ -137,7 +137,6 @@ static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *stat
 				break;
 		}
 		if (j == ctx->nbo) {
-			radeon_bo_incref(ctx->radeon, state->bo[i]);
 			r = radeon_ctx_set_bo_new(ctx, state->bo[i]);
 			if (r)
 				return r;
