@@ -189,3 +189,29 @@ You may also need to update the backends if they will see the new expr type:
 You can then use the new expression from builtins (if all backends
 would rather see it), or scan the IR and convert to use your new
 expression type (see ir_mod_to_fract, for example).
+
+Q: How is memory management handled in the compiler?
+
+The hierarchical memory allocator "talloc" developed for the Samba
+project is used, so that things like optimization passes don't have to
+worry about their garbage collection so much.  It has a few nice
+features, including low performance overhead and good debugging
+support that's trivially available.
+
+Generally, each stage of the compile creates a talloc context and
+allocates its memory out of that or children of it.  At the end of the
+stage, the pieces still live are stolen to a new context and the old
+one freed, or the whole context is kept for use by the next stage.
+
+For IR transformations, a temporary context is used, then at the end
+of all transformations, reparent_ir reparents all live nodes under the
+shader's IR list, and the old context full of dead nodes is freed.
+When developing a single IR transformation pass, this means that you
+want to allocate instruction nodes out of the temporary context, so if
+it becomes dead it doesn't live on as the child of a live node.  At
+the moment, optimization passes aren't passed that temporary context,
+so they find it by calling talloc_parent() on a nearby IR node.  The
+talloc_parent() call is expensive, so many passes will cache the
+result of the first talloc_parent().  Cleaning up all the optimization
+passes to take a context argument and not call talloc_parent() is left
+as an exercise.
