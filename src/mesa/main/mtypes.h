@@ -964,11 +964,6 @@ struct gl_pixel_attrib
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
 
-   /* There are multiple color table stages: */
-   GLboolean ColorTableEnabled[COLORTABLE_MAX];
-   GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
-   GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
-
    /* Convolution (GL_EXT_convolution) */
    GLboolean Convolution1DEnabled;
    GLboolean Convolution2DEnabled;
@@ -2754,7 +2749,6 @@ struct gl_extensions
    GLboolean NV_vertex_program1_1;
    GLboolean OES_read_format;
    GLboolean SGI_color_matrix;
-   GLboolean SGI_color_table;
    GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
@@ -2791,26 +2785,20 @@ struct gl_matrix_stack
 #define IMAGE_SCALE_BIAS_BIT                      0x1
 #define IMAGE_SHIFT_OFFSET_BIT                    0x2
 #define IMAGE_MAP_COLOR_BIT                       0x4
-#define IMAGE_COLOR_TABLE_BIT                     0x8
 #define IMAGE_CONVOLUTION_BIT                     0x10
 #define IMAGE_POST_CONVOLUTION_SCALE_BIAS         0x20
-#define IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT    0x40
 #define IMAGE_COLOR_MATRIX_BIT                    0x80
-#define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
 #define IMAGE_CLAMP_BIT                           0x800
 
 
 /** Pixel Transfer ops up to convolution */
 #define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
                                     IMAGE_SHIFT_OFFSET_BIT |   \
-                                    IMAGE_MAP_COLOR_BIT |      \
-                                    IMAGE_COLOR_TABLE_BIT)
+                                    IMAGE_MAP_COLOR_BIT)
 
 /** Pixel transfer ops after convolution */
 #define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
-                                     IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
-                                     IMAGE_COLOR_MATRIX_BIT |                 \
-                                     IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT)
+                                     IMAGE_COLOR_MATRIX_BIT)
 /*@}*/
 
 
@@ -3175,9 +3163,6 @@ struct __GLcontextRec
    struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */
    struct gl_selection  Select;    /**< Selection */
-
-   struct gl_color_table ColorTable[COLORTABLE_MAX];
-   struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
 
    struct gl_program_state Program;  /**< general program state */
    struct gl_vertex_program_state VertexProgram;

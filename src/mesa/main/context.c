@@ -728,7 +728,6 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_attrib( ctx );
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
-   _mesa_init_colortables( ctx );
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
@@ -1105,7 +1104,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-   _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
    _mesa_free_queryobj_data(ctx);

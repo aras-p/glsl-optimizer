@@ -277,7 +277,6 @@ EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
 EXTRA_EXT(NV_light_max_exponent);
 EXTRA_EXT(EXT_convolution);
-EXTRA_EXT(SGI_color_table);
 EXTRA_EXT(SGI_texture_color_table);
 EXTRA_EXT(EXT_depth_bounds_test);
 EXTRA_EXT(ARB_depth_clamp);
@@ -936,17 +935,6 @@ static const struct value_desc values[] = {
    { GL_POST_CONVOLUTION_ALPHA_BIAS_EXT,
      CONTEXT_FLOAT(Pixel.PostConvolutionBias[3]),
      extra_EXT_convolution },
-
-   /* GL_SGI_color_table */
-   { GL_COLOR_TABLE_SGI,
-     CONTEXT_BOOL(Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]),
-     extra_SGI_color_table },
-   { GL_POST_CONVOLUTION_COLOR_TABLE_SGI,
-     CONTEXT_BOOL(Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]),
-     extra_SGI_color_table },
-   { GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI,
-     CONTEXT_BOOL(Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]),
-     extra_SGI_color_table },
 
    /* GL_SGI_texture_color_table */
    { GL_TEXTURE_COLOR_TABLE_SGI, LOC_TEXUNIT, TYPE_BOOLEAN,

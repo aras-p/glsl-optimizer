@@ -69,7 +69,6 @@ struct gl_enable_attrib
    GLboolean Blend;
    GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
-   GLboolean ColorTable[COLORTABLE_MAX];
    GLboolean Convolution1D;
    GLboolean Convolution2D;
    GLboolean Separable2D;
@@ -260,9 +259,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Blend = ctx->Color.BlendEnabled;
       attr->ClipPlanes = ctx->Transform.ClipPlanesEnabled;
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
-      for (i = 0; i < COLORTABLE_MAX; i++) {
-         attr->ColorTable[i] = ctx->Pixel.ColorTableEnabled[i];
-      }
       attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
       attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
       attr->Separable2D = ctx->Pixel.Separable2DEnabled;
@@ -515,15 +511,6 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
                    GL_COLOR_MATERIAL);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION],
-                   enable->ColorTable[COLORTABLE_PRECONVOLUTION],
-                   GL_COLOR_TABLE);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION],
-                   enable->ColorTable[COLORTABLE_POSTCONVOLUTION],
-                   GL_POST_CONVOLUTION_COLOR_TABLE);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX],
-                   enable->ColorTable[COLORTABLE_POSTCOLORMATRIX],
-                   GL_POST_COLOR_MATRIX_COLOR_TABLE);
    TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
    TEST_AND_UPDATE(ctx->Transform.DepthClamp, enable->DepthClamp,
 		   GL_DEPTH_CLAMP);

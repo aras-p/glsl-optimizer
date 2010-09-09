@@ -1896,10 +1896,6 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
    if (transferOps & IMAGE_MAP_COLOR_BIT) {
       _mesa_map_rgba( ctx, n, rgba );
    }
-   /* GL_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_PRECONVOLUTION], n, rgba);
-   }
    /* convolution */
    if (transferOps & IMAGE_CONVOLUTION_BIT) {
       /* this has to be done in the calling code */
@@ -1917,17 +1913,9 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
                                 ctx->Pixel.PostConvolutionBias[BCOMP],
                                 ctx->Pixel.PostConvolutionBias[ACOMP]);
    }
-   /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_POSTCONVOLUTION], n, rgba);
-   }
    /* color matrix transform */
    if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
       _mesa_transform_rgba(ctx, n, rgba);
-   }
-   /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_POSTCOLORMATRIX], n, rgba);
    }
    /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {
