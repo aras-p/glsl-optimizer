@@ -901,9 +901,6 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       debug_printf("\n");
    }
 
-   /* Keep a copy of the tokens in shader->base.tokens */
-   shader->base.tokens = tgsi_dup_tokens(templ->tokens);
-
    return shader;
 }
 
