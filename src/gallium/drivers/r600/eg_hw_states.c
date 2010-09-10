@@ -117,7 +117,7 @@ static void eg_cb(struct r600_context *rctx, struct radeon_state *rstate,
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
 
-	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB0 + cb, 0, 0);
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB0, cb, 0);
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);

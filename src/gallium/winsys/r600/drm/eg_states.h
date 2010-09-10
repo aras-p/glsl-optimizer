@@ -391,7 +391,7 @@ static const struct radeon_register EG_names_GS_SAMPLER_BORDER[] = {
 	{0x0000A80C, 0, 0, "TD_GS_SAMPLER0_BORDER_ALPHA"},
 };
 
-static const struct radeon_register EG_names_CB0[] = {
+static const struct radeon_register EG_names_CB[] = {
 	{0x00028C60, 1, 0, "CB_COLOR0_BASE"},
 	{0x00028C64, 0, 0, "CB_COLOR0_PITCH"},
 	{0x00028C68, 0, 0, "CB_COLOR0_SLICE"},
@@ -400,78 +400,6 @@ static const struct radeon_register EG_names_CB0[] = {
 	{0x00028C74, 0, 0, "CB_COLOR0_ATTRIB"},
 	{0x00028C78, 0, 0, "CB_COLOR0_DIM"},
 };
-
-/* TODO */
-static const struct radeon_register EG_names_CB1[] = {
-	{0x00028044, 1, 0, "CB_COLOR1_BASE"},
-	{0x000280A4, 0, 0, "CB_COLOR1_INFO"},
-	{0x00028064, 0, 0, "CB_COLOR1_SIZE"},
-	{0x00028084, 0, 0, "CB_COLOR1_VIEW"},
-	{0x000280E4, 1, 1, "CB_COLOR1_FRAG"},
-	{0x000280C4, 1, 2, "CB_COLOR1_TILE"},
-	{0x00028104, 0, 0, "CB_COLOR1_MASK"},
-};
-
-static const struct radeon_register EG_names_CB2[] = {
-	{0x00028048, 1, 0, "CB_COLOR2_BASE"},
-	{0x000280A8, 0, 0, "CB_COLOR2_INFO"},
-	{0x00028068, 0, 0, "CB_COLOR2_SIZE"},
-	{0x00028088, 0, 0, "CB_COLOR2_VIEW"},
-	{0x000280E8, 1, 1, "CB_COLOR2_FRAG"},
-	{0x000280C8, 1, 2, "CB_COLOR2_TILE"},
-	{0x00028108, 0, 0, "CB_COLOR2_MASK"},
-};
-
-static const struct radeon_register EG_names_CB3[] = {
-	{0x0002804C, 1, 0, "CB_COLOR3_BASE"},
-	{0x000280AC, 0, 0, "CB_COLOR3_INFO"},
-	{0x0002806C, 0, 0, "CB_COLOR3_SIZE"},
-	{0x0002808C, 0, 0, "CB_COLOR3_VIEW"},
-	{0x000280EC, 1, 1, "CB_COLOR3_FRAG"},
-	{0x000280CC, 1, 2, "CB_COLOR3_TILE"},
-	{0x0002810C, 0, 0, "CB_COLOR3_MASK"},
-};
-
-static const struct radeon_register EG_names_CB4[] = {
-	{0x00028050, 1, 0, "CB_COLOR4_BASE"},
-	{0x000280B0, 0, 0, "CB_COLOR4_INFO"},
-	{0x00028070, 0, 0, "CB_COLOR4_SIZE"},
-	{0x00028090, 0, 0, "CB_COLOR4_VIEW"},
-	{0x000280F0, 1, 1, "CB_COLOR4_FRAG"},
-	{0x000280D0, 1, 2, "CB_COLOR4_TILE"},
-	{0x00028110, 0, 0, "CB_COLOR4_MASK"},
-};
-
-static const struct radeon_register EG_names_CB5[] = {
-	{0x00028054, 1, 0, "CB_COLOR5_BASE"},
-	{0x000280B4, 0, 0, "CB_COLOR5_INFO"},
-	{0x00028074, 0, 0, "CB_COLOR5_SIZE"},
-	{0x00028094, 0, 0, "CB_COLOR5_VIEW"},
-	{0x000280F4, 1, 1, "CB_COLOR5_FRAG"},
-	{0x000280D4, 1, 2, "CB_COLOR5_TILE"},
-	{0x00028114, 0, 0, "CB_COLOR5_MASK"},
-};
-
-static const struct radeon_register EG_names_CB6[] = {
-	{0x00028058, 1, 0, "CB_COLOR6_BASE"},
-	{0x000280B8, 0, 0, "CB_COLOR6_INFO"},
-	{0x00028078, 0, 0, "CB_COLOR6_SIZE"},
-	{0x00028098, 0, 0, "CB_COLOR6_VIEW"},
-	{0x000280F8, 1, 1, "CB_COLOR6_FRAG"},
-	{0x000280D8, 1, 2, "CB_COLOR6_TILE"},
-	{0x00028118, 0, 0, "CB_COLOR6_MASK"},
-};
-
-static const struct radeon_register EG_names_CB7[] = {
-	{0x0002805C, 1, 0, "CB_COLOR7_BASE"},
-	{0x000280BC, 0, 0, "CB_COLOR7_INFO"},
-	{0x0002807C, 0, 0, "CB_COLOR7_SIZE"},
-	{0x0002809C, 0, 0, "CB_COLOR7_VIEW"},
-	{0x000280FC, 1, 1, "CB_COLOR7_FRAG"},
-	{0x000280DC, 1, 2, "CB_COLOR7_TILE"},
-	{0x0002811C, 0, 0, "CB_COLOR7_MASK"},
-};
-/* TODO */
 
 /* different - TODO */
 static const struct radeon_register EG_names_DB[] = {
