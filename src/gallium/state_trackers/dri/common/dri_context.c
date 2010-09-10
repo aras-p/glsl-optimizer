@@ -54,31 +54,23 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
 {
    __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
-   struct st_api *stapi;
+   struct st_api *stapi = screen->st_api;
    struct dri_context *ctx = NULL;
    struct st_context_iface *st_share = NULL;
    struct st_context_attribs attribs;
 
    memset(&attribs, 0, sizeof(attribs));
    switch (api) {
-   case API_OPENGL:
-      stapi = screen->st_api[ST_API_OPENGL];
-      attribs.profile = ST_PROFILE_DEFAULT;
-      break;
    case API_OPENGLES:
-      stapi = screen->st_api[ST_API_OPENGL_ES1];
       attribs.profile = ST_PROFILE_OPENGL_ES1;
       break;
    case API_OPENGLES2:
-      stapi = screen->st_api[ST_API_OPENGL_ES2];
       attribs.profile = ST_PROFILE_OPENGL_ES2;
       break;
    default:
-      stapi = NULL;
+      attribs.profile = ST_PROFILE_DEFAULT;
       break;
    }
-   if (!stapi)
-      return GL_FALSE;
 
    if (sharedContextPrivate) {
       st_share = ((struct dri_context *)sharedContextPrivate)->st;
@@ -195,24 +187,10 @@ struct dri_context *
 dri_get_current(__DRIscreen *sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
-   struct st_api *stapi;
-   struct st_context_iface *st = NULL;
-   gl_api api;
+   struct st_api *stapi = screen->st_api;
+   struct st_context_iface *st;
 
-   /* XXX: How do we do this when the screen supports
-      multiple rendering API's? Pick the first one,
-      like this? (NB: all three API's use the same
-      implementation of get_current (see st_manager.c),
-      so maybe it doesn't matter right now since
-      they'll all return the same result.) */
-   for (api = API_OPENGL; api <= API_OPENGLES2; ++api) {
-      stapi = screen->st_api[api];
-      if (!stapi)
-         continue;
-      st = stapi->get_current(stapi);
-      if (st)
-         break;
-   }
+   st = stapi->get_current(stapi);
 
    return (struct dri_context *) (st) ? st->st_manager_private : NULL;
 }
