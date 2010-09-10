@@ -118,7 +118,7 @@ static void evergreenSendTexState(GLcontext *ctx, struct radeon_state_atom *atom
 
                     if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
                     {   /* vs texture */                                     
-                        R600_OUT_BATCH((i + VERT_ATTRIB_MAX + EG_SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
+                        R600_OUT_BATCH((i + VERT_ATTRIB_MAX + EG_SQ_FETCH_RESOURCE_VS_OFFSET) * EG_FETCH_RESOURCE_STRIDE);
                     }
                     else
                     {

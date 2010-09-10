@@ -554,9 +554,9 @@ set_vtx_resource(context_t *context)
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(SQ_TEX_VTX_VALID_BUFFER << SQ_TEX_RESOURCE_WORD6_0__TYPE_shift);
-    R600_OUT_BATCH_RELOC(SQ_VTX_CONSTANT_WORD0_0,
+    R600_OUT_BATCH_RELOC(0,
                          bo,
-                         SQ_VTX_CONSTANT_WORD0_0,
+                         0,
                          RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_BATCH();
     COMMIT_BATCH();
