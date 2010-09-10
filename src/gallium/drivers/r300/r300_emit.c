@@ -1137,9 +1137,9 @@ void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, voi
     END_CS;
 }
 
-void r300_emit_buffer_validate(struct r300_context *r300,
-                               boolean do_validate_vertex_buffers,
-                               struct pipe_resource *index_buffer)
+boolean r300_emit_buffer_validate(struct r300_context *r300,
+                                  boolean do_validate_vertex_buffers,
+                                  struct pipe_resource *index_buffer)
 {
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
@@ -1150,7 +1150,6 @@ void r300_emit_buffer_validate(struct r300_context *r300,
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct pipe_resource *pbuf;
     unsigned i;
-    boolean invalid = FALSE;
 
     /* upload buffers first */
     if (r300->screen->caps.has_tcl && r300->any_user_vbs) {
@@ -1161,7 +1160,6 @@ void r300_emit_buffer_validate(struct r300_context *r300,
     /* Clean out BOs. */
     r300->rws->cs_reset_buffers(r300->cs);
 
-validate:
     /* Color buffers... */
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = r300_texture(fb->cbufs[i]->texture);
@@ -1208,15 +1206,10 @@ validate:
                                  r300_buffer(index_buffer)->domain, 0);
 
     if (!r300->rws->cs_validate(r300->cs)) {
-        r300->context.flush(&r300->context, 0, NULL);
-        if (invalid) {
-            /* Well, hell. */
-            fprintf(stderr, "r300: Stuck in validation loop, gonna quit now.\n");
-            abort();
-        }
-        invalid = TRUE;
-        goto validate;
+        return FALSE;
     }
+
+    return TRUE;
 }
 
 unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
