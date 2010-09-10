@@ -2,6 +2,8 @@
  * any utility code, just the graw interface and gallium.
  */
 
+#include <stdio.h>
+
 #include "state_tracker/graw.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -179,8 +181,10 @@ static void init( void )
    }
    
    ctx = screen->context_create(screen, NULL);
-   if (ctx == NULL)
+   if (ctx == NULL) {
+      fprintf(stderr, "Unable to create context!\n");
       exit(3);
+   }
 
    templat.target = PIPE_TEXTURE_2D;
    templat.format = formats[i];
@@ -194,14 +198,18 @@ static void init( void )
    
    tex = screen->resource_create(screen,
                                  &templat);
-   if (tex == NULL)
+   if (tex == NULL) {
+      fprintf(stderr, "Unable to create screen texture!\n");
       exit(4);
+   }
 
    surf = screen->get_tex_surface(screen, tex, 0, 0, 0,
                                   PIPE_BIND_RENDER_TARGET |
                                   PIPE_BIND_DISPLAY_TARGET);
-   if (surf == NULL)
+   if (surf == NULL) {
+      fprintf(stderr, "Unable to get tex surface!\n");
       exit(5);
+   }
 
    memset(&fb, 0, sizeof fb);
    fb.nr_cbufs = 1;
