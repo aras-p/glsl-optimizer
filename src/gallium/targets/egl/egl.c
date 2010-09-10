@@ -184,9 +184,6 @@ load_pipe_module(struct pipe_module *pmod, const char *name)
       }
    }
 
-   if (!pmod->drmdd)
-      pmod->name = NULL;
-
    return (pmod->drmdd != NULL);
 }
 
@@ -305,7 +302,7 @@ static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
    struct pipe_module *pmod = get_pipe_module(name);
-   return (pmod && pmod->drmdd->create_screen) ?
+   return (pmod && pmod->drmdd && pmod->drmdd->create_screen) ?
       pmod->drmdd->create_screen(fd) : NULL;
 }
 
