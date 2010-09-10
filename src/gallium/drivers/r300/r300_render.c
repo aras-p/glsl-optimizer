@@ -604,7 +604,6 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 }
             } while (count);
         }
-	u_upload_flush(r300->upload_vb);
     }
 
     if (translate) {
