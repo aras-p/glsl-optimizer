@@ -2186,9 +2186,7 @@ struct gl_shader_state
 struct gl_shader_compiler_options
 {
    /** Driver-selectable options: */
-   GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
-   GLboolean EmitComments;              /**< Annotated instructions */
    GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
    /**
     * Attempts to flatten all ir_if (OPCODE_IF) for GPUs that can't
