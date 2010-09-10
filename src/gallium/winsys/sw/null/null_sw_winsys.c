@@ -35,6 +35,7 @@
  * @author Jose Fonseca
  */
 
+#include <stdio.h>
 
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
@@ -85,6 +86,7 @@ null_sw_displaytarget_create(struct sw_winsys *winsys,
                              unsigned alignment,
                              unsigned *stride)
 {
+   fprintf(stderr, "null_sw_displaytarget_create() returning NULL\n");
    return NULL;
 }
 
