@@ -140,12 +140,12 @@ static void eg_cb(struct r600_context *rctx, struct radeon_state *rstate,
 		S_028C70_SOURCE_FORMAT(1) |
 		S_028C70_NUMBER_TYPE(ntype);
 
-	rstate->states[EG_CB0__CB_COLOR0_BASE] = state->cbufs[cb]->offset >> 8;
-	rstate->states[EG_CB0__CB_COLOR0_INFO] = color_info;
-	rstate->states[EG_CB0__CB_COLOR0_PITCH] = S_028C64_PITCH_TILE_MAX(pitch);
-	rstate->states[EG_CB0__CB_COLOR0_SLICE] = S_028C68_SLICE_TILE_MAX(slice);
-	rstate->states[EG_CB0__CB_COLOR0_VIEW] = 0x00000000;
-	rstate->states[EG_CB0__CB_COLOR0_ATTRIB] = S_028C74_NON_DISP_TILING_ORDER(1);
+	rstate->states[EG_CB__CB_COLOR0_BASE] = state->cbufs[cb]->offset >> 8;
+	rstate->states[EG_CB__CB_COLOR0_INFO] = color_info;
+	rstate->states[EG_CB__CB_COLOR0_PITCH] = S_028C64_PITCH_TILE_MAX(pitch);
+	rstate->states[EG_CB__CB_COLOR0_SLICE] = S_028C68_SLICE_TILE_MAX(slice);
+	rstate->states[EG_CB__CB_COLOR0_VIEW] = 0x00000000;
+	rstate->states[EG_CB__CB_COLOR0_ATTRIB] = S_028C74_NON_DISP_TILING_ORDER(1);
 
 	radeon_state_pm4(rstate);
 }
