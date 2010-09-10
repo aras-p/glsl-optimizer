@@ -513,4 +513,10 @@ static const struct radeon_register R600_names_VGT_EVENT[] = {
 	{0x00028A90, 1, 0, "VGT_EVENT_INITIATOR"},
 };
 
+static const struct radeon_register R600_names_CB_FLUSH[] = {
+};
+
+static const struct radeon_register R600_names_DB_FLUSH[] = {
+};
+
 #endif

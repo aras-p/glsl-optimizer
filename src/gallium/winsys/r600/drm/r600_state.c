@@ -43,8 +43,8 @@ static int r600_state_pm4_generic(struct radeon_state *state);
 static int r600_state_pm4_query_begin(struct radeon_state *state);
 static int r600_state_pm4_query_end(struct radeon_state *state);
 static int r700_state_pm4_config(struct radeon_state *state);
-static int r700_state_pm4_cb0(struct radeon_state *state);
-static int r700_state_pm4_db(struct radeon_state *state);
+static int r600_state_pm4_db_flush(struct radeon_state *state);
+static int r600_state_pm4_cb_flush(struct radeon_state *state);
 
 #include "r600_states.h"
 
@@ -84,6 +84,8 @@ struct radeon_stype_info r600_stypes[] = {
 	{ R600_STATE_UCP, 1, 0, r600_state_pm4_generic, SUB_NONE(UCP) },
 	{ R600_STATE_VGT, 1, 0, r600_state_pm4_vgt, SUB_NONE(VGT) },
 	{ R600_STATE_DRAW, 1, 0, r600_state_pm4_draw, SUB_NONE(DRAW) },
+	{ R600_STATE_CB_FLUSH, 1, 0, r600_state_pm4_cb_flush, SUB_NONE(CB_FLUSH) },
+	{ R600_STATE_DB_FLUSH, 1, 0, r600_state_pm4_db_flush, SUB_NONE(DB_FLUSH) },
 };
 #define STYPES_SIZE Elements(r600_stypes)
 
@@ -224,8 +226,6 @@ static int r600_state_pm4_cb0(struct radeon_state *state)
 {
 	int r;
 
-	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
-				S_0085F0_CB0_DEST_BASE_ENA(1));
 	r = r600_state_pm4_generic(state);
 	if (r)
 		return r;
@@ -234,41 +234,15 @@ static int r600_state_pm4_cb0(struct radeon_state *state)
 	return 0;
 }
 
-static int r700_state_pm4_cb0(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
-				S_0085F0_CB0_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
-	return 0;
-}
-
 static int r600_state_pm4_db(struct radeon_state *state)
 {
 	int r;
 
-	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
 	r = r600_state_pm4_generic(state);
 	if (r)
 		return r;
 	state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0);
 	state->pm4[state->cpm4++] = 0x00000001;
-	return 0;
-}
-
-static int r700_state_pm4_db(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
 	return 0;
 }
 
@@ -391,6 +365,28 @@ static int r600_state_pm4_draw(struct radeon_state *state)
 	return 0;
 }
 
+static int r600_state_pm4_cb_flush(struct radeon_state *state)
+{
+	if (!state->nbo)
+		return 0;
+
+	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
+				  S_0085F0_CB0_DEST_BASE_ENA(1));
+
+	return 0;
+}
+
+static int r600_state_pm4_db_flush(struct radeon_state *state)
+{
+	if (!state->nbo)
+		return 0;
+
+	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
+				S_0085F0_DB_DEST_BASE_ENA(1));
+
+	return 0;
+}
+
 static int r600_state_pm4_resource(struct radeon_state *state)
 {
 	u32 flags, type, nbo, offset, soffset;
@@ -464,10 +460,11 @@ static void r600_modify_type_array(struct radeon *radeon)
 			info->pm4 = r700_state_pm4_config;
 			break;
 		case R600_STATE_CB0:
-			info->pm4 = r700_state_pm4_cb0;
+			info->pm4 = r600_state_pm4_generic;
 			break;
 		case R600_STATE_DB:
-			info->pm4 = r700_state_pm4_db;
+			info->pm4 = r600_state_pm4_generic;
+			break;
 		};
 	}
 }

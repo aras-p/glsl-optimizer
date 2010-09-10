@@ -595,6 +595,54 @@ static void r600_bind_shader_sampler(struct r600_context *rctx, struct r600_shad
 	}
 }
 
+
+static int setup_cb_flush(struct r600_context *rctx, struct radeon_state *flush)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct r600_resource_texture *rtex;
+	struct r600_resource *rbuffer;
+	struct pipe_surface *surf;
+	int i;
+
+	radeon_state_init(flush, rscreen->rw, R600_STATE_CB_FLUSH, 0, 0);
+
+	for (i = 0; i < rctx->framebuffer->state.framebuffer.nr_cbufs; i++) {
+		surf = rctx->framebuffer->state.framebuffer.cbufs[i];
+		
+		rtex = (struct r600_resource_texture*)surf->texture;
+		rbuffer = &rtex->resource;
+		/* just need to the bo to the flush list */
+		flush->bo[i] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		flush->placement[i] = RADEON_GEM_DOMAIN_VRAM;
+	}
+	flush->nbo = rctx->framebuffer->state.framebuffer.nr_cbufs;
+	return radeon_state_pm4(flush);
+}
+
+static int setup_db_flush(struct r600_context *rctx, struct radeon_state *flush)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct r600_resource_texture *rtex;
+	struct r600_resource *rbuffer;
+	struct pipe_surface *surf;
+	int i;
+
+	surf = rctx->framebuffer->state.framebuffer.zsbuf;
+
+	if (!surf)
+		return 0;
+		
+	radeon_state_init(flush, rscreen->rw, R600_STATE_DB_FLUSH, 0, 0);
+	rtex = (struct r600_resource_texture*)surf->texture;
+	rbuffer = &rtex->resource;
+	/* just need to the bo to the flush list */
+	flush->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	flush->placement[0] = RADEON_GEM_DOMAIN_VRAM;
+
+	flush->nbo = 1;
+	return radeon_state_pm4(flush);
+}
+
 int r600_context_hw_states(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = r600_context(ctx);
@@ -605,6 +653,10 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	rctx->vtbl->scissor(rctx, &rctx->hw_states.scissor);
 	rctx->vtbl->dsa(rctx, &rctx->hw_states.dsa);
 	rctx->vtbl->cb_cntl(rctx, &rctx->hw_states.cb_cntl);
+							       
+	/* setup flushes */
+	setup_db_flush(rctx, &rctx->hw_states.db_flush);
+	setup_cb_flush(rctx, &rctx->hw_states.cb_flush);
 
 	/* bind states */
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.rasterizer);
@@ -613,6 +665,9 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_cntl);
 
 	radeon_draw_bind(&rctx->draw, &rctx->config);
+
+	radeon_draw_bind(&rctx->draw, &rctx->hw_states.db_flush);
+	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_flush);
 
 	if (rctx->viewport) {
 		radeon_draw_bind(&rctx->draw, &rctx->viewport->rstate[0]);

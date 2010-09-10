@@ -212,6 +212,8 @@ enum r600_stype {
 	R600_STATE_UCP,
 	R600_STATE_VGT,
 	R600_STATE_DRAW,
+	R600_STATE_CB_FLUSH,
+	R600_STATE_DB_FLUSH,
 };
 
 #include "r600_states_inc.h"

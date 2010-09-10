@@ -119,6 +119,9 @@ struct r600_context_hw_states {
 	struct radeon_state	scissor;
 	struct radeon_state	dsa;
 	struct radeon_state	cb_cntl;
+
+	struct radeon_state	db_flush;
+	struct radeon_state	cb_flush;
 };
 
 #define R600_MAX_CONSTANT 256 /* magic */
