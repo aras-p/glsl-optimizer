@@ -220,6 +220,7 @@ static int init_gpr(struct r600_bc_alu *alu)
 	return 0;
 }
 
+#if 0
 static int reserve_gpr(struct r600_bc_alu *alu, unsigned sel, unsigned chan, unsigned cycle)
 {
 	if (alu->hw_gpr[cycle][chan] < 0)
@@ -299,14 +300,7 @@ static int cycle_for_vector_bank_swizzle(const int swiz, const int sel, unsigned
 	return ret;
 }
 
-static int is_const(int sel)
-{
-	if (sel > 255 && sel < 512)
-		return 1;
-	if (sel >= V_SQ_ALU_SRC_0 && sel <= V_SQ_ALU_SRC_LITERAL)
-		return 1;
-	return 0;
-}
+
 
 static void update_chan_counter(struct r600_bc_alu *alu, int *chan_counter)
 {
@@ -323,7 +317,6 @@ static void update_chan_counter(struct r600_bc_alu *alu, int *chan_counter)
 	}
 }
 
-#if 0
 /* we need something like this I think - but this is bogus */
 int check_read_slots(struct r600_bc *bc, struct r600_bc_alu *alu_first)
 {
@@ -348,13 +341,22 @@ int check_read_slots(struct r600_bc *bc, struct r600_bc_alu *alu_first)
 }
 #endif
 
+static int is_const(int sel)
+{
+	if (sel > 255 && sel < 512)
+		return 1;
+	if (sel >= V_SQ_ALU_SRC_0 && sel <= V_SQ_ALU_SRC_LITERAL)
+		return 1;
+	return 0;
+}
+
 static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	unsigned swizzle_key;
 
 	if (alu->bank_swizzle_force) {
 		alu->bank_swizzle = alu->bank_swizzle_force;
-		return;
+		return 0;
 	}
 	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
 		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
@@ -370,7 +372,7 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 	if (alu->bank_swizzle_force) {
 		alu->bank_swizzle = alu->bank_swizzle_force;
-		return;
+		return 0;
 	}
 	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
 		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
@@ -408,7 +410,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 {
 	struct r600_bc_alu *nalu = r600_bc_alu();
 	struct r600_bc_alu *lalu;
-	struct r600_bc_alu *curr_bs_head;
 	int i, r;
 
 	if (nalu == NULL)

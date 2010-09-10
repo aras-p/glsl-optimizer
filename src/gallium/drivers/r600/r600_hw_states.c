@@ -1084,10 +1084,9 @@ void r600_set_constant_buffer_mem(struct pipe_context *ctx,
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
-	unsigned nconstant = 0, i, type, shader_class, size;
+	unsigned nconstant = 0, type, shader_class, size;
 	struct radeon_state *rstate, *rstates;
 	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
-	u32 *ptr;
 
 	type = R600_STATE_CBUF;
 

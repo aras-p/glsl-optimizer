@@ -108,7 +108,6 @@ static void r600_sampler_view_destroy(struct pipe_context *ctx,
 {
 	struct r600_context_state *rstate = (struct r600_context_state *)state;
 	struct r600_context *rctx = r600_context(ctx);
-	int i;
 
 	/* need to search list of vs/ps sampler views and remove it from any - uggh */
 	r600_remove_sampler_view(&rctx->ps_sampler, rstate);
