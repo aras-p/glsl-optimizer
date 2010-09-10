@@ -373,8 +373,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline->fs->sampler_unit = transform.freeSampler;
 
-   aaline->fs->aaline_fs
-      = aaline->driver_create_fs_state(pipe, &aaline_fs);
+   aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
    if (aaline->fs->aaline_fs == NULL)
       goto fail;
 
