@@ -224,14 +224,14 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             break;
     case MESA_FORMAT_RGBA_FLOAT32:
             format = COLOR_32_32_32_32_FLOAT;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGBA_FLOAT16:
             format = COLOR_16_16_16_16_FLOAT;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_STD;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
