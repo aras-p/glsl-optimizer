@@ -34,7 +34,7 @@
 int radeon_draw_init(struct radeon_draw *draw, struct radeon *radeon)
 {
 	draw->radeon = radeon;
-	draw->state = calloc(radeon->nstate_per_shader * R600_SHADER_MAX, sizeof(void*));
+	draw->state = calloc(radeon->max_states, sizeof(void*));
 	if (draw->state == NULL)
 		return -ENOMEM;
 	return 0;

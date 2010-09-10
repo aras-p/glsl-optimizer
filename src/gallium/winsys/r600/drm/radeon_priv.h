@@ -59,9 +59,8 @@ struct radeon {
 	unsigned			device;
 	unsigned			family;
 	unsigned			nstype;
-	unsigned			nstate_per_shader;
-	unsigned			*state_type_id;
 	struct radeon_stype_info	*stype;
+	unsigned max_states;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);

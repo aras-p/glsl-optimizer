@@ -632,6 +632,7 @@ static void build_types_array(struct radeon *radeon, struct radeon_stype_info *t
 			}
 		}
 	}
+	radeon->max_states = id;
 	radeon->stype = types;
 	radeon->nstype = size;
 }

@@ -70,8 +70,8 @@ int radeon_state_init(struct radeon_state *state, struct radeon *radeon, u32 sty
 	}
 
 	memset(state, 0, sizeof(struct radeon_state));
-	state->state_id = radeon->nstate_per_shader * shader_index + radeon->state_type_id[stype] + id;
 	state->stype = found;
+	state->state_id = state->stype->num * shader_index + state->stype->base_id + id;
 	state->radeon = radeon;
 	state->id = id;
 	state->shader_index = shader_index;
@@ -128,7 +128,7 @@ int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shad
 	state->stype = found;
 	state->id = id;
 	state->shader_index = shader_index;
-	state->state_id = state->radeon->nstate_per_shader * shader_index + state->radeon->state_type_id[stype] + id;
+	state->state_id = state->stype->num * shader_index + state->stype->base_id + id;
 	return radeon_state_pm4(state);
 }
 
