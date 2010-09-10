@@ -56,8 +56,7 @@ static void evergreen_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr
 
 static void evergreen_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-    //TODO apr.01
-	//r700Start3D((context_t *)radeon);
+	r700Start3D((context_t *)radeon);
 }
 
 static void evergreen_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
