@@ -25,6 +25,7 @@ progs = [
     'fs-test',
     'vs-test',
     'gs-test',
+    'shader-leak',
     'tri-gs',
 ]
 
