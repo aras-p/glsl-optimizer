@@ -308,7 +308,7 @@ static int r600_state_pm4_generic(struct radeon_state *state)
 	return r;
 }
 
-static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags)
+static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int bufs_are_cbs)
 {
 	unsigned i, j, add, size;
 
@@ -327,6 +327,8 @@ static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags)
 	for (i = 0; i < state->nreloc; i++) {
 		size = (state->bo[state->reloc_bo_id[i]]->size + 255) >> 8;
 		state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_SYNC, 3);
+		if (bufs_are_cbs)
+			flags |= S_0085F0_CB0_DEST_BASE_ENA(1 << i);
 		state->pm4[state->cpm4++] = flags;
 		state->pm4[state->cpm4++] = size;
 		state->pm4[state->cpm4++] = 0x00000000;
@@ -425,7 +427,7 @@ static int r700_state_pm4_config(struct radeon_state *state)
 
 static int r600_state_pm4_shader(struct radeon_state *state)
 {
-	r600_state_pm4_with_flush(state, S_0085F0_SH_ACTION_ENA(1));
+	r600_state_pm4_with_flush(state, S_0085F0_SH_ACTION_ENA(1), 0);
 	return r600_state_pm4_generic(state);
 }
 
@@ -508,8 +510,7 @@ static int r600_state_pm4_cb_flush(struct radeon_state *state)
 	if (!state->nbo)
 		return 0;
 
-	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
-				  S_0085F0_CB0_DEST_BASE_ENA(1));
+	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1), 1);
 
 	return 0;
 }
@@ -520,7 +521,7 @@ static int r600_state_pm4_db_flush(struct radeon_state *state)
 		return 0;
 
 	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
+				  S_0085F0_DB_DEST_BASE_ENA(1), 0);
 
 	return 0;
 }
@@ -553,7 +554,7 @@ static int r600_state_pm4_resource(struct radeon_state *state)
 		fprintf(stderr, "%s need %d bo got %d\n", __func__, nbo, state->nbo);
 		return -EINVAL;
 	}
-	r600_state_pm4_with_flush(state, flags);
+	r600_state_pm4_with_flush(state, flags, 0);
 	offset = regs[0].offset + soffset;
 	if (state->radeon->family >= CHIP_CEDAR)
 		nres = 8;
