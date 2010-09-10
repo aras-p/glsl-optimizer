@@ -70,6 +70,16 @@ struct lp_build_tgsi_aos_context
    /* Builder for integer masks and indices */
    struct lp_build_context int_bld;
 
+   /*
+    * AoS swizzle used:
+    * - swizzles[0] = red index
+    * - swizzles[1] = green index
+    * - swizzles[2] = blue index
+    * - swizzles[3] = alpha index
+    */
+   unsigned char swizzles[4];
+   unsigned char inv_swizzles[4];
+
    LLVMValueRef consts_ptr;
    const LLVMValueRef *inputs;
    LLVMValueRef *outputs;
@@ -96,6 +106,44 @@ struct lp_build_tgsi_aos_context
 
 
 /**
+ * Wrapper around lp_build_swizzle_aos which translates swizzles to another 
+ * ordering.
+ */
+static LLVMValueRef
+swizzle_aos(struct lp_build_tgsi_aos_context *bld,
+            LLVMValueRef a,
+            unsigned swizzle_x,
+            unsigned swizzle_y,
+            unsigned swizzle_z,
+            unsigned swizzle_w)
+{
+   unsigned char swizzles[4];
+
+   assert(swizzle_x < 4);
+   assert(swizzle_y < 4);
+   assert(swizzle_z < 4);
+   assert(swizzle_w < 4);
+
+   swizzles[bld->inv_swizzles[0]] = bld->swizzles[swizzle_x];
+   swizzles[bld->inv_swizzles[1]] = bld->swizzles[swizzle_y];
+   swizzles[bld->inv_swizzles[2]] = bld->swizzles[swizzle_z];
+   swizzles[bld->inv_swizzles[3]] = bld->swizzles[swizzle_w];
+
+   return lp_build_swizzle_aos(&bld->base, a, swizzles);
+}
+
+
+static LLVMValueRef
+swizzle_scalar_aos(struct lp_build_tgsi_aos_context *bld,
+                   LLVMValueRef a,
+                   unsigned chan)
+{
+   chan = bld->swizzles[chan];
+   return lp_build_swizzle_scalar_aos(&bld->base, a, chan);
+}
+
+
+/**
  * Register fetch.
  */
 static LLVMValueRef
@@ -106,7 +154,6 @@ emit_fetch(
 {
    struct lp_type type = bld->base.type;
    const struct tgsi_full_src_register *reg = &inst->Src[src_op];
-   unsigned char swizzles[4];
    LLVMValueRef res;
    unsigned chan;
 
@@ -127,9 +174,11 @@ emit_fetch(
          LLVMValueRef index;
          LLVMValueRef scalar_ptr;
          LLVMValueRef scalar;
+         LLVMValueRef swizzle;
 
          index = LLVMConstInt(LLVMInt32Type(),
-                              reg->Register.Index*4 + chan, 0);
+                              reg->Register.Index*4 + chan,
+                              0);
 
          scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
                                    &index, 1, "");
@@ -138,9 +187,13 @@ emit_fetch(
 
          lp_build_name(scalar, "const[%u].%c", reg->Register.Index, "xyzw"[chan]);
 
-         index = LLVMConstInt(LLVMInt32Type(), chan, 0);
+         /*
+          * NOTE: constants array is always assumed to be RGBA
+          */
 
-         res = LLVMBuildInsertElement(bld->base.builder, res, scalar, index, "");
+         swizzle = LLVMConstInt(LLVMInt32Type(), chan, 0);
+
+         res = LLVMBuildInsertElement(bld->base.builder, res, scalar, swizzle, "");
       }
 
       /*
@@ -209,17 +262,11 @@ emit_fetch(
     * Swizzle the argument
     */
 
-   for (chan = 0; chan < 4; ++chan) {
-      const unsigned swizzle =
-         tgsi_util_get_full_src_register_swizzle(reg, chan);
-      if (swizzle > 3) {
-         assert(0 && "invalid swizzle in emit_fetch()");
-         return bld->base.undef;
-      }
-      swizzles[chan] = swizzle;
-   }
-
-   res = lp_build_swizzle_aos(&bld->base, res, swizzles);
+   res = swizzle_aos(bld, res,
+                     reg->Register.SwizzleX,
+                     reg->Register.SwizzleY,
+                     reg->Register.SwizzleZ,
+                     reg->Register.SwizzleW);
 
    return res;
 }
@@ -294,7 +341,6 @@ emit_store(
     */
 
    if (inst->Instruction.Predicate) {
-      unsigned char swizzles[4];
       LLVMValueRef pred;
 
       assert(inst->Predicate.Index < LP_MAX_TGSI_PREDS);
@@ -315,12 +361,11 @@ emit_store(
          pred = LLVMBuildNot(bld->base.builder, pred, "");
       }
 
-      swizzles[0] = inst->Predicate.SwizzleX;
-      swizzles[1] = inst->Predicate.SwizzleY;
-      swizzles[2] = inst->Predicate.SwizzleZ;
-      swizzles[3] = inst->Predicate.SwizzleW;
-
-      pred = lp_build_swizzle_aos(&bld->base, pred, swizzles);
+      pred = swizzle_aos(bld, pred,
+                         inst->Predicate.SwizzleX,
+                         inst->Predicate.SwizzleY,
+                         inst->Predicate.SwizzleZ,
+                         inst->Predicate.SwizzleW);
 
       if (mask) {
          mask = LLVMBuildAnd(bld->base.builder, mask, pred, "");
@@ -640,15 +685,15 @@ emit_instruction(
 
    case TGSI_OPCODE_LG2:
       src0 = emit_fetch(bld, inst, 0);
-      tmp0 = lp_build_swizzle_scalar_aos(&bld->base, src0, TGSI_SWIZZLE_X);
+      tmp0 = swizzle_scalar_aos(bld, src0, TGSI_SWIZZLE_X);
       dst0 = lp_build_log2(&bld->base, tmp0);
       break;
 
    case TGSI_OPCODE_POW:
       src0 = emit_fetch(bld, inst, 0);
-      src0 = lp_build_swizzle_scalar_aos(&bld->base, src0, TGSI_SWIZZLE_X);
+      src0 = swizzle_scalar_aos(bld, src0, TGSI_SWIZZLE_X);
       src1 = emit_fetch(bld, inst, 1);
-      src1 = lp_build_swizzle_scalar_aos(&bld->base, src1, TGSI_SWIZZLE_X);
+      src1 = swizzle_scalar_aos(bld, src1, TGSI_SWIZZLE_X);
       dst0 = lp_build_pow(&bld->base, src0, src1);
       break;
 
@@ -670,7 +715,7 @@ emit_instruction(
 
    case TGSI_OPCODE_COS:
       src0 = emit_fetch(bld, inst, 0);
-      tmp0 = lp_build_swizzle_scalar_aos(&bld->base, src0, TGSI_SWIZZLE_X);
+      tmp0 = swizzle_scalar_aos(bld, src0, TGSI_SWIZZLE_X);
       dst0 = lp_build_cos(&bld->base, tmp0);
       break;
 
@@ -726,7 +771,7 @@ emit_instruction(
 
    case TGSI_OPCODE_SIN:
       src0 = emit_fetch(bld, inst, 0);
-      tmp0 = lp_build_swizzle_scalar_aos(&bld->base, src0, TGSI_SWIZZLE_X);
+      tmp0 = swizzle_scalar_aos(bld, src0, TGSI_SWIZZLE_X);
       dst0 = lp_build_sin(&bld->base, tmp0);
       break;
 
@@ -998,6 +1043,7 @@ void
 lp_build_tgsi_aos(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   struct lp_type type,
+                  unsigned char swizzles[4],
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *inputs,
                   LLVMValueRef *outputs,
@@ -1015,6 +1061,12 @@ lp_build_tgsi_aos(LLVMBuilderRef builder,
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
    lp_build_context_init(&bld.int_bld, builder, lp_int_type(type));
+
+   for (chan = 0; chan < 4; ++chan) {
+      bld.swizzles[chan] = swizzles[chan];
+      bld.inv_swizzles[swizzles[chan]] = chan;
+   }
+
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
@@ -1069,18 +1121,19 @@ lp_build_tgsi_aos(LLVMBuilderRef builder,
          /* simply copy the immediate values into the next immediates[] slot */
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
-            float rgba[4];
+            float imm[4];
             assert(size <= 4);
             assert(num_immediates < LP_MAX_TGSI_IMMEDIATES);
-            for (chan = 0; chan < size; ++chan) {
-               rgba[chan] = parse.FullToken.FullImmediate.u[chan].Float;
+            for (chan = 0; chan < 4; ++chan) {
+               imm[chan] = 0.0f;
             }
-            for (chan = size; chan < 4; ++chan) {
-               rgba[chan] = 0.0f;
+            for (chan = 0; chan < size; ++chan) {
+               unsigned swizzle = bld.swizzles[chan];
+               imm[swizzle] = parse.FullToken.FullImmediate.u[chan].Float;
             }
             bld.immediates[num_immediates] =
                      lp_build_const_aos(type,
-                                        rgba[0], rgba[1], rgba[2], rgba[3],
+                                        imm[0], imm[1], imm[2], imm[3],
                                         NULL);
             num_immediates++;
          }
