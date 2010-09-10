@@ -1,5 +1,5 @@
-#include "state_tracker/st_api.h"
 #include "vg_api.h"
+#include "egl.h"
 
 PUBLIC struct st_api *
 st_api_create_OpenVG(void)

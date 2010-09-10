@@ -47,8 +47,6 @@
  */
 enum st_api_type {
    ST_API_OPENGL,
-   ST_API_OPENGL_ES1,
-   ST_API_OPENGL_ES2,
    ST_API_OPENVG,
 
    ST_API_COUNT
@@ -459,19 +457,5 @@ st_visual_have_buffers(const struct st_visual *visual, unsigned mask)
 {
    return ((visual->buffer_mask & mask) == mask);
 }
-
-/* these symbols may need to be dynamically lookup up */
-extern PUBLIC struct st_api * st_api_create_OpenGL(void);
-extern PUBLIC struct st_api * st_api_create_OpenGL_ES1(void);
-extern PUBLIC struct st_api * st_api_create_OpenGL_ES2(void);
-extern PUBLIC struct st_api * st_api_create_OpenVG(void);
-
-/**
- * The entry points of the state trackers.
- */
-#define ST_CREATE_OPENGL_SYMBOL      "st_api_create_OpenGL"
-#define ST_CREATE_OPENGL_ES1_SYMBOL  "st_api_create_OpenGL_ES1"
-#define ST_CREATE_OPENGL_ES2_SYMBOL  "st_api_create_OpenGL_ES2"
-#define ST_CREATE_OPENVG_SYMBOL      "st_api_create_OpenVG"
 
 #endif /* _ST_API_H_ */

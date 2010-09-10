@@ -37,6 +37,8 @@
 #include "state_tracker/drm_driver.h"
 #include "common/egl_g3d_loader.h"
 
+#include "egl.h"
+
 struct egl_g3d_loader egl_g3d_loader;
 
 static struct st_module {

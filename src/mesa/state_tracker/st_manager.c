@@ -674,22 +674,6 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    return &st->iface;
 }
 
-static struct st_context_iface *
-st_api_create_context_es1(struct st_api *stapi, struct st_manager *smapi,
-                          const struct st_context_attribs *attribs,
-                          struct st_context_iface *shared_stctxi)
-{
-   return st_api_create_context(stapi, smapi, attribs, shared_stctxi);
-}
-
-static struct st_context_iface *
-st_api_create_context_es2(struct st_api *stapi, struct st_manager *smapi,
-                          const struct st_context_attribs *attribs,
-                          struct st_context_iface *shared_stctxi)
-{
-   return st_api_create_context(stapi, smapi, attribs, shared_stctxi);
-}
-
 static boolean
 st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
                     struct st_framebuffer_iface *stdrawi,
@@ -890,56 +874,8 @@ static const struct st_api st_gl_api = {
    st_api_get_current,
 };
 
-static const struct st_api st_gl_api_es1 = {
-   ST_API_OPENGL_ES1,
-   ST_PROFILE_OPENGL_ES1_MASK,
-   st_api_destroy,
-   st_api_get_proc_address,
-   st_api_create_context_es1,
-   st_api_make_current,
-   st_api_get_current,
-};
-
-static const struct st_api st_gl_api_es2 = {
-   ST_API_OPENGL_ES2,
-   ST_PROFILE_OPENGL_ES2_MASK,
-   st_api_destroy,
-   st_api_get_proc_address,
-   st_api_create_context_es2,
-   st_api_make_current,
-   st_api_get_current,
-};
-
 struct st_api *
 st_gl_api_create(void)
 {
-   (void) st_gl_api;
-   (void) st_gl_api_es1;
-   (void) st_gl_api_es2;
-
-#if FEATURE_GL
    return (struct st_api *) &st_gl_api;
-#else
-   return NULL;
-#endif
-}
-
-struct st_api *
-st_gl_api_create_es1(void)
-{
-#if FEATURE_ES1
-   return (struct st_api *) &st_gl_api_es1;
-#else
-   return NULL;
-#endif
-}
-
-struct st_api *
-st_gl_api_create_es2(void)
-{
-#if FEATURE_ES2
-   return (struct st_api *) &st_gl_api_es2;
-#else
-   return NULL;
-#endif
 }
