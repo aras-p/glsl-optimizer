@@ -113,7 +113,7 @@ void
 lp_build_tgsi_aos(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   struct lp_type type,
-                  unsigned char swizzles[4],
+                  const unsigned char swizzles[4],
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *inputs,
                   LLVMValueRef *outputs,
