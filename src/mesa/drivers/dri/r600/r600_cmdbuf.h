@@ -105,6 +105,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R600_IT_ME_INITIALIZE                     0x00004400
 #define R600_IT_COND_WRITE                        0x00004500
 #define R600_IT_EVENT_WRITE                       0x00004600
+#       define R600_EVENT_TYPE(x)                 ((x) << 0)
+#       define R600_EVENT_INDEX(x)                ((x) << 8)
 #define R600_IT_EVENT_WRITE_EOP                   0x00004700
 #define R600_IT_ONE_REG_WRITE                     0x00005700
 #define R600_IT_SET_CONFIG_REG                    0x00006800
