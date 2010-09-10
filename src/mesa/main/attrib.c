@@ -69,9 +69,6 @@ struct gl_enable_attrib
    GLboolean Blend;
    GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
-   GLboolean Convolution1D;
-   GLboolean Convolution2D;
-   GLboolean Separable2D;
    GLboolean CullFace;
    GLboolean DepthClamp;
    GLboolean DepthTest;
@@ -259,9 +256,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Blend = ctx->Color.BlendEnabled;
       attr->ClipPlanes = ctx->Transform.ClipPlanesEnabled;
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
-      attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
-      attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
-      attr->Separable2D = ctx->Pixel.Separable2DEnabled;
       attr->CullFace = ctx->Polygon.CullFlag;
       attr->DepthClamp = ctx->Transform.DepthClamp;
       attr->DepthTest = ctx->Depth.Test;
@@ -516,12 +510,6 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 		   GL_DEPTH_CLAMP);
    TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
    TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
-   TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D,
-                   GL_CONVOLUTION_1D);
-   TEST_AND_UPDATE(ctx->Pixel.Convolution2DEnabled, enable->Convolution2D,
-                   GL_CONVOLUTION_2D);
-   TEST_AND_UPDATE(ctx->Pixel.Separable2DEnabled, enable->Separable2D,
-                   GL_SEPARABLE_2D);
    TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
    TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);
    TEST_AND_UPDATE(ctx->Line.SmoothFlag, enable->LineSmooth, GL_LINE_SMOOTH);

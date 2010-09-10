@@ -32,7 +32,6 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/convolve.h"
 #include "main/enums.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
@@ -773,8 +772,6 @@ static void radeon_teximage(
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
-	GLint postConvWidth = width;
-	GLint postConvHeight = height;
 	GLuint face = _mesa_tex_target_to_face(target);
 
 	radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
@@ -795,20 +792,15 @@ static void radeon_teximage(
 
 	t->validated = GL_FALSE;
 
-	if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-	       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-						  &postConvHeight);
-	}
-
 	if (!_mesa_is_format_compressed(texImage->TexFormat)) {
 		GLuint texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 		/* Minimum pitch of 32 bytes */
-		if (postConvWidth * texelBytes < 32) {
-			postConvWidth = 32 / texelBytes;
-			texImage->RowStride = postConvWidth;
+		if (width * texelBytes < 32) {
+			width = 32 / texelBytes;
+			texImage->RowStride = width;
 		}
 		if (!image->mt) {
-			assert(texImage->RowStride == postConvWidth);
+			assert(texImage->RowStride == width);
 		}
 	}
 

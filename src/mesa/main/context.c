@@ -557,8 +557,6 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
    ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
-   ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
-   ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
    ctx->Const.MaxShininess = 128.0;

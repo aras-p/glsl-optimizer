@@ -208,8 +208,6 @@ intelInitExtensions(GLcontext *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   /* Disable imaging extension until convolution is working in teximage paths.
-    */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
    _mesa_map_function_array(GL_VERSION_2_1_functions);

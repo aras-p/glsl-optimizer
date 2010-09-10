@@ -276,7 +276,6 @@ EXTRA_EXT(NV_fragment_program);
 EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
 EXTRA_EXT(NV_light_max_exponent);
-EXTRA_EXT(EXT_convolution);
 EXTRA_EXT(SGI_texture_color_table);
 EXTRA_EXT(EXT_depth_bounds_test);
 EXTRA_EXT(ARB_depth_clamp);
@@ -879,38 +878,6 @@ static const struct value_desc values[] = {
    { GL_TRANSPOSE_PROJECTION_MATRIX_ARB,
      CONTEXT_MATRIX_T(ProjectionMatrixStack.Top), NO_EXTRA },
    { GL_TRANSPOSE_TEXTURE_MATRIX_ARB, CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA },
-
-   /* GL_EXT_convolution (also in 1.2 imaging) */
-   { GL_CONVOLUTION_1D_EXT, CONTEXT_BOOL(Pixel.Convolution1DEnabled),
-     extra_EXT_convolution },
-   { GL_CONVOLUTION_2D_EXT, CONTEXT_BOOL(Pixel.Convolution2DEnabled),
-     extra_EXT_convolution },
-   { GL_SEPARABLE_2D_EXT, CONTEXT_BOOL(Pixel.Separable2DEnabled),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_RED_SCALE_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionScale[0]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_GREEN_SCALE_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionScale[1]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_BLUE_SCALE_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionScale[2]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_ALPHA_SCALE_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionScale[3]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_RED_BIAS_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionBias[0]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_GREEN_BIAS_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionBias[1]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_BLUE_BIAS_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionBias[2]),
-     extra_EXT_convolution },
-   { GL_POST_CONVOLUTION_ALPHA_BIAS_EXT,
-     CONTEXT_FLOAT(Pixel.PostConvolutionBias[3]),
-     extra_EXT_convolution },
 
    /* GL_SGI_texture_color_table */
    { GL_TEXTURE_COLOR_TABLE_SGI, LOC_TEXUNIT, TYPE_BOOLEAN,

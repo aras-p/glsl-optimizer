@@ -800,20 +800,6 @@ struct gl_hint_attrib
    GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
 };
 
-
-/**
- * Image convolution state.
- */
-struct gl_convolution_attrib
-{
-   GLenum Format;
-   GLenum InternalFormat;
-   GLuint Width;
-   GLuint Height;
-   GLfloat Filter[MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_HEIGHT * 4];
-};
-
-
 /**
  * Light state flags.
  */
@@ -953,17 +939,6 @@ struct gl_pixel_attrib
    /* Note: actual pixel maps are not part of this attrib group */
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
-
-   /* Convolution (GL_EXT_convolution) */
-   GLboolean Convolution1DEnabled;
-   GLboolean Convolution2DEnabled;
-   GLboolean Separable2DEnabled;
-   GLfloat ConvolutionBorderColor[3][4];  /**< RGBA */
-   GLenum ConvolutionBorderMode[3];
-   GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
-   GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
-   GLfloat PostConvolutionScale[4];  /**< RGBA */
-   GLfloat PostConvolutionBias[4];   /**< RGBA */
 
    /*--- End Pixel Transfer State ---*/
 
@@ -2528,8 +2503,6 @@ struct gl_constants
    GLfloat LineWidthGranularity;
 
    GLuint MaxColorTableSize;
-   GLuint MaxConvolutionWidth;
-   GLuint MaxConvolutionHeight;
 
    GLuint MaxClipPlanes;
    GLuint MaxLights;
@@ -2652,7 +2625,6 @@ struct gl_extensions
    GLboolean EXT_blend_subtract;
    GLboolean EXT_clip_volume_hint;
    GLboolean EXT_cull_vertex;
-   GLboolean EXT_convolution;
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
@@ -2769,20 +2741,13 @@ struct gl_matrix_stack
 #define IMAGE_SCALE_BIAS_BIT                      0x1
 #define IMAGE_SHIFT_OFFSET_BIT                    0x2
 #define IMAGE_MAP_COLOR_BIT                       0x4
-#define IMAGE_CONVOLUTION_BIT                     0x10
-#define IMAGE_POST_CONVOLUTION_SCALE_BIAS         0x20
 #define IMAGE_CLAMP_BIT                           0x800
 
 
-/** Pixel Transfer ops up to convolution */
-#define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
-                                    IMAGE_SHIFT_OFFSET_BIT |   \
-                                    IMAGE_MAP_COLOR_BIT)
-
-/** Pixel transfer ops after convolution */
-#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS)
-/*@}*/
-
+/** Pixel Transfer ops */
+#define IMAGE_BITS (IMAGE_SCALE_BIAS_BIT |			\
+		    IMAGE_SHIFT_OFFSET_BIT |			\
+		    IMAGE_MAP_COLOR_BIT)
 
 /**
  * \name Bits to indicate what state has changed.  
@@ -3135,9 +3100,6 @@ struct __GLcontextRec
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
    struct gl_pixelmaps          PixelMaps;
-   struct gl_convolution_attrib Convolution1D;
-   struct gl_convolution_attrib Convolution2D;
-   struct gl_convolution_attrib Separable2D;
 
    struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */

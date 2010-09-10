@@ -28,7 +28,6 @@
 #include "main/macros.h"
 #include "main/texstore.h"
 #include "main/texobj.h"
-#include "main/convolve.h"
 #include "main/colormac.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
@@ -586,7 +585,6 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
 
     if (!tempImage)
 	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
         GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr
@@ -626,7 +624,6 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 
     if (!tempImage)
 	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
         GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr

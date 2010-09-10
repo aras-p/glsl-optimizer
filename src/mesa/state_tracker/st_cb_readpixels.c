@@ -338,9 +338,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    assert(ctx->ReadBuffer->Width > 0);
 
-   /* XXX convolution not done yet */
-   assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
-
    st_validate_state(st);
 
    /* Do all needed clipping here, so that we can forget about it later */

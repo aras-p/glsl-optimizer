@@ -545,11 +545,6 @@ st_TexImage(GLcontext * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   /* The Mesa/Gallium state tracker does not implement the imaging extensions
-    * such as convolution.
-    */
-   assert(!ctx->Extensions.EXT_convolution);
-
    /* switch to "normal" */
    if (stObj->surface_based) {
       _mesa_clear_texture_object(ctx, texObj);

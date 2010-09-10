@@ -712,29 +712,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled = state;
          break;
 
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution1DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution1DEnabled = state;
-         break;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution2DEnabled = state;
-         break;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Separable2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Separable2DEnabled = state;
-         break;
-
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
          CHECK_EXTENSION(ARB_texture_cube_map, cap);
@@ -1326,17 +1303,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_texture_color_table);
          return ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
-
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution1DEnabled;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution2DEnabled;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Separable2DEnabled;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:

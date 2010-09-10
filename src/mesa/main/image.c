@@ -1866,23 +1866,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
    if (transferOps & IMAGE_MAP_COLOR_BIT) {
       _mesa_map_rgba( ctx, n, rgba );
    }
-   /* convolution */
-   if (transferOps & IMAGE_CONVOLUTION_BIT) {
-      /* this has to be done in the calling code */
-      _mesa_problem(ctx, "IMAGE_CONVOLUTION_BIT set in _mesa_apply_transfer_ops");
-   }
-   /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
-   if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
-      _mesa_scale_and_bias_rgba(n, rgba,
-                                ctx->Pixel.PostConvolutionScale[RCOMP],
-                                ctx->Pixel.PostConvolutionScale[GCOMP],
-                                ctx->Pixel.PostConvolutionScale[BCOMP],
-                                ctx->Pixel.PostConvolutionScale[ACOMP],
-                                ctx->Pixel.PostConvolutionBias[RCOMP],
-                                ctx->Pixel.PostConvolutionBias[GCOMP],
-                                ctx->Pixel.PostConvolutionBias[BCOMP],
-                                ctx->Pixel.PostConvolutionBias[ACOMP]);
-   }
+
    /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {
       GLuint i;
@@ -1988,8 +1972,7 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
 
 /**
  * Used to pack an array [][4] of RGBA float colors as specified
- * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
- * glGetConvolutionFilter(), etc.
+ * by the dstFormat, dstType and dstPacking.  Used by glReadPixels.
  * Note: the rgba values will be modified by this function when any pixel
  * transfer ops are enabled.
  */

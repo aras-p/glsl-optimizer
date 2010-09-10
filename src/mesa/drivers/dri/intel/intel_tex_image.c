@@ -4,7 +4,6 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/bufferobj.h"
-#include "main/convolve.h"
 #include "main/context.h"
 #include "main/formats.h"
 #include "main/texcompress.h"
@@ -320,8 +319,6 @@ intelTexImage(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   GLint postConvWidth = width;
-   GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride = 0, srcRowStride = texImage->RowStride;
 
@@ -331,11 +328,6 @@ intelTexImage(GLcontext * ctx,
    intelImage->face = target_to_face(target);
    intelImage->level = level;
 
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-                                         &postConvHeight);
-   }
-
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
    }
@@ -343,13 +335,13 @@ intelTexImage(GLcontext * ctx,
       texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
       
       /* Minimum pitch of 32 bytes */
-      if (postConvWidth * texelBytes < 32) {
-	 postConvWidth = 32 / texelBytes;
-	 texImage->RowStride = postConvWidth;
+      if (width * texelBytes < 32) {
+	 width = 32 / texelBytes;
+	 texImage->RowStride = width;
       }
 
       if (!intelImage->mt) {      
-	  assert(texImage->RowStride == postConvWidth);
+	  assert(texImage->RowStride == width);
       }
    }
 
@@ -502,8 +494,8 @@ intelTexImage(GLcontext * ctx,
          assert(dims != 3);
       }
       else {
-         dstRowStride = postConvWidth * texelBytes;
-         sizeInBytes = depth * dstRowStride * postConvHeight;
+         dstRowStride = width * texelBytes;
+         sizeInBytes = depth * dstRowStride * height;
       }
 
       texImage->Data = _mesa_alloc_texmemory(sizeInBytes);

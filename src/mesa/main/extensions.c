@@ -116,7 +116,6 @@ static const struct {
    { OFF, "GL_EXT_clip_volume_hint",           F(EXT_clip_volume_hint) },
    { OFF, "GL_EXT_cull_vertex",                F(EXT_cull_vertex) },
    { ON,  "GL_EXT_compiled_vertex_array",      F(EXT_compiled_vertex_array) },
-   { OFF, "GL_EXT_convolution",                F(EXT_convolution) },
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
    { OFF, "GL_EXT_draw_buffers2",              F(EXT_draw_buffers2) },
@@ -303,7 +302,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
-   ctx->Extensions.EXT_convolution = GL_TRUE;
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
@@ -393,7 +391,6 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
-   ctx->Extensions.EXT_convolution = GL_TRUE;
 }
 
 

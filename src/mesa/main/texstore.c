@@ -45,7 +45,7 @@
  * Texture image processing is actually kind of complicated.  We have to do:
  *    Format/type conversions
  *    pixel unpacking
- *    pixel transfer (scale, bais, lookup, convolution!, etc)
+ *    pixel transfer (scale, bais, lookup, etc)
  *
  * These functions can handle most everything, including processing full
  * images and sub-images.
@@ -55,7 +55,6 @@
 #include "glheader.h"
 #include "bufferobj.h"
 #include "colormac.h"
-#include "convolve.h"
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -310,6 +309,11 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 {
    GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *tempImage;
+   const GLint components = _mesa_components_in_format(logicalBaseFormat);
+   const GLint srcStride =
+      _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
+   GLfloat *dst;
+   GLint img, row;
 
    ASSERT(dims >= 1 && dims <= 3);
 
@@ -331,126 +335,24 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
           textureBaseFormat == GL_COLOR_INDEX ||
           textureBaseFormat == GL_DEPTH_COMPONENT);
 
-   /* conventional color image */
+   tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
+				  * components * sizeof(GLfloat));
+   if (!tempImage)
+      return NULL;
 
-   if ((dims == 1 && ctx->Pixel.Convolution1DEnabled) ||
-       (dims >= 2 && ctx->Pixel.Convolution2DEnabled) ||
-       (dims >= 2 && ctx->Pixel.Separable2DEnabled)) {
-      /* need image convolution */
-      const GLuint preConvTransferOps
-         = (transferOps & IMAGE_PRE_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT;
-      const GLuint postConvTransferOps
-         = (transferOps & IMAGE_POST_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT;
-      GLint img, row;
-      GLint convWidth = srcWidth, convHeight = srcHeight;
-      GLfloat *convImage;
-
-      /* pre-convolution image buffer (3D) */
-      tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
-                                           * 4 * sizeof(GLfloat));
-      if (!tempImage)
-         return NULL;
-
-      /* post-convolution image buffer (2D) */
-      convImage = (GLfloat *) malloc(srcWidth * srcHeight
-                                           * 4 * sizeof(GLfloat));
-      if (!convImage) {
-         free(tempImage);
-         return NULL;
-      }
-
-      /* loop over 3D image slices */
-      for (img = 0; img < srcDepth; img++) {
-         GLfloat *dst = tempImage + img * (srcWidth * srcHeight * 4);
-
-         /* unpack and do transfer ops up to convolution */
-         for (row = 0; row < srcHeight; row++) {
-            const GLvoid *src = _mesa_image_address(dims, srcPacking,
-                                              srcAddr, srcWidth, srcHeight,
-                                              srcFormat, srcType, img, row, 0);
-            _mesa_unpack_color_span_float(ctx, srcWidth, GL_RGBA, dst,
-                                          srcFormat, srcType, src,
-                                          srcPacking,
-                                          preConvTransferOps);
-            dst += srcWidth * 4;
-         }
-
-         /* size after optional convolution */
-         convWidth = srcWidth;
-         convHeight = srcHeight;
-
-#if FEATURE_convolve
-         /* do convolution */
-         {
-            GLfloat *src = tempImage + img * (srcWidth * srcHeight * 4);
-            if (dims == 1) {
-               ASSERT(ctx->Pixel.Convolution1DEnabled);
-               _mesa_convolve_1d_image(ctx, &convWidth, src, convImage);
-            }
-            else {
-               if (ctx->Pixel.Convolution2DEnabled) {
-                  _mesa_convolve_2d_image(ctx, &convWidth, &convHeight,
-                                          src, convImage);
-               }
-               else {
-                  ASSERT(ctx->Pixel.Separable2DEnabled);
-                  _mesa_convolve_sep_image(ctx, &convWidth, &convHeight,
-                                           src, convImage);
-               }
-            }
-         }
-#endif
-         /* do post-convolution transfer and pack into tempImage */
-         {
-            const GLint logComponents
-               = _mesa_components_in_format(logicalBaseFormat);
-            const GLfloat *src = convImage;
-            GLfloat *dst = tempImage + img * (convWidth * convHeight * 4);
-            for (row = 0; row < convHeight; row++) {
-               _mesa_pack_rgba_span_float(ctx, convWidth,
-                                          (GLfloat (*)[4]) src,
-                                          logicalBaseFormat, GL_FLOAT,
-                                          dst, &ctx->DefaultPacking,
-                                          postConvTransferOps);
-               src += convWidth * 4;
-               dst += convWidth * logComponents;
-            }
-         }
-      } /* loop over 3D image slices */
-
-      free(convImage);
-
-      /* might need these below */
-      srcWidth = convWidth;
-      srcHeight = convHeight;
-   }
-   else {
-      /* no convolution */
-      const GLint components = _mesa_components_in_format(logicalBaseFormat);
-      const GLint srcStride =
-         _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
-      GLfloat *dst;
-      GLint img, row;
-
-      tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
-                                           * components * sizeof(GLfloat));
-      if (!tempImage)
-         return NULL;
-
-      dst = tempImage;
-      for (img = 0; img < srcDepth; img++) {
-         const GLubyte *src
-            = (const GLubyte *) _mesa_image_address(dims, srcPacking, srcAddr,
-                                                    srcWidth, srcHeight,
-                                                    srcFormat, srcType,
-                                                    img, 0, 0);
-         for (row = 0; row < srcHeight; row++) {
-            _mesa_unpack_color_span_float(ctx, srcWidth, logicalBaseFormat,
-                                          dst, srcFormat, srcType, src,
-                                          srcPacking, transferOps);
-            dst += srcWidth * components;
-            src += srcStride;
-         }
+   dst = tempImage;
+   for (img = 0; img < srcDepth; img++) {
+      const GLubyte *src
+	 = (const GLubyte *) _mesa_image_address(dims, srcPacking, srcAddr,
+						 srcWidth, srcHeight,
+						 srcFormat, srcType,
+						 img, 0, 0);
+      for (row = 0; row < srcHeight; row++) {
+	 _mesa_unpack_color_span_float(ctx, srcWidth, logicalBaseFormat,
+				       dst, srcFormat, srcType, src,
+				       srcPacking, transferOps);
+	 dst += srcWidth * components;
+	 src += srcStride;
       }
    }
 
@@ -536,7 +438,6 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 {
    GLuint transferOps = ctx->_ImageTransferState;
    const GLint components = _mesa_components_in_format(logicalBaseFormat);
-   GLboolean freeSrcImage = GL_FALSE;
    GLint img, row;
    GLchan *tempImage, *dst;
 
@@ -556,37 +457,10 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
           textureBaseFormat == GL_ALPHA ||
           textureBaseFormat == GL_INTENSITY);
 
-#if FEATURE_convolve
-   if ((dims == 1 && ctx->Pixel.Convolution1DEnabled) ||
-       (dims >= 2 && ctx->Pixel.Convolution2DEnabled) ||
-       (dims >= 2 && ctx->Pixel.Separable2DEnabled)) {
-      /* get convolved image */
-      GLfloat *convImage = make_temp_float_image(ctx, dims,
-                                                 logicalBaseFormat,
-                                                 logicalBaseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType,
-                                                 srcAddr, srcPacking);
-      if (!convImage)
-         return NULL;
-      /* the convolved image is our new source image */
-      srcAddr = convImage;
-      srcFormat = logicalBaseFormat;
-      srcType = GL_FLOAT;
-      srcPacking = &ctx->DefaultPacking;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-      transferOps = 0;
-      freeSrcImage = GL_TRUE;
-   }
-#endif
-
    /* unpack and transfer the source image */
    tempImage = (GLchan *) malloc(srcWidth * srcHeight * srcDepth
                                        * components * sizeof(GLchan));
    if (!tempImage) {
-      if (freeSrcImage) {
-         free((void *) srcAddr);
-      }
       return NULL;
    }
 
@@ -606,11 +480,6 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
          dst += srcWidth * components;
          src += srcStride;
       }
-   }
-
-   /* If we made a temporary image for convolution, free it here */
-   if (freeSrcImage) {
-      free((void *) srcAddr);
    }
 
    if (logicalBaseFormat != textureBaseFormat) {
@@ -1238,7 +1107,6 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1365,7 +1233,6 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1567,7 +1434,6 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1697,7 +1563,6 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1824,7 +1689,6 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1882,7 +1746,6 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -1951,7 +1814,6 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2010,7 +1872,6 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2115,7 +1976,6 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2186,7 +2046,6 @@ _mesa_texstore_al1616(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2257,7 +2116,6 @@ _mesa_texstore_rgba_16(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2327,8 +2185,6 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
       if (!tempImage)
          return GL_FALSE;
 
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-
       /* Note: tempImage is always float[4] / RGBA.  We convert to 1, 2,
        * 3 or 4 components/pixel here.
        */
@@ -2390,7 +2246,6 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2479,7 +2334,6 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2710,7 +2564,6 @@ _mesa_texstore_signed_r8(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2755,7 +2608,6 @@ _mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2800,7 +2652,6 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -2912,7 +2763,6 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3186,7 +3036,6 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       bytesPerRow = srcWidth * components * sizeof(GLfloat);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
@@ -3254,7 +3103,6 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3318,7 +3166,6 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3382,7 +3229,6 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3446,7 +3292,6 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3510,7 +3355,6 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3574,7 +3418,6 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -3638,7 +3481,6 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
@@ -4057,9 +3899,6 @@ texture_row_stride(const struct gl_texture_image *texImage)
  * This is the software fallback for Driver.TexImage1D()
  * and Driver.CopyTexImage1D().
  * \sa _mesa_store_teximage2d()
- * Note that the width may not be the actual texture width since it may
- * be changed by convolution w/ GL_REDUCE.  The texImage->Width field will
- * have the actual texture size.
  */
 void
 _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
@@ -4114,9 +3953,6 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
  *
  * This function is oriented toward storing images in main memory, rather
  * than VRAM.  Device driver's can easily plug in their own replacement.
- *
- * Note: width and height may be pre-convolved dimensions, but
- * texImage->Width and texImage->Height will be post-convolved dimensions.
  */
 void
 _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,

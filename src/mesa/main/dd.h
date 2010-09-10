@@ -558,15 +558,6 @@ struct dd_function_table {
    void (*CopyColorSubTable)( GLcontext *ctx,
 			      GLenum target, GLsizei start,
 			      GLint x, GLint y, GLsizei width );
-
-   void (*CopyConvolutionFilter1D)( GLcontext *ctx, GLenum target,
-				    GLenum internalFormat,
-				    GLint x, GLint y, GLsizei width );
-
-   void (*CopyConvolutionFilter2D)( GLcontext *ctx, GLenum target,
-				    GLenum internalFormat,
-				    GLint x, GLint y,
-				    GLsizei width, GLsizei height );
    /*@}*/
 
 
