@@ -28,7 +28,7 @@
 
 static const struct debug_named_value debug_options[] = {
     { "fp", DBG_FP, "Log fragment program compilation" },
-    { "vp", DBG_VP, "Log bertex program compilation" },
+    { "vp", DBG_VP, "Log vertex program compilation" },
     { "draw", DBG_DRAW, "Log draw calls" },
     { "swtcl", DBG_SWTCL, "Log SWTCL-specific info" },
     { "rsblock", DBG_RS_BLOCK, "Log rasterizer registers" },
@@ -41,11 +41,13 @@ static const struct debug_named_value debug_options[] = {
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
     { "stats", DBG_STATS, "Log emission statistics" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
+    { "scissor", DBG_SCISSOR, "Log scissor info" },
     { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
     { "notiling", DBG_NO_TILING, "Disable tiling" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },
     { "noopt", DBG_NO_OPT, "Disable shader optimizations" },
+    { "nocbzb", DBG_NO_CBZB, "Disable fast color clear" },
 
     /* must be last */
     DEBUG_NAMED_VALUE_END

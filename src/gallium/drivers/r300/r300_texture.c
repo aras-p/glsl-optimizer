@@ -881,9 +881,11 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
             surface->cbzb_format = R300_DEPTHFORMAT_16BIT_INT_Z;
 
         SCREEN_DBG(r300_screen(screen), DBG_CBZB,
-                   "CBZB Dim: %ix%i, Misalignment: %i, Macro: %s\n",
+                   "CBZB Allowed: %s, Dim: %ix%i, Misalignment: %i, Micro: %s, Macro: %s\n",
+                   surface->cbzb_allowed ? "YES" : " NO",
                    surface->cbzb_width, surface->cbzb_height,
                    offset & 2047,
+                   tex->desc.microtile ? "YES" : " NO",
                    tex->desc.macrotile[level] ? "YES" : " NO");
     }
 

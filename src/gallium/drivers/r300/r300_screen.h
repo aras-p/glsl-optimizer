@@ -92,12 +92,14 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_RS_BLOCK    (1 << 10)
 #define DBG_CBZB        (1 << 11)
 #define DBG_HYPERZ      (1 << 12)
+#define DBG_SCISSOR     (1 << 13)
 /* Features. */
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)
 #define DBG_NO_IMMD     (1 << 18)
 #define DBG_FAKE_OCC    (1 << 19)
-#define DBG_NO_OPT	(1 << 20)
+#define DBG_NO_OPT      (1 << 20)
+#define DBG_NO_CBZB     (1 << 21)
 /* Statistics. */
 #define DBG_STATS       (1 << 24)
 /*@}*/

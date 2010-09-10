@@ -339,6 +339,9 @@ static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
                        (bpp == 16 || bpp == 32) &&
                        desc->macrotile[0];
 
+    if (SCREEN_DBG_ON(rscreen, DBG_NO_CBZB))
+        first_level_valid = FALSE;
+
     for (i = 0; i <= desc->b.b.last_level; i++)
         desc->cbzb_allowed[i] = first_level_valid && desc->macrotile[i];
 }

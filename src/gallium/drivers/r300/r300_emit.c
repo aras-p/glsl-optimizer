@@ -300,6 +300,10 @@ void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state)
         width = surf->cbzb_width;
     }
 
+    DBG(r300, DBG_SCISSOR,
+	"r300: Scissor width: %i, height: %i, CBZB clear: %s\n",
+	width, height, r300->cbzb_clear ? "YES" : "NO");
+
     BEGIN_CS(size);
 
     /* Set up scissors.
