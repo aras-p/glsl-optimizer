@@ -1047,10 +1047,9 @@ static void evergreenSetRenderTarget(context_t *context, int id)
              EG_CB_COLOR0_PITCH__TILE_MAX_shift, 
              EG_CB_COLOR0_PITCH__TILE_MAX_mask);
 
-    /* skice */
+    /* slice */
     SETfield(evergreen->render_target[id].CB_COLOR0_SLICE.u32All, 
-             //( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
-             ( (nPitchInPixel * 240)/64 )-1,
+             ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              EG_CB_COLOR0_SLICE__TILE_MAX_shift, 
              EG_CB_COLOR0_SLICE__TILE_MAX_mask);
 
