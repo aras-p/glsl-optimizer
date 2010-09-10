@@ -404,8 +404,8 @@ static const struct radeon_register R600_names_CB0[] = {
 	{0x000280A0, 0, 0, "CB_COLOR0_INFO"},
 	{0x00028060, 0, 0, "CB_COLOR0_SIZE"},
 	{0x00028080, 0, 0, "CB_COLOR0_VIEW"},
-	{0x000280E0, 1, 1, "CB_COLOR0_FRAG"},
-	{0x000280C0, 1, 2, "CB_COLOR0_TILE"},
+	{0x000280E0, 1, 0, "CB_COLOR0_FRAG"},
+	{0x000280C0, 1, 0, "CB_COLOR0_TILE"},
 	{0x00028100, 0, 0, "CB_COLOR0_MASK"},
 };
 

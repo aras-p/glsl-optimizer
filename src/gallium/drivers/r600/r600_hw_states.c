@@ -120,12 +120,8 @@ static void r600_cb(struct r600_context *rctx, struct radeon_state *rstate,
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-	rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-	rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
-	rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
-	rstate->nbo = 3;
+	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
+	rstate->nbo = 1;
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[cb]->height / 64 - 1;
 
