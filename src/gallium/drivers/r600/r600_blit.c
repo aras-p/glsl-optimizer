@@ -335,10 +335,10 @@ static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon
 	/* simple shader */
 	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
 	if (bo == NULL) {
-		radeon_bo_decref(rscreen->rw, bo);
 		return;
 	}
 	if (radeon_bo_map(rscreen->rw, bo)) {
+		radeon_bo_decref(rscreen->rw, bo);
 		return;
 	}
 	switch (rscreen->chip_class) {
