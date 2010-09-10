@@ -49,8 +49,12 @@ struct lp_fragment_shader_variant_key
 {
    struct pipe_depth_state depth;
    struct pipe_stencil_state stencil[2];
-   struct pipe_alpha_state alpha;
    struct pipe_blend_state blend;
+
+   struct {
+      unsigned enabled:1;
+      unsigned func:3;
+   } alpha;
 
    unsigned nr_cbufs:8;
    unsigned nr_samplers:8;	/* actually derivable from just the shader */

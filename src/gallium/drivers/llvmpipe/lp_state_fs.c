@@ -332,14 +332,13 @@ generate_fs(struct llvmpipe_context *lp,
                   lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
 
                   /* Alpha test */
-                  /* XXX: should the alpha reference value be passed separately? */
 		  /* XXX: should only test the final assignment to alpha */
-                  if(cbuf == 0 && chan == 3) {
+                  if (cbuf == 0 && chan == 3 && key->alpha.enabled) {
                      LLVMValueRef alpha = out;
                      LLVMValueRef alpha_ref_value;
                      alpha_ref_value = lp_jit_context_alpha_ref_value(builder, context_ptr);
                      alpha_ref_value = lp_build_broadcast(builder, vec_type, alpha_ref_value);
-                     lp_build_alpha_test(builder, &key->alpha, type,
+                     lp_build_alpha_test(builder, key->alpha.func, type,
                                          &mask, alpha, alpha_ref_value);
                   }
 
@@ -750,7 +749,6 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
 
    if (key->alpha.enabled) {
       debug_printf("alpha.func = %s\n", util_dump_func(key->alpha.func, TRUE));
-      debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
    }
 
    if (key->blend.logicop_enable) {
