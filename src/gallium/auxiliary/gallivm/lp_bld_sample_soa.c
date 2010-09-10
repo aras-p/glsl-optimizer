@@ -2190,9 +2190,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       lp_build_sample_nop(&bld, texel_out);
    }
    else if (util_format_fits_8unorm(bld.format_desc) &&
-            bld.format_desc->nr_channels > 1 &&
             (static_state->target == PIPE_TEXTURE_2D ||
-                  static_state->target == PIPE_TEXTURE_RECT) &&
+             static_state->target == PIPE_TEXTURE_RECT) &&
             static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
             static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
             static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
@@ -2204,7 +2203,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    }
    else {
       if (gallivm_debug & GALLIVM_DEBUG_PERF &&
-          bld.format_desc->nr_channels > 1 &&
           (static_state->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
            static_state->mag_img_filter != PIPE_TEX_FILTER_NEAREST ||
            static_state->min_mip_filter == PIPE_TEX_MIPFILTER_LINEAR) &&
