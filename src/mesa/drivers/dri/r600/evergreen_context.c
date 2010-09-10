@@ -37,6 +37,7 @@
 #include "evergreen_state.h"
 #include "evergreen_blit.h"
 #include "r600_cmdbuf.h"
+#include "radeon_queryobj.h"
 
 static void evergreen_get_lock(radeonContextPtr rmesa)
 {
