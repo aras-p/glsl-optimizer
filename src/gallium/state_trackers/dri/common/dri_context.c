@@ -57,17 +57,21 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    struct st_api *stapi;
    struct dri_context *ctx = NULL;
    struct st_context_iface *st_share = NULL;
-   struct st_visual stvis;
+   struct st_context_attribs attribs;
 
+   memset(&attribs, 0, sizeof(attribs));
    switch (api) {
    case API_OPENGL:
       stapi = screen->st_api[ST_API_OPENGL];
+      attribs.profile = ST_PROFILE_DEFAULT;
       break;
    case API_OPENGLES:
       stapi = screen->st_api[ST_API_OPENGL_ES1];
+      attribs.profile = ST_PROFILE_OPENGL_ES1;
       break;
    case API_OPENGLES2:
       stapi = screen->st_api[ST_API_OPENGL_ES2];
+      attribs.profile = ST_PROFILE_OPENGL_ES2;
       break;
    default:
       stapi = NULL;
@@ -92,8 +96,8 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
-   dri_fill_st_visual(&stvis, screen, visual);
-   ctx->st = stapi->create_context(stapi, &screen->base, &stvis, st_share);
+   dri_fill_st_visual(&attribs.visual, screen, visual);
+   ctx->st = stapi->create_context(stapi, &screen->base, &attribs, st_share);
    if (ctx->st == NULL)
       goto fail;
    ctx->st->st_manager_private = (void *) ctx;

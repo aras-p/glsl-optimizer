@@ -43,7 +43,8 @@
  * Return the state tracker for the given context.
  */
 static struct st_api *
-egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx)
+egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
+                  enum st_profile_type *profile)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    EGLint idx = -1;
@@ -74,6 +75,18 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx)
       break;
    }
 
+   switch (idx) {
+   case ST_API_OPENGL_ES1:
+      *profile = ST_PROFILE_OPENGL_ES1;
+      break;
+   case ST_API_OPENGL_ES2:
+      *profile = ST_PROFILE_OPENGL_ES2;
+      break;
+   default:
+      *profile = ST_PROFILE_DEFAULT;
+      break;
+   }
+
    return (idx >= 0) ? gdrv->loader->get_st_api(idx) : NULL;
 }
 
@@ -85,6 +98,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    struct egl_g3d_context *gshare = egl_g3d_context(share);
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    struct egl_g3d_context *gctx;
+   struct st_context_attribs stattribs;
 
    gctx = CALLOC_STRUCT(egl_g3d_context);
    if (!gctx) {
@@ -97,14 +111,18 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
-   gctx->stapi = egl_g3d_choose_st(drv, &gctx->base);
+   memset(&stattribs, 0, sizeof(stattribs));
+   if (gconf)
+      stattribs.visual = gconf->stvis;
+
+   gctx->stapi = egl_g3d_choose_st(drv, &gctx->base, &stattribs.profile);
    if (!gctx->stapi) {
       FREE(gctx);
       return NULL;
    }
 
    gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi,
-         (gconf) ? &gconf->stvis : NULL, (gshare) ? gshare->stctxi : NULL);
+         &stattribs, (gshare) ? gshare->stctxi : NULL);
    if (!gctx->stctxi) {
       FREE(gctx);
       return NULL;

@@ -849,6 +849,7 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    XMesaDisplay xmdpy = xmesa_init_display(v->display);
+   struct st_context_attribs attribs;
    XMesaContext c;
 
    if (!xmdpy)
@@ -863,8 +864,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_read_buffer = NULL;
 
+   memset(&attribs, 0, sizeof(attribs));
+   attribs.profile = ST_PROFILE_DEFAULT;
+   attribs.visual = v->stvis;
+
    c->st = stapi->create_context(stapi, xmdpy->smapi,
-         &v->stvis, (share_list) ? share_list->st : NULL);
+         &attribs, (share_list) ? share_list->st : NULL);
    if (c->st == NULL)
       goto fail;
 

@@ -260,11 +260,15 @@ compute_version_es2(GLcontext *ctx)
 
 /**
  * Set the context's VersionMajor, VersionMinor, VersionString fields.
- * This should only be called once as part of context initialization.
+ * This should only be called once as part of context initialization
+ * or to perform version check for GLX_ARB_create_context_profile.
  */
 void
 _mesa_compute_version(GLcontext *ctx)
 {
+   if (ctx->VersionMajor)
+      return;
+
    switch (ctx->API) {
    case API_OPENGL:
       compute_version(ctx);

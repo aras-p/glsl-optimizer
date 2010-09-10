@@ -341,12 +341,19 @@ vg_context_destroy(struct st_context_iface *stctxi)
 
 static struct st_context_iface *
 vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
-                      const struct st_visual *visual,
+                      const struct st_context_attribs *attribs,
                       struct st_context_iface *shared_stctxi)
 {
    struct vg_context *shared_ctx = (struct vg_context *) shared_stctxi;
    struct vg_context *ctx;
    struct pipe_context *pipe;
+
+   if (!(stapi->profile_mask & (1 << attribs->profile)))
+      return NULL;
+
+   /* only 1.0 is supported */
+   if (attribs->major != 1 || attribs->minor > 0)
+      return NULL;
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
    if (!pipe)
@@ -528,6 +535,8 @@ vg_api_destroy(struct st_api *stapi)
 }
 
 static const struct st_api vg_api = {
+   ST_API_OPENVG,
+   ST_PROFILE_DEFAULT_MASK,
    vg_api_destroy,
    vg_api_get_proc_address,
    vg_api_create_context,

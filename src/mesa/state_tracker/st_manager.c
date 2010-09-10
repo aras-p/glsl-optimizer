@@ -44,6 +44,7 @@
 #include "main/framebuffer.h"
 #include "main/fbobject.h"
 #include "main/renderbuffer.h"
+#include "main/version.h"
 #include "st_texture.h"
 
 #include "st_context.h"
@@ -302,10 +303,6 @@ st_visual_to_context_mode(const struct st_visual *visual,
                           __GLcontextModes *mode)
 {
    memset(mode, 0, sizeof(*mode));
-
-   /* FBO-only context */
-   if (!visual)
-      return;
 
    if (st_visual_have_buffers(visual, ST_ATTACHMENT_BACK_LEFT_MASK))
       mode->doubleBufferMode = GL_TRUE;
@@ -612,24 +609,55 @@ st_context_destroy(struct st_context_iface *stctxi)
 }
 
 static struct st_context_iface *
-create_context(gl_api api, struct st_manager *smapi,
-               const struct st_visual *visual,
-               struct st_context_iface *shared_stctxi)
+st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
+                      const struct st_context_attribs *attribs,
+                      struct st_context_iface *shared_stctxi)
 {
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
    struct st_context *st;
    struct pipe_context *pipe;
    __GLcontextModes mode;
+   gl_api api;
+
+   if (!(stapi->profile_mask & (1 << attribs->profile)))
+      return NULL;
+
+   switch (attribs->profile) {
+   case ST_PROFILE_DEFAULT:
+      api = API_OPENGL;
+      break;
+   case ST_PROFILE_OPENGL_ES1:
+      api = API_OPENGLES;
+      break;
+   case ST_PROFILE_OPENGL_ES2:
+      api = API_OPENGLES2;
+      break;
+   case ST_PROFILE_OPENGL_CORE:
+   default:
+      return NULL;
+      break;
+   }
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
    if (!pipe)
       return NULL;
 
-   st_visual_to_context_mode(visual, &mode);
+   st_visual_to_context_mode(&attribs->visual, &mode);
    st = st_create_context(api, pipe, &mode, shared_ctx);
    if (!st) {
       pipe->destroy(pipe);
       return NULL;
+   }
+
+   /* need to perform version check */
+   if (attribs->major > 1 || attribs->minor > 0) {
+      _mesa_compute_version(st->ctx);
+
+      if (st->ctx->VersionMajor < attribs->major ||
+          st->ctx->VersionMajor < attribs->minor) {
+         st_destroy_context(st);
+         return NULL;
+      }
    }
 
    st->invalidate_on_gl_viewport =
@@ -647,27 +675,19 @@ create_context(gl_api api, struct st_manager *smapi,
 }
 
 static struct st_context_iface *
-st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
-                      const struct st_visual *visual,
-                      struct st_context_iface *shared_stctxi)
-{
-   return create_context(API_OPENGL, smapi, visual, shared_stctxi);
-}
-
-static struct st_context_iface *
 st_api_create_context_es1(struct st_api *stapi, struct st_manager *smapi,
-                          const struct st_visual *visual,
+                          const struct st_context_attribs *attribs,
                           struct st_context_iface *shared_stctxi)
 {
-   return create_context(API_OPENGLES, smapi, visual, shared_stctxi);
+   return st_api_create_context(stapi, smapi, attribs, shared_stctxi);
 }
 
 static struct st_context_iface *
 st_api_create_context_es2(struct st_api *stapi, struct st_manager *smapi,
-                          const struct st_visual *visual,
+                          const struct st_context_attribs *attribs,
                           struct st_context_iface *shared_stctxi)
 {
-   return create_context(API_OPENGLES2, smapi, visual, shared_stctxi);
+   return st_api_create_context(stapi, smapi, attribs, shared_stctxi);
 }
 
 static boolean
@@ -852,6 +872,17 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
 }
 
 static const struct st_api st_gl_api = {
+   ST_API_OPENGL,
+#if FEATURE_GL
+   ST_PROFILE_DEFAULT_MASK |
+#endif
+#if FEATURE_ES1
+   ST_PROFILE_OPENGL_ES1_MASK |
+#endif
+#if FEATURE_ES2
+   ST_PROFILE_OPENGL_ES2_MASK |
+#endif
+   0,
    st_api_destroy,
    st_api_get_proc_address,
    st_api_create_context,
@@ -860,6 +891,8 @@ static const struct st_api st_gl_api = {
 };
 
 static const struct st_api st_gl_api_es1 = {
+   ST_API_OPENGL_ES1,
+   ST_PROFILE_OPENGL_ES1_MASK,
    st_api_destroy,
    st_api_get_proc_address,
    st_api_create_context_es1,
@@ -868,6 +901,8 @@ static const struct st_api st_gl_api_es1 = {
 };
 
 static const struct st_api st_gl_api_es2 = {
+   ST_API_OPENGL_ES2,
+   ST_PROFILE_OPENGL_ES2_MASK,
    st_api_destroy,
    st_api_get_proc_address,
    st_api_create_context_es2,
