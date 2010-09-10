@@ -126,7 +126,8 @@ endif
 
 # OpenGL state tracker
 GL_CPPFLAGS := -I$(TOP)/src/mesa $(API_DEFINES)
-GL_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
+# do not link to $(GL_LIB) as the it supports GLES too
+GL_SYS := $(DRI_LIB_DEPS)
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 
 # OpenGL ES 1.x state tracker

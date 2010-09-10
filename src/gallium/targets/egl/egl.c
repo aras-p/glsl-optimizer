@@ -98,6 +98,8 @@ load_st_module(struct st_module *stmod,
 {
    struct st_api *(*create_api)(void);
 
+   _eglLog(_EGL_DEBUG, "searching for st module %s", name);
+
    stmod->name = loader_strdup(name);
    if (stmod->name)
       _eglSearchPathForEach(dlopen_st_module_cb, (void *) stmod);
@@ -187,7 +189,7 @@ load_pipe_module(struct pipe_module *pmod, const char *name)
 }
 
 static struct st_api *
-get_st_api(enum st_api_type api)
+get_st_api_full(enum st_api_type api, enum st_profile_type profile)
 {
    struct st_module *stmod = &st_modules[api];
    const char *names[8], *symbol;
@@ -199,17 +201,19 @@ get_st_api(enum st_api_type api)
    switch (api) {
    case ST_API_OPENGL:
       symbol = ST_CREATE_OPENGL_SYMBOL;
-      names[count++] = "GL";
-      break;
-   case ST_API_OPENGL_ES1:
-      symbol = ST_CREATE_OPENGL_ES1_SYMBOL;
-      names[count++] = "GLESv1_CM";
-      names[count++] = "GL";
-      break;
-   case ST_API_OPENGL_ES2:
-      symbol = ST_CREATE_OPENGL_ES2_SYMBOL;
-      names[count++] = "GLESv2";
-      names[count++] = "GL";
+      switch (profile) {
+      case ST_PROFILE_OPENGL_ES1:
+         names[count++] = "GLESv1_CM";
+         names[count++] = "GL";
+         break;
+      case ST_PROFILE_OPENGL_ES2:
+         names[count++] = "GLESv2";
+         names[count++] = "GL";
+         break;
+      default:
+         names[count++] = "GL";
+         break;
+      }
       break;
    case ST_API_OPENVG:
       symbol = ST_CREATE_OPENVG_SYMBOL;
@@ -230,7 +234,7 @@ get_st_api(enum st_api_type api)
    }
 
    if (!stmod->stapi) {
-      EGLint level = (egl_g3d_loader.api_mask & (1 << api)) ?
+      EGLint level = (egl_g3d_loader.profile_masks[api]) ?
          _EGL_WARNING : _EGL_DEBUG;
       _eglLog(level, "unable to load " ST_PREFIX "%s" UTIL_DL_EXT, names[0]);
    }
@@ -241,50 +245,31 @@ get_st_api(enum st_api_type api)
 }
 
 static struct st_api *
-guess_gl_api(void)
+get_st_api(enum st_api_type api)
 {
-   struct st_api *stapi;
-   int gl_apis[] = {
-      ST_API_OPENGL,
-      ST_API_OPENGL_ES1,
-      ST_API_OPENGL_ES2,
-      -1
-   };
-   int i, api = -1;
+   enum st_profile_type profile = ST_PROFILE_DEFAULT;
 
-   /* determine the api from the loaded libraries */
-   for (i = 0; gl_apis[i] != -1; i++) {
-      if (st_modules[gl_apis[i]].stapi) {
-         api = gl_apis[i];
-         break;
-      }
-   }
-   /* determine the api from the linked libraries */
-   if (api == -1) {
-      struct util_dl_library *self = util_dl_open(NULL);
+   /* determine the profile from the linked libraries */
+   if (api == ST_API_OPENGL) {
+      struct util_dl_library *self;
 
+      self = util_dl_open(NULL);
       if (self) {
-         if (util_dl_get_proc_address(self, "glColor4d"))
-            api = ST_API_OPENGL;
-         else if (util_dl_get_proc_address(self, "glColor4x"))
-            api = ST_API_OPENGL_ES1;
+         if (util_dl_get_proc_address(self, "glColor4x"))
+            profile = ST_PROFILE_OPENGL_ES1;
          else if (util_dl_get_proc_address(self, "glShaderBinary"))
-            api = ST_API_OPENGL_ES2;
+            profile = ST_PROFILE_OPENGL_ES2;
          util_dl_close(self);
       }
    }
 
-   stapi = (api != -1) ? get_st_api(api) : NULL;
-   if (!stapi) {
-      for (i = 0; gl_apis[i] != -1; i++) {
-         api = gl_apis[i];
-         stapi = get_st_api(api);
-         if (stapi)
-            break;
-      }
-   }
+   return get_st_api_full(api, profile);
+}
 
-   return stapi;
+static struct st_api *
+guess_gl_api(enum st_profile_type profile)
+{
+   return get_st_api_full(ST_API_OPENGL, profile);
 }
 
 static struct pipe_module *
@@ -333,23 +318,20 @@ create_sw_screen(struct sw_winsys *ws)
 static const struct egl_g3d_loader *
 loader_init(void)
 {
-   uint api_mask = 0x0;
-
    /* TODO detect at runtime? */
 #if FEATURE_GL
-   api_mask |= 1 << ST_API_OPENGL;
+   egl_g3d_loader.profile_masks[ST_API_OPENGL] |= ST_PROFILE_DEFAULT_MASK;
 #endif
 #if FEATURE_ES1
-   api_mask |= 1 << ST_API_OPENGL_ES1;
+   egl_g3d_loader.profile_masks[ST_API_OPENGL] |= ST_PROFILE_OPENGL_ES1_MASK;
 #endif
 #if FEATURE_ES2
-   api_mask |= 1 << ST_API_OPENGL_ES2;
+   egl_g3d_loader.profile_masks[ST_API_OPENGL] |= ST_PROFILE_OPENGL_ES2_MASK;
 #endif
 #if FEATURE_VG
-   api_mask |= 1 << ST_API_OPENVG;
+   egl_g3d_loader.profile_masks[ST_API_OPENVG] |= ST_PROFILE_DEFAULT_MASK;
 #endif
 
-   egl_g3d_loader.api_mask = api_mask;
    egl_g3d_loader.get_st_api = get_st_api;
    egl_g3d_loader.guess_gl_api = guess_gl_api;
    egl_g3d_loader.create_drm_screen = create_drm_screen;

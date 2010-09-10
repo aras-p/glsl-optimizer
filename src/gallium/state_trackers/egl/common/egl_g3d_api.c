@@ -47,16 +47,21 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
                   enum st_profile_type *profile)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   EGLint idx = -1;
+   struct st_api *stapi;
+   EGLint api = -1;
+
+   *profile = ST_PROFILE_DEFAULT;
 
    switch (ctx->ClientAPI) {
    case EGL_OPENGL_ES_API:
       switch (ctx->ClientVersion) {
       case 1:
-         idx = ST_API_OPENGL_ES1;
+         api = ST_API_OPENGL;
+         *profile = ST_PROFILE_OPENGL_ES1;
          break;
       case 2:
-         idx = ST_API_OPENGL_ES2;
+         api = ST_API_OPENGL;
+         *profile = ST_PROFILE_OPENGL_ES2;
          break;
       default:
          _eglLog(_EGL_WARNING, "unknown client version %d",
@@ -65,29 +70,31 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
       }
       break;
    case EGL_OPENVG_API:
-      idx = ST_API_OPENVG;
+      api = ST_API_OPENVG;
       break;
    case EGL_OPENGL_API:
-      idx = ST_API_OPENGL;
+      api = ST_API_OPENGL;
       break;
    default:
       _eglLog(_EGL_WARNING, "unknown client API 0x%04x", ctx->ClientAPI);
       break;
    }
 
-   switch (idx) {
-   case ST_API_OPENGL_ES1:
-      *profile = ST_PROFILE_OPENGL_ES1;
+   switch (api) {
+   case ST_API_OPENGL:
+      stapi = gdrv->loader->guess_gl_api(*profile);
       break;
-   case ST_API_OPENGL_ES2:
-      *profile = ST_PROFILE_OPENGL_ES2;
+   case ST_API_OPENVG:
+      stapi = gdrv->loader->get_st_api(api);
       break;
    default:
-      *profile = ST_PROFILE_DEFAULT;
+      stapi = NULL;
       break;
    }
+   if (stapi && !(stapi->profile_mask & (1 << *profile)))
+      stapi = NULL;
 
-   return (idx >= 0) ? gdrv->loader->get_st_api(idx) : NULL;
+   return stapi;
 }
 
 static _EGLContext *
