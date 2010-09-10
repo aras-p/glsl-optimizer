@@ -35,7 +35,7 @@
 #include "radeon_common_context.h"
 #include "evergreen_context.h"
 #include "evergreen_state.h"
-#include "r600_blit.h"
+#include "evergreen_blit.h"
 
 static void evergreen_get_lock(radeonContextPtr rmesa)
 {
@@ -96,8 +96,8 @@ void evergreen_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = evergreen_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = evergreen_fallback;
 	radeon->vtbl.emit_query_finish = evergreen_emit_query_finish;
-	radeon->vtbl.check_blit = r600_check_blit;
-	radeon->vtbl.blit = r600_blit;
+	radeon->vtbl.check_blit = evergreen_check_blit;
+	radeon->vtbl.blit = evergreen_blit;
 	radeon->vtbl.is_format_renderable = r600IsFormatRenderable;
 }
 

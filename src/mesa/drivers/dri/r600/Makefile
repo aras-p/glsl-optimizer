@@ -68,6 +68,7 @@ DRIVER_SOURCES = \
          evergreen_vertprog.c   \
          evergreen_fragprog.c   \
          evergreen_oglprog.c    \
+		 evergreen_blit.c     \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)
