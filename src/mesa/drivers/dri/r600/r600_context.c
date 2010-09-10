@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/extensions.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
+#include "main/points.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -458,6 +459,9 @@ GLboolean r600CreateContext(gl_api api,
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	r600InitConstValues(ctx, screen);
+
+	/* reinit, it depends on consts above */
+	_mesa_init_point(ctx);
 
 	_mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
