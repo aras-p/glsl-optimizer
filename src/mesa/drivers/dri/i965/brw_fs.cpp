@@ -753,6 +753,10 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by brw_channel_expressions");
       break;
 
+   case ir_unop_noise:
+      assert(!"not reached: should be handled by lower_noise");
+      break;
+
    case ir_unop_sqrt:
       emit(fs_inst(FS_OPCODE_SQRT, this->result, op[0]));
       break;

@@ -356,6 +356,9 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       assign(ir, 0, last);
       break;
    }
+   case ir_unop_noise:
+      assert(!"noise should have been broken down to function call");
+      break;
    }
 
    ir->remove();
