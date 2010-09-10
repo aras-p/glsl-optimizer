@@ -1026,7 +1026,7 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
 static void evergreenSetRenderTarget(context_t *context, int id)
 {
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
-
+    uint32_t format = COLOR_8_8_8_8, comp_swap = SWAP_ALT, number_type = NUMBER_UNORM, source_format = 1;
     struct radeon_renderbuffer *rrb;
     unsigned int nPitchInPixel;
 
@@ -1067,43 +1067,266 @@ static void evergreenSetRenderTarget(context_t *context, int id)
              ARRAY_LINEAR_GENERAL, 
              EG_CB_COLOR0_INFO__ARRAY_MODE_shift, 
              EG_CB_COLOR0_INFO__ARRAY_MODE_mask);   
-    if(4 == rrb->cpp)
-    {
-        SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-                 COLOR_8_8_8_8,
-                 EG_CB_COLOR0_INFO__FORMAT_shift, 
-                 EG_CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-                 SWAP_ALT, //SWAP_STD
-                 EG_CB_COLOR0_INFO__COMP_SWAP_shift, 
-                 EG_CB_COLOR0_INFO__COMP_SWAP_mask);
+
+    switch (rrb->base.Format) {
+    case MESA_FORMAT_RGBA8888:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_SIGNED_RGBA8888:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_SNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_RGBA8888_REV:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_SIGNED_RGBA8888_REV:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_SNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_XRGB8888:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB8888_REV:
+    case MESA_FORMAT_XRGB8888_REV:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_RGB565:
+            format = COLOR_5_6_5;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_RGB565_REV:
+            format = COLOR_5_6_5;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB4444:
+            format = COLOR_4_4_4_4;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB4444_REV:
+            format = COLOR_4_4_4_4;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB1555:
+            format = COLOR_1_5_5_5;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_ARGB1555_REV:
+            format = COLOR_1_5_5_5;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_AL88:
+            format = COLOR_8_8;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_AL88_REV:
+            format = COLOR_8_8;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_RGB332:
+            format = COLOR_3_3_2;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_A8:
+            format = COLOR_8;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_I8:
+    case MESA_FORMAT_CI8:
+            format = COLOR_8;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_L8:
+            format = COLOR_8;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_UNORM;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_RGBA_FLOAT32:
+            format = COLOR_32_32_32_32_FLOAT;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_RGBA_FLOAT16:
+            format = COLOR_16_16_16_16_FLOAT;
+            comp_swap = SWAP_STD_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_ALPHA_FLOAT32:
+            format = COLOR_32_FLOAT;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_ALPHA_FLOAT16:
+            format = COLOR_16_FLOAT;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_LUMINANCE_FLOAT32:
+            format = COLOR_32_FLOAT;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_LUMINANCE_FLOAT16:
+            format = COLOR_16_FLOAT;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+            format = COLOR_32_32_FLOAT;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+            format = COLOR_16_16_FLOAT;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_INTENSITY_FLOAT32: /* X, X, X, X */
+            format = COLOR_32_FLOAT;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_FLOAT;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_INTENSITY_FLOAT16: /* X, X, X, X */
+            format = COLOR_16_FLOAT;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_X8_Z24:
+    case MESA_FORMAT_S8_Z24:
+            format = COLOR_8_24;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+		     ARRAY_1D_TILED_THIN1,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_shift,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_mask);
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_Z24_S8:
+            format = COLOR_24_8;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+		     ARRAY_1D_TILED_THIN1,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_shift,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_mask);
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_Z16:
+            format = COLOR_16;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+		     ARRAY_1D_TILED_THIN1,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_shift,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_mask);
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_Z32:
+            format = COLOR_32;
+            comp_swap = SWAP_STD;
+	    number_type = NUMBER_UNORM;
+	    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+		     ARRAY_1D_TILED_THIN1,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_shift,
+		     EG_CB_COLOR0_INFO__ARRAY_MODE_mask);
+	    source_format = 0;
+            break;
+    case MESA_FORMAT_SARGB8:
+            format = COLOR_8_8_8_8;
+            comp_swap = SWAP_ALT;
+	    number_type = NUMBER_SRGB;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_SLA8:
+            format = COLOR_8_8;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_SRGB;
+	    source_format = 1;
+            break;
+    case MESA_FORMAT_SL8:
+            format = COLOR_8;
+            comp_swap = SWAP_ALT_REV;
+	    number_type = NUMBER_SRGB;
+	    source_format = 1;
+            break;
+    default:
+	    _mesa_problem(context->radeon.glCtx, "unexpected format in evergreenSetRenderTarget()");
+	    break;
     }
-    else
-    {
-        SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-                 COLOR_5_6_5,
-                 EG_CB_COLOR0_INFO__FORMAT_shift, 
-                 EG_CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-                 SWAP_ALT_REV,
-                 EG_CB_COLOR0_INFO__COMP_SWAP_shift, 
-                 EG_CB_COLOR0_INFO__COMP_SWAP_mask);
-    }
-    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-             1,
-             EG_CB_COLOR0_INFO__SOURCE_FORMAT_shift, 
-             EG_CB_COLOR0_INFO__SOURCE_FORMAT_mask);
-    SETbit(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-           EG_CB_COLOR0_INFO__BLEND_CLAMP_bit);
-    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All, 
-             NUMBER_UNORM,
-             EG_CB_COLOR0_INFO__NUMBER_TYPE_shift, 
+
+    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+	     format,
+	     EG_CB_COLOR0_INFO__FORMAT_shift,
+	     EG_CB_COLOR0_INFO__FORMAT_mask);
+    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+	     comp_swap,
+	     EG_CB_COLOR0_INFO__COMP_SWAP_shift,
+	     EG_CB_COLOR0_INFO__COMP_SWAP_mask);
+    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+             number_type,
+             EG_CB_COLOR0_INFO__NUMBER_TYPE_shift,
              EG_CB_COLOR0_INFO__NUMBER_TYPE_mask);
+    SETfield(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+             source_format,
+             EG_CB_COLOR0_INFO__SOURCE_FORMAT_shift,
+             EG_CB_COLOR0_INFO__SOURCE_FORMAT_mask);
+    SETbit(evergreen->render_target[id].CB_COLOR0_INFO.u32All,
+           EG_CB_COLOR0_INFO__BLEND_CLAMP_bit);
 
     evergreen->render_target[id].CB_COLOR0_VIEW.u32All        = 0;
     evergreen->render_target[id].CB_COLOR0_CMASK.u32All       = 0;
     evergreen->render_target[id].CB_COLOR0_FMASK.u32All       = 0;
-    evergreen->render_target[id].CB_COLOR0_FMASK_SLICE.u32All = 0; 
+    evergreen->render_target[id].CB_COLOR0_FMASK_SLICE.u32All = 0;
 
     evergreen->render_target[id].enabled = GL_TRUE;
 }

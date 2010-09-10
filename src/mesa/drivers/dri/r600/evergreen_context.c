@@ -99,7 +99,7 @@ void evergreen_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.emit_query_finish = evergreen_emit_query_finish;
 	radeon->vtbl.check_blit = r600_check_blit;
 	radeon->vtbl.blit = r600_blit;
-	radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
+	radeon->vtbl.is_format_renderable = r600IsFormatRenderable;
 }
 
 
