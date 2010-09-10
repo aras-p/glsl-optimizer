@@ -533,50 +533,44 @@ static int presub_helper(
 	for(inst = s->Inst->Next; inst != &c->Program.Instructions;
 							inst = inst->Next) {
 		unsigned int i;
+		unsigned char can_use_presub = 1;
 		const struct rc_opcode_info * info =
 					rc_get_opcode_info(inst->U.I.Opcode);
+		/* XXX: There are some situations where instructions
+		 * with more than 2 src registers can use the
+		 * presubtract select, but to keep things simple we
+		 * will disable presubtract on these instructions for
+		 * now. */
+		if (info->NumSrcRegs > 2 || info->HasTexture) {
+			can_use_presub = 0;
+		}
 
+		/* We can't use more than one presubtract value in an
+		 * instruction, unless the two prsubtract operations
+		 * are the same and read from the same registers. */
+		if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+			if (inst->U.I.PreSub.Opcode != presub_opcode
+				|| inst->U.I.PreSub.SrcReg[0].File !=
+					s->Inst->U.I.SrcReg[1].File
+				|| inst->U.I.PreSub.SrcReg[0].Index !=
+					s->Inst->U.I.SrcReg[1].Index) {
+				can_use_presub = 0;
+			}
+		}
+
+		/* Even if the instruction can't use a presubtract operation
+		 * we still need to check if the instruction reads from
+		 * s->Inst->U.I.DstReg, because if it does we must not
+		 * remove s->Inst. */
 		for(i = 0; i < info->NumSrcRegs; i++) {
 			if(s->Inst->U.I.DstReg.WriteMask !=
 					src_reads_dst_mask(inst->U.I.SrcReg[i],
 						s->Inst->U.I.DstReg)) {
 				continue;
 			}
-			if (cant_sub) {
+			if (cant_sub || !can_use_presub) {
 				can_remove = 0;
 				break;
-			}
-			/* XXX: There are some situations where instructions
-			 * with more than 2 src registers can use the
-			 * presubtract select, but to keep things simple we
-			 * will disable presubtract on these instructions for
-			 * now. Note: This if statement should not be pulled
-			 * outside of the loop, because it only applies to
-			 * instructions that could potentially use the
-			 * presubtract source. */
-			if (info->NumSrcRegs > 2) {
-				can_remove = 0;
-				break;
-			}
-
-			if (info->HasTexture) {
-				can_remove = 0;
-				break;
-			}
-
-			/* We can't use more than one presubtract value in an
-			 * instruction, unless the two prsubtract operations
-			 * are the same and read from the same registers. */
-			if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
-				if (inst->U.I.PreSub.Opcode != presub_opcode
-					|| inst->U.I.PreSub.SrcReg[0].File !=
-						s->Inst->U.I.SrcReg[1].File
-					|| inst->U.I.PreSub.SrcReg[0].Index !=
-						s->Inst->U.I.SrcReg[1].Index) {
-
-					can_remove = 0;
-					break;
-				}
 			}
 			presub_replace(s, inst, i);
 			can_remove = 1;
