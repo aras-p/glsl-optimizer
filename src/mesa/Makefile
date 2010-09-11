@@ -16,16 +16,6 @@ MESA_OBJ_DIR := .
 ES1_OBJ_DIR := objs-es1
 ES2_OBJ_DIR := objs-es2
 
-MESA_CPPFLAGS := $(API_DEFINES)
-ES1_CPPFLAGS := -DFEATURE_ES1=1
-ES2_CPPFLAGS := -DFEATURE_ES2=1
-
-ifeq ($(MESA_LLVM),1)
-MESA_CPPFLAGS += $(LLVM_CFLAGS)
-ES1_CPPFLAGS += $(LLVM_CFLAGS)
-ES2_CPPFLAGS += $(LLVM_CFLAGS)
-endif
-
 
 include sources.mak
 
@@ -38,24 +28,33 @@ ES1_GALLIUM_OBJECTS := $(addprefix $(ES1_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
 ES2_GALLIUM_OBJECTS := $(addprefix $(ES2_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
 MESA_GALLIUM_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
 
-# adjust include dirs
-MESA_INCLUDES := $(INCLUDE_DIRS)
-ES1_INCLUDES := -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
-ES2_INCLUDES := -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
-MESA_INCLUDES := -I$(TOP)/src/glsl $(MESA_INCLUDES)
-ES1_INCLUDES := -I$(TOP)/src/glsl $(ES1_INCLUDES)
-ES2_INCLUDES := -I$(TOP)/src/glsl $(ES2_INCLUDES)
-# For symbol_table.h in glsl compiler headers.
-MESA_INCLUDES := -I$(TOP)/src/mesa/shader $(MESA_INCLUDES)
+# define preprocessor flags
+MESA_CPPFLAGS := $(API_DEFINES) $(DEFINES)
+ES1_CPPFLAGS := -DFEATURE_ES1=1 $(DEFINES)
+ES2_CPPFLAGS := -DFEATURE_ES2=1 $(DEFINES)
+
+# append include dirs
+MESA_CPPFLAGS += $(INCLUDE_DIRS)
+ES1_CPPFLAGS += -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
+ES2_CPPFLAGS += -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
+
+# tidy compiler flags
+CFLAGS := $(filter-out $(DEFINES), $(CFLAGS))
+CXXFLAGS := $(filter-out $(DEFINES), $(CXXFLAGS))
+
+# LLVM is needed for the state tracker
+MESA_CFLAGS := $(LLVM_CFLAGS)
+ES1_CFLAGS := $(LLVM_CFLAGS)
+ES2_CFLAGS := $(LLVM_CFLAGS)
 
 define mesa-cc-c
 	@mkdir -p $(dir $@)
-	$(CC) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_INCLUDES) $(CFLAGS)
+	$(CC) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CFLAGS) $(CFLAGS)
 endef
 
 define mesa-cxx-c
 	@mkdir -p $(dir $@)
-	$(CXX) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_INCLUDES) $(CXXFLAGS)
+	$(CXX) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CFLAGS) $(CXXFLAGS)
 endef
 
 $(MESA_OBJ_DIR)/%.o: %.c
@@ -144,22 +143,20 @@ asm_subdirs:
 depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) -p$(MESA_OBJ_DIR)/ $(DEFINES) \
-		$(INCLUDE_DIRS) $(ALL_SOURCES) > /dev/null 2>/dev/null
+	@$(MKDEP) $(MKDEP_OPTIONS) -p$(MESA_OBJ_DIR)/ $(MESA_CPPFLAGS) \
+		$(ALL_SOURCES) > /dev/null 2>/dev/null
 
 depend.es1: $(ALL_SOURCES)
 	@echo "running $(MKDEP) for ES1"
 	@touch $@
-	@$(MKDEP) $(MKDEP_OPTIONS) -f$@ -p$(ES1_OBJ_DIR)/ $(DEFINES) \
-		$(ES1_CPPFLAGS) $(ES1_INCLUDES) $(ALL_SOURCES) \
-		> /dev/null 2>/dev/null
+	@$(MKDEP) $(MKDEP_OPTIONS) -f$@ -p$(ES1_OBJ_DIR)/ $(ES1_CPPFLAGS) \
+		$(ALL_SOURCES) > /dev/null 2>/dev/null
 
 depend.es2: $(ALL_SOURCES)
 	@echo "running $(MKDEP) for ES2"
 	@touch $@
-	@$(MKDEP) $(MKDEP_OPTIONS) -f$@ -p$(ES2_OBJ_DIR)/ $(DEFINES) \
-		$(ES2_CPPFLAGS) $(ES2_INCLUDES) $(ALL_SOURCES) \
-		> /dev/null 2>/dev/null
+	@$(MKDEP) $(MKDEP_OPTIONS) -f$@ -p$(ES2_OBJ_DIR)/ $(ES2_CPPFLAGS) \
+		$(ALL_SOURCES) > /dev/null 2>/dev/null
 
 ######################################################################
 # Installation rules

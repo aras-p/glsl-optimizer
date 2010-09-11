@@ -358,6 +358,7 @@ GLSL_LIBS = \
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/glsl \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/gallium/include \
