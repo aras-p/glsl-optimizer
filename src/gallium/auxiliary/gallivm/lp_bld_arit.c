@@ -614,17 +614,15 @@ lp_build_div(struct lp_build_context *bld,
 
 
 /**
- * Linear interpolation.
- *
- * This also works for integer values with a few caveats.
+ * Linear interpolation -- without any checks.
  *
  * @sa http://www.stereopsis.com/doubleblend.html
  */
-LLVMValueRef
-lp_build_lerp(struct lp_build_context *bld,
-              LLVMValueRef x,
-              LLVMValueRef v0,
-              LLVMValueRef v1)
+static INLINE LLVMValueRef
+lp_build_lerp_simple(struct lp_build_context *bld,
+                     LLVMValueRef x,
+                     LLVMValueRef v0,
+                     LLVMValueRef v1)
 {
    LLVMValueRef delta;
    LLVMValueRef res;
@@ -639,12 +637,80 @@ lp_build_lerp(struct lp_build_context *bld,
 
    res = lp_build_add(bld, v0, res);
 
-   if(bld->type.fixed)
+   if (bld->type.fixed) {
       /* XXX: This step is necessary for lerping 8bit colors stored on 16bits,
        * but it will be wrong for other uses. Basically we need a more
        * powerful lp_type, capable of further distinguishing the values
        * interpretation from the value storage. */
       res = LLVMBuildAnd(bld->builder, res, lp_build_const_int_vec(bld->type, (1 << bld->type.width/2) - 1), "");
+   }
+
+   return res;
+}
+
+
+/**
+ * Linear interpolation.
+ */
+LLVMValueRef
+lp_build_lerp(struct lp_build_context *bld,
+              LLVMValueRef x,
+              LLVMValueRef v0,
+              LLVMValueRef v1)
+{
+   const struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, x));
+   assert(lp_check_value(type, v0));
+   assert(lp_check_value(type, v1));
+
+   if (type.norm) {
+      struct lp_type wide_type;
+      struct lp_build_context wide_bld;
+      LLVMValueRef xl, xh, v0l, v0h, v1l, v1h, resl, resh;
+      LLVMValueRef shift;
+
+      assert(type.length >= 2);
+      assert(!type.sign);
+
+      /*
+       * Create a wider type, enough to hold the intermediate result of the
+       * multiplication.
+       */
+      memset(&wide_type, 0, sizeof wide_type);
+      wide_type.fixed  = TRUE;
+      wide_type.width  = type.width*2;
+      wide_type.length = type.length/2;
+
+      lp_build_context_init(&wide_bld, bld->builder, wide_type);
+
+      lp_build_unpack2(bld->builder, type, wide_type, x,  &xl,  &xh);
+      lp_build_unpack2(bld->builder, type, wide_type, v0, &v0l, &v0h);
+      lp_build_unpack2(bld->builder, type, wide_type, v1, &v1l, &v1h);
+
+      /*
+       * Scale x from [0, 255] to [0, 256]
+       */
+
+      shift = lp_build_const_int_vec(wide_type, type.width - 1);
+
+      xl = lp_build_add(&wide_bld, xl,
+                        LLVMBuildAShr(bld->builder, xl, shift, ""));
+      xh = lp_build_add(&wide_bld, xh,
+                        LLVMBuildAShr(bld->builder, xh, shift, ""));
+
+      /*
+       * Lerp both halves.
+       */
+
+      resl = lp_build_lerp_simple(&wide_bld, xl, v0l, v1l);
+      resh = lp_build_lerp_simple(&wide_bld, xh, v0h, v1h);
+
+      res = lp_build_pack2(bld->builder, wide_type, type, resl, resh);
+   } else {
+      res = lp_build_lerp_simple(bld, x, v0, v1);
+   }
 
    return res;
 }
