@@ -207,7 +207,7 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
    assert(block != NULL);
 
    if (LP_DEBUG & DEBUG_MEM)
-      debug_printf("alloc %d block %d/%d tot %d/%d\n",
+      debug_printf("alloc %u block %u/%lu tot %u/%u\n",
 		   size, block->used, DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
 
@@ -240,7 +240,7 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
    assert(block != NULL);
 
    if (LP_DEBUG & DEBUG_MEM)
-      debug_printf("alloc %d block %d/%d tot %d/%d\n",
+      debug_printf("alloc %u block %u/%lu tot %u/%u\n",
 		   size + alignment - 1,
 		   block->used, DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
