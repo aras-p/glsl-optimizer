@@ -230,6 +230,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/glsl/*.[ch]					\
 	$(DIRECTORY)/src/glsl/*.[cly]pp					\
 	$(DIRECTORY)/src/glsl/README					\
+	$(DIRECTORY)/src/glsl/glcpp/*.[chly]				\
 	$(DIRECTORY)/src/glsl/glcpp/README				\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
@@ -244,6 +245,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/program/*.[chly]				\
+	$(DIRECTORY)/src/mesa/program/*.cpp				\
 	$(DIRECTORY)/src/mesa/program/Makefile				\
 	$(DIRECTORY)/src/mesa/program/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
@@ -317,7 +319,9 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/*/Makefile.template			\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
-	$(DIRECTORY)/src/egl/*/*/*.[ch]
+	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/main/*.pc.in				\
+	$(DIRECTORY)/src/egl/main/*.def
 
 GALLIUM_FILES = \
 	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
@@ -330,6 +334,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/auxiliary/gallivm/*.cpp		\
 	$(DIRECTORY)/src/gallium/*/*/*.py				\
 	$(DIRECTORY)/src/gallium/*/*/*.csv				\
 	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
