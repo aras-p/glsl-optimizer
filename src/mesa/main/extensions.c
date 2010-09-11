@@ -259,6 +259,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_queryobj
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+   ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
 #if FEATURE_ARB_shader_objects

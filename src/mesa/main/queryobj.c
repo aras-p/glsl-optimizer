@@ -143,6 +143,11 @@ get_query_binding_point(struct gl_context *ctx, GLenum target)
          return &ctx->Query.CurrentOcclusionObject;
       else
          return NULL;
+   case GL_ANY_SAMPLES_PASSED:
+      if (ctx->Extensions.ARB_occlusion_query2)
+         return &ctx->Query.CurrentOcclusionObject;
+      else
+         return NULL;
    case GL_TIME_ELAPSED_EXT:
       if (ctx->Extensions.EXT_timer_query)
          return &ctx->Query.CurrentTimerObject;
@@ -378,12 +383,19 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
          if (!q->Ready)
             ctx->Driver.WaitQuery(ctx, q);
          /* if result is too large for returned type, clamp to max value */
-         if (q->Result > 0x7fffffff) {
-            *params = 0x7fffffff;
-         }
-         else {
-            *params = (GLint)q->Result;
-         }
+	 if (q->Target == GL_ANY_SAMPLES_PASSED) {
+	    if (q->Result)
+	       *params = GL_TRUE;
+	    else
+	       *params = GL_FALSE;
+	 } else {
+	    if (q->Result > 0x7fffffff) {
+	       *params = 0x7fffffff;
+	    }
+	    else {
+	       *params = (GLint)q->Result;
+	    }
+	 }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
 	 if (!q->Ready)
@@ -418,12 +430,19 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
          if (!q->Ready)
             ctx->Driver.WaitQuery(ctx, q);
          /* if result is too large for returned type, clamp to max value */
-         if (q->Result > 0xffffffff) {
-            *params = 0xffffffff;
-         }
-         else {
-            *params = (GLuint)q->Result;
-         }
+	 if (q->Target == GL_ANY_SAMPLES_PASSED) {
+	    if (q->Result)
+	       *params = GL_TRUE;
+	    else
+	       *params = GL_FALSE;
+	 } else {
+	    if (q->Result > 0xffffffff) {
+	       *params = 0xffffffff;
+	    }
+	    else {
+	       *params = (GLuint)q->Result;
+	    }
+	 }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
 	 if (!q->Ready)

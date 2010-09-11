@@ -71,7 +71,7 @@ GL 3.3:
 GLSL 3.30                                             not started
 GL_ARB_blend_func_extended                            not started
 GL_ARB_explicit_attrib_location                       DONE (swrast, i915, i965)
-GL_ARB_occlusion_query2                               not started
+GL_ARB_occlusion_query2                               DONE (swrast, gallium)
 GL_ARB_sampler_objects                                not started
 GL_ARB_texture_rgb10_a2ui                             not started
 GL_ARB_texture_swizzle                                DONE (same as EXT version)
