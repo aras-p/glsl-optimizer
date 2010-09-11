@@ -144,6 +144,8 @@
 #define NV_PC_MAX_INSTRUCTIONS 2048
 #define NV_PC_MAX_VALUES (NV_PC_MAX_INSTRUCTIONS * 4)
 
+#define NV_PC_MAX_BASIC_BLOCKS 1024
+
 static INLINE boolean
 nv_is_vector_op(uint opcode)
 {
@@ -284,7 +286,7 @@ struct nv_basic_block {
 
    int id;
    int subroutine;
-   uint priv;
+   uint priv; /* reset to 0 after you're done */
    uint pass_seq;
 
    uint32_t bin_pos; /* position, size in emitted code */
@@ -328,7 +330,7 @@ struct nv_pc {
    struct nv_value values[NV_PC_MAX_VALUES];
    struct nv_instruction instructions[NV_PC_MAX_INSTRUCTIONS];
    struct nv_ref **refs;
-   struct nv_basic_block **bb_list;
+   struct nv_basic_block *bb_list[NV_PC_MAX_BASIC_BLOCKS];
    int num_values;
    int num_instructions;
    int num_refs;
@@ -437,9 +439,15 @@ new_ref(struct nv_pc *pc, struct nv_value *val)
 static INLINE struct nv_basic_block *
 new_basic_block(struct nv_pc *pc)
 {
-   struct nv_basic_block *bb = CALLOC_STRUCT(nv_basic_block);
+   struct nv_basic_block *bb;
 
-   bb->id = pc->num_blocks++;
+   if (pc->num_blocks >= NV_PC_MAX_BASIC_BLOCKS)
+      return NULL;
+
+   bb = CALLOC_STRUCT(nv_basic_block);
+
+   bb->id = pc->num_blocks;
+   pc->bb_list[pc->num_blocks++] = bb;
    return bb;
 }
 

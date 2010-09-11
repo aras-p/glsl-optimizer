@@ -238,9 +238,7 @@ nv_pc_exec_pass2(struct nv_pc *pc)
 
    NV50_DBGMSG("preparing %u blocks for emission\n", pc->num_blocks);
 
-   pc->bb_list = CALLOC(pc->num_blocks, sizeof(pc->bb_list[0]));
-
-   pc->num_blocks = 0;
+   pc->num_blocks = 0; /* will reorder bb_list */
 
    for (i = 0; i < pc->num_subroutines + 1; ++i)
       if (pc->root[i] && (ret = nv_pc_pass2(pc, pc->root[i])))

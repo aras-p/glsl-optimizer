@@ -340,6 +340,66 @@ nv_print_program(struct nv_pc *pc)
          nv_print_function(pc->root[i]);
 }
 
+#ifdef NV50_PC_DEBUG
+static void
+nv_do_print_cfgraph(struct nv_pc *pc, FILE *f, struct nv_basic_block *b)
+{
+   int i;
+
+   b->pass_seq = pc->pass_seq;
+
+   fprintf(f, "\t%i [shape=box]\n", b->id);
+
+   for (i = 0; i < 2; ++i) {
+      if (!b->out[i])
+         continue;
+      switch (b->out_kind[i]) {
+      case CFG_EDGE_FORWARD:
+         fprintf(f, "\t%i -> %i;\n", b->id, b->out[i]->id);
+         break;
+      case CFG_EDGE_LOOP_ENTER:
+         fprintf(f, "\t%i -> %i [color=green];\n", b->id, b->out[i]->id);
+         break;
+      case CFG_EDGE_LOOP_LEAVE:
+         fprintf(f, "\t%i -> %i [color=red];\n", b->id, b->out[i]->id);
+         break;
+      case CFG_EDGE_BACK:
+         fprintf(f, "\t%i -> %i;\n", b->id, b->out[i]->id);
+         continue;
+      case CFG_EDGE_FAKE:
+         fprintf(f, "\t%i -> %i [style=dotted];\n", b->id, b->out[i]->id);
+         break;
+      default:
+         assert(0);
+         break;
+      }
+      if (b->out[i]->pass_seq < pc->pass_seq)
+         nv_do_print_cfgraph(pc, f, b->out[i]);
+   }
+}
+
+/* Print the control flow graph of subroutine @subr (0 == MAIN) to a file. */
+static void
+nv_print_cfgraph(struct nv_pc *pc, const char *filepath, int subr)
+{
+   FILE *f;
+
+   f = fopen(filepath, "a");
+   if (!f)
+      return;
+
+   fprintf(f, "digraph G {\n");
+
+   ++pc->pass_seq;
+
+   nv_do_print_cfgraph(pc, f, pc->root[subr]);
+
+   fprintf(f, "}\n");
+
+   fclose(f);
+}
+#endif
+
 static INLINE void
 nvcg_show_bincode(struct nv_pc *pc)
 {
@@ -393,6 +453,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
 {
    struct nv_pc *pc;
    int ret;
+   int i;
 
    pc = CALLOC_STRUCT(nv_pc);
    if (!pc)
@@ -428,6 +489,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
       goto out;
 #ifdef NV50PC_DEBUG
    nv_print_program(pc);
+   nv_print_cfgraph(pc, "nv50_shader_cfgraph.dot", 0);
 #endif
 
    /* prepare for emission */
@@ -461,8 +523,8 @@ nv50_generate_code(struct nv50_translation_info *ti)
 out:
    nv_pc_free_refs(pc);
 
-   if (pc->bb_list)
-      FREE(pc->bb_list);
+   for (i = 0; i < pc->num_blocks; ++i)
+      FREE(pc->bb_list[i]);
 
    if (ret) { /* on success, these will be referenced by nv50_program */
       if (pc->emit)
@@ -644,23 +706,38 @@ nvbb_dominated_by(struct nv_basic_block *b, struct nv_basic_block *d)
    return j ? TRUE : FALSE;
 }
 
-/* check if bf (future) can be reached from bp (past) */
+/* check if @bf (future) can be reached from @bp (past), stop at @bt */
 boolean
 nvbb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
                   struct nv_basic_block *bt)
 {
-   if (bf == bp)
-      return TRUE;
-   if (bp == bt)
-      return FALSE;
+   struct nv_basic_block *q[NV_PC_MAX_BASIC_BLOCKS], *b;
+   int i, p, n;
 
-   if (bp->out[0] && !IS_WALL_EDGE(bp->out_kind[0]) &&
-       nvbb_reachable_by(bf, bp->out[0], bt))
-      return TRUE;
-   if (bp->out[1] && !IS_WALL_EDGE(bp->out_kind[1]) &&
-       nvbb_reachable_by(bf, bp->out[1], bt))
-      return TRUE;
-   return FALSE;
+   p = 0;
+   n = 1;
+   q[0] = bp;
+
+   while (p < n) {
+      b = q[p++];
+
+      if (b == bf)
+         break;
+      if (b == bt)
+         continue;
+      assert(n <= (1024 - 2));
+
+      for (i = 0; i < 2; ++i) {
+         if (b->out[i] && !IS_WALL_EDGE(b->out_kind[i]) && !b->out[i]->priv) {
+            q[n] = b->out[i];
+            q[n++]->priv = 1;
+         }
+      }
+   }
+   for (--n; n >= 0; --n)
+      q[n]->priv = 0;
+
+   return (b == bf);
 }
 
 static struct nv_basic_block *
