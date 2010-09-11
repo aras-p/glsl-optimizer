@@ -237,6 +237,7 @@ nv_pc_free_refs(struct nv_pc *pc)
    int i;
    for (i = 0; i < pc->num_refs; i += 64)
       FREE(pc->refs[i]);
+   FREE(pc->refs);
 }
 
 static const char *
@@ -525,7 +526,8 @@ out:
 
    for (i = 0; i < pc->num_blocks; ++i)
       FREE(pc->bb_list[i]);
-
+   if (pc->root)
+      FREE(pc->root);
    if (ret) { /* on success, these will be referenced by nv50_program */
       if (pc->emit)
          FREE(pc->emit);

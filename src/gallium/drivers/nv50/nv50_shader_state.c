@@ -44,7 +44,7 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
    if (!map)
       return;
 
-   count = buf->width0; /* MIN2(buf->width0, size); */
+   count = (buf->width0 + 3) / 4;
    start = 0;
 
    while (count) {

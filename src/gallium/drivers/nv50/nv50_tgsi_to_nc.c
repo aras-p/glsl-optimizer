@@ -39,7 +39,7 @@
 #define BLD_MAX_PREDS 4
 #define BLD_MAX_IMMDS 128
 
-#define BLD_MAX_COND_NESTING 4
+#define BLD_MAX_COND_NESTING 8
 #define BLD_MAX_LOOP_NESTING 4
 #define BLD_MAX_CALL_NESTING 2
 
@@ -70,14 +70,14 @@ bld_vals_del_val(struct bld_value_stack *stk, struct nv_value *val)
 {
    unsigned i;
 
-   for (i = stk->size - 1; i >= 0; --i)
-      if (stk->body[i] == val)
+   for (i = stk->size; i > 0; --i)
+      if (stk->body[i - 1] == val)
          break;
-   if (i < 0)
+   if (!i)
       return FALSE;
 
-   if (i != stk->size - 1)
-      stk->body[i] = stk->body[stk->size - 1];
+   if (i != stk->size)
+      stk->body[i - 1] = stk->body[stk->size - 1];
 
    --stk->size; /* XXX: old size in REALLOC */
    return TRUE;
@@ -1643,6 +1643,8 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
+      assert(bld->cond_lvl < BLD_MAX_COND_NESTING);
+
       nvbb_attach_block(bld->pc->current_block, b, CFG_EDGE_FORWARD);
 
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
@@ -1694,6 +1696,8 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bl = new_basic_block(bld->pc);
       struct nv_basic_block *bb = new_basic_block(bld->pc);
+
+      assert(bld->loop_lvl < BLD_MAX_LOOP_NESTING);
 
       bld->loop_bb[bld->loop_lvl] = bl;
       bld->brkt_bb[bld->loop_lvl] = bb;

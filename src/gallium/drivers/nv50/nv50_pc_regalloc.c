@@ -888,6 +888,10 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    ctx->pc = pc;
 
    ctx->insns = CALLOC(NV_PC_MAX_INSTRUCTIONS, sizeof(struct nv_instruction *));
+   if (!ctx->insns) {
+      FREE(ctx);
+      return -1;
+   }
 
    pc->pass_seq++;
    ret = pass_generate_phi_movs(ctx, root);
@@ -941,6 +945,7 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    NV50_DBGMSG("REGISTER ALLOCATION - leaving\n");
 
 out:
+   FREE(ctx->insns);
    FREE(ctx);
    return ret;
 }
