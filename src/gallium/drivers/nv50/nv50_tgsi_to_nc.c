@@ -125,7 +125,7 @@ struct bld_context {
    struct bld_value_stack pvs[BLD_MAX_PREDS][4]; /* TGSI_FILE_PREDICATE */
    struct bld_value_stack ovs[PIPE_MAX_SHADER_OUTPUTS][4];
 
-   uint32_t outputs_written[(PIPE_MAX_SHADER_OUTPUTS + 31) / 32];
+   uint32_t outputs_written[(PIPE_MAX_SHADER_OUTPUTS + 7) / 8];
 
    struct nv_value *frgcrd[4];
    struct nv_value *sysval[4];
