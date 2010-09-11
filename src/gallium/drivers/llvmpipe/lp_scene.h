@@ -49,7 +49,7 @@ struct lp_scene_queue;
 #define TILES_Y (LP_MAX_HEIGHT / TILE_SIZE)
 
 
-#define CMD_BLOCK_MAX 16
+#define CMD_BLOCK_MAX 128
 #define DATA_BLOCK_SIZE (64 * 1024 - 2 * sizeof(void *))
 
 /* Scene temporary storage is clamped to this size:
