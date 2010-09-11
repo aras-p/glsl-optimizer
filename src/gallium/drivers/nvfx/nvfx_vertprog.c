@@ -878,7 +878,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 
 	/* hope 0xf is (0, 0, 0, 1) initialized; otherwise, we are _probably_ not required to do this */
 	memset(vpc->vp->generic_to_fp_input, 0x0f, sizeof(vpc->vp->generic_to_fp_input));
-	for(int i = 0; i < 10; ++i) {
+	for(int i = 0; i < num_texcoords; ++i) {
 		if(sem_layout[i] == 0xff)
 			continue;
 		//printf("vp: GENERIC[%i] to fpreg %i\n", sem_layout[i], NVFX_FP_OP_INPUT_SRC_TC(0) + i);
@@ -886,7 +886,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	}
 
 	vpc->vp->sprite_fp_input = -1;
-	for(int i = 0; i < 10; ++i)
+	for(int i = 0; i < num_texcoords; ++i)
 	{
 		if(sem_layout[i] == 0xff)
 		{
