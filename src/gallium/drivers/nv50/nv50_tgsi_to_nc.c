@@ -1075,7 +1075,7 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    const struct tgsi_full_src_register *src = &insn->Src[s];
    struct nv_value *res;
    struct nv_value *ptr = NULL;
-   unsigned idx, swz, dim_idx, ind_idx, ind_swz;
+   unsigned idx, swz, dim_idx, ind_idx, ind_swz, sgn;
    ubyte type = infer_src_type(insn->Instruction.Opcode);
 
    idx = src->Register.Index;
@@ -1157,10 +1157,15 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    if (!res)
       return bld_undef(bld, NV_FILE_GPR);
 
+   sgn = tgsi_util_get_full_src_register_sign_mode(src, chan);
+
    if (insn->Instruction.Opcode != TGSI_OPCODE_MOV)
       res->reg.as_type = type;
+   else
+   if (sgn != TGSI_UTIL_SIGN_KEEP) /* apparently "MOV A, -B" assumes float */
+      res->reg.as_type = NV_TYPE_F32;
 
-   switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
+   switch (sgn) {
    case TGSI_UTIL_SIGN_KEEP:
       break;
    case TGSI_UTIL_SIGN_CLEAR:
