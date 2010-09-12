@@ -1,0 +1,715 @@
+/**************************************************************************
+ *
+ * Copyright 2010 Luca Barbieri
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+template<typename Base = ID3D11DeviceChild>
+struct GalliumD3D11DeviceChild : public GalliumPrivateDataComObject<Base, dual_refcnt_t>
+{
+	GalliumD3D11Screen* device; // must not be null
+
+
+	// if this is called, the subclass constructor must set device itself
+	GalliumD3D11DeviceChild()
+	: device(0)
+	{}
+
+	GalliumD3D11DeviceChild(GalliumD3D11Screen* p_device)
+	{
+		// we store the reference count minus one in refcnt
+		device = p_device;
+		device->AddRef();
+	}
+
+	/* The purpose of this is to avoid cyclic garbage, since this won't hold
+	 * a pointer to the device if it is only held by a pipeline binding in the immediate context
+	 *
+	 * TODO: we could only manipulate the device refcnt when atomic_refcnt == 0 changes,
+	 * but this requires more complex atomic ops
+	 */
+	inline ULONG add_ref()
+	{
+		device->AddRef();
+		return GalliumPrivateDataComObject<Base, dual_refcnt_t>::add_ref();
+	}
+
+	inline ULONG release()
+	{
+		device->Release();
+		return GalliumPrivateDataComObject<Base, dual_refcnt_t>::release();
+	}
+
+	virtual ULONG STDMETHODCALLTYPE AddRef()
+	{
+		return add_ref();
+	}
+
+	virtual ULONG STDMETHODCALLTYPE Release()
+	{
+		return release();
+	}
+
+	virtual void STDMETHODCALLTYPE GetDevice(
+		__out  ID3D11Device **ppDevice
+	   )
+	{
+		device->AddRef();
+		*ppDevice = device;
+	}
+};
+
+template<typename Base = ID3D11DeviceChild, typename Object = void>
+struct GalliumD3D11Object : public GalliumD3D11DeviceChild<Base>
+{
+	Object* object;
+	GalliumD3D11Object(GalliumD3D11Screen* device, Object* object)
+	: GalliumD3D11DeviceChild<Base>(device), object(object)
+	{}
+
+	virtual ~GalliumD3D11Object();
+};
+
+#define IMPLEMENT_OBJECT_DTOR(name, gallium) \
+template<> \
+GalliumD3D11Object<ID3D11##name, void>::~GalliumD3D11Object() \
+{ \
+	DX10_ONLY(device->Unbind##name(this)); \
+	device->immediate_pipe->delete_##gallium##_state(device->immediate_pipe, object); \
+}
+
+#define IMPLEMENT_VIEW_DTOR(name, gallium) \
+template<> \
+GalliumD3D11Object<ID3D11##name, struct pipe_##gallium>::~GalliumD3D11Object() \
+{ \
+	DX10_ONLY(device->Unbind##name(this)); \
+	pipe_##gallium##_reference(&object, 0); \
+}
+
+IMPLEMENT_OBJECT_DTOR(InputLayout, vertex_elements)
+IMPLEMENT_OBJECT_DTOR(DepthStencilState, depth_stencil_alpha)
+IMPLEMENT_OBJECT_DTOR(RasterizerState, rasterizer)
+IMPLEMENT_OBJECT_DTOR(SamplerState, sampler)
+IMPLEMENT_OBJECT_DTOR(BlendState, blend)
+IMPLEMENT_OBJECT_DTOR(VertexShader, vs)
+IMPLEMENT_OBJECT_DTOR(PixelShader, fs)
+IMPLEMENT_OBJECT_DTOR(GeometryShader, gs)
+
+IMPLEMENT_VIEW_DTOR(ShaderResourceView, sampler_view)
+IMPLEMENT_VIEW_DTOR(RenderTargetView, surface)
+IMPLEMENT_VIEW_DTOR(DepthStencilView, surface)
+
+#if API >= 11
+// IMPLEMENT_VIEW_DTOR(UnorderedAccessView, surface);
+// IMPLEMENT_OBJECT_DTOR(HullShader, tcs);
+// IMPLEMENT_OBJECT_DTOR(DomainShader, tes);
+// IMPLEMENT_OBJECT_DTOR(ComputeShader, cs);
+#else
+IMPLEMENT_OBJECT_DTOR(BlendState1, blend)
+IMPLEMENT_VIEW_DTOR(ShaderResourceView1, sampler_view)
+#endif
+
+template<typename Base, typename Desc, typename Object = void>
+struct GalliumD3D11DescribedObject : public GalliumD3D11Object<Base, Object>
+{
+	Desc desc;
+	GalliumD3D11DescribedObject(GalliumD3D11Screen* device, Object* object, const Desc& desc)
+	: GalliumD3D11Object<Base, Object>(device, object), desc(desc)
+	{}
+
+	virtual void STDMETHODCALLTYPE GetDesc(Desc *pDesc)
+	{
+		memcpy(pDesc, &desc, sizeof(desc));
+	}
+};
+
+typedef GalliumD3D11Object<ID3D11InputLayout> GalliumD3D11InputLayout;
+typedef GalliumD3D11DescribedObject<ID3D11DepthStencilState, D3D11_DEPTH_STENCIL_DESC> GalliumD3D11DepthStencilState;
+typedef GalliumD3D11DescribedObject<ID3D11RasterizerState, D3D11_RASTERIZER_DESC> GalliumD3D11RasterizerStateBase;
+typedef GalliumD3D11DescribedObject<ID3D11SamplerState, D3D11_SAMPLER_DESC> GalliumD3D11SamplerState;
+
+#if API >= 11
+typedef GalliumD3D11DescribedObject<ID3D11BlendState, D3D11_BLEND_DESC> GalliumD3D11BlendState;
+#else
+typedef GalliumD3D10DescribedObject<ID3D10BlendState1, D3D10_BLEND_DESC> GalliumD3D10BlendStateBase;
+
+struct GalliumD3D10BlendState : public GalliumD3D10BlendStateBase
+{
+	static D3D10_BLEND_DESC convert_to_d3d10(const D3D10_BLEND_DESC1& desc1)
+	{
+		D3D10_BLEND_DESC desc;
+		desc.AlphaToCoverageEnable = desc1.AlphaToCoverageEnable;
+		desc.SrcBlend = desc1.RenderTarget[0].SrcBlend;
+		desc.DestBlend = desc1.RenderTarget[0].DestBlend;
+		desc.BlendOp = desc1.RenderTarget[0].BlendOp;
+		desc.SrcBlendAlpha = desc1.RenderTarget[0].SrcBlendAlpha;
+		desc.DestBlendAlpha = desc1.RenderTarget[0].DestBlendAlpha;
+		desc.BlendOpAlpha = desc1.RenderTarget[0].BlendOpAlpha;
+		for(unsigned i = 0; i < 8; ++i)
+		{
+			desc.BlendEnable[i] = desc1.RenderTarget[i].BlendEnable;
+			desc.RenderTargetWriteMask[i] = desc1.RenderTarget[i].RenderTargetWriteMask;
+		}
+		return desc;
+	}
+
+	D3D10_BLEND_DESC1 desc1;
+
+	GalliumD3D10BlendState(GalliumD3D10Screen* device, void* object, const D3D10_BLEND_DESC& desc)
+	: GalliumD3D10BlendStateBase(device, object, desc)
+	{
+		memset(&desc1, 0, sizeof(desc1));
+		desc1.AlphaToCoverageEnable = desc.AlphaToCoverageEnable;
+		desc1.RenderTarget[0].SrcBlend = desc.SrcBlend;
+		desc1.RenderTarget[0].DestBlend = desc.DestBlend;
+		desc1.RenderTarget[0].BlendOp = desc.BlendOp;
+		desc1.RenderTarget[0].SrcBlendAlpha = desc.SrcBlendAlpha;
+		desc1.RenderTarget[0].DestBlendAlpha = desc.DestBlendAlpha;
+		desc1.RenderTarget[0].BlendOpAlpha = desc.BlendOpAlpha;
+		for(unsigned i = 0; i < 8; ++i)
+		{
+			desc1.RenderTarget[i].BlendEnable = desc.BlendEnable[i];
+			desc1.RenderTarget[i].RenderTargetWriteMask = desc.RenderTargetWriteMask[i];
+		}
+	}
+
+	GalliumD3D10BlendState(GalliumD3D10Screen* device, void* object, const D3D10_BLEND_DESC1& desc)
+	: GalliumD3D10BlendStateBase(device, object, convert_to_d3d10(desc)), desc1(desc1)
+	{}
+
+	virtual void STDMETHODCALLTYPE GetDesc1(D3D10_BLEND_DESC1 *pDesc)
+	{
+		memcpy(pDesc, &desc1, sizeof(desc1));
+	}
+};
+#endif
+
+struct GalliumD3D11RasterizerState : public GalliumD3D11RasterizerStateBase
+{
+	bool depth_clamp;
+
+	GalliumD3D11RasterizerState(GalliumD3D11Screen* device, void* object, const D3D11_RASTERIZER_DESC& desc, bool depth_clamp)
+	: GalliumD3D11RasterizerStateBase(device, object, desc), depth_clamp(depth_clamp)
+	{}
+};
+
+template<typename Base = ID3D11DeviceChild>
+struct GalliumD3D11Shader : public GalliumD3D11Object<Base>
+{
+	std::vector<int> slot_to_resource;
+	std::vector<int> slot_to_sampler;
+
+	GalliumD3D11Shader(GalliumD3D11Screen* device, void* object)
+	: GalliumD3D11Object<Base>(device, object)
+	{}
+};
+
+typedef GalliumD3D11Shader<ID3D11VertexShader> GalliumD3D11VertexShader;
+typedef GalliumD3D11Shader<ID3D11GeometryShader> GalliumD3D11GeometryShader;
+typedef GalliumD3D11Shader<ID3D11PixelShader> GalliumD3D11PixelShader;
+
+#if API >= 11
+/*
+typedef GalliumD3D11Shader<ID3D11HullShader> GalliumD3D11HullShader;
+typedef GalliumD3D11Shader<ID3D11DomainShader> GalliumD3D11DomainShader;
+typedef GalliumD3D11Shader<ID3D11ComputeShader> GalliumD3D11ComputeShader;
+*/
+#endif
+
+template<typename Base = ID3D11Resource>
+struct GalliumD3D11ResourceBase : public GalliumD3D11DeviceChild<Base>
+{
+	unsigned eviction_priority;
+
+	virtual void STDMETHODCALLTYPE SetEvictionPriority(
+		__in  unsigned EvictionPriority)
+	{
+		eviction_priority = EvictionPriority;
+	}
+
+	virtual unsigned STDMETHODCALLTYPE GetEvictionPriority()
+	{
+		return eviction_priority;
+	}
+};
+
+template<typename Real>
+struct GalliumDXGIResource : public IDXGIResource
+{
+	virtual HRESULT STDMETHODCALLTYPE SetEvictionPriority(
+		__in  unsigned EvictionPriority)
+	{
+		static_cast<Real*>(this)->eviction_priority = EvictionPriority;
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetEvictionPriority(unsigned* pEvictionPriority)
+	{
+		   	*pEvictionPriority = static_cast<Real*>(this)->eviction_priority;
+		   	return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetDevice(
+		__in  REFIID riid,
+		__out  void **ppParent)
+	{
+		if(!static_cast<Real*>(this)->device)
+			return E_NOINTERFACE;
+		return static_cast<Real*>(this)->device->QueryInterface(riid, ppParent);
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetParent(
+		__in  REFIID riid,
+		__out  void **ppParent)
+	{
+		if(!static_cast<Real*>(this)->device)
+			return E_NOINTERFACE;
+		return static_cast<Real*>(this)->device->QueryInterface(riid, ppParent);
+	}
+};
+
+template<typename T>
+struct com_traits<GalliumDXGIResource<T> > : public com_traits<IDXGIResource>
+{};
+
+template<typename Base = ID3D11Resource>
+struct GalliumD3D11Resource
+	: public GalliumMultiComObject<
+		GalliumMultiPrivateDataComObject<
+			GalliumD3D11ResourceBase<Base>,
+			GalliumDXGIResource<GalliumD3D11Resource<Base> >
+		>,
+		IGalliumResource
+	>
+{
+	struct pipe_resource* resource;
+	std::unordered_map<unsigned, pipe_transfer*> transfers;
+	float min_lod;
+	DXGI_USAGE dxgi_usage;
+
+	GalliumD3D11Resource(GalliumD3D11Screen* device = 0, struct pipe_resource* resource = 0, unsigned dxgi_usage = 0)
+	: resource(resource), min_lod(0), dxgi_usage(dxgi_usage)
+	{
+		this->device = device;
+		if(device)
+			device->AddRef();
+		this->eviction_priority = 0;
+	}
+
+	~GalliumD3D11Resource()
+	{
+		pipe_resource_reference(&resource, 0);
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetUsage(
+		__out  DXGI_USAGE *pUsage
+	   )
+	{
+		*pUsage = this->dxgi_usage;
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetSharedHandle(HANDLE *pSharedHandle)
+	{
+		return E_NOTIMPL;
+	}
+
+	virtual struct pipe_resource* STDMETHODCALLTYPE GetGalliumResource()
+	{
+		return resource;
+	}
+};
+
+template<typename Base, typename Desc, D3D11_RESOURCE_DIMENSION Dim>
+struct GalliumD3D11TypedResource : public GalliumD3D11Resource<Base>
+{
+	Desc desc;
+	GalliumD3D11TypedResource() {}
+	GalliumD3D11TypedResource(GalliumD3D11Screen* device, struct pipe_resource* resource, const Desc& desc, unsigned dxgi_usage)
+	: GalliumD3D11Resource<Base>(device, resource, dxgi_usage), desc(desc)
+	{}
+	virtual void STDMETHODCALLTYPE GetType(
+		__out  D3D11_RESOURCE_DIMENSION *pResourceDimension)
+	{
+		*pResourceDimension = Dim;
+	}
+	virtual void STDMETHODCALLTYPE GetDesc(Desc *pDesc)
+	{
+		memcpy(pDesc, &desc, sizeof(desc));
+	}
+};
+
+typedef GalliumD3D11TypedResource<ID3D11Texture1D, D3D11_TEXTURE1D_DESC, D3D11_RESOURCE_DIMENSION_TEXTURE1D> GalliumD3D11Texture1DBase;
+typedef GalliumD3D11TypedResource<ID3D11Texture2D, D3D11_TEXTURE2D_DESC, D3D11_RESOURCE_DIMENSION_TEXTURE2D> GalliumD3D11Texture2DBase;
+typedef GalliumD3D11TypedResource<ID3D11Texture3D, D3D11_TEXTURE3D_DESC, D3D11_RESOURCE_DIMENSION_TEXTURE3D> GalliumD3D11Texture3DBase;
+typedef GalliumD3D11TypedResource<ID3D11Buffer, D3D11_BUFFER_DESC, D3D11_RESOURCE_DIMENSION_BUFFER> GalliumD3D11BufferBase;
+
+#if API >= 11
+typedef GalliumD3D11BufferBase GalliumD3D11Buffer;
+typedef GalliumD3D11Texture1DBase GalliumD3D11Texture1D;
+typedef GalliumD3D11Texture2DBase GalliumD3D11Texture2D;
+typedef GalliumD3D11Texture3DBase GalliumD3D11Texture3D;
+#else
+struct GalliumD3D10Buffer : public GalliumD3D10BufferBase
+{
+	GalliumD3D10Buffer(GalliumD3D10Screen* device, struct pipe_resource* resource, const D3D10_BUFFER_DESC& desc, unsigned dxgi_usage)
+	: GalliumD3D10BufferBase(device, resource, desc, dxgi_usage)
+	{}
+
+	~GalliumD3D10Buffer()
+	{
+		device->UnbindBuffer(this);
+	}
+
+        virtual HRESULT STDMETHODCALLTYPE Map(
+        	__in  D3D10_MAP MapType,
+        	__in  unsigned MapFlags,
+        	__out  void **ppData)
+        {
+        	D3D10_MAPPED_SUBRESOURCE msr;
+        	HRESULT hr = device->Map(this, 0, MapType, MapFlags, &msr);
+        	if(!SUCCEEDED(hr))
+        		return hr;
+        	*ppData = msr.pData;
+        	return S_OK;
+        }
+
+        virtual void STDMETHODCALLTYPE Unmap()
+        {
+        	device->Unmap(this, 0);
+        }
+};
+
+struct GalliumD3D10Texture1D : public GalliumD3D10Texture1DBase
+{
+	GalliumD3D10Texture1D(GalliumD3D10Screen* device, struct pipe_resource* resource, const D3D10_TEXTURE1D_DESC& desc, unsigned dxgi_usage)
+	: GalliumD3D10Texture1DBase(device, resource, desc, dxgi_usage)
+	{}
+
+	virtual HRESULT STDMETHODCALLTYPE Map(
+		__in  unsigned Subresource,
+		__in  D3D10_MAP MapType,
+		__in  unsigned MapFlags,
+		__out  void **ppData)
+        {
+        	D3D10_MAPPED_SUBRESOURCE msr;
+        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+        	if(!SUCCEEDED(hr))
+        		return hr;
+        	*ppData = msr.pData;
+        	return S_OK;
+        }
+
+        virtual void STDMETHODCALLTYPE Unmap(
+        	__in  unsigned Subresource
+        )
+        {
+        	device->Unmap(this, Subresource);
+        }
+};
+
+struct GalliumD3D10Texture2D : public GalliumD3D10Texture2DBase
+{
+	GalliumD3D10Texture2D() {}
+	GalliumD3D10Texture2D(GalliumD3D10Screen* device, struct pipe_resource* resource, const D3D10_TEXTURE2D_DESC& desc, unsigned dxgi_usage)
+	: GalliumD3D10Texture2DBase(device, resource, desc, dxgi_usage)
+	{}
+
+	virtual HRESULT STDMETHODCALLTYPE Map(
+		__in  unsigned Subresource,
+		__in  D3D10_MAP MapType,
+		__in  unsigned MapFlags,
+		__out  D3D10_MAPPED_TEXTURE2D *pMappedTex2D)
+        {
+        	D3D10_MAPPED_SUBRESOURCE msr;
+        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+        	if(!SUCCEEDED(hr))
+        		return hr;
+        	pMappedTex2D->pData = msr.pData;
+        	pMappedTex2D->RowPitch = msr.RowPitch;
+        	return S_OK;
+        }
+
+        virtual void STDMETHODCALLTYPE Unmap(
+        	__in  unsigned Subresource
+        )
+        {
+        	device->Unmap(this, Subresource);
+        }
+};
+
+
+struct GalliumD3D10Texture3D : public GalliumD3D10Texture3DBase
+{
+	GalliumD3D10Texture3D(GalliumD3D10Screen* device, struct pipe_resource* resource, const D3D10_TEXTURE3D_DESC& desc, unsigned dxgi_usage)
+	: GalliumD3D10Texture3DBase(device, resource, desc, dxgi_usage)
+	{}
+
+	virtual HRESULT STDMETHODCALLTYPE Map(
+		__in  unsigned Subresource,
+		__in  D3D10_MAP MapType,
+		__in  unsigned MapFlags,
+		__out  D3D10_MAPPED_TEXTURE3D *pMappedTex3D)
+        {
+        	D3D10_MAPPED_SUBRESOURCE msr;
+        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+        	if(!SUCCEEDED(hr))
+        		return hr;
+        	pMappedTex3D->pData = msr.pData;
+        	pMappedTex3D->RowPitch = msr.RowPitch;
+        	pMappedTex3D->DepthPitch = msr.DepthPitch;
+        	return S_OK;
+        }
+
+        virtual void STDMETHODCALLTYPE Unmap(
+        	__in  unsigned Subresource
+        )
+        {
+        	device->Unmap(this, Subresource);
+        }
+};
+#endif
+
+struct GalliumD3D11Surface : public GalliumMultiPrivateDataComObject<GalliumD3D11Texture2D, IDXGISurface1>
+{
+	GalliumD3D11Surface(GalliumD3D11Screen* device, struct pipe_resource* resource, const D3D11_TEXTURE2D_DESC& desc, unsigned dxgi_usage)
+	{
+		this->device = device;
+		this->device->AddRef();
+		this->resource = resource;
+		this->desc = desc;
+		this->dxgi_usage = dxgi_usage;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetDesc(
+		__out  DXGI_SURFACE_DESC *pDesc)
+	{
+		pDesc->Format = this->desc.Format;
+		pDesc->Width = this->desc.Width;
+		pDesc->Height = this->desc.Height;
+		pDesc->SampleDesc = this->desc.SampleDesc;
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetParent(
+		__in  REFIID riid,
+		__out  void **ppParent)
+	{
+		if(!device)
+			return E_NOINTERFACE;
+		return device->QueryInterface(riid, ppParent);
+	}
+
+	/* TODO: somehow implement these */
+	virtual HRESULT STDMETHODCALLTYPE GetDC(
+		BOOL Discard,
+		__out  HDC *phdc)
+	{
+		*phdc = 0;
+		return E_NOTIMPL;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE ReleaseDC(
+		__in_opt  RECT *pDirtyRect)
+	{
+		return E_NOTIMPL;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Map(
+		__out  DXGI_MAPPED_RECT *pLockedRect,
+		unsigned MapFlags)
+	{
+		D3D11_MAP d3d_map;
+		if(MapFlags & DXGI_MAP_DISCARD)
+			d3d_map = D3D11_MAP_WRITE_DISCARD;
+		else
+		{
+			if(MapFlags & DXGI_MAP_READ)
+			{
+				if(MapFlags & DXGI_MAP_WRITE)
+					d3d_map = D3D11_MAP_READ_WRITE;
+				else
+					d3d_map = D3D11_MAP_READ;
+			}
+			else
+				d3d_map = D3D11_MAP_WRITE;
+		}
+		D3D11_MAPPED_SUBRESOURCE d3d_mapped;
+		HRESULT hres = this->device->get_immediate_context()->Map(this, 0, d3d_map, 0, &d3d_mapped);
+		pLockedRect->pBits = (uint8_t*)d3d_mapped.pData;
+		pLockedRect->Pitch = d3d_mapped.RowPitch;
+		return hres;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Unmap(void)
+	{
+		this->device->get_immediate_context()->Unmap(this, 0);
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetDevice(
+		__in  REFIID riid,
+		__out  void **ppParent)
+	{
+		if(!device)
+			return E_NOINTERFACE;
+		return device->QueryInterface(riid, ppParent);
+	}
+};
+
+template<typename Base, typename Desc, typename Object>
+struct GalliumD3D11View : public GalliumD3D11DescribedObject<Base, Desc, Object>
+{
+	GalliumD3D11Resource<>* resource;
+	GalliumD3D11View(GalliumD3D11Screen* device, GalliumD3D11Resource<>* resource, Object* object, const Desc& desc)
+	: GalliumD3D11DescribedObject<Base, Desc, Object>(device, object, desc), resource(resource)
+	{
+		resource->AddRef();
+	}
+
+	~GalliumD3D11View()
+	{
+		resource->Release();
+	}
+
+	virtual void STDMETHODCALLTYPE GetResource(ID3D11Resource** ppResource)
+	{
+		resource->AddRef();
+		*ppResource = resource;
+	}
+};
+
+typedef GalliumD3D11View<ID3D11DepthStencilView, D3D11_DEPTH_STENCIL_VIEW_DESC, struct pipe_surface> GalliumD3D11DepthStencilView;
+typedef GalliumD3D11View<ID3D11RenderTargetView, D3D11_RENDER_TARGET_VIEW_DESC, struct pipe_surface> GalliumD3D11RenderTargetView;
+
+#if API >= 11
+typedef GalliumD3D11View<ID3D11ShaderResourceView, D3D11_SHADER_RESOURCE_VIEW_DESC, struct pipe_sampler_view> GalliumD3D11ShaderResourceView;
+#else
+typedef GalliumD3D10View<ID3D10ShaderResourceView1, D3D10_SHADER_RESOURCE_VIEW_DESC1, struct pipe_sampler_view> GalliumD3D10ShaderResourceViewBase;
+
+struct GalliumD3D10ShaderResourceView : public GalliumD3D10ShaderResourceViewBase
+{
+	GalliumD3D10ShaderResourceView(GalliumD3D10Screen* device, GalliumD3D10Resource<>* resource, struct pipe_sampler_view* view, const D3D10_SHADER_RESOURCE_VIEW_DESC1& desc)
+	: GalliumD3D10ShaderResourceViewBase(device, resource, view, desc)
+	{}
+
+	virtual void STDMETHODCALLTYPE GetDesc1(D3D10_SHADER_RESOURCE_VIEW_DESC1 *pDesc)
+	{
+		memcpy(pDesc, &desc, sizeof(*pDesc));
+	}
+
+	virtual void STDMETHODCALLTYPE GetDesc(D3D10_SHADER_RESOURCE_VIEW_DESC *pDesc)
+	{
+		memcpy(pDesc, &desc, sizeof(*pDesc));
+	}
+};
+#endif
+
+template<typename Base = ID3D11Asynchronous>
+struct GalliumD3D11Asynchronous : public GalliumD3D11DeviceChild<Base>
+{
+	struct pipe_query* query;
+	unsigned data_size;
+
+	GalliumD3D11Asynchronous(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size)
+	: GalliumD3D11DeviceChild<Base>(device), query(query), data_size(data_size)
+	{}
+
+	~GalliumD3D11Asynchronous()
+	{
+		this->device->immediate_pipe->destroy_query(this->device->immediate_pipe, query);
+	}
+
+	virtual unsigned STDMETHODCALLTYPE GetDataSize()
+	{
+		return data_size;
+	}
+
+#if API < 11
+	virtual void STDMETHODCALLTYPE Begin()
+	{
+		this->device->Begin(this);
+	}
+
+	virtual void STDMETHODCALLTYPE End()
+	{
+		this->device->End(this);
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE GetData(
+		__out_bcount(DataSize)  void *pData,
+	        __in  unsigned DataSize,
+	        __in  unsigned GetDataFlags)
+	{
+		return this->device->GetData(this, pData, DataSize, GetDataFlags);
+	}
+#endif
+};
+
+template<typename Base = ID3D11Asynchronous>
+struct GalliumD3D11QueryOrPredicate : public GalliumD3D11Asynchronous<Base>
+{
+	D3D11_QUERY_DESC desc;
+	GalliumD3D11QueryOrPredicate(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_QUERY_DESC& desc)
+	: GalliumD3D11Asynchronous<Base>(device, query, data_size), desc(desc)
+	{}
+
+	virtual void STDMETHODCALLTYPE GetDesc(
+		__out  D3D11_QUERY_DESC *pDesc)
+	{
+		*pDesc = desc;
+	}
+};
+
+struct GalliumD3D11Query : public GalliumD3D11QueryOrPredicate<ID3D11Query>
+{
+	GalliumD3D11Query(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_QUERY_DESC& desc)
+	: GalliumD3D11QueryOrPredicate(device, query, data_size, desc)
+	{}
+};
+
+struct GalliumD3D11Predicate : public GalliumD3D11QueryOrPredicate<ID3D11Predicate>
+{
+	GalliumD3D11Predicate(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_QUERY_DESC& desc)
+	: GalliumD3D11QueryOrPredicate(device, query, data_size, desc)
+	{}
+
+	~GalliumD3D11Predicate()
+	{
+		DX10_ONLY(device->UnbindPredicate(this));
+	}
+};
+
+struct GalliumD3D11Counter : public GalliumD3D11Asynchronous<ID3D11Counter>
+{
+	D3D11_COUNTER_DESC desc;
+	GalliumD3D11Counter(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_COUNTER_DESC& desc)
+	: GalliumD3D11Asynchronous(device, query, data_size), desc(desc)
+	{}
+
+	virtual void STDMETHODCALLTYPE GetDesc(
+		__out  D3D11_COUNTER_DESC *pDesc)
+	{
+		*pDesc = desc;
+	}
+};

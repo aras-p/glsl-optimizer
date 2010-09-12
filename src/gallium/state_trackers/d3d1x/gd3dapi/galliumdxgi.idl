@@ -1,0 +1,77 @@
+/**************************************************************************
+ *
+ * Copyright 2010 Luca Barbieri
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+/* Header for the Gallium extensions to DXGI */
+
+import "galliumcom.idl";
+import "../d3dapi/dxgi.idl";
+
+/* These calls set the display system that will be associated
+ * to new DXGI factories created with CreateDXGIFactory and
+ * CreateDXGIFactory1 by the current thread.
+ *
+ * Existing factories and DXGI objects created from them are
+ * not affected.
+ *
+ * Gallium DXGI has both per-thread and per-process settings.
+ * If the per-thread display system has been set (i.e. a function
+ * of these was called, and the last one called was not UseNothing),
+ * it will be used.
+ * Otherwise, the per-process display system will be used if set, or
+ * and other the factory creation call may either fail, or use an
+ * user-specified default..
+ *
+ * The per-process setting can be altered by calling
+ * GalliumDXGIMakeDefault, which will set the per-process setting
+ * according to the current per-thread setting.
+ *
+ * GalliumDXGIUseNothing() is the initial state, which means that
+ * the per-process default should be used, and if that is "use nothing"
+ * too, the call will either fail or use a user-specified default.
+ *
+ * NOTE that setting the per-process default is NOT atomic and must
+ * not be done concurrently with other calls to GalliumDXGIMakeDefault,
+ * CreateDXGIFactory or CreateDXGIFactory1.
+ *
+ * The PFNHWNDRESOLVER function is passed HWNDs coming from
+ * the API user and must return window-system-specific values:
+ * - X11: Window*
+ * - GDI: HWND
+ */
+
+typedef struct _XDisplay Display;
+typedef void* (*PFNHWNDRESOLVER)(void*, HWND);
+
+void GalliumDXGIUseNothing();
+
+/* only a subset of these may be available, depending on platform and compilation options */
+void GalliumDXGIUseX11Display(Display* dpy, PFNHWNDRESOLVER resolver, void* resolver_cookie);
+void GalliumDXGIUseDRMCard(int fd);
+void GalliumDXGIUseFBDev(int fd);
+void GalliumDXGIUseHDC(HDC hdc, PFNHWNDRESOLVER resolver, void* resolver_cookie);
+
+void GalliumDXGIMakeDefault();
+

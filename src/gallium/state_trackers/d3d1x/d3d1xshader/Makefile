@@ -1,0 +1,7 @@
+LIBNAME=d3d1xshader
+CPP_SOURCES=$(wildcard src/*.cpp)
+LIBRARY_INCLUDES=-Iinclude -I../w32api -I../d3dapi
+PROGS=tools/fxdis
+LIBS=libd3d1xshader.a
+
+include ../Makefile.inc
