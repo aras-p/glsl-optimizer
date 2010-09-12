@@ -58,7 +58,9 @@ lp_scene_create( struct pipe_context *pipe )
       return NULL;
 
    scene->pipe = pipe;
-   scene->data.head = &scene->data.first;
+
+   scene->data.head =
+      CALLOC_STRUCT(data_block);
 
    pipe_mutex_init(scene->mutex);
 
@@ -73,7 +75,8 @@ void
 lp_scene_destroy(struct lp_scene *scene)
 {
    pipe_mutex_destroy(scene->mutex);
-   assert(scene->data.head == &scene->data.first);
+   assert(scene->data.head->next == NULL);
+   FREE(scene->data.head);
    FREE(scene);
 }
 
@@ -240,14 +243,13 @@ lp_scene_end_rasterization(struct lp_scene *scene )
       struct data_block_list *list = &scene->data;
       struct data_block *block, *tmp;
 
-      for (block = list->head; block; block = tmp) {
+      for (block = list->head->next; block; block = tmp) {
          tmp = block->next;
-         if (block != &list->first)
-            FREE(block);
+	 FREE(block);
       }
 
-      list->head = &list->first;
       list->head->next = NULL;
+      list->head->used = 0;
    }
 
    lp_fence_reference(&scene->fence, NULL);
