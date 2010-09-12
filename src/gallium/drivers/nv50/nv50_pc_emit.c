@@ -696,7 +696,9 @@ emit_add_b32(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_add_a16(struct nv_pc *pc, struct nv_instruction *i)
 {
-   pc->emit[0] = 0xd0000001 | (get_immd_u32(i->src[0]) << 9);
+   int s = (i->opcode == NV_OP_MOV) ? 0 : 1;
+
+   pc->emit[0] = 0xd0000001 | ((uint16_t)get_immd_u32(i->src[s]) << 9);
    pc->emit[1] = 0x20000000;
 
    pc->emit[0] |= (DREG(i->def[0])->id + 1) << 2;
@@ -704,7 +706,7 @@ emit_add_a16(struct nv_pc *pc, struct nv_instruction *i)
    set_pred(pc, i);
 
    if (i->src[1])
-      set_a16_bits(pc, SREG(i->src[1])->id);
+      set_a16_bits(pc, SREG(i->src[1])->id + 1);
 }
 
 static void

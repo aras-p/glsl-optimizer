@@ -665,6 +665,7 @@ bld_get_address(struct bld_context *bld, int id, struct nv_value *indirect)
 {
    int i;
    struct nv_instruction *nvi;
+   struct nv_value *val;
 
    for (i = 0; i < 4; ++i) {
       if (!bld->saved_addr[i][0])
@@ -677,7 +678,13 @@ bld_get_address(struct bld_context *bld, int id, struct nv_value *indirect)
    }
    i &= 3;
 
-   bld->saved_addr[i][0] = bld_load_imm_u32(bld, id);
+   val = bld_imm_u32(bld, id);
+   if (indirect)
+      val = bld_insn_2(bld, NV_OP_ADD, indirect, val);
+   else
+      val = bld_insn_1(bld, NV_OP_MOV, val);
+
+   bld->saved_addr[i][0] = val;
    bld->saved_addr[i][0]->reg.file = NV_FILE_ADDR;
    bld->saved_addr[i][0]->reg.type = NV_TYPE_U16;
    bld->saved_addr[i][1] = indirect;
