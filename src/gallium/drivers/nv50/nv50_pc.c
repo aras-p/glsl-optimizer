@@ -170,6 +170,27 @@ nv50_supported_src_mods(uint opcode, int s)
    }
 }
 
+/* We may want an opcode table. */
+boolean
+nv50_op_can_write_flags(uint opcode)
+{
+   if (nv_is_vector_op(opcode))
+      return FALSE;
+   switch (opcode) { /* obvious ones like KIL, CALL, etc. not included */
+   case NV_OP_PHI:
+   case NV_OP_MOV:
+   case NV_OP_LINTERP:
+   case NV_OP_PINTERP:
+   case NV_OP_LDA:
+      return FALSE;
+   default:
+      break;
+   }
+   if (opcode >= NV_OP_RCP && opcode <= NV_OP_PREEX2)
+      return FALSE;
+   return TRUE;
+}
+
 int
 nv_nvi_refcount(struct nv_instruction *nvi)
 {

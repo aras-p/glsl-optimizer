@@ -700,19 +700,15 @@ bld_predicate(struct bld_context *bld, struct nv_value *src, boolean bool_only)
       while (nvi->opcode == NV_OP_ABS || nvi->opcode == NV_OP_NEG ||
              nvi->opcode == NV_OP_CVT) {
          s0i = nvi->src[0]->value->insn;
-         if (!s0i ||
-             s0i->opcode == NV_OP_LDA ||
-             s0i->opcode == NV_OP_MOV ||
-             s0i->opcode == NV_OP_PHI)
+         if (!s0i || !nv50_op_can_write_flags(s0i->opcode))
             break;
          nvi = s0i;
          assert(!nvi->flags_src);
       }
    }
 
-   if (nvi->opcode == NV_OP_LDA ||
-       nvi->opcode == NV_OP_MOV ||
-       nvi->opcode == NV_OP_PHI || nvi->bb != bld->pc->current_block) {
+   if (!nv50_op_can_write_flags(nvi->opcode) ||
+       nvi->bb != bld->pc->current_block) {
       nvi = new_instruction(bld->pc, NV_OP_CVT);
       nv_reference(bld->pc, &nvi->src[0], src);
    }
