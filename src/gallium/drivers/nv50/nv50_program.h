@@ -27,7 +27,7 @@
 #include "tgsi/tgsi_scan.h"
 #include "nouveau/nouveau_class.h"
 
-#define NV50_CAP_MAX_PROGRAM_TEMPS (128 / 4)
+#define NV50_CAP_MAX_PROGRAM_TEMPS 64
 
 struct nv50_varying {
    uint8_t id; /* tgsi index */
