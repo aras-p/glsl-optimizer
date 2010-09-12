@@ -562,6 +562,11 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
       nvi->src[0] = nvi->src[2];
       nvi->src[2] = NULL;
       nvi->opcode = NV_OP_ADD;
+
+      if (val->reg.imm.u32 == 0) {
+         nvi->src[1] = NULL;
+         nvi->opcode = NV_OP_MOV;
+      }
    }
 }
 
@@ -701,6 +706,10 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
       if (SRC_IS_MUL(src1) && src1->refc == 1)
          src = src1;
       else
+         continue;
+
+      /* could have an immediate from above constant_*  */
+      if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
          continue;
 
       nvi->opcode = NV_OP_MAD;
