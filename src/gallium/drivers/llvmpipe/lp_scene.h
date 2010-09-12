@@ -50,7 +50,7 @@ struct lp_scene_queue;
 
 
 #define CMD_BLOCK_MAX 128
-#define DATA_BLOCK_SIZE (64 * 1024 - 2 * sizeof(void *))
+#define DATA_BLOCK_SIZE (64 * 1024)
 
 /* Scene temporary storage is clamped to this size:
  */
@@ -207,7 +207,7 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
    assert(block != NULL);
 
    if (LP_DEBUG & DEBUG_MEM)
-      debug_printf("alloc %u block %u/%lu tot %u/%u\n",
+      debug_printf("alloc %u block %u/%u tot %u/%u\n",
 		   size, block->used, DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
 
@@ -240,7 +240,7 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
    assert(block != NULL);
 
    if (LP_DEBUG & DEBUG_MEM)
-      debug_printf("alloc %u block %u/%lu tot %u/%u\n",
+      debug_printf("alloc %u block %u/%u tot %u/%u\n",
 		   size + alignment - 1,
 		   block->used, DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
