@@ -57,6 +57,7 @@ nv50_indirect_opnd(struct nv_instruction *i)
    switch (i->opcode) {
    case NV_OP_MOV:
    case NV_OP_LDA:
+   case NV_OP_STA:
       return 0;
    default:
       return 1;
@@ -341,7 +342,7 @@ nv_print_program(struct nv_pc *pc)
          nv_print_function(pc->root[i]);
 }
 
-#ifdef NV50_PC_DEBUG
+#ifdef NV50PC_DEBUG
 static void
 nv_do_print_cfgraph(struct nv_pc *pc, FILE *f, struct nv_basic_block *b)
 {

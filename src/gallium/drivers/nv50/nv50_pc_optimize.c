@@ -327,7 +327,8 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
 
       /* cannot write to $oX when using immediate */
       for (j = 0; j < 4 && nvi->src[j]; ++j)
-         if (nvi->src[j]->value->reg.file == NV_FILE_IMM)
+         if (nvi->src[j]->value->reg.file == NV_FILE_IMM ||
+             nvi->src[j]->value->reg.file == NV_FILE_MEM_L)
             break;
       if (j < 4 && nvi->src[j])
          continue;

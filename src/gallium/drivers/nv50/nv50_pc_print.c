@@ -220,7 +220,7 @@ nv_print_value(struct nv_value *value, struct nv_value *ind, ubyte type)
       PRINT(" %s%cc%i", mgta, reg_pfx, nv_value_id(value));
       break;
    case NV_FILE_MEM_L:
-      nv_print_address('l', -1, ind, 4 * nv_value_id(value));
+      nv_print_address('l', -1, ind, nv_value_id(value));
       break;
    case NV_FILE_MEM_S:
       nv_print_address('s', -1, ind, 4 * nv_value_id(value));
