@@ -405,10 +405,13 @@ nv_print_cfgraph(struct nv_pc *pc, const char *filepath, int subr)
 static INLINE void
 nvcg_show_bincode(struct nv_pc *pc)
 {
-   int i;
+   unsigned i;
 
-   for (i = 0; i < pc->bin_size / 4; ++i)
+   for (i = 0; i < pc->bin_size / 4; ++i) {
       debug_printf("0x%08x ", pc->emit[i]);
+      if ((i % 16) == 15)
+         debug_printf("\n");
+   }
    debug_printf("\n");
 }
 
