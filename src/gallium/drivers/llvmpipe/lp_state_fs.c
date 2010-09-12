@@ -850,8 +850,14 @@ generate_variant(struct llvmpipe_context *lp,
       lp_debug_fs_variant(variant);
    }
 
-   generate_fragment(lp, shader, variant, RAST_WHOLE);
    generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
+
+   if (variant->opaque) {
+      /* Specialized shader, which doesn't need to read the color buffer. */
+      generate_fragment(lp, shader, variant, RAST_WHOLE);
+   } else {
+      variant->jit_function[RAST_WHOLE] = variant->jit_function[RAST_EDGE_TEST];
+   }
 
    return variant;
 }
