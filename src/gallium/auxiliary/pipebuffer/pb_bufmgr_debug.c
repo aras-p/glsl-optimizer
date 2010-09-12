@@ -158,7 +158,7 @@ pb_debug_buffer_fill(struct pb_debug_buffer *buf)
 {
    uint8_t *map;
    
-   map = pb_map(buf->buffer, PB_USAGE_CPU_WRITE);
+   map = pb_map(buf->buffer, PB_USAGE_CPU_WRITE, NULL);
    assert(map);
    if(map) {
       fill_random_pattern(map, buf->underflow_size);

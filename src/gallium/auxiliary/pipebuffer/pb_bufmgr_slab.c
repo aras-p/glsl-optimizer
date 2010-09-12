@@ -227,9 +227,12 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 pb_slab_buffer_map(struct pb_buffer *_buf, 
-                   unsigned flags)
+                   unsigned flags,
+                   void *flush_ctx)
 {
    struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+
+   /* XXX: it will be necessary to remap here to propagate flush_ctx */
 
    ++buf->mapCount;
    return (void *) ((uint8_t *) buf->slab->virtual + buf->start);
