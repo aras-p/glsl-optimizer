@@ -214,6 +214,7 @@ static INLINE void
 bld_warn_uninitialized(struct bld_context *bld, int kind,
                        struct bld_value_stack *stk, struct nv_basic_block *b)
 {
+#ifdef NV50_TGSI2NC_DEBUG
    long i = (stk - &bld->tvs[0][0]) / 4;
    long c = (stk - &bld->tvs[0][0]) & 3;
 
@@ -222,6 +223,7 @@ bld_warn_uninitialized(struct bld_context *bld, int kind,
 
    debug_printf("WARNING: TEMP[%li].%c %s used uninitialized in BB:%i\n",
                 i, (int)('x' + c), kind ? "may be" : "is", b->id);
+#endif
 }
 
 static INLINE struct nv_value *
@@ -646,7 +648,10 @@ bld_pow(struct bld_context *bld, struct nv_value *x, struct nv_value *e)
 static INLINE struct nv_value *
 bld_load_imm_f32(struct bld_context *bld, float f)
 {
-   return bld_insn_1(bld, NV_OP_MOV, bld_imm_f32(bld, f));
+   struct nv_value *imm = bld_insn_1(bld, NV_OP_MOV, bld_imm_f32(bld, f));
+
+   SET_TYPE(imm, NV_TYPE_F32);
+   return imm;
 }
 
 static INLINE struct nv_value *
@@ -944,6 +949,8 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
 
    switch (reg->Register.File) {
    case TGSI_FILE_OUTPUT:
+      if (!value->insn && (bld->ti->output_file == NV_FILE_OUT))
+         value = bld_insn_1(bld, NV_OP_MOV, value);
       value = bld_insn_1(bld, NV_OP_MOV, value);
       value->reg.file = bld->ti->output_file;
 
@@ -956,9 +963,9 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
       break;
    case TGSI_FILE_TEMPORARY:
       assert(reg->Register.Index < BLD_MAX_TEMPS);
-      value->reg.file = NV_FILE_GPR;
-      if (value->insn->bb != bld->pc->current_block)
+      if (!value->insn || (value->insn->bb != bld->pc->current_block))
          value = bld_insn_1(bld, NV_OP_MOV, value);
+      value->reg.file = NV_FILE_GPR;
 
       if (bld->ti->store_to_memory)
          bld_lmem_store(bld, ptr, reg->Register.Index * 4 + chan, value);
@@ -1616,6 +1623,23 @@ bld_instruction(struct bld_context *bld,
       if (insn->Dst[0].Register.WriteMask & 8)
          dst0[3] = emit_fetch(bld, insn, 1, 3);
       break;
+   case TGSI_OPCODE_EXP:
+      src0 = emit_fetch(bld, insn, 0, 0);
+      temp = bld_insn_1(bld, NV_OP_FLOOR, src0);
+
+      if (insn->Dst[0].Register.WriteMask & 2)
+         dst0[1] = bld_insn_2(bld, NV_OP_SUB, src0, temp);
+      if (insn->Dst[0].Register.WriteMask & 1) {
+         temp = bld_insn_1(bld, NV_OP_PREEX2, temp);
+         dst0[0] = bld_insn_1(bld, NV_OP_EX2, temp);
+      }
+      if (insn->Dst[0].Register.WriteMask & 4) {
+         temp = bld_insn_1(bld, NV_OP_PREEX2, src0);
+         dst0[2] = bld_insn_1(bld, NV_OP_EX2, temp);
+      }
+      if (insn->Dst[0].Register.WriteMask & 8)
+         dst0[3] = bld_imm_f32(bld, 1.0f);
+      break;
    case TGSI_OPCODE_EX2:
       src0 = emit_fetch(bld, insn, 0, 0);
       temp = bld_insn_1(bld, NV_OP_PREEX2, src0);
@@ -1797,6 +1821,24 @@ bld_instruction(struct bld_context *bld,
       temp = bld_pow(bld, src0, src1);
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
          dst0[c] = temp;
+      break;
+   case TGSI_OPCODE_LOG:
+      src0 = emit_fetch(bld, insn, 0, 0);
+      src0 = bld_insn_1(bld, NV_OP_ABS, src0);
+      temp = bld_insn_1(bld, NV_OP_LG2, src0);
+      dst0[2] = temp;
+      if (insn->Dst[0].Register.WriteMask & 3) {
+         temp = bld_insn_1(bld, NV_OP_FLOOR, temp);
+         dst0[0] = temp;
+      }
+      if (insn->Dst[0].Register.WriteMask & 2) {
+         temp = bld_insn_1(bld, NV_OP_PREEX2, temp);
+         temp = bld_insn_1(bld, NV_OP_EX2, temp);
+         temp = bld_insn_1(bld, NV_OP_RCP, temp);
+         dst0[1] = bld_insn_2(bld, NV_OP_MUL, src0, temp);
+      }
+      if (insn->Dst[0].Register.WriteMask & 8)
+         dst0[3] = bld_imm_f32(bld, 1.0f);
       break;
    case TGSI_OPCODE_RCP:
    case TGSI_OPCODE_LG2:

@@ -322,6 +322,8 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
          continue;
       assert(nvi->def[0] == sti->src[0]->value);
 
+      if (nvi->opcode == NV_OP_SELECT)
+         continue;
       if (nvi->def[0]->refc > 1)
          continue;
 
