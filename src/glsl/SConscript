@@ -73,6 +73,7 @@ sources = [
     'loop_controls.cpp',
     'loop_unroll.cpp',
     'lower_noise.cpp',
+    'opt_redundant_jumps.cpp',
     's_expression.cpp',
 ]
 

@@ -716,6 +716,8 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
 
+   progress = optimize_redundant_jumps(ir) || progress;
+
    loop_state *ls = analyze_loop_variables(ir);
    progress = set_loop_controls(ir, ls) || progress;
    progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
