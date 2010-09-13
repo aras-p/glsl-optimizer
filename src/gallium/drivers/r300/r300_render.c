@@ -754,11 +754,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     r300->draw_vbo_locked = TRUE;
     draw_vbo(r300->draw, info);
-    r300->draw_vbo_locked = FALSE;
-
-    /* XXX Not sure whether this is the best fix.
-     * It prevents CS from being rejected and weird assertion failures. */
     draw_flush(r300->draw);
+    r300->draw_vbo_locked = FALSE;
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         if (r300->vertex_buffer[i].buffer) {
