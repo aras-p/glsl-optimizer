@@ -449,9 +449,9 @@ floor_pot(uint32_t n)
 {
    assert(n);
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
-   asm("bsr %1,%0"
-       : "=r" (n)
-       : "rm" (n));
+   __asm__("bsr %1,%0"
+          : "=r" (n)
+          : "rm" (n));
    return 1 << n;
 #else
    n |= (n >>  1);
