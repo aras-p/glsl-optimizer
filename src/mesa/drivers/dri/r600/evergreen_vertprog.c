@@ -697,7 +697,7 @@ GLboolean evergreenSetupVPconstants(GLcontext * ctx)
         radeonAllocDmaRegion(&context->radeon, 
                              &context->vp_Constbo, 
                              &context->vp_bo_offset, 
-                             256, 
+                             unNumParamData * 4 * 4, 
                              256);        
         r600EmitShaderConsts(ctx,
                              context->vp_Constbo,
