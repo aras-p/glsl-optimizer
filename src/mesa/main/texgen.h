@@ -35,11 +35,6 @@ struct _glapi_table;
 
 #if FEATURE_texgen
 
-#define _MESA_INIT_TEXGEN_FUNCTIONS(driver, impl) \
-   do {                                           \
-      (driver)->TexGen = impl ## TexGen;          \
-   } while (0)
-
 extern void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
 
@@ -67,8 +62,6 @@ _es_TexGenfv(GLenum coord, GLenum pname, const GLfloat *params);
 
 
 #else /* FEATURE_texgen */
-
-#define _MESA_INIT_TEXGEN_FUNCTIONS(driver, impl) do { } while (0)
 
 static void
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )

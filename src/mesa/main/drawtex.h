@@ -30,11 +30,6 @@
 
 #if FEATURE_OES_draw_texture
 
-#define _MESA_INIT_DRAWTEX_FUNCTIONS(driver, impl) \
-   do {                                            \
-      (driver)->DrawTex = impl ## DrawTex;         \
-   } while (0)
-
 extern void GLAPIENTRY
 _mesa_DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
 
@@ -58,10 +53,6 @@ _mesa_DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
 
 extern void GLAPIENTRY
 _mesa_DrawTexxv(const GLfixed *coords);
-
-#else /* FEATURE_OES_draw_texture */
-
-#define _MESA_INIT_DRAWTEX_FUNCTIONS(driver, impl) do { } while (0)
 
 #endif /* FEATURE_OES_draw_texture */
 

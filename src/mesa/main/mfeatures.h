@@ -42,9 +42,6 @@
 /**
  * A feature can be anything.  But most of them share certain characteristics.
  *
- * When a feature defines driver entries, they can be initialized by
- *   _MESA_INIT_<FEATURE>_FUNCTIONS
- *
  * When a feature defines vtxfmt entries, they can be initialized and
  * installed by
  *   _MESA_INIT_<FEATURE>_VTXFMT

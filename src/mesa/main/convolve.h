@@ -33,12 +33,6 @@
 
 #if FEATURE_convolve
 
-#define _MESA_INIT_CONVOLVE_FUNCTIONS(driver, impl)                        \
-   do {                                                                    \
-      (driver)->CopyConvolutionFilter1D = impl ## CopyConvolutionFilter1D; \
-      (driver)->CopyConvolutionFilter2D = impl ## CopyConvolutionFilter2D; \
-   } while (0)
-
 extern void GLAPIENTRY
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width,
                           GLenum format, GLenum type, const GLvoid *image);
@@ -71,8 +65,6 @@ _mesa_init_convolve_dispatch(struct _glapi_table *disp);
 #else /* FEATURE_convolve */
 
 #include "main/compiler.h"
-
-#define _MESA_INIT_CONVOLVE_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void GLAPIENTRY
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width,

@@ -38,16 +38,6 @@
 
 #if FEATURE_dlist
 
-#define _MESA_INIT_DLIST_FUNCTIONS(driver, impl)               \
-   do {                                                        \
-      (driver)->NewList           = impl ## NewList;           \
-      (driver)->EndList           = impl ## EndList;           \
-      (driver)->BeginCallList     = impl ## BeginCallList;     \
-      (driver)->EndCallList       = impl ## EndCallList;       \
-      (driver)->SaveFlushVertices = impl ## SaveFlushVertices; \
-      (driver)->NotifySaveBegin   = impl ## NotifyBegin;       \
-   } while (0)
-
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl)  \
    do {                                      \
       (vfmt)->CallList  = impl ## CallList;  \
@@ -83,7 +73,6 @@ extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
 
 #include "main/compiler.h"
 
-#define _MESA_INIT_DLIST_FUNCTIONS(driver, impl) do { } while (0)
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
 
 static INLINE void
