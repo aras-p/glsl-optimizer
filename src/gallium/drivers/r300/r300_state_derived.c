@@ -477,6 +477,15 @@ static void r300_update_rs_block(struct r300_context *r300)
         }
     }
 
+    if (DBG_ON(r300, DBG_RS)) {
+        for (; i < ATTR_GENERIC_COUNT; i++) {
+            if (fs_inputs->generic[i] != ATTR_UNUSED) {
+                DBG(r300, DBG_RS,
+                    "r300: FS input generic %i unassigned.\n", i);
+            }
+        }
+    }
+
     /* Rasterize fog coordinates. */
     if (vs_outputs->fog != ATTR_UNUSED && tex_count < 8) {
         /* Set up the fog coordinates in VAP. */
