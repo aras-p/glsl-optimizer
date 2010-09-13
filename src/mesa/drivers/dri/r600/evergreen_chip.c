@@ -146,7 +146,6 @@ static void evergreenSendTexState(GLcontext *ctx, struct radeon_state_atom *atom
 				}
 				if (bo) 
                 {                    
-                    radeon_bo_unmap(bo);                    
 
 					r700SyncSurf(context, bo,
 						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
