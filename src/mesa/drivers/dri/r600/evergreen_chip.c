@@ -1502,13 +1502,6 @@ static void evergreenSendVGT(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 }
 
-static void evergreenSendTIMESTAMP(GLcontext *ctx, struct radeon_state_atom *atom)
-{
-    context_t *context = EVERGREEN_CONTEXT(ctx);	
-	BATCH_LOCALS(&context->radeon);
-	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
-}
-
 void evergreenInitAtoms(context_t *context)
 {        
     radeon_print(RADEON_STATE, RADEON_NORMAL, "%s %p\n", __func__, context);
@@ -1532,7 +1525,6 @@ void evergreenInitAtoms(context_t *context)
     EVERGREEN_ALLOC_STATE(db,        always,        65,  evergreenSendDB); 
     EVERGREEN_ALLOC_STATE(cb,        always,        33,  evergreenSendCB);	
     EVERGREEN_ALLOC_STATE(vgt,       always,        29,  evergreenSendVGT);
-    EVERGREEN_ALLOC_STATE(timestamp, always,        3,   evergreenSendTIMESTAMP);
 
     evergreen_init_query_stateobj(&context->radeon, 6 * 2);
 
