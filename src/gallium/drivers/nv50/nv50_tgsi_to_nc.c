@@ -1269,10 +1269,14 @@ get_tex_dim(const struct tgsi_full_instruction *insn, int *dim, int *arg)
 
 static void
 load_proj_tex_coords(struct bld_context *bld,
-                     struct nv_value *t[4], int dim,
+                     struct nv_value *t[4], int dim, int arg,
                      const struct tgsi_full_instruction *insn)
 {
-   int c, mask = 0;
+   int c, mask;
+
+   mask = (1 << dim) - 1;
+   if (arg != dim)
+      mask |= 4; /* depth comparison value */
 
    t[3] = emit_fetch(bld, insn, 0, 3);
 
@@ -1284,17 +1288,19 @@ load_proj_tex_coords(struct bld_context *bld,
 
    t[3] = bld_insn_1(bld, NV_OP_RCP, t[3]);
 
-   for (c = 0; c < dim; ++c) {
+   for (c = 0; c < 4; ++c) {
+      if (!(mask & (1 << c)))
+         continue;
       t[c] = emit_fetch(bld, insn, 0, c);
 
-      if (t[c]->insn->opcode == NV_OP_LINTERP ||
-          t[c]->insn->opcode == NV_OP_PINTERP) {
-         t[c] = bld_duplicate_insn(bld, t[c]->insn);
-         t[c]->insn->opcode = NV_OP_PINTERP;
-         nv_reference(bld->pc, &t[c]->insn->src[1], t[3]);
-      } else {
-         mask |= 1 << c;
-      }
+      if (t[c]->insn->opcode != NV_OP_LINTERP &&
+          t[c]->insn->opcode != NV_OP_PINTERP)
+         continue;
+      t[c] = bld_duplicate_insn(bld, t[c]->insn);
+      t[c]->insn->opcode = NV_OP_PINTERP;
+      nv_reference(bld->pc, &t[c]->insn->src[1], t[3]);
+
+      mask &= ~(1 << c);
    }
 
    for (c = 0; mask; ++c, mask >>= 1) {
@@ -1467,10 +1473,13 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
    get_tex_dim(insn, &dim, &arg);
 
    if (!cube && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
-      load_proj_tex_coords(bld, t, dim, insn);
-   else
+      load_proj_tex_coords(bld, t, dim, arg, insn);
+   else {
       for (c = 0; c < dim; ++c)
          t[c] = emit_fetch(bld, insn, 0, c);
+      if (arg != dim)
+         t[dim] = emit_fetch(bld, insn, 0, 2);
+   }
 
    if (cube) {
       assert(dim >= 3);
@@ -1484,9 +1493,6 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
       for (c = 0; c < 3; ++c)
          t[c] = bld_insn_2(bld, NV_OP_MUL, t[c], s[0]);
    }
-
-   if (arg != dim)
-      t[dim] = emit_fetch(bld, insn, 0, 2);
 
    if (opcode == NV_OP_TXB || opcode == NV_OP_TXL) {
       t[arg++] = emit_fetch(bld, insn, 0, 3);
