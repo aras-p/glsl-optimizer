@@ -40,9 +40,7 @@
 #include "program/program.h"
 #include "dlist.h"
 #include "shaderobj.h"
-#if FEATURE_ARB_sync
 #include "syncobj.h"
-#endif
 
 /**
  * Allocate and initialize a shared context state structure.
@@ -122,9 +120,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->RenderBuffers = _mesa_NewHashTable();
 #endif
 
-#if FEATURE_ARB_sync
    make_empty_list(& shared->SyncObjects);
-#endif
 
    return shared;
 }
@@ -337,7 +333,6 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 #endif
 
-#if FEATURE_ARB_sync
    {
       struct simple_node *node;
       struct simple_node *temp;
@@ -346,7 +341,6 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 	 _mesa_unref_sync_object(ctx, (struct gl_sync_object *) node);
       }
    }
-#endif
 
    /*
     * Free texture objects (after FBOs since some textures might have

@@ -111,9 +111,7 @@
 #include "points.h"
 #include "polygon.h"
 #include "queryobj.h"
-#if FEATURE_ARB_sync
 #include "syncobj.h"
-#endif
 #include "rastpos.h"
 #include "remap.h"
 #include "scissor.h"
@@ -737,9 +735,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
    _mesa_init_queryobj( ctx );
-#if FEATURE_ARB_sync
    _mesa_init_sync( ctx );
-#endif
    _mesa_init_rastpos( ctx );
    _mesa_init_scissor( ctx );
    _mesa_init_shader_state( ctx );
@@ -1100,9 +1096,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
    _mesa_free_queryobj_data(ctx);
-#if FEATURE_ARB_sync
    _mesa_free_sync_data(ctx);
-#endif
    _mesa_free_varray_data(ctx);
    _mesa_free_transform_feedback(ctx);
 
