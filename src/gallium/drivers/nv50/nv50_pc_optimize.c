@@ -732,7 +732,7 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
 
 struct load_record {
    struct load_record *next;
-   uint64_t data;
+   uint64_t data[2];
    struct nv_value *value;
 };
 
@@ -757,7 +757,7 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
 {
    struct load_record **rec, *it;
    struct nv_instruction *ld, *next;
-   uint64_t data;
+   uint64_t data[2];
    struct nv_value *val;
    int j;
 
@@ -769,11 +769,13 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
       rec = NULL;
 
       if (ld->opcode == NV_OP_LINTERP || ld->opcode == NV_OP_PINTERP) {
-         data = val->reg.id;
+         data[0] = val->reg.id;
+         data[1] = 0;
          rec = &ctx->mem_v;
       } else
       if (ld->opcode == NV_OP_LDA) {
-         data = val->reg.id;
+         data[0] = val->reg.id;
+         data[1] = ld->src[4] ? ld->src[4]->value->n : ~0ULL;
          if (val->reg.file >= NV_FILE_MEM_C(0) &&
              val->reg.file <= NV_FILE_MEM_C(15))
             rec = &ctx->mem_c[val->reg.file - NV_FILE_MEM_C(0)];
@@ -785,7 +787,8 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
             rec = &ctx->mem_l;
       } else
       if ((ld->opcode == NV_OP_MOV) && (val->reg.file == NV_FILE_IMM)) {
-         data = val->reg.imm.u32;
+         data[0] = val->reg.imm.u32;
+         data[1] = 0;
          rec = &ctx->imm;
       }
 
@@ -793,7 +796,7 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
          continue;
 
       for (it = *rec; it; it = it->next)
-         if (it->data == data)
+         if (it->data[0] == data[0] && it->data[1] == data[1])
             break;
 
       if (it) {
@@ -807,7 +810,8 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
             continue;
          it = &ctx->pool[ctx->alloc++];
          it->next = *rec;
-         it->data = data;
+         it->data[0] = data[0];
+         it->data[1] = data[1];
          it->value = ld->def[0];
          *rec = it;
       }
