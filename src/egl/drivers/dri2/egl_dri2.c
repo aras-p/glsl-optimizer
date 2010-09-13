@@ -903,6 +903,7 @@ const int i965_chip_ids[] = {
    0x2e12, /* PCI_CHIP_Q45_G */
    0x2e22, /* PCI_CHIP_G45_G */
    0x2e32, /* PCI_CHIP_G41_G */
+   0xa011, /* Ironlake */
 };
 
 const struct dri2_driver_map driver_map[] = {
