@@ -847,7 +847,7 @@ void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(1 | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
     OUT_CS(r300->vertex_info.size |
             (r300->vertex_info.size << 8));
-    OUT_CS(r300->vbo_offset);
+    OUT_CS(r300->draw_vbo_offset);
     OUT_CS_BUF_RELOC(r300->vbo, 0, r300_buffer(r300->vbo)->domain, 0);
     END_CS;
 }

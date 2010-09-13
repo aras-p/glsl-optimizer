@@ -179,26 +179,20 @@ enum r300_prepare_flags {
 
 /**
  * Check if the requested number of dwords is available in the CS and
- * if not, flush. Then validate buffers and emit dirty state.
+ * if not, flush.
  * \param r300          The context.
  * \param flags         See r300_prepare_flags.
- * \param index_buffer  The index buffer to validate. The parameter may be NULL.
  * \param cs_dwords     The number of dwords to reserve in CS.
- * \param aos_offset    The offset passed to emit_aos.
- * \param index_bias    The index bias to emit.
+ * \return TRUE if the CS was flushed
  */
-static boolean r300_prepare_for_rendering(struct r300_context *r300,
-                                          enum r300_prepare_flags flags,
-                                          struct pipe_resource *index_buffer,
-                                          unsigned cs_dwords,
-                                          int aos_offset,
-                                          int index_bias)
+static boolean r300_reserve_cs_dwords(struct r300_context *r300,
+                                   enum r300_prepare_flags flags,
+                                   unsigned cs_dwords)
 {
     boolean flushed        = FALSE;
     boolean first_draw     = flags & PREP_FIRST_DRAW;
     boolean emit_aos       = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
-    boolean indexed        = flags & PREP_INDEXED;
     boolean hw_index_bias  = r500_index_bias_supported(r300);
 
     /* Add dirty state, index offset, and AOS. */
@@ -223,8 +217,32 @@ static boolean r300_prepare_for_rendering(struct r300_context *r300,
         flushed = TRUE;
     }
 
+    return flushed;
+}
+
+/**
+ * Validate buffers and emit dirty state.
+ * \param r300          The context.
+ * \param flags         See r300_prepare_flags.
+ * \param index_buffer  The index buffer to validate. The parameter may be NULL.
+ * \param aos_offset    The offset passed to emit_aos.
+ * \param index_bias    The index bias to emit.
+ * \return TRUE if rendering should be skipped
+ */
+static boolean r300_emit_states(struct r300_context *r300,
+                                enum r300_prepare_flags flags,
+                                struct pipe_resource *index_buffer,
+                                int aos_offset,
+                                int index_bias)
+{
+    boolean first_draw     = flags & PREP_FIRST_DRAW;
+    boolean emit_aos       = flags & PREP_EMIT_AOS;
+    boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean indexed        = flags & PREP_INDEXED;
+    boolean hw_index_bias  = r500_index_bias_supported(r300);
+
     /* Validate buffers and emit dirty state if needed. */
-    if (first_draw || flushed) {
+    if (first_draw) {
         if (!r300_emit_buffer_validate(r300, flags & PREP_VALIDATE_VBOS,
                                        index_buffer)) {
             fprintf(stderr, "r300: CS space validation failed. "
@@ -248,6 +266,30 @@ static boolean r300_prepare_for_rendering(struct r300_context *r300,
     }
 
     return TRUE;
+}
+
+/**
+ * Check if the requested number of dwords is available in the CS and
+ * if not, flush. Then validate buffers and emit dirty state.
+ * \param r300          The context.
+ * \param flags         See r300_prepare_flags.
+ * \param index_buffer  The index buffer to validate. The parameter may be NULL.
+ * \param cs_dwords     The number of dwords to reserve in CS.
+ * \param aos_offset    The offset passed to emit_aos.
+ * \param index_bias    The index bias to emit.
+ * \return TRUE if rendering should be skipped
+ */
+static boolean r300_prepare_for_rendering(struct r300_context *r300,
+                                          enum r300_prepare_flags flags,
+                                          struct pipe_resource *index_buffer,
+                                          unsigned cs_dwords,
+                                          int aos_offset,
+                                          int index_bias)
+{
+    if (r300_reserve_cs_dwords(r300, flags, cs_dwords))
+        flags |= PREP_FIRST_DRAW;
+
+    return r300_emit_states(r300, flags, index_buffer, aos_offset, index_bias);
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
@@ -675,7 +717,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     struct pipe_transfer *ib_transfer = NULL;
     unsigned count = info->count;
     int i;
-    void* indices = NULL;
+    void *indices = NULL;
+    boolean indexed = info->indexed && r300->index_buffer.buffer;
 
     if (r300->skip_rendering) {
         return;
@@ -687,6 +730,11 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     r300_update_derived_state(r300);
 
+    r300_reserve_cs_dwords(r300,
+            PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL |
+            (indexed ? PREP_INDEXED : 0),
+            indexed ? 256 : 6);
+
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         if (r300->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
@@ -697,14 +745,16 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         }
     }
 
-    if (info->indexed && r300->index_buffer.buffer) {
+    if (indexed) {
         indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
                                   PIPE_TRANSFER_READ, &ib_transfer);
     }
 
     draw_set_mapped_index_buffer(r300->draw, indices);
 
+    r300->draw_vbo_locked = TRUE;
     draw_vbo(r300->draw, info);
+    r300->draw_vbo_locked = FALSE;
 
     /* XXX Not sure whether this is the best fix.
      * It prevents CS from being rejected and weird assertion failures. */
@@ -718,7 +768,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         }
     }
 
-    if (ib_transfer) {
+    if (indexed) {
         pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
         draw_set_mapped_index_buffer(r300->draw, NULL);
     }
@@ -738,7 +788,6 @@ struct r300_render {
     unsigned hwprim;
 
     /* VBO */
-    size_t vbo_offset;
     size_t vbo_max_used;
     void * vbo_ptr;
 
@@ -769,18 +818,19 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
 
-    if (size + r300render->vbo_offset > r300->draw_vbo_size)
+    DBG(r300, DBG_DRAW, "r300: render_allocate_vertices (size: %d)\n", size);
+
+    if (size + r300->draw_vbo_offset > r300->draw_vbo_size)
     {
 	pipe_resource_reference(&r300->vbo, NULL);
         r300->vbo = pipe_buffer_create(screen,
 				       PIPE_BIND_VERTEX_BUFFER,
 				       R300_MAX_DRAW_VBO_SIZE);
-        r300render->vbo_offset = 0;
+        r300->draw_vbo_offset = 0;
         r300->draw_vbo_size = R300_MAX_DRAW_VBO_SIZE;
     }
 
     r300render->vertex_size = vertex_size;
-    r300->vbo_offset = r300render->vbo_offset;
 
     return (r300->vbo) ? TRUE : FALSE;
 }
@@ -792,6 +842,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 
     assert(!r300render->vbo_transfer);
 
+    DBG(r300, DBG_DRAW, "r300: render_map_vertices\n");
+
     r300render->vbo_ptr = pipe_buffer_map(&r300render->r300->context,
 					  r300->vbo,
                                           PIPE_TRANSFER_WRITE,
@@ -799,7 +851,7 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 
     assert(r300render->vbo_ptr);
 
-    return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
+    return ((uint8_t*)r300render->vbo_ptr + r300->draw_vbo_offset);
 }
 
 static void r300_render_unmap_vertices(struct vbuf_render* render,
@@ -812,6 +864,8 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 
     assert(r300render->vbo_transfer);
 
+    DBG(r300, DBG_DRAW, "r300: render_unmap_vertices\n");
+
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
     pipe_buffer_unmap(context, r300->vbo, r300render->vbo_transfer);
@@ -822,8 +876,11 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 static void r300_render_release_vertices(struct vbuf_render* render)
 {
     struct r300_render* r300render = r300_render(render);
+    struct r300_context* r300 = r300render->r300;
 
-    r300render->vbo_offset += r300render->vbo_max_used;
+    DBG(r300, DBG_DRAW, "r300: render_release_vertices\n");
+
+    r300->draw_vbo_offset += r300render->vbo_max_used;
     r300render->vbo_max_used = 0;
 }
 
@@ -851,12 +908,12 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     CS_LOCALS(r300);
     (void) i; (void) ptr;
 
-    if (!r300_prepare_for_rendering(r300,
-                                    PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                                    NULL, dwords, 0, 0))
-        return;
-
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
+
+    if (!r300_emit_states(r300,
+            PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
+            NULL, 0, 0))
+        return;
 
     /* Uncomment to dump all VBOs rendered through this interface.
      * Slow and noisy!
@@ -893,7 +950,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     struct r300_context* r300 = r300render->r300;
     int i;
     unsigned end_cs_dwords;
-    unsigned max_index = (r300->draw_vbo_size - r300render->vbo_offset) /
+    unsigned max_index = (r300->draw_vbo_size - r300->draw_vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
     unsigned short_count;
     unsigned free_dwords;
@@ -901,14 +958,13 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     CS_LOCALS(r300);
     DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
-    /* Reserve at least 256 dwords.
-     *
-     * Below we manage the CS space manually because there may be more
-     * indices than it can fit in CS. */
-    if (!r300_prepare_for_rendering(r300,
+    if (!r300_emit_states(r300,
             PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-            NULL, 256, 0, 0))
+            NULL, 0, 0))
         return;
+
+    /* Below we manage the CS space manually because there may be more
+     * indices than it can fit in CS. */
 
     end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
@@ -972,8 +1028,6 @@ static struct vbuf_render* r300_render_create(struct r300_context* r300)
     r300render->base.draw_arrays = r300_render_draw_arrays;
     r300render->base.release_vertices = r300_render_release_vertices;
     r300render->base.destroy = r300_render_destroy;
-
-    r300render->vbo_offset = 0;
 
     return &r300render->base;
 }

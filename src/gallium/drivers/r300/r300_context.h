@@ -447,9 +447,17 @@ struct r300_context {
     struct r300_winsys_cs *cs;
     /* Screen. */
     struct r300_screen *screen;
+
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    /* Vertex buffer for SW TCL. */
+    struct pipe_resource* vbo;
+    /* Offset and size into the SW TCL VBO. */
+    size_t draw_vbo_offset;
     size_t draw_vbo_size;
+    /* Whether the VBO must not be flushed. */
+    boolean draw_vbo_locked;
+
     /* Accelerated blit support. */
     struct blitter_context* blitter;
     /* Stencil two-sided reference value fallback. */
@@ -457,14 +465,10 @@ struct r300_context {
     /* For translating vertex buffers having incompatible vertex layout. */
     struct r300_translate_context tran;
 
-    /* Vertex buffer for rendering. */
-    struct pipe_resource* vbo;
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this
      * dummy texture there. */
     struct r300_sampler_view *texkill_sampler;
-    /* Offset into the VBO. */
-    size_t vbo_offset;
 
     /* The currently active query. */
     struct r300_query *query_current;
