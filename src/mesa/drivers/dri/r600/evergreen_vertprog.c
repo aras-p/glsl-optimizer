@@ -655,6 +655,7 @@ GLboolean evergreenSetupVPconstants(GLcontext * ctx)
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
     unsigned int ui;
+    int alloc_size;
 
     /* sent out shader constants. */
     paramList = vp->mesa_program->Base.Parameters;
@@ -677,6 +678,9 @@ GLboolean evergreenSetupVPconstants(GLcontext * ctx)
 
 	    unNumParamData = paramList->NumParameters;
 
+	    /* alloc multiple of 16 constants */
+	    alloc_size = ((unNumParamData * 4 * 4) + 255) & ~255;
+
 	    for(ui=0; ui<unNumParamData; ui++) {
             if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
             {
@@ -697,7 +701,7 @@ GLboolean evergreenSetupVPconstants(GLcontext * ctx)
         radeonAllocDmaRegion(&context->radeon, 
                              &context->vp_Constbo, 
                              &context->vp_bo_offset, 
-                             unNumParamData * 4 * 4, 
+			     alloc_size,
                              256);        
         r600EmitShaderConsts(ctx,
                              context->vp_Constbo,

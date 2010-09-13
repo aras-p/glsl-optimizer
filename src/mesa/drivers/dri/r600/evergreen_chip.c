@@ -550,8 +550,9 @@ static void evergreenSendPSresource(GLcontext *ctx)
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_bo * pbo;
-	
-	struct radeon_bo * pbo_const;
+    struct radeon_bo * pbo_const;
+    /* const size reg is in units of 16 consts */
+    int const_size = ((evergreen->ps.num_consts * 4) + 15) & ~15;
 
     BATCH_LOCALS(&context->radeon);
     radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
@@ -582,17 +583,8 @@ static void evergreenSendPSresource(GLcontext *ctx)
     {                  
         r700SyncSurf(context, pbo_const, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit); 
 
-	    BEGIN_BATCH_NO_AUTOSTATE(3);  
-        
-        if(evergreen->ps.num_consts < 4)
-        {
-            EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_PS_0, 1);
-        }
-        else
-        {
-            EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_PS_0, (evergreen->ps.num_consts * 4)/16 );
-        }
-        
+	BEGIN_BATCH_NO_AUTOSTATE(3);
+	EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_PS_0, const_size / 16);
         END_BATCH();
 
         BEGIN_BATCH_NO_AUTOSTATE(3 + 2);            
@@ -613,8 +605,9 @@ static void evergreenSendVSresource(GLcontext *ctx, struct radeon_state_atom *at
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_bo * pbo;
-	
-	struct radeon_bo * pbo_const;
+    struct radeon_bo * pbo_const;
+    /* const size reg is in units of 16 consts */
+    int const_size = ((evergreen->vs.num_consts * 4) + 15) & ~15;
 
     BATCH_LOCALS(&context->radeon);
     radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
@@ -646,17 +639,8 @@ static void evergreenSendVSresource(GLcontext *ctx, struct radeon_state_atom *at
     {                  
         r700SyncSurf(context, pbo_const, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-	    BEGIN_BATCH_NO_AUTOSTATE(3);   
-        
-        if(evergreen->vs.num_consts < 4)
-        {
-            EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_VS_0, 1);
-        }
-        else
-        {
-            EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_VS_0, (evergreen->vs.num_consts * 4)/16 );
-        }
-       
+	BEGIN_BATCH_NO_AUTOSTATE(3);
+	EVERGREEN_OUT_BATCH_REGVAL(EG_SQ_ALU_CONST_BUFFER_SIZE_VS_0, const_size / 16);
         END_BATCH();
 
         BEGIN_BATCH_NO_AUTOSTATE(3 + 2);            

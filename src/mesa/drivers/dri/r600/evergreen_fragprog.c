@@ -748,6 +748,7 @@ GLboolean evergreenSetupFPconstants(GLcontext * ctx)
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
     unsigned int ui;
+    int alloc_size;
 
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;
@@ -771,14 +772,17 @@ GLboolean evergreenSetupFPconstants(GLcontext * ctx)
 		        evergreen->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
 		        evergreen->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
 	    }
-        
+
+	    /* alloc multiple of 16 constants */
+	    alloc_size = ((unNumParamData * 4 * 4) + 255) & ~255;
+
         /* Load fp constants to gpu */
         if(unNumParamData > 0) 
         {            
             radeonAllocDmaRegion(&context->radeon, 
                                 &context->fp_Constbo, 
                                 &context->fp_bo_offset, 
-                                unNumParamData * 4 * 4, 
+                                alloc_size,
                                 256);            
             r600EmitShaderConsts(ctx,
                                  context->fp_Constbo,
