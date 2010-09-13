@@ -445,7 +445,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
  *
  * Undefined if no zero exists, so code should check against ~0UL first.
  */
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
 static inline unsigned fls(unsigned word)
 {
         asm("bsr %1,%0"
