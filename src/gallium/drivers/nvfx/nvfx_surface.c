@@ -160,6 +160,8 @@ static struct blitter_context*
 nvfx_get_blitter(struct pipe_context* pipe, int copy)
 {
 	struct nvfx_context* nvfx = nvfx_context(pipe);
+	struct blitter_context** pblitter;
+	struct blitter_context* blitter;
 
 	assert(nvfx->blitters_in_use < Elements(nvfx->blitter));
 
@@ -171,10 +173,10 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 		OUT_RING(chan, 0);
 	}
 
-	struct blitter_context** pblitter = &nvfx->blitter[nvfx->blitters_in_use++];
+	pblitter = &nvfx->blitter[nvfx->blitters_in_use++];
 	if(!*pblitter)
 		*pblitter = util_blitter_create(pipe);
-	struct blitter_context* blitter = *pblitter;
+	blitter = *pblitter;
 
 	util_blitter_save_blend(blitter, nvfx->blend);
 	util_blitter_save_depth_stencil_alpha(blitter, nvfx->zsa);
@@ -371,15 +373,19 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
 	struct pipe_subresource tempsr, surfsr;
 	struct nvfx_context* nvfx = nvfx_context(pipe);
+	struct nvfx_miptree* temp;
+	unsigned use_vertex_buffers;
+	boolean use_index_buffer;
+	unsigned base_vertex;
 
 	/* temporarily detach the temp, so it isn't used in place of the actual resource */
-	struct nvfx_miptree* temp = ns->temp;
+	temp = ns->temp;
 	ns->temp = 0;
 
 	// TODO: we really should do this validation before setting these variable in draw calls
-	unsigned use_vertex_buffers = nvfx->use_vertex_buffers;
-	boolean use_index_buffer = nvfx->use_index_buffer;
-	unsigned base_vertex = nvfx->base_vertex;
+	use_vertex_buffers = nvfx->use_vertex_buffers;
+	use_index_buffer = nvfx->use_index_buffer;
+	base_vertex = nvfx->base_vertex;
 
 	tempsr.face = 0;
 	tempsr.level = 0;
