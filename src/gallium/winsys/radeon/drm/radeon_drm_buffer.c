@@ -20,9 +20,6 @@ struct radeon_drm_buffer {
 
     struct radeon_bo *bo;
 
-    /* The CS associated with the last buffer_map. */
-    struct radeon_libdrm_cs *cs;
-
     boolean flinked;
     uint32_t flink;
 
@@ -95,9 +92,21 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
     struct radeon_libdrm_cs *cs = flush_ctx;
     int write = 0;
 
+    /* Note how we use radeon_bo_is_referenced_by_cs here. There are
+     * basically two places this map function can be called from:
+     * - pb_map
+     * - create_buffer (in the buffer reuse case)
+     *
+     * Since pb managers are per-winsys managers, not per-context managers,
+     * and we shouldn't reuse buffers if they are in-use in any context,
+     * we simply ask: is this buffer referenced by *any* CS?
+     *
+     * The problem with buffer_create is that it comes from pipe_screen,
+     * so we have no CS to look at, though luckily the following code
+     * is sufficient to tell whether the buffer is in use. */
     if (flags & PB_USAGE_DONTBLOCK) {
         if (_buf->base.usage & RADEON_PB_USAGE_VERTEX)
-            if (cs && radeon_bo_is_referenced_by_cs(buf->bo, cs->cs))
+            if (radeon_bo_is_referenced_by_cs(buf->bo, NULL))
 		return NULL;
     }
 
@@ -109,6 +118,10 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
         if (radeon_bo_is_busy(buf->bo, &domain))
             return NULL;
     }
+
+    /* If we don't have any CS and the buffer is referenced,
+     * we cannot flush. */
+    assert(cs || !radeon_bo_is_referenced_by_cs(buf->bo, NULL));
 
     if (cs && radeon_bo_is_referenced_by_cs(buf->bo, cs->cs)) {
         cs->flush_cs(cs->flush_data);
