@@ -429,8 +429,7 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 
 	if (query_running) {
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
-		if (rscreen->chip_class == R700)
-			db_render_control |= S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
+		db_render_control |= S_028D0C_PERFECT_ZPASS_COUNTS(1);
 	}
 
 	rstate->states[EG_DSA__DB_STENCIL_CLEAR] = 0x00000000;
