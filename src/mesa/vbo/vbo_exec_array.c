@@ -490,6 +490,8 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
+   vbo_exec_FlushVertices_internal( ctx, GL_FALSE );
+
    FLUSH_CURRENT( ctx, 0 );
 
    if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {

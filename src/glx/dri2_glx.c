@@ -210,7 +210,17 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 
    __glxHashDelete(pdp->dri2Hash, pdraw->base.xDrawable);
    (*psc->core->destroyDrawable) (pdraw->driDrawable);
-   DRI2DestroyDrawable(psc->base.dpy, pdraw->base.xDrawable);
+
+   /* If it's a GLX 1.3 drawables, we can destroy the DRI2 drawable
+    * now, as the application explicitly asked to destroy the GLX
+    * drawable.  Otherwise, for legacy drawables, we let the DRI2
+    * drawable linger on the server, since there's no good way of
+    * knowing when the application is done with it.  The server will
+    * destroy the DRI2 drawable when it destroys the X drawable or the
+    * client exits anyway. */
+   if (pdraw->base.xDrawable != pdraw->base.drawable)
+      DRI2DestroyDrawable(psc->base.dpy, pdraw->base.xDrawable);
+
    Xfree(pdraw);
 }
 
