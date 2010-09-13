@@ -914,7 +914,7 @@ GLboolean add_tex_instruction(r700_AssemblerBase*     pAsm,
         {
             unsigned int count = GETbits(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 
                                          EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask) + 1;
-            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, count,
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, count,
                      EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
         }
         else
