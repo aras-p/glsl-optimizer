@@ -1407,7 +1407,6 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 static void *
 nvfx_vp_state_create(struct pipe_context *pipe, const struct pipe_shader_state *cso)
 {
-        struct nvfx_context *nvfx = nvfx_context(pipe);
         struct nvfx_pipe_vertex_program *pvp;
 
         pvp = CALLOC(1, sizeof(struct nvfx_pipe_vertex_program));

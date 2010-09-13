@@ -468,7 +468,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 {
 	const struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	struct nvfx_insn insn;
-	struct nvfx_src src[3], tmp, tmp2;
+	struct nvfx_src src[3], tmp;
 	struct nvfx_reg dst;
 	int mask, sat, unit = 0;
 	int ai = -1, ci = -1, ii = -1;
