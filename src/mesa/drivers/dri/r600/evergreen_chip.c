@@ -1446,22 +1446,7 @@ static void evergreenSendCB(GLcontext *ctx, struct radeon_state_atom *atom)
     
     COMMIT_BATCH();
 }
-static void evergreenSendCP(GLcontext *ctx, struct radeon_state_atom *atom)
-{
-    context_t *context = EVERGREEN_CONTEXT(ctx);	
-	BATCH_LOCALS(&context->radeon);
-	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
-    //first to send
-    //r700Start3D
-    BEGIN_BATCH_NO_AUTOSTATE(3);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_CONTEXT_CONTROL, 1)); //IT_CONTEXT_CONTROL 0x28
-    R600_OUT_BATCH(0x80000000);
-    R600_OUT_BATCH(0x80000000);
-    END_BATCH();
-
-    COMMIT_BATCH();
-}
 static void evergreenSendVGT(GLcontext *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -1536,8 +1521,6 @@ void evergreenInitAtoms(context_t *context)
     EVERGREEN_ALLOC_STATE(init, always, 19, evergreenSendSQConfig);
 
     //make sure send first
-    EVERGREEN_ALLOC_STATE(cp, always, 3,    evergreenSendCP);
-
     EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (6 + (VERT_ATTRIB_MAX * 12)), evergreenSendVTX);
     EVERGREEN_ALLOC_STATE(pa,        always,        124, evergreenSendPA);
     EVERGREEN_ALLOC_STATE(tp,        always,        0,   evergreenSendTP);
