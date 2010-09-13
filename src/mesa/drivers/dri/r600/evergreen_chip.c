@@ -1512,8 +1512,6 @@ void evergreenInitAtoms(context_t *context)
     context->radeon.hw.atomlist.name = "atom-list";
 
     EVERGREEN_ALLOC_STATE(init, always, 19, evergreenSendSQConfig);
-
-    //make sure send first
     EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (6 + (VERT_ATTRIB_MAX * 12)), evergreenSendVTX);
     EVERGREEN_ALLOC_STATE(pa,        always,        124, evergreenSendPA);
     EVERGREEN_ALLOC_STATE(tp,        always,        0,   evergreenSendTP);
