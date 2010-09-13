@@ -440,30 +440,28 @@ do_triangle_ccw(struct lp_setup_context *setup,
 }
 
 /*
- * __fls: find last set bit in word
- * @word: The word to search
+ * Round to nearest less or equal power of two of the input.
  *
- * Undefined if no zero exists, so code should check against ~0UL first.
+ * Undefined if no bit set exists, so code should check against 0 first.
  */
+static INLINE uint32_t 
+floor_pot(uint32_t n)
+{
+   assert(n);
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
-static inline unsigned fls(unsigned word)
-{
-        asm("bsr %1,%0"
-            : "=r" (word)
-            : "rm" (word));
-        return word;
-}
+   asm("bsr %1,%0"
+       : "=r" (n)
+       : "rm" (n));
+   return 1 << n;
 #else
-static inline unsigned fls(unsigned n)
-{
-    n |= (n >>  1);
-    n |= (n >>  2);
-    n |= (n >>  4);
-    n |= (n >>  8);
-    n |= (n >> 16);
-    return n - (n >> 1);
-}
+   n |= (n >>  1);
+   n |= (n >>  2);
+   n |= (n >>  4);
+   n |= (n >>  8);
+   n |= (n >> 16);
+   return n - (n >> 1);
 #endif
+}
 
 
 boolean
@@ -477,14 +475,14 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 
    /* What is the largest power-of-two boundary this triangle crosses:
     */
-   int dx = 1 << fls((bbox->x0 ^ bbox->x1) |
-		     (bbox->y0 ^ bbox->y1));
+   int dx = floor_pot((bbox->x0 ^ bbox->x1) |
+		      (bbox->y0 ^ bbox->y1));
 
    /* The largest dimension of the rasterized area of the triangle
-    * (aligned to a 4x4 grid), rounded up to the next power of two:
+    * (aligned to a 4x4 grid), rounded down to the nearest power of two:
     */
-   int sz = 1 << fls((bbox->x1 - (bbox->x0 & ~3)) |
-		     (bbox->y1 - (bbox->y0 & ~3)));
+   int sz = floor_pot((bbox->x1 - (bbox->x0 & ~3)) |
+		      (bbox->y1 - (bbox->y0 & ~3)));
 
    if (nr_planes == 3) {
       if (sz < 4 && dx < 64)
