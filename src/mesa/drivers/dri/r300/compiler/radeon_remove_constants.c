@@ -26,6 +26,7 @@
  */
 
 #include "radeon_remove_constants.h"
+#include "radeon_dataflow.h"
 
 static void remap_regs(void * userdata, struct rc_instruction * inst,
 			rc_register_file * pfile, unsigned int * pindex)

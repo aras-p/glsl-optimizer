@@ -225,7 +225,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
 			if (source < 0) {
-				rc_error(c, "Failed to translate "
+				rc_error(&c->Base, "Failed to translate "
 							"rgb instruction.\n");
 				return;
 			}
@@ -245,7 +245,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
 			if (source < 0) {
-				rc_error(c, "Failed to translate "
+				rc_error(&c->Base, "Failed to translate "
 							"alpha instruction.\n");
 				return;
 			}
