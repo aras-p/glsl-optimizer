@@ -38,19 +38,11 @@
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
-#if FEATURE_ARB_vertex_buffer_object
 #include "main/bufferobj.h"
-#endif
-#if FEATURE_EXT_framebuffer_object
 #include "main/fbobject.h"
 #include "main/texrender.h"
-#endif
-#if FEATURE_ARB_sync
 #include "main/syncobj.h"
-#endif
-#if FEATURE_EXT_transform_feedback
 #include "main/transformfeedback.h"
-#endif
 
 #include "program/program.h"
 #include "tnl/tnl.h"
@@ -187,21 +179,15 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* query objects */
    _mesa_init_query_object_functions(driver);
 
-#if FEATURE_ARB_sync
    _mesa_init_sync_object_functions(driver);
-#endif
 
-#if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;
    driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
    driver->RenderTexture = _mesa_render_texture;
    driver->FinishRenderTexture = _mesa_finish_render_texture;
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
-#endif
 
-#if FEATURE_EXT_framebuffer_blit
    driver->BlitFramebuffer = _swrast_BlitFramebuffer;
-#endif
 
    /* APPLE_vertex_array_object */
    driver->NewArrayObject = _mesa_new_array_object;
@@ -210,9 +196,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    _mesa_init_shader_object_functions(driver);
 
-#if FEATURE_EXT_transform_feedback
    _mesa_init_transform_feedback_functions(driver);
-#endif
 
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;

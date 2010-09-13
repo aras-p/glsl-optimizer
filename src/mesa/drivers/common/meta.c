@@ -2583,12 +2583,10 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    /*
     * Prepare for new texture image size/data
     */
-#if FEATURE_convolve
    if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2,
                                          &postConvWidth, &postConvHeight);
    }
-#endif
 
    if (texImage->Data) {
       ctx->Driver.FreeTexImageData(ctx, texImage);
