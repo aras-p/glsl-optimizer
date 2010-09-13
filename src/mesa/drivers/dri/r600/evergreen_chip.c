@@ -1431,15 +1431,15 @@ static void evergreenSendCB(GLcontext *ctx, struct radeon_state_atom *atom)
     R600_OUT_BATCH(evergreen->CB_SHADER_MASK.u32All);   
     END_BATCH();
 
-    BEGIN_BATCH_NO_AUTOSTATE(5);
-    EVERGREEN_OUT_BATCH_REGSEQ(EG_CB_BLEND_RED, 3);
+    BEGIN_BATCH_NO_AUTOSTATE(6);
+    EVERGREEN_OUT_BATCH_REGSEQ(EG_CB_BLEND_RED, 4);
     R600_OUT_BATCH(evergreen->CB_BLEND_RED.u32All);    
     R600_OUT_BATCH(evergreen->CB_BLEND_GREEN.u32All);  
     R600_OUT_BATCH(evergreen->CB_BLEND_BLUE.u32All);   
+    R600_OUT_BATCH(evergreen->CB_BLEND_ALPHA.u32All);  
     END_BATCH();
 
-    BEGIN_BATCH_NO_AUTOSTATE(9);
-    EVERGREEN_OUT_BATCH_REGVAL(EG_CB_BLEND_ALPHA, evergreen->CB_BLEND_ALPHA.u32All);  
+    BEGIN_BATCH_NO_AUTOSTATE(6);
     EVERGREEN_OUT_BATCH_REGVAL(EG_CB_BLEND0_CONTROL, evergreen->CB_BLEND0_CONTROL.u32All);  
     EVERGREEN_OUT_BATCH_REGVAL(EG_CB_COLOR_CONTROL, evergreen->CB_COLOR_CONTROL.u32All);  
     END_BATCH();
@@ -1530,7 +1530,7 @@ void evergreenInitAtoms(context_t *context)
     EVERGREEN_ALLOC_STATE(sx,        always,        9,   evergreenSendSX);
     EVERGREEN_ALLOC_STATE(tx,        evergreen_tx,  (R700_TEXTURE_NUMBERUNITS * (21+5) + 6), evergreenSendTexState); /* 21 for resource, 5 for sampler */
     EVERGREEN_ALLOC_STATE(db,        always,        65,  evergreenSendDB); 
-    EVERGREEN_ALLOC_STATE(cb,        always,        35,  evergreenSendCB);	
+    EVERGREEN_ALLOC_STATE(cb,        always,        33,  evergreenSendCB);	
     EVERGREEN_ALLOC_STATE(vgt,       always,        29,  evergreenSendVGT);
     EVERGREEN_ALLOC_STATE(timestamp, always,        3,   evergreenSendTIMESTAMP);
 
