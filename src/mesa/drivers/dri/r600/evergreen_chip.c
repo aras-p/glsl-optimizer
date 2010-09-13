@@ -893,6 +893,8 @@ static void evergreenSetDepthTarget(context_t *context)
 
     evergreen->DB_DEPTH_SIZE.u32All  = 0;        
     
+    nPitchInPixel = rrb->pitch/rrb->cpp;
+
     SETfield(evergreen->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
              EG_DB_DEPTH_SIZE__PITCH_TILE_MAX_shift, 
              EG_DB_DEPTH_SIZE__PITCH_TILE_MAX_mask);
