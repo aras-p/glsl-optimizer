@@ -236,7 +236,8 @@ brw_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shad
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
          return 1;
       default:
-              break;
+         assert(0);
+         return 0;
       }
 }
 
