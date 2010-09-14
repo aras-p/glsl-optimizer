@@ -122,10 +122,24 @@ typedef void *GLeglImageOES;
 #define GL_MAX_FRAGMENT_UNIFORM_VECTORS     0x8DFD
 #endif
 
+
+
 /**
- * Special, internal token
+ * Internal token to represent a GLSL shader program (a collection of
+ * one or more shaders that get linked together).  Note that GLSL
+ * shaders and shader programs share one name space (one hash table)
+ * so we need a value that's different from any of the
+ * GL_VERTEX/FRAGMENT/GEOMETRY_PROGRAM tokens.
  */
 #define GL_SHADER_PROGRAM_MESA 0x9999
+
+
+/**
+ * Internal token for geometry programs.
+ * Use the value for GL_GEOMETRY_PROGRAM_NV for now.
+ */
+#define MESA_GEOMETRY_PROGRAM 0x8c26
+
 
 
 #endif /* GLHEADER_H */
