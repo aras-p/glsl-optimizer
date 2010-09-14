@@ -35,7 +35,6 @@
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
 
-#include "gallivm/lp_bld_limits.h"
 #include "lp_texture.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
