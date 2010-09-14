@@ -275,6 +275,10 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->type);
       break;
 
+   case ir_unop_noise:
+      /* XXX what can we assert here? */
+      break;
+
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_mul:
