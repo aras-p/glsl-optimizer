@@ -82,6 +82,7 @@ util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out)
             *out = i - 3;
             return FALSE;
          }
+         break;
       case UTIL_CAPS_CHECK_UNIMPLEMENTED:
          *out = i - 1;
          return FALSE;
