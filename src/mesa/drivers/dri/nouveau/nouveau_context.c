@@ -183,6 +183,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	GLcontext *ctx = dri_ctx->driverPrivate;
 	__DRIscreen *screen = dri_ctx->driScreenPriv;
 	struct gl_framebuffer *fb = draw->driverPrivate;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	unsigned int attachments[10];
 	__DRIbuffer *buffers = NULL;
 	int i = 0, count, ret;
@@ -191,7 +192,8 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		return;
 	draw->lastStamp = *draw->pStamp;
 
-	attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+	if (nfb->need_front)
+		attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	if (fb->Visual.doubleBufferMode)
 		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
 	if (fb->Visual.haveDepthBuffer && fb->Visual.haveStencilBuffer)
@@ -327,6 +329,25 @@ nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode)
 		FIRE_RING(context_chan(ctx));
 }
 
+static void
+validate_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
+		     int *stamp)
+{
+	struct gl_framebuffer *fb = draw->driverPrivate;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
+	GLboolean need_front =
+		(fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT ||
+		 fb->_ColorReadBufferIndex == BUFFER_FRONT_LEFT);
+
+	if (nfb->need_front != need_front) {
+		nfb->need_front = need_front;
+		dri2InvalidateDrawable(draw);
+	}
+
+	if (*draw->pStamp != *stamp)
+		update_framebuffer(dri_ctx, draw, stamp);
+}
+
 void
 nouveau_validate_framebuffer(GLcontext *ctx)
 {
@@ -334,15 +355,13 @@ nouveau_validate_framebuffer(GLcontext *ctx)
 	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;
 	__DRIdrawable *dri_read = dri_ctx->driReadablePriv;
 
-	if (ctx->DrawBuffer->Name == 0 &&
-	    dri_ctx->dri2.draw_stamp != *dri_draw->pStamp)
-		update_framebuffer(dri_ctx, dri_draw,
-				   &dri_ctx->dri2.draw_stamp);
+	if (ctx->DrawBuffer->Name == 0)
+		validate_framebuffer(dri_ctx, dri_draw,
+				     &dri_ctx->dri2.draw_stamp);
 
-	if (ctx->ReadBuffer->Name == 0 && dri_draw != dri_read &&
-	    dri_ctx->dri2.read_stamp != *dri_read->pStamp)
-		update_framebuffer(dri_ctx, dri_read,
-				   &dri_ctx->dri2.read_stamp);
+	if (ctx->ReadBuffer->Name == 0)
+		validate_framebuffer(dri_ctx, dri_read,
+				     &dri_ctx->dri2.read_stamp);
 
 	if (nouveau_next_dirty_state(ctx) >= 0) {
 		nouveau_state_emit(ctx);

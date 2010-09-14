@@ -30,6 +30,7 @@
 struct nouveau_framebuffer {
 	struct gl_framebuffer base;
 	struct nouveau_bo *lma_bo;
+	GLboolean need_front;
 };
 #define to_nouveau_framebuffer(x) ((struct nouveau_framebuffer *)(x))
 

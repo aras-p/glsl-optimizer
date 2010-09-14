@@ -189,6 +189,7 @@ nouveau_framebuffer_dri_new(const GLvisual *visual)
 		return NULL;
 
 	_mesa_initialize_window_framebuffer(&nfb->base, visual);
+	nfb->need_front = !visual->doubleBufferMode;
 
 	return &nfb->base;
 }

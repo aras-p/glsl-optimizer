@@ -156,7 +156,7 @@ nouveau_create_buffer(__DRIscreen *dri_screen,
 		      const __GLcontextModes *visual,
 		      GLboolean is_pixmap)
 {
-	struct gl_renderbuffer  *rb;
+	struct gl_renderbuffer *rb;
 	struct gl_framebuffer *fb;
 	GLenum color_format;
 
