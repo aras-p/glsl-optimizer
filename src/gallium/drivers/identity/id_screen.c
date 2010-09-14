@@ -67,7 +67,7 @@ identity_screen_get_vendor(struct pipe_screen *_screen)
 
 static int
 identity_screen_get_param(struct pipe_screen *_screen,
-                          unsigned shader, enum pipe_cap param)
+                          enum pipe_cap param)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
