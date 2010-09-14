@@ -1034,8 +1034,8 @@ __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
 
 
 void
-__indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count,
-                                GLsizei primcount)
+__indirect_glMultiDrawArraysEXT(GLenum mode, const GLint *first,
+                                const GLsizei *count, GLsizei primcount)
 {
    struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
