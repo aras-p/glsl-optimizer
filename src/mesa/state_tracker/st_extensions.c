@@ -162,6 +162,8 @@ void st_init_limits(struct st_context *st)
       pc->MaxNativeAddressRegs     = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_ADDRS);
       pc->MaxNativeParameters      = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONSTS);
 
+      options->EmitNoNoise = TRUE;
+
       /* TODO: make these more fine-grained if anyone needs it */
       options->EmitNoIfs = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
       options->EmitNoFunctions = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH);
