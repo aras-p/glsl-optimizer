@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_mod_to_floor.cpp
+ * \file ir_mod_to_fract.cpp
  *
  * Breaks an ir_unop_mod expression down to (op1 * fract(op0 / op1))
  *
