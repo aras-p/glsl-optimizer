@@ -81,7 +81,7 @@ rbug_screen_get_param(struct pipe_screen *_screen,
 
 static int
 rbug_screen_get_shader_param(struct pipe_screen *_screen,
-                      unsigned shader, enum pipe_cap param)
+                      unsigned shader, enum pipe_shader_cap param)
 {
    struct rbug_screen *rb_screen = rbug_screen(_screen);
    struct pipe_screen *screen = rb_screen->screen;
