@@ -103,7 +103,7 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 					0, 15) + 1;
 
 			lod_bias = CLAMP(ctx->Texture.Unit[i].LodBias +
-					 t->LodBias, 0, 15);
+					 t->LodBias, -16, 15) * 8;
 		}
 
 		format |= get_wrap_mode(t->WrapT) << 28 |
@@ -117,7 +117,7 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 			nvgl_filter_mode(t->MagFilter) << 28 |
 			log2i(t->MaxAnisotropy) << 27 |
 			nvgl_filter_mode(t->MinFilter) << 24 |
-			lod_bias << 16;
+			(lod_bias & 0xff) << 16;
 
 	} else {
 		s = &to_nv04_context(ctx)->dummy_texture;
@@ -134,7 +134,7 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 	if (nv04_mtex_engine(fahrenheit)) {
 		nouveau_bo_markl(bctx, fahrenheit,
 				 NV04_MULTITEX_TRIANGLE_OFFSET(i),
-				 s->bo, 0, bo_flags);
+				 s->bo, s->offset, bo_flags);
 
 		nouveau_bo_mark(bctx, fahrenheit,
 				NV04_MULTITEX_TRIANGLE_FORMAT(i),
@@ -149,7 +149,7 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 	} else {
 		nouveau_bo_markl(bctx, fahrenheit,
 				 NV04_TEXTURED_TRIANGLE_OFFSET,
-				 s->bo, 0, bo_flags);
+				 s->bo, s->offset, bo_flags);
 
 		nouveau_bo_mark(bctx, fahrenheit,
 				NV04_TEXTURED_TRIANGLE_FORMAT,
