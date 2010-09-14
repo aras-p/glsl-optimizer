@@ -55,11 +55,11 @@
 #include "GL/internal/glcore.h"
 
 
-#ifndef GL_FIXED
-#define GL_FIXED 0x140C
+/**
+ * GL_FIXED is defined in glext.h version 64 but these typedefs aren't (yet).
+ */
 typedef int GLfixed;
 typedef int GLclampx;
-#endif
 
 
 #ifndef GL_OES_EGL_image

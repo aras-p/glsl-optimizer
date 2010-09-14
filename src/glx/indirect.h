@@ -600,7 +600,7 @@ extern HIDDEN void __indirect_glSecondaryColor3uivEXT(const GLuint * v);
 extern HIDDEN void __indirect_glSecondaryColor3usEXT(GLushort red, GLushort green, GLushort blue);
 extern HIDDEN void __indirect_glSecondaryColor3usvEXT(const GLushort * v);
 extern HIDDEN void __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
-extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
+extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount);
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 extern HIDDEN void __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid * pointer);
 extern HIDDEN void __indirect_glFogCoorddEXT(GLdouble coord);

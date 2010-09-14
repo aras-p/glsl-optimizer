@@ -8892,8 +8892,8 @@ exec_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 /* GL_EXT_multi_draw_arrays */
 static void GLAPIENTRY
-exec_MultiDrawArraysEXT(GLenum mode, GLint * first,
-                        GLsizei * count, GLsizei primcount)
+exec_MultiDrawArraysEXT(GLenum mode, const GLint *first,
+                        const GLsizei *count, GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);

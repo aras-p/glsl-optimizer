@@ -4336,12 +4336,12 @@ KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointerEXT)(GLint size, GLenum type, G
    DISPATCH(SecondaryColorPointerEXT, (size, type, stride, pointer), (F, "glSecondaryColorPointerEXT(%d, 0x%x, %d, %p);\n", size, type, stride, (const void *) pointer));
 }
 
-KEYWORD1 void KEYWORD2 NAME(MultiDrawArrays)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount)
+KEYWORD1 void KEYWORD2 NAME(MultiDrawArrays)(GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount)
 {
    DISPATCH(MultiDrawArraysEXT, (mode, first, count, primcount), (F, "glMultiDrawArrays(0x%x, %p, %p, %d);\n", mode, (const void *) first, (const void *) count, primcount));
 }
 
-KEYWORD1 void KEYWORD2 NAME(MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount)
+KEYWORD1 void KEYWORD2 NAME(MultiDrawArraysEXT)(GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount)
 {
    DISPATCH(MultiDrawArraysEXT, (mode, first, count, primcount), (F, "glMultiDrawArraysEXT(0x%x, %p, %p, %d);\n", mode, (const void *) first, (const void *) count, primcount));
 }

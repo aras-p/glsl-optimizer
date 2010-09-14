@@ -3625,7 +3625,7 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_SecondaryColorPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], parameters)
 #define GET_SecondaryColorPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index])
 #define SET_SecondaryColorPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], fn)
-#define CALL_MultiDrawArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *, GLsizei *, GLsizei)), driDispatchRemapTable[MultiDrawArraysEXT_remap_index], parameters)
+#define CALL_MultiDrawArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *, const GLsizei *, GLsizei)), driDispatchRemapTable[MultiDrawArraysEXT_remap_index], parameters)
 #define GET_MultiDrawArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index])
 #define SET_MultiDrawArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index], fn)
 #define CALL_MultiDrawElementsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei)), driDispatchRemapTable[MultiDrawElementsEXT_remap_index], parameters)

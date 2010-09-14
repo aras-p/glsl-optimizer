@@ -106,7 +106,7 @@ xorg: check-xorg-source $(XORG_OUTPUTS)
 
 check-xorg-source:
 	@if ! test -d $(XORG_GLX_DIR); then \
-		echo "ERROR: Must specify path to xserver/GL/GLX checkout; set XORG_GLX_DIR."; \
+		echo "ERROR: Must specify path to xserver/GL/ checkout; set XORG_BASE env var."; \
 		exit 1; \
 	fi
 

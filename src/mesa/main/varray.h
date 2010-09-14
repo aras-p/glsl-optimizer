@@ -159,8 +159,8 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
 
 
 extern void GLAPIENTRY
-_mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount );
+_mesa_MultiDrawArraysEXT( GLenum mode, const GLint *first,
+                          const GLsizei *count, GLsizei primcount );
 
 extern void GLAPIENTRY
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
