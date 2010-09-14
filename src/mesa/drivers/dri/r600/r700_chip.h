@@ -38,7 +38,7 @@
 
 #include "r700_chipoffset.h"
 
-#define SETfield(x, val, shift, mask)  ( (x) = ((x) & ~(mask)) | ((val) << (shift)) ) /* u32All */
+#define SETfield(x, val, shift, mask)  ( (x) = ((x) & ~(mask)) | (((val) << (shift)) & (mask)) )/* u32All */
 #define CLEARfield(x, mask)            ( (x) &= ~(mask) )
 #define SETbit(x, bit)                 ( (x) |= (bit) )
 #define CLEARbit(x, bit)               ( (x) &= ~(bit) )
