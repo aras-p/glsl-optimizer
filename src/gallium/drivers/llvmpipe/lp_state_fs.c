@@ -212,6 +212,9 @@ generate_quad_mask(LLVMBuilderRef builder,
    case 3:
       shift = 10;
       break;
+   default:
+      assert(0);
+      shift = 0;
    }
 
    mask_input = LLVMBuildLShr(builder,
