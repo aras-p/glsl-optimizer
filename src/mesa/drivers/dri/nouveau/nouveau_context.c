@@ -50,8 +50,6 @@
 static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_multitexture",	NULL },
 	{ "GL_ARB_texture_env_add",	NULL },
-	{ "GL_ARB_texture_env_combine",	NULL },
-	{ "GL_ARB_texture_env_dot3",	NULL },
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
 	{ "GL_EXT_framebuffer_blit",	NULL },

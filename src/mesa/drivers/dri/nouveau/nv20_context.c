@@ -33,6 +33,8 @@
 
 static const struct dri_extension nv20_extensions[] = {
 	{ "GL_EXT_texture_rectangle",	NULL },
+	{ "GL_ARB_texture_env_combine", NULL },
+	{ "GL_ARB_texture_env_dot3",    NULL },
 	{ NULL,				NULL }
 };
 
