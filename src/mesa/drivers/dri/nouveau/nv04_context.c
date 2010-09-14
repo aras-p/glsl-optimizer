@@ -31,6 +31,20 @@
 #include "nouveau_class.h"
 #include "nv04_driver.h"
 
+static GLboolean
+texunit_needs_combiners(struct gl_texture_unit *u)
+{
+	struct gl_texture_object *t = u->_Current;
+	struct gl_texture_image *ti = t->Image[0][t->BaseLevel];
+
+	return ti->TexFormat == MESA_FORMAT_A8 ||
+		ti->TexFormat == MESA_FORMAT_L8 ||
+		u->EnvMode == GL_COMBINE ||
+		u->EnvMode == GL_COMBINE4_NV ||
+		u->EnvMode == GL_BLEND ||
+		u->EnvMode == GL_ADD;
+}
+
 struct nouveau_grobj *
 nv04_context_engine(GLcontext *ctx)
 {
@@ -38,10 +52,8 @@ nv04_context_engine(GLcontext *ctx)
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
 	struct nouveau_grobj *fahrenheit;
 
-	if (ctx->Texture.Unit[0].EnvMode == GL_COMBINE ||
-	    ctx->Texture.Unit[0].EnvMode == GL_COMBINE4_NV ||
-	    ctx->Texture.Unit[0].EnvMode == GL_BLEND ||
-	    ctx->Texture.Unit[0].EnvMode == GL_ADD ||
+	if ((ctx->Texture.Unit[0]._ReallyEnabled &&
+	     texunit_needs_combiners(&ctx->Texture.Unit[0])) ||
 	    ctx->Texture.Unit[1]._ReallyEnabled ||
 	    ctx->Stencil.Enabled)
 		fahrenheit = hw->eng3dm;
