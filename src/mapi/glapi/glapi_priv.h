@@ -38,7 +38,7 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 
-#ifndef GL_FIXED
+#ifndef GL_OES_fixed_point
 typedef int GLfixed;
 typedef int GLclampx;
 #endif
