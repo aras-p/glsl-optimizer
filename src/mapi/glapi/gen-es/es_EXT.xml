@@ -106,8 +106,8 @@
 <category name="GL_EXT_multi_draw_arrays" number="69">
     <function name="MultiDrawArraysEXT" offset="assign">
         <param name="mode" type="GLenum"/>
-        <param name="first" type="GLint *"/> <!-- Spec bug. Should be const. -->
-        <param name="count" type="GLsizei *"/> <!-- Spec bug. Should be const. -->
+        <param name="first" type="const GLint *"/>
+        <param name="count" type="const GLsizei *"/>
         <param name="primcount" type="GLsizei"/>
         <glx handcode="true"/>
     </function>
