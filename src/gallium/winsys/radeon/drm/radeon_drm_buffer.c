@@ -56,15 +56,18 @@ static void
 radeon_drm_buffer_destroy(struct pb_buffer *_buf)
 {
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
+    int name;
 
     if (buf->bo->ptr != NULL) {
 	remove_from_list(buf);
 	radeon_bo_unmap(buf->bo);
 	buf->bo->ptr = NULL;
     }
-
-    util_hash_table_remove(buf->mgr->buffer_handles,
-                           (void*)(uintptr_t)buf->bo->handle);
+    name = radeon_gem_name_bo(buf->bo);
+    if (name) {
+	util_hash_table_remove(buf->mgr->buffer_handles,
+			       (void*)(uintptr_t)name);
+    }
     radeon_bo_unref(buf->bo);
 
     FREE(buf);
