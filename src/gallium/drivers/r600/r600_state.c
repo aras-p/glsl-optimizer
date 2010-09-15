@@ -32,8 +32,6 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
-#include "r600d.h"
-#include "r600_state_inlines.h"
 
 static struct r600_context_state *r600_new_context_state(unsigned type)
 {
