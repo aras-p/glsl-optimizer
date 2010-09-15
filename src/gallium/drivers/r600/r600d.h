@@ -831,6 +831,8 @@
 #define   S_0287F0_SOURCE_SELECT(x)                    (((x) & 0x3) << 0)
 #define   G_0287F0_SOURCE_SELECT(x)                    (((x) >> 0) & 0x3)
 #define   C_0287F0_SOURCE_SELECT                       0xFFFFFFFC
+#define     V_0287F0_DI_SRC_SEL_DMA                    0
+#define     V_0287F0_DI_SRC_SEL_AUTO_INDEX             2
 #define   S_0287F0_MAJOR_MODE(x)                       (((x) & 0x3) << 2)
 #define   G_0287F0_MAJOR_MODE(x)                       (((x) >> 2) & 0x3)
 #define   C_0287F0_MAJOR_MODE                          0xFFFFFFF3

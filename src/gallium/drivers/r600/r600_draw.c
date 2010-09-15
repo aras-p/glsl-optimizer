@@ -54,15 +54,15 @@ static int r600_draw_common(struct r600_draw *draw)
 		return r;
 	switch (draw->index_size) {
 	case 2:
-		vgt_draw_initiator = 0;
+		vgt_draw_initiator = S_0287F0_SOURCE_SELECT(V_0287F0_DI_SRC_SEL_DMA);
 		vgt_dma_index_type = 0;
 		break;
 	case 4:
-		vgt_draw_initiator = 0;
+		vgt_draw_initiator = S_0287F0_SOURCE_SELECT(V_0287F0_DI_SRC_SEL_DMA);
 		vgt_dma_index_type = 1;
 		break;
 	case 0:
-		vgt_draw_initiator = 2;
+		vgt_draw_initiator = S_0287F0_SOURCE_SELECT(V_0287F0_DI_SRC_SEL_AUTO_INDEX);
 		vgt_dma_index_type = 0;
 		break;
 	default:
