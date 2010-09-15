@@ -104,6 +104,7 @@ nv50_nvi_can_load(struct nv_instruction *nvi, int s, struct nv_value *value)
    case NV_OP_FLOOR:
    case NV_OP_TRUNC:
    case NV_OP_CVT:
+   case NV_OP_NEG:
    case NV_OP_MAD:
    case NV_OP_MUL:
    case NV_OP_SAT:

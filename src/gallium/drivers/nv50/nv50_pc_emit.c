@@ -654,6 +654,8 @@ emit_add_f32(struct nv_pc *pc, struct nv_instruction *i)
 {
    pc->emit[0] = 0xb0000000;
 
+   assert(!((i->src[0]->mod | i->src[1]->mod) & NV_MOD_ABS));
+
    if (SFILE(i, 1) == NV_FILE_IMM) {
       emit_form_IMM(pc, i, 0);
 
@@ -665,6 +667,9 @@ emit_add_f32(struct nv_pc *pc, struct nv_instruction *i)
 
       if (i->src[0]->mod & NV_MOD_NEG) pc->emit[1] |= 1 << 26;
       if (i->src[1]->mod & NV_MOD_NEG) pc->emit[1] |= 1 << 27;
+
+      if (i->saturate)
+         pc->emit[1] |= 0x20000000;
    } else {
       emit_form_MUL(pc, i);
 

@@ -220,7 +220,6 @@ struct nv_value {
 
 struct nv_ref {
    struct nv_value *value;
-   struct nv_instruction *insn;
    ubyte mod;
    ubyte typecast;
    ubyte flags; /* not used yet */

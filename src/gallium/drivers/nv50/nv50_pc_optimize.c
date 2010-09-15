@@ -336,6 +336,7 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
          continue;
 
       nvi->def[0] = sti->def[0];
+      nvi->def[0]->insn = nvi;
       nvi->fixed = sti->fixed;
 
       nv_nvi_delete(sti);
@@ -374,7 +375,7 @@ nv_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
          if (j == 0 && ld->src[4]) /* can't load shared mem */
             continue;
 
-         /* fold it ! */ /* XXX: ref->insn */
+         /* fold it ! */
          nv_reference(ctx->pc, &nvi->src[j], ld->src[0]->value);
          if (ld->src[4])
             nv_reference(ctx->pc, &nvi->src[4], ld->src[4]->value);
@@ -388,6 +389,7 @@ nv_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+/* NOTE: Assumes loads have not yet been folded. */
 static int
 nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
 {
@@ -402,14 +404,7 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
          nvi->src[1]->mod ^= NV_MOD_NEG;
       }
 
-      /* should not put any modifiers on NEG and ABS */
-      assert(nvi->opcode != NV_MOD_NEG || !nvi->src[0]->mod);
-      assert(nvi->opcode != NV_MOD_ABS || !nvi->src[0]->mod);
-
-      for (j = 0; j < 4; ++j) {
-         if (!nvi->src[j])
-            break;
-
+      for (j = 0; j < 4 && nvi->src[j]; ++j) {
          mi = nvi->src[j]->value->insn;
          if (!mi)
             continue;
@@ -421,16 +416,32 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
          if (mi->opcode == NV_OP_ABS) mod = NV_MOD_ABS;
          else
             continue;
+         assert(!(mod & mi->src[0]->mod & NV_MOD_NEG));
 
-         if (nvi->opcode == NV_OP_ABS)
+         mod |= mi->src[0]->mod;
+
+         if (mi->flags_def || mi->flags_src)
+            continue;
+
+         if ((nvi->opcode == NV_OP_ABS) || (nvi->src[j]->mod & NV_MOD_ABS)) {
+            /* abs neg [abs] = abs */
             mod &= ~(NV_MOD_NEG | NV_MOD_ABS);
-         else
-         if (nvi->opcode == NV_OP_NEG && mod == NV_MOD_NEG) {
-            nvi->opcode = NV_OP_MOV;
+         } else
+         if ((nvi->opcode == NV_OP_NEG) && (mod & NV_MOD_NEG)) {
+            /* neg as opcode and modifier on same insn cannot occur */
+            /* neg neg abs = abs, neg neg = identity */
+            assert(j == 0);
+            if (mod & NV_MOD_ABS)
+               nvi->opcode = NV_OP_ABS;
+            else
+            if (nvi->flags_def)
+               nvi->opcode = NV_OP_CVT;
+            else
+               nvi->opcode = NV_OP_MOV;
             mod = 0;
          }
 
-         if (!(nv50_supported_src_mods(nvi->opcode, j) & mod))
+         if ((nv50_supported_src_mods(nvi->opcode, j) & mod) != mod)
             continue;
 
          nv_reference(ctx->pc, &nvi->src[j], mi->src[0]->value);
@@ -441,11 +452,15 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
       if (nvi->opcode == NV_OP_SAT) {
          mi = nvi->src[0]->value->insn;
 
-         if ((mi->opcode == NV_OP_MAD) && !mi->flags_def) {
-            mi->saturate = 1;
-            mi->def[0] = nvi->def[0];
-            nv_nvi_delete(nvi);
-         }
+         if (mi->opcode != NV_OP_ADD || mi->opcode != NV_OP_MAD)
+            continue;
+         if (mi->flags_def || mi->def[0]->refc > 1)
+            continue;
+
+         mi->saturate = 1;
+         mi->def[0] = nvi->def[0];
+         mi->def[0]->insn = mi;
+         nv_nvi_delete(nvi);
       }
    }
    DESCEND_ARBITRARY(j, nv_pass_lower_mods);
@@ -956,7 +971,7 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
          for (n1 = 0, nvi = b->out[1]->entry; nvi; nvi = nvi->next, ++n1)
             if (!nv50_nvi_can_predicate(nvi))
                break;
-#ifdef NV50_PC_DEBUG
+#ifdef NV50PC_DEBUG
          if (nvi) {
             debug_printf("cannot predicate: "); nv_print_instruction(nvi);
          }
@@ -1082,6 +1097,11 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
       return ret;
 
    pc->pass_seq++;
+   ret = nv_pass_lower_mods(&pass, root);
+   if (ret)
+      return ret;
+
+   pc->pass_seq++;
    ret = nv_pass_fold_loads(&pass, root);
    if (ret)
       return ret;
@@ -1103,11 +1123,6 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
 
    pc->pass_seq++;
    ret = nv_pass_cse(&pass, root);
-   if (ret)
-      return ret;
-
-   pc->pass_seq++;
-   ret = nv_pass_lower_mods(&pass, root);
    if (ret)
       return ret;
 
