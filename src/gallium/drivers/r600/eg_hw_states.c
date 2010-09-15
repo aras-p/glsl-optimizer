@@ -889,6 +889,7 @@ static int eg_draw_vgt_init(struct r600_draw *draw,
 	radeon_state_init(&draw->draw, rscreen->rw, R600_STATE_DRAW, 0, 0);
 	draw->draw.states[EG_DRAW__VGT_NUM_INDICES] = draw->count;
 	draw->draw.states[EG_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
+	draw->draw.states[EG_DRAW__VGT_DMA_BASE] = draw->index_buffer_offset;
 	if (rbuffer) {
 		draw->draw.bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		draw->draw.placement[0] = RADEON_GEM_DOMAIN_GTT;
@@ -905,8 +906,8 @@ static int eg_draw_vgt_prim(struct r600_draw *draw,
 	struct r600_screen *rscreen = rctx->screen;
 	radeon_state_init(&draw->vgt, rscreen->rw, R600_STATE_VGT, 0, 0);
 	draw->vgt.states[EG_VGT__VGT_PRIMITIVE_TYPE] = prim;
-	draw->vgt.states[EG_VGT__VGT_MAX_VTX_INDX] = 0x00FFFFFF;
-	draw->vgt.states[EG_VGT__VGT_MIN_VTX_INDX] = 0x00000000;
+	draw->vgt.states[EG_VGT__VGT_MAX_VTX_INDX] = draw->max_index;
+	draw->vgt.states[EG_VGT__VGT_MIN_VTX_INDX] = draw->min_index;
 	draw->vgt.states[EG_VGT__VGT_INDX_OFFSET] = draw->start;
 	draw->vgt.states[EG_VGT__VGT_DMA_INDEX_TYPE] = vgt_dma_index_type;
 	draw->vgt.states[EG_VGT__VGT_PRIMITIVEID_EN] = 0x00000000;

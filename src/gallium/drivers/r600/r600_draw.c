@@ -131,8 +131,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.min_index = info->min_index;
+		draw.max_index = info->max_index;
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
+		draw.index_buffer_offset = rctx->index_buffer.offset;
 
 		assert(rctx->index_buffer.offset %
 				rctx->index_buffer.index_size == 0);
@@ -142,6 +145,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	else {
 		draw.index_size = 0;
 		draw.index_buffer = NULL;
+		draw.min_index = 0;
+		draw.max_index = 0xffffff;
+		draw.index_buffer_offset = 0;
 	}
 	r = r600_draw_common(&draw);
 	if (r)
