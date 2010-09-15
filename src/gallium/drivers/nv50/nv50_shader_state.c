@@ -27,7 +27,6 @@
 #include "util/u_inlines.h"
 
 #include "nv50_context.h"
-#include "nv50_transfer.h"
 
 static void
 nv50_transfer_constbuf(struct nv50_context *nv50,

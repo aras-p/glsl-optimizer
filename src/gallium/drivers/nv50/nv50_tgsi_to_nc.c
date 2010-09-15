@@ -31,7 +31,6 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 
-#include "util/u_simple_list.h"
 #include "tgsi/tgsi_dump.h"
 
 #define BLD_MAX_TEMPS 64
