@@ -262,19 +262,20 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
       if (src_idx == 0) {
+         /* Note that the SHADOW variants use the Z component too */
          switch (inst->Texture.Texture) {
          case TGSI_TEXTURE_1D:
-         case TGSI_TEXTURE_SHADOW1D:
             read_mask = TGSI_WRITEMASK_X;
             break;
-
+         case TGSI_TEXTURE_SHADOW1D:
+            read_mask = TGSI_WRITEMASK_XZ;
+            break;
          case TGSI_TEXTURE_2D:
          case TGSI_TEXTURE_RECT:
-         case TGSI_TEXTURE_SHADOW2D:
-         case TGSI_TEXTURE_SHADOWRECT:
             read_mask = TGSI_WRITEMASK_XY;
             break;
-
+         case TGSI_TEXTURE_SHADOW2D:
+         case TGSI_TEXTURE_SHADOWRECT:
          case TGSI_TEXTURE_3D:
          case TGSI_TEXTURE_CUBE:
             read_mask = TGSI_WRITEMASK_XYZ;
