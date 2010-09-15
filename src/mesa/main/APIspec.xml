@@ -1701,8 +1701,7 @@
 	<desc name="type">
 		<value name="GL_UNSIGNED_BYTE"/>
 		<value name="GL_UNSIGNED_SHORT"/>
-		<!-- GL_UNSIGNED_INT is not defined in GLES1.1 headers -->
-		<value name="(0x1405 /* GL_UNSIGNED_INT */)" category="OES_element_index_uint"/>
+		<value name="GL_UNSIGNED_INT" category="OES_element_index_uint"/>
 	</desc>
 </template>
 
@@ -3458,8 +3457,8 @@
 	<proto>
 		<return type="void"/>
 		<param name="mode" type="GLenum"/>
-		<param name="first" type="GLint *"/>
-		<param name="count" type="GLsizei *"/>
+		<param name="first" type="const GLint *"/>
+		<param name="count" type="const GLsizei *"/>
 		<param name="primcount" type="GLsizei"/>
 	</proto>
 
@@ -3497,8 +3496,7 @@
 	<desc name="type">
 		<value name="GL_UNSIGNED_BYTE"/>
 		<value name="GL_UNSIGNED_SHORT"/>
-		<!-- GL_UNSIGNED_INT is not defined in GLES1.1 headers -->
-		<value name="(0x1405 /* GL_UNSIGNED_INT */)" category="OES_element_index_uint"/>
+		<value name="GL_UNSIGNED_INT" category="OES_element_index_uint"/>
 	</desc>
 </template>
 
@@ -3836,9 +3834,9 @@
 	<category name="ARB_texture_non_power_of_two"/>
 	<!-- disabled due to missing enums
 	<category name="EXT_texture_compression_dxt1"/>
+	-->
 	<category name="EXT_texture_lod_bias"/>
 	<category name="EXT_blend_minmax"/>
-	-->
 	<category name="EXT_multi_draw_arrays"/>
 	<category name="OES_EGL_image"/>
 
@@ -4124,10 +4122,8 @@
 	<category name="OES_packed_depth_stencil"/>
 	<category name="OES_standard_derivatives"/>
 
-	<!-- disabled due to missing enums
 	<category name="EXT_texture_compression_dxt1"/>
 	<category name="EXT_blend_minmax"/>
-	-->
 	<category name="EXT_multi_draw_arrays"/>
 	<category name="OES_EGL_image"/>
 
