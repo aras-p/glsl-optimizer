@@ -228,7 +228,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
    ctx.idxbuf = NULL;
    ctx.vtx_size = 0;
    ctx.edgeflag = 0.5f;
-   ctx.edgeflag_attr = nv50->vertprog->cfg.edgeflag_in;
+   ctx.edgeflag_attr = nv50->vertprog->vp.edgeflag;
 
    /* map vertex buffers, determine vertex size */
    for (i = 0; i < nv50->vtxelt->num_elements; i++) {

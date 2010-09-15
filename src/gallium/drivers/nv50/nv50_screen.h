@@ -22,10 +22,11 @@ struct nv50_screen {
 
 	struct nouveau_resource *immd_heap;
 
-	struct pipe_resource *strm_vbuf[16];
-
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
+
+	struct nouveau_bo *stack_bo; /* control flow stack */
+	struct nouveau_bo *local_bo; /* l[] memory */
 
 	boolean force_push;
 };
@@ -37,5 +38,14 @@ nv50_screen(struct pipe_screen *screen)
 }
 
 extern void nv50_screen_relocs(struct nv50_screen *);
+
+struct nv50_format {
+	uint32_t rt;
+	uint32_t tic;
+	uint32_t vtx;
+	uint32_t usage;
+};
+
+extern const struct nv50_format nv50_format_table[];
 
 #endif

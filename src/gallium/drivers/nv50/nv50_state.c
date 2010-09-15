@@ -48,6 +48,53 @@ nv50_colormask(unsigned mask)
 	return cmask;
 }
 
+static INLINE uint32_t
+nv50_blend_func(unsigned factor)
+{
+	switch (factor) {
+	case PIPE_BLENDFACTOR_ZERO:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ZERO;
+	case PIPE_BLENDFACTOR_ONE:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE;
+	case PIPE_BLENDFACTOR_SRC_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_COLOR;
+	case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_DST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_DST_ALPHA;
+	case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_DST_ALPHA;
+	case PIPE_BLENDFACTOR_DST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_DST_COLOR;
+	case PIPE_BLENDFACTOR_INV_DST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_DST_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_ALPHA_SATURATE;
+	case PIPE_BLENDFACTOR_CONST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_CONST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_SRC1_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC1_COLOR;
+	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC1_COLOR;
+	case PIPE_BLENDFACTOR_SRC1_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC1_ALPHA;
+	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC1_ALPHA;
+	default:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ZERO;
+	}
+}
+
 static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
@@ -80,12 +127,12 @@ nv50_blend_state_create(struct pipe_context *pipe,
 	if (blend_enabled) {
 		so_method(so, tesla, NV50TCL_BLEND_EQUATION_RGB, 5);
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_src_factor));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_dst_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].rgb_src_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].rgb_dst_factor));
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_src_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].alpha_src_factor));
 		so_method(so, tesla, NV50TCL_BLEND_FUNC_DST_ALPHA, 1);
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_dst_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].alpha_dst_factor));
 	}
 
 	if (cso->logicop_enable == 0 ) {
@@ -546,7 +593,6 @@ nv50_vp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_VERTEX;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -578,7 +624,6 @@ nv50_fp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_FRAGMENT;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -610,7 +655,6 @@ nv50_gp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_GEOMETRY;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
