@@ -40,6 +40,7 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+#include "main/compiler.h"
 #include "main/mtypes.h"
 
 
