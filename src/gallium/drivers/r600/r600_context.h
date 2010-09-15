@@ -114,6 +114,17 @@ struct r600_vertex_element
 	struct pipe_vertex_element	elements[32];
 };
 
+struct r600_draw {
+	struct pipe_context	*ctx;
+	struct radeon_state	draw;
+	struct radeon_state	vgt;
+	unsigned		mode;
+	unsigned		start;
+	unsigned		count;
+	unsigned		index_size;
+	struct pipe_resource	*index_buffer;
+};
+
 struct r600_context_hw_states {
 	struct radeon_state	rasterizer;
 	struct radeon_state	scissor;
@@ -162,11 +173,10 @@ struct r600_context_hw_state_vtbl {
 	void (*cb_cntl)(struct r600_context *rctx, struct radeon_state *rstate);
 	int (*vs_resource)(struct r600_context *rctx, int id, struct r600_resource *rbuffer, uint32_t offset,
 			   uint32_t stride, uint32_t format);
-	int (*vgt_init)(struct r600_context *rctx, struct radeon_state *draw,
-			struct r600_resource *rbuffer,
-			uint32_t count, int vgt_draw_initiator);
-	int (*vgt_prim)(struct r600_context *rctx, struct radeon_state *vgt,
-			uint32_t prim, uint32_t start, uint32_t vgt_dma_index_type);
+	int (*vgt_init)(struct r600_draw *draw,
+			int vgt_draw_initiator);
+	int (*vgt_prim)(struct r600_draw *draw,
+			uint32_t prim, uint32_t vgt_dma_index_type);
 
 	int (*ps_shader)(struct r600_context *rctx, struct r600_context_state *rshader,
 			 struct radeon_state *state);

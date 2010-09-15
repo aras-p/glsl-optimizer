@@ -37,17 +37,6 @@
 #include "r600_resource.h"
 #include "r600_state_inlines.h"
 
-struct r600_draw {
-	struct pipe_context	*ctx;
-	struct radeon_state	draw;
-	struct radeon_state	vgt;
-	unsigned		mode;
-	unsigned		start;
-	unsigned		count;
-	unsigned		index_size;
-	struct pipe_resource	*index_buffer;
-};
-
 static int r600_draw_common(struct r600_draw *draw)
 {
 	struct r600_context *rctx = r600_context(draw->ctx);
@@ -110,11 +99,10 @@ static int r600_draw_common(struct r600_draw *draw)
 	}
 	rctx->vs_nresource = rctx->vertex_elements->count;
 	/* FIXME start need to change winsys */
-	rctx->vtbl->vgt_init(rctx, &draw->draw, (struct r600_resource *)draw->index_buffer,
-			     draw->count, vgt_draw_initiator);
+	rctx->vtbl->vgt_init(draw, vgt_draw_initiator);
 	radeon_draw_bind(&rctx->draw, &draw->draw);
 
-	rctx->vtbl->vgt_prim(rctx, &draw->vgt, prim, draw->start, vgt_dma_index_type);
+	rctx->vtbl->vgt_prim(draw, prim, vgt_dma_index_type);
 	radeon_draw_bind(&rctx->draw, &draw->vgt);
 
 	r = radeon_ctx_set_draw(&rctx->ctx, &rctx->draw);

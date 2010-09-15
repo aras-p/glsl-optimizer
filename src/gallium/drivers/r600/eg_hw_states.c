@@ -880,40 +880,41 @@ static int eg_vs_resource(struct r600_context *rctx, int id, struct r600_resourc
 	return radeon_state_pm4(vs_resource);
 }
 
-static int eg_draw_vgt_init(struct r600_context *rctx, struct radeon_state *draw,
-			    struct r600_resource *rbuffer,
-			    uint32_t count, int vgt_draw_initiator)
+static int eg_draw_vgt_init(struct r600_draw *draw,
+			    int vgt_draw_initiator)
 {
+	struct r600_context *rctx = r600_context(draw->ctx);
 	struct r600_screen *rscreen = rctx->screen;
-	
-	radeon_state_init(draw, rscreen->rw, R600_STATE_DRAW, 0, 0);
-	draw->states[EG_DRAW__VGT_NUM_INDICES] = count;
-	draw->states[EG_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
+	struct r600_resource *rbuffer = (struct r600_resource *)draw->index_buffer;
+	radeon_state_init(&draw->draw, rscreen->rw, R600_STATE_DRAW, 0, 0);
+	draw->draw.states[EG_DRAW__VGT_NUM_INDICES] = draw->count;
+	draw->draw.states[EG_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	if (rbuffer) {
-		draw->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-		draw->placement[0] = RADEON_GEM_DOMAIN_GTT;
-		draw->placement[1] = RADEON_GEM_DOMAIN_GTT;
-		draw->nbo = 1;
+		draw->draw.bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		draw->draw.placement[0] = RADEON_GEM_DOMAIN_GTT;
+		draw->draw.placement[1] = RADEON_GEM_DOMAIN_GTT;
+		draw->draw.nbo = 1;
 	}
-	return radeon_state_pm4(draw);
+	return radeon_state_pm4(&draw->draw);
 }
 
-static int eg_draw_vgt_prim(struct r600_context *rctx, struct radeon_state *vgt,
-			    uint32_t prim, uint32_t start, uint32_t vgt_dma_index_type)
+static int eg_draw_vgt_prim(struct r600_draw *draw,
+			    uint32_t prim, uint32_t vgt_dma_index_type)
 {
+	struct r600_context *rctx = r600_context(draw->ctx);
 	struct r600_screen *rscreen = rctx->screen;
-	radeon_state_init(vgt, rscreen->rw, R600_STATE_VGT, 0, 0);
-	vgt->states[EG_VGT__VGT_PRIMITIVE_TYPE] = prim;
-	vgt->states[EG_VGT__VGT_MAX_VTX_INDX] = 0x00FFFFFF;
-	vgt->states[EG_VGT__VGT_MIN_VTX_INDX] = 0x00000000;
-	vgt->states[EG_VGT__VGT_INDX_OFFSET] = start;
-	vgt->states[EG_VGT__VGT_DMA_INDEX_TYPE] = vgt_dma_index_type;
-	vgt->states[EG_VGT__VGT_PRIMITIVEID_EN] = 0x00000000;
-	vgt->states[EG_VGT__VGT_DMA_NUM_INSTANCES] = 0x00000001;
-	vgt->states[EG_VGT__VGT_MULTI_PRIM_IB_RESET_EN] = 0x00000000;
-	vgt->states[EG_VGT__VGT_INSTANCE_STEP_RATE_0] = 0x00000000;
-	vgt->states[EG_VGT__VGT_INSTANCE_STEP_RATE_1] = 0x00000000;
-	return radeon_state_pm4(vgt);
+	radeon_state_init(&draw->vgt, rscreen->rw, R600_STATE_VGT, 0, 0);
+	draw->vgt.states[EG_VGT__VGT_PRIMITIVE_TYPE] = prim;
+	draw->vgt.states[EG_VGT__VGT_MAX_VTX_INDX] = 0x00FFFFFF;
+	draw->vgt.states[EG_VGT__VGT_MIN_VTX_INDX] = 0x00000000;
+	draw->vgt.states[EG_VGT__VGT_INDX_OFFSET] = draw->start;
+	draw->vgt.states[EG_VGT__VGT_DMA_INDEX_TYPE] = vgt_dma_index_type;
+	draw->vgt.states[EG_VGT__VGT_PRIMITIVEID_EN] = 0x00000000;
+	draw->vgt.states[EG_VGT__VGT_DMA_NUM_INSTANCES] = 0x00000001;
+	draw->vgt.states[EG_VGT__VGT_MULTI_PRIM_IB_RESET_EN] = 0x00000000;
+	draw->vgt.states[EG_VGT__VGT_INSTANCE_STEP_RATE_0] = 0x00000000;
+	draw->vgt.states[EG_VGT__VGT_INSTANCE_STEP_RATE_1] = 0x00000000;
+	return radeon_state_pm4(&draw->vgt);
 }
 
 
