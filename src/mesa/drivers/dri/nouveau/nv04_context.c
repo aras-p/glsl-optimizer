@@ -93,15 +93,15 @@ nv04_channel_flush_notify(struct nouveau_channel *chan)
 	GLcontext *ctx = &nctx->base;
 
 	if (nctx->fallback < SWRAST) {
-		/* Flushing seems to clobber the engine context. */
+		nouveau_bo_state_emit(ctx);
+
+		/* Reemit the engine state. */
 		context_emit(ctx, TEX_OBJ0);
 		context_emit(ctx, TEX_OBJ1);
 		context_emit(ctx, TEX_ENV0);
 		context_emit(ctx, TEX_ENV1);
 		context_emit(ctx, CONTROL);
 		context_emit(ctx, BLEND);
-
-		nouveau_bo_state_emit(ctx);
 	}
 }
 

@@ -459,8 +459,6 @@ nouveau_state_emit(GLcontext *ctx)
 	}
 
 	BITSET_ZERO(nctx->dirty);
-
-	nouveau_bo_state_emit(ctx);
 }
 
 static void
