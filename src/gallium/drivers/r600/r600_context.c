@@ -64,7 +64,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_context *rctx = r600_context(ctx);
-	struct r600_query *rquery;
+	struct r600_query *rquery = NULL;
 	static int dc = 0;
 	char dname[256];
 
