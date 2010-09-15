@@ -73,7 +73,7 @@ static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
-static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_resource_texture *rtex)
+static void r600_setup_miptree(struct r600_resource_texture *rtex)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	unsigned long w, h, pitch, size, layer_size, i, offset;
@@ -105,7 +105,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
-	struct r600_screen *rscreen = r600_screen(screen);
+	struct radeon *radeon = (struct radeon *)screen->winsys;
 
 	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (!rtex) {
@@ -116,11 +116,11 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	resource->base.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
-	r600_setup_miptree(rscreen, rtex);
+	r600_setup_miptree(rtex);
 
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
-	resource->bo = radeon_bo(rscreen->rw, 0, rtex->size, 4096, NULL);
+	resource->bo = radeon_bo(radeon, 0, rtex->size, 4096, NULL);
 	if (resource->bo == NULL) {
 		FREE(rtex);
 		return NULL;
@@ -146,13 +146,13 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
-	struct r600_screen *rscreen = r600_screen(screen);
+	struct radeon *radeon = (struct radeon *)screen->winsys;
 
 	if (resource->bo) {
-		radeon_bo_decref(rscreen->rw, resource->bo);
+		radeon_bo_decref(radeon, resource->bo);
 	}
 	if (rtex->uncompressed) {
-		radeon_bo_decref(rscreen->rw, rtex->uncompressed);
+		radeon_bo_decref(radeon, rtex->uncompressed);
 	}
 	r600_texture_destroy_state(ptex);
 	FREE(rtex);
@@ -317,7 +317,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon_bo *bo;
 	enum pipe_format format = transfer->resource->format;
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
 	struct r600_resource_texture *rtex;
 	unsigned long offset = 0;
 	char *map;
@@ -342,10 +342,10 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
-	if (radeon_bo_map(rscreen->rw, bo)) {
+	if (radeon_bo_map(radeon, bo)) {
 		return NULL;
 	}
-	radeon_bo_wait(rscreen->rw, bo);
+	radeon_bo_wait(radeon, bo);
 
 	map = bo->data;
 	return map + offset;
@@ -355,7 +355,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
 	struct r600_resource_texture *rtex;
 	struct radeon_bo *bo;
 
@@ -369,7 +369,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 			bo = ((struct r600_resource *)transfer->resource)->bo;
 		}
 	}
-	radeon_bo_unmap(rscreen->rw, bo);
+	radeon_bo_unmap(radeon, bo);
 }
 
 struct u_resource_vtbl r600_texture_vtbl =
@@ -495,7 +495,7 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	default:
 		break;
 	}
-	
+
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
 		goto out_unknown;

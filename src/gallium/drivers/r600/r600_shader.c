@@ -51,7 +51,7 @@ struct r600_shader_ctx {
 	u32					value[4];
 	u32					*literals;
 	u32					nliterals;
-	u32                                     max_driver_temp_used;
+	u32					max_driver_temp_used;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -62,7 +62,6 @@ struct r600_shader_tgsi_instruction {
 };
 
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[], eg_shader_tgsi_instruction[];
-static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
 static int tgsi_helper_tempx_replicate(struct r600_shader_ctx *ctx);
 
 static int r600_shader_update(struct pipe_context *ctx, struct r600_shader *shader)

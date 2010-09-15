@@ -20,11 +20,12 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "r600_asm.h"
+#include "radeon.h"
 #include "r600_context.h"
 #include "util/u_memory.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
+#include "r600_asm.h"
 #include <stdio.h>
 #include <errno.h>
 
@@ -71,7 +72,6 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		return 1;
-        
 	default: R600_ERR(
 		"Need instruction operand number for 0x%x.\n", alu->inst); 
 	};

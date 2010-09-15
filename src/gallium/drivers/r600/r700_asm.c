@@ -20,8 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "r600_asm.h"
+#include "radeon.h"
 #include "r600_context.h"
+#include "r600_asm.h"
 #include "util/u_memory.h"
 #include "r700_sq.h"
 #include <stdio.h>
