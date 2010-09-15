@@ -432,6 +432,9 @@ tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 	src.swz[1] = fsrc->Register.SwizzleY;
 	src.swz[2] = fsrc->Register.SwizzleZ;
 	src.swz[3] = fsrc->Register.SwizzleW;
+	src.indirect = 0;
+	src.indirect_reg = 0;
+	src.indirect_swz = 0;
 	return src;
 }
 
