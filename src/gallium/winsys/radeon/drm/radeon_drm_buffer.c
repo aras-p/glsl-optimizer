@@ -5,6 +5,7 @@
 #include "radeon_cs_gem.h"
 #include "radeon_buffer.h"
 
+#include "util/u_hash_table.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
@@ -41,6 +42,7 @@ struct radeon_drm_bufmgr {
     struct pb_manager base;
     struct radeon_libdrm_winsys *rws;
     struct radeon_drm_buffer buffer_map_list;
+    struct util_hash_table *buffer_handles;
 };
 
 static INLINE struct radeon_drm_bufmgr *
@@ -60,6 +62,9 @@ radeon_drm_buffer_destroy(struct pb_buffer *_buf)
 	radeon_bo_unmap(buf->bo);
 	buf->bo->ptr = NULL;
     }
+
+    util_hash_table_remove(buf->mgr->buffer_handles,
+                           (void*)(uintptr_t)buf->bo->handle);
     radeon_bo_unref(buf->bo);
 
     FREE(buf);
@@ -186,6 +191,13 @@ struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager 
     struct radeon_drm_buffer *buf;
     struct radeon_bo *bo;
 
+    buf = util_hash_table_get(mgr->buffer_handles, (void*)(uintptr_t)handle);
+    if (buf) {
+        struct pb_buffer *b = NULL;
+        pb_reference(&b, &buf->base);
+        return b;
+    }
+
     bo = radeon_bo_open(rws->bom, handle, 0,
 			0, 0, 0);
     if (bo == NULL)
@@ -207,6 +219,8 @@ struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager 
     buf->mgr = mgr;
 
     buf->bo = bo;
+
+    util_hash_table_set(mgr->buffer_handles, (void*)(uintptr_t)handle, buf);
 
     return &buf->base;
 }
@@ -261,7 +275,18 @@ static void
 radeon_drm_bufmgr_destroy(struct pb_manager *_mgr)
 {
     struct radeon_drm_bufmgr *mgr = radeon_drm_bufmgr(_mgr);
+    util_hash_table_destroy(mgr->buffer_handles);
     FREE(mgr);
+}
+
+static unsigned handle_hash(void *key)
+{
+    return (unsigned)key;
+}
+
+static int handle_compare(void *key1, void *key2)
+{
+    return !((int)key1 == (int)key2);
 }
 
 struct pb_manager *
@@ -279,6 +304,7 @@ radeon_drm_bufmgr_create(struct radeon_libdrm_winsys *rws)
 
     mgr->rws = rws;
     make_empty_list(&mgr->buffer_map_list);
+    mgr->buffer_handles = util_hash_table_create(handle_hash, handle_compare);
     return &mgr->base;
 }
 
