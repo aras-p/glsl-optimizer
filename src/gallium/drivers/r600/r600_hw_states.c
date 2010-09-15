@@ -353,7 +353,7 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
 	struct r600_shader *rshader;
-	struct r600_query *rquery;
+	struct r600_query *rquery = NULL;
 	boolean query_running;
 	int i;
 
