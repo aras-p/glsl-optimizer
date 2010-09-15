@@ -384,7 +384,7 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
 {
-	struct r600_bc_alu *alu;
+	struct r600_bc_alu *alu = NULL;
 	int num_instr = 1;
 
 	init_gpr(alu_first);
