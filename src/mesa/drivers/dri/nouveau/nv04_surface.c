@@ -255,7 +255,7 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 
 			BEGIN_RING(chan, sifm,
 				   NV03_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
-			OUT_RING(chan, sub_h << 16 | sub_w);
+			OUT_RING(chan, align(sub_h, 2) << 16 | align(sub_w, 2));
 			OUT_RING(chan, src->pitch  |
 				 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 				 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
