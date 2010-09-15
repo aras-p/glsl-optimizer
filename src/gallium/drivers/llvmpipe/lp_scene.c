@@ -223,7 +223,7 @@ lp_scene_end_rasterization(struct lp_scene *scene )
             if (LP_DEBUG & DEBUG_SETUP)
                debug_printf("resource %d: %p %dx%d sz %d\n",
                             j,
-                            ref->resource[i],
+                            (void *) ref->resource[i],
                             ref->resource[i]->width0,
                             ref->resource[i]->height0,
                             llvmpipe_resource_size(ref->resource[i]));
