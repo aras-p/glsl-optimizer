@@ -898,8 +898,8 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	       if (storage->index == -1) {
 		  storage->index = index;
 	       } else {
-		  assert(index == ((int)storage->index +
-				   a * statevar->num_elements + i));
+		  assert(index ==
+                         (int)(storage->index + a * statevar->num_elements + i));
 	       }
 	    } else {
 	       ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
