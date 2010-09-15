@@ -32,9 +32,9 @@ struct nv50_varying {
    uint8_t id; /* tgsi index */
    uint8_t hw; /* hw index, nv50 wants flat FP inputs last */
 
-   uint8_t mask   : 4;
-   uint8_t linear : 1;
-   uint8_t pad    : 3;
+   unsigned mask   : 4;
+   unsigned linear : 1;
+   unsigned pad    : 3;
 
    ubyte sn; /* semantic name */
    ubyte si; /* semantic index */

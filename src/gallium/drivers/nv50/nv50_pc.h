@@ -239,23 +239,23 @@ struct nv_instruction {
    struct nv_basic_block *bb;
    struct nv_basic_block *target; /* target block of control flow insn */
    ubyte cc;
-   ubyte set_cond      : 4;
-   ubyte fixed         : 1; /* don't optimize away */
-   ubyte is_terminator : 1;
-   ubyte is_join       : 1;
-   ubyte is_long       : 1; /* for emission */
+   unsigned set_cond      : 4;
+   unsigned fixed         : 1; /* don't optimize away */
+   unsigned is_terminator : 1;
+   unsigned is_join       : 1;
+   unsigned is_long       : 1; /* for emission */
    /* */
-   ubyte saturate : 1;
-   ubyte centroid : 1;
-   ubyte flat     : 1;
-   ubyte lanes    : 4;
-   ubyte tex_live : 1;
+   unsigned saturate : 1;
+   unsigned centroid : 1;
+   unsigned flat     : 1;
+   unsigned lanes    : 4;
+   unsigned tex_live : 1;
    /* */
    ubyte tex_t; /* TIC binding */
    ubyte tex_s; /* TSC binding */
-   ubyte tex_argc : 3;
-   ubyte tex_cube : 1;
-   ubyte tex_mask : 4;
+   unsigned tex_argc : 3;
+   unsigned tex_cube : 1;
+   unsigned tex_mask : 4;
    /* */
    ubyte quadop;
 };
