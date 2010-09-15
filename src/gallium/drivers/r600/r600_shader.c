@@ -2414,6 +2414,9 @@ static inline void callstack_check_depth(struct r600_shader_ctx *ctx, unsigned r
 		case FC_PUSH_WQM:
 			diff = 4;
 			break;
+		default:
+			assert(0);
+			diff = 0;
 		}
 		if ((ctx->bc->callstack[ctx->bc->call_sp].current + diff) >
 		    ctx->bc->callstack[ctx->bc->call_sp].max) {
