@@ -85,7 +85,7 @@ int
 calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
 		     enum ir_expression_operation op)
 {
-   void *mem_ctx = talloc_init(__func__);
+   void *mem_ctx = talloc_init("%s", __func__);
 
    ir_expression *const sub =
       new(mem_ctx) ir_expression(ir_binop_sub, from->type, to, from);
