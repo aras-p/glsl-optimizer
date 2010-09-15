@@ -459,7 +459,8 @@ nv50_emit_program(struct nv_pc *pc)
    assert(pc->emit == &code[pc->bin_size / 4]);
 
    /* XXX: we can do better than this ... */
-   if (!(pc->emit[-2] & 1) || (pc->emit[-2] & 2) || (pc->emit[-1] & 3)) {
+   if (!pc->bin_size ||
+       !(pc->emit[-2] & 1) || (pc->emit[-2] & 2) || (pc->emit[-1] & 3)) {
       pc->emit[0] = 0xf0000001;
       pc->emit[1] = 0xe0000000;
       pc->bin_size += 8;
@@ -523,6 +524,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ret = nv_pc_exec_pass2(pc);
    if (ret)
       goto out;
+   assert(!(pc->bin_size % 8));
 
    pc->emit = CALLOC(pc->bin_size / 4 + 2, 4);
    if (!pc->emit) {
