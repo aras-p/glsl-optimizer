@@ -447,8 +447,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
 static INLINE uint32_t 
 floor_pot(uint32_t n)
 {
-   assert(n);
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
+   if (n == 0)
+      return 0;
+
    __asm__("bsr %1,%0"
           : "=r" (n)
           : "rm" (n));
