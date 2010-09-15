@@ -865,7 +865,7 @@ static void evergreenSetDepthTarget(context_t *context)
 {
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel;
+    unsigned int nPitchInPixel, height;
 
     rrb = radeon_get_depthbuffer(&context->radeon);
     if (!rrb)
@@ -879,13 +879,22 @@ static void evergreenSetDepthTarget(context_t *context)
     
     nPitchInPixel = rrb->pitch/rrb->cpp;
 
+    if (context->radeon.radeonScreen->driScreen->dri2.enabled)
+    {
+        height = rrb->base.Height;
+    }
+    else
+    {
+        height =  context->radeon.radeonScreen->driScreen->fbHeight;
+    }
+
     SETfield(evergreen->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
              EG_DB_DEPTH_SIZE__PITCH_TILE_MAX_shift, 
              EG_DB_DEPTH_SIZE__PITCH_TILE_MAX_mask);
-    SETfield(evergreen->DB_DEPTH_SIZE.u32All, (context->radeon.radeonScreen->driScreen->fbHeight/8)-1,
+    SETfield(evergreen->DB_DEPTH_SIZE.u32All, (height/8)-1,
              EG_DB_DEPTH_SIZE__HEIGHT_TILE_MAX_shift, 
              EG_DB_DEPTH_SIZE__HEIGHT_TILE_MAX_mask);
-    evergreen->DB_DEPTH_SLICE.u32All = ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1;
+    evergreen->DB_DEPTH_SLICE.u32All = ( (nPitchInPixel * height)/64 )-1;
 
     if(4 == rrb->cpp)
     {
@@ -1052,7 +1061,7 @@ static void evergreenSetRenderTarget(context_t *context, int id)
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     uint32_t format = COLOR_8_8_8_8, comp_swap = SWAP_ALT, number_type = NUMBER_UNORM, source_format = 1;
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel;
+    unsigned int nPitchInPixel, height;
 
     rrb = radeon_get_colorbuffer(&context->radeon);
     if (!rrb || !rrb->bo) {
@@ -1067,13 +1076,22 @@ static void evergreenSetRenderTarget(context_t *context, int id)
     /* pitch */
     nPitchInPixel = rrb->pitch/rrb->cpp;    
 
+    if (context->radeon.radeonScreen->driScreen->dri2.enabled)
+    {
+        height = rrb->base.Height;
+    }
+    else
+    {
+        height =  context->radeon.radeonScreen->driScreen->fbHeight;
+    }
+
     SETfield(evergreen->render_target[id].CB_COLOR0_PITCH.u32All, (nPitchInPixel/8)-1,
              EG_CB_COLOR0_PITCH__TILE_MAX_shift, 
              EG_CB_COLOR0_PITCH__TILE_MAX_mask);
 
     /* slice */
     SETfield(evergreen->render_target[id].CB_COLOR0_SLICE.u32All, 
-             ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+             ( (nPitchInPixel * height)/64 )-1,
              EG_CB_COLOR0_SLICE__TILE_MAX_shift, 
              EG_CB_COLOR0_SLICE__TILE_MAX_mask);
 

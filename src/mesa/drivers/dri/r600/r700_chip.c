@@ -270,7 +270,7 @@ static void r700SetRenderTarget(context_t *context, int id)
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     uint32_t format = COLOR_8_8_8_8, comp_swap = SWAP_ALT, number_type = NUMBER_UNORM;
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel;
+    unsigned int nPitchInPixel, height;
 
     rrb = radeon_get_colorbuffer(&context->radeon);
     if (!rrb || !rrb->bo) {
@@ -283,9 +283,19 @@ static void r700SetRenderTarget(context_t *context, int id)
     r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset / 256;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
+
+    if (context->radeon.radeonScreen->driScreen->dri2.enabled)
+    {
+        height = rrb->base.Height;
+    }
+    else
+    {
+        height =  context->radeon.radeonScreen->driScreen->fbHeight;
+    }
+
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * height)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
@@ -544,7 +554,7 @@ static void r700SetDepthTarget(context_t *context)
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel;
+    unsigned int nPitchInPixel, height;
 
     rrb = radeon_get_depthbuffer(&context->radeon);
     if (!rrb)
@@ -560,9 +570,18 @@ static void r700SetDepthTarget(context_t *context)
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
 
+    if (context->radeon.radeonScreen->driScreen->dri2.enabled)
+    {
+        height = rrb->base.Height;
+    }
+    else 
+    {
+        height =  context->radeon.radeonScreen->driScreen->fbHeight;
+    }
+
     SETfield(r700->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * height)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
 
     if(4 == rrb->cpp)
