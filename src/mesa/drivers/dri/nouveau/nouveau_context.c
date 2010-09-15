@@ -212,7 +212,6 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	for (i = 0; i < count; i++) {
 		struct gl_renderbuffer *rb;
 		struct nouveau_surface *s;
-		uint32_t old_handle;
 		int index;
 
 		switch (buffers[i].attachment) {
@@ -242,19 +241,10 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		s->pitch = buffers[i].pitch;
 		s->cpp = buffers[i].cpp;
 
-		/* Don't bother to reopen the bo if it happens to be
-		 * the same. */
-		if (s->bo) {
-			ret = nouveau_bo_handle_get(s->bo, &old_handle);
-			assert(!ret);
-		}
-
-		if (!s->bo || old_handle != buffers[i].name) {
-			nouveau_bo_ref(NULL, &s->bo);
-			ret = nouveau_bo_handle_ref(context_dev(ctx),
-						    buffers[i].name, &s->bo);
-			assert(!ret);
-		}
+		nouveau_bo_ref(NULL, &s->bo);
+		ret = nouveau_bo_handle_ref(context_dev(ctx),
+					    buffers[i].name, &s->bo);
+		assert(!ret);
 	}
 
 	_mesa_resize_framebuffer(NULL, fb, draw->w, draw->h);
@@ -293,12 +283,14 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 			update_framebuffer(dri_ctx, dri_read,
 					   &dri_ctx->dri2.read_stamp);
 
+		/* Clean up references to the old framebuffer objects. */
+		context_bctx(ctx, FRAMEBUFFER);
+		FIRE_RING(context_chan(ctx));
+
 		/* Pass it down to mesa. */
 		_mesa_make_current(ctx, dri_draw->driverPrivate,
 				   dri_read->driverPrivate);
 		_mesa_update_state(ctx);
-
-		FIRE_RING(context_chan(ctx));
 
 	} else {
 		_mesa_make_current(NULL, NULL, NULL);
