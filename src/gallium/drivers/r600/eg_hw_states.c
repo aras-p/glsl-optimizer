@@ -1065,21 +1065,13 @@ static void eg_texture_state_cb(struct r600_screen *rscreen, struct r600_resourc
 	swap = r600_translate_colorswap(rtexture->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
-		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
-		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
 		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
-		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
-		rstate->nbo = 3;
+		rstate->nbo = 1;
 		color_info = 0;
 	} else {
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
-		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
-		rstate->nbo = 3;
+		rstate->nbo = 1;
 		color_info = S_028C70_SOURCE_FORMAT(1);
 	}
 	color_info |= S_028C70_FORMAT(format) |

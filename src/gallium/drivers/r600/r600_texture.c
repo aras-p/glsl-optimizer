@@ -314,6 +314,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon_bo *bo;
 	enum pipe_format format = transfer->resource->format;
@@ -328,7 +329,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
 		rtex = (struct r600_resource_texture*)transfer->resource;
-		if (rtex->depth) {
+		if (rtex->depth && rscreen->chip_class != EVERGREEN) {
 			r = r600_texture_from_depth(ctx, rtex, transfer->sr.level);
 			if (r) {
 				return NULL;
