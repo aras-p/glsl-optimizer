@@ -162,7 +162,7 @@ swtnl_triangle(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3)
 	OUT_VERTEX(v1);
 	OUT_VERTEX(v2);
 	OUT_VERTEX(v3);
-	END_PRIMITIVE(0x210);
+	END_PRIMITIVE(0x102);
 }
 
 static void
@@ -173,7 +173,7 @@ swtnl_quad(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
 	OUT_VERTEX(v2);
 	OUT_VERTEX(v3);
 	OUT_VERTEX(v4);
-	END_PRIMITIVE(0x320210);
+	END_PRIMITIVE(0x213103);
 }
 
 /* TnL initialization. */
