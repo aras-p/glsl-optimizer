@@ -1013,6 +1013,147 @@ static int r600_vs_shader(struct r600_context *rctx, struct r600_context_state *
 	return radeon_state_pm4(state);
 }
 
+static void r600_texture_state_scissor(struct r600_screen *rscreen,
+					struct r600_resource_texture *rtexture,
+					unsigned level)
+{
+	struct radeon_state *rstate = &rtexture->scissor[level];
+
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_SCISSOR, 0, 0);
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_1_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_1_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_2_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_2_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_RULE] = 0x0000FFFF;
+	rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_VPORT_SCISSOR_0_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_VPORT_SCISSOR_0_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_TL] = 0x80000000;
+
+	radeon_state_pm4(rstate);
+}
+
+static void r600_texture_state_cb(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
+{
+	struct radeon_state *rstate;
+	struct r600_resource *rbuffer;
+	unsigned pitch, slice;
+	unsigned color_info;
+	unsigned format, swap, ntype;
+	const struct util_format_description *desc;
+
+	rstate = &rtexture->cb[cb][level];
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB0 + cb, 0, 0);
+	rbuffer = &rtexture->resource;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	pitch = (rtexture->pitch[level] / rtexture->bpt) / 8 - 1;
+	slice = (rtexture->pitch[level] / rtexture->bpt) * rtexture->height[level] / 64 - 1;
+	ntype = 0;
+	desc = util_format_description(rbuffer->base.b.format);
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		ntype = V_0280A0_NUMBER_SRGB;
+	format = r600_translate_colorformat(rtexture->resource.base.b.format);
+	swap = r600_translate_colorswap(rtexture->resource.base.b.format);
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
+		rstate->nbo = 3;
+		color_info = 0;
+	} else {
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
+		rstate->nbo = 3;
+		color_info = S_0280A0_SOURCE_FORMAT(1);
+	}
+	color_info |= S_0280A0_FORMAT(format) |
+		S_0280A0_COMP_SWAP(swap) |
+		S_0280A0_BLEND_CLAMP(1) |
+		S_0280A0_NUMBER_TYPE(ntype);
+	rstate->states[R600_CB0__CB_COLOR0_BASE] = rtexture->offset[level] >> 8;
+	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
+	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
+						S_028060_SLICE_TILE_MAX(slice);
+
+	radeon_state_pm4(rstate);
+}
+
+static void r600_texture_state_db(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct radeon_state *rstate = &rtexture->db[level];
+	struct r600_resource *rbuffer;
+	unsigned pitch, slice, format;
+
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_DB, 0, 0);
+	rbuffer = &rtexture->resource;
+	rtexture->tilled = 1;
+	rtexture->array_mode = 2;
+	rtexture->tile_type = 1;
+	rtexture->depth = 1;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	pitch = (rtexture->pitch[level] / rtexture->bpt) / 8 - 1;
+	slice = (rtexture->pitch[level] / rtexture->bpt) * rtexture->height[level] / 64 - 1;
+	format = r600_translate_dbformat(rbuffer->base.b.format);
+	rstate->states[R600_DB__DB_DEPTH_BASE] = rtexture->offset[level] >> 8;
+	rstate->states[R600_DB__DB_DEPTH_INFO] = S_028010_ARRAY_MODE(rtexture->array_mode) |
+					S_028010_FORMAT(format);
+	rstate->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
+	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (rtexture->height[level] / 8) -1;
+	rstate->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
+						S_028000_SLICE_TILE_MAX(slice);
+	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rstate->nbo = 1;
+
+	radeon_state_pm4(rstate);
+}
+
+static void r600_texture_state_viewport(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct radeon_state *rstate = &rtexture->viewport[level];
+
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_VIEWPORT, 0, 0);
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui((float)rtexture->width[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui((float)rtexture->width[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui((float)rtexture->height[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui((float)-rtexture->height[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = 0x3F000000;
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = 0x3F000000;
+	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
+	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
+
+	radeon_state_pm4(rstate);
+}
+
 struct r600_context_hw_state_vtbl r600_hw_state_vtbl = {
 	.blend = r600_blend,
 	.ucp = r600_ucp,
@@ -1032,6 +1173,10 @@ struct r600_context_hw_state_vtbl r600_hw_state_vtbl = {
 	.vs_shader = r600_vs_shader,
 	.ps_shader = r600_ps_shader,
 	.init_config = r600_init_config,
+	.texture_state_viewport = r600_texture_state_viewport,
+	.texture_state_db = r600_texture_state_db,
+	.texture_state_cb = r600_texture_state_cb,
+	.texture_state_scissor = r600_texture_state_scissor,
 };
 
 void r600_set_constant_buffer_file(struct pipe_context *ctx,

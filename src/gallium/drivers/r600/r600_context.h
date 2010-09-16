@@ -150,7 +150,9 @@ struct r600_shader_sampler_states {
 };
 
 struct r600_context;
+struct r600_screen;
 struct r600_resource;
+struct r600_resource_texture;
 
 struct r600_context_hw_state_vtbl {
 	void (*blend)(struct r600_context *rctx,
@@ -185,6 +187,21 @@ struct r600_context_hw_state_vtbl {
 	int (*vs_shader)(struct r600_context *rctx, struct r600_context_state *rpshader,
 			 struct radeon_state *state);
 	void (*init_config)(struct r600_context *rctx);
+
+
+	void (*texture_state_viewport)(struct r600_screen *rscreen,
+				       struct r600_resource_texture *rtexture,
+				       unsigned level);
+	void (*texture_state_cb)(struct r600_screen *rscreen,
+				 struct r600_resource_texture *rtexture,
+				 unsigned cb,
+				 unsigned level);
+	void (*texture_state_db)(struct r600_screen *rscreen,
+				 struct r600_resource_texture *rtexture,
+				 unsigned level);
+	void (*texture_state_scissor)(struct r600_screen *rscreen,
+				 struct r600_resource_texture *rtexture,
+				 unsigned level);
 };
 extern struct r600_context_hw_state_vtbl r600_hw_state_vtbl;
 extern struct r600_context_hw_state_vtbl eg_hw_state_vtbl;
