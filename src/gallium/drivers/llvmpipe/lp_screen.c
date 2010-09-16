@@ -412,10 +412,9 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 
    lp_jit_screen_init(screen);
 
+   screen->num_threads = util_cpu_caps.nr_cpus > 1 ? util_cpu_caps.nr_cpus : 0;
 #ifdef PIPE_OS_EMBEDDED
    screen->num_threads = 0;
-#else
-   screen->num_threads = util_cpu_caps.nr_cpus;
 #endif
    screen->num_threads = debug_get_num_option("LP_NUM_THREADS", screen->num_threads);
    screen->num_threads = MIN2(screen->num_threads, LP_MAX_THREADS);
