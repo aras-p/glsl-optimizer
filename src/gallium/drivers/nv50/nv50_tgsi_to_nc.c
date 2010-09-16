@@ -289,7 +289,8 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
         struct bld_value_stack *stack)
 {
    struct nv_basic_block *in;
-   struct nv_value *vals[16], *val;
+   struct nv_value *vals[16] = { 0 };
+   struct nv_value *val;
    struct nv_instruction *phi;
    int i, j, n;
 
