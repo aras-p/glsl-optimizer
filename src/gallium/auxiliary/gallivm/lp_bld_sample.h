@@ -346,6 +346,9 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     LLVMValueRef explicit_lod,
                     LLVMValueRef texel_out[4]);
 
+void
+lp_build_sample_nop(struct lp_type type,
+                    LLVMValueRef texel_out[4]);
 
 
 #endif /* LP_BLD_SAMPLE_H */

@@ -1095,16 +1095,15 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
  * Just set texels to white instead of actually sampling the texture.
  * For debugging.
  */
-static void
-lp_build_sample_nop(struct lp_build_sample_context *bld,
+void
+lp_build_sample_nop(struct lp_type type,
                     LLVMValueRef texel_out[4])
 {
-   struct lp_build_context *texel_bld = &bld->texel_bld;
+   LLVMValueRef one = lp_build_one(type);
    unsigned chan;
 
    for (chan = 0; chan < 4; chan++) {
-      /*lp_bld_mov(texel_bld, texel, texel_bld->one);*/
-      texel_out[chan] = texel_bld->one;
+      texel_out[chan] = one;
    }  
 }
 
@@ -1189,7 +1188,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
 
    if (0) {
       /* For debug: no-op texture sampling */
-      lp_build_sample_nop(&bld, texel_out);
+      lp_build_sample_nop(bld.texel_type, texel_out);
    }
    else if (util_format_fits_8unorm(bld.format_desc) &&
             lp_is_simple_wrap_mode(static_state->wrap_s) &&
