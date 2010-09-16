@@ -553,7 +553,7 @@ static boolean emit_def_const( struct svga_shader_emitter *emit,
 static INLINE boolean
 create_zero_immediate( struct svga_shader_emitter *emit )
 {
-   unsigned idx = emit->nr_hw_const++;
+   unsigned idx = emit->nr_hw_float_const++;
 
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
                         idx, 0, 0, 0, 1 ))
@@ -568,7 +568,7 @@ create_zero_immediate( struct svga_shader_emitter *emit )
 static INLINE boolean
 create_loop_const( struct svga_shader_emitter *emit )
 {
-   unsigned idx = emit->nr_hw_const++;
+   unsigned idx = emit->nr_hw_int_const++;
 
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_INT, idx,
                         255, /* iteration count */
@@ -586,7 +586,7 @@ create_loop_const( struct svga_shader_emitter *emit )
 static INLINE boolean
 create_sincos_consts( struct svga_shader_emitter *emit )
 {
-   unsigned idx = emit->nr_hw_const++;
+   unsigned idx = emit->nr_hw_float_const++;
 
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT, idx,
                         -1.5500992e-006f,
@@ -596,7 +596,7 @@ create_sincos_consts( struct svga_shader_emitter *emit )
       return FALSE;
 
    emit->sincos_consts_idx = idx;
-   idx = emit->nr_hw_const++;
+   idx = emit->nr_hw_float_const++;
 
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT, idx,
                         -0.020833334f,
@@ -617,7 +617,7 @@ create_arl_consts( struct svga_shader_emitter *emit )
 
    for (i = 0; i < emit->num_arl_consts; i += 4) {
       int j;
-      unsigned idx = emit->nr_hw_const++;
+      unsigned idx = emit->nr_hw_float_const++;
       float vals[4];
       for (j = 0; j < 4 && (j + i) < emit->num_arl_consts; ++j) {
          vals[j] = emit->arl_consts[i + j].number;
@@ -2407,7 +2407,7 @@ static boolean make_immediate( struct svga_shader_emitter *emit,
                                float d,
                                struct src_register *out )
 {
-   unsigned idx = emit->nr_hw_const++;
+   unsigned idx = emit->nr_hw_float_const++;
 
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
                         idx, a, b, c, d ))

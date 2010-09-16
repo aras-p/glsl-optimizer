@@ -203,7 +203,7 @@ svga_tgsi_translate( const struct svga_shader *shader,
       emit.imm_start += key.vkey.num_zero_stride_vertex_elements;
    }
 
-   emit.nr_hw_const = (emit.imm_start + emit.info.file_max[TGSI_FILE_IMMEDIATE] + 1);
+   emit.nr_hw_float_const = (emit.imm_start + emit.info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
    emit.nr_hw_temp = emit.info.file_max[TGSI_FILE_TEMPORARY] + 1;
    emit.in_main_func = TRUE;
