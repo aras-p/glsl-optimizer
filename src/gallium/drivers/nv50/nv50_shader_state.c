@@ -111,6 +111,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
       break;
    default:
       assert(0);
+      cbi = 0;
       break;
    }
 
