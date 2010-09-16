@@ -153,6 +153,9 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
+   if (!ir->has_user_signature())
+      return;
+
    printf("(function %s\n", ir->name);
    indentation++;
    foreach_iter(exec_list_iterator, iter, *ir) {
