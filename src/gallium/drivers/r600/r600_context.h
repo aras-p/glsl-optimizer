@@ -49,7 +49,7 @@ struct r600_query {
 	boolean					flushed;
 	unsigned				state;
 	/* The buffer where query results are stored. */
-	struct radeon_bo			*buffer;
+	struct radeon_ws_bo			*buffer;
 	unsigned				buffer_size;
 	/* linked list of queries */
 	struct list_head			list;
@@ -103,7 +103,7 @@ struct r600_context_state {
 	unsigned			type;
 	struct radeon_state		rstate[R600_MAX_RSTATE];
 	struct r600_shader		shader;
-	struct radeon_bo		*bo;
+	struct radeon_ws_bo		*bo;
 	unsigned			nrstate;
 };
 

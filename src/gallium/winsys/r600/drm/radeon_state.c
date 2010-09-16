@@ -139,7 +139,7 @@ void radeon_state_fini(struct radeon_state *state)
 	if (state == NULL)
 		return NULL;
 	for (i = 0; i < state->nbo; i++) {
-		state->bo[i] = radeon_bo_decref(state->radeon, state->bo[i]);
+		radeon_ws_bo_reference(state->radeon, &state->bo[i], NULL);
 	}
 	memset(state, 0, sizeof(struct radeon_state));
 }

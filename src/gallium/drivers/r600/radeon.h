@@ -87,24 +87,17 @@ enum {
 
 enum radeon_family radeon_get_family(struct radeon *rw);
 
-/*
- * radeon object functions
- */
-struct radeon_bo {
-	unsigned			refcount;
-	unsigned			handle;
-	unsigned			size;
-	unsigned			alignment;
-	unsigned			map_count;
-	void				*data;
-};
-struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			unsigned size, unsigned alignment, void *ptr);
-int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
-void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
-struct radeon_bo *radeon_bo_incref(struct radeon *radeon, struct radeon_bo *bo);
-struct radeon_bo *radeon_bo_decref(struct radeon *radeon, struct radeon_bo *bo);
-int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
+/* lowlevel WS bo */
+struct radeon_ws_bo;
+struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
+				  unsigned size, unsigned alignment);
+struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
+					 unsigned handle);
+void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo);
+void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo);
+void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
+			    struct radeon_ws_bo *src);
+int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *bo);
 
 struct radeon_stype_info;
 /*
@@ -124,7 +117,7 @@ struct radeon_state {
 	u32				pm4_crc;
 	u32				pm4[128];
 	unsigned			nbo;
-	struct radeon_bo		*bo[4];
+	struct radeon_ws_bo		*bo[4];
 	unsigned			nreloc;
 	unsigned			reloc_pm4_id[8];
 	unsigned			reloc_bo_id[8];

@@ -39,7 +39,7 @@ static void r600_query_begin(struct r600_context *rctx, struct r600_query *rquer
 	radeon_state_fini(rstate);
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_QUERY_BEGIN, 0, 0);
 	rstate->states[R600_QUERY__OFFSET] = rquery->num_results;
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rquery->buffer);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rquery->buffer);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	if (radeon_state_pm4(rstate)) {
@@ -55,7 +55,7 @@ static void r600_query_end(struct r600_context *rctx, struct r600_query *rquery)
 	radeon_state_fini(rstate);
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_QUERY_END, 0, 0);
 	rstate->states[R600_QUERY__OFFSET] = rquery->num_results + 8;
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rquery->buffer);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rquery->buffer);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	if (radeon_state_pm4(rstate)) {
@@ -79,7 +79,7 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 	q->type = query_type;
 	q->buffer_size = 4096;
 
-	q->buffer = radeon_bo(rscreen->rw, 0, q->buffer_size, 1, NULL);
+	q->buffer = radeon_ws_bo(rscreen->rw, q->buffer_size, 1);
 	if (!q->buffer) {
 		FREE(q);
 		return NULL;
@@ -96,7 +96,7 @@ static void r600_destroy_query(struct pipe_context *ctx,
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_query *q = r600_query(query);
 
-	radeon_bo_decref(rscreen->rw, q->buffer);
+	radeon_ws_bo_reference(rscreen->rw, &q->buffer, NULL);
 	LIST_DEL(&q->list);
 	FREE(query);
 }
@@ -108,9 +108,8 @@ static void r600_query_result(struct pipe_context *ctx, struct r600_query *rquer
 	u32 *results;
 	int i;
 
-	radeon_bo_wait(rscreen->rw, rquery->buffer);
-	radeon_bo_map(rscreen->rw, rquery->buffer);
-	results = rquery->buffer->data;
+	radeon_ws_bo_wait(rscreen->rw, rquery->buffer);
+	results = radeon_ws_bo_map(rscreen->rw, rquery->buffer);
 	for (i = 0; i < rquery->num_results; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
@@ -118,7 +117,7 @@ static void r600_query_result(struct pipe_context *ctx, struct r600_query *rquer
 			rquery->result += end - start;
 		}
 	}
-	radeon_bo_unmap(rscreen->rw, rquery->buffer);
+	radeon_ws_bo_unmap(rscreen->rw, rquery->buffer);
 	rquery->num_results = 0;
 }
 

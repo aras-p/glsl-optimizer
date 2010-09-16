@@ -45,7 +45,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	}
 	bo->size = size;
 	bo->handle = handle;
-	bo->refcount = 1;
+	pipe_reference_init(&bo->reference, 1);
 	bo->alignment = alignment;
 
 	if (handle) {
@@ -82,7 +82,8 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	if (ptr) {
 		if (radeon_bo_map(radeon, bo)) {
 			fprintf(stderr, "%s failed to copy data into bo\n", __func__);
-			return radeon_bo_decref(radeon, bo);
+			radeon_bo_reference(radeon, &bo, NULL);
+			return bo;
 		}
 		memcpy(bo->data, ptr, size);
 		radeon_bo_unmap(radeon, bo);
@@ -133,31 +134,26 @@ void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 	bo->data = NULL;
 }
 
-struct radeon_bo *radeon_bo_incref(struct radeon *radeon, struct radeon_bo *bo)
-{
-	bo->refcount++;
-	return bo;
-}
-
-struct radeon_bo *radeon_bo_decref(struct radeon *radeon, struct radeon_bo *bo)
+static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_gem_close args;
 
-	if (bo == NULL)
-		return NULL;
-	if (--bo->refcount > 0) {
-		return NULL;
-	}
-
-	if (bo->map_count) {
-		munmap(bo->data, bo->size);
-	}
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
 	drmIoctl(radeon->fd, DRM_IOCTL_GEM_CLOSE, &args);
 	memset(bo, 0, sizeof(struct radeon_bo));
 	free(bo);
-	return NULL;
+}
+
+void radeon_bo_reference(struct radeon *radeon,
+			 struct radeon_bo **dst,
+			 struct radeon_bo *src)
+{
+	struct radeon_bo *old = *dst;
+	if (pipe_reference(&(*dst)->reference, &src->reference)) {
+		radeon_bo_destroy(radeon, old);
+	}
+	*dst = src;
 }
 
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)

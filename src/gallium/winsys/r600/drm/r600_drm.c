@@ -39,26 +39,3 @@ struct radeon *r600_drm_winsys_create(int drmfd)
 	return radeon_new(drmfd, 0);
 }
 
-boolean r600_buffer_get_handle(struct radeon *rw,
-			       struct pipe_resource *buf,
-			       struct winsys_handle *whandle)
-{
-	struct drm_gem_flink flink;
-	struct r600_resource* rbuffer = (struct r600_resource*)buf;
-
-	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
-		if (!rbuffer->flink) {
-			flink.handle = rbuffer->bo->handle;
-
-			if (ioctl(rw->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
-				return FALSE;
-			}
-
-			rbuffer->flink = flink.name;
-		}
-		whandle->handle = rbuffer->flink;
-	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
-		whandle->handle = rbuffer->bo->handle;
-	}
-	return TRUE;
-}

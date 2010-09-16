@@ -157,18 +157,19 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_context_state 
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_shader *rshader = &rpshader->shader;
 	int r;
+	void *data;
 
 	/* copy new shader */
-	radeon_bo_decref(rscreen->rw, rpshader->bo);
+	radeon_ws_bo_reference(rscreen->rw, &rpshader->bo, NULL);
 	rpshader->bo = NULL;
-	rpshader->bo = radeon_bo(rscreen->rw, 0, rshader->bc.ndw * 4,
-				4096, NULL);
+	rpshader->bo = radeon_ws_bo(rscreen->rw, rshader->bc.ndw * 4,
+				    4096);
 	if (rpshader->bo == NULL) {
 		return -ENOMEM;
 	}
-	radeon_bo_map(rscreen->rw, rpshader->bo);
-	memcpy(rpshader->bo->data, rshader->bc.bytecode, rshader->bc.ndw * 4);
-	radeon_bo_unmap(rscreen->rw, rpshader->bo);
+	data = radeon_ws_bo_map(rscreen->rw, rpshader->bo);
+	memcpy(data, rshader->bc.bytecode, rshader->bc.ndw * 4);
+	radeon_ws_bo_unmap(rscreen->rw, rpshader->bo);
 	/* build state */
 	rshader->flat_shade = rctx->flat_shade;
 	switch (rshader->processor_type) {

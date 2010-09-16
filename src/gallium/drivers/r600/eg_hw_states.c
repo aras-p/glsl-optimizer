@@ -120,7 +120,7 @@ static void eg_cb(struct r600_context *rctx, struct radeon_state *rstate,
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB0, cb, 0);
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
 	rstate->nbo = 1;
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
@@ -170,7 +170,7 @@ static void eg_db(struct r600_context *rctx, struct radeon_state *rstate,
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
 	level = state->zsbuf->level;
@@ -544,11 +544,11 @@ static void eg_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 		if (r) {
 			return;
 		}
-		rstate->bo[0] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
-		rstate->bo[1] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], tmp->uncompressed);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], tmp->uncompressed);
 	} else {
-		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], rbuffer->bo);
 	}
 	rstate->nbo = 2;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
@@ -860,10 +860,11 @@ static int eg_vs_resource(struct r600_context *rctx, int id, struct r600_resourc
 	struct r600_screen *rscreen = rctx->screen;
 
 	radeon_state_init(vs_resource, rscreen->rw, R600_STATE_RESOURCE, id, R600_SHADER_VS);
-	vs_resource->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+
+	radeon_ws_bo_reference(rscreen->rw, &vs_resource->bo[0], rbuffer->bo);
 	vs_resource->nbo = 1;
 	vs_resource->states[EG_PS_RESOURCE__RESOURCE0_WORD0] = offset;
-	vs_resource->states[EG_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset - 1;
+	vs_resource->states[EG_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->size - offset - 1;
 	vs_resource->states[EG_PS_RESOURCE__RESOURCE0_WORD2] = S_030008_STRIDE(stride) |
 		S_030008_DATA_FORMAT(format);
 	vs_resource->states[EG_PS_RESOURCE__RESOURCE0_WORD3] = S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
@@ -891,7 +892,7 @@ static int eg_draw_vgt_init(struct r600_draw *draw,
 	draw->draw.states[EG_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	draw->draw.states[EG_DRAW__VGT_DMA_BASE] = draw->index_buffer_offset;
 	if (rbuffer) {
-		draw->draw.bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		radeon_ws_bo_reference(rscreen->rw, &draw->draw.bo[0], rbuffer->bo);
 		draw->draw.placement[0] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw.placement[1] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw.nbo = 1;
@@ -973,7 +974,7 @@ static int eg_ps_shader(struct r600_context *rctx, struct r600_context_state *rp
 	state->states[EG_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
 	state->states[EG_PS_SHADER__SPI_BARYC_CNTL] = S_0286E0_PERSP_CENTROID_ENA(1) |
 	  S_0286E0_LINEAR_CENTROID_ENA(1); 
-	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	radeon_ws_bo_reference(rscreen->rw, &state->bo[0], rpshader->bo);
 	state->nbo = 1;
 	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
@@ -998,8 +999,8 @@ static int eg_vs_shader(struct r600_context *rctx, struct r600_context_state *rp
 	state->states[EG_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
 	state->states[EG_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028860_NUM_GPRS(rshader->bc.ngpr) |
 		S_028860_STACK_SIZE(rshader->bc.nstack);
-	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	state->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	radeon_ws_bo_reference(rscreen->rw, &state->bo[0], rpshader->bo);
+	radeon_ws_bo_reference(rscreen->rw, &state->bo[1], rpshader->bo);
 	state->nbo = 2;
 	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	state->placement[2] = RADEON_GEM_DOMAIN_GTT;
@@ -1064,12 +1065,12 @@ static void eg_texture_state_cb(struct r600_screen *rscreen, struct r600_resourc
 	format = r600_translate_colorformat(rtexture->resource.base.b.format);
 	swap = r600_translate_colorswap(rtexture->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rtexture->uncompressed);
 		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		rstate->nbo = 1;
 		color_info = 0;
 	} else {
-		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		rstate->nbo = 1;
 		color_info = S_028C70_SOURCE_FORMAT(1);
@@ -1113,7 +1114,7 @@ static void eg_texture_state_db(struct r600_screen *rscreen, struct r600_resourc
 	rstate->states[EG_DB__DB_DEPTH_VIEW] = 0x00000000;
 	rstate->states[EG_DB__DB_DEPTH_SIZE] = S_028058_PITCH_TILE_MAX(pitch);
 	rstate->states[EG_DB__DB_DEPTH_SLICE] = S_02805C_SLICE_TILE_MAX(slice);
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 1;
 
@@ -1202,7 +1203,7 @@ void eg_set_constant_buffer(struct pipe_context *ctx,
 	rstate->states[EG_VS_CBUF__ALU_CONST_BUFFER_SIZE_VS_0] = size;
 	rstate->states[EG_VS_CBUF__ALU_CONST_CACHE_VS_0] = 0;
 
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
 	if (radeon_state_pm4(rstate))

@@ -23,8 +23,13 @@
 #include <errno.h>
 #include "radeon.h"
 
+#include "pipe/p_compiler.h"
+#include "util/u_inlines.h"
+#include "pipe/p_defines.h"
+
 struct radeon;
 struct radeon_ctx;
+
 
 /*
  * radeon functions
@@ -35,6 +40,15 @@ struct radeon_register {
 	unsigned			need_reloc;
 	unsigned			bo_id;
 	char				name[64];
+};
+
+struct radeon_bo {
+	struct pipe_reference           reference;
+	unsigned			handle;
+	unsigned			size;
+	unsigned			alignment;
+	unsigned			map_count;
+	void				*data;
 };
 
 struct radeon_sub_type {
@@ -61,7 +75,7 @@ struct radeon_ctx {
 	unsigned			nreloc;
 	struct radeon_cs_reloc		*reloc;
 	unsigned			nbo;
-	struct radeon_bo		**bo;
+	struct radeon_ws_bo		**bo;
 };
 
 struct radeon {
@@ -72,6 +86,11 @@ struct radeon {
 	unsigned			nstype;
 	struct radeon_stype_info	*stype;
 	unsigned max_states;
+};
+
+struct radeon_ws_bo {
+	struct pipe_reference reference;
+	struct radeon_bo *bo;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);
@@ -101,5 +120,14 @@ extern int radeon_state_reloc(struct radeon_state *state, unsigned id, unsigned 
  * radeon draw functions
  */
 extern int radeon_draw_pm4(struct radeon_draw *draw);
+
+/* bo */
+struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
+			    unsigned size, unsigned alignment, void *ptr);
+int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
+void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
+void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
+			 struct radeon_bo *src);
+int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 
 #endif

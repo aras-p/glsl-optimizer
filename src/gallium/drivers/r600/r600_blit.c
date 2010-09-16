@@ -165,7 +165,8 @@ struct r600_blit_states {
 static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600_blit_states *bstates)
 {
 	struct radeon_state *rstate;
-	struct radeon_bo *bo;
+	struct radeon_ws_bo *bo;
+	void *data;
 	u32 vbo[] = {
 		0xBF800000, 0xBF800000, 0x3F800000, 0x3F800000,
 		0x3F000000, 0x3F000000, 0x3F000000, 0x00000000,
@@ -178,16 +179,17 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	};
 
 	/* simple shader */
-	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
 	if (bo == NULL) {
 		return -ENOMEM;
 	}
-	if (radeon_bo_map(rscreen->rw, bo)) {
-		radeon_bo_decref(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo);
+	if (!data) {
+		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return -ENOMEM;
 	}
-	memcpy(bo->data, vbo, 128);
-	radeon_bo_unmap(rscreen->rw, bo);
+	memcpy(data, vbo, 128);
+	radeon_ws_bo_unmap(rscreen->rw, bo);
 
 	rstate = &bstates->vs_resource0;
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
@@ -219,7 +221,7 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD4] = 0x00000000;
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD5] = 0x00000000;
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD6] = 0xC0000000;
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	if (radeon_state_pm4(rstate)) {
@@ -232,7 +234,8 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 
 static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_bo *bo;
+	struct radeon_ws_bo *bo;
+	void *data;
 	u32 shader_bc_r600[] = {
 		0x00000004, 0x81000400,
 		0x00000008, 0xA01C0000,
@@ -271,28 +274,29 @@ static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon
 	};
 
 	/* simple shader */
-	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
 	if (bo == NULL) {
 		return;
 	}
-	if (radeon_bo_map(rscreen->rw, bo)) {
-		radeon_bo_decref(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo);
+	if (!data) {
+		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
 	switch (rscreen->chip_class) {
 	case R600:
-		memcpy(bo->data, shader_bc_r600, 128);
+		memcpy(data, shader_bc_r600, 128);
 		break;
 	case R700:
-		memcpy(bo->data, shader_bc_r700, 128);
+		memcpy(data, shader_bc_r700, 128);
 		break;
 	default:
 		R600_ERR("unsupported chip family\n");
-		radeon_bo_unmap(rscreen->rw, bo);
-		radeon_bo_decref(rscreen->rw, bo);
+		radeon_ws_bo_unmap(rscreen->rw, bo);
+		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
-	radeon_bo_unmap(rscreen->rw, bo);
+	radeon_ws_bo_unmap(rscreen->rw, bo);
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
 
@@ -304,7 +308,7 @@ static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon
 	rstate->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = 0x00000005;
 
 	rstate->bo[0] = bo;
-	rstate->bo[1] = radeon_bo_incref(rscreen->rw, bo);
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], bo);
 	rstate->nbo = 2;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
@@ -314,7 +318,8 @@ static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon
 
 static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_bo *bo;
+	struct radeon_ws_bo *bo;
+	void *data;
 	u32 shader_bc_r600[] = {
 		0x00000002, 0xA00C0000,
 		0xC0008000, 0x94200688,
@@ -333,28 +338,29 @@ static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon
 	};
 
 	/* simple shader */
-	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
 	if (bo == NULL) {
 		return;
 	}
-	if (radeon_bo_map(rscreen->rw, bo)) {
-		radeon_bo_decref(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo);
+	if (!data) {
+		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
 	switch (rscreen->chip_class) {
 	case R600:
-		memcpy(bo->data, shader_bc_r600, 48);
+		memcpy(data, shader_bc_r600, 48);
 		break;
 	case R700:
-		memcpy(bo->data, shader_bc_r700, 48);
+		memcpy(data, shader_bc_r700, 48);
 		break;
 	default:
 		R600_ERR("unsupported chip family\n");
-		radeon_bo_unmap(rscreen->rw, bo);
-		radeon_bo_decref(rscreen->rw, bo);
+		radeon_ws_bo_unmap(rscreen->rw, bo);
+		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
-	radeon_bo_unmap(rscreen->rw, bo);
+	radeon_ws_bo_unmap(rscreen->rw, bo);
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 

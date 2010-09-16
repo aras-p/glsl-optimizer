@@ -155,7 +155,7 @@ static int r600_state_pm4_bytecode(struct radeon_state *state, unsigned offset, 
 				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
 				if (r)
 					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
+				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->bo->handle;
 			}
 		}
 		return 0;
@@ -172,7 +172,7 @@ static int r600_state_pm4_bytecode(struct radeon_state *state, unsigned offset, 
 				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
 				if (r)
 					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
+				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->bo->handle;
 			}
 		}
 		return 0;
@@ -220,7 +220,7 @@ static int eg_state_pm4_bytecode(struct radeon_state *state, unsigned offset, un
 				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
 				if (r)
 					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
+				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->bo->handle;
 			}
 		}
 		return 0;
@@ -237,7 +237,7 @@ static int eg_state_pm4_bytecode(struct radeon_state *state, unsigned offset, un
 				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
 				if (r)
 					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
+				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->bo->handle;
 			}
 		}
 		return 0;
@@ -318,7 +318,7 @@ static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int
 		}
 	}
 	for (i = 0; i < state->nreloc; i++) {
-		size = (state->bo[state->reloc_bo_id[i]]->size + 255) >> 8;
+		size = (state->bo[state->reloc_bo_id[i]]->bo->size + 255) >> 8;
 		state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_SYNC, 3);
 		if (bufs_are_cbs)
 			flags |= S_0085F0_CB0_DEST_BASE_ENA(1 << i);
@@ -328,7 +328,7 @@ static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int
 		state->pm4[state->cpm4++] = 0x0000000A;
 		state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
 		state->reloc_pm4_id[i] = state->cpm4;
-		state->pm4[state->cpm4++] = state->bo[state->reloc_bo_id[i]]->handle;
+		state->pm4[state->cpm4++] = state->bo[state->reloc_bo_id[i]]->bo->handle;
 	}
 }
 
@@ -384,7 +384,7 @@ static int r600_state_pm4_query_begin(struct radeon_state *state)
 	r = radeon_state_reloc(state, state->cpm4, 0);
 	if (r)
 		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
+	state->pm4[state->cpm4++] = state->bo[0]->bo->handle;
 	return 0;
 }
 
@@ -401,7 +401,7 @@ static int r600_state_pm4_query_end(struct radeon_state *state)
 	r = radeon_state_reloc(state, state->cpm4, 0);
 	if (r)
 		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
+	state->pm4[state->cpm4++] = state->bo[0]->bo->handle;
 	return 0;
 }
 
@@ -486,7 +486,7 @@ static int r600_state_pm4_draw(struct radeon_state *state)
 		r = radeon_state_reloc(state, state->cpm4, 0);
 		if (r)
 			return r;
-		state->pm4[state->cpm4++] = state->bo[0]->handle;
+		state->pm4[state->cpm4++] = state->bo[0]->bo->handle;
 	} else {
 		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
 		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];
@@ -572,13 +572,13 @@ static int r600_state_pm4_resource(struct radeon_state *state)
 	r = radeon_state_reloc(state, state->cpm4, 0);
 	if (r)
 		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
+	state->pm4[state->cpm4++] = state->bo[0]->bo->handle;
 	if (type == 2) {
 		state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
 		r = radeon_state_reloc(state, state->cpm4, 1);
 		if (r)
 			return r;
-		state->pm4[state->cpm4++] = state->bo[1]->handle;
+		state->pm4[state->cpm4++] = state->bo[1]->bo->handle;
 	}
 	return 0;
 }

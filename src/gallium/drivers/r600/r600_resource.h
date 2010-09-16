@@ -34,10 +34,11 @@ struct r600_screen;
  */
 struct r600_resource {
 	struct u_resource		base;
-	struct radeon_bo		*bo;
+	struct radeon_ws_bo		*bo;
 	u32				domain;
 	u32				flink;
 	struct pb_buffer		*pb;
+	u32				size;
 };
 
 struct r600_resource_texture {
@@ -55,7 +56,7 @@ struct r600_resource_texture {
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty;
-	struct radeon_bo		*uncompressed;
+	struct radeon_ws_bo		*uncompressed;
 	struct radeon_state		scissor[PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		cb[8][PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		db[PIPE_MAX_TEXTURE_LEVELS];
