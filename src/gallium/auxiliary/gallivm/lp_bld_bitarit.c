@@ -58,7 +58,7 @@ lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
       res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
    }
 
-   return b;
+   return res;
 }
 
 
@@ -86,7 +86,7 @@ lp_build_and(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
       res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
    }
 
-   return b;
+   return res;
 }
 
 
@@ -115,7 +115,7 @@ lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
       res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
    }
 
-   return b;
+   return res;
 }
 
 
