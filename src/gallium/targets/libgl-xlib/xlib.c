@@ -39,14 +39,6 @@
 #include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
 
-/* piggy back on this libGL for OpenGL support in EGL */
-struct st_api *
-st_api_create_OpenGL()
-{
-   return st_gl_api_create();
-}
-
-
 /* Helper function to choose and instantiate one of the software rasterizers:
  * cell, llvmpipe, softpipe.
  *
