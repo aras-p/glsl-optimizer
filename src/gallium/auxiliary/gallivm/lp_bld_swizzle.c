@@ -76,11 +76,12 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
    }
    else {
       LLVMValueRef res;
+
+#if HAVE_LLVM >= 0x207
       /* The shuffle vector is always made of int32 elements */
       struct lp_type i32_vec_type = lp_type_int_vec(32);
       i32_vec_type.length = type.length;
 
-#if HAVE_LLVM >= 0x207
       res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
                                    LLVMConstInt(LLVMInt32Type(), 0, 0), "");
       res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
