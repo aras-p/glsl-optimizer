@@ -301,9 +301,9 @@ static int destructive_merge_instructions(
 			unsigned int arg;
 			int free_source;
 			unsigned int one_way = 0;
-			struct radeon_pair_instruction_source srcp =
+			struct rc_pair_instruction_source srcp =
 						alpha->RGB.Src[srcp_src];
-			struct radeon_pair_instruction_source temp;
+			struct rc_pair_instruction_source temp;
 			/* 2nd arg of 1 means this is an rgb source.
 			 * 3rd arg of 0 means this is not an alpha source. */
 			free_source = rc_pair_alloc_source(rgb, 1, 0,
@@ -366,9 +366,9 @@ static int destructive_merge_instructions(
 			unsigned int arg;
 			int free_source;
 			unsigned int one_way = 0;
-			struct radeon_pair_instruction_source srcp =
+			struct rc_pair_instruction_source srcp =
 						alpha->Alpha.Src[srcp_src];
-			struct radeon_pair_instruction_source temp;
+			struct rc_pair_instruction_source temp;
 			/* 2nd arg of 0 means this is not an rgb source.
 			 * 3rd arg of 1 means this is an alpha source. */
 			free_source = rc_pair_alloc_source(rgb, 0, 1,

@@ -198,7 +198,7 @@ static void use_temporary(struct r500_fragment_program_code* code, unsigned int 
 		code->max_temp_idx = index;
 }
 
-static unsigned int use_source(struct r500_fragment_program_code* code, struct radeon_pair_instruction_source src)
+static unsigned int use_source(struct r500_fragment_program_code* code, struct rc_pair_instruction_source src)
 {
 	if (src.File == RC_FILE_CONSTANT) {
 		return src.Index | 0x100;
