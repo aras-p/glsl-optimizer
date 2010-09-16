@@ -855,7 +855,6 @@ init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
    assert(tex->MaxSize > 0);
 
    _mesa_GenTextures(1, &tex->TexObj);
-   _mesa_BindTexture(tex->Target, tex->TexObj);
 }
 
 
