@@ -49,6 +49,7 @@ st_print_current(void);
 #define DEBUG_SCENE         0x1000
 #define DEBUG_FENCE         0x2000
 #define DEBUG_MEM           0x4000
+#define DEBUG_FS            0x8000
 
 /* Performance flags.  These are active even on release builds.
  */

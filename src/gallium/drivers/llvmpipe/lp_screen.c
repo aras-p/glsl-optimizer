@@ -64,6 +64,7 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "scene", DEBUG_SCENE, NULL },
    { "fence", DEBUG_FENCE, NULL },
    { "mem", DEBUG_MEM, NULL },
+   { "fs", DEBUG_FS, NULL },
    DEBUG_NAMED_VALUE_END
 };
 #endif

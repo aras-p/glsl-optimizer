@@ -865,7 +865,7 @@ generate_variant(struct llvmpipe_context *lp,
          ? TRUE : FALSE;
 
 
-   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+   if ((LP_DEBUG & DEBUG_FS) || (gallivm_debug & GALLIVM_DEBUG_IR)) {
       lp_debug_fs_variant(variant);
    }
 
