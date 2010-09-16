@@ -188,6 +188,7 @@ nv04_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 	hw->chan->flush_notify = nv04_channel_flush_notify;
 
 	/* GL constants. */
+	ctx->Const.MaxTextureLevels = 11;
 	ctx->Const.MaxTextureCoordUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureImageUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureUnits = NV04_TEXTURE_UNITS;
