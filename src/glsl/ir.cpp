@@ -1137,11 +1137,11 @@ ir_function::ir_function(const char *name)
 
 
 bool
-ir_function::has_builtin_signature()
+ir_function::has_user_signature()
 {
    foreach_list(n, &this->signatures) {
       ir_function_signature *const sig = (ir_function_signature *) n;
-      if (sig->is_builtin)
+      if (!sig->is_builtin)
 	 return true;
    }
    return false;

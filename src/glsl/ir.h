@@ -410,8 +410,8 @@ public:
     */
    const char *name;
 
-   /** Whether or not this function has a signature that is a built-in. */
-   bool has_builtin_signature();
+   /** Whether or not this function has a signature that isn't a built-in. */
+   bool has_user_signature();
 
    /**
     * List of ir_function_signature for each overloaded function with this name.
