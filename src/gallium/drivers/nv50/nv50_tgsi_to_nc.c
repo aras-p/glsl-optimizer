@@ -1539,7 +1539,7 @@ bld_instruction(struct bld_context *bld,
    struct nv_value *src0;
    struct nv_value *src1;
    struct nv_value *src2;
-   struct nv_value *dst0[4];
+   struct nv_value *dst0[4] = { 0 };
    struct nv_value *temp;
    int c;
    uint opcode = translate_opcode(insn->Instruction.Opcode);
