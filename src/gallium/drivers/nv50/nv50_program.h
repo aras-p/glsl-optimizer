@@ -85,6 +85,7 @@ struct nv50_program {
       uint8_t prim_type; /* point, line strip or tri strip */
    } gp;
 
+   /* relocation records */
    void *fixups;
    unsigned num_fixups;
 };
@@ -126,6 +127,10 @@ struct nv50_translation_info {
 };
 
 int nv50_generate_code(struct nv50_translation_info *ti);
+
+void nv50_relocate_program(struct nv50_program *p,
+                           uint32_t code_base, uint32_t data_base);
+
 boolean nv50_program_tx(struct nv50_program *p);
 
 #endif /* __NV50_PROG_H__ */

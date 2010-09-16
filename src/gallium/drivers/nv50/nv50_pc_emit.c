@@ -23,8 +23,6 @@
 #include "nv50_context.h"
 #include "nv50_pc.h"
 
-// Definitions
-
 #define FLAGS_CC_SHIFT    7
 #define FLAGS_ID_SHIFT    12
 #define FLAGS_WR_ID_SHIFT 4
@@ -33,6 +31,64 @@
 #define FLAGS_WR_EN       (1 << 6)
 #define FLAGS_WR_ID_MASK  (0x3 << FLAGS_WR_ID_SHIFT)
 
+#define NV50_FIXUP_CODE_RELOC 0
+#define NV50_FIXUP_DATA_RELOC 1
+
+struct nv50_fixup {
+   uint8_t type;
+   int8_t shift;
+   uint32_t mask;
+   uint32_t data;
+   uint32_t offset;
+};
+
+void
+nv50_relocate_program(struct nv50_program *p,
+                      uint32_t code_base,
+                      uint32_t data_base)
+{
+   struct nv50_fixup *f = (struct nv50_fixup *)p->fixups;
+   unsigned i;
+
+   for (i = 0; i < p->num_fixups; ++i) {
+      uint32_t data;
+
+      switch (f[i].type) {
+      case NV50_FIXUP_CODE_RELOC: data = code_base + f[i].data; break;
+      case NV50_FIXUP_DATA_RELOC: data = data_base + f[i].data; break;
+      default:
+         data = f[i].data;
+         break;
+      }
+      data = (f[i].shift < 0) ? (data >> -f[i].shift) : (data << f[i].shift);
+
+      p->code[f[i].offset / 4] &= ~f[i].mask;
+      p->code[f[i].offset / 4] |= data & f[i].mask;
+   }
+}
+
+static void
+new_fixup(struct nv_pc *pc, uint8_t ty, int w, uint32_t data, uint32_t m, int s)
+{
+   struct nv50_fixup *f;
+
+   const unsigned size = sizeof(struct nv50_fixup);
+   const unsigned n = pc->num_fixups;
+
+   if (!(n % 8))
+      pc->fixups = REALLOC(pc->fixups, n * size, (n + 8) * size);
+
+   f = (struct nv50_fixup *)pc->fixups;
+
+   f[n].offset = (pc->bin_pos + w) * 4;
+   f[n].type = ty;
+   f[n].data = data;
+   f[n].mask = m;
+   f[n].shift = s;
+
+   ++pc->num_fixups;
+}
+
 const ubyte nv50_inst_min_size_tab[NV_OP_COUNT] =
 {
    0, 0, 0, 8, 8, 4, 4, 4, 8, 4, 4, 8, 8, 8, 8, 8, /* 15 */
@@ -40,10 +96,6 @@ const ubyte nv50_inst_min_size_tab[NV_OP_COUNT] =
    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, /* 47 */
    4, 8, 8, 8, 8, 8, 0, 0, 8
 };
-
-/* XXX: silence, you ! */
-unsigned
-nv50_inst_min_size(struct nv_instruction *i);
 
 unsigned
 nv50_inst_min_size(struct nv_instruction *i)
@@ -159,27 +211,9 @@ set_immd(struct nv_pc *pc, struct nv_ref *ref)
    set_immd_u32(pc, get_immd_u32(ref));
 }
 
-static void
-new_fixup(struct nv_pc *pc, unsigned type, uint32_t data, uint32_t m, int s)
-{
-   const unsigned size = sizeof(struct nv_fixup);
-   const unsigned n = pc->num_fixups;
-   return;
-
-   if (!(n % 8))
-      pc->fixups = REALLOC(pc->fixups, n * size, (n + 8) * size);
-
-   pc->fixups[n].offset = pc->bin_pos + (s / 32);
-   pc->fixups[n].type = type;
-   pc->fixups[n].data = data;
-   pc->fixups[n].mask = m << (s % 32);
-   pc->fixups[n].shift = s % 32;
-
-   ++pc->num_fixups;
-
-   assert(((data << (s % 32)) & pc->fixups[n].mask) == (data << (s % 32)));
-}
-
+/* Allocate data in immediate buffer, if we want to load the immediate
+ * for a constant buffer instead of inlining it into the code.
+ */
 static void
 nv_pc_alloc_immd(struct nv_pc *pc, struct nv_ref *ref)
 {
@@ -446,7 +480,7 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
       sf = NV_FILE_MEM_C(0);
       nv_pc_alloc_immd(pc, i->src[0]);
 
-      new_fixup(pc, NV_FIXUP_PARAM_RELOC, SREG(i->src[0])->id, 0xffff, 9);
+      new_fixup(pc, NV50_FIXUP_DATA_RELOC, 0, SREG(i->src[0])->id, 0xffff, 9);
    }
 
    if (sf == NV_FILE_MEM_S ||
@@ -723,8 +757,12 @@ emit_flow(struct nv_pc *pc, struct nv_instruction *i, ubyte flow_op)
    set_pred(pc, i);
 
    if (i->target && (i->opcode != NV_OP_BREAK)) {
-      new_fixup(pc, NV_FIXUP_CFLOW_RELOC, i->target->bin_pos, 0x7ff800, 11);
-      pc->emit[0] |= (i->target->bin_pos / 4) << 11;
+      uint32_t pos = i->target->bin_pos;
+
+      new_fixup(pc, NV50_FIXUP_CODE_RELOC, 0, pos, 0xffff << 11, 9);
+      new_fixup(pc, NV50_FIXUP_CODE_RELOC, 1, pos, 0x3f << 14, -4);
+
+      pc->emit[0] |= (pos / 4) << 11;
    }
 }
 

@@ -295,28 +295,6 @@ struct nv_basic_block {
    uint32_t live_set[NV_PC_MAX_VALUES / 32];
 };
 
-#define NV_FIXUP_CFLOW_RELOC 0
-#define NV_FIXUP_PARAM_RELOC 1
-
-struct nv_fixup {
-   ubyte type;
-   ubyte shift;
-   uint32_t mask;
-   uint32_t data;
-   uint32_t offset;
-};
-
-static INLINE void
-nv_fixup_apply(uint32_t *bin, struct nv_fixup *fixup, uint32_t data)
-{
-   uint32_t val;
-
-   val = bin[fixup->offset / 4] & ~fixup->mask;
-   data = (fixup->shift < 0) ? (data >> fixup->shift) : (data << fixup->shift);
-   val |= (fixup->data + data) & fixup->mask;
-   bin[fixup->offset / 4] = val;
-}
-
 struct nv50_translation_info;
 
 struct nv_pc {
@@ -346,8 +324,8 @@ struct nv_pc {
    unsigned bin_size;
    unsigned bin_pos;
 
-   struct nv_fixup *fixups;
-   int num_fixups;
+   void *fixups;
+   unsigned num_fixups;
 
    /* optimization enables */
    boolean opt_reload_elim;
@@ -471,6 +449,7 @@ nv_reference(struct nv_pc *pc, struct nv_ref **d, struct nv_value *s)
 
 /* nv50_emit.c */
 void nv50_emit_instruction(struct nv_pc *, struct nv_instruction *);
+unsigned nv50_inst_min_size(struct nv_instruction *);
 
 /* nv50_print.c */
 const char *nv_opcode_name(uint opcode);

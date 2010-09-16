@@ -653,5 +653,8 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
    if (p->code)
       FREE(p->code);
 
+   if (p->fixups)
+      FREE(p->fixups);
+
    p->translated = FALSE;
 }
