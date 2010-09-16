@@ -55,7 +55,11 @@ nv04_context_engine(GLcontext *ctx)
 	if ((ctx->Texture.Unit[0]._ReallyEnabled &&
 	     texunit_needs_combiners(&ctx->Texture.Unit[0])) ||
 	    ctx->Texture.Unit[1]._ReallyEnabled ||
-	    ctx->Stencil.Enabled)
+	    ctx->Stencil.Enabled ||
+	    !(ctx->Color.ColorMask[0][RCOMP] &&
+	      ctx->Color.ColorMask[0][GCOMP] &&
+	      ctx->Color.ColorMask[0][BCOMP] &&
+	      ctx->Color.ColorMask[0][ACOMP]))
 		fahrenheit = hw->eng3dm;
 	else
 		fahrenheit = hw->eng3d;
