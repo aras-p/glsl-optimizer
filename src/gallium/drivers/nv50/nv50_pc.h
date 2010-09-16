@@ -171,6 +171,7 @@ nv_type_order(ubyte type)
       return 3;
    }
    assert(0);
+   return 0;
 }
 
 static INLINE uint
