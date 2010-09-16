@@ -33,6 +33,7 @@
 #include "nv10_driver.h"
 
 static const struct dri_extension nv10_extensions[] = {
+	{ "GL_ARB_texture_env_crossbar", NULL },
 	{ "GL_EXT_texture_rectangle",	NULL },
 	{ "GL_ARB_texture_env_combine", NULL },
 	{ "GL_ARB_texture_env_dot3",    NULL },
