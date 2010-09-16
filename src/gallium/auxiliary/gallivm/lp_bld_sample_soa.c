@@ -45,6 +45,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_conv.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_bitarit.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
@@ -157,7 +158,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
        * coords which are out of bounds to become zero.  Zero's guaranteed
        * to be inside the texture image.
        */
-      offset = lp_build_andc(&bld->uint_coord_bld, offset, use_border);
+      offset = lp_build_andnot(&bld->uint_coord_bld, offset, use_border);
    }
 
    lp_build_fetch_rgba_soa(bld->builder,

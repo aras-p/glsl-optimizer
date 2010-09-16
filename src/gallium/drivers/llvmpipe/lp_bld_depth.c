@@ -69,6 +69,7 @@
 
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_flow.h"
@@ -626,7 +627,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
       /* apply stencil-fail operator */
       {
-         LLVMValueRef s_fail_mask = lp_build_andc(&bld, orig_mask, s_pass_mask);
+         LLVMValueRef s_fail_mask = lp_build_andnot(&bld, orig_mask, s_pass_mask);
          stencil_vals = lp_build_stencil_op(&sbld, stencil, S_FAIL_OP,
                                             stencil_refs, stencil_vals,
                                             s_fail_mask, face);
@@ -672,7 +673,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
          LLVMValueRef z_fail_mask, z_pass_mask;
 
          /* apply Z-fail operator */
-         z_fail_mask = lp_build_andc(&bld, orig_mask, z_pass);
+         z_fail_mask = lp_build_andnot(&bld, orig_mask, z_pass);
          stencil_vals = lp_build_stencil_op(&sbld, stencil, Z_FAIL_OP,
                                             stencil_refs, stencil_vals,
                                             z_fail_mask, face);

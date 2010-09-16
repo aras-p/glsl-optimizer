@@ -556,28 +556,3 @@ lp_build_select_aos(struct lp_build_context *bld,
 #endif
    }
 }
-
-
-/** Return (a & ~b) */
-LLVMValueRef
-lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
-{
-   const struct lp_type type = bld->type;
-
-   assert(lp_check_value(type, a));
-   assert(lp_check_value(type, b));
-
-   /* can't do bitwise ops on floating-point values */
-   if(type.floating) {
-      a = LLVMBuildBitCast(bld->builder, a, bld->int_vec_type, "");
-      b = LLVMBuildBitCast(bld->builder, b, bld->int_vec_type, "");
-   }
-
-   b = LLVMBuildNot(bld->builder, b, "");
-   b = LLVMBuildAnd(bld->builder, a, b, "");
-
-   if(type.floating) {
-      b = LLVMBuildBitCast(bld->builder, b, bld->vec_type, "");
-   }
-   return b;
-}

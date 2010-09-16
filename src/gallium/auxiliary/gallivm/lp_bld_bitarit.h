@@ -27,19 +27,17 @@
 
 /**
  * @file
- * Helper functions for logical operations.
+ * Helper bitwise arithmetic functions.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
 
-#ifndef LP_BLD_LOGIC_H
-#define LP_BLD_LOGIC_H
+#ifndef LP_BLD_BITARIT_H
+#define LP_BLD_BITARIT_H
 
 
 #include "gallivm/lp_bld.h"
-
-#include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
 
 
 struct lp_type;
@@ -47,39 +45,25 @@ struct lp_build_context;
 
 
 LLVMValueRef
-lp_build_compare(LLVMBuilderRef builder,
-                 const struct lp_type type,
-                 unsigned func,
-                 LLVMValueRef a,
-                 LLVMValueRef b);
-
-
-/**
- * @param func is one of PIPE_FUNC_xxx
- */
-LLVMValueRef
-lp_build_cmp(struct lp_build_context *bld,
-             unsigned func,
-             LLVMValueRef a,
-             LLVMValueRef b);
+lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
 
 LLVMValueRef
-lp_build_select_bitwise(struct lp_build_context *bld,
-                        LLVMValueRef mask,
-                        LLVMValueRef a,
-                        LLVMValueRef b);
+lp_build_and(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
 
 LLVMValueRef
-lp_build_select(struct lp_build_context *bld,
-                LLVMValueRef mask,
-                LLVMValueRef a,
-                LLVMValueRef b);
+lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
 
 LLVMValueRef
-lp_build_select_aos(struct lp_build_context *bld,
-                    unsigned mask,
-                    LLVMValueRef a,
-                    LLVMValueRef b);
+lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
+
+LLVMValueRef
+lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
+
+LLVMValueRef
+lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm);
+
+LLVMValueRef
+lp_build_shr_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm);
 
 
-#endif /* !LP_BLD_LOGIC_H */
+#endif /* !LP_BLD_ARIT_H */
