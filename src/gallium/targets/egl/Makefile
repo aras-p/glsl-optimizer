@@ -185,6 +185,13 @@ $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 	$(common_SYS) $($(1)_SYS)
 endef
 
+define mklib-cxx
+$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+	-cplusplus -install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< \
+	-Wl,--start-group $(common_LIBS) $($(1)_LIBS) -Wl,--end-group \
+	$(common_SYS) $($(1)_SYS)
+endef
+
 # EGL driver
 $(OUTPUT_PATH)/egl_gallium.so: egl.o $(egl_LIBS)
 	$(call mklib,egl)
@@ -213,13 +220,13 @@ $(OUTPUT_PATH)/$(PIPE_PREFIX)swrast.so: pipe_swrast.o $(swrast_LIBS)
 
 # state trackers
 $(OUTPUT_PATH)/$(ST_PREFIX)$(GL_LIB).so: st_GL.o $(GL_LIBS)
-	$(call mklib,GL)
+	$(call mklib-cxx,GL)
 
 $(OUTPUT_PATH)/$(ST_PREFIX)$(GLESv1_CM_LIB).so: st_GLESv1_CM.o $(GLESv1_CM_LIBS)
-	$(call mklib,GLESv1_CM)
+	$(call mklib-cxx,GLESv1_CM)
 
 $(OUTPUT_PATH)/$(ST_PREFIX)$(GLESv2_LIB).so: st_GLESv2.o $(GLESv2_LIBS)
-	$(call mklib,GLESv2)
+	$(call mklib-cxx,GLESv2)
 
 $(OUTPUT_PATH)/$(ST_PREFIX)$(VG_LIB).so: st_OpenVG.o $(OpenVG_LIBS)
 	$(call mklib,OpenVG)
