@@ -1198,7 +1198,8 @@ static void
 bld_lit(struct bld_context *bld, struct nv_value *dst0[4],
         const struct tgsi_full_instruction *insn)
 {
-   struct nv_value *val0, *zero;
+   struct nv_value *val0 = NULL;
+   struct nv_value *zero = NULL;
    unsigned mask = insn->Dst[0].Register.WriteMask;
 
    if (mask & ((1 << 0) | (1 << 3)))
