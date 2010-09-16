@@ -753,6 +753,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     draw_set_mapped_index_buffer(r300->draw, indices);
 
     r300->draw_vbo_locked = TRUE;
+    r300->draw_first_emitted = FALSE;
     draw_vbo(r300->draw, info);
     draw_flush(r300->draw);
     r300->draw_vbo_locked = FALSE;
@@ -907,10 +908,17 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
-    if (!r300_emit_states(r300,
-            PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-            NULL, 0, 0))
-        return;
+    if (r300->draw_first_emitted) {
+        if (!r300_prepare_for_rendering(r300,
+                PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
+                NULL, 6, 0, 0))
+            return;
+    } else {
+        if (!r300_emit_states(r300,
+                PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
+                NULL, 0, 0))
+            return;
+    }
 
     /* Uncomment to dump all VBOs rendered through this interface.
      * Slow and noisy!
@@ -937,6 +945,8 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300render->hwprim);
     END_CS;
+
+    r300->draw_first_emitted = TRUE;
 }
 
 static void r300_render_draw_elements(struct vbuf_render* render,
@@ -955,10 +965,17 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     CS_LOCALS(r300);
     DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
-    if (!r300_emit_states(r300,
-            PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-            NULL, 0, 0))
-        return;
+    if (r300->draw_first_emitted) {
+        if (!r300_prepare_for_rendering(r300,
+                PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                NULL, 256, 0, 0))
+            return;
+    } else {
+        if (!r300_emit_states(r300,
+                PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                NULL, 0, 0))
+            return;
+    }
 
     /* Below we manage the CS space manually because there may be more
      * indices than it can fit in CS. */
@@ -999,6 +1016,8 @@ static void r300_render_draw_elements(struct vbuf_render* render,
             end_cs_dwords = r300_get_num_cs_end_dwords(r300);
         }
     }
+
+    r300->draw_first_emitted = TRUE;
 }
 
 static void r300_render_destroy(struct vbuf_render* render)

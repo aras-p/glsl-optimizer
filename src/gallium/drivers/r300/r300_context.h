@@ -457,6 +457,7 @@ struct r300_context {
     size_t draw_vbo_size;
     /* Whether the VBO must not be flushed. */
     boolean draw_vbo_locked;
+    boolean draw_first_emitted;
 
     /* Accelerated blit support. */
     struct blitter_context* blitter;
