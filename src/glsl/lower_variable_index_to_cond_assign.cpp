@@ -217,16 +217,19 @@ public:
 
    bool progress;
 
+   bool is_array_or_matrix(const ir_instruction *ir) const
+   {
+      return (ir->type->is_array() || ir->type->is_matrix());
+   }
+
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
 					  ir_rvalue* value)
    {
-      unsigned length;
-      if (orig_deref->array->type->is_array())
-         length = orig_deref->array->type->length;
-      else if (orig_deref->array->type->is_matrix())
-         length = orig_deref->array->type->matrix_columns;
-      else
-         assert(0);
+      assert(is_array_or_matrix(orig_deref->array));
+
+      const unsigned length = (orig_deref->array->type->is_array())
+         ? orig_deref->array->type->length
+         : orig_deref->array->type->matrix_columns;
 
       void *const mem_ctx = talloc_parent(base_ir);
       ir_variable *var =
@@ -274,8 +277,7 @@ public:
 
       ir_dereference_array* orig_deref = (*pir)->as_dereference_array();
       if (orig_deref && !orig_deref->array_index->as_constant()
-            && (orig_deref->array->type->is_array()
-		|| orig_deref->array->type->is_matrix())) {
+	  && is_array_or_matrix(orig_deref->array)) {
          ir_variable* var = convert_dereference_array(orig_deref, 0);
          assert(var);
          *pir = new(talloc_parent(base_ir)) ir_dereference_variable(var);
@@ -291,8 +293,7 @@ public:
       ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
 
       if (orig_deref && !orig_deref->array_index->as_constant()
-            && (orig_deref->array->type->is_array()
-		|| orig_deref->array->type->is_matrix())) {
+	  && is_array_or_matrix(orig_deref->array)) {
          convert_dereference_array(orig_deref, ir->rhs);
          ir->remove();
          this->progress = true;
