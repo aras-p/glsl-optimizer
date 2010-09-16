@@ -3,7 +3,6 @@
 
 #include "draw_llvm.h"
 
-#include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_struct.h"
 #include "gallivm/lp_bld_format.h"
 #include "gallivm/lp_bld_debug.h"
