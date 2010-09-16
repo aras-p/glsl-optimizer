@@ -116,6 +116,13 @@ GLboolean brwCreateContext( int api,
       ctx->ShaderCompilerOptions[i].EmitNVTempInitialization = GL_TRUE;
       ctx->ShaderCompilerOptions[i].EmitNoNoise = GL_TRUE;
       ctx->ShaderCompilerOptions[i].EmitNoMainReturn = GL_TRUE;
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = GL_TRUE;
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput = GL_TRUE;
+
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectUniform =
+	 (i == MESA_SHADER_FRAGMENT);
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
+	 (i == MESA_SHADER_FRAGMENT);
    }
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);

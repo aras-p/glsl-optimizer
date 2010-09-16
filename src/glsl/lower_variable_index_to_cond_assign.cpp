@@ -210,16 +210,54 @@ struct switch_generator
 
 class variable_index_to_cond_assign_visitor : public ir_rvalue_visitor {
 public:
-   variable_index_to_cond_assign_visitor()
+   variable_index_to_cond_assign_visitor(bool lower_input,
+					 bool lower_output,
+					 bool lower_temp,
+					 bool lower_uniform)
    {
       this->progress = false;
+      this->lower_inputs = lower_input;
+      this->lower_outputs = lower_output;
+      this->lower_temps = lower_temp;
+      this->lower_uniforms = lower_uniform;
    }
 
    bool progress;
+   bool lower_inputs;
+   bool lower_outputs;
+   bool lower_temps;
+   bool lower_uniforms;
 
    bool is_array_or_matrix(const ir_instruction *ir) const
    {
       return (ir->type->is_array() || ir->type->is_matrix());
+   }
+
+   bool needs_lowering(ir_dereference_array *deref) const
+   {
+      if (deref == NULL || deref->array_index->as_constant()
+	  || !is_array_or_matrix(deref->array))
+	 return false;
+
+      if (deref->array->ir_type == ir_type_constant)
+	 return this->lower_temps;
+
+      const ir_variable *const var = deref->array->variable_referenced();
+      switch (var->mode) {
+      case ir_var_auto:
+      case ir_var_temporary:
+	 return this->lower_temps;
+      case ir_var_uniform:
+	 return this->lower_uniforms;
+      case ir_var_in:
+	 return (var->location == -1) ? this->lower_temps : this->lower_inputs;
+      case ir_var_out:
+	 return (var->location == -1) ? this->lower_temps : this->lower_outputs;
+      case ir_var_inout:
+	 return this->lower_temps;
+      }
+
+      assert(!"Should not get here.");
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
@@ -276,8 +314,7 @@ public:
          return;
 
       ir_dereference_array* orig_deref = (*pir)->as_dereference_array();
-      if (orig_deref && !orig_deref->array_index->as_constant()
-	  && is_array_or_matrix(orig_deref->array)) {
+      if (needs_lowering(orig_deref)) {
          ir_variable* var = convert_dereference_array(orig_deref, 0);
          assert(var);
          *pir = new(talloc_parent(base_ir)) ir_dereference_variable(var);
@@ -292,8 +329,7 @@ public:
 
       ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
 
-      if (orig_deref && !orig_deref->array_index->as_constant()
-	  && is_array_or_matrix(orig_deref->array)) {
+      if (needs_lowering(orig_deref)) {
          convert_dereference_array(orig_deref, ir->rhs);
          ir->remove();
          this->progress = true;
@@ -304,9 +340,16 @@ public:
 };
 
 bool
-lower_variable_index_to_cond_assign(exec_list *instructions)
+lower_variable_index_to_cond_assign(exec_list *instructions,
+				    bool lower_input,
+				    bool lower_output,
+				    bool lower_temp,
+				    bool lower_uniform)
 {
-   variable_index_to_cond_assign_visitor v;
+   variable_index_to_cond_assign_visitor v(lower_input,
+					   lower_output,
+					   lower_temp,
+					   lower_uniform);
 
    visit_list_elements(&v, instructions);
 

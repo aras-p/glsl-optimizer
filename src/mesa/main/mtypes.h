@@ -2191,6 +2191,16 @@ struct gl_shader_compiler_options
    GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
 
+   /**
+    * \name Forms of indirect addressing the driver cannot do.
+    */
+   /*@{*/
+   GLboolean EmitNoIndirectInput;   /**< No indirect addressing of inputs */
+   GLboolean EmitNoIndirectOutput;  /**< No indirect addressing of outputs */
+   GLboolean EmitNoIndirectTemp;    /**< No indirect addressing of temps */
+   GLboolean EmitNoIndirectUniform; /**< No indirect addressing of constants */
+   /*@}*/
+
    GLuint MaxUnrollIterations;
 
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
