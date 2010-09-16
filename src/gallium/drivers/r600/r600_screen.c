@@ -112,8 +112,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
-	switch(shader)
-	{
+	switch(shader) {
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
 		break;
@@ -126,35 +125,35 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	}
 
 	/* TODO: all these should be fixed, since r600 surely supports much more! */
-        switch (param) {
-        case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
-        case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
-        case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
-        case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
-                return 16384;
-        case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
-                return 8; /* FIXME */
-        case PIPE_SHADER_CAP_MAX_INPUTS:
+	switch (param) {
+	case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+		return 16384;
+	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+		return 8; /* FIXME */
+	case PIPE_SHADER_CAP_MAX_INPUTS:
 		if(shader == PIPE_SHADER_FRAGMENT)
 			return 10;
 		else
 			return 16;
-        case PIPE_SHADER_CAP_MAX_TEMPS:
-                return 256; //max native temporaries
-        case PIPE_SHADER_CAP_MAX_ADDRS:
-                return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
-        case PIPE_SHADER_CAP_MAX_CONSTS:
-                return 256; //max native parameters
-        case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-                return 1;
-        case PIPE_SHADER_CAP_MAX_PREDS:
-                return 0; /* FIXME */
-        case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-                /* TODO: support this! */
-                return 0;
-        default:
-                return 0;
-        }
+	case PIPE_SHADER_CAP_MAX_TEMPS:
+		return 256; //max native temporaries
+	case PIPE_SHADER_CAP_MAX_ADDRS:
+		return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
+	case PIPE_SHADER_CAP_MAX_CONSTS:
+		return 256; //max native parameters
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+		return 1;
+	case PIPE_SHADER_CAP_MAX_PREDS:
+		return 0; /* FIXME */
+	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+		/* TODO: support this! */
+		return 0;
+	default:
+		return 0;
+	}
 }
 
 static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
