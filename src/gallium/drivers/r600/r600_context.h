@@ -210,7 +210,7 @@ struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
 	struct radeon			*rw;
-	struct radeon_ctx		ctx;
+	struct radeon_ctx		*ctx;
 	struct blitter_context		*blitter;
 	struct radeon_draw		draw;
 	struct r600_context_hw_state_vtbl *vtbl;

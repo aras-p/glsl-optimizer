@@ -82,29 +82,30 @@ void radeon_ctx_clear(struct radeon_ctx *ctx)
 	ctx->nbo = 0;
 }
 
-int radeon_ctx_init(struct radeon_ctx *ctx, struct radeon *radeon)
+struct radeon_ctx *radeon_ctx_init(struct radeon *radeon)
 {
+	struct radeon_ctx *ctx;
 	if (radeon == NULL)
-		return -EINVAL;
-	memset(ctx, 0, sizeof(struct radeon_ctx));
+		return NULL;
+	ctx = calloc(1, sizeof(struct radeon_ctx));
 	ctx->radeon = radeon_incref(radeon);
 	radeon_ctx_clear(ctx);
 	ctx->pm4 = malloc(RADEON_CTX_MAX_PM4 * 4);
 	if (ctx->pm4 == NULL) {
 		radeon_ctx_fini(ctx);
-		return -ENOMEM;
+		return NULL;
 	}
 	ctx->reloc = malloc(sizeof(struct radeon_cs_reloc) * RADEON_CTX_MAX_PM4);
 	if (ctx->reloc == NULL) {
 		radeon_ctx_fini(ctx);
-		return -ENOMEM;
+		return NULL;
 	}
 	ctx->bo = malloc(sizeof(void *) * RADEON_CTX_MAX_PM4);
 	if (ctx->bo == NULL) {
 		radeon_ctx_fini(ctx);
-		return -ENOMEM;
+		return NULL;
 	}
-	return 0;
+	return ctx;
 }
 
 void radeon_ctx_fini(struct radeon_ctx *ctx)
@@ -121,7 +122,7 @@ void radeon_ctx_fini(struct radeon_ctx *ctx)
 	free(ctx->bo);
 	free(ctx->pm4);
 	free(ctx->reloc);
-	memset(ctx, 0, sizeof(struct radeon_ctx));
+	free(ctx);
 }
 
 static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *state)

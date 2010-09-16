@@ -56,7 +56,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	free(rctx->vs_constant);
 	free(rctx->vs_resource);
 
-	radeon_ctx_fini(&rctx->ctx);
+	radeon_ctx_fini(rctx->ctx);
 	FREE(rctx);
 }
 
@@ -65,34 +65,17 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_query *rquery = NULL;
-	static int dc = 0;
-#if 0
-	char dname[256];
-#endif
 
 	/* suspend queries */
 	r600_queries_suspend(ctx);
-	/* FIXME dumping should be removed once shader support instructions
-	 * without throwing bad code
-	 */
-	if (!rctx->ctx.cdwords)
-		goto out;
-#if 0
-	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 2) {
-		radeon_ctx_dump_bof(&rctx->ctx, dname);
-		R600_ERR("dumped %s\n", dname);
-	}
-#endif
-#if 1
-	radeon_ctx_submit(&rctx->ctx);
-#endif
+
+	radeon_ctx_submit(rctx->ctx);
+
 	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
 		rquery->flushed = true;
 	}
-	dc++;
-out:
-	radeon_ctx_clear(&rctx->ctx);
+
+	radeon_ctx_clear(rctx->ctx);
 	/* resume queries */
 	r600_queries_resume(ctx);
 }
@@ -151,7 +134,7 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 		return NULL;
 	}						   
 
-	radeon_ctx_init(&rctx->ctx, rscreen->rw);
+	rctx->ctx = radeon_ctx_init(rscreen->rw);
 	radeon_draw_init(&rctx->draw, rscreen->rw);
 	return &rctx->context;
 }

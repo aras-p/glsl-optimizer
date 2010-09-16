@@ -155,12 +155,12 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	rquery->num_results = 0;
 	rquery->flushed = false;
 	r600_query_resume(ctx, rquery);
-	r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+	r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 	if (r == -EBUSY) {
 		/* this shouldn't happen */
 		R600_ERR("had to flush while emitting end query\n");
 		ctx->flush(ctx, 0, NULL);
-		r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+		r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 	}
 }
 
@@ -173,12 +173,12 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	rquery->state &= ~R600_QUERY_STATE_STARTED;
 	rquery->state |= R600_QUERY_STATE_ENDED;
 	r600_query_suspend(ctx, rquery);
-	r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+	r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 	if (r == -EBUSY) {
 		/* this shouldn't happen */
 		R600_ERR("had to flush while emitting end query\n");
 		ctx->flush(ctx, 0, NULL);
-		r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+		r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 	}
 }
 
@@ -191,12 +191,12 @@ void r600_queries_suspend(struct pipe_context *ctx)
 	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
 		if (rquery->state & R600_QUERY_STATE_STARTED) {
 			r600_query_suspend(ctx, rquery);
-			r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+			r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 			if (r == -EBUSY) {
 				/* this shouldn't happen */
 				R600_ERR("had to flush while emitting end query\n");
 				ctx->flush(ctx, 0, NULL);
-				r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+				r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 			}
 		}
 		rquery->state |= R600_QUERY_STATE_SUSPENDED;
@@ -212,12 +212,12 @@ void r600_queries_resume(struct pipe_context *ctx)
 	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
 		if (rquery->state & R600_QUERY_STATE_STARTED) {
 			r600_query_resume(ctx, rquery);
-			r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+			r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 			if (r == -EBUSY) {
 				/* this shouldn't happen */
 				R600_ERR("had to flush while emitting end query\n");
 				ctx->flush(ctx, 0, NULL);
-				r = radeon_ctx_set_query_state(&rctx->ctx, &rquery->rstate);
+				r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 			}
 		}
 		rquery->state &= ~R600_QUERY_STATE_SUSPENDED;

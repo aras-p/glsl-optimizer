@@ -161,18 +161,9 @@ struct radeon_cs_reloc {
 };
 #pragma pack()
 
-struct radeon_ctx {
-	struct radeon			*radeon;
-	u32				*pm4;
-	int				cdwords;
-	int				ndwords;
-	unsigned			nreloc;
-	struct radeon_cs_reloc		*reloc;
-	unsigned			nbo;
-	struct radeon_bo		**bo;
-};
+struct radeon_ctx;
 
-int radeon_ctx_init(struct radeon_ctx *ctx, struct radeon *radeon);
+struct radeon_ctx *radeon_ctx_init(struct radeon *radeon);
 void radeon_ctx_fini(struct radeon_ctx *ctx);
 void radeon_ctx_clear(struct radeon_ctx *ctx);
 int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw);

@@ -53,6 +53,17 @@ struct radeon_stype_info {
 	unsigned			npm4;
 };
 
+struct radeon_ctx {
+	struct radeon			*radeon;
+	u32				*pm4;
+	int				cdwords;
+	int				ndwords;
+	unsigned			nreloc;
+	struct radeon_cs_reloc		*reloc;
+	unsigned			nbo;
+	struct radeon_bo		**bo;
+};
+
 struct radeon {
 	int				fd;
 	int				refcount;

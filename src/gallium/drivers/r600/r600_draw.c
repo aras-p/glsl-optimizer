@@ -105,10 +105,10 @@ static int r600_draw_common(struct r600_draw *draw)
 	rctx->vtbl->vgt_prim(draw, prim, vgt_dma_index_type);
 	radeon_draw_bind(&rctx->draw, &draw->vgt);
 
-	r = radeon_ctx_set_draw(&rctx->ctx, &rctx->draw);
+	r = radeon_ctx_set_draw(rctx->ctx, &rctx->draw);
 	if (r == -EBUSY) {
 		r600_flush(draw->ctx, 0, NULL);
-		r = radeon_ctx_set_draw(&rctx->ctx, &rctx->draw);
+		r = radeon_ctx_set_draw(rctx->ctx, &rctx->draw);
 	}
 
 	radeon_state_fini(&draw->draw);

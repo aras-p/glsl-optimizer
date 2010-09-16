@@ -570,10 +570,10 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	r600_queries_suspend(ctx);
 
 	/* schedule draw*/
-	r = radeon_ctx_set_draw(&rctx->ctx, &draw);
+	r = radeon_ctx_set_draw(rctx->ctx, &draw);
 	if (r == -EBUSY) {
 		r600_flush(ctx, 0, NULL);
-		r = radeon_ctx_set_draw(&rctx->ctx, &draw);
+		r = radeon_ctx_set_draw(rctx->ctx, &draw);
 	}
 	if (r) {
 		goto out;
