@@ -651,11 +651,12 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                jit_tex->row_stride[j] = lp_tex->row_stride[j];
                jit_tex->img_stride[j] = lp_tex->img_stride[j];
 
-               if (!jit_tex->data[j]) {
+               if ((LP_PERF & PERF_TEX_MEM) ||
+		   !jit_tex->data[j]) {
                   /* out of memory - use dummy tile memory */
                   jit_tex->data[j] = lp_dummy_tile;
-                  jit_tex->width = TILE_SIZE;
-                  jit_tex->height = TILE_SIZE;
+                  jit_tex->width = TILE_SIZE/8;
+                  jit_tex->height = TILE_SIZE/8;
                   jit_tex->depth = 1;
                   jit_tex->last_level = 0;
                   jit_tex->row_stride[j] = 0;

@@ -48,6 +48,7 @@
 #include "gallivm/lp_bld_tgsi.h"
 #include "lp_jit.h"
 #include "lp_tex_sample.h"
+#include "lp_debug.h"
 
 
 /**
@@ -179,6 +180,11 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
    struct lp_llvm_sampler_soa *sampler = (struct lp_llvm_sampler_soa *)base;
 
    assert(unit < PIPE_MAX_SAMPLERS);
+   
+   if (LP_PERF & PERF_NO_TEX) {
+      lp_build_sample_nop(type, texel);
+      return;
+   }
 
    lp_build_sample_soa(builder,
                        &sampler->dynamic_state.static_state[unit],

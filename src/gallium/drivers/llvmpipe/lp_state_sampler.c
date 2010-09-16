@@ -37,6 +37,7 @@
 #include "lp_context.h"
 #include "lp_screen.h"
 #include "lp_state.h"
+#include "lp_debug.h"
 #include "state_tracker/sw_winsys.h"
 
 
@@ -44,7 +45,22 @@ static void *
 llvmpipe_create_sampler_state(struct pipe_context *pipe,
                               const struct pipe_sampler_state *sampler)
 {
-   return mem_dup(sampler, sizeof(*sampler));
+   struct pipe_sampler_state *state = mem_dup(sampler, sizeof *sampler);
+
+   if (LP_PERF & PERF_NO_MIP_LINEAR) {
+      if (state->min_mip_filter == PIPE_TEX_MIPFILTER_LINEAR)
+	 state->min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
+   }
+
+   if (LP_PERF & PERF_NO_MIPMAPS)
+      state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+
+   if (LP_PERF & PERF_NO_LINEAR) {
+      state->mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+      state->min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   }
+
+   return state;
 }
 
 

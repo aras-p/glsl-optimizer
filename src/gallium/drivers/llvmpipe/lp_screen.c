@@ -68,6 +68,19 @@ static const struct debug_named_value lp_debug_flags[] = {
 };
 #endif
 
+int LP_PERF = 0;
+static const struct debug_named_value lp_perf_flags[] = {
+   { "texmem",         PERF_TEX_MEM, NULL },
+   { "no_mipmap",      PERF_NO_MIPMAPS, NULL },
+   { "no_linear",      PERF_NO_LINEAR, NULL },
+   { "no_mip_linear",  PERF_NO_MIP_LINEAR, NULL },
+   { "no_tex",         PERF_NO_TEX, NULL },
+   { "no_blend",       PERF_NO_BLEND, NULL },
+   { "no_depth",       PERF_NO_DEPTH, NULL },
+   { "no_alphatest",   PERF_NO_ALPHATEST, NULL },
+   DEBUG_NAMED_VALUE_END
+};
+
 
 static const char *
 llvmpipe_get_vendor(struct pipe_screen *screen)
@@ -371,6 +384,8 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 #endif
+
+   LP_PERF = debug_get_flags_option("LP_PERF", lp_perf_flags, 0 );
 
    if (!screen)
       return NULL;

@@ -60,6 +60,10 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 
       util_copy_framebuffer_state(&lp->framebuffer, fb);
 
+      if (LP_PERF & PERF_NO_DEPTH) {
+	 pipe_surface_reference(&lp->framebuffer.zsbuf, NULL);
+      }
+
       /* Tell draw module how deep the Z/depth buffer is */
       if (lp->framebuffer.zsbuf) {
          int depth_bits;

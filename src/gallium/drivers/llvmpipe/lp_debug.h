@@ -50,6 +50,19 @@ st_print_current(void);
 #define DEBUG_FENCE         0x2000
 #define DEBUG_MEM           0x4000
 
+/* Performance flags.  These are active even on release builds.
+ */
+#define PERF_TEX_MEM        0x1  	/* minimize texture cache footprint */
+#define PERF_NO_MIP_LINEAR  0x2  	/* MIP_FILTER_LINEAR ==> _NEAREST */
+#define PERF_NO_MIPMAPS     0x4  	/* MIP_FILTER_NONE always */
+#define PERF_NO_LINEAR      0x8  	/* FILTER_NEAREST always */
+#define PERF_NO_TEX         0x10  	/* sample white always */
+#define PERF_NO_BLEND       0x20  	/* disable blending */
+#define PERF_NO_DEPTH       0x40  	/* disable depth buffering entirely */
+#define PERF_NO_ALPHATEST   0x80  	/* disable alpha testing */
+
+
+extern int LP_PERF;
 
 #ifdef DEBUG
 extern int LP_DEBUG;
