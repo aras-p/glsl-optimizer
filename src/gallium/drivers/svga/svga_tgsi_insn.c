@@ -197,22 +197,37 @@ translate_src_register( const struct svga_shader_emitter *emit,
       break;
    }
 
-   /* Indirect addressing (for coninstant buffer lookups only)
+   /* Indirect addressing.
     */
-   if (reg->Register.Indirect)
-   {
-      /* we shift the offset towards the minimum */
-      if (svga_arl_needs_adjustment( emit )) {
-         src.base.num -= svga_arl_adjustment( emit );
+   if (reg->Register.Indirect) {
+      if (emit->unit == PIPE_SHADER_FRAGMENT) {
+         /* Pixel shaders have only loop registers for relative
+          * addressing into inputs. Ignore the redundant address
+          * register, the contents of aL should be in sync with it.
+          */
+         if (reg->Register.File == TGSI_FILE_INPUT) {
+            src.base.relAddr = 1;
+            src.indirect = src_token(SVGA3DREG_LOOP, 0);
+         }
       }
-      src.base.relAddr = 1;
+      else {
+         /* Constant buffers only.
+          */
+         if (reg->Register.File == TGSI_FILE_CONSTANT) {
+            /* we shift the offset towards the minimum */
+            if (svga_arl_needs_adjustment( emit )) {
+               src.base.num -= svga_arl_adjustment( emit );
+            }
+            src.base.relAddr = 1;
 
-      /* Not really sure what should go in the second token:
-       */
-      src.indirect = src_token( SVGA3DREG_ADDR,
-                                reg->Indirect.Index );
+            /* Not really sure what should go in the second token:
+             */
+            src.indirect = src_token( SVGA3DREG_ADDR,
+                                      reg->Indirect.Index );
 
-      src.indirect.swizzle = SWIZZLE_XXXX;
+            src.indirect.swizzle = SWIZZLE_XXXX;
+         }
+      }
    }
 
    src = swizzle( src,
@@ -1593,6 +1608,14 @@ static boolean emit_arl(struct svga_shader_emitter *emit,
                         const struct tgsi_full_instruction *insn)
 {
    ++emit->current_arl;
+   if (emit->unit == PIPE_SHADER_FRAGMENT) {
+      /* MOVA not present in pixel shader instruction set.
+       * Ignore this instruction altogether since it is
+       * only used for loop counters -- and for that
+       * we reference aL directly.
+       */
+      return TRUE;
+   }
    if (svga_arl_needs_adjustment( emit )) {
       return emit_fake_arl( emit, insn );
    } else {
