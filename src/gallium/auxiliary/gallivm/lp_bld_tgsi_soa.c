@@ -476,9 +476,8 @@ get_indirect_offsets(struct lp_build_tgsi_soa_context *bld,
                      const struct tgsi_src_register *indirect_reg)
 {
    /* always use X component of address register */
-   const int x = indirect_reg->SwizzleX;
+   unsigned swizzle = indirect_reg->SwizzleX;
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-   uint swizzle = tgsi_util_get_src_register_swizzle(indirect_reg, x);
    LLVMValueRef vec4 = lp_build_const_int_vec(bld->int_bld.type, 4); 
    LLVMValueRef addr_vec;
 
