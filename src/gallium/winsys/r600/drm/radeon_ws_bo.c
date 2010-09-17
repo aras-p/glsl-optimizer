@@ -15,7 +15,9 @@ struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
 
 	if (radeon->use_mem_constant && (usage & PIPE_BIND_CONSTANT_BUFFER)) {
 		man = radeon->mman;
-	} else
+	} else if (usage & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+		man = radeon->cman;
+	else
 		man = radeon->kman;
 
 	ws_bo->pb = man->create_buffer(man, size, &desc);

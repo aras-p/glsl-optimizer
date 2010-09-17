@@ -34,26 +34,10 @@ static int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_ws_bo *bo
 {
 	if (ctx->nbo >= RADEON_CTX_MAX_PM4)
 		return -EBUSY;
-	radeon_ws_bo_reference(ctx->radeon, &ctx->bo[ctx->nbo], bo);
+	/* take a reference to the kernel bo */
+	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->nbo], radeon_bo_pb_get_bo(bo->pb));
 	ctx->nbo++;
 	return 0;
-}
-
-static struct radeon_ws_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned reloc)
-{
-	struct radeon_cs_reloc *greloc;
-	unsigned i;
-	struct radeon_ws_bo *bo;
-
-	greloc = (void *)(((u8 *)ctx->reloc) + reloc * 4);
-	for (i = 0; i < ctx->nbo; i++) {
-		if (radeon_ws_bo_get_handle(ctx->bo[i]) == greloc->handle) {
-			radeon_ws_bo_reference(ctx->radeon, &bo, ctx->bo[i]);
-			return bo;
-		}
-	}
-	fprintf(stderr, "%s no bo for reloc[%d 0x%08X] %d\n", __func__, reloc, greloc->handle, ctx->nbo);
-	return NULL;
 }
 
 static void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32 *placement)
@@ -65,7 +49,7 @@ static void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32
 	placement[1] = 0;
 	greloc = (void *)(((u8 *)ctx->reloc) + reloc * 4);
 	for (i = 0; i < ctx->nbo; i++) {
-		if (radeon_ws_bo_get_handle(ctx->bo[i]) == greloc->handle) {
+		if (ctx->bo[i]->handle == greloc->handle) {
 			placement[0] = greloc->read_domain | greloc->write_domain;
 			placement[1] = placement[0];
 			return;
@@ -76,7 +60,7 @@ static void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32
 void radeon_ctx_clear(struct radeon_ctx *ctx)
 {
 	for (int i = 0; i < ctx->nbo; i++) {
-		radeon_ws_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
+		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
 	}
 	ctx->ndwords = RADEON_CTX_MAX_PM4;
 	ctx->cdwords = 0;
@@ -118,7 +102,7 @@ void radeon_ctx_fini(struct radeon_ctx *ctx)
 		return;
 
 	for (i = 0; i < ctx->nbo; i++) {
-		radeon_ws_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
+		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
 	}
 	ctx->radeon = radeon_decref(ctx->radeon);
 	free(ctx->bo);
@@ -131,12 +115,13 @@ static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *stat
 {
 	unsigned i, j;
 	int r;
-
+	struct radeon_bo *state_bo;
 	if (state == NULL)
 		return 0;
 	for (i = 0; i < state->nbo; i++) {
 		for (j = 0; j < ctx->nbo; j++) {
-			if (state->bo[i] == ctx->bo[j])
+			state_bo = radeon_bo_pb_get_bo(state->bo[i]->pb);
+			if (state_bo == ctx->bo[j])
 				break;
 		}
 		if (j == ctx->nbo) {
@@ -158,6 +143,8 @@ int radeon_ctx_submit(struct radeon_ctx *ctx)
 
 	if (!ctx->cdwords)
 		return 0;
+
+	radeon_bo_pbmgr_flush_maps(ctx->radeon->kman);
 #if 0
 	for (r = 0; r < ctx->cdwords; r++) {
 		fprintf(stderr, "0x%08X\n", ctx->pm4[r]);
@@ -310,7 +297,6 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 {
 	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;
 	unsigned i;
-	void *data;
 	unsigned bo_size;
 	root = device_id = bcs = blob = array = bo = size = handle = NULL;
 	root = bof_object();
@@ -347,7 +333,7 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 		bo = bof_object();
 		if (bo == NULL)
 			goto out_err;
-		bo_size = radeon_ws_bo_get_size(ctx->bo[i]);
+		bo_size = ctx->bo[i]->size;
 		size = bof_int32(bo_size);
 		if (size == NULL)
 			goto out_err;
@@ -355,16 +341,16 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 			goto out_err;
 		bof_decref(size);
 		size = NULL;
-		handle = bof_int32(radeon_ws_bo_get_handle(ctx->bo[i]));
+		handle = bof_int32(ctx->bo[i]->handle);
 		if (handle == NULL)
 			goto out_err;
 		if (bof_object_set(bo, "handle", handle))
 			goto out_err;
 		bof_decref(handle);
 		handle = NULL;
-		data = radeon_ws_bo_map(ctx->radeon, ctx->bo[i], 0, NULL);
-		blob = bof_blob(bo_size, data);
-		radeon_ws_bo_unmap(ctx->radeon, ctx->bo[i]);
+		radeon_bo_map(ctx->radeon, ctx->bo[i]);
+		blob = bof_blob(bo_size, ctx->bo[i]->data);
+		radeon_bo_unmap(ctx->radeon, ctx->bo[i]);
 		if (blob == NULL)
 			goto out_err;
 		if (bof_object_set(bo, "data", blob))

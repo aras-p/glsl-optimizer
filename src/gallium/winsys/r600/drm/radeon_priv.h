@@ -75,7 +75,7 @@ struct radeon_ctx {
 	unsigned			nreloc;
 	struct radeon_cs_reloc		*reloc;
 	unsigned			nbo;
-	struct radeon_ws_bo		**bo;
+	struct radeon_bo		**bo;
 };
 
 struct radeon {
@@ -89,6 +89,7 @@ struct radeon {
 	boolean use_mem_constant; /* true for evergreen */
 	struct pb_manager *mman; /* malloc manager */
 	struct pb_manager *kman; /* kernel bo manager */
+	struct pb_manager *cman; /* cached bo manager */
 };
 
 struct radeon_ws_bo {
