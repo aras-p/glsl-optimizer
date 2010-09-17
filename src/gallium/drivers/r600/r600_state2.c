@@ -684,8 +684,10 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+#if 0
 	static int dc = 0;
 	char dname[256];
+#endif
 
 	if (!rctx->ctx.pm4_cdwords)
 		return;
