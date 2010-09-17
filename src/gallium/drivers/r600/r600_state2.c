@@ -40,7 +40,6 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include <pipebuffer/pb_buffer.h>
-#include "state_tracker/drm_driver.h"
 #include "r600.h"
 #include "r600d.h"
 #include "r700_sq.h"
