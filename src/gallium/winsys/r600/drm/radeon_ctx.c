@@ -47,7 +47,7 @@ static struct radeon_ws_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned r
 
 	greloc = (void *)(((u8 *)ctx->reloc) + reloc * 4);
 	for (i = 0; i < ctx->nbo; i++) {
-		if (ctx->bo[i]->bo->handle == greloc->handle) {
+		if (radeon_ws_bo_get_handle(ctx->bo[i]) == greloc->handle) {
 			radeon_ws_bo_reference(ctx->radeon, &bo, ctx->bo[i]);
 			return bo;
 		}
@@ -65,7 +65,7 @@ static void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32
 	placement[1] = 0;
 	greloc = (void *)(((u8 *)ctx->reloc) + reloc * 4);
 	for (i = 0; i < ctx->nbo; i++) {
-		if (ctx->bo[i]->bo->handle == greloc->handle) {
+		if (radeon_ws_bo_get_handle(ctx->bo[i]) == greloc->handle) {
 			placement[0] = greloc->read_domain | greloc->write_domain;
 			placement[1] = placement[0];
 			return;
@@ -184,9 +184,10 @@ static int radeon_ctx_reloc(struct radeon_ctx *ctx, struct radeon_ws_bo *bo,
 			unsigned id, unsigned *placement)
 {
 	unsigned i;
+	unsigned bo_handle = radeon_ws_bo_get_handle(bo);
 
 	for (i = 0; i < ctx->nreloc; i++) {
-		if (ctx->reloc[i].handle == bo->bo->handle) {
+		if (ctx->reloc[i].handle == bo_handle) {
 			ctx->pm4[id] = i * sizeof(struct radeon_cs_reloc) / 4;
 			return 0;
 		}
@@ -194,7 +195,7 @@ static int radeon_ctx_reloc(struct radeon_ctx *ctx, struct radeon_ws_bo *bo,
 	if (ctx->nreloc >= RADEON_CTX_MAX_PM4) {
 		return -EBUSY;
 	}
-	ctx->reloc[ctx->nreloc].handle = bo->bo->handle;
+	ctx->reloc[ctx->nreloc].handle = bo_handle;
 	ctx->reloc[ctx->nreloc].read_domain = placement[0] | placement [1];
 	ctx->reloc[ctx->nreloc].write_domain = placement[0] | placement [1];
 	ctx->reloc[ctx->nreloc].flags = 0;
@@ -310,7 +311,7 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;
 	unsigned i;
 	void *data;
-
+	unsigned bo_size;
 	root = device_id = bcs = blob = array = bo = size = handle = NULL;
 	root = bof_object();
 	if (root == NULL)
@@ -346,14 +347,15 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 		bo = bof_object();
 		if (bo == NULL)
 			goto out_err;
-		size = bof_int32(ctx->bo[i]->bo->size);
+		bo_size = radeon_ws_bo_get_size(ctx->bo[i]);
+		size = bof_int32(bo_size);
 		if (size == NULL)
 			goto out_err;
 		if (bof_object_set(bo, "size", size))
 			goto out_err;
 		bof_decref(size);
 		size = NULL;
-		handle = bof_int32(ctx->bo[i]->bo->handle);
+		handle = bof_int32(radeon_ws_bo_get_handle(ctx->bo[i]));
 		if (handle == NULL)
 			goto out_err;
 		if (bof_object_set(bo, "handle", handle))
@@ -361,7 +363,7 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 		bof_decref(handle);
 		handle = NULL;
 		data = radeon_ws_bo_map(ctx->radeon, ctx->bo[i], 0, NULL);
-		blob = bof_blob(ctx->bo[i]->bo->size, data);
+		blob = bof_blob(bo_size, data);
 		radeon_ws_bo_unmap(ctx->radeon, ctx->bo[i]);
 		if (blob == NULL)
 			goto out_err;

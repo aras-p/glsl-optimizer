@@ -8,21 +8,20 @@ struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
 {
 	struct radeon_ws_bo *ws_bo = calloc(1, sizeof(struct radeon_ws_bo));
 	struct pb_desc desc;
+	struct pb_manager *man;
+
+	desc.alignment = alignment;
+	desc.usage = usage;
 
 	if (radeon->use_mem_constant && (usage & PIPE_BIND_CONSTANT_BUFFER)) {
-		desc.alignment = alignment;
-		desc.usage = usage;
-		ws_bo->pb = radeon->mman->create_buffer(radeon->mman, size, &desc);
-		if (ws_bo->pb == NULL) {
-			free(ws_bo);
-			return NULL;
-		}
-	} else {
-		ws_bo->bo = radeon_bo(radeon, 0, size, alignment, NULL);
-		if (!ws_bo->bo) {
-			free(ws_bo);
-			return NULL;
-		}
+		man = radeon->mman;
+	} else
+		man = radeon->kman;
+
+	ws_bo->pb = man->create_buffer(man, size, &desc);
+	if (ws_bo->pb == NULL) {
+		free(ws_bo);
+		return NULL;
 	}
 
 	pipe_reference_init(&ws_bo->reference, 1);
@@ -34,8 +33,8 @@ struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
 {
 	struct radeon_ws_bo *ws_bo = calloc(1, sizeof(struct radeon_ws_bo));
 
-	ws_bo->bo = radeon_bo(radeon, handle, 0, 0, NULL);
-	if (!ws_bo->bo) {
+	ws_bo->pb = radeon_bo_pb_create_buffer_from_handle(radeon->kman, handle);
+	if (!ws_bo->pb) {
 		free(ws_bo);
 		return NULL;
 	}
@@ -45,26 +44,18 @@ struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
 
 void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned usage, void *ctx)
 {
-	if (bo->pb)
-		return pb_map(bo->pb, usage, ctx);
-	radeon_bo_map(radeon, bo->bo);
-	return bo->bo->data;
+	return pb_map(bo->pb, usage, ctx);
 }
 
 void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo)
 {
-	if (bo->pb)
-		pb_unmap(bo->pb);
-	else
-		radeon_bo_unmap(radeon, bo->bo);
+	pb_unmap(bo->pb);
 }
 
 static void radeon_ws_bo_destroy(struct radeon *radeon, struct radeon_ws_bo *bo)
 {
 	if (bo->pb)
 		pb_reference(&bo->pb, NULL);
-	else
-		radeon_bo_reference(radeon, &bo->bo, NULL);
 	free(bo);
 }
 
@@ -79,10 +70,35 @@ void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 	*dst = src;
 }
 
-int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *bo)
+int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *pb_bo)
 {
-	if (bo->pb)
+	/* TODO */
+	struct radeon_bo *bo;
+	bo = radeon_bo_pb_get_bo(pb_bo->pb);
+	if (!bo)
 		return 0;
-	else
-		return radeon_bo_wait(radeon, bo->bo);
+	radeon_bo_wait(radeon, bo);
+	return 0;
+}
+
+unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo)
+{
+	struct radeon_bo *bo;
+
+	bo = radeon_bo_pb_get_bo(pb_bo->pb);
+	if (!bo)
+		return 0;
+
+	return bo->handle;
+}
+
+unsigned radeon_ws_bo_get_size(struct radeon_ws_bo *pb_bo)
+{
+	struct radeon_bo *bo;
+
+	bo = radeon_bo_pb_get_bo(pb_bo->pb);
+	if (!bo)
+		return 0;
+
+	return bo->size;
 }

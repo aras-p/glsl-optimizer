@@ -14,7 +14,8 @@ C_SOURCES = \
 	radeon_pciid.c \
 	radeon.c \
 	r600_drm.c \
-	radeon_ws_bo.c
+	radeon_ws_bo.c \
+	radeon_bo_pb.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
 		   $(shell pkg-config libdrm --cflags-only-I)

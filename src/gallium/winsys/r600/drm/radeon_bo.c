@@ -170,3 +170,19 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	} while (ret == -EBUSY);
 	return ret;
 }
+
+int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain)
+{
+        struct drm_radeon_gem_busy args;
+        int ret;
+
+        memset(&args, 0, sizeof(args));
+        args.handle = bo->handle;
+        args.domain = 0;
+
+        ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_BUSY,
+                                  &args, sizeof(args));
+
+        *domain = args.domain;
+        return ret;
+}

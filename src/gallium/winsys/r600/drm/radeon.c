@@ -130,6 +130,9 @@ struct radeon *radeon_new(int fd, unsigned device)
 	radeon->mman = pb_malloc_bufmgr_create();
 	if (!radeon->mman)
 		return NULL;
+	radeon->kman = radeon_bo_pbmgr_create(radeon);
+	if (!radeon->kman)
+		return NULL;
 	return radeon;
 }
 
@@ -150,6 +153,7 @@ struct radeon *radeon_decref(struct radeon *radeon)
 	}
 
 	radeon->mman->destroy(radeon->mman);
+	radeon->kman->destroy(radeon->kman);
 	drmClose(radeon->fd);
 	free(radeon);
 	return NULL;

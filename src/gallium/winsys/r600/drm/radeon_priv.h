@@ -88,11 +88,11 @@ struct radeon {
 	unsigned max_states;
 	boolean use_mem_constant; /* true for evergreen */
 	struct pb_manager *mman; /* malloc manager */
+	struct pb_manager *kman; /* kernel bo manager */
 };
 
 struct radeon_ws_bo {
 	struct pipe_reference reference;
-	struct radeon_bo *bo;
 	struct pb_buffer *pb;
 };
 
@@ -124,6 +124,10 @@ extern int radeon_state_reloc(struct radeon_state *state, unsigned id, unsigned 
  */
 extern int radeon_draw_pm4(struct radeon_draw *draw);
 
+/* ws bo winsys only */
+unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *bo);
+unsigned radeon_ws_bo_get_size(struct radeon_ws_bo *bo);
+
 /* bo */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			    unsigned size, unsigned alignment, void *ptr);
@@ -132,5 +136,13 @@ void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
+int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
+
+/* pipebuffer kernel bo manager */
+struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon);
+struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
+void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
+struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
+							 uint32_t handle);
 
 #endif

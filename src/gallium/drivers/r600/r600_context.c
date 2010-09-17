@@ -80,6 +80,13 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	r600_queries_resume(ctx);
 }
 
+void r600_flush_ctx(void *data)
+{
+        struct r600_context *rctx = data;
+
+        rctx->context.flush(&rctx->context, 0, NULL);
+}
+
 struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
