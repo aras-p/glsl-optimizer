@@ -2703,8 +2703,7 @@ static void aos_to_soa( struct x86_function *func,
    struct x86_reg aos_input = x86_make_reg( file_REG32, reg_BX );
    struct x86_reg num_inputs = x86_make_reg( file_REG32, reg_CX );
    struct x86_reg stride = x86_make_reg( file_REG32, reg_DX );
-   int inner_loop;
-
+   int loop_top, loop_exit_fixup;
 
    /* Save EBX */
    x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
@@ -2717,8 +2716,11 @@ static void aos_to_soa( struct x86_function *func,
    x86_mov( func, num_inputs, x86_fn_arg( func, arg_num ) );
    x86_mov( func, stride,     x86_fn_arg( func, arg_stride ) );
 
-   /* do */
-   inner_loop = x86_get_label( func );
+   /* while (num_inputs != 0) */
+   loop_top = x86_get_label( func );
+   x86_cmp_imm( func, num_inputs, 0 );
+   loop_exit_fixup = x86_jcc_forward( func, cc_E );
+
    {
       x86_push( func, aos_input );
       sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
@@ -2750,9 +2752,10 @@ static void aos_to_soa( struct x86_function *func,
       x86_lea( func, aos_input, x86_make_disp(aos_input, 16) );
       x86_lea( func, soa_input, x86_make_disp(soa_input, 64) );
    }
-   /* while --num_inputs */
+   /* --num_inputs */
    x86_dec( func, num_inputs );
-   x86_jcc( func, cc_NE, inner_loop );
+   x86_jmp( func, loop_top );
+   x86_fixup_fwd_jump( func, loop_exit_fixup );
 
    /* Restore EBX */
    x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
