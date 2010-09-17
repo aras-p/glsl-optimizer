@@ -228,12 +228,11 @@ nvgl_wrap_mode(unsigned wrap)
 		return 0x1;
 	case GL_MIRRORED_REPEAT:
 		return 0x2;
+	case GL_CLAMP:
 	case GL_CLAMP_TO_EDGE:
 		return 0x3;
 	case GL_CLAMP_TO_BORDER:
 		return 0x4;
-	case GL_CLAMP:
-		return 0x5;
 	default:
 		assert(0);
 	}
