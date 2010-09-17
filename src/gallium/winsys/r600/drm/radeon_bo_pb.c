@@ -218,7 +218,8 @@ struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon)
 void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr)
 {
 	struct radeon_bo_pbmgr *mgr = radeon_bo_pbmgr(_mgr);
-	struct radeon_bo_pb *rpb, *t_rpb;
+	struct radeon_bo_pb *rpb = NULL;
+	struct radeon_bo_pb *t_rpb;
 
 	LIST_FOR_EACH_ENTRY_SAFE(rpb, t_rpb, &mgr->buffer_map_list, maplist) {
 		radeon_bo_unmap(mgr->radeon, rpb->bo);
