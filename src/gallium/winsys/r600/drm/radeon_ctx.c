@@ -86,7 +86,7 @@ struct radeon_ctx *radeon_ctx_init(struct radeon *radeon)
 		radeon_ctx_fini(ctx);
 		return NULL;
 	}
-	ctx->bo = malloc(sizeof(void *) * RADEON_CTX_MAX_PM4);
+	ctx->bo = calloc(sizeof(void *), RADEON_CTX_MAX_PM4);
 	if (ctx->bo == NULL) {
 		radeon_ctx_fini(ctx);
 		return NULL;
