@@ -723,7 +723,7 @@
 #define     V_02880C_EARLY_Z_THEN_LATE_Z               1
 #define     V_02880C_RE_Z                              2
 #define     V_02880C_EARLY_Z_THEN_RE_Z                 3
-#define   S_02880C_KILL_ENABLE(x)                      (((x) & 0x1) << 5)
+#define   S_02880C_KILL_ENABLE(x)                      (((x) & 0x1) << 6)
 #define   G_02880C_KILL_ENABLE(x)                      (((x) >> 6) & 0x1)
 #define   C_02880C_KILL_ENABLE                         0xFFFFFFBF
 #define   S_02880C_DUAL_EXPORT_ENABLE(x)               (((x) & 0x1) << 9)
