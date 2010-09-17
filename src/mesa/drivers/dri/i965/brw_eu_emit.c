@@ -1744,13 +1744,27 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint response_length,
 		   GLboolean eot)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn;
 
+   /* Sandybridge doesn't have the implied move for SENDs,
+    * and the first message register index comes from src0.
+    */
+   if (intel->gen >= 6) {
+      brw_push_insn_state(p);
+      brw_set_mask_control( p, BRW_MASK_DISABLE );
+      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      brw_pop_insn_state(p);
+      src0 = brw_message_reg(msg_reg_nr);
+   }
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen < 6)
+       insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_ff_sync_message(p->brw,
 			   insn,
