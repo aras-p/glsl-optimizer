@@ -1627,9 +1627,12 @@ static void spill_values( struct brw_wm_compile *c,
 void brw_wm_emit( struct brw_wm_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    GLuint insn;
 
    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+   if (intel->gen >= 6)
+	brw_set_acc_write_control(p, 1);
 
    /* Check if any of the payload regs need to be spilled:
     */

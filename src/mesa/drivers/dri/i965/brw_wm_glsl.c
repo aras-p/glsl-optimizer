@@ -711,6 +711,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
     brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
+    if (intel->gen >= 6)
+	brw_set_acc_write_control(p, 1);
+
     for (i = 0; i < c->nr_fp_insns; i++) {
         const struct prog_instruction *inst = &c->prog_instructions[i];
 	int dst_flags;
