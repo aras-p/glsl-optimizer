@@ -107,7 +107,9 @@ const struct brw_tracked_state gen6_sf_vp = {
 
 static void prepare_viewport_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->sf.state_bo);
+   brw_add_validated_bo(brw, brw->clip.vp_bo);
+   brw_add_validated_bo(brw, brw->sf.vp_bo);
+   brw_add_validated_bo(brw, brw->cc.vp_bo);
 }
 
 static void upload_viewport_state_pointers(struct brw_context *brw)
