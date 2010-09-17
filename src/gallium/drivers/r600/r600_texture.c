@@ -325,7 +325,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	char *map;
 	int r;
 
-	r600_flush(ctx, 0, NULL);
+	ctx->flush(ctx, 0, NULL);
 	if (rtransfer->linear_texture) {
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {

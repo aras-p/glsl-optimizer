@@ -8,6 +8,7 @@ LIBRARY_INCLUDES = \
 
 C_SOURCES = \
 	r600_buffer.c \
+	r600_state2.c \
 	r600_context.c \
 	r600_shader.c \
 	r600_draw.c \

@@ -7,6 +7,8 @@ LIBNAME = r600winsys
 C_SOURCES = \
 	bof.c \
 	r600_state.c \
+	r600_state2.c \
+	r600.c \
 	radeon_ctx.c \
 	radeon_draw.c \
 	radeon_state.c \

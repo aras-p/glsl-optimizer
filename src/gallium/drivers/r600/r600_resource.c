@@ -57,11 +57,11 @@ void r600_init_context_resource_functions(struct r600_context *r600)
 	r600->context.is_resource_referenced = u_is_resource_referenced_vtbl;
 }
 
-void r600_init_screen_resource_functions(struct r600_screen *r600screen)
+void r600_init_screen_resource_functions(struct pipe_screen *screen)
 {
-	r600screen->screen.resource_create = r600_resource_create;
-	r600screen->screen.resource_from_handle = r600_resource_from_handle;
-	r600screen->screen.resource_get_handle = u_resource_get_handle_vtbl;
-	r600screen->screen.resource_destroy = u_resource_destroy_vtbl;
-	r600screen->screen.user_buffer_create = r600_user_buffer_create;
+	screen->resource_create = r600_resource_create;
+	screen->resource_from_handle = r600_resource_from_handle;
+	screen->resource_get_handle = u_resource_get_handle_vtbl;
+	screen->resource_destroy = u_resource_destroy_vtbl;
+	screen->user_buffer_create = r600_user_buffer_create;
 }

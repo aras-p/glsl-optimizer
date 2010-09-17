@@ -63,7 +63,7 @@ struct r600_resource_texture {
 };
 
 void r600_init_context_resource_functions(struct r600_context *r600);
-void r600_init_screen_resource_functions(struct r600_screen *r600screen);
+void r600_init_screen_resource_functions(struct pipe_screen *screen);
 
 /* r600_buffer */
 u32 r600_domain_from_usage(unsigned usage);
