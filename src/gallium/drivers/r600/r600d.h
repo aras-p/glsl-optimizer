@@ -639,6 +639,23 @@
 #define   S_028D10_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
 #define   G_028D10_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
 #define   C_028D10_IGNORE_SC_ZRANGE                    0xFFFDFFFF
+#define R_02880C_DB_SHADER_CONTROL                    0x02880C
+#define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
+#define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
+#define   C_02880C_Z_EXPORT_ENABLE                     0xFFFFFFFE
+#define   S_02880C_Z_ORDER(x)                          (((x) & 0x3) << 4)
+#define   G_02880C_Z_ORDER(x)                          (((x) >> 4) & 0x3)
+#define   C_02880C_Z_ORDER                             0xFFFFFCFF
+#define     V_02880C_LATE_Z                            0
+#define     V_02880C_EARLY_Z_THEN_LATE_Z               1
+#define     V_02880C_RE_Z                              2
+#define     V_02880C_EARLY_Z_THEN_RE_Z                 3
+#define   S_02880C_KILL_ENABLE(x)                      (((x) & 0x1) << 5)
+#define   G_02880C_KILL_ENABLE(x)                      (((x) >> 6) & 0x1)
+#define   C_02880C_KILL_ENABLE                         0xFFFFFFBF
+#define   S_02880C_DUAL_EXPORT_ENABLE(x)               (((x) & 0x1) << 9)
+#define   G_02880C_DUAL_EXPORT_ENABLE(x)               (((x) >> 9) & 0x1)
+#define   C_02880C_DUAL_EXPORT_ENABLE                  0xFFFFFDFF
 #define R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x028DF8
 #define   S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) & 0xFF) << 0)
 #define   G_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) >> 0) & 0xFF)

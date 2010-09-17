@@ -362,13 +362,16 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	}
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_DSA, 0, 0);
 
-	db_shader_control = 0x210;
+	db_shader_control = 0;
+	db_shader_control |= S_02880C_DUAL_EXPORT_ENABLE(1);
+	db_shader_control |= S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+
 	rshader = &rctx->ps_shader->shader;
 	if (rshader->uses_kill)
-		db_shader_control |= (1 << 6);
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			db_shader_control |= 1;
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
 	}
 	stencil_ref_mask = 0;
 	stencil_ref_mask_bf = 0;
