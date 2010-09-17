@@ -59,6 +59,7 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_XY_TEST |
 	     depth_clamp |
 	     provoking);
+   OUT_BATCH(GEN6_CLIP_FORCE_ZERO_RTAINDEX);
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
