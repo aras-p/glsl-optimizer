@@ -178,7 +178,7 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 }
 
 static GLboolean
-teximage_fits(GLcontext *ctx, struct gl_texture_object *t, int level)
+teximage_fits(struct gl_texture_object *t, int level)
 {
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
 	struct gl_texture_image *ti = t->Image[0][level];
@@ -186,8 +186,7 @@ teximage_fits(GLcontext *ctx, struct gl_texture_object *t, int level)
 	if (!ti || !to_nouveau_teximage(ti)->surface.bo)
 		return GL_FALSE;
 
-	if (context_chipset(ctx) < 0x10 &&
-	    level == t->BaseLevel && (s->offset & 0x7f))
+	if (level == t->BaseLevel && (s->offset & 0x7f))
 		return GL_FALSE;
 
 	return t->Target == GL_TEXTURE_RECTANGLE ||
@@ -202,7 +201,7 @@ validate_teximage(GLcontext *ctx, struct gl_texture_object *t,
 {
 	struct gl_texture_image *ti = t->Image[0][level];
 
-	if (teximage_fits(ctx, t, level)) {
+	if (teximage_fits(t, level)) {
 		struct nouveau_surface *ss = to_nouveau_texture(t)->surfaces;
 		struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 
@@ -290,8 +289,8 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 	struct nouveau_texture *nt = to_nouveau_texture(t);
 	int i, last = get_last_level(t);
 
-	if (!teximage_fits(ctx, t, t->BaseLevel) ||
-	    !teximage_fits(ctx, t, last))
+	if (!teximage_fits(t, t->BaseLevel) ||
+	    !teximage_fits(t, last))
 		return GL_FALSE;
 
 	if (nt->dirty) {
@@ -314,8 +313,8 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 void
 nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t)
 {
-	if (!teximage_fits(ctx, t, t->BaseLevel) ||
-	    !teximage_fits(ctx, t, get_last_level(t))) {
+	if (!teximage_fits(t, t->BaseLevel) ||
+	    !teximage_fits(t, get_last_level(t))) {
 		texture_dirty(t);
 		relayout_texture(ctx, t);
 		nouveau_texture_validate(ctx, t);
@@ -377,7 +376,7 @@ nouveau_teximage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 	}
 
 	if (level == t->BaseLevel) {
-		if (!teximage_fits(ctx, t, level))
+		if (!teximage_fits(t, level))
 			relayout_texture(ctx, t);
 		nouveau_texture_validate(ctx, t);
 	}

@@ -225,7 +225,7 @@ nv10_emit_tex_obj(GLcontext *ctx, int emit)
 			bo_flags | NOUVEAU_BO_OR);
 
 	nouveau_bo_markl(bctx, celsius, NV10TCL_TX_OFFSET(i),
-			 s->bo, 0, bo_flags);
+			 s->bo, s->offset, bo_flags);
 
 	BEGIN_RING(chan, celsius, NV10TCL_TX_FILTER(i), 1);
 	OUT_RING(chan, tx_filter);
