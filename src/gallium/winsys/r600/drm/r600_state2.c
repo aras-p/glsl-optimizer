@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "xf86drm.h"
 #include "r600.h"
 #include "r600d.h"
 #include "r600_priv.h"
