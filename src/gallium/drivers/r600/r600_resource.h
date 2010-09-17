@@ -75,4 +75,35 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 						const struct pipe_resource *base,
 						struct winsys_handle *whandle);
 
+#define R600_BUFFER_MAGIC 0xabcd1600
+#define R600_BUFFER_MAX_RANGES 32
+
+struct r600_buffer_range {
+	uint32_t start;
+	uint32_t end;
+};
+
+struct r600_resource_buffer {
+	struct r600_resource r;
+	uint32_t magic;
+	void *user_buffer;
+	struct r600_buffer_range ranges[R600_BUFFER_MAX_RANGES];
+	unsigned num_ranges;
+};
+
+/* r600_buffer */
+static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buffer)
+{
+	if (buffer) {
+		assert(((struct r600_resource_buffer *)buffer)->magic == R600_BUFFER_MAGIC);
+		return (struct r600_resource_buffer *)buffer;
+    }
+    return NULL;
+}
+
+static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
+{
+    return r600_buffer(buffer)->user_buffer ? true : false;
+}
+
 #endif

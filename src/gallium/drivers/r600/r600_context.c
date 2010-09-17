@@ -28,6 +28,7 @@
 #include <util/u_inlines.h>
 #include <util/u_format.h>
 #include <util/u_memory.h>
+#include <util/u_upload_mgr.h>
 #include <util/u_blitter.h>
 #include "r600_screen.h"
 #include "r600_context.h"
@@ -56,6 +57,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	free(rctx->vs_constant);
 	free(rctx->vs_resource);
 
+	u_upload_destroy(rctx->upload_vb);
+	u_upload_destroy(rctx->upload_ib);
+
 	radeon_ctx_fini(rctx->ctx);
 	FREE(rctx);
 }
@@ -65,6 +69,10 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_query *rquery = NULL;
+
+	/* flush upload buffers */
+	u_upload_flush(rctx->upload_vb);
+	u_upload_flush(rctx->upload_ib);
 
 	/* suspend queries */
 	r600_queries_suspend(ctx);
@@ -123,25 +131,37 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 
 	rctx->vtbl->init_config(rctx);
 
+	rctx->upload_ib = u_upload_create(&rctx->context, 32 * 1024, 16,
+					  PIPE_BIND_INDEX_BUFFER);
+	if (rctx->upload_ib == NULL) {
+		goto out_free;
+	}
+
+	rctx->upload_vb = u_upload_create(&rctx->context, 128 * 1024, 16,
+					  PIPE_BIND_VERTEX_BUFFER);
+	if (rctx->upload_vb == NULL) {
+		goto out_free;
+	}
+
 	rctx->vs_constant = (struct radeon_state *)calloc(R600_MAX_CONSTANT, sizeof(struct radeon_state));
 	if (!rctx->vs_constant) {
-		FREE(rctx);
-		return NULL;
+		goto out_free;
 	}
 
 	rctx->ps_constant = (struct radeon_state *)calloc(R600_MAX_CONSTANT, sizeof(struct radeon_state));
 	if (!rctx->ps_constant) {
-		FREE(rctx);
-		return NULL;
+		goto out_free;
 	}
 
 	rctx->vs_resource = (struct radeon_state *)calloc(R600_MAX_RESOURCE, sizeof(struct radeon_state));
 	if (!rctx->vs_resource) {
-		FREE(rctx);
-		return NULL;
+		goto out_free;
 	}						   
 
 	rctx->ctx = radeon_ctx_init(rscreen->rw);
 	radeon_draw_init(&rctx->draw, rscreen->rw);
 	return &rctx->context;
+ out_free:
+	FREE(rctx);
+	return NULL;
 }

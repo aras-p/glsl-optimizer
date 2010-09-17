@@ -29,6 +29,7 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_upload_mgr.h>
 #include "state_tracker/drm_driver.h"
 #include "r600_screen.h"
 #include "r600_context.h"
@@ -67,66 +68,69 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = r600_screen(screen);
-	struct r600_resource *rbuffer;
+	struct r600_resource_buffer *rbuffer;
 	struct radeon_ws_bo *bo;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
-	rbuffer = CALLOC_STRUCT(r600_resource);
+	rbuffer = CALLOC_STRUCT(r600_resource_buffer);
 	if (rbuffer == NULL)
 		return NULL;
 
-	rbuffer->base.b = *templ;
-	pipe_reference_init(&rbuffer->base.b.reference, 1);
-	rbuffer->base.b.screen = screen;
-	rbuffer->base.vtbl = &r600_buffer_vtbl;
-	rbuffer->size = rbuffer->base.b.width0;
-	rbuffer->domain = r600_domain_from_usage(rbuffer->base.b.bind);
-	bo = radeon_ws_bo(rscreen->rw, rbuffer->base.b.width0, alignment, rbuffer->base.b.bind);
+	rbuffer->magic = R600_BUFFER_MAGIC;
+	rbuffer->user_buffer = NULL;
+	rbuffer->num_ranges = 0;
+	rbuffer->r.base.b = *templ;
+	pipe_reference_init(&rbuffer->r.base.b.reference, 1);
+	rbuffer->r.base.b.screen = screen;
+	rbuffer->r.base.vtbl = &r600_buffer_vtbl;
+	rbuffer->r.size = rbuffer->r.base.b.width0;
+	rbuffer->r.domain = r600_domain_from_usage(rbuffer->r.base.b.bind);
+	bo = radeon_ws_bo(rscreen->rw, rbuffer->r.base.b.width0, alignment, rbuffer->r.base.b.bind);
 	if (bo == NULL) {
 		FREE(rbuffer);
 		return NULL;
 	}
-	rbuffer->bo = bo;
-	return &rbuffer->base.b;
+	rbuffer->r.bo = bo;
+	return &rbuffer->r.base.b;
 }
 
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind)
 {
-	struct r600_resource *rbuffer;
-	struct r600_screen *rscreen = r600_screen(screen);
-	struct pipe_resource templ;
-	void *data;
+	struct r600_resource_buffer *rbuffer;
 
-	memset(&templ, 0, sizeof(struct pipe_resource));
-	templ.target = PIPE_BUFFER;
-	templ.format = PIPE_FORMAT_R8_UNORM;
-	templ.usage = PIPE_USAGE_IMMUTABLE;
-	templ.bind = bind;
-	templ.width0 = bytes;
-	templ.height0 = 1;
-	templ.depth0 = 1;
-
-	rbuffer = (struct r600_resource*)r600_buffer_create(screen, &templ);
-	if (rbuffer == NULL) {
+	rbuffer = CALLOC_STRUCT(r600_resource_buffer);
+	if (rbuffer == NULL)
 		return NULL;
-	}
-	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo, 0, NULL);
-	memcpy(data, ptr, bytes);
-	radeon_ws_bo_unmap(rscreen->rw, rbuffer->bo);
-	return &rbuffer->base.b;
+
+	rbuffer->magic = R600_BUFFER_MAGIC;
+	pipe_reference_init(&rbuffer->r.base.b.reference, 1);
+	rbuffer->r.base.vtbl = &r600_buffer_vtbl;
+	rbuffer->r.base.b.screen = screen;
+	rbuffer->r.base.b.target = PIPE_BUFFER;
+	rbuffer->r.base.b.format = PIPE_FORMAT_R8_UNORM;
+	rbuffer->r.base.b.usage = PIPE_USAGE_IMMUTABLE;
+	rbuffer->r.base.b.bind = bind;
+	rbuffer->r.base.b.width0 = bytes;
+	rbuffer->r.base.b.height0 = 1;
+	rbuffer->r.base.b.depth0 = 1;
+	rbuffer->r.base.b.flags = 0;
+	rbuffer->num_ranges = 0;
+	rbuffer->r.bo = NULL;
+	rbuffer->user_buffer = ptr;
+	return &rbuffer->r.base.b;
 }
 
 static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
-	struct r600_resource *rbuffer = (struct r600_resource*)buf;
+	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 	struct r600_screen *rscreen = r600_screen(screen);
 
-	if (rbuffer->bo) {
-		radeon_ws_bo_reference(rscreen->rw, &rbuffer->bo, NULL);
+	if (rbuffer->r.bo) {
+		radeon_ws_bo_reference(rscreen->rw, &rbuffer->r.bo, NULL);
 	}
 	FREE(rbuffer);
 }
@@ -134,18 +138,40 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
-	struct r600_resource *rbuffer = (struct r600_resource*)transfer->resource;
+	struct r600_context *rctx = r600_context(pipe);
+	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 	struct r600_screen *rscreen = r600_screen(pipe->screen);
 	int write = 0;
 	uint8_t *data;
+	int i;
+	boolean flush = FALSE;
 
+	if (rbuffer->user_buffer)
+		return (uint8_t*)rbuffer->user_buffer + transfer->box.x;
+
+	if (transfer->usage & PIPE_TRANSFER_DISCARD) {
+		for (i = 0; i < rbuffer->num_ranges; i++) {
+			if ((transfer->box.x >= rbuffer->ranges[i].start) &&
+			    (transfer->box.x < rbuffer->ranges[i].end))
+				flush = TRUE;
+			
+			if (flush) {
+				radeon_ws_bo_reference(rscreen->rw, &rbuffer->r.bo, NULL);
+				rbuffer->num_ranges = 0;
+				rbuffer->r.bo = radeon_ws_bo(rscreen->rw, 
+							     rbuffer->r.base.b.width0, 0,
+							     rbuffer->r.base.b.bind);
+				break;
+			}
+		}
+	}
 	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */
 	}
 	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo, transfer->usage, r600_context(pipe));
+	data = radeon_ws_bo_map(rscreen->rw, rbuffer->r.bo, transfer->usage, rctx);
 	if (!data)
 		return NULL;
 
@@ -155,16 +181,39 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 					struct pipe_transfer *transfer)
 {
-	struct r600_resource *rbuffer = (struct r600_resource*)transfer->resource;
+	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 	struct r600_screen *rscreen = r600_screen(pipe->screen);
 
-	radeon_ws_bo_unmap(rscreen->rw, rbuffer->bo);
+	if (rbuffer->r.bo)
+		radeon_ws_bo_unmap(rscreen->rw, rbuffer->r.bo);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 					      struct pipe_transfer *transfer,
 					      const struct pipe_box *box)
 {
+	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
+	unsigned i;
+	unsigned offset = transfer->box.x + box->x;
+	unsigned length = box->width;
+
+	assert(box->x + box->width <= transfer->box.width);
+
+	if (rbuffer->user_buffer)
+		return;
+
+	/* mark the range as used */
+	for(i = 0; i < rbuffer->num_ranges; ++i) {
+		if(offset <= rbuffer->ranges[i].end && rbuffer->ranges[i].start <= (offset+box->width)) {
+			rbuffer->ranges[i].start = MIN2(rbuffer->ranges[i].start, offset);
+			rbuffer->ranges[i].end   = MAX2(rbuffer->ranges[i].end, (offset+length));
+			return;
+		}
+	}
+	
+	rbuffer->ranges[rbuffer->num_ranges].start = offset;
+	rbuffer->ranges[rbuffer->num_ranges].end = offset+length;
+	rbuffer->num_ranges++;
 }
 
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
@@ -213,3 +262,59 @@ struct u_resource_vtbl r600_buffer_vtbl =
 	r600_buffer_transfer_unmap,		/* transfer_unmap */
 	u_default_transfer_inline_write		/* transfer_inline_write */
 };
+
+int r600_upload_index_buffer(struct r600_context *rctx,
+			     struct r600_draw *draw)
+{
+	struct pipe_resource *upload_buffer = NULL;
+	unsigned index_offset = draw->index_buffer_offset;
+	int ret = 0;
+
+	if (r600_buffer_is_user_buffer(draw->index_buffer)) {
+		ret = u_upload_buffer(rctx->upload_ib,
+				      index_offset,
+				      draw->count * draw->index_size,
+				      draw->index_buffer,
+				      &index_offset,
+				      &upload_buffer);
+		if (ret) {
+			goto done;
+		}
+		draw->index_buffer_offset = index_offset;
+		draw->index_buffer = upload_buffer;
+	}
+
+done:
+	return ret;
+}
+
+int r600_upload_user_buffers(struct r600_context *rctx)
+{
+	enum pipe_error ret = PIPE_OK;
+	int i, nr;
+
+	nr = rctx->vertex_elements->count;
+
+	for (i = 0; i < nr; i++) {
+		struct pipe_vertex_buffer *vb =
+			&rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
+
+		if (r600_buffer_is_user_buffer(vb->buffer)) {
+			struct pipe_resource *upload_buffer = NULL;
+			unsigned offset = 0; /*vb->buffer_offset * 4;*/
+			unsigned size = vb->buffer->width0;
+			unsigned upload_offset;
+			ret = u_upload_buffer(rctx->upload_vb,
+					      offset, size,
+					      vb->buffer,
+					      &upload_offset, &upload_buffer);
+			if (ret)
+				return ret;
+
+			pipe_resource_reference(&vb->buffer, NULL);
+			vb->buffer = upload_buffer;
+			vb->buffer_offset = upload_offset;
+		}
+	}
+	return ret;
+}

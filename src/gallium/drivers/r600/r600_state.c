@@ -437,6 +437,7 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	unsigned i;
+	boolean any_user_buffers = FALSE;
 
 	for (i = 0; i < rctx->nvertex_buffer; i++) {
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
@@ -444,8 +445,11 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
 	for (i = 0; i < count; i++) {
 		rctx->vertex_buffer[i].buffer = NULL;
+		if (r600_buffer_is_user_buffer(buffers[i].buffer))
+			any_user_buffers = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
 	}
+	rctx->any_user_vbs = any_user_buffers;
 	rctx->nvertex_buffer = count;
 }
 

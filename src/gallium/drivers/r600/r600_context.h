@@ -34,6 +34,8 @@
 #include "radeon.h"
 #include "r600_shader.h"
 
+struct u_upload_mgr;
+
 #define R600_QUERY_STATE_STARTED	(1 << 0)
 #define R600_QUERY_STATE_ENDED		(1 << 1)
 #define R600_QUERY_STATE_SUSPENDED	(1 << 2)
@@ -249,6 +251,12 @@ struct r600_context {
 	struct pipe_index_buffer	index_buffer;
 	struct pipe_blend_color		blend_color;
 	struct list_head		query_list;
+
+	/* upload managers */
+	struct u_upload_mgr *upload_vb;
+	struct u_upload_mgr *upload_ib;
+	bool any_user_vbs;
+
 };
 
 /* Convenience cast wrapper. */
@@ -305,5 +313,9 @@ void r600_set_constant_buffer_mem(struct pipe_context *ctx,
 void eg_set_constant_buffer(struct pipe_context *ctx,
 			    uint shader, uint index,
 			    struct pipe_resource *buffer);
+
+int r600_upload_index_buffer(struct r600_context *rctx,
+                             struct r600_draw *draw);
+int r600_upload_user_buffers(struct r600_context *rctx);
 
 #endif

@@ -126,6 +126,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	memset(&draw, 0, sizeof(draw));
 
+	if (rctx->any_user_vbs) {
+		r600_upload_user_buffers(rctx);
+		rctx->any_user_vbs = false;
+	}
+
 	draw.ctx = ctx;
 	draw.mode = info->mode;
 	draw.start = info->start;
@@ -139,8 +144,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 		assert(rctx->index_buffer.offset %
 				rctx->index_buffer.index_size == 0);
-		draw.start += rctx->index_buffer.offset /
-			rctx->index_buffer.index_size;
+		r600_upload_index_buffer(rctx, &draw);
 	}
 	else {
 		draw.index_size = 0;
