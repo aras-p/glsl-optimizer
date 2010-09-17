@@ -141,6 +141,9 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 ir_call *
 ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 {
+   if (this->type == glsl_type::error_type)
+      return ir_call::get_error_instruction(mem_ctx);
+
    exec_list new_parameters;
 
    foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
