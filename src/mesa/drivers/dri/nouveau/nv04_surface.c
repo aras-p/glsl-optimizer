@@ -214,11 +214,6 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 	assert(_mesa_is_pow_two(dst->width) &&
 	       _mesa_is_pow_two(dst->height));
 
-        /* If area is too large to copy in one shot we must copy it in
-	 * POT chunks to meet alignment requirements */
-	assert(sub_w == w || _mesa_is_pow_two(w));
-	assert(sub_h == h || _mesa_is_pow_two(h));
-
 	nouveau_bo_marko(bctx, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE,
 			 src->bo, bo_flags | NOUVEAU_BO_RD);
 	nouveau_bo_marko(bctx, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE,
