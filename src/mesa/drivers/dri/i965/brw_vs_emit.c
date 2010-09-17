@@ -254,7 +254,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_overflow_output = 0;
 
    if (intel->gen >= 6)
-      mrf = 4;
+      mrf = 3; /* no more pos store in attribute */
    else if (intel->gen == 5)
       mrf = 8;
    else
@@ -1451,8 +1451,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * position.
        */
       brw_MOV(p, brw_message_reg(2), pos);
-      brw_MOV(p, brw_message_reg(3), pos);
-      len_vertex_header = 2;
+      len_vertex_header = 1;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
