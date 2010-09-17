@@ -149,8 +149,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_PREDS:
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-		/* TODO: support this! */
-		return 0;
+		return 1;
 	default:
 		return 0;
 	}
