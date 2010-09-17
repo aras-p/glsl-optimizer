@@ -603,7 +603,7 @@ store_mipmap(GLcontext *ctx, GLenum target, int first, int last,
 		.BufferObj = ctx->Shared->NullBufferObj,
 		.Alignment = 1
 	};
-	GLenum format = t->Image[0][first]->TexFormat;
+	GLenum format = t->Image[0][t->BaseLevel]->TexFormat;
 	unsigned base_format, type, comps;
 	int i;
 
