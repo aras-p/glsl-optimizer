@@ -289,8 +289,11 @@ static void r600_scissor(struct r600_context *rctx, struct radeon_state *rstate)
 	const struct pipe_scissor_state *state = &rctx->scissor->state.scissor;
 	const struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 	struct r600_screen *rscreen = rctx->screen;
+	enum radeon_family family;
 	unsigned minx, maxx, miny, maxy;
 	u32 tl, br;
+
+	family = radeon_get_family(rctx->rw);
 
 	if (state == NULL) {
 		minx = 0;
@@ -320,7 +323,10 @@ static void r600_scissor(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_2_BR] = br;
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_TL] = tl;
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_BR] = br;
-	rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+
+	if (family >= CHIP_RV770)
+		rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+
 	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_TL] = tl;
 	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_BR] = br;
 	rstate->states[R600_SCISSOR__PA_SC_VPORT_SCISSOR_0_TL] = tl;
@@ -1021,6 +1027,9 @@ static void r600_texture_state_scissor(struct r600_screen *rscreen,
 					unsigned level)
 {
 	struct radeon_state *rstate = &rtexture->scissor[level];
+	enum radeon_family family;
+
+	family = radeon_get_family(rscreen->rw);
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_SCISSOR, 0, 0);
 	/* set states (most default value are 0 and struct already
@@ -1035,7 +1044,10 @@ static void r600_texture_state_scissor(struct r600_screen *rscreen,
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_TL] = 0x80000000;
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_RULE] = 0x0000FFFF;
-	rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+
+	if (family >= CHIP_RV770)
+		rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+
 	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
 	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_TL] = 0x80000000;
 	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
