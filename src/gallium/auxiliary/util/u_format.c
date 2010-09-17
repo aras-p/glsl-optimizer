@@ -173,6 +173,14 @@ util_format_fits_8unorm(const struct util_format_description *format_desc)
 {
    unsigned chan;
 
+   /*
+    * After linearized sRGB values require more than 8bits.
+    */
+
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+      return FALSE;
+   }
+
    switch (format_desc->layout) {
 
    case UTIL_FORMAT_LAYOUT_S3TC:
