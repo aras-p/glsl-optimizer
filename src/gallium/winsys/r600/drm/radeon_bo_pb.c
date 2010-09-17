@@ -39,8 +39,9 @@ static void radeon_bo_pb_destroy(struct pb_buffer *_buf)
 {
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
 
+	LIST_DEL(&buf->maplist);
+
 	if (buf->bo->data != NULL) {
-		LIST_DEL(&buf->maplist);
 		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
 	}
 	radeon_bo_reference(buf->mgr->radeon, &buf->bo, NULL);
@@ -57,8 +58,10 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		if (p_atomic_read(&buf->bo->reference.count) > 1)
 			return NULL;
 	}
-	if (buf->bo->data != NULL)
+	if (buf->bo->data != NULL) {
+		LIST_DELINIT(&buf->maplist);
 		return buf->bo->data;
+	}
 
 	if (flags & PB_USAGE_DONTBLOCK) {
 		uint32_t domain;
@@ -72,13 +75,14 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 	if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 		return NULL;
 	}
-	LIST_ADDTAIL(&buf->maplist, &buf->mgr->buffer_map_list);
+	LIST_DELINIT(&buf->maplist);
 	return buf->bo->data;
 }
 
 static void radeon_bo_pb_unmap_internal(struct pb_buffer *_buf)
 {
-	(void)_buf;
+	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
+	LIST_ADDTAIL(&buf->maplist, &buf->mgr->buffer_map_list);
 }
 
 static void
@@ -218,7 +222,7 @@ void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr)
 
 	LIST_FOR_EACH_ENTRY_SAFE(rpb, t_rpb, &mgr->buffer_map_list, maplist) {
 		radeon_bo_unmap(mgr->radeon, rpb->bo);
-		LIST_DEL(&rpb->maplist);
+		LIST_DELINIT(&rpb->maplist);
 	}
 
 	LIST_INITHEAD(&mgr->buffer_map_list);
