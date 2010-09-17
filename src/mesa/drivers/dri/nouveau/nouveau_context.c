@@ -262,7 +262,10 @@ update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 	nouveau_update_renderbuffers(dri_ctx, draw);
 	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
 
+	/* Clean up references to the old framebuffer objects. */
 	context_dirty(ctx, FRAMEBUFFER);
+	context_bctx(ctx, FRAMEBUFFER);
+	FIRE_RING(context_chan(ctx));
 }
 
 GLboolean
@@ -282,10 +285,6 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 		    dri_read->driverPrivate != ctx->WinSysReadBuffer)
 			update_framebuffer(dri_ctx, dri_read,
 					   &dri_ctx->dri2.read_stamp);
-
-		/* Clean up references to the old framebuffer objects. */
-		context_bctx(ctx, FRAMEBUFFER);
-		FIRE_RING(context_chan(ctx));
 
 		/* Pass it down to mesa. */
 		_mesa_make_current(ctx, dri_draw->driverPrivate,
