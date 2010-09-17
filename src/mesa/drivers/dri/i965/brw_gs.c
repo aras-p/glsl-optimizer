@@ -60,7 +60,7 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
@@ -85,12 +85,19 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    switch (key->primitive) {
    case GL_QUADS:
+      /* Gen6: VF has already converted into polygon. */
+      if (intel->gen == 6)
+          return;
       brw_gs_quads( &c, key );
       break;
    case GL_QUAD_STRIP:
+      if (intel->gen == 6)
+          return;
       brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
+      /* XXX fix GS hang issue */
+      assert(intel->gen < 6);
       brw_gs_lines( &c );
       break;
    case GL_LINES:
