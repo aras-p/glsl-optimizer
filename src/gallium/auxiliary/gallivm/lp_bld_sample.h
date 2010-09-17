@@ -225,6 +225,7 @@ texture_dims(enum pipe_texture_target tex)
    case PIPE_TEXTURE_1D:
       return 1;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       return 2;
    case PIPE_TEXTURE_3D:
