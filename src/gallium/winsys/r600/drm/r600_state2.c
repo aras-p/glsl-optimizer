@@ -984,7 +984,7 @@ void r600_context_dump_bof(struct r600_context *ctx, const char *file)
 		goto out_err;
 	device_id = bof_int32(ctx->radeon->device);
 	if (device_id == NULL)
-		return;
+		goto out_err;
 	if (bof_object_set(root, "device_id", device_id))
 		goto out_err;
 	bof_decref(device_id);
