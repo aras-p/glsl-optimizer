@@ -87,6 +87,7 @@ struct radeon {
 	struct radeon_stype_info	*stype;
 	unsigned max_states;
 	boolean use_mem_constant; /* true for evergreen */
+	struct pb_manager *mman; /* malloc manager */
 };
 
 struct radeon_ws_bo {

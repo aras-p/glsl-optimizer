@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <pipebuffer/pb_bufmgr.h>
 #include "xf86drm.h"
 #include "radeon_priv.h"
 #include "radeon_drm.h"
@@ -125,6 +126,10 @@ struct radeon *radeon_new(int fd, unsigned device)
 			__func__, radeon->device);
 		break;
 	}
+
+	radeon->mman = pb_malloc_bufmgr_create();
+	if (!radeon->mman)
+		return NULL;
 	return radeon;
 }
 
@@ -143,6 +148,8 @@ struct radeon *radeon_decref(struct radeon *radeon)
 	if (--radeon->refcount > 0) {
 		return NULL;
 	}
+
+	radeon->mman->destroy(radeon->mman);
 	drmClose(radeon->fd);
 	free(radeon);
 	return NULL;

@@ -12,7 +12,7 @@ struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
 	if (radeon->use_mem_constant && (usage & PIPE_BIND_CONSTANT_BUFFER)) {
 		desc.alignment = alignment;
 		desc.usage = usage;
-		ws_bo->pb = pb_malloc_buffer_create(size, &desc);
+		ws_bo->pb = radeon->mman->create_buffer(radeon->mman, size, &desc);
 		if (ws_bo->pb == NULL) {
 			free(ws_bo);
 			return NULL;
