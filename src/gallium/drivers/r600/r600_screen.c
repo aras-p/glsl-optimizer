@@ -277,6 +277,7 @@ struct pipe_screen *r600_screen_create(struct radeon *rw)
 		FREE(rscreen);
 		return NULL;
 	}
+	radeon_set_mem_constant(rw, rscreen->use_mem_constant);
 	rscreen->rw = rw;
 	rscreen->screen.winsys = (struct pipe_winsys*)rw;
 	rscreen->screen.destroy = r600_destroy_screen;

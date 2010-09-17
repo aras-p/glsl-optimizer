@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include <pipe/p_compiler.h>
+
 typedef uint64_t		u64;
 typedef uint32_t		u32;
 typedef uint16_t		u16;
@@ -86,14 +88,15 @@ enum {
 };
 
 enum radeon_family radeon_get_family(struct radeon *rw);
+void radeon_set_mem_constant(struct radeon *radeon, boolean state);
 
 /* lowlevel WS bo */
 struct radeon_ws_bo;
 struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
-				  unsigned size, unsigned alignment);
+				  unsigned size, unsigned alignment, unsigned usage);
 struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
 					 unsigned handle);
-void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo);
+void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned usage, void *ctx);
 void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo);
 void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 			    struct radeon_ws_bo *src);

@@ -163,11 +163,11 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_context_state 
 	radeon_ws_bo_reference(rscreen->rw, &rpshader->bo, NULL);
 	rpshader->bo = NULL;
 	rpshader->bo = radeon_ws_bo(rscreen->rw, rshader->bc.ndw * 4,
-				    4096);
+				    4096, 0);
 	if (rpshader->bo == NULL) {
 		return -ENOMEM;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, rpshader->bo);
+	data = radeon_ws_bo_map(rscreen->rw, rpshader->bo, 0, rctx);
 	memcpy(data, rshader->bc.bytecode, rshader->bc.ndw * 4);
 	radeon_ws_bo_unmap(rscreen->rw, rpshader->bo);
 	/* build state */

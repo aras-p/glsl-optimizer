@@ -121,7 +121,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
 	resource->size = rtex->size;
-	resource->bo = radeon_ws_bo(radeon, rtex->size, 4096);
+	resource->bo = radeon_ws_bo(radeon, rtex->size, 4096, 0);
 	if (resource->bo == NULL) {
 		FREE(rtex);
 		return NULL;
@@ -344,7 +344,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
-	map = radeon_ws_bo_map(radeon, bo);
+	map = radeon_ws_bo_map(radeon, bo, 0, r600_context(ctx));
 	if (!map) {
 		return NULL;
 	}
@@ -655,7 +655,7 @@ int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_textu
 
 	/* allocate uncompressed texture */
 	if (rtexture->uncompressed == NULL) {
-		rtexture->uncompressed = radeon_ws_bo(rscreen->rw, rtexture->size, 4096);
+		rtexture->uncompressed = radeon_ws_bo(rscreen->rw, rtexture->size, 4096, 0);
 		if (rtexture->uncompressed == NULL) {
 			return -ENOMEM;
 		}

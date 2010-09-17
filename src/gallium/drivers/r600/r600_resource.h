@@ -37,7 +37,6 @@ struct r600_resource {
 	struct radeon_ws_bo		*bo;
 	u32				domain;
 	u32				flink;
-	struct pb_buffer		*pb;
 	u32				size;
 };
 

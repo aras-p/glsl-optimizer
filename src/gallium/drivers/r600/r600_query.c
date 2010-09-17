@@ -79,7 +79,7 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 	q->type = query_type;
 	q->buffer_size = 4096;
 
-	q->buffer = radeon_ws_bo(rscreen->rw, q->buffer_size, 1);
+	q->buffer = radeon_ws_bo(rscreen->rw, q->buffer_size, 1, 0);
 	if (!q->buffer) {
 		FREE(q);
 		return NULL;
@@ -109,7 +109,7 @@ static void r600_query_result(struct pipe_context *ctx, struct r600_query *rquer
 	int i;
 
 	radeon_ws_bo_wait(rscreen->rw, rquery->buffer);
-	results = radeon_ws_bo_map(rscreen->rw, rquery->buffer);
+	results = radeon_ws_bo_map(rscreen->rw, rquery->buffer, 0, r600_context(ctx));
 	for (i = 0; i < rquery->num_results; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;

@@ -360,7 +360,7 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 			goto out_err;
 		bof_decref(handle);
 		handle = NULL;
-		data = radeon_ws_bo_map(ctx->radeon, ctx->bo[i]);
+		data = radeon_ws_bo_map(ctx->radeon, ctx->bo[i], 0, NULL);
 		blob = bof_blob(ctx->bo[i]->bo->size, data);
 		radeon_ws_bo_unmap(ctx->radeon, ctx->bo[i]);
 		if (blob == NULL)

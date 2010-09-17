@@ -29,6 +29,11 @@ enum radeon_family radeon_get_family(struct radeon *radeon)
 	return radeon->family;
 }
 
+void radeon_set_mem_constant(struct radeon *radeon, boolean state)
+{
+	radeon->use_mem_constant = state;
+}
+
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;

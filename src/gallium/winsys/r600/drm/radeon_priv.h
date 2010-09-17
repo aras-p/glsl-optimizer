@@ -86,11 +86,13 @@ struct radeon {
 	unsigned			nstype;
 	struct radeon_stype_info	*stype;
 	unsigned max_states;
+	boolean use_mem_constant; /* true for evergreen */
 };
 
 struct radeon_ws_bo {
 	struct pipe_reference reference;
 	struct radeon_bo *bo;
+	struct pb_buffer *pb;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);

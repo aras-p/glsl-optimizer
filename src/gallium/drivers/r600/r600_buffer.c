@@ -69,7 +69,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	struct r600_screen *rscreen = r600_screen(screen);
 	struct r600_resource *rbuffer;
 	struct radeon_ws_bo *bo;
-	struct pb_desc desc;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
@@ -82,19 +81,8 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->base.b.screen = screen;
 	rbuffer->base.vtbl = &r600_buffer_vtbl;
 	rbuffer->size = rbuffer->base.b.width0;
-	if ((rscreen->use_mem_constant == FALSE) && (rbuffer->base.b.bind & PIPE_BIND_CONSTANT_BUFFER)) {
-		desc.alignment = alignment;
-		desc.usage = rbuffer->base.b.bind;
-		rbuffer->pb = pb_malloc_buffer_create(rbuffer->base.b.width0,
-						      &desc);
-		if (rbuffer->pb == NULL) {
-			free(rbuffer);
-			return NULL;
-		}
-		return &rbuffer->base.b;
-	}
 	rbuffer->domain = r600_domain_from_usage(rbuffer->base.b.bind);
-	bo = radeon_ws_bo(rscreen->rw, rbuffer->base.b.width0, alignment);
+	bo = radeon_ws_bo(rscreen->rw, rbuffer->base.b.width0, alignment, rbuffer->base.b.bind);
 	if (bo == NULL) {
 		FREE(rbuffer);
 		return NULL;
@@ -125,7 +113,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	if (rbuffer == NULL) {
 		return NULL;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo);
+	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo, 0, NULL);
 	memcpy(data, ptr, bytes);
 	radeon_ws_bo_unmap(rscreen->rw, rbuffer->bo);
 	return &rbuffer->base.b;
@@ -137,15 +125,9 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	struct r600_resource *rbuffer = (struct r600_resource*)buf;
 	struct r600_screen *rscreen = r600_screen(screen);
 
-	if (rbuffer->pb) {
-		pipe_reference_init(&rbuffer->pb->base.reference, 0);
-		pb_destroy(rbuffer->pb);
-		rbuffer->pb = NULL;
-	}
 	if (rbuffer->bo) {
 		radeon_ws_bo_reference(rscreen->rw, &rbuffer->bo, NULL);
 	}
-	memset(rbuffer, 0, sizeof(struct r600_resource));
 	FREE(rbuffer);
 }
 
@@ -157,16 +139,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	int write = 0;
 	uint8_t *data;
 
-	if (rbuffer->pb) {
-		return (uint8_t*)pb_map(rbuffer->pb, transfer->usage, NULL) + transfer->box.x;
-	}
 	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */
 	}
 	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo);
+	data = radeon_ws_bo_map(rscreen->rw, rbuffer->bo, transfer->usage, r600_context(pipe));
 	if (!data)
 		return NULL;
 
@@ -179,11 +158,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	struct r600_resource *rbuffer = (struct r600_resource*)transfer->resource;
 	struct r600_screen *rscreen = r600_screen(pipe->screen);
 
-	if (rbuffer->pb) {
-		pb_unmap(rbuffer->pb);
-	} else {
-		radeon_ws_bo_unmap(rscreen->rw, rbuffer->bo);
-	}
+	radeon_ws_bo_unmap(rscreen->rw, rbuffer->bo);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,

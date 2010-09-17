@@ -179,11 +179,11 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	};
 
 	/* simple shader */
-	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096, 0);
 	if (bo == NULL) {
 		return -ENOMEM;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo, 0, NULL);
 	if (!data) {
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return -ENOMEM;
@@ -274,11 +274,11 @@ static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon
 	};
 
 	/* simple shader */
-	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096, 0);
 	if (bo == NULL) {
 		return;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo, 0, NULL);
 	if (!data) {
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
@@ -338,11 +338,11 @@ static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon
 	};
 
 	/* simple shader */
-	bo = radeon_ws_bo(rscreen->rw, 128, 4096);
+	bo = radeon_ws_bo(rscreen->rw, 128, 4096, 0);
 	if (bo == NULL) {
 		return;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, bo);
+	data = radeon_ws_bo_map(rscreen->rw, bo, 0, NULL);
 	if (!data) {
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
