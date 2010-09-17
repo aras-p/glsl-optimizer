@@ -548,7 +548,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen5.sampler = sampler;
       insn->bits3.sampler_gen5.msg_type = msg_type;
@@ -557,8 +557,12 @@ static void brw_set_sampler_message(struct brw_context *brw,
       insn->bits3.sampler_gen5.response_length = response_length;
       insn->bits3.sampler_gen5.msg_length = msg_length;
       insn->bits3.sampler_gen5.end_of_thread = eot;
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
-      insn->bits2.send_gen5.end_of_thread = eot;
+      if (intel->gen >= 6)
+	  insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_SAMPLER;
+      else {
+	  insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
+	  insn->bits2.send_gen5.end_of_thread = eot;
+      }
    } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
@@ -1581,6 +1585,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint header_present,
 		GLuint simd_mode)
 {
+   struct intel_context *intel = &p->brw->intel;
    GLboolean need_stall = 0;
 
    if (writemask == 0) {
@@ -1652,11 +1657,25 @@ void brw_SAMPLE(struct brw_compile *p,
    }
 
    {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+      struct brw_instruction *insn;
    
+      /* Sandybridge doesn't have the implied move for SENDs,
+       * and the first message register index comes from src0.
+       */
+      if (intel->gen >= 6) {
+	  brw_push_insn_state(p);
+	  brw_set_mask_control( p, BRW_MASK_DISABLE );
+	  /* m1 contains header? */
+	  brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+	  brw_pop_insn_state(p);
+	  src0 = brw_message_reg(msg_reg_nr);
+      }
+
+      insn = next_insn(p, BRW_OPCODE_SEND);
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE;
-      insn->header.destreg__conditionalmod = msg_reg_nr;
+      if (intel->gen < 6)
+	  insn->header.destreg__conditionalmod = msg_reg_nr;
 
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src0);

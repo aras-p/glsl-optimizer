@@ -1102,7 +1102,7 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Fill in the shadow comparison reference value. */
    if (shadow) {
-      if (intel->gen == 5) {
+      if (intel->gen >= 5) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
 	 cur_mrf += mrf_per_channel;
@@ -1115,7 +1115,7 @@ void emit_tex(struct brw_wm_compile *c,
       cur_mrf += mrf_per_channel;
    }
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 5) {
       if (shadow)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
       else
@@ -1168,7 +1168,7 @@ void emit_txb(struct brw_wm_compile *c,
     * from mattering.
     */
    if (c->dispatch_width == 16 || intel->gen < 5) {
-      if (intel->gen == 5)
+      if (intel->gen >= 5)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
       else
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
