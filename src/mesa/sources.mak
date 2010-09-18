@@ -154,7 +154,6 @@ TNL_SOURCES = \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c \
-	tnl/t_vb_cull.c \
 	tnl/t_vb_fog.c \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \

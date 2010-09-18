@@ -114,7 +114,6 @@ static const struct {
    { OFF, "GL_EXT_blend_minmax",               F(EXT_blend_minmax) },
    { OFF, "GL_EXT_blend_subtract",             F(EXT_blend_subtract) },
    { OFF, "GL_EXT_clip_volume_hint",           F(EXT_clip_volume_hint) },
-   { OFF, "GL_EXT_cull_vertex",                F(EXT_cull_vertex) },
    { ON,  "GL_EXT_compiled_vertex_array",      F(EXT_compiled_vertex_array) },
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },

@@ -224,8 +224,6 @@ _mesa_create_exec_table(void)
    SET_ClearIndex(exec, _mesa_ClearIndex);
    SET_ClipPlane(exec, _mesa_ClipPlane);
    SET_ColorMaterial(exec, _mesa_ColorMaterial);
-   SET_CullParameterfvEXT(exec, _mesa_CullParameterfvEXT);
-   SET_CullParameterdvEXT(exec, _mesa_CullParameterdvEXT);
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
    SET_DepthRange(exec, _mesa_DepthRange);

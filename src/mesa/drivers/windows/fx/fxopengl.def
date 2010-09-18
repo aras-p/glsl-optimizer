@@ -135,8 +135,6 @@ EXPORTS
  glCopyTexSubImage3D
  glCopyTexSubImage3DEXT
  glCullFace
- glCullParameterdvEXT
- glCullParameterfvEXT
  glDeleteBuffersARB
  glDeleteFencesNV
  glDeleteLists

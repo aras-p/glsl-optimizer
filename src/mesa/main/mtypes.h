@@ -1405,7 +1405,6 @@ struct gl_transform_attrib
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
    GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
 
-   GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
    GLfloat CullEyePos[4];
    GLfloat CullObjPos[4];
 };
@@ -2624,7 +2623,6 @@ struct gl_extensions
    GLboolean EXT_blend_minmax;
    GLboolean EXT_blend_subtract;
    GLboolean EXT_clip_volume_hint;
-   GLboolean EXT_cull_vertex;
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;

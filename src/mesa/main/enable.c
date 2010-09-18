@@ -335,13 +335,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
          ctx->Polygon.CullFlag = state;
          break;
-      case GL_CULL_VERTEX_EXT:
-         CHECK_EXTENSION(EXT_cull_vertex, cap);
-         if (ctx->Transform.CullVertexFlag == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
-         ctx->Transform.CullVertexFlag = state;
-         break;
       case GL_DEPTH_TEST:
          if (ctx->Depth.Test == state)
             return;

@@ -46,7 +46,6 @@
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
-#define need_GL_EXT_cull_vertex
 #define need_GL_EXT_draw_buffers2
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_blit
@@ -106,7 +105,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
    { "GL_EXT_blend_logic_op",             NULL },
    { "GL_EXT_blend_subtract",             NULL },
-   { "GL_EXT_cull_vertex",                GL_EXT_cull_vertex_functions },
    { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
    { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
    { "GL_EXT_framebuffer_multisample",    GL_EXT_framebuffer_multisample_functions },
