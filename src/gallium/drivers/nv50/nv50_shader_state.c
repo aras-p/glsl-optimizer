@@ -281,6 +281,17 @@ nv50_program_validate(struct nv50_program *p)
    return p->translated;
 }
 
+static INLINE void
+nv50_program_validate_common(struct nv50_context *nv50, struct nv50_program *p)
+{
+   nv50_program_validate_code(nv50, p);
+
+   if (p->uses_lmem)
+      nv50->req_lmem |= 1 << p->type;
+   else
+      nv50->req_lmem &= ~(1 << p->type);
+}
+
 struct nouveau_stateobj *
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
@@ -300,7 +311,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_VERTPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;
@@ -325,7 +336,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_FRAGPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;
@@ -350,7 +361,7 @@ nv50_geomprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_GEOMPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;

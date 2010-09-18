@@ -265,6 +265,19 @@ nv50_screen_relocs(struct nv50_screen *screen)
 		OUT_RELOC (chan, screen->constbuf_parm[i],
 			   ((NV50_CB_PVP + i) << 16) | 0x0000, rl, 0, 0);
 	}
+
+	BGN_RELOC (chan, screen->stack_bo,
+		   tesla, NV50TCL_STACK_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->stack_bo, 0, rl);
+	OUT_RELOCl(chan, screen->stack_bo, 0, rl);
+
+	if (!screen->cur_ctx->req_lmem)
+		return;
+
+	BGN_RELOC (chan, screen->local_bo,
+		   tesla, NV50TCL_LOCAL_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->local_bo, 0, rl);
+	OUT_RELOCl(chan, screen->local_bo, 0, rl);
 }
 
 #ifndef NOUVEAU_GETPARAM_GRAPH_UNITS

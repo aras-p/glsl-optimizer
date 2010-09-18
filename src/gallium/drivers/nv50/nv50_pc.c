@@ -547,6 +547,8 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ti->p->fixups = pc->fixups;
    ti->p->num_fixups = pc->num_fixups;
 
+   ti->p->uses_lmem = ti->store_to_memory;
+
    NV50_DBGMSG("SHADER TRANSLATION - %s\n", ret ? "failure" : "success");
 
 out:
