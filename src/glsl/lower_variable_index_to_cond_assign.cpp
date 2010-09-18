@@ -258,6 +258,7 @@ public:
       }
 
       assert(!"Should not get here.");
+      return false;
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
