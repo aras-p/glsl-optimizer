@@ -9384,13 +9384,13 @@
         <size name="CullParameterdv"/>
     </enum>
 
-    <function name="CullParameterdvEXT" offset="assign" static_dispatch="false">
+    <function name="CullParameterdvEXT">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
     </function>
 
-    <function name="CullParameterfvEXT" offset="assign" static_dispatch="false">
+    <function name="CullParameterfvEXT">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
