@@ -930,7 +930,7 @@ static int eg_ps_shader(struct r600_context *rctx, struct r600_context_state *rp
 	const struct pipe_rasterizer_state *rasterizer;
 	struct r600_shader *rshader = &rpshader->shader;
 	unsigned i, tmp, exports_ps, num_cout;
-	boolean have_pos = FALSE;
+	boolean have_pos = FALSE, have_face = FALSE;
 
 	rasterizer = &rctx->rasterizer->state.rasterizer;
 
@@ -945,6 +945,10 @@ static int eg_ps_shader(struct r600_context *rctx, struct r600_context_state *rp
 		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
+
+		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			have_face = TRUE;
+
 		if (rasterizer->sprite_coord_enable & (1 << i)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
@@ -971,7 +975,10 @@ static int eg_ps_shader(struct r600_context *rctx, struct r600_context_state *rp
 		state->states[EG_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1);
 		state->states[EG_PS_SHADER__SPI_INPUT_Z] |= 1;
 	}
+
 	state->states[EG_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
+	state->states[EG_PS_SHADER__SPI_PS_IN_CONTROL_1] |= S_0286D0_FRONT_FACE_ENA(have_face);
+
 	state->states[EG_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028844_NUM_GPRS(rshader->bc.ngpr) | S_028844_PRIME_CACHE_ON_DRAW(1) |
 		S_028844_STACK_SIZE(rshader->bc.nstack);
 	state->states[EG_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
