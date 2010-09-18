@@ -582,7 +582,6 @@ struct statevar_element {
    const char *field;
    int tokens[STATE_LENGTH];
    int swizzle;
-   bool array_indexed;
 };
 
 static struct statevar_element gl_DepthRange_elements[] = {
