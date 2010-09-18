@@ -973,7 +973,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
 
 static struct nvfx_vertex_program*
-nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps, const struct tgsi_shader_info* info)
+nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps, struct tgsi_shader_info* info)
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_vertex_program* vp = NULL;
