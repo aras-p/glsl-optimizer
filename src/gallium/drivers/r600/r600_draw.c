@@ -40,7 +40,6 @@
 static int r600_draw_common(struct r600_draw *draw)
 {
 	struct r600_context *rctx = r600_context(draw->ctx);
-	struct r600_screen *rscreen = rctx->screen;
 	/* FIXME vs_resource */
 	struct radeon_state *vs_resource;
 	struct r600_resource *rbuffer;
