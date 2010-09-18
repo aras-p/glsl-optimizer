@@ -184,7 +184,6 @@ static const struct {
    { OFF, "GL_IBM_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { OFF, "GL_INGR_blend_func_separate",       F(EXT_blend_func_separate) },
    { OFF, "GL_MESA_pack_invert",               F(MESA_pack_invert) },
-   { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
    { OFF, "GL_MESA_texture_array",             F(MESA_texture_array) },
    { OFF, "GL_MESA_texture_signed_rgba",       F(MESA_texture_signed_rgba) },

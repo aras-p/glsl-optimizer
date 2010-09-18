@@ -55,7 +55,6 @@
      (((unsigned long)p) - (unsigned long)mmesa->mgaScreen->buffers.map)
 
 
-#if defined(MESA_packed_depth_stencil)
 static GLboolean
 check_depth_stencil_24_8( const GLcontext *ctx, GLenum type,
 			  const struct gl_pixelstore_attrib *packing,
@@ -64,7 +63,7 @@ check_depth_stencil_24_8( const GLcontext *ctx, GLenum type,
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
-   return ( type == GL_UNSIGNED_INT_24_8_MESA &&
+   return ( type == GL_UNSIGNED_INT_24_8 &&
 	    ctx->Visual->DepthBits == 24 &&
 	    ctx->Visual->StencilBits == 8 &&
 	    mmesa->mgaScreen->cpp == 4 &&
@@ -78,7 +77,6 @@ check_depth_stencil_24_8( const GLcontext *ctx, GLenum type,
 	    pitch % 32 == 0 &&
 	    pitch < 4096 );
 }
-#endif
 
 
 static GLboolean
@@ -252,13 +250,11 @@ mgaTryReadPixels( GLcontext *ctx,
       return GL_FALSE;
 
    switch (format) {
-#if defined(MESA_packed_depth_stencil)
-   case GL_DEPTH_STENCIL_MESA:
+   case GL_DEPTH_STENCIL:
       ok = check_depth_stencil_24_8(ctx, type, pack, pixels, size, pitch);
       planemask = ~0;
       source = mmesa->mgaScreen->depthOffset;
       break;
-#endif
 
    case GL_DEPTH_COMPONENT:
       ok = check_depth(ctx, type, pack, pixels, size, pitch);
@@ -494,8 +490,7 @@ mgaTryDrawPixels( GLcontext *ctx,
 
 
    switch (format) {
-#if defined(MESA_packed_depth_stencil)
-   case GL_DEPTH_STENCIL_MESA:
+   case GL_DEPTH_STENCIL:
       dest = mmesa->mgaScreen->depthOffset;
       planemask = ~0;
       if (!check_depth_stencil_24_8(ctx, type, unpack, pixels, size, pitch) ||
@@ -503,7 +498,6 @@ mgaTryDrawPixels( GLcontext *ctx,
 	  !check_stencil_per_fragment_ops(ctx))
 	 return GL_FALSE;
       break;
-#endif
 
    case GL_DEPTH_COMPONENT:
       dest = mmesa->mgaScreen->depthOffset;
