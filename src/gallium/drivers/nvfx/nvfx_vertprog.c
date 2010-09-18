@@ -377,6 +377,8 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	src.swz[2] = fsrc->Register.SwizzleZ;
 	src.swz[3] = fsrc->Register.SwizzleW;
 	src.indirect = 0;
+	src.indirect_reg = 0;
+	src.indirect_swz = 0;
 
 	if(fsrc->Register.Indirect) {
 		if(fsrc->Indirect.File == TGSI_FILE_ADDRESS &&
