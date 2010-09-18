@@ -3,89 +3,53 @@
      (parameters
        (declare (in) vec2 arg0)
        (declare (in) vec2 arg1))
-     ((declare () bvec2 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec2 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec3
      (parameters
        (declare (in) vec3 arg0)
        (declare (in) vec3 arg1))
-     ((declare () bvec3 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec3 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec4
      (parameters
        (declare (in) vec4 arg0)
        (declare (in) vec4 arg1))
-     ((declare () bvec4 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (assign (constant bool (1)) (w) (var_ref temp) (expression bool < (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec4 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec2
      (parameters
        (declare (in) ivec2 arg0)
        (declare (in) ivec2 arg1))
-     ((declare () bvec2 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec2 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec3
      (parameters
        (declare (in) ivec3 arg0)
        (declare (in) ivec3 arg1))
-     ((declare () bvec3 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec3 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec4
      (parameters
        (declare (in) ivec4 arg0)
        (declare (in) ivec4 arg1))
-     ((declare () bvec4 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (assign (constant bool (1)) (w) (var_ref temp) (expression bool < (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec4 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec2
      (parameters
        (declare (in) uvec2 arg0)
        (declare (in) uvec2 arg1))
-     ((declare () bvec2 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec2 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec3
      (parameters
        (declare (in) uvec3 arg0)
        (declare (in) uvec3 arg1))
-     ((declare () bvec3 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec3 < (var_ref arg0) (var_ref arg1)))))
 
    (signature bvec4
      (parameters
        (declare (in) uvec4 arg0)
        (declare (in) uvec4 arg1))
-     ((declare () bvec4 temp)
-      (assign (constant bool (1)) (x) (var_ref temp) (expression bool < (swiz x (var_ref arg0))(swiz x (var_ref arg1))))
-      (assign (constant bool (1)) (y) (var_ref temp) (expression bool < (swiz y (var_ref arg0))(swiz y (var_ref arg1))))
-      (assign (constant bool (1)) (z) (var_ref temp) (expression bool < (swiz z (var_ref arg0))(swiz z (var_ref arg1))))
-      (assign (constant bool (1)) (w) (var_ref temp) (expression bool < (swiz w (var_ref arg0))(swiz w (var_ref arg1))))
-      (return (var_ref temp))))
+     ((return (expression bvec4 < (var_ref arg0) (var_ref arg1)))))
 ))
