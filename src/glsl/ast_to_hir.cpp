@@ -1534,17 +1534,12 @@ ast_type_specifier::glsl_type(const char **name,
 {
    const struct glsl_type *type;
 
-   if ((this->type_specifier == ast_struct) && (this->type_name == NULL)) {
-      /* FINISHME: Handle annonymous structures. */
-      type = NULL;
-   } else {
-      type = state->symbols->get_type(this->type_name);
-      *name = this->type_name;
+   type = state->symbols->get_type(this->type_name);
+   *name = this->type_name;
 
-      if (this->is_array) {
-	 YYLTYPE loc = this->get_location();
-	 type = process_array_type(&loc, type, this->array_size, state);
-      }
+   if (this->is_array) {
+      YYLTYPE loc = this->get_location();
+      type = process_array_type(&loc, type, this->array_size, state);
    }
 
    return type;
@@ -2705,7 +2700,6 @@ ast_struct_specifier::hir(exec_list *instructions,
       }
    }
 
-
    /* Allocate storage for the structure fields and process the field
     * declarations.  As the declarations are processed, try to also convert
     * the types to HIR.  This ensures that structure definitions embedded in
@@ -2750,21 +2744,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    assert(i == decl_count);
 
-   const char *name;
-   if (this->name == NULL) {
-      static unsigned anon_count = 1;
-      char buf[32];
-
-      snprintf(buf, sizeof(buf), "#anon_struct_%04x", anon_count);
-      anon_count++;
-
-      name = strdup(buf);
-   } else {
-      name = this->name;
-   }
-
    const glsl_type *t =
-      glsl_type::get_record_instance(fields, decl_count, name);
+      glsl_type::get_record_instance(fields, decl_count, this->name);
 
    YYLTYPE loc = this->get_location();
    if (!state->symbols->add_type(name, t)) {

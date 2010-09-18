@@ -680,6 +680,11 @@ ast_struct_specifier::print(void) const
 ast_struct_specifier::ast_struct_specifier(char *identifier,
 					   ast_node *declarator_list)
 {
+   if (identifier == NULL) {
+      static unsigned anon_count = 1;
+      identifier = talloc_asprintf(this, "#anon_struct_%04x", anon_count);
+      anon_count++;
+   }
    name = identifier;
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
