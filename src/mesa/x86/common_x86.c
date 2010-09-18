@@ -331,4 +331,6 @@ _mesa_get_x86_features(void)
 #endif
 
 #endif /* USE_X86_ASM */
+
+   (void) detection_debug;
 }
