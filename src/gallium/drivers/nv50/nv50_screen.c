@@ -222,6 +222,36 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    OUT_RELOC(ch, bo, (n << 18) | (gr->subc << 13) | m, fl, 0, 0)
 
 void
+nv50_screen_reloc_constbuf(struct nv50_screen *screen, unsigned cbi)
+{
+	struct nouveau_bo *bo;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	unsigned size;
+	const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
+
+	switch (cbi) {
+	case NV50_CB_PMISC:
+		bo = screen->constbuf_misc[0];
+		size = 0x200;
+		break;
+	case NV50_CB_PVP:
+	case NV50_CB_PFP:
+	case NV50_CB_PGP:
+		bo = screen->constbuf_parm[cbi - NV50_CB_PVP];
+		size = 0;
+		break;
+	default:
+		return;
+	}
+
+	BGN_RELOC (chan, bo, tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
+	OUT_RELOCh(chan, bo, 0, rl);
+	OUT_RELOCl(chan, bo, 0, rl);
+	OUT_RELOC (chan, bo, (cbi << 16) | size, rl, 0, 0);
+}
+
+void
 nv50_screen_relocs(struct nv50_screen *screen)
 {
 	struct nouveau_channel *chan = screen->base.channel;
@@ -243,12 +273,7 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOCh(chan, screen->tsc, 0, rl);
 	OUT_RELOCl(chan, screen->tsc, 0, rl);
 
-	BGN_RELOC (chan, screen->constbuf_misc[0],
-		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-	OUT_RELOCh(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOCl(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOC (chan, screen->constbuf_misc[0],
-		   (NV50_CB_PMISC << 16) | 0x0200, rl, 0, 0);
+	nv50_screen_reloc_constbuf(screen, NV50_CB_PMISC);
 
 	BGN_RELOC (chan, screen->constbuf_misc[0],
 		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
@@ -257,14 +282,8 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOC (chan, screen->constbuf_misc[0],
 		   (NV50_CB_AUX << 16) | 0x0200, rl, 0, 0);
 
-	for (i = 0; i < 3; ++i) {
-		BGN_RELOC (chan, screen->constbuf_parm[i],
-			   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOC (chan, screen->constbuf_parm[i],
-			   ((NV50_CB_PVP + i) << 16) | 0x0000, rl, 0, 0);
-	}
+	for (i = 0; i < 3; ++i)
+		nv50_screen_reloc_constbuf(screen, NV50_CB_PVP + i);
 
 	BGN_RELOC (chan, screen->stack_bo,
 		   tesla, NV50TCL_STACK_ADDRESS_HIGH, 2, rl);

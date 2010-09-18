@@ -39,6 +39,8 @@ nv50_screen(struct pipe_screen *screen)
 
 extern void nv50_screen_relocs(struct nv50_screen *);
 
+extern void nv50_screen_reloc_constbuf(struct nv50_screen *, unsigned cbi);
+
 struct nv50_format {
 	uint32_t rt;
 	uint32_t tic;
