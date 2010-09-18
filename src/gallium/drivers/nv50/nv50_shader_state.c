@@ -54,7 +54,7 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
          continue;
       }
       nr = MIN2(count, nr - 7);
-      nr = MIN2(nr, 2074);
+      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
 
       nv50_screen_reloc_constbuf(nv50->screen, cbi);
 
@@ -91,7 +91,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
             continue;
          }
          nr = MIN2(count, nr - 7);
-         nr = MIN2(nr, 2074);
+         nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
 
          nv50_screen_reloc_constbuf(nv50->screen, NV50_CB_PMISC);
 
