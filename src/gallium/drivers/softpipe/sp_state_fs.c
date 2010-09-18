@@ -60,7 +60,15 @@ softpipe_create_fs_state(struct pipe_context *pipe,
       state = softpipe_create_fs_exec( softpipe, templ );
    }
 
-   assert(state);
+   if (!state)
+      return NULL;
+
+   /* draw's fs state */
+   state->draw_shader = draw_create_fragment_shader(softpipe->draw, templ);
+   if (!state->draw_shader) {
+      state->delete( state );
+      return NULL;
+   }
 
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &state->info);
@@ -90,6 +98,9 @@ softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    softpipe->fs = fs;
 
+   draw_bind_fragment_shader(softpipe->draw,
+                             (softpipe->fs ? softpipe->fs->draw_shader : NULL));
+
    softpipe->dirty |= SP_NEW_FS;
 }
 
@@ -108,6 +119,8 @@ softpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
        */
       tgsi_exec_machine_bind_shader(softpipe->fs_machine, NULL, 0, NULL);
    }
+
+   draw_delete_fragment_shader(softpipe->draw, state->draw_shader);
 
    state->delete( state );
 }

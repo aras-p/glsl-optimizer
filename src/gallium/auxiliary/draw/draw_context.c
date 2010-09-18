@@ -413,6 +413,42 @@ draw_set_force_passthrough( struct draw_context *draw, boolean enable )
 }
 
 
+
+/**
+ * Allocate an extra vertex/geometry shader vertex attribute.
+ * This is used by some of the optional draw module stages such
+ * as wide_point which may need to allocate additional generic/texcoord
+ * attributes.
+ */
+int
+draw_alloc_extra_vertex_attrib(struct draw_context *draw,
+                               uint semantic_name, uint semantic_index)
+{
+   const int num_outputs = draw_current_shader_outputs(draw);
+   const int n = draw->extra_shader_outputs.num;
+
+   assert(n < Elements(draw->extra_shader_outputs.semantic_name));
+
+   draw->extra_shader_outputs.semantic_name[n] = semantic_name;
+   draw->extra_shader_outputs.semantic_index[n] = semantic_index;
+   draw->extra_shader_outputs.slot[n] = num_outputs + n;
+   draw->extra_shader_outputs.num++;
+
+   return draw->extra_shader_outputs.slot[n];
+}
+
+
+/**
+ * Remove all extra vertex attributes that were allocated with
+ * draw_alloc_extra_vertex_attrib().
+ */
+void
+draw_remove_extra_vertex_attribs(struct draw_context *draw)
+{
+   draw->extra_shader_outputs.num = 0;
+}
+
+
 /**
  * Ask the draw module for the location/slot of the given vertex attribute in
  * a post-transformed vertex.
@@ -446,12 +482,12 @@ draw_find_shader_output(const struct draw_context *draw,
          return i;
    }
 
-   /* XXX there may be more than one extra vertex attrib.
-    * For example, simulated gl_FragCoord and gl_PointCoord.
-    */
-   if (draw->extra_shader_outputs.semantic_name == semantic_name &&
-       draw->extra_shader_outputs.semantic_index == semantic_index) {
-      return draw->extra_shader_outputs.slot;
+   /* Search the extra vertex attributes */
+   for (i = 0; i < draw->extra_shader_outputs.num; i++) {
+      if (draw->extra_shader_outputs.semantic_name[i] == semantic_name &&
+          draw->extra_shader_outputs.semantic_index[i] == semantic_index) {
+         return draw->extra_shader_outputs.slot[i];
+      }
    }
 
    return 0;
@@ -470,16 +506,18 @@ draw_find_shader_output(const struct draw_context *draw,
 uint
 draw_num_shader_outputs(const struct draw_context *draw)
 {
-   uint count = draw->vs.vertex_shader->info.num_outputs;
+   uint count;
 
    /* If a geometry shader is present, its outputs go to the
     * driver, else the vertex shader's outputs.
     */
    if (draw->gs.geometry_shader)
       count = draw->gs.geometry_shader->info.num_outputs;
+   else
+      count = draw->vs.vertex_shader->info.num_outputs;
 
-   if (draw->extra_shader_outputs.slot > 0)
-      count++;
+   count += draw->extra_shader_outputs.num;
+
    return count;
 }
 

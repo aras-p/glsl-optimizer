@@ -46,6 +46,7 @@ struct draw_context;
 struct draw_stage;
 struct draw_vertex_shader;
 struct draw_geometry_shader;
+struct draw_fragment_shader;
 struct tgsi_sampler;
 
 #define DRAW_MAX_TEXTURE_LEVELS 13  /* 4K x 4K for now */
@@ -136,6 +137,17 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 void draw_delete_vertex_shader(struct draw_context *draw,
                                struct draw_vertex_shader *dvs);
 
+
+/*
+ * Fragment shader functions
+ */
+struct draw_fragment_shader *
+draw_create_fragment_shader(struct draw_context *draw,
+                            const struct pipe_shader_state *shader);
+void draw_bind_fragment_shader(struct draw_context *draw,
+                               struct draw_fragment_shader *dvs);
+void draw_delete_fragment_shader(struct draw_context *draw,
+                                 struct draw_fragment_shader *dvs);
 
 /*
  * Geometry shader functions

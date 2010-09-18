@@ -701,9 +701,9 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
 
    aapoint->pos_slot = draw_current_shader_position_output(draw);
 
-   draw->extra_shader_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_shader_outputs.semantic_index = aapoint->fs->generic_attrib;
-   draw->extra_shader_outputs.slot = aapoint->tex_slot;
+   /* allocate the extra post-transformed vertex attribute */
+   (void) draw_alloc_extra_vertex_attrib(draw, TGSI_SEMANTIC_GENERIC,
+                                         aapoint->fs->generic_attrib);
 
    /* find psize slot in post-transform vertex */
    aapoint->psize_slot = -1;
@@ -754,7 +754,7 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
 
    draw->suspend_flushing = FALSE;
 
-   draw->extra_shader_outputs.slot = 0;
+   draw_remove_extra_vertex_attribs(draw);
 }
 
 

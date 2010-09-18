@@ -250,6 +250,11 @@ struct draw_context
       struct tgsi_sampler **samplers;
    } gs;
 
+   /** Fragment shader state */
+   struct {
+      struct draw_fragment_shader *fragment_shader;
+   } fs;
+
    /** Stream output (vertex feedback) state */
    struct {
       struct pipe_stream_output_state state;
@@ -266,9 +271,10 @@ struct draw_context
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */
    struct {
-      uint semantic_name;
-      uint semantic_index;
-      int slot;
+      uint num;
+      uint semantic_name[10];
+      uint semantic_index[10];
+      uint slot[10];
    } extra_shader_outputs;
 
    unsigned reduced_prim;
@@ -361,6 +367,11 @@ void draw_gs_destroy( struct draw_context *draw );
  */
 uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
+
+int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
+                                   uint semantic_name, uint semantic_index);
+void draw_remove_extra_vertex_attribs(struct draw_context *draw);
+
 
 /*******************************************************************************
  * Vertex processing (was passthrough) code:

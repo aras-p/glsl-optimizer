@@ -8,6 +8,7 @@ C_SOURCES = \
 	cso_cache/cso_context.c \
 	cso_cache/cso_hash.c \
 	draw/draw_context.c \
+	draw/draw_fs.c \
 	draw/draw_gs.c \
 	draw/draw_pipe.c \
 	draw/draw_pipe_aaline.c \
