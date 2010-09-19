@@ -2313,6 +2313,7 @@ static int tgsi_arl(struct r600_shader_ctx *ctx)
 	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
 	if (r)
 		return r;
+	ctx->bc->cf_last->r6xx_uses_waterfall = 1;
 	return 0;
 }
 
