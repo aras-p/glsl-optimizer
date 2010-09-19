@@ -926,38 +926,47 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	int r;
 
-	r = tgsi_setup_trig(ctx, r600_src);
-	if (r)
-		return r;
-
+	/* We'll only need the trig stuff if we are going to write to the
+	 * X or Y components of the destination vector.
+	 */
+	if (likely(inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_XY)) {
+		r = tgsi_setup_trig(ctx, r600_src);
+		if (r)
+			return r;
+	}
 
 	/* dst.x = COS */
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS);
-	r = tgsi_dst(ctx, &inst->Dst[0], 0, &alu.dst);
-	if (r)
-		return r;
+	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_X) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS);
+		r = tgsi_dst(ctx, &inst->Dst[0], 0, &alu.dst);
+		if (r)
+			return r;
 
-	alu.src[0].sel = ctx->temp_reg;
-	alu.src[0].chan = 0;
-	alu.last = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 0;
+		alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
 
 	/* dst.y = SIN */
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN);
-	r = tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
-	if (r)
-		return r;
+	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Y) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN);
+		r = tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
+		if (r)
+			return r;
 
-	alu.src[0].sel = ctx->temp_reg;
-	alu.src[0].chan = 0;
-	alu.last = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 0;
+		alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
 	return 0;
 }
 
