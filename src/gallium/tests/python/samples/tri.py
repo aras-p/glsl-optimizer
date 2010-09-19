@@ -88,8 +88,8 @@ def test(dev):
 
     # rasterizer
     rasterizer = Rasterizer()
-    rasterizer.front_winding = PIPE_WINDING_CW
-    rasterizer.cull_mode = PIPE_WINDING_NONE
+    rasterizer.front_ccw = False
+    rasterizer.cull_face = PIPE_FACE_NONE
     rasterizer.scissor = 1
     ctx.set_rasterizer(rasterizer)
 
@@ -161,8 +161,8 @@ def test(dev):
     # vertex shader
     vs = Shader('''
         VERT
-        DCL IN[0], POSITION, CONSTANT
-        DCL IN[1], COLOR, CONSTANT
+        DCL IN[0]
+        DCL IN[1]
         DCL OUT[0], POSITION, CONSTANT
         DCL OUT[1], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]
