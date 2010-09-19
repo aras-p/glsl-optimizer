@@ -31,11 +31,40 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_index_modify.h>
 #include "radeon.h"
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
 #include "r600_state_inlines.h"
+
+static void r600_translate_index_buffer(struct r600_context *r600,
+					struct pipe_resource **index_buffer,
+					unsigned *index_size, unsigned index_offset,
+					unsigned *start, unsigned count)
+{
+    switch (*index_size) {
+        case 1:
+            util_shorten_ubyte_elts(&r600->context, index_buffer, index_offset, *start, count);
+            *index_size = 2;
+            *start = 0;
+            break;
+
+        case 2:
+            if (*start % 2 != 0 || index_offset) {
+                util_rebuild_ushort_elts(&r600->context, index_buffer, index_offset, *start, count);
+                *start = 0;
+            }
+            break;
+
+        case 4:
+            if (index_offset) {
+                util_rebuild_uint_elts(&r600->context, index_buffer, index_offset, *start, count);
+                *start = 0;
+            }
+            break;
+    }
+}
 
 static int r600_draw_common(struct r600_draw *draw)
 {
@@ -135,14 +164,20 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		draw.min_index = info->min_index;
 		draw.max_index = info->max_index;
+
+		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
+					    &rctx->index_buffer.index_size,
+					    rctx->index_buffer.offset, &draw.start,
+					    info->count);
+
+		fprintf(stderr,"draw start is %d\n", draw.start);
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
 		draw.index_buffer_offset = rctx->index_buffer.offset;
 
-		assert(rctx->index_buffer.offset %
-				rctx->index_buffer.index_size == 0);
 		r600_upload_index_buffer(rctx, &draw);
 	}
 	else {
