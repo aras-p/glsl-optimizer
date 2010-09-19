@@ -719,7 +719,8 @@ enum ir_expression_operation {
    ir_binop_mod,
 
    /**
-    * \name Binary comparison operators
+    * \name Binary comparison operators which return a boolean vector.
+    * The type of both operands must be equal.
     */
    /*@{*/
    ir_binop_less,
