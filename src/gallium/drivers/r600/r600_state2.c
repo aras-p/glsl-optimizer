@@ -1218,8 +1218,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		bo[1] = radeon_ws_bo_incref(rscreen->rw, tmp->uncompressed);
 #endif
 	}
-	pitch = (tmp->pitch[0] / tmp->bpt);
-	pitch = (pitch + 0x7) & ~0x7;
+	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_038000_RESOURCE0_WORD0,

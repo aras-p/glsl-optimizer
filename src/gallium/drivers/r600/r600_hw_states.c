@@ -558,8 +558,7 @@ static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[3] = RADEON_GEM_DOMAIN_GTT;
 
-	pitch = (tmp->pitch[0] / tmp->bpt);
-	pitch = (pitch + 0x7) & ~0x7;
+	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
 
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
