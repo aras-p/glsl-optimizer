@@ -54,6 +54,14 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 {
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
 
+	if (flags & PB_USAGE_UNSYNCHRONIZED) {
+		if (!buf->bo->data && radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+			return NULL;
+		}
+		LIST_DELINIT(&buf->maplist);
+		return buf->bo->data;
+	}
+
 	if (p_atomic_read(&buf->bo->reference.count) > 1) {
 		if (flags & PB_USAGE_DONTBLOCK) {
 			return NULL;
