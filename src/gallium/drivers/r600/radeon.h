@@ -100,7 +100,6 @@ void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned 
 void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo);
 void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 			    struct radeon_ws_bo *src);
-int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *bo);
 
 struct radeon_stype_info;
 /*

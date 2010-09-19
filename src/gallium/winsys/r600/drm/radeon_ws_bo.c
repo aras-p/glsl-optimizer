@@ -72,17 +72,6 @@ void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 	*dst = src;
 }
 
-int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *pb_bo)
-{
-	/* TODO */
-	struct radeon_bo *bo;
-	bo = radeon_bo_pb_get_bo(pb_bo->pb);
-	if (!bo)
-		return 0;
-	radeon_bo_wait(radeon, bo);
-	return 0;
-}
-
 unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo)
 {
 	struct radeon_bo *bo;

@@ -63,20 +63,26 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		}
 	}
 
-	if (buf->bo->data != NULL) {
-		LIST_DELINIT(&buf->maplist);
-		return buf->bo->data;
-	}
-
 	if (flags & PB_USAGE_DONTBLOCK) {
 		uint32_t domain;
 		if (radeon_bo_busy(buf->mgr->radeon, buf->bo, &domain))
 			return NULL;
 	}
 
-	if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
-		return NULL;
+	if (buf->bo->data != NULL) {
+		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
+			return NULL;
+		}
+	} else {
+		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+			return NULL;
+		}
+		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
+			radeon_bo_unmap(buf->mgr->radeon, buf->bo);
+			return NULL;
+		}
 	}
+
 	LIST_DELINIT(&buf->maplist);
 	return buf->bo->data;
 }

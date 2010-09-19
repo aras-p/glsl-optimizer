@@ -92,26 +92,6 @@ enum radeon_family {
 
 enum radeon_family r600_get_family(struct radeon *rw);
 
-/*
- * radeon object functions
- */
-#if 0
-struct radeon_bo {
-	unsigned			refcount;
-	unsigned			handle;
-	unsigned			size;
-	unsigned			alignment;
-	unsigned			map_count;
-	void				*data;
-};
-struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			unsigned size, unsigned alignment, void *ptr);
-int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
-void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
-struct radeon_bo *radeon_bo_incref(struct radeon *radeon, struct radeon_bo *bo);
-struct radeon_bo *radeon_bo_decref(struct radeon *radeon, struct radeon_bo *bo);
-int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
-#endif
 /* lowlevel WS bo */
 struct radeon_ws_bo;
 struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
@@ -122,7 +102,6 @@ void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned 
 void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo);
 void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 			    struct radeon_ws_bo *src);
-int radeon_ws_bo_wait(struct radeon *radeon, struct radeon_ws_bo *bo);
 
 /* R600/R700 STATES */
 #define R600_GROUP_MAX			16

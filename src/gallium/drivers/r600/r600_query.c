@@ -108,7 +108,6 @@ static void r600_query_result(struct pipe_context *ctx, struct r600_query *rquer
 	u32 *results;
 	int i;
 
-	radeon_ws_bo_wait(rscreen->rw, rquery->buffer);
 	results = radeon_ws_bo_map(rscreen->rw, rquery->buffer, 0, r600_context(ctx));
 	for (i = 0; i < rquery->num_results; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;

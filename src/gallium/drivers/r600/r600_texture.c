@@ -347,7 +347,6 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	if (!map) {
 		return NULL;
 	}
-	radeon_ws_bo_wait(radeon, bo);
 
 	return map + offset;
 }
