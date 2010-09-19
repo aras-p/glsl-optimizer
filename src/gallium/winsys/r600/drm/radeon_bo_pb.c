@@ -53,11 +53,16 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 			  unsigned flags, void *ctx)
 {
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
-	
-	if (flags & PB_USAGE_DONTBLOCK) {
-		if (p_atomic_read(&buf->bo->reference.count) > 1)
+
+	if (p_atomic_read(&buf->bo->reference.count) > 1) {
+		if (flags & PB_USAGE_DONTBLOCK) {
 			return NULL;
+		}
+		if (ctx) {
+			r600_flush_ctx(ctx);
+		}
 	}
+
 	if (buf->bo->data != NULL) {
 		LIST_DELINIT(&buf->maplist);
 		return buf->bo->data;
@@ -69,9 +74,6 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 			return NULL;
 	}
 
-	if (p_atomic_read(&buf->bo->reference.count) > 1 && ctx) {
-		r600_flush_ctx(ctx);
-	}
 	if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 		return NULL;
 	}
