@@ -974,10 +974,10 @@ static int r600_ps_shader(struct r600_context *rctx, struct r600_context_state *
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			exports_ps |= (1 << (num_cout+1));
 			num_cout++;
 		}
 	}
+	exports_ps |= (num_cout << 1);
 	if (!exports_ps) {
 		/* always at least export 1 component per pixel */
 		exports_ps = 2;
