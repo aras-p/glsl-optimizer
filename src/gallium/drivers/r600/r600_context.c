@@ -70,10 +70,6 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_query *rquery = NULL;
 
-	/* flush upload buffers */
-	u_upload_flush(rctx->upload_vb);
-	u_upload_flush(rctx->upload_ib);
-
 	/* suspend queries */
 	r600_queries_suspend(ctx);
 

@@ -31,6 +31,7 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_upload_mgr.h>
 #include "radeon.h"
 #include "r600_screen.h"
 #include "r600_context.h"
@@ -124,6 +125,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	assert(info->index_bias == 0);
 
 	memset(&draw, 0, sizeof(draw));
+
+	/* flush upload buffers */
+	u_upload_flush(rctx->upload_vb);
+	u_upload_flush(rctx->upload_ib);
 
 	if (rctx->any_user_vbs) {
 		r600_upload_user_buffers(rctx);
