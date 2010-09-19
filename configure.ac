@@ -1376,6 +1376,9 @@ case "$with_egl_platforms" in
 yes)
     if test "x$enable_egl" = xyes && test "x$mesa_driver" != xosmesa; then
         EGL_PLATFORMS="x11"
+        if test "$mesa_driver" = dri; then
+            EGL_PLATFORMS="$EGL_PLATFORMS drm"
+        fi
     fi
     ;;
 *)
