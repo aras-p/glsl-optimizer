@@ -23,8 +23,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _NATIVE_KMS_H_
-#define _NATIVE_KMS_H_
+#ifndef _NATIVE_DRM_H_
+#define _NATIVE_DRM_H_
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -37,110 +37,110 @@
 #include "common/native.h"
 #include "common/native_helper.h"
 
-struct kms_config;
-struct kms_crtc;
-struct kms_connector;
-struct kms_mode;
-struct kms_surface;
+struct drm_config;
+struct drm_crtc;
+struct drm_connector;
+struct drm_mode;
+struct drm_surface;
 
-struct kms_display {
+struct drm_display {
    struct native_display base;
 
    struct native_event_handler *event_handler;
 
    int fd;
-   struct kms_config *config;
+   struct drm_config *config;
 
    /* for modesetting */
    drmModeResPtr resources;
-   struct kms_connector *connectors;
+   struct drm_connector *connectors;
    int num_connectors;
 
-   struct kms_surface **shown_surfaces;
+   struct drm_surface **shown_surfaces;
    /* save the original settings of the CRTCs */
-   struct kms_crtc *saved_crtcs;
+   struct drm_crtc *saved_crtcs;
 };
 
-struct kms_config {
+struct drm_config {
    struct native_config base;
 };
 
-struct kms_crtc {
+struct drm_crtc {
    drmModeCrtcPtr crtc;
    uint32_t connectors[32];
    int num_connectors;
 };
 
-struct kms_framebuffer {
+struct drm_framebuffer {
    struct pipe_resource *texture;
    boolean is_passive;
 
    uint32_t buffer_id;
 };
 
-struct kms_surface {
+struct drm_surface {
    struct native_surface base;
-   struct kms_display *kdpy;
+   struct drm_display *drmdpy;
 
    struct resource_surface *rsurf;
    enum pipe_format color_format;
    int width, height;
 
    unsigned int sequence_number;
-   struct kms_framebuffer front_fb, back_fb;
+   struct drm_framebuffer front_fb, back_fb;
 
    boolean is_shown;
-   struct kms_crtc current_crtc;
+   struct drm_crtc current_crtc;
 };
 
-struct kms_connector {
+struct drm_connector {
    struct native_connector base;
 
    uint32_t connector_id;
    drmModeConnectorPtr connector;
-   struct kms_mode *kms_modes;
+   struct drm_mode *drm_modes;
    int num_modes;
 };
 
-struct kms_mode {
+struct drm_mode {
    struct native_mode base;
    drmModeModeInfo mode;
 };
 
-static INLINE struct kms_display *
-kms_display(const struct native_display *ndpy)
+static INLINE struct drm_display *
+drm_display(const struct native_display *ndpy)
 {
-   return (struct kms_display *) ndpy;
+   return (struct drm_display *) ndpy;
 }
 
-static INLINE struct kms_config *
-kms_config(const struct native_config *nconf)
+static INLINE struct drm_config *
+drm_config(const struct native_config *nconf)
 {
-   return (struct kms_config *) nconf;
+   return (struct drm_config *) nconf;
 }
 
-static INLINE struct kms_surface *
-kms_surface(const struct native_surface *nsurf)
+static INLINE struct drm_surface *
+drm_surface(const struct native_surface *nsurf)
 {
-   return (struct kms_surface *) nsurf;
+   return (struct drm_surface *) nsurf;
 }
 
-static INLINE struct kms_connector *
-kms_connector(const struct native_connector *nconn)
+static INLINE struct drm_connector *
+drm_connector(const struct native_connector *nconn)
 {
-   return (struct kms_connector *) nconn;
+   return (struct drm_connector *) nconn;
 }
 
-static INLINE struct kms_mode *
-kms_mode(const struct native_mode *nmode)
+static INLINE struct drm_mode *
+drm_mode(const struct native_mode *nmode)
 {
-   return (struct kms_mode *) nmode;
+   return (struct drm_mode *) nmode;
 }
 
 boolean
-kms_display_init_modeset(struct native_display *ndpy);
+drm_display_init_modeset(struct native_display *ndpy);
 
 void
-kms_display_fini_modeset(struct native_display *ndpy);
+drm_display_fini_modeset(struct native_display *ndpy);
 
-#endif /* _NATIVE_KMS_H_ */
+#endif /* _NATIVE_DRM_H_ */
