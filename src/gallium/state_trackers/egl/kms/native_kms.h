@@ -38,14 +38,10 @@
 #include "common/native_helper.h"
 
 struct kms_config;
+struct kms_crtc;
 struct kms_connector;
 struct kms_mode;
-
-struct kms_crtc {
-   drmModeCrtcPtr crtc;
-   uint32_t connectors[32];
-   int num_connectors;
-};
+struct kms_surface;
 
 struct kms_display {
    struct native_display base;
@@ -53,15 +49,26 @@ struct kms_display {
    struct native_event_handler *event_handler;
 
    int fd;
-   drmModeResPtr resources;
    struct kms_config *config;
 
+   /* for modesetting */
+   drmModeResPtr resources;
    struct kms_connector *connectors;
    int num_connectors;
 
    struct kms_surface **shown_surfaces;
    /* save the original settings of the CRTCs */
    struct kms_crtc *saved_crtcs;
+};
+
+struct kms_config {
+   struct native_config base;
+};
+
+struct kms_crtc {
+   drmModeCrtcPtr crtc;
+   uint32_t connectors[32];
+   int num_connectors;
 };
 
 struct kms_framebuffer {
@@ -86,10 +93,6 @@ struct kms_surface {
    struct kms_crtc current_crtc;
 };
 
-struct kms_config {
-   struct native_config base;
-};
-
 struct kms_connector {
    struct native_connector base;
 
@@ -110,16 +113,16 @@ kms_display(const struct native_display *ndpy)
    return (struct kms_display *) ndpy;
 }
 
-static INLINE struct kms_surface *
-kms_surface(const struct native_surface *nsurf)
-{
-   return (struct kms_surface *) nsurf;
-}
-
 static INLINE struct kms_config *
 kms_config(const struct native_config *nconf)
 {
    return (struct kms_config *) nconf;
+}
+
+static INLINE struct kms_surface *
+kms_surface(const struct native_surface *nsurf)
+{
+   return (struct kms_surface *) nsurf;
 }
 
 static INLINE struct kms_connector *
@@ -133,5 +136,11 @@ kms_mode(const struct native_mode *nmode)
 {
    return (struct kms_mode *) nmode;
 }
+
+boolean
+kms_display_init_modeset(struct native_display *ndpy);
+
+void
+kms_display_fini_modeset(struct native_display *ndpy);
 
 #endif /* _NATIVE_KMS_H_ */
