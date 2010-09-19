@@ -1363,7 +1363,7 @@ fi
 AC_ARG_WITH([egl-platforms],
     [AS_HELP_STRING([--with-egl-platforms@<:@=DIRS...@:>@],
         [comma delimited native platforms libEGL supports, e.g.
-        "x11,kms" @<:@default=auto@:>@])],
+        "x11,drm" @<:@default=auto@:>@])],
     [with_egl_platforms="$withval"],
     [with_egl_platforms=yes])
 AC_ARG_WITH([egl-displays],

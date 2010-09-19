@@ -30,7 +30,7 @@
 #include "util/u_inlines.h"
 #include "egllog.h"
 
-#include "native_kms.h"
+#include "native_drm.h"
 
 static boolean
 kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,

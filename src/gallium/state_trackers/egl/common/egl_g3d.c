@@ -65,8 +65,8 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
          break;
       case _EGL_PLATFORM_DRM:
          plat_name = "DRM";
-#ifdef HAVE_KMS_BACKEND
-         nplat = native_get_kms_platform();
+#ifdef HAVE_DRM_BACKEND
+         nplat = native_get_drm_platform();
 #endif
          break;
       case _EGL_PLATFORM_FBDEV:

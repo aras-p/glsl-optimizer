@@ -30,7 +30,7 @@
 #include "util/u_memory.h"
 #include "egllog.h"
 
-#include "native_kms.h"
+#include "native_drm.h"
 
 /* see get_drm_screen_name */
 #include <radeon_drm.h>
@@ -228,13 +228,13 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
    return kms_create_display(fd, event_handler, user_data);
 }
 
-static const struct native_platform kms_platform = {
-   "KMS", /* name */
+static const struct native_platform drm_platform = {
+   "DRM", /* name */
    native_create_display
 };
 
 const struct native_platform *
-native_get_kms_platform(void)
+native_get_drm_platform(void)
 {
-   return &kms_platform;
+   return &drm_platform;
 }

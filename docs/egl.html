@@ -72,13 +72,13 @@ drivers will be installed to <code>${libdir}/egl</code>.</p>
 <li><code>--with-egl-platforms</code>
 
 <p>List the platforms (window systems) to support.  Its argument is a comma
-seprated string such as <code>--with-egl-platforms=x11,kms</code>.  It decides
+seprated string such as <code>--with-egl-platforms=x11,drm</code>.  It decides
 the platforms a driver may support.  The first listed platform is also used by
 the main library to decide the native platform: the platform the EGL native
 types such as <code>EGLNativeDisplayType</code> or
 <code>EGLNativeWindowType</code> defined for.</p>
 
-<p>The available platforms are <code>x11</code>, <code>kms</code>,
+<p>The available platforms are <code>x11</code>, <code>drm</code>,
 <code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> platform can
 only be built with SCons.</p>
 

@@ -57,7 +57,7 @@ EGL_NATIVE_PLATFORM=_EGL_INVALID_PLATFORM
 ifeq ($(firstword $(EGL_PLATFORMS)),x11)
 EGL_NATIVE_PLATFORM=_EGL_PLATFORM_X11
 endif
-ifeq ($(firstword $(EGL_PLATFORMS)),kms)
+ifeq ($(firstword $(EGL_PLATFORMS)),drm)
 EGL_NATIVE_PLATFORM=_EGL_PLATFORM_DRM
 endif
 ifeq ($(firstword $(EGL_PLATFORMS)),fbdev)
