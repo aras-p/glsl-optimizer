@@ -696,7 +696,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
-					S_SQ_CF_ALU_WORD1_USES_WATERFALL(cf->r6xx_uses_waterfall) |
+					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == 0 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
