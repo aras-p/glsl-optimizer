@@ -2232,6 +2232,12 @@
 #define R_0286C0_SPI_PS_INPUT_CNTL_31                0x0286C0
 #define R_028850_SQ_PGM_RESOURCES_PS                 0x028850
 #define R_028854_SQ_PGM_EXPORTS_PS                   0x028854
+#define   S_028854_EXPORT_COLORS(x)                    (((x) & 0xF) << 1)
+#define   G_028854_EXPORT_COLORS(x)                    (((x) >> 1) & 0xF)
+#define   C_028854_EXPORT_COLORS                       0xFFFFFFE1
+#define   S_028854_EXPORT_Z(x)                         (((x) & 0x1) << 0)
+#define   G_028854_EXPORT_Z(x)                         (((x) >> 0) & 0x1)
+#define   C_028854_EXPORT_Z                            0xFFFFFFFE
 #define R_008958_VGT_PRIMITIVE_TYPE                  0x008958
 #define R_028A7C_VGT_DMA_INDEX_TYPE                  0x028A7C
 #define R_028A88_VGT_DMA_NUM_INSTANCES               0x028A88

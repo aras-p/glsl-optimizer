@@ -991,13 +991,12 @@ static int r600_ps_shader(struct r600_context *rctx, struct r600_context_state *
 
 	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(i);
-		tmp |= S_028644_SEL_CENTROID(1);
+		tmp = S_028644_SEMANTIC(i) | S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+			rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
 
@@ -1014,29 +1013,33 @@ static int r600_ps_shader(struct r600_context *rctx, struct r600_context_state *
 	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			exports_ps |= 1;
+			exports_ps |= S_028854_EXPORT_Z(1);
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
 			num_cout++;
 		}
 	}
-	exports_ps |= (num_cout << 1);
-	if (!exports_ps) {
-		/* always at least export 1 component per pixel */
-		exports_ps = 2;
+	exports_ps |= S_028854_EXPORT_COLORS(num_cout);
+	if (exports_ps == 0) {
+		/* Always at least export 1 color component per pixel. */
+		exports_ps = S_028854_EXPORT_COLORS(1);
 	}
-	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
-							S_0286CC_PERSP_GRADIENT_ENA(1);
+	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] =
+		S_0286CC_NUM_INTERP(rshader->ninput) |
+		S_0286CC_PERSP_GRADIENT_ENA(1);
+
 	if (have_pos) {
-		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1) |
-		                                                       S_0286CC_BARYC_SAMPLE_CNTL(1);
+		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=
+			S_0286CC_POSITION_ENA(1) |
+			S_0286CC_BARYC_SAMPLE_CNTL(1);
 		state->states[R600_PS_SHADER__SPI_INPUT_Z] |=
 			S_0286D8_PROVIDE_Z_TO_SPI(1);
 	}
 
-	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
-	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] |= S_0286D0_FRONT_FACE_ENA(have_face);
+	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] =
+		S_0286D0_FRONT_FACE_ENA(have_face);
 
-	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
+	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] =
+		S_028868_NUM_GPRS(rshader->bc.ngpr) |
 		S_028868_STACK_SIZE(rshader->bc.nstack);
 	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
 	radeon_ws_bo_reference(rscreen->rw, &state->bo[0], rpshader->bo);
