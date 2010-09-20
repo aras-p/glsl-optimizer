@@ -695,8 +695,9 @@ depth_test_quads_fallback(struct quad_stage *qs,
       nr = alpha_test_quads(qs, quads, nr);
    }
 
-   if (qs->softpipe->depth_stencil->depth.enabled ||
-       qs->softpipe->depth_stencil->stencil[0].enabled) {
+   if (qs->softpipe->framebuffer.zsbuf &&
+	(qs->softpipe->depth_stencil->depth.enabled ||
+       qs->softpipe->depth_stencil->stencil[0].enabled)) {
 
       data.ps = qs->softpipe->framebuffer.zsbuf;
       data.format = data.ps->format;
@@ -804,6 +805,9 @@ choose_depth_test(struct quad_stage *qs,
    boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
 
    boolean occlusion = qs->softpipe->active_query_count;
+
+   if(!qs->softpipe->framebuffer.zsbuf)
+      depth = depthwrite = stencil = FALSE;
 
    /* default */
    qs->run = depth_test_quads_fallback;
