@@ -330,11 +330,8 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_texture_object *oldTex = *ptr;
 
-      {
-         GLboolean valid = valid_texture_object(oldTex);
-         ASSERT(valid);
-         (void) valid;
-      }
+      ASSERT(valid_texture_object(oldTex));
+      (void) valid_texture_object; /* silence warning in release builds */
 
       _glthread_LOCK_MUTEX(oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
