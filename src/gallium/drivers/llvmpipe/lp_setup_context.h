@@ -73,7 +73,7 @@ struct lp_setup_context
    uint prim;
    uint vertex_size;
    uint nr_vertices;
-   uint sprite;
+   uint sprite_coord_enable, sprite_coord_origin;
    uint vertex_buffer_size;
    void *vertex_buffer;
 

@@ -184,7 +184,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
          if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
             const int index = shader->info.input_semantic_index[slot];
             
-            if (setup->sprite & (1 << index)) {
+            if (setup->sprite_coord_enable & (1 << index)) {
                for (i = 0; i < NUM_CHANNELS; i++)
                   if (usage_mask & (1 << i))
                      perspective_coef(setup, point, info, slot+1, vert_attr, i);
