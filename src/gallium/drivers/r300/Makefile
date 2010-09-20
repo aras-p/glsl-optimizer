@@ -39,5 +39,6 @@ EXTRA_OBJECTS = \
 
 include ../../Makefile.template
 
+.PHONY: $(COMPILER_ARCHIVE)
 $(COMPILER_ARCHIVE):
 	$(MAKE) -C $(TOP)/src/mesa/drivers/dri/r300/compiler
