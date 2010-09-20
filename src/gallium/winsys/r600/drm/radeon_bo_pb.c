@@ -55,7 +55,6 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
 	struct pipe_context *pctx = ctx;
 
-//printf("%s:%d ************************************************\n", __func__, __LINE__);
 	if (flags & PB_USAGE_UNSYNCHRONIZED) {
 		if (!buf->bo->data && radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 			return NULL;
@@ -64,11 +63,13 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		return buf->bo->data;
 	}
 
-	if (flags & PB_USAGE_DONTBLOCK) {
-		return NULL;
-	}
-	if (ctx) {
-		pctx->flush(pctx, 0, NULL);
+	if (p_atomic_read(&buf->bo->reference.count) > 1) {
+		if (flags & PB_USAGE_DONTBLOCK) {
+			return NULL;
+		}
+		if (ctx) {
+			pctx->flush(pctx, 0, NULL);
+		}
 	}
 
 	if (flags & PB_USAGE_DONTBLOCK) {
