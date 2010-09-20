@@ -951,7 +951,6 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
    functions->TextureMemCpy = memcpy;
 #endif
 
-   functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = viaIsTextureResident;
 }
 

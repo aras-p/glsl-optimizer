@@ -203,7 +203,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTexImageData = intelFreeTextureImageData;
-   functions->UpdateTexturePalette = 0;
 
 #if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)
