@@ -382,9 +382,15 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_context_state *rstate;
 	int i;
 
-	r600_context_state_decref(rctx->framebuffer);
+	if (rctx->framebuffer) {
+		for (i = 0; i < rctx->framebuffer->state.framebuffer.nr_cbufs; i++)
+			radeon_draw_unbind(&rctx->draw, &rctx->framebuffer->rstate[i+1]);
+		radeon_draw_unbind(&rctx->draw, &rctx->framebuffer->rstate[0]);
+	}
 	clean_flush(rctx, &rctx->hw_states.cb_flush);
 	clean_flush(rctx, &rctx->hw_states.db_flush);
+
+	r600_context_state_decref(rctx->framebuffer);
 
 	rstate = r600_new_context_state(pipe_framebuffer_type);
 	rstate->state.framebuffer = *state;
