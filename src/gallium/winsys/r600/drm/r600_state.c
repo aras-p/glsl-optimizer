@@ -335,12 +335,14 @@ static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int
 static int r600_state_pm4_cb0(struct radeon_state *state)
 {
 	int r;
-
+	uint32_t sbu;
 	r = r600_state_pm4_generic(state);
 	if (r)
 		return r;
+
+	sbu = (2 << (state->stype->stype - R600_STATE_CB0));
 	state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0);
-	state->pm4[state->cpm4++] = 0x00000002;
+	state->pm4[state->cpm4++] = sbu;
 	return 0;
 }
 
