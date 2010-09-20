@@ -73,7 +73,7 @@ static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
-static void r600_setup_miptree(struct r600_resource_texture *rtex)
+static void r600_setup_miptree(struct r600_resource_texture *rtex, enum chip_class chipc)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	unsigned long w, h, pitch, size, layer_size, i, offset;
@@ -86,8 +86,12 @@ static void r600_setup_miptree(struct r600_resource_texture *rtex)
 		pitch = util_format_get_stride(ptex->format, align(w, 64));
 		pitch = align(pitch, 256);
 		layer_size = pitch * h;
-		if (ptex->target == PIPE_TEXTURE_CUBE)
-			size = layer_size * 6;
+		if (ptex->target == PIPE_TEXTURE_CUBE) {
+			if (chipc == R700)
+				size = layer_size * 8;
+			else
+				size = layer_size * 6;
+		}
 		else
 			size = layer_size * u_minify(ptex->depth0, i);
 		rtex->offset[i] = offset;
@@ -103,6 +107,7 @@ static void r600_setup_miptree(struct r600_resource_texture *rtex)
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
+	struct r600_screen *rscreen = r600_screen(screen);
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
@@ -116,7 +121,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	resource->base.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
-	r600_setup_miptree(rtex);
+	r600_setup_miptree(rtex, rscreen->chip_class);
 
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
