@@ -1064,8 +1064,10 @@ static int r600_vs_shader(struct r600_context *rctx, struct r600_context_state *
 		tmp = i << ((i & 3) * 8);
 		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i / 4] |= tmp;
 	}
-	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
-	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
+	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] =
+		S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
+	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] =
+		S_028868_NUM_GPRS(rshader->bc.ngpr) |
 		S_028868_STACK_SIZE(rshader->bc.nstack);
 	radeon_ws_bo_reference(rscreen->rw, &state->bo[0], rpshader->bo);
 	radeon_ws_bo_reference(rscreen->rw, &state->bo[1], rpshader->bo);
@@ -1204,19 +1206,30 @@ static void r600_texture_state_db(struct r600_screen *rscreen, struct r600_resou
 static void r600_texture_state_viewport(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned level)
 {
 	struct radeon_state *rstate = &rtexture->viewport[level];
+	float width, height;
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_VIEWPORT, 0, 0);
+
+	width = rtexture->width[level] * 0.5;
+	height = rtexture->height[level] * 0.5;
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
 	 */
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui((float)rtexture->width[level]/2.0);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui((float)rtexture->width[level]/2.0);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui((float)rtexture->height[level]/2.0);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui((float)-rtexture->height[level]/2.0);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = 0x3F000000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = 0x3F000000;
-	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui(width);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui(width);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui(height);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui(height);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = fui(0.5);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = fui(0.5);
+	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] =
+		S_028818_VPORT_X_SCALE_ENA(1) |
+		S_028818_VPORT_X_OFFSET_ENA(1) |
+		S_028818_VPORT_Y_SCALE_ENA(1) |
+		S_028818_VPORT_Y_OFFSET_ENA(1) |
+		S_028818_VPORT_Z_SCALE_ENA(1) |
+		S_028818_VPORT_Z_OFFSET_ENA(1) |
+		S_028818_VTX_W0_FMT(1);
 	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = fui(1);
 
 	radeon_state_pm4(rstate);
@@ -1325,7 +1338,7 @@ void r600_set_constant_buffer_mem(struct pipe_context *ctx,
 
 	nconstant = buffer->width0 / 16;
 	size = ALIGN_DIVUP(nconstant, 16);
-		
+
 	radeon_state_init(rstate, rscreen->rw, type, 0, shader_class);
 	rstate->states[R600_VS_CBUF__ALU_CONST_BUFFER_SIZE_VS_0] = size;
 	rstate->states[R600_VS_CBUF__ALU_CONST_CACHE_VS_0] = 0;
