@@ -2112,6 +2112,9 @@
 #define R_0286D4_SPI_INTERP_CONTROL_0                0x0286D4
 #define R_028A48_PA_SC_MPASS_PS_CNTL                 0x028A48
 #define R_028C00_PA_SC_LINE_CNTL                     0x028C00
+#define   S_028C00_LAST_PIXEL(x)                       (((x) & 0x1) << 10)
+#define   G_028C00_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
+#define   C_028C00_LAST_PIXEL                          0xFFFFFBFF
 #define R_028C04_PA_SC_AA_CONFIG                     0x028C04
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
 #define R_028C48_PA_SC_AA_MASK                       0x028C48
@@ -2125,7 +2128,16 @@
 #define R_028814_PA_SU_SC_MODE_CNTL                  0x028814
 #define R_028A00_PA_SU_POINT_SIZE                    0x028A00
 #define R_028A04_PA_SU_POINT_MINMAX                  0x028A04
+#define   S_028A04_MIN_SIZE(x)                         (((x) & 0xFFFF) << 0)
+#define   G_028A04_MIN_SIZE(x)                         (((x) >> 0) & 0xFFFF)
+#define   C_028A04_MIN_SIZE                            0xFFFF0000
+#define   S_028A04_MAX_SIZE(x)                         (((x) & 0xFFFF) << 16)
+#define   G_028A04_MAX_SIZE(x)                         (((x) >> 16) & 0xFFFF)
+#define   C_028A04_MAX_SIZE                            0x0000FFFF
 #define R_028A08_PA_SU_LINE_CNTL                     0x028A08
+#define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)
+#define   G_028A08_WIDTH(x)                            (((x) >> 0) & 0xFFFF)
+#define   C_028A08_WIDTH                               0xFFFF0000
 #define R_028A0C_PA_SC_LINE_STIPPLE                  0x028A0C
 #define R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x028DF8
 #define R_028DFC_PA_SU_POLY_OFFSET_CLAMP             0x028DFC
@@ -2134,6 +2146,27 @@
 #define R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE        0x028E08
 #define R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET       0x028E0C
 #define R_028818_PA_CL_VTE_CNTL                      0x028818
+#define   S_028818_VPORT_X_SCALE_ENA(x)                (((x) & 0x1) << 0)
+#define   G_028818_VPORT_X_SCALE_ENA(x)                (((x) >> 0 & 0x1)
+#define   C_028818_VPORT_X_SCALE_ENA                   0xFFFFFFFE
+#define   S_028818_VPORT_X_OFFSET_ENA(x)               (((x) & 0x1) << 1)
+#define   G_028818_VPORT_X_OFFSET_ENA(x)               (((x) >> 1 & 0x1)
+#define   C_028818_VPORT_X_OFFSET_ENA                  0xFFFFFFFD
+#define   S_028818_VPORT_Y_SCALE_ENA(x)                (((x) & 0x1) << 2)
+#define   G_028818_VPORT_Y_SCALE_ENA(x)                (((x) >> 2 & 0x1)
+#define   C_028818_VPORT_Y_SCALE_ENA                   0xFFFFFFFB
+#define   S_028818_VPORT_Y_OFFSET_ENA(x)               (((x) & 0x1) << 3)
+#define   G_028818_VPORT_Y_OFFSET_ENA(x)               (((x) >> 3 & 0x1)
+#define   C_028818_VPORT_Y_OFFSET_ENA                  0xFFFFFFF7
+#define   S_028818_VPORT_Z_SCALE_ENA(x)                (((x) & 0x1) << 4)
+#define   G_028818_VPORT_Z_SCALE_ENA(x)                (((x) >> 4 & 0x1)
+#define   C_028818_VPORT_Z_SCALE_ENA                   0xFFFFFFEF
+#define   S_028818_VPORT_Z_OFFSET_ENA(x)               (((x) & 0x1) << 5)
+#define   G_028818_VPORT_Z_OFFSET_ENA(x)               (((x) >> 5 & 0x1)
+#define   C_028818_VPORT_Z_OFFSET_ENA                  0xFFFFFFDF
+#define   S_028818_VTX_W0_FMT(x)                       (((x) & 0x1) << 10)
+#define   G_028818_VTX_W0_FMT(x)                       (((x) >> 10) & 0x1)
+#define   C_028818_VTX_W0_FMT                          0xFFFFFBFF
 #define R_02843C_PA_CL_VPORT_XSCALE_0                0x02843C
 #define R_028444_PA_CL_VPORT_YSCALE_0                0x028444
 #define R_02844C_PA_CL_VPORT_ZSCALE_0                0x02844C

@@ -197,7 +197,7 @@ static void r600_rasterizer(struct r600_context *rctx, struct radeon_state *rsta
 	float offset_units = 0, offset_scale = 0;
 	char depth = 0;
 	unsigned offset_db_fmt_cntl = 0;
-	unsigned tmp;
+	unsigned point_size;
 	unsigned prov_vtx = 1;
 
 	if (rctx->clip)
@@ -248,9 +248,18 @@ static void r600_rasterizer(struct r600_context *rctx, struct radeon_state *rsta
 	}
 	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0;
 	if (clip) {
-		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = S_028810_PS_UCP_MODE(3) | ((1 << clip->nr) - 1);
-		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_NEAR_DISABLE(clip->depth_clamp);
-		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_FAR_DISABLE(clip->depth_clamp);
+		/* Clip plane enable bits are stashed in the lower six bits of
+		 * PA_CL_CLIP_CNTL, so just set all of the corresponding bits with a
+		 * pinch of bit twiddling.
+		 *
+		 * PS_UCP_MODE 3 is "expand and clip as trifan," which is the same
+		 * setting that we use on r300-r500. I believe that fglrx always uses
+		 * this mode as well. */
+		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] =
+			((1 << clip->nr) - 1) |
+			S_028810_PS_UCP_MODE(3) |
+			S_028810_ZCLIP_NEAR_DISABLE(clip->depth_clamp) |
+			S_028810_ZCLIP_FAR_DISABLE(clip->depth_clamp);
 	}
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] =
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
@@ -264,14 +273,20 @@ static void r600_rasterizer(struct r600_context *rctx, struct radeon_state *rsta
 			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
 	rstate->states[R600_RASTERIZER__PA_CL_NANINF_CNTL] = 0x00000000;
-	/* point size 12.4 fixed point */
-	tmp = (unsigned)(state->point_size * 8.0);
-	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp);
-	rstate->states[R600_RASTERIZER__PA_SU_POINT_MINMAX] = 0x80000000;
-	rstate->states[R600_RASTERIZER__PA_SU_LINE_CNTL] = 0x00000008;
+	/* Point size for PA_SU_POINT_SIZE and PA_SU_POINT_MINMAX is fixed-point,
+	 * 12.4.
+	 *
+	 * For some reason, maximum point size is set to 0x8000 (2048.0) instead
+	 * of the maximum value 0xFFF0 (4095.0). */
+	point_size = (unsigned)(state->point_size * 8.0);
+	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] =
+		S_028A00_HEIGHT(point_size) | S_028A00_WIDTH(point_size);
+	rstate->states[R600_RASTERIZER__PA_SU_POINT_MINMAX] =
+		S_028A04_MIN_SIZE(0) | S_028A04_MAX_SIZE(0x8000);
+	rstate->states[R600_RASTERIZER__PA_SU_LINE_CNTL] = S_028A08_WIDTH(8);
 	rstate->states[R600_RASTERIZER__PA_SC_LINE_STIPPLE] = 0x00000005;
 	rstate->states[R600_RASTERIZER__PA_SC_MPASS_PS_CNTL] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SC_LINE_CNTL] = 0x00000400;
+	rstate->states[R600_RASTERIZER__PA_SC_LINE_CNTL] = S_028C00_LAST_PIXEL(1);
 	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_CLIP_ADJ] = fui(1);
 	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_DISC_ADJ] = fui(1);
 	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_CLIP_ADJ] = fui(1);
@@ -349,7 +364,14 @@ static void r600_viewport(struct r600_context *rctx, struct radeon_state *rstate
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui(state->translate[0]);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui(state->translate[1]);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = fui(state->translate[2]);
-	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
+	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] =
+		S_028818_VPORT_X_SCALE_ENA(1) |
+		S_028818_VPORT_X_OFFSET_ENA(1) |
+		S_028818_VPORT_Y_SCALE_ENA(1) |
+		S_028818_VPORT_Y_OFFSET_ENA(1) |
+		S_028818_VPORT_Z_SCALE_ENA(1) |
+		S_028818_VPORT_Z_OFFSET_ENA(1) |
+		S_028818_VTX_W0_FMT(1);
 	radeon_state_pm4(rstate);
 }
 
