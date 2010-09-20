@@ -467,10 +467,12 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			result = V_0280A0_COLOR_16;
 			goto out_word4;
 		case PIPE_FORMAT_Z24X8_UNORM:
-			result = V_0280A0_COLOR_8_24;
-			goto out_word4;
 		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 			result = V_0280A0_COLOR_8_24;
+			goto out_word4;
+		case PIPE_FORMAT_X8Z24_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+			result = V_0280A0_COLOR_24_8;
 			goto out_word4;
 		default:
 			goto out_unknown;

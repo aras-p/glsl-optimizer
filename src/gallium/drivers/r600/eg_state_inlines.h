@@ -313,6 +313,10 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_028C70_SWAP_STD;
 
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		return V_028C70_SWAP_STD;
+
 	case PIPE_FORMAT_R10G10B10A2_UNORM:
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
 	case PIPE_FORMAT_B10G10R10A2_UNORM:
@@ -388,6 +392,10 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_028C70_COLOR_8_24;
+
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		return V_028C70_COLOR_24_8;
 
 	case PIPE_FORMAT_R32_FLOAT:
 		return V_028C70_COLOR_32_FLOAT;
