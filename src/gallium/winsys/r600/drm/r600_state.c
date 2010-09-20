@@ -304,6 +304,7 @@ static int r600_state_pm4_generic(struct radeon_state *state)
 static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int bufs_are_cbs)
 {
 	unsigned i, j, add, size;
+	uint32_t flags_cb;
 
 	state->nreloc = 0;
 	for (i = 0; i < state->nbo; i++) {
@@ -318,11 +319,12 @@ static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags, int
 		}
 	}
 	for (i = 0; i < state->nreloc; i++) {
+		flags_cb = flags;
 		size = (radeon_ws_bo_get_size(state->bo[state->reloc_bo_id[i]]) + 255) >> 8;
 		state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_SYNC, 3);
 		if (bufs_are_cbs)
-			flags |= S_0085F0_CB0_DEST_BASE_ENA(1 << i);
-		state->pm4[state->cpm4++] = flags;
+			flags_cb |= S_0085F0_CB0_DEST_BASE_ENA(1 << i);
+		state->pm4[state->cpm4++] = flags_cb;
 		state->pm4[state->cpm4++] = size;
 		state->pm4[state->cpm4++] = 0x00000000;
 		state->pm4[state->cpm4++] = 0x0000000A;
