@@ -392,9 +392,8 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	}
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_DSA, 0, 0);
 
-	db_shader_control = 0;
-	db_shader_control |= S_02880C_DUAL_EXPORT_ENABLE(1);
-	db_shader_control |= S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+	db_shader_control = S_02880C_DUAL_EXPORT_ENABLE(1) |
+		S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 
 	rshader = &rctx->ps_shader->shader;
 	if (rshader->uses_kill)
@@ -408,35 +407,37 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
 		S_028800_ZFUNC(state->depth.func);
-	/* set stencil enable */
 
+	/* set stencil enable */
 	if (state->stencil[0].enabled) {
-		db_depth_control |= S_028800_STENCIL_ENABLE(1);
-		db_depth_control |= S_028800_STENCILFUNC(r600_translate_ds_func(state->stencil[0].func));
-		db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
-		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
-		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
+		db_depth_control |= S_028800_STENCIL_ENABLE(1) |
+			S_028800_STENCILFUNC(r600_translate_ds_func(state->stencil[0].func)) |
+			S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op)) |
+			S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op)) |
+			S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
 
 		stencil_ref_mask = S_028430_STENCILMASK(state->stencil[0].valuemask) |
-			S_028430_STENCILWRITEMASK(state->stencil[0].writemask);
-		stencil_ref_mask |= S_028430_STENCILREF(stencil_ref->ref_value[0]);
+			S_028430_STENCILWRITEMASK(state->stencil[0].writemask) |
+			S_028430_STENCILREF(stencil_ref->ref_value[0]);
+
 		if (state->stencil[1].enabled) {
-			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
-			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
-			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
-			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
-			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
-			stencil_ref_mask_bf = S_028434_STENCILMASK_BF(state->stencil[1].valuemask) |
-				S_028434_STENCILWRITEMASK_BF(state->stencil[1].writemask);
-			stencil_ref_mask_bf |= S_028430_STENCILREF(stencil_ref->ref_value[1]);
+			db_depth_control |= S_028800_BACKFACE_ENABLE(1) |
+				S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func)) |
+				S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op)) |
+				S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op)) |
+				S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
+			stencil_ref_mask_bf =
+				S_028434_STENCILMASK_BF(state->stencil[1].valuemask) |
+				S_028434_STENCILWRITEMASK_BF(state->stencil[1].writemask) |
+				S_028430_STENCILREF(stencil_ref->ref_value[1]);
 		}
 	}
 
 	alpha_test_control = 0;
 	alpha_ref = 0;
 	if (state->alpha.enabled) {
-		alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func);
-		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
+		alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func) |
+			S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
 
