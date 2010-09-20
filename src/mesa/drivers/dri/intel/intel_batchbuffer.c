@@ -44,7 +44,9 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 
    batch->buf = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
 				   intel->maxBatchSize, 4096);
-   batch->map = batch->buffer;
+   drm_intel_gem_bo_map_gtt(batch->buf);
+   batch->map = batch->buf->virtual;
+
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->reserved_space = BATCH_RESERVED;
@@ -58,7 +60,6 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
    batch->intel = intel;
-   batch->buffer = malloc(intel->maxBatchSize);
    intel_batchbuffer_reset(batch);
 
    return batch;
@@ -67,8 +68,11 @@ intel_batchbuffer_alloc(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
-   free (batch->buffer);
-   drm_intel_bo_unreference(batch->buf);
+   if (batch->map) {
+      drm_intel_gem_bo_unmap_gtt(batch->buf);
+      batch->map = NULL;
+   }
+   dri_bo_unreference(batch->buf);
    batch->buf = NULL;
    free(batch);
 }
@@ -84,13 +88,7 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    int ret = 0;
    int x_off = 0, y_off = 0;
 
-   drm_intel_bo_subdata(batch->buf, 0, used, batch->buffer);
-   if (batch->state_batch_offset != batch->size) {
-      drm_intel_bo_subdata(batch->buf,
-			   batch->state_batch_offset,
-			   batch->size - batch->state_batch_offset,
-			   batch->buffer + batch->state_batch_offset);
-   }
+   drm_intel_gem_bo_unmap_gtt(batch->buf);
 
    batch->ptr = NULL;
 
