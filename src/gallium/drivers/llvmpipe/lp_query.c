@@ -92,8 +92,9 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    int i;
 
    if (!pq->fence) {
-      assert(0);                /* query not in issued state */
-      return FALSE;
+      /* no fence because there was no scene, so results is zero */
+      *result = 0;
+      return TRUE;
    }
 
    if (!lp_fence_signalled(pq->fence)) {
