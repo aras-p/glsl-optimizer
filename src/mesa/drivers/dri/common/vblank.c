@@ -241,7 +241,7 @@ GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache )
  * the first time the \c drmWaitVBlank fails.  If \c drmWaitVBlank is
  * successful, \c vbl_seq will be set the sequence value in the reply.
  *
- * \param vbl      Pointer to drmVBlank packet desribing how to wait.
+ * \param vbl      Pointer to drmVBlank packet describing how to wait.
  * \param vbl_seq  Location to store the current refresh counter.
  * \param fd       File descriptor use to call into the DRM.
  * \return         Zero on success or -1 on failure.

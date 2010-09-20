@@ -354,7 +354,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        case __DRI_BUFFER_ACCUM:
        default:
 	   fprintf(stderr,
-		   "unhandled buffer attach event, attacment type %d\n",
+		   "unhandled buffer attach event, attachment type %d\n",
 		   buffers[i].attachment);
 	   return;
        }
