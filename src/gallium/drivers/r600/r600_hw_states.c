@@ -618,15 +618,17 @@ static void r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 	struct r600_screen *rscreen = rctx->screen;
 	const struct pipe_blend_state *pbs = &rctx->blend->state.blend;
 	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;
-	uint32_t color_control, target_mask, shader_mask;
+	uint32_t color_control, target_mask, shader_mask, shader_control;
 	int i;
 
 	target_mask = 0;
 	shader_mask = 0;
+	shader_control = 0;
 	color_control = S_028808_PER_MRT_BLEND(1);
 
 	for (i = 0; i < nr_cbufs; i++) {
 		shader_mask |= 0xf << (i * 4);
+		shader_control |= (1 << i);
 	}
 
 	if (pbs->logicop_enable) {
@@ -654,6 +656,8 @@ static void r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = shader_mask;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = target_mask;
 	rstate->states[R600_CB_CNTL__CB_COLOR_CONTROL] = color_control;
+	if (rscreen->chip_class == R700)
+		rstate->states[R600_CB_CNTL__CB_SHADER_CONTROL] = shader_control;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_CONFIG] = 0x00000000;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_MCTX] = 0x00000000;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX] = 0x00000000;
@@ -884,9 +888,6 @@ static void r600_init_config(struct r600_context *rctx)
 			S_028A4C_WALK_ORDER_ENABLE(1) |
 			S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1);
 	}
-	rctx->config.states[R600_CONFIG__CB_SHADER_CONTROL] =
-		S_0287A0_RT0_ENABLE(1) |
-		S_0287A0_RT1_ENABLE(1);
 	rctx->config.states[R600_CONFIG__SQ_ESGS_RING_ITEMSIZE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__SQ_GSVS_RING_ITEMSIZE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__SQ_ESTMP_RING_ITEMSIZE] = 0x00000000;

@@ -31,7 +31,6 @@ static const struct radeon_register R600_names_CONFIG[] = {
 	{0x00009838, 0, 0, "DB_WATERMARKS"},
 	{0x00028350, 0, 0, "SX_MISC"},
 	{0x000286C8, 0, 0, "SPI_THREAD_GROUPING"},
-	{0x000287A0, 0, 0, "CB_SHADER_CONTROL"},
 	{0x000288A8, 0, 0, "SQ_ESGS_RING_ITEMSIZE"},
 	{0x000288AC, 0, 0, "SQ_GSVS_RING_ITEMSIZE"},
 	{0x000288B0, 0, 0, "SQ_ESTMP_RING_ITEMSIZE"},
@@ -80,6 +79,7 @@ static const struct radeon_register R600_names_CB_CNTL[] = {
 	{0x00028C38, 0, 0, "CB_CLRCMP_DST"},
 	{0x00028C3C, 0, 0, "CB_CLRCMP_MSK"},
 	{0x00028C48, 0, 0, "PA_SC_AA_MASK"},
+	{0x000287A0, 0, 0, "CB_SHADER_CONTROL"},
 };
 
 static const struct radeon_register R600_names_RASTERIZER[] = {
