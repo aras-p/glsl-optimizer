@@ -124,7 +124,8 @@ ir_validate::visit_leave(ir_loop *ir)
 		"    from:      %p\n"
 		"    to:        %p\n"
 		"    increment: %p\n",
-		ir->counter, ir->from, ir->to, ir->increment);
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
 	 abort();
       }
 
@@ -139,7 +140,8 @@ ir_validate::visit_leave(ir_loop *ir)
 		"    from:      %p\n"
 		"    to:        %p\n"
 		"    increment: %p\n",
-		ir->counter, ir->from, ir->to, ir->increment);
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
 	 abort();
       }
    }
