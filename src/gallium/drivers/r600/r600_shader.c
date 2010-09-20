@@ -1530,7 +1530,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-		src_not_temp = false;
+		src_not_temp = FALSE;
 		src_gpr = ctx->temp_reg;
 	}
 
@@ -1641,7 +1641,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_literal(ctx->bc, lit_vals);
 		if (r)
 			return r;
-		src_not_temp = false;
+		src_not_temp = FALSE;
 		src_gpr = ctx->temp_reg;
 	}
 

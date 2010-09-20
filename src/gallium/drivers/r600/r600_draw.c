@@ -156,7 +156,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	if (rctx->any_user_vbs) {
 		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = false;
+		rctx->any_user_vbs = FALSE;
 	}
 
 	draw.ctx = ctx;

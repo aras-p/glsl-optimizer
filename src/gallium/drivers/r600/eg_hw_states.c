@@ -422,11 +422,11 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
 		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
 
-	query_running = false;
+	query_running = FALSE;
 
 	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
 		if (rquery->state & R600_QUERY_STATE_STARTED) {
-			query_running = true;
+			query_running = TRUE;
 		}
 	}
 

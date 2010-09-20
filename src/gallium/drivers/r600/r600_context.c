@@ -80,7 +80,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	radeon_ctx_submit(rctx->ctx);
 
 	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
-		rquery->flushed = true;
+		rquery->flushed = TRUE;
 	}
 
 	radeon_ctx_clear(rctx->ctx);

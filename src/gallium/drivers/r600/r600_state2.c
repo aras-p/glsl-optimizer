@@ -205,7 +205,7 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 			R_028894_SQ_PGM_START_FS,
 			0x00000000, 0xFFFFFFFF, shader->bo);
-	rctx->vs_rebuild = false;
+	rctx->vs_rebuild = FALSE;
 }
 
 static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -275,7 +275,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_0288CC_SQ_PGM_CF_OFFSET_PS,
 				0x00000000, 0xFFFFFFFF, NULL);
-	rctx->ps_rebuild = false;
+	rctx->ps_rebuild = FALSE;
 }
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -1082,10 +1082,10 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 		return;
 
 	if (rctx->flatshade != rs->flatshade) {
-		rctx->ps_rebuild = true;
+		rctx->ps_rebuild = TRUE;
 	}
 	if (rctx->sprite_coord_enable != rs->sprite_coord_enable) {
-		rctx->ps_rebuild = true;
+		rctx->ps_rebuild = TRUE;
 	}
 	rctx->flatshade = rs->flatshade;
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
@@ -1371,7 +1371,7 @@ static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	rctx->vertex_elements = v;
 	if (v) {
 		v->refcount++;
-		rctx->vs_rebuild = true;
+		rctx->vs_rebuild = TRUE;
 	}
 }
 

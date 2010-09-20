@@ -132,7 +132,7 @@ static void r600_query_resume(struct pipe_context *ctx, struct r600_query *rquer
 		r600_query_result(ctx, rquery);
 	}
 	r600_query_begin(rctx, rquery);
-	rquery->flushed = false;
+	rquery->flushed = FALSE;
 }
 
 static void r600_query_suspend(struct pipe_context *ctx, struct r600_query *rquery)
@@ -151,7 +151,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	rquery->state = R600_QUERY_STATE_STARTED;
 	rquery->num_results = 0;
-	rquery->flushed = false;
+	rquery->flushed = FALSE;
 	r600_query_resume(ctx, rquery);
 	r = radeon_ctx_set_query_state(rctx->ctx, &rquery->rstate);
 	if (r == -EBUSY) {
@@ -231,7 +231,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 
 	if (!rquery->flushed) {
 		ctx->flush(ctx, 0, NULL);
-		rquery->flushed = true;
+		rquery->flushed = TRUE;
 	}
 	r600_query_result(ctx, rquery);
 	*result = rquery->result;

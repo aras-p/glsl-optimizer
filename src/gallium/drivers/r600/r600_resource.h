@@ -103,7 +103,7 @@ static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buf
 
 static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
 {
-    return r600_buffer(buffer)->user_buffer ? true : false;
+    return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
 #endif
