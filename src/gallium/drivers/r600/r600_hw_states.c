@@ -540,7 +540,7 @@ static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_screen *rscreen = rctx->screen;
 	const struct util_format_description *desc;
-	struct r600_resource_texture *tmp;
+	struct r600_resource_texture *texture;
 	struct r600_resource *rbuffer;
 	unsigned format;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
@@ -564,15 +564,15 @@ static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 		return;
 	}
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_RESOURCE, id, R600_SHADER_PS);
-	tmp = (struct r600_resource_texture*)view->texture;
-	rbuffer = &tmp->resource;
-	if (tmp->depth) {
-		r = r600_texture_from_depth(ctx, tmp, view->first_level);
+	texture = (struct r600_resource_texture*)view->texture;
+	rbuffer = &texture->resource;
+	if (texture->depth) {
+		r = r600_texture_from_depth(ctx, texture, view->first_level);
 		if (r) {
 			return;
 		}
-		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], tmp->uncompressed);
-		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], tmp->uncompressed);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], texture->uncompressed);
+		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], texture->uncompressed);
 	} else {
 		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rbuffer->bo);
 		radeon_ws_bo_reference(rscreen->rw, &rstate->bo[1], rbuffer->bo);
@@ -583,7 +583,7 @@ static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[3] = RADEON_GEM_DOMAIN_GTT;
 
-	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
+	pitch = align(texture->pitch[0] / texture->bpt, 8);
 
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
@@ -596,8 +596,8 @@ static void r600_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 			S_038004_TEX_HEIGHT(view->texture->height0 - 1) |
 			S_038004_TEX_DEPTH(view->texture->depth0 - 1) |
 			S_038004_DATA_FORMAT(format);
-	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = tmp->offset[0] >> 8;
-	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = tmp->offset[1] >> 8;
+	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = texture->offset[0] >> 8;
+	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = texture->offset[1] >> 8;
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD4] =
 		        word4 | 
 			S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
