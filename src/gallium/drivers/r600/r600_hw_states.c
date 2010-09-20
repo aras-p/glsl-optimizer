@@ -232,7 +232,8 @@ static void r600_rasterizer(struct r600_context *rctx, struct radeon_state *rsta
 
 	rctx->flat_shade = state->flatshade;
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_RASTERIZER, 0, 0);
-	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] = 0x00000001;
+	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] =
+		S_0286D4_FLAT_SHADE_ENA(1);
 	if (state->sprite_coord_enable) {
 		rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] |=
 				S_0286D4_PNT_SPRITE_ENA(1) |
@@ -271,10 +272,10 @@ static void r600_rasterizer(struct r600_context *rctx, struct radeon_state *rsta
 	rstate->states[R600_RASTERIZER__PA_SC_LINE_STIPPLE] = 0x00000005;
 	rstate->states[R600_RASTERIZER__PA_SC_MPASS_PS_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_SC_LINE_CNTL] = 0x00000400;
-	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_CLIP_ADJ] = 0x3F800000;
-	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_DISC_ADJ] = 0x3F800000;
-	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_CLIP_ADJ] = 0x3F800000;
-	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_DISC_ADJ] = 0x3F800000;
+	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_CLIP_ADJ] = fui(1);
+	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_DISC_ADJ] = fui(1);
+	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_CLIP_ADJ] = fui(1);
+	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_DISC_ADJ] = fui(1);
 	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_DB_FMT_CNTL] = offset_db_fmt_cntl;
 	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_CLAMP] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_FRONT_SCALE] = fui(offset_scale);
@@ -314,7 +315,8 @@ static void r600_scissor(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_SCISSOR__PA_SC_WINDOW_OFFSET] = 0x00000000;
 	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_TL] = tl;
 	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_BR] = br;
-	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_RULE] = 0x0000FFFF;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_RULE] =
+		S_02820C_CLIP_RULE(0xFFFF);
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_TL] = tl;
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_BR] = br;
 	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_1_TL] = tl;
@@ -339,8 +341,8 @@ static void r600_viewport(struct r600_context *rctx, struct radeon_state *rstate
 	struct r600_screen *rscreen = rctx->screen;
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_VIEWPORT, 0, 0);
-	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMIN_0] = 0x00000000;
-	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
+	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMIN_0] = fui(0);
+	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = fui(1);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui(state->scale[0]);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui(state->scale[1]);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = fui(state->scale[2]);
@@ -437,7 +439,7 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	}
 
 	rstate->states[R600_DSA__DB_STENCIL_CLEAR] = 0x00000000;
-	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
+	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = fui(1);
 	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = alpha_test_control;
 	rstate->states[R600_DSA__DB_STENCILREFMASK] = stencil_ref_mask;
 	rstate->states[R600_DSA__DB_STENCILREFMASK_BF] = stencil_ref_mask_bf;
@@ -830,21 +832,38 @@ static void r600_init_config(struct r600_context *rctx)
 	rctx->config.states[R600_CONFIG__SX_MISC] = 0x00000000;
 
 	if (family >= CHIP_RV770) {
-		rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00004000;
+		rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] =
+			S_008D8C_VS_PC_LIMIT_ENABLE(1);
 		rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002;
 		rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x00000000;
-		rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x00420204;
+		rctx->config.states[R600_CONFIG__DB_WATERMARKS] =
+			S_009838_DEPTH_FREE(4) |
+			S_009838_DEPTH_FLUSH(16) |
+			S_009838_DEPTH_PENDING_FREE(4) |
+			S_009838_DEPTH_CACHELINE_FREE(4);
 		rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000000;
-		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00514000;
+		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00500000 |
+			S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1) |
+			S_028A4C_FORCE_EOV_REZ_ENABLE(1);
 	} else {
 		rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00000000;
-		rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000003;
+		rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002 |
+			S_009508_DISABLE_CUBE_WRAP(1);
 		rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x82000000;
-		rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x01020204;
-		rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000001;
-		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00004010;
+		rctx->config.states[R600_CONFIG__DB_WATERMARKS] =
+			S_009838_DEPTH_FREE(4) |
+			S_009838_DEPTH_FLUSH(16) |
+			S_009838_DEPTH_PENDING_FREE(4) |
+			S_009838_DEPTH_CACHELINE_FREE(16);
+		rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] =
+			S_0286C8_PS_GROUPING(1);
+		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] =
+			S_028A4C_WALK_ORDER_ENABLE(1) |
+			S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1);
 	}
-	rctx->config.states[R600_CONFIG__CB_SHADER_CONTROL] = 0x00000003;
+	rctx->config.states[R600_CONFIG__CB_SHADER_CONTROL] =
+		S_0287A0_RT0_ENABLE(1) |
+		S_0287A0_RT1_ENABLE(1);
 	rctx->config.states[R600_CONFIG__SQ_ESGS_RING_ITEMSIZE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__SQ_GSVS_RING_ITEMSIZE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__SQ_ESTMP_RING_ITEMSIZE] = 0x00000000;
@@ -868,7 +887,7 @@ static void r600_init_config(struct r600_context *rctx)
 	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_1_FMT_CNTL] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_GS_MODE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_STRMOUT_EN] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_REUSE_OFF] = 0x00000001;
+	rctx->config.states[R600_CONFIG__VGT_REUSE_OFF] = S_028AB4_REUSE_OFF(1);
 	rctx->config.states[R600_CONFIG__VGT_VTX_CNT_EN] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_STRMOUT_BUFFER_EN] = 0x00000000;
 	radeon_state_pm4(&rctx->config);
@@ -986,7 +1005,8 @@ static int r600_ps_shader(struct r600_context *rctx, struct r600_context_state *
 	if (have_pos) {
 		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1) |
 		                                                       S_0286CC_BARYC_SAMPLE_CNTL(1);
-		state->states[R600_PS_SHADER__SPI_INPUT_Z] |= 1;
+		state->states[R600_PS_SHADER__SPI_INPUT_Z] |=
+			S_0286D8_PROVIDE_Z_TO_SPI(1);
 	}
 
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
@@ -1170,7 +1190,7 @@ static void r600_texture_state_viewport(struct r600_screen *rscreen, struct r600
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = 0x3F000000;
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = 0x3F000000;
 	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
-	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
+	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = fui(1);
 
 	radeon_state_pm4(rstate);
 }
