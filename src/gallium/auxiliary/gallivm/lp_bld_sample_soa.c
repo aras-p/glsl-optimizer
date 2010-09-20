@@ -1195,7 +1195,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
             lp_is_simple_wrap_mode(static_state->wrap_s) &&
             lp_is_simple_wrap_mode(static_state->wrap_t)) {
       /* do sampling/filtering with fixed pt arithmetic */
-      printf("new sample\n");
       lp_build_sample_aos(&bld, unit, s, t, r, ddx, ddy,
                           lod_bias, explicit_lod,
                           width, height, depth,
@@ -1217,7 +1216,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                       static_state->wrap_t);
       }
 
-      printf("old sample\n");
       lp_build_sample_general(&bld, unit, s, t, r, ddx, ddy,
                               lod_bias, explicit_lod,
                               width, height, depth,
