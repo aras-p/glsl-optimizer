@@ -346,7 +346,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
-	map = radeon_ws_bo_map(radeon, bo, 0, r600_context(ctx));
+	map = radeon_ws_bo_map(radeon, bo, 0, ctx);
 	if (!map) {
 		return NULL;
 	}

@@ -171,7 +171,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
-	data = radeon_ws_bo_map(rscreen->rw, rbuffer->r.bo, transfer->usage, rctx);
+	data = radeon_ws_bo_map(rscreen->rw, rbuffer->r.bo, transfer->usage, pipe);
 	if (!data)
 		return NULL;
 

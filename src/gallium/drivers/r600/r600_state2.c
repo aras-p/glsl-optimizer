@@ -1600,6 +1600,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
+		pipe_surface_reference(&rctx->framebuffer.cbufs[i], NULL);
+	}
+	for (int i = 0; i < state->nr_cbufs; i++) {
 		pipe_surface_reference(&rctx->framebuffer.cbufs[i], state->cbufs[i]);
 	}
 	pipe_surface_reference(&rctx->framebuffer.zsbuf, state->zsbuf);

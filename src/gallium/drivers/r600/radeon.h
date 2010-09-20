@@ -221,5 +221,4 @@ enum r600_stype {
 #define R600_QUERY_SIZE				1
 #define R600_QUERY_PM4				128
 
-void r600_flush_ctx(void *data);
 #endif
