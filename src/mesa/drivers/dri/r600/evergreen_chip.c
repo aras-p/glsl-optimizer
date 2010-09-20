@@ -1221,7 +1221,6 @@ static void evergreenSetRenderTarget(context_t *context, int id)
 	    source_format = 1;
             break;
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
             format = COLOR_8;
             comp_swap = SWAP_STD;
 	    number_type = NUMBER_UNORM;

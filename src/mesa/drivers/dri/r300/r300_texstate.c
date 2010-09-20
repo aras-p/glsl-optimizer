@@ -109,8 +109,6 @@ int32_t r300TranslateTexFormat(gl_format mesaFormat)
 			return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
 		case MESA_FORMAT_I8:
 			return R300_EASY_TX_FORMAT(X, X, X, X, X8);
-		case MESA_FORMAT_CI8:
-			return R300_EASY_TX_FORMAT(X, X, X, X, X8);
 		case MESA_FORMAT_YCBCR:
 			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE;
 		case MESA_FORMAT_YCBCR_REV:

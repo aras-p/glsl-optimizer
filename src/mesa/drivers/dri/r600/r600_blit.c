@@ -55,7 +55,6 @@ unsigned r600_check_blit(gl_format mesa_format)
     case MESA_FORMAT_RGB332:
     case MESA_FORMAT_A8:
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
     case MESA_FORMAT_L8:
     case MESA_FORMAT_RGBA_FLOAT32:
     case MESA_FORMAT_RGBA_FLOAT16:
@@ -252,7 +251,6 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
             format = COLOR_8;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -910,7 +908,6 @@ set_tex_resource(context_t * context,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    break;
     case MESA_FORMAT_I8: /* X, X, X, X */
-    case MESA_FORMAT_CI8:
 	    SETfield(sq_tex_resource1, FMT_8,
 		     SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 

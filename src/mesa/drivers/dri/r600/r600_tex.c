@@ -415,7 +415,6 @@ unsigned r600IsFormatRenderable(gl_format mesa_format)
 	case MESA_FORMAT_RGB332:
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_I8:
-	case MESA_FORMAT_CI8:
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_RGBA_FLOAT32:
 	case MESA_FORMAT_RGBA_FLOAT16:

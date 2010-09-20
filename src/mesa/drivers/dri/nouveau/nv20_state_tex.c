@@ -111,9 +111,6 @@ get_tex_format_pot(struct gl_texture_image *ti)
 	case MESA_FORMAT_L8:
 		return NV20_3D_TEX_FORMAT_FORMAT_L8;
 
-	case MESA_FORMAT_CI8:
-		return NV20_3D_TEX_FORMAT_FORMAT_INDEX8;
-
 	default:
 		assert(0);
 	}

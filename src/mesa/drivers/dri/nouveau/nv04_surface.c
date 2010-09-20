@@ -41,7 +41,6 @@ swzsurf_format(gl_format format)
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_I8:
 	case MESA_FORMAT_RGB332:
-	case MESA_FORMAT_CI8:
 		return NV04_SWIZZLED_SURFACE_FORMAT_COLOR_Y8;
 
 	case MESA_FORMAT_RGB565:
@@ -81,7 +80,6 @@ surf2d_format(gl_format format)
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_I8:
 	case MESA_FORMAT_RGB332:
-	case MESA_FORMAT_CI8:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
 
 	case MESA_FORMAT_RGB565:
@@ -121,7 +119,6 @@ rect_format(gl_format format)
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_I8:
 	case MESA_FORMAT_RGB332:
-	case MESA_FORMAT_CI8:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 
 	case MESA_FORMAT_RGB565:
@@ -161,7 +158,6 @@ sifm_format(gl_format format)
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_I8:
 	case MESA_FORMAT_RGB332:
-	case MESA_FORMAT_CI8:
 		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_AY8;
 
 	case MESA_FORMAT_RGB565:

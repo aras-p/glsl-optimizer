@@ -58,7 +58,6 @@ unsigned evergreen_check_blit(gl_format mesa_format)
     case MESA_FORMAT_RGB332:
     case MESA_FORMAT_A8:
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
     case MESA_FORMAT_L8:
     case MESA_FORMAT_RGBA_FLOAT32:
     case MESA_FORMAT_RGBA_FLOAT16:
@@ -268,7 +267,6 @@ eg_set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_fo
 	    source_format = 1;
             break;
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
             format = COLOR_8;
             comp_swap = SWAP_STD;
 	    number_type = NUMBER_UNORM;
@@ -922,7 +920,6 @@ eg_set_tex_resource(context_t * context,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    break;
     case MESA_FORMAT_I8: /* X, X, X, X */
-    case MESA_FORMAT_CI8:
 	    SETfield(sq_tex_resource7, FMT_8,
 		     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift,
 		     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);

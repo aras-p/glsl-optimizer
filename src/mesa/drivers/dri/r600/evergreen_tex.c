@@ -496,7 +496,6 @@ static GLboolean evergreenGetTexFormat(struct gl_texture_object *tObj, gl_format
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		break;
 	case MESA_FORMAT_I8: /* X, X, X, X */
-	case MESA_FORMAT_CI8:
 		SETfield(t->SQ_TEX_RESOURCE7, FMT_8,
 			     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                  EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);

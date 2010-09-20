@@ -410,7 +410,6 @@ static void r700SetRenderTarget(context_t *context, int id)
 	    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
             break;
     case MESA_FORMAT_I8:
-    case MESA_FORMAT_CI8:
             format = COLOR_8;
             comp_swap = SWAP_STD;
 	    number_type = NUMBER_UNORM;
