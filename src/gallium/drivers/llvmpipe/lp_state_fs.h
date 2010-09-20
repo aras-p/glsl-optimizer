@@ -100,6 +100,8 @@ struct lp_fragment_shader
 
    struct lp_fs_variant_list_item variants;
 
+   struct draw_fragment_shader *draw_data;
+
    /* For debugging/profiling purposes */
    unsigned variant_key_size;
    unsigned no;
