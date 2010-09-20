@@ -71,7 +71,8 @@ perspective_coef(struct lp_setup_context *setup,
                  const struct point_info *info,
                  unsigned slot,
                  unsigned vert_attr,
-                 unsigned i)
+                 unsigned i,
+                 unsigned sprite_coord_origin)
 {
    if (i == 0) {
       float dadx = FIXED_ONE / (float)info->dx12;
@@ -83,14 +84,18 @@ perspective_coef(struct lp_setup_context *setup,
                                    dady * ((float)info->v0[0][1] - setup->pixel_offset)));
    }
    else if (i == 1) {
-      float dadx =  0.0f;
-      float dady =  FIXED_ONE / (float)info->dx12;
+      float dadx = 0.0f;
+      float dady = FIXED_ONE / (float)info->dx12;
+
+      if (sprite_coord_origin == PIPE_SPRITE_COORD_LOWER_LEFT) {
+         dady = -dady;
+      }
 
       point->inputs.dadx[slot][i] = dadx;
       point->inputs.dady[slot][i] = dady;
       point->inputs.a0[slot][i] = (0.5 -
-                                  (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
-                                   dady * ((float)info->v0[0][1] - setup->pixel_offset)));
+                                   (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
+                                    dady * ((float)info->v0[0][1] - setup->pixel_offset)));
    }
    else if (i == 2) {
       point->inputs.a0[slot][i] = 0.0f;
@@ -187,7 +192,8 @@ setup_point_coefficients( struct lp_setup_context *setup,
             if (setup->sprite_coord_enable & (1 << index)) {
                for (i = 0; i < NUM_CHANNELS; i++)
                   if (usage_mask & (1 << i))
-                     perspective_coef(setup, point, info, slot+1, vert_attr, i);
+                     perspective_coef(setup, point, info, slot+1, vert_attr, i,
+                                      setup->sprite_coord_origin);
                fragcoord_usage_mask |= TGSI_WRITEMASK_W;
                break;                     
             }
