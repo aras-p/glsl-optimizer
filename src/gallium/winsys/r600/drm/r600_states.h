@@ -401,7 +401,7 @@ static const struct radeon_register R600_names_GS_SAMPLER_BORDER[] = {
 
 static const struct radeon_register R600_names_CB0[] = {
 	{0x00028040, 1, 0, "CB_COLOR0_BASE"},
-	{0x000280A0, 0, 0, "CB_COLOR0_INFO"},
+	{0x000280A0, 1, 0, "CB_COLOR0_INFO"},
 	{0x00028060, 0, 0, "CB_COLOR0_SIZE"},
 	{0x00028080, 0, 0, "CB_COLOR0_VIEW"},
 	{0x000280E0, 1, 0, "CB_COLOR0_FRAG"},
@@ -411,7 +411,7 @@ static const struct radeon_register R600_names_CB0[] = {
 
 static const struct radeon_register R600_names_CB1[] = {
 	{0x00028044, 1, 0, "CB_COLOR1_BASE"},
-	{0x000280A4, 0, 0, "CB_COLOR1_INFO"},
+	{0x000280A4, 1, 0, "CB_COLOR1_INFO"},
 	{0x00028064, 0, 0, "CB_COLOR1_SIZE"},
 	{0x00028084, 0, 0, "CB_COLOR1_VIEW"},
 	{0x000280E4, 1, 0, "CB_COLOR1_FRAG"},
@@ -421,7 +421,7 @@ static const struct radeon_register R600_names_CB1[] = {
 
 static const struct radeon_register R600_names_CB2[] = {
 	{0x00028048, 1, 0, "CB_COLOR2_BASE"},
-	{0x000280A8, 0, 0, "CB_COLOR2_INFO"},
+	{0x000280A8, 1, 0, "CB_COLOR2_INFO"},
 	{0x00028068, 0, 0, "CB_COLOR2_SIZE"},
 	{0x00028088, 0, 0, "CB_COLOR2_VIEW"},
 	{0x000280E8, 1, 0, "CB_COLOR2_FRAG"},
@@ -431,7 +431,7 @@ static const struct radeon_register R600_names_CB2[] = {
 
 static const struct radeon_register R600_names_CB3[] = {
 	{0x0002804C, 1, 0, "CB_COLOR3_BASE"},
-	{0x000280AC, 0, 0, "CB_COLOR3_INFO"},
+	{0x000280AC, 1, 0, "CB_COLOR3_INFO"},
 	{0x0002806C, 0, 0, "CB_COLOR3_SIZE"},
 	{0x0002808C, 0, 0, "CB_COLOR3_VIEW"},
 	{0x000280EC, 1, 0, "CB_COLOR3_FRAG"},
@@ -441,7 +441,7 @@ static const struct radeon_register R600_names_CB3[] = {
 
 static const struct radeon_register R600_names_CB4[] = {
 	{0x00028050, 1, 0, "CB_COLOR4_BASE"},
-	{0x000280B0, 0, 0, "CB_COLOR4_INFO"},
+	{0x000280B0, 1, 0, "CB_COLOR4_INFO"},
 	{0x00028070, 0, 0, "CB_COLOR4_SIZE"},
 	{0x00028090, 0, 0, "CB_COLOR4_VIEW"},
 	{0x000280F0, 1, 0, "CB_COLOR4_FRAG"},
@@ -451,7 +451,7 @@ static const struct radeon_register R600_names_CB4[] = {
 
 static const struct radeon_register R600_names_CB5[] = {
 	{0x00028054, 1, 0, "CB_COLOR5_BASE"},
-	{0x000280B4, 0, 0, "CB_COLOR5_INFO"},
+	{0x000280B4, 1, 0, "CB_COLOR5_INFO"},
 	{0x00028074, 0, 0, "CB_COLOR5_SIZE"},
 	{0x00028094, 0, 0, "CB_COLOR5_VIEW"},
 	{0x000280F4, 1, 0, "CB_COLOR5_FRAG"},
@@ -461,7 +461,7 @@ static const struct radeon_register R600_names_CB5[] = {
 
 static const struct radeon_register R600_names_CB6[] = {
 	{0x00028058, 1, 0, "CB_COLOR6_BASE"},
-	{0x000280B8, 0, 0, "CB_COLOR6_INFO"},
+	{0x000280B8, 1, 0, "CB_COLOR6_INFO"},
 	{0x00028078, 0, 0, "CB_COLOR6_SIZE"},
 	{0x00028098, 0, 0, "CB_COLOR6_VIEW"},
 	{0x000280F8, 1, 0, "CB_COLOR6_FRAG"},
@@ -471,7 +471,7 @@ static const struct radeon_register R600_names_CB6[] = {
 
 static const struct radeon_register R600_names_CB7[] = {
 	{0x0002805C, 1, 0, "CB_COLOR7_BASE"},
-	{0x000280BC, 0, 0, "CB_COLOR7_INFO"},
+	{0x000280BC, 1, 0, "CB_COLOR7_INFO"},
 	{0x0002807C, 0, 0, "CB_COLOR7_SIZE"},
 	{0x0002809C, 0, 0, "CB_COLOR7_VIEW"},
 	{0x000280FC, 1, 0, "CB_COLOR7_FRAG"},
@@ -483,7 +483,7 @@ static const struct radeon_register R600_names_DB[] = {
 	{0x0002800C, 1, 0, "DB_DEPTH_BASE"},
 	{0x00028000, 0, 0, "DB_DEPTH_SIZE"},
 	{0x00028004, 0, 0, "DB_DEPTH_VIEW"},
-	{0x00028010, 0, 0, "DB_DEPTH_INFO"},
+	{0x00028010, 1, 0, "DB_DEPTH_INFO"},
 	{0x00028D24, 0, 0, "DB_HTILE_SURFACE"},
 	{0x00028D34, 0, 0, "DB_PREFETCH_LIMIT"},
 };
