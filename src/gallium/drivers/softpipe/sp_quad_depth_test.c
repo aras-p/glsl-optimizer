@@ -696,8 +696,8 @@ depth_test_quads_fallback(struct quad_stage *qs,
    }
 
    if (qs->softpipe->framebuffer.zsbuf &&
-	(qs->softpipe->depth_stencil->depth.enabled ||
-       qs->softpipe->depth_stencil->stencil[0].enabled)) {
+         (qs->softpipe->depth_stencil->depth.enabled ||
+          qs->softpipe->depth_stencil->stencil[0].enabled)) {
 
       data.ps = qs->softpipe->framebuffer.zsbuf;
       data.format = data.ps->format;
