@@ -52,26 +52,29 @@ struct point_info {
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  */
-static void constant_coef( struct lp_setup_context *setup,
-                           struct lp_rast_triangle *point,
-                           unsigned slot,
-                           const float value,
-                           unsigned i )
+static void
+constant_coef(struct lp_setup_context *setup,
+              struct lp_rast_triangle *point,
+              unsigned slot,
+              const float value,
+              unsigned i)
 {
    point->inputs.a0[slot][i] = value;
    point->inputs.dadx[slot][i] = 0.0f;
    point->inputs.dady[slot][i] = 0.0f;
 }
 
-static void perspective_coef( struct lp_setup_context *setup,
-                              struct lp_rast_triangle *point,
-                              const struct point_info *info,
-                              unsigned slot,
-                              unsigned vert_attr,
-                              unsigned i)
+
+static void
+perspective_coef(struct lp_setup_context *setup,
+                 struct lp_rast_triangle *point,
+                 const struct point_info *info,
+                 unsigned slot,
+                 unsigned vert_attr,
+                 unsigned i)
 {
-   if (i == 0) {   
-      float dadx = FIXED_ONE / (float)info->dx12;  
+   if (i == 0) {
+      float dadx = FIXED_ONE / (float)info->dx12;
       float dady =  0.0f;
       point->inputs.dadx[slot][i] = dadx;
       point->inputs.dady[slot][i] = dady;
@@ -79,30 +82,26 @@ static void perspective_coef( struct lp_setup_context *setup,
                                   (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
                                    dady * ((float)info->v0[0][1] - setup->pixel_offset)));
    }
-
    else if (i == 1) {
-      float dadx =  0.0f; 
+      float dadx =  0.0f;
       float dady =  FIXED_ONE / (float)info->dx12;
-   
+
       point->inputs.dadx[slot][i] = dadx;
       point->inputs.dady[slot][i] = dady;
       point->inputs.a0[slot][i] = (0.5 -
                                   (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
                                    dady * ((float)info->v0[0][1] - setup->pixel_offset)));
    }
-
    else if (i == 2) {
       point->inputs.a0[slot][i] = 0.0f;
       point->inputs.dadx[slot][i] = 0.0f;
       point->inputs.dady[slot][i] = 0.0f;
    }
-      
    else if (i == 3) {
       point->inputs.a0[slot][i] = 1.0f;
       point->inputs.dadx[slot][i] = 0.0f;
       point->inputs.dady[slot][i] = 0.0f;
    }
-
 }
 
 
@@ -143,6 +142,7 @@ setup_point_fragcoord_coef(struct lp_setup_context *setup,
       constant_coef(setup, point, slot, info->v0[0][3], 3);
    }
 }
+
 
 /**
  * Compute the point->coef[] array dadx, dady, a0 values.
@@ -202,6 +202,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
    setup_point_fragcoord_coef(setup, point, info, 0,
                               fragcoord_usage_mask);
 }
+
 
 static INLINE int
 subpixel_snap(float a)
@@ -322,8 +323,9 @@ try_setup_point( struct lp_setup_context *setup,
 }
 
 
-static void lp_setup_point( struct lp_setup_context *setup,
-                           const float (*v0)[4] )
+static void 
+lp_setup_point(struct lp_setup_context *setup,
+               const float (*v0)[4])
 {
    if (!try_setup_point( setup, v0 ))
    {
