@@ -173,7 +173,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 					    rctx->index_buffer.offset, &draw.start,
 					    info->count);
 
-		fprintf(stderr,"draw start is %d\n", draw.start);
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
 		draw.index_buffer_offset = rctx->index_buffer.offset;
