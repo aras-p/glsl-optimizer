@@ -967,6 +967,55 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 			return r;
 	}
 
+	/* dst.z = 0.0; */
+	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Z) {
+		fprintf(stderr, "writing z\n");
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+
+		r = tgsi_dst(ctx, &inst->Dst[0], 2, &alu.dst);
+		if (r)
+			return r;
+
+		alu.src[0].sel = V_SQ_ALU_SRC_0;
+		alu.src[0].chan = 0;
+
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+	}
+
+	/* dst.w = 1.0; */
+	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_W) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+
+		r = tgsi_dst(ctx, &inst->Dst[0], 3, &alu.dst);
+		if (r)
+			return r;
+
+		alu.src[0].sel = V_SQ_ALU_SRC_1;
+		alu.src[0].chan = 0;
+
+		alu.last = 1;
+
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+	}
+
 	return 0;
 }
 
