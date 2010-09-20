@@ -33,6 +33,10 @@
 #include "r600_context.h"
 #include "r600_resource.h"
 
+static void clean_flush(struct r600_context *rctx, struct radeon_state *flush);
+static int setup_cb_flush(struct r600_context *rctx, struct radeon_state *flush);
+static int setup_db_flush(struct r600_context *rctx, struct radeon_state *flush);
+
 static struct r600_context_state *r600_new_context_state(unsigned type)
 {
 	struct r600_context_state *rstate = CALLOC_STRUCT(r600_context_state);
@@ -379,6 +383,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	int i;
 
 	r600_context_state_decref(rctx->framebuffer);
+	clean_flush(rctx, &rctx->hw_states.cb_flush);
+	clean_flush(rctx, &rctx->hw_states.db_flush);
 
 	rstate = r600_new_context_state(pipe_framebuffer_type);
 	rstate->state.framebuffer = *state;
@@ -393,6 +399,10 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (state->zsbuf) {
 		rctx->vtbl->db(rctx, &rstate->rstate[0], state);
 	}
+	/* setup flush states */
+	setup_cb_flush(rctx, &rctx->hw_states.cb_flush);
+	setup_db_flush(rctx, &rctx->hw_states.db_flush);
+
 	return;
 }
 
@@ -554,6 +564,7 @@ struct r600_context_state *r600_context_state_decref(struct r600_context_state *
 	case pipe_framebuffer_type:
 		for (i = 0; i < rstate->state.framebuffer.nr_cbufs; i++) {
 			pipe_surface_reference(&rstate->state.framebuffer.cbufs[i], NULL);
+			radeon_state_fini(&rstate->rstate[i+1]);
 		}
 		pipe_surface_reference(&rstate->state.framebuffer.zsbuf, NULL);
 		break;
@@ -600,6 +611,17 @@ static void r600_bind_shader_sampler(struct r600_context *rctx, struct r600_shad
 	}
 }
 
+static void clean_flush(struct r600_context *rctx, struct radeon_state *flush)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	int i;
+
+	for (i = 0 ; i < flush->nbo; i++) {
+		radeon_ws_bo_reference(rscreen->rw, &flush->bo[i], NULL);
+	}
+	flush->nbo = 0;
+	radeon_state_fini(flush);
+}
 
 static int setup_cb_flush(struct r600_context *rctx, struct radeon_state *flush)
 {
@@ -658,10 +680,6 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	rctx->vtbl->dsa(rctx, &rctx->hw_states.dsa);
 	rctx->vtbl->cb_cntl(rctx, &rctx->hw_states.cb_cntl);
 							       
-	/* setup flushes */
-	setup_db_flush(rctx, &rctx->hw_states.db_flush);
-	setup_cb_flush(rctx, &rctx->hw_states.cb_flush);
-
 	/* bind states */
 	radeon_draw_bind(&rctx->draw, &rctx->config);
 
@@ -669,9 +687,6 @@ int r600_context_hw_states(struct pipe_context *ctx)
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.scissor);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.dsa);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_cntl);
-
-	radeon_draw_bind(&rctx->draw, &rctx->hw_states.db_flush);
-	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_flush);
 
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.db_flush);
 	radeon_draw_bind(&rctx->draw, &rctx->hw_states.cb_flush);

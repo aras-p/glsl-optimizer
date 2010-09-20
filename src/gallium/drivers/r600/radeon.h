@@ -102,6 +102,9 @@ void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 			    struct radeon_ws_bo *src);
 
 struct radeon_stype_info;
+
+/* currently limited to max buffers in a cb flush */
+#define RADEON_STATE_MAX_BO 8
 /*
  * states functions
  */
@@ -119,7 +122,7 @@ struct radeon_state {
 	u32				pm4_crc;
 	u32				pm4[128];
 	unsigned			nbo;
-	struct radeon_ws_bo		*bo[4];
+	struct radeon_ws_bo		*bo[RADEON_STATE_MAX_BO];
 	unsigned			nreloc;
 	unsigned			reloc_pm4_id[8];
 	unsigned			reloc_bo_id[8];
