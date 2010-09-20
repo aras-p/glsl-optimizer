@@ -527,7 +527,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_clip_state = r600_set_clip_state;
 
-	if (rctx->screen->chip_class == EVERGREEN)
+	if (radeon_get_family_class(rctx->rw) == EVERGREEN)
 		rctx->context.set_constant_buffer = eg_set_constant_buffer;
 	else if (rctx->screen->use_mem_constant)
 		rctx->context.set_constant_buffer = r600_set_constant_buffer_mem;

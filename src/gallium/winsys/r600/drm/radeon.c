@@ -30,6 +30,11 @@ enum radeon_family radeon_get_family(struct radeon *radeon)
 	return radeon->family;
 }
 
+enum chip_class radeon_get_family_class(struct radeon *radeon)
+{
+	return radeon->chip_class;
+}
+
 void radeon_set_mem_constant(struct radeon *radeon, boolean state)
 {
 	radeon->use_mem_constant = state;
@@ -121,6 +126,37 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_RV560:
 	case CHIP_RV570:
 	case CHIP_R580:
+	default:
+		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
+			__func__, radeon->device);
+		break;
+	}
+
+	/* setup class */
+	switch (radeon->family) {
+	case CHIP_R600:
+	case CHIP_RV610:
+	case CHIP_RV630:
+	case CHIP_RV670:
+	case CHIP_RV620:
+	case CHIP_RV635:
+	case CHIP_RS780:
+	case CHIP_RS880:
+		radeon->chip_class = R600;
+		break;
+	case CHIP_RV770:
+	case CHIP_RV730:
+	case CHIP_RV710:
+	case CHIP_RV740:
+		radeon->chip_class = R700;
+		break;
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		radeon->chip_class = EVERGREEN;
+		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
 			__func__, radeon->device);

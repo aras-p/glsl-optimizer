@@ -283,7 +283,7 @@ static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
-	switch (rscreen->chip_class) {
+	switch (radeon_get_family_class(rscreen->rw)) {
 	case R600:
 		memcpy(data, shader_bc_r600, 128);
 		break;
@@ -347,7 +347,7 @@ static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return;
 	}
-	switch (rscreen->chip_class) {
+	switch (radeon_get_family_class(rscreen->rw)) {
 	case R600:
 		memcpy(data, shader_bc_r600, 48);
 		break;

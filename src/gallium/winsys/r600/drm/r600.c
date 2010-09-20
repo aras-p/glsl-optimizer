@@ -32,6 +32,11 @@ enum radeon_family r600_get_family(struct radeon *r600)
 	return r600->family;
 }
 
+enum chip_class r600_get_family_class(struct radeon *radeon)
+{
+	return radeon->chip_class;
+}
+
 static int r600_get_device(struct radeon *r600)
 {
 	struct drm_radeon_info info;
@@ -117,6 +122,37 @@ struct radeon *r600_new(int fd, unsigned device)
 		R600_ERR("unknown or unsupported chipset 0x%04X\n", r600->device);
 		break;
 	}
+
+	/* setup class */
+	switch (r600->family) {
+	case CHIP_R600:
+	case CHIP_RV610:
+	case CHIP_RV630:
+	case CHIP_RV670:
+	case CHIP_RV620:
+	case CHIP_RV635:
+	case CHIP_RS780:
+	case CHIP_RS880:
+		r600->chip_class = R600;
+		break;
+	case CHIP_RV770:
+	case CHIP_RV730:
+	case CHIP_RV710:
+	case CHIP_RV740:
+		r600->chip_class = R700;
+		break;
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		r600->chip_class = EVERGREEN;
+		break;
+	default:
+		R600_ERR("unknown or unsupported chipset 0x%04X\n", r600->device);
+		break;
+	}
+
 	return r600;
 }
 

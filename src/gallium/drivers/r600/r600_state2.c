@@ -56,12 +56,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 #include "r600_state_inlines.h"
 
-enum chip_class {
-	R600,
-	R700,
-	EVERGREEN,
-};
-
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -85,7 +79,6 @@ enum r600_pipe_state_id {
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*radeon;
-	unsigned			chip_class;
 };
 
 struct r600_pipe_sampler_view {
@@ -2189,27 +2182,6 @@ struct pipe_screen *r600_screen_create2(struct radeon *radeon)
 		return NULL;
 	}
 
-	switch (family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		rscreen->chip_class = R600;
-		break;
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
-		rscreen->chip_class = R700;
-		break;
-	default:
-		FREE(rscreen);
-		return NULL;
-	}
 	rscreen->radeon = radeon;
 	rscreen->screen.winsys = (struct pipe_winsys*)radeon;
 	rscreen->screen.destroy = r600_destroy_screen;

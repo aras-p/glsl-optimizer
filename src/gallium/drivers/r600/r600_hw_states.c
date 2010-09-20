@@ -457,7 +457,7 @@ static void r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 
 	if (query_running) {
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
-		if (rscreen->chip_class == R700)
+		if (radeon_get_family_class(rscreen->rw) == R700)
 			db_render_control |= S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
 	}
 
@@ -656,7 +656,7 @@ static void r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = shader_mask;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = target_mask;
 	rstate->states[R600_CB_CNTL__CB_COLOR_CONTROL] = color_control;
-	if (rscreen->chip_class == R700)
+	if (radeon_get_family_class(rscreen->rw) == R700)
 		rstate->states[R600_CB_CNTL__CB_SHADER_CONTROL] = shader_control;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_CONFIG] = 0x00000000;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_MCTX] = 0x00000000;

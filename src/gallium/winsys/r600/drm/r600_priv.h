@@ -38,6 +38,7 @@ struct radeon {
 	int				refcount;
 	unsigned			device;
 	unsigned			family;
+	enum chip_class			chip_class;
 };
 
 struct radeon *r600_new(int fd, unsigned device);

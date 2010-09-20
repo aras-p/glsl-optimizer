@@ -79,6 +79,12 @@ enum radeon_family {
 	CHIP_LAST,
 };
 
+enum chip_class {
+	R600,
+	R700,
+	EVERGREEN,
+};
+
 enum {
 	R600_SHADER_PS = 1,
 	R600_SHADER_VS,
@@ -88,6 +94,7 @@ enum {
 };
 
 enum radeon_family radeon_get_family(struct radeon *rw);
+enum chip_class radeon_get_family_class(struct radeon *radeon);
 void radeon_set_mem_constant(struct radeon *radeon, boolean state);
 
 /* lowlevel WS bo */

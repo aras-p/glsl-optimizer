@@ -90,7 +90,14 @@ enum radeon_family {
 	CHIP_LAST,
 };
 
+enum chip_class {
+	R600,
+	R700,
+	EVERGREEN,
+};
+
 enum radeon_family r600_get_family(struct radeon *rw);
+enum chip_class r600_get_family_class(struct radeon *radeon);
 
 /* lowlevel WS bo */
 struct radeon_ws_bo;

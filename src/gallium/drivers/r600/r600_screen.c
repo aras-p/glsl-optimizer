@@ -242,39 +242,13 @@ struct pipe_screen *r600_screen_create(struct radeon *rw)
 	if (rscreen == NULL) {
 		return NULL;
 	}
-	
+
 	/* don't enable mem constant for r600 yet */
 	rscreen->use_mem_constant = FALSE;
-
-	switch (family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		rscreen->chip_class = R600;
-		break;
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
-		rscreen->chip_class = R700;
-		break;
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-		rscreen->chip_class = EVERGREEN;
+	if (radeon_get_family_class(rw) == EVERGREEN) {
 		rscreen->use_mem_constant = TRUE;
-		break;
-	default:
-		FREE(rscreen);
-		return NULL;
 	}
+
 	radeon_set_mem_constant(rw, rscreen->use_mem_constant);
 	rscreen->rw = rw;
 	rscreen->screen.winsys = (struct pipe_winsys*)rw;

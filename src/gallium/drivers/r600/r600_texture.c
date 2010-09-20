@@ -107,7 +107,6 @@ static void r600_setup_miptree(struct r600_resource_texture *rtex, enum chip_cla
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
-	struct r600_screen *rscreen = r600_screen(screen);
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
@@ -121,7 +120,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	resource->base.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
-	r600_setup_miptree(rtex, rscreen->chip_class);
+	r600_setup_miptree(rtex, radeon_get_family_class(radeon));
 
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
@@ -320,7 +319,6 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon_ws_bo *bo;
 	enum pipe_format format = transfer->resource->format;
@@ -334,7 +332,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
 		rtex = (struct r600_resource_texture*)transfer->resource;
-		if (rtex->depth && rscreen->chip_class != EVERGREEN) {
+		if (rtex->depth && radeon_get_family_class(radeon) != EVERGREEN) {
 			r = r600_texture_from_depth(ctx, rtex, transfer->sr.level);
 			if (r) {
 				return NULL;

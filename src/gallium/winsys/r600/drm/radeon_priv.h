@@ -83,6 +83,7 @@ struct radeon {
 	int				refcount;
 	unsigned			device;
 	unsigned			family;
+	enum chip_class			chip_class;
 	unsigned			nstype;
 	struct radeon_stype_info	*stype;
 	unsigned max_states;

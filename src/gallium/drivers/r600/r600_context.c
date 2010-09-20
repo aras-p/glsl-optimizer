@@ -113,7 +113,7 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->screen = rscreen;
 	rctx->rw = rscreen->rw;
 
-	if (rscreen->chip_class == EVERGREEN)
+	if (radeon_get_family_class(rscreen->rw) == EVERGREEN)
 		rctx->vtbl = &eg_hw_state_vtbl;
 	else
 		rctx->vtbl = &r600_hw_state_vtbl;
