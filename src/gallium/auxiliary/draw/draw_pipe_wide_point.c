@@ -237,7 +237,11 @@ widepoint_first_point(struct draw_stage *stage,
       for (i = 0; i < fs->info.num_inputs; i++) {
          if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             const int generic_index = fs->info.input_semantic_index[i];
-            if (rast->sprite_coord_enable & (1 << generic_index)) {
+            /* Note that sprite_coord enable is a bitfield of
+             * PIPE_MAX_SHADER_OUTPUTS bits.
+             */
+            if (generic_index < PIPE_MAX_SHADER_OUTPUTS &&
+                (rast->sprite_coord_enable & (1 << generic_index))) {
                /* OK, this generic attribute needs to be replaced with a
                 * texcoord (see above).
                 */
