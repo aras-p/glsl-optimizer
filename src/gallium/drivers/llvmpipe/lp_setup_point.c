@@ -152,6 +152,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
                           struct lp_rast_triangle *point,
                           const struct point_info *info)
 {
+   const struct lp_fragment_shader *shader = setup->fs.current.variant->shader;
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
 
@@ -172,12 +173,16 @@ setup_point_coefficients( struct lp_setup_context *setup,
          fragcoord_usage_mask |= usage_mask;
          break;
 
+      case LP_INTERP_LINEAR:
+         /* Sprite tex coords may use linear interpolation someday */
+         /* fall-through */
+
       case LP_INTERP_PERSPECTIVE:
-         /* For point sprite textures */        
-         if (setup->fs.current.variant->shader->info.input_semantic_name[slot] 
-             == TGSI_SEMANTIC_GENERIC) 
-         {
-            int index = setup->fs.current.variant->shader->info.input_semantic_index[slot];
+         /* check if the sprite coord flag is set for this attribute.
+          * If so, set it up so it up so x any y vary from 0 to 1.
+          */
+         if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
+            const int index = shader->info.input_semantic_index[slot];
             
             if (setup->sprite & (1 << index)) {
                for (i = 0; i < NUM_CHANNELS; i++)
