@@ -47,6 +47,7 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_bitarit.h"
 #include "lp_bld_logic.h"
+#include "lp_bld_printf.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_gather.h"
@@ -1057,6 +1058,11 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Do shadow test/comparison.
+ * \param p  the texcoord Z (aka R, aka P) component
+ * \param texel  the texel to compare against (use the X channel)
+ */
 static void
 lp_build_sample_compare(struct lp_build_sample_context *bld,
                         LLVMValueRef p,
@@ -1064,30 +1070,30 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *texel_bld = &bld->texel_bld;
    LLVMValueRef res;
-   unsigned chan;
+   const unsigned chan = 0;
 
-   if(bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
+   if (bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
 
-   /* TODO: Compare before swizzling, to avoid redundant computations */
-   res = NULL;
-   for(chan = 0; chan < 4; ++chan) {
-      LLVMValueRef cmp;
-      cmp = lp_build_cmp(texel_bld, bld->static_state->compare_func, p, texel[chan]);
-      cmp = lp_build_select(texel_bld, cmp, texel_bld->one, texel_bld->zero);
-
-      if(res)
-         res = lp_build_add(texel_bld, res, cmp);
-      else
-         res = cmp;
+   /* debug code */
+   if (0) {
+      LLVMValueRef indx = lp_build_const_int32(0);
+      LLVMValueRef coord = LLVMBuildExtractElement(bld->builder, p, indx, "");
+      LLVMValueRef tex = LLVMBuildExtractElement(bld->builder,
+                                                 texel[chan], indx, "");
+      lp_build_printf(bld->builder, "shadow compare coord %f to texture %f\n",
+                      coord, tex);
    }
 
-   assert(res);
-   res = lp_build_mul(texel_bld, res, lp_build_const_vec(texel_bld->type, 0.25));
+   /* result = (p FUNC texel) ? 1 : 0 */
+   res = lp_build_cmp(texel_bld, bld->static_state->compare_func,
+                      p, texel[chan]);
+   res = lp_build_select(texel_bld, res, texel_bld->one, texel_bld->zero);
 
    /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
-   for(chan = 0; chan < 3; ++chan)
-      texel[chan] = res;
+   texel[0] =
+   texel[1] =
+   texel[2] = res;
    texel[3] = texel_bld->one;
 }
 
