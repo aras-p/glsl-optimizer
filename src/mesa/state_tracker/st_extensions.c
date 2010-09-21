@@ -411,10 +411,7 @@ void st_init_extensions(struct st_context *st)
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW, 0) &&
-       (ctx->Mesa_DXTn ||
-        screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
-                                    PIPE_TEXTURE_2D, 0,
-                                    PIPE_BIND_RENDER_TARGET, 0))) {
+       ctx->Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
       ctx->Extensions.S3_s3tc = GL_TRUE;
    }

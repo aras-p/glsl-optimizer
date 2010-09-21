@@ -412,125 +412,6 @@ strip_texture_border(GLint border,
 
 
 /**
- * Try to do texture compression via rendering.  If the Gallium driver
- * can render into a compressed surface this will allow us to do texture
- * compression.
- * \return GL_TRUE for success, GL_FALSE for failure
- */
-static GLboolean
-compress_with_blit(struct gl_context * ctx,
-                   GLenum target, GLint level,
-                   GLint xoffset, GLint yoffset, GLint zoffset,
-                   GLint width, GLint height, GLint depth,
-                   GLenum format, GLenum type, const void *pixels,
-                   const struct gl_pixelstore_attrib *unpack,
-                   struct gl_texture_image *texImage)
-{
-   const GLuint dstImageOffsets[1] = {0};
-   struct st_texture_image *stImage = st_texture_image(texImage);
-   struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   gl_format mesa_format;
-   struct pipe_resource templ;
-   struct pipe_resource *src_tex;
-   struct pipe_sampler_view view_templ;
-   struct pipe_sampler_view *src_view;
-   struct pipe_surface *dst_surface, surf_tmpl;
-   struct pipe_transfer *tex_xfer;
-   void *map;
-
-   if (!stImage->pt) {
-      /* XXX: Can this happen? Should we assert? */
-      return GL_FALSE;
-   }
-
-   /* get destination surface (in the compressed texture) */
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = stImage->pt->format;
-   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
-   surf_tmpl.u.tex.level = stImage->level;
-   surf_tmpl.u.tex.first_layer = stImage->face;
-   surf_tmpl.u.tex.last_layer = stImage->face;
-   dst_surface = pipe->create_surface(pipe, stImage->pt, &surf_tmpl);
-   if (!dst_surface) {
-      /* can't render into this format (or other problem) */
-      return GL_FALSE;
-   }
-
-   /* Choose format for the temporary RGBA texture image.
-    */
-   mesa_format = st_ChooseTextureFormat(ctx, GL_RGBA, format, type);
-   assert(mesa_format);
-   if (!mesa_format)
-      return GL_FALSE;
-
-   /* Create the temporary source texture
-    */
-   memset(&templ, 0, sizeof(templ));
-   templ.target = st->internal_target;
-   templ.format = st_mesa_format_to_pipe_format(mesa_format);
-   templ.width0 = width;
-   templ.height0 = height;
-   templ.depth0 = 1;
-   templ.array_size = 1;
-   templ.last_level = 0;
-   templ.usage = PIPE_USAGE_DEFAULT;
-   templ.bind = PIPE_BIND_SAMPLER_VIEW;
-   src_tex = screen->resource_create(screen, &templ);
-
-   if (!src_tex)
-      return GL_FALSE;
-
-   /* Put user's tex data into the temporary texture
-    */
-   tex_xfer = pipe_get_transfer(st_context(ctx)->pipe, src_tex,
-                                0, 0, /* layer, level are zero */
-                                PIPE_TRANSFER_WRITE,
-                                0, 0, width, height); /* x, y, w, h */
-   map = pipe_transfer_map(pipe, tex_xfer);
-
-   _mesa_texstore(ctx, 2, GL_RGBA, mesa_format,
-                  map,              /* dest ptr */
-                  0, 0, 0,          /* dest x/y/z offset */
-                  tex_xfer->stride, /* dest row stride (bytes) */
-                  dstImageOffsets,  /* image offsets (for 3D only) */
-                  width, height, 1, /* size */
-                  format, type,     /* source format/type */
-                  pixels,           /* source data */
-                  unpack);          /* source data packing */
-
-   pipe_transfer_unmap(pipe, tex_xfer);
-   pipe->transfer_destroy(pipe, tex_xfer);
-
-   /* Create temporary sampler view */
-   u_sampler_view_default_template(&view_templ,
-                                   src_tex,
-                                   src_tex->format);
-   src_view = pipe->create_sampler_view(pipe, src_tex, &view_templ);
-
-
-   /* copy / compress image */
-   util_blit_pixels_tex(st->blit,
-                        src_view,         /* sampler view (src) */
-                        0, 0,             /* src x0, y0 */
-                        width, height,    /* src x1, y1 */
-                        dst_surface,      /* pipe_surface (dst) */
-                        xoffset, yoffset, /* dst x0, y0 */
-                        xoffset + width,  /* dst x1 */
-                        yoffset + height, /* dst y1 */
-                        0.0,              /* z */
-                        PIPE_TEX_MIPFILTER_NEAREST);
-
-   pipe_surface_reference(&dst_surface, NULL);
-   pipe_resource_reference(&src_tex, NULL);
-   pipe_sampler_view_reference(&src_view, NULL);
-
-   return GL_TRUE;
-}
-
-
-/**
  * Do glTexImage1/2/3D().
  */
 static void
@@ -672,24 +553,6 @@ st_TexImage(struct gl_context * ctx,
       pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, 1,
 					   format, type,
 					   pixels, unpack, "glTexImage");
-   }
-
-   /* See if we can do texture compression with a blit/render.
-    */
-   if (!compressed_src &&
-       !ctx->Mesa_DXTn &&
-       _mesa_is_format_compressed(texImage->TexFormat) &&
-       screen->is_format_supported(screen,
-                                   stImage->pt->format,
-                                   stImage->pt->target, 0,
-                                   PIPE_BIND_RENDER_TARGET, 0)) {
-      if (!pixels)
-         goto done;
-
-      if (compress_with_blit(ctx, target, level, 0, 0, 0, width, height, depth,
-                             format, type, pixels, unpack, texImage)) {
-         goto done;
-      }
    }
 
    /*
@@ -1099,22 +962,6 @@ st_TexSubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
                                   type, pixels, packing, "glTexSubImage2D");
    if (!pixels)
       return;
-
-   /* See if we can do texture compression with a blit/render.
-    */
-   if (!ctx->Mesa_DXTn &&
-       _mesa_is_format_compressed(texImage->TexFormat) &&
-       screen->is_format_supported(screen,
-                                   stImage->pt->format,
-                                   stImage->pt->target, 0,
-                                   PIPE_BIND_RENDER_TARGET, 0)) {
-      if (compress_with_blit(ctx, target, level,
-                             xoffset, yoffset, zoffset,
-                             width, height, depth,
-                             format, type, pixels, packing, texImage)) {
-         goto done;
-      }
-   }
 
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
