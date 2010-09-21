@@ -118,6 +118,10 @@ softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 
    softpipe->num_vertex_samplers = num_samplers;
 
+   draw_set_samplers(softpipe->draw,
+                     softpipe->vertex_samplers,
+                     softpipe->num_vertex_samplers);
+
    softpipe->dirty |= SP_NEW_SAMPLER;
 }
 
@@ -233,6 +237,10 @@ softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
    }
 
    softpipe->num_vertex_sampler_views = num;
+
+   draw_set_sampler_views(softpipe->draw,
+                          softpipe->vertex_sampler_views,
+                          softpipe->num_vertex_sampler_views);
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
