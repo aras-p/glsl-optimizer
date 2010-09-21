@@ -267,7 +267,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.box = *box;
 	trans->transfer.stride = rtex->pitch[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
-	if (rtex->tilled && !rtex->depth) {
+	if (rtex->tiled && !rtex->depth) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
 		resource.width0 = box->width;

@@ -165,7 +165,7 @@ static void r600_db(struct r600_context *rctx, struct radeon_state *rstate,
 		return;
 
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-	rtex->tilled = 1;
+	rtex->tiled = 1;
 	rtex->array_mode = 2;
 	rtex->tile_type = 1;
 	rtex->depth = 1;
@@ -1178,7 +1178,7 @@ static void r600_texture_state_db(struct r600_screen *rscreen, struct r600_resou
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_DB, 0, 0);
 	rbuffer = &rtexture->resource;
-	rtexture->tilled = 1;
+	rtexture->tiled = 1;
 	rtexture->array_mode = 2;
 	rtexture->tile_type = 1;
 	rtexture->depth = 1;

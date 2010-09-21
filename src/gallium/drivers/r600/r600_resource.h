@@ -50,7 +50,7 @@ struct r600_resource_texture {
 	unsigned long			pitch_override;
 	unsigned long			bpt;
 	unsigned long			size;
-	unsigned			tilled;
+	unsigned			tiled;
 	unsigned			array_mode;
 	unsigned			tile_type;
 	unsigned			depth;

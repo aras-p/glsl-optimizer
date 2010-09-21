@@ -1563,7 +1563,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		return;
 
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-	rtex->tilled = 1;
+	rtex->tiled = 1;
 	rtex->array_mode = 2;
 	rtex->tile_type = 1;
 	rtex->depth = 1;
