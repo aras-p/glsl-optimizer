@@ -1,4 +1,4 @@
-#if API < 10
+#if API < 11
 HRESULT D3D10CreateBlob(
 	__in   SIZE_T NumBytes,
 	__out  LPD3D10BLOB *ppBuffer
@@ -37,7 +37,7 @@ static HRESULT dxbc_assemble_as_blob(struct dxbc_chunk_header** chunks, unsigned
 	std::pair<void*, size_t> p = dxbc_assemble(chunks, num_chunks);
 	if(!p.first)
 		return E_OUTOFMEMORY;
-	*blob = return new GalliumD3DBlob(p.first, p.second);
+	*blob = new GalliumD3DBlob(p.first, p.second);
 	return S_OK;
 }
 
@@ -51,7 +51,7 @@ HRESULT  D3D10GetInputSignatureBlob(
 	if(!sig)
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob(&sig, 1, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, ppSignatureBlob);
 }
 
 HRESULT  D3D10GetOutputSignatureBlob(
@@ -64,7 +64,7 @@ HRESULT  D3D10GetOutputSignatureBlob(
 	if(!sig)
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob(&sig, 1, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, ppSignatureBlob);
 }
 
 HRESULT  D3D10GetInputOutputSignatureBlob(
@@ -81,7 +81,7 @@ HRESULT  D3D10GetInputOutputSignatureBlob(
 	if(!sigs[1])
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob(&sigs, 2, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sigs, 2, ppSignatureBlob);
 }
 
 #endif

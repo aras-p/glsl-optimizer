@@ -1049,6 +1049,7 @@ class GalliumD3DBlob : public GalliumComObject<ID3DBlob>
 	void* data;
 	size_t size;
 
+public:
 	GalliumD3DBlob(void* data, size_t size)
 	: data(data), size(size)
 	{}
@@ -1057,7 +1058,7 @@ class GalliumD3DBlob : public GalliumComObject<ID3DBlob>
 	{
 		free(data);
 	}
-public:
+
 	virtual LPVOID STDMETHODCALLTYPE GetBufferPointer()
 	{
 		return data;
