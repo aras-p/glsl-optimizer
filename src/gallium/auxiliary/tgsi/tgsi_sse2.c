@@ -2844,7 +2844,6 @@ check_soa_dependencies(const struct tgsi_full_instruction *inst)
    case TGSI_OPCODE_ADD:
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_MUL:
-   case TGSI_OPCODE_XPD:
    case TGSI_OPCODE_RCP:
    case TGSI_OPCODE_RSQ:
    case TGSI_OPCODE_EXP:
