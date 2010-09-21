@@ -215,6 +215,7 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
@@ -279,7 +280,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       }
    }
 	 
-   brw_wm_lookup_iz(line_aa,
+   brw_wm_lookup_iz(intel,
+		    line_aa,
 		    lookup,
 		    uses_depth,
 		    key);

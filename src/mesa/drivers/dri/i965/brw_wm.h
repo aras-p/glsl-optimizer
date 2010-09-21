@@ -299,7 +299,8 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 void brw_wm_print_program( struct brw_wm_compile *c,
 			   const char *stage );
 
-void brw_wm_lookup_iz( GLuint line_aa,
+void brw_wm_lookup_iz( struct intel_context *intel,
+		       GLuint line_aa,
 		       GLuint lookup,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
