@@ -781,12 +781,22 @@ namespace std
 	{
 #endif
 		template<>
+		struct hash<GUID> : public std::unary_function<GUID, size_t>
+		{
+			inline size_t operator()(GUID __val) const;
+		};
+
 		inline size_t hash<GUID>::operator()(GUID __val) const
 		{
 			return raw_hash(__val);
 		}
 
 		template<>
+		struct hash<c_string> : public std::unary_function<c_string, size_t>
+		{
+			inline size_t operator()(c_string __val) const;
+		};
+
 		inline size_t hash<c_string>::operator()(c_string __val) const
 		{
 			return raw_hash(__val.p, strlen(__val.p));
@@ -795,7 +805,7 @@ namespace std
 		template<typename T, typename U>
 		struct hash<std::pair<T, U> > : public std::unary_function<std::pair<T, U>, size_t>
 		{
-			size_t operator()(std::pair<T, U> __val) const;
+			inline size_t operator()(std::pair<T, U> __val) const;
 		};
 
 		template<typename T, typename U>
