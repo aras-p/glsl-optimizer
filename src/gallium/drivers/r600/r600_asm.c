@@ -531,7 +531,8 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
 		(bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX &&
-		 bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC)) {
+		 bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) ||
+	         bc->force_add_cf) {
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nvtx);
@@ -543,6 +544,8 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
+	if ((bc->ndw / 4) > 7)
+		bc->force_add_cf = 1;
 	return 0;
 }
 
@@ -557,7 +560,8 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
-		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX ||
+	        bc->force_add_cf) {
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(ntex);
@@ -569,6 +573,8 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
+	if ((bc->ndw / 4) > 7)
+		bc->force_add_cf = 1;
 	return 0;
 }
 
