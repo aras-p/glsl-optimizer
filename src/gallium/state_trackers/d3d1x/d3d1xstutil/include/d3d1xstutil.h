@@ -59,6 +59,7 @@ namespace std
 	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
 
 #include "galliumdxgi.h"
+#include <d3dcommon.h>
 
 extern "C"
 {
@@ -1033,6 +1034,39 @@ struct GalliumDXGIDevice : public GalliumMultiPrivateDataComObject<Base, IDXGIDe
         	max_latency = MaxLatency;
         	return S_OK;
         }
+};
+
+COM_INTERFACE(ID3D10Blob, IUnknown);
+
+/* NOTE: ID3DBlob implementations may come from a Microsoft native DLL
+ * (e.g. d3dcompiler), or perhaps even from the application itself.
+ *
+ * Hence, never try to access the data/size members directly, which is why they are private.
+ * In internal code, use std::pair<void*, size_t> instead of this class.
+ */
+class GalliumD3DBlob : public GalliumComObject<ID3DBlob>
+{
+	void* data;
+	size_t size;
+
+	GalliumD3DBlob(void* data, size_t size)
+	: data(data), size(size)
+	{}
+
+	~GalliumD3DBlob()
+	{
+		free(data);
+	}
+public:
+	virtual LPVOID STDMETHODCALLTYPE GetBufferPointer()
+	{
+		return data;
+	}
+
+	virtual SIZE_T STDMETHODCALLTYPE GetBufferSize()
+	{
+		return size;
+	}
 };
 
 #endif /* D3D1XSTUTIL_H_ */

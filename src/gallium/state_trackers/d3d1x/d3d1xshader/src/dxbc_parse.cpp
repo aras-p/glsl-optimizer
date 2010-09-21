@@ -29,26 +29,18 @@
 #include <d3d11shader.h>
 #include <d3dcommon.h>
 
-struct dxbc_container_header
-{
-	unsigned fourcc;
-	uint32_t unk[5];
-	uint32_t total_size;
-	uint32_t chunk_count;
-	uint32_t chunk_offsets[];
-};
-
 dxbc_container* dxbc_parse(const void* data, int size)
 {
 	std::auto_ptr<dxbc_container> container(new dxbc_container());
 	container->data = data;
 	dxbc_container_header* header = (dxbc_container_header*)data;
+	uint32_t* chunk_offsets = (uint32_t*)(header + 1);
 	if(bswap_le32(header->fourcc) != FOURCC_DXBC)
 		return 0;
 	unsigned num_chunks = bswap_le32(header->chunk_count);
 	for(unsigned i = 0; i < num_chunks; ++i)
 	{
-		unsigned offset = bswap_le32(header->chunk_offsets[i]);
+		unsigned offset = bswap_le32(chunk_offsets[i]);
 		dxbc_chunk_header* chunk = (dxbc_chunk_header*)((char*)data + offset);
 		unsigned fourcc = bswap_le32(chunk->fourcc);
 		container->chunk_map[fourcc] = i;
@@ -60,12 +52,13 @@ dxbc_container* dxbc_parse(const void* data, int size)
 dxbc_chunk_header* dxbc_find_chunk(const void* data, int size, unsigned fourcc)
 {
 	dxbc_container_header* header = (dxbc_container_header*)data;
+	uint32_t* chunk_offsets = (uint32_t*)(header + 1);
 	if(bswap_le32(header->fourcc) != FOURCC_DXBC)
 		return 0;
 	unsigned num_chunks = bswap_le32(header->chunk_count);
 	for(unsigned i = 0; i < num_chunks; ++i)
 	{
-		unsigned offset = bswap_le32(header->chunk_offsets[i]);
+		unsigned offset = bswap_le32(chunk_offsets[i]);
 		dxbc_chunk_header* chunk = (dxbc_chunk_header*)((char*)data + offset);
 		if(bswap_le32(chunk->fourcc) == fourcc)
 			return chunk;

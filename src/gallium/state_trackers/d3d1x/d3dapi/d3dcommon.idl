@@ -314,6 +314,10 @@ interface ID3D10Blob : IUnknown
 	SIZE_T GetBufferSize();
 };
 
+typedef ID3D10Blob* LPD3D10BLOB;
+typedef ID3D10Blob ID3DBlob;
+typedef ID3DBlob* LPD3DBLOB;
+
 typedef enum _D3D_INCLUDE_TYPE
 {
 	D3D_INCLUDE_LOCAL = 0,

@@ -75,6 +75,15 @@ struct dxbc_container
 	std::map<unsigned, unsigned> chunk_map;
 };
 
+struct dxbc_container_header
+{
+	unsigned fourcc;
+	uint32_t unk[4];
+	uint32_t one;
+	uint32_t total_size;
+	uint32_t chunk_count;
+};
+
 dxbc_container* dxbc_parse(const void* data, int size);
 std::ostream& operator <<(std::ostream& out, const dxbc_container& container);
 
@@ -97,5 +106,7 @@ static inline dxbc_chunk_signature* dxbc_find_signature(const void* data, int si
 struct _D3D11_SIGNATURE_PARAMETER_DESC;
 typedef struct _D3D11_SIGNATURE_PARAMETER_DESC D3D11_SIGNATURE_PARAMETER_DESC;
 int dxbc_parse_signature(dxbc_chunk_signature* sig, D3D11_SIGNATURE_PARAMETER_DESC** params);
+
+std::pair<void*, size_t> dxbc_assemble(struct dxbc_chunk_header** chunks, unsigned num_chunks);
 
 #endif /* DXBC_H_ */

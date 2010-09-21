@@ -214,6 +214,7 @@ struct GalliumD3D11Screen
 #include "d3d11_objects.h"
 #include "d3d11_screen.h"
 #include "d3d11_context.h"
+#include "d3d11_misc.h"
 
 #if API >= 11
 HRESULT STDMETHODCALLTYPE GalliumD3D11DeviceCreate(struct pipe_screen* screen, struct pipe_context* context, BOOL owns_context, unsigned creation_flags, IDXGIAdapter* adapter, ID3D11Device** ppDevice)
