@@ -471,6 +471,7 @@ static void eg_sampler_border(struct r600_context *rctx, struct radeon_state *rs
 
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_SAMPLER_BORDER, id, R600_SHADER_PS);
 	if (uc.ui) {
+	        rstate->states[EG_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_INDEX] = id;
 		rstate->states[EG_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_RED] = fui(state->border_color[0]);
 		rstate->states[EG_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_GREEN] = fui(state->border_color[1]);
 		rstate->states[EG_PS_SAMPLER_BORDER__TD_PS_SAMPLER0_BORDER_BLUE] = fui(state->border_color[2]);
