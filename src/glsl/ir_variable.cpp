@@ -162,6 +162,9 @@ generate_110_uniforms(exec_list *instructions,
 				    state->Const.MaxTextureCoords);
 
    add_uniform(instructions, state, "gl_TextureMatrix", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixInverse", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixTranspose", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixInverseTranspose", mat4_array_type);
 
    add_uniform(instructions, state, "gl_DepthRange",
 		state->symbols->get_type("gl_DepthRangeParameters"));
