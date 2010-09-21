@@ -1223,7 +1223,7 @@ static void emit_kil( struct brw_wm_compile *c,
 /* KIL_NV kills the pixels that are currently executing, not based on a test
  * of the arguments.
  */
-static void emit_kil_nv( struct brw_wm_compile *c )
+void emit_kil_nv( struct brw_wm_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);

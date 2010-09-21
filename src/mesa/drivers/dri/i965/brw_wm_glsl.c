@@ -614,21 +614,6 @@ static void emit_arl(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-/**
- * For GLSL shaders, this KIL will be unconditional.
- * It may be contained inside an IF/ENDIF structure of course.
- */
-static void emit_kil(struct brw_wm_compile *c)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-    brw_push_insn_state(p);
-    brw_set_mask_control(p, BRW_MASK_DISABLE);
-    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
-    brw_AND(p, depth, c->emit_mask_reg, depth);
-    brw_pop_insn_state(p);
-}
-
 static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
@@ -898,7 +883,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 			 c->fp->program.Base.SamplerUnits[inst->TexSrcUnit]);
 		break;
 	    case OPCODE_KIL_NV:
-		emit_kil(c);
+		emit_kil_nv(c);
 		break;
 	    case OPCODE_IF:
 		assert(if_depth < MAX_IF_DEPTH);
