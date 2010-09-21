@@ -365,13 +365,6 @@ svga_is_format_supported( struct pipe_screen *screen,
       case PIPE_FORMAT_B5G5R5A1_UNORM:
          return FALSE;
          
-      /* Simulate ability to render into compressed textures */
-      case PIPE_FORMAT_DXT1_RGB:
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-         return TRUE;
-
       default:
          break;
       }

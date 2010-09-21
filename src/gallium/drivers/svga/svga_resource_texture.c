@@ -146,16 +146,6 @@ svga_translate_format_render(enum pipe_format format)
    case PIPE_FORMAT_L8_UNORM:
       return svga_translate_format(format);
 
-#if 1
-   /* For on host conversion */
-   case PIPE_FORMAT_DXT1_RGB:
-      return SVGA3D_X8R8G8B8;
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-      return SVGA3D_A8R8G8B8;
-#endif
-
    default:
       return SVGA3D_FORMAT_INVALID;
    }
