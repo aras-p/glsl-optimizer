@@ -77,7 +77,7 @@ struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 	void* resolver_cookie;
 
         GalliumDXGIFactory(const struct native_platform* platform, void* display, PFNHWNDRESOLVER resolver, void* resolver_cookie)
-        : GalliumDXGIObject((IUnknown*)NULL), platform(platform), display(display), resolver(resolver ? resolver : identity_resolver), resolver_cookie(resolver_cookie)
+        : GalliumDXGIObject<IDXGIFactory1, IUnknown>((IUnknown*)NULL), platform(platform), display(display), resolver(resolver ? resolver : identity_resolver), resolver_cookie(resolver_cookie)
         {}
 
         virtual HRESULT STDMETHODCALLTYPE EnumAdapters(
@@ -316,7 +316,7 @@ struct GalliumDXGIOutput : public GalliumDXGIObject<IDXGIOutput, GalliumDXGIAdap
 	DXGI_GAMMA_CONTROL* gamma;
 
 	GalliumDXGIOutput(GalliumDXGIAdapter* adapter, std::string name, const struct native_connector* connector = 0)
-	: GalliumDXGIObject(adapter), connector(connector)
+	: GalliumDXGIObject<IDXGIOutput, GalliumDXGIAdapter>(adapter), connector(connector)
 	{
 		memset(&desc, 0, sizeof(desc));
 		for(unsigned i = 0; i < std::min(name.size(), sizeof(desc.DeviceName) - 1); ++i)
@@ -818,7 +818,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 	bool formats_compatible;
 
 	GalliumDXGISwapChain(GalliumDXGIFactory* factory, IUnknown* p_device, const DXGI_SWAP_CHAIN_DESC& p_desc)
-	: GalliumDXGIObject(factory), desc(p_desc)
+	: GalliumDXGIObject<IDXGISwapChain, GalliumDXGIFactory>(factory), desc(p_desc)
 	{
 		HRESULT hr;
 

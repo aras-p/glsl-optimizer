@@ -684,14 +684,14 @@ struct GalliumD3D11QueryOrPredicate : public GalliumD3D11Asynchronous<Base>
 struct GalliumD3D11Query : public GalliumD3D11QueryOrPredicate<ID3D11Query>
 {
 	GalliumD3D11Query(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_QUERY_DESC& desc)
-	: GalliumD3D11QueryOrPredicate(device, query, data_size, desc)
+	: GalliumD3D11QueryOrPredicate<ID3D11Query>(device, query, data_size, desc)
 	{}
 };
 
 struct GalliumD3D11Predicate : public GalliumD3D11QueryOrPredicate<ID3D11Predicate>
 {
 	GalliumD3D11Predicate(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_QUERY_DESC& desc)
-	: GalliumD3D11QueryOrPredicate(device, query, data_size, desc)
+	: GalliumD3D11QueryOrPredicate<ID3D11Predicate>(device, query, data_size, desc)
 	{}
 
 	~GalliumD3D11Predicate()
@@ -704,7 +704,7 @@ struct GalliumD3D11Counter : public GalliumD3D11Asynchronous<ID3D11Counter>
 {
 	D3D11_COUNTER_DESC desc;
 	GalliumD3D11Counter(GalliumD3D11Screen* device, struct pipe_query* query, unsigned data_size, const D3D11_COUNTER_DESC& desc)
-	: GalliumD3D11Asynchronous(device, query, data_size), desc(desc)
+	: GalliumD3D11Asynchronous<ID3D11Counter>(device, query, data_size), desc(desc)
 	{}
 
 	virtual void STDMETHODCALLTYPE GetDesc(

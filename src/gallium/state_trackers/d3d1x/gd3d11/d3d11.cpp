@@ -126,20 +126,22 @@ struct GalliumD3D11Caps
 	unsigned stages;
 };
 
+typedef GalliumDXGIDevice<
+	GalliumMultiComObject<
+#if API >= 11
+		GalliumPrivateDataComObject<ID3D11Device>,
+#else
+		GalliumPrivateDataComObject<ID3D10Device1>,
+#endif
+		IGalliumDevice
+	>
+> GalliumD3D11ScreenBase;
+
 // used to avoid needing to have forward declarations of functions
 // this is called "screen" because in the D3D10 case it's only part of the device
-struct GalliumD3D11Screen
-	: public GalliumDXGIDevice<
-		GalliumMultiComObject<
-#if API >= 11
-			GalliumPrivateDataComObject<ID3D11Device>,
-#else
-			GalliumPrivateDataComObject<ID3D10Device1>,
-#endif
-			IGalliumDevice
-		>
-	>
+struct GalliumD3D11Screen : public GalliumD3D11ScreenBase
 {
+
 	pipe_screen* screen;
 	pipe_context* immediate_pipe;
 	GalliumD3D11Caps screen_caps;
@@ -159,7 +161,7 @@ struct GalliumD3D11Screen
 
 
 	GalliumD3D11Screen(pipe_screen* screen, struct pipe_context* immediate_pipe, IDXGIAdapter* adapter)
-	: GalliumDXGIDevice(adapter), screen(screen), immediate_pipe(immediate_pipe)
+	: GalliumD3D11ScreenBase(adapter), screen(screen), immediate_pipe(immediate_pipe)
 	{
 	}
 

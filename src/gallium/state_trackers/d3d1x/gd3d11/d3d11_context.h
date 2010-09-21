@@ -119,7 +119,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 #define SYNCHRONIZED do {} while(0)
 
 	GalliumD3D11DeviceContext(GalliumD3D11Screen* device, pipe_context* pipe, bool owns_pipe, unsigned context_flags = 0)
-	: GalliumD3D11DeviceChild(device), pipe(pipe), owns_pipe(owns_pipe), context_flags(context_flags)
+	: GalliumD3D11DeviceChild<ID3D11DeviceContext>(device), pipe(pipe), owns_pipe(owns_pipe), context_flags(context_flags)
 	{
 		caps = device->screen_caps;
 		init_context();
@@ -1988,7 +1988,7 @@ struct GalliumD3D11ImmediateDeviceContext
 	: public GalliumD3D11DeviceContext<nonatomic_device_child_ptr_traits>
 {
 	GalliumD3D11ImmediateDeviceContext(GalliumD3D11Screen* device, pipe_context* pipe, unsigned context_flags = 0)
-	: GalliumD3D11DeviceContext(device, pipe, context_flags)
+	: GalliumD3D11DeviceContext<nonatomic_device_child_ptr_traits>(device, pipe, context_flags)
 	{
 		// not necessary, but tests that the API at least basically works
 		ClearState();
