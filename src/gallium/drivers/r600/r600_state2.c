@@ -234,10 +234,10 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			exports_ps |= (1 << (num_cout+1));
 			num_cout++;
 		}
 	}
+	exports_ps |= S_028854_EXPORT_COLORS(num_cout);
 	if (!exports_ps) {
 		/* always at least export 1 component per pixel */
 		exports_ps = 2;
@@ -687,7 +687,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 2) {
+	if (dc < 20) {
 		r600_context_dump_bof(&rctx->ctx, dname);
 		R600_ERR("dumped %s\n", dname);
 	}
