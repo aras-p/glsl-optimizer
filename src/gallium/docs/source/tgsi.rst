@@ -678,8 +678,6 @@ This instruction replicates its result.
 
   pc = pop()
 
-  Potential restrictions:  
-  * Only occurs at end of function.
 
 .. opcode:: SSG - Set Sign
 
