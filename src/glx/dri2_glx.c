@@ -118,6 +118,8 @@ dri2_destroy_context(struct glx_context *context)
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) context->psc;
 
+   driReleaseDrawables(&pcp->base);
+
    if (context->xid)
       glx_send_destroy_context(psc->base.dpy, context->xid);
 
@@ -158,7 +160,8 @@ dri2_unbind_context(struct glx_context *context, struct glx_context *new)
 
    (*psc->core->unbindContext) (pcp->driContext);
 
-   driReleaseDrawables(&pcp->base);
+   if (context == new)
+      driReleaseDrawables(&pcp->base);
 }
 
 static struct glx_context *
