@@ -18,7 +18,8 @@ C_SOURCES = htab.c \
 	    surface.c \
 	    decode.c \
 	    presentation.c \
-	    bitmap.c
+	    bitmap.c \
+	    output.c
 
 
 include ../../Makefile.template
