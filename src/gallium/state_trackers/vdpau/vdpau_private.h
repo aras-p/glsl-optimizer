@@ -161,8 +161,9 @@ typedef struct
 {
 	vlVdpDevice *device;
 	struct vl_screen *vlscreen;
-    struct vl_context *vctx;
+    	struct vl_context *vctx;
 	enum pipe_video_chroma_format chroma_format;
+	enum pipe_video_profile profile;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;
@@ -173,6 +174,7 @@ vlHandle vlAddDataHTAB(void *data);
 void* vlGetDataHTAB(vlHandle handle);
 boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 
+VdpGetErrorString vlVdpGetErrorString;
 VdpDeviceDestroy vlVdpDeviceDestroy;
 VdpGetProcAddress vlVdpGetProcAddress;
 VdpGetApiVersion vlVdpGetApiVersion;
@@ -197,5 +199,18 @@ VdpVideoSurfacePutBitsYCbCr vlVdpVideoSurfacePutBitsYCbCr;
 VdpDecoderCreate vlVdpDecoderCreate;
 VdpDecoderDestroy vlVdpDecoderDestroy;
 VdpDecoderRender vlVdpDecoderRender;
-
+VdpOutputSurfaceCreate vlVdpOutputSurfaceCreate;
+VdpBitmapSurfaceCreate vlVdpBitmapSurfaceCreate;
+VdpBitmapSurfaceDestroy vlVdpBitmapSurfaceDestroy;
+VdpBitmapSurfaceGetParameters vlVdpBitmapSurfaceGetParameters;
+VdpBitmapSurfacePutBitsNative vlVdpBitmapSurfacePutBitsNative;
+VdpPresentationQueueTargetDestroy vlVdpPresentationQueueTargetDestroy;
+VdpPresentationQueueCreate vlVdpPresentationQueueCreate;
+VdpPresentationQueueDestroy vlVdpPresentationQueueDestroy;
+VdpPresentationQueueSetBackgroundColor vlVdpPresentationQueueSetBackgroundColor;
+VdpPresentationQueueGetBackgroundColor vlVdpPresentationQueueGetBackgroundColor;
+VdpPresentationQueueGetTime vlVdpPresentationQueueGetTime;
+VdpPresentationQueueDisplay vlVdpPresentationQueueDisplay;
+VdpPresentationQueueBlockUntilSurfaceIdle vlVdpPresentationQueueBlockUntilSurfaceIdle;
+VdpPresentationQueueQuerySurfaceStatus vlVdpPresentationQueueQuerySurfaceStatus;
 #endif // VDPAU_PRIVATE_H

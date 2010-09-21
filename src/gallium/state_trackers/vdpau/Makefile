@@ -16,7 +16,9 @@ C_SOURCES = htab.c \
 	    device.c \
 	    query.c \
 	    surface.c \
-	    decode.c
+	    decode.c \
+	    presentation.c \
+	    bitmap.c
 
 
 include ../../Makefile.template
