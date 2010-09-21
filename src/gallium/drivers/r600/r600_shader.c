@@ -969,7 +969,6 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 
 	/* dst.z = 0.0; */
 	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Z) {
-		fprintf(stderr, "writing z\n");
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
