@@ -84,10 +84,13 @@ static void r600_setup_miptree(struct r600_resource_texture *rtex, enum chip_cla
 		h = u_minify(ptex->height0, i);
 		h = util_next_power_of_two(h);
 		pitch = util_format_get_stride(ptex->format, align(w, 64));
-		pitch = align(pitch, 256);
+		if (chipc == EVERGREEN)
+			pitch = align(pitch, 512);
+		else
+			pitch = align(pitch, 256);
 		layer_size = pitch * h;
 		if (ptex->target == PIPE_TEXTURE_CUBE) {
-			if (chipc == R700)
+			if (chipc >= R700)
 				size = layer_size * 8;
 			else
 				size = layer_size * 6;
