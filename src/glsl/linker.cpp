@@ -457,7 +457,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	  */
 	 if (input->type != output->type) {
 	    linker_error_printf(prog,
-				"%s shader output `%s' delcared as "
+				"%s shader output `%s' declared as "
 				"type `%s', but %s shader input declared "
 				"as type `%s'\n",
 				producer_stage, output->name,
