@@ -906,6 +906,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    shader->draw_data = draw_create_fragment_shader(llvmpipe->draw, templ);
    if (shader->draw_data == NULL) {
       FREE((void *) shader->base.tokens);
+      FREE(shader);
       return NULL;
    }
 
