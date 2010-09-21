@@ -4,7 +4,7 @@
 #include "r600/drm/r600_drm_public.h"
 #include "r600/r600_public.h"
 
-#if 0
+#if 1
 static struct pipe_screen *
 create_screen(int fd)
 {
