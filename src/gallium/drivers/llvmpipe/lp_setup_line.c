@@ -292,6 +292,7 @@ try_setup_line( struct lp_setup_context *setup,
    float x2diff;
    float y2diff;
    float dx, dy;
+   float area;
 
    boolean draw_start;
    boolean draw_end;
@@ -311,6 +312,18 @@ try_setup_line( struct lp_setup_context *setup,
 
    dx = v1[0][0] - v2[0][0];
    dy = v1[0][1] - v2[0][1];
+   area = (dx * dx  + dy * dy);
+   if (area == 0) {
+      LP_COUNT(nr_culled_tris);
+      return TRUE;
+   }
+
+   info.oneoverarea = 1.0f / area;
+   info.dx = dx;
+   info.dy = dy;
+   info.v1 = v1;
+   info.v2 = v2;
+
   
    /* X-MAJOR LINE */
    if (fabsf(dx) >= fabsf(dy)) {
@@ -572,12 +585,6 @@ try_setup_line( struct lp_setup_context *setup,
    line->plane[2].dcdx = y[2] - y[3];
    line->plane[3].dcdx = y[3] - y[0];
 
-
-   info.oneoverarea = 1.0f / (dx * dx  + dy * dy);    
-   info.dx = dx;
-   info.dy = dy;
-   info.v1 = v1;
-   info.v2 = v2;
 
    /* Setup parameter interpolants:
     */
