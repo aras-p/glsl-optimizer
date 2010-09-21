@@ -748,21 +748,48 @@ static inline bool operator !=(const c_string& a, const c_string& b)
 	return strcmp(a.p, b.p);
 }
 
-#ifdef __GLIBCXX__
+static inline size_t raw_hash(const char* p, size_t size)
+{
+	size_t res;
+	if(sizeof(size_t) >= 8)
+		res = (size_t)14695981039346656037ULL;
+	else
+		res = (size_t)2166136261UL;
+	const char* end = p + size;
+	for(; p != end; ++p)
+	{
+		res ^= (size_t)*p++;
+		if(sizeof(size_t) >= 8)
+			res *= (size_t)1099511628211ULL;
+		else
+			res *= (size_t)16777619UL;
+	}
+	return res;
+};
+
+template<typename T>
+static inline size_t raw_hash(const T& t)
+{
+	return raw_hash((const char*)&t, sizeof(t));
+}
+
+// TODO: only tested with the gcc libstdc++, might not work elsewhere
 namespace std
 {
+#ifndef _MSC_VER
 	namespace tr1
 	{
+#endif
 		template<>
 		inline size_t hash<GUID>::operator()(GUID __val) const
 		{
-			return _Fnv_hash::hash(__val);
+			return raw_hash(__val);
 		}
 
 		template<>
 		inline size_t hash<c_string>::operator()(c_string __val) const
 		{
-			return _Fnv_hash::hash(__val.p, strlen(__val.p));
+			return raw_hash(__val.p, strlen(__val.p));
 		}
 
 		template<typename T, typename U>
@@ -777,13 +804,12 @@ namespace std
 			std::pair<size_t, size_t> p;
 			p.first = hash<T>()(__val.first);
 			p.second = hash<U>()(__val.second);
-			return _Fnv_hash::hash(p);
+			return raw_hash(p);
 		}
+#ifndef _MSC_VER
 	}
-}
-#else
-#warning "You probably need to add a pair, C string and GUID hash implementation for your C++ library"
 #endif
+}
 
 template<typename Base, typename RefCnt = refcnt_t>
 struct GalliumPrivateDataComObject : public GalliumComObject<Base, RefCnt>
