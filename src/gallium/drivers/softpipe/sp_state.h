@@ -70,6 +70,8 @@ struct sp_fragment_shader {
 
    struct tgsi_shader_info info;
 
+   struct draw_fragment_shader *draw_shader;
+
    boolean origin_lower_left; /**< fragment shader uses lower left position origin? */
    boolean pixel_center_integer; /**< fragment shader uses integer pixel center? */
 

@@ -886,6 +886,7 @@ static void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    struct lp_fragment_shader *shader;
    int nr_samplers;
 
@@ -901,6 +902,12 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
+
+   shader->draw_data = draw_create_fragment_shader(llvmpipe->draw, templ);
+   if (shader->draw_data == NULL) {
+      FREE((void *) shader->base.tokens);
+      return NULL;
+   }
 
    nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
 
@@ -937,6 +944,9 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
       return;
 
    draw_flush(llvmpipe->draw);
+
+   draw_bind_fragment_shader(llvmpipe->draw,
+                             (llvmpipe->fs ? llvmpipe->fs->draw_data : NULL));
 
    llvmpipe->fs = fs;
 
@@ -994,6 +1004,8 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
       remove_shader_variant(llvmpipe, li->base);
       li = next;
    }
+
+   draw_delete_fragment_shader(llvmpipe->draw, shader->draw_data);
 
    assert(shader->variants_cached == 0);
    FREE((void *) shader->base.tokens);

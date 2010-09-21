@@ -124,17 +124,24 @@ Points
 sprite_coord_enable
 ^^^^^^^^^^^^^^^^^^^
 
-Specifies if a texture unit has its texture coordinates replaced or not. This
-is a packed bitfield containing the enable for all texcoords -- if all bits
-are zero, point sprites are effectively disabled. 
+Controls automatic texture coordinate generation for rendering sprite points.
+
+When bit k in the sprite_coord_enable bitfield is set, then generic
+input k to the fragment shader will get an automatically computed
+texture coordinate.
+
+The texture coordinate will be of the form (s, t, 0, 1) where s varies
+from 0 to 1 from left to right while t varies from 0 to 1 according to
+the state of 'sprite_coord_mode' (see below).
 
 If any bit is set, then point_smooth MUST be disabled (there are no
 round sprites) and point_quad_rasterization MUST be true (sprites are
 always rasterized as quads).  Any mismatch between these states should
 be considered a bug in the state-tracker.
 
-If enabled, the four vertices of the resulting quad will be assigned
-texture coordinates, according to sprite_coord_mode.
+This feature is implemented in the :ref:`Draw` module but may also be
+implemented natively by GPUs or implemented with a geometry shader.
+
 
 sprite_coord_mode
 ^^^^^^^^^^^^^^^^^
@@ -144,6 +151,7 @@ point sprites. For PIPE_SPRITE_COORD_LOWER_LEFT, the lower-left vertex will
 have coordinates (0,0,0,1). For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left
 vertex will have coordinates (0,0,0,1).
 This state is used by :ref:`Draw` to generate texcoords.
+
 
 point_quad_rasterization
 ^^^^^^^^^^^^^^^^^^^^^^^^

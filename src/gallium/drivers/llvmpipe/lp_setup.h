@@ -107,7 +107,8 @@ void
 lp_setup_set_point_state( struct lp_setup_context *setup,
                           float point_size,                          
                           boolean point_size_per_vertex,
-                          uint sprite);
+                          uint sprite_coord_enable,
+                          uint sprite_coord_origin);
 
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,
