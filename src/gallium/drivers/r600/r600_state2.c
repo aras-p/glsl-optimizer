@@ -677,7 +677,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-#if 0
+#if 1
 	static int dc = 0;
 	char dname[256];
 #endif
@@ -2174,11 +2174,44 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	}
 }
 
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ);
+struct pipe_resource *r600_user_buffer_create2(struct pipe_screen *screen,
+						void *ptr, unsigned bytes,
+						unsigned bind)
+{
+	struct pipe_resource *resource;
+	struct r600_resource *rresource;
+	struct pipe_resource desc;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+	void *rptr;
+
+	desc.screen = screen;
+	desc.target = PIPE_BUFFER;
+	desc.format = PIPE_FORMAT_R8_UNORM;
+	desc.usage = PIPE_USAGE_IMMUTABLE;
+	desc.bind = bind;
+	desc.width0 = bytes;
+	desc.height0 = 1;
+	desc.depth0 = 1;
+	desc.flags = 0;
+	resource = r600_buffer_create(screen, &desc);
+	if (resource == NULL) {
+		return NULL;
+	}
+
+	rresource = (struct r600_resource *)resource;
+	rptr = radeon_ws_bo_map(radeon, rresource->bo, 0, NULL);
+	memcpy(rptr, ptr, bytes);
+	radeon_ws_bo_unmap(radeon, rresource->bo);
+
+	return resource;
+}
+
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
 struct pipe_screen *r600_screen_create2(struct radeon *radeon)
 {
 	struct r600_screen *rscreen;
-	enum radeon_family family = r600_get_family(radeon);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
@@ -2197,6 +2230,7 @@ struct pipe_screen *r600_screen_create2(struct radeon *radeon)
 	rscreen->screen.context_create = r600_create_context2;
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
+	rscreen->screen.user_buffer_create = r600_user_buffer_create2;
 
 	return &rscreen->screen;
 }

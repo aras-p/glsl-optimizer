@@ -43,7 +43,7 @@ struct radeon_register {
 };
 
 struct radeon_bo {
-	struct pipe_reference           reference;
+	struct pipe_reference		reference;
 	unsigned			handle;
 	unsigned			size;
 	unsigned			alignment;

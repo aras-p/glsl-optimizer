@@ -192,6 +192,8 @@ struct r600_reloc {
 };
 #pragma pack()
 
+struct radeon_bo;
+
 struct r600_context {
 	struct radeon		*radeon;
 	unsigned		ngroups;
@@ -203,7 +205,7 @@ struct r600_context {
 	unsigned		nreloc;
 	unsigned		creloc;
 	struct r600_reloc	*reloc;
-	struct radeon_ws_bo	**bo;
+	struct radeon_bo	**bo;
 	u32			*pm4;
 };
 

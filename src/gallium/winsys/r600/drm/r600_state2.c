@@ -39,8 +39,8 @@
 #include <pipebuffer/pb_bufmgr.h>
 
 struct radeon_ws_bo {
-	struct pipe_reference reference;
-	struct pb_buffer *pb;
+	struct pipe_reference		reference;
+	struct pb_buffer		*pb;
 };
 
 struct radeon_bo {
@@ -54,6 +54,9 @@ struct radeon_bo {
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
 int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
 void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
+void radeon_bo_reference(struct radeon *radeon,
+			 struct radeon_bo **dst,
+			 struct radeon_bo *src);
 
 unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
 
@@ -694,14 +697,13 @@ out_err:
 	return r;
 }
 
-static void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_ws_bo *bo)
+static void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo)
 {
 	int i, reloc_id;
-	unsigned handle = radeon_ws_bo_get_handle(bo);
 
 	assert(bo != NULL);
 	for (i = 0, reloc_id = -1; i < ctx->creloc; i++) {
-		if (ctx->reloc[i].handle == handle) {
+		if (ctx->reloc[i].handle == bo->handle) {
 			reloc_id = i * sizeof(struct r600_reloc) / 4;
 			/* set PKT3 to point to proper reloc */
 			*pm4 = reloc_id;
@@ -713,11 +715,11 @@ static void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct rad
 			r600_context_flush(ctx);
 		}
 		reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
-		ctx->reloc[ctx->creloc].handle = handle;
+		ctx->reloc[ctx->creloc].handle = bo->handle;
 		ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT;
 		ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT;
 		ctx->reloc[ctx->creloc].flags = 0;
-		radeon_ws_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
+		radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
 		ctx->creloc++;
 		/* set PKT3 to point to proper reloc */
 		*pm4 = reloc_id;
@@ -741,10 +743,6 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			/* find relocation */
 			id = block->pm4_bo_index[id];
 			radeon_ws_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
-			for (int j = 0; j < block->reloc[id].nreloc; j++) {
-				r600_context_bo_reloc(ctx, &block->pm4[block->reloc[id].bo_pm4_index[j]],
-							block->reloc[id].bo);
-			}
 		}
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
@@ -780,8 +778,6 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
 		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
-	r600_context_bo_reloc(ctx, &block->pm4[block->reloc[1].bo_pm4_index[0]], block->reloc[1].bo);
-	r600_context_bo_reloc(ctx, &block->pm4[block->reloc[2].bo_pm4_index[0]], block->reloc[2].bo);
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
 	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
@@ -860,9 +856,23 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 
 static inline void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group, unsigned opcode)
 {
+	struct radeon_bo *bo;
+	int id;
+
 	for (int i = 0; i < group->nblocks; i++) {
 		struct r600_group_block *block = &group->blocks[i];
 		if (block->status & R600_BLOCK_STATUS_DIRTY) {
+			for (int j = 0; j < block->nreg; j++) {
+				if (block->pm4_bo_index[j]) {
+					/* find relocation */
+					id = block->pm4_bo_index[j];
+					bo = radeon_bo_pb_get_bo(block->reloc[id].bo->pb);
+					for (int k = 0; k < block->reloc[id].nreloc; k++) {
+						r600_context_bo_reloc(ctx, &block->pm4[block->reloc[id].bo_pm4_index[k]], bo);
+					}
+				}
+			}
+
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(opcode, block->nreg);
 			ctx->pm4[ctx->pm4_cdwords++] = (block->start_offset - group->start_offset) >> 2;
 			memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
@@ -911,7 +921,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], radeon_bo_pb_get_bo(draw->indices->pb));
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
@@ -949,7 +959,7 @@ void r600_context_flush(struct r600_context *ctx)
 #endif
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
-		radeon_ws_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
+		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
@@ -961,13 +971,6 @@ void r600_context_flush(struct r600_context *ctx)
 			if (block->status & R600_BLOCK_STATUS_ENABLED) {
 				ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
 				block->status |= R600_BLOCK_STATUS_DIRTY;
-				for (int k = 1; k <= block->nbo; k++) {
-					for (int l = 0; l < block->reloc[k].nreloc; l++) {
-						r600_context_bo_reloc(ctx,
-							&block->pm4[block->reloc[k].bo_pm4_index[l]],
-							block->reloc[k].bo);
-					}
-				}
 			}
 		}
 	}
@@ -1010,7 +1013,7 @@ void r600_context_dump_bof(struct r600_context *ctx, const char *file)
 	if (array == NULL)
 		goto out_err;
 	for (i = 0; i < ctx->creloc; i++) {
-		struct radeon_bo *rbo = radeon_bo_pb_get_bo(ctx->bo[i]->pb);
+		struct radeon_bo *rbo = ctx->bo[i];
 		bo = bof_object();
 		if (bo == NULL)
 			goto out_err;
