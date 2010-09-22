@@ -305,11 +305,11 @@ dri2_lookup_egl_image(struct dri_context *ctx, void *handle)
 }
 
 static __DRIimage *
-dri2_create_image_from_name(__DRIcontext *context,
+dri2_create_image_from_name(__DRIscreen *_screen,
                             int width, int height, int format,
                             int name, int pitch, void *loaderPrivate)
 {
-   struct dri_screen *screen = dri_screen(context->driScreenPriv);
+   struct dri_screen *screen = dri_screen(_screen);
    __DRIimage *img;
    struct pipe_resource templ;
    struct winsys_handle whandle;

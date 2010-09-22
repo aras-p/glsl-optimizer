@@ -1509,7 +1509,6 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
 			     EGLClientBuffer buffer, const EGLint *attr_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
    struct dri2_egl_image *dri2_img;
    unsigned int attachments[1];
    xcb_drawable_t drawable;
@@ -1577,7 +1576,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
 
    stride = buffers[0].pitch / buffers[0].cpp;
    dri2_img->dri_image =
-      dri2_dpy->image->createImageFromName(dri2_ctx->dri_context,
+      dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
 					   buffers_reply->width,
 					   buffers_reply->height,
 					   format,
@@ -1628,7 +1627,6 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				  EGLClientBuffer buffer, const EGLint *attr_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
    struct dri2_egl_image *dri2_img;
    EGLint width, height, format, name, stride, pitch, i, err;
 
@@ -1697,7 +1695,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    }
 
    dri2_img->dri_image =
-      dri2_dpy->image->createImageFromName(dri2_ctx->dri_context,
+      dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
 					   width,
 					   height,
 					   format,
