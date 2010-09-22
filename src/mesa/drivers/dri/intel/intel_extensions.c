@@ -212,6 +212,9 @@ intelInitExtensions(GLcontext *ctx)
     */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
+   _mesa_map_function_array(GL_VERSION_2_1_functions);
+   ctx->Const.GLSLVersion = 120;
+
    if (intel->gen >= 5)
       driInitExtensions(ctx, ironlake_extensions, GL_FALSE);
 
