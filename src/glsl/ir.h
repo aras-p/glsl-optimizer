@@ -646,6 +646,14 @@ public:
     * For non-vector types in the LHS, this field will be zero.  For vector
     * types, a bit will be set for each component that is written.  Note that
     * for \c vec2 and \c vec3 types only the lower bits will ever be set.
+    *
+    * A partially-set write mask means that each enabled channel gets
+    * the value from a consecutive channel of the rhs.  For example,
+    * to write just .xyw of gl_FrontColor with color:
+    *
+    * (assign (constant bool (1)) (xyw)
+    *     (var_ref gl_FragColor)
+    *     (swiz xyw (var_ref color)))
     */
    unsigned write_mask:4;
 };

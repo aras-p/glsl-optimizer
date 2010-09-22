@@ -168,18 +168,26 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
       if (!found)
 	 return;
 
+      int rhs_channel = 0;
+      for (int j = 0; j < 4; j++) {
+	 if (j == channel)
+	    break;
+	 if (found->write_mask & (1 << j))
+	    rhs_channel++;
+      }
+
       switch (type->base_type) {
       case GLSL_TYPE_FLOAT:
-	 data.f[i] = found->constant->value.f[channel];
+	 data.f[i] = found->constant->value.f[rhs_channel];
 	 break;
       case GLSL_TYPE_INT:
-	 data.i[i] = found->constant->value.i[channel];
+	 data.i[i] = found->constant->value.i[rhs_channel];
 	 break;
       case GLSL_TYPE_UINT:
-	 data.u[i] = found->constant->value.u[channel];
+	 data.u[i] = found->constant->value.u[rhs_channel];
 	 break;
       case GLSL_TYPE_BOOL:
-	 data.b[i] = found->constant->value.b[channel];
+	 data.b[i] = found->constant->value.b[rhs_channel];
 	 break;
       default:
 	 assert(!"not reached");

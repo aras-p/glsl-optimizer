@@ -504,8 +504,9 @@ emit_inline_vector_constructor(const glsl_type *type,
       instructions->push_tail(inst);
    } else {
       unsigned base_component = 0;
+      unsigned base_lhs_component = 0;
       ir_constant_data data;
-      unsigned constant_mask = 0;
+      unsigned constant_mask = 0, constant_components = 0;
 
       memset(&data, 0, sizeof(data));
 
@@ -515,8 +516,8 @@ emit_inline_vector_constructor(const glsl_type *type,
 
 	 /* Do not try to assign more components to the vector than it has!
 	  */
-	 if ((rhs_components + base_component) > lhs_components) {
-	    rhs_components = lhs_components - base_component;
+	 if ((rhs_components + base_lhs_component) > lhs_components) {
+	    rhs_components = lhs_components - base_lhs_component;
 	 }
 
 	 const ir_constant *const c = param->as_constant();
@@ -543,18 +544,23 @@ emit_inline_vector_constructor(const glsl_type *type,
 
 	    /* Mask of fields to be written in the assignment.
 	     */
-	    constant_mask |= ((1U << rhs_components) - 1) << base_component;
-	 }
+	    constant_mask |= ((1U << rhs_components) - 1) << base_lhs_component;
+	    constant_components++;
 
-	 /* Advance the component index by the number of components that were
-	  * just assigned.
+	    base_component += rhs_components;
+	 }
+	 /* Advance the component index by the number of components
+	  * that were just assigned.
 	  */
-	 base_component += rhs_components;
+	 base_lhs_component += rhs_components;
       }
 
       if (constant_mask != 0) {
 	 ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = new(ctx) ir_constant(var->type, &data);
+	 const glsl_type *rhs_type = glsl_type::get_instance(var->type->base_type,
+							     constant_components,
+							     1);
+	 ir_rvalue *rhs = new(ctx) ir_constant(rhs_type, &data);
 
 	 ir_instruction *inst =
 	    new(ctx) ir_assignment(lhs, rhs, NULL, constant_mask);
@@ -574,12 +580,10 @@ emit_inline_vector_constructor(const glsl_type *type,
 
 	 const ir_constant *const c = param->as_constant();
 	 if (c == NULL) {
-	    /* Generate a swizzle that puts the first element of the source at
-	     * the location of the first element of the destination.
-	     */
+	    /* Generate a swizzle in case rhs_components != rhs->type->vector_elements. */
 	    unsigned swiz[4] = { 0, 0, 0, 0 };
 	    for (unsigned i = 0; i < rhs_components; i++)
-	       swiz[i + base_component] = i;
+	       swiz[i] = i;
 
 	    /* Mask of fields to be written in the assignment.
 	     */
@@ -587,7 +591,7 @@ emit_inline_vector_constructor(const glsl_type *type,
 	       << base_component;
 
 	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, lhs_components);
+	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, rhs_components);
 
 	    ir_instruction *inst =
 	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
@@ -632,10 +636,10 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
     */
    unsigned swiz[4] = { src_base, src_base, src_base, src_base };
    for (unsigned i = 0; i < count; i++)
-      swiz[i + row_base] = src_base + i;
+      swiz[i + row_base] = i;
 
    ir_rvalue *const rhs =
-      new(mem_ctx) ir_swizzle(src, swiz, column_ref->type->components());
+      new(mem_ctx) ir_swizzle(src, swiz, count);
 
    /* Mask of fields to be written in the assignment.
     */
@@ -816,7 +820,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
 				     var->type->matrix_columns);
 
       unsigned swiz[4] = { 0, 0, 0, 0 };
-      for (unsigned i = 1; i < src_matrix->type->vector_elements; i++)
+      for (unsigned i = 1; i < last_row; i++)
 	 swiz[i] = i;
 
       const unsigned write_mask = (1U << last_row) - 1;
@@ -837,13 +841,10 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  */
 	 ir_rvalue *rhs;
 	 if (lhs->type->vector_elements != rhs_col->type->vector_elements) {
-	    rhs = new(ctx) ir_swizzle(rhs_col, swiz,
-				      lhs->type->vector_elements);
+	    rhs = new(ctx) ir_swizzle(rhs_col, swiz, last_row);
 	 } else {
 	    rhs = rhs_col;
 	 }
-
-	 assert(lhs->type == rhs->type);
 
 	 ir_instruction *inst =
 	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);

@@ -391,14 +391,16 @@ ir_validate::visit_enter(ir_assignment *ir)
 	 abort();
       }
 
-      /* Mask of fields that do not exist in the destination.  These should
-       * not be written by the assignment.
-       */
-      const unsigned invalid_mask = ~((1U << lhs->type->components()) - 1);
+      int lhs_components = 0;
+      for (int i = 0; i < 4; i++) {
+	 if (ir->write_mask & (1 << i))
+	    lhs_components++;
+      }
 
-      if ((invalid_mask & ir->write_mask) != 0) {
-	 printf("Assignment write mask enables invalid components for "
-		"type %s:\n", lhs->type->name);
+      if (lhs_components != ir->rhs->type->vector_elements) {
+	 printf("Assignment count of LHS write mask channels enabled not\n"
+		"matching RHS vector size (%d LHS, %d RHS).\n",
+		lhs_components, ir->rhs->type->vector_elements);
 	 ir->print();
 	 abort();
       }

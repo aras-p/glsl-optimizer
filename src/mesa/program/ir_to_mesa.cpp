@@ -1577,13 +1577,39 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
       assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
       l.writemask = WRITEMASK_XYZW;
    } else if (ir->lhs->type->is_scalar()) {
-      /* FINISHME: This hack makes writing to gl_FragData, which lives in the
+      /* FINISHME: This hack makes writing to gl_FragDepth, which lives in the
        * FINISHME: W component of fragment shader output zero, work correctly.
        */
       l.writemask = WRITEMASK_XYZW;
    } else {
+      int swizzles[4];
+      int first_enabled_chan = 0;
+      int rhs_chan = 0;
+
       assert(ir->lhs->type->is_vector());
       l.writemask = ir->write_mask;
+
+      for (int i = 0; i < 4; i++) {
+	 if (l.writemask & (1 << i)) {
+	    first_enabled_chan = GET_SWZ(r.swizzle, i);
+	    break;
+	 }
+      }
+
+      /* Swizzle a small RHS vector into the channels being written.
+       *
+       * glsl ir treats write_mask as dictating how many channels are
+       * present on the RHS while Mesa IR treats write_mask as just
+       * showing which channels of the vec4 RHS get written.
+       */
+      for (int i = 0; i < 4; i++) {
+	 if (l.writemask & (1 << i))
+	    swizzles[i] = GET_SWZ(r.swizzle, rhs_chan++);
+	 else
+	    swizzles[i] = first_enabled_chan;
+      }
+      r.swizzle = MAKE_SWIZZLE4(swizzles[0], swizzles[1],
+				swizzles[2], swizzles[3]);
    }
 
    assert(l.file != PROGRAM_UNDEFINED);
