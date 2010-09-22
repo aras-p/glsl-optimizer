@@ -239,6 +239,7 @@ struct GalliumDXGIAdapter
 
 	~GalliumDXGIAdapter()
 	{
+		display->destroy(display);
 		free(configs);
 		free(connectors);
 	}
