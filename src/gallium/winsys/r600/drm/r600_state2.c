@@ -914,6 +914,15 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 			r600_context_flush(ctx);
 		}
 	}
+
+	/* find number of color buffer */
+	for (int i = 0; i < 8; i++) {
+		cb[i] = r600_context_reg_bo(ctx, R600_GROUP_CONTEXT, R_028040_CB_COLOR0_BASE + (i << 2));
+		if (cb[i]) {
+			ndwords += 7;
+		}
+	}
+
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
 		r600_context_flush(ctx);
@@ -955,7 +964,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	/* flush color buffer */
 	for (int i = 0; i < 8; i++) {
-		cb[i] = r600_context_reg_bo(ctx, R600_GROUP_CONTEXT, R_028040_CB_COLOR0_BASE + (i << 2));
 		if (cb[i]) {
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
 			ctx->pm4[ctx->pm4_cdwords++] = (S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
