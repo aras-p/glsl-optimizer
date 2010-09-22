@@ -1049,7 +1049,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
  * Return the blend factor equivalent to a destination alpha of one.
  */
 static INLINE unsigned
-force_dst_alpha_one(unsigned factor, boolean alpha)
+force_dst_alpha_one(unsigned factor)
 {
    switch(factor) {
    case PIPE_BLENDFACTOR_DST_ALPHA:
@@ -1058,15 +1058,6 @@ force_dst_alpha_one(unsigned factor, boolean alpha)
       return PIPE_BLENDFACTOR_ZERO;
    case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
       return PIPE_BLENDFACTOR_ZERO;
-   }
-
-   if (alpha) {
-      switch(factor) {
-      case PIPE_BLENDFACTOR_DST_COLOR:
-         return PIPE_BLENDFACTOR_ONE;
-      case PIPE_BLENDFACTOR_INV_DST_COLOR:
-         return PIPE_BLENDFACTOR_ZERO;
-      }
    }
 
    return factor;
@@ -1145,12 +1136,15 @@ make_variant_key(struct llvmpipe_context *lp,
        *
        * TODO: This should be generalized to all channels for better
        * performance, but only alpha causes correctness issues.
+       *
+       * Also, force rgb/alpha func/factors match, to make AoS blending easier.
        */
       if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W) {
-         blend_rt->rgb_src_factor = force_dst_alpha_one(blend_rt->rgb_src_factor, FALSE);
-         blend_rt->rgb_dst_factor = force_dst_alpha_one(blend_rt->rgb_dst_factor, FALSE);
-         blend_rt->alpha_src_factor = force_dst_alpha_one(blend_rt->alpha_src_factor, TRUE);
-         blend_rt->alpha_dst_factor = force_dst_alpha_one(blend_rt->alpha_dst_factor, TRUE);
+         blend_rt->rgb_src_factor   = force_dst_alpha_one(blend_rt->rgb_src_factor);
+         blend_rt->rgb_dst_factor   = force_dst_alpha_one(blend_rt->rgb_dst_factor);
+         blend_rt->alpha_func       = blend_rt->rgb_func;
+         blend_rt->alpha_src_factor = blend_rt->rgb_src_factor;
+         blend_rt->alpha_dst_factor = blend_rt->rgb_dst_factor;
       }
    }
 
