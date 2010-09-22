@@ -556,6 +556,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 
+
 	switch (draw->index_size) {
 	case 2:
 		vgt_draw_initiator = 0;
@@ -660,7 +661,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-#if 1
+#if 0
 	static int dc = 0;
 	char dname[256];
 #endif
@@ -2089,7 +2090,10 @@ static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *quer
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_query *rquery = (struct r600_query *)query;
 
+	rquery->result = 0;
+	rquery->num_results = 0;
 	r600_query_begin(&rctx->ctx, (struct r600_query *)query);
 }
 
@@ -2105,7 +2109,11 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 					boolean wait, void *vresult)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_query *rquery = (struct r600_query *)query;
 
+	if (rquery->num_results) {
+		ctx->flush(ctx, 0, NULL);
+	}
 	return r600_context_query_result(&rctx->ctx, (struct r600_query *)query, wait, vresult);
 }
 

@@ -69,7 +69,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_query *rquery = NULL;
-#if 0
+#if 1
 	static int dc = 0;
 	char dname[256];
 #endif
@@ -84,7 +84,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 2) {
+	if (dc < 20) {
 		radeon_ctx_dump_bof(rctx->ctx, dname);
 		R600_ERR("dumped %s\n", dname);
 	}
