@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 IDL=$(wildcard *.idl include/*.idl)
 IDL_H=$(IDL:.idl=.h)
-LD=$(CXX)
+LD=$(CXX) $(CXXFLAGS)
 
 include ../../../Makefile.template
 
