@@ -762,7 +762,7 @@ static inline size_t raw_hash(const char* p, size_t size)
 	const char* end = p + size;
 	for(; p != end; ++p)
 	{
-		res ^= (size_t)*p++;
+		res ^= (size_t)*p;
 		if(sizeof(size_t) >= 8)
 			res *= (size_t)1099511628211ULL;
 		else
