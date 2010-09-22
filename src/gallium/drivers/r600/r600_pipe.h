@@ -1,0 +1,146 @@
+/*
+ * Copyright 2010 Jerome Glisse <glisse@freedesktop.org>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *      Jerome Glisse
+ */
+#ifndef R600_PIPE_H
+#define R600_PIPE_H
+
+enum r600_pipe_state_id {
+	R600_PIPE_STATE_BLEND = 0,
+	R600_PIPE_STATE_BLEND_COLOR,
+	R600_PIPE_STATE_CONFIG,
+	R600_PIPE_STATE_CLIP,
+	R600_PIPE_STATE_SCISSOR,
+	R600_PIPE_STATE_VIEWPORT,
+	R600_PIPE_STATE_RASTERIZER,
+	R600_PIPE_STATE_VGT,
+	R600_PIPE_STATE_FRAMEBUFFER,
+	R600_PIPE_STATE_DSA,
+	R600_PIPE_STATE_STENCIL_REF,
+	R600_PIPE_STATE_PS_SHADER,
+	R600_PIPE_STATE_VS_SHADER,
+	R600_PIPE_STATE_CONSTANT,
+	R600_PIPE_STATE_SAMPLER,
+	R600_PIPE_STATE_RESOURCE,
+	R600_PIPE_NSTATES
+};
+
+struct r600_screen {
+	struct pipe_screen		screen;
+	struct radeon			*radeon;
+};
+
+struct r600_pipe_sampler_view {
+	struct pipe_sampler_view	base;
+	struct r600_pipe_state		state;
+};
+
+struct r600_pipe_rasterizer {
+	struct r600_pipe_state		rstate;
+	bool				flatshade;
+	unsigned			sprite_coord_enable;
+};
+
+struct r600_pipe_blend {
+	struct r600_pipe_state		rstate;
+	unsigned			cb_target_mask;
+};
+
+struct r600_pipe_shader {
+	struct r600_shader		shader;
+	struct r600_pipe_state		rstate;
+	struct radeon_ws_bo		*bo;
+};
+
+struct r600_vertex_element
+{
+	unsigned			count;
+	unsigned			refcount;
+	struct pipe_vertex_element	elements[32];
+};
+
+struct r600_pipe_context {
+	struct pipe_context		context;
+	struct r600_screen		*screen;
+	struct radeon			*radeon;
+	struct blitter_context		*blitter;
+	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
+	struct r600_context		ctx;
+	struct r600_vertex_element	*vertex_elements;
+	struct pipe_framebuffer_state	framebuffer;
+	struct pipe_index_buffer	index_buffer;
+	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
+	unsigned			nvertex_buffer;
+	unsigned			cb_target_mask;
+	/* for saving when using blitter */
+	struct pipe_stencil_ref		stencil_ref;
+	struct pipe_viewport_state	viewport;
+	struct pipe_clip_state		clip;
+	unsigned			vs_nconst;
+	unsigned			ps_nconst;
+	struct r600_pipe_state		vs_const[256];
+	struct r600_pipe_state		ps_const[256];
+	struct r600_pipe_state		vs_resource[160];
+	struct r600_pipe_state		ps_resource[160];
+	struct r600_pipe_state		config;
+	struct r600_pipe_shader 	*ps_shader;
+	struct r600_pipe_shader 	*vs_shader;
+	struct r600_pipe_state		vs_const_buffer;
+	struct r600_pipe_state		ps_const_buffer;
+	/* shader information */
+	unsigned			sprite_coord_enable;
+	bool				flatshade;
+};
+
+struct r600_drawl {
+	struct pipe_context	*ctx;
+	unsigned		mode;
+	unsigned		start;
+	unsigned		count;
+	unsigned		index_size;
+	struct pipe_resource	*index_buffer;
+};
+
+uint32_t r600_translate_texformat(enum pipe_format format,
+				  const unsigned char *swizzle_view, 
+				  uint32_t *word4_p, uint32_t *yuv_format_p);
+
+/* r600_state2.c */
+int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+
+/* evergreen_state.c */
+void evergreen_init_state_functions2(struct r600_pipe_context *rctx);
+void evergreen_init_config2(struct r600_pipe_context *rctx);
+void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+
+static INLINE u32 S_FIXED(float value, u32 frac_bits)
+{
+	return value * (1 << frac_bits);
+}
+#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+#endif

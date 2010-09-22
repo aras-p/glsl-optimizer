@@ -38,6 +38,7 @@
 #include "util/u_inlines.h"
 #include <pipebuffer/pb_bufmgr.h>
 
+#define GROUP_FORCE_NEW_BLOCK	0
 struct radeon_ws_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*pb;
@@ -93,7 +94,7 @@ static int r600_group_id_register_offset(unsigned offset)
 	return -1;
 }
 
-static int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg)
+int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg)
 {
 	struct r600_group_block *block, *tmp;
 	struct r600_group *group;
@@ -101,12 +102,21 @@ static int r600_context_add_block(struct r600_context *ctx, const struct r600_re
 
 	for (unsigned i = 0, n = 0; i < nreg; i += n) {
 		u32 j, r;
-		/* find number of consecutive registers */
-		for (j = i + 1, r = reg[i].offset + 4, n = 1; j < (nreg - i); j++, n++, r+=4) {
-			if (r != reg[j].offset) {
-				break;
+
+		/* register that need relocation are in their own group */
+		n = 1;
+		if (!reg[i].need_bo) {
+			/* find number of consecutive registers */
+			for (j = i + 1, r = reg[i].offset + 4, n = 1; j < (nreg - i); j++, n++, r+=4) {
+				if (reg[i].need_bo || r != reg[j].offset) {
+					break;
+				}
 			}
 		}
+
+		/* ignore new block balise */
+		if (reg[i].offset == GROUP_FORCE_NEW_BLOCK)
+			continue;
 
 		/* find into which group this block is */
 		group_id = r600_group_id_register_offset(reg[i].offset);
@@ -158,7 +168,7 @@ static int r600_context_add_block(struct r600_context *ctx, const struct r600_re
 	return 0;
 }
 
-static int r600_group_init(struct r600_group *group, unsigned start_offset, unsigned end_offset)
+int r600_group_init(struct r600_group *group, unsigned start_offset, unsigned end_offset)
 {
 	group->start_offset = start_offset;
 	group->end_offset = end_offset;
@@ -702,7 +712,7 @@ out_err:
 	return r;
 }
 
-static void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo)
+void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo)
 {
 	int i, reloc_id;
 
@@ -770,8 +780,8 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	block->pm4[4] = state->regs[4].value;
 	block->pm4[5] = state->regs[5].value;
 	block->pm4[6] = state->regs[6].value;
-	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, block->reloc[1].bo);
-	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, block->reloc[2].bo);
+	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
 		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 		 * we have single case btw VERTEX & TEXTURE resource
@@ -859,7 +869,7 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 	}
 }
 
-static inline void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group, unsigned opcode)
+void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group, unsigned opcode)
 {
 	struct radeon_bo *bo;
 	int id;
@@ -887,7 +897,7 @@ static inline void r600_context_group_emit_dirty(struct r600_context *ctx, struc
 	}
 }
 
-static struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned group_id, unsigned offset)
+struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned group_id, unsigned offset)
 {
 	struct r600_group_block *block;
 	unsigned id;

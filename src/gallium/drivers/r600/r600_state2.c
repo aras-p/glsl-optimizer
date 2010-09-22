@@ -48,108 +48,12 @@ struct radeon_state {
 };
 #include "r600_resource.h"
 #include "r600_shader.h"
-
-
-uint32_t r600_translate_texformat(enum pipe_format format,
-				  const unsigned char *swizzle_view, 
-				  uint32_t *word4_p, uint32_t *yuv_format_p);
-
+#include "r600_pipe.h"
 #include "r600_state_inlines.h"
-
-enum r600_pipe_state_id {
-	R600_PIPE_STATE_BLEND = 0,
-	R600_PIPE_STATE_BLEND_COLOR,
-	R600_PIPE_STATE_CONFIG,
-	R600_PIPE_STATE_CLIP,
-	R600_PIPE_STATE_SCISSOR,
-	R600_PIPE_STATE_VIEWPORT,
-	R600_PIPE_STATE_RASTERIZER,
-	R600_PIPE_STATE_VGT,
-	R600_PIPE_STATE_FRAMEBUFFER,
-	R600_PIPE_STATE_DSA,
-	R600_PIPE_STATE_STENCIL_REF,
-	R600_PIPE_STATE_PS_SHADER,
-	R600_PIPE_STATE_VS_SHADER,
-	R600_PIPE_STATE_CONSTANT,
-	R600_PIPE_STATE_SAMPLER,
-	R600_PIPE_STATE_RESOURCE,
-	R600_PIPE_NSTATES
-};
-
-struct r600_screen {
-	struct pipe_screen		screen;
-	struct radeon			*radeon;
-};
-
-struct r600_pipe_sampler_view {
-	struct pipe_sampler_view	base;
-	struct r600_pipe_state		state;
-};
-
-struct r600_pipe_rasterizer {
-	struct r600_pipe_state		rstate;
-	bool				flatshade;
-	unsigned			sprite_coord_enable;
-};
-
-struct r600_pipe_blend {
-	struct r600_pipe_state		rstate;
-	unsigned			cb_target_mask;
-};
-
-struct r600_pipe_shader {
-	struct r600_shader		shader;
-	struct r600_pipe_state		rstate;
-	struct radeon_ws_bo		*bo;
-};
-
-struct r600_vertex_element
-{
-	unsigned			count;
-	unsigned			refcount;
-	struct pipe_vertex_element	elements[32];
-};
-
-struct r600_pipe_context {
-	struct pipe_context		context;
-	struct r600_screen		*screen;
-	struct radeon			*radeon;
-	struct blitter_context		*blitter;
-	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
-	struct r600_context		ctx;
-	struct r600_vertex_element	*vertex_elements;
-	struct pipe_framebuffer_state	framebuffer;
-	struct pipe_index_buffer	index_buffer;
-	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned			nvertex_buffer;
-	unsigned			cb_target_mask;
-	/* for saving when using blitter */
-	struct pipe_stencil_ref		stencil_ref;
-	struct pipe_viewport_state	viewport;
-	struct pipe_clip_state		clip;
-	unsigned			vs_nconst;
-	unsigned			ps_nconst;
-	struct r600_pipe_state		vs_const[256];
-	struct r600_pipe_state		ps_const[256];
-	struct r600_pipe_state		vs_resource[160];
-	struct r600_pipe_state		ps_resource[160];
-	struct r600_pipe_state		config;
-	struct r600_pipe_shader 	*ps_shader;
-	struct r600_pipe_shader 	*vs_shader;
-	/* shader information */
-	unsigned			sprite_coord_enable;
-	bool				flatshade;
-};
-
-static INLINE u32 S_FIXED(float value, u32 frac_bits)
-{
-	return value * (1 << frac_bits);
-}
 
 /* r600_shader.c */
 static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10];
@@ -287,10 +191,18 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	rshader->flat_shade = rctx->flatshade;
 	switch (rshader->processor_type) {
 	case TGSI_PROCESSOR_VERTEX:
-		r600_pipe_shader_vs(ctx, shader);
+		if (rshader->family >= CHIP_CEDAR) {
+			evergreen_pipe_shader_vs(ctx, shader);
+		} else {
+			r600_pipe_shader_vs(ctx, shader);
+		}
 		break;
 	case TGSI_PROCESSOR_FRAGMENT:
-		r600_pipe_shader_ps(ctx, shader);
+		if (rshader->family >= CHIP_CEDAR) {
+			evergreen_pipe_shader_ps(ctx, shader);
+		} else {
+			r600_pipe_shader_ps(ctx, shader);
+		}
 		break;
 	default:
 		return -EINVAL;
@@ -339,7 +251,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	return r600_bc_build(&shader->bc);
 }
 
-static int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;
@@ -359,7 +271,7 @@ static int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_s
 }
 
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
-static int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
+int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;
@@ -534,15 +446,6 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 		return;
 	FREE(rscreen);
 }
-
-struct r600_drawl {
-	struct pipe_context	*ctx;
-	unsigned		mode;
-	unsigned		start;
-	unsigned		count;
-	unsigned		index_size;
-	struct pipe_resource	*index_buffer;
-};
 
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 static void r600_draw_common(struct r600_drawl *draw)
@@ -2137,7 +2040,6 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
-	rctx->context.draw_vbo = r600_draw_vbo2;
 	rctx->context.flush = r600_flush2;
 
 	/* Easy accessing of screen/winsys. */
@@ -2146,7 +2048,6 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 
 	r600_init_blit_functions2(rctx);
 	r600_init_query_functions2(rctx);
-	r600_init_state_functions2(rctx);
 	r600_init_context_resource_functions2(rctx);
 
 	rctx->blitter = util_blitter_create(&rctx->context);
@@ -2155,12 +2056,45 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 		return NULL;
 	}
 
-	if (r600_context_init(&rctx->ctx, rctx->radeon)) {
+	switch (r600_get_family(rctx->radeon)) {
+	case CHIP_R600:
+	case CHIP_RV610:
+	case CHIP_RV630:
+	case CHIP_RV670:
+	case CHIP_RV620:
+	case CHIP_RV635:
+	case CHIP_RS780:
+	case CHIP_RS880:
+	case CHIP_RV770:
+	case CHIP_RV730:
+	case CHIP_RV710:
+	case CHIP_RV740:
+		rctx->context.draw_vbo = r600_draw_vbo2;
+		r600_init_state_functions2(rctx);
+		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
+			r600_destroy_context(&rctx->context);
+			return NULL;
+		}
+		r600_init_config2(rctx);
+		break;
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		rctx->context.draw_vbo = evergreen_draw;
+		evergreen_init_state_functions2(rctx);
+		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
+			r600_destroy_context(&rctx->context);
+			return NULL;
+		}
+		evergreen_init_config2(rctx);
+		break;
+	default:
+		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-
-	r600_init_config2(rctx);
 
 	return &rctx->context;
 }

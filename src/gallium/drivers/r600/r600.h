@@ -129,6 +129,17 @@ enum r600_group_id {
 	R600_NGROUPS
 };
 
+enum evergreen_group_id {
+	EVERGREEN_GROUP_CONFIG = 0,
+	EVERGREEN_GROUP_CONTEXT,
+	EVERGREEN_GROUP_RESOURCE,
+	EVERGREEN_GROUP_SAMPLER,
+	EVERGREEN_GROUP_CTL_CONST,
+	EVERGREEN_GROUP_LOOP_CONST,
+	EVERGREEN_GROUP_BOOL_CONST,
+	EVERGREEN_NGROUPS
+};
+
 struct r600_pipe_reg {
 	unsigned			group_id;
 	u32				offset;
@@ -264,5 +275,10 @@ boolean r600_context_query_result(struct r600_context *ctx,
 				boolean wait, void *vresult);
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
+
+int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
+void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
+void evergreen_ps_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
+void evergreen_vs_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
 
 #endif
