@@ -186,6 +186,11 @@ void st_init_limits(struct st_context *st)
     * attributes) supported by a driver. */
    c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_MAX_INPUTS) - 2;
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
+
+   /* XXX we'll need a better query here someday */
+   if (screen->get_param(screen, PIPE_CAP_GLSL)) {
+      c->GLSLVersion = 120;
+   }
 }
 
 
@@ -285,7 +290,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
       ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
-      ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {

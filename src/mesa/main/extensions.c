@@ -77,7 +77,6 @@ static const struct {
    { OFF, "GL_ARB_seamless_cube_map",          F(ARB_seamless_cube_map) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
-   { OFF, "GL_ARB_shading_language_120",       F(ARB_shading_language_120) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(ARB_shadow_ambient) },
    { OFF, "GL_ARB_sync",                       F(ARB_sync) },
@@ -268,9 +267,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
 #if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
-#endif
-#if FEATURE_ARB_shading_language_120
-   ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_shadow_ambient = GL_TRUE;
@@ -512,9 +508,6 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
 #endif
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
-#endif
-#if FEATURE_ARB_shading_language_120
-   ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
 #endif
 }
 

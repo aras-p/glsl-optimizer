@@ -89,7 +89,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_point_sprite",               NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
-   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
    { "GL_ARB_sync",                       GL_ARB_sync_functions },
    { "GL_ARB_texture_border_clamp",       NULL },
    { "GL_ARB_texture_cube_map",           NULL },

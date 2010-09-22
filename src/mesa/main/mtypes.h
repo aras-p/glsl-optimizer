@@ -2608,6 +2608,8 @@ struct gl_constants
 
    GLuint MaxVarying;  /**< Number of float[4] varying parameters */
 
+   GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
+
    /** Which texture units support GL_ATI_envmap_bumpmap as targets */
    GLbitfield SupportedBumpUnits;
 
@@ -2668,7 +2670,6 @@ struct gl_extensions
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
-   GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
    GLboolean ARB_shadow_ambient;
    GLboolean ARB_sync;

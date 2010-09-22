@@ -42,6 +42,12 @@
 #include "tnl/t_pipeline.h"
 
 
+static const struct dri_extension gl_21_extension[] = {
+  {"GL_VERSION_2_1", GL_VERSION_2_1_functions },
+};
+
+
+
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -87,6 +93,8 @@ GLboolean brwCreateContext( int api,
    intelInitSpanFuncs(ctx);
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+
+   ctx->Const.GLSLVersion = 120;
 
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
@@ -151,6 +159,8 @@ GLboolean brwCreateContext( int api,
    ctx->Const.FragmentProgram.MaxEnvParams =
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
+
+   driInitExtensions(ctx, gl_21_extension, GL_TRUE);
 
    if (intel->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;

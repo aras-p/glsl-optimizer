@@ -597,6 +597,21 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
+   /* Shading language version */
+   if (ctx->API == API_OPENGL) {
+#if FEATURE_ARB_shading_language_120
+      ctx->Const.GLSLVersion = 120;
+#else
+      ctx->Const.GLSLVersion = 110;
+#endif
+   }
+   else if (ctx->API == API_OPENGLES2) {
+      ctx->Const.GLSLVersion = 100;
+   }
+   else if (ctx->API == API_OPENGLES) {
+      ctx->Const.GLSLVersion = 0; /* GLSL not supported */
+   }
+
    /* GL_ARB_framebuffer_object */
    ctx->Const.MaxSamples = 0;
 

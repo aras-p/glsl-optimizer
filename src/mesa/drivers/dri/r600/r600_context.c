@@ -166,7 +166,6 @@ static const struct dri_extension mm_extensions[] = {
 static const struct dri_extension gl_20_extension[] = {
 #ifdef R600_ENABLE_GLSL_TEST
     {"GL_ARB_shading_language_100",			GL_VERSION_2_0_functions },
-    {"GL_ARB_shading_language_120",			GL_VERSION_2_1_functions },
 #else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 #endif /* R600_ENABLE_GLSL_TEST */
@@ -265,6 +264,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
     {
         r700->bShaderUseMemConstant = GL_FALSE;
     }
+
+        ctx->Const.GLSLVersion = 120;
 
 	ctx->Const.MaxTextureImageUnits = 16;
 	/* 8 per clause on r6xx, 16 on r7xx
