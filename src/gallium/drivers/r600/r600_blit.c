@@ -583,9 +583,8 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 		bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = S_028D0C_DEPTH_COPY_ENABLE(1) |
 			S_028D0C_STENCIL_COPY_ENABLE(1) |
 			S_028D0C_COPY_CENTROID(1);
-		bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
 	}
-
+	bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000003;
 	r600_blit_state_cb_flush(rscreen, &bstates.cb_flush, rtexture, 0, 0);
 	r600_blit_state_db_flush(rscreen, &bstates.db_flush, rtexture, 0, 0);
 
