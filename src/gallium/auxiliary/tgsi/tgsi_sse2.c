@@ -2975,7 +2975,8 @@ tgsi_emit_sse2(
                          tgsi_get_processor_name(proc));
 	 }
 
-         ok = check_soa_dependencies(&parse.FullToken.FullInstruction);
+         if (ok)
+            ok = check_soa_dependencies(&parse.FullToken.FullInstruction);
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
