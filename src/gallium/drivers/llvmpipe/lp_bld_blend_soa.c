@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -195,6 +195,13 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 }
 
 
+static boolean
+lp_build_blend_factor_complementary(unsigned src_factor, unsigned dst_factor)
+{
+   return dst_factor == (src_factor ^ 0x10);
+}
+
+
 /**
  * Generate blend code in SOA mode.
  * \param rt  render target index (to index the blend / colormask state)
@@ -243,8 +250,41 @@ lp_build_blend_soa(LLVMBuilderRef builder,
             unsigned func = i < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
             boolean func_commutative = lp_build_blend_func_commutative(func);
 
-            /* It makes no sense to blend unless values are normalized */
-            assert(type.norm);
+	    if (func == PIPE_BLEND_ADD &&
+		lp_build_blend_factor_complementary(src_factor, dst_factor) && 0) {
+               /*
+                * Special case linear interpolation, (i.e., complementary factors).
+                */
+
+	       LLVMValueRef weight;
+	       if (src_factor < dst_factor) {
+		  weight = lp_build_blend_soa_factor(&bld, src_factor, i);
+		  res[i] = lp_build_lerp(&bld.base, weight, dst[i], src[i]);
+	       } else {
+		  weight = lp_build_blend_soa_factor(&bld, dst_factor, i);
+		  res[i] = lp_build_lerp(&bld.base, weight, src[i], dst[i]);
+	       }
+	       continue;
+	    }
+
+	    if ((func == PIPE_BLEND_ADD ||
+                 func == PIPE_BLEND_SUBTRACT ||
+                 func == PIPE_BLEND_REVERSE_SUBTRACT) &&
+		src_factor == dst_factor &&
+                type.floating) {
+               /*
+                * Special common factor.
+                *
+                * XXX: Only for floating points for now, since saturation will
+                * cause different results.
+                */
+
+	       LLVMValueRef factor;
+               factor = lp_build_blend_soa_factor(&bld, src_factor, i);
+               res[i] = lp_build_blend_func(&bld.base, func, src[i], dst[i]);
+               res[i] = lp_build_mul(&bld.base, res[i], factor);
+	       continue;
+	    }
 
             /*
              * Compute src/dst factors.
