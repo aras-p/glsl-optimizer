@@ -502,6 +502,16 @@ process_buffers(struct dri2_drawable * pdraw, DRI2Buffer * buffers,
 
 }
 
+unsigned dri2GetSwapEventType(Display* dpy, XID drawable)
+{
+      struct glx_display *glx_dpy = __glXInitialize(dpy);
+      __GLXDRIdrawable *pdraw;
+      pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
+      if (!pdraw || !(pdraw->eventMask & GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK))
+         return 0;
+      return glx_dpy->codes->first_event + GLX_BufferSwapComplete;
+}
+
 static int64_t
 dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 		int64_t remainder)
