@@ -63,22 +63,53 @@ struct GalliumDXGIObject : public GalliumPrivateDataComObject<Base>
         }
 };
 
-static void* STDMETHODCALLTYPE identity_resolver(void* cookie, HWND hwnd)
+COM_INTERFACE(IGalliumDXGIBackend, IUnknown)
+
+struct GalliumDXGIIdentityBackend : public GalliumComObject<IGalliumDXGIBackend>
 {
-	return (void*)hwnd;
-}
+	virtual void * STDMETHODCALLTYPE BeginPresent(
+		HWND hwnd,
+		void** window,
+		RECT *rect,
+		RGNDATA **rgndata,
+		BOOL* preserve_aspect_ratio
+	)
+	{
+		*window = (void*)hwnd;
+		rect->left = 0;
+		rect->top = 0;
+		rect->right = INT_MAX;
+		rect->bottom = INT_MAX;
+		*rgndata = 0;
+
+		// yes, because we like things looking good
+		*preserve_aspect_ratio = TRUE;
+		return 0;
+	}
+
+	virtual void STDMETHODCALLTYPE EndPresent(
+		HWND hwnd,
+		void* present_cookie
+	)
+	{}
+};
 
 struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 {
         HWND associated_window;
 	const struct native_platform* platform;
 	void* display;
-	PFNHWNDRESOLVER resolver;
+	ComPtr<IGalliumDXGIBackend> backend;
 	void* resolver_cookie;
 
-        GalliumDXGIFactory(const struct native_platform* platform, void* display, PFNHWNDRESOLVER resolver, void* resolver_cookie)
-        : GalliumDXGIObject<IDXGIFactory1, IUnknown>((IUnknown*)NULL), platform(platform), display(display), resolver(resolver ? resolver : (PFNHWNDRESOLVER)identity_resolver), resolver_cookie(resolver_cookie)
-        {}
+	GalliumDXGIFactory(const struct native_platform* platform, void* display, IGalliumDXGIBackend* p_backend)
+	: GalliumDXGIObject<IDXGIFactory1, IUnknown>((IUnknown*)NULL), platform(platform), display(display)
+	  {
+		if(p_backend)
+			backend = p_backend;
+		else
+			backend.reset(new GalliumDXGIIdentityBackend());
+	}
 
         virtual HRESULT STDMETHODCALLTYPE EnumAdapters(
         	UINT Adapter,
@@ -678,6 +709,7 @@ struct dxgi_blitter
 		rasterizer = pipe->create_rasterizer_state(pipe, &rs_state);
 
 		struct pipe_blend_state blendd;
+		memset(&blendd, 0, sizeof(blendd));
 		blendd.rt[0].colormask = PIPE_MASK_RGBA;
 		blend = pipe->create_blend_state(pipe, &blendd);
 
@@ -793,9 +825,12 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 	ComPtr<GalliumDXGIAdapter> adapter;
 	ComPtr<IDXGIOutput> target;
 
+	DXGI_SWAP_CHAIN_DESC desc;
+
 	struct native_surface* surface;
 	const struct native_config* config;
 
+	void* window;
 	struct pipe_resource* resources[NUM_NATIVE_ATTACHMENTS];
 	int width;
 	int height;
@@ -808,8 +843,6 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 	struct pipe_resource* gallium_buffer0;
 	struct pipe_sampler_view* gallium_buffer0_view;
 
-	DXGI_SWAP_CHAIN_DESC desc;
-
 	struct pipe_context* pipe;
 	bool owns_pipe;
 
@@ -819,7 +852,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 	bool formats_compatible;
 
 	GalliumDXGISwapChain(GalliumDXGIFactory* factory, IUnknown* p_device, const DXGI_SWAP_CHAIN_DESC& p_desc)
-	: GalliumDXGIObject<IDXGISwapChain, GalliumDXGIFactory>(factory), desc(p_desc)
+	: GalliumDXGIObject<IDXGISwapChain, GalliumDXGIFactory>(factory), desc(p_desc), surface(0)
 	{
 		HRESULT hr;
 
@@ -835,39 +868,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		if(!SUCCEEDED(hr))
 			throw hr;
 
-		void* win = factory->resolver(factory->resolver_cookie, desc.OutputWindow);
-
-		unsigned config_num;
-		if(!strcmp(factory->platform->name, "X11"))
-		{
-			XWindowAttributes xwa;
-			XGetWindowAttributes((Display*)factory->display, (Window)win, &xwa);
-			config_num = adapter->configs_by_native_visual_id[xwa.visual->visualid];
-		}
-		else
-		{
-			enum pipe_format format = dxgi_to_pipe_format[desc.BufferDesc.Format];
-			if(!adapter->configs_by_pipe_format.count(format))
-			{
-				if(adapter->configs_by_pipe_format.empty())
-					throw E_FAIL;
-				// TODO: choose the best match
-				format = (pipe_format)adapter->configs_by_pipe_format.begin()->first;
-			}
-			// TODO: choose the best config
-			config_num = adapter->configs_by_pipe_format.find(format)->second;
-		}
-
-		config = adapter->configs[config_num];
-		surface = adapter->display->create_window_surface(adapter->display, (EGLNativeWindowType)win, config);
-		surface->user_data = this;
-
-		width = 0;
-		height = 0;
-		seq_num = 0;
-		present_count = 0;
-		needs_validation = true;
-		ever_validated = false;
+		memset(resources, 0, sizeof(resources));
 
 		if(desc.SwapEffect == DXGI_SWAP_EFFECT_SEQUENTIAL && desc.BufferCount != 1)
 		{
@@ -885,6 +886,48 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		}
 
 		blitter.reset(new dxgi_blitter(pipe));
+		window = 0;
+	}
+
+	void init_for_window()
+	{
+		if(surface)
+		{
+			surface->destroy(surface);
+			surface = 0;
+		}
+
+		unsigned config_num;
+		if(!strcmp(parent->platform->name, "X11"))
+		{
+			XWindowAttributes xwa;
+			XGetWindowAttributes((Display*)parent->display, (Window)window, &xwa);
+			config_num = adapter->configs_by_native_visual_id[xwa.visual->visualid];
+		}
+		else
+		{
+			enum pipe_format format = dxgi_to_pipe_format[desc.BufferDesc.Format];
+			if(!adapter->configs_by_pipe_format.count(format))
+			{
+				if(adapter->configs_by_pipe_format.empty())
+					throw E_FAIL;
+				// TODO: choose the best match
+				format = (pipe_format)adapter->configs_by_pipe_format.begin()->first;
+			}
+			// TODO: choose the best config
+			config_num = adapter->configs_by_pipe_format.find(format)->second;
+		}
+
+		config = adapter->configs[config_num];
+		surface = adapter->display->create_window_surface(adapter->display, (EGLNativeWindowType)window, config);
+		surface->user_data = this;
+
+		width = 0;
+		height = 0;
+		seq_num = 0;
+		present_count = 0;
+		needs_validation = true;
+		ever_validated = false;
 
 		formats_compatible = util_is_format_compatible(
 				util_format_description(dxgi_to_pipe_format[desc.BufferDesc.Format]),
@@ -951,7 +994,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		unsigned new_seq_num;
 		needs_validation = false;
 
-		if(!surface->validate(surface, 1 << NATIVE_ATTACHMENT_BACK_LEFT, &new_seq_num, resources, &width, &height))
+		if(!surface->validate(surface, (1 << NATIVE_ATTACHMENT_BACK_LEFT) | (1 << NATIVE_ATTACHMENT_FRONT_LEFT), &new_seq_num, resources, &width, &height))
 			return false;
 
 		if(!ever_validated || seq_num != new_seq_num)
@@ -976,16 +1019,36 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 				return hr;
 		}
 
+		void* cur_window = 0;
+		RECT rect;
+		RGNDATA* rgndata;
+		BOOL preserve_aspect_ratio;
+		unsigned dst_w, dst_h;
+		bool db;
+		struct pipe_resource* dst;
+		struct pipe_resource* src;
+		struct pipe_surface* dst_surface;
+
+		void* present_cookie = parent->backend->BeginPresent(desc.OutputWindow, &cur_window, &rect, &rgndata, &preserve_aspect_ratio);
+		if(!cur_window || rect.left >= rect.right || rect.top >= rect.bottom)
+			goto end_present;
+
+		if(cur_window != window)
+		{
+			window = cur_window;
+			init_for_window();
+		}
+
 		if(needs_validation)
 		{
 			if(!validate())
 				return DXGI_ERROR_DEVICE_REMOVED;
 		}
 
-		bool db = !!(config->buffer_mask & NATIVE_ATTACHMENT_BACK_LEFT);
-		struct pipe_resource* dst = resources[db ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT];
-		struct pipe_resource* src = gallium_buffer0;
-		struct pipe_surface* dst_surface = 0;
+		db = !!(config->buffer_mask & NATIVE_ATTACHMENT_BACK_LEFT);
+		dst = resources[db ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT];
+		src = gallium_buffer0;
+		dst_surface = 0;
 
 		/* TODO: sharing the context for blitting won't work correctly if queries are active
 		 * Hopefully no one is crazy enough to keep queries active while presenting, expecting
@@ -993,58 +1056,85 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		 * We could alternatively force using another context, but that might cause inefficiency issues
 		 */
 
-		/* Windows DXGI does not scale in an aspect-preserving way, but we do this
-		 * by default, since we can and it's usually what you want
-		 */
-		unsigned blit_x, blit_y, blit_w, blit_h;
-		float black[4] = {0, 0, 0, 0};
+		if((unsigned)rect.right > dst->width0)
+			rect.right = dst->width0;
+		if((unsigned)rect.bottom > dst->height0)
+			rect.bottom = dst->height0;
+		if(rect.left > rect.right)
+			rect.left = rect.right;
+		if(rect.top > rect.bottom)
+			rect.top = rect.bottom;
 
-		if(!formats_compatible || src->width0 != dst->width0 || dst->width0 != src->width0)
-			dst_surface = pipe->screen->get_tex_surface(pipe->screen, dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+		if(rect.left >= rect.right && rect.top >= rect.bottom)
+			goto end_present;
 
-		int delta = src->width0 * dst->height0 - dst->width0 * src->height0;
-		if(delta > 0)
+		dst_w = rect.right - rect.left;
+		dst_h = rect.bottom - rect.top;
+
+		// TODO: add support for rgndata
+//		if(preserve_aspect_ratio || !rgndata)
+		if(1)
 		{
-			blit_w = dst->width0;
-			blit_h = dst->width0 * src->height0 / src->width0;
-		}
-		else if(delta < 0)
-		{
-			blit_w = dst->height0 * src->width0 / src->height0;
-			blit_h = dst->height0;
-		}
-		else
-		{
-			blit_w = dst->width0;
-			blit_h = dst->height0;
-		}
+			unsigned blit_x, blit_y, blit_w, blit_h;
+			float black[4] = {0, 0, 0, 0};
 
-		blit_x = (dst->width0 - blit_w) >> 1;
-		blit_y = (dst->height0 - blit_h) >> 1;
+			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h)
+				dst_surface = pipe->screen->get_tex_surface(pipe->screen, dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
 
-		if(blit_x)
-			pipe->clear_render_target(pipe, dst_surface, black, 0, 0, blit_x, dst->height0);
-		if(blit_y)
-			pipe->clear_render_target(pipe, dst_surface, black, 0, 0, dst->width0, blit_y);
+			if(preserve_aspect_ratio)
+			{
+				int delta = src->width0 * dst_h - dst_w * src->height0;
+				if(delta > 0)
+				{
+					blit_w = dst_w;
+					blit_h = dst_w * src->height0 / src->width0;
+				}
+				else if(delta < 0)
+				{
+					blit_w = dst_h * src->width0 / src->height0;
+					blit_h = dst_h;
+				}
+				else
+				{
+					blit_w = dst_w;
+					blit_h = dst_h;
+				}
 
-		if(formats_compatible && blit_w == src->width0 && blit_h == src->height0)
-		{
-			pipe_subresource sr;
-			sr.face = 0;
-			sr.level = 0;
-			pipe->resource_copy_region(pipe, dst, sr, 0, 0, 0, src, sr, 0, 0, 0, blit_w, blit_h);
+				blit_x = (dst_w - blit_w) >> 1;
+				blit_y = (dst_h - blit_h) >> 1;
+			}
+			else
+			{
+				blit_x = 0;
+				blit_y = 0;
+				blit_w = dst_w;
+				blit_h = dst_h;
+			}
+
+			if(blit_x)
+				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top, blit_x, dst_h);
+			if(blit_y)
+				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top, dst_w, blit_y);
+
+			if(formats_compatible && blit_w == src->width0 && blit_h == src->height0)
+			{
+				pipe_subresource sr;
+				sr.face = 0;
+				sr.level = 0;
+				pipe->resource_copy_region(pipe, dst, sr, rect.left, rect.top, 0, src, sr, 0, 0, 0, blit_w, blit_h);
+			}
+			else
+			{
+				blitter->blit(dst_surface, gallium_buffer0_view, rect.left + blit_x, rect.top + blit_y, blit_w, blit_h);
+				if(!owns_pipe)
+					gallium_device->RestoreGalliumState();
+			}
+
+			if(blit_w != dst_w)
+				pipe->clear_render_target(pipe, dst_surface, black, rect.left + blit_x + blit_w, rect.top, dst_w - blit_x - blit_w, dst_h);
+			if(blit_h != dst_h)
+				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top + blit_y + blit_h, dst_w, dst_h - blit_y - blit_h);
 		}
-		else
-		{
-			blitter->blit(dst_surface, gallium_buffer0_view, blit_x, blit_y, blit_w, blit_h);
-			if(!owns_pipe)
-				gallium_device->RestoreGalliumState();
-		}
-
-		if(blit_w != dst->width0)
-			pipe->clear_render_target(pipe, dst_surface, black, blit_x + blit_w, 0, dst->width0 - blit_x - blit_w, dst->height0);
-		if(blit_h != dst->height0)
-			pipe->clear_render_target(pipe, dst_surface, black, 0, blit_y + blit_h, dst->width0, dst->height0 - blit_y - blit_h);
 
 		if(dst_surface)
 			pipe->screen->tex_surface_destroy(dst_surface);
@@ -1059,6 +1149,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 			if(!surface->flush_frontbuffer(surface))
 				return DXGI_ERROR_DEVICE_REMOVED;
 		}
+
+end_present:
+		parent->backend->EndPresent(desc.OutputWindow, present_cookie);
 
 		++present_count;
 		return S_OK;
@@ -1225,8 +1318,7 @@ struct dxgi_binding
 {
 	const struct native_platform* platform;
 	void* display;
-	PFNHWNDRESOLVER resolver;
-	void* resolver_cookie;
+	IGalliumDXGIBackend* backend;
 };
 
 static dxgi_binding dxgi_default_binding;
@@ -1236,50 +1328,57 @@ void STDMETHODCALLTYPE GalliumDXGIUseNothing()
 {
 	dxgi_thread_binding.platform = 0;
 	dxgi_thread_binding.display = 0;
-	dxgi_thread_binding.resolver = 0;
-	dxgi_thread_binding.resolver_cookie = 0;
+	if(dxgi_thread_binding.backend)
+		dxgi_thread_binding.backend->Release();
+	dxgi_thread_binding.backend = 0;
 }
 
 #ifdef GALLIUM_DXGI_USE_X11
-void STDMETHODCALLTYPE GalliumDXGIUseX11Display(Display* dpy, PFNHWNDRESOLVER resolver, void* resolver_cookie)
+void STDMETHODCALLTYPE GalliumDXGIUseX11Display(Display* dpy, IGalliumDXGIBackend* backend)
 {
+	GalliumDXGIUseNothing();
 	dxgi_thread_binding.platform = native_get_x11_platform();
 	dxgi_thread_binding.display = dpy;
-	dxgi_thread_binding.resolver = resolver;
-	dxgi_thread_binding.resolver_cookie = resolver_cookie;
+
+	if(backend)
+	{
+		dxgi_thread_binding.backend = backend;
+		backend->AddRef();
+	}
 }
 #endif
 
+/*
 #ifdef GALLIUM_DXGI_USE_DRM
 void STDMETHODCALLTYPE GalliumDXGIUseDRMCard(int fd)
 {
+	GalliumDXGIUseNothing();
 	dxgi_thread_binding.platform = native_get_drm_platform();
 	dxgi_thread_binding.display = (void*)fd;
-	dxgi_thread_binding.resolver = 0;
-	dxgi_thread_binding.resolver_cookie = 0;
+	dxgi_thread_binding.backend = 0;
 }
 #endif
 
 #ifdef GALLIUM_DXGI_USE_FBDEV
 void STDMETHODCALLTYPE GalliumDXGIUseFBDev(int fd)
 {
+	GalliumDXGIUseNothing();
 	dxgi_thread_binding.platform = native_get_fbdev_platform();
 	dxgi_thread_binding.display = (void*)fd;
-	dxgi_thread_binding.resolver = 0;
-	dxgi_thread_binding.resolver_cookie = 0;
+	dxgi_thread_binding.backend = 0;
 }
 #endif
 
 #ifdef GALLIUM_DXGI_USE_GDI
 void STDMETHODCALLTYPE GalliumDXGIUseHDC(HDC hdc, PFNHWNDRESOLVER resolver, void* resolver_cookie)
 {
+	GalliumDXGIUseNothing();
 	dxgi_thread_binding.platform = native_get_gdi_platform();
 	dxgi_thread_binding.display = (void*)hdc;
-	dxgi_thread_binding.resolver = resolver;
-	dxgi_thread_binding.resolver_cookie = resolver_cookie;
+	dxgi_thread_binding.backend = 0;
 }
 #endif
-
+*/
 void STDMETHODCALLTYPE GalliumDXGIMakeDefault()
 {
 	dxgi_default_binding = dxgi_thread_binding;
@@ -1296,11 +1395,11 @@ void STDMETHODCALLTYPE GalliumDXGIMakeDefault()
 	 GalliumDXGIFactory* factory;
 	 *ppFactory = 0;
 	 if(dxgi_thread_binding.platform)
-		 factory = new GalliumDXGIFactory(dxgi_thread_binding.platform, dxgi_thread_binding.display, dxgi_thread_binding.resolver, dxgi_thread_binding.resolver_cookie);
+		 factory = new GalliumDXGIFactory(dxgi_thread_binding.platform, dxgi_thread_binding.display, dxgi_thread_binding.backend);
 	 else if(dxgi_default_binding.platform)
-		 factory = new GalliumDXGIFactory(dxgi_default_binding.platform, dxgi_default_binding.display, dxgi_default_binding.resolver, dxgi_default_binding.resolver_cookie);
+		 factory = new GalliumDXGIFactory(dxgi_default_binding.platform, dxgi_default_binding.display, dxgi_default_binding.backend);
 	 else
-		 factory = new GalliumDXGIFactory(native_get_x11_platform(), NULL, NULL, NULL);
+		 factory = new GalliumDXGIFactory(native_get_x11_platform(), NULL, NULL);
 	 HRESULT hres = factory->QueryInterface(riid, ppFactory);
 	 factory->Release();
 	 return hres;

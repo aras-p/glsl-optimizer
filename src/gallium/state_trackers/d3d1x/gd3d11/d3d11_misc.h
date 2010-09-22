@@ -1,5 +1,10 @@
 #if API < 11
-HRESULT D3D10CreateBlob(
+extern "C" HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
+	__in   SIZE_T NumBytes,
+	__out  LPD3D10BLOB *ppBuffer
+);
+
+HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
 	__in   SIZE_T NumBytes,
 	__out  LPD3D10BLOB *ppBuffer
 )

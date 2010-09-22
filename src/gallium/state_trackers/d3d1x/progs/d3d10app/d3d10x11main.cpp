@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	Window win = XCreateWindow(dpy, RootWindow(dpy, vi->screen), 0, 0, width, height, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel | CWColormap| CWEventMask, &swa);
 	XMapWindow(dpy, win);
 
-	GalliumDXGIUseX11Display(dpy, 0, 0);
+	GalliumDXGIUseX11Display(dpy, 0);
 
 	DXGI_SWAP_CHAIN_DESC swap_chain_desc;
 	memset(&swap_chain_desc, 0, sizeof(swap_chain_desc));

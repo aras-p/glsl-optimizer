@@ -62,16 +62,57 @@ import "../d3dapi/dxgi.idl";
  * - GDI: HWND
  */
 
-typedef struct _XDisplay Display;
-typedef void* (*PFNHWNDRESOLVER)(void*, HWND);
+[object, local, uuid("c22d2f85-f7dd-40b0-a50b-5d308f973c5e")]
+interface IGalliumDXGIBackend : IUnknown
+{
+	/* Returns a cookie that is passed to EndPresent
+	 *
+	 * *window and *rect are the window and subrectangle
+	 * to present in.
+	 *
+	 * For X11, *window is a Window.
+	 * For other systems, it will be the equivalent way to reference a window.
+	 *
+	 * The rectangle is clipped against the window size, so you can
+	 * specify (0, 0, INT_MAX, INT_MAX) to use the whole window.
+	 *
+	 * rgndata is set to either NULL, or the region, in coordinates relative
+	 * to the subrectangle, to clip presentation to.
+	 * *rgndata is valid until EndPresent is called, at which point EndPresent
+	 * may free the data.
+	 *
+	 * If window is set 0, the window is fully obscured, so don't present
+	 * anything, and tell the app of the obscuration.
+	 *
+	 * If preserve_aspect_ratio is set, *rgndata will be ignored. This
+	 * limitation may be lifted in future versions.
+	 *
+	 * EndPresent is still called even if you return 0 in window.
+	 */
+	void* BeginPresent(
+		[in]  HWND hwnd,
+		[out] void** window,
+		[out] RECT* rect,
+		[out] struct _RGNDATA** rgndata,
+		[out] BOOL* preserve_aspect_ratio
+	);
+
+	void EndPresent(
+		[in]  HWND hwnd,
+		[out] void* present_cookie
+	);
+}
 
 void GalliumDXGIUseNothing();
 
 /* only a subset of these may be available, depending on platform and compilation options */
-void GalliumDXGIUseX11Display(Display* dpy, PFNHWNDRESOLVER resolver, void* resolver_cookie);
+void GalliumDXGIUseX11Display(struct _XDisplay* dpy, IGalliumDXGIBackend* backend);
+
+/* these don't really work for now
 void GalliumDXGIUseDRMCard(int fd);
 void GalliumDXGIUseFBDev(int fd);
-void GalliumDXGIUseHDC(HDC hdc, PFNHWNDRESOLVER resolver, void* resolver_cookie);
+void GalliumDXGIUseHDC(HDC hdc, IGalliumDXGIGDIBackend* backend);
+*/
 
 void GalliumDXGIMakeDefault();
 
