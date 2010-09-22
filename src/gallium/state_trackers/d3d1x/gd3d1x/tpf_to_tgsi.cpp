@@ -441,7 +441,7 @@ struct tpf_to_tgsi_converter
 			case TPF_OPCODE_LD_MS:
 			{
 				unsigned texslot = _texslot(false);
-				unsigned dim;
+				unsigned dim = 0;
 				switch(targets[texslot].first)
 				{
 				case TGSI_TEXTURE_1D:
