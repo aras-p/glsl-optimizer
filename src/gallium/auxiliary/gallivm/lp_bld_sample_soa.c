@@ -605,7 +605,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
 
       if (dims == 3) {
          z = lp_build_sample_wrap_nearest(bld, r, depth_vec,
-                                          bld->static_state->pot_height,
+                                          bld->static_state->pot_depth,
                                           bld->static_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
       }
