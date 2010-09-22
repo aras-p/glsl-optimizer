@@ -650,14 +650,7 @@ int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_textu
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	int r;
 
-	if (!rtexture->depth) {
-		/* This shouldn't happen maybe print a warning */
-		return 0;
-	}
-	if (rtexture->uncompressed && !rtexture->dirty) {
-		/* Uncompressed bo already in good state */
-		return 0;
-	}
+	/* TODO possible dirty handling */
 
 	/* allocate uncompressed texture */
 	if (rtexture->uncompressed == NULL) {
