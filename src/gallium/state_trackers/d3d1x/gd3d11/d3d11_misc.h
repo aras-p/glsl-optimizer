@@ -72,7 +72,7 @@ HRESULT  D3D10GetOutputSignatureBlob(
 	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, ppSignatureBlob);
 }
 
-HRESULT  D3D10GetInputOutputSignatureBlob(
+HRESULT  D3D10GetInputAndOutputSignatureBlob(
 	__in   const void *pShaderBytecode,
 	__in   SIZE_T BytecodeLength,
 	__out  ID3D10Blob **ppSignatureBlob
