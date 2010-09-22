@@ -160,6 +160,8 @@ struct r600_blit_states {
 	struct radeon_state	vs_shader;
 	struct radeon_state	vs_resource0;
 	struct radeon_state	vs_resource1;
+	struct radeon_state     cb_flush;
+	struct radeon_state     db_flush;
 };
 
 static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600_blit_states *bstates)
@@ -445,6 +447,7 @@ static void r600_blit_state_rasterizer(struct r600_screen *rscreen, struct radeo
 
 static void r600_blit_state_dsa(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
+	uint32_t db_render_override, db_shader_control;
 	radeon_state_init(rstate, rscreen->rw, R600_STATE_DSA, 0, 0);
 
 	/* set states (most default value are 0 and struct already
@@ -453,8 +456,16 @@ static void r600_blit_state_dsa(struct r600_screen *rscreen, struct radeon_state
 	rstate->states[R600_DSA__DB_ALPHA_TO_MASK] = 0x0000AA00;
 	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
 	rstate->states[R600_DSA__DB_RENDER_CONTROL] = 0x00000060;
-	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = 0x0000002A;
-	rstate->states[R600_DSA__DB_SHADER_CONTROL] = 0x00000210;
+
+	db_render_override = S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
+
+	db_shader_control = S_02880C_DUAL_EXPORT_ENABLE(0) |
+		S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+
+	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = db_render_override;
+	rstate->states[R600_DSA__DB_SHADER_CONTROL] = db_shader_control;
 
 	radeon_state_pm4(rstate);
 }
@@ -475,6 +486,25 @@ static void r600_blit_state_cb_cntl(struct r600_screen *rscreen, struct radeon_s
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = 0x0000000F;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_MASK] = 0xFFFFFFFF;
+	rstate->states[R600_CB_CNTL__CB_SHADER_CONTROL] = 0x1;
+	radeon_state_pm4(rstate);
+}
+
+static void r600_blit_state_cb_flush(struct r600_screen *rscreen, struct radeon_state *rstate, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
+{
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB_FLUSH, 0, 0);
+
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rtexture->uncompressed);
+	rstate->nbo = 1;
+	radeon_state_pm4(rstate);
+}
+
+static void r600_blit_state_db_flush(struct r600_screen *rscreen, struct radeon_state *rstate, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
+{
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_DB_FLUSH, 0, 0);
+
+	radeon_ws_bo_reference(rscreen->rw, &rstate->bo[0], rtexture->resource.bo);
+	rstate->nbo = 1;
 	radeon_state_pm4(rstate);
 }
 
@@ -512,6 +542,7 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	struct r600_context *rctx = r600_context(ctx);
 	struct radeon_draw draw;
 	struct r600_blit_states bstates;
+	enum radeon_family family;
 	int r;
 
 	r = r600_texture_scissor(ctx, rtexture, level);
@@ -535,8 +566,29 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (r) {
 		return r;
 	}
-	bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = 0x0000008C;
-	bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
+
+	/* for some gpus we need special cases */
+	family = radeon_get_family(rscreen->rw);
+	/* according to R6xx_R7xx_3D.pdf section 6.3.1, these GPUs needs special handling */
+	if (family == CHIP_RV610 || family == CHIP_RV630 || family == CHIP_RV620 ||
+	    family == CHIP_RV635) {
+		bstates.dsa.states[R600_DSA__DB_DEPTH_CONTROL] = S_028800_Z_ENABLE(1) |
+			S_028800_STENCIL_ENABLE(1) | S_028800_ZFUNC(PIPE_FUNC_LEQUAL) |
+			S_028800_STENCILFUNC(PIPE_FUNC_ALWAYS) |
+			S_028800_STENCILZPASS(V_028800_STENCIL_KEEP) |
+			S_028800_STENCILZFAIL(V_028800_STENCIL_INCR);
+
+		bstates.dsa.states[R600_DSA__DB_STENCILREFMASK] = S_028430_STENCILWRITEMASK(0xff);
+	} else {
+		bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = S_028D0C_DEPTH_COPY_ENABLE(1) |
+			S_028D0C_STENCIL_COPY_ENABLE(1) |
+			S_028D0C_COPY_CENTROID(1);
+		bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
+	}
+
+	r600_blit_state_cb_flush(rscreen, &bstates.cb_flush, rtexture, 0, 0);
+	r600_blit_state_db_flush(rscreen, &bstates.db_flush, rtexture, 0, 0);
+
 	/* force rebuild */
 	bstates.dsa.cpm4 = bstates.cb_cntl.cpm4 = 0;
 	if (radeon_state_pm4(&bstates.dsa)) {
@@ -561,6 +613,8 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	radeon_draw_bind(&draw, &rctx->config);
 	radeon_draw_bind(&draw, &bstates.vgt);
 	radeon_draw_bind(&draw, &bstates.draw);
+	radeon_draw_bind(&draw, &bstates.cb_flush);
+	radeon_draw_bind(&draw, &bstates.db_flush);
 	radeon_draw_bind(&draw, &bstates.vs_resource0);
 	radeon_draw_bind(&draw, &bstates.vs_resource1);
 	radeon_draw_bind(&draw, &bstates.vs_constant0);

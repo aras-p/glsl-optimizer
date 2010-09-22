@@ -607,8 +607,15 @@
 #define   G_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) >> 0) & 0x3FF)
 #define   C_028D34_DEPTH_HEIGHT_TILE_MAX               0xFFFFFC00
 #define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
+#define   S_028D0C_DEPTH_CLEAR_ENABLE(x)               (((x) & 0x1) << 0)
+#define   S_028D0C_STENCIL_CLEAR_ENABLE(x)             (((x) & 0x1) << 1)
+#define   S_028D0C_DEPTH_COPY_ENABLE(x)                (((x) & 0x1) << 2)
+#define   S_028D0C_STENCIL_COPY_ENABLE(x)              (((x) & 0x1) << 3)
+#define   S_028D0C_RESUMMARIZE_ENABLE(x)               (((x) & 0x1) << 4)
 #define   S_028D0C_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
 #define   S_028D0C_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028D0C_COPY_CENTROID(x)                    (((x) & 0x1) << 7)
+#define   S_028D0C_COPY_SAMPLE(x)                      (((x) & 0x1) << 8)
 #define   S_028D0C_R700_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
 #define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
 #define   V_028D10_FORCE_OFF                         0
