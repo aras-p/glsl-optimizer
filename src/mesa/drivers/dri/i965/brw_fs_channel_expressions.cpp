@@ -128,10 +128,7 @@ ir_channel_expressions_visitor::assign(ir_assignment *ir, int elem, ir_rvalue *v
     */
    assert(ir->write_mask == (1 << ir->lhs->type->components()) - 1);
 
-   /* Smear the float across all the channels for the masked write. */
-   val_swiz = new(mem_ctx) ir_swizzle(val, 0, 0, 0, 0,
-				      ir->lhs->type->components());
-   assign = new(mem_ctx) ir_assignment(lhs, val_swiz, NULL, (1 << elem));
+   assign = new(mem_ctx) ir_assignment(lhs, val, NULL, (1 << elem));
    ir->insert_before(assign);
 }
 
