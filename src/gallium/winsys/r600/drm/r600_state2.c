@@ -60,6 +60,10 @@ void radeon_bo_reference(struct radeon *radeon,
 
 unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
 
+/* queries */
+static void r600_context_queries_suspend(struct r600_context *ctx);
+static void r600_context_queries_resume(struct r600_context *ctx);
+
 static int r600_group_id_register_offset(unsigned offset)
 {
 	if (offset >= R600_CONFIG_REG_OFFSET && offset < R600_CONFIG_REG_END) {
@@ -583,6 +587,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->radeon = radeon;
+	LIST_INITHEAD(&ctx->query_list);
 	/* initialize groups */
 	r = r600_group_init(&ctx->groups[R600_GROUP_CONFIG], R600_CONFIG_REG_OFFSET, R600_CONFIG_REG_END);
 	if (r) {
@@ -902,7 +907,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
-	/* Ok we enough room to copy packet */
+	/* enough room to copy packet */
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONFIG], PKT3_SET_CONFIG_REG);
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONTEXT], PKT3_SET_CONTEXT_REG);
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_ALU_CONST], PKT3_SET_ALU_CONST);
@@ -929,6 +934,8 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
+	/* all dirty state have been scheduled in current cs */
+	ctx->pm4_dirty_cdwords = 0;
 }
 
 void r600_context_flush(struct r600_context *ctx)
@@ -941,6 +948,9 @@ void r600_context_flush(struct r600_context *ctx)
 
 	if (!ctx->pm4_cdwords)
 		return;
+
+	/* suspend queries */
+	r600_context_queries_suspend(ctx);
 
 #if 1
 	/* emit cs */
@@ -964,6 +974,13 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
+
+	/* resume queries */
+	r600_context_queries_resume(ctx);
+
+	/* set all valid group as dirty so they get reemited on
+	 * next draw command
+	 */
 	for (int i = 0; i < ctx->ngroups; i++) {
 		for (int j = 0; j < ctx->groups[i].nblocks; j++) {
 			/* mark enabled block as dirty */
@@ -1056,4 +1073,136 @@ out_err:
 	bof_decref(handle);
 	bof_decref(device_id);
 	bof_decref(root);
+}
+
+static void r600_query_result(struct r600_context *ctx, struct r600_query *query)
+{
+	u64 start, end;
+	u32 *results;
+	int i;
+
+	results = radeon_ws_bo_map(ctx->radeon, query->buffer, 0, NULL);
+	for (i = 0; i < query->num_results; i += 4) {
+		start = (u64)results[i] | (u64)results[i + 1] << 32;
+		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
+		if ((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL)) {
+			query->result += end - start;
+		}
+	}
+	radeon_ws_bo_unmap(ctx->radeon, query->buffer);
+	query->num_results = 0;
+}
+
+void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
+{
+	/* query request needs 6 dwords for begin + 6 dwords for end */
+	if ((12 + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
+		/* need to flush */
+		r600_context_flush(ctx);
+	}
+
+	/* if query buffer is full force a flush */
+	if (query->num_results >= ((query->buffer_size >> 2) - 2)) {
+		r600_context_flush(ctx);
+		r600_query_result(ctx, query);
+	}
+
+	/* emit begin query */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results;
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], radeon_bo_pb_get_bo(query->buffer->pb));
+
+	query->state |= R600_QUERY_STATE_STARTED;
+	query->state ^= R600_QUERY_STATE_ENDED;
+}
+
+void r600_query_end(struct r600_context *ctx, struct r600_query *query)
+{
+	/* emit begin query */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8;
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], radeon_bo_pb_get_bo(query->buffer->pb));
+
+	query->num_results += 16;
+	query->state ^= R600_QUERY_STATE_STARTED;
+	query->state |= R600_QUERY_STATE_ENDED;
+}
+
+struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type)
+{
+	struct r600_query *query;
+
+	if (query_type != PIPE_QUERY_OCCLUSION_COUNTER)
+		return NULL;
+
+	query = calloc(1, sizeof(struct r600_query));
+	if (query == NULL)
+		return NULL;
+
+	query->type = query_type;
+	query->buffer_size = 4096;
+
+	query->buffer = radeon_ws_bo(ctx->radeon, query->buffer_size, 1, 0);
+	if (!query->buffer) {
+		free(query);
+		return NULL;
+	}
+
+	LIST_ADDTAIL(&query->list, &ctx->query_list);
+
+	return query;
+}
+
+void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
+{
+	radeon_ws_bo_reference(ctx->radeon, &query->buffer, NULL);
+	LIST_DEL(&query->list);
+	free(query);
+}
+
+boolean r600_context_query_result(struct r600_context *ctx,
+				struct r600_query *query,
+				boolean wait, void *vresult)
+{
+	uint64_t *result = (uint64_t*)vresult;
+
+	if (query->num_results) {
+		r600_context_flush(ctx);
+	}
+	r600_query_result(ctx, query);
+	*result = query->result;
+	query->result = 0;
+	return TRUE;
+}
+
+static void r600_context_queries_suspend(struct r600_context *ctx)
+{
+	struct r600_query *query;
+
+	LIST_FOR_EACH_ENTRY(query, &ctx->query_list, list) {
+		if (query->state & R600_QUERY_STATE_STARTED) {
+			r600_query_end(ctx, query);
+			query->state |= R600_QUERY_STATE_SUSPENDED;
+		}
+	}
+}
+
+static void r600_context_queries_resume(struct r600_context *ctx)
+{
+	struct r600_query *query;
+
+	LIST_FOR_EACH_ENTRY(query, &ctx->query_list, list) {
+		if (query->state & R600_QUERY_STATE_SUSPENDED) {
+			r600_query_begin(ctx, query);
+			query->state ^= R600_QUERY_STATE_SUSPENDED;
+		}
+	}
 }

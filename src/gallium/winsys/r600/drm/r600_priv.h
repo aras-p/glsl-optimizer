@@ -45,11 +45,10 @@ struct radeon *r600_new(int fd, unsigned device);
 void r600_delete(struct radeon *r600);
 
 struct r600_reg {
-	unsigned		need_bo;
-	unsigned		flush_flags;
-	unsigned		offset;
+	unsigned			need_bo;
+	unsigned			flush_flags;
+	unsigned			offset;
 };
-
 
 /* radeon_pciid.c */
 unsigned radeon_family_from_device(unsigned device);

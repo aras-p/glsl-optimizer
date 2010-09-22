@@ -2089,6 +2089,52 @@ static void r600_init_config2(struct r600_pipe_context *rctx)
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
+static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	return (struct pipe_query*)r600_context_query_create(&rctx->ctx, query_type);
+}
+
+static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_context_query_destroy(&rctx->ctx, (struct r600_query *)query);
+}
+
+static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_query_begin(&rctx->ctx, (struct r600_query *)query);
+}
+
+static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_query_end(&rctx->ctx, (struct r600_query *)query);
+}
+
+static boolean r600_get_query_result(struct pipe_context *ctx,
+					struct pipe_query *query,
+					boolean wait, void *vresult)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	return r600_context_query_result(&rctx->ctx, (struct r600_query *)query, wait, vresult);
+}
+
+static void r600_init_query_functions2(struct r600_pipe_context *rctx)
+{
+	rctx->context.create_query = r600_create_query;
+	rctx->context.destroy_query = r600_destroy_query;
+	rctx->context.begin_query = r600_begin_query;
+	rctx->context.end_query = r600_end_query;
+	rctx->context.get_query_result = r600_get_query_result;
+}
+
 static struct pipe_context *r600_create_context2(struct pipe_screen *screen, void *priv)
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
@@ -2108,6 +2154,7 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	rctx->radeon = rscreen->radeon;
 
 	r600_init_blit_functions2(rctx);
+	r600_init_query_functions2(rctx);
 	r600_init_state_functions2(rctx);
 	r600_init_context_resource_functions2(rctx);
 

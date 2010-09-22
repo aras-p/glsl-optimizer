@@ -28,6 +28,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <util/u_double_list.h>
+#include <pipe/p_compiler.h>
 
 #define RADEON_CTX_MAX_PM4	(64 * 1024 / 4)
 
@@ -183,6 +185,9 @@ struct r600_group {
 	unsigned		*offset_block_id;
 };
 
+/*
+ * relocation
+ */
 #pragma pack(1)
 struct r600_reloc {
 	uint32_t	handle;
@@ -192,7 +197,29 @@ struct r600_reloc {
 };
 #pragma pack()
 
-struct radeon_bo;
+/*
+ * query
+ */
+struct r600_query {
+	u64					result;
+	/* The kind of query. Currently only OQ is supported. */
+	unsigned				type;
+	/* How many results have been written, in dwords. It's incremented
+	 * after end_query and flush. */
+	unsigned				num_results;
+	/* if we've flushed the query */
+	unsigned				state;
+	/* The buffer where query results are stored. */
+	struct radeon_ws_bo			*buffer;
+	unsigned				buffer_size;
+	/* linked list of queries */
+	struct list_head			list;
+};
+
+#define R600_QUERY_STATE_STARTED	(1 << 0)
+#define R600_QUERY_STATE_ENDED		(1 << 1)
+#define R600_QUERY_STATE_SUSPENDED	(1 << 2)
+
 
 struct r600_context {
 	struct radeon		*radeon;
@@ -207,6 +234,7 @@ struct r600_context {
 	struct r600_reloc	*reloc;
 	struct radeon_bo	**bo;
 	u32			*pm4;
+	struct list_head	query_list;
 };
 
 struct r600_draw {
@@ -228,5 +256,13 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 void r600_context_flush(struct r600_context *ctx);
 void r600_context_dump_bof(struct r600_context *ctx, const char *file);
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
+
+struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
+void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);
+boolean r600_context_query_result(struct r600_context *ctx,
+				struct r600_query *query,
+				boolean wait, void *vresult);
+void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
+void r600_query_end(struct r600_context *ctx, struct r600_query *query);
 
 #endif
