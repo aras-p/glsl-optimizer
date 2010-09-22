@@ -65,47 +65,77 @@ constant_coef(struct lp_setup_context *setup,
 }
 
 
+/**
+ * Setup automatic texcoord coefficients (for sprite rendering).
+ * \param slot  the vertex attribute slot to setup
+ * \param i  the attribute channel in [0,3]
+ * \param sprite_coord_origin  one of PIPE_SPRITE_COORD_x
+ * \param perspective_proj  will the TEX instruction do a divide by Q?
+ */
 static void
-perspective_coef(struct lp_setup_context *setup,
-                 struct lp_rast_triangle *point,
-                 const struct point_info *info,
-                 unsigned slot,
-                 unsigned vert_attr,
-                 unsigned i,
-                 unsigned sprite_coord_origin)
+texcoord_coef(struct lp_setup_context *setup,
+              struct lp_rast_triangle *point,
+              const struct point_info *info,
+              unsigned slot,
+              unsigned i,
+              unsigned sprite_coord_origin,
+              boolean perspective_proj)
 {
+   assert(i < 4);
+
    if (i == 0) {
       float dadx = FIXED_ONE / (float)info->dx12;
       float dady =  0.0f;
-      point->inputs.dadx[slot][i] = dadx;
-      point->inputs.dady[slot][i] = dady;
-      point->inputs.a0[slot][i] = (0.5 -
-                                  (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
-                                   dady * ((float)info->v0[0][1] - setup->pixel_offset)));
+      float x0 = info->v0[0][0] - setup->pixel_offset;
+      float y0 = info->v0[0][1] - setup->pixel_offset;
+
+      point->inputs.dadx[slot][0] = dadx;
+      point->inputs.dady[slot][0] = dady;
+      point->inputs.a0[slot][0] = 0.5 - (dadx * x0 + dady * y0);
+
+      if (!perspective_proj) {
+         /* Divide coefficients by vertex.w here.
+          *
+          * It would be clearer to always multiply by w0 above and
+          * then divide it out for perspective projection here, but
+          * doing it this way involves less algebra.
+          */
+         float w0 = info->v0[0][3];
+         point->inputs.dadx[slot][0] *= w0;
+         point->inputs.dady[slot][0] *= w0;
+         point->inputs.a0[slot][0] *= w0;
+      }
    }
    else if (i == 1) {
       float dadx = 0.0f;
       float dady = FIXED_ONE / (float)info->dx12;
+      float x0 = info->v0[0][0] - setup->pixel_offset;
+      float y0 = info->v0[0][1] - setup->pixel_offset;
 
       if (sprite_coord_origin == PIPE_SPRITE_COORD_LOWER_LEFT) {
          dady = -dady;
       }
 
-      point->inputs.dadx[slot][i] = dadx;
-      point->inputs.dady[slot][i] = dady;
-      point->inputs.a0[slot][i] = (0.5 -
-                                   (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
-                                    dady * ((float)info->v0[0][1] - setup->pixel_offset)));
+      point->inputs.dadx[slot][1] = dadx;
+      point->inputs.dady[slot][1] = dady;
+      point->inputs.a0[slot][1] = 0.5 - (dadx * x0 + dady * y0);
+
+      if (!perspective_proj) {
+         float w0 = info->v0[0][3];
+         point->inputs.dadx[slot][1] *= w0;
+         point->inputs.dady[slot][1] *= w0;
+         point->inputs.a0[slot][1] *= w0;
+      }
    }
    else if (i == 2) {
-      point->inputs.a0[slot][i] = 0.0f;
-      point->inputs.dadx[slot][i] = 0.0f;
-      point->inputs.dady[slot][i] = 0.0f;
+      point->inputs.a0[slot][2] = 0.0f;
+      point->inputs.dadx[slot][2] = 0.0f;
+      point->inputs.dady[slot][2] = 0.0f;
    }
-   else if (i == 3) {
-      point->inputs.a0[slot][i] = 1.0f;
-      point->inputs.dadx[slot][i] = 0.0f;
-      point->inputs.dady[slot][i] = 0.0f;
+   else {
+      point->inputs.a0[slot][3] = 1.0f;
+      point->inputs.dadx[slot][3] = 0.0f;
+      point->inputs.dady[slot][3] = 0.0f;
    }
 }
 
@@ -184,7 +214,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
 
       case LP_INTERP_PERSPECTIVE:
          /* check if the sprite coord flag is set for this attribute.
-          * If so, set it up so it up so x any y vary from 0 to 1.
+          * If so, set it up so it up so x and y vary from 0 to 1.
           */
          if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
             const int index = shader->info.input_semantic_index[slot];
@@ -195,8 +225,9 @@ setup_point_coefficients( struct lp_setup_context *setup,
                 (setup->sprite_coord_enable & (1 << index))) {
                for (i = 0; i < NUM_CHANNELS; i++)
                   if (usage_mask & (1 << i))
-                     perspective_coef(setup, point, info, slot+1, vert_attr, i,
-                                      setup->sprite_coord_origin);
+                     texcoord_coef(setup, point, info, slot + 1, i,
+                                   setup->sprite_coord_origin,
+                                   (usage_mask & TGSI_WRITEMASK_W));
                fragcoord_usage_mask |= TGSI_WRITEMASK_W;
                break;                     
             }
