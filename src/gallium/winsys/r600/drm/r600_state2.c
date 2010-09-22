@@ -887,8 +887,24 @@ static inline void r600_context_group_emit_dirty(struct r600_context *ctx, struc
 	}
 }
 
+static struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned group_id, unsigned offset)
+{
+	struct r600_group_block *block;
+	unsigned id;
+
+	id = ctx->groups[group_id].offset_block_id[(offset - ctx->groups[group_id].start_offset) >> 2];
+	block = &ctx->groups[group_id].blocks[id];
+	offset -= block->start_offset;
+	id = block->pm4_bo_index[offset >> 2];
+	if (block->reloc[id].bo) {
+		return radeon_bo_pb_get_bo(block->reloc[id].bo->pb);
+	}
+	return NULL;
+}
+
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
+	struct radeon_bo *cb[8];
 	unsigned ndwords = 9;
 
 	if (draw->indices) {
@@ -907,12 +923,14 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
+
 	/* enough room to copy packet */
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONFIG], PKT3_SET_CONFIG_REG);
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONTEXT], PKT3_SET_CONTEXT_REG);
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_ALU_CONST], PKT3_SET_ALU_CONST);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_SAMPLER], PKT3_SET_SAMPLER);
 	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_RESOURCE], PKT3_SET_RESOURCE);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_SAMPLER], PKT3_SET_SAMPLER);
+
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_index_type;
@@ -934,6 +952,23 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
+
+	/* flush color buffer */
+	for (int i = 0; i < 8; i++) {
+		cb[i] = r600_context_reg_bo(ctx, R600_GROUP_CONTEXT, R_028040_CB_COLOR0_BASE + (i << 2));
+		if (cb[i]) {
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
+			ctx->pm4[ctx->pm4_cdwords++] = (S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
+							S_0085F0_CB_ACTION_ENA(1);
+			ctx->pm4[ctx->pm4_cdwords++] = (cb[i]->size + 255) >> 8;
+			ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+			ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+			ctx->pm4[ctx->pm4_cdwords++] = 0;
+			r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], cb[i]);
+		}
+	}
+
 	/* all dirty state have been scheduled in current cs */
 	ctx->pm4_dirty_cdwords = 0;
 }
