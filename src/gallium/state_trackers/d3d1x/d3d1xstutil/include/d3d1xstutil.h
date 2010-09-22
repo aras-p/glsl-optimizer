@@ -363,8 +363,12 @@ struct dual_refcnt_t
 	unsigned nonatomic_release()
 	{
 		//printf("%p nonatomic_release at %u %u\n", this, atomic_refcnt, nonatomic_refcnt);
-		if(!--nonatomic_refcnt && !atomic_refcnt && is_zero())
-			return 0;
+		if(!--nonatomic_refcnt)
+		{
+			__sync_synchronize();
+			if(!atomic_refcnt && is_zero())
+				return 0;
+		}
 		return 1;
 	}
 };
