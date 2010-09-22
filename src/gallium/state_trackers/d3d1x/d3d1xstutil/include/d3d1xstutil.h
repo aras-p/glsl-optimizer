@@ -42,20 +42,6 @@ namespace std
 #include <utility>
 
 #define WIN32_LEAN_AND_MEAN
-#define INITGUID
-#include <guiddef.h>
-
-// just replicate GUIDs in every object file to avoid the hassle of having to pull in a library for them
-#ifdef __GNUC__
-#define ATTRIBUTE_UNUSED __attribute__((unused))
-#else
-#define ATTRIBUTE_UNUSED
-#endif
-#undef DEFINE_GUID
-#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-        static const GUID name ATTRIBUTE_UNUSED = \
-	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
-
 #include <objbase.h>
 #include <specstrings.h>
 

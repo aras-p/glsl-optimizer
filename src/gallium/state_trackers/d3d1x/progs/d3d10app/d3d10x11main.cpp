@@ -24,7 +24,6 @@
  *
  **************************************************************************/
 
-#define INITGUID
 #include "d3d10app.h"
 #include <X11/Xlib.h>
 #include <GL/glx.h>
