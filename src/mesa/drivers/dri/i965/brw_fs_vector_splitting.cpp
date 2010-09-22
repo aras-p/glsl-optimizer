@@ -271,12 +271,15 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 	 void *mem_ctx = lhs ? lhs->mem_ctx : rhs->mem_ctx;
 	 unsigned int writemask;
 
+	 if (!(ir->write_mask & (1 << i)))
+	    continue;
+
 	 if (lhs) {
 	    new_lhs = new(mem_ctx) ir_dereference_variable(lhs->components[i]);
-	    writemask = (ir->write_mask >> i) & 1;
+	    writemask = 1;
 	 } else {
 	    new_lhs = ir->lhs->clone(mem_ctx, NULL);
-	    writemask = ir->write_mask & (1 << i);
+	    writemask = 1 << i;
 	 }
 
 	 if (rhs) {
