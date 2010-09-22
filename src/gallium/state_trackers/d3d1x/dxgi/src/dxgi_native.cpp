@@ -77,7 +77,7 @@ struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 	void* resolver_cookie;
 
         GalliumDXGIFactory(const struct native_platform* platform, void* display, PFNHWNDRESOLVER resolver, void* resolver_cookie)
-        : GalliumDXGIObject<IDXGIFactory1, IUnknown>((IUnknown*)NULL), platform(platform), display(display), resolver(resolver ? resolver : identity_resolver), resolver_cookie(resolver_cookie)
+        : GalliumDXGIObject<IDXGIFactory1, IUnknown>((IUnknown*)NULL), platform(platform), display(display), resolver(resolver ? resolver : (PFNHWNDRESOLVER)identity_resolver), resolver_cookie(resolver_cookie)
         {}
 
         virtual HRESULT STDMETHODCALLTYPE EnumAdapters(
