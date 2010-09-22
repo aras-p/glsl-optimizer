@@ -35,8 +35,8 @@ bool tpf_link_cf_insns(tpf_program& program)
 	if(program.cf_insn_linked.size())
 		return true;
 
-	program.cf_insn_linked.resize(program.insns.size());
 	std::vector<int> cf_insn_linked;
+	cf_insn_linked.resize(program.insns.size());
 	memset(&cf_insn_linked[0], 0xff, cf_insn_linked.size() * sizeof(int));
 	std::vector<unsigned> cf_stack;
 	for(unsigned insn_num = 0; insn_num < program.insns.size(); ++insn_num)
