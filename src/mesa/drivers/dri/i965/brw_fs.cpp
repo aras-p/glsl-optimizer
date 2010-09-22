@@ -750,7 +750,9 @@ fs_visitor::visit(ir_expression *ir)
    case ir_binop_dot:
    case ir_binop_cross:
    case ir_unop_any:
-      assert(!"not reached: should be handled by brw_channel_expressions");
+   case ir_binop_all_equal:
+   case ir_binop_any_nequal:
+      assert(!"not reached: should be handled by brw_fs_channel_expressions");
       break;
 
    case ir_unop_noise:
