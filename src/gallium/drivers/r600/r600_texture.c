@@ -136,19 +136,6 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	return &resource->base.b;
 }
 
-static void r600_texture_destroy_state(struct pipe_resource *ptexture)
-{
-	struct r600_resource_texture *rtexture = (struct r600_resource_texture*)ptexture;
-
-	for (int i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++) {
-		radeon_state_fini(&rtexture->scissor[i]);
-		radeon_state_fini(&rtexture->db[i]);
-		for (int j = 0; j < 8; j++) {
-			radeon_state_fini(&rtexture->cb[j][i]);
-		}
-	}
-}
-
 static void r600_texture_destroy(struct pipe_screen *screen,
 				 struct pipe_resource *ptex)
 {
@@ -156,13 +143,12 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	struct r600_resource *resource = &rtex->resource;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 
+	if (rtex->flushed_depth_texture)
+		pipe_resource_reference(&rtex->flushed_depth_texture, NULL);
+
 	if (resource->bo) {
 		radeon_ws_bo_reference(radeon, &resource->bo, NULL);
 	}
-	if (rtex->uncompressed) {
-		radeon_ws_bo_reference(radeon, &rtex->uncompressed, NULL);
-	}
-	r600_texture_destroy_state(ptex);
 	FREE(rtex);
 }
 
@@ -248,6 +234,39 @@ static unsigned int r600_texture_is_referenced(struct pipe_context *context,
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
+int r600_texture_depth_flush(struct pipe_context *ctx,
+			     struct pipe_resource *texture)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct pipe_resource resource;
+
+	if (rtex->flushed_depth_texture)
+		goto out;
+
+	resource.target = PIPE_TEXTURE_2D;
+	resource.format = texture->format;
+	resource.width0 = texture->width0;
+	resource.height0 = texture->height0;
+	resource.depth0 = 0;
+	resource.last_level = 0;
+	resource.nr_samples = 0;
+	resource.usage = PIPE_USAGE_DYNAMIC;
+	resource.bind = 0;
+	resource.flags = 0;
+
+	resource.bind |= PIPE_BIND_RENDER_TARGET;
+
+	rtex->flushed_depth_texture = ctx->screen->resource_create(ctx->screen, &resource);
+	if (rtex->flushed_depth_texture == NULL) {
+		R600_ERR("failed to create temporary texture to hold untiled copy\n");
+		return -ENOMEM;
+	}
+
+out:
+	r600_blit_uncompress_depth(ctx, rtex);
+	return 0;
+}
+
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
 						struct pipe_subresource sr,
@@ -257,6 +276,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
+	int r;
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
@@ -267,7 +287,15 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.box = *box;
 	trans->transfer.stride = rtex->pitch[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
-	if (rtex->tiled && !rtex->depth) {
+	if (rtex->depth) {
+		r = r600_texture_depth_flush(ctx, texture);
+		if (r < 0) {
+			R600_ERR("failed to create temporary texture to hold untiled copy\n");
+			pipe_resource_reference(&trans->transfer.resource, NULL);
+			FREE(trans);
+			return NULL;
+		}
+	} else if (rtex->tiled) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
 		resource.width0 = box->width;
@@ -311,9 +339,16 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 				   struct pipe_transfer *transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 	if (rtransfer->linear_texture) {
 		pipe_resource_reference(&rtransfer->linear_texture, NULL);
+	}
+	if (rtex->flushed_depth_texture) {
+		if (transfer->usage & PIPE_TRANSFER_WRITE) {
+			// TODO
+		}
+		pipe_resource_reference(&rtex->flushed_depth_texture, NULL);
 	}
 	pipe_resource_reference(&transfer->resource, NULL);
 	FREE(transfer);
@@ -326,25 +361,19 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct radeon_ws_bo *bo;
 	enum pipe_format format = transfer->resource->format;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
-	struct r600_resource_texture *rtex;
 	unsigned long offset = 0;
 	char *map;
-	int r;
 
 	if (rtransfer->linear_texture) {
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
-		rtex = (struct r600_resource_texture*)transfer->resource;
-		if (rtex->depth && radeon_get_family_class(radeon) != EVERGREEN) {
-			r = r600_texture_from_depth(ctx, rtex, transfer->sr.level);
-			if (r) {
-				return NULL;
-			}
-			r600_flush(ctx, 0, NULL);
-			bo = rtex->uncompressed;
-		} else {
+		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
+
+		if (rtex->flushed_depth_texture)
+			bo = ((struct r600_resource *)rtex->flushed_depth_texture)->bo;
+		else
 			bo = ((struct r600_resource *)transfer->resource)->bo;
-		}
+
 		offset = rtransfer->offset +
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
@@ -362,15 +391,15 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
-	struct r600_resource_texture *rtex;
 	struct radeon_ws_bo *bo;
 
 	if (rtransfer->linear_texture) {
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
-		rtex = (struct r600_resource_texture*)transfer->resource;
-		if (rtex->depth) {
-			bo = rtex->uncompressed;
+		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
+
+		if (rtex->flushed_depth_texture) {
+			bo = ((struct r600_resource *)rtex->flushed_depth_texture)->bo;
 		} else {
 			bo = ((struct r600_resource *)transfer->resource)->bo;
 		}
@@ -643,75 +672,4 @@ out_word4:
 out_unknown:
 //	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
 	return ~0;
-}
-
-int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	int r;
-
-	/* TODO possible dirty handling */
-
-	/* allocate uncompressed texture */
-	if (rtexture->uncompressed == NULL) {
-		rtexture->uncompressed = radeon_ws_bo(rscreen->rw, rtexture->size, 4096, 0);
-		if (rtexture->uncompressed == NULL) {
-			return -ENOMEM;
-		}
-	}
-
-	/* render a rectangle covering whole buffer to uncompress depth */
-	r = r600_blit_uncompress_depth(ctx, rtexture, level);
-	if (r) {
-		return r;
-	}
-
-	rtexture->dirty = 0;
-	return 0;
-}
-
-
-
-int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-
-	if (!rtexture->scissor[level].cpm4) {
-		rctx->vtbl->texture_state_scissor(rscreen, rtexture, level);
-	}
-	return 0;
-}
-
-int r600_texture_cb(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-
-	if (!rtexture->cb[cb][level].cpm4) {
-		rctx->vtbl->texture_state_cb(rscreen, rtexture, cb, level);
-	}
-	return 0;
-}
-
-int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-
-	if (!rtexture->db[level].cpm4) {
-		rctx->vtbl->texture_state_db(rscreen, rtexture, level);
-	}
-	return 0;
-}
-
-int r600_texture_viewport(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
-{
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-
-	if (!rtexture->viewport[level].cpm4) {
-		rctx->vtbl->texture_state_viewport(rscreen, rtexture, level);
-	}
-	return 0;
 }

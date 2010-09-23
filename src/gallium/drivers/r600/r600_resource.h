@@ -55,11 +55,7 @@ struct r600_resource_texture {
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty;
-	struct radeon_ws_bo		*uncompressed;
-	struct radeon_state		scissor[PIPE_MAX_TEXTURE_LEVELS];
-	struct radeon_state		cb[8][PIPE_MAX_TEXTURE_LEVELS];
-	struct radeon_state		db[PIPE_MAX_TEXTURE_LEVELS];
-	struct radeon_state		viewport[PIPE_MAX_TEXTURE_LEVELS];
+	struct r600_resource_texture    *flushed_depth_texture;
 };
 
 void r600_init_context_resource_functions(struct r600_context *r600);
@@ -106,4 +102,6 @@ static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
     return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
+int r600_texture_depth_flush(struct pipe_context *ctx,
+			     struct pipe_resource *texture);
 #endif

@@ -98,6 +98,7 @@ enum pipe_state_type {
 };
 
 #define R600_MAX_RSTATE		16
+#define R600_STATE_FLAG_DSA_FLUSH 1
 
 struct r600_context_state {
 	union pipe_states		state;
@@ -107,6 +108,7 @@ struct r600_context_state {
 	struct r600_shader		shader;
 	struct radeon_ws_bo		*bo;
 	unsigned			nrstate;
+	unsigned			flags;
 };
 
 struct r600_vertex_element
@@ -189,21 +191,6 @@ struct r600_context_hw_state_vtbl {
 	int (*vs_shader)(struct r600_context *rctx, struct r600_context_state *rpshader,
 			 struct radeon_state *state);
 	void (*init_config)(struct r600_context *rctx);
-
-
-	void (*texture_state_viewport)(struct r600_screen *rscreen,
-				       struct r600_resource_texture *rtexture,
-				       unsigned level);
-	void (*texture_state_cb)(struct r600_screen *rscreen,
-				 struct r600_resource_texture *rtexture,
-				 unsigned cb,
-				 unsigned level);
-	void (*texture_state_db)(struct r600_screen *rscreen,
-				 struct r600_resource_texture *rtexture,
-				 unsigned level);
-	void (*texture_state_scissor)(struct r600_screen *rscreen,
-				 struct r600_resource_texture *rtexture,
-				 unsigned level);
 };
 extern struct r600_context_hw_state_vtbl r600_hw_state_vtbl;
 extern struct r600_context_hw_state_vtbl eg_hw_state_vtbl;
@@ -257,6 +244,7 @@ struct r600_context {
 	struct u_upload_mgr *upload_ib;
 	bool any_user_vbs;
 
+	void *custom_dsa_flush;
 };
 
 /* Convenience cast wrapper. */

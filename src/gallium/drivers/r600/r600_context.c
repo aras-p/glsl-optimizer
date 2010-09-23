@@ -125,10 +125,11 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	else
 		rctx->vtbl = &r600_hw_state_vtbl;
 
-	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
 	r600_init_state_functions(rctx);
 	r600_init_context_resource_functions(rctx);
+
+	r600_init_blit_functions(rctx);
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
