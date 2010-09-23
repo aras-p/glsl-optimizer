@@ -30,6 +30,7 @@ extern "C"
 {
 #include "util/u_gen_mipmap.h"
 #include "tgsi/tgsi_ureg.h"
+#include "tgsi/tgsi_dump.h"
 #include "cso_cache/cso_context.h"
 }
 

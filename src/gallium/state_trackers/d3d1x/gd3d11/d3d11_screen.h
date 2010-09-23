@@ -24,6 +24,8 @@
  *
  **************************************************************************/
 
+DEBUG_GET_ONCE_BOOL_OPTION(dump_shaders, "D3D1X_DUMP_SHADERS", FALSE);
+
 /* These cap sets are much more correct than the ones in u_caps.c */
 /* TODO: it seems cube levels should be the same as 2D levels */
 
@@ -1166,6 +1168,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 			)
 	{
+		bool dump = debug_get_option_dump_shaders();
+
 		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(shader_bytecode, bytecode_length);
 		if(!sm4_chunk)
 			return 0;
@@ -1174,11 +1178,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(!sm4.get())
 			return 0;
 
+		if(dump)
+			sm4->dump();
+
 		struct pipe_shader_state tgsi_shader;
 		memset(&tgsi_shader, 0, sizeof(tgsi_shader));
 		tgsi_shader.tokens = (const tgsi_token*)sm4_to_tgsi(*sm4);
 		if(!tgsi_shader.tokens)
 			return 0;
+
+		if(dump)
+			tgsi_dump(tgsi_shader.tokens, 0);
 
 		void* shader_cso;
 		GalliumD3D11Shader<>* shader;
