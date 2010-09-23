@@ -675,6 +675,11 @@ struct maybe_mutex_t<true>
 {
 	pipe_mutex mutex;
 
+	maybe_mutex_t()
+	{
+		pipe_mutex_init(mutex);
+	}
+
 	void lock()
 	{
 		pipe_mutex_lock(mutex);
