@@ -25,7 +25,7 @@
  **************************************************************************/
 
 #include "dxbc.h"
-#include "tpf.h"
+#include "sm4.h"
 #include <iostream>
 #include <fstream>
 
@@ -60,14 +60,14 @@ int main(int argc, char** argv)
 	if(dxbc)
 	{
 		std::cout << *dxbc;
-		dxbc_chunk_header* tpf_chunk = dxbc_find_shader_bytecode(&data[0], data.size());
-		if(tpf_chunk)
+		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(&data[0], data.size());
+		if(sm4_chunk)
 		{
-			tpf_program* tpf = tpf_parse(tpf_chunk + 1, bswap_le32(tpf_chunk->size));
-			if(tpf)
+			sm4_program* sm4 = sm4_parse(sm4_chunk + 1, bswap_le32(sm4_chunk->size));
+			if(sm4)
 			{
-				std::cout << *tpf;
-				delete tpf;
+				std::cout << *sm4;
+				delete sm4;
 			}
 		}
 		delete dxbc;

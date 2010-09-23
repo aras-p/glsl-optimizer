@@ -1172,17 +1172,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 			)
 	{
-		dxbc_chunk_header* tpf_chunk = dxbc_find_shader_bytecode(pShaderBytecode, BytecodeLength);
-		if(!tpf_chunk)
+		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(pShaderBytecode, BytecodeLength);
+		if(!sm4_chunk)
 			return 0;
 
-		std::auto_ptr<tpf_program> tpf(tpf_parse(tpf_chunk + 1, bswap_le32(tpf_chunk->size)));
-		if(!tpf.get())
+		std::auto_ptr<sm4_program> sm4(sm4_parse(sm4_chunk + 1, bswap_le32(sm4_chunk->size)));
+		if(!sm4.get())
 			return 0;
 
 		struct pipe_shader_state tgsi_shader;
 		memset(&tgsi_shader, 0, sizeof(tgsi_shader));
-		tgsi_shader.tokens = (const tgsi_token*)tpf_to_tgsi(*tpf);
+		tgsi_shader.tokens = (const tgsi_token*)sm4_to_tgsi(*sm4);
 		if(!tgsi_shader.tokens)
 			return 0;
 
@@ -1211,8 +1211,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		if(shader)
 		{
-			shader->slot_to_resource = tpf->slot_to_resource;
-			shader->slot_to_sampler = tpf->slot_to_sampler;
+			shader->slot_to_resource = sm4->slot_to_resource;
+			shader->slot_to_sampler = sm4->slot_to_sampler;
 		}
 
 		free((void*)tgsi_shader.tokens);

@@ -24,19 +24,19 @@
  *
  **************************************************************************/
 
-#include "tpf.h"
+#include "sm4.h"
 
-// TODO: we should fix this to output the same syntax as fxc, if tpf_dump_ms_syntax is set
+// TODO: we should fix this to output the same syntax as fxc, if sm4_dump_short_syntax is set
 
-bool tpf_dump_ms_syntax = true;
+bool sm4_dump_short_syntax = true;
 
-std::ostream& operator <<(std::ostream& out, const tpf_op& op)
+std::ostream& operator <<(std::ostream& out, const sm4_op& op)
 {
 	if(op.neg)
 		out << '-';
 	if(op.abs)
 		out << '|';
-	if(op.file == TPF_FILE_IMMEDIATE32)
+	if(op.file == SM4_FILE_IMMEDIATE32)
 	{
 		out << "l(";
 		for(unsigned i = 0; i < op.comps; ++i)
@@ -47,7 +47,7 @@ std::ostream& operator <<(std::ostream& out, const tpf_op& op)
 		}
 		out << ")";
 	}
-	else if(op.file == TPF_FILE_IMMEDIATE64)
+	else if(op.file == SM4_FILE_IMMEDIATE64)
 	{
 		out << "d(";
 		for(unsigned i = 0; i < op.comps; ++i)
@@ -62,17 +62,17 @@ std::ostream& operator <<(std::ostream& out, const tpf_op& op)
 	else
 	{
 		bool naked = false;
-		if(tpf_dump_ms_syntax)
+		if(sm4_dump_short_syntax)
 		{
 			switch(op.file)
 			{
-			case TPF_FILE_TEMP:
-			case TPF_FILE_INPUT:
-			case TPF_FILE_OUTPUT:
-			case TPF_FILE_CONSTANT_BUFFER:
-			case TPF_FILE_INDEXABLE_TEMP:
-			case TPF_FILE_UNORDERED_ACCESS_VIEW:
-			case TPF_FILE_THREAD_GROUP_SHARED_MEMORY:
+			case SM4_FILE_TEMP:
+			case SM4_FILE_INPUT:
+			case SM4_FILE_OUTPUT:
+			case SM4_FILE_CONSTANT_BUFFER:
+			case SM4_FILE_INDEXABLE_TEMP:
+			case SM4_FILE_UNORDERED_ACCESS_VIEW:
+			case SM4_FILE_THREAD_GROUP_SHARED_MEMORY:
 				naked = true;
 				break;
 			default:
@@ -81,7 +81,7 @@ std::ostream& operator <<(std::ostream& out, const tpf_op& op)
 			}
 		}
 
-		out << (tpf_dump_ms_syntax ? tpf_file_ms_names : tpf_file_names)[op.file];
+		out << (sm4_dump_short_syntax ? sm4_shortfile_names : sm4_file_names)[op.file];
 
 		if(op.indices[0].reg.get())
 			naked = false;
@@ -105,21 +105,21 @@ std::ostream& operator <<(std::ostream& out, const tpf_op& op)
 		{
 			switch(op.mode)
 			{
-			case TPF_OPERAND_MODE_MASK:
-				out << (tpf_dump_ms_syntax ? '.' : '!');
+			case SM4_OPERAND_MODE_MASK:
+				out << (sm4_dump_short_syntax ? '.' : '!');
 				for(unsigned i = 0; i < op.comps; ++i)
 				{
 					if(op.mask & (1 << i))
 						out << "xyzw"[i];
 				}
 				break;
-			case TPF_OPERAND_MODE_SWIZZLE:
+			case SM4_OPERAND_MODE_SWIZZLE:
 				out << '.';
 				for(unsigned i = 0; i < op.comps; ++i)
 					out << "xyzw"[op.swizzle[i]];
 				break;
-			case TPF_OPERAND_MODE_SCALAR:
-				out << (tpf_dump_ms_syntax ? '.' : ':');
+			case SM4_OPERAND_MODE_SCALAR:
+				out << (sm4_dump_short_syntax ? '.' : ':');
 				out << "xyzw"[op.swizzle[0]];
 				break;
 			}
@@ -130,12 +130,12 @@ std::ostream& operator <<(std::ostream& out, const tpf_op& op)
 	return out;
 }
 
-std::ostream& operator <<(std::ostream& out, const tpf_dcl& dcl)
+std::ostream& operator <<(std::ostream& out, const sm4_dcl& dcl)
 {
-	out << tpf_opcode_names[dcl.opcode];
+	out << sm4_opcode_names[dcl.opcode];
 	switch(dcl.opcode)
 	{
-	case TPF_OPCODE_DCL_GLOBAL_FLAGS:
+	case SM4_OPCODE_DCL_GLOBAL_FLAGS:
 		if(dcl.dcl_global_flags.allow_refactoring)
 			out << " refactoringAllowed";
 		if(dcl.dcl_global_flags.early_depth_stencil)
@@ -145,12 +145,12 @@ std::ostream& operator <<(std::ostream& out, const tpf_dcl& dcl)
 		if(dcl.dcl_global_flags.enable_raw_and_structured_in_non_cs)
 			out << " enableRawAndStructuredBuffers";
 		break;
-	case TPF_OPCODE_DCL_INPUT_PS:
-	case TPF_OPCODE_DCL_INPUT_PS_SIV:
-	case TPF_OPCODE_DCL_INPUT_PS_SGV:
-		out << ' ' << tpf_interpolation_names[dcl.dcl_input_ps.interpolation];
+	case SM4_OPCODE_DCL_INPUT_PS:
+	case SM4_OPCODE_DCL_INPUT_PS_SIV:
+	case SM4_OPCODE_DCL_INPUT_PS_SGV:
+		out << ' ' << sm4_interpolation_names[dcl.dcl_input_ps.interpolation];
 		break;
-	case TPF_OPCODE_DCL_TEMPS:
+	case SM4_OPCODE_DCL_TEMPS:
 		out << ' ' << dcl.num;
 		break;
 	default:
@@ -160,25 +160,25 @@ std::ostream& operator <<(std::ostream& out, const tpf_dcl& dcl)
 		out << ' ' << *dcl.op;
 	switch(dcl.opcode)
 	{
-	case TPF_OPCODE_DCL_CONSTANT_BUFFER:
+	case SM4_OPCODE_DCL_CONSTANT_BUFFER:
 		out << ", " << (dcl.dcl_constant_buffer.dynamic ? "dynamicIndexed" : "immediateIndexed");
 		break;
-	case TPF_OPCODE_DCL_INPUT_SIV:
-	case TPF_OPCODE_DCL_INPUT_SGV:
-	case TPF_OPCODE_DCL_OUTPUT_SIV:
-	case TPF_OPCODE_DCL_OUTPUT_SGV:
-	case TPF_OPCODE_DCL_INPUT_PS_SIV:
-	case TPF_OPCODE_DCL_INPUT_PS_SGV:
-		out << ", " << tpf_sv_names[dcl.num];
+	case SM4_OPCODE_DCL_INPUT_SIV:
+	case SM4_OPCODE_DCL_INPUT_SGV:
+	case SM4_OPCODE_DCL_OUTPUT_SIV:
+	case SM4_OPCODE_DCL_OUTPUT_SGV:
+	case SM4_OPCODE_DCL_INPUT_PS_SIV:
+	case SM4_OPCODE_DCL_INPUT_PS_SGV:
+		out << ", " << sm4_sv_names[dcl.num];
 		break;
 	}
 
 	return out;
 }
 
-std::ostream& operator <<(std::ostream& out, const tpf_insn& insn)
+std::ostream& operator <<(std::ostream& out, const sm4_insn& insn)
 {
-	out << tpf_opcode_names[insn.opcode];
+	out << sm4_opcode_names[insn.opcode];
 	if(insn.insn.sat)
 		out << "_sat";
 	for(unsigned i = 0; i < insn.num_ops; ++i)
@@ -190,7 +190,7 @@ std::ostream& operator <<(std::ostream& out, const tpf_insn& insn)
 	return out;
 }
 
-std::ostream& operator <<(std::ostream& out, const tpf_program& program)
+std::ostream& operator <<(std::ostream& out, const sm4_program& program)
 {
 	out << "pvghdc"[program.version.type] << "s_" << program.version.major << "_" << program.version.minor << "\n";
 	for(unsigned i = 0; i < program.dcls.size(); ++i)
@@ -201,22 +201,22 @@ std::ostream& operator <<(std::ostream& out, const tpf_program& program)
 	return out;
 }
 
-void tpf_op::dump()
+void sm4_op::dump()
 {
 	std::cout << *this;
 }
 
-void tpf_insn::dump()
+void sm4_insn::dump()
 {
 	std::cout << *this;
 }
 
-void tpf_dcl::dump()
+void sm4_dcl::dump()
 {
 	std::cout << *this;
 }
 
-void tpf_program::dump()
+void sm4_program::dump()
 {
 	std::cout << *this;
 }

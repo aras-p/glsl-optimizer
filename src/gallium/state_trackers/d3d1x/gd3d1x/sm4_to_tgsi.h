@@ -24,11 +24,11 @@
  *
  **************************************************************************/
 
-#ifndef TPF_TO_TGSI_H_
-#define TPF_TO_TGSI_H_
+#ifndef SM4_TO_TGSI_H_
+#define SM4_TO_TGSI_H_
 
-#include "tpf.h"
+#include "sm4.h"
 
-void* tpf_to_tgsi(struct tpf_program& program);
+void* sm4_to_tgsi(struct sm4_program& program);
 
-#endif /* TPF_TO_TGSI_H_ */
+#endif /* SM4_TO_TGSI_H_ */

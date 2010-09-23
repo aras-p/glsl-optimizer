@@ -26,11 +26,11 @@
 
 #include <vector>
 #include <set>
-#include "tpf.h"
+#include "sm4.h"
 
 #define check(x) do {if(!(x)) return false;} while(0)
 
-bool tpf_link_cf_insns(tpf_program& program)
+bool sm4_link_cf_insns(sm4_program& program)
 {
 	if(program.cf_insn_linked.size())
 		return true;
@@ -44,42 +44,42 @@ bool tpf_link_cf_insns(tpf_program& program)
 		unsigned v;
 		switch(program.insns[insn_num]->opcode)
 		{
-		case TPF_OPCODE_LOOP:
+		case SM4_OPCODE_LOOP:
 			cf_stack.push_back(insn_num);
 			break;
-		case TPF_OPCODE_ENDLOOP:
+		case SM4_OPCODE_ENDLOOP:
 			check(!cf_stack.empty());
 			v = cf_stack.back();
-			check(program.insns[v]->opcode == TPF_OPCODE_LOOP);
+			check(program.insns[v]->opcode == SM4_OPCODE_LOOP);
 			cf_insn_linked[v] = insn_num;
 			cf_insn_linked[insn_num] = v;
 			cf_stack.pop_back();
 			break;
-		case TPF_OPCODE_IF:
-		case TPF_OPCODE_SWITCH:
+		case SM4_OPCODE_IF:
+		case SM4_OPCODE_SWITCH:
 			cf_insn_linked[insn_num] = insn_num; // later changed
 			cf_stack.push_back(insn_num);
 			break;
-		case TPF_OPCODE_ELSE:
-		case TPF_OPCODE_CASE:
+		case SM4_OPCODE_ELSE:
+		case SM4_OPCODE_CASE:
 			check(!cf_stack.empty());
 			v = cf_stack.back();
-			if(program.insns[insn_num]->opcode == TPF_OPCODE_ELSE)
-				check(program.insns[v]->opcode == TPF_OPCODE_IF);
+			if(program.insns[insn_num]->opcode == SM4_OPCODE_ELSE)
+				check(program.insns[v]->opcode == SM4_OPCODE_IF);
 			else
-				check(program.insns[v]->opcode == TPF_OPCODE_SWITCH || program.insns[v]->opcode == TPF_OPCODE_CASE);
+				check(program.insns[v]->opcode == SM4_OPCODE_SWITCH || program.insns[v]->opcode == SM4_OPCODE_CASE);
 			cf_insn_linked[insn_num] = cf_insn_linked[v]; // later changed
 			cf_insn_linked[v] = insn_num;
 			cf_stack.back() = insn_num;
 			break;
-		case TPF_OPCODE_ENDSWITCH:
-		case TPF_OPCODE_ENDIF:
+		case SM4_OPCODE_ENDSWITCH:
+		case SM4_OPCODE_ENDIF:
 			check(!cf_stack.empty());
 			v = cf_stack.back();
-			if(program.insns[insn_num]->opcode == TPF_OPCODE_ENDIF)
-				check(program.insns[v]->opcode == TPF_OPCODE_IF || program.insns[v]->opcode == TPF_OPCODE_ELSE);
+			if(program.insns[insn_num]->opcode == SM4_OPCODE_ENDIF)
+				check(program.insns[v]->opcode == SM4_OPCODE_IF || program.insns[v]->opcode == SM4_OPCODE_ELSE);
 			else
-				check(program.insns[v]->opcode == TPF_OPCODE_SWITCH || program.insns[v]->opcode == TPF_OPCODE_CASE);
+				check(program.insns[v]->opcode == SM4_OPCODE_SWITCH || program.insns[v]->opcode == SM4_OPCODE_CASE);
 			cf_insn_linked[insn_num] = cf_insn_linked[v];
 			cf_insn_linked[v] = insn_num;
 			cf_stack.pop_back();
@@ -91,7 +91,7 @@ bool tpf_link_cf_insns(tpf_program& program)
 	return true;
 }
 
-bool tpf_find_labels(tpf_program& program)
+bool sm4_find_labels(sm4_program& program)
 {
 	if(program.labels_found)
 		return true;
@@ -101,11 +101,11 @@ bool tpf_find_labels(tpf_program& program)
 	{
 		switch(program.insns[insn_num]->opcode)
 		{
-		case TPF_OPCODE_LABEL:
+		case SM4_OPCODE_LABEL:
 			if(program.insns[insn_num]->num_ops > 0)
 			{
-				tpf_op& op = *program.insns[insn_num]->ops[0];
-				if(op.file == TPF_FILE_LABEL && op.has_simple_index())
+				sm4_op& op = *program.insns[insn_num]->ops[0];
+				if(op.file == SM4_FILE_LABEL && op.has_simple_index())
 				{
 					unsigned idx = (unsigned)op.indices[0].disp;
 					if(idx >= labels.size())
@@ -121,7 +121,7 @@ bool tpf_find_labels(tpf_program& program)
 	return true;
 }
 
-bool tpf_allocate_resource_sampler_pairs(tpf_program& program)
+bool sm4_allocate_resource_sampler_pairs(sm4_program& program)
 {
 	if(program.resource_sampler_slots_assigned)
 		return true;
@@ -135,16 +135,16 @@ bool tpf_allocate_resource_sampler_pairs(tpf_program& program)
 		int sampler = -2;
 		for(unsigned i = 0; i < program.insns[insn_num]->num_ops; ++i)
 		{
-			tpf_op* op = program.insns[insn_num]->ops[i].get();
+			sm4_op* op = program.insns[insn_num]->ops[i].get();
 			if(op)
 			{
-				if(op->file == TPF_FILE_RESOURCE)
+				if(op->file == SM4_FILE_RESOURCE)
 				{
 					if(!op->has_simple_index() || resource >= 0)
 						return false;
 					resource = (int)op->indices[0].disp;
 				}
-				if(op->file == TPF_FILE_SAMPLER)
+				if(op->file == SM4_FILE_SAMPLER)
 				{
 					if(!op->has_simple_index() || sampler >= 0)
 						return false;
@@ -154,11 +154,11 @@ bool tpf_allocate_resource_sampler_pairs(tpf_program& program)
 		}
 
 		unsigned opcode = program.insns[insn_num]->opcode;
-		if(opcode == TPF_OPCODE_LD || opcode == TPF_OPCODE_LD_MS)
+		if(opcode == SM4_OPCODE_LD || opcode == SM4_OPCODE_LD_MS)
 			sampler = -1;
 		if(sampler >= -1 && resource >= 0)
 			pairs.insert(std::make_pair(resource, sampler));
-		if(opcode == TPF_OPCODE_RESINFO)
+		if(opcode == SM4_OPCODE_RESINFO)
 			resinfos.insert(resource);
 	}
 

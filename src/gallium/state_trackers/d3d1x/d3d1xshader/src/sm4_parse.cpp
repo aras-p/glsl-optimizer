@@ -24,7 +24,7 @@
  *
  **************************************************************************/
 
-#include "tpf.h"
+#include "sm4.h"
 #include "utils.h"
 
 #if 1
@@ -35,13 +35,13 @@
 #define fail(x) throw(x)
 #endif
 
-struct tpf_parser
+struct sm4_parser
 {
 	unsigned* tokens;
 	unsigned* tokens_end;
-	tpf_program& program;
+	sm4_program& program;
 
-	tpf_parser(tpf_program& program, void* p_tokens, unsigned size)
+	sm4_parser(sm4_program& program, void* p_tokens, unsigned size)
 	: program(program)
 	{
 		tokens = (unsigned*)p_tokens;
@@ -73,12 +73,12 @@ struct tpf_parser
 		tokens += toskip;
 	}
 
-	void read_op(tpf_op* pop)
+	void read_op(sm4_op* pop)
 	{
-		tpf_op& op = *pop;
-		tpf_token_operand optok;
+		sm4_op& op = *pop;
+		sm4_token_operand optok;
 		read_token(&optok);
-		assert(optok.file < TPF_FILE_COUNT);
+		assert(optok.file < SM4_FILE_COUNT);
 		op.swizzle[0] = 0;
 		op.swizzle[1] = 1;
 		op.swizzle[2] = 2;
@@ -86,40 +86,40 @@ struct tpf_parser
 		op.mask = 0xf;
 		switch(optok.comps_enum)
 		{
-		case TPF_OPERAND_COMPNUM_0:
+		case SM4_OPERAND_COMPNUM_0:
 			op.comps = 0;
 			break;
-		case TPF_OPERAND_COMPNUM_1:
+		case SM4_OPERAND_COMPNUM_1:
 			op.comps = 1;
 			break;
-		case TPF_OPERAND_COMPNUM_4:
+		case SM4_OPERAND_COMPNUM_4:
 			op.comps = 4;
 			op.mode = optok.mode;
 			switch(optok.mode)
 			{
-			case TPF_OPERAND_MODE_MASK:
-				op.mask = TPF_OPERAND_SEL_MASK(optok.sel);
+			case SM4_OPERAND_MODE_MASK:
+				op.mask = SM4_OPERAND_SEL_MASK(optok.sel);
 				break;
-			case TPF_OPERAND_MODE_SWIZZLE:
-				op.swizzle[0] = TPF_OPERAND_SEL_SWZ(optok.sel, 0);
-				op.swizzle[1] = TPF_OPERAND_SEL_SWZ(optok.sel, 1);
-				op.swizzle[2] = TPF_OPERAND_SEL_SWZ(optok.sel, 2);
-				op.swizzle[3] = TPF_OPERAND_SEL_SWZ(optok.sel, 3);
+			case SM4_OPERAND_MODE_SWIZZLE:
+				op.swizzle[0] = SM4_OPERAND_SEL_SWZ(optok.sel, 0);
+				op.swizzle[1] = SM4_OPERAND_SEL_SWZ(optok.sel, 1);
+				op.swizzle[2] = SM4_OPERAND_SEL_SWZ(optok.sel, 2);
+				op.swizzle[3] = SM4_OPERAND_SEL_SWZ(optok.sel, 3);
 				break;
-			case TPF_OPERAND_MODE_SCALAR:
-				op.swizzle[0] = op.swizzle[1] = op.swizzle[2] = op.swizzle[3] = TPF_OPERAND_SEL_SCALAR(optok.sel);
+			case SM4_OPERAND_MODE_SCALAR:
+				op.swizzle[0] = op.swizzle[1] = op.swizzle[2] = op.swizzle[3] = SM4_OPERAND_SEL_SCALAR(optok.sel);
 				break;
 			}
 			break;
-		case TPF_OPERAND_COMPNUM_N:
+		case SM4_OPERAND_COMPNUM_N:
 			fail("Unhandled operand component type");
 		}
-		op.file = (tpf_file)optok.file;
+		op.file = (sm4_file)optok.file;
 		op.num_indices = optok.num_indices;
 
 		if(optok.extended)
 		{
-			tpf_token_operand_extended optokext;
+			sm4_token_operand_extended optokext;
 			read_token(&optokext);
 			if(optokext.type == 0)
 			{}
@@ -147,32 +147,32 @@ struct tpf_parser
 			// TODO: is disp supposed to be signed here??
 			switch(repr)
 			{
-			case TPF_OPERAND_INDEX_REPR_IMM32:
+			case SM4_OPERAND_INDEX_REPR_IMM32:
 				op.indices[i].disp = (int32_t)read32();
 				break;
-			case TPF_OPERAND_INDEX_REPR_IMM64:
+			case SM4_OPERAND_INDEX_REPR_IMM64:
 				op.indices[i].disp = read64();
 				break;
-			case TPF_OPERAND_INDEX_REPR_REG:
+			case SM4_OPERAND_INDEX_REPR_REG:
 relative:
-				op.indices[i].reg.reset(new tpf_op());
+				op.indices[i].reg.reset(new sm4_op());
 				read_op(&*op.indices[0].reg);
 				break;
-			case TPF_OPERAND_INDEX_REPR_REG_IMM32:
+			case SM4_OPERAND_INDEX_REPR_REG_IMM32:
 				op.indices[i].disp = (int32_t)read32();
 				goto relative;
-			case TPF_OPERAND_INDEX_REPR_REG_IMM64:
+			case SM4_OPERAND_INDEX_REPR_REG_IMM64:
 				op.indices[i].disp = read64();
 				goto relative;
 			}
 		}
 
-		if(op.file == TPF_FILE_IMMEDIATE32)
+		if(op.file == SM4_FILE_IMMEDIATE32)
 		{
 			for(unsigned i = 0; i < op.comps; ++i)
 				op.imm_values[i].i32 = read32();
 		}
-		else if(op.file == TPF_FILE_IMMEDIATE64)
+		else if(op.file == SM4_FILE_IMMEDIATE64)
 		{
 			for(unsigned i = 0; i < op.comps; ++i)
 				op.imm_values[i].i64 = read64();
@@ -188,114 +188,114 @@ relative:
 
 		while(tokens != tokens_end)
 		{
-			tpf_token_instruction insntok;
+			sm4_token_instruction insntok;
 			read_token(&insntok);
 			unsigned* insn_end = tokens - 1 + insntok.length;
-			tpf_opcode opcode = (tpf_opcode)insntok.opcode;
-			check(opcode < TPF_OPCODE_COUNT);
+			sm4_opcode opcode = (sm4_opcode)insntok.opcode;
+			check(opcode < SM4_OPCODE_COUNT);
 
-			if(opcode == TPF_OPCODE_CUSTOMDATA)
+			if(opcode == SM4_OPCODE_CUSTOMDATA)
 			{
 				unsigned customlen = read32() - 2;
 				skip(customlen);
 				continue;
 			}
 
-			if((opcode >= TPF_OPCODE_DCL_RESOURCE && opcode <= TPF_OPCODE_DCL_GLOBAL_FLAGS)
-				|| (opcode >= TPF_OPCODE_DCL_STREAM && opcode <= TPF_OPCODE_DCL_RESOURCE_STRUCTURED))
+			if((opcode >= SM4_OPCODE_DCL_RESOURCE && opcode <= SM4_OPCODE_DCL_GLOBAL_FLAGS)
+				|| (opcode >= SM4_OPCODE_DCL_STREAM && opcode <= SM4_OPCODE_DCL_RESOURCE_STRUCTURED))
 			{
-				tpf_dcl& dcl = *new tpf_dcl;
+				sm4_dcl& dcl = *new sm4_dcl;
 				program.dcls.push_back(&dcl);
-				(tpf_token_instruction&)dcl = insntok;
+				(sm4_token_instruction&)dcl = insntok;
 
-				tpf_token_instruction_extended exttok;
+				sm4_token_instruction_extended exttok;
 				memcpy(&exttok, &insntok, sizeof(exttok));
 				while(exttok.extended)
 				{
 					read_token(&exttok);
 				}
 
-#define READ_OP_ANY dcl.op.reset(new tpf_op()); read_op(&*dcl.op);
+#define READ_OP_ANY dcl.op.reset(new sm4_op()); read_op(&*dcl.op);
 #define READ_OP(FILE) READ_OP_ANY
-				//check(dcl.op->file == TPF_FILE_##FILE);
+				//check(dcl.op->file == SM4_FILE_##FILE);
 
 				switch(opcode)
 				{
-				case TPF_OPCODE_DCL_GLOBAL_FLAGS:
+				case SM4_OPCODE_DCL_GLOBAL_FLAGS:
 					break;
-				case TPF_OPCODE_DCL_RESOURCE:
+				case SM4_OPCODE_DCL_RESOURCE:
 					READ_OP(RESOURCE);
 					read_token(&dcl.rrt);
 					break;
-				case TPF_OPCODE_DCL_SAMPLER:
+				case SM4_OPCODE_DCL_SAMPLER:
 					READ_OP(SAMPLER);
 					break;
-				case TPF_OPCODE_DCL_INPUT:
-				case TPF_OPCODE_DCL_INPUT_PS:
+				case SM4_OPCODE_DCL_INPUT:
+				case SM4_OPCODE_DCL_INPUT_PS:
 					READ_OP(INPUT);
 					break;
-				case TPF_OPCODE_DCL_INPUT_SIV:
-				case TPF_OPCODE_DCL_INPUT_SGV:
-				case TPF_OPCODE_DCL_INPUT_PS_SIV:
-				case TPF_OPCODE_DCL_INPUT_PS_SGV:
+				case SM4_OPCODE_DCL_INPUT_SIV:
+				case SM4_OPCODE_DCL_INPUT_SGV:
+				case SM4_OPCODE_DCL_INPUT_PS_SIV:
+				case SM4_OPCODE_DCL_INPUT_PS_SGV:
 					READ_OP(INPUT);
-					dcl.sv = (tpf_sv)(uint16_t)read32();
+					dcl.sv = (sm4_sv)(uint16_t)read32();
 					break;
-				case TPF_OPCODE_DCL_OUTPUT:
+				case SM4_OPCODE_DCL_OUTPUT:
 					READ_OP(OUTPUT);
 					break;
-				case TPF_OPCODE_DCL_OUTPUT_SIV:
-				case TPF_OPCODE_DCL_OUTPUT_SGV:
+				case SM4_OPCODE_DCL_OUTPUT_SIV:
+				case SM4_OPCODE_DCL_OUTPUT_SGV:
 					READ_OP(OUTPUT);
-					dcl.sv = (tpf_sv)(uint16_t)read32();
+					dcl.sv = (sm4_sv)(uint16_t)read32();
 					break;
-				case TPF_OPCODE_DCL_INDEX_RANGE:
+				case SM4_OPCODE_DCL_INDEX_RANGE:
 					READ_OP_ANY;
-					check(dcl.op->file == TPF_FILE_INPUT || dcl.op->file == TPF_FILE_OUTPUT);
+					check(dcl.op->file == SM4_FILE_INPUT || dcl.op->file == SM4_FILE_OUTPUT);
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_TEMPS:
+				case SM4_OPCODE_DCL_TEMPS:
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_INDEXABLE_TEMP:
+				case SM4_OPCODE_DCL_INDEXABLE_TEMP:
 					READ_OP(INDEXABLE_TEMP);
 					dcl.indexable_temp.num = read32();
 					dcl.indexable_temp.comps = read32();
 					break;
-				case TPF_OPCODE_DCL_CONSTANT_BUFFER:
+				case SM4_OPCODE_DCL_CONSTANT_BUFFER:
 					READ_OP(CONSTANT_BUFFER);
 					break;
-				case TPF_OPCODE_DCL_GS_INPUT_PRIMITIVE:
-				case TPF_OPCODE_DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
+				case SM4_OPCODE_DCL_GS_INPUT_PRIMITIVE:
+				case SM4_OPCODE_DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
 					break;
-				case TPF_OPCODE_DCL_MAX_OUTPUT_VERTEX_COUNT:
+				case SM4_OPCODE_DCL_MAX_OUTPUT_VERTEX_COUNT:
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_GS_INSTANCE_COUNT:
+				case SM4_OPCODE_DCL_GS_INSTANCE_COUNT:
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_INPUT_CONTROL_POINT_COUNT:
-				case TPF_OPCODE_DCL_OUTPUT_CONTROL_POINT_COUNT:
-				case TPF_OPCODE_DCL_TESS_DOMAIN:
-				case TPF_OPCODE_DCL_TESS_PARTITIONING:
-				case TPF_OPCODE_DCL_TESS_OUTPUT_PRIMITIVE:
+				case SM4_OPCODE_DCL_INPUT_CONTROL_POINT_COUNT:
+				case SM4_OPCODE_DCL_OUTPUT_CONTROL_POINT_COUNT:
+				case SM4_OPCODE_DCL_TESS_DOMAIN:
+				case SM4_OPCODE_DCL_TESS_PARTITIONING:
+				case SM4_OPCODE_DCL_TESS_OUTPUT_PRIMITIVE:
 					break;
-				case TPF_OPCODE_DCL_HS_MAX_TESSFACTOR:
+				case SM4_OPCODE_DCL_HS_MAX_TESSFACTOR:
 					dcl.f32 = read32();
 					break;
-				case TPF_OPCODE_DCL_HS_FORK_PHASE_INSTANCE_COUNT:
+				case SM4_OPCODE_DCL_HS_FORK_PHASE_INSTANCE_COUNT:
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_FUNCTION_BODY:
+				case SM4_OPCODE_DCL_FUNCTION_BODY:
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_FUNCTION_TABLE:
+				case SM4_OPCODE_DCL_FUNCTION_TABLE:
 					dcl.num = read32();
 					dcl.data = malloc(dcl.num * sizeof(uint32_t));
 					for(unsigned i = 0; i < dcl.num; ++i)
 						((uint32_t*)dcl.data)[i] = read32();
 					break;
-				case TPF_OPCODE_DCL_INTERFACE:
+				case SM4_OPCODE_DCL_INTERFACE:
 					dcl.intf.id = read32();
 					dcl.intf.expected_function_table_length = read32();
 					{
@@ -307,39 +307,39 @@ relative:
 					for(unsigned i = 0; i < dcl.intf.table_length; ++i)
 						((uint32_t*)dcl.data)[i] = read32();
 					break;
-				case TPF_OPCODE_DCL_THREAD_GROUP:
+				case SM4_OPCODE_DCL_THREAD_GROUP:
 					dcl.thread_group_size[0] = read32();
 					dcl.thread_group_size[1] = read32();
 					dcl.thread_group_size[2] = read32();
 					break;
-				case TPF_OPCODE_DCL_UNORDERED_ACCESS_VIEW_TYPED:
+				case SM4_OPCODE_DCL_UNORDERED_ACCESS_VIEW_TYPED:
 					READ_OP(UNORDERED_ACCESS_VIEW);
 					read_token(&dcl.rrt);
 					break;
-				case TPF_OPCODE_DCL_UNORDERED_ACCESS_VIEW_RAW:
+				case SM4_OPCODE_DCL_UNORDERED_ACCESS_VIEW_RAW:
 					READ_OP(UNORDERED_ACCESS_VIEW);
 					break;
-				case TPF_OPCODE_DCL_UNORDERED_ACCESS_VIEW_STRUCTURED:
+				case SM4_OPCODE_DCL_UNORDERED_ACCESS_VIEW_STRUCTURED:
 					READ_OP(UNORDERED_ACCESS_VIEW);
 					dcl.structured.stride = read32();
 					break;
-				case TPF_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_RAW:
+				case SM4_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_RAW:
 					READ_OP(THREAD_GROUP_SHARED_MEMORY);
 					dcl.num = read32();
 					break;
-				case TPF_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_STRUCTURED:
+				case SM4_OPCODE_DCL_THREAD_GROUP_SHARED_MEMORY_STRUCTURED:
 					READ_OP(THREAD_GROUP_SHARED_MEMORY);
 					dcl.structured.stride = read32();
 					dcl.structured.count = read32();
 					break;
-				case TPF_OPCODE_DCL_RESOURCE_RAW:
+				case SM4_OPCODE_DCL_RESOURCE_RAW:
 					READ_OP(RESOURCE);
 					break;
-				case TPF_OPCODE_DCL_RESOURCE_STRUCTURED:
+				case SM4_OPCODE_DCL_RESOURCE_STRUCTURED:
 					READ_OP(RESOURCE);
 					dcl.structured.stride = read32();
 					break;
-				case TPF_OPCODE_DCL_STREAM:
+				case SM4_OPCODE_DCL_STREAM:
 					/* TODO: dcl_stream is undocumented: what is it? */
 					fail("Unhandled dcl_stream since it's undocumented");
 				default:
@@ -350,24 +350,24 @@ relative:
 			}
 			else
 			{
-				tpf_insn& insn = *new tpf_insn;
+				sm4_insn& insn = *new sm4_insn;
 				program.insns.push_back(&insn);
-				(tpf_token_instruction&)insn = insntok;
+				(sm4_token_instruction&)insn = insntok;
 
-				tpf_token_instruction_extended exttok;
+				sm4_token_instruction_extended exttok;
 				memcpy(&exttok, &insntok, sizeof(exttok));
 				while(exttok.extended)
 				{
 					read_token(&exttok);
-					if(exttok.type == TPF_TOKEN_INSTRUCTION_EXTENDED_TYPE_SAMPLE_CONTROLS)
+					if(exttok.type == SM4_TOKEN_INSTRUCTION_EXTENDED_TYPE_SAMPLE_CONTROLS)
 					{
 						insn.sample_offset[0] = exttok.sample_controls.offset_u;
 						insn.sample_offset[1] = exttok.sample_controls.offset_v;
 						insn.sample_offset[2] = exttok.sample_controls.offset_w;
 					}
-					else if(exttok.type == TPF_TOKEN_INSTRUCTION_EXTENDED_TYPE_RESOURCE_DIM)
+					else if(exttok.type == SM4_TOKEN_INSTRUCTION_EXTENDED_TYPE_RESOURCE_DIM)
 						insn.resource_target = exttok.resource_target.target;
-					else if(exttok.type == TPF_TOKEN_INSTRUCTION_EXTENDED_TYPE_RESOURCE_RETURN_TYPE)
+					else if(exttok.type == SM4_TOKEN_INSTRUCTION_EXTENDED_TYPE_RESOURCE_RETURN_TYPE)
 					{
 						insn.resource_return_type[0] = exttok.resource_return_type.x;
 						insn.resource_return_type[1] = exttok.resource_return_type.y;
@@ -378,7 +378,7 @@ relative:
 
 				switch(opcode)
 				{
-				case TPF_OPCODE_INTERFACE_CALL:
+				case SM4_OPCODE_INTERFACE_CALL:
 					insn.num = read32();
 					break;
 				default:
@@ -389,8 +389,8 @@ relative:
 				while(tokens != insn_end)
 				{
 					check(tokens < insn_end);
-					check(op_num < TPF_MAX_OPS);
-					insn.ops[op_num].reset(new tpf_op);
+					check(op_num < SM4_MAX_OPS);
+					insn.ops[op_num].reset(new sm4_op);
 					read_op(&*insn.ops[op_num]);
 					++op_num;
 				}
@@ -413,10 +413,10 @@ relative:
 	}
 };
 
-tpf_program* tpf_parse(void* tokens, int size)
+sm4_program* sm4_parse(void* tokens, int size)
 {
-	tpf_program* program = new tpf_program;
-	tpf_parser parser(*program, tokens, size);
+	sm4_program* program = new sm4_program;
+	sm4_parser parser(*program, tokens, size);
 	if(!parser.parse())
 		return program;
 	delete program;

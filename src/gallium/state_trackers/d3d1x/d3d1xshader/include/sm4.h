@@ -24,8 +24,10 @@
  *
  **************************************************************************/
 
-#ifndef TPF_H_
-#define TPF_H_
+/* Header for Shader Model 4.0, 4.1 and 5.0 */
+
+#ifndef SM4_H_
+#define SM4_H_
 
 #include <stdint.h>
 #include <string.h>
@@ -36,16 +38,16 @@
 #include <iostream>
 #include "le32.h"
 
-#include "tpf_defs.h"
+#include "sm4_defs.h"
 
-extern const char* tpf_opcode_names[];
-extern const char* tpf_file_names[];
-extern const char* tpf_file_ms_names[];
-extern const char* tpf_target_names[];
-extern const char* tpf_interpolation_names[];
-extern const char* tpf_sv_names[];
+extern const char* sm4_opcode_names[];
+extern const char* sm4_file_names[];
+extern const char* sm4_file_ms_names[];
+extern const char* sm4_target_names[];
+extern const char* sm4_interpolation_names[];
+extern const char* sm4_sv_names[];
 
-struct tpf_token_version
+struct sm4_token_version
 {
 	unsigned minor : 4;
 	unsigned major : 4;
@@ -53,7 +55,7 @@ struct tpf_token_version
 	unsigned type : 16;
 };
 
-struct tpf_token_instruction
+struct sm4_token_instruction
 {
 	// we don't make it an union directly because unions can't be inherited from
 	union
@@ -155,7 +157,7 @@ struct tpf_token_instruction
 	};
 };
 
-union  tpf_token_instruction_extended
+union  sm4_token_instruction_extended
 {
 	struct
 	{
@@ -186,7 +188,7 @@ union  tpf_token_instruction_extended
 	} resource_return_type;
 };
 
-struct tpf_token_resource_return_type
+struct sm4_token_resource_return_type
 {
 	unsigned x : 4;
 	unsigned y : 4;
@@ -194,31 +196,31 @@ struct tpf_token_resource_return_type
 	unsigned w : 4;
 };
 
-struct tpf_token_operand
+struct sm4_token_operand
 {
-	unsigned comps_enum : 2; /* tpf_operands_comps */
-	unsigned mode : 2; /* tpf_operand_mode */
+	unsigned comps_enum : 2; /* sm4_operands_comps */
+	unsigned mode : 2; /* sm4_operand_mode */
 	unsigned sel : 8;
-	unsigned file : 8; /* tpf_file */
+	unsigned file : 8; /* sm4_file */
 	unsigned num_indices : 2;
-	unsigned index0_repr : 3; /* tpf_operand_index_repr */
-	unsigned index1_repr : 3; /* tpf_operand_index_repr */
-	unsigned index2_repr : 3; /* tpf_operand_index_repr */
+	unsigned index0_repr : 3; /* sm4_operand_index_repr */
+	unsigned index1_repr : 3; /* sm4_operand_index_repr */
+	unsigned index2_repr : 3; /* sm4_operand_index_repr */
 	unsigned extended : 1;
 };
 
-#define TPF_OPERAND_SEL_MASK(sel) ((sel) & 0xf)
-#define TPF_OPERAND_SEL_SWZ(sel, i) (((sel) >> ((i) * 2)) & 3)
-#define TPF_OPERAND_SEL_SCALAR(sel) ((sel) & 3)
+#define SM4_OPERAND_SEL_MASK(sel) ((sel) & 0xf)
+#define SM4_OPERAND_SEL_SWZ(sel, i) (((sel) >> ((i) * 2)) & 3)
+#define SM4_OPERAND_SEL_SCALAR(sel) ((sel) & 3)
 
-struct tpf_token_operand_extended
+struct sm4_token_operand_extended
 {
 	unsigned type : 6;
 	unsigned neg : 1;
 	unsigned abs : 1;
 };
 
-union tpf_any
+union sm4_any
 {
 	double f64;
 	float f32;
@@ -228,30 +230,30 @@ union tpf_any
 	int64_t u32;
 };
 
-struct tpf_op;
-struct tpf_insn;
-struct tpf_dcl;
-struct tpf_program;
-std::ostream& operator <<(std::ostream& out, const tpf_op& op);
-std::ostream& operator <<(std::ostream& out, const tpf_insn& op);
-std::ostream& operator <<(std::ostream& out, const tpf_dcl& op);
-std::ostream& operator <<(std::ostream& out, const tpf_program& op);
+struct sm4_op;
+struct sm4_insn;
+struct sm4_dcl;
+struct sm4_program;
+std::ostream& operator <<(std::ostream& out, const sm4_op& op);
+std::ostream& operator <<(std::ostream& out, const sm4_insn& op);
+std::ostream& operator <<(std::ostream& out, const sm4_dcl& op);
+std::ostream& operator <<(std::ostream& out, const sm4_program& op);
 
-struct tpf_op
+struct sm4_op
 {
 	uint8_t mode;
 	uint8_t comps;
 	uint8_t mask;
 	uint8_t num_indices;
 	uint8_t swizzle[4];
-	tpf_file file;
-	tpf_any imm_values[4];
+	sm4_file file;
+	sm4_any imm_values[4];
 	bool neg;
 	bool abs;
 	struct
 	{
 		int64_t disp;
-		std::auto_ptr<tpf_op> reg;
+		std::auto_ptr<sm4_op> reg;
 	} indices[3];
 
 	bool is_index_simple(unsigned i) const
@@ -264,7 +266,7 @@ struct tpf_op
 		return num_indices == 1 && is_index_simple(0);
 	}
 
-	tpf_op()
+	sm4_op()
 	{
 		memset(this, 0, sizeof(*this));
 	}
@@ -272,14 +274,14 @@ struct tpf_op
 	void dump();
 
 private:
-	tpf_op(const tpf_op& op)
+	sm4_op(const sm4_op& op)
 	{}
 };
 
 /* for sample_d */
-#define TPF_MAX_OPS 6
+#define SM4_MAX_OPS 6
 
-struct tpf_insn : public tpf_token_instruction
+struct sm4_insn : public sm4_token_instruction
 {
 	int8_t sample_offset[3];
 	uint8_t resource_target;
@@ -287,9 +289,9 @@ struct tpf_insn : public tpf_token_instruction
 
 	unsigned num;
 	unsigned num_ops;
-	std::auto_ptr<tpf_op> ops[TPF_MAX_OPS];
+	std::auto_ptr<sm4_op> ops[SM4_MAX_OPS];
 
-	tpf_insn()
+	sm4_insn()
 	{
 		memset(this, 0, sizeof(*this));
 	}
@@ -297,18 +299,18 @@ struct tpf_insn : public tpf_token_instruction
 	void dump();
 
 private:
-	tpf_insn(const tpf_insn& op)
+	sm4_insn(const sm4_insn& op)
 	{}
 };
 
-struct tpf_dcl : public tpf_token_instruction
+struct sm4_dcl : public sm4_token_instruction
 {
-	std::auto_ptr<tpf_op> op;
+	std::auto_ptr<sm4_op> op;
 	union
 	{
 		unsigned num;
 		float f32;
-		tpf_sv sv;
+		sm4_sv sv;
 		struct
 		{
 			unsigned id;
@@ -317,7 +319,7 @@ struct tpf_dcl : public tpf_token_instruction
 			unsigned array_length;
 		} intf;
 		unsigned thread_group_size[3];
-		tpf_token_resource_return_type rrt;
+		sm4_token_resource_return_type rrt;
 		struct
 		{
 			unsigned num;
@@ -332,12 +334,12 @@ struct tpf_dcl : public tpf_token_instruction
 
 	void* data;
 
-	tpf_dcl()
+	sm4_dcl()
 	{
 		memset(this, 0, sizeof(*this));
 	}
 
-	~tpf_dcl()
+	~sm4_dcl()
 	{
 		free(data);
 	}
@@ -345,15 +347,15 @@ struct tpf_dcl : public tpf_token_instruction
 	void dump();
 
 private:
-	tpf_dcl(const tpf_dcl& op)
+	sm4_dcl(const sm4_dcl& op)
 	{}
 };
 
-struct tpf_program
+struct sm4_program
 {
-	tpf_token_version version;
-	std::vector<tpf_dcl*> dcls;
-	std::vector<tpf_insn*> insns;
+	sm4_token_version version;
+	std::vector<sm4_dcl*> dcls;
+	std::vector<sm4_insn*> insns;
 
 	/* for ifs, the insn number of the else or endif if there is no else
 	 * for elses, the insn number of the endif
@@ -376,33 +378,33 @@ struct tpf_program
 	bool labels_found;
 	std::vector<int> label_to_insn_num;
 
-	tpf_program()
+	sm4_program()
 	{
 		memset(&version, 0, sizeof(version));
 		labels_found = false;
 		resource_sampler_slots_assigned = false;
 	}
 
-	~tpf_program()
+	~sm4_program()
 	{
-		for(std::vector<tpf_dcl*>::iterator i = dcls.begin(), e = dcls.end(); i != e; ++i)
+		for(std::vector<sm4_dcl*>::iterator i = dcls.begin(), e = dcls.end(); i != e; ++i)
 			delete *i;
-		for(std::vector<tpf_insn*>::iterator i = insns.begin(), e = insns.end(); i != e; ++i)
+		for(std::vector<sm4_insn*>::iterator i = insns.begin(), e = insns.end(); i != e; ++i)
 			delete *i;
 	}
 
 	void dump();
 
 private:
-	tpf_program(const tpf_dcl& op)
+	sm4_program(const sm4_dcl& op)
 	{}
 };
 
-tpf_program* tpf_parse(void* tokens, int size);
+sm4_program* sm4_parse(void* tokens, int size);
 
-bool tpf_link_cf_insns(tpf_program& program);
-bool tpf_find_labels(tpf_program& program);
-bool tpf_allocate_resource_sampler_pairs(tpf_program& program);
+bool sm4_link_cf_insns(sm4_program& program);
+bool sm4_find_labels(sm4_program& program);
+bool sm4_allocate_resource_sampler_pairs(sm4_program& program);
 
-#endif /* TPF_H_ */
+#endif /* SM4_H_ */
 

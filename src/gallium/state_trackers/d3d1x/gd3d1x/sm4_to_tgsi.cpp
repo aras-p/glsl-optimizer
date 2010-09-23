@@ -24,7 +24,7 @@
  *
  **************************************************************************/
 
-#include "tpf.h"
+#include "sm4.h"
 #include "tgsi/tgsi_ureg.h"
 #include <vector>
 
@@ -36,7 +36,7 @@
 #define fail(x) throw(x)
 #endif
 
-static unsigned tpf_to_pipe_interpolation[] =
+static unsigned sm4_to_pipe_interpolation[] =
 {
 	TGSI_INTERPOLATE_PERSPECTIVE, /* UNDEFINED */
 	TGSI_INTERPOLATE_CONSTANT,
@@ -50,7 +50,7 @@ static unsigned tpf_to_pipe_interpolation[] =
 	TGSI_INTERPOLATE_LINEAR, /* LINEAR_NOPERSPECTIVE_SAMPLE */
 };
 
-static int tpf_to_pipe_sv[] =
+static int sm4_to_pipe_sv[] =
 {
 	-1,
 	TGSI_SEMANTIC_POSITION,
@@ -65,7 +65,7 @@ static int tpf_to_pipe_sv[] =
 	-1, /*TGSI_SEMANTIC_SAMPLE_INDEX*/
 };
 
-struct tpf_to_tgsi_converter
+struct sm4_to_tgsi_converter
 {
 	struct ureg_program* ureg;
 	std::vector<struct ureg_dst> temps;
@@ -75,37 +75,37 @@ struct tpf_to_tgsi_converter
 	std::vector<std::pair<unsigned, unsigned> > targets; // first is normal, second shadow/comparison
 	std::vector<unsigned> sampler_modes; // 0 = normal, 1 = shadow/comparison
 	std::vector<std::pair<unsigned, unsigned> > loops;
-	tpf_insn* insn;
-	struct tpf_program& program;
-	std::vector<unsigned> tpf_to_tgsi_insn_num;
-	std::vector<std::pair<unsigned, unsigned> > label_to_tpf_insn_num;
+	sm4_insn* insn;
+	struct sm4_program& program;
+	std::vector<unsigned> sm4_to_tgsi_insn_num;
+	std::vector<std::pair<unsigned, unsigned> > label_to_sm4_insn_num;
 	bool in_sub;
 	bool avoid_txf;
 	bool avoid_int;
 
-	tpf_to_tgsi_converter(struct tpf_program& program)
+	sm4_to_tgsi_converter(struct sm4_program& program)
 	: program(program)
 	{
 		avoid_txf = true;
 		avoid_int = false;
 	}
 
-	struct ureg_dst _reg(tpf_op& op)
+	struct ureg_dst _reg(sm4_op& op)
 	{
 		switch(op.file)
 		{
-		case TPF_FILE_NULL:
+		case SM4_FILE_NULL:
 		{
 			struct ureg_dst d;
 			memset(&d, 0, sizeof(d));
 			d.File = TGSI_FILE_NULL;
 			return d;
 		}
-		case TPF_FILE_TEMP:
+		case SM4_FILE_TEMP:
 			check(op.has_simple_index());
 			check(op.indices[0].disp < temps.size());
 			return temps[op.indices[0].disp];
-		case TPF_FILE_OUTPUT:
+		case SM4_FILE_OUTPUT:
 			check(op.has_simple_index());
 			check(op.indices[0].disp < outputs.size());
 			return outputs[op.indices[0].disp];
@@ -118,8 +118,8 @@ struct tpf_to_tgsi_converter
 	struct ureg_dst _dst(unsigned i = 0)
 	{
 		check(i < insn->num_ops);
-		tpf_op& op = *insn->ops[i];
-		check(op.mode == TPF_OPERAND_MODE_MASK || op.mode == TPF_OPERAND_MODE_SCALAR);
+		sm4_op& op = *insn->ops[i];
+		check(op.mode == SM4_OPERAND_MODE_MASK || op.mode == SM4_OPERAND_MODE_SCALAR);
 		struct ureg_dst d = ureg_writemask(_reg(op), op.mask);
 		if(insn->insn.sat)
 			d = ureg_saturate(d);
@@ -129,19 +129,19 @@ struct tpf_to_tgsi_converter
 	struct ureg_src _src(unsigned i)
 	{
 		check(i < insn->num_ops);
-		tpf_op& op = *insn->ops[i];
+		sm4_op& op = *insn->ops[i];
 		struct ureg_src s;
 		switch(op.file)
 		{
-		case TPF_FILE_IMMEDIATE32:
+		case SM4_FILE_IMMEDIATE32:
 			s = ureg_imm4f(ureg, op.imm_values[0].f32, op.imm_values[1].f32, op.imm_values[2].f32, op.imm_values[3].f32);
 			break;
-		case TPF_FILE_INPUT:
+		case SM4_FILE_INPUT:
 			check(op.has_simple_index());
 			check(op.indices[0].disp < inputs.size());
 			s = inputs[op.indices[0].disp];
 			break;
-		case TPF_FILE_CONSTANT_BUFFER:
+		case SM4_FILE_CONSTANT_BUFFER:
 			// TODO: indirect addressing
 			check(op.num_indices == 2);
 			check(op.is_index_simple(0));
@@ -154,12 +154,12 @@ struct tpf_to_tgsi_converter
 			s = ureg_src(_reg(op));
 			break;
 		}
-		if(op.mode == TPF_OPERAND_MODE_SWIZZLE || op.mode == TPF_OPERAND_MODE_SCALAR)
+		if(op.mode == SM4_OPERAND_MODE_SWIZZLE || op.mode == SM4_OPERAND_MODE_SCALAR)
 			s = ureg_swizzle(s, op.swizzle[0], op.swizzle[1], op.swizzle[2], op.swizzle[3]);
 		else
 		{
 			/* immediates are masked to show needed values */
-			check(op.file == TPF_FILE_IMMEDIATE32 || op.file == TPF_FILE_IMMEDIATE64);
+			check(op.file == SM4_FILE_IMMEDIATE32 || op.file == SM4_FILE_IMMEDIATE64);
 		}
 		if(op.abs)
 			s = ureg_abs(s);
@@ -168,10 +168,10 @@ struct tpf_to_tgsi_converter
 		return s;
 	};
 
-	int _idx(tpf_file file, unsigned i = 0)
+	int _idx(sm4_file file, unsigned i = 0)
 	{
 		check(i < insn->num_ops);
-		tpf_op& op = *insn->ops[i];
+		sm4_op& op = *insn->ops[i];
 		check(op.file == file);
 		check(op.has_simple_index());
 		return (int)op.indices[0].disp;
@@ -180,7 +180,7 @@ struct tpf_to_tgsi_converter
 	int _texslot(bool have_sampler = true)
 	{
 		std::map<std::pair<int, int>, int>::iterator i;
-		i = program.resource_sampler_to_slot.find(std::make_pair(_idx(TPF_FILE_RESOURCE, 2), have_sampler ? _idx(TPF_FILE_SAMPLER, 3) : -1));
+		i = program.resource_sampler_to_slot.find(std::make_pair(_idx(SM4_FILE_RESOURCE, 2), have_sampler ? _idx(SM4_FILE_SAMPLER, 3) : -1));
 		check(i != program.resource_sampler_to_slot.end());
 		return i->second;
 	}
@@ -214,19 +214,19 @@ struct tpf_to_tgsi_converter
 			return ureg_writemask(_tmp(), d.WriteMask);
 	}
 
-#define OP1_(d, g) case TPF_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1)); break
-#define OP2_(d, g) case TPF_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1), _src(2)); break
-#define OP3_(d, g) case TPF_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1), _src(2), _src(3)); break
+#define OP1_(d, g) case SM4_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1)); break
+#define OP2_(d, g) case SM4_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1), _src(2)); break
+#define OP3_(d, g) case SM4_OPCODE_##d: ureg_##g(ureg, _dst(), _src(1), _src(2), _src(3)); break
 #define OP1(n) OP1_(n, n)
 #define OP2(n) OP2_(n, n)
 #define OP3(n) OP3_(n, n)
-#define OP_CF(d, g)  case TPF_OPCODE_##d: ureg_##g(ureg, &label); label_to_tpf_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num])); break;
+#define OP_CF(d, g)  case SM4_OPCODE_##d: ureg_##g(ureg, &label); label_to_sm4_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num])); break;
 
 	void translate_insns(unsigned begin, unsigned end)
 	{
 		for(unsigned insn_num = begin; insn_num < end; ++insn_num)
 		{
-			tpf_to_tgsi_insn_num[insn_num] = ureg_get_instruction_number(ureg);
+			sm4_to_tgsi_insn_num[insn_num] = ureg_get_instruction_number(ureg);
 			unsigned label;
 			insn = program.insns[insn_num];
 			bool ok;
@@ -234,7 +234,7 @@ struct tpf_to_tgsi_converter
 			switch(insn->opcode)
 			{
 			// trivial instructions
-			case TPF_OPCODE_NOP:
+			case SM4_OPCODE_NOP:
 				break;
 			OP1(MOV);
 
@@ -279,26 +279,26 @@ struct tpf_to_tgsi_converter
 			OP1_(DERIV_RTY, DDY);
 			OP1_(DERIV_RTY_COARSE, DDY);
 			OP1_(DERIV_RTY_FINE, DDY);
-			case TPF_OPCODE_EMIT:
+			case SM4_OPCODE_EMIT:
 				ureg_EMIT(ureg);
 				break;
-			case TPF_OPCODE_CUT:
+			case SM4_OPCODE_CUT:
 				ureg_ENDPRIM(ureg);
 				break;
-			case TPF_OPCODE_EMITTHENCUT:
+			case SM4_OPCODE_EMITTHENCUT:
 				ureg_EMIT(ureg);
 				ureg_ENDPRIM(ureg);
 				break;
 
 			// non-trivial instructions
-			case TPF_OPCODE_MOVC:
+			case SM4_OPCODE_MOVC:
 				/* CMP checks for < 0, but MOVC checks for != 0
 				 * but fortunately, x != 0 is equivalent to -abs(x) < 0
 				 * XXX: can test_nz apply to this?!
 				 */
 				ureg_CMP(ureg, _dst(), ureg_negate(ureg_abs(_src(1))), _src(2), _src(3));
 				break;
-			case TPF_OPCODE_SQRT:
+			case SM4_OPCODE_SQRT:
 			{
 				struct ureg_dst d = _dst();
 				struct ureg_dst t = _tmp(d);
@@ -306,7 +306,7 @@ struct tpf_to_tgsi_converter
 				ureg_RCP(ureg, d, ureg_src(t));
 				break;
 			}
-			case TPF_OPCODE_SINCOS:
+			case SM4_OPCODE_SINCOS:
 			{
 				struct ureg_dst s = _dst(0);
 				struct ureg_dst c = _dst(1);
@@ -319,45 +319,45 @@ struct tpf_to_tgsi_converter
 			}
 
 			// control flow
-			case TPF_OPCODE_DISCARD:
+			case SM4_OPCODE_DISCARD:
 				ureg_KIL(ureg, _src(0));
 				break;
 			OP_CF(LOOP, BGNLOOP);
 			OP_CF(ENDLOOP, ENDLOOP);
-			case TPF_OPCODE_BREAK:
+			case SM4_OPCODE_BREAK:
 				ureg_BRK(ureg);
 				break;
-			case TPF_OPCODE_BREAKC:
+			case SM4_OPCODE_BREAKC:
 				// XXX: can test_nz apply to this?!
 				ureg_BREAKC(ureg, _src(0));
 				break;
-			case TPF_OPCODE_CONTINUE:
+			case SM4_OPCODE_CONTINUE:
 				ureg_CONT(ureg);
 				break;
-			case TPF_OPCODE_CONTINUEC:
+			case SM4_OPCODE_CONTINUEC:
 				// XXX: can test_nz apply to this?!
 				ureg_IF(ureg, _src(0), &label);
 				ureg_CONT(ureg);
 				ureg_fixup_label(ureg, label, ureg_get_instruction_number(ureg));
 				ureg_ENDIF(ureg);
 				break;
-			case TPF_OPCODE_SWITCH:
+			case SM4_OPCODE_SWITCH:
 				ureg_SWITCH(ureg, _src(0));
 				break;
-			case TPF_OPCODE_CASE:
+			case SM4_OPCODE_CASE:
 				ureg_CASE(ureg, _src(0));
 				break;
-			case TPF_OPCODE_DEFAULT:
+			case SM4_OPCODE_DEFAULT:
 				ureg_DEFAULT(ureg);
 				break;
-			case TPF_OPCODE_ENDSWITCH:
+			case SM4_OPCODE_ENDSWITCH:
 				ureg_ENDSWITCH(ureg);
 				break;
-			case TPF_OPCODE_CALL:
+			case SM4_OPCODE_CALL:
 				ureg_CAL(ureg, &label);
-				label_to_tpf_insn_num.push_back(std::make_pair(label, program.label_to_insn_num[_idx(TPF_FILE_LABEL)]));
+				label_to_sm4_insn_num.push_back(std::make_pair(label, program.label_to_insn_num[_idx(SM4_FILE_LABEL)]));
 				break;
-			case TPF_OPCODE_LABEL:
+			case SM4_OPCODE_LABEL:
 				if(in_sub)
 					ureg_ENDSUB(ureg);
 				else
@@ -365,11 +365,11 @@ struct tpf_to_tgsi_converter
 				ureg_BGNSUB(ureg);
 				in_sub = true;
 				break;
-			case TPF_OPCODE_RET:
+			case SM4_OPCODE_RET:
 				if(in_sub || insn_num != (program.insns.size() - 1))
 					ureg_RET(ureg);
 				break;
-			case TPF_OPCODE_RETC:
+			case SM4_OPCODE_RETC:
 				ureg_IF(ureg, _src(0), &label);
 				if(insn->insn.test_nz)
 					ureg_RET(ureg);
@@ -383,24 +383,24 @@ struct tpf_to_tgsi_converter
 				ureg_ENDIF(ureg);
 				break;
 			OP_CF(ELSE, ELSE);
-			case TPF_OPCODE_ENDIF:
+			case SM4_OPCODE_ENDIF:
 				ureg_ENDIF(ureg);
 				break;
-			case TPF_OPCODE_IF:
+			case SM4_OPCODE_IF:
 				if(insn->insn.test_nz)
 				{
 					ureg_IF(ureg, _src(0), &label);
-					label_to_tpf_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num]));
+					label_to_sm4_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num]));
 				}
 				else
 				{
 					unsigned linked = program.cf_insn_linked[insn_num];
-					if(program.insns[linked]->opcode == TPF_OPCODE_ENDIF)
+					if(program.insns[linked]->opcode == SM4_OPCODE_ENDIF)
 					{
 						ureg_IF(ureg, _src(0), &label);
 						ureg_fixup_label(ureg, label, ureg_get_instruction_number(ureg));
 						ureg_ELSE(ureg, &label);
-						label_to_tpf_insn_num.push_back(std::make_pair(label, linked));
+						label_to_sm4_insn_num.push_back(std::make_pair(label, linked));
 					}
 					else
 					{
@@ -410,13 +410,13 @@ struct tpf_to_tgsi_converter
 						unsigned endif = program.cf_insn_linked[linked];
 
 						ureg_IF(ureg, _src(0), &label);
-						label_to_tpf_insn_num.push_back(std::make_pair(label, linked));
+						label_to_sm4_insn_num.push_back(std::make_pair(label, linked));
 
 						translate_insns(linked + 1, endif);
 
-						tpf_to_tgsi_insn_num[linked] = ureg_get_instruction_number(ureg);
+						sm4_to_tgsi_insn_num[linked] = ureg_get_instruction_number(ureg);
 						ureg_ELSE(ureg, &label);
-						label_to_tpf_insn_num.push_back(std::make_pair(label, endif));
+						label_to_sm4_insn_num.push_back(std::make_pair(label, endif));
 
 						translate_insns(insn_num + 1, linked);
 
@@ -425,10 +425,10 @@ struct tpf_to_tgsi_converter
 					}
 				}
 				break;
-			case TPF_OPCODE_RESINFO:
+			case SM4_OPCODE_RESINFO:
 			{
 				std::map<int, int>::iterator i;
-				i = program.resource_to_slot.find(_idx(TPF_FILE_RESOURCE, 2));
+				i = program.resource_to_slot.find(_idx(SM4_FILE_RESOURCE, 2));
 				check(i != program.resource_to_slot.end());
 				unsigned texslot = i->second;
 
@@ -437,8 +437,8 @@ struct tpf_to_tgsi_converter
 				break;
 			};
 			// TODO: sample offset, sample index
-			case TPF_OPCODE_LD: // dst, coord_int, res; mipmap level in last coord_int arg (ouch)
-			case TPF_OPCODE_LD_MS:
+			case SM4_OPCODE_LD: // dst, coord_int, res; mipmap level in last coord_int arg (ouch)
+			case SM4_OPCODE_LD_MS:
 			{
 				unsigned texslot = _texslot(false);
 				unsigned dim = 0;
@@ -475,13 +475,13 @@ struct tpf_to_tgsi_converter
 					ureg_TXF(ureg, _dst(), tex_target(texslot), ureg_swizzle(_src(1), 0, 1, 2, dim), samplers[texslot]);
 				break;
 			}
-			case TPF_OPCODE_SAMPLE: // dst, coord, res, samp
+			case SM4_OPCODE_SAMPLE: // dst, coord, res, samp
 			{
 				unsigned texslot = _texslot();
 				ureg_TEX(ureg, _dst(), tex_target(texslot), _src(1), samplers[texslot]);
 				break;
 			}
-			case TPF_OPCODE_SAMPLE_B: // dst, coord, res, samp, bias.x
+			case SM4_OPCODE_SAMPLE_B: // dst, coord, res, samp, bias.x
 			{
 				unsigned texslot = _texslot();
 				struct ureg_dst tmp = _tmp();
@@ -490,7 +490,7 @@ struct tpf_to_tgsi_converter
 				ureg_TXB(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
 				break;
 			}
-			case TPF_OPCODE_SAMPLE_C: // dst, coord, res, samp, comp.x
+			case SM4_OPCODE_SAMPLE_C: // dst, coord, res, samp, comp.x
 			{
 				unsigned texslot = _texslot();
 				struct ureg_dst tmp = _tmp();
@@ -499,7 +499,7 @@ struct tpf_to_tgsi_converter
 				ureg_TEX(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
 				break;
 			}
-			case TPF_OPCODE_SAMPLE_C_LZ: // dst, coord, res, samp, comp.x
+			case SM4_OPCODE_SAMPLE_C_LZ: // dst, coord, res, samp, comp.x
 			{
 				unsigned texslot = _texslot();
 				struct ureg_dst tmp = _tmp();
@@ -509,13 +509,13 @@ struct tpf_to_tgsi_converter
 				ureg_TXL(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
 				break;
 			}
-			case TPF_OPCODE_SAMPLE_D: // dst, coord, res, samp, ddx, ddy
+			case SM4_OPCODE_SAMPLE_D: // dst, coord, res, samp, ddx, ddy
 			{
 				unsigned texslot = _texslot();
 				ureg_TXD(ureg, _dst(), tex_target(texslot), _src(1), samplers[texslot], _src(4), _src(5));
 				break;
 			}
-			case TPF_OPCODE_SAMPLE_L: // dst, coord, res, samp, bias.x
+			case SM4_OPCODE_SAMPLE_L: // dst, coord, res, samp, bias.x
 			{
 				unsigned texslot = _texslot();
 				struct ureg_dst tmp = _tmp();
@@ -561,7 +561,7 @@ struct tpf_to_tgsi_converter
 				OP2_(UGE, USGE);
 				OP2(USHR);
 
-				case TPF_OPCODE_UDIV:
+				case SM4_OPCODE_UDIV:
 				{
 					struct ureg_dst q = _dst(0);
 					struct ureg_dst r = _dst(1);
@@ -583,8 +583,8 @@ struct tpf_to_tgsi_converter
 				ok = true;
 				switch(insn->opcode)
 				{
-				case TPF_OPCODE_ITOF:
-				case TPF_OPCODE_UTOF:
+				case SM4_OPCODE_ITOF:
+				case SM4_OPCODE_UTOF:
 					break;
 				OP1_(FTOI, TRUNC);
 				OP1_(FTOU, FLR);
@@ -607,10 +607,10 @@ struct tpf_to_tgsi_converter
 				OP2_(ULT, SLT);
 				OP2_(UGE, SGE);
 
-				case TPF_OPCODE_INEG:
+				case SM4_OPCODE_INEG:
 					ureg_MOV(ureg, _dst(), ureg_negate(_src(1)));
 					break;
-				case TPF_OPCODE_ISHL:
+				case SM4_OPCODE_ISHL:
 				{
 					struct ureg_dst d = _dst();
 					struct ureg_dst t = _tmp(d);
@@ -618,8 +618,8 @@ struct tpf_to_tgsi_converter
 					ureg_MUL(ureg, d, ureg_src(t), _src(1));
 					break;
 				}
-				case TPF_OPCODE_ISHR:
-				case TPF_OPCODE_USHR:
+				case SM4_OPCODE_ISHR:
+				case SM4_OPCODE_USHR:
 				{
 					struct ureg_dst d = _dst();
 					struct ureg_dst t = _tmp(d);
@@ -628,7 +628,7 @@ struct tpf_to_tgsi_converter
 					ureg_FLR(ureg, d, ureg_src(t));
 					break;
 				}
-				case TPF_OPCODE_UDIV:
+				case SM4_OPCODE_UDIV:
 				{
 					struct ureg_dst q = _dst(0);
 					struct ureg_dst r = _dst(1);
@@ -681,11 +681,11 @@ next:;
 			return 0;
 		}
 
-		if(!tpf_link_cf_insns(program))
+		if(!sm4_link_cf_insns(program))
 			fail("Malformed control flow");
-		if(!tpf_find_labels(program))
+		if(!sm4_find_labels(program))
 			fail("Failed to locate labels");
-		if(!tpf_allocate_resource_sampler_pairs(program))
+		if(!sm4_allocate_resource_sampler_pairs(program))
 			fail("Unsupported (indirect?) accesses to resources and/or samplers");
 
 		ureg = ureg_create(processor);
@@ -695,22 +695,22 @@ next:;
 		for(unsigned i = 0; i < program.slot_to_resource.size(); ++i)
 			samplers.push_back(ureg_DECL_sampler(ureg, i));
 
-		tpf_to_tgsi_insn_num.resize(program.insns.size());
+		sm4_to_tgsi_insn_num.resize(program.insns.size());
 		for(unsigned insn_num = 0; insn_num < program.dcls.size(); ++insn_num)
 		{
-			tpf_dcl& dcl = *program.dcls[insn_num];
+			sm4_dcl& dcl = *program.dcls[insn_num];
 			int idx = -1;
 			if(dcl.op.get() && dcl.op->has_simple_index())
 				idx = dcl.op->indices[0].disp;
 			switch(dcl.opcode)
 			{
-			case TPF_OPCODE_DCL_GLOBAL_FLAGS:
+			case SM4_OPCODE_DCL_GLOBAL_FLAGS:
 				break;
-			case TPF_OPCODE_DCL_TEMPS:
+			case SM4_OPCODE_DCL_TEMPS:
 				for(unsigned i = 0; i < dcl.num; ++i)
 					temps.push_back(ureg_DECL_temporary(ureg));
 				break;
-			case TPF_OPCODE_DCL_INPUT:
+			case SM4_OPCODE_DCL_INPUT:
 				check(idx >= 0);
 				if(inputs.size() <= (unsigned)idx)
 					inputs.resize(idx + 1);
@@ -719,13 +719,13 @@ next:;
 				else
 					check(0);
 				break;
-			case TPF_OPCODE_DCL_INPUT_PS:
+			case SM4_OPCODE_DCL_INPUT_PS:
 				check(idx >= 0);
 				if(inputs.size() <= (unsigned)idx)
 					inputs.resize(idx + 1);
-				inputs[idx] = ureg_DECL_fs_input(ureg, TGSI_SEMANTIC_GENERIC, idx, tpf_to_pipe_interpolation[dcl.dcl_input_ps.interpolation]);
+				inputs[idx] = ureg_DECL_fs_input(ureg, TGSI_SEMANTIC_GENERIC, idx, sm4_to_pipe_interpolation[dcl.dcl_input_ps.interpolation]);
 				break;
-			case TPF_OPCODE_DCL_OUTPUT:
+			case SM4_OPCODE_DCL_OUTPUT:
 				check(idx >= 0);
 				if(outputs.size() <= (unsigned)idx)
 					outputs.resize(idx + 1);
@@ -734,43 +734,43 @@ next:;
 				else
 					outputs[idx] = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, idx);
 				break;
-			case TPF_OPCODE_DCL_INPUT_SIV:
-			case TPF_OPCODE_DCL_INPUT_SGV:
-			case TPF_OPCODE_DCL_INPUT_PS_SIV:
-			case TPF_OPCODE_DCL_INPUT_PS_SGV:
+			case SM4_OPCODE_DCL_INPUT_SIV:
+			case SM4_OPCODE_DCL_INPUT_SGV:
+			case SM4_OPCODE_DCL_INPUT_PS_SIV:
+			case SM4_OPCODE_DCL_INPUT_PS_SGV:
 				check(idx >= 0);
 				if(inputs.size() <= (unsigned)idx)
 					inputs.resize(idx + 1);
 				// TODO: is this correct?
-				inputs[idx] = ureg_DECL_system_value(ureg, idx, tpf_to_pipe_sv[dcl.sv], 0);
+				inputs[idx] = ureg_DECL_system_value(ureg, idx, sm4_to_pipe_sv[dcl.sv], 0);
 				break;
-			case TPF_OPCODE_DCL_OUTPUT_SIV:
-			case TPF_OPCODE_DCL_OUTPUT_SGV:
+			case SM4_OPCODE_DCL_OUTPUT_SIV:
+			case SM4_OPCODE_DCL_OUTPUT_SGV:
 				check(idx >= 0);
 				if(outputs.size() <= (unsigned)idx)
 					outputs.resize(idx + 1);
-				check(tpf_to_pipe_sv[dcl.sv] >= 0);
-				outputs[idx] = ureg_DECL_output(ureg, tpf_to_pipe_sv[dcl.sv], 0);
+				check(sm4_to_pipe_sv[dcl.sv] >= 0);
+				outputs[idx] = ureg_DECL_output(ureg, sm4_to_pipe_sv[dcl.sv], 0);
 				break;
-			case TPF_OPCODE_DCL_RESOURCE:
+			case SM4_OPCODE_DCL_RESOURCE:
 				check(idx >= 0);
 				if(targets.size() <= (unsigned)idx)
 					targets.resize(idx + 1);
 				switch(dcl.dcl_resource.target)
 				{
-				case TPF_TARGET_TEXTURE1D:
+				case SM4_TARGET_TEXTURE1D:
 					targets[idx].first = TGSI_TEXTURE_1D;
 					targets[idx].second = TGSI_TEXTURE_SHADOW1D;
 					break;
-				case TPF_TARGET_TEXTURE2D:
+				case SM4_TARGET_TEXTURE2D:
 					targets[idx].first = TGSI_TEXTURE_2D;
 					targets[idx].second = TGSI_TEXTURE_SHADOW2D;
 					break;
-				case TPF_TARGET_TEXTURE3D:
+				case SM4_TARGET_TEXTURE3D:
 					targets[idx].first = TGSI_TEXTURE_3D;
 					targets[idx].second = 0;
 					break;
-				case TPF_TARGET_TEXTURECUBE:
+				case SM4_TARGET_TEXTURECUBE:
 					targets[idx].first = TGSI_TEXTURE_CUBE;
 					targets[idx].second = 0;
 					break;
@@ -778,14 +778,14 @@ next:;
 					check(0);
 				}
 				break;
-			case TPF_OPCODE_DCL_SAMPLER:
+			case SM4_OPCODE_DCL_SAMPLER:
 				check(idx >= 0);
 				if(sampler_modes.size() <= (unsigned)idx)
 					sampler_modes.resize(idx + 1);
 				check(!dcl.dcl_sampler.mono);
 				sampler_modes[idx] = dcl.dcl_sampler.shadow;
 				break;
-			case TPF_OPCODE_DCL_CONSTANT_BUFFER:
+			case SM4_OPCODE_DCL_CONSTANT_BUFFER:
 				check(dcl.op->num_indices == 2);
 				check(dcl.op->is_index_simple(0));
 				check(dcl.op->is_index_simple(1));
@@ -798,14 +798,14 @@ next:;
 		}
 
 		translate_insns(0, program.insns.size());
-		tpf_to_tgsi_insn_num.push_back(ureg_get_instruction_number(ureg));
+		sm4_to_tgsi_insn_num.push_back(ureg_get_instruction_number(ureg));
 		if(in_sub)
 			ureg_ENDSUB(ureg);
 		else
 			ureg_END(ureg);
 
-		for(unsigned i = 0; i < label_to_tpf_insn_num.size(); ++i)
-			ureg_fixup_label(ureg, label_to_tpf_insn_num[i].first, tpf_to_tgsi_insn_num[label_to_tpf_insn_num[i].second]);
+		for(unsigned i = 0; i < label_to_sm4_insn_num.size(); ++i)
+			ureg_fixup_label(ureg, label_to_sm4_insn_num[i].first, sm4_to_tgsi_insn_num[label_to_sm4_insn_num[i].second]);
 
 		const struct tgsi_token * tokens = ureg_get_tokens(ureg, 0);
 		ureg_destroy(ureg);
@@ -825,8 +825,8 @@ next:;
 	}
 };
 
-void* tpf_to_tgsi(struct tpf_program& program)
+void* sm4_to_tgsi(struct sm4_program& program)
 {
-	tpf_to_tgsi_converter conv(program);
+	sm4_to_tgsi_converter conv(program);
 	return conv.translate();
 }

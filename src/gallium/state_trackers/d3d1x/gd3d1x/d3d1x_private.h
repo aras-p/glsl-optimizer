@@ -33,8 +33,8 @@
 #include <float.h>
 
 #include "dxbc.h"
-#include "tpf.h"
-#include "tpf_to_tgsi.h"
+#include "sm4.h"
+#include "sm4_to_tgsi.h"
 
 #include "d3d1xstutil.h"
 

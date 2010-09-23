@@ -25,8 +25,8 @@
  **************************************************************************/
 
 #include "dxbc.h"
-#include "tpf.h"
-#include "../tpf_to_tgsi.h"
+#include "sm4.h"
+#include "../sm4_to_tgsi.h"
 #include "tgsi/tgsi_dump.h"
 #include <iostream>
 #include <fstream>
@@ -62,16 +62,16 @@ int main(int argc, char** argv)
 	if(dxbc)
 	{
 		std::cout << *dxbc;
-		dxbc_chunk_header* tpf_chunk = dxbc_find_shader_bytecode(&data[0], data.size());
-		if(tpf_chunk)
+		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(&data[0], data.size());
+		if(sm4_chunk)
 		{
-			tpf_program* tpf = tpf_parse(tpf_chunk + 1, bswap_le32(tpf_chunk->size));
-			if(tpf)
+			sm4_program* sm4 = sm4_parse(sm4_chunk + 1, bswap_le32(sm4_chunk->size));
+			if(sm4)
 			{
-				const struct tgsi_token* tokens = (const struct tgsi_token*)tpf_to_tgsi(*tpf);
+				const struct tgsi_token* tokens = (const struct tgsi_token*)sm4_to_tgsi(*sm4);
 				if(tokens)
 				{
-					std::cout << *tpf;
+					std::cout << *sm4;
 					std::cout << "\n# TGSI program: " << std::endl;
 					tgsi_dump(tokens, 0);
 				}
