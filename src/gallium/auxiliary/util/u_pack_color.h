@@ -394,7 +394,7 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
       return;
    case PIPE_FORMAT_B4G4R4A4_UNORM:
       {
-         uc->ub = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+         uc->us = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
    case PIPE_FORMAT_A8_UNORM:
