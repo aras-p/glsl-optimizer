@@ -144,7 +144,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 
 	if (rtex->flushed_depth_texture)
-		pipe_resource_reference(&rtex->flushed_depth_texture, NULL);
+		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
 	if (resource->bo) {
 		radeon_ws_bo_reference(radeon, &resource->bo, NULL);
@@ -256,7 +256,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 
 	resource.bind |= PIPE_BIND_RENDER_TARGET;
 
-	rtex->flushed_depth_texture = ctx->screen->resource_create(ctx->screen, &resource);
+	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold untiled copy\n");
 		return -ENOMEM;
@@ -348,7 +348,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
 			// TODO
 		}
-		pipe_resource_reference(&rtex->flushed_depth_texture, NULL);
+		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 	}
 	pipe_resource_reference(&transfer->resource, NULL);
 	FREE(transfer);
