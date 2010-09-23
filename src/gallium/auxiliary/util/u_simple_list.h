@@ -46,6 +46,8 @@
 do {						\
    (elem)->next->prev = (elem)->prev;		\
    (elem)->prev->next = (elem)->next;		\
+   (elem)->next = elem;                         \
+   (elem)->prev = elem;                         \
 } while (0)
 
 /**
