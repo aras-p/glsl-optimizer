@@ -794,7 +794,7 @@ st_manager_get_egl_image_surface(struct st_context *st,
       return NULL;
 
    memset(&stimg, 0, sizeof(stimg));
-   if (!smapi->get_egl_image(smapi, &st->iface, eglimg, &stimg))
+   if (!smapi->get_egl_image(smapi, eglimg, &stimg))
       return NULL;
 
    ps = smapi->screen->get_tex_surface(smapi->screen,
