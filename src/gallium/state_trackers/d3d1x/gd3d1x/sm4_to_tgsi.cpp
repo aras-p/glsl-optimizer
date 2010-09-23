@@ -720,14 +720,18 @@ next:;
 				break;
 			case SM4_OPCODE_DCL_INPUT:
 				check(idx >= 0);
-				if(inputs.size() <= (unsigned)idx)
-					inputs.resize(idx + 1);
 				if(processor == TGSI_PROCESSOR_VERTEX)
+				{
+					if(inputs.size() <= (unsigned)idx)
+						inputs.resize(idx + 1);
 					inputs[idx] = ureg_DECL_vs_input(ureg, idx);
+				}
 				else if(processor == TGSI_PROCESSOR_GEOMETRY)
 				{
 					// TODO: is this correct?
 					unsigned gsidx = dcl.op->indices[1].disp;
+					if(inputs.size() <= (unsigned)gsidx)
+						inputs.resize(gsidx + 1);
 					inputs[gsidx] = ureg_DECL_gs_input(ureg, gsidx, TGSI_SEMANTIC_GENERIC, gsidx);
 				}
 				else
@@ -789,7 +793,11 @@ next:;
 					targets[idx].second = 0;
 					break;
 				default:
-					check(0);
+					// HACK to make SimpleSample10 work
+					//check(0);
+					targets[idx].first = TGSI_TEXTURE_2D;
+					targets[idx].second = TGSI_TEXTURE_SHADOW2D;
+					break;
 				}
 				break;
 			case SM4_OPCODE_DCL_SAMPLER:
