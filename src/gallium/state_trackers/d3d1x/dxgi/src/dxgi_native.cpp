@@ -1139,6 +1139,8 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		if(dst_surface)
 			pipe->screen->tex_surface_destroy(dst_surface);
 
+		pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME);
+
 		if(db)
 		{
 			if(!surface->swap_buffers(surface))
