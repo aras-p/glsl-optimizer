@@ -33,7 +33,7 @@
 #include <iostream>
 #include "le32.h"
 
-#define FOURCC(a, b, c, d)  ((uint32_t)(uint8_t)(a) | ((uint32_t)(uint8_t)(b) << 8) | ((uint32_t)(uint8_t)(c) << 16) | ((uint32_t)(uint8_t)(d) << 24 ))
+#define FOURCC(a, b, c, d) ((uint32_t)(uint8_t)(a) | ((uint32_t)(uint8_t)(b) << 8) | ((uint32_t)(uint8_t)(c) << 16) | ((uint32_t)(uint8_t)(d) << 24 ))
 #define FOURCC_DXBC FOURCC('D', 'X', 'B', 'C')
 #define FOURCC_RDEF FOURCC('R', 'D', 'E', 'F')
 #define FOURCC_ISGN FOURCC('I', 'S', 'G', 'N')
@@ -100,7 +100,7 @@ static inline dxbc_chunk_header* dxbc_find_shader_bytecode(const void* data, int
 
 static inline dxbc_chunk_signature* dxbc_find_signature(const void* data, int size, bool output)
 {
-	return  (dxbc_chunk_signature*)dxbc_find_chunk(data, size, output ? FOURCC_OSGN : FOURCC_ISGN);
+	return (dxbc_chunk_signature*)dxbc_find_chunk(data, size, output ? FOURCC_OSGN : FOURCC_ISGN);
 }
 
 struct _D3D11_SIGNATURE_PARAMETER_DESC;

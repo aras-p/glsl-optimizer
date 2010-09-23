@@ -167,7 +167,7 @@ bool sm4_allocate_resource_sampler_pairs(sm4_program& program)
 		program.resource_sampler_to_slot[*i] = program.slot_to_resource.size();
 		if(!program.resource_to_slot.count(i->first))
 		{
-			program.resource_to_slot[i->first] =  program.slot_to_resource.size();
+			program.resource_to_slot[i->first] = program.slot_to_resource.size();
 			resinfos.erase(i->first);
 		}
 		program.slot_to_resource.push_back(i->first);
@@ -177,7 +177,7 @@ bool sm4_allocate_resource_sampler_pairs(sm4_program& program)
 	for(std::set<int>::iterator i = resinfos.begin(); i != resinfos.end(); ++i)
 	{
 		program.resource_sampler_to_slot[std::make_pair(*i, -1)] = program.slot_to_resource.size();
-		program.resource_to_slot[*i] =  program.slot_to_resource.size();
+		program.resource_to_slot[*i] = program.slot_to_resource.size();
 		program.slot_to_resource.push_back(*i);
 		program.slot_to_sampler.push_back(-1);
 	}

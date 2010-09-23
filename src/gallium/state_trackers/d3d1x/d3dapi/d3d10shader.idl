@@ -182,15 +182,15 @@ interface ID3D10ShaderReflectionType
 	);
 
 	ID3D10ShaderReflectionType* GetMemberTypeByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D10ShaderReflectionType* GetMemberTypeByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 
 	LPCSTR GetMemberTypeName(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 };
 
@@ -214,11 +214,11 @@ interface ID3D10ShaderReflectionConstantBuffer
 	);
 
 	ID3D10ShaderReflectionVariable* GetVariableByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D10ShaderReflectionVariable* GetVariableByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 };
 
@@ -230,39 +230,39 @@ interface ID3D10ShaderReflection : IUnknown
 	);
 
 	ID3D10ShaderReflectionConstantBuffer* GetConstantBufferByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D10ShaderReflectionConstantBuffer* GetConstantBufferByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 
 	HRESULT GetResourceBindingDesc(
-		[in]  UINT ResourceIndex,
+		[in] UINT ResourceIndex,
 		[out] D3D10_SHADER_INPUT_BIND_DESC *pDesc
 	);
 
 	HRESULT GetInputParameterDesc(
-		[in]  UINT ParameterIndex,
+		[in] UINT ParameterIndex,
 		[out] D3D10_SIGNATURE_PARAMETER_DESC *pDesc
 	);
 	
 	HRESULT GetOutputParameterDesc
 	(
-		[in]  UINT ParameterIndex,
+		[in] UINT ParameterIndex,
 		[out] D3D10_SIGNATURE_PARAMETER_DESC *pDesc
 	);
 };
 
 HRESULT D3D10CompileShader(LPCSTR pSrcData, SIZE_T SrcDataLen, LPCSTR pFileName, const D3D10_SHADER_MACRO* pDefines, LPD3D10INCLUDE pInclude, 
-    LPCSTR pFunctionName, LPCSTR pProfile, UINT Flags, ID3D10Blob** ppShader, ID3D10Blob** ppErrorMsgs);
+	LPCSTR pFunctionName, LPCSTR pProfile, UINT Flags, ID3D10Blob** ppShader, ID3D10Blob** ppErrorMsgs);
 HRESULT D3D10DisassembleShader(const void *pShader, SIZE_T BytecodeLength, BOOL EnableColorCode, LPCSTR pComments, ID3D10Blob** ppDisassembly);
 LPCSTR D3D10GetPixelShaderProfile(ID3D10Device *pDevice);
 LPCSTR D3D10GetVertexShaderProfile(ID3D10Device *pDevice);
 LPCSTR D3D10GetGeometryShaderProfile(ID3D10Device *pDevice);
 HRESULT D3D10ReflectShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D10ShaderReflection **ppReflector);
 HRESULT D3D10PreprocessShader(LPCSTR pSrcData, SIZE_T SrcDataSize, LPCSTR pFileName, const D3D10_SHADER_MACRO* pDefines, 
-    LPD3D10INCLUDE pInclude, ID3D10Blob** ppShaderText, ID3D10Blob** ppErrorMsgs);
+	LPD3D10INCLUDE pInclude, ID3D10Blob** ppShaderText, ID3D10Blob** ppErrorMsgs);
 HRESULT D3D10GetInputSignatureBlob(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D10Blob **ppSignatureBlob);
 HRESULT D3D10GetOutputSignatureBlob(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D10Blob **ppSignatureBlob);
 HRESULT D3D10GetInputAndOutputSignatureBlob(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D10Blob **ppSignatureBlob);

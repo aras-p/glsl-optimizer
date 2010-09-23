@@ -90,7 +90,7 @@ interface IGalliumDXGIBackend : IUnknown
 	 * EndPresent is still called even if you return 0 in window.
 	 */
 	void* BeginPresent(
-		[in]  HWND hwnd,
+		[in] HWND hwnd,
 		[out] void** window,
 		[out] RECT* rect,
 		[out] struct _RGNDATA** rgndata,
@@ -98,7 +98,7 @@ interface IGalliumDXGIBackend : IUnknown
 	);
 
 	void EndPresent(
-		[in]  HWND hwnd,
+		[in] HWND hwnd,
 		[out] void* present_cookie
 	);
 }

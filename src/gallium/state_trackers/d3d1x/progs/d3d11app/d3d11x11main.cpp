@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
 	D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
 
-	HRESULT hr  =D3D11CreateDeviceAndSwapChain(
+	HRESULT hr =D3D11CreateDeviceAndSwapChain(
 		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,

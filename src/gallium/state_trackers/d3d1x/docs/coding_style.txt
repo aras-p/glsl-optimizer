@@ -6,7 +6,6 @@ The goal of these guidelines is to allow as much freedom as possible, while keep
 - Align multiline statements with an additional extra tab before each continuation line 
 - Keep in mind that people can program with proportional fonts: hence, don't attempt to align anything not at the start of the line, since it's impossible
 - In general, there should never be two consecutive spaces in the source code
-- As a special exception, [in] and __in annotations are followed by two spaces to align them with [out] and __out if displayed with a fixed size font. This may be revisited.
 - There is no strict limit on line length, but try to not make lines too long, and insert a line break where it looks good
 
 * Language/platform features

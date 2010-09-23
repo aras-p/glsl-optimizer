@@ -1,6 +1,6 @@
 /*
-* Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
-* Copyright (C) 2009-2010  Luca Barbieri  All Rights Reserved.
+* Copyright (C) 1999-2001 Brian Paul All Rights Reserved.
+* Copyright (C) 2009-2010 Luca Barbieri All Rights Reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -14,7 +14,7 @@
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
 * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -518,7 +518,7 @@ struct d3d11gears : public d3d11_application
 		gears[2].mesh = build_gear(dev, triangles / 4, 1.3f, 2.0f, 0.5f, 10, 0.7f);
 
 		gears[0].x = -3.0f;
-		gears[0].y =  -2.0f;
+		gears[0].y = -2.0f;
 		gears[0].wmul = 1.0f;
 		gears[0].t0 = 0.0 * M_PI / 180.0f;
 

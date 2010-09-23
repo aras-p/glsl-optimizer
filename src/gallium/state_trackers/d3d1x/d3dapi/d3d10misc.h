@@ -8,7 +8,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
@@ -26,19 +26,19 @@ extern "C" {
 #endif
 
 typedef enum D3D10_DRIVER_TYPE {
-    D3D10_DRIVER_TYPE_HARDWARE  = 0,
-    D3D10_DRIVER_TYPE_REFERENCE = 1,
-    D3D10_DRIVER_TYPE_NULL      = 2,
-    D3D10_DRIVER_TYPE_SOFTWARE  = 3,
-    D3D10_DRIVER_TYPE_WARP      = 5, // added by Luca Barbieri in Sep 2010
+	D3D10_DRIVER_TYPE_HARDWARE = 0,
+	D3D10_DRIVER_TYPE_REFERENCE = 1,
+	D3D10_DRIVER_TYPE_NULL	 = 2,
+	D3D10_DRIVER_TYPE_SOFTWARE = 3,
+	D3D10_DRIVER_TYPE_WARP	 = 5, // added by Luca Barbieri in Sep 2010
 } D3D10_DRIVER_TYPE;
 
 HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
-        HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device);
+	HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device);
 
 HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
-        HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
-        IDXGISwapChain **swapchain, ID3D10Device **device);
+	HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
+	IDXGISwapChain **swapchain, ID3D10Device **device);
 
 #ifdef __cplusplus
 }

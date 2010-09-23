@@ -29,24 +29,24 @@
 #include "d3d10tri.hlsl.vs.h"
 
 struct vertex {
-   float position[4];
-   float color[4];
+ float position[4];
+ float color[4];
 };
 
 static struct vertex vertices[3] =
 {
-   {
-      { 0.0f, 0.9f, 0.5f, 1.0f },
-      { 1.0f, 0.0f, 0.0f, 1.0f }
-   },
-   {
-      { 0.9f, -0.9f, 0.5f, 1.0f },
-      { 0.0f, 0.0f, 1.0f, 1.0f }
-   },
-   {
-      { -0.9f, -0.9f, 0.5f, 1.0f },
-      { 0.0f, 1.0f, 0.0f, 1.0f }
-   },
+ {
+	 { 0.0f, 0.9f, 0.5f, 1.0f },
+	 { 1.0f, 0.0f, 0.0f, 1.0f }
+ },
+ {
+	 { 0.9f, -0.9f, 0.5f, 1.0f },
+	 { 0.0f, 0.0f, 1.0f, 1.0f }
+ },
+ {
+	 { -0.9f, -0.9f, 0.5f, 1.0f },
+	 { 0.0f, 1.0f, 0.0f, 1.0f }
+ },
 };
 
 struct d3d10tri : public d3d10_application

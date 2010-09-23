@@ -220,7 +220,7 @@ struct sm4_to_tgsi_converter
 #define OP1(n) OP1_(n, n)
 #define OP2(n) OP2_(n, n)
 #define OP3(n) OP3_(n, n)
-#define OP_CF(d, g)  case SM4_OPCODE_##d: ureg_##g(ureg, &label); label_to_sm4_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num])); break;
+#define OP_CF(d, g) case SM4_OPCODE_##d: ureg_##g(ureg, &label); label_to_sm4_insn_num.push_back(std::make_pair(label, program.cf_insn_linked[insn_num])); break;
 
 	void translate_insns(unsigned begin, unsigned end)
 	{

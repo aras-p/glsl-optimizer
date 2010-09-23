@@ -168,23 +168,23 @@ struct GalliumD3D11Screen : public GalliumD3D11ScreenBase
 #if API < 11
 	// we use a D3D11-like API internally
 	virtual HRESULT STDMETHODCALLTYPE Map(
-			__in  ID3D11Resource *pResource,
-			__in  unsigned Subresource,
-			__in  D3D11_MAP MapType,
-			__in  unsigned MapFlags,
-			__out  D3D11_MAPPED_SUBRESOURCE *pMappedResource) = 0;
+			__in ID3D11Resource *pResource,
+			__in unsigned Subresource,
+			__in D3D11_MAP MapType,
+			__in unsigned MapFlags,
+			__out D3D11_MAPPED_SUBRESOURCE *pMappedResource) = 0;
 	virtual void STDMETHODCALLTYPE Unmap(
-			__in  ID3D11Resource *pResource,
-			__in  unsigned Subresource) = 0;
+			__in ID3D11Resource *pResource,
+			__in unsigned Subresource) = 0;
 	virtual void STDMETHODCALLTYPE Begin(
-		__in  ID3D11Asynchronous *pAsync) = 0;
+		__in ID3D11Asynchronous *pAsync) = 0;
 	virtual void STDMETHODCALLTYPE End(
-		__in  ID3D11Asynchronous *pAsync) = 0;
+		__in ID3D11Asynchronous *pAsync) = 0;
 	virtual HRESULT STDMETHODCALLTYPE GetData(
-		__in  ID3D11Asynchronous *pAsync,
-		__out_bcount_opt(DataSize)  void *pData,
-		__in  unsigned DataSize,
-		__in  unsigned GetDataFlags) = 0;
+		__in ID3D11Asynchronous *pAsync,
+		__out_bcount_opt(DataSize) void *pData,
+		__in unsigned DataSize,
+		__in unsigned GetDataFlags) = 0;
 
 	// TODO: maybe we should use function overloading, but that might risk silent errors,
 	// and cannot be exported to a C interface

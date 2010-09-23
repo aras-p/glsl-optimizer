@@ -157,7 +157,7 @@ struct sm4_token_instruction
 	};
 };
 
-union  sm4_token_instruction_extended
+union sm4_token_instruction_extended
 {
 	struct
 	{

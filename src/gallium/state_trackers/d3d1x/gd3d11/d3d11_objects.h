@@ -71,8 +71,8 @@ struct GalliumD3D11DeviceChild : public GalliumPrivateDataComObject<Base, dual_r
 	}
 
 	virtual void STDMETHODCALLTYPE GetDevice(
-		__out  ID3D11Device **ppDevice
-	   )
+		__out ID3D11Device **ppDevice
+	 )
 	{
 		device->AddRef();
 		*ppDevice = device;
@@ -242,7 +242,7 @@ struct GalliumD3D11ResourceBase : public GalliumD3D11DeviceChild<Base>
 	unsigned eviction_priority;
 
 	virtual void STDMETHODCALLTYPE SetEvictionPriority(
-		__in  unsigned EvictionPriority)
+		__in unsigned EvictionPriority)
 	{
 		eviction_priority = EvictionPriority;
 	}
@@ -257,7 +257,7 @@ template<typename Real>
 struct GalliumDXGIResource : public IDXGIResource
 {
 	virtual HRESULT STDMETHODCALLTYPE SetEvictionPriority(
-		__in  unsigned EvictionPriority)
+		__in unsigned EvictionPriority)
 	{
 		static_cast<Real*>(this)->eviction_priority = EvictionPriority;
 		return S_OK;
@@ -265,13 +265,13 @@ struct GalliumDXGIResource : public IDXGIResource
 
 	virtual HRESULT STDMETHODCALLTYPE GetEvictionPriority(unsigned* pEvictionPriority)
 	{
-		   	*pEvictionPriority = static_cast<Real*>(this)->eviction_priority;
-		   	return S_OK;
+		 	*pEvictionPriority = static_cast<Real*>(this)->eviction_priority;
+		 	return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDevice(
-		__in  REFIID riid,
-		__out  void **ppParent)
+		__in REFIID riid,
+		__out void **ppParent)
 	{
 		if(!static_cast<Real*>(this)->device)
 			return E_NOINTERFACE;
@@ -279,8 +279,8 @@ struct GalliumDXGIResource : public IDXGIResource
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetParent(
-		__in  REFIID riid,
-		__out  void **ppParent)
+		__in REFIID riid,
+		__out void **ppParent)
 	{
 		if(!static_cast<Real*>(this)->device)
 			return E_NOINTERFACE;
@@ -322,8 +322,8 @@ struct GalliumD3D11Resource
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetUsage(
-		__out  DXGI_USAGE *pUsage
-	   )
+		__out DXGI_USAGE *pUsage
+	 )
 	{
 		*pUsage = this->dxgi_usage;
 		return S_OK;
@@ -349,7 +349,7 @@ struct GalliumD3D11TypedResource : public GalliumD3D11Resource<Base>
 	: GalliumD3D11Resource<Base>(device, resource, dxgi_usage), desc(desc)
 	{}
 	virtual void STDMETHODCALLTYPE GetType(
-		__out  D3D11_RESOURCE_DIMENSION *pResourceDimension)
+		__out D3D11_RESOURCE_DIMENSION *pResourceDimension)
 	{
 		*pResourceDimension = Dim;
 	}
@@ -381,23 +381,23 @@ struct GalliumD3D10Buffer : public GalliumD3D10BufferBase
 		device->UnbindBuffer(this);
 	}
 
-        virtual HRESULT STDMETHODCALLTYPE Map(
-        	__in  D3D10_MAP MapType,
-        	__in  unsigned MapFlags,
-        	__out  void **ppData)
-        {
-        	D3D10_MAPPED_SUBRESOURCE msr;
-        	HRESULT hr = device->Map(this, 0, MapType, MapFlags, &msr);
-        	if(!SUCCEEDED(hr))
-        		return hr;
-        	*ppData = msr.pData;
-        	return S_OK;
-        }
+	virtual HRESULT STDMETHODCALLTYPE Map(
+		__in D3D10_MAP MapType,
+		__in unsigned MapFlags,
+		__out void **ppData)
+	{
+		D3D10_MAPPED_SUBRESOURCE msr;
+		HRESULT hr = device->Map(this, 0, MapType, MapFlags, &msr);
+		if(!SUCCEEDED(hr))
+			return hr;
+		*ppData = msr.pData;
+		return S_OK;
+	}
 
-        virtual void STDMETHODCALLTYPE Unmap()
-        {
-        	device->Unmap(this, 0);
-        }
+	virtual void STDMETHODCALLTYPE Unmap()
+	{
+		device->Unmap(this, 0);
+	}
 };
 
 struct GalliumD3D10Texture1D : public GalliumD3D10Texture1DBase
@@ -407,25 +407,25 @@ struct GalliumD3D10Texture1D : public GalliumD3D10Texture1DBase
 	{}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		__in  unsigned Subresource,
-		__in  D3D10_MAP MapType,
-		__in  unsigned MapFlags,
-		__out  void **ppData)
-        {
-        	D3D10_MAPPED_SUBRESOURCE msr;
-        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
-        	if(!SUCCEEDED(hr))
-        		return hr;
-        	*ppData = msr.pData;
-        	return S_OK;
-        }
+		__in unsigned Subresource,
+		__in D3D10_MAP MapType,
+		__in unsigned MapFlags,
+		__out void **ppData)
+	{
+		D3D10_MAPPED_SUBRESOURCE msr;
+		HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+		if(!SUCCEEDED(hr))
+			return hr;
+		*ppData = msr.pData;
+		return S_OK;
+	}
 
-        virtual void STDMETHODCALLTYPE Unmap(
-        	__in  unsigned Subresource
-        )
-        {
-        	device->Unmap(this, Subresource);
-        }
+	virtual void STDMETHODCALLTYPE Unmap(
+		__in unsigned Subresource
+	)
+	{
+		device->Unmap(this, Subresource);
+	}
 };
 
 struct GalliumD3D10Texture2D : public GalliumD3D10Texture2DBase
@@ -436,26 +436,26 @@ struct GalliumD3D10Texture2D : public GalliumD3D10Texture2DBase
 	{}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		__in  unsigned Subresource,
-		__in  D3D10_MAP MapType,
-		__in  unsigned MapFlags,
-		__out  D3D10_MAPPED_TEXTURE2D *pMappedTex2D)
-        {
-        	D3D10_MAPPED_SUBRESOURCE msr;
-        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
-        	if(!SUCCEEDED(hr))
-        		return hr;
-        	pMappedTex2D->pData = msr.pData;
-        	pMappedTex2D->RowPitch = msr.RowPitch;
-        	return S_OK;
-        }
+		__in unsigned Subresource,
+		__in D3D10_MAP MapType,
+		__in unsigned MapFlags,
+		__out D3D10_MAPPED_TEXTURE2D *pMappedTex2D)
+	{
+		D3D10_MAPPED_SUBRESOURCE msr;
+		HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+		if(!SUCCEEDED(hr))
+			return hr;
+		pMappedTex2D->pData = msr.pData;
+		pMappedTex2D->RowPitch = msr.RowPitch;
+		return S_OK;
+	}
 
-        virtual void STDMETHODCALLTYPE Unmap(
-        	__in  unsigned Subresource
-        )
-        {
-        	device->Unmap(this, Subresource);
-        }
+	virtual void STDMETHODCALLTYPE Unmap(
+		__in unsigned Subresource
+	)
+	{
+		device->Unmap(this, Subresource);
+	}
 };
 
 
@@ -466,27 +466,27 @@ struct GalliumD3D10Texture3D : public GalliumD3D10Texture3DBase
 	{}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		__in  unsigned Subresource,
-		__in  D3D10_MAP MapType,
-		__in  unsigned MapFlags,
-		__out  D3D10_MAPPED_TEXTURE3D *pMappedTex3D)
-        {
-        	D3D10_MAPPED_SUBRESOURCE msr;
-        	HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
-        	if(!SUCCEEDED(hr))
-        		return hr;
-        	pMappedTex3D->pData = msr.pData;
-        	pMappedTex3D->RowPitch = msr.RowPitch;
-        	pMappedTex3D->DepthPitch = msr.DepthPitch;
-        	return S_OK;
-        }
+		__in unsigned Subresource,
+		__in D3D10_MAP MapType,
+		__in unsigned MapFlags,
+		__out D3D10_MAPPED_TEXTURE3D *pMappedTex3D)
+	{
+		D3D10_MAPPED_SUBRESOURCE msr;
+		HRESULT hr = device->Map(this, Subresource, MapType, MapFlags, &msr);
+		if(!SUCCEEDED(hr))
+			return hr;
+		pMappedTex3D->pData = msr.pData;
+		pMappedTex3D->RowPitch = msr.RowPitch;
+		pMappedTex3D->DepthPitch = msr.DepthPitch;
+		return S_OK;
+	}
 
-        virtual void STDMETHODCALLTYPE Unmap(
-        	__in  unsigned Subresource
-        )
-        {
-        	device->Unmap(this, Subresource);
-        }
+	virtual void STDMETHODCALLTYPE Unmap(
+		__in unsigned Subresource
+	)
+	{
+		device->Unmap(this, Subresource);
+	}
 };
 #endif
 
@@ -502,7 +502,7 @@ struct GalliumD3D11Surface : public GalliumMultiPrivateDataComObject<GalliumD3D1
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(
-		__out  DXGI_SURFACE_DESC *pDesc)
+		__out DXGI_SURFACE_DESC *pDesc)
 	{
 		pDesc->Format = this->desc.Format;
 		pDesc->Width = this->desc.Width;
@@ -512,8 +512,8 @@ struct GalliumD3D11Surface : public GalliumMultiPrivateDataComObject<GalliumD3D1
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetParent(
-		__in  REFIID riid,
-		__out  void **ppParent)
+		__in REFIID riid,
+		__out void **ppParent)
 	{
 		if(!device)
 			return E_NOINTERFACE;
@@ -523,20 +523,20 @@ struct GalliumD3D11Surface : public GalliumMultiPrivateDataComObject<GalliumD3D1
 	/* TODO: somehow implement these */
 	virtual HRESULT STDMETHODCALLTYPE GetDC(
 		BOOL Discard,
-		__out  HDC *phdc)
+		__out HDC *phdc)
 	{
 		*phdc = 0;
 		return E_NOTIMPL;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE ReleaseDC(
-		__in_opt  RECT *pDirtyRect)
+		__in_opt RECT *pDirtyRect)
 	{
 		return E_NOTIMPL;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		__out  DXGI_MAPPED_RECT *pLockedRect,
+		__out DXGI_MAPPED_RECT *pLockedRect,
 		unsigned MapFlags)
 	{
 		D3D11_MAP d3d_map;
@@ -568,8 +568,8 @@ struct GalliumD3D11Surface : public GalliumMultiPrivateDataComObject<GalliumD3D1
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDevice(
-		__in  REFIID riid,
-		__out  void **ppParent)
+		__in REFIID riid,
+		__out void **ppParent)
 	{
 		if(!device)
 			return E_NOINTERFACE;
@@ -657,9 +657,9 @@ struct GalliumD3D11Asynchronous : public GalliumD3D11DeviceChild<Base>
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetData(
-		__out_bcount(DataSize)  void *pData,
-	        __in  unsigned DataSize,
-	        __in  unsigned GetDataFlags)
+		__out_bcount(DataSize) void *pData,
+		__in unsigned DataSize,
+		__in unsigned GetDataFlags)
 	{
 		return this->device->GetData(this, pData, DataSize, GetDataFlags);
 	}
@@ -675,7 +675,7 @@ struct GalliumD3D11QueryOrPredicate : public GalliumD3D11Asynchronous<Base>
 	{}
 
 	virtual void STDMETHODCALLTYPE GetDesc(
-		__out  D3D11_QUERY_DESC *pDesc)
+		__out D3D11_QUERY_DESC *pDesc)
 	{
 		*pDesc = desc;
 	}
@@ -708,7 +708,7 @@ struct GalliumD3D11Counter : public GalliumD3D11Asynchronous<ID3D11Counter>
 	{}
 
 	virtual void STDMETHODCALLTYPE GetDesc(
-		__out  D3D11_COUNTER_DESC *pDesc)
+		__out D3D11_COUNTER_DESC *pDesc)
 	{
 		*pDesc = desc;
 	}

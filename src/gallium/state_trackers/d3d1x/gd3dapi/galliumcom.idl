@@ -42,7 +42,7 @@ interface IGalliumDevice : IUnknown
 {
 	// turn Gallium resource into API resource
 	HRESULT OpenGalliumResource(
-		[in]  struct pipe_resource* resource,
+		[in] struct pipe_resource* resource,
 		[out] IUnknown** api_resource
 	);
 

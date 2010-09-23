@@ -30,17 +30,17 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 
-HRESULT  D3D11CreateDevice(
-	__in_opt   IDXGIAdapter *pAdapter,
-	__in   D3D_DRIVER_TYPE DriverType,
-	__in   HMODULE Software,
-	__in   unsigned Flags,
-	__in_ecount_opt( FeatureLevels )  const D3D_FEATURE_LEVEL *pFeatureLevels,
-	__in   unsigned FeatureLevels,
-	__in   unsigned SDKVersion,
-	__out_opt  ID3D11Device **ppDevice,
-	__out_opt  D3D_FEATURE_LEVEL *pFeatureLevel,
-	__out_opt  ID3D11DeviceContext **ppImmediateContext
+HRESULT D3D11CreateDevice(
+	__in_opt IDXGIAdapter *pAdapter,
+	__in D3D_DRIVER_TYPE DriverType,
+	__in HMODULE Software,
+	__in unsigned Flags,
+	__in_ecount_opt( FeatureLevels ) const D3D_FEATURE_LEVEL *pFeatureLevels,
+	__in unsigned FeatureLevels,
+	__in unsigned SDKVersion,
+	__out_opt ID3D11Device **ppDevice,
+	__out_opt D3D_FEATURE_LEVEL *pFeatureLevel,
+	__out_opt ID3D11DeviceContext **ppImmediateContext
 )
 {
 	HRESULT hr;

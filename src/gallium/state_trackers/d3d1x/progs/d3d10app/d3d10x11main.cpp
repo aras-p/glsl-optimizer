@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 	HRESULT hr;
 	if(0)
 	{
-		hr  = D3D10CreateDeviceAndSwapChain(
+		hr = D3D10CreateDeviceAndSwapChain(
 			NULL,
 			D3D10_DRIVER_TYPE_HARDWARE,
 			NULL,
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		hr  = D3D10CreateDeviceAndSwapChain1(
+		hr = D3D10CreateDeviceAndSwapChain1(
 			NULL,
 			D3D10_DRIVER_TYPE_HARDWARE,
 			NULL,

@@ -303,11 +303,11 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 #if API >= 11
 #define SET_SHADER_EXTRA_ARGS , \
-	__in_ecount_opt(NumClassInstances)  ID3D11ClassInstance *const *ppClassInstances, \
+	__in_ecount_opt(NumClassInstances) ID3D11ClassInstance *const *ppClassInstances, \
 	unsigned NumClassInstances
 #define GET_SHADER_EXTRA_ARGS , \
-		__out_ecount_opt(*pNumClassInstances)  ID3D11ClassInstance **ppClassInstances, \
-		__inout_opt  unsigned *pNumClassInstances
+		__out_ecount_opt(*pNumClassInstances) ID3D11ClassInstance **ppClassInstances, \
+		__inout_opt unsigned *pNumClassInstances
 #else
 #define SET_SHADER_EXTRA_ARGS
 #define GET_SHADER_EXTRA_ARGS
@@ -396,65 +396,65 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 
 #define IMPLEMENT_SHADER_STAGE(XS, Stage) \
 	virtual void STDMETHODCALLTYPE XS##SetShader( \
-		__in_opt  ID3D11##Stage##Shader *pShader \
+		__in_opt ID3D11##Stage##Shader *pShader \
 		SET_SHADER_EXTRA_ARGS) \
 	{ \
 		SYNCHRONIZED; \
 		xs_set_shader<D3D11_STAGE_##XS>((GalliumD3D11Shader<>*)pShader); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetShader(\
-		__out  ID3D11##Stage##Shader **ppShader \
+		__out ID3D11##Stage##Shader **ppShader \
 		GET_SHADER_EXTRA_ARGS) \
 	{ \
 		SYNCHRONIZED; \
 		*ppShader = (ID3D11##Stage##Shader*)shaders[D3D11_STAGE_##XS].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetConstantBuffers(\
-		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot)  unsigned NumBuffers, \
-		__in_ecount(NumBuffers)  ID3D11Buffer *const *ppConstantBuffers) \
+		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot) unsigned NumBuffers, \
+		__in_ecount(NumBuffers) ID3D11Buffer *const *ppConstantBuffers) \
 	{ \
 		SYNCHRONIZED; \
 		xs_set_constant_buffers<D3D11_STAGE_##XS>(StartSlot, NumBuffers, (GalliumD3D11Buffer *const *)ppConstantBuffers); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetConstantBuffers(\
-		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot)  unsigned NumBuffers, \
-		__out_ecount(NumBuffers)  ID3D11Buffer **ppConstantBuffers) \
+		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot) unsigned NumBuffers, \
+		__out_ecount(NumBuffers) ID3D11Buffer **ppConstantBuffers) \
 	{ \
 		SYNCHRONIZED; \
 		for(unsigned i = 0; i < NumBuffers; ++i) \
 			ppConstantBuffers[i] = constant_buffers[D3D11_STAGE_##XS][StartSlot + i].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetShaderResources(\
-		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - StartSlot)  unsigned NumViews, \
-		__in_ecount(NumViews)  ID3D11ShaderResourceView *const *ppShaderResourceViews) \
+		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - StartSlot) unsigned NumViews, \
+		__in_ecount(NumViews) ID3D11ShaderResourceView *const *ppShaderResourceViews) \
 	{ \
 		SYNCHRONIZED; \
 		xs_set_shader_resources<D3D11_STAGE_##XS>(StartSlot, NumViews, (GalliumD3D11ShaderResourceView *const *)ppShaderResourceViews); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetShaderResources(\
-		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - StartSlot)  unsigned NumViews, \
-		__out_ecount(NumViews)  ID3D11ShaderResourceView **ppShaderResourceViews) \
+		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - StartSlot) unsigned NumViews, \
+		__out_ecount(NumViews) ID3D11ShaderResourceView **ppShaderResourceViews) \
 	{ \
 		SYNCHRONIZED; \
 		for(unsigned i = 0; i < NumViews; ++i) \
 			ppShaderResourceViews[i] = shader_resource_views[D3D11_STAGE_##XS][StartSlot + i].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetSamplers(\
-		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - StartSlot)  unsigned NumSamplers, \
-		__in_ecount(NumSamplers)  ID3D11SamplerState *const *ppSamplers) \
+		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - StartSlot) unsigned NumSamplers, \
+		__in_ecount(NumSamplers) ID3D11SamplerState *const *ppSamplers) \
 	{ \
 		SYNCHRONIZED; \
 		xs_set_samplers<D3D11_STAGE_##XS>(StartSlot, NumSamplers, (GalliumD3D11SamplerState *const *)ppSamplers); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetSamplers( \
-		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - 1)  unsigned StartSlot, \
-		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - StartSlot)  unsigned NumSamplers, \
-		__out_ecount(NumSamplers)  ID3D11SamplerState **ppSamplers) \
+		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - 1) unsigned StartSlot, \
+		__in_range(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - StartSlot) unsigned NumSamplers, \
+		__out_ecount(NumSamplers) ID3D11SamplerState **ppSamplers) \
 	{ \
 		SYNCHRONIZED; \
 		for(unsigned i = 0; i < NumSamplers; ++i) \
@@ -477,10 +477,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	IMPLEMENT_SHADER_STAGE(CS, Compute)
 
 	virtual void STDMETHODCALLTYPE CSSetUnorderedAccessViews(
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1)  unsigned StartSlot,
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - StartSlot)  unsigned NumUAVs,
-		__in_ecount(NumUAVs)  ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		__in_ecount(NumUAVs)  const unsigned *pUAVInitialCounts)
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1) unsigned StartSlot,
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - StartSlot) unsigned NumUAVs,
+		__in_ecount(NumUAVs) ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
+		__in_ecount(NumUAVs) const unsigned *pUAVInitialCounts)
 	{
 		SYNCHRONIZED;
 		for(unsigned i = 0; i < NumUAVs; ++i)
@@ -488,9 +488,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE CSGetUnorderedAccessViews(
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1)  unsigned StartSlot,
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - StartSlot)  unsigned NumUAVs,
-		__out_ecount(NumUAVs)  ID3D11UnorderedAccessView **ppUnorderedAccessViews)
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1) unsigned StartSlot,
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - StartSlot) unsigned NumUAVs,
+		__out_ecount(NumUAVs) ID3D11UnorderedAccessView **ppUnorderedAccessViews)
 	{
 		SYNCHRONIZED;
 		for(unsigned i = 0; i < NumUAVs; ++i)
@@ -535,7 +535,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			if(s < caps.stages)
 			{
 				void* samplers_to_bind[PIPE_MAX_SAMPLERS];
-				unsigned num_samplers_to_bind =  shaders[s] ? shaders[s]->slot_to_sampler.size() : 0;
+				unsigned num_samplers_to_bind = shaders[s] ? shaders[s]->slot_to_sampler.size() : 0;
 				for(unsigned i = 0; i < num_samplers_to_bind; ++i)
 				{
 					// index can be -1 to access sampler_csos[s].ld
@@ -579,7 +579,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IASetInputLayout(
-		__in_opt  ID3D11InputLayout *pInputLayout)
+		__in_opt ID3D11InputLayout *pInputLayout)
 	{
 		SYNCHRONIZED;
 		if(pInputLayout != input_layout.p)
@@ -590,18 +590,18 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetInputLayout(
-		__out  ID3D11InputLayout **ppInputLayout)
+		__out ID3D11InputLayout **ppInputLayout)
 	{
 		SYNCHRONIZED;
 		*ppInputLayout = input_layout.ref();
 	}
 
 	virtual void STDMETHODCALLTYPE IASetVertexBuffers(
-		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - 1)  unsigned StartSlot,
-		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - StartSlot)  unsigned NumBuffers,
-		__in_ecount(NumBuffers)  ID3D11Buffer *const *ppVertexBuffers,
-		__in_ecount(NumBuffers)  const unsigned *pStrides,
-		__in_ecount(NumBuffers)  const unsigned *pOffsets)
+		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - 1) unsigned StartSlot,
+		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - StartSlot) unsigned NumBuffers,
+		__in_ecount(NumBuffers) ID3D11Buffer *const *ppVertexBuffers,
+		__in_ecount(NumBuffers) const unsigned *pStrides,
+		__in_ecount(NumBuffers) const unsigned *pOffsets)
 	{
 		SYNCHRONIZED;
 		int last_different = -1;
@@ -629,11 +629,11 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetVertexBuffers(
-		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - 1)  unsigned StartSlot,
-		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - StartSlot)  unsigned NumBuffers,
-		__out_ecount_opt(NumBuffers)  ID3D11Buffer **ppVertexBuffers,
-		__out_ecount_opt(NumBuffers)  unsigned *pStrides,
-		__out_ecount_opt(NumBuffers)  unsigned *pOffsets)
+		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - 1) unsigned StartSlot,
+		__in_range(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - StartSlot) unsigned NumBuffers,
+		__out_ecount_opt(NumBuffers) ID3D11Buffer **ppVertexBuffers,
+		__out_ecount_opt(NumBuffers) unsigned *pStrides,
+		__out_ecount_opt(NumBuffers) unsigned *pOffsets)
 	{
 		SYNCHRONIZED;
 		if(ppVertexBuffers)
@@ -677,9 +677,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IASetIndexBuffer(
-		__in_opt  ID3D11Buffer *pIndexBuffer,
-		__in  DXGI_FORMAT Format,
-		__in  unsigned Offset)
+		__in_opt ID3D11Buffer *pIndexBuffer,
+		__in DXGI_FORMAT Format,
+		__in unsigned Offset)
 	{
 		SYNCHRONIZED;
 		if(index_buffer.p != pIndexBuffer || index_format != Format || index_offset != Offset)
@@ -693,9 +693,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetIndexBuffer(
-		__out_opt  ID3D11Buffer **pIndexBuffer,
-		__out_opt  DXGI_FORMAT *Format,
-		__out_opt  unsigned *Offset)
+		__out_opt ID3D11Buffer **pIndexBuffer,
+		__out_opt DXGI_FORMAT *Format,
+		__out_opt unsigned *Offset)
 	{
 		SYNCHRONIZED;
 		if(pIndexBuffer)
@@ -707,7 +707,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IASetPrimitiveTopology(
-		__in  D3D11_PRIMITIVE_TOPOLOGY Topology)
+		__in D3D11_PRIMITIVE_TOPOLOGY Topology)
 	{
 		SYNCHRONIZED;
 		if(primitive_topology != Topology)
@@ -721,16 +721,16 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetPrimitiveTopology(
-		__out  D3D11_PRIMITIVE_TOPOLOGY *pTopology)
+		__out D3D11_PRIMITIVE_TOPOLOGY *pTopology)
 	{
 		SYNCHRONIZED;
 		*pTopology = primitive_topology;
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexed(
-		__in  unsigned IndexCount,
-		__in  unsigned StartIndexLocation,
-		__in  int BaseVertexLocation)
+		__in unsigned IndexCount,
+		__in unsigned StartIndexLocation,
+		__in int BaseVertexLocation)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -751,8 +751,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE Draw(
-		__in  unsigned VertexCount,
-		__in  unsigned StartVertexLocation)
+		__in unsigned VertexCount,
+		__in unsigned StartVertexLocation)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -773,11 +773,11 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexedInstanced(
-		__in  unsigned IndexCountPerInstance,
-		__in  unsigned InstanceCount,
-		__in  unsigned StartIndexLocation,
-		__in  int BaseVertexLocation,
-		__in  unsigned StartInstanceLocation)
+		__in unsigned IndexCountPerInstance,
+		__in unsigned InstanceCount,
+		__in unsigned StartIndexLocation,
+		__in int BaseVertexLocation,
+		__in unsigned StartInstanceLocation)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -798,10 +798,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawInstanced(
-		__in  unsigned VertexCountPerInstance,
-		__in  unsigned InstanceCount,
-		__in  unsigned StartVertexLocation,
-		__in  unsigned StartInstanceLocation)
+		__in unsigned VertexCountPerInstance,
+		__in unsigned InstanceCount,
+		__in unsigned StartVertexLocation,
+		__in unsigned StartInstanceLocation)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -834,8 +834,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexedInstancedIndirect(
-		__in  ID3D11Buffer *pBufferForArgs,
-		__in  unsigned AlignedByteOffsetForArgs)
+		__in ID3D11Buffer *pBufferForArgs,
+		__in unsigned AlignedByteOffsetForArgs)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -865,8 +865,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawInstancedIndirect(
-		__in  ID3D11Buffer *pBufferForArgs,
-		__in  unsigned AlignedByteOffsetForArgs)
+		__in ID3D11Buffer *pBufferForArgs,
+		__in unsigned AlignedByteOffsetForArgs)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -896,9 +896,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE Dispatch(
-		__in  unsigned ThreadGroupCountX,
-		__in  unsigned ThreadGroupCountY,
-		__in  unsigned ThreadGroupCountZ)
+		__in unsigned ThreadGroupCountX,
+		__in unsigned ThreadGroupCountY,
+		__in unsigned ThreadGroupCountZ)
 	{
 // uncomment this when this is implemented
 //		SYNCHRONIZED;
@@ -907,8 +907,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DispatchIndirect(
-		__in  ID3D11Buffer *pBufferForArgs,
-		__in  unsigned AlignedByteOffsetForArgs)
+		__in ID3D11Buffer *pBufferForArgs,
+		__in unsigned AlignedByteOffsetForArgs)
 	{
 // uncomment this when this is implemented
 //		SYNCHRONIZED;
@@ -926,7 +926,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetState(
-		__in_opt  ID3D11RasterizerState *pRasterizerState)
+		__in_opt ID3D11RasterizerState *pRasterizerState)
 	{
 		SYNCHRONIZED;
 		if(pRasterizerState != rasterizer_state.p)
@@ -943,7 +943,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetState(
-		__out  ID3D11RasterizerState **ppRasterizerState)
+		__out ID3D11RasterizerState **ppRasterizerState)
 	{
 		SYNCHRONIZED;
 		*ppRasterizerState = rasterizer_state.ref();
@@ -968,8 +968,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetViewports(
-		__in_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)  unsigned NumViewports,
-		__in_ecount_opt(NumViewports)  const D3D11_VIEWPORT *pViewports)
+		__in_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) unsigned NumViewports,
+		__in_ecount_opt(NumViewports) const D3D11_VIEWPORT *pViewports)
 	{
 		SYNCHRONIZED;
 		if(NumViewports)
@@ -992,8 +992,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetViewports(
-		__inout_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)   unsigned *pNumViewports,
-		__out_ecount_opt(*pNumViewports)  D3D11_VIEWPORT *pViewports)
+		__inout_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) unsigned *pNumViewports,
+		__out_ecount_opt(*pNumViewports) D3D11_VIEWPORT *pViewports)
 	{
 		SYNCHRONIZED;
 		if(pViewports)
@@ -1019,8 +1019,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetScissorRects(
-		__in_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)  unsigned NumRects,
-		__in_ecount_opt(NumRects)  const D3D11_RECT *pRects)
+		__in_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) unsigned NumRects,
+		__in_ecount_opt(NumRects) const D3D11_RECT *pRects)
 	{
 		SYNCHRONIZED;
 		if(NumRects)
@@ -1044,8 +1044,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetScissorRects(
-		__inout_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)   unsigned *pNumRects,
-		__out_ecount_opt(*pNumRects)  D3D11_RECT *pRects)
+		__inout_range(0, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) unsigned *pNumRects,
+		__out_ecount_opt(*pNumRects) D3D11_RECT *pRects)
 	{
 		SYNCHRONIZED;
 		if(pRects)
@@ -1061,9 +1061,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE OMSetBlendState(
-		__in_opt  ID3D11BlendState *pBlendState,
-		__in_opt  const float BlendFactor[ 4 ],
-		__in  unsigned SampleMask)
+		__in_opt ID3D11BlendState *pBlendState,
+		__in_opt const float BlendFactor[ 4 ],
+		__in unsigned SampleMask)
 	{
 		SYNCHRONIZED;
 		float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -1092,9 +1092,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetBlendState(
-		__out_opt  ID3D11BlendState **ppBlendState,
-		__out_opt  float BlendFactor[ 4 ],
-		__out_opt  unsigned *pSampleMask)
+		__out_opt ID3D11BlendState **ppBlendState,
+		__out_opt float BlendFactor[ 4 ],
+		__out_opt unsigned *pSampleMask)
 	{
 		SYNCHRONIZED;
 		if(ppBlendState)
@@ -1114,8 +1114,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE OMSetDepthStencilState(
-		__in_opt  ID3D11DepthStencilState *pDepthStencilState,
-		__in  unsigned StencilRef)
+		__in_opt ID3D11DepthStencilState *pDepthStencilState,
+		__in unsigned StencilRef)
 	{
 		SYNCHRONIZED;
 		if(pDepthStencilState != depth_stencil_state.p)
@@ -1132,8 +1132,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetDepthStencilState(
-		__out_opt  ID3D11DepthStencilState **ppDepthStencilState,
-		__out_opt  unsigned *pStencilRef)
+		__out_opt ID3D11DepthStencilState **ppDepthStencilState,
+		__out_opt unsigned *pStencilRef)
 	{
 		SYNCHRONIZED;
 		if(*ppDepthStencilState)
@@ -1178,9 +1178,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	 */
 
 	virtual void STDMETHODCALLTYPE OMSetRenderTargets(
-		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT)  unsigned NumViews,
-		__in_ecount_opt(NumViews)  ID3D11RenderTargetView *const *ppRenderTargetViews,
-		__in_opt  ID3D11DepthStencilView *pDepthStencilView)
+		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) unsigned NumViews,
+		__in_ecount_opt(NumViews) ID3D11RenderTargetView *const *ppRenderTargetViews,
+		__in_opt ID3D11DepthStencilView *pDepthStencilView)
 	{
 		SYNCHRONIZED;
 		if(!ppRenderTargetViews)
@@ -1211,9 +1211,9 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetRenderTargets(
-		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT)  unsigned NumViews,
-		__out_ecount_opt(NumViews)  ID3D11RenderTargetView **ppRenderTargetViews,
-		__out_opt  ID3D11DepthStencilView **ppDepthStencilView)
+		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) unsigned NumViews,
+		__out_ecount_opt(NumViews) ID3D11RenderTargetView **ppRenderTargetViews,
+		__out_opt ID3D11DepthStencilView **ppDepthStencilView)
 	{
 		SYNCHRONIZED;
 		if(ppRenderTargetViews)
@@ -1233,13 +1233,13 @@ changed:
 #if API >= 11
 	/* TODO: what is this supposed to do _exactly_? are we doing the right thing? */
 	virtual void STDMETHODCALLTYPE OMSetRenderTargetsAndUnorderedAccessViews(
-		__in  unsigned NumRTVs,
-		__in_ecount_opt(NumRTVs)  ID3D11RenderTargetView *const *ppRenderTargetViews,
-		__in_opt  ID3D11DepthStencilView *pDepthStencilView,
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1)  unsigned UAVStartSlot,
-		__in  unsigned NumUAVs,
-		__in_ecount_opt(NumUAVs)  ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		__in_ecount_opt(NumUAVs)  const unsigned *pUAVInitialCounts)
+		__in unsigned NumRTVs,
+		__in_ecount_opt(NumRTVs) ID3D11RenderTargetView *const *ppRenderTargetViews,
+		__in_opt ID3D11DepthStencilView *pDepthStencilView,
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1) unsigned UAVStartSlot,
+		__in unsigned NumUAVs,
+		__in_ecount_opt(NumUAVs) ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
+		__in_ecount_opt(NumUAVs) const unsigned *pUAVInitialCounts)
 	{
 		SYNCHRONIZED;
 		if(NumRTVs != D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL)
@@ -1256,12 +1256,12 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetRenderTargetsAndUnorderedAccessViews(
-		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT)  unsigned NumRTVs,
-		__out_ecount_opt(NumRTVs)  ID3D11RenderTargetView **ppRenderTargetViews,
-		__out_opt  ID3D11DepthStencilView **ppDepthStencilView,
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1)  unsigned UAVStartSlot,
-		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - UAVStartSlot)  unsigned NumUAVs,
-		__out_ecount_opt(NumUAVs)  ID3D11UnorderedAccessView **ppUnorderedAccessViews)
+		__in_range(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) unsigned NumRTVs,
+		__out_ecount_opt(NumRTVs) ID3D11RenderTargetView **ppRenderTargetViews,
+		__out_opt ID3D11DepthStencilView **ppDepthStencilView,
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - 1) unsigned UAVStartSlot,
+		__in_range(0, D3D11_PS_CS_UAV_REGISTER_COUNT - UAVStartSlot) unsigned NumUAVs,
+		__out_ecount_opt(NumUAVs) ID3D11UnorderedAccessView **ppUnorderedAccessViews)
 	{
 		SYNCHRONIZED;
 		if(ppRenderTargetViews)
@@ -1276,9 +1276,9 @@ changed:
 #endif
 
 	virtual void STDMETHODCALLTYPE SOSetTargets(
-		__in_range(0, D3D11_SO_BUFFER_SLOT_COUNT)  unsigned NumBuffers,
-		__in_ecount_opt(NumBuffers)  ID3D11Buffer *const *ppSOTargets,
-		__in_ecount_opt(NumBuffers)  const unsigned *pOffsets)
+		__in_range(0, D3D11_SO_BUFFER_SLOT_COUNT) unsigned NumBuffers,
+		__in_ecount_opt(NumBuffers) ID3D11Buffer *const *ppSOTargets,
+		__in_ecount_opt(NumBuffers) const unsigned *pOffsets)
 	{
 		SYNCHRONIZED;
 		unsigned i;
@@ -1312,10 +1312,10 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE SOGetTargets(
-		__in_range(0, D3D11_SO_BUFFER_SLOT_COUNT)  unsigned NumBuffers,
-		__out_ecount(NumBuffers)  ID3D11Buffer **ppSOTargets
+		__in_range(0, D3D11_SO_BUFFER_SLOT_COUNT) unsigned NumBuffers,
+		__out_ecount(NumBuffers) ID3D11Buffer **ppSOTargets
 #if API < 11
-		, __out_ecount(NumBuffers)  UINT *pOffsets
+		, __out_ecount(NumBuffers) UINT *pOffsets
 #endif
 		)
 	{
@@ -1330,7 +1330,7 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE Begin(
-		__in  ID3D11Asynchronous *pAsync)
+		__in ID3D11Asynchronous *pAsync)
 	{
 		SYNCHRONIZED;
 		if(caps.queries)
@@ -1338,7 +1338,7 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE End(
-		__in  ID3D11Asynchronous *pAsync)
+		__in ID3D11Asynchronous *pAsync)
 	{
 		SYNCHRONIZED;
 		if(caps.queries)
@@ -1346,10 +1346,10 @@ changed:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetData(
-		__in  ID3D11Asynchronous *pAsync,
-		__out_bcount_opt(DataSize)  void *pData,
-		__in  unsigned DataSize,
-		__in  unsigned GetDataFlags)
+		__in ID3D11Asynchronous *pAsync,
+		__out_bcount_opt(DataSize) void *pData,
+		__in unsigned DataSize,
+		__in unsigned GetDataFlags)
 	{
 		SYNCHRONIZED;
 		if(!caps.queries)
@@ -1387,8 +1387,8 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE SetPredication(
-		__in_opt  ID3D11Predicate *pPredicate,
-		__in  BOOL PredicateValue)
+		__in_opt ID3D11Predicate *pPredicate,
+		__in BOOL PredicateValue)
 	{
 		SYNCHRONIZED;
 		if(render_predicate.p != pPredicate || render_predicate_value != PredicateValue)
@@ -1400,8 +1400,8 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE GetPredication(
-		__out_opt  ID3D11Predicate **ppPredicate,
-		__out_opt  BOOL *pPredicateValue)
+		__out_opt ID3D11Predicate **ppPredicate,
+		__out_opt BOOL *pPredicateValue)
 	{
 		SYNCHRONIZED;
 		if(ppPredicate)
@@ -1428,11 +1428,11 @@ changed:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		__in  ID3D11Resource *pResource,
-		__in  unsigned Subresource,
-		__in  D3D11_MAP MapType,
-		__in  unsigned MapFlags,
-		__out  D3D11_MAPPED_SUBRESOURCE *pMappedResource)
+		__in ID3D11Resource *pResource,
+		__in unsigned Subresource,
+		__in D3D11_MAP MapType,
+		__in unsigned MapFlags,
+		__out D3D11_MAPPED_SUBRESOURCE *pMappedResource)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
@@ -1472,8 +1472,8 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE Unmap(
-		__in  ID3D11Resource *pResource,
-		__in  unsigned Subresource)
+		__in ID3D11Resource *pResource,
+		__in unsigned Subresource)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
@@ -1481,20 +1481,20 @@ changed:
 		if(i != resource->transfers.end())
 		{
 			pipe->transfer_unmap(pipe, i->second);
-			pipe->transfer_destroy(pipe,  i->second);
+			pipe->transfer_destroy(pipe, i->second);
 			resource->transfers.erase(i);
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE CopySubresourceRegion(
-		__in  ID3D11Resource *pDstResource,
-		__in  unsigned DstSubresource,
-		__in  unsigned DstX,
-		__in  unsigned DstY,
-		__in  unsigned DstZ,
-		__in  ID3D11Resource *pSrcResource,
-		__in  unsigned SrcSubresource,
-		__in_opt  const D3D11_BOX *pSrcBox)
+		__in ID3D11Resource *pDstResource,
+		__in unsigned DstSubresource,
+		__in unsigned DstX,
+		__in unsigned DstY,
+		__in unsigned DstZ,
+		__in ID3D11Resource *pSrcResource,
+		__in unsigned SrcSubresource,
+		__in_opt const D3D11_BOX *pSrcBox)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
@@ -1512,8 +1512,8 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE CopyResource(
-		__in  ID3D11Resource *pDstResource,
-		__in  ID3D11Resource *pSrcResource)
+		__in ID3D11Resource *pDstResource,
+		__in ID3D11Resource *pSrcResource)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
@@ -1540,12 +1540,12 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE UpdateSubresource(
-		__in  ID3D11Resource *pDstResource,
-		__in  unsigned DstSubresource,
-		__in_opt  const D3D11_BOX *pDstBox,
-		__in  const void *pSrcData,
-		__in  unsigned SrcRowPitch,
-		__in  unsigned SrcDepthPitch)
+		__in ID3D11Resource *pDstResource,
+		__in unsigned DstSubresource,
+		__in_opt const D3D11_BOX *pDstBox,
+		__in const void *pSrcData,
+		__in unsigned SrcRowPitch,
+		__in unsigned SrcDepthPitch)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
@@ -1556,17 +1556,17 @@ changed:
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE CopyStructureCount(
-		__in  ID3D11Buffer *pDstBuffer,
-		__in  unsigned DstAlignedByteOffset,
-		__in  ID3D11UnorderedAccessView *pSrcView)
+		__in ID3D11Buffer *pDstBuffer,
+		__in unsigned DstAlignedByteOffset,
+		__in ID3D11UnorderedAccessView *pSrcView)
 	{
 		SYNCHRONIZED;
 	}
 #endif
 
 	virtual void STDMETHODCALLTYPE ClearRenderTargetView(
-		__in  ID3D11RenderTargetView *pRenderTargetView,
-		__in  const float ColorRGBA[4])
+		__in ID3D11RenderTargetView *pRenderTargetView,
+		__in const float ColorRGBA[4])
 	{
 		SYNCHRONIZED;
 		GalliumD3D11RenderTargetView* view = ((GalliumD3D11RenderTargetView*)pRenderTargetView);
@@ -1574,10 +1574,10 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE ClearDepthStencilView(
-		__in  ID3D11DepthStencilView *pDepthStencilView,
-		__in  unsigned ClearFlags,
-		__in  float Depth,
-		__in  UINT8 Stencil)
+		__in ID3D11DepthStencilView *pDepthStencilView,
+		__in unsigned ClearFlags,
+		__in float Depth,
+		__in UINT8 Stencil)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11DepthStencilView* view = ((GalliumD3D11DepthStencilView*)pDepthStencilView);
@@ -1591,15 +1591,15 @@ changed:
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewUint(
-		__in  ID3D11UnorderedAccessView *pUnorderedAccessView,
-		__in  const unsigned Values[ 4 ])
+		__in ID3D11UnorderedAccessView *pUnorderedAccessView,
+		__in const unsigned Values[ 4 ])
 	{
 		SYNCHRONIZED;
 	}
 
 	virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewFloat(
-			__in  ID3D11UnorderedAccessView *pUnorderedAccessView,
-			__in  const float Values[ 4 ])
+			__in ID3D11UnorderedAccessView *pUnorderedAccessView,
+			__in const float Values[ 4 ])
 	{
 		SYNCHRONIZED;
 	}
@@ -1631,7 +1631,7 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE GenerateMips(
-			__in  ID3D11ShaderResourceView *pShaderResourceView)
+			__in ID3D11ShaderResourceView *pShaderResourceView)
 	{
 		SYNCHRONIZED;
 
@@ -1675,7 +1675,7 @@ changed:
 #if API >= 11
 	/* TODO: hack SRVs or sampler states to handle this, or add to Gallium */
 	virtual void STDMETHODCALLTYPE SetResourceMinLOD(
-		__in  ID3D11Resource *pResource,
+		__in ID3D11Resource *pResource,
 		float MinLOD)
 	{
 		SYNCHRONIZED;
@@ -1688,7 +1688,7 @@ changed:
 	}
 
 	virtual float STDMETHODCALLTYPE GetResourceMinLOD(
-		__in  ID3D11Resource *pResource)
+		__in ID3D11Resource *pResource)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
@@ -1697,11 +1697,11 @@ changed:
 #endif
 
 	virtual void STDMETHODCALLTYPE ResolveSubresource(
-		__in  ID3D11Resource *pDstResource,
-		__in  unsigned DstSubresource,
-		__in  ID3D11Resource *pSrcResource,
-		__in  unsigned SrcSubresource,
-		__in  DXGI_FORMAT Format)
+		__in ID3D11Resource *pDstResource,
+		__in unsigned DstSubresource,
+		__in ID3D11Resource *pSrcResource,
+		__in unsigned SrcSubresource,
+		__in DXGI_FORMAT Format)
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
@@ -1713,7 +1713,7 @@ changed:
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE ExecuteCommandList(
-		__in  ID3D11CommandList *pCommandList,
+		__in ID3D11CommandList *pCommandList,
 		BOOL RestoreContextState)
 	{
 		SYNCHRONIZED;
@@ -1721,7 +1721,7 @@ changed:
 
 	virtual HRESULT STDMETHODCALLTYPE FinishCommandList(
 		BOOL RestoreDeferredContextState,
-		__out_opt  ID3D11CommandList **ppCommandList)
+		__out_opt ID3D11CommandList **ppCommandList)
 	{
 		SYNCHRONIZED;
 		return E_NOTIMPL;

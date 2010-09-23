@@ -104,7 +104,7 @@ struct mesh
 		this->vertex_size = vertex_size;
 		index_offset = vertex_size * num_vertices;
 
-	   	D3D11_BUFFER_DESC bufferd;
+	 	D3D11_BUFFER_DESC bufferd;
 		memset(&bufferd, 0, sizeof(bufferd));
 		bufferd.Usage = D3D11_USAGE_IMMUTABLE;
 		bufferd.BindFlags = D3D11_BIND_VERTEX_BUFFER;

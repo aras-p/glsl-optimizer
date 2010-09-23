@@ -160,31 +160,31 @@ interface ID3D11ShaderReflectionType
 	);
 
 	ID3D11ShaderReflectionType* GetMemberTypeByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D11ShaderReflectionType* GetMemberTypeByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 
 	LPCSTR GetMemberTypeName(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	HRESULT IsEqual(
-		[in]  ID3D11ShaderReflectionType* pType
+		[in] ID3D11ShaderReflectionType* pType
 	);
 	ID3D11ShaderReflectionType* GetSubType();
 	ID3D11ShaderReflectionType* GetBaseClass();
 	UINT GetNumInterfaces();
 	ID3D11ShaderReflectionType* GetInterfaceByIndex(
-		[in]  UINT uIndex
+		[in] UINT uIndex
 	);
 	HRESULT IsOfType(
-		[in]  ID3D11ShaderReflectionType* pType
+		[in] ID3D11ShaderReflectionType* pType
 	);
 	HRESULT ImplementsInterface(
-		[in]  ID3D11ShaderReflectionType* pBase
+		[in] ID3D11ShaderReflectionType* pBase
 	);
 };
 
@@ -201,7 +201,7 @@ interface ID3D11ShaderReflectionVariable
 	ID3D11ShaderReflectionConstantBuffer* GetBuffer();
 
 	UINT GetInterfaceSlot(
-		[in]  UINT uArrayIndex
+		[in] UINT uArrayIndex
 	);
 };
 
@@ -213,11 +213,11 @@ interface ID3D11ShaderReflectionConstantBuffer
 	);
 
 	ID3D11ShaderReflectionVariable* GetVariableByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D11ShaderReflectionVariable* GetVariableByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 };
 
@@ -229,40 +229,40 @@ interface ID3D11ShaderReflection
 	);
 
 	ID3D11ShaderReflectionConstantBuffer* GetConstantBufferByIndex(
-		[in]  UINT Index
+		[in] UINT Index
 	);
 
 	ID3D11ShaderReflectionConstantBuffer* GetConstantBufferByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 
 	HRESULT GetResourceBindingDesc(
-		[in]  UINT ResourceIndex,
+		[in] UINT ResourceIndex,
 		[out] D3D11_SHADER_INPUT_BIND_DESC *pDesc
 	);
 
 	HRESULT GetInputParameterDesc(
-		[in]  UINT ParameterIndex,
+		[in] UINT ParameterIndex,
 		[out] D3D11_SIGNATURE_PARAMETER_DESC *pDesc
 	);
 	
 	HRESULT GetOutputParameterDesc
 	(
-		[in]  UINT ParameterIndex,
+		[in] UINT ParameterIndex,
 		[out] D3D11_SIGNATURE_PARAMETER_DESC *pDesc
 	);
 	
 	HRESULT GetPatchConstantParameterDesc(
-		[in]  UINT ParameterIndex,
+		[in] UINT ParameterIndex,
 		[out] D3D11_SIGNATURE_PARAMETER_DESC *pDesc
 	);
 
 	ID3D11ShaderReflectionVariable* GetVariableByName(
-		[in]  LPCSTR Name
+		[in] LPCSTR Name
 	);
 
 	HRESULT GetResourceBindingDescByName(
-		[in]  LPCSTR Name,
+		[in] LPCSTR Name,
 		[out] D3D11_SHADER_INPUT_BIND_DESC *pDesc
 	);
 

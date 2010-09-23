@@ -30,13 +30,13 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 
-HRESULT  D3D10CreateDevice1(
+HRESULT D3D10CreateDevice1(
 	__in_opt IDXGIAdapter *pAdapter,
-	__in  D3D10_DRIVER_TYPE DriverType,
-	__in  HMODULE Software,
-	__in  unsigned Flags,
-	__in  D3D10_FEATURE_LEVEL1 HardwareLevel,
-	__in  unsigned SDKVersion,
+	__in D3D10_DRIVER_TYPE DriverType,
+	__in HMODULE Software,
+	__in unsigned Flags,
+	__in D3D10_FEATURE_LEVEL1 HardwareLevel,
+	__in unsigned SDKVersion,
 	__out_opt ID3D10Device1 **ppDevice
 )
 {
@@ -87,7 +87,7 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain1(
 	D3D10_DRIVER_TYPE DriverType,
 	HMODULE Software,
 	unsigned Flags,
-	__in  D3D10_FEATURE_LEVEL1 HardwareLevel,
+	__in D3D10_FEATURE_LEVEL1 HardwareLevel,
 	unsigned SDKVersion,
 	__in_opt DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
 	__out_opt IDXGISwapChain** ppSwapChain,
@@ -122,12 +122,12 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain1(
 	return hr;
 }
 
-HRESULT  D3D10CreateDevice(
+HRESULT D3D10CreateDevice(
 	__in_opt IDXGIAdapter *pAdapter,
-	__in  D3D10_DRIVER_TYPE DriverType,
-	__in  HMODULE Software,
-	__in  unsigned Flags,
-	__in  unsigned SDKVersion,
+	__in D3D10_DRIVER_TYPE DriverType,
+	__in HMODULE Software,
+	__in unsigned Flags,
+	__in unsigned SDKVersion,
 	__out_opt ID3D10Device **ppDevice
 )
 {
