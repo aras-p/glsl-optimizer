@@ -37,7 +37,6 @@
 #include <d3d11.h>
 #include <galliumcom.h>
 #include <galliumdxgi.h>
-#include <specstrings.h>
 
 struct native_display;
 
