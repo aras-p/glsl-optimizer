@@ -43,6 +43,7 @@ rbug_destroy(struct pipe_context *_pipe)
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
 
+   remove_from_list(&rb_pipe->list);
    pipe->destroy(pipe);
 
    FREE(rb_pipe);
