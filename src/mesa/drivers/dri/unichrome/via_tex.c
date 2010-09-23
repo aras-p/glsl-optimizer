@@ -663,6 +663,8 @@ static void viaTexImage(GLcontext *ctx,
 			struct gl_texture_image *texImage)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
+   GLint postConvWidth = width;
+   GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
    struct via_texture_object *viaObj = (struct via_texture_object *)texObj;
    struct via_texture_image *viaImage = (struct via_texture_image *)texImage;
@@ -682,13 +684,13 @@ static void viaTexImage(GLcontext *ctx,
    texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    /* Minimum pitch of 32 bytes */
-   if (width * texelBytes < 32) {
-      width = 32 / texelBytes;
-      texImage->RowStride = width;
+   if (postConvWidth * texelBytes < 32) {
+      postConvWidth = 32 / texelBytes;
+      texImage->RowStride = postConvWidth;
    }
 
-   assert(texImage->RowStride == width);
-   viaImage->pitchLog2 = logbase2(width * texelBytes);
+   assert(texImage->RowStride == postConvWidth);
+   viaImage->pitchLog2 = logbase2(postConvWidth * texelBytes);
 
    /* allocate memory */
    if (_mesa_is_format_compressed(texImage->TexFormat))
@@ -697,7 +699,7 @@ static void viaTexImage(GLcontext *ctx,
                                             texImage->Height,
                                             texImage->Depth);
    else
-      sizeInBytes = width * height * texelBytes;
+      sizeInBytes = postConvWidth * postConvHeight * texelBytes;
 
 
    /* Attempt to allocate texture memory directly, otherwise use main
@@ -778,7 +780,7 @@ static void viaTexImage(GLcontext *ctx,
          dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
       }
       else {
-         dstRowStride = width * _mesa_get_format_bytes(texImage->TexFormat);
+         dstRowStride = postConvWidth * _mesa_get_format_bytes(texImage->TexFormat);
       }
       success = _mesa_texstore(ctx, dims,
                                texImage->_BaseFormat,
