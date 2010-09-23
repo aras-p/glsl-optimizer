@@ -449,14 +449,14 @@ struct dri2_extension_match {
 static struct dri2_extension_match dri2_driver_extensions[] = {
    { __DRI_CORE, 1, offsetof(struct dri2_egl_display, core) },
    { __DRI_DRI2, 1, offsetof(struct dri2_egl_display, dri2) },
-   { NULL }
+   { NULL, 0, 0 }
 };
 
 static struct dri2_extension_match dri2_core_extensions[] = {
    { __DRI2_FLUSH, 1, offsetof(struct dri2_egl_display, flush) },
    { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
    { __DRI_IMAGE, 1, offsetof(struct dri2_egl_display, image) },
-   { NULL }
+   { NULL, 0, 0 }
 };
 
 static EGLBoolean
