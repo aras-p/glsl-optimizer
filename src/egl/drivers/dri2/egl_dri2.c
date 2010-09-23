@@ -339,6 +339,8 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
    xcb_dri2_get_buffers_reply_t *reply;
    xcb_dri2_get_buffers_cookie_t cookie;
 
+   (void) driDrawable;
+
    cookie = xcb_dri2_get_buffers_unchecked (dri2_dpy->conn,
 					    dri2_surf->drawable,
 					    count, count, attachments);
@@ -360,12 +362,16 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
 static void
 dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
+   (void) driDrawable;
+
    /* FIXME: Does EGL support front buffer rendering at all? */
 
 #if 0
    struct dri2_egl_surface *dri2_surf = loaderPrivate;
 
    dri2WaitGL(dri2_surf);
+#else
+   (void) loaderPrivate;
 #endif
 }
 
@@ -375,6 +381,8 @@ dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
    _EGLDisplay *disp = data;
    struct dri2_egl_image *dri2_img;
    _EGLImage *img;
+
+   (void) screen;
 
    img = _eglLookupImage(image, disp);
    if (img == NULL) {
@@ -405,6 +413,8 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
    xcb_dri2_get_buffers_with_format_reply_t *reply;
    xcb_dri2_get_buffers_with_format_cookie_t cookie;
    xcb_dri2_attach_format_t *format_attachments;
+
+   (void) driDrawable;
 
    format_attachments = (xcb_dri2_attach_format_t *) attachments;
    cookie = xcb_dri2_get_buffers_with_format_unchecked (dri2_dpy->conn,
@@ -771,6 +781,8 @@ dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp,
 {
    struct dri2_egl_display *dri2_dpy;
 
+   (void) drv;
+
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
@@ -1074,6 +1086,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    const __DRIconfig *dri_config;
    int api;
 
+   (void) drv;
+
    dri2_ctx = malloc(sizeof *dri2_ctx);
    if (!dri2_ctx) {
       _eglError(EGL_BAD_ALLOC, "eglCreateContext");
@@ -1144,6 +1158,8 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+
+   (void) drv;
 
    if (_eglIsSurfaceBound(surf))
       return EGL_TRUE;
@@ -1219,6 +1235,8 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    xcb_get_geometry_reply_t *reply;
    xcb_screen_iterator_t s;
    xcb_generic_error_t *error;
+
+   (void) drv;
 
    dri2_surf = malloc(sizeof *dri2_surf);
    if (!dri2_surf) {
@@ -1393,6 +1411,8 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 static _EGLProc
 dri2_get_proc_address(_EGLDriver *drv, const char *procname)
 {
+   (void) drv;
+
    /* FIXME: Do we need to support lookup of EGL symbols too? */
 
    return (_EGLProc) _glapi_get_proc_address(procname);
@@ -1403,6 +1423,8 @@ dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(ctx->DrawSurface);
+
+   (void) drv;
 
    /* FIXME: If EGL allows frontbuffer rendering for window surfaces,
     * we need to copy fake to real here.*/
@@ -1415,6 +1437,9 @@ dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
 static EGLBoolean
 dri2_wait_native(_EGLDriver *drv, _EGLDisplay *disp, EGLint engine)
 {
+   (void) drv;
+   (void) disp;
+
    if (engine != EGL_CORE_NATIVE_ENGINE)
       return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
    /* glXWaitX(); */
@@ -1436,6 +1461,8 @@ dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
    xcb_gcontext_t gc;
+
+   (void) drv;
 
    (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
 
@@ -1500,6 +1527,11 @@ static EGLBoolean
 dri2_release_tex_image(_EGLDriver *drv,
 		       _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
 {
+   (void) drv;
+   (void) disp;
+   (void) surf;
+   (void) buffer;
+
    return EGL_TRUE;
 }
 
@@ -1518,6 +1550,8 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
    xcb_get_geometry_reply_t *geometry_reply;
    xcb_generic_error_t *error;
    int stride, format;
+
+   (void) ctx;
 
    drawable = (xcb_drawable_t) buffer;
    xcb_dri2_create_drawable (dri2_dpy->conn, drawable);
@@ -1629,6 +1663,8 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    struct dri2_egl_image *dri2_img;
    EGLint width, height, format, name, stride, pitch, i, err;
 
+   (void) ctx;
+
    name = (EGLint) buffer;
 
    err = EGL_SUCCESS;
@@ -1715,6 +1751,8 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 		      _EGLContext *ctx, EGLenum target,
 		      EGLClientBuffer buffer, const EGLint *attr_list)
 {
+   (void) drv;
+
    switch (target) {
    case EGL_NATIVE_PIXMAP_KHR:
       return dri2_create_image_khr_pixmap(disp, ctx, buffer, attr_list);
@@ -1734,6 +1772,8 @@ dri2_destroy_image_khr(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *image)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img = dri2_egl_image(image);
 
+   (void) drv;
+
    dri2_dpy->image->destroyImage(dri2_img->dri_image);
    free(dri2_img);
 
@@ -1749,6 +1789,8 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
    int width, height, format, i;
    unsigned int use, dri_use, valid_mask;
    EGLint err = EGL_SUCCESS;
+
+   (void) drv;
 
    dri2_img = malloc(sizeof *dri2_img);
    if (!dri2_img) {
@@ -1850,6 +1892,8 @@ dri2_export_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img = dri2_egl_image(img);
 
+   (void) drv;
+
    if (name && !dri2_dpy->image->queryImage(dri2_img->dri_image,
 					    __DRI_IMAGE_ATTRIB_NAME, name)) {
       _eglError(EGL_BAD_ALLOC, "dri2_export_drm_image_mesa");
@@ -1875,6 +1919,8 @@ _EGLDriver *
 _eglMain(const char *args)
 {
    struct dri2_egl_driver *dri2_drv;
+
+   (void) args;
 
    dri2_drv = malloc(sizeof *dri2_drv);
    if (!dri2_drv)
