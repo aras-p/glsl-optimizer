@@ -108,9 +108,6 @@ i915CreateContext(int api,
    if (!i915)
       return GL_FALSE;
 
-   if (0)
-      printf("\ntexmem-0-3 branch\n\n");
-
    i915InitVtbl(i915);
 
    i915InitDriverFunctions(&functions);
