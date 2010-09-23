@@ -321,27 +321,28 @@ do_clip_tri( struct draw_stage *stage,
 
    /* If flat-shading, copy provoking vertex color to polygon vertex[0]
     */
-   if (clipper->flat) {
-      if (stage->draw->rasterizer->flatshade_first) {
-         if (inlist[0] != header->v[0]) {
-            assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
-            inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
-            copy_colors(stage, inlist[0], header->v[0]);
+   if (n >= 3) {
+      if (clipper->flat) {
+         if (stage->draw->rasterizer->flatshade_first) {
+            if (inlist[0] != header->v[0]) {
+               assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
+               inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
+               copy_colors(stage, inlist[0], header->v[0]);
+            }
+         }
+         else {
+            if (inlist[0] != header->v[2]) {
+               assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
+               inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
+               copy_colors(stage, inlist[0], header->v[2]);
+            }
          }
       }
-      else {
-         if (inlist[0] != header->v[2]) {
-            assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
-            inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
-            copy_colors(stage, inlist[0], header->v[2]);
-         }
-      }
-   }
-
-   /* Emit the polygon as triangles to the setup stage:
-    */
-   if (n >= 3)
+      
+      /* Emit the polygon as triangles to the setup stage:
+       */
       emit_poly( stage, inlist, n, header );
+   }
 }
 
 
