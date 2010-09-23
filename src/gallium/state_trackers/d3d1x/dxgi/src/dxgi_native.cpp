@@ -1381,7 +1381,11 @@ void STDMETHODCALLTYPE GalliumDXGIUseHDC(HDC hdc, PFNHWNDRESOLVER resolver, void
 */
 void STDMETHODCALLTYPE GalliumDXGIMakeDefault()
 {
+	if(dxgi_default_binding.backend)
+		dxgi_default_binding.backend->Release();
 	dxgi_default_binding = dxgi_thread_binding;
+	if(dxgi_default_binding.backend)
+		dxgi_default_binding.backend->AddRef();
 }
 
  /* TODO: why did Microsoft add this? should we do something different for DXGI 1.0 and 1.1?
