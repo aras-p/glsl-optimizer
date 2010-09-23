@@ -1220,8 +1220,8 @@ static void r600_texture_state_viewport(struct r600_screen *rscreen, struct r600
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui(width);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui(height);
 	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui(height);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = fui(0.5);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = fui(0.5);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = fui(0.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = fui(1.0);
 	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] =
 		S_028818_VPORT_X_SCALE_ENA(1) |
 		S_028818_VPORT_X_OFFSET_ENA(1) |

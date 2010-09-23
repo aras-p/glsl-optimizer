@@ -169,16 +169,30 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	struct radeon_state *rstate;
 	struct radeon_ws_bo *bo;
 	void *data;
-	float vbo[] = {
+	float *vbo;
+	enum radeon_family family;
+	float vbo_r600[] = {
 	  -1.0, -1.0, 1.0, 1.0,
-	   0.5,  0.5, 0.5, 0.0,
+	   0.5,  0.5, 0.0, 0.0,
 	   1.0, -1.0, 1.0, 1.0,
-	   0.5,  0.5, 0.5, 0.0,
+	   0.5,  0.5, 0.0, 0.0,
 	   1.0,  1.0, 1.0, 1.0,
-	   0.5,  0.5, 0.5, 0.0,
+	   0.5,  0.5, 0.0, 0.0,
 	  -1.0,  1.0, 1.0, 1.0,
-	   0.5,  0.5, 0.5, 0.0};
+	   0.5,  0.5, 0.0, 0.0 };
 
+	float vbo_rv6xx[] = {
+	  -1.0, -1.0, 0.0, 1.0,
+	   0.5,  0.5, 0.0, 0.0,
+	   1.0, -1.0, 0.0, 1.0,
+	   0.5,  0.5, 0.0, 0.0,
+	   1.0,  1.0, 0.0, 1.0,
+	   0.5,  0.5, 0.0, 0.0,
+	  -1.0,  1.0, 0.0, 1.0,
+	   0.5,  0.5, 0.0, 0.0};
+
+
+	family = radeon_get_family(rscreen->rw);
 	/* simple shader */
 	bo = radeon_ws_bo(rscreen->rw, 128, 4096, 0);
 	if (bo == NULL) {
@@ -189,6 +203,12 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 		radeon_ws_bo_reference(rscreen->rw, &bo, NULL);
 		return -ENOMEM;
 	}
+	if (family == CHIP_RV610 || family == CHIP_RV630 || family == CHIP_RV620 ||
+	    family == CHIP_RV635)
+		vbo = vbo_rv6xx;
+	else
+		vbo = vbo_r600;
+
 	memcpy(data, vbo, 128);
 	radeon_ws_bo_unmap(rscreen->rw, bo);
 
@@ -572,17 +592,17 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (family == CHIP_RV610 || family == CHIP_RV630 || family == CHIP_RV620 ||
 	    family == CHIP_RV635) {
 		bstates.dsa.states[R600_DSA__DB_DEPTH_CONTROL] = S_028800_Z_ENABLE(1) |
-			S_028800_STENCIL_ENABLE(1) | S_028800_ZFUNC(PIPE_FUNC_LEQUAL) |
-			S_028800_STENCILFUNC(PIPE_FUNC_ALWAYS) |
+			S_028800_STENCIL_ENABLE(1) | S_028800_ZFUNC(V_028800_STENCILFUNC_LEQUAL) |
+			S_028800_STENCILFUNC(V_028800_STENCILFUNC_ALWAYS) |
 			S_028800_STENCILZPASS(V_028800_STENCIL_KEEP) |
 			S_028800_STENCILZFAIL(V_028800_STENCIL_INCR);
 
 		bstates.dsa.states[R600_DSA__DB_STENCILREFMASK] = S_028430_STENCILWRITEMASK(0xff);
-	} else {
-		bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = S_028D0C_DEPTH_COPY_ENABLE(1) |
+	}
+	bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = S_028D0C_DEPTH_COPY_ENABLE(1) |
 			S_028D0C_STENCIL_COPY_ENABLE(1) |
 			S_028D0C_COPY_CENTROID(1);
-	}
+
 	bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000003;
 	r600_blit_state_cb_flush(rscreen, &bstates.cb_flush, rtexture, 0, 0);
 	r600_blit_state_db_flush(rscreen, &bstates.db_flush, rtexture, 0, 0);
