@@ -57,6 +57,8 @@ static void r600_destroy_context(struct pipe_context *context)
 	free(rctx->vs_constant);
 	free(rctx->vs_resource);
 
+	util_blitter_destroy(rctx->blitter);
+
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
