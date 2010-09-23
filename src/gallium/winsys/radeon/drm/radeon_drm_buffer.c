@@ -118,8 +118,10 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
 		return NULL;
     }
 
-    if (buf->bo->ptr != NULL)
+    if (buf->bo->ptr != NULL) {
+        remove_from_list(buf);
 	return buf->bo->ptr;
+    }
 
     if (flags & PB_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -142,14 +144,18 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
     if (radeon_bo_map(buf->bo, write)) {
         return NULL;
     }
-    insert_at_tail(&buf->mgr->buffer_map_list, buf);
+
+    remove_from_list(buf);
     return buf->bo->ptr;
 }
 
 static void
 radeon_drm_buffer_unmap_internal(struct pb_buffer *_buf)
 {
-    (void)_buf;
+    struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
+    if (is_empty_list(buf)) { /* = is not inserted... */
+        insert_at_tail(&buf->mgr->buffer_map_list, buf);
+    }
 }
 
 static void
@@ -163,7 +169,7 @@ radeon_drm_buffer_get_base_buffer(struct pb_buffer *buf,
 
 
 static enum pipe_error
-radeon_drm_buffer_validate(struct pb_buffer *_buf, 
+radeon_drm_buffer_validate(struct pb_buffer *_buf,
 			   struct pb_validate *vl,
 			   unsigned flags)
 {
