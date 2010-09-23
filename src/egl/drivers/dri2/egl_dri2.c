@@ -370,10 +370,9 @@ dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 }
 
 static __DRIimage *
-dri2_lookup_egl_image(__DRIcontext *context, void *image, void *data)
+dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
 {
-   struct dri2_egl_context *dri2_ctx = data;
-   _EGLDisplay *disp = dri2_ctx->base.Resource.Display;
+   _EGLDisplay *disp = data;
    struct dri2_egl_image *dri2_img;
    _EGLImage *img;
 
@@ -728,7 +727,7 @@ dri2_create_screen(_EGLDisplay *disp)
    dri2_dpy = disp->DriverData;
    dri2_dpy->dri_screen =
       dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				      &dri2_dpy->driver_configs, dri2_dpy);
+				      &dri2_dpy->driver_configs, disp);
 
    if (dri2_dpy->dri_screen == NULL) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");

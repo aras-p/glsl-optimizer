@@ -841,7 +841,7 @@ typedef struct __DRIimageLookupExtensionRec __DRIimageLookupExtension;
 struct __DRIimageLookupExtensionRec {
     __DRIextension base;
 
-    __DRIimage *(*lookupEGLImage)(__DRIcontext *context, void *image,
+    __DRIimage *(*lookupEGLImage)(__DRIscreen *screen, void *image,
 				  void *loaderPrivate);
 };
 

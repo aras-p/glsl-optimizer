@@ -291,15 +291,16 @@ dri2_flush_frontbuffer(struct dri_drawable *drawable,
 }
 
 static __DRIimage *
-dri2_lookup_egl_image(struct dri_context *ctx, void *handle)
+dri2_lookup_egl_image(struct dri_screen *screen, void *handle)
 {
-   __DRIimageLookupExtension *loader = ctx->sPriv->dri2.image;
+   __DRIimageLookupExtension *loader = screen->sPriv->dri2.image;
    __DRIimage *img;
 
    if (!loader->lookupEGLImage)
       return NULL;
 
-   img = loader->lookupEGLImage(ctx->cPriv, handle, ctx->cPriv->loaderPrivate);
+   img = loader->lookupEGLImage(screen->sPriv,
+				handle, screen->sPriv->loaderPrivate);
 
    return img;
 }
@@ -537,6 +538,7 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
+   screen->lookup_egl_image = dri2_lookup_egl_image;
 
    return configs;
 fail:
@@ -555,8 +557,6 @@ dri2_create_context(gl_api api, const __GLcontextModes * visual,
       return FALSE;
 
    ctx = cPriv->driverPrivate;
-
-   ctx->lookup_egl_image = dri2_lookup_egl_image;
 
    return TRUE;
 }

@@ -69,6 +69,9 @@ struct dri_screen
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
    enum pipe_texture_target target;
+
+   /* hooks filled in by dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_screen *ctx, void *handle);
 };
 
 /** cast wrapper */

@@ -202,8 +202,8 @@ intel_image_target_renderbuffer_storage(GLcontext *ctx,
    __DRIimage *image;
 
    screen = intel->intelScreen->driScrnPriv;
-   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
-					      intel->driContext->loaderPrivate);
+   image = screen->dri2.image->lookupEGLImage(screen, image_handle,
+					      screen->loaderPrivate);
    if (image == NULL)
       return;
 

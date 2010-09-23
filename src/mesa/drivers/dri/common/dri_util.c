@@ -880,6 +880,7 @@ dri2CreateNewScreen(int scrn, int fd,
     }
 
     psp->DriverAPI = driDriverAPI;
+    psp->loaderPrivate = data;
 
     driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,
 		       __dri2NConfigOptions);

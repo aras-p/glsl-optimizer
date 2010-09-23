@@ -384,7 +384,6 @@ struct st_manager
     * This function is optional.
     */
    boolean (*get_egl_image)(struct st_manager *smapi,
-                            struct st_context_iface *stctx,
                             void *egl_image,
                             struct st_egl_image *out);
 

@@ -539,6 +539,7 @@ struct __DRIscreenRec {
     driOptionCache optionInfo;
     driOptionCache optionCache;
    unsigned int api_mask;
+   void *loaderPrivate;
 };
 
 extern void

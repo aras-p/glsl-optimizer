@@ -61,9 +61,6 @@ struct dri_context
    /* gallium */
    struct st_api *stapi;
    struct st_context_iface *st;
-
-   /* hooks filled in by dri2 & drisw */
-   __DRIimage * (*lookup_egl_image)(struct dri_context *ctx, void *handle);
 };
 
 static INLINE struct dri_context *
