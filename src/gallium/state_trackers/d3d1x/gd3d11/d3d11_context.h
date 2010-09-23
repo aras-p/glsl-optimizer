@@ -304,10 +304,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 #if API >= 11
 #define SET_SHADER_EXTRA_ARGS , \
 	ID3D11ClassInstance *const *ppClassInstances, \
-	unsigned NumClassInstances
+	unsigned count
 #define GET_SHADER_EXTRA_ARGS , \
 		ID3D11ClassInstance **ppClassInstances, \
-		unsigned *pNumClassInstances
+		unsigned *out_count
 #else
 #define SET_SHADER_EXTRA_ARGS
 #define GET_SHADER_EXTRA_ARGS
@@ -410,55 +410,55 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		*ppShader = (ID3D11##Stage##Shader*)shaders[D3D11_STAGE_##XS].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetConstantBuffers(\
-		unsigned StartSlot, \
-		unsigned NumBuffers, \
-		ID3D11Buffer *const *ppConstantBuffers) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11Buffer *const* constant_buffers) \
 	{ \
 		SYNCHRONIZED; \
-		xs_set_constant_buffers<D3D11_STAGE_##XS>(StartSlot, NumBuffers, (GalliumD3D11Buffer *const *)ppConstantBuffers); \
+		xs_set_constant_buffers<D3D11_STAGE_##XS>(start, count, (GalliumD3D11Buffer *const *)constant_buffers); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetConstantBuffers(\
-		unsigned StartSlot, \
-		unsigned NumBuffers, \
-		ID3D11Buffer **ppConstantBuffers) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11Buffer **out_constant_buffers) \
 	{ \
 		SYNCHRONIZED; \
-		for(unsigned i = 0; i < NumBuffers; ++i) \
-			ppConstantBuffers[i] = constant_buffers[D3D11_STAGE_##XS][StartSlot + i].ref(); \
+		for(unsigned i = 0; i < count; ++i) \
+			out_constant_buffers[i] = constant_buffers[D3D11_STAGE_##XS][start + i].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetShaderResources(\
-		unsigned StartSlot, \
-		unsigned NumViews, \
-		ID3D11ShaderResourceView *const *ppShaderResourceViews) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11ShaderResourceView *const *new_shader_resource_views) \
 	{ \
 		SYNCHRONIZED; \
-		xs_set_shader_resources<D3D11_STAGE_##XS>(StartSlot, NumViews, (GalliumD3D11ShaderResourceView *const *)ppShaderResourceViews); \
+		xs_set_shader_resources<D3D11_STAGE_##XS>(start, count, (GalliumD3D11ShaderResourceView *const *)new_shader_resource_views); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetShaderResources(\
-		unsigned StartSlot, \
-		unsigned NumViews, \
-		ID3D11ShaderResourceView **ppShaderResourceViews) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11ShaderResourceView **out_shader_resource_views) \
 	{ \
 		SYNCHRONIZED; \
-		for(unsigned i = 0; i < NumViews; ++i) \
-			ppShaderResourceViews[i] = shader_resource_views[D3D11_STAGE_##XS][StartSlot + i].ref(); \
+		for(unsigned i = 0; i < count; ++i) \
+			out_shader_resource_views[i] = shader_resource_views[D3D11_STAGE_##XS][start + i].ref(); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##SetSamplers(\
-		unsigned StartSlot, \
-		unsigned NumSamplers, \
-		ID3D11SamplerState *const *ppSamplers) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11SamplerState *const *new_samplers) \
 	{ \
 		SYNCHRONIZED; \
-		xs_set_samplers<D3D11_STAGE_##XS>(StartSlot, NumSamplers, (GalliumD3D11SamplerState *const *)ppSamplers); \
+		xs_set_samplers<D3D11_STAGE_##XS>(start, count, (GalliumD3D11SamplerState *const *)new_samplers); \
 	} \
 	virtual void STDMETHODCALLTYPE XS##GetSamplers( \
-		unsigned StartSlot, \
-		unsigned NumSamplers, \
-		ID3D11SamplerState **ppSamplers) \
+		unsigned start, \
+		unsigned count, \
+		ID3D11SamplerState **out_samplers) \
 	{ \
 		SYNCHRONIZED; \
-		for(unsigned i = 0; i < NumSamplers; ++i) \
-			ppSamplers[i] = samplers[D3D11_STAGE_##XS][StartSlot + i].ref(); \
+		for(unsigned i = 0; i < count; ++i) \
+			out_samplers[i] = samplers[D3D11_STAGE_##XS][start + i].ref(); \
 	}
 
 #define DO_VS(x) x
@@ -477,24 +477,24 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	IMPLEMENT_SHADER_STAGE(CS, Compute)
 
 	virtual void STDMETHODCALLTYPE CSSetUnorderedAccessViews(
-		unsigned StartSlot,
-		unsigned NumUAVs,
-		ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		const unsigned *pUAVInitialCounts)
+		unsigned start,
+		unsigned count,
+		ID3D11UnorderedAccessView *const *new_unordered_access_views,
+		const unsigned *new_uav_initial_counts)
 	{
 		SYNCHRONIZED;
-		for(unsigned i = 0; i < NumUAVs; ++i)
-			cs_unordered_access_views[StartSlot + i] = ppUnorderedAccessViews[i];
+		for(unsigned i = 0; i < count; ++i)
+			cs_unordered_access_views[start + i] = new_unordered_access_views[i];
 	}
 
 	virtual void STDMETHODCALLTYPE CSGetUnorderedAccessViews(
-		unsigned StartSlot,
-		unsigned NumUAVs,
-		ID3D11UnorderedAccessView **ppUnorderedAccessViews)
+		unsigned start,
+		unsigned count,
+		ID3D11UnorderedAccessView **out_unordered_access_views)
 	{
 		SYNCHRONIZED;
-		for(unsigned i = 0; i < NumUAVs; ++i)
-			ppUnorderedAccessViews[i] = cs_unordered_access_views[StartSlot + i].ref();
+		for(unsigned i = 0; i < count; ++i)
+			out_unordered_access_views[i] = cs_unordered_access_views[start + i].ref();
 	}
 #endif
 
@@ -579,79 +579,79 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IASetInputLayout(
-		ID3D11InputLayout *pInputLayout)
+		ID3D11InputLayout *new_input_layout)
 	{
 		SYNCHRONIZED;
-		if(pInputLayout != input_layout.p)
+		if(new_input_layout != input_layout.p)
 		{
-			input_layout = pInputLayout;
-			pipe->bind_vertex_elements_state(pipe, pInputLayout ? ((GalliumD3D11InputLayout*)pInputLayout)->object : default_input_layout);
+			input_layout = new_input_layout;
+			pipe->bind_vertex_elements_state(pipe, new_input_layout ? ((GalliumD3D11InputLayout*)new_input_layout)->object : default_input_layout);
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetInputLayout(
-		ID3D11InputLayout **ppInputLayout)
+		ID3D11InputLayout **out_input_layout)
 	{
 		SYNCHRONIZED;
-		*ppInputLayout = input_layout.ref();
+		*out_input_layout = input_layout.ref();
 	}
 
 	virtual void STDMETHODCALLTYPE IASetVertexBuffers(
-		unsigned StartSlot,
-		unsigned NumBuffers,
-		ID3D11Buffer *const *ppVertexBuffers,
-		const unsigned *pStrides,
-		const unsigned *pOffsets)
+		unsigned start,
+		unsigned count,
+		ID3D11Buffer *const *new_vertex_buffers,
+		const unsigned *new_strides,
+		const unsigned *new_offsets)
 	{
 		SYNCHRONIZED;
 		int last_different = -1;
-		for(unsigned i = 0; i < NumBuffers; ++i)
+		for(unsigned i = 0; i < count; ++i)
 		{
-			ID3D11Buffer* buffer = ppVertexBuffers[i];
-			if(buffer != input_buffers[StartSlot + i].p
-				|| vertex_buffers[StartSlot + i].buffer_offset != pOffsets[i]
-				|| vertex_buffers[StartSlot + i].stride != pOffsets[i]
+			ID3D11Buffer* buffer = new_vertex_buffers[i];
+			if(buffer != input_buffers[start + i].p
+				|| vertex_buffers[start + i].buffer_offset != new_offsets[i]
+				|| vertex_buffers[start + i].stride != new_offsets[i]
 			)
 			{
-				input_buffers[StartSlot + i] = buffer;
-				vertex_buffers[StartSlot + i].buffer = buffer ? ((GalliumD3D11Buffer*)buffer)->resource : 0;
-				vertex_buffers[StartSlot + i].buffer_offset = pOffsets[i];
-				vertex_buffers[StartSlot + i].stride = pStrides[i];
-				vertex_buffers[StartSlot + i].max_index = ~0;
+				input_buffers[start + i] = buffer;
+				vertex_buffers[start + i].buffer = buffer ? ((GalliumD3D11Buffer*)buffer)->resource : 0;
+				vertex_buffers[start + i].buffer_offset = new_offsets[i];
+				vertex_buffers[start + i].stride = new_strides[i];
+				vertex_buffers[start + i].max_index = ~0;
 				last_different = i;
 			}
 		}
 		if(last_different >= 0)
 		{
-			num_vertex_buffers = std::max(num_vertex_buffers, StartSlot + NumBuffers);
+			num_vertex_buffers = std::max(num_vertex_buffers, start + count);
 			update_flags |= UPDATE_VERTEX_BUFFERS;
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetVertexBuffers(
-		unsigned StartSlot,
-		unsigned NumBuffers,
-		ID3D11Buffer **ppVertexBuffers,
-		unsigned *pStrides,
-		unsigned *pOffsets)
+		unsigned start,
+		unsigned count,
+		ID3D11Buffer **out_vertex_buffers,
+		unsigned *out_strides,
+		unsigned *out_offsets)
 	{
 		SYNCHRONIZED;
-		if(ppVertexBuffers)
+		if(out_vertex_buffers)
 		{
-			for(unsigned i = 0; i < NumBuffers; ++i)
-				ppVertexBuffers[i] = input_buffers[StartSlot + i].ref();
+			for(unsigned i = 0; i < count; ++i)
+				out_vertex_buffers[i] = input_buffers[start + i].ref();
 		}
 
-		if(pOffsets)
+		if(out_offsets)
 		{
-			for(unsigned i = 0; i < NumBuffers; ++i)
-				pOffsets[i] = vertex_buffers[StartSlot + i].buffer_offset;
+			for(unsigned i = 0; i < count; ++i)
+				out_offsets[i] = vertex_buffers[start + i].buffer_offset;
 		}
 
-		if(pStrides)
+		if(out_strides)
 		{
-			for(unsigned i = 0; i < NumBuffers; ++i)
-				pStrides[i] = vertex_buffers[StartSlot + i].stride;
+			for(unsigned i = 0; i < count; ++i)
+				out_strides[i] = vertex_buffers[start + i].stride;
 		}
 	}
 
@@ -677,60 +677,60 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE IASetIndexBuffer(
-		ID3D11Buffer *pIndexBuffer,
-		DXGI_FORMAT Format,
-		unsigned Offset)
+		ID3D11Buffer *new_index_buffer,
+		DXGI_FORMAT new_index_format,
+		unsigned new_index_offset)
 	{
 		SYNCHRONIZED;
-		if(index_buffer.p != pIndexBuffer || index_format != Format || index_offset != Offset)
+		if(index_buffer.p != new_index_buffer || index_format != new_index_format || index_offset != new_index_offset)
 		{
-			index_buffer = pIndexBuffer;
-			index_format = Format;
-			index_offset = Offset;
+			index_buffer = new_index_buffer;
+			index_format = new_index_format;
+			index_offset = new_index_offset;
 
 			set_index_buffer();
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetIndexBuffer(
-		ID3D11Buffer **pIndexBuffer,
-		DXGI_FORMAT *Format,
-		unsigned *Offset)
+		ID3D11Buffer **out_index_buffer,
+		DXGI_FORMAT *out_index_format,
+		unsigned *out_index_offset)
 	{
 		SYNCHRONIZED;
-		if(pIndexBuffer)
-			*pIndexBuffer = index_buffer.ref();
-		if(Format)
-			*Format = index_format;
-		if(Offset)
-			*Offset = index_offset;
+		if(out_index_buffer)
+			*out_index_buffer = index_buffer.ref();
+		if(out_index_format)
+			*out_index_format = index_format;
+		if(out_index_offset)
+			*out_index_offset = index_offset;
 	}
 
 	virtual void STDMETHODCALLTYPE IASetPrimitiveTopology(
-		D3D11_PRIMITIVE_TOPOLOGY Topology)
+		D3D11_PRIMITIVE_TOPOLOGY new_primitive_topology)
 	{
 		SYNCHRONIZED;
-		if(primitive_topology != Topology)
+		if(primitive_topology != new_primitive_topology)
 		{
-			if(Topology < D3D_PRIMITIVE_TOPOLOGY_COUNT)
-				primitive_mode = d3d_to_pipe_prim[Topology];
+			if(new_primitive_topology < D3D_PRIMITIVE_TOPOLOGY_COUNT)
+				primitive_mode = d3d_to_pipe_prim[new_primitive_topology];
 			else
 				primitive_mode = 0;
-			primitive_topology = Topology;
+			primitive_topology = new_primitive_topology;
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE IAGetPrimitiveTopology(
-		D3D11_PRIMITIVE_TOPOLOGY *pTopology)
+		D3D11_PRIMITIVE_TOPOLOGY *out_primitive_topology)
 	{
 		SYNCHRONIZED;
-		*pTopology = primitive_topology;
+		*out_primitive_topology = primitive_topology;
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexed(
-		unsigned IndexCount,
-		unsigned StartIndexLocation,
-		int BaseVertexLocation)
+		unsigned index_count,
+		unsigned start_index_location,
+		int base_vertex_location)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -739,9 +739,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		pipe_draw_info info;
 		info.mode = primitive_mode;
 		info.indexed = TRUE;
-		info.count = IndexCount;
-		info.start = StartIndexLocation;
-		info.index_bias = BaseVertexLocation;
+		info.count = index_count;
+		info.start = start_index_location;
+		info.index_bias = base_vertex_location;
 		info.min_index = 0;
 		info.max_index = ~0;
 		info.start_instance = 0;
@@ -751,8 +751,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE Draw(
-		unsigned VertexCount,
-		unsigned StartVertexLocation)
+		unsigned vertex_count,
+		unsigned start_vertex_location)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -761,8 +761,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		pipe_draw_info info;
 		info.mode = primitive_mode;
 		info.indexed = FALSE;
-		info.count = VertexCount;
-		info.start = StartVertexLocation;
+		info.count = vertex_count;
+		info.start = start_vertex_location;
 		info.index_bias = 0;
 		info.min_index = 0;
 		info.max_index = ~0;
@@ -773,11 +773,11 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexedInstanced(
-		unsigned IndexCountPerInstance,
-		unsigned InstanceCount,
-		unsigned StartIndexLocation,
-		int BaseVertexLocation,
-		unsigned StartInstanceLocation)
+		unsigned index_countPerInstance,
+		unsigned instance_count,
+		unsigned start_index_location,
+		int base_vertex_location,
+		unsigned start_instance_location)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -786,22 +786,22 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		pipe_draw_info info;
 		info.mode = primitive_mode;
 		info.indexed = TRUE;
-		info.count = IndexCountPerInstance;
-		info.start = StartIndexLocation;
-		info.index_bias = BaseVertexLocation;
+		info.count = index_countPerInstance;
+		info.start = start_index_location;
+		info.index_bias = base_vertex_location;
 		info.min_index = 0;
 		info.max_index = ~0;
-		info.start_instance = StartInstanceLocation;
-		info.instance_count = InstanceCount;
+		info.start_instance = start_instance_location;
+		info.instance_count = instance_count;
 
 		pipe->draw_vbo(pipe, &info);
 	}
 
 	virtual void STDMETHODCALLTYPE DrawInstanced(
-		unsigned VertexCountPerInstance,
-		unsigned InstanceCount,
-		unsigned StartVertexLocation,
-		unsigned StartInstanceLocation)
+		unsigned vertex_countPerInstance,
+		unsigned instance_count,
+		unsigned start_vertex_location,
+		unsigned start_instance_location)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -810,13 +810,13 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		pipe_draw_info info;
 		info.mode = primitive_mode;
 		info.indexed = FALSE;
-		info.count = VertexCountPerInstance;
-		info.start = StartVertexLocation;
+		info.count = vertex_countPerInstance;
+		info.start = start_vertex_location;
 		info.index_bias = 0;
 		info.min_index = 0;
 		info.max_index = ~0;
-		info.start_instance = StartInstanceLocation;
-		info.instance_count = InstanceCount;
+		info.start_instance = start_instance_location;
+		info.instance_count = instance_count;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -834,8 +834,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawIndexedInstancedIndirect(
-		ID3D11Buffer *pBufferForArgs,
-		unsigned AlignedByteOffsetForArgs)
+		ID3D11Buffer *buffer,
+		unsigned aligned_byte_offset)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -848,7 +848,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			unsigned index_bias;
 		} data;
 
-		pipe_buffer_read(pipe, ((GalliumD3D11Buffer*)pBufferForArgs)->resource, AlignedByteOffsetForArgs, sizeof(data), &data);
+		pipe_buffer_read(pipe, ((GalliumD3D11Buffer*)buffer)->resource, aligned_byte_offset, sizeof(data), &data);
 
 		pipe_draw_info info;
 		info.mode = primitive_mode;
@@ -865,8 +865,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DrawInstancedIndirect(
-		ID3D11Buffer *pBufferForArgs,
-		unsigned AlignedByteOffsetForArgs)
+		ID3D11Buffer *buffer,
+		unsigned aligned_byte_offset)
 	{
 		SYNCHRONIZED;
 		if(update_flags)
@@ -878,7 +878,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			unsigned start;
 		} data;
 
-		pipe_buffer_read(pipe, ((GalliumD3D11Buffer*)pBufferForArgs)->resource, AlignedByteOffsetForArgs, sizeof(data), &data);
+		pipe_buffer_read(pipe, ((GalliumD3D11Buffer*)buffer)->resource, aligned_byte_offset, sizeof(data), &data);
 
 		pipe_draw_info info;
 		info.mode = primitive_mode;
@@ -896,9 +896,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE Dispatch(
-		unsigned ThreadGroupCountX,
-		unsigned ThreadGroupCountY,
-		unsigned ThreadGroupCountZ)
+		unsigned thread_group_count_x,
+		unsigned thread_group_count_y,
+		unsigned thread_group_count_z)
 	{
 // uncomment this when this is implemented
 //		SYNCHRONIZED;
@@ -907,8 +907,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE DispatchIndirect(
-		ID3D11Buffer *pBufferForArgs,
-		unsigned AlignedByteOffsetForArgs)
+		ID3D11Buffer *buffer,
+		unsigned aligned_byte_offset)
 	{
 // uncomment this when this is implemented
 //		SYNCHRONIZED;
@@ -926,14 +926,14 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetState(
-		ID3D11RasterizerState *pRasterizerState)
+		ID3D11RasterizerState *new_rasterizer_state)
 	{
 		SYNCHRONIZED;
-		if(pRasterizerState != rasterizer_state.p)
+		if(new_rasterizer_state != rasterizer_state.p)
 		{
-			rasterizer_state = pRasterizerState;
-			pipe->bind_rasterizer_state(pipe, pRasterizerState ? ((GalliumD3D11RasterizerState*)pRasterizerState)->object : default_rasterizer);
-			bool new_depth_clamp = pRasterizerState ? ((GalliumD3D11RasterizerState*)pRasterizerState)->depth_clamp : false;
+			rasterizer_state = new_rasterizer_state;
+			pipe->bind_rasterizer_state(pipe, new_rasterizer_state ? ((GalliumD3D11RasterizerState*)new_rasterizer_state)->object : default_rasterizer);
+			bool new_depth_clamp = new_rasterizer_state ? ((GalliumD3D11RasterizerState*)new_rasterizer_state)->depth_clamp : false;
 			if(depth_clamp != new_depth_clamp)
 			{
 				depth_clamp = new_depth_clamp;
@@ -943,10 +943,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetState(
-		ID3D11RasterizerState **ppRasterizerState)
+		ID3D11RasterizerState **out_rasterizer_state)
 	{
 		SYNCHRONIZED;
-		*ppRasterizerState = rasterizer_state.ref();
+		*out_rasterizer_state = rasterizer_state.ref();
 	}
 
 	void set_viewport()
@@ -968,19 +968,19 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetViewports(
-		unsigned NumViewports,
-		const D3D11_VIEWPORT *pViewports)
+		unsigned count,
+		const D3D11_VIEWPORT *new_viewports)
 	{
 		SYNCHRONIZED;
-		if(NumViewports)
+		if(count)
 		{
-			if(memcmp(&viewports[0], &pViewports[0], sizeof(viewports[0])))
+			if(memcmp(&viewports[0], &new_viewports[0], sizeof(viewports[0])))
 			{
-				viewports[0] = pViewports[0];
+				viewports[0] = new_viewports[0];
 				set_viewport();
 			}
-			for(unsigned i = 1; i < NumViewports; ++i)
-				viewports[i] = pViewports[i];
+			for(unsigned i = 1; i < count; ++i)
+				viewports[i] = new_viewports[i];
 		}
 		else if(num_viewports)
 		{
@@ -988,24 +988,24 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			memset(&viewports[0], 0, sizeof(viewports[0]));
 			set_viewport();
 		}
-		num_viewports = NumViewports;
+		num_viewports = count;
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetViewports(
-		unsigned *pNumViewports,
-		D3D11_VIEWPORT *pViewports)
+		unsigned *out_count,
+		D3D11_VIEWPORT *out_viewports)
 	{
 		SYNCHRONIZED;
-		if(pViewports)
+		if(out_viewports)
 		{
 			unsigned i;
-			for(i = 0; i < std::min(*pNumViewports, num_viewports); ++i)
-				pViewports[i] = viewports[i];
+			for(i = 0; i < std::min(*out_count, num_viewports); ++i)
+				out_viewports[i] = viewports[i];
 
-			memset(pViewports + i, 0, (*pNumViewports - i) * sizeof(D3D11_VIEWPORT));
+			memset(out_viewports + i, 0, (*out_count - i) * sizeof(D3D11_VIEWPORT));
 		}
 
-		*pNumViewports = num_viewports;
+		*out_count = num_viewports;
 	}
 
 	void set_scissor()
@@ -1019,19 +1019,19 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE RSSetScissorRects(
-		unsigned NumRects,
-		const D3D11_RECT *pRects)
+		unsigned count,
+		const D3D11_RECT *new_rects)
 	{
 		SYNCHRONIZED;
-		if(NumRects)
+		if(count)
 		{
-			if(memcmp(&scissor_rects[0], &pRects[0], sizeof(scissor_rects[0])))
+			if(memcmp(&scissor_rects[0], &new_rects[0], sizeof(scissor_rects[0])))
 			{
-				scissor_rects[0] = pRects[0];
+				scissor_rects[0] = new_rects[0];
 				set_scissor();
 			}
-			for(unsigned i = 1; i < NumRects; ++i)
-				scissor_rects[i] = pRects[i];
+			for(unsigned i = 1; i < count; ++i)
+				scissor_rects[i] = new_rects[i];
 		}
 		else if(num_scissor_rects)
 		{
@@ -1040,69 +1040,69 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			set_scissor();
 		}
 
-		num_scissor_rects = NumRects;
+		num_scissor_rects = count;
 	}
 
 	virtual void STDMETHODCALLTYPE RSGetScissorRects(
-		unsigned *pNumRects,
-		D3D11_RECT *pRects)
+		unsigned *out_count,
+		D3D11_RECT *out_rects)
 	{
 		SYNCHRONIZED;
-		if(pRects)
+		if(out_rects)
 		{
 			unsigned i;
-			for(i = 0; i < std::min(*pNumRects, num_scissor_rects); ++i)
-				pRects[i] = scissor_rects[i];
+			for(i = 0; i < std::min(*out_count, num_scissor_rects); ++i)
+				out_rects[i] = scissor_rects[i];
 
-			memset(pRects + i, 0, (*pNumRects - i) * sizeof(D3D11_RECT));
+			memset(out_rects + i, 0, (*out_count - i) * sizeof(D3D11_RECT));
 		}
 
-		*pNumRects = num_scissor_rects;
+		*out_count = num_scissor_rects;
 	}
 
 	virtual void STDMETHODCALLTYPE OMSetBlendState(
-		ID3D11BlendState *pBlendState,
-		const float BlendFactor[ 4 ],
-		unsigned SampleMask)
+		ID3D11BlendState *new_blend_state,
+		const float new_blend_factor[4],
+		unsigned new_sample_mask)
 	{
 		SYNCHRONIZED;
 		float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-		if(blend_state.p != pBlendState)
+		if(blend_state.p != new_blend_state)
 		{
-			pipe->bind_blend_state(pipe, pBlendState ? ((GalliumD3D11BlendState*)pBlendState)->object : default_blend);
-			blend_state = pBlendState;
+			pipe->bind_blend_state(pipe, new_blend_state ? ((GalliumD3D11BlendState*)new_blend_state)->object : default_blend);
+			blend_state = new_blend_state;
 		}
 
 		// Windows D3D11 does this, even though it's apparently undocumented
-		if(!BlendFactor)
-			BlendFactor = white;
+		if(!new_blend_factor)
+			new_blend_factor = white;
 
-		if(memcmp(blend_color, BlendFactor, sizeof(blend_color)))
+		if(memcmp(blend_color, new_blend_factor, sizeof(blend_color)))
 		{
-			pipe->set_blend_color(pipe, (struct pipe_blend_color*)BlendFactor);
-			memcpy(blend_color, BlendFactor, sizeof(blend_color));
+			pipe->set_blend_color(pipe, (struct pipe_blend_color*)new_blend_factor);
+			memcpy(blend_color, new_blend_factor, sizeof(blend_color));
 		}
 
-		if(sample_mask != SampleMask)
+		if(sample_mask != new_sample_mask)
 		{
-			pipe->set_sample_mask(pipe, sample_mask);
-			sample_mask = SampleMask;
+			pipe->set_sample_mask(pipe, new_sample_mask);
+			sample_mask = new_sample_mask;
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetBlendState(
-		ID3D11BlendState **ppBlendState,
-		float BlendFactor[ 4 ],
-		unsigned *pSampleMask)
+		ID3D11BlendState **out_blend_state,
+		float out_blend_factor[4],
+		unsigned *out_sample_mask)
 	{
 		SYNCHRONIZED;
-		if(ppBlendState)
-			*ppBlendState = blend_state.ref();
-		if(BlendFactor)
-			memcpy(BlendFactor, blend_color, sizeof(blend_color));
-		if(pSampleMask)
-			*pSampleMask = sample_mask;
+		if(out_blend_state)
+			*out_blend_state = blend_state.ref();
+		if(out_blend_factor)
+			memcpy(out_blend_factor, blend_color, sizeof(blend_color));
+		if(out_sample_mask)
+			*out_sample_mask = sample_mask;
 	}
 
 	void set_stencil_ref()
@@ -1114,32 +1114,32 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 
 	virtual void STDMETHODCALLTYPE OMSetDepthStencilState(
-		ID3D11DepthStencilState *pDepthStencilState,
-		unsigned StencilRef)
+		ID3D11DepthStencilState *new_depth_stencil_state,
+		unsigned new_stencil_ref)
 	{
 		SYNCHRONIZED;
-		if(pDepthStencilState != depth_stencil_state.p)
+		if(new_depth_stencil_state != depth_stencil_state.p)
 		{
-			pipe->bind_depth_stencil_alpha_state(pipe, pDepthStencilState ? ((GalliumD3D11DepthStencilState*)pDepthStencilState)->object : default_depth_stencil);
-			depth_stencil_state = pDepthStencilState;
+			pipe->bind_depth_stencil_alpha_state(pipe, new_depth_stencil_state ? ((GalliumD3D11DepthStencilState*)new_depth_stencil_state)->object : default_depth_stencil);
+			depth_stencil_state = new_depth_stencil_state;
 		}
 
-		if(StencilRef != stencil_ref)
+		if(new_stencil_ref != stencil_ref)
 		{
-			stencil_ref = StencilRef;
+			stencil_ref = new_stencil_ref;
 			set_stencil_ref();
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetDepthStencilState(
-		ID3D11DepthStencilState **ppDepthStencilState,
-		unsigned *pStencilRef)
+		ID3D11DepthStencilState **out_depth_stencil_state,
+		unsigned *out_stencil_ref)
 	{
 		SYNCHRONIZED;
-		if(*ppDepthStencilState)
-			*ppDepthStencilState = depth_stencil_state.ref();
-		if(pStencilRef)
-			*pStencilRef = stencil_ref;
+		if(*out_depth_stencil_state)
+			*out_depth_stencil_state = depth_stencil_state.ref();
+		if(out_stencil_ref)
+			*out_stencil_ref = stencil_ref;
 	}
 
 	void set_framebuffer()
@@ -1178,121 +1178,121 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	 */
 
 	virtual void STDMETHODCALLTYPE OMSetRenderTargets(
-		unsigned NumViews,
-		ID3D11RenderTargetView *const *ppRenderTargetViews,
-		ID3D11DepthStencilView *pDepthStencilView)
+		unsigned count,
+		ID3D11RenderTargetView *const *new_render_target_views,
+		ID3D11DepthStencilView  *new_depth_stencil_view)
 	{
 		SYNCHRONIZED;
-		if(!ppRenderTargetViews)
-			NumViews = 0;
-		if(NumViews == num_render_target_views)
+		if(!new_render_target_views)
+			count = 0;
+		if(count == num_render_target_views)
 		{
-			for(unsigned i = 0; i < NumViews; ++i)
+			for(unsigned i = 0; i < count; ++i)
 			{
-				if(ppRenderTargetViews[i] != render_target_views[i].p)
+				if(new_render_target_views[i] != render_target_views[i].p)
 					goto changed;
 			}
 			return;
 		}
 changed:
-		depth_stencil_view = pDepthStencilView;
+		depth_stencil_view = new_depth_stencil_view;
 		unsigned i;
-		for(i = 0; i < NumViews; ++i)
+		for(i = 0; i < count; ++i)
 		{
-			render_target_views[i] = ppRenderTargetViews[i];
+			render_target_views[i] = new_render_target_views[i];
 #if API >= 11
 			om_unordered_access_views[i] = (ID3D11UnorderedAccessView*)NULL;
 #endif
 		}
 		for(; i < num_render_target_views; ++i)
 			render_target_views[i] = (ID3D11RenderTargetView*)NULL;
-		num_render_target_views = NumViews;
+		num_render_target_views = count;
 		set_framebuffer();
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetRenderTargets(
-		unsigned NumViews,
-		ID3D11RenderTargetView **ppRenderTargetViews,
-		ID3D11DepthStencilView **ppDepthStencilView)
+		unsigned count,
+		ID3D11RenderTargetView **out_render_target_views,
+		ID3D11DepthStencilView  **out_depth_stencil_view)
 	{
 		SYNCHRONIZED;
-		if(ppRenderTargetViews)
+		if(out_render_target_views)
 		{
 			unsigned i;
-			for(i = 0; i < std::min(num_render_target_views, NumViews); ++i)
-				ppRenderTargetViews[i] = render_target_views[i].ref();
+			for(i = 0; i < std::min(num_render_target_views, count); ++i)
+				out_render_target_views[i] = render_target_views[i].ref();
 
-			for(; i < NumViews; ++i)
-				ppRenderTargetViews[i] = 0;
+			for(; i < count; ++i)
+				out_render_target_views[i] = 0;
 		}
 
-		if(ppDepthStencilView)
-			*ppDepthStencilView = depth_stencil_view.ref();
+		if(out_depth_stencil_view)
+			*out_depth_stencil_view = depth_stencil_view.ref();
 	}
 
 #if API >= 11
 	/* TODO: what is this supposed to do _exactly_? are we doing the right thing? */
 	virtual void STDMETHODCALLTYPE OMSetRenderTargetsAndUnorderedAccessViews(
-		unsigned NumRTVs,
-		ID3D11RenderTargetView *const *ppRenderTargetViews,
-		ID3D11DepthStencilView *pDepthStencilView,
-		unsigned UAVStartSlot,
-		unsigned NumUAVs,
-		ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		const unsigned *pUAVInitialCounts)
+		unsigned rtv_count,
+		ID3D11RenderTargetView *const *new_render_target_views,
+		ID3D11DepthStencilView  *new_depth_stencil_view,
+		unsigned uav_start,
+		unsigned uav_count,
+		ID3D11UnorderedAccessView *const *new_unordered_access_views,
+		const unsigned *new_uav_initial_counts)
 	{
 		SYNCHRONIZED;
-		if(NumRTVs != D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL)
-			OMSetRenderTargets(NumRTVs, ppRenderTargetViews, pDepthStencilView);
+		if(rtv_count != D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL)
+			OMSetRenderTargets(rtv_count, new_render_target_views, new_depth_stencil_view);
 
-		if(NumUAVs != D3D11_KEEP_UNORDERED_ACCESS_VIEWS)
+		if(uav_count != D3D11_KEEP_UNORDERED_ACCESS_VIEWS)
 		{
-			for(unsigned i = 0; i < NumUAVs; ++i)
+			for(unsigned i = 0; i < uav_count; ++i)
 			{
-				om_unordered_access_views[UAVStartSlot + i] = ppUnorderedAccessViews[i];
-				render_target_views[UAVStartSlot + i] = (ID3D11RenderTargetView*)0;
+				om_unordered_access_views[uav_start + i] = new_unordered_access_views[i];
+				render_target_views[uav_start + i] = (ID3D11RenderTargetView*)0;
 			}
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetRenderTargetsAndUnorderedAccessViews(
-		unsigned NumRTVs,
-		ID3D11RenderTargetView **ppRenderTargetViews,
-		ID3D11DepthStencilView **ppDepthStencilView,
-		unsigned UAVStartSlot,
-		unsigned NumUAVs,
-		ID3D11UnorderedAccessView **ppUnorderedAccessViews)
+		unsigned rtv_count,
+		ID3D11RenderTargetView **out_render_target_views,
+		ID3D11DepthStencilView  **out_depth_stencil_view,
+		unsigned uav_start,
+		unsigned uav_count,
+		ID3D11UnorderedAccessView **out_unordered_access_views)
 	{
 		SYNCHRONIZED;
-		if(ppRenderTargetViews)
-			OMGetRenderTargets(NumRTVs, ppRenderTargetViews, ppDepthStencilView);
+		if(out_render_target_views)
+			OMGetRenderTargets(rtv_count, out_render_target_views, out_depth_stencil_view);
 
-		if(ppUnorderedAccessViews)
+		if(out_unordered_access_views)
 		{
-			for(unsigned i = 0; i < NumUAVs; ++i)
-				ppUnorderedAccessViews[i] = om_unordered_access_views[UAVStartSlot + i].ref();
+			for(unsigned i = 0; i < uav_count; ++i)
+				out_unordered_access_views[i] = om_unordered_access_views[uav_start + i].ref();
 		}
 	}
 #endif
 
 	virtual void STDMETHODCALLTYPE SOSetTargets(
-		unsigned NumBuffers,
-		ID3D11Buffer *const *ppSOTargets,
-		const unsigned *pOffsets)
+		unsigned count,
+		ID3D11Buffer *const *new_so_targets,
+		const unsigned *new_offsets)
 	{
 		SYNCHRONIZED;
 		unsigned i;
-		if(!ppSOTargets)
-			NumBuffers = 0;
+		if(!new_so_targets)
+			count = 0;
 		bool changed = false;
-		for(i = 0; i < NumBuffers; ++i)
+		for(i = 0; i < count; ++i)
 		{
-			ID3D11Buffer* buffer = ppSOTargets[i];
-			if(buffer != so_targets[i].p || pOffsets[i] != so_offsets[i])
+			ID3D11Buffer* buffer = new_so_targets[i];
+			if(buffer != so_targets[i].p || new_offsets[i] != so_offsets[i])
 			{
 				so_buffers[i] = buffer ? ((GalliumD3D11Buffer*)buffer)->resource : 0;
 				so_targets[i] = buffer;
-				so_offsets[i] = pOffsets[i];
+				so_offsets[i] = new_offsets[i];
 				changed = true;
 			}
 		}
@@ -1305,61 +1305,61 @@ changed:
 				so_offsets[i] = 0;
 			}
 		}
-		num_so_targets = NumBuffers;
+		num_so_targets = count;
 
 		if(changed && caps.so)
 			pipe->set_stream_output_buffers(pipe, so_buffers, (int*)so_offsets, num_so_targets);
 	}
 
 	virtual void STDMETHODCALLTYPE SOGetTargets(
-		unsigned NumBuffers,
-		ID3D11Buffer **ppSOTargets
+		unsigned count,
+		ID3D11Buffer **out_so_targets
 #if API < 11
-		, UINT *pOffsets
+		, UINT *out_offsets
 #endif
 		)
 	{
 		SYNCHRONIZED;
-		for(unsigned i = 0; i < NumBuffers; ++i)
+		for(unsigned i = 0; i < count; ++i)
 		{
-			ppSOTargets[i] = so_targets[i].ref();
+			out_so_targets[i] = so_targets[i].ref();
 #if API < 11
-			pOffsets[i] = so_offsets[i];
+			out_offsets[i] = so_offsets[i];
 #endif
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE Begin(
-		ID3D11Asynchronous *pAsync)
+		ID3D11Asynchronous *async)
 	{
 		SYNCHRONIZED;
 		if(caps.queries)
-			pipe->begin_query(pipe, ((GalliumD3D11Asynchronous<>*)pAsync)->query);
+			pipe->begin_query(pipe, ((GalliumD3D11Asynchronous<>*)async)->query);
 	}
 
 	virtual void STDMETHODCALLTYPE End(
-		ID3D11Asynchronous *pAsync)
+		ID3D11Asynchronous *async)
 	{
 		SYNCHRONIZED;
 		if(caps.queries)
-			pipe->end_query(pipe, ((GalliumD3D11Asynchronous<>*)pAsync)->query);
+			pipe->end_query(pipe, ((GalliumD3D11Asynchronous<>*)async)->query);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetData(
-		ID3D11Asynchronous *pAsync,
-		void *pData,
-		unsigned DataSize,
-		unsigned GetDataFlags)
+		ID3D11Asynchronous *iasync,
+		void *out_data,
+		unsigned data_size,
+		unsigned get_data_flags)
 	{
 		SYNCHRONIZED;
 		if(!caps.queries)
 			return E_NOTIMPL;
 
-		GalliumD3D11Asynchronous<>* async = (GalliumD3D11Asynchronous<>*)pAsync;
-		void* data = alloca(async->data_size);
-		boolean ret = pipe->get_query_result(pipe, ((GalliumD3D11Asynchronous<>*)pAsync)->query, !(GetDataFlags & D3D11_ASYNC_GETDATA_DONOTFLUSH), data);
-		if(pData)
-			memcpy(pData, data, std::min(async->data_size, DataSize));
+		GalliumD3D11Asynchronous<>* async = (GalliumD3D11Asynchronous<>*)iasync;
+		void* tmp_data = alloca(async->data_size);
+		boolean ret = pipe->get_query_result(pipe, async->query, !(get_data_flags & D3D11_ASYNC_GETDATA_DONOTFLUSH), tmp_data);
+		if(out_data)
+			memcpy(out_data, tmp_data, std::min(async->data_size, data_size));
 		return ret ? S_OK : S_FALSE;
 	}
 
@@ -1387,27 +1387,27 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE SetPredication(
-		ID3D11Predicate *pPredicate,
-		BOOL PredicateValue)
+		ID3D11Predicate *new_predicate,
+		BOOL new_predicate_value)
 	{
 		SYNCHRONIZED;
-		if(render_predicate.p != pPredicate || render_predicate_value != PredicateValue)
+		if(render_predicate.p != new_predicate || render_predicate_value != new_predicate_value)
 		{
-			render_predicate = pPredicate;
-			render_predicate_value = PredicateValue;
+			render_predicate = new_predicate;
+			render_predicate_value = new_predicate_value;
 			set_render_condition();
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE GetPredication(
-		ID3D11Predicate **ppPredicate,
-		BOOL *pPredicateValue)
+		ID3D11Predicate **out_predicate,
+		BOOL *out_predicate_value)
 	{
 		SYNCHRONIZED;
-		if(ppPredicate)
-			*ppPredicate = render_predicate.ref();
-		if(pPredicateValue)
-			*pPredicateValue = render_predicate_value;
+		if(out_predicate)
+			*out_predicate = render_predicate.ref();
+		if(out_predicate_value)
+			*out_predicate_value = render_predicate_value;
 	}
 
 	static pipe_subresource d3d11_to_pipe_subresource(struct pipe_resource* resource, unsigned subresource)
@@ -1428,56 +1428,56 @@ changed:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE Map(
-		ID3D11Resource *pResource,
-		unsigned Subresource,
-		D3D11_MAP MapType,
-		unsigned MapFlags,
-		D3D11_MAPPED_SUBRESOURCE *pMappedResource)
+		ID3D11Resource *iresource,
+		unsigned subresource,
+		D3D11_MAP map_type,
+		unsigned map_flags,
+		D3D11_MAPPED_SUBRESOURCE *mapped_resource)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
-		if(resource->transfers.count(Subresource))
+		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)iresource;
+		if(resource->transfers.count(subresource))
 			return E_FAIL;
-		pipe_subresource sr = d3d11_to_pipe_subresource(resource->resource, Subresource);
+		pipe_subresource sr = d3d11_to_pipe_subresource(resource->resource, subresource);
 		pipe_box box;
 		d3d11_to_pipe_box(resource->resource, sr.level, 0);
 		unsigned usage = 0;
-		if(MapType == D3D11_MAP_READ)
+		if(map_type == D3D11_MAP_READ)
 			usage = PIPE_TRANSFER_READ;
-		else if(MapType == D3D11_MAP_WRITE)
+		else if(map_type == D3D11_MAP_WRITE)
 			usage = PIPE_TRANSFER_WRITE;
-		else if(MapType == D3D11_MAP_READ_WRITE)
+		else if(map_type == D3D11_MAP_READ_WRITE)
 			usage = PIPE_TRANSFER_READ_WRITE;
-		else if(MapType == D3D11_MAP_WRITE_DISCARD)
+		else if(map_type == D3D11_MAP_WRITE_DISCARD)
 			usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD;
-		else if(MapType == D3D11_MAP_WRITE_NO_OVERWRITE)
+		else if(map_type == D3D11_MAP_WRITE_NO_OVERWRITE)
 			usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_NOOVERWRITE;
 		else
 			return E_INVALIDARG;
-		if(MapType & D3D10_MAP_FLAG_DO_NOT_WAIT)
+		if(map_type & D3D10_MAP_FLAG_DO_NOT_WAIT)
 			usage |= PIPE_TRANSFER_DONTBLOCK;
 		struct pipe_transfer* transfer = pipe->get_transfer(pipe, resource->resource, sr, usage, &box);
 		if(!transfer) {
-			if(MapType & D3D10_MAP_FLAG_DO_NOT_WAIT)
+			if(map_type & D3D10_MAP_FLAG_DO_NOT_WAIT)
 				return DXGI_ERROR_WAS_STILL_DRAWING;
 			else
 				return E_FAIL;
 		}
-		resource->transfers[Subresource] = transfer;
+		resource->transfers[subresource] = transfer;
 		pipe->transfer_map(pipe, transfer);
-		pMappedResource->pData = transfer->data;
-		pMappedResource->RowPitch = transfer->stride;
-		pMappedResource->DepthPitch = transfer->slice_stride;
+		mapped_resource->pData = transfer->data;
+		mapped_resource->RowPitch = transfer->stride;
+		mapped_resource->DepthPitch = transfer->slice_stride;
 		return S_OK;
 	}
 
 	virtual void STDMETHODCALLTYPE Unmap(
-		ID3D11Resource *pResource,
-		unsigned Subresource)
+		ID3D11Resource *iresource,
+		unsigned subresource)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
-		std::unordered_map<unsigned, pipe_transfer*>::iterator i = resource->transfers.find(Subresource);
+		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)iresource;
+		std::unordered_map<unsigned, pipe_transfer*>::iterator i = resource->transfers.find(subresource);
 		if(i != resource->transfers.end())
 		{
 			pipe->transfer_unmap(pipe, i->second);
@@ -1487,37 +1487,37 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE CopySubresourceRegion(
-		ID3D11Resource *pDstResource,
-		unsigned DstSubresource,
-		unsigned DstX,
-		unsigned DstY,
-		unsigned DstZ,
-		ID3D11Resource *pSrcResource,
-		unsigned SrcSubresource,
-		const D3D11_BOX *pSrcBox)
+		ID3D11Resource *dst_resource,
+		unsigned dst_subresource,
+		unsigned dst_x,
+		unsigned dst_y,
+		unsigned dst_z,
+		ID3D11Resource *src_resource,
+		unsigned src_subresource,
+		const D3D11_BOX *src_box)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
-		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)pSrcResource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, DstSubresource);
-		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, SrcSubresource);
-		pipe_box box = d3d11_to_pipe_box(src->resource, subsrc.level, pSrcBox);
+		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
+		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
+		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
+		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, src_subresource);
+		pipe_box box = d3d11_to_pipe_box(src->resource, subsrc.level, src_box);
 		for(unsigned i = 0; i < box.depth; ++i)
 		{
 			pipe->resource_copy_region(pipe,
-				dst->resource, subdst, DstX, DstY, DstZ + i,
+				dst->resource, subdst, dst_x, dst_y, dst_z + i,
 				src->resource, subsrc, box.x, box.y, box.z + i,
 				box.width, box.height);
 		}
 	}
 
 	virtual void STDMETHODCALLTYPE CopyResource(
-		ID3D11Resource *pDstResource,
-		ID3D11Resource *pSrcResource)
+		ID3D11Resource *dst_resource,
+		ID3D11Resource *src_resource)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
-		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)pSrcResource;
+		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
+		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
 		pipe_subresource sr;
 		unsigned faces = dst->resource->target == PIPE_TEXTURE_CUBE ? 6 : 1;
 
@@ -1540,66 +1540,66 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE UpdateSubresource(
-		ID3D11Resource *pDstResource,
-		unsigned DstSubresource,
+		ID3D11Resource *dst_resource,
+		unsigned dst_subresource,
 		const D3D11_BOX *pDstBox,
 		const void *pSrcData,
-		unsigned SrcRowPitch,
-		unsigned SrcDepthPitch)
+		unsigned src_row_pitch,
+		unsigned src_depth_pitch)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, DstSubresource);
+		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
+		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
 		pipe_box box = d3d11_to_pipe_box(dst->resource, subdst.level, pDstBox);
-		pipe->transfer_inline_write(pipe, dst->resource, subdst, PIPE_TRANSFER_WRITE, &box, pSrcData, SrcRowPitch, SrcDepthPitch);
+		pipe->transfer_inline_write(pipe, dst->resource, subdst, PIPE_TRANSFER_WRITE, &box, pSrcData, src_row_pitch, src_depth_pitch);
 	}
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE CopyStructureCount(
-		ID3D11Buffer *pDstBuffer,
-		unsigned DstAlignedByteOffset,
-		ID3D11UnorderedAccessView *pSrcView)
+		ID3D11Buffer *dst_buffer,
+		unsigned dst_aligned_byte_offset,
+		ID3D11UnorderedAccessView *src_view)
 	{
 		SYNCHRONIZED;
 	}
 #endif
 
 	virtual void STDMETHODCALLTYPE ClearRenderTargetView(
-		ID3D11RenderTargetView *pRenderTargetView,
-		const float ColorRGBA[4])
+		ID3D11RenderTargetView *render_target_view,
+		const float color[4])
 	{
 		SYNCHRONIZED;
-		GalliumD3D11RenderTargetView* view = ((GalliumD3D11RenderTargetView*)pRenderTargetView);
-		pipe->clear_render_target(pipe, view->object, ColorRGBA, 0, 0, view->object->width, view->object->height);
+		GalliumD3D11RenderTargetView* view = ((GalliumD3D11RenderTargetView*)render_target_view);
+		pipe->clear_render_target(pipe, view->object, color, 0, 0, view->object->width, view->object->height);
 	}
 
 	virtual void STDMETHODCALLTYPE ClearDepthStencilView(
-		ID3D11DepthStencilView *pDepthStencilView,
-		unsigned ClearFlags,
-		float Depth,
-		UINT8 Stencil)
+		ID3D11DepthStencilView  *depth_stencil_view,
+		unsigned clear_flags,
+		float depth,
+		UINT8 stencil)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11DepthStencilView* view = ((GalliumD3D11DepthStencilView*)pDepthStencilView);
+		GalliumD3D11DepthStencilView* view = ((GalliumD3D11DepthStencilView*)depth_stencil_view);
 		unsigned flags = 0;
-		if(ClearFlags & D3D11_CLEAR_DEPTH)
+		if(clear_flags & D3D11_CLEAR_DEPTH)
 			flags |= PIPE_CLEAR_DEPTH;
-		if(ClearFlags & D3D11_CLEAR_STENCIL)
+		if(clear_flags & D3D11_CLEAR_STENCIL)
 			flags |= PIPE_CLEAR_STENCIL;
-		pipe->clear_depth_stencil(pipe, view->object, flags, Depth, Stencil, 0, 0, view->object->width, view->object->height);
+		pipe->clear_depth_stencil(pipe, view->object, flags, depth, stencil, 0, 0, view->object->width, view->object->height);
 	}
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewUint(
-		ID3D11UnorderedAccessView *pUnorderedAccessView,
-		const unsigned Values[ 4 ])
+		ID3D11UnorderedAccessView *unordered_access_view,
+		const unsigned values[4])
 	{
 		SYNCHRONIZED;
 	}
 
 	virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewFloat(
-			ID3D11UnorderedAccessView *pUnorderedAccessView,
-			const float Values[ 4 ])
+			ID3D11UnorderedAccessView *unordered_access_view,
+			const float values[4])
 	{
 		SYNCHRONIZED;
 	}
@@ -1631,11 +1631,11 @@ changed:
 	}
 
 	virtual void STDMETHODCALLTYPE GenerateMips(
-			ID3D11ShaderResourceView *pShaderResourceView)
+		ID3D11ShaderResourceView *shader_resource_view)
 	{
 		SYNCHRONIZED;
 
-		GalliumD3D11ShaderResourceView* view = (GalliumD3D11ShaderResourceView*)pShaderResourceView;
+		GalliumD3D11ShaderResourceView* view = (GalliumD3D11ShaderResourceView*)shader_resource_view;
 		if(caps.gs)
 			pipe->bind_gs_state(pipe, 0);
 		if(caps.so)
@@ -1675,53 +1675,53 @@ changed:
 #if API >= 11
 	/* TODO: hack SRVs or sampler states to handle this, or add to Gallium */
 	virtual void STDMETHODCALLTYPE SetResourceMinLOD(
-		ID3D11Resource *pResource,
-		float MinLOD)
+		ID3D11Resource *iresource,
+		float min_lod)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
-		if(resource->min_lod != MinLOD)
+		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)iresource;
+		if(resource->min_lod != min_lod)
 		{
 			// TODO: actually do anything?
-			resource->min_lod = MinLOD;
+			resource->min_lod = min_lod;
 		}
 	}
 
 	virtual float STDMETHODCALLTYPE GetResourceMinLOD(
-		ID3D11Resource *pResource)
+		ID3D11Resource *iresource)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)pResource;
+		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)iresource;
 		return resource->min_lod;
 	}
 #endif
 
 	virtual void STDMETHODCALLTYPE ResolveSubresource(
-		ID3D11Resource *pDstResource,
-		unsigned DstSubresource,
-		ID3D11Resource *pSrcResource,
-		unsigned SrcSubresource,
-		DXGI_FORMAT Format)
+		ID3D11Resource *dst_resource,
+		unsigned dst_subresource,
+		ID3D11Resource *src_resource,
+		unsigned src_subresource,
+		DXGI_FORMAT format)
 	{
 		SYNCHRONIZED;
-		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)pDstResource;
-		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)pSrcResource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, DstSubresource);
-		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, SrcSubresource);
+		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
+		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
+		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
+		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, src_subresource);
 		pipe->resource_resolve(pipe, dst->resource, subdst, src->resource, subsrc);
 	}
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE ExecuteCommandList(
-		ID3D11CommandList *pCommandList,
-		BOOL RestoreContextState)
+		ID3D11CommandList *command_list,
+		BOOL restore_context_state)
 	{
 		SYNCHRONIZED;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE FinishCommandList(
-		BOOL RestoreDeferredContextState,
-		ID3D11CommandList **ppCommandList)
+		BOOL restore_deferred_context_state,
+		ID3D11CommandList **out_command_list)
 	{
 		SYNCHRONIZED;
 		return E_NOTIMPL;
@@ -1898,7 +1898,7 @@ changed:
 		}
 	}
 
-	void UnbindDepthStencilView(ID3D11DepthStencilView* view)
+	void UnbindDepthStencilView(ID3D11DepthStencilView * view)
 	{
 		SYNCHRONIZED;
 		if(view == depth_stencil_view)
