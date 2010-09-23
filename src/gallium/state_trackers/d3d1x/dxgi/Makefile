@@ -1,5 +1,5 @@
 LIBNAME=dxgi
-LIBRARY_INCLUDES=-Iinclude -I../gd3dapi -I../d3dapi -I../w32api -I../d3d1xstutil/include -I../include -I../../../include -I../../../auxiliary -I../../../state_trackers/egl/common
+LIBRARY_INCLUDES=-I../../../../../include -Iinclude -I../gd3dapi -I../d3dapi -I../w32api -I../d3d1xstutil/include -I../include -I../../../include -I../../../auxiliary -I../../../state_trackers/egl/common
 LIBRARY_DEFINES=-DDXGI_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\"
 CPP_SOURCES=$(wildcard src/*.cpp)
 
