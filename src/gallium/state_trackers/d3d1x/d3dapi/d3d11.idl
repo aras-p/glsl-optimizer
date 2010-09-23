@@ -1335,24 +1335,24 @@ interface ID3D11Device;
 [object, local, uuid("1841e5c8-16b0-489b-bcc8-44cfb0d5deae")]
 interface ID3D11DeviceChild : IUnknown {
 	void GetDevice(
-		[out] ID3D11Device **ppDevice
+		[out] ID3D11Device **a
 	);
 
 	HRESULT GetPrivateData(
-		[in] REFGUID guid,
-		[in, out] UINT *pDataSize,
-		[out] void *pData
+		[in] REFGUID a,
+		[in, out] UINT *b,
+		[out] void *c
 	);
 
 	HRESULT SetPrivateData(
-		[in] REFGUID guid,
-		[in] UINT DataSize,
-		[in] const void *pData
+		[in] REFGUID a,
+		[in] UINT b,
+		[in] const void *c
 	);
 
 	HRESULT SetPrivateDataInterface(
-		[in] REFGUID guid,
-		[in] const IUnknown *pData
+		[in] REFGUID a,
+		[in] const IUnknown *b
 	);
 };
 
@@ -1364,21 +1364,21 @@ interface ID3D11InputLayout : ID3D11DeviceChild
 [object, local, uuid("03823efb-8d8f-4e1c-9aa2-f64bb2cbfdf1")]
 interface ID3D11DepthStencilState : ID3D11DeviceChild {
 	void GetDesc(
-		[out] D3D11_DEPTH_STENCIL_DESC *pDesc
+		[out] D3D11_DEPTH_STENCIL_DESC *a
 	);
 };
 
 [object, local, uuid("75b68faa-347d-4159-8f45-a0640f01cd9a")]
 interface ID3D11BlendState : ID3D11DeviceChild {
 	void GetDesc(
-		[out] D3D11_BLEND_DESC *pDesc
+		[out] D3D11_BLEND_DESC *a
 	);
 };
 
 [object, local, uuid("9bb4ab81-ab1a-4d8f-b506-fc04200b6ee7")]
 interface ID3D11RasterizerState : ID3D11DeviceChild {
 	void GetDesc(
-		[out] D3D11_RASTERIZER_DESC *pDesc
+		[out] D3D11_RASTERIZER_DESC *a
 	);
 };
 
@@ -1386,7 +1386,7 @@ interface ID3D11RasterizerState : ID3D11DeviceChild {
 interface ID3D11SamplerState : ID3D11DeviceChild
 {
 	void GetDesc(
-		[out] D3D11_SAMPLER_DESC *pDesc
+		[out] D3D11_SAMPLER_DESC *a
 	);
 
 };
@@ -1394,11 +1394,11 @@ interface ID3D11SamplerState : ID3D11DeviceChild
 [object, local, uuid("dc8e63f3-d12b-4952-b47b-5e45026a862d")]
 interface ID3D11Resource : ID3D11DeviceChild {
 	void GetType(
-		[out] D3D11_RESOURCE_DIMENSION *pResourceDimension
+		[out] D3D11_RESOURCE_DIMENSION *a
 	);
 
 	void SetEvictionPriority(
-		[in] UINT EvictionPriority
+		[in] UINT a
 	);
 
 	UINT GetEvictionPriority(
@@ -1408,7 +1408,7 @@ interface ID3D11Resource : ID3D11DeviceChild {
 [object, local, uuid("48570b85-d1ee-4fcd-a250-eb350722b037")]
 interface ID3D11Buffer : ID3D11Resource {
 	void GetDesc(
-		[out] D3D11_BUFFER_DESC *pDesc
+		[out] D3D11_BUFFER_DESC *a
 	);
 
 };
@@ -1416,28 +1416,28 @@ interface ID3D11Buffer : ID3D11Resource {
 [object, local, uuid("f8fb5c27-c6b3-4f75-a4c8-439af2ef564c")]
 interface ID3D11Texture1D : ID3D11Resource {
 	void GetDesc(
-		[out] D3D11_TEXTURE1D_DESC *pDesc
+		[out] D3D11_TEXTURE1D_DESC *a
 	);
 };
 
 [object, local, uuid("6f15aaf2-d208-4e89-9ab4-489535d34f9c")]
 interface ID3D11Texture2D : ID3D11Resource {
 	void GetDesc(
-		[out] D3D11_TEXTURE2D_DESC *pDesc
+		[out] D3D11_TEXTURE2D_DESC *a
 	);
 };
 
 [object, local, uuid("037e866e-f56d-4357-a8af-9dabbe6e250e")]
 interface ID3D11Texture3D : ID3D11Resource {
 	void GetDesc(
-		[out] D3D11_TEXTURE3D_DESC *pDesc
+		[out] D3D11_TEXTURE3D_DESC *a
 	);
 };
 
 [object, local, uuid("839d1216-bb2e-412b-b7f4-a9dbebe08ed1")]
 interface ID3D11View : ID3D11DeviceChild {
 	void GetResource(
-		[out] ID3D11Resource **ppResource
+		[out] ID3D11Resource **a
 	);
 
 };
@@ -1445,7 +1445,7 @@ interface ID3D11View : ID3D11DeviceChild {
 [object, local, uuid("b0e06fe0-8192-4e1a-b1ca-36d7414710b2")]
 interface ID3D11ShaderResourceView : ID3D11View {
 	void GetDesc(
-		[out] D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc
+		[out] D3D11_SHADER_RESOURCE_VIEW_DESC *a
 	);
 };
 
@@ -1453,7 +1453,7 @@ interface ID3D11ShaderResourceView : ID3D11View {
 interface ID3D11RenderTargetView : ID3D11View
 {
 	void GetDesc(
-		[out] D3D11_RENDER_TARGET_VIEW_DESC *pDesc
+		[out] D3D11_RENDER_TARGET_VIEW_DESC *a
 	);
 };
 
@@ -1461,7 +1461,7 @@ interface ID3D11RenderTargetView : ID3D11View
 interface ID3D11DepthStencilView : ID3D11View
 {
 	void GetDesc(
-		[out] D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc
+		[out] D3D11_DEPTH_STENCIL_VIEW_DESC *a
 	);
 };
 
@@ -1469,7 +1469,7 @@ interface ID3D11DepthStencilView : ID3D11View
 interface ID3D11UnorderedAccessView : ID3D11View
 {
 	void GetDesc(
-		[out] D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc
+		[out] D3D11_UNORDERED_ACCESS_VIEW_DESC *a
 	);
 };
 
@@ -1514,7 +1514,7 @@ interface ID3D11Asynchronous : ID3D11DeviceChild
 interface ID3D11Query : ID3D11Asynchronous
 {
 	void GetDesc(
-		[out] D3D11_QUERY_DESC *pDesc
+		[out] D3D11_QUERY_DESC *a
 	);
 };
 
@@ -1527,7 +1527,7 @@ interface ID3D11Predicate : ID3D11Query
 interface ID3D11Counter : ID3D11Asynchronous
 {
 	void GetDesc(
-		[out] D3D11_COUNTER_DESC *pDesc
+		[out] D3D11_COUNTER_DESC *a
 	);
 };
 
@@ -1537,21 +1537,21 @@ interface ID3D11ClassLinkage;
 interface ID3D11ClassInstance : ID3D11DeviceChild
 {
 	void GetClassLinkage(
-		[out] ID3D11ClassLinkage **ppLinkage
+		[out] ID3D11ClassLinkage **a
 	);
 
 	void GetDesc(
-		[out] D3D11_CLASS_INSTANCE_DESC *pDesc
+		[out] D3D11_CLASS_INSTANCE_DESC *a
 	);
 
 	void GetInstanceName(
-		[out] LPSTR pInstanceName,
-		[in, out] SIZE_T *pBufferLength
+		[out] LPSTR a,
+		[in, out] SIZE_T *b
 	);
 
 	void GetTypeName(
-		[out] LPSTR pTypeName,
-		[in, out] SIZE_T *pBufferLength
+		[out] LPSTR a,
+		[in, out] SIZE_T *b
 	);
 };
 
@@ -1559,18 +1559,18 @@ interface ID3D11ClassInstance : ID3D11DeviceChild
 interface ID3D11ClassLinkage : ID3D11DeviceChild
 {
 	HRESULT GetClassInstance(
-		[in] LPCSTR pClassInstanceName,
-		[in] UINT InstanceIndex,
-		[out] ID3D11ClassInstance **ppInstance
+		[in] LPCSTR a,
+		[in] UINT b,
+		[out] ID3D11ClassInstance **c
 	);
 
 	HRESULT CreateClassInstance(
-		[in] LPCSTR pClassTypeName,
-		[in] UINT ConstantBufferOffset,
-		[in] UINT ConstantVectorOffset,
-		[in] UINT TextureOffset,
-		[in] UINT SamplerOffset,
-		[out] ID3D11ClassInstance **ppInstance
+		[in] LPCSTR a,
+		[in] UINT b,
+		[in] UINT c,
+		[in] UINT d,
+		[in] UINT e,
+		[out] ID3D11ClassInstance **f
 	);
 };
 
@@ -1586,213 +1586,213 @@ interface ID3D11DeviceContext;
 interface ID3D11Device : IUnknown
 {
 	HRESULT CreateBuffer(
-		[in] const D3D11_BUFFER_DESC *pDesc,
-		[in] const D3D11_SUBRESOURCE_DATA *pInitialData,
-		[out] ID3D11Buffer **ppBuffer
+		[in] const D3D11_BUFFER_DESC *a,
+		[in] const D3D11_SUBRESOURCE_DATA *b,
+		[out] ID3D11Buffer **c
 	);
 
 	HRESULT CreateTexture1D(
-		[in] const D3D11_TEXTURE1D_DESC *pDesc,
-		[in] const D3D11_SUBRESOURCE_DATA *pInitialData,
-		[out] ID3D11Texture1D **ppTexture1D
+		[in] const D3D11_TEXTURE1D_DESC *a,
+		[in] const D3D11_SUBRESOURCE_DATA *b,
+		[out] ID3D11Texture1D **c
 	);
 
 	HRESULT CreateTexture2D(
-		[in] const D3D11_TEXTURE2D_DESC *pDesc,
-		[in] const D3D11_SUBRESOURCE_DATA *pInitialData,
-		[out] ID3D11Texture2D **ppTexture2D
+		[in] const D3D11_TEXTURE2D_DESC *a,
+		[in] const D3D11_SUBRESOURCE_DATA *b,
+		[out] ID3D11Texture2D **c
 	);
 
 	HRESULT CreateTexture3D(
-		[in] const D3D11_TEXTURE3D_DESC *pDesc,
-		[in] const D3D11_SUBRESOURCE_DATA *pInitialData,
-		[out] ID3D11Texture3D **ppTexture3D
+		[in] const D3D11_TEXTURE3D_DESC *a,
+		[in] const D3D11_SUBRESOURCE_DATA *b,
+		[out] ID3D11Texture3D **c
 	);
 
 	HRESULT CreateShaderResourceView(
-		[in] ID3D11Resource *pResource,
-		[in] const D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc,
-		[out] ID3D11ShaderResourceView **ppSRView
+		[in] ID3D11Resource *a,
+		[in] const D3D11_SHADER_RESOURCE_VIEW_DESC *b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	HRESULT CreateUnorderedAccessView(
-		[in] ID3D11Resource *pResource,
-		[in] const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc,
-		[out] ID3D11UnorderedAccessView **ppUAView
+		[in] ID3D11Resource *a,
+		[in] const D3D11_UNORDERED_ACCESS_VIEW_DESC *b,
+		[out] ID3D11UnorderedAccessView **c
 	);
 
 	HRESULT CreateRenderTargetView(
-		[in] ID3D11Resource *pResource,
-		[in] const D3D11_RENDER_TARGET_VIEW_DESC *pDesc,
-		[out] ID3D11RenderTargetView **ppRTView
+		[in] ID3D11Resource *a,
+		[in] const D3D11_RENDER_TARGET_VIEW_DESC *b,
+		[out] ID3D11RenderTargetView **c
 	);
 
 	HRESULT CreateDepthStencilView(
-		[in] ID3D11Resource *pResource,
-		[in] const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc,
-		[out] ID3D11DepthStencilView **ppDepthStencilView
+		[in] ID3D11Resource *a,
+		[in] const D3D11_DEPTH_STENCIL_VIEW_DESC *b,
+		[out] ID3D11DepthStencilView **c
 	);
 
 	HRESULT CreateInputLayout(
-		[in] const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs,
-		[in] UINT NumElements,
-		[in] const void *pShaderBytecodeWithInputSignature,
-		[in] SIZE_T BytecodeLength,
-		[out] ID3D11InputLayout **ppInputLayout
+		[in] const D3D11_INPUT_ELEMENT_DESC *a,
+		[in] UINT b,
+		[in] const void *c,
+		[in] SIZE_T d,
+		[out] ID3D11InputLayout **e
 	);
 
 	HRESULT CreateVertexShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11VertexShader **ppVertexShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11VertexShader **d
 	);
 
 	HRESULT CreateGeometryShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11GeometryShader **ppGeometryShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11GeometryShader **d
 	);
 
 	HRESULT CreateGeometryShaderWithStreamOutput(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] const D3D11_SO_DECLARATION_ENTRY *pSODeclaration,
-		[in] UINT NumEntries,
-		[in] const UINT *pBufferStrides,
-		[in] UINT NumStrides,
-		[in] UINT RasterizedStream,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11GeometryShader **ppGeometryShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] const D3D11_SO_DECLARATION_ENTRY *c,
+		[in] UINT d,
+		[in] const UINT *e,
+		[in] UINT f,
+		[in] UINT g,
+		[in] ID3D11ClassLinkage *h,
+		[out] ID3D11GeometryShader **i
 	);
 
 	HRESULT CreatePixelShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11PixelShader **ppPixelShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11PixelShader **d
 	);
 
 	HRESULT CreateHullShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11HullShader **ppHullShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11HullShader **d
 	);
 
 	HRESULT CreateDomainShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11DomainShader **ppDomainShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11DomainShader **d
 	);
 
 	HRESULT CreateComputeShader(
-		[in] const void *pShaderBytecode,
-		[in] SIZE_T BytecodeLength,
-		[in] ID3D11ClassLinkage *pClassLinkage,
-		[out] ID3D11ComputeShader **ppComputeShader
+		[in] const void *a,
+		[in] SIZE_T b,
+		[in] ID3D11ClassLinkage *c,
+		[out] ID3D11ComputeShader **d
 	);
 
 	HRESULT CreateClassLinkage(
-		[out] ID3D11ClassLinkage **ppLinkage
+		[out] ID3D11ClassLinkage **a
 	);
 
 	HRESULT CreateBlendState(
-		[in] const D3D11_BLEND_DESC *pBlendStateDesc,
-		[out] ID3D11BlendState **ppBlendState
+		[in] const D3D11_BLEND_DESC *a,
+		[out] ID3D11BlendState **b
 	);
 
 	HRESULT CreateDepthStencilState(
-		[in] const D3D11_DEPTH_STENCIL_DESC *pDepthStencilDesc,
-		[out] ID3D11DepthStencilState **ppDepthStencilState
+		[in] const D3D11_DEPTH_STENCIL_DESC *a,
+		[out] ID3D11DepthStencilState **b
 	);
 
 	HRESULT CreateRasterizerState(
-		[in] const D3D11_RASTERIZER_DESC *pRasterizerDesc,
-		[out] ID3D11RasterizerState **ppRasterizerState
+		[in] const D3D11_RASTERIZER_DESC *a,
+		[out] ID3D11RasterizerState **b
 	);
 
 	HRESULT CreateSamplerState(
-		[in] const D3D11_SAMPLER_DESC *pSamplerDesc,
-		[out] ID3D11SamplerState **ppSamplerState
+		[in] const D3D11_SAMPLER_DESC *a,
+		[out] ID3D11SamplerState **b
 	);
 
 	HRESULT CreateQuery(
-		[in] const D3D11_QUERY_DESC *pQueryDesc,
-		[out] ID3D11Query **ppQuery
+		[in] const D3D11_QUERY_DESC *a,
+		[out] ID3D11Query **b
 	);
 
 	HRESULT CreatePredicate(
-		[in] const D3D11_QUERY_DESC *pPredicateDesc,
-		[out] ID3D11Predicate **ppPredicate
+		[in] const D3D11_QUERY_DESC *a,
+		[out] ID3D11Predicate **b
 	);
 
 	HRESULT CreateCounter(
-		[in] const D3D11_COUNTER_DESC *pCounterDesc,
-		[out] ID3D11Counter **ppCounter
+		[in] const D3D11_COUNTER_DESC *a,
+		[out] ID3D11Counter **b
 	);
 
 	HRESULT CreateDeferredContext(
-		[in] UINT ContextFlags,
-		[out] ID3D11DeviceContext **ppDeferredContext
+		[in] UINT a,
+		[out] ID3D11DeviceContext **b
 	);
 
 	HRESULT OpenSharedResource(
-		[in] HANDLE hResource,
-		[in] REFIID ReturnedInterface,
-		[out] void **ppResource
+		[in] HANDLE a,
+		[in] REFIID b,
+		[out] void **c
 	);
 
 	HRESULT CheckFormatSupport(
-		[in] DXGI_FORMAT Format,
-		[out] UINT *pFormatSupport
+		[in] DXGI_FORMAT a,
+		[out] UINT *b
 	);
 
 	HRESULT CheckMultisampleQualityLevels(
-		[in] DXGI_FORMAT Format,
-		[in] UINT SampleCount,
-		[out] UINT *pNumQualityLevels
+		[in] DXGI_FORMAT a,
+		[in] UINT b,
+		[out] UINT *c
 	);
 
 	void CheckCounterInfo(
-		[out] D3D11_COUNTER_INFO *pCounterInfo
+		[out] D3D11_COUNTER_INFO *a
 	);
 
 	HRESULT CheckCounter(
-		[in] const D3D11_COUNTER_DESC *pDesc,
-		[out] D3D11_COUNTER_TYPE *pType,
-		[out] UINT *pActiveCounters,
-		[out] LPSTR szName,
-		[in, out, optional] UINT *pNameLength,
-		[out] LPSTR szUnits,
-		[in, out, optional] UINT *pUnitsLength,
-		[out] LPSTR szDescription,
-		[in, out, optional] UINT *pDescriptionLength
+		[in] const D3D11_COUNTER_DESC *a,
+		[out] D3D11_COUNTER_TYPE *b,
+		[out] UINT *c,
+		[out] LPSTR d,
+		[in, out, optional] UINT *e,
+		[out] LPSTR f,
+		[in, out, optional] UINT *g,
+		[out] LPSTR h,
+		[in, out, optional] UINT *i
 	);
 
 	HRESULT CheckFeatureSupport(
-		[in] D3D11_FEATURE Feature,
-		[out] void *pFeatureSupportData,
-		[in] UINT FeatureSupportDataSize
+		[in] D3D11_FEATURE a,
+		[out] void *b,
+		[in] UINT c
 	);
 
 	HRESULT GetPrivateData(
-		[in] REFGUID guid,
-		[in, out] UINT *pDataSize,
-		[out] void *pData
+		[in] REFGUID a,
+		[in, out] UINT *b,
+		[out] void *c
 	);
 
 	HRESULT SetPrivateData(
-		[in] REFGUID guid,
-		[in] UINT DataSize,
-		[in] const void *pData
+		[in] REFGUID a,
+		[in] UINT b,
+		[in] const void *c
 	);
 
 	HRESULT SetPrivateDataInterface(
-		[in] REFGUID guid,
-		[in] const IUnknown *pData
+		[in] REFGUID a,
+		[in] const IUnknown *b
 	);
 
 	D3D_FEATURE_LEVEL GetFeatureLevel();
@@ -1802,11 +1802,11 @@ interface ID3D11Device : IUnknown
 	HRESULT GetDeviceRemovedReason();
 
 	void GetImmediateContext(
-		[out] ID3D11DeviceContext **ppImmediateContext
+		[out] ID3D11DeviceContext **a
 	);
 
 	HRESULT SetExceptionMode(
-		[in] UINT RaiseFlags
+		[in] UINT a
 	);
 
 	UINT GetExceptionMode();
@@ -1816,607 +1816,607 @@ interface ID3D11Device : IUnknown
 interface ID3D11DeviceContext : ID3D11DeviceChild
 {
 	void VSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void PSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void PSSetShader(
-		[in] ID3D11PixelShader *pPixelShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11PixelShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void PSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void VSSetShader(
-		[in] ID3D11VertexShader *pVertexShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11VertexShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void DrawIndexed(
-		[in] UINT IndexCount,
-		[in] UINT StartIndexLocation,
-		[in] INT BaseVertexLocation
+		[in] UINT a,
+		[in] UINT b,
+		[in] INT c
 	);
 
 	void Draw(
-		[in] UINT VertexCount,
-		[in] UINT StartVertexLocation
+		[in] UINT a,
+		[in] UINT b
 	);
 
 	HRESULT Map(
-		[in] ID3D11Resource *pResource,
-		[in] UINT Subresource,
-		[in] D3D11_MAP MapType,
-		[in] UINT MapFlags,
-		[out] D3D11_MAPPED_SUBRESOURCE *pMappedResource
+		[in] ID3D11Resource *a,
+		[in] UINT b,
+		[in] D3D11_MAP c,
+		[in] UINT d,
+		[out] D3D11_MAPPED_SUBRESOURCE *e
 	);
 
 	void Unmap(
-		[in] ID3D11Resource *pResource,
-		[in] UINT Subresource
+		[in] ID3D11Resource *a,
+		[in] UINT b
 	);
 
 	void PSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void IASetInputLayout(
-		[in] ID3D11InputLayout *pInputLayout
+		[in] ID3D11InputLayout *a
 	);
 
 	void IASetVertexBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppVertexBuffers,
-		[in] const UINT *pStrides,
-		[in] const UINT *pOffsets
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c,
+		[in] const UINT *d,
+		[in] const UINT *e
 	);
 
 	void IASetIndexBuffer(
-		[in] ID3D11Buffer *pIndexBuffer,
-		[in] DXGI_FORMAT Format,
-		[in] UINT Offset
+		[in] ID3D11Buffer *a,
+		[in] DXGI_FORMAT b,
+		[in] UINT c
 	);
 
 	void DrawIndexedInstanced(
-		[in] UINT IndexCountPerInstance,
-		[in] UINT InstanceCount,
-		[in] UINT StartIndexLocation,
-		[in] INT BaseVertexLocation,
-		[in] UINT StartInstanceLocation
+		[in] UINT a,
+		[in] UINT b,
+		[in] UINT c,
+		[in] INT d,
+		[in] UINT e
 	);
 
 	void DrawInstanced(
-		[in] UINT VertexCountPerInstance,
-		[in] UINT InstanceCount,
-		[in] UINT StartVertexLocation,
-		[in] UINT StartInstanceLocation
+		[in] UINT a,
+		[in] UINT b,
+		[in] UINT c,
+		[in] UINT d
 	);
 
 	void GSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void GSSetShader(
-		[in] ID3D11GeometryShader *pShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11GeometryShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void IASetPrimitiveTopology(
-		[in] D3D11_PRIMITIVE_TOPOLOGY Topology
+		[in] D3D11_PRIMITIVE_TOPOLOGY a
 	);
 
 	void VSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void VSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void Begin(
-		[in] ID3D11Asynchronous *pAsync
+		[in] ID3D11Asynchronous *a
 	);
 
 	void End(
-		[in] ID3D11Asynchronous *pAsync
+		[in] ID3D11Asynchronous *a
 	);
 
 	HRESULT GetData(
-		[in] ID3D11Asynchronous *pAsync,
-		[out] void *pData,
-		[in] UINT DataSize,
-		[in] UINT GetDataFlags
+		[in] ID3D11Asynchronous *a,
+		[out] void *b,
+		[in] UINT c,
+		[in] UINT d
 	);
 
 	void SetPredication(
-		[in] ID3D11Predicate *pPredicate,
-		[in] BOOL PredicateValue
+		[in] ID3D11Predicate *a,
+		[in] BOOL b
 	);
 
 	void GSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void GSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void OMSetRenderTargets(
-		[in] UINT NumViews,
-		[in] ID3D11RenderTargetView *const *ppRenderTargetViews,
-		[in] ID3D11DepthStencilView *pDepthStencilView
+		[in] UINT a,
+		[in] ID3D11RenderTargetView *const *b,
+		[in] ID3D11DepthStencilView *c
 	);
 
 	void OMSetRenderTargetsAndUnorderedAccessViews(
-		[in] UINT NumRTVs,
-		[in] ID3D11RenderTargetView *const *ppRenderTargetViews,
-		[in] ID3D11DepthStencilView *pDepthStencilView,
-		[in] UINT UAVStartSlot,
-		[in] UINT NumUAVs,
-		[in] ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		[in] const UINT *pUAVInitialCounts
+		[in] UINT a,
+		[in] ID3D11RenderTargetView *const *b,
+		[in] ID3D11DepthStencilView *c,
+		[in] UINT d,
+		[in] UINT e,
+		[in] ID3D11UnorderedAccessView *const *f,
+		[in] const UINT *g
 	);
 
 	void OMSetBlendState(
-		[in] ID3D11BlendState *pBlendState,
-		[in] const FLOAT BlendFactor[ 4 ],
-		[in] UINT SampleMask
+		[in] ID3D11BlendState *a,
+		[in] const FLOAT b[4],
+		[in] UINT c
 	);
 
 	void OMSetDepthStencilState(
-		[in] ID3D11DepthStencilState *pDepthStencilState,
-		[in] UINT StencilRef
+		[in] ID3D11DepthStencilState *a,
+		[in] UINT b
 	);
 
 	void SOSetTargets(
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppSOTargets,
-		[in] const UINT *pOffsets
+		[in] UINT a,
+		[in] ID3D11Buffer *const *b,
+		[in] const UINT *c
 	);
 
 	void DrawAuto(
 	);
 
 	void DrawIndexedInstancedIndirect(
-		[in] ID3D11Buffer *pBufferForArgs,
-		[in] UINT AlignedByteOffsetForArgs
+		[in] ID3D11Buffer *a,
+		[in] UINT b
 	);
 
 	void DrawInstancedIndirect(
-		[in] ID3D11Buffer *pBufferForArgs,
-		[in] UINT AlignedByteOffsetForArgs
+		[in] ID3D11Buffer *a,
+		[in] UINT b
 	);
 
 	void Dispatch(
-		[in] UINT ThreadGroupCountX,
-		[in] UINT ThreadGroupCountY,
-		[in] UINT ThreadGroupCountZ
+		[in] UINT a,
+		[in] UINT b,
+		[in] UINT c
 	);
 
 	void DispatchIndirect(
-		[in] ID3D11Buffer *pBufferForArgs,
-		[in] UINT AlignedByteOffsetForArgs
+		[in] ID3D11Buffer *a,
+		[in] UINT b
 	);
 
 	void RSSetState(
-		[in] ID3D11RasterizerState *pRasterizerState
+		[in] ID3D11RasterizerState *a
 	);
 
 	void RSSetViewports(
-		[in] UINT NumViewports,
-		[in] const D3D11_VIEWPORT *pViewports
+		[in] UINT a,
+		[in] const D3D11_VIEWPORT *b
 	);
 
 	void RSSetScissorRects(
-		[in] UINT NumRects,
-		[in] const D3D11_RECT *pRects
+		[in] UINT a,
+		[in] const D3D11_RECT *b
 	);
 
 	void CopySubresourceRegion(
-		[in] ID3D11Resource *pDstResource,
-		[in] UINT DstSubresource,
-		[in] UINT DstX,
-		[in] UINT DstY,
-		[in] UINT DstZ,
-		[in] ID3D11Resource *pSrcResource,
-		[in] UINT SrcSubresource,
-		[in] const D3D11_BOX *pSrcBox
+		[in] ID3D11Resource *a,
+		[in] UINT b,
+		[in] UINT c,
+		[in] UINT d,
+		[in] UINT e,
+		[in] ID3D11Resource *f,
+		[in] UINT g,
+		[in] const D3D11_BOX *h
 	);
 
 	void CopyResource(
-		[in] ID3D11Resource *pDstResource,
-		[in] ID3D11Resource *pSrcResource
+		[in] ID3D11Resource *a,
+		[in] ID3D11Resource *b
 	);
 
 	void UpdateSubresource(
-		[in] ID3D11Resource *pDstResource,
-		[in] UINT DstSubresource,
-		[in] const D3D11_BOX *pDstBox,
-		[in] const void *pSrcData,
-		[in] UINT SrcRowPitch,
-		[in] UINT SrcDepthPitch
+		[in] ID3D11Resource *a,
+		[in] UINT b,
+		[in] const D3D11_BOX *c,
+		[in] const void *d,
+		[in] UINT e,
+		[in] UINT f
 	);
 
 	void CopyStructureCount(
-		[in] ID3D11Buffer *pDstBuffer,
-		[in] UINT DstAlignedByteOffset,
-		[in] ID3D11UnorderedAccessView *pSrcView
+		[in] ID3D11Buffer *a,
+		[in] UINT b,
+		[in] ID3D11UnorderedAccessView *c
 	);
 
 	void ClearRenderTargetView(
-		[in] ID3D11RenderTargetView *pRenderTargetView,
-		[in] const FLOAT ColorRGBA[ 4 ]
+		[in] ID3D11RenderTargetView *a,
+		[in] const FLOAT b[4]
 	);
 
 	void ClearUnorderedAccessViewUint(
-		[in] ID3D11UnorderedAccessView *pUnorderedAccessView,
-		[in] const UINT Values[ 4 ]
+		[in] ID3D11UnorderedAccessView *a,
+		[in] const UINT b[4]
 	);
 
 	void ClearUnorderedAccessViewFloat(
-		[in] ID3D11UnorderedAccessView *pUnorderedAccessView,
-		[in] const FLOAT Values[ 4 ]
+		[in] ID3D11UnorderedAccessView *a,
+		[in] const FLOAT b[4]
 	);
 
 	void ClearDepthStencilView(
-		[in] ID3D11DepthStencilView *pDepthStencilView,
-		[in] UINT ClearFlags,
-		[in] FLOAT Depth,
-		[in] UINT8 Stencil
+		[in] ID3D11DepthStencilView *a,
+		[in] UINT b,
+		[in] FLOAT c,
+		[in] UINT8 d
 	);
 
 	void GenerateMips(
-		[in] ID3D11ShaderResourceView *pShaderResourceView
+		[in] ID3D11ShaderResourceView *a
 	);
 
 	void SetResourceMinLOD(
-		[in] ID3D11Resource *pResource,
-		[in] FLOAT MinLOD
+		[in] ID3D11Resource *a,
+		[in] FLOAT b
 	);
 
 	FLOAT GetResourceMinLOD(
-		[in] ID3D11Resource *pResource
+		[in] ID3D11Resource *a
 	);
 
 	void ResolveSubresource(
-		[in] ID3D11Resource *pDstResource,
-		[in] UINT DstSubresource,
-		[in] ID3D11Resource *pSrcResource,
-		[in] UINT SrcSubresource,
-		[in] DXGI_FORMAT Format
+		[in] ID3D11Resource *a,
+		[in] UINT b,
+		[in] ID3D11Resource *c,
+		[in] UINT d,
+		[in] DXGI_FORMAT e
 	);
 
 	void ExecuteCommandList(
-		[in] ID3D11CommandList *pCommandList,
-		[in] BOOL RestoreContextState
+		[in] ID3D11CommandList *a,
+		[in] BOOL b
 	);
 
 	void HSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void HSSetShader(
-		[in] ID3D11HullShader *pHullShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11HullShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void HSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void HSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void DSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void DSSetShader(
-		[in] ID3D11DomainShader *pDomainShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11DomainShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void DSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void DSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void CSSetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[in] ID3D11ShaderResourceView *const *ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11ShaderResourceView *const *c
 	);
 
 	void CSSetUnorderedAccessViews(
-		[in] UINT StartSlot,
-		[in] UINT NumUAVs,
-		[in] ID3D11UnorderedAccessView *const *ppUnorderedAccessViews,
-		[in] const UINT *pUAVInitialCounts
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11UnorderedAccessView *const *c,
+		[in] const UINT *d
 	);
 
 	void CSSetShader(
-		[in] ID3D11ComputeShader *pComputeShader,
-		[in] ID3D11ClassInstance *const *ppClassInstances,
-		[in] UINT NumClassInstances
+		[in] ID3D11ComputeShader *a,
+		[in] ID3D11ClassInstance *const *b,
+		[in] UINT c
 	);
 
 	void CSSetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[in] ID3D11SamplerState *const *ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11SamplerState *const *c
 	);
 
 	void CSSetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[in] ID3D11Buffer *const *ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[in] ID3D11Buffer *const *c
 	);
 
 	void VSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void PSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void PSGetShader(
-		[out] ID3D11PixelShader **ppPixelShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11PixelShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void PSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void VSGetShader(
-		[out] ID3D11VertexShader **ppVertexShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11VertexShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void PSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void IAGetInputLayout(
-		[out] ID3D11InputLayout **ppInputLayout
+		[out] ID3D11InputLayout **a
 	);
 
 	void IAGetVertexBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppVertexBuffers,
-		[out] UINT *pStrides,
-		[out] UINT *pOffsets
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c,
+		[out] UINT *d,
+		[out] UINT *e
 	);
 
 	void IAGetIndexBuffer(
-		[out] ID3D11Buffer **pIndexBuffer,
-		[out] DXGI_FORMAT *Format,
-		[out] UINT *Offset
+		[out] ID3D11Buffer **a,
+		[out] DXGI_FORMAT *b,
+		[out] UINT *c
 	);
 
 	void GSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void GSGetShader(
-		[out] ID3D11GeometryShader **ppGeometryShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11GeometryShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void IAGetPrimitiveTopology(
-		[out] D3D11_PRIMITIVE_TOPOLOGY *pTopology
+		[out] D3D11_PRIMITIVE_TOPOLOGY *a
 	);
 
 	void VSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void VSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void GetPredication(
-		[out] ID3D11Predicate **ppPredicate,
-		[out] BOOL *pPredicateValue
+		[out] ID3D11Predicate **a,
+		[out] BOOL *b
 	);
 
 	void GSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void GSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void OMGetRenderTargets(
-		[in] UINT NumViews,
-		[out] ID3D11RenderTargetView **ppRenderTargetViews,
-		[out] ID3D11DepthStencilView **ppDepthStencilView
+		[in] UINT a,
+		[out] ID3D11RenderTargetView **b,
+		[out] ID3D11DepthStencilView **c
 	);
 
 	void OMGetRenderTargetsAndUnorderedAccessViews(
-		[in] UINT NumRTVs,
-		[out] ID3D11RenderTargetView **ppRenderTargetViews,
-		[out] ID3D11DepthStencilView **ppDepthStencilView,
-		[in] UINT UAVStartSlot,
-		[in] UINT NumUAVs,
-		[out] ID3D11UnorderedAccessView **ppUnorderedAccessViews
+		[in] UINT a,
+		[out] ID3D11RenderTargetView **b,
+		[out] ID3D11DepthStencilView **c,
+		[in] UINT d,
+		[in] UINT e,
+		[out] ID3D11UnorderedAccessView **f
 	);
 
 	void OMGetBlendState(
-		[out] ID3D11BlendState **ppBlendState,
-		[out] FLOAT BlendFactor[ 4 ],
-		[out] UINT *pSampleMask
+		[out] ID3D11BlendState **a,
+		[out] FLOAT b[4],
+		[out] UINT *c
 	);
 
 	void OMGetDepthStencilState(
-		[out] ID3D11DepthStencilState **ppDepthStencilState,
-		[out] UINT *pStencilRef
+		[out] ID3D11DepthStencilState **a,
+		[out] UINT *b
 	);
 
 	void SOGetTargets(
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppSOTargets
+		[in] UINT a,
+		[out] ID3D11Buffer **b
 	);
 
 	void RSGetState(
-		[out] ID3D11RasterizerState **ppRasterizerState
+		[out] ID3D11RasterizerState **a
 	);
 
 	void RSGetViewports(
-		[in, out] /*_range*/ UINT *pNumViewports,
-		[out] D3D11_VIEWPORT *pViewports
+		[in, out] UINT *a,
+		[out] D3D11_VIEWPORT *b
 	);
 
 	void RSGetScissorRects(
-		[in, out] /*_range*/ UINT *pNumRects,
-		[out] D3D11_RECT *pRects
+		[in, out] UINT *a,
+		[out] D3D11_RECT *b
 	);
 
 	void HSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void HSGetShader(
-		[out] ID3D11HullShader **ppHullShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11HullShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void HSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void HSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void DSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void DSGetShader(
-		[out] ID3D11DomainShader **ppDomainShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11DomainShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void DSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void DSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void CSGetShaderResources(
-		[in] UINT StartSlot,
-		[in] UINT NumViews,
-		[out] ID3D11ShaderResourceView **ppShaderResourceViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11ShaderResourceView **c
 	);
 
 	void CSGetUnorderedAccessViews(
-		[in] UINT StartSlot,
-		[in] UINT NumUAVs,
-		[out] ID3D11UnorderedAccessView **ppUnorderedAccessViews
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11UnorderedAccessView **c
 	);
 
 	void CSGetShader(
-		[out] ID3D11ComputeShader **ppComputeShader,
-		[out] ID3D11ClassInstance **ppClassInstances,
-		[in, out, optional] UINT *pNumClassInstances
+		[out] ID3D11ComputeShader **a,
+		[out] ID3D11ClassInstance **b,
+		[in, out, optional] UINT *c
 	);
 
 	void CSGetSamplers(
-		[in] UINT StartSlot,
-		[in] UINT NumSamplers,
-		[out] ID3D11SamplerState **ppSamplers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11SamplerState **c
 	);
 
 	void CSGetConstantBuffers(
-		[in] UINT StartSlot,
-		[in] UINT NumBuffers,
-		[out] ID3D11Buffer **ppConstantBuffers
+		[in] UINT a,
+		[in] UINT b,
+		[out] ID3D11Buffer **c
 	);
 
 	void ClearState();
@@ -2428,8 +2428,8 @@ interface ID3D11DeviceContext : ID3D11DeviceChild
 	UINT GetContextFlags();
 
 	HRESULT FinishCommandList(
-		[in] BOOL RestoreDeferredContextState,
-		[out] ID3D11CommandList **ppCommandList
+		[in] BOOL a,
+		[out] ID3D11CommandList **b
 	);
 };
 
@@ -2449,44 +2449,44 @@ typedef enum D3D11_CREATE_DEVICE_FLAG
 
 
 HRESULT D3D11CreateDevice(
-	[in,optional] IDXGIAdapter* pAdapter,
-	[in] D3D_DRIVER_TYPE DriverType,
-	[in] HMODULE Software,
-	[in] UINT Flags,
-	[in,optional] const D3D_FEATURE_LEVEL* pFeatureLevels,
-	[in] UINT FeatureLevels,
-	[in] UINT SDKVersion,
-	[out,optional] ID3D11Device** ppDevice,
-	[out,optional] D3D_FEATURE_LEVEL* pFeatureLevel,
-	[out,optional] ID3D11DeviceContext** ppImmediateContext
+	[in,optional] IDXGIAdapter* a,
+	[in] D3D_DRIVER_TYPE b,
+	[in] HMODULE c,
+	[in] UINT d,
+	[in,optional] const D3D_FEATURE_LEVEL* e,
+	[in] UINT f,
+	[in] UINT g,
+	[out,optional] ID3D11Device** h,
+	[out,optional] D3D_FEATURE_LEVEL* i,
+	[out,optional] ID3D11DeviceContext** j
 );
 
 typedef HRESULT (* PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)(
-	[in,optional] IDXGIAdapter*, 
+	[in,optional] IDXGIAdapter*,
 	D3D_DRIVER_TYPE,
 	HMODULE,
 	UINT, 
-	[in,optional] const D3D_FEATURE_LEVEL*, 
+	[in,optional] const D3D_FEATURE_LEVEL*,
 	UINT,
 	UINT,
-	[in, optional] const DXGI_SWAP_CHAIN_DESC*, 
+	[in, optional] const DXGI_SWAP_CHAIN_DESC*,
 	[out,optional] IDXGISwapChain**,
-	[out,optional] ID3D11Device**, 
+	[out,optional] ID3D11Device**,
 	[out,optional] D3D_FEATURE_LEVEL*,
 	[out,optional] ID3D11DeviceContext**
 );
 
 HRESULT D3D11CreateDeviceAndSwapChain(
-	[in,optional] IDXGIAdapter* pAdapter,
-	[in] D3D_DRIVER_TYPE DriverType,
-	[in] HMODULE Software,
-	[in] UINT Flags,
-	[in,optional] const D3D_FEATURE_LEVEL* pFeatureLevels,
-	[in] UINT FeatureLevels,
-	[in] UINT SDKVersion,
-	[in,optional] const DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
-	[out,optional] IDXGISwapChain** ppSwapChain,
-	[out,optional] ID3D11Device** ppDevice,
-	[out,optional] D3D_FEATURE_LEVEL* pFeatureLevel,
-	[out,optional] ID3D11DeviceContext** ppImmediateContext
+	[in,optional] IDXGIAdapter* a,
+	[in] D3D_DRIVER_TYPE b,
+	[in] HMODULE c,
+	[in] UINT d,
+	[in,optional] const D3D_FEATURE_LEVEL* e,
+	[in] UINT f,
+	[in] UINT g,
+	[in,optional] const DXGI_SWAP_CHAIN_DESC* h,
+	[out,optional] IDXGISwapChain** i,
+	[out,optional] ID3D11Device** j,
+	[out,optional] D3D_FEATURE_LEVEL* k,
+	[out,optional] ID3D11DeviceContext** l
 );

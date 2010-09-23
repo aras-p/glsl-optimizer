@@ -333,14 +333,14 @@ typedef enum _D3D_INCLUDE_TYPE
 interface ID3DInclude : IUnknown
 {
 	HRESULT Open(
-		[in] D3D_INCLUDE_TYPE IncludeType,
-		[in] LPCSTR pFileName,
-		[in] LPCVOID pParentData,
-		[out] LPCVOID *ppData,
-		[in] UINT *pBytes
+		[in] D3D_INCLUDE_TYPE a,
+		[in] LPCSTR b,
+		[in] LPCVOID c,
+		[out] LPCVOID *d,
+		[in] UINT *e
 	);
 	HRESULT Close(
-		[in] LPCVOID pData
+		[in] LPCVOID a
 	);
 };
 

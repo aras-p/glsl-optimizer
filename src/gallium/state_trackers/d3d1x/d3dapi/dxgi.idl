@@ -135,22 +135,22 @@ typedef struct DXGI_SHARED_RESOURCE {
 interface IDXGIObject : IUnknown
 {
 	HRESULT SetPrivateData(
-	[in] REFGUID guid,
-	[in] UINT data_size,
-	[in] const void *data
+	[in] REFGUID a,
+	[in] UINT b,
+	[in] const void *c
 	);
 	HRESULT SetPrivateDataInterface(
-	[in] REFGUID guid,
-	[in] const IUnknown *object
+	[in] REFGUID a,
+	[in] const IUnknown *b
 	);
 	HRESULT GetPrivateData(
-	[in] REFGUID guid,
-	[in, out] UINT *data_size,
-	[out] void *data
+	[in] REFGUID a,
+	[in, out] UINT *b,
+	[out] void *c
 	);
 	HRESULT GetParent(
-	[in] REFIID riid,
-	[out] void **parent
+	[in] REFIID a,
+	[out] void **b
 	);
 }
 
@@ -162,8 +162,8 @@ interface IDXGIObject : IUnknown
 interface IDXGIDeviceSubObject : IDXGIObject
 {
 	HRESULT GetDevice(
-	[in] REFIID riid,
-	[out] void **device
+	[in] REFIID a,
+	[out] void **b
 	);
 }
 
@@ -175,11 +175,11 @@ interface IDXGIDeviceSubObject : IDXGIObject
 interface IDXGISurface : IDXGIDeviceSubObject
 {
 	HRESULT GetDesc(
-	[out] DXGI_SURFACE_DESC *desc
+	[out] DXGI_SURFACE_DESC *a
 	);
 	HRESULT Map(
-	[out] DXGI_MAPPED_RECT *mapped_rect,
-	[in] UINT flags
+	[out] DXGI_MAPPED_RECT *a,
+	[in] UINT b
 	);
 	HRESULT Unmap(
 	);
@@ -193,44 +193,44 @@ interface IDXGISurface : IDXGIDeviceSubObject
 interface IDXGIOutput : IDXGIObject
 {
 	HRESULT GetDesc(
-	[out] DXGI_OUTPUT_DESC *desc
+	[out] DXGI_OUTPUT_DESC *a
 	);
 	HRESULT GetDisplayModeList(
-	[in] DXGI_FORMAT format,
-	[in] UINT flags,
-	[in, out] UINT *mode_count,
-	[out] DXGI_MODE_DESC *desc
+	[in] DXGI_FORMAT a,
+	[in] UINT b,
+	[in, out] UINT *c,
+	[out] DXGI_MODE_DESC *d
 	);
 	HRESULT FindClosestMatchingMode(
-	[in] const DXGI_MODE_DESC *mode,
-	[out] DXGI_MODE_DESC *closest_match,
-	[in] IUnknown *device
+	[in] const DXGI_MODE_DESC *a,
+	[out] DXGI_MODE_DESC *b,
+	[in] IUnknown *c
 	);
 	HRESULT WaitForVBlank(
 	);
 	HRESULT TakeOwnership(
-	[in] IUnknown *device,
-	[in] BOOL exclusive
+	[in] IUnknown *a,
+	[in] BOOL b
 	);
 	void ReleaseOwnership(
 	);
 	HRESULT GetGammaControlCapabilities(
-	[out] DXGI_GAMMA_CONTROL_CAPABILITIES *gamma_caps
+	[out] DXGI_GAMMA_CONTROL_CAPABILITIES *a
 	);
 	HRESULT SetGammaControl(
-	[in] const DXGI_GAMMA_CONTROL *gamma_control
+	[in] const DXGI_GAMMA_CONTROL *a
 	);
 	HRESULT GetGammaControl(
-	[out] DXGI_GAMMA_CONTROL *gamma_control
+	[out] DXGI_GAMMA_CONTROL *a
 	);
 	HRESULT SetDisplaySurface(
-	[in] IDXGISurface *surface
+	[in] IDXGISurface *a
 	);
 	HRESULT GetDisplaySurfaceData(
-	[in] IDXGISurface *surface
+	[in] IDXGISurface *a
 	);
 	HRESULT GetFrameStatistics(
-	[out] DXGI_FRAME_STATISTICS *stats
+	[out] DXGI_FRAME_STATISTICS *a
 	);
 }
 
@@ -242,15 +242,15 @@ interface IDXGIOutput : IDXGIObject
 interface IDXGIAdapter : IDXGIObject
 {
 	HRESULT EnumOutputs(
-	[in] UINT output_idx,
-	[in, out] IDXGIOutput **output
+	[in] UINT a,
+	[in, out] IDXGIOutput **b
 	);
 	HRESULT GetDesc(
-	[out] DXGI_ADAPTER_DESC *desc
+	[out] DXGI_ADAPTER_DESC *a
 	);
 	HRESULT CheckInterfaceSupport(
-	[in] REFGUID guid,
-	[out] LARGE_INTEGER *umd_version
+	[in] REFGUID a,
+	[out] LARGE_INTEGER *b
 	);
 }
 
@@ -262,43 +262,43 @@ interface IDXGIAdapter : IDXGIObject
 interface IDXGISwapChain : IDXGIDeviceSubObject
 {
 	HRESULT Present(
-	[in] UINT sync_interval,
-	[in] UINT flags
+	[in] UINT a,
+	[in] UINT b
 	);
 	HRESULT GetBuffer(
-	[in] UINT buffer_idx,
-	[in] REFIID riid,
-	[in, out] void **surface
+	[in] UINT a,
+	[in] REFIID b,
+	[in, out] void **c
 	);
 	HRESULT SetFullscreenState(
-	[in] BOOL fullscreen,
-	[in] IDXGIOutput *target
+	[in] BOOL a,
+	[in] IDXGIOutput *b
 	);
 	HRESULT GetFullscreenState(
-	[out] BOOL *fullscreen,
-	[out] IDXGIOutput **target
+	[out] BOOL *a,
+	[out] IDXGIOutput **b
 	);
 	HRESULT GetDesc(
-	[out] DXGI_SWAP_CHAIN_DESC *desc
+	[out] DXGI_SWAP_CHAIN_DESC *a
 	);
 	HRESULT ResizeBuffers(
-	[in] UINT buffer_count,
-	[in] UINT width,
-	[in] UINT height,
-	[in] DXGI_FORMAT format,
-	[in] UINT flags
+	[in] UINT a,
+	[in] UINT b,
+	[in] UINT c,
+	[in] DXGI_FORMAT d,
+	[in] UINT e
 	);
 	HRESULT ResizeTarget(
-	[in] const DXGI_MODE_DESC *target_mode_desc
+	[in] const DXGI_MODE_DESC *a
 	);
 	HRESULT GetContainingOutput(
-	[out] IDXGIOutput **output
+	[out] IDXGIOutput **a
 	);
 	HRESULT GetFrameStatistics(
-	[out] DXGI_FRAME_STATISTICS *stats
+	[out] DXGI_FRAME_STATISTICS *a
 	);
 	HRESULT GetLastPresentCount(
-	[out] UINT *last_present_count
+	[out] UINT *a
 	);
 }
 
@@ -310,24 +310,24 @@ interface IDXGISwapChain : IDXGIDeviceSubObject
 interface IDXGIFactory : IDXGIObject
 {
 	HRESULT EnumAdapters(
-	[in] UINT adapter_idx,
-	[out] IDXGIAdapter **adapter
+	[in] UINT a,
+	[out] IDXGIAdapter **b
 	);
 	HRESULT MakeWindowAssociation(
-	[in] HWND window,
-	[in] UINT flags
+	[in] HWND a,
+	[in] UINT b
 	);
 	HRESULT GetWindowAssociation(
-	[in] HWND *window
+	[in] HWND *a
 	);
 	HRESULT CreateSwapChain(
-	[in] IUnknown *device,
-	[in] DXGI_SWAP_CHAIN_DESC *desc,
-	[out] IDXGISwapChain **swapchain
+	[in] IUnknown *a,
+	[in] DXGI_SWAP_CHAIN_DESC *b,
+	[out] IDXGISwapChain **c
 	);
 	HRESULT CreateSoftwareAdapter(
-	[in] HMODULE swrast,
-	[out] IDXGIAdapter **adapter
+	[in] HMODULE a,
+	[out] IDXGIAdapter **b
 	);
 }
 
@@ -341,25 +341,25 @@ interface IDXGIFactory : IDXGIObject
 interface IDXGIDevice : IDXGIObject
 {
 	HRESULT GetAdapter(
-	[out] IDXGIAdapter **adapter
+	[out] IDXGIAdapter **a
 	);
 	HRESULT CreateSurface(
-	[in] const DXGI_SURFACE_DESC *desc,
-	[in] UINT surface_count,
-	[in] DXGI_USAGE usage,
-	[in] const DXGI_SHARED_RESOURCE *shared_resource,
-	[out] IDXGISurface **surface
+	[in] const DXGI_SURFACE_DESC *a,
+	[in] UINT b,
+	[in] DXGI_USAGE c,
+	[in] const DXGI_SHARED_RESOURCE *d,
+	[out] IDXGISurface **e
 	);
 	HRESULT QueryResourceResidency(
-	[in] IUnknown *const *resources,
-	[out] DXGI_RESIDENCY *residency,
-	[in] UINT resource_count
+	[in] IUnknown *const *a,
+	[out] DXGI_RESIDENCY *b,
+	[in] UINT c
 	);
 	HRESULT SetGPUThreadPriority(
-	[in] INT priority
+	[in] INT a
 	);
 	HRESULT GetGPUThreadPriority(
-	[out] INT *priority
+	[out] INT *a
 	);
 }
 
@@ -407,19 +407,19 @@ typedef struct DXGI_ADAPTER_DESC1
 interface IDXGIResource : IDXGIDeviceSubObject
 {
 	HRESULT GetSharedHandle(
-		[out] HANDLE *pSharedHandle
+		[out] HANDLE *a
 	);
 
 	HRESULT GetUsage(
-		[out] DXGI_USAGE *pUsage
+		[out] DXGI_USAGE *a
 	);
 
 	HRESULT SetEvictionPriority(
-		[in] UINT EvictionPriority
+		[in] UINT a
 	);
 
 	HRESULT GetEvictionPriority(
-		[out] UINT *pEvictionPriority
+		[out] UINT *a
 	);
 };
 
@@ -427,12 +427,12 @@ interface IDXGIResource : IDXGIDeviceSubObject
 interface IDXGISurface1 : IDXGISurface
 {
 	HRESULT GetDC( 
-		[in] BOOL Discard,
-		[out] HDC *phdc
+		[in] BOOL a,
+		[out] HDC *b
 	);
 
 	HRESULT ReleaseDC(
-		[in, optional] RECT *pDirtyRect
+		[in, optional] RECT *a
 	);
  };
 
@@ -440,11 +440,11 @@ interface IDXGISurface1 : IDXGISurface
 interface IDXGIDevice1 : IDXGIDevice
 {
 	HRESULT SetMaximumFrameLatency( 
-		[in] UINT MaxLatency
+		[in] UINT a
 	);
 
 	HRESULT GetMaximumFrameLatency( 
-		[out] UINT *pMaxLatency
+		[out] UINT *a
 	);
 };
 
@@ -452,7 +452,7 @@ interface IDXGIDevice1 : IDXGIDevice
 interface IDXGIAdapter1 : IDXGIAdapter
 {
 	HRESULT GetDesc1( 
-		[out] DXGI_ADAPTER_DESC1 *pDesc
+		[out] DXGI_ADAPTER_DESC1 *a
 	);
 };
 
@@ -460,8 +460,8 @@ interface IDXGIAdapter1 : IDXGIAdapter
 interface IDXGIFactory1 : IDXGIFactory
 {
 	HRESULT EnumAdapters1(
-		[in] UINT Adapter,
-		[out] IDXGIAdapter1 **ppAdapter
+		[in] UINT a,
+		[out] IDXGIAdapter1 **b
 	);
 
 	BOOL IsCurrent();

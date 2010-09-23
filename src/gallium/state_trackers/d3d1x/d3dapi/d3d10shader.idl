@@ -178,19 +178,19 @@ typedef struct _D3D10_SHADER_INPUT_BIND_DESC
 interface ID3D10ShaderReflectionType
 {
 	HRESULT GetDesc(
-		[out] D3D10_SHADER_TYPE_DESC *pDesc
+		[out] D3D10_SHADER_TYPE_DESC *a
 	);
 
 	ID3D10ShaderReflectionType* GetMemberTypeByIndex(
-		[in] UINT Index
+		[in] UINT a
 	);
 
 	ID3D10ShaderReflectionType* GetMemberTypeByName(
-		[in] LPCSTR Name
+		[in] LPCSTR a
 	);
 
 	LPCSTR GetMemberTypeName(
-		[in] UINT Index
+		[in] UINT a
 	);
 };
 
@@ -200,7 +200,7 @@ interface ID3D10ShaderReflectionConstantBuffer;
 interface ID3D10ShaderReflectionVariable
 {
 	HRESULT GetDesc(
-		[out] D3D10_SHADER_VARIABLE_DESC *pDesc
+		[out] D3D10_SHADER_VARIABLE_DESC *a
 	);
 
 	ID3D10ShaderReflectionType* GetType();
@@ -210,15 +210,15 @@ interface ID3D10ShaderReflectionVariable
 interface ID3D10ShaderReflectionConstantBuffer
 {
 	HRESULT GetDesc(
-		[out] D3D10_SHADER_BUFFER_DESC *pDesc
+		[out] D3D10_SHADER_BUFFER_DESC *a
 	);
 
 	ID3D10ShaderReflectionVariable* GetVariableByIndex(
-		[in] UINT Index
+		[in] UINT a
 	);
 
 	ID3D10ShaderReflectionVariable* GetVariableByName(
-		[in] LPCSTR Name
+		[in] LPCSTR a
 	);
 };
 
@@ -226,31 +226,31 @@ interface ID3D10ShaderReflectionConstantBuffer
 interface ID3D10ShaderReflection : IUnknown
 {
 	HRESULT GetDesc(
-		[out] D3D10_SHADER_DESC *pDesc
+		[out] D3D10_SHADER_DESC *a
 	);
 
 	ID3D10ShaderReflectionConstantBuffer* GetConstantBufferByIndex(
-		[in] UINT Index
+		[in] UINT a
 	);
 
 	ID3D10ShaderReflectionConstantBuffer* GetConstantBufferByName(
-		[in] LPCSTR Name
+		[in] LPCSTR a
 	);
 
 	HRESULT GetResourceBindingDesc(
-		[in] UINT ResourceIndex,
-		[out] D3D10_SHADER_INPUT_BIND_DESC *pDesc
+		[in] UINT a,
+		[out] D3D10_SHADER_INPUT_BIND_DESC *b
 	);
 
 	HRESULT GetInputParameterDesc(
-		[in] UINT ParameterIndex,
-		[out] D3D10_SIGNATURE_PARAMETER_DESC *pDesc
+		[in] UINT a,
+		[out] D3D10_SIGNATURE_PARAMETER_DESC *b
 	);
 	
 	HRESULT GetOutputParameterDesc
 	(
-		[in] UINT ParameterIndex,
-		[out] D3D10_SIGNATURE_PARAMETER_DESC *pDesc
+		[in] UINT a,
+		[out] D3D10_SIGNATURE_PARAMETER_DESC *b
 	);
 };
 
