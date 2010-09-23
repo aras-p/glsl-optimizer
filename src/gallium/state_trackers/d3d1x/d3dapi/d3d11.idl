@@ -2467,7 +2467,7 @@ typedef HRESULT (* PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)(
 	HMODULE,
 	UINT, 
 	[in,optional] const D3D_FEATURE_LEVEL*, 
-	UINT FeatureLevels,
+	UINT,
 	UINT,
 	[in, optional] const DXGI_SWAP_CHAIN_DESC*, 
 	[out,optional] IDXGISwapChain**,
