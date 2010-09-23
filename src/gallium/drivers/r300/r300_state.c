@@ -1169,7 +1169,6 @@ static void*
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
     boolean is_r500 = r300->screen->caps.is_r500;
     int lod_bias;
-    union util_color uc;
 
     sampler->state = *state;
 
@@ -1225,9 +1224,6 @@ static void*
     if (DBG_ON(r300, DBG_ANISOHQ) && is_r500) {
         sampler->filter1 |= r500_anisotropy(state->max_anisotropy);
     }
-
-    util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-    sampler->border_color = uc.ui;
 
     /* R500-specific fixups and optimizations */
     if (r300->screen->caps.is_r500) {

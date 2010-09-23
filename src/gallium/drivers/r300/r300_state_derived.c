@@ -567,6 +567,85 @@ static void r300_update_rs_block(struct r300_context *r300)
     }
 }
 
+static uint32_t r300_get_border_color(enum pipe_format format,
+                                      const unsigned char swizzle_view[4],
+                                      const float border[4])
+{
+    const struct util_format_description *desc;
+    unsigned char swizzle[4];
+    unsigned i;
+    float border_swizzled[4];
+    uint32_t r;
+
+    desc = util_format_description(format);
+
+    /* Combine the swizzles. */
+    for (i = 0; i < 4; i++) {
+        swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                     desc->swizzle[swizzle_view[i]] : swizzle_view[i];
+    }
+
+    /* Apply swizzling. */
+    for (i = 0; i < 4; i++) {
+        switch (swizzle[i]) {
+            case UTIL_FORMAT_SWIZZLE_X:
+                border_swizzled[i] = border[0];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Y:
+                border_swizzled[i] = border[1];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Z:
+                border_swizzled[i] = border[2];
+                break;
+            case UTIL_FORMAT_SWIZZLE_W:
+                border_swizzled[i] = border[3];
+                break;
+            case UTIL_FORMAT_SWIZZLE_0:
+                border_swizzled[i] = 0;
+                break;
+            default: /* 1, NONE */
+                border_swizzled[i] = 1;
+        }
+    }
+
+    /* We don't use util_pack_format because it does not handle the formats
+     * we want, e.g. R4G4B4A4 is non-existent in Gallium. */
+    switch (desc->channel[0].size) {
+        case 4:
+            r = ((float_to_ubyte(border_swizzled[0]) & 0xf0) >> 4) |
+                ((float_to_ubyte(border_swizzled[1]) & 0xf0) << 0) |
+                ((float_to_ubyte(border_swizzled[2]) & 0xf0) << 4) |
+                ((float_to_ubyte(border_swizzled[3]) & 0xf0) << 8);
+            break;
+
+        case 5:
+            if (desc->channel[1].size == 5) {
+                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
+                    ((float_to_ubyte(border_swizzled[1]) & 0xf8) << 2) |
+                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 7) |
+                    ((float_to_ubyte(border_swizzled[3]) & 0x80) << 8);
+            } else if (desc->channel[1].size == 6) {
+                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
+                    ((float_to_ubyte(border_swizzled[1]) & 0xfc) << 3) |
+                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 8);
+            } else {
+                assert(0);
+            }
+            break;
+
+        default:
+            /* I think the fat formats (16, 32) are specified
+             * as the 8-bit ones. I am not sure how compressed formats
+             * work here. */
+            r = ((float_to_ubyte(border_swizzled[0]) & 0xff) << 0) |
+                ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
+                ((float_to_ubyte(border_swizzled[2]) & 0xff) << 16) |
+                ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+    }
+
+    return r;
+}
+
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
 {
     struct r300_textures_state *state =
@@ -599,7 +678,11 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->format = view->format;
             texstate->filter0 = sampler->filter0;
             texstate->filter1 = sampler->filter1;
-            texstate->border_color = sampler->border_color;
+
+            /* Set the border color. */
+            texstate->border_color =
+                r300_get_border_color(view->base.format, view->swizzle,
+                                      sampler->state.border_color);
 
             /* determine min/max levels */
             max_level = MIN3(sampler->max_lod + view->base.first_level,
