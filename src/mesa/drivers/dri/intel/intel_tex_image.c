@@ -333,12 +333,6 @@ intelTexImage(GLcontext * ctx,
    }
    else {
       texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-      
-      /* Minimum pitch of 32 bytes */
-      if (width * texelBytes < 32) {
-	 width = 32 / texelBytes;
-	 texImage->RowStride = width;
-      }
 
       if (!intelImage->mt) {      
 	  assert(texImage->RowStride == width);
