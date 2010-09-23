@@ -473,33 +473,6 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    int sz = floor_pot((bbox->x1 - (bbox->x0 & ~3)) |
 		      (bbox->y1 - (bbox->y0 & ~3)));
 
-   if (nr_planes == 3) {
-      if (sz < 4 && dx < 64)
-      {
-	 /* Triangle is contained in a single 4x4 stamp:
-	  */
-	 int mask = (bbox->x0 & 63 & ~3) | ((bbox->y0 & 63 & ~3) << 8);
-
-	 return lp_scene_bin_command( scene,
-				      bbox->x0/64, bbox->y0/64,
-				      LP_RAST_OP_TRIANGLE_3_4,
-				      lp_rast_arg_triangle(tri, mask) );
-      }
-
-      if (sz < 16 && dx < 64)
-      {
-	 int mask = (bbox->x0 & 63 & ~3) | ((bbox->y0 & 63 & ~3) << 8);
-
-	 /* Triangle is contained in a single 16x16 block:
-	  */
-	 return lp_scene_bin_command( scene,
-				      bbox->x0/64, bbox->y0/64,
-                                      LP_RAST_OP_TRIANGLE_3_16,
-                                      lp_rast_arg_triangle(tri, mask) );
-      }
-   }
-
-
    /* Determine which tile(s) intersect the triangle's bounding box
     */
    if (dx < TILE_SIZE)
@@ -509,6 +482,32 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 
       assert(iy0 == bbox->y1 / TILE_SIZE &&
 	     ix0 == bbox->x1 / TILE_SIZE);
+
+      if (nr_planes == 3) {
+         int px = bbox->x0 & 63 & ~3;
+         int py = bbox->y0 & 63 & ~3;
+	 int mask = px | (py << 8);
+
+         if (sz < 4)
+         {
+            /* Triangle is contained in a single 4x4 stamp:
+             */
+
+            return lp_scene_bin_command( scene, ix0, iy0,
+                                         LP_RAST_OP_TRIANGLE_3_4,
+                                         lp_rast_arg_triangle(tri, mask) );
+         }
+
+         if (sz < 16)
+         {
+            /* Triangle is contained in a single 16x16 block:
+             */
+            return lp_scene_bin_command( scene, ix0, iy0,
+                                         LP_RAST_OP_TRIANGLE_3_16,
+                                         lp_rast_arg_triangle(tri, mask) );
+         }
+      }
+
 
       /* Triangle is contained in a single tile:
        */
