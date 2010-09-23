@@ -327,7 +327,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	{
 		SYNCHRONIZED;
 
-		*pcount = 0;
+		if(sample_count == 1)
+			*pcount = 1;
+		else
+			*pcount = 0;
 		return S_OK;
 	}
 
