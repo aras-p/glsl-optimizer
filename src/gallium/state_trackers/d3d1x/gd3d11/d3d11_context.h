@@ -267,14 +267,32 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	{
 		util_destroy_gen_mipmap(gen_mipmap);
 		cso_destroy_context(cso_ctx);
+
+		pipe->bind_vertex_elements_state(pipe, 0);
 		pipe->delete_vertex_elements_state(pipe, default_input_layout);
+
+		pipe->bind_rasterizer_state(pipe, 0);
 		pipe->delete_rasterizer_state(pipe, default_rasterizer);
+
+		pipe->bind_depth_stencil_alpha_state(pipe, 0);
 		pipe->delete_depth_stencil_alpha_state(pipe, default_depth_stencil);
+
+		pipe->bind_blend_state(pipe, 0);
 		pipe->delete_blend_state(pipe, default_blend);
+
+		pipe->bind_fragment_sampler_states(pipe, 0, 0);
+		pipe->bind_vertex_sampler_states(pipe, 0, 0);
+		if(pipe->bind_geometry_sampler_states)
+			pipe->bind_geometry_sampler_states(pipe, 0, 0);
 		pipe->delete_sampler_state(pipe, default_sampler);
 		pipe->delete_sampler_state(pipe, ld_sampler);
+
+		pipe->bind_fs_state(pipe, 0);
 		pipe->delete_fs_state(pipe, default_shaders[PIPE_SHADER_FRAGMENT]);
+
+		pipe->bind_vs_state(pipe, 0);
 		pipe->delete_vs_state(pipe, default_shaders[PIPE_SHADER_VERTEX]);
+
 		if(owns_pipe)
 			pipe->destroy(pipe);
 	}
