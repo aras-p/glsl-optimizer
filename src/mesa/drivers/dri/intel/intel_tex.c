@@ -9,23 +9,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
-static GLboolean
-intelIsTextureResident(GLcontext * ctx, struct gl_texture_object *texObj)
-{
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   return
-      intelObj->mt &&
-      intelObj->mt->region &&
-      intel_is_region_resident(intel, intelObj->mt->region);
-#endif
-   return 1;
-}
-
-
-
 static struct gl_texture_image *
 intelNewTextureImage(GLcontext * ctx)
 {
@@ -217,7 +200,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTexImageData = intelFreeTextureImageData;
    functions->UpdateTexturePalette = 0;
-   functions->IsTextureResident = intelIsTextureResident;
 
 #if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)
