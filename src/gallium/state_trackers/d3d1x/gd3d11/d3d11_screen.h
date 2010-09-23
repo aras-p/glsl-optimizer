@@ -166,7 +166,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE GetImmediateContext(
-		__out ID3D11DeviceContext **ppImmediateContext)
+		ID3D11DeviceContext **ppImmediateContext)
 	{
 		immediate_context->AddRef();
 		*ppImmediateContext = immediate_context;
@@ -185,21 +185,21 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CheckCounter(
-		__in const D3D11_COUNTER_DESC *pDesc,
-		__out D3D11_COUNTER_TYPE *pType,
-		__out unsigned *pActiveCounters,
-		__out_ecount_opt(*pNameLength) LPSTR szName,
-		__inout_opt unsigned *pNameLength,
-		__out_ecount_opt(*pUnitsLength) LPSTR szUnits,
-		__inout_opt unsigned *pUnitsLength,
-		__out_ecount_opt(*pDescriptionLength) LPSTR szDescription,
-		__inout_opt unsigned *pDescriptionLength)
+		const D3D11_COUNTER_DESC *pDesc,
+		D3D11_COUNTER_TYPE *pType,
+		unsigned *pActiveCounters,
+		LPSTR szName,
+		unsigned *pNameLength,
+		LPSTR szUnits,
+		unsigned *pUnitsLength,
+		LPSTR szDescription,
+		unsigned *pDescriptionLength)
 	{
 		return E_NOTIMPL;
 	}
 
 	virtual void STDMETHODCALLTYPE CheckCounterInfo(
-		__out D3D11_COUNTER_INFO *pCounterInfo)
+		D3D11_COUNTER_INFO *pCounterInfo)
 	{
 		/* none supported at the moment */
 		pCounterInfo->LastDeviceDependentCounter = (D3D11_COUNTER)0;
@@ -210,7 +210,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
 		D3D11_FEATURE Feature,
-		__out_bcount(FeatureSupportDataSize) void *pFeatureSupportData,
+		void *pFeatureSupportData,
 		unsigned FeatureSupportDataSize)
 	{
 		SYNCHRONIZED;
@@ -360,13 +360,13 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState(
-		__in const D3D11_BLEND_DESC *pBlendStateDesc,
-		__out_opt ID3D11BlendState **ppBlendState
+		const D3D11_BLEND_DESC *pBlendStateDesc,
+		ID3D11BlendState **ppBlendState
 	)
 #else
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState1(
-		__in const D3D10_BLEND_DESC1 *pBlendStateDesc,
-		__out_opt ID3D10BlendState1 **ppBlendState
+		const D3D10_BLEND_DESC1 *pBlendStateDesc,
+		ID3D10BlendState1 **ppBlendState
 	)
 #endif
 	{
@@ -400,8 +400,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API < 11
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState(
-		__in const D3D10_BLEND_DESC *pBlendStateDesc,
-		__out_opt ID3D10BlendState **ppBlendState
+		const D3D10_BLEND_DESC *pBlendStateDesc,
+		ID3D10BlendState **ppBlendState
 	)
 	{
 		SYNCHRONIZED;
@@ -439,8 +439,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateDepthStencilState(
-		__in const D3D11_DEPTH_STENCIL_DESC *pDepthStencilStateDesc,
-		__out_opt ID3D11DepthStencilState **ppDepthStencilState
+		const D3D11_DEPTH_STENCIL_DESC *pDepthStencilStateDesc,
+		ID3D11DepthStencilState **ppDepthStencilState
 	)
 	{
 		SYNCHRONIZED;
@@ -477,8 +477,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateRasterizerState(
-		__in const D3D11_RASTERIZER_DESC *pRasterizerDesc,
-		__out_opt ID3D11RasterizerState **ppRasterizerState)
+		const D3D11_RASTERIZER_DESC *pRasterizerDesc,
+		ID3D11RasterizerState **ppRasterizerState)
 	{
 		SYNCHRONIZED;
 
@@ -517,8 +517,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSamplerState(
-		__in const D3D11_SAMPLER_DESC *pSamplerDesc,
-		__out_opt ID3D11SamplerState **ppSamplerState)
+		const D3D11_SAMPLER_DESC *pSamplerDesc,
+		ID3D11SamplerState **ppSamplerState)
 	{
 		SYNCHRONIZED;
 
@@ -555,11 +555,11 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateInputLayout(
-		__in_ecount(NumElements) const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs,
-		__in_range(0, D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT) unsigned NumElements,
-		__in const void *pShaderBytecodeWithInputSignature,
-		__in SIZE_T BytecodeLength,
-		__out_opt ID3D11InputLayout **ppInputLayout)
+		const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs,
+		unsigned NumElements,
+		const void *pShaderBytecodeWithInputSignature,
+		SIZE_T BytecodeLength,
+		ID3D11InputLayout **ppInputLayout)
 	{
 		SYNCHRONIZED;
 
@@ -738,9 +738,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture1D(
-		__in const D3D11_TEXTURE1D_DESC *pDesc,
-		__in_xcount_opt(pDesc->MipLevels * pDesc->ArraySize) const D3D11_SUBRESOURCE_DATA *pInitialData,
-		__out_opt ID3D11Texture1D **ppTexture1D)
+		const D3D11_TEXTURE1D_DESC *pDesc,
+		const D3D11_SUBRESOURCE_DATA *pInitialData,
+		ID3D11Texture1D **ppTexture1D)
 	{
 		SYNCHRONIZED;
 
@@ -754,9 +754,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture2D(
-		__in const D3D11_TEXTURE2D_DESC *pDesc,
-		__in_xcount_opt(pDesc->MipLevels * pDesc->ArraySize) const D3D11_SUBRESOURCE_DATA *pInitialData,
-		__out_opt ID3D11Texture2D **ppTexture2D)
+		const D3D11_TEXTURE2D_DESC *pDesc,
+		const D3D11_SUBRESOURCE_DATA *pInitialData,
+		ID3D11Texture2D **ppTexture2D)
 	{
 		SYNCHRONIZED;
 
@@ -773,9 +773,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture3D(
-		__in const D3D11_TEXTURE3D_DESC *pDesc,
-		__in_xcount_opt(pDesc->MipLevels) const D3D11_SUBRESOURCE_DATA *pInitialData,
-		__out_opt ID3D11Texture3D **ppTexture3D)
+		const D3D11_TEXTURE3D_DESC *pDesc,
+		const D3D11_SUBRESOURCE_DATA *pInitialData,
+		ID3D11Texture3D **ppTexture3D)
 	{
 		SYNCHRONIZED;
 
@@ -789,9 +789,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateBuffer(
-		__in const D3D11_BUFFER_DESC *pDesc,
-		__in_opt const D3D11_SUBRESOURCE_DATA *pInitialData,
-		__out_opt ID3D11Buffer **ppBuffer)
+		const D3D11_BUFFER_DESC *pDesc,
+		const D3D11_SUBRESOURCE_DATA *pInitialData,
+		ID3D11Buffer **ppBuffer)
 	{
 		SYNCHRONIZED;
 
@@ -809,8 +809,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE OpenGalliumResource(
-		__in struct pipe_resource* resource,
-		__out IUnknown** dxgi_resource)
+		struct pipe_resource* resource,
+		IUnknown** dxgi_resource)
 	{
 		SYNCHRONIZED;
 
@@ -845,11 +845,11 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSurface(
-		__in const DXGI_SURFACE_DESC *pDesc,
+		const DXGI_SURFACE_DESC *pDesc,
 		unsigned NumSurfaces,
 		DXGI_USAGE Usage,
-		__in_opt const DXGI_SHARED_RESOURCE *pSharedResource,
-		__out IDXGISurface **ppSurface)
+		const DXGI_SHARED_RESOURCE *pSharedResource,
+		IDXGISurface **ppSurface)
 	{
 		SYNCHRONIZED;
 
@@ -882,9 +882,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateShaderResourceView(
-		__in ID3D11Resource *pResource,
-		__in_opt const D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc,
-		__out_opt ID3D11ShaderResourceView **ppSRView)
+		ID3D11Resource *pResource,
+		const D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc,
+		ID3D11ShaderResourceView **ppSRView)
 	{
 #if API >= 11
 		D3D11_SHADER_RESOURCE_VIEW_DESC def_desc;
@@ -898,9 +898,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateShaderResourceView1(
-			__in ID3D11Resource *pResource,
-			__in_opt const D3D10_SHADER_RESOURCE_VIEW_DESC1 *pDesc,
-			__out_opt ID3D10ShaderResourceView1 **ppSRView)
+			ID3D11Resource *pResource,
+			const D3D10_SHADER_RESOURCE_VIEW_DESC1 *pDesc,
+			ID3D10ShaderResourceView1 **ppSRView)
 	{
 		D3D10_SHADER_RESOURCE_VIEW_DESC1 def_desc;
 #endif
@@ -988,9 +988,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateUnorderedAccessView(
-		__in ID3D11Resource *pResource,
-		__in_opt const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc,
-		__out_opt ID3D11UnorderedAccessView **ppUAView)
+		ID3D11Resource *pResource,
+		const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc,
+		ID3D11UnorderedAccessView **ppUAView)
 	{
 		SYNCHRONIZED;
 
@@ -1001,9 +1001,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateRenderTargetView(
-		__in ID3D11Resource *pResource,
-		__in_opt const D3D11_RENDER_TARGET_VIEW_DESC *pDesc,
-		__out_opt ID3D11RenderTargetView **ppRTView)
+		ID3D11Resource *pResource,
+		const D3D11_RENDER_TARGET_VIEW_DESC *pDesc,
+		ID3D11RenderTargetView **ppRTView)
 	{
 		SYNCHRONIZED;
 
@@ -1092,9 +1092,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateDepthStencilView(
-		__in ID3D11Resource *pResource,
-		__in_opt const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc,
-		__out_opt ID3D11DepthStencilView **ppDepthStencilView)
+		ID3D11Resource *pResource,
+		const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc,
+		ID3D11DepthStencilView **ppDepthStencilView)
 	{
 		SYNCHRONIZED;
 
@@ -1168,7 +1168,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 	GalliumD3D11Shader<>* create_stage_shader(unsigned type, const void *pShaderBytecode, SIZE_T BytecodeLength
 #if API >= 11
-			, __in_opt ID3D11ClassLinkage *pClassLinkage
+			, ID3D11ClassLinkage *pClassLinkage
 #endif
 			)
 	{
@@ -1221,21 +1221,21 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 #define CREATE_SHADER_ARGS \
-	__in const void *pShaderBytecode, \
-	__in SIZE_T BytecodeLength, \
-	__in_opt ID3D11ClassLinkage *pClassLinkage
+	const void *pShaderBytecode, \
+	SIZE_T BytecodeLength, \
+	ID3D11ClassLinkage *pClassLinkage
 #define PASS_SHADER_ARGS pShaderBytecode, BytecodeLength, pClassLinkage
 #else
 #define CREATE_SHADER_ARGS \
-	__in const void *pShaderBytecode, \
-	__in SIZE_T BytecodeLength
+	const void *pShaderBytecode, \
+	SIZE_T BytecodeLength
 #define PASS_SHADER_ARGS pShaderBytecode, BytecodeLength
 #endif
 
 #define IMPLEMENT_CREATE_SHADER(Stage, GALLIUM) \
 	virtual HRESULT STDMETHODCALLTYPE Create##Stage##Shader( \
 		CREATE_SHADER_ARGS, \
-		__out_opt ID3D11##Stage##Shader **pp##Stage##Shader) \
+		ID3D11##Stage##Shader **pp##Stage##Shader) \
 	{ \
 		SYNCHRONIZED; \
 		GalliumD3D11##Stage##Shader* shader = (GalliumD3D11##Stage##Shader*)create_stage_shader(PIPE_SHADER_##GALLIUM, PASS_SHADER_ARGS); \
@@ -1256,7 +1256,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #define IMPLEMENT_NOTIMPL_CREATE_SHADER(Stage) \
 	virtual HRESULT STDMETHODCALLTYPE Create##Stage##Shader( \
 		CREATE_SHADER_ARGS, \
-		__out_opt ID3D11##Stage##Shader **pp##Stage##Shader) \
+		ID3D11##Stage##Shader **pp##Stage##Shader) \
 	{ \
 		return E_NOTIMPL; \
 	}
@@ -1271,19 +1271,19 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateGeometryShaderWithStreamOutput(
-		__in const void *pShaderBytecode,
-		__in SIZE_T BytecodeLength,
-		__in_ecount_opt(NumEntries) const D3D11_SO_DECLARATION_ENTRY *pSODeclaration,
-		__in_range(0, D3D11_SO_STREAM_COUNT * D3D11_SO_OUTPUT_COMPONENT_COUNT) unsigned NumEntries,
+		const void *pShaderBytecode,
+		SIZE_T BytecodeLength,
+		const D3D11_SO_DECLARATION_ENTRY *pSODeclaration,
+		unsigned NumEntries,
 #if API >= 11
-		__in_ecount_opt(NumStrides) const unsigned *pBufferStrides,
-		__in_range(0, D3D11_SO_BUFFER_SLOT_COUNT) unsigned NumStrides,
-		__in unsigned RasterizedStream,
-		__in_opt ID3D11ClassLinkage *pClassLinkage,
+		const unsigned *pBufferStrides,
+		unsigned NumStrides,
+		unsigned RasterizedStream,
+		ID3D11ClassLinkage *pClassLinkage,
 #else
-		__in UINT OutputStreamStride,
+		UINT OutputStreamStride,
 #endif
-		__out_opt ID3D11GeometryShader **ppGeometryShader)
+		ID3D11GeometryShader **ppGeometryShader)
 	{
 		SYNCHRONIZED;
 
@@ -1297,7 +1297,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateClassLinkage(
-			__out ID3D11ClassLinkage **ppLinkage)
+			ID3D11ClassLinkage **ppLinkage)
 	{
 		SYNCHRONIZED;
 
@@ -1309,8 +1309,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateQuery(
-		__in const D3D11_QUERY_DESC *pQueryDesc,
-		__out_opt ID3D11Query **ppQuery)
+		const D3D11_QUERY_DESC *pQueryDesc,
+		ID3D11Query **ppQuery)
 	{
 		SYNCHRONIZED;
 
@@ -1332,8 +1332,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreatePredicate(
-		__in const D3D11_QUERY_DESC *pPredicateDesc,
-		__out_opt ID3D11Predicate **ppPredicate)
+		const D3D11_QUERY_DESC *pPredicateDesc,
+		ID3D11Predicate **ppPredicate)
 	{
 		SYNCHRONIZED;
 
@@ -1362,8 +1362,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 
 	virtual HRESULT STDMETHODCALLTYPE CreateCounter(
-		__in const D3D11_COUNTER_DESC *pCounterDesc,
-		__out_opt ID3D11Counter **ppCounter)
+		const D3D11_COUNTER_DESC *pCounterDesc,
+		ID3D11Counter **ppCounter)
 	{
 		SYNCHRONIZED;
 
@@ -1375,7 +1375,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateDeferredContext(
 		unsigned ContextFlags,
-		__out_opt ID3D11DeviceContext **ppDeferredContext)
+		ID3D11DeviceContext **ppDeferredContext)
 	{
 		SYNCHRONIZED;
 
@@ -1387,9 +1387,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE OpenSharedResource(
-			__in HANDLE hResource,
-			__in REFIID ReturnedInterface,
-			__out_opt void **ppResource)
+			HANDLE hResource,
+			REFIID ReturnedInterface,
+			void **ppResource)
 	{
 		SYNCHRONIZED;
 
@@ -1414,14 +1414,14 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	 * Probably nothing uses these, assuming it has ever been implemented anywhere.
 	 */
 	void STDMETHODCALLTYPE SetTextFilterSize(
-		__in UINT Width,
-		__in UINT Height
+		UINT Width,
+		UINT Height
 	)
 	{}
 
 	virtual void STDMETHODCALLTYPE GetTextFilterSize(
-		__in UINT *Width,
-		__in UINT *Height
+		UINT *Width,
+		UINT *Height
 	)
 	{}
 #endif

@@ -31,13 +31,13 @@
 #include <pipe/p_context.h>
 
 HRESULT D3D10CreateDevice1(
-	__in_opt IDXGIAdapter *pAdapter,
-	__in D3D10_DRIVER_TYPE DriverType,
-	__in HMODULE Software,
-	__in unsigned Flags,
-	__in D3D10_FEATURE_LEVEL1 HardwareLevel,
-	__in unsigned SDKVersion,
-	__out_opt ID3D10Device1 **ppDevice
+	IDXGIAdapter *pAdapter,
+	D3D10_DRIVER_TYPE DriverType,
+	HMODULE Software,
+	unsigned Flags,
+	D3D10_FEATURE_LEVEL1 HardwareLevel,
+	unsigned SDKVersion,
+	ID3D10Device1 **ppDevice
 )
 {
 	HRESULT hr;
@@ -83,15 +83,15 @@ HRESULT D3D10CreateDevice1(
 }
 
 HRESULT WINAPI D3D10CreateDeviceAndSwapChain1(
-	__in_opt IDXGIAdapter* pAdapter,
+	IDXGIAdapter* pAdapter,
 	D3D10_DRIVER_TYPE DriverType,
 	HMODULE Software,
 	unsigned Flags,
-	__in D3D10_FEATURE_LEVEL1 HardwareLevel,
+	D3D10_FEATURE_LEVEL1 HardwareLevel,
 	unsigned SDKVersion,
-	__in_opt DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
-	__out_opt IDXGISwapChain** ppSwapChain,
-	__out_opt ID3D10Device1** ppDevice
+	DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+	IDXGISwapChain** ppSwapChain,
+	ID3D10Device1** ppDevice
 )
 {
 	ComPtr<ID3D10Device1> dev;
@@ -123,26 +123,26 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain1(
 }
 
 HRESULT D3D10CreateDevice(
-	__in_opt IDXGIAdapter *pAdapter,
-	__in D3D10_DRIVER_TYPE DriverType,
-	__in HMODULE Software,
-	__in unsigned Flags,
-	__in unsigned SDKVersion,
-	__out_opt ID3D10Device **ppDevice
+	IDXGIAdapter *pAdapter,
+	D3D10_DRIVER_TYPE DriverType,
+	HMODULE Software,
+	unsigned Flags,
+	unsigned SDKVersion,
+	ID3D10Device **ppDevice
 )
 {
 	return D3D10CreateDevice1(pAdapter, DriverType, Software, Flags, D3D10_FEATURE_LEVEL_10_0, SDKVersion, (ID3D10Device1**)ppDevice);
 }
 
 HRESULT WINAPI D3D10CreateDeviceAndSwapChain(
-	__in_opt IDXGIAdapter* pAdapter,
+	IDXGIAdapter* pAdapter,
 	D3D10_DRIVER_TYPE DriverType,
 	HMODULE Software,
 	unsigned Flags,
 	unsigned SDKVersion,
-	__in_opt DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
-	__out_opt IDXGISwapChain** ppSwapChain,
-	__out_opt ID3D10Device** ppDevice
+	DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+	IDXGISwapChain** ppSwapChain,
+	ID3D10Device** ppDevice
 )
 {
 	return D3D10CreateDeviceAndSwapChain1(pAdapter, DriverType, Software, Flags, D3D10_FEATURE_LEVEL_10_0, SDKVersion, pSwapChainDesc, ppSwapChain, (ID3D10Device1**)ppDevice);

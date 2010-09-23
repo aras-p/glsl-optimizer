@@ -42,7 +42,7 @@
 
 extern const char* sm4_opcode_names[];
 extern const char* sm4_file_names[];
-extern const char* sm4_file_ms_names[];
+extern const char* sm4_shortfile_names[];
 extern const char* sm4_target_names[];
 extern const char* sm4_interpolation_names[];
 extern const char* sm4_sv_names[];

@@ -31,16 +31,16 @@
 #include <pipe/p_context.h>
 
 HRESULT D3D11CreateDevice(
-	__in_opt IDXGIAdapter *pAdapter,
-	__in D3D_DRIVER_TYPE DriverType,
-	__in HMODULE Software,
-	__in unsigned Flags,
-	__in_ecount_opt( FeatureLevels ) const D3D_FEATURE_LEVEL *pFeatureLevels,
-	__in unsigned FeatureLevels,
-	__in unsigned SDKVersion,
-	__out_opt ID3D11Device **ppDevice,
-	__out_opt D3D_FEATURE_LEVEL *pFeatureLevel,
-	__out_opt ID3D11DeviceContext **ppImmediateContext
+	IDXGIAdapter *pAdapter,
+	D3D_DRIVER_TYPE DriverType,
+	HMODULE Software,
+	unsigned Flags,
+	const D3D_FEATURE_LEVEL *pFeatureLevels,
+	unsigned FeatureLevels,
+	unsigned SDKVersion,
+	ID3D11Device **ppDevice,
+	D3D_FEATURE_LEVEL *pFeatureLevel,
+	ID3D11DeviceContext **ppImmediateContext
 )
 {
 	HRESULT hr;
@@ -90,18 +90,18 @@ HRESULT D3D11CreateDevice(
 }
 
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(
-	__in_opt IDXGIAdapter* pAdapter,
+	IDXGIAdapter* pAdapter,
 	D3D_DRIVER_TYPE DriverType,
 	HMODULE Software,
 	unsigned Flags,
-	__in_ecount_opt( FeatureLevels ) CONST D3D_FEATURE_LEVEL* pFeatureLevels,
+	CONST D3D_FEATURE_LEVEL* pFeatureLevels,
 	unsigned FeatureLevels,
 	unsigned SDKVersion,
-	__in_opt CONST DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
-	__out_opt IDXGISwapChain** ppSwapChain,
-	__out_opt ID3D11Device** ppDevice,
-	__out_opt D3D_FEATURE_LEVEL* pFeatureLevel,
-	__out_opt ID3D11DeviceContext** ppImmediateContext )
+	CONST DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+	IDXGISwapChain** ppSwapChain,
+	ID3D11Device** ppDevice,
+	D3D_FEATURE_LEVEL* pFeatureLevel,
+	ID3D11DeviceContext** ppImmediateContext )
 {
 	ComPtr<ID3D11Device> dev;
 	ComPtr<ID3D11DeviceContext> ctx;

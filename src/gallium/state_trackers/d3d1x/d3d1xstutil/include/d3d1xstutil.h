@@ -43,7 +43,6 @@ namespace std
 
 #define WIN32_LEAN_AND_MEAN
 #include <objbase.h>
-#include <specstrings.h>
 
 #include "galliumdxgi.h"
 #include <d3dcommon.h>
@@ -836,9 +835,9 @@ struct GalliumPrivateDataComObject : public GalliumComObject<Base, RefCnt>
 	}
 
 	HRESULT get_private_data(
-		__in REFGUID guid,
-		__inout UINT *pDataSize,
-		__out_bcount_opt(*pDataSize) void *pData)
+		REFGUID guid,
+		UINT *pDataSize,
+		void *pData)
 	{
 		lock_t<mutex_t> lock(private_data_mutex);
 		private_data_map_t::iterator i = private_data_map.find(guid);
@@ -868,9 +867,9 @@ struct GalliumPrivateDataComObject : public GalliumComObject<Base, RefCnt>
 	}
 
 	HRESULT set_private_data(
-		__in REFGUID guid,
-		__in UINT DataSize,
-		__in_bcount_opt( DataSize ) const void *pData)
+		REFGUID guid,
+		UINT DataSize,
+		const void *pData)
 	{
 		void* p = 0;
 
@@ -902,8 +901,8 @@ struct GalliumPrivateDataComObject : public GalliumComObject<Base, RefCnt>
 	}
 
 	HRESULT set_private_data_interface(
-		__in REFGUID guid,
-		__in_opt const IUnknown *pData)
+		REFGUID guid,
+		const IUnknown *pData)
 	{
 		lock_t<mutex_t> lock(private_data_mutex);
 		std::pair<void*, unsigned>& v = private_data_map[guid];
@@ -926,24 +925,24 @@ struct GalliumPrivateDataComObject : public GalliumComObject<Base, RefCnt>
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
-		__in REFGUID guid,
-		__inout UINT *pDataSize,
-		__out_bcount_opt(*pDataSize) void *pData)
+		REFGUID guid,
+		UINT *pDataSize,
+		void *pData)
 	{
 		return get_private_data(guid, pDataSize, pData);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
-		__in REFGUID guid,
-		__in UINT DataSize,
-		__in_bcount_opt( DataSize ) const void *pData)
+		REFGUID guid,
+		UINT DataSize,
+		const void *pData)
 	{
 		return set_private_data(guid, DataSize, pData);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
-		__in REFGUID guid,
-		__in_opt const IUnknown *pData)
+		REFGUID guid,
+		const IUnknown *pData)
 	{
 		return set_private_data_interface(guid, pData);
 	}
@@ -954,24 +953,24 @@ struct GalliumMultiPrivateDataComObject : public GalliumMultiComObject<BaseClass
 {
 	// we could avoid this duplication, but the increased complexity to do so isn't worth it
 	virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
-		__in REFGUID guid,
-		__inout UINT *pDataSize,
-		__out_bcount_opt(*pDataSize) void *pData)
+		REFGUID guid,
+		UINT *pDataSize,
+		void *pData)
 	{
 		return BaseClass::get_private_data(guid, pDataSize, pData);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
-		__in REFGUID guid,
-		__in UINT DataSize,
-		__in_bcount_opt( DataSize ) const void *pData)
+		REFGUID guid,
+		UINT DataSize,
+		const void *pData)
 	{
 		return BaseClass::set_private_data(guid, DataSize, pData);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
-		__in REFGUID guid,
-		__in_opt const IUnknown *pData)
+		REFGUID guid,
+		const IUnknown *pData)
 	{
 		return BaseClass::set_private_data_interface(guid, pData);
 	}
@@ -1015,22 +1014,22 @@ struct GalliumDXGIDevice : public GalliumMultiPrivateDataComObject<Base, IDXGIDe
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetParent(
-		__in REFIID riid,
-		__out void **ppParent)
+		REFIID riid,
+		void **ppParent)
 	{
 		return adapter.p->QueryInterface(riid, ppParent);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetAdapter(
-		__out IDXGIAdapter **pAdapter)
+		IDXGIAdapter **pAdapter)
 	{
 		*pAdapter = adapter.ref();
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE QueryResourceResidency(
-		__in_ecount(NumResources) IUnknown *const *ppResources,
-		__out_ecount(NumResources) DXGI_RESIDENCY *pResidencyStatus,
+		IUnknown *const *ppResources,
+		DXGI_RESIDENCY *pResidencyStatus,
 		UINT NumResources)
 	{
 		for(unsigned i = 0; i < NumResources; ++i)
@@ -1046,7 +1045,7 @@ struct GalliumDXGIDevice : public GalliumMultiPrivateDataComObject<Base, IDXGIDe
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetGPUThreadPriority(
-		__out INT *pPriority)
+		INT *pPriority)
 	{
 		*pPriority = priority;
 		return S_OK;

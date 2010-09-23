@@ -1,12 +1,12 @@
 #if API < 11
 extern "C" HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
-	__in SIZE_T NumBytes,
-	__out LPD3D10BLOB *ppBuffer
+	SIZE_T NumBytes,
+	LPD3D10BLOB *ppBuffer
 );
 
 HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
-	__in SIZE_T NumBytes,
-	__out LPD3D10BLOB *ppBuffer
+	SIZE_T NumBytes,
+	LPD3D10BLOB *ppBuffer
 )
 {
 	void* data = malloc(NumBytes);
@@ -17,21 +17,21 @@ HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetPixelShaderProfile(
-	__in ID3D10Device *pDevice
+	ID3D10Device *pDevice
 )
 {
 	return "ps_4_0";
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetVertexShaderProfile(
-	__in ID3D10Device *pDevice
+	ID3D10Device *pDevice
 )
 {
 	return "vs_4_0";
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetGeometryShaderProfile(
-	__in ID3D10Device *pDevice
+	ID3D10Device *pDevice
 )
 {
 	return "gs_4_0";
@@ -47,9 +47,9 @@ static HRESULT dxbc_assemble_as_blob(struct dxbc_chunk_header** chunks, unsigned
 }
 
 HRESULT D3D10GetInputSignatureBlob(
-	__in const void *pShaderBytecode,
-	__in SIZE_T BytecodeLength,
-	__out ID3D10Blob **ppSignatureBlob
+	const void *pShaderBytecode,
+	SIZE_T BytecodeLength,
+	ID3D10Blob **ppSignatureBlob
 )
 {
 	dxbc_chunk_signature* sig = dxbc_find_signature(pShaderBytecode, BytecodeLength, false);
@@ -60,9 +60,9 @@ HRESULT D3D10GetInputSignatureBlob(
 }
 
 HRESULT D3D10GetOutputSignatureBlob(
-	__in const void *pShaderBytecode,
-	__in SIZE_T BytecodeLength,
-	__out ID3D10Blob **ppSignatureBlob
+	const void *pShaderBytecode,
+	SIZE_T BytecodeLength,
+	ID3D10Blob **ppSignatureBlob
 )
 {
 	dxbc_chunk_signature* sig = dxbc_find_signature(pShaderBytecode, BytecodeLength, true);
@@ -73,9 +73,9 @@ HRESULT D3D10GetOutputSignatureBlob(
 }
 
 HRESULT D3D10GetInputAndOutputSignatureBlob(
-	__in const void *pShaderBytecode,
-	__in SIZE_T BytecodeLength,
-	__out ID3D10Blob **ppSignatureBlob
+	const void *pShaderBytecode,
+	SIZE_T BytecodeLength,
+	ID3D10Blob **ppSignatureBlob
 )
 {
 	dxbc_chunk_signature* sigs[2];
