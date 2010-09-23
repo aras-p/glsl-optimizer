@@ -901,7 +901,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 
 	void set_clip()
 	{
-		SYNCHRONIZED;
 		pipe_clip_state clip;
 		clip.nr = 0;
 		clip.depth_clamp = depth_clamp;
@@ -1588,7 +1587,7 @@ changed:
 	}
 #endif
 
-	virtual void STDMETHODCALLTYPE RestoreGalliumStateBlitOnly()
+	void restore_gallium_state_blit_only()
 	{
 		pipe->bind_blend_state(pipe, blend_state.p ? blend_state.p->object : default_blend);
 		pipe->bind_depth_stencil_alpha_state(pipe, depth_stencil_state.p ? depth_stencil_state.p->object : default_depth_stencil);
@@ -1607,6 +1606,12 @@ changed:
 		update_flags |= UPDATE_VERTEX_BUFFERS | (1 << (UPDATE_SAMPLERS_SHIFT + D3D11_STAGE_PS)) | (1 << (UPDATE_VIEWS_SHIFT + D3D11_STAGE_PS));
 	}
 
+	virtual void STDMETHODCALLTYPE RestoreGalliumStateBlitOnly()
+	{
+		SYNCHRONIZED;
+		restore_gallium_state_blit_only();
+	}
+
 	virtual void STDMETHODCALLTYPE GenerateMips(
 			__in  ID3D11ShaderResourceView *pShaderResourceView)
 	{
@@ -1620,13 +1625,13 @@ changed:
 		if(pipe->render_condition)
 			pipe->render_condition(pipe, 0, 0);
 		util_gen_mipmap(gen_mipmap, view->object, 0, 0, view->object->texture->last_level, PIPE_TEX_FILTER_LINEAR);
-		RestoreGalliumStateBlitOnly();
+		restore_gallium_state_blit_only();
 	}
 
 	virtual void STDMETHODCALLTYPE RestoreGalliumState()
 	{
 		SYNCHRONIZED;
-		RestoreGalliumStateBlitOnly();
+		restore_gallium_state_blit_only();
 
 		set_index_buffer();
 		set_stencil_ref();
@@ -1707,7 +1712,12 @@ changed:
 
 	virtual void STDMETHODCALLTYPE ClearState(void)
 	{
-		SYNCHRONIZED;
+		/* we don't take a lock here because we would deadlock otherwise
+		 * TODO: this is probably incorrect, because ClearState should likely be atomic.
+		 * However, I can't think of any correct usage that would be affected by this
+		 * being non-atomic, and making this atomic is quite expensive and complicates
+		 * the code
+		 */
 
 		// we qualify all calls so that we avoid virtual dispatch and might get them inlined
 		// TODO: make sure all this gets inlined, which might require more compiler flags
