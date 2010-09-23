@@ -4,15 +4,15 @@
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
+ * "software"), to deal in the software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * distribute, sublicense, and/or sell copies of the software, and to
+ * permit persons to whom the software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial
- * portions of the Software.
+ * portions of the software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -31,21 +31,21 @@
 #include <pipe/p_context.h>
 
 HRESULT D3D11CreateDevice(
-	IDXGIAdapter *pAdapter,
-	D3D_DRIVER_TYPE DriverType,
-	HMODULE Software,
-	unsigned Flags,
-	const D3D_FEATURE_LEVEL *pFeatureLevels,
-	unsigned FeatureLevels,
-	unsigned SDKVersion,
-	ID3D11Device **ppDevice,
-	D3D_FEATURE_LEVEL *pFeatureLevel,
-	ID3D11DeviceContext **ppImmediateContext
+	IDXGIAdapter *adapter,
+	D3D_DRIVER_TYPE driver_type,
+	HMODULE software,
+	unsigned flags,
+	const D3D_FEATURE_LEVEL *feature_levels,
+	unsigned num_feature_levels,
+	unsigned sdk_version,
+	ID3D11Device **out_device,
+	D3D_FEATURE_LEVEL *feature_level,
+	ID3D11DeviceContext **out_immediate_context
 )
 {
 	HRESULT hr;
 	ComPtr<IDXGIAdapter1> adapter_to_release;
-	if(!pAdapter)
+	if(!adapter)
 	{
 		ComPtr<IDXGIFactory1> factory;
 		hr = CreateDXGIFactory1(IID_IDXGIFactory1, (void**)&factory);
@@ -54,17 +54,17 @@ HRESULT D3D11CreateDevice(
 		hr = factory->EnumAdapters1(0, &adapter_to_release);
 		if(!SUCCEEDED(hr))
 			return hr;
-		pAdapter = adapter_to_release.p;
+		adapter = adapter_to_release.p;
 	}
 	ComPtr<IGalliumAdapter> gallium_adapter;
-	hr = pAdapter->QueryInterface(IID_IGalliumAdapter, (void**)&gallium_adapter);
+	hr = adapter->QueryInterface(IID_IGalliumAdapter, (void**)&gallium_adapter);
 	if(!SUCCEEDED(hr))
 		return hr;
 	struct pipe_screen* screen;
 	// TODO: what should D3D_DRIVER_TYPE_SOFTWARE return? fast or reference?
-	if(DriverType == D3D_DRIVER_TYPE_REFERENCE)
+	if(driver_type == D3D_DRIVER_TYPE_REFERENCE)
 		screen = gallium_adapter->GetGalliumReferenceSoftwareScreen();
-	else if(DriverType == D3D_DRIVER_TYPE_SOFTWARE || DriverType == D3D_DRIVER_TYPE_WARP)
+	else if(driver_type == D3D_DRIVER_TYPE_SOFTWARE || driver_type == D3D_DRIVER_TYPE_WARP)
 		screen = gallium_adapter->GetGalliumFastSoftwareScreen();
 	else
 		screen = gallium_adapter->GetGalliumScreen();
@@ -74,42 +74,42 @@ HRESULT D3D11CreateDevice(
 	if(!context)
 		return E_FAIL;
 	ComPtr<ID3D11Device> device;
-	hr = GalliumD3D11DeviceCreate(screen, context, TRUE, Flags, pAdapter, &device);
+	hr = GalliumD3D11DeviceCreate(screen, context, TRUE, flags, adapter, &device);
 	if(!SUCCEEDED(hr))
 	{
 		context->destroy(context);
 		return hr;
 	}
-	if(ppImmediateContext)
-		device->GetImmediateContext(ppImmediateContext);
-	if(pFeatureLevel)
-		*pFeatureLevel = device->GetFeatureLevel();
-	if(ppDevice)
-		*ppDevice = device.steal();
+	if(out_immediate_context)
+		device->GetImmediateContext(out_immediate_context);
+	if(feature_level)
+		*feature_level = device->GetFeatureLevel();
+	if(out_device)
+		*out_device = device.steal();
 	return S_OK;
 }
 
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(
-	IDXGIAdapter* pAdapter,
-	D3D_DRIVER_TYPE DriverType,
-	HMODULE Software,
-	unsigned Flags,
-	CONST D3D_FEATURE_LEVEL* pFeatureLevels,
-	unsigned FeatureLevels,
-	unsigned SDKVersion,
+	IDXGIAdapter* adapter,
+	D3D_DRIVER_TYPE driver_type,
+	HMODULE software,
+	unsigned flags,
+	CONST D3D_FEATURE_LEVEL* feature_levels,
+	unsigned num_feature_levels,
+	unsigned sdk_version,
 	CONST DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
-	IDXGISwapChain** ppSwapChain,
-	ID3D11Device** ppDevice,
-	D3D_FEATURE_LEVEL* pFeatureLevel,
-	ID3D11DeviceContext** ppImmediateContext )
+	IDXGISwapChain** out_swap_chain,
+	ID3D11Device** out_device,
+	D3D_FEATURE_LEVEL* feature_level,
+	ID3D11DeviceContext** out_immediate_context )
 {
 	ComPtr<ID3D11Device> dev;
 	ComPtr<ID3D11DeviceContext> ctx;
 	HRESULT hr;
-	hr = D3D11CreateDevice(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, (ID3D11Device**)&dev, pFeatureLevel, (ID3D11DeviceContext**)&ctx);
+	hr = D3D11CreateDevice(adapter, driver_type, software, flags, feature_levels, num_feature_levels, sdk_version, (ID3D11Device**)&dev, feature_level, (ID3D11DeviceContext**)&ctx);
 	if(!SUCCEEDED(hr))
 		return hr;
-	if(ppSwapChain)
+	if(out_swap_chain)
 	{
 		ComPtr<IDXGIFactory> factory;
 		ComPtr<IDXGIDevice> dxgi_device;
@@ -123,13 +123,13 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(
 			return hr;
 
 		adapter->GetParent(IID_IDXGIFactory, (void**)&factory);
-		hr = factory->CreateSwapChain(dev.p, (DXGI_SWAP_CHAIN_DESC*)pSwapChainDesc, ppSwapChain);
+		hr = factory->CreateSwapChain(dev.p, (DXGI_SWAP_CHAIN_DESC*)pSwapChainDesc, out_swap_chain);
 		if(!SUCCEEDED(hr))
 			return hr;
 	}
-	if(ppDevice)
-		*ppDevice = dev.steal();
-	if(ppImmediateContext)
-		*ppImmediateContext = ctx.steal();
+	if(out_device)
+		*out_device = dev.steal();
+	if(out_immediate_context)
+		*out_immediate_context = ctx.steal();
 	return hr;
 }

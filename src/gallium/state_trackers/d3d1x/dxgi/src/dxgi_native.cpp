@@ -40,9 +40,9 @@ struct GalliumDXGIAdapter;
 struct GalliumDXGISwapChain;
 struct GalliumDXGIFactory;
 
-static HRESULT GalliumDXGISwapChainCreate(GalliumDXGIFactory* factory, IUnknown* device, const DXGI_SWAP_CHAIN_DESC& desc, IDXGISwapChain** ppSwapChain);
-static HRESULT GalliumDXGIAdapterCreate(GalliumDXGIFactory* adapter, const struct native_platform* platform, void* dpy, IDXGIAdapter1** ppAdapter);
-static HRESULT GalliumDXGIOutputCreate(GalliumDXGIAdapter* adapter, const std::string& name, const struct native_connector* connector, IDXGIOutput** ppOutput);
+static HRESULT GalliumDXGISwapChainCreate(GalliumDXGIFactory* factory, IUnknown* device, const DXGI_SWAP_CHAIN_DESC& desc, IDXGISwapChain** out_swap_chain);
+static HRESULT GalliumDXGIAdapterCreate(GalliumDXGIFactory* adapter, const struct native_platform* platform, void* dpy, IDXGIAdapter1** out_adapter);
+static HRESULT GalliumDXGIOutputCreate(GalliumDXGIAdapter* adapter, const std::string& name, const struct native_connector* connector, IDXGIOutput** out_output);
 static void GalliumDXGISwapChainRevalidate(IDXGISwapChain* swap_chain);
 
 template<typename Base = IDXGIObject, typename Parent = IDXGIObject>
@@ -57,9 +57,9 @@ struct GalliumDXGIObject : public GalliumPrivateDataComObject<Base>
 
 	virtual HRESULT STDMETHODCALLTYPE GetParent(
 		REFIID riid,
-		void **ppParent)
+		void **out_parent)
 	{
-		return parent->QueryInterface(riid, ppParent);
+		return parent->QueryInterface(riid, out_parent);
 	}
 };
 
@@ -112,32 +112,32 @@ struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE EnumAdapters(
-		UINT Adapter,
-		IDXGIAdapter **ppAdapter)
+		UINT adapter,
+		IDXGIAdapter **out_adapter)
 	{
-		return EnumAdapters1(Adapter, (IDXGIAdapter1**)ppAdapter);
+		return EnumAdapters1(adapter, (IDXGIAdapter1**)out_adapter);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE EnumAdapters1(
-		UINT Adapter,
-		IDXGIAdapter1 **ppAdapter)
+		UINT adapter,
+		IDXGIAdapter1 **out_adapter)
 	{
-		*ppAdapter = 0;
-		if(Adapter == 0)
+		*out_adapter = 0;
+		if(adapter == 0)
 		{
-			return GalliumDXGIAdapterCreate(this, platform, display, ppAdapter);
+			return GalliumDXGIAdapterCreate(this, platform, display, out_adapter);
 		}
 #if 0
 		// TODO: enable this
 		if(platform == native_get_x11_platform())
 		{
 			unsigned nscreens = ScreenCount((Display*)display);
-			if(Adapter < nscreens)
+			if(adapter < nscreens)
 			{
 				unsigned def_screen = DefaultScreen(display);
-				if(Adapter <= def_screen)
-					--Adapter;
-				*ppAdapter = GalliumDXGIAdapterCreate(this, platform, display, Adapter);
+				if(adapter <= def_screen)
+					--adapter;
+				*out_adapter = GalliumDXGIAdapterCreate(this, platform, display, adapter);
 				return S_OK;
 			}
 		}
@@ -153,35 +153,35 @@ struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 	 * Does this act for existing swapchains? For new swapchains?
 	 */
 	virtual HRESULT STDMETHODCALLTYPE MakeWindowAssociation(
-		HWND WindowHandle,
-		UINT Flags)
+		HWND window_handle,
+		UINT flags)
 	{
 		/* TODO: actually implement, for Wine, X11 and KMS*/
-		associated_window = WindowHandle;
+		associated_window = window_handle;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetWindowAssociation(
-		HWND *pWindowHandle)
+		HWND *pwindow_handle)
 	{
-		*pWindowHandle = associated_window;
+		*pwindow_handle = associated_window;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSwapChain(
-		IUnknown *pDevice,
-		DXGI_SWAP_CHAIN_DESC *pDesc,
-		IDXGISwapChain **ppSwapChain)
+		IUnknown *device,
+		DXGI_SWAP_CHAIN_DESC *desc,
+		IDXGISwapChain **out_swap_chain)
 	{
-		return GalliumDXGISwapChainCreate(this, pDevice, *pDesc, ppSwapChain);
+		return GalliumDXGISwapChainCreate(this, device, *desc, out_swap_chain);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSoftwareAdapter(
-		HMODULE Module,
-		IDXGIAdapter **ppAdapter)
+		HMODULE module,
+		IDXGIAdapter **out_adapter)
 	{
 		/* TODO: ignore the module, and just create a Gallium software screen */
-		*ppAdapter = 0;
+		*out_adapter = 0;
 		return E_NOTIMPL;
 	}
 
@@ -276,44 +276,44 @@ struct GalliumDXGIAdapter
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE EnumOutputs(
-		UINT Output,
-		IDXGIOutput **ppOutput)
+		UINT output,
+		IDXGIOutput **out_output)
 	{
-		if(Output >= (unsigned)num_outputs)
+		if(output >= (unsigned)num_outputs)
 			return DXGI_ERROR_NOT_FOUND;
 
 		if(connectors)
 		{
 			std::ostringstream ss;
-			ss << "Output #" << Output;
-			return GalliumDXGIOutputCreate(this, ss.str(), connectors[Output], ppOutput);
+			ss << "output #" << output;
+			return GalliumDXGIOutputCreate(this, ss.str(), connectors[output], out_output);
 		}
 		else
-			return GalliumDXGIOutputCreate(this, "Unique output", NULL, ppOutput);
+			return GalliumDXGIOutputCreate(this, "Unique output", NULL, out_output);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(
-		DXGI_ADAPTER_DESC *pDesc)
+		DXGI_ADAPTER_DESC *desc)
 	{
-		memcpy(pDesc, &desc, sizeof(*pDesc));
+		memcpy(desc, &desc, sizeof(*desc));
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDesc1(
-		DXGI_ADAPTER_DESC1 *pDesc)
+		DXGI_ADAPTER_DESC1 *desc)
 	{
-		memcpy(pDesc, &desc, sizeof(*pDesc));
+		memcpy(desc, &desc, sizeof(*desc));
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CheckInterfaceSupport(
-		REFGUID InterfaceName,
-		LARGE_INTEGER *pUMDVersion)
+		REFGUID interface_name,
+		LARGE_INTEGER *u_m_d_version)
 	{
 		// these number was taken from Windows 7 with Catalyst 10.8: its meaning is unclear
-		if(InterfaceName == IID_ID3D11Device || InterfaceName == IID_ID3D10Device1 || InterfaceName == IID_ID3D10Device)
+		if(interface_name == IID_ID3D11Device || interface_name == IID_ID3D10Device1 || interface_name == IID_ID3D10Device)
 		{
-			pUMDVersion->QuadPart = 0x00080011000a0411ULL;
+			u_m_d_version->QuadPart = 0x00080011000a0411ULL;
 			return S_OK;
 		}
 		return DXGI_ERROR_UNSUPPORTED;
@@ -407,37 +407,37 @@ use_fake_mode:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(
-		DXGI_OUTPUT_DESC *pDesc)
+		DXGI_OUTPUT_DESC *out_desc)
 	{
-		*pDesc = desc;
+		*out_desc = desc;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDisplayModeList(
-		DXGI_FORMAT EnumFormat,
-		UINT Flags,
-		UINT *pNumModes,
-		DXGI_MODE_DESC *pDesc)
+		DXGI_FORMAT enum_format,
+		UINT flags,
+		UINT *pcount,
+		DXGI_MODE_DESC *desc)
 	{
 		/* TODO: should we return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE when we don't
 		 * support modesetting instead of fake modes?
 		 */
-		pipe_format format = dxgi_to_pipe_format[EnumFormat];
+		pipe_format format = dxgi_to_pipe_format[enum_format];
 		if(parent->configs_by_pipe_format.count(format))
 		{
-			if(!pDesc)
+			if(!desc)
 			{
-				*pNumModes = num_modes;
+				*pcount = num_modes;
 				return S_OK;
 			}
 
-			unsigned copy_modes = std::min(num_modes, *pNumModes);
+			unsigned copy_modes = std::min(num_modes, *pcount);
 			for(unsigned i = 0; i < copy_modes; ++i)
 			{
-				pDesc[i] = dxgi_modes[i];
-				pDesc[i].Format = EnumFormat;
+				desc[i] = dxgi_modes[i];
+				desc[i].Format = enum_format;
 			}
-			*pNumModes = num_modes;
+			*pcount = num_modes;
 
 			if(copy_modes < num_modes)
 				return DXGI_ERROR_MORE_DATA;
@@ -446,15 +446,15 @@ use_fake_mode:
 		}
 		else
 		{
-			*pNumModes = 0;
+			*pcount = 0;
 			return S_OK;
 		}
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE FindClosestMatchingMode(
 		const DXGI_MODE_DESC *pModeToMatch,
-		DXGI_MODE_DESC *pClosestMatch,
-		IUnknown *pConcernedDevice)
+		DXGI_MODE_DESC *closest_match,
+		IUnknown *concerned_device)
 	{
 		/* TODO: actually implement this */
 		DXGI_FORMAT dxgi_format = pModeToMatch->Format;
@@ -462,7 +462,7 @@ use_fake_mode:
 		init_pipe_to_dxgi_format();
 		if(!parent->configs_by_pipe_format.count(format))
 		{
-			if(!pConcernedDevice)
+			if(!concerned_device)
 				return E_FAIL;
 			else
 			{
@@ -471,8 +471,8 @@ use_fake_mode:
 			}
 		}
 
-		*pClosestMatch = dxgi_modes[0];
-		pClosestMatch->Format = dxgi_format;
+		*closest_match = dxgi_modes[0];
+		closest_match->Format = dxgi_format;
 		return S_OK;
 	}
 
@@ -482,8 +482,8 @@ use_fake_mode:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE TakeOwnership(
-		IUnknown *pDevice,
-		BOOL Exclusive)
+		IUnknown *device,
+		BOOL exclusive)
 	{
 		return S_OK;
 	}
@@ -493,9 +493,9 @@ use_fake_mode:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetGammaControlCapabilities(
-		DXGI_GAMMA_CONTROL_CAPABILITIES *pGammaCaps)
+		DXGI_GAMMA_CONTROL_CAPABILITIES *gamma_caps)
 	{
-		memset(pGammaCaps, 0, sizeof(*pGammaCaps));
+		memset(gamma_caps, 0, sizeof(*gamma_caps));
 		return S_OK;
 	}
 
@@ -528,23 +528,23 @@ use_fake_mode:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE SetDisplaySurface(
-		IDXGISurface *pScanoutSurface)
+		IDXGISurface *scanout_surface)
 	{
 		return E_NOTIMPL;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDisplaySurfaceData(
-		IDXGISurface *pDestination)
+		IDXGISurface *destination)
 	{
 		return E_NOTIMPL;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetFrameStatistics(
-		DXGI_FRAME_STATISTICS *pStats)
+		DXGI_FRAME_STATISTICS *stats)
 	{
-		memset(pStats, 0, sizeof(*pStats));
+		memset(stats, 0, sizeof(*stats));
 #ifdef _WIN32
-		QueryPerformanceCounter(&pStats->SyncQPCTime);
+		QueryPerformanceCounter(&stats->SyncQPCTime);
 #endif
 		return E_NOTIMPL;
 	}
@@ -567,12 +567,12 @@ use_fake_mode:
  * surface and the contents become undefined.
  * D3D may internally use multiple buffers, but you can't observe this, except
  * by looking at the buffer contents after Present (but those are undefined).
- * If it uses multiple buffers internally, then it will normally use BufferCount buffers
+ * If it uses multiple buffers internally, then it will normally use buffer_count buffers
  * (this has latency implications).
  * Discard mode seems to internally use a single buffer in windowed mode,
- * even if DWM is enabled, and BufferCount buffers in fullscreen mode.
+ * even if DWM is enabled, and buffer_count buffers in fullscreen mode.
  *
- * In sequential mode, the runtime alllocates BufferCount buffers.
+ * In sequential mode, the runtime alllocates buffer_count buffers.
  * You can get each with GetBuffers(n).
  * GetBuffers(0) ALWAYS points to the backbuffer to be presented and has the
  * same usage constraints as the discard mode.
@@ -646,11 +646,11 @@ use_fake_mode:
  * I was unable to find any code using it either in DirectX SDK examples, or on the web.
  *
  * It seems the only reason you would use it is to not have to redraw from scratch, while
- * also possibly avoid a copy compared to BufferCount == 1, assuming that your
+ * also possibly avoid a copy compared to buffer_count == 1, assuming that your
  * application is OK with having to redraw starting not from the last frame, but from
  * one/two/more frames behind it.
  *
- * A better design would forbid the user specifying BufferCount explicitly, and
+ * A better design would forbid the user specifying buffer_count explicitly, and
  * would instead let the application give an upper bound on how old the buffer can
  * become after presentation, with "infinite" being equivalent to discard.
  * The runtime would then tell the application with frame number the buffer switched to
@@ -872,7 +872,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 		if(desc.SwapEffect == DXGI_SWAP_EFFECT_SEQUENTIAL && desc.BufferCount != 1)
 		{
-			std::cerr << "Gallium DXGI: if DXGI_SWAP_EFFECT_SEQUENTIAL is specified, only BufferCount == 1 is implemented, but " << desc.BufferCount << " was specified: ignoring this" << std::endl;
+			std::cerr << "Gallium DXGI: if DXGI_SWAP_EFFECT_SEQUENTIAL is specified, only buffer_count == 1 is implemented, but " << desc.BufferCount << " was specified: ignoring this" << std::endl;
 			// change the returned desc, so that the application might perhaps notice what we did and react well
 			desc.BufferCount = 1;
 		}
@@ -942,9 +942,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 	virtual HRESULT STDMETHODCALLTYPE GetDevice(
 		REFIID riid,
-		void **ppDevice)
+		void **pdevice)
 	{
-		return dxgi_device->QueryInterface(riid, ppDevice);
+		return dxgi_device->QueryInterface(riid, pdevice);
 	}
 
 	HRESULT create_buffer0()
@@ -1006,10 +1006,10 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE Present(
-		UINT SyncInterval,
-		UINT Flags)
+		UINT sync_interval,
+		UINT flags)
 	{
-		if(Flags & DXGI_PRESENT_TEST)
+		if(flags & DXGI_PRESENT_TEST)
 			return S_OK;
 
 		if(!buffer0)
@@ -1181,38 +1181,38 @@ end_present:
 
 	/* TODO: implement somehow */
 	virtual HRESULT STDMETHODCALLTYPE SetFullscreenState(
-		BOOL Fullscreen,
-		IDXGIOutput *pTarget)
+		BOOL fullscreen,
+		IDXGIOutput *target)
 	{
-		fullscreen = Fullscreen;
-		target = pTarget;
+		fullscreen = fullscreen;
+		target = target;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetFullscreenState(
-		BOOL *pFullscreen,
-		IDXGIOutput **ppTarget)
+		BOOL *out_fullscreen,
+		IDXGIOutput **out_target)
 	{
-		if(pFullscreen)
-			*pFullscreen = fullscreen;
-		if(ppTarget)
-			*ppTarget = target.ref();
+		if(out_fullscreen)
+			*out_fullscreen = fullscreen;
+		if(out_target)
+			*out_target = target.ref();
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(
-		DXGI_SWAP_CHAIN_DESC *pDesc)
+		DXGI_SWAP_CHAIN_DESC *out_desc)
 	{
-		*pDesc = desc;
+		*out_desc = desc;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE ResizeBuffers(
-		UINT BufferCount,
-		UINT Width,
-		UINT Height,
-		DXGI_FORMAT NewFormat,
-		UINT SwapChainFlags)
+		UINT buffer_count,
+		UINT width,
+		UINT height,
+		DXGI_FORMAT new_format,
+		UINT swap_chain_flags)
 	{
 		if(buffer0)
 		{
@@ -1227,45 +1227,45 @@ end_present:
 		}
 
 		if(desc.SwapEffect != DXGI_SWAP_EFFECT_SEQUENTIAL)
-			desc.BufferCount = BufferCount;
-		desc.BufferDesc.Format = NewFormat;
-		desc.BufferDesc.Width = Width;
-		desc.BufferDesc.Height = Height;
-		desc.Flags = SwapChainFlags;
+			desc.BufferCount = buffer_count;
+		desc.BufferDesc.Format = new_format;
+		desc.BufferDesc.Width = width;
+		desc.BufferDesc.Height = height;
+		desc.Flags = swap_chain_flags;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE ResizeTarget(
-		const DXGI_MODE_DESC *pNewTargetParameters)
+		const DXGI_MODE_DESC *out_new_target_parameters)
 	{
 		/* TODO: implement */
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetContainingOutput(
-			IDXGIOutput **ppOutput)
+		IDXGIOutput **out_output)
 	{
-		*ppOutput = adapter->outputs[0].ref();
+		*out_output = adapter->outputs[0].ref();
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetFrameStatistics(
-			DXGI_FRAME_STATISTICS *pStats)
+		DXGI_FRAME_STATISTICS *out_stats)
 	{
-		memset(pStats, 0, sizeof(*pStats));
+		memset(out_stats, 0, sizeof(*out_stats));
 #ifdef _WIN32
-		QueryPerformanceCounter(&pStats->SyncQPCTime);
+		QueryPerformanceCounter(&out_stats->SyncQPCTime);
 #endif
-		pStats->PresentCount = present_count;
-		pStats->PresentRefreshCount = present_count;
-		pStats->SyncRefreshCount = present_count;
+		out_stats->PresentCount = present_count;
+		out_stats->PresentRefreshCount = present_count;
+		out_stats->SyncRefreshCount = present_count;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetLastPresentCount(
-		UINT *pLastPresentCount)
+		UINT *last_present_count)
 	{
-		*pLastPresentCount = present_count;
+		*last_present_count = present_count;
 		return S_OK;
 	}
 };
@@ -1275,11 +1275,11 @@ static void GalliumDXGISwapChainRevalidate(IDXGISwapChain* swap_chain)
 	((GalliumDXGISwapChain*)swap_chain)->needs_validation = true;
 }
 
-static HRESULT GalliumDXGIAdapterCreate(GalliumDXGIFactory* factory, const struct native_platform* platform, void* dpy, IDXGIAdapter1** pAdapter)
+static HRESULT GalliumDXGIAdapterCreate(GalliumDXGIFactory* factory, const struct native_platform* platform, void* dpy, IDXGIAdapter1** out_adapter)
 {
 	try
 	{
-		*pAdapter = new GalliumDXGIAdapter(factory, platform, dpy);
+		*out_adapter = new GalliumDXGIAdapter(factory, platform, dpy);
 		return S_OK;
 	}
 	catch(HRESULT hr)
@@ -1288,11 +1288,11 @@ static HRESULT GalliumDXGIAdapterCreate(GalliumDXGIFactory* factory, const struc
 	}
 }
 
-static HRESULT GalliumDXGIOutputCreate(GalliumDXGIAdapter* adapter, const std::string& name, const struct native_connector* connector, IDXGIOutput** pOutput)
+static HRESULT GalliumDXGIOutputCreate(GalliumDXGIAdapter* adapter, const std::string& name, const struct native_connector* connector, IDXGIOutput** out_output)
 {
 	try
 	{
-		*pOutput = new GalliumDXGIOutput(adapter, name, connector);
+		*out_output = new GalliumDXGIOutput(adapter, name, connector);
 		return S_OK;
 	}
 	catch(HRESULT hr)
@@ -1301,11 +1301,11 @@ static HRESULT GalliumDXGIOutputCreate(GalliumDXGIAdapter* adapter, const std::s
 	}
 }
 
-static HRESULT GalliumDXGISwapChainCreate(GalliumDXGIFactory* factory, IUnknown* device, const DXGI_SWAP_CHAIN_DESC& desc, IDXGISwapChain** pSwapChain)
+static HRESULT GalliumDXGISwapChainCreate(GalliumDXGIFactory* factory, IUnknown* device, const DXGI_SWAP_CHAIN_DESC& desc, IDXGISwapChain** out_swap_chain)
 {
 	try
 	{
-		*pSwapChain = new GalliumDXGISwapChain(factory, device, desc);
+		*out_swap_chain = new GalliumDXGISwapChain(factory, device, desc);
 		return S_OK;
 	}
 	catch(HRESULT hr)
@@ -1393,26 +1393,26 @@ void STDMETHODCALLTYPE GalliumDXGIMakeDefault()
  * TODO: should we use a singleton here, so we never have multiple DXGI objects for the same thing? */
  HRESULT STDMETHODCALLTYPE CreateDXGIFactory1(
 		REFIID riid,
-		void **ppFactory
+		void **out_factory
 )
  {
 	 GalliumDXGIFactory* factory;
-	 *ppFactory = 0;
+	 *out_factory = 0;
 	 if(dxgi_thread_binding.platform)
 		 factory = new GalliumDXGIFactory(dxgi_thread_binding.platform, dxgi_thread_binding.display, dxgi_thread_binding.backend);
 	 else if(dxgi_default_binding.platform)
 		 factory = new GalliumDXGIFactory(dxgi_default_binding.platform, dxgi_default_binding.display, dxgi_default_binding.backend);
 	 else
 		 factory = new GalliumDXGIFactory(native_get_x11_platform(), NULL, NULL);
-	 HRESULT hres = factory->QueryInterface(riid, ppFactory);
+	 HRESULT hres = factory->QueryInterface(riid, out_factory);
 	 factory->Release();
 	 return hres;
  }
 
  HRESULT STDMETHODCALLTYPE CreateDXGIFactory(
 		 REFIID riid,
-		 void **ppFactory
+		 void **out_factor
 )
  {
-	 return CreateDXGIFactory1(riid, ppFactory);
+	 return CreateDXGIFactory1(riid, out_factor);
  }
