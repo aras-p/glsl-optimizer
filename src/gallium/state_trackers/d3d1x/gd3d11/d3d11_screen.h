@@ -166,10 +166,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual void STDMETHODCALLTYPE GetImmediateContext(
-		ID3D11DeviceContext **ppImmediateContext)
+		ID3D11DeviceContext **out_immediate_context)
 	{
 		immediate_context->AddRef();
-		*ppImmediateContext = immediate_context;
+		*out_immediate_context = immediate_context;
 	}
 #endif
 
@@ -185,42 +185,42 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CheckCounter(
-		const D3D11_COUNTER_DESC *pDesc,
-		D3D11_COUNTER_TYPE *pType,
-		unsigned *pActiveCounters,
-		LPSTR szName,
-		unsigned *pNameLength,
-		LPSTR szUnits,
-		unsigned *pUnitsLength,
-		LPSTR szDescription,
-		unsigned *pDescriptionLength)
+		const D3D11_COUNTER_DESC *desc,
+		D3D11_COUNTER_TYPE *type,
+		unsigned *active_counters,
+		LPSTR sz_name,
+		unsigned *name_length,
+		LPSTR sz_units,
+		unsigned *units_length,
+		LPSTR sz_description,
+		unsigned *description_length)
 	{
 		return E_NOTIMPL;
 	}
 
 	virtual void STDMETHODCALLTYPE CheckCounterInfo(
-		D3D11_COUNTER_INFO *pCounterInfo)
+		D3D11_COUNTER_INFO *counter_info)
 	{
 		/* none supported at the moment */
-		pCounterInfo->LastDeviceDependentCounter = (D3D11_COUNTER)0;
-		pCounterInfo->NumSimultaneousCounters = 0;
-		pCounterInfo->NumDetectableParallelUnits = 1;
+		counter_info->LastDeviceDependentCounter = (D3D11_COUNTER)0;
+		counter_info->NumDetectableParallelUnits = 1;
+		counter_info->NumSimultaneousCounters = 0;
 	}
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
-		D3D11_FEATURE Feature,
-		void *pFeatureSupportData,
-		unsigned FeatureSupportDataSize)
+		D3D11_FEATURE feature,
+		void *out_feature_support_data,
+		unsigned feature_support_data_size)
 	{
 		SYNCHRONIZED;
 
-		switch(Feature)
+		switch(feature)
 		{
 			case D3D11_FEATURE_THREADING:
 			{
-				D3D11_FEATURE_DATA_THREADING* data = (D3D11_FEATURE_DATA_THREADING*)pFeatureSupportData;
-				if(FeatureSupportDataSize != sizeof(*data))
+				D3D11_FEATURE_DATA_THREADING* data = (D3D11_FEATURE_DATA_THREADING*)out_feature_support_data;
+				if(feature_support_data_size != sizeof(*data))
 					return E_INVALIDARG;
 
 				data->DriverCommandLists = FALSE;
@@ -229,8 +229,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			}
 			case D3D11_FEATURE_DOUBLES:
 			{
-				D3D11_FEATURE_DATA_DOUBLES* data = (D3D11_FEATURE_DATA_DOUBLES*)pFeatureSupportData;
-				if(FeatureSupportDataSize != sizeof(*data))
+				D3D11_FEATURE_DATA_DOUBLES* data = (D3D11_FEATURE_DATA_DOUBLES*)out_feature_support_data;
+				if(feature_support_data_size != sizeof(*data))
 					return E_INVALIDARG;
 
 				data->DoublePrecisionFloatShaderOps = FALSE;
@@ -238,16 +238,16 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			}
 			case D3D11_FEATURE_FORMAT_SUPPORT:
 			{
-				D3D11_FEATURE_DATA_FORMAT_SUPPORT* data = (D3D11_FEATURE_DATA_FORMAT_SUPPORT*)pFeatureSupportData;
-				if(FeatureSupportDataSize != sizeof(*data))
+				D3D11_FEATURE_DATA_FORMAT_SUPPORT* data = (D3D11_FEATURE_DATA_FORMAT_SUPPORT*)out_feature_support_data;
+				if(feature_support_data_size != sizeof(*data))
 					return E_INVALIDARG;
 
 				return this->CheckFormatSupport(data->InFormat, &data->OutFormatSupport);
 			}
 			case D3D11_FEATURE_FORMAT_SUPPORT2:
 			{
-				D3D11_FEATURE_DATA_FORMAT_SUPPORT* data = (D3D11_FEATURE_DATA_FORMAT_SUPPORT*)pFeatureSupportData;
-				if(FeatureSupportDataSize != sizeof(*data))
+				D3D11_FEATURE_DATA_FORMAT_SUPPORT* data = (D3D11_FEATURE_DATA_FORMAT_SUPPORT*)out_feature_support_data;
+				if(feature_support_data_size != sizeof(*data))
 					return E_INVALIDARG;
 
 				data->OutFormatSupport = 0;
@@ -256,8 +256,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			}
 			case D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS:
 			{
-				D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS* data = (D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS*)pFeatureSupportData;
-				if(FeatureSupportDataSize != sizeof(*data))
+				D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS* data = (D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS*)out_feature_support_data;
+				if(feature_support_data_size != sizeof(*data))
 					return E_INVALIDARG;
 
 				data->ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x = FALSE;
@@ -270,14 +270,14 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CheckFormatSupport(
-		DXGI_FORMAT Format,
-		unsigned *pFormatSupport
+		DXGI_FORMAT dxgi_format,
+		unsigned *out_format_support
 	)
 	{
 		SYNCHRONIZED;
 
 		/* TODO: MSAA, advanced features */
-		pipe_format format = dxgi_to_pipe_format[Format];
+		pipe_format format = dxgi_to_pipe_format[dxgi_format];
 		if(!format)
 			return E_INVALIDARG;
 
@@ -313,19 +313,19 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 				support |= D3D11_FORMAT_SUPPORT_DISPLAY;
 			format_support[format] = support;
 		}
-		*pFormatSupport = support;
+		*out_format_support = support;
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CheckMultisampleQualityLevels(
-		DXGI_FORMAT Format,
-		unsigned SampleCount,
-		unsigned *pNumQualityLevels
+		DXGI_FORMAT format,
+		unsigned sample_count,
+		unsigned *pcount
 	)
 	{
 		SYNCHRONIZED;
 
-		*pNumQualityLevels = 0;
+		*pcount = 0;
 		return S_OK;
 	}
 
@@ -360,13 +360,13 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState(
-		const D3D11_BLEND_DESC *pBlendStateDesc,
-		ID3D11BlendState **ppBlendState
+		const D3D11_BLEND_DESC *blend_state_desc,
+		ID3D11BlendState **out_blend_state
 	)
 #else
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState1(
-		const D3D10_BLEND_DESC1 *pBlendStateDesc,
-		ID3D10BlendState1 **ppBlendState
+		const D3D10_BLEND_DESC1 *blend_state_desc,
+		ID3D10BlendState1 **out_blend_state
 	)
 #endif
 	{
@@ -374,49 +374,49 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		pipe_blend_state state;
 		memset(&state, 0, sizeof(state));
-		state.alpha_to_coverage = !!pBlendStateDesc->AlphaToCoverageEnable;
-		state.independent_blend_enable = !!pBlendStateDesc->IndependentBlendEnable;
+		state.alpha_to_coverage = !!blend_state_desc->AlphaToCoverageEnable;
+		state.independent_blend_enable = !!blend_state_desc->IndependentBlendEnable;
 		assert(PIPE_MAX_COLOR_BUFS >= 8);
 		for(unsigned i = 0; i < 8; ++i)
 		{
 			 if(!convert_blend_state(
 					 state.rt[i],
-					 pBlendStateDesc->RenderTarget[i],
-					 pBlendStateDesc->RenderTarget[i].BlendEnable,
-					 pBlendStateDesc->RenderTarget[i].RenderTargetWriteMask))
+					 blend_state_desc->RenderTarget[i],
+					 blend_state_desc->RenderTarget[i].BlendEnable,
+					 blend_state_desc->RenderTarget[i].RenderTargetWriteMask))
 				 return E_INVALIDARG;
 		}
 
-		if(!ppBlendState)
+		if(!out_blend_state)
 			return S_FALSE;
 
 		void* object = immediate_pipe->create_blend_state(immediate_pipe, &state);
 		if(!object)
 			return E_FAIL;
 
-		*ppBlendState = new GalliumD3D11BlendState(this, object, *pBlendStateDesc);
+		*out_blend_state = new GalliumD3D11BlendState(this, object, *blend_state_desc);
 		return S_OK;
 	}
 
 #if API < 11
 	virtual HRESULT STDMETHODCALLTYPE CreateBlendState(
-		const D3D10_BLEND_DESC *pBlendStateDesc,
-		ID3D10BlendState **ppBlendState
+		const D3D10_BLEND_DESC *blend_state_desc,
+		ID3D10BlendState **out_blend_state
 	)
 	{
 		SYNCHRONIZED;
 
 		pipe_blend_state state;
 		memset(&state, 0, sizeof(state));
-		state.alpha_to_coverage = !!pBlendStateDesc->AlphaToCoverageEnable;
+		state.alpha_to_coverage = !!blend_state_desc->AlphaToCoverageEnable;
 		assert(PIPE_MAX_COLOR_BUFS >= 8);
 		for(unsigned i = 0; i < 8; ++i)
 		{
 			if(!convert_blend_state(
 				state.rt[i],
-				*pBlendStateDesc,
-				pBlendStateDesc->BlendEnable[i],
-				pBlendStateDesc->RenderTargetWriteMask[i]))
+				*blend_state_desc,
+				blend_state_desc->BlendEnable[i],
+				blend_state_desc->RenderTargetWriteMask[i]))
 				return E_INVALIDARG;
 		}
 
@@ -433,150 +433,150 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(!object)
 			return E_FAIL;
 
-		*ppBlendState = new GalliumD3D11BlendState(this, object, *pBlendStateDesc);
+		*out_blend_state = new GalliumD3D11BlendState(this, object, *blend_state_desc);
 		return S_OK;
 	}
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateDepthStencilState(
-		const D3D11_DEPTH_STENCIL_DESC *pDepthStencilStateDesc,
-		ID3D11DepthStencilState **ppDepthStencilState
+		const D3D11_DEPTH_STENCIL_DESC *depth_stencil_state_desc,
+		ID3D11DepthStencilState **depth_stencil_state
 	)
 	{
 		SYNCHRONIZED;
 
 		pipe_depth_stencil_alpha_state state;
 		memset(&state, 0, sizeof(state));
-		state.depth.enabled = !!pDepthStencilStateDesc->DepthEnable;
-		state.depth.writemask = pDepthStencilStateDesc->DepthWriteMask;
-		state.depth.func = pDepthStencilStateDesc->DepthFunc - 1;
-		state.stencil[0].enabled = !!pDepthStencilStateDesc->StencilEnable;
-		state.stencil[0].writemask = pDepthStencilStateDesc->StencilWriteMask;
-		state.stencil[0].valuemask = pDepthStencilStateDesc->StencilReadMask;
-		state.stencil[0].zpass_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->FrontFace.StencilPassOp];
-		state.stencil[0].fail_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->FrontFace.StencilFailOp];
-		state.stencil[0].zfail_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->FrontFace.StencilDepthFailOp];
-		state.stencil[0].func = pDepthStencilStateDesc->FrontFace.StencilFunc - 1;
-		state.stencil[1].enabled = !!pDepthStencilStateDesc->StencilEnable;
-		state.stencil[1].writemask = pDepthStencilStateDesc->StencilWriteMask;
-		state.stencil[1].valuemask = pDepthStencilStateDesc->StencilReadMask;
-		state.stencil[1].zpass_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->BackFace.StencilPassOp];
-		state.stencil[1].fail_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->BackFace.StencilFailOp];
-		state.stencil[1].zfail_op = d3d11_to_pipe_stencil_op[pDepthStencilStateDesc->BackFace.StencilDepthFailOp];
-		state.stencil[1].func = pDepthStencilStateDesc->BackFace.StencilFunc - 1;
+		state.depth.enabled = !!depth_stencil_state_desc->DepthEnable;
+		state.depth.writemask = depth_stencil_state_desc->DepthWriteMask;
+		state.depth.func = depth_stencil_state_desc->DepthFunc - 1;
+		state.stencil[0].enabled = !!depth_stencil_state_desc->StencilEnable;
+		state.stencil[0].writemask = depth_stencil_state_desc->StencilWriteMask;
+		state.stencil[0].valuemask = depth_stencil_state_desc->StencilReadMask;
+		state.stencil[0].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilPassOp];
+		state.stencil[0].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilFailOp];
+		state.stencil[0].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilDepthFailOp];
+		state.stencil[0].func = depth_stencil_state_desc->FrontFace.StencilFunc - 1;
+		state.stencil[1].enabled = !!depth_stencil_state_desc->StencilEnable;
+		state.stencil[1].writemask = depth_stencil_state_desc->StencilWriteMask;
+		state.stencil[1].valuemask = depth_stencil_state_desc->StencilReadMask;
+		state.stencil[1].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilPassOp];
+		state.stencil[1].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilFailOp];
+		state.stencil[1].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilDepthFailOp];
+		state.stencil[1].func = depth_stencil_state_desc->BackFace.StencilFunc - 1;
 
-		if(!ppDepthStencilState)
+		if(!depth_stencil_state)
 			return S_FALSE;
 
 		void* object = immediate_pipe->create_depth_stencil_alpha_state(immediate_pipe, &state);
 		if(!object)
 			return E_FAIL;
 
-		*ppDepthStencilState = new GalliumD3D11DepthStencilState(this, object, *pDepthStencilStateDesc);
+		*depth_stencil_state = new GalliumD3D11DepthStencilState(this, object, *depth_stencil_state_desc);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateRasterizerState(
-		const D3D11_RASTERIZER_DESC *pRasterizerDesc,
-		ID3D11RasterizerState **ppRasterizerState)
+		const D3D11_RASTERIZER_DESC *rasterizer_desc,
+		ID3D11RasterizerState **out_rasterizer_state)
 	{
 		SYNCHRONIZED;
 
 		pipe_rasterizer_state state;
 		memset(&state, 0, sizeof(state));
 		state.gl_rasterization_rules = 1; /* D3D10/11 use GL rules */
-		state.fill_front = state.fill_back = (pRasterizerDesc->FillMode == D3D11_FILL_WIREFRAME) ? PIPE_POLYGON_MODE_LINE : PIPE_POLYGON_MODE_FILL;
-		if(pRasterizerDesc->CullMode == D3D11_CULL_FRONT)
+		state.fill_front = state.fill_back = (rasterizer_desc->FillMode == D3D11_FILL_WIREFRAME) ? PIPE_POLYGON_MODE_LINE : PIPE_POLYGON_MODE_FILL;
+		if(rasterizer_desc->CullMode == D3D11_CULL_FRONT)
 			state.cull_face = PIPE_FACE_FRONT;
-		else if(pRasterizerDesc->CullMode == D3D11_CULL_BACK)
+		else if(rasterizer_desc->CullMode == D3D11_CULL_BACK)
 			state.cull_face = PIPE_FACE_BACK;
 		else
 			state.cull_face = PIPE_FACE_NONE;
-		state.front_ccw = !!pRasterizerDesc->FrontCounterClockwise;
+		state.front_ccw = !!rasterizer_desc->FrontCounterClockwise;
 		/* TODO: is this correct? */
-		/* TODO: we are ignoring DepthBiasClamp! */
-		state.offset_tri = state.offset_line = state.offset_point = pRasterizerDesc->SlopeScaledDepthBias || pRasterizerDesc->DepthBias;
-		state.offset_scale = pRasterizerDesc->SlopeScaledDepthBias;
-		state.offset_units = pRasterizerDesc->DepthBias;
-		state.scissor = !!pRasterizerDesc->ScissorEnable;
-		state.multisample = !!pRasterizerDesc->MultisampleEnable;
-		state.line_smooth = !!pRasterizerDesc->AntialiasedLineEnable;
+		/* TODO: we are ignoring depthBiasClamp! */
+		state.offset_tri = state.offset_line = state.offset_point = rasterizer_desc->SlopeScaledDepthBias || rasterizer_desc->DepthBias;
+		state.offset_scale = rasterizer_desc->SlopeScaledDepthBias;
+		state.offset_units = rasterizer_desc->DepthBias;
+		state.scissor = !!rasterizer_desc->ScissorEnable;
+		state.multisample = !!rasterizer_desc->MultisampleEnable;
+		state.line_smooth = !!rasterizer_desc->AntialiasedLineEnable;
 
 		/* TODO: is this correct? */
 		state.point_quad_rasterization = 1;
 
-		if(!ppRasterizerState)
+		if(!out_rasterizer_state)
 			return S_FALSE;
 
 		void* object = immediate_pipe->create_rasterizer_state(immediate_pipe, &state);
 		if(!object)
 			return E_FAIL;
 
-		*ppRasterizerState = new GalliumD3D11RasterizerState(this, object, *pRasterizerDesc, !pRasterizerDesc->DepthClipEnable);
+		*out_rasterizer_state = new GalliumD3D11RasterizerState(this, object, *rasterizer_desc, !rasterizer_desc->DepthClipEnable);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSamplerState(
-		const D3D11_SAMPLER_DESC *pSamplerDesc,
-		ID3D11SamplerState **ppSamplerState)
+		const D3D11_SAMPLER_DESC *sampler_desc,
+		ID3D11SamplerState **out_sampler_state)
 	{
 		SYNCHRONIZED;
 
 		pipe_sampler_state state;
 		memset(&state, 0, sizeof(state));
 		state.normalized_coords = 1;
-		state.min_mip_filter = (pSamplerDesc->Filter & 1);
-		state.mag_img_filter = ((pSamplerDesc->Filter >> 2) & 1);
-		state.min_img_filter = ((pSamplerDesc->Filter >> 4) & 1);
-		if(pSamplerDesc->Filter & 0x40)
-			state.max_anisotropy = pSamplerDesc->MaxAnisotropy;
-		if(pSamplerDesc->Filter & 0x80)
+		state.min_mip_filter = (sampler_desc->Filter & 1);
+		state.mag_img_filter = ((sampler_desc->Filter >> 2) & 1);
+		state.min_img_filter = ((sampler_desc->Filter >> 4) & 1);
+		if(sampler_desc->Filter & 0x40)
+			state.max_anisotropy = sampler_desc->MaxAnisotropy;
+		if(sampler_desc->Filter & 0x80)
 		{
 			state.compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-			state.compare_func = pSamplerDesc->ComparisonFunc;
+			state.compare_func = sampler_desc->ComparisonFunc;
 		}
-		state.wrap_s = d3d11_to_pipe_wrap[pSamplerDesc->AddressU];
-		state.wrap_t = d3d11_to_pipe_wrap[pSamplerDesc->AddressV];
-		state.wrap_r = d3d11_to_pipe_wrap[pSamplerDesc->AddressW];
-		state.lod_bias = pSamplerDesc->MipLODBias;
-		memcpy(state.border_color, pSamplerDesc->BorderColor, sizeof(state.border_color));
-		state.min_lod = pSamplerDesc->MinLOD;
-		state.max_lod = pSamplerDesc->MaxLOD;
+		state.wrap_s = d3d11_to_pipe_wrap[sampler_desc->AddressU];
+		state.wrap_t = d3d11_to_pipe_wrap[sampler_desc->AddressV];
+		state.wrap_r = d3d11_to_pipe_wrap[sampler_desc->AddressW];
+		state.lod_bias = sampler_desc->MipLODBias;
+		memcpy(state.border_color, sampler_desc->BorderColor, sizeof(state.border_color));
+		state.min_lod = sampler_desc->MinLOD;
+		state.max_lod = sampler_desc->MaxLOD;
 
-		if(!ppSamplerState)
+		if(!out_sampler_state)
 			return S_FALSE;
 
 		void* object = immediate_pipe->create_sampler_state(immediate_pipe, &state);
 		if(!object)
 			return E_FAIL;
 
-		*ppSamplerState = new GalliumD3D11SamplerState(this, object, *pSamplerDesc);
+		*out_sampler_state = new GalliumD3D11SamplerState(this, object, *sampler_desc);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateInputLayout(
-		const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs,
-		unsigned NumElements,
-		const void *pShaderBytecodeWithInputSignature,
-		SIZE_T BytecodeLength,
-		ID3D11InputLayout **ppInputLayout)
+		const D3D11_INPUT_ELEMENT_DESC *input_element_descs,
+		unsigned count,
+		const void *shader_bytecode_with_input_signature,
+		SIZE_T bytecode_length,
+		ID3D11InputLayout **out_input_layout)
 	{
 		SYNCHRONIZED;
 
-		if(NumElements > D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT)
+		if(count > D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT)
 			return E_INVALIDARG;
 		assert(D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT <= PIPE_MAX_ATTRIBS);
 
 		// putting semantics matching in the core API seems to be a (minor) design mistake
 
-		struct dxbc_chunk_signature* sig = dxbc_find_signature(pShaderBytecodeWithInputSignature, BytecodeLength, false);
+		struct dxbc_chunk_signature* sig = dxbc_find_signature(shader_bytecode_with_input_signature, bytecode_length, false);
 		D3D11_SIGNATURE_PARAMETER_DESC* params;
 		unsigned num_params = dxbc_parse_signature(sig, &params);
 
 		typedef std::unordered_map<std::pair<c_string, unsigned>, unsigned> semantic_to_idx_map_t;
 		semantic_to_idx_map_t semantic_to_idx_map;
-		for(unsigned i = 0; i < NumElements; ++i)
-			semantic_to_idx_map[std::make_pair(c_string(pInputElementDescs[i].SemanticName), pInputElementDescs[i].SemanticIndex)] = i;
+		for(unsigned i = 0; i < count; ++i)
+			semantic_to_idx_map[std::make_pair(c_string(input_element_descs[i].SemanticName), input_element_descs[i].SemanticIndex)] = i;
 
 		struct pipe_vertex_element elements[D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT];
 
@@ -593,102 +593,102 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			memset(&elements[i], 0, sizeof(elements[i]));
 			if(idx >= 0)
 			{
-				elements[i].src_format = dxgi_to_pipe_format[pInputElementDescs[idx].Format];
-				elements[i].src_offset = pInputElementDescs[idx].AlignedByteOffset;
-				elements[i].vertex_buffer_index = pInputElementDescs[idx].InputSlot;
-				elements[i].instance_divisor = pInputElementDescs[idx].InstanceDataStepRate;
+				elements[i].src_format = dxgi_to_pipe_format[input_element_descs[idx].Format];
+				elements[i].src_offset = input_element_descs[idx].AlignedByteOffset;
+				elements[i].vertex_buffer_index = input_element_descs[idx].InputSlot;
+				elements[i].instance_divisor = input_element_descs[idx].InstanceDataStepRate;
 			}
 		}
 
 		free(params);
 
-		if(!ppInputLayout)
+		if(!out_input_layout)
 			return S_FALSE;
 
 		void* object = immediate_pipe->create_vertex_elements_state(immediate_pipe, num_params_to_use, elements);
 		if(!object)
 			return E_FAIL;
 
-		*ppInputLayout = new GalliumD3D11InputLayout(this, object);
+		*out_input_layout = new GalliumD3D11InputLayout(this, object);
 		return S_OK;
 	}
 
-	static unsigned d3d11_to_pipe_bind_flags(unsigned BindFlags)
+	static unsigned d3d11_to_pipe_bind_flags(unsigned bind_flags)
 	{
 		unsigned bind = 0;
-		if(BindFlags & D3D11_BIND_VERTEX_BUFFER)
+		if(bind_flags & D3D11_BIND_VERTEX_BUFFER)
 			bind |= PIPE_BIND_VERTEX_BUFFER;
-		if(BindFlags & D3D11_BIND_INDEX_BUFFER)
+		if(bind_flags & D3D11_BIND_INDEX_BUFFER)
 			bind |= PIPE_BIND_INDEX_BUFFER;
-		if(BindFlags & D3D11_BIND_CONSTANT_BUFFER)
+		if(bind_flags & D3D11_BIND_CONSTANT_BUFFER)
 			bind |= PIPE_BIND_CONSTANT_BUFFER;
-		if(BindFlags & D3D11_BIND_SHADER_RESOURCE)
+		if(bind_flags & D3D11_BIND_SHADER_RESOURCE)
 			bind |= PIPE_BIND_SAMPLER_VIEW;
-		if(BindFlags & D3D11_BIND_STREAM_OUTPUT)
+		if(bind_flags & D3D11_BIND_STREAM_OUTPUT)
 			bind |= PIPE_BIND_STREAM_OUTPUT;
-		if(BindFlags & D3D11_BIND_RENDER_TARGET)
+		if(bind_flags & D3D11_BIND_RENDER_TARGET)
 			bind |= PIPE_BIND_RENDER_TARGET;
-		if(BindFlags & D3D11_BIND_DEPTH_STENCIL)
+		if(bind_flags & D3D11_BIND_DEPTH_STENCIL)
 			bind |= PIPE_BIND_DEPTH_STENCIL;
 		return bind;
 	}
 
 	inline HRESULT create_resource(
 		pipe_texture_target target,
-		unsigned Width,
-		unsigned Height,
-		unsigned Depth,
-		unsigned MipLevels,
-		unsigned ArraySize,
-		DXGI_FORMAT Format,
+		unsigned width,
+		unsigned height,
+		unsigned depth,
+		unsigned mip_levels,
+		unsigned array_size,
+		DXGI_FORMAT format,
 		const DXGI_SAMPLE_DESC* SampleDesc,
-		D3D11_USAGE Usage,
-		unsigned BindFlags,
-		unsigned CPUAccessFlags,
-		unsigned MiscFlags,
-		const D3D11_SUBRESOURCE_DATA *pInitialData,
+		D3D11_USAGE usage,
+		unsigned bind_flags,
+		unsigned c_p_u_access_flags,
+		unsigned misc_flags,
+		const D3D11_SUBRESOURCE_DATA *initial_data,
 		DXGI_USAGE dxgi_usage,
 		struct pipe_resource** ppresource
 	)
 	{
-		if(invalid(Format >= DXGI_FORMAT_COUNT))
+		if(invalid(format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		if(MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
+		if(misc_flags & D3D11_RESOURCE_MISC_TEXTURECUBE)
 		{
 			if(target != PIPE_TEXTURE_2D)
 				return E_INVALIDARG;
 			target = PIPE_TEXTURE_CUBE;
 
-			if(ArraySize != 6)
+			if(array_size != 6)
 				return E_NOTIMPL;
 		}
 		else
 		{
-			if(ArraySize > 1)
+			if(array_size > 1)
 				return E_NOTIMPL;
-			ArraySize = 1;
+			array_size = 1;
 		}
 		/* TODO: msaa */
 		struct pipe_resource templat;
 		memset(&templat, 0, sizeof(templat));
 		templat.target = target;
-		templat.width0 = Width;
-		templat.height0 = Height;
-		templat.depth0 = Depth;
-		templat.last_level = MipLevels ? (MipLevels - 1) : 0;
-		templat.format = dxgi_to_pipe_format[Format];
-		templat.bind = d3d11_to_pipe_bind_flags(BindFlags);
-		if(CPUAccessFlags & D3D11_CPU_ACCESS_READ)
+		templat.width0 = width;
+		templat.height0 = height;
+		templat.depth0 = depth;
+		templat.last_level = mip_levels ? (mip_levels - 1) : 0;
+		templat.format = dxgi_to_pipe_format[format];
+		templat.bind = d3d11_to_pipe_bind_flags(bind_flags);
+		if(c_p_u_access_flags & D3D11_CPU_ACCESS_READ)
 			templat.bind |= PIPE_BIND_TRANSFER_READ;
-		if(CPUAccessFlags & D3D11_CPU_ACCESS_WRITE)
+		if(c_p_u_access_flags & D3D11_CPU_ACCESS_WRITE)
 			templat.bind |= PIPE_BIND_TRANSFER_WRITE;
-		if(MiscFlags & D3D11_RESOURCE_MISC_SHARED)
+		if(misc_flags & D3D11_RESOURCE_MISC_SHARED)
 			templat.bind |= PIPE_BIND_SHARED;
-		if(MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
+		if(misc_flags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
 			templat.bind |= PIPE_BIND_TRANSFER_READ | PIPE_BIND_TRANSFER_WRITE;
 		if(dxgi_usage & DXGI_USAGE_BACK_BUFFER)
 			templat.bind |= PIPE_BIND_DISPLAY_TARGET;
-		templat.usage = d3d11_to_pipe_usage[Usage];
+		templat.usage = d3d11_to_pipe_usage[usage];
 		if(invalid(!templat.format))
 			return E_NOTIMPL;
 
@@ -698,9 +698,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		struct pipe_resource* resource = screen->resource_create(screen, &templat);
 		if(!resource)
 			return E_FAIL;
-		if(pInitialData)
+		if(initial_data)
 		{
-			for(unsigned slice = 0; slice < ArraySize; ++slice)
+			for(unsigned slice = 0; slice < array_size; ++slice)
 			{
 				for(unsigned level = 0; level <= templat.last_level; ++level)
 				{
@@ -709,11 +709,11 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 					sr.face = slice;
 					struct pipe_box box;
 					box.x = box.y = box.z = 0;
-					box.width = u_minify(Width, level);
-					box.height = u_minify(Height, level);
-					box.depth = u_minify(Depth, level);
-					immediate_pipe->transfer_inline_write(immediate_pipe, resource, sr, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_UNSYNCHRONIZED, &box, pInitialData->pSysMem, pInitialData->SysMemPitch, pInitialData->SysMemSlicePitch);
-					++pInitialData;
+					box.width = u_minify(width, level);
+					box.height = u_minify(height, level);
+					box.depth = u_minify(depth, level);
+					immediate_pipe->transfer_inline_write(immediate_pipe, resource, sr, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_UNSYNCHRONIZED, &box, initial_data->pSysMem, initial_data->SysMemPitch, initial_data->SysMemSlicePitch);
+					++initial_data;
 				}
 			}
 		}
@@ -738,73 +738,73 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture1D(
-		const D3D11_TEXTURE1D_DESC *pDesc,
-		const D3D11_SUBRESOURCE_DATA *pInitialData,
-		ID3D11Texture1D **ppTexture1D)
+		const D3D11_TEXTURE1D_DESC *desc,
+		const D3D11_SUBRESOURCE_DATA *initial_data,
+		ID3D11Texture1D **out_texture1d)
 	{
 		SYNCHRONIZED;
 
 		struct pipe_resource* resource;
-		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(pDesc->BindFlags, pDesc->MiscFlags);
-		HRESULT hr = create_resource(PIPE_TEXTURE_1D, pDesc->Width, 1, 1, pDesc->MipLevels, pDesc->ArraySize, pDesc->Format, 0, pDesc->Usage, pDesc->BindFlags, pDesc->CPUAccessFlags, pDesc->MiscFlags, pInitialData, dxgi_usage, ppTexture1D ? &resource : 0);
+		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(desc->BindFlags, desc->MiscFlags);
+		HRESULT hr = create_resource(PIPE_TEXTURE_1D, desc->Width, 1, 1, desc->MipLevels, desc->ArraySize, desc->Format, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture1d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		*ppTexture1D = new GalliumD3D11Texture1D(this, resource, *pDesc, dxgi_usage);
+		*out_texture1d = new GalliumD3D11Texture1D(this, resource, *desc, dxgi_usage);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture2D(
-		const D3D11_TEXTURE2D_DESC *pDesc,
-		const D3D11_SUBRESOURCE_DATA *pInitialData,
-		ID3D11Texture2D **ppTexture2D)
+		const D3D11_TEXTURE2D_DESC *desc,
+		const D3D11_SUBRESOURCE_DATA *initial_data,
+		ID3D11Texture2D **out_texture2d)
 	{
 		SYNCHRONIZED;
 
 		struct pipe_resource* resource;
-		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(pDesc->BindFlags, pDesc->MiscFlags);
-		HRESULT hr = create_resource(PIPE_TEXTURE_2D, pDesc->Width, pDesc->Height, 1, pDesc->MipLevels, pDesc->ArraySize, pDesc->Format, &pDesc->SampleDesc, pDesc->Usage, pDesc->BindFlags, pDesc->CPUAccessFlags, pDesc->MiscFlags, pInitialData, dxgi_usage, ppTexture2D ? &resource : 0);
+		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(desc->BindFlags, desc->MiscFlags);
+		HRESULT hr = create_resource(PIPE_TEXTURE_2D, desc->Width, desc->Height, 1, desc->MipLevels, desc->ArraySize, desc->Format, &desc->SampleDesc, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture2d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		if(pDesc->MipLevels == 1 && pDesc->ArraySize == 1)
-			*ppTexture2D = new GalliumD3D11Surface(this, resource, *pDesc, dxgi_usage);
+		if(desc->MipLevels == 1 && desc->ArraySize == 1)
+			*out_texture2d = new GalliumD3D11Surface(this, resource, *desc, dxgi_usage);
 		else
-			*ppTexture2D = new GalliumD3D11Texture2D(this, resource, *pDesc, dxgi_usage);
+			*out_texture2d = new GalliumD3D11Texture2D(this, resource, *desc, dxgi_usage);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateTexture3D(
-		const D3D11_TEXTURE3D_DESC *pDesc,
-		const D3D11_SUBRESOURCE_DATA *pInitialData,
-		ID3D11Texture3D **ppTexture3D)
+		const D3D11_TEXTURE3D_DESC *desc,
+		const D3D11_SUBRESOURCE_DATA *initial_data,
+		ID3D11Texture3D **out_texture3d)
 	{
 		SYNCHRONIZED;
 
 		struct pipe_resource* resource;
-		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(pDesc->BindFlags, pDesc->MiscFlags);
-		HRESULT hr = create_resource(PIPE_TEXTURE_3D, pDesc->Width, pDesc->Height, pDesc->Depth, pDesc->MipLevels, 1, pDesc->Format, 0, pDesc->Usage, pDesc->BindFlags, pDesc->CPUAccessFlags, pDesc->MiscFlags, pInitialData, dxgi_usage, ppTexture3D ? &resource : 0);
+		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(desc->BindFlags, desc->MiscFlags);
+		HRESULT hr = create_resource(PIPE_TEXTURE_3D, desc->Width, desc->Height, desc->Depth, desc->MipLevels, 1, desc->Format, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture3d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		*ppTexture3D = new GalliumD3D11Texture3D(this, resource, *pDesc, dxgi_usage);
+		*out_texture3d = new GalliumD3D11Texture3D(this, resource, *desc, dxgi_usage);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateBuffer(
-		const D3D11_BUFFER_DESC *pDesc,
-		const D3D11_SUBRESOURCE_DATA *pInitialData,
-		ID3D11Buffer **ppBuffer)
+		const D3D11_BUFFER_DESC *desc,
+		const D3D11_SUBRESOURCE_DATA *initial_data,
+		ID3D11Buffer **out_buffer)
 	{
 		SYNCHRONIZED;
 
 #if API >= 11
-		if(pDesc->StructureByteStride > 1)
+		if(desc->StructureByteStride > 1)
 			return E_NOTIMPL;
 #endif
 		struct pipe_resource* resource;
-		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(pDesc->BindFlags, pDesc->MiscFlags);
-		HRESULT hr = create_resource(PIPE_BUFFER, pDesc->ByteWidth, 1, 1, 1, 1, DXGI_FORMAT_R8_UNORM, 0, pDesc->Usage, pDesc->BindFlags, pDesc->CPUAccessFlags, pDesc->MiscFlags, pInitialData, dxgi_usage, ppBuffer ? &resource : 0);
+		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(desc->BindFlags, desc->MiscFlags);
+		HRESULT hr = create_resource(PIPE_BUFFER, desc->ByteWidth, 1, 1, 1, 1, DXGI_FORMAT_R8_UNORM, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_buffer ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		*ppBuffer = new GalliumD3D11Buffer(this, resource, *pDesc, dxgi_usage);
+		*out_buffer = new GalliumD3D11Buffer(this, resource, *desc, dxgi_usage);
 		return S_OK;
 	}
 
@@ -845,11 +845,11 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateSurface(
-		const DXGI_SURFACE_DESC *pDesc,
-		unsigned NumSurfaces,
-		DXGI_USAGE Usage,
-		const DXGI_SHARED_RESOURCE *pSharedResource,
-		IDXGISurface **ppSurface)
+		const DXGI_SURFACE_DESC *dxgi_desc,
+		unsigned count,
+		DXGI_USAGE usage,
+		const DXGI_SHARED_RESOURCE *shared_resource,
+		IDXGISurface **out_surface)
 	{
 		SYNCHRONIZED;
 
@@ -857,58 +857,58 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		memset(&desc, 0, sizeof(desc));
 
 		struct pipe_resource* resource;
-		desc.Width = pDesc->Width;
-		desc.Height = pDesc->Height;
-		desc.Format = pDesc->Format;
-		desc.SampleDesc = pDesc->SampleDesc;
-		desc.ArraySize = NumSurfaces;
+		desc.Width = dxgi_desc->Width;
+		desc.Height = dxgi_desc->Height;
+		desc.Format = dxgi_desc->Format;
+		desc.SampleDesc = dxgi_desc->SampleDesc;
+		desc.ArraySize = count;
 		desc.MipLevels = 1;
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-		if(Usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
+		if(usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
 			desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-		if(Usage & DXGI_USAGE_SHADER_INPUT)
+		if(usage & DXGI_USAGE_SHADER_INPUT)
 			desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
 #if API >= 11
-		if(Usage & DXGI_USAGE_UNORDERED_ACCESS)
+		if(usage & DXGI_USAGE_UNORDERED_ACCESS)
 			desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 #endif
-		if(Usage & DXGI_USAGE_SHARED)
+		if(usage & DXGI_USAGE_SHARED)
 			desc.MiscFlags |= D3D11_RESOURCE_MISC_SHARED;
-		HRESULT hr = create_resource(PIPE_TEXTURE_2D, pDesc->Width, pDesc->Height, 1, 1, NumSurfaces, pDesc->Format, &pDesc->SampleDesc, D3D11_USAGE_DEFAULT, desc.BindFlags, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, desc.MiscFlags, 0, Usage, &resource);
+		HRESULT hr = create_resource(PIPE_TEXTURE_2D, dxgi_desc->Width, dxgi_desc->Height, 1, 1, count, dxgi_desc->Format, &dxgi_desc->SampleDesc, D3D11_USAGE_DEFAULT, desc.BindFlags, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, desc.MiscFlags, 0, usage, &resource);
 		if(hr != S_OK)
 			return hr;
-		*ppSurface = new GalliumD3D11Surface(this, resource, desc, Usage);
+		*out_surface = new GalliumD3D11Surface(this, resource, desc, usage);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateShaderResourceView(
-		ID3D11Resource *pResource,
-		const D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc,
-		ID3D11ShaderResourceView **ppSRView)
+		ID3D11Resource *iresource,
+		const D3D11_SHADER_RESOURCE_VIEW_DESC *desc,
+		ID3D11ShaderResourceView **out_srv)
 	{
 #if API >= 11
 		D3D11_SHADER_RESOURCE_VIEW_DESC def_desc;
 #else
-		if(pDesc->ViewDimension == D3D10_1_SRV_DIMENSION_TEXTURECUBEARRAY)
+		if(desc->ViewDimension == D3D10_1_SRV_DIMENSION_TEXTURECUBEARRAY)
 			return E_INVALIDARG;
 		D3D10_SHADER_RESOURCE_VIEW_DESC1 desc1;
 		memset(&desc1, 0, sizeof(desc1));
-		memcpy(&desc1, pDesc, sizeof(*pDesc));
-		return CreateShaderResourceView1(pResource, &desc1, (ID3D10ShaderResourceView1**)ppSRView);
+		memcpy(&desc1, desc, sizeof(*desc));
+		return CreateShaderResourceView1(iresource, &desc1, (ID3D10ShaderResourceView1**)out_srv);
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateShaderResourceView1(
-			ID3D11Resource *pResource,
-			const D3D10_SHADER_RESOURCE_VIEW_DESC1 *pDesc,
-			ID3D10ShaderResourceView1 **ppSRView)
+			ID3D11Resource *iresource,
+			const D3D10_SHADER_RESOURCE_VIEW_DESC1 *desc,
+			ID3D10ShaderResourceView1 **out_srv)
 	{
 		D3D10_SHADER_RESOURCE_VIEW_DESC1 def_desc;
 #endif
 		SYNCHRONIZED;
 
-		if(!pDesc)
+		if(!desc)
 		{
-			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)pResource)->resource;
+			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)iresource)->resource;
 			init_pipe_to_dxgi_format();
 			memset(&def_desc, 0, sizeof(def_desc));
 			def_desc.Format = pipe_to_dxgi_format[resource->format];
@@ -916,10 +916,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			{
 			case PIPE_BUFFER:
 				def_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-				def_desc.Buffer.ElementWidth = 1;
-#if API >= 11
-				def_desc.Buffer.NumElements = resource->width0;
-#endif
+				def_desc.Buffer.ElementWidth = resource->width0;
 				break;
 			case PIPE_TEXTURE_1D:
 				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
@@ -941,14 +938,14 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			default:
 				return E_INVALIDARG;
 			}
-			pDesc = &def_desc;
+			desc = &def_desc;
 		}
 
 		struct pipe_sampler_view templat;
 		memset(&templat, 0, sizeof(templat));
-		if(invalid(Format >= DXGI_FORMAT_COUNT))
+		if(invalid(format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		templat.format = dxgi_to_pipe_format[pDesc->Format];
+		templat.format = dxgi_to_pipe_format[desc->Format];
 		if(!templat.format)
 			return E_NOTIMPL;
 		templat.swizzle_r = PIPE_SWIZZLE_RED;
@@ -956,8 +953,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.swizzle_b = PIPE_SWIZZLE_BLUE;
 		templat.swizzle_a = PIPE_SWIZZLE_ALPHA;
 
-		templat.texture = ((GalliumD3D11Resource<>*)pResource)->resource;
-		switch(pDesc->ViewDimension)
+		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
+		switch(desc->ViewDimension)
 		{
 		case D3D11_SRV_DIMENSION_TEXTURE1D:
 		case D3D11_SRV_DIMENSION_TEXTURE2D:
@@ -965,8 +962,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
 			/* yes, this works for all of these types (but TODO: texture arrays) */
-			templat.first_level = pDesc->Texture1D.MostDetailedMip;
-			templat.last_level = templat.first_level + pDesc->Texture1D.MipLevels - 1;
+			templat.first_level = desc->Texture1D.MostDetailedMip;
+			templat.last_level = templat.first_level + desc->Texture1D.MipLevels - 1;
 			break;
 		case D3D11_SRV_DIMENSION_BUFFER:
 		case D3D11_SRV_DIMENSION_TEXTURE2DMS:
@@ -976,41 +973,41 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			return E_INVALIDARG;
 		}
 
-		if(!ppSRView)
+		if(!out_srv)
 			return S_FALSE;
 
 		struct pipe_sampler_view* view = immediate_pipe->create_sampler_view(immediate_pipe, templat.texture, &templat);
 		if(!view)
 			return E_FAIL;
-		*ppSRView = new GalliumD3D11ShaderResourceView(this, (GalliumD3D11Resource<>*)pResource, view, *pDesc);
+		*out_srv = new GalliumD3D11ShaderResourceView(this, (GalliumD3D11Resource<>*)iresource, view, *desc);
 		return S_OK;
 	}
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateUnorderedAccessView(
-		ID3D11Resource *pResource,
-		const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc,
-		ID3D11UnorderedAccessView **ppUAView)
+		ID3D11Resource *resource,
+		const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc,
+		ID3D11UnorderedAccessView **out_uav)
 	{
 		SYNCHRONIZED;
 
 		return E_NOTIMPL;
 
-		// remember to return S_FALSE and not crash if ppUAView == 0 and parameters are valid
+		// remember to return S_FALSE and not crash if out_u_a_view == 0 and parameters are valid
 	}
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateRenderTargetView(
-		ID3D11Resource *pResource,
-		const D3D11_RENDER_TARGET_VIEW_DESC *pDesc,
-		ID3D11RenderTargetView **ppRTView)
+		ID3D11Resource *iresource,
+		const D3D11_RENDER_TARGET_VIEW_DESC *desc,
+		ID3D11RenderTargetView **out_rtv)
 	{
 		SYNCHRONIZED;
 
 		D3D11_RENDER_TARGET_VIEW_DESC def_desc;
-		if(!pDesc)
+		if(!desc)
 		{
-			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)pResource)->resource;
+			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)iresource)->resource;
 			init_pipe_to_dxgi_format();
 			memset(&def_desc, 0, sizeof(def_desc));
 			def_desc.Format = pipe_to_dxgi_format[resource->format];
@@ -1018,10 +1015,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			{
 			case PIPE_BUFFER:
 				def_desc.ViewDimension = D3D11_RTV_DIMENSION_BUFFER;
-				def_desc.Buffer.ElementWidth = 1;
-#if API >= 11
-				def_desc.Buffer.NumElements = resource->width0;
-#endif
+				def_desc.Buffer.ElementWidth = resource->width0;
 				break;
 			case PIPE_TEXTURE_1D:
 				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1D;
@@ -1041,33 +1035,33 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			default:
 				return E_INVALIDARG;
 			}
-			pDesc = &def_desc;
+			desc = &def_desc;
 		}
 
 		unsigned zslice = 0;
 		unsigned face = 0;
 		unsigned level;
 		enum pipe_format format;
-		if(invalid(pDesc->Format >= DXGI_FORMAT_COUNT))
+		if(invalid(desc->format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		format = dxgi_to_pipe_format[pDesc->Format];
+		format = dxgi_to_pipe_format[desc->Format];
 		if(!format)
 			return E_NOTIMPL;
 
-		switch(pDesc->ViewDimension)
+		switch(desc->ViewDimension)
 		{
 		case D3D11_RTV_DIMENSION_TEXTURE1D:
 		case D3D11_RTV_DIMENSION_TEXTURE2D:
-			level = pDesc->Texture1D.MipSlice;
+			level = desc->Texture1D.MipSlice;
 			break;
 		case D3D11_RTV_DIMENSION_TEXTURE3D:
-			level = pDesc->Texture3D.MipSlice;
-			zslice = pDesc->Texture3D.FirstWSlice;
+			level = desc->Texture3D.MipSlice;
+			zslice = desc->Texture3D.FirstWSlice;
 			break;
 		case D3D11_RTV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_RTV_DIMENSION_TEXTURE2DARRAY:
-			level = pDesc->Texture1DArray.MipSlice;
-			face = pDesc->Texture1DArray.FirstArraySlice;
+			level = desc->Texture1DArray.MipSlice;
+			face = desc->Texture1DArray.FirstArraySlice;
 			break;
 		case D3D11_RTV_DIMENSION_BUFFER:
 		case D3D11_RTV_DIMENSION_TEXTURE2DMS:
@@ -1077,31 +1071,31 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			return E_INVALIDARG;
 		}
 
-		if(!ppRTView)
+		if(!out_rtv)
 			return S_FALSE;
 
 		struct pipe_surface* surface = screen->get_tex_surface(screen,
-				((GalliumD3D11Resource<>*)pResource)->resource,
+				((GalliumD3D11Resource<>*)iresource)->resource,
 				face, level, zslice, PIPE_BIND_RENDER_TARGET);
 		if(!surface)
 			return E_FAIL;
 		/* muhahahahaha, let's hope this actually works */
 		surface->format = format;
-		*ppRTView = new GalliumD3D11RenderTargetView(this, (GalliumD3D11Resource<>*)pResource, surface, *pDesc);
+		*out_rtv = new GalliumD3D11RenderTargetView(this, (GalliumD3D11Resource<>*)iresource, surface, *desc);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreateDepthStencilView(
-		ID3D11Resource *pResource,
-		const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc,
-		ID3D11DepthStencilView **ppDepthStencilView)
+		ID3D11Resource *iresource,
+		const D3D11_DEPTH_STENCIL_VIEW_DESC *desc,
+		ID3D11DepthStencilView **out_depth_stencil_view)
 	{
 		SYNCHRONIZED;
 
 		D3D11_DEPTH_STENCIL_VIEW_DESC def_desc;
-		if(!pDesc)
+		if(!desc)
 		{
-			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)pResource)->resource;
+			struct pipe_resource* resource = ((GalliumD3D11Resource<>*)iresource)->resource;
 			init_pipe_to_dxgi_format();
 			memset(&def_desc, 0, sizeof(def_desc));
 			def_desc.Format = pipe_to_dxgi_format[resource->format];
@@ -1121,29 +1115,29 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			default:
 				return E_INVALIDARG;
 			}
-			pDesc = &def_desc;
+			desc = &def_desc;
 		}
 
 		unsigned zslice = 0;
 		unsigned face = 0;
 		unsigned level;
 		enum pipe_format format;
-		if(invalid(pDesc->Format >= DXGI_FORMAT_COUNT))
+		if(invalid(desc->format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		format = dxgi_to_pipe_format[pDesc->Format];
+		format = dxgi_to_pipe_format[desc->Format];
 		if(!format)
 			return E_NOTIMPL;
 
-		switch(pDesc->ViewDimension)
+		switch(desc->ViewDimension)
 		{
 		case D3D11_DSV_DIMENSION_TEXTURE1D:
 		case D3D11_DSV_DIMENSION_TEXTURE2D:
-			level = pDesc->Texture1D.MipSlice;
+			level = desc->Texture1D.MipSlice;
 			break;
 		case D3D11_DSV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
-			level = pDesc->Texture1DArray.MipSlice;
-			face = pDesc->Texture1DArray.FirstArraySlice;
+			level = desc->Texture1DArray.MipSlice;
+			face = desc->Texture1DArray.FirstArraySlice;
 			break;
 		case D3D11_DSV_DIMENSION_TEXTURE2DMS:
 		case D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY:
@@ -1152,27 +1146,27 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			return E_INVALIDARG;
 		}
 
-		if(!ppDepthStencilView)
+		if(!out_depth_stencil_view)
 			return S_FALSE;
 
 		struct pipe_surface* surface = screen->get_tex_surface(screen,
-				((GalliumD3D11Resource<>*)pResource)->resource,
+				((GalliumD3D11Resource<>*)iresource)->resource,
 				face, level, zslice, PIPE_BIND_DEPTH_STENCIL);
 		if(!surface)
 			return E_FAIL;
 		/* muhahahahaha, let's hope this actually works */
 		surface->format = format;
-		*ppDepthStencilView = new GalliumD3D11DepthStencilView(this, (GalliumD3D11Resource<>*)pResource, surface, *pDesc);
+		*out_depth_stencil_view = new GalliumD3D11DepthStencilView(this, (GalliumD3D11Resource<>*)iresource, surface, *desc);
 		return S_OK;
 	}
 
-	GalliumD3D11Shader<>* create_stage_shader(unsigned type, const void *pShaderBytecode, SIZE_T BytecodeLength
+	GalliumD3D11Shader<>* create_stage_shader(unsigned type, const void* shader_bytecode, SIZE_T bytecode_length
 #if API >= 11
-			, ID3D11ClassLinkage *pClassLinkage
+			, ID3D11ClassLinkage *class_linkage
 #endif
 			)
 	{
-		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(pShaderBytecode, BytecodeLength);
+		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(shader_bytecode, bytecode_length);
 		if(!sm4_chunk)
 			return 0;
 
@@ -1221,29 +1215,29 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 #define CREATE_SHADER_ARGS \
-	const void *pShaderBytecode, \
-	SIZE_T BytecodeLength, \
-	ID3D11ClassLinkage *pClassLinkage
-#define PASS_SHADER_ARGS pShaderBytecode, BytecodeLength, pClassLinkage
+	const void *shader_bytecode, \
+	SIZE_T bytecode_length, \
+	ID3D11ClassLinkage *class_linkage
+#define PASS_SHADER_ARGS shader_bytecode, bytecode_length, class_linkage
 #else
 #define CREATE_SHADER_ARGS \
-	const void *pShaderBytecode, \
-	SIZE_T BytecodeLength
-#define PASS_SHADER_ARGS pShaderBytecode, BytecodeLength
+	const void *shader_bytecode, \
+	SIZE_T bytecode_length
+#define PASS_SHADER_ARGS shader_bytecode, bytecode_length
 #endif
 
 #define IMPLEMENT_CREATE_SHADER(Stage, GALLIUM) \
 	virtual HRESULT STDMETHODCALLTYPE Create##Stage##Shader( \
 		CREATE_SHADER_ARGS, \
-		ID3D11##Stage##Shader **pp##Stage##Shader) \
+		ID3D11##Stage##Shader **out_shader) \
 	{ \
 		SYNCHRONIZED; \
 		GalliumD3D11##Stage##Shader* shader = (GalliumD3D11##Stage##Shader*)create_stage_shader(PIPE_SHADER_##GALLIUM, PASS_SHADER_ARGS); \
 		if(!shader) \
 			return E_FAIL; \
-		if(pp##Stage##Shader) \
+		if(out_shader) \
 		{ \
-			*pp##Stage##Shader = shader; \
+			*out_shader = shader; \
 			return S_OK; \
 		} \
 		else \
@@ -1256,7 +1250,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #define IMPLEMENT_NOTIMPL_CREATE_SHADER(Stage) \
 	virtual HRESULT STDMETHODCALLTYPE Create##Stage##Shader( \
 		CREATE_SHADER_ARGS, \
-		ID3D11##Stage##Shader **pp##Stage##Shader) \
+		ID3D11##Stage##Shader **out_shader) \
 	{ \
 		return E_NOTIMPL; \
 	}
@@ -1271,24 +1265,21 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateGeometryShaderWithStreamOutput(
-		const void *pShaderBytecode,
-		SIZE_T BytecodeLength,
-		const D3D11_SO_DECLARATION_ENTRY *pSODeclaration,
-		unsigned NumEntries,
+		const void *shader_bytecode,
+		SIZE_T bytecode_length,
+		const D3D11_SO_DECLARATION_ENTRY *so_declaration,
+		unsigned num_entries,
 #if API >= 11
-		const unsigned *pBufferStrides,
-		unsigned NumStrides,
-		unsigned RasterizedStream,
-		ID3D11ClassLinkage *pClassLinkage,
+		const unsigned *buffer_strides,
+		unsigned num_strides,
+		unsigned rasterized_stream,
+		ID3D11ClassLinkage *class_linkage,
 #else
-		UINT OutputStreamStride,
+		UINT output_stream_stride,
 #endif
-		ID3D11GeometryShader **ppGeometryShader)
+		ID3D11GeometryShader **out_geometry_shader)
 	{
 		SYNCHRONIZED;
-
-		if(!ppGeometryShader)
-			return S_FALSE;
 
 		return E_NOTIMPL;
 
@@ -1297,48 +1288,45 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateClassLinkage(
-			ID3D11ClassLinkage **ppLinkage)
+		ID3D11ClassLinkage **out_linkage)
 	{
 		SYNCHRONIZED;
-
-		if(!ppLinkage)
-			return S_FALSE;
 
 		return E_NOTIMPL;
 	}
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE CreateQuery(
-		const D3D11_QUERY_DESC *pQueryDesc,
-		ID3D11Query **ppQuery)
+		const D3D11_QUERY_DESC *query_desc,
+		ID3D11Query **out_query)
 	{
 		SYNCHRONIZED;
 
-		if(invalid(pQueryDesc->Query >= D3D11_QUERY_COUNT))
+		if(invalid(query_desc->Query >= D3D11_QUERY_COUNT))
 			return E_INVALIDARG;
-		unsigned query_type = d3d11_to_pipe_query[pQueryDesc->Query];
+		unsigned query_type = d3d11_to_pipe_query[query_desc->Query];
 		if(!query_type)
 			return E_NOTIMPL;
 
-		if(ppQuery)
+		if(out_query)
 			return S_FALSE;
 
 		struct pipe_query* query = immediate_pipe->create_query(immediate_pipe, query_type);
 		if(!query)
 			return E_FAIL;
 
-		*ppQuery = new GalliumD3D11Query(this, query, d3d11_query_size[pQueryDesc->Query], *pQueryDesc);
+		*out_query = new GalliumD3D11Query(this, query, d3d11_query_size[query_desc->Query], *query_desc);
 		return S_OK;
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE CreatePredicate(
-		const D3D11_QUERY_DESC *pPredicateDesc,
-		ID3D11Predicate **ppPredicate)
+		const D3D11_QUERY_DESC *predicate_desc,
+		ID3D11Predicate **out_predicate)
 	{
 		SYNCHRONIZED;
 
 		unsigned query_type;
-		switch(pPredicateDesc->Query)
+		switch(predicate_desc->Query)
 		{
 		case D3D11_QUERY_SO_OVERFLOW_PREDICATE:
 			return E_NOTIMPL;
@@ -1349,59 +1337,59 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			return E_INVALIDARG;
 		}
 
-		if(ppPredicate)
+		if(out_predicate)
 			return S_FALSE;
 
 		struct pipe_query* query = immediate_pipe->create_query(immediate_pipe, query_type);
 		if(!query)
 			return E_FAIL;
 
-		*ppPredicate = new GalliumD3D11Predicate(this, query, sizeof(BOOL), *pPredicateDesc);
+		*out_predicate = new GalliumD3D11Predicate(this, query, sizeof(BOOL), *predicate_desc);
 		return S_OK;
 	}
 
 
 	virtual HRESULT STDMETHODCALLTYPE CreateCounter(
-		const D3D11_COUNTER_DESC *pCounterDesc,
-		ID3D11Counter **ppCounter)
+		const D3D11_COUNTER_DESC *counter_desc,
+		ID3D11Counter **out_counter)
 	{
 		SYNCHRONIZED;
 
 		return E_NOTIMPL;
 
-		// remember to return S_FALSE if ppCounter == NULL and everything is OK
+		// remember to return S_FALSE if out_counter == NULL and everything is OK
 	}
 
 #if API >= 11
 	virtual HRESULT STDMETHODCALLTYPE CreateDeferredContext(
-		unsigned ContextFlags,
-		ID3D11DeviceContext **ppDeferredContext)
+		unsigned context_flags,
+		ID3D11DeviceContext **out_deferred_context)
 	{
 		SYNCHRONIZED;
 
 		// TODO: this will have to be implemented using a new Gallium util module
 		return E_NOTIMPL;
 
-		// remember to return S_FALSE if ppCounter == NULL and everything is OK
+		// remember to return S_FALSE if out_counter == NULL and everything is OK
 	}
 #endif
 
 	virtual HRESULT STDMETHODCALLTYPE OpenSharedResource(
-			HANDLE hResource,
-			REFIID ReturnedInterface,
-			void **ppResource)
+			HANDLE resource,
+			REFIID iid,
+			void **out_resource)
 	{
 		SYNCHRONIZED;
 
 		// TODO: the problem here is that we need to communicate dimensions somehow
 		return E_NOTIMPL;
 
-		// remember to return S_FALSE if ppCounter == NULL and everything is OK
+		// remember to return S_FALSE if out_counter == NULL and everything is OK
 #if 0
 		struct pipe_resou	rce templat;
 		struct winsys_handle handle;
 		handle.stride = 0;
-		handle.handle = hResource;
+		handle.handle = resource;
 		handle.type = DRM_API_HANDLE_TYPE_SHARED;
 		screen->resource_from_handle(screen, &templat, &handle);
 #endif
@@ -1410,18 +1398,18 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 #if API < 11
 	/* these are documented as "Not implemented".
 	 * According to the UMDDI documentation, they apparently turn on a
-	 * (Width + 1) x (Height + 1) convolution filter for 1-bit textures.
+	 * (width + 1) x (height + 1) convolution filter for 1-bit textures.
 	 * Probably nothing uses these, assuming it has ever been implemented anywhere.
 	 */
 	void STDMETHODCALLTYPE SetTextFilterSize(
-		UINT Width,
-		UINT Height
+		UINT width,
+		UINT height
 	)
 	{}
 
 	virtual void STDMETHODCALLTYPE GetTextFilterSize(
-		UINT *Width,
-		UINT *Height
+		UINT *width,
+		UINT *height
 	)
 	{}
 #endif
