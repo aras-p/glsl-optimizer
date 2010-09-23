@@ -295,7 +295,7 @@ static const struct radeon_register EG_names_UCP[] = {
 	{0x0002860C, 0, 0, "PA_CL_UCP5_X"},
 	{0x00028610, 0, 0, "PA_CL_UCP5_Y"},
 	{0x00028614, 0, 0, "PA_CL_UCP5_Z"},
-	{0x0002861C, 0, 0, "PA_CL_UCP5_W"},
+	{0x00028618, 0, 0, "PA_CL_UCP5_W"},
 };
 
 static const struct radeon_register EG_names_VS_CBUF[] = {
