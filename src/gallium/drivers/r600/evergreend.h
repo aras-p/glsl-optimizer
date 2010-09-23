@@ -1157,6 +1157,9 @@
 #define   S_030008_NUM_FORMAT_ALL(x)                   (((x) & 0x3) << 26)
 #define   G_030008_NUM_FORMAT_ALL(x)                   (((x) >> 26) & 0x3)
 #define   C_030008_NUM_FORMAT_ALL                      0xF3FFFFFF
+#define     V_030008_SQ_NUM_FORMAT_NORM                0x00000000
+#define     V_030008_SQ_NUM_FORMAT_INT                 0x00000001
+#define     V_030008_SQ_NUM_FORMAT_SCALED              0x00000002
 #define   S_030008_FORMAT_COMP_ALL(x)                  (((x) & 0x1) << 28)
 #define   G_030008_FORMAT_COMP_ALL(x)                  (((x) >> 28) & 0x1)
 #define   C_030008_FORMAT_COMP_ALL                     0xEFFFFFFF

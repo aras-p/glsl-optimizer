@@ -120,9 +120,8 @@ static int r600_draw_common(struct r600_draw *draw)
 		vertex_buffer = &rctx->vertex_buffer[j];
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
-		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
 		
-		rctx->vtbl->vs_resource(rctx, i, rbuffer, offset, vertex_buffer->stride, format);
+		rctx->vtbl->vs_resource(rctx, i, rbuffer, offset, vertex_buffer->stride, rctx->vertex_elements->elements[i].src_format);
 		radeon_draw_bind(&rctx->draw, vs_resource);
 	}
 	rctx->vs_nresource = rctx->vertex_elements->count;

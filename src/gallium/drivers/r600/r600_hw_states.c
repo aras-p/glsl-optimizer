@@ -928,18 +928,24 @@ static void r600_init_config(struct r600_context *rctx)
 }
 
 static int r600_vs_resource(struct r600_context *rctx, int id, struct r600_resource *rbuffer, uint32_t offset,
-			    uint32_t stride, uint32_t format)
+			    uint32_t stride, uint32_t src_format)
 {
 	struct radeon_state *vs_resource = &rctx->vs_resource[id];
 	struct r600_screen *rscreen = rctx->screen;
+	unsigned format, num_format = 0, format_comp = 0;
 
+	format = r600_translate_colorformat(src_format);
+
+	r600_translate_vertex_num_format(src_format, &num_format, &format_comp);
+
+	format = S_038008_DATA_FORMAT(format) | S_038008_NUM_FORMAT_ALL(num_format) | S_038008_FORMAT_COMP_ALL(format_comp);
+	
 	radeon_state_init(vs_resource, rscreen->rw, R600_STATE_RESOURCE, id, R600_SHADER_VS);
 	radeon_ws_bo_reference(rscreen->rw, &vs_resource->bo[0], rbuffer->bo);
 	vs_resource->nbo = 1;
 	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD0] = offset;
 	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->size - offset - 1;
-	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(stride) |
-		S_038008_DATA_FORMAT(format);
+	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(stride) | format;
 	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = 0x00000000;
 	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD4] = 0x00000000;
 	vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD5] = 0x00000000;
