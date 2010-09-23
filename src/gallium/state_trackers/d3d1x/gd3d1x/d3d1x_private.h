@@ -41,9 +41,6 @@
 #include <d3d11.h>
 #include <d3d11shader.h>
 
-
-#include <specstrings.h>
-
 extern "C"
 {
 #include <pipe/p_defines.h>
