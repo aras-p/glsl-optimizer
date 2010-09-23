@@ -86,13 +86,13 @@ struct tpf_parser
 		op.mask = 0xf;
 		switch(optok.comps_enum)
 		{
-		case TPF_OPERAND_COMPS_0:
+		case TPF_OPERAND_COMPNUM_0:
 			op.comps = 0;
 			break;
-		case TPF_OPERAND_COMPS_1:
+		case TPF_OPERAND_COMPNUM_1:
 			op.comps = 1;
 			break;
-		case TPF_OPERAND_COMPS_4:
+		case TPF_OPERAND_COMPNUM_4:
 			op.comps = 4;
 			op.mode = optok.mode;
 			switch(optok.mode)
@@ -111,7 +111,7 @@ struct tpf_parser
 				break;
 			}
 			break;
-		case TPF_OPERAND_COMPS_N:
+		case TPF_OPERAND_COMPNUM_N:
 			fail("Unhandled operand component type");
 		}
 		op.file = (tpf_file)optok.file;
@@ -192,7 +192,7 @@ relative:
 			read_token(&insntok);
 			unsigned* insn_end = tokens - 1 + insntok.length;
 			tpf_opcode opcode = (tpf_opcode)insntok.opcode;
-			check(opcode < TPF_OPCODE_D3D11_COUNT);
+			check(opcode < TPF_OPCODE_COUNT);
 
 			if(opcode == TPF_OPCODE_CUSTOMDATA)
 			{
