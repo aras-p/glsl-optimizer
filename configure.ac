@@ -1521,18 +1521,16 @@ elif test "x$enable_gallium_i965" = xauto; then
 fi
 
 dnl
-dnl Gallium Radeon configuration
+dnl Gallium Radeon r300g configuration
 dnl
 AC_ARG_ENABLE([gallium-radeon],
     [AS_HELP_STRING([--enable-gallium-radeon],
         [build gallium radeon @<:@default=disabled@:>@])],
     [enable_gallium_radeon="$enableval"],
     [enable_gallium_radeon=auto])
-if test "x$enable_gallium_radeon" = xyes; then
+if test "x$enable_gallium_radeon" = xyes || test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
-elif test "x$enable_gallium_radeon" = xauto; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
 
 dnl
