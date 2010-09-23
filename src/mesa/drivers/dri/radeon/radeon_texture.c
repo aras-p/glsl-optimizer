@@ -792,18 +792,6 @@ static void radeon_teximage(
 
 	t->validated = GL_FALSE;
 
-	if (!_mesa_is_format_compressed(texImage->TexFormat)) {
-		GLuint texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-		/* Minimum pitch of 32 bytes */
-		if (width * texelBytes < 32) {
-			width = 32 / texelBytes;
-			texImage->RowStride = width;
-		}
-		if (!image->mt) {
-			assert(texImage->RowStride == width);
-		}
-	}
-
 	/* Mesa core only clears texImage->Data but not image->mt */
 	radeonFreeTexImageData(ctx, texImage);
 
