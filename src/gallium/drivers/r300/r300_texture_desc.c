@@ -444,10 +444,10 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     if (max_buffer_size) {
         /* Make sure the buffer we got is large enough. */
         if (desc->size_in_bytes > max_buffer_size) {
-            fprintf(stderr, "r300: texture_from_handle: The buffer is not "
+            fprintf(stderr, "r300: texture_desc_init: The buffer is not "
                             "large enough. Got: %i, Need: %i, Info:\n",
                             max_buffer_size, desc->size_in_bytes);
-            r300_tex_print_info(rscreen, desc, "texture_from_handle");
+            r300_tex_print_info(rscreen, desc, "texture_desc_init");
             return FALSE;
         }
 
@@ -457,7 +457,7 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     }
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
-        r300_tex_print_info(rscreen, desc, "texture_from_handle");
+        r300_tex_print_info(rscreen, desc, "texture_desc_init");
 
     return TRUE;
 }
