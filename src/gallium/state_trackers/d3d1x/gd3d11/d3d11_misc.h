@@ -1,37 +1,37 @@
 #if API < 11
 extern "C" HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
-	SIZE_T NumBytes,
-	LPD3D10BLOB *ppBuffer
+	SIZE_T num_bytes,
+	LPD3D10BLOB *out_buffer
 );
 
 HRESULT STDMETHODCALLTYPE D3D10CreateBlob(
-	SIZE_T NumBytes,
-	LPD3D10BLOB *ppBuffer
+	SIZE_T num_bytes,
+	LPD3D10BLOB *out_buffer
 )
 {
-	void* data = malloc(NumBytes);
+	void* data = malloc(num_bytes);
 	if(!data)
 		return E_OUTOFMEMORY;
-	*ppBuffer = new GalliumD3DBlob(data, NumBytes);
+	*out_buffer = new GalliumD3DBlob(data, num_bytes);
 	return S_OK;
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetPixelShaderProfile(
-	ID3D10Device *pDevice
+	ID3D10Device *device
 )
 {
 	return "ps_4_0";
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetVertexShaderProfile(
-	ID3D10Device *pDevice
+	ID3D10Device *device
 )
 {
 	return "vs_4_0";
 }
 
 LPCSTR STDMETHODCALLTYPE D3D10GetGeometryShaderProfile(
-	ID3D10Device *pDevice
+	ID3D10Device *device
 )
 {
 	return "gs_4_0";
@@ -47,46 +47,46 @@ static HRESULT dxbc_assemble_as_blob(struct dxbc_chunk_header** chunks, unsigned
 }
 
 HRESULT D3D10GetInputSignatureBlob(
-	const void *pShaderBytecode,
-	SIZE_T BytecodeLength,
-	ID3D10Blob **ppSignatureBlob
+	const void *shader_bytecode,
+	SIZE_T bytecode_length,
+	ID3D10Blob **signature_blob
 )
 {
-	dxbc_chunk_signature* sig = dxbc_find_signature(pShaderBytecode, BytecodeLength, false);
+	dxbc_chunk_signature* sig = dxbc_find_signature(shader_bytecode, bytecode_length, false);
 	if(!sig)
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, signature_blob);
 }
 
 HRESULT D3D10GetOutputSignatureBlob(
-	const void *pShaderBytecode,
-	SIZE_T BytecodeLength,
-	ID3D10Blob **ppSignatureBlob
+	const void *shader_bytecode,
+	SIZE_T bytecode_length,
+	ID3D10Blob **signature_blob
 )
 {
-	dxbc_chunk_signature* sig = dxbc_find_signature(pShaderBytecode, BytecodeLength, true);
+	dxbc_chunk_signature* sig = dxbc_find_signature(shader_bytecode, bytecode_length, true);
 	if(!sig)
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sig, 1, signature_blob);
 }
 
 HRESULT D3D10GetInputAndOutputSignatureBlob(
-	const void *pShaderBytecode,
-	SIZE_T BytecodeLength,
-	ID3D10Blob **ppSignatureBlob
+	const void *shader_bytecode,
+	SIZE_T bytecode_length,
+	ID3D10Blob **signature_blob
 )
 {
 	dxbc_chunk_signature* sigs[2];
-	sigs[0] = dxbc_find_signature(pShaderBytecode, BytecodeLength, false);
+	sigs[0] = dxbc_find_signature(shader_bytecode, bytecode_length, false);
 	if(!sigs[0])
 		return E_FAIL;
-	sigs[1] = dxbc_find_signature(pShaderBytecode, BytecodeLength, true);
+	sigs[1] = dxbc_find_signature(shader_bytecode, bytecode_length, true);
 	if(!sigs[1])
 		return E_FAIL;
 
-	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sigs, 2, ppSignatureBlob);
+	return dxbc_assemble_as_blob((dxbc_chunk_header**)&sigs, 2, signature_blob);
 }
 
 #endif
