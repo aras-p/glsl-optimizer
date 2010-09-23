@@ -24,6 +24,7 @@
  *
  **************************************************************************/
 
+#include "d3d1xstutil.h"
 #include "sm4.h"
 #include "tgsi/tgsi_ureg.h"
 #include <vector>
@@ -137,9 +138,16 @@ struct sm4_to_tgsi_converter
 			s = ureg_imm4f(ureg, op.imm_values[0].f32, op.imm_values[1].f32, op.imm_values[2].f32, op.imm_values[3].f32);
 			break;
 		case SM4_FILE_INPUT:
-			check(op.has_simple_index());
-			check(op.indices[0].disp < inputs.size());
-			s = inputs[op.indices[0].disp];
+			check(op.is_index_simple(0));
+			check(op.num_indices == 1 || op.num_indices == 2);
+			// TODO: is this correct, or are incorrectly swapping the two indices in the GS case?
+			check(op.indices[op.num_indices - 1].disp < inputs.size());
+			s = inputs[op.indices[op.num_indices - 1].disp];
+			if(op.num_indices == 2)
+			{
+				s.Dimension = 1;
+				s.DimensionIndex = op.indices[0].disp;
+			}
 			break;
 		case SM4_FILE_CONSTANT_BUFFER:
 			// TODO: indirect addressing
@@ -700,7 +708,7 @@ next:;
 		{
 			sm4_dcl& dcl = *program.dcls[insn_num];
 			int idx = -1;
-			if(dcl.op.get() && dcl.op->has_simple_index())
+			if(dcl.op.get() && dcl.op->is_index_simple(0))
 				idx = dcl.op->indices[0].disp;
 			switch(dcl.opcode)
 			{
@@ -716,6 +724,12 @@ next:;
 					inputs.resize(idx + 1);
 				if(processor == TGSI_PROCESSOR_VERTEX)
 					inputs[idx] = ureg_DECL_vs_input(ureg, idx);
+				else if(processor == TGSI_PROCESSOR_GEOMETRY)
+				{
+					// TODO: is this correct?
+					unsigned gsidx = dcl.op->indices[1].disp;
+					inputs[gsidx] = ureg_DECL_gs_input(ureg, gsidx, TGSI_SEMANTIC_GENERIC, gsidx);
+				}
 				else
 					check(0);
 				break;
@@ -791,6 +805,15 @@ next:;
 				check(dcl.op->is_index_simple(1));
 				idx = dcl.op->indices[0].disp;
 				ureg_DECL_constant2D(ureg, 0, (unsigned)dcl.op->indices[1].disp - 1, idx);
+				break;
+			case SM4_OPCODE_DCL_GS_INPUT_PRIMITIVE:
+				ureg_property_gs_input_prim(ureg, d3d_to_pipe_prim_type[dcl.dcl_gs_input_primitive.primitive]);
+				break;
+			case SM4_OPCODE_DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
+				ureg_property_gs_output_prim(ureg, d3d_to_pipe_prim[dcl.dcl_gs_output_primitive_topology.primitive_topology]);
+				break;
+			case SM4_OPCODE_DCL_MAX_OUTPUT_VERTEX_COUNT:
+				ureg_property_gs_max_vertices(ureg, dcl.num);
 				break;
 			default:
 				check(0);

@@ -62,6 +62,12 @@ extern "C"
 #undef max
 #endif
 
+#define D3D_PRIMITIVE_TOPOLOGY_COUNT 65
+extern unsigned d3d_to_pipe_prim[D3D_PRIMITIVE_TOPOLOGY_COUNT];
+
+#define D3D_PRIMITIVE_COUNT 40
+extern unsigned d3d_to_pipe_prim_type[D3D_PRIMITIVE_COUNT];
+
 /* NOTE: this _depends_ on the vtable layout of the C++ compiler to be
  * binary compatible with Windows.
  * Furthermore some absurd vtable layout likely won't work at all, since

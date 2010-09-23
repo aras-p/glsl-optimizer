@@ -92,7 +92,4 @@ extern unsigned d3d11_to_pipe_wrap[D3D11_TEXTURE_ADDRESS_COUNT];
 extern unsigned d3d11_to_pipe_query[D3D11_QUERY_COUNT];
 extern unsigned d3d11_query_size[D3D11_QUERY_COUNT];
 
-#define D3D_PRIMITIVE_TOPOLOGY_COUNT 65
-extern unsigned d3d_to_pipe_prim[D3D_PRIMITIVE_TOPOLOGY_COUNT];
-
 #endif /* D3D1X_H_ */
