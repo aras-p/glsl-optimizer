@@ -420,7 +420,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL || bc->cf_last->inst != (type << 3) ||
 		bc->force_add_cf) {
-		/* at most 128 slots, one add alu can add 4 slots + 4 constant worst case */
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nalu);
@@ -434,7 +433,9 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	} else {
 		LIST_ADDTAIL(&nalu->bs_list, &bc->cf_last->curr_bs_head->bs_list);
 	}
-	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
+	/* at most 128 slots, one add alu can add 4 slots + 4 constants(2 slots)
+	 * worst case */
+	if (alu->last && (bc->cf_last->ndw >> 1) >= 120) {
 		bc->force_add_cf = 1;
 	}
 	/* number of gpr == the last gpr used in any alu */
