@@ -162,7 +162,8 @@ static EGLBoolean
 convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
                  struct GLX_egl_config *GLX_conf)
 {
-   int err = 0, attr, egl_attr, val, i;
+   int err = 0, attr, egl_attr, val;
+   unsigned i;
    EGLint conformant, config_caveat, surface_type;
 
    for (i = 0; i < ARRAY_SIZE(fbconfig_attributes); i++) {
@@ -243,7 +244,8 @@ static EGLBoolean
 convert_visual(Display *dpy, XVisualInfo *vinfo,
                struct GLX_egl_config *GLX_conf)
 {
-   int err, attr, egl_attr, val, i;
+   int err, attr, egl_attr, val;
+   unsigned i;
    EGLint conformant, config_caveat, surface_type;
 
    /* the visual must support OpenGL */

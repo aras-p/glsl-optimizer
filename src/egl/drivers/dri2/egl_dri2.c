@@ -292,7 +292,7 @@ dri2_process_buffers(struct dri2_egl_surface *dri2_surf,
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
    xcb_rectangle_t rectangle;
-   int i;
+   unsigned i;
 
    dri2_surf->buffer_count = count;
    dri2_surf->have_fake_front = 0;
@@ -1386,7 +1386,7 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
    xcb_rectangle_t rectangles[16];
    int i;
 
-   if (numRects > ARRAY_SIZE(rectangles))
+   if (numRects > (int)ARRAY_SIZE(rectangles))
       return dri2_copy_region(drv, disp, draw, dri2_surf->region);
 
    /* FIXME: Invert y here? */
