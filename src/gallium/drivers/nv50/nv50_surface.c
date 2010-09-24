@@ -199,7 +199,6 @@ nv50_surface_copy(struct pipe_context *pipe,
 	nv50_miptree_surface_del(ps_dst);
 }
 
-/* XXX this should probably look more along the lines of nv50_clear */
 static void
 nv50_clear_render_target(struct pipe_context *pipe,
 			 struct pipe_surface *dst,
@@ -209,33 +208,99 @@ nv50_clear_render_target(struct pipe_context *pipe,
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_channel *chan = screen->eng2d->channel;
-	struct nouveau_grobj *eng2d = screen->eng2d;
-	int format, ret;
-	union util_color uc;
-	util_pack_color(rgba, dst->format, &uc);
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nouveau_bo *bo = mt->base.bo;
 
-	format = nv50_2d_format(dst->format);
-	if (!format)
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_COLOR(0), 4);
+	OUT_RINGf (chan, rgba[0]);
+	OUT_RINGf (chan, rgba[1]);
+	OUT_RINGf (chan, rgba[2]);
+	OUT_RINGf (chan, rgba[3]);
+
+	if (MARK_RING(chan, 18, 2))
 		return;
 
-	ret = MARK_RING (chan, 16 + 32, 2);
-	if (ret)
+	BEGIN_RING(chan, tesla, NV50TCL_RT_CONTROL, 1);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_ADDRESS_HIGH(0), 5);
+	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, nv50_format_table[dst->format].rt);
+	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_HORIZ(0), 2);
+	OUT_RING  (chan, dst->width);
+	OUT_RING  (chan, dst->height);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_ARRAY_MODE, 1);
+	OUT_RING  (chan, 1);
+
+	/* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
+
+	BEGIN_RING(chan, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
+	OUT_RING  (chan, (width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
+	OUT_RING  (chan, 0x3c);
+
+	nv50->dirty |= NV50_NEW_FRAMEBUFFER;
+}
+
+static void
+nv50_clear_depth_stencil(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 unsigned clear_flags,
+			 double depth,
+			 unsigned stencil,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_screen *screen = nv50->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nouveau_bo *bo = mt->base.bo;
+	uint32_t mode = 0;
+
+	if (clear_flags & PIPE_CLEAR_DEPTH) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_DEPTH, 1);
+		OUT_RINGf (chan, depth);
+		mode |= NV50TCL_CLEAR_BUFFERS_Z;
+	}
+
+	if (clear_flags & PIPE_CLEAR_STENCIL) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_STENCIL, 1);
+		OUT_RING  (chan, stencil & 0xff);
+		mode |= NV50TCL_CLEAR_BUFFERS_S;
+	}
+
+	if (MARK_RING(chan, 17, 2))
 		return;
 
-	ret = nv50_surface_set(screen, dst, 1);
-	if (ret)
-		return;
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
+	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, nv50_format_table[dst->format].rt);
+	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ENABLE, 1);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_HORIZ, 3);
+	OUT_RING  (chan, dst->width);
+	OUT_RING  (chan, dst->height);
+	OUT_RING  (chan, (1 << 16) | 1);
 
-	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_SHAPE, 3);
-	OUT_RING  (chan, NV50_2D_DRAW_SHAPE_RECTANGLES);
-	OUT_RING  (chan, format);
-	OUT_RING  (chan, uc.ui);
-	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_POINT32_X(0), 4);
-	OUT_RING  (chan, dstx);
-	OUT_RING  (chan, dsty);
-	OUT_RING  (chan, width);
-	OUT_RING  (chan, height);
+	BEGIN_RING(chan, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
+	OUT_RING  (chan, (width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
+	OUT_RING  (chan, mode);
+
+	nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
 
 void
@@ -243,6 +308,7 @@ nv50_init_surface_functions(struct nv50_context *nv50)
 {
 	nv50->pipe.resource_copy_region = nv50_surface_copy;
 	nv50->pipe.clear_render_target = nv50_clear_render_target;
+	nv50->pipe.clear_depth_stencil = nv50_clear_depth_stencil;
 }
 
 

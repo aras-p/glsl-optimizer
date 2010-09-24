@@ -457,6 +457,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	BEGIN_RING(chan, screen->tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	OUT_RING  (chan, 8);
 
+	BEGIN_RING(chan, screen->tesla, NV50TCL_CLEAR_FLAGS, 1);
+	OUT_RING  (chan, NV50TCL_CLEAR_FLAGS_D3D);
+
 	/* constant buffers for immediates and VP/FP parameters */
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (32 * 4) * 4,
 			     &screen->constbuf_misc[0]);
