@@ -598,6 +598,10 @@ intel_finish_render_texture(GLcontext * ctx,
    struct gl_texture_image *image =
       tex_obj->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
+
+   DBG("Finish render texture tid %lx tex=%u refcount=%d\n",
+       _glthread_GetID(), att->Texture->Name, irb->Base.RefCount);
 
    /* Flag that this image may now be validated into the object's miptree. */
    intel_image->used_as_render_target = GL_FALSE;
