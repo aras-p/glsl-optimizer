@@ -52,48 +52,26 @@ nv50_2d_format_faithful(enum pipe_format format)
 	}
 }
 
-static INLINE int
-nv50_format(enum pipe_format format)
+static INLINE uint8_t
+nv50_2d_format(enum pipe_format format)
 {
-	switch (format) {
-	case PIPE_FORMAT_B8G8R8A8_UNORM:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
-	case PIPE_FORMAT_B8G8R8X8_UNORM:
-		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
-	case PIPE_FORMAT_B8G8R8A8_SRGB:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_SRGB;
-	case PIPE_FORMAT_B8G8R8X8_SRGB:
-		return NV50_2D_DST_FORMAT_X8R8G8B8_SRGB;
-	case PIPE_FORMAT_B5G6R5_UNORM:
-		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
-	case PIPE_FORMAT_B5G5R5A1_UNORM:
-		return NV50_2D_DST_FORMAT_A1R5G5B5_UNORM;
-	case PIPE_FORMAT_B10G10R10A2_UNORM:
-		return NV50_2D_DST_FORMAT_A2R10G10B10_UNORM;
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_L8_UNORM:
-	case PIPE_FORMAT_R8_UNORM:
+	uint8_t id = nv50_format_table[format].rt;
+
+	/* Hardware values for color formats range from 0xc0 to 0xff,
+	 * but the 2D engine doesn't support all of them.
+	 */
+	if ((id >= 0xc0) && (0xff0843e080608409ULL & (1ULL << (id - 0xc0))))
+		return id;
+
+	switch (util_format_get_blocksize(format)) {
+	case 1:
 		return NV50_2D_DST_FORMAT_R8_UNORM;
-	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32G32B32A32_FLOAT;
-	case PIPE_FORMAT_R32G32B32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32G32B32X32_FLOAT;
-	case PIPE_FORMAT_Z32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32_FLOAT;
-
-	/* only because we require src format == dst format: */
-	case PIPE_FORMAT_R16G16_SNORM:
-	case PIPE_FORMAT_R16G16_UNORM:
-	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
+	case 2:
 		return NV50_2D_DST_FORMAT_R16_UNORM;
-
+	case 4:
+		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	default:
-		return -1;
+		return 0;
 	}
 }
 
@@ -107,8 +85,8 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
 
- 	format = nv50_format(ps->format);
-	if (format < 0) {
+	format = nv50_2d_format(ps->format);
+	if (!format) {
 		NOUVEAU_ERR("invalid/unsupported surface format: %s\n",
 			    util_format_name(ps->format));
  		return 1;
@@ -237,8 +215,8 @@ nv50_clear_render_target(struct pipe_context *pipe,
 	union util_color uc;
 	util_pack_color(rgba, dst->format, &uc);
 
-	format = nv50_format(dst->format);
-	if (format < 0)
+	format = nv50_2d_format(dst->format);
+	if (!format)
 		return;
 
 	ret = MARK_RING (chan, 16 + 32, 2);
@@ -258,7 +236,6 @@ nv50_clear_render_target(struct pipe_context *pipe,
 	OUT_RING  (chan, dsty);
 	OUT_RING  (chan, width);
 	OUT_RING  (chan, height);
-
 }
 
 void
