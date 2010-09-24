@@ -1410,7 +1410,9 @@
 #define R_028000_DB_RENDER_CONTROL                   0x00028000
 #define   S_028000_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
 #define   S_028000_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
-#define   S_028000_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
+#define R_028004_DB_COUNT_CONTROL                    0x00028004
+#define   S_028004_ZPASS_INCREMENT_DISABLE        (((x) & 0x1) << 0)
+#define   S_028004_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 1)
 #define R_028008_DB_DEPTH_VIEW                       0x00028008
 #define R_02800C_DB_RENDER_OVERRIDE                  0x0002800C
 #define   V_02800C_FORCE_OFF                         0
