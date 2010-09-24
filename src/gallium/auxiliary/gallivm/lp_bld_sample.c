@@ -655,11 +655,21 @@ lp_build_sample_partial_offset(struct lp_build_context *bld,
        * Pixel blocks have power of two dimensions. LLVM should convert the
        * rem/div to bit arithmetic.
        * TODO: Verify this.
+       * It does indeed BUT it does transform it to scalar (and back) when doing so
+       * (using roughly extract, shift/and, mov, unpack) (llvm 2.7).
+       * The generated code looks seriously unfunny and is quite expensive.
        */
-
+#if 0
       LLVMValueRef block_width = lp_build_const_int_vec(bld->type, block_length);
       subcoord = LLVMBuildURem(bld->builder, coord, block_width, "");
       coord    = LLVMBuildUDiv(bld->builder, coord, block_width, "");
+#else
+      unsigned logbase2 = util_unsigned_logbase2(block_length);
+      LLVMValueRef block_shift = lp_build_const_int_vec(bld->type, logbase2);
+      LLVMValueRef block_mask = lp_build_const_int_vec(bld->type, block_length - 1);
+      subcoord = LLVMBuildAnd(bld->builder, coord, block_mask, "");
+      coord = LLVMBuildLShr(bld->builder, coord, block_shift, "");
+#endif
    }
 
    offset = lp_build_mul(bld, coord, stride);
