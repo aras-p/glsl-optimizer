@@ -1045,7 +1045,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 				return DXGI_ERROR_DEVICE_REMOVED;
 		}
 
-		db = !!(config->buffer_mask & NATIVE_ATTACHMENT_BACK_LEFT);
+		db = !!(config->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT));
 		dst = resources[db ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT];
 		src = gallium_buffer0;
 		dst_surface = 0;
