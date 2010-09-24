@@ -26,7 +26,6 @@
 
 #include "d3d10app.h"
 #include <X11/Xlib.h>
-#include <GL/glx.h>
 #include <galliumdxgi.h>
 #include <sys/time.h>
 
@@ -36,14 +35,6 @@ unsigned width, height;
 DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 static ID3D10Device* dev;
 static ID3D10Device* ctx;
-
-static int attributeList[] = {
-		GLX_RGBA,
-		GLX_RED_SIZE, 8,
-		GLX_GREEN_SIZE, 8,
-		GLX_BLUE_SIZE, 8,
-		None
-};
 
 double get_time()
 {
@@ -55,15 +46,15 @@ double get_time()
 int main(int argc, char** argv)
 {
 	Display* dpy = XOpenDisplay(0);
-	XVisualInfo* vi = glXChooseVisual(dpy, DefaultScreen(dpy), attributeList);
-	Colormap cmap = XCreateColormap(dpy, RootWindow(dpy, vi->screen), vi->visual, AllocNone);
+	Visual* visual = DefaultVisual(dpy, DefaultScreen(dpy));
+	Colormap cmap = XCreateColormap(dpy, RootWindow(dpy, DefaultScreen(dpy)), visual, AllocNone);
 	XSetWindowAttributes swa;
 	swa.colormap = cmap;
 	swa.border_pixel = 0;
 	swa.event_mask = StructureNotifyMask;
 	width = 512;
 	height = 512;
-	Window win = XCreateWindow(dpy, RootWindow(dpy, vi->screen), 0, 0, width, height, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel | CWColormap| CWEventMask, &swa);
+	Window win = XCreateWindow(dpy, RootWindow(dpy, DefaultScreen(dpy)), 0, 0, width, height, 0, CopyFromParent, InputOutput, visual, CWBorderPixel | CWColormap| CWEventMask, &swa);
 	XMapWindow(dpy, win);
 
 	GalliumDXGIUseX11Display(dpy, 0);
