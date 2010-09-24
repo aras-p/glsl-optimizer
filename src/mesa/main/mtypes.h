@@ -40,6 +40,7 @@
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "main/simple_list.h"	/* struct simple_node */
+#include "main/formats.h"       /* MESA_FORMAT_COUNT */
 
 
 /**
@@ -3239,6 +3240,8 @@ struct gl_context
 
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
+
+   GLboolean TextureFormatSupported[MESA_FORMAT_COUNT];
 
    /** 
     * Use dp4 (rather than mul/mad) instructions for position
