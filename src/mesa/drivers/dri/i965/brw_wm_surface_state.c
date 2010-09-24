@@ -429,6 +429,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       case MESA_FORMAT_XRGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
+      case MESA_FORMAT_SARGB8:
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
+	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
 	 break;

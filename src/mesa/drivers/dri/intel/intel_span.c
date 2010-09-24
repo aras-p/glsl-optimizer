@@ -366,6 +366,7 @@ intel_set_span_functions(struct intel_context *intel,
       intel_InitPointers_xRGB8888(rb);
       break;
    case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_SARGB8:
       intel_InitPointers_ARGB8888(rb);
       break;
    case MESA_FORMAT_Z16:

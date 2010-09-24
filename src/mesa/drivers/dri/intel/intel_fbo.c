@@ -433,6 +433,10 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to XGBA8 texture OK\n");
    }
+   else if (texImage->TexFormat == MESA_FORMAT_SARGB8) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to SARGB8 texture OK\n");
+   }
    else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGB5 texture OK\n");
@@ -659,6 +663,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_XRGB8888:
+      case MESA_FORMAT_SARGB8:
       case MESA_FORMAT_RGB565:
       case MESA_FORMAT_ARGB1555:
       case MESA_FORMAT_ARGB4444:
