@@ -970,7 +970,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, ddx, ddy,
+      lod = lp_build_lod_selector(bld, unit, ddx, ddy,
                                   lod_bias, explicit_lod,
                                   width, height, depth);
    }

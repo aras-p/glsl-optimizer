@@ -82,8 +82,9 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
-   float lod_bias, min_lod, max_lod;
    float border_color[4];
+   unsigned min_max_lod_equal:1;  /**< min_lod == max_lod ? */
+   float min_max_lod;             /**< only valid when min_max_lod_equal=1 */
 
    /* Aero hacks */
    unsigned force_nearest_s:1;
@@ -143,6 +144,20 @@ struct lp_sampler_dynamic_state
                 LLVMBuilderRef builder,
                 unsigned unit);
 
+   /** Obtain texture min lod */
+   LLVMValueRef
+   (*min_lod)(const struct lp_sampler_dynamic_state *state,
+              LLVMBuilderRef builder, unsigned unit);
+
+   /** Obtain texture max lod */
+   LLVMValueRef
+   (*max_lod)(const struct lp_sampler_dynamic_state *state,
+              LLVMBuilderRef builder, unsigned unit);
+
+   /** Obtain texture lod bias */
+   LLVMValueRef
+   (*lod_bias)(const struct lp_sampler_dynamic_state *state,
+               LLVMBuilderRef builder, unsigned unit);
 };
 
 
@@ -248,6 +263,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 LLVMValueRef
 lp_build_lod_selector(struct lp_build_sample_context *bld,
+                      unsigned unit,
                       const LLVMValueRef ddx[4],
                       const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */

@@ -65,6 +65,11 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
                        LP_MAX_TEXTURE_LEVELS);
 
+      elem_types[LP_JIT_TEXTURE_MIN_LOD] = LLVMFloatType();
+      elem_types[LP_JIT_TEXTURE_MAX_LOD] = LLVMFloatType();
+      elem_types[LP_JIT_TEXTURE_LOD_BIAS] = LLVMFloatType();
+
+
       texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, width,
@@ -88,6 +93,16 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, data,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_DATA);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, min_lod,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_MIN_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, max_lod,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_MAX_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, lod_bias,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_LOD_BIAS);
+
       LP_CHECK_STRUCT_SIZE(struct lp_jit_texture,
                            screen->target, texture_type);
 

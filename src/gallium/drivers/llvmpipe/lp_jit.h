@@ -54,6 +54,10 @@ struct lp_jit_texture
    uint32_t row_stride[LP_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[LP_MAX_TEXTURE_LEVELS];
    const void *data[LP_MAX_TEXTURE_LEVELS];
+   /* sampler state, actually */
+   float min_lod;
+   float max_lod;
+   float lod_bias;
 };
 
 
@@ -65,6 +69,9 @@ enum {
    LP_JIT_TEXTURE_ROW_STRIDE,
    LP_JIT_TEXTURE_IMG_STRIDE,
    LP_JIT_TEXTURE_DATA,
+   LP_JIT_TEXTURE_MIN_LOD,
+   LP_JIT_TEXTURE_MAX_LOD,
+   LP_JIT_TEXTURE_LOD_BIAS,
    LP_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
 

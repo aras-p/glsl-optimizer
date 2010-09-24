@@ -99,21 +99,21 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
       state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    }
 
+   /* If min_lod == max_lod we can greatly simplify mipmap selection.
+    * This is a case that occurs during automatic mipmap generation.
+    */
+   if (sampler->min_lod == sampler->max_lod) {
+      state->min_max_lod_equal = 1;
+      state->min_max_lod = sampler->min_lod;
+   }
+
    state->compare_mode      = sampler->compare_mode;
    if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
       state->compare_func   = sampler->compare_func;
    }
 
    state->normalized_coords = sampler->normalized_coords;
-   state->lod_bias          = sampler->lod_bias;
-   if (!view->last_level &&
-       sampler->min_img_filter == sampler->mag_img_filter) {
-      state->min_lod        = 0.0f;
-      state->max_lod        = 0.0f;
-   } else {
-      state->min_lod        = MAX2(sampler->min_lod, 0.0f);
-      state->max_lod        = sampler->max_lod;
-   }
+
    state->border_color[0]   = sampler->border_color[0];
    state->border_color[1]   = sampler->border_color[1];
    state->border_color[2]   = sampler->border_color[2];
@@ -140,6 +140,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
  */
 LLVMValueRef
 lp_build_lod_selector(struct lp_build_sample_context *bld,
+                      unsigned unit,
                       const LLVMValueRef ddx[4],
                       const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */
@@ -149,20 +150,20 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef depth)
 
 {
-   if (bld->static_state->min_lod == bld->static_state->max_lod) {
+   if (bld->static_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
        * This is hit during mipmap generation.
        */
-      return LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
+      return LLVMConstReal(LLVMFloatType(), bld->static_state->min_max_lod);
    }
    else {
       struct lp_build_context *float_bld = &bld->float_bld;
-      LLVMValueRef sampler_lod_bias = LLVMConstReal(LLVMFloatType(),
-                                                    bld->static_state->lod_bias);
-      LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(),
-                                           bld->static_state->min_lod);
-      LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(),
-                                           bld->static_state->max_lod);
+      LLVMValueRef sampler_lod_bias =
+         bld->dynamic_state->lod_bias(bld->dynamic_state, bld->builder, unit);
+      LLVMValueRef min_lod =
+         bld->dynamic_state->min_lod(bld->dynamic_state, bld->builder, unit);
+      LLVMValueRef max_lod =
+         bld->dynamic_state->max_lod(bld->dynamic_state, bld->builder, unit);
       LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
       LLVMValueRef lod;
 

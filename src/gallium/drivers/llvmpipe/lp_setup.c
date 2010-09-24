@@ -617,7 +617,8 @@ lp_setup_set_vertex_info( struct lp_setup_context *setup,
 void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
-                                    struct pipe_sampler_view **views)
+                                    struct pipe_sampler_view **views,
+                                    const struct pipe_sampler_state **samplers)
 {
    unsigned i;
 
@@ -637,6 +638,11 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
+
+         /* sampler state */
+         jit_tex->min_lod = samplers[i]->min_lod;
+         jit_tex->max_lod = samplers[i]->max_lod;
+         jit_tex->lod_bias = samplers[i]->lod_bias;
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
