@@ -28,7 +28,7 @@
 
 /* evergreen values */
 #define EG_RESOURCE_OFFSET                 0x00030000
-#define EG_RESOURCE_END                    0x00030400
+#define EG_RESOURCE_END                    0x00034000
 #define EG_LOOP_CONST_OFFSET               0x0003A200
 #define EG_LOOP_CONST_END                  0x0003A26C
 #define EG_BOOL_CONST_OFFSET               0x0003A500
