@@ -129,6 +129,7 @@ struct r600_draw {
 	struct pipe_resource	*index_buffer;
 	unsigned		index_buffer_offset;
 	unsigned		min_index, max_index;
+	unsigned		index_bias;
 };
 
 struct r600_context_hw_states {

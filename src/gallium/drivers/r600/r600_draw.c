@@ -149,8 +149,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_draw draw;
 	int r;
 
-	assert(info->index_bias == 0);
-
 	memset(&draw, 0, sizeof(draw));
 
 	if (rctx->any_user_vbs) {
@@ -166,16 +164,17 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		draw.min_index = info->min_index;
 		draw.max_index = info->max_index;
+		draw.index_bias = info->index_bias;
 
 		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
 					    &rctx->index_buffer.index_size,
-					    rctx->index_buffer.offset, &draw.start,
+					    0, &draw.start,
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
-		draw.index_buffer_offset = rctx->index_buffer.offset;
-
+		draw.index_buffer_offset = draw.start * draw.index_size;
+		draw.start = 0;
 		r600_upload_index_buffer(rctx, &draw);
 	}
 	else {
@@ -184,7 +183,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.min_index = 0;
 		draw.max_index = 0xffffff;
 		draw.index_buffer_offset = 0;
+		draw.index_bias = draw.start;
 	}
+
 	r = r600_draw_common(&draw);
 	if (r)
 	  fprintf(stderr,"draw common failed %d\n", r);
