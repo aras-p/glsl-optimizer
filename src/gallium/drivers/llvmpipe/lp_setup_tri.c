@@ -160,8 +160,9 @@ lp_setup_print_triangle(struct lp_setup_context *setup,
 }
 
 
+#define MAX_PLANES 8
 static unsigned
-lp_rast_tri_tab[9] = {
+lp_rast_tri_tab[MAX_PLANES+1] = {
    0,               /* should be impossible */
    LP_RAST_OP_TRIANGLE_1,
    LP_RAST_OP_TRIANGLE_2,
@@ -531,11 +532,11 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    }
    else
    {
-      int c[7];
-      int ei[7];
-      int eo[7];
-      int xstep[7];
-      int ystep[7];
+      int c[MAX_PLANES];
+      int ei[MAX_PLANES];
+      int eo[MAX_PLANES];
+      int xstep[MAX_PLANES];
+      int ystep[MAX_PLANES];
       int x, y;
 
       int ix0 = bbox->x0 / TILE_SIZE;
@@ -564,7 +565,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       for (y = iy0; y <= iy1; y++)
       {
 	 boolean in = FALSE;  /* are we inside the triangle? */
-	 int cx[7];
+	 int cx[MAX_PLANES];
 
          for (i = 0; i < nr_planes; i++)
             cx[i] = c[i];
