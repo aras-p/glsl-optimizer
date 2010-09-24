@@ -326,7 +326,7 @@
 #define   S_028C74_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 4)
 #define   G_028C74_NON_DISP_TILING_ORDER(x)            (((x) >> 4) & 0x1)
 #define   C_028C74_NON_DISP_TILING_ORDER               0xFFFFFFEF
- 
+
 #define R_028C78_CB_COLOR0_DIM                         0x028C78
 #define   S_028C78_WIDTH_MAX(x)                        (((x) & 0xFFFF) << 0)
 #define   G_028C78_WIDTH_MAX(x)                        (((x) >> 0) & 0xFFFF)
@@ -679,56 +679,6 @@
 #define   S_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) & 0x3FF) << 0)
 #define   G_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) >> 0) & 0x3FF)
 #define   C_028D34_DEPTH_HEIGHT_TILE_MAX               0xFFFFFC00
-#define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
-#define   S_028D0C_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
-#define   S_028D0C_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
-#define   S_028D0C_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
-#define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
-#define   V_028D10_FORCE_OFF                         0
-#define   V_028D10_FORCE_ENABLE                      1
-#define   V_028D10_FORCE_DISABLE                     2
-#define   S_028D10_FORCE_HIZ_ENABLE(x)                 (((x) & 0x3) << 0)
-#define   G_028D10_FORCE_HIZ_ENABLE(x)                 (((x) >> 0) & 0x3)
-#define   C_028D10_FORCE_HIZ_ENABLE                    0xFFFFFFFC
-#define   S_028D10_FORCE_HIS_ENABLE0(x)                (((x) & 0x3) << 2)
-#define   G_028D10_FORCE_HIS_ENABLE0(x)                (((x) >> 2) & 0x3)
-#define   C_028D10_FORCE_HIS_ENABLE0                   0xFFFFFFF3
-#define   S_028D10_FORCE_HIS_ENABLE1(x)                (((x) & 0x3) << 4)
-#define   G_028D10_FORCE_HIS_ENABLE1(x)                (((x) >> 4) & 0x3)
-#define   C_028D10_FORCE_HIS_ENABLE1                   0xFFFFFFCF
-#define   S_028D10_FORCE_SHADER_Z_ORDER(x)             (((x) & 0x1) << 6)
-#define   G_028D10_FORCE_SHADER_Z_ORDER(x)             (((x) >> 6) & 0x1)
-#define   C_028D10_FORCE_SHADER_Z_ORDER                0xFFFFFFBF
-#define   S_028D10_FAST_Z_DISABLE(x)                   (((x) & 0x1) << 7)
-#define   G_028D10_FAST_Z_DISABLE(x)                   (((x) >> 7) & 0x1)
-#define   C_028D10_FAST_Z_DISABLE                      0xFFFFFF7F
-#define   S_028D10_FAST_STENCIL_DISABLE(x)             (((x) & 0x1) << 8)
-#define   G_028D10_FAST_STENCIL_DISABLE(x)             (((x) >> 8) & 0x1)
-#define   C_028D10_FAST_STENCIL_DISABLE                0xFFFFFEFF
-#define   S_028D10_NOOP_CULL_DISABLE(x)                (((x) & 0x1) << 9)
-#define   G_028D10_NOOP_CULL_DISABLE(x)                (((x) >> 9) & 0x1)
-#define   C_028D10_NOOP_CULL_DISABLE                   0xFFFFFDFF
-#define   S_028D10_FORCE_COLOR_KILL(x)                 (((x) & 0x1) << 10)
-#define   G_028D10_FORCE_COLOR_KILL(x)                 (((x) >> 10) & 0x1)
-#define   C_028D10_FORCE_COLOR_KILL                    0xFFFFFBFF
-#define   S_028D10_FORCE_Z_READ(x)                     (((x) & 0x1) << 11)
-#define   G_028D10_FORCE_Z_READ(x)                     (((x) >> 11) & 0x1)
-#define   C_028D10_FORCE_Z_READ                        0xFFFFF7FF
-#define   S_028D10_FORCE_STENCIL_READ(x)               (((x) & 0x1) << 12)
-#define   G_028D10_FORCE_STENCIL_READ(x)               (((x) >> 12) & 0x1)
-#define   C_028D10_FORCE_STENCIL_READ                  0xFFFFEFFF
-#define   S_028D10_FORCE_FULL_Z_RANGE(x)               (((x) & 0x3) << 13)
-#define   G_028D10_FORCE_FULL_Z_RANGE(x)               (((x) >> 13) & 0x3)
-#define   C_028D10_FORCE_FULL_Z_RANGE                  0xFFFF9FFF
-#define   S_028D10_FORCE_QC_SMASK_CONFLICT(x)          (((x) & 0x1) << 15)
-#define   G_028D10_FORCE_QC_SMASK_CONFLICT(x)          (((x) >> 15) & 0x1)
-#define   C_028D10_FORCE_QC_SMASK_CONFLICT             0xFFFF7FFF
-#define   S_028D10_DISABLE_VIEWPORT_CLAMP(x)           (((x) & 0x1) << 16)
-#define   G_028D10_DISABLE_VIEWPORT_CLAMP(x)           (((x) >> 16) & 0x1)
-#define   C_028D10_DISABLE_VIEWPORT_CLAMP              0xFFFEFFFF
-#define   S_028D10_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
-#define   G_028D10_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
-#define   C_028D10_IGNORE_SC_ZRANGE                    0xFFFDFFFF
 #define R_02880C_DB_SHADER_CONTROL                    0x02880C
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
@@ -1458,8 +1408,56 @@
 #define R_008C0C_SQ_THREAD_RESOURCE_MGMT             0x00008C0C
 #define R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ        0x00008D8C
 #define R_028000_DB_RENDER_CONTROL                   0x00028000
+#define   S_028000_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
+#define   S_028000_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028000_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
 #define R_028008_DB_DEPTH_VIEW                       0x00028008
 #define R_02800C_DB_RENDER_OVERRIDE                  0x0002800C
+#define   V_02800C_FORCE_OFF                         0
+#define   V_02800C_FORCE_ENABLE                      1
+#define   V_02800C_FORCE_DISABLE                     2
+#define   S_02800C_FORCE_HIZ_ENABLE(x)                 (((x) & 0x3) << 0)
+#define   G_02800C_FORCE_HIZ_ENABLE(x)                 (((x) >> 0) & 0x3)
+#define   C_02800C_FORCE_HIZ_ENABLE                    0xFFFFFFFC
+#define   S_02800C_FORCE_HIS_ENABLE0(x)                (((x) & 0x3) << 2)
+#define   G_02800C_FORCE_HIS_ENABLE0(x)                (((x) >> 2) & 0x3)
+#define   C_02800C_FORCE_HIS_ENABLE0                   0xFFFFFFF3
+#define   S_02800C_FORCE_HIS_ENABLE1(x)                (((x) & 0x3) << 4)
+#define   G_02800C_FORCE_HIS_ENABLE1(x)                (((x) >> 4) & 0x3)
+#define   C_02800C_FORCE_HIS_ENABLE1                   0xFFFFFFCF
+#define   S_02800C_FORCE_SHADER_Z_ORDER(x)             (((x) & 0x1) << 6)
+#define   G_02800C_FORCE_SHADER_Z_ORDER(x)             (((x) >> 6) & 0x1)
+#define   C_02800C_FORCE_SHADER_Z_ORDER                0xFFFFFFBF
+#define   S_02800C_FAST_Z_DISABLE(x)                   (((x) & 0x1) << 7)
+#define   G_02800C_FAST_Z_DISABLE(x)                   (((x) >> 7) & 0x1)
+#define   C_02800C_FAST_Z_DISABLE                      0xFFFFFF7F
+#define   S_02800C_FAST_STENCIL_DISABLE(x)             (((x) & 0x1) << 8)
+#define   G_02800C_FAST_STENCIL_DISABLE(x)             (((x) >> 8) & 0x1)
+#define   C_02800C_FAST_STENCIL_DISABLE                0xFFFFFEFF
+#define   S_02800C_NOOP_CULL_DISABLE(x)                (((x) & 0x1) << 9)
+#define   G_02800C_NOOP_CULL_DISABLE(x)                (((x) >> 9) & 0x1)
+#define   C_02800C_NOOP_CULL_DISABLE                   0xFFFFFDFF
+#define   S_02800C_FORCE_COLOR_KILL(x)                 (((x) & 0x1) << 10)
+#define   G_02800C_FORCE_COLOR_KILL(x)                 (((x) >> 10) & 0x1)
+#define   C_02800C_FORCE_COLOR_KILL                    0xFFFFFBFF
+#define   S_02800C_FORCE_Z_READ(x)                     (((x) & 0x1) << 11)
+#define   G_02800C_FORCE_Z_READ(x)                     (((x) >> 11) & 0x1)
+#define   C_02800C_FORCE_Z_READ                        0xFFFFF7FF
+#define   S_02800C_FORCE_STENCIL_READ(x)               (((x) & 0x1) << 12)
+#define   G_02800C_FORCE_STENCIL_READ(x)               (((x) >> 12) & 0x1)
+#define   C_02800C_FORCE_STENCIL_READ                  0xFFFFEFFF
+#define   S_02800C_FORCE_FULL_Z_RANGE(x)               (((x) & 0x3) << 13)
+#define   G_02800C_FORCE_FULL_Z_RANGE(x)               (((x) >> 13) & 0x3)
+#define   C_02800C_FORCE_FULL_Z_RANGE                  0xFFFF9FFF
+#define   S_02800C_FORCE_QC_SMASK_CONFLICT(x)          (((x) & 0x1) << 15)
+#define   G_02800C_FORCE_QC_SMASK_CONFLICT(x)          (((x) >> 15) & 0x1)
+#define   C_02800C_FORCE_QC_SMASK_CONFLICT             0xFFFF7FFF
+#define   S_02800C_DISABLE_VIEWPORT_CLAMP(x)           (((x) & 0x1) << 16)
+#define   G_02800C_DISABLE_VIEWPORT_CLAMP(x)           (((x) >> 16) & 0x1)
+#define   C_02800C_DISABLE_VIEWPORT_CLAMP              0xFFFEFFFF
+#define   S_02800C_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
+#define   G_02800C_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
+#define   C_02800C_IGNORE_SC_ZRANGE                    0xFFFDFFFF
 #define R_028010_DB_RENDER_OVERRIDE2                 0x00028010
 #define R_028014_DB_HTILE_DATA_BASE                  0x00028014
 #define R_028028_DB_STENCIL_CLEAR                    0x00028028
@@ -1863,5 +1861,7 @@
 #define   S_0085F0_CR2_ACTION_ENA(x)                   (((x) & 0x1) << 31)
 #define   G_0085F0_CR2_ACTION_ENA(x)                   (((x) >> 31) & 0x1)
 #define   C_0085F0_CR2_ACTION_ENA                      0x7FFFFFFF
+#define R_008970_VGT_NUM_INDICES                     0x008970
+#define R_0287F0_VGT_DRAW_INITIATOR                  0x0287F0
 
 #endif

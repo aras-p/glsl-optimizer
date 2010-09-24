@@ -418,9 +418,9 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	db_render_control = 0;
 ///	db_render_control = S_028D0C_STENCIL_COMPRESS_DISABLE(1) |
 ///		S_028D0C_DEPTH_COMPRESS_DISABLE(1);
-	db_render_override = S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
+	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
 
 	query_running = FALSE;
 
@@ -431,8 +431,8 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	}
 
 	if (query_running) {
-		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
-		db_render_control |= S_028D0C_PERFECT_ZPASS_COUNTS(1);
+		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
+		db_render_control |= S_028000_PERFECT_ZPASS_COUNTS(1);
 	}
 
 	rstate->states[EG_DSA__DB_STENCIL_CLEAR] = 0x00000000;
