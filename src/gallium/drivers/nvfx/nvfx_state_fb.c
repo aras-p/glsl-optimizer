@@ -140,6 +140,12 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		case 0:
 			rt_format |= NV30_3D_RT_FORMAT_COLOR_A8R8G8B8;
 			break;
+		case PIPE_FORMAT_R8G8B8X8_UNORM:
+			rt_format |= NV30_3D_RT_FORMAT_COLOR_X8B8G8R8;
+			break;
+		case PIPE_FORMAT_R8G8B8A8_UNORM:
+			rt_format |= NV30_3D_RT_FORMAT_COLOR_A8B8G8R8;
+			break;
 		case PIPE_FORMAT_B5G6R5_UNORM:
 			rt_format |= NV30_3D_RT_FORMAT_COLOR_R5G6B5;
 			break;

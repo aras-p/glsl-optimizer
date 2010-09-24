@@ -194,6 +194,8 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
+		case PIPE_FORMAT_R8G8B8A8_UNORM:
+		case PIPE_FORMAT_R8G8B8X8_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
 			break;
 		case PIPE_FORMAT_R16G16B16A16_FLOAT:
