@@ -31,6 +31,7 @@
 #include <tgsi/tgsi_util.h>
 #include <util/u_blitter.h>
 #include <util/u_double_list.h>
+#include "translate/translate_cache.h"
 #include "radeon.h"
 #include "r600_shader.h"
 
@@ -115,7 +116,11 @@ struct r600_vertex_element
 {
 	unsigned			refcount;
 	unsigned			count;
-	struct pipe_vertex_element	elements[32];
+	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
+
+	enum pipe_format hw_format[PIPE_MAX_ATTRIBS];
+	unsigned hw_format_size[PIPE_MAX_ATTRIBS];
+	boolean incompatible_layout;
 };
 
 struct r600_draw {
@@ -131,6 +136,18 @@ struct r600_draw {
 	unsigned		min_index, max_index;
 	unsigned		index_bias;
 };
+
+struct r600_translate_context {
+	/* Translate cache for incompatible vertex offset/stride/format fallback. */
+	struct translate_cache *translate_cache;
+
+	/* The vertex buffer slot containing the translated buffer. */
+	unsigned vb_slot;
+
+	/* Saved and new vertex element state. */
+	void *saved_velems, *new_velems;
+};
+
 
 struct r600_context_hw_states {
 	struct radeon_state	rasterizer;
@@ -247,6 +264,10 @@ struct r600_context {
 	struct u_upload_mgr *upload_vb;
 	struct u_upload_mgr *upload_ib;
 	bool any_user_vbs;
+	unsigned vb_max_index;
+
+	/* For translating vertex buffers having incompatible vertex layout. */
+	struct r600_translate_context tran;
 };
 
 /* Convenience cast wrapper. */
