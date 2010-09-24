@@ -564,7 +564,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-#if 0
+#if 1
 	static int dc = 0;
 	char dname[256];
 #endif
@@ -572,7 +572,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 	if (!rctx->ctx.pm4_cdwords)
 		return;
 
-#if 0
+#if 1
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 20) {
 		r600_context_dump_bof(&rctx->ctx, dname);
@@ -2050,12 +2050,6 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	r600_init_query_functions2(rctx);
 	r600_init_context_resource_functions2(rctx);
 
-	rctx->blitter = util_blitter_create(&rctx->context);
-	if (rctx->blitter == NULL) {
-		FREE(rctx);
-		return NULL;
-	}
-
 	switch (r600_get_family(rctx->radeon)) {
 	case CHIP_R600:
 	case CHIP_RV610:
@@ -2093,6 +2087,12 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	default:
 		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
 		r600_destroy_context(&rctx->context);
+		return NULL;
+	}
+
+	rctx->blitter = util_blitter_create(&rctx->context);
+	if (rctx->blitter == NULL) {
+		FREE(rctx);
 		return NULL;
 	}
 

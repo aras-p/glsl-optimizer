@@ -32,7 +32,7 @@
 #define EVERGREEN_CONTEXT_REG_OFFSET                0X00028000
 #define EVERGREEN_CONTEXT_REG_END                   0X00029000
 #define EVERGREEN_RESOURCE_OFFSET                   0x00030000
-#define EVERGREEN_RESOURCE_END                      0x00030400
+#define EVERGREEN_RESOURCE_END                      0x00034000
 #define EVERGREEN_LOOP_CONST_OFFSET                 0x0003A200
 #define EVERGREEN_LOOP_CONST_END                    0x0003A26C
 #define EVERGREEN_BOOL_CONST_OFFSET                 0x0003A500
@@ -746,29 +746,6 @@
 #define   S_02880C_DUAL_EXPORT_ENABLE(x)               (((x) & 0x1) << 9)
 #define   G_02880C_DUAL_EXPORT_ENABLE(x)               (((x) >> 9) & 0x1)
 #define   C_02880C_DUAL_EXPORT_ENABLE                  0xFFFFFDFF
-#define R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x028DF8
-#define   S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) & 0xFF) << 0)
-#define   G_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) >> 0) & 0xFF)
-#define   C_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS         0xFFFFFF00
-#define   S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) & 0x1) << 8)
-#define   G_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) >> 8) & 0x1)
-#define   C_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT         0xFFFFFEFF
-#define R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE       0x028E00
-#define   S_028E00_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
-#define   G_028E00_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
-#define   C_028E00_SCALE                               0x00000000
-#define R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET      0x028E04
-#define   S_028E04_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
-#define   G_028E04_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
-#define   C_028E04_OFFSET                              0x00000000
-#define R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE        0x028E08
-#define   S_028E08_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
-#define   G_028E08_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
-#define   C_028E08_SCALE                               0x00000000
-#define R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET       0x028E0C
-#define   S_028E0C_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
-#define   G_028E0C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
-#define   C_028E0C_OFFSET                              0x00000000
 #define R_028A00_PA_SU_POINT_SIZE                    0x028A00
 #define   S_028A00_HEIGHT(x)                           (((x) & 0xFFFF) << 0)
 #define   G_028A00_HEIGHT(x)                           (((x) >> 0) & 0xFFFF)
@@ -1689,11 +1666,29 @@
 #define R_028B54_VGT_SHADER_STAGES_EN                0x00028B54
 #define R_028B70_DB_ALPHA_TO_MASK                    0x00028B70
 #define R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x00028B78
+#define   S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) & 0xFF) << 0)
+#define   G_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) >> 0) & 0xFF)
+#define   C_028B78_POLY_OFFSET_NEG_NUM_DB_BITS         0xFFFFFF00
+#define   S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) & 0x1) << 8)
+#define   G_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) >> 8) & 0x1)
+#define   C_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT         0xFFFFFEFF
 #define R_028B7C_PA_SU_POLY_OFFSET_CLAMP             0x00028B7C
 #define R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE       0x00028B80
+#define   S_028B80_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
+#define   G_028B80_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028B80_SCALE                               0x00000000
 #define R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET      0x00028B84
+#define   S_028B84_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
+#define   G_028B84_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028B84_OFFSET                              0x00000000
 #define R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE        0x00028B88
+#define   S_028B88_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
+#define   G_028B88_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028B88_SCALE                               0x00000000
 #define R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET       0x00028B8C
+#define   S_028B8C_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
+#define   G_028B8C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028B8C_OFFSET                              0x00000000
 #define R_028B94_VGT_STRMOUT_CONFIG                  0x00028B94
 #define R_028B98_VGT_STRMOUT_BUFFER_CONFIG           0x00028B98
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00

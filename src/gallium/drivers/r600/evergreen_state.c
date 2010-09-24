@@ -256,11 +256,11 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
 	return rstate;
 }
 
@@ -895,22 +895,22 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
 		rctx->vs_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer, R600_GROUP_ALU_CONST,
+		r600_pipe_state_add_reg(&rctx->vs_const_buffer, EVERGREEN_GROUP_CONTEXT,
 					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
 					ALIGN_DIVUP(buffer->width0 >> 4, 16),
 					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer, R600_GROUP_ALU_CONST,
+		r600_pipe_state_add_reg(&rctx->vs_const_buffer, EVERGREEN_GROUP_CONTEXT,
 					R_028980_ALU_CONST_CACHE_VS_0,
 					0, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
 		rctx->ps_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer, R600_GROUP_ALU_CONST,
+		r600_pipe_state_add_reg(&rctx->ps_const_buffer, EVERGREEN_GROUP_CONTEXT,
 					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
 					ALIGN_DIVUP(buffer->width0 >> 4, 16),
 					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer, R600_GROUP_ALU_CONST,
+		r600_pipe_state_add_reg(&rctx->ps_const_buffer, EVERGREEN_GROUP_CONTEXT,
 					R_028940_ALU_CONST_CACHE_PS_0,
 					0, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);

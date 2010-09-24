@@ -65,31 +65,12 @@ unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
 static void r600_context_queries_suspend(struct r600_context *ctx);
 static void r600_context_queries_resume(struct r600_context *ctx);
 
-static int r600_group_id_register_offset(unsigned offset)
+static int r600_group_id_register_offset(struct r600_context *ctx, unsigned offset)
 {
-	if (offset >= R600_CONFIG_REG_OFFSET && offset < R600_CONFIG_REG_END) {
-		return R600_GROUP_CONFIG;
-	}
-	if (offset >= R600_CONTEXT_REG_OFFSET && offset < R600_CONTEXT_REG_END) {
-		return R600_GROUP_CONTEXT;
-	}
-	if (offset >= R600_ALU_CONST_OFFSET && offset < R600_ALU_CONST_END) {
-		return R600_GROUP_ALU_CONST;
-	}
-	if (offset >= R600_RESOURCE_OFFSET && offset < R600_RESOURCE_END) {
-		return R600_GROUP_RESOURCE;
-	}
-	if (offset >= R600_SAMPLER_OFFSET && offset < R600_SAMPLER_END) {
-		return R600_GROUP_SAMPLER;
-	}
-	if (offset >= R600_CTL_CONST_OFFSET && offset < R600_CTL_CONST_END) {
-		return R600_GROUP_CTL_CONST;
-	}
-	if (offset >= R600_LOOP_CONST_OFFSET && offset < R600_LOOP_CONST_END) {
-		return R600_GROUP_LOOP_CONST;
-	}
-	if (offset >= R600_BOOL_CONST_OFFSET && offset < R600_BOOL_CONST_END) {
-		return R600_GROUP_BOOL_CONST;
+	for (int i = 0; i < ctx->ngroups; i++) {
+		if (offset >= ctx->groups[i].start_offset && offset <= ctx->groups[i].end_offset) {
+			return i;
+		}
 	}
 	return -1;
 }
@@ -119,7 +100,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			continue;
 
 		/* find into which group this block is */
-		group_id = r600_group_id_register_offset(reg[i].offset);
+		group_id = r600_group_id_register_offset(ctx, reg[i].offset);
 		assert(group_id >= 0);
 		group = &ctx->groups[group_id];
 
@@ -1005,7 +986,7 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
-#if 1
+#if 0
 	/* emit cs */
 	drmib.num_chunks = 2;
 	drmib.chunks = (uint64_t)(uintptr_t)chunk_array;

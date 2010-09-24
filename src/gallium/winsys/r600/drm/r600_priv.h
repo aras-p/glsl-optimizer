@@ -39,6 +39,7 @@ struct radeon {
 	unsigned			device;
 	unsigned			family;
 	enum chip_class			chip_class;
+	boolean				use_mem_constant; /* true for evergreen */
 };
 
 struct radeon *r600_new(int fd, unsigned device);
