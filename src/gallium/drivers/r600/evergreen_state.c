@@ -1342,20 +1342,36 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	assert(info->index_bias == 0);
 
+	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.mode = info->mode;
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.min_index = info->min_index;
+		draw.max_index = info->max_index;
+		draw.index_bias = info->index_bias;
+
+		r600_translate_index_buffer2(rctx, &rctx->index_buffer.buffer,
+					    &rctx->index_buffer.index_size,
+					    &draw.start,
+					    info->count);
+
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
-		assert(rctx->index_buffer.offset %
-				rctx->index_buffer.index_size == 0);
-		draw.start += rctx->index_buffer.offset /
-			rctx->index_buffer.index_size;
+		draw.index_buffer_offset = draw.start * draw.index_size;
+		draw.start = 0;
+		r600_upload_index_buffer2(rctx, &draw);
 	} else {
 		draw.index_size = 0;
 		draw.index_buffer = NULL;
+		draw.min_index = info->min_index;
+		draw.max_index = info->max_index;
+		draw.index_bias = info->start;
 	}
+
+	/* flush upload buffers */
+	r600_upload_user_buffers2(rctx);
+
 	switch (draw.index_size) {
 	case 2:
 		vgt_draw_initiator = 0;
@@ -1421,10 +1437,10 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	vgt.id = R600_PIPE_STATE_VGT;
 	vgt.nregs = 0;
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONFIG, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw.start, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw.index_bias, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, info->max_index, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, draw.max_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, draw.min_index, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.count;

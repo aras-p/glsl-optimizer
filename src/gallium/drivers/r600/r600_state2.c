@@ -39,6 +39,8 @@
 #include <util/u_pack_color.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
+#include <util/u_upload_mgr.h>
+#include <util/u_index_modify.h>
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -108,7 +110,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z;
-	boolean have_pos = FALSE;
+	boolean have_pos = FALSE, have_face = FALSE;
 
 	/* clear previous register */
 	rstate->nregs = 0;
@@ -123,6 +125,8 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
+		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			have_face = TRUE;
 		if (rctx->sprite_coord_enable & (1 << i)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
@@ -153,7 +157,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		spi_input_z |= 1;
 	}
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D0_SPI_PS_IN_CONTROL_1, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D0_SPI_PS_IN_CONTROL_1, S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_028840_SQ_PGM_START_PS,
@@ -459,6 +463,8 @@ static void r600_draw_common(struct r600_drawl *draw)
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 
+	/* flush upload buffers */
+	r600_upload_user_buffers2(rctx);
 
 	switch (draw->index_size) {
 	case 2:
@@ -518,7 +524,9 @@ static void r600_draw_common(struct r600_drawl *draw)
 	vgt.id = R600_PIPE_STATE_VGT;
 	vgt.nregs = 0;
 	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONFIG, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw->start, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw->index_bias, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, draw->max_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, draw->min_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
@@ -535,6 +543,30 @@ static void r600_draw_common(struct r600_drawl *draw)
 	r600_context_draw(&rctx->ctx, &rdraw);
 }
 
+void r600_translate_index_buffer2(struct r600_pipe_context *r600,
+					struct pipe_resource **index_buffer,
+					unsigned *index_size,
+					unsigned *start, unsigned count)
+{
+	switch (*index_size) {
+	case 1:
+		util_shorten_ubyte_elts(&r600->context, index_buffer, 0, *start, count);
+		*index_size = 2;
+		*start = 0;
+		break;
+
+	case 2:
+		if (*start % 2 != 0) {
+			util_rebuild_ushort_elts(&r600->context, index_buffer, 0, *start, count);
+			*start = 0;
+		}
+		break;
+
+	case 4:
+		break;
+	}
+}
+
 static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -542,20 +574,32 @@ static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info
 
 	assert(info->index_bias == 0);
 
+	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;
 	draw.mode = info->mode;
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.min_index = info->min_index;
+		draw.max_index = info->max_index;
+		draw.index_bias = info->index_bias;
+
+		r600_translate_index_buffer2(rctx, &rctx->index_buffer.buffer,
+					    &rctx->index_buffer.index_size,
+					    &draw.start,
+					    info->count);
+
 		draw.index_size = rctx->index_buffer.index_size;
 		draw.index_buffer = rctx->index_buffer.buffer;
-		assert(rctx->index_buffer.offset %
-				rctx->index_buffer.index_size == 0);
-		draw.start += rctx->index_buffer.offset /
-			rctx->index_buffer.index_size;
+		draw.index_buffer_offset = draw.start * draw.index_size;
+		draw.start = 0;
+		r600_upload_index_buffer2(rctx, &draw);
 	} else {
 		draw.index_size = 0;
 		draw.index_buffer = NULL;
+		draw.min_index = info->min_index;
+		draw.max_index = info->max_index;
+		draw.index_bias = info->start;
 	}
 	r600_draw_common(&draw);
 }
@@ -571,6 +615,9 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 
 	if (!rctx->ctx.pm4_cdwords)
 		return;
+
+	u_upload_flush(rctx->upload_vb);
+	u_upload_flush(rctx->upload_ib);
 
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
@@ -591,6 +638,10 @@ static void r600_destroy_context(struct pipe_context *context)
 	for (int i = 0; i < R600_PIPE_NSTATES; i++) {
 		free(rctx->states[i]);
 	}
+
+	u_upload_destroy(rctx->upload_vb);
+	u_upload_destroy(rctx->upload_ib);
+
 	FREE(rctx);
 }
 
@@ -1319,9 +1370,11 @@ static void r600_set_scissor_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_02820C_PA_SC_CLIPRECT_RULE, 0x0000FFFF,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
-				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
-				0xFFFFFFFF, NULL);
+	if (rctx->family >= CHIP_RV770) {
+		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+					R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
+					0xFFFFFFFF, NULL);
+	}
 
 	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
 	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
@@ -1418,7 +1471,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				state->cbufs[cb]->offset >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, 0xFFFFFFFF, NULL);
+				color_info, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_028060_CB_COLOR0_SIZE + cb * 4,
 				S_028060_PITCH_TILE_MAX(pitch) |
@@ -1469,7 +1522,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028004_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028010_DB_DEPTH_INFO,
 				S_028010_ARRAY_MODE(rtex->array_mode) | S_028010_FORMAT(format),
-				0xFFFFFFFF, NULL);
+				0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028D34_DB_PREFETCH_LIMIT,
 				(state->zsbuf->height / 8) - 1, 0xFFFFFFFF, NULL);
 }
@@ -1966,8 +2019,6 @@ static void r600_init_config2(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028AB8_VGT_VTX_CNT_EN, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B20_VGT_STRMOUT_BUFFER_EN, 0x00000000, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, 0x00FFFFFF, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028A84_VGT_PRIMITIVEID_EN, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0x00000000, 0xFFFFFFFF, NULL);
@@ -2045,6 +2096,7 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
 	rctx->radeon = rscreen->radeon;
+	rctx->family = r600_get_family(rctx->radeon);
 
 	r600_init_blit_functions2(rctx);
 	r600_init_query_functions2(rctx);
@@ -2086,6 +2138,20 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 		break;
 	default:
 		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
+		r600_destroy_context(&rctx->context);
+		return NULL;
+	}
+
+	rctx->upload_ib = u_upload_create(&rctx->context, 32 * 1024, 16,
+					  PIPE_BIND_INDEX_BUFFER);
+	if (rctx->upload_ib == NULL) {
+		r600_destroy_context(&rctx->context);
+		return NULL;
+	}
+
+	rctx->upload_vb = u_upload_create(&rctx->context, 128 * 1024, 16,
+					  PIPE_BIND_VERTEX_BUFFER);
+	if (rctx->upload_vb == NULL) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
@@ -2139,8 +2205,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_PREDS:
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-		/* TODO: support this! */
-		return 0;
+		return 1;
 	default:
 		return 0;
 	}
@@ -2202,7 +2267,62 @@ struct pipe_screen *r600_screen_create2(struct radeon *radeon)
 	rscreen->screen.context_create = r600_create_context2;
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
-	rscreen->screen.user_buffer_create = r600_user_buffer_create2;
+//	rscreen->screen.user_buffer_create = r600_user_buffer_create2;
 
 	return &rscreen->screen;
+}
+
+int r600_upload_index_buffer2(struct r600_pipe_context *rctx, struct r600_drawl *draw)
+{
+	struct pipe_resource *upload_buffer = NULL;
+	unsigned index_offset = draw->index_buffer_offset;
+	int ret = 0;
+
+	if (r600_buffer_is_user_buffer(draw->index_buffer)) {
+		ret = u_upload_buffer(rctx->upload_ib,
+				      index_offset,
+				      draw->count * draw->index_size,
+				      draw->index_buffer,
+				      &index_offset,
+				      &upload_buffer);
+		if (ret) {
+			goto done;
+		}
+		draw->index_buffer_offset = index_offset;
+		draw->index_buffer = upload_buffer;
+	}
+
+done:
+	return ret;
+}
+
+int r600_upload_user_buffers2(struct r600_pipe_context *rctx)
+{
+	enum pipe_error ret = PIPE_OK;
+	int i, nr;
+
+	nr = rctx->vertex_elements->count;
+
+	for (i = 0; i < nr; i++) {
+		struct pipe_vertex_buffer *vb =
+			&rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
+
+		if (r600_buffer_is_user_buffer(vb->buffer)) {
+			struct pipe_resource *upload_buffer = NULL;
+			unsigned offset = 0; /*vb->buffer_offset * 4;*/
+			unsigned size = vb->buffer->width0;
+			unsigned upload_offset;
+			ret = u_upload_buffer(rctx->upload_vb,
+					      offset, size,
+					      vb->buffer,
+					      &upload_offset, &upload_buffer);
+			if (ret)
+				return ret;
+
+			pipe_resource_reference(&vb->buffer, NULL);
+			vb->buffer = upload_buffer;
+			vb->buffer_offset = upload_offset;
+		}
+	}
+	return ret;
 }

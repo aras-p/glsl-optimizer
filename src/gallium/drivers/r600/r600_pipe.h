@@ -111,14 +111,21 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
+	struct u_upload_mgr		*upload_vb;
+	struct u_upload_mgr		*upload_ib;
+	enum radeon_family		family;
 };
 
 struct r600_drawl {
 	struct pipe_context	*ctx;
 	unsigned		mode;
+	unsigned		min_index;
+	unsigned		max_index;
+	unsigned		index_bias;
 	unsigned		start;
 	unsigned		count;
 	unsigned		index_size;
+	unsigned		index_buffer_offset;
 	struct pipe_resource	*index_buffer;
 };
 
@@ -129,6 +136,12 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 /* r600_state2.c */
 int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+int r600_upload_index_buffer2(struct r600_pipe_context *rctx, struct r600_drawl *draw);
+int r600_upload_user_buffers2(struct r600_pipe_context *rctx);
+void r600_translate_index_buffer2(struct r600_pipe_context *r600,
+					struct pipe_resource **index_buffer,
+					unsigned *index_size,
+					unsigned *start, unsigned count);
 
 /* evergreen_state.c */
 void evergreen_init_state_functions2(struct r600_pipe_context *rctx);
