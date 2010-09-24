@@ -29,49 +29,32 @@
 
 #include "radeon_program.h"
 
+struct read_write_mask_data {
+	void * UserData;
+	rc_read_write_mask_fn Cb;
+};
+
 static void reads_normal_callback(
-	rc_read_write_chan_fn cb,
+	void * userdata,
 	struct rc_instruction * fullinst,
-	struct rc_src_register src,
-	void * userdata)
+	struct rc_src_register * src)
 {
+	struct read_write_mask_data * cb_data = userdata;
 	unsigned int refmask = 0;
 	unsigned int chan;
 	for(chan = 0; chan < 4; chan++) {
-		refmask |= 1 << GET_SWZ(src.Swizzle, chan);
+		refmask |= 1 << GET_SWZ(src->Swizzle, chan);
 	}
 	refmask &= RC_MASK_XYZW;
 
-	if (refmask)
-		cb(userdata, fullinst, src.File, src.Index, refmask);
+	if (refmask) {
+		cb_data->Cb(cb_data->UserData, fullinst, src->File,
+							src->Index, refmask);
+	}
 
-	if (refmask && src.RelAddr)
-		cb(userdata, fullinst, RC_FILE_ADDRESS, 0, RC_MASK_X);
-}
-
-static void reads_normal(struct rc_instruction * fullinst, rc_read_write_chan_fn cb, void * userdata)
-{
-	struct rc_sub_instruction * inst = &fullinst->U.I;
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
-
-	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
-
-		if (inst->SrcReg[src].File == RC_FILE_NONE)
-			return;
-
-		if (inst->SrcReg[src].File == RC_FILE_PRESUB) {
-			unsigned int i;
-			unsigned int srcp_regs = rc_presubtract_src_reg_count(
-							inst->PreSub.Opcode);
-			for( i = 0; i < srcp_regs; i++) {
-				reads_normal_callback(cb, fullinst,
-						inst->PreSub.SrcReg[i],
-						userdata);
-			}
-		} else {
-			reads_normal_callback(cb, fullinst,
-						inst->SrcReg[src], userdata);
-		}
+	if (refmask && src->RelAddr) {
+		cb_data->Cb(cb_data->UserData, fullinst, RC_FILE_ADDRESS, 0,
+								RC_MASK_X);
 	}
 }
 
@@ -112,7 +95,7 @@ static void pair_get_src_refmasks(unsigned int * refmasks,
 	}
 }
 
-static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_mask_fn cb, void * userdata)
+static void reads_pair(struct rc_instruction * fullinst, rc_read_write_mask_fn cb, void * userdata)
 {
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 	unsigned int refmasks[3] = { 0, 0, 0 };
@@ -143,6 +126,74 @@ static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_mask_fn 
 	}
 }
 
+static void pair_sub_for_all_args(
+	struct rc_instruction * fullinst,
+	struct rc_pair_sub_instruction * sub,
+	rc_pair_read_arg_fn cb,
+	void * userdata)
+{
+	int i;
+	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
+
+	for(i = 0; i < info->NumSrcRegs; i++) {
+		cb(userdata, fullinst, &sub->Arg[i]);
+	}
+}
+
+/* This function calls the callback function (cb) for each source used by
+ * the instruction.
+ * */
+void rc_for_all_reads_src(
+	struct rc_instruction * inst,
+	rc_read_src_fn cb,
+	void * userdata)
+{
+	const struct rc_opcode_info * opcode =
+					rc_get_opcode_info(inst->U.I.Opcode);
+
+	/* This function only works with normal instructions. */
+	if (inst->Type != RC_INSTRUCTION_NORMAL) {
+		assert(0);
+		return;
+	}
+
+	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
+
+		if (inst->U.I.SrcReg[src].File == RC_FILE_NONE)
+			continue;
+
+		if (inst->U.I.SrcReg[src].File == RC_FILE_PRESUB) {
+			unsigned int i;
+			unsigned int srcp_regs = rc_presubtract_src_reg_count(
+						inst->U.I.PreSub.Opcode);
+			for( i = 0; i < srcp_regs; i++) {
+				cb(userdata, inst, &inst->U.I.PreSub.SrcReg[i]);
+			}
+		} else {
+			cb(userdata, inst, &inst->U.I.SrcReg[src]);
+		}
+	}
+}
+
+/**
+ * This function calls the callback function (cb) for each arg of the RGB and
+ * alpha components.
+ */
+void rc_pair_for_all_reads_arg(
+	struct rc_instruction * inst,
+	rc_pair_read_arg_fn cb,
+	void * userdata)
+{
+	/* This function only works with pair instructions. */
+	if (inst->Type != RC_INSTRUCTION_PAIR) {
+		assert(0);
+		return;
+	}
+
+	pair_sub_for_all_args(inst, &inst->U.P.RGB, cb, userdata);
+	pair_sub_for_all_args(inst, &inst->U.P.Alpha, cb, userdata);
+}
+
 /**
  * Calls a callback function for all register reads.
  *
@@ -153,7 +204,11 @@ static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_mask_fn 
 void rc_for_all_reads_mask(struct rc_instruction * inst, rc_read_write_mask_fn cb, void * userdata)
 {
 	if (inst->Type == RC_INSTRUCTION_NORMAL) {
-		reads_normal(inst, cb, userdata);
+		struct read_write_mask_data cb_data;
+		cb_data.UserData = userdata;
+		cb_data.Cb = cb;
+
+		rc_for_all_reads_src(inst, reads_normal_callback, &cb_data);
 	} else {
 		reads_pair(inst, cb, userdata);
 	}

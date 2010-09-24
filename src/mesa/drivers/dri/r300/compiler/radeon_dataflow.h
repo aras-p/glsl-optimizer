@@ -33,6 +33,8 @@
 struct radeon_compiler;
 struct rc_instruction;
 struct rc_swizzle_caps;
+struct rc_src_register;
+struct rc_pair_instruction_arg;
 
 
 /**
@@ -48,6 +50,16 @@ typedef void (*rc_read_write_mask_fn)(void * userdata, struct rc_instruction * i
 			rc_register_file file, unsigned int index, unsigned int mask);
 void rc_for_all_reads_mask(struct rc_instruction * inst, rc_read_write_mask_fn cb, void * userdata);
 void rc_for_all_writes_mask(struct rc_instruction * inst, rc_read_write_mask_fn cb, void * userdata);
+
+typedef void (*rc_read_src_fn)(void * userdata, struct rc_instruction * inst,
+			struct rc_src_register * src);
+void rc_for_all_reads_src(struct rc_instruction * inst, rc_read_src_fn cb,
+			void * userdata);
+
+typedef void (*rc_pair_read_arg_fn)(void * userdata,
+	struct rc_instruction * inst, struct rc_pair_instruction_arg * arg);
+void rc_pair_for_all_reads_arg(struct rc_instruction * inst,
+					rc_pair_read_arg_fn cb, void * userdata);
 
 typedef void (*rc_remap_register_fn)(void * userdata, struct rc_instruction * inst,
 			rc_register_file * pfile, unsigned int * pindex);
