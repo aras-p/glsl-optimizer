@@ -54,6 +54,7 @@
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
 #include "lp_bld_sample_aos.h"
+#include "lp_bld_struct.h"
 #include "lp_bld_quad.h"
 
 
@@ -93,6 +94,7 @@ wrap_mode_uses_border_color(unsigned mode)
  */
 static void
 lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
+                          unsigned unit,
                           LLVMValueRef width,
                           LLVMValueRef height,
                           LLVMValueRef depth,
@@ -188,13 +190,18 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
 
    if (use_border) {
       /* select texel color or border color depending on use_border */
+      LLVMValueRef border_color_ptr = 
+         bld->dynamic_state->border_color(bld->dynamic_state,
+                                          bld->builder, unit);
       int chan;
       for (chan = 0; chan < 4; chan++) {
          LLVMValueRef border_chan =
-            lp_build_const_vec(bld->texel_type,
-                                  bld->static_state->border_color[chan]);
+            lp_build_array_get(bld->builder, border_color_ptr,
+                               lp_build_const_int32(chan));
+         LLVMValueRef border_chan_vec =
+            lp_build_broadcast_scalar(&bld->float_vec_bld, border_chan);
          texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
-                                           border_chan, texel_out[chan]);
+                                           border_chan_vec, texel_out[chan]);
       }
    }
 }
@@ -567,6 +574,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
+                              unsigned unit,
                               LLVMValueRef width_vec,
                               LLVMValueRef height_vec,
                               LLVMValueRef depth_vec,
@@ -615,7 +623,8 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    /*
     * Get texture colors.
     */
-   lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+   lp_build_sample_texel_soa(bld, unit,
+                             width_vec, height_vec, depth_vec,
                              x, y, z,
                              row_stride_vec, img_stride_vec,
                              data_ptr, colors_out);
@@ -628,6 +637,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
+                             unsigned unit,
                              LLVMValueRef width_vec,
                              LLVMValueRef height_vec,
                              LLVMValueRef depth_vec,
@@ -689,11 +699,13 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
     * Get texture colors.
     */
    /* get x0/x1 texels */
-   lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+   lp_build_sample_texel_soa(bld, unit,
+                             width_vec, height_vec, depth_vec,
                              x0, y0, z0,
                              row_stride_vec, img_stride_vec,
                              data_ptr, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+   lp_build_sample_texel_soa(bld, unit,
+                             width_vec, height_vec, depth_vec,
                              x1, y0, z0,
                              row_stride_vec, img_stride_vec,
                              data_ptr, neighbors[0][1]);
@@ -711,11 +723,13 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       LLVMValueRef colors0[4];
 
       /* get x0/x1 texels at y1 */
-      lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+      lp_build_sample_texel_soa(bld, unit,
+                                width_vec, height_vec, depth_vec,
                                 x0, y1, z0,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, neighbors[1][0]);
-      lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+      lp_build_sample_texel_soa(bld, unit,
+                                width_vec, height_vec, depth_vec,
                                 x1, y1, z0,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, neighbors[1][1]);
@@ -735,19 +749,23 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          LLVMValueRef colors1[4];
 
          /* get x0/x1/y0/y1 texels at z1 */
-         lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+         lp_build_sample_texel_soa(bld, unit,
+                                   width_vec, height_vec, depth_vec,
                                    x0, y0, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, neighbors1[0][0]);
-         lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+         lp_build_sample_texel_soa(bld, unit,
+                                   width_vec, height_vec, depth_vec,
                                    x1, y0, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, neighbors1[0][1]);
-         lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+         lp_build_sample_texel_soa(bld, unit,
+                                   width_vec, height_vec, depth_vec,
                                    x0, y1, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, neighbors1[1][0]);
-         lp_build_sample_texel_soa(bld, width_vec, height_vec, depth_vec,
+         lp_build_sample_texel_soa(bld, unit,
+                                   width_vec, height_vec, depth_vec,
                                    x1, y1, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, neighbors1[1][1]);
@@ -787,6 +805,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_mipmap(struct lp_build_sample_context *bld,
+                       unsigned unit,
                        unsigned img_filter,
                        unsigned mip_filter,
                        LLVMValueRef s,
@@ -812,14 +831,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       /* sample the first mipmap level */
-      lp_build_sample_image_nearest(bld,
+      lp_build_sample_image_nearest(bld, unit,
                                     width0_vec, height0_vec, depth0_vec,
                                     row_stride0_vec, img_stride0_vec,
                                     data_ptr0, s, t, r, colors0);
 
       if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
          /* sample the second mipmap level */
-         lp_build_sample_image_nearest(bld,
+         lp_build_sample_image_nearest(bld, unit,
                                        width1_vec, height1_vec, depth1_vec,
                                        row_stride1_vec, img_stride1_vec,
                                        data_ptr1, s, t, r, colors1);
@@ -829,14 +848,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
 
       /* sample the first mipmap level */
-      lp_build_sample_image_linear(bld,
+      lp_build_sample_image_linear(bld, unit,
                                    width0_vec, height0_vec, depth0_vec,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, s, t, r, colors0);
 
       if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
          /* sample the second mipmap level */
-         lp_build_sample_image_linear(bld,
+         lp_build_sample_image_linear(bld, unit,
                                       width1_vec, height1_vec, depth1_vec,
                                       row_stride1_vec, img_stride1_vec,
                                       data_ptr1, s, t, r, colors1);
@@ -995,7 +1014,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
     */
    if (min_filter == mag_filter) {
       /* no need to distinquish between minification and magnification */
-      lp_build_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
+      lp_build_sample_mipmap(bld, unit,
+                             min_filter, mip_filter, s, t, r, lod_fpart,
                              width0_vec, width1_vec,
                              height0_vec, height1_vec,
                              depth0_vec, depth1_vec,
@@ -1027,7 +1047,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_if(&if_ctx, flow_ctx, bld->builder, minify);
       {
          /* Use the minification filter */
-         lp_build_sample_mipmap(bld, min_filter, mip_filter,
+         lp_build_sample_mipmap(bld, unit,
+                                min_filter, mip_filter,
                                 s, t, r, lod_fpart,
                                 width0_vec, width1_vec,
                                 height0_vec, height1_vec,
@@ -1040,7 +1061,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_else(&if_ctx);
       {
          /* Use the magnification filter */
-         lp_build_sample_mipmap(bld, mag_filter, mip_filter,
+         lp_build_sample_mipmap(bld, unit,
+                                mag_filter, mip_filter,
                                 s, t, r, lod_fpart,
                                 width0_vec, width1_vec,
                                 height0_vec, height1_vec,
@@ -1146,6 +1168,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef s;
    LLVMValueRef t;
    LLVMValueRef r;
+   struct lp_type float_vec_type;
 
    if (0) {
       enum pipe_format fmt = static_state->format;
@@ -1168,7 +1191,10 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.int_coord_type = lp_int_type(type);
    bld.texel_type = type;
 
+   float_vec_type = lp_type_float_vec(32);
+
    lp_build_context_init(&bld.float_bld, builder, bld.float_type);
+   lp_build_context_init(&bld.float_vec_bld, builder, float_vec_type);
    lp_build_context_init(&bld.int_bld, builder, bld.int_type);
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
    lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);

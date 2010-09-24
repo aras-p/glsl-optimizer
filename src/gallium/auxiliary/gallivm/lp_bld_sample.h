@@ -82,7 +82,6 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
-   float border_color[4];
    unsigned min_max_lod_equal:1;  /**< min_lod == max_lod ? */
    float min_max_lod;             /**< only valid when min_max_lod_equal=1 */
 
@@ -158,6 +157,11 @@ struct lp_sampler_dynamic_state
    LLVMValueRef
    (*lod_bias)(const struct lp_sampler_dynamic_state *state,
                LLVMBuilderRef builder, unsigned unit);
+
+   /** Obtain texture border color */
+   LLVMValueRef
+   (*border_color)(const struct lp_sampler_dynamic_state *state,
+                   LLVMBuilderRef builder, unsigned unit);
 };
 
 
@@ -177,6 +181,9 @@ struct lp_build_sample_context
    /** regular scalar float type */
    struct lp_type float_type;
    struct lp_build_context float_bld;
+
+   /** float vector type */
+   struct lp_build_context float_vec_bld;
 
    /** regular scalar float type */
    struct lp_type int_type;

@@ -643,6 +643,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          jit_tex->min_lod = samplers[i]->min_lod;
          jit_tex->max_lod = samplers[i]->max_lod;
          jit_tex->lod_bias = samplers[i]->lod_bias;
+         COPY_4V(jit_tex->border_color, samplers[i]->border_color);
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.

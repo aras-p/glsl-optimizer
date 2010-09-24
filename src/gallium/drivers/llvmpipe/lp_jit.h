@@ -58,6 +58,7 @@ struct lp_jit_texture
    float min_lod;
    float max_lod;
    float lod_bias;
+   float border_color[4];
 };
 
 
@@ -72,6 +73,7 @@ enum {
    LP_JIT_TEXTURE_MIN_LOD,
    LP_JIT_TEXTURE_MAX_LOD,
    LP_JIT_TEXTURE_LOD_BIAS,
+   LP_JIT_TEXTURE_BORDER_COLOR,
    LP_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
 

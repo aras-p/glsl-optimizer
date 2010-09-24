@@ -114,11 +114,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
    state->normalized_coords = sampler->normalized_coords;
 
-   state->border_color[0]   = sampler->border_color[0];
-   state->border_color[1]   = sampler->border_color[1];
-   state->border_color[2]   = sampler->border_color[2];
-   state->border_color[3]   = sampler->border_color[3];
-
    /*
     * FIXME: Handle the remainder of pipe_sampler_view.
     */
