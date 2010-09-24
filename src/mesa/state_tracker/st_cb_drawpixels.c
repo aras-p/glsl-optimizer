@@ -832,7 +832,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
-   struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
+   struct st_renderbuffer *rbDraw;
    struct pipe_context *pipe = st_context(ctx)->pipe;
    enum pipe_transfer_usage usage;
    struct pipe_transfer *ptDraw;
@@ -845,6 +845,13 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
       return;
    }
+
+   /* Get the dest renderbuffer.  If there's a wrapper, use the
+    * underlying renderbuffer.
+    */
+   rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
+   if (rbDraw->Base.Wrapped)
+      rbDraw = st_renderbuffer(rbDraw->Base.Wrapped);
 
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height,
@@ -967,6 +974,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       driver_fp = make_fragment_shader_z(st);
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
+
+   if (rbRead->Base.Wrapped)
+      rbRead = st_renderbuffer(rbRead->Base.Wrapped);
 
    sample_count = rbRead->texture->nr_samples;
    /* I believe this would be legal, presumably would need to do a resolve
