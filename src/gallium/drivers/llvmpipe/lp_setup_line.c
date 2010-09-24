@@ -208,6 +208,12 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
          fragcoord_usage_mask |= usage_mask;
          break;
 
+      case LP_INTERP_FACING:
+         for (i = 0; i < NUM_CHANNELS; i++)
+            if (usage_mask & (1 << i))
+               constant_coef(setup, tri, slot+1, 1.0, i);
+         break;
+
       default:
          assert(0);
       }

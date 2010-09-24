@@ -232,13 +232,23 @@ setup_point_coefficients( struct lp_setup_context *setup,
                break;                     
             }
          }
-
-         /* Otherwise fallthrough */
-      default:
+         /* FALLTHROUGH */
+      case LP_INTERP_CONSTANT:
          for (i = 0; i < NUM_CHANNELS; i++) {
             if (usage_mask & (1 << i))
                constant_coef(setup, point, slot+1, info->v0[vert_attr][i], i);
          }
+         break;
+
+      case LP_INTERP_FACING:
+         for (i = 0; i < NUM_CHANNELS; i++)
+            if (usage_mask & (1 << i))
+               constant_coef(setup, point, slot+1, 1.0, i);
+         break;
+
+      default:
+         assert(0);
+         break;
       }
    }
 
