@@ -1019,7 +1019,8 @@ static int r600_ps_shader(struct r600_context *rctx, struct r600_context_state *
 		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
 			have_face = TRUE;
 
-		if (rasterizer->sprite_coord_enable & (1 << i)) {
+		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+		    rasterizer->sprite_coord_enable & (1 << rshader->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 		state->states[R600_PS_SHADER__SPI_PS_INPUT_CNTL_0 + i] = tmp;
