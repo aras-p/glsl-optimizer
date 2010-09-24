@@ -818,12 +818,11 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028050_DB_Z_WRITE_BASE,
 				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
-	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028014_DB_HTILE_DATA_BASE,
-				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+//	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028014_DB_HTILE_DATA_BASE, state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028040_DB_Z_INFO,
 				S_028040_ARRAY_MODE(rtex->array_mode) | S_028040_FORMAT(format),
-				0xFFFFFFFF, NULL);
+				0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),
 				0xFFFFFFFF, NULL);
@@ -1252,9 +1251,9 @@ void evergreen_init_config2(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
+//	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+//	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
 
@@ -1424,8 +1423,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONFIG, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw.start, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
-//	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, info->max_index, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, 0x0000FFFF, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, info->max_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
