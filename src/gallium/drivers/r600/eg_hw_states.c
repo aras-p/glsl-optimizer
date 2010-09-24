@@ -215,7 +215,7 @@ static void eg_rasterizer(struct r600_context *rctx, struct radeon_state *rstate
 		case PIPE_FORMAT_Z32_FLOAT:
 			depth = -23;
 			offset_units *= 1.0f;
-			offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+			offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
 			break;
 		case PIPE_FORMAT_Z16_UNORM:
 			depth = -16;
@@ -226,7 +226,7 @@ static void eg_rasterizer(struct r600_context *rctx, struct radeon_state *rstate
 			return;
 		}
 	}
-	offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
+	offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 
 	if (state->flatshade_first)
 		prov_vtx = 0;
