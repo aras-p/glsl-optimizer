@@ -101,6 +101,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			screen_caps.stages = i + 1;
 		}
 
+		screen_caps.stages_with_sampling = (1 << screen_caps.stages) - 1;
+		if(!screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS))
+			screen_caps.stages_with_sampling &=~ (1 << PIPE_SHADER_VERTEX);
+
 		memset(format_support, 0xff, sizeof(format_support));
 
 		float default_level;

@@ -158,6 +158,12 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		}
 		if(!pipe->set_stream_output_buffers)
 			caps.so = false;
+		if(!pipe->set_geometry_sampler_views)
+			caps.stages_with_sampling &=~ (1 << PIPE_SHADER_GEOMETRY);
+		if(!pipe->set_fragment_sampler_views)
+			caps.stages_with_sampling &=~ (1 << PIPE_SHADER_FRAGMENT);
+		if(!pipe->set_vertex_sampler_views)
+			caps.stages_with_sampling &=~ (1 << PIPE_SHADER_VERTEX);
 
 		update_flags = 0;
 
@@ -505,7 +511,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		{
 			while(num_shader_resource_views[s] && !sampler_views[s][num_shader_resource_views[s] - 1]) \
 				--num_shader_resource_views[s];
-			if(s < caps.stages)
+			if((1 << s) & caps.stages_with_sampling)
 			{
 				struct pipe_sampler_view* views_to_bind[PIPE_MAX_SAMPLERS];
 				unsigned num_views_to_bind = shaders[s] ? shaders[s]->slot_to_resource.size() : 0;
@@ -532,7 +538,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		{
 			while(num_samplers[s] && !sampler_csos[s].v[num_samplers[s] - 1])
 				--num_samplers[s];
-			if(s < caps.stages)
+			if((1 << s) & caps.stages_with_sampling)
 			{
 				void* samplers_to_bind[PIPE_MAX_SAMPLERS];
 				unsigned num_samplers_to_bind = shaders[s] ? shaders[s]->slot_to_sampler.size() : 0;

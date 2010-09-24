@@ -125,6 +125,7 @@ struct GalliumD3D11Caps
 	bool render_condition;
 	unsigned constant_buffers[D3D11_STAGES];
 	unsigned stages;
+	unsigned stages_with_sampling;
 };
 
 typedef GalliumDXGIDevice<
