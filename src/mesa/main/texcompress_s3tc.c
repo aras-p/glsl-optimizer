@@ -166,7 +166,8 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGB_DXT1);
+   ASSERT(dstFormat == MESA_FORMAT_RGB_DXT1 ||
+          dstFormat == MESA_FORMAT_SRGB_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -228,7 +229,8 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT1);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT1 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -289,7 +291,8 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT3);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT3 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT3);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -349,7 +352,8 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT5);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT5 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT5);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
