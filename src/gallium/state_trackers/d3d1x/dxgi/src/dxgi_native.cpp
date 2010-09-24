@@ -902,6 +902,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		{
 			XWindowAttributes xwa;
 			XGetWindowAttributes((Display*)parent->display, (Window)window, &xwa);
+			assert(adapter->configs_by_native_visual_id.count(xwa.visual->visualid));
 			config_num = adapter->configs_by_native_visual_id[xwa.visual->visualid];
 		}
 		else
