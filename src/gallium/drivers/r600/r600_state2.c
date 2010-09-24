@@ -572,7 +572,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 	if (!rctx->ctx.pm4_cdwords)
 		return;
 
-#if 1
+#if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 20) {
 		r600_context_dump_bof(&rctx->ctx, dname);

@@ -60,10 +60,11 @@ static void evergreen_set_blend_color(struct pipe_context *ctx,
 		return;
 
 	rstate->id = R600_PIPE_STATE_BLEND_COLOR;
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028414_CB_BLEND_RED, fui(state->color[0]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028418_CB_BLEND_GREEN, fui(state->color[1]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02841C_CB_BLEND_BLUE, fui(state->color[2]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028420_CB_BLEND_ALPHA, fui(state->color[3]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028414_CB_BLEND_RED, fui(state->color[0]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028418_CB_BLEND_GREEN, fui(state->color[1]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02841C_CB_BLEND_BLUE, fui(state->color[2]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028420_CB_BLEND_ALPHA, fui(state->color[3]), 0xFFFFFFFF, NULL);
+
 	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
 	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
@@ -75,6 +76,8 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
 	u32 color_control, target_mask;
+	/* FIXME there is more then 8 framebuffer */
+	unsigned blend_cntl[8];
 
 	if (blend == NULL) {
 		return NULL;
@@ -101,8 +104,38 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 		}
 	}
 	blend->cb_target_mask = target_mask;
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028808_CB_COLOR_CONTROL,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028808_CB_COLOR_CONTROL,
 				color_control, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
+
+	for (int i = 0; i < 8; i++) {
+		unsigned eqRGB = state->rt[i].rgb_func;
+		unsigned srcRGB = state->rt[i].rgb_src_factor;
+		unsigned dstRGB = state->rt[i].rgb_dst_factor;
+		unsigned eqA = state->rt[i].alpha_func;
+		unsigned srcA = state->rt[i].alpha_src_factor;
+		unsigned dstA = state->rt[i].alpha_dst_factor;
+
+		blend_cntl[i] = 0;
+		if (!state->rt[i].blend_enable)
+			continue;
+
+		blend_cntl[i] |= S_028780_BLEND_CONTROL_ENABLE(1);
+		blend_cntl[i] |= S_028780_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
+		blend_cntl[i] |= S_028780_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
+		blend_cntl[i] |= S_028780_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
+
+		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
+			blend_cntl[i] |= S_028780_SEPARATE_ALPHA_BLEND(1);
+			blend_cntl[i] |= S_028780_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
+			blend_cntl[i] |= S_028780_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
+			blend_cntl[i] |= S_028780_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
+		}
+	}
+	for (int i = 0; i < 8; i++) {
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl[i], 0xFFFFFFFF, NULL);
+	}
+
 	return rstate;
 }
 
@@ -177,25 +210,29 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 
 	/* misc */
 	db_render_control = 0;
-	db_render_override = S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
+	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
 	/* TODO db_render_override depends on query */
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028028_DB_STENCIL_CLEAR, 0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028028_DB_STENCIL_CLEAR, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028430_DB_STENCILREFMASK, stencil_ref_mask,
 				0xFFFFFFFF & C_028430_STENCILREF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028434_DB_STENCILREFMASK_BF, stencil_ref_mask_bf,
 				0xFFFFFFFF & C_028434_STENCILREF_BF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02880C_DB_SHADER_CONTROL, db_shader_control, 0xFFFFFFBE, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028D0C_DB_RENDER_CONTROL, db_render_control, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028D10_DB_RENDER_OVERRIDE, db_render_override, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02880C_DB_SHADER_CONTROL, db_shader_control, 0xFFFFFFBE, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028000_DB_RENDER_CONTROL, db_render_control, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02800C_DB_RENDER_OVERRIDE, db_render_override, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028AC8_DB_PRELOAD_CONTROL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00, 0xFFFFFFFF, NULL);
 
 	return rstate;
 }
@@ -232,9 +269,9 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 			tmp |= S_0286D4_PNT_SPRITE_TOP_1(1);
 		}
 	}
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D4_SPI_INTERP_CONTROL_0, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0286D4_SPI_INTERP_CONTROL_0, tmp, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028814_PA_SU_SC_MODE_CNTL,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028814_PA_SU_SC_MODE_CNTL,
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
 		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
 		S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
@@ -242,25 +279,27 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
 		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02881C_PA_CL_VS_OUT_CNTL,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02881C_PA_CL_VS_OUT_CNTL,
 			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028820_PA_CL_NANINF_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028820_PA_CL_NANINF_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028A04_PA_SU_POINT_MINMAX, 0x80000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028A08_PA_SU_LINE_CNTL, 0x00000008, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A04_PA_SU_POINT_MINMAX, 0x80000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A08_PA_SU_LINE_CNTL, 0x00000008, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE, fui(offset_scale), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C08_PA_SU_VTX_CNTL, 0x00000005, 0xFFFFFFFF, NULL);
 	return rstate;
 }
 
@@ -308,7 +347,7 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_SAMPLER, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
 			S_03C000_CLAMP_X(r600_tex_wrap(state->wrap_s)) |
 			S_03C000_CLAMP_Y(r600_tex_wrap(state->wrap_t)) |
 			S_03C000_CLAMP_Z(r600_tex_wrap(state->wrap_r)) |
@@ -318,11 +357,11 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
 	/* FIXME LOD it depends on texture base level ... */
-	r600_pipe_state_add_reg(rstate, R600_GROUP_SAMPLER, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
 			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
 			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)),
 			0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_SAMPLER, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
 				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6)) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
@@ -413,29 +452,29 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
 
 	/* FIXME properly handle first level != 0 */
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030000_RESOURCE0_WORD0,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030000_RESOURCE0_WORD0,
 				S_030000_DIM(r600_tex_dim(texture->target)) |
 				S_030000_PITCH((pitch / 8) - 1) |
 				S_030000_TEX_WIDTH(texture->width0 - 1), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030004_RESOURCE0_WORD1,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030004_RESOURCE0_WORD1,
 				S_030004_TEX_HEIGHT(texture->height0 - 1) |
 				S_030004_TEX_DEPTH(texture->depth0 - 1),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030008_RESOURCE0_WORD2,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030008_RESOURCE0_WORD2,
 				tmp->offset[0] >> 8, 0xFFFFFFFF, bo[0]);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_03000C_RESOURCE0_WORD3,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_03000C_RESOURCE0_WORD3,
 				tmp->offset[1] >> 8, 0xFFFFFFFF, bo[1]);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030010_RESOURCE0_WORD4,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030010_RESOURCE0_WORD4,
 				word4 | S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_NORM) |
 				S_030010_SRF_MODE_ALL(V_030010_SFR_MODE_NO_ZERO) |
 				S_030010_REQUEST_SIZE(1) |
 				S_030010_BASE_LEVEL(state->first_level), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030014_RESOURCE0_WORD5,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030014_RESOURCE0_WORD5,
 				S_030014_LAST_LEVEL(state->last_level) |
 				S_030014_BASE_ARRAY(0) |
 				S_030014_LAST_ARRAY(0), 0xffffffff, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_030018_RESOURCE0_WORD6, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_RESOURCE, R_03001C_RESOURCE0_WORD7,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_030018_RESOURCE0_WORD6, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_RESOURCE, R_03001C_RESOURCE0_WORD7,
 				S_03001C_DATA_FORMAT(format) |
 				S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_TEXTURE), 0xFFFFFFFF, NULL);
 
@@ -531,20 +570,20 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	rctx->clip = *state;
 	rstate->id = R600_PIPE_STATE_CLIP;
 	for (int i = 0; i < state->nr; i++) {
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 					R_0285BC_PA_CL_UCP0_X + i * 4,
 					fui(state->ucp[i][0]), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 					R_0285C0_PA_CL_UCP0_Y + i * 4,
 					fui(state->ucp[i][1]) , 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 					R_0285C4_PA_CL_UCP0_Z + i * 4,
 					fui(state->ucp[i][2]), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 					R_0285C8_PA_CL_UCP0_W + i * 4,
 					fui(state->ucp[i][3]), 0xFFFFFFFF, NULL);
 	}
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028810_PA_CL_CLIP_CNTL,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028810_PA_CL_CLIP_CNTL,
 			S_028810_PS_UCP_MODE(3) | ((1 << state->nr) - 1) |
 			S_028810_ZCLIP_NEAR_DISABLE(state->depth_clamp) |
 			S_028810_ZCLIP_FAR_DISABLE(state->depth_clamp), 0xFFFFFFFF, NULL);
@@ -587,51 +626,51 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 		return;
 
 	rstate->id = R600_PIPE_STATE_SCISSOR;
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny) | S_028240_WINDOW_OFFSET_DISABLE(1);
+	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
 	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028034_PA_SC_SCREEN_SCISSOR_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028210_PA_SC_CLIPRECT_0_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028214_PA_SC_CLIPRECT_0_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028218_PA_SC_CLIPRECT_1_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_02821C_PA_SC_CLIPRECT_1_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028220_PA_SC_CLIPRECT_2_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028224_PA_SC_CLIPRECT_2_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028228_PA_SC_CLIPRECT_3_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_02822C_PA_SC_CLIPRECT_3_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_02820C_PA_SC_CLIPRECT_RULE, 0x0000FFFF,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
 				0xFFFFFFFF, NULL);
 
@@ -653,11 +692,11 @@ static void evergreen_set_stencil_ref(struct pipe_context *ctx,
 	rctx->stencil_ref = *state;
 	rstate->id = R600_PIPE_STATE_STENCIL_REF;
 	tmp = S_028430_STENCILREF(state->ref_value[0]);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028430_DB_STENCILREFMASK, tmp,
 				~C_028430_STENCILREF, NULL);
 	tmp = S_028434_STENCILREF_BF(state->ref_value[1]);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028434_DB_STENCILREFMASK_BF, tmp,
 				~C_028434_STENCILREF_BF, NULL);
 
@@ -677,15 +716,15 @@ static void evergreen_set_viewport_state(struct pipe_context *ctx,
 
 	rctx->viewport = *state;
 	rstate->id = R600_PIPE_STATE_VIEWPORT;
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028818_PA_CL_VTE_CNTL, 0x0000043F, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028818_PA_CL_VTE_CNTL, 0x0000043F, 0xFFFFFFFF, NULL);
 
 	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
 	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
@@ -726,24 +765,27 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_NUMBER_TYPE(ntype);
 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
 				state->cbufs[cb]->offset >> 8, 0xFFFFFFFF, bo[0]);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
+				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
+				0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C70_CB_COLOR0_INFO + cb * 0x3C,
-				color_info, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+				color_info, 0xFFFFFFFF, bo[0]);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C64_CB_COLOR0_PITCH + cb * 0x3C,
 				S_028C64_PITCH_TILE_MAX(pitch),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C68_CB_COLOR0_SLICE + cb * 0x3C,
 				S_028C68_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
 				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
 				S_028C74_NON_DISP_TILING_ORDER(1),
 				0xFFFFFFFF, NULL);
@@ -772,18 +814,20 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028048_DB_Z_READ_BASE,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028048_DB_Z_READ_BASE,
 				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028050_DB_Z_WRITE_BASE,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028050_DB_Z_WRITE_BASE,
 				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028040_DB_Z_INFO,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028014_DB_HTILE_DATA_BASE,
+				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028040_DB_Z_INFO,
 				S_028040_ARRAY_MODE(rtex->array_mode) | S_028040_FORMAT(format),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028058_DB_DEPTH_SIZE,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02805C_DB_DEPTH_SLICE,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02805C_DB_DEPTH_SLICE,
 				S_02805C_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL);
 }
@@ -824,29 +868,29 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		target_mask ^= 0xf << (i * 4);
 		shader_mask |= 0xf << (i * 4);
 	}
-	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);
+	tl = S_028240_TL_X(0) | S_028240_TL_Y(0);
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028244_PA_SC_GENERIC_SCISSOR_BR, br,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl,
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028254_PA_SC_VPORT_SCISSOR_0_BR, br,
 				0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028238_CB_TARGET_MASK,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028238_CB_TARGET_MASK,
 				0x00000000, target_mask, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02823C_CB_SHADER_MASK,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02823C_CB_SHADER_MASK,
 				shader_mask, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C04_PA_SC_AA_CONFIG,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C04_PA_SC_AA_CONFIG,
 				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX,
 				0x00000000, 0xFFFFFFFF, NULL);
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
@@ -927,6 +971,7 @@ static void *evergreen_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
+	shader->shader.use_mem_constant = TRUE;
 	r =  r600_pipe_shader_create2(ctx, shader, state->tokens);
 	if (r) {
 		return NULL;
@@ -1159,90 +1204,127 @@ void evergreen_init_config2(struct r600_pipe_context *rctx)
 	tmp |= S_008C00_VS_PRIO(vs_prio);
 	tmp |= S_008C00_GS_PRIO(gs_prio);
 	tmp |= S_008C00_ES_PRIO(es_prio);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
 	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
 	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
 	tmp |= S_008C08_NUM_ES_GPRS(num_es_gprs);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C0C_NUM_HS_GPRS(num_hs_gprs);
 	tmp |= S_008C0C_NUM_LS_GPRS(num_ls_gprs);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C0C_SQ_GPR_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C0C_SQ_GPR_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C18_NUM_PS_THREADS(num_ps_threads);
 	tmp |= S_008C18_NUM_VS_THREADS(num_vs_threads);
 	tmp |= S_008C18_NUM_GS_THREADS(num_gs_threads);
 	tmp |= S_008C18_NUM_ES_THREADS(num_es_threads);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C1C_NUM_HS_THREADS(num_hs_threads);
 	tmp |= S_008C1C_NUM_LS_THREADS(num_ls_threads);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C20_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
 	tmp |= S_008C20_NUM_VS_STACK_ENTRIES(num_vs_stack_entries);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C20_SQ_STACK_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C20_SQ_STACK_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C24_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
 	tmp |= S_008C24_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C24_SQ_STACK_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C24_SQ_STACK_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C28_NUM_HS_STACK_ENTRIES(num_hs_stack_entries);
 	tmp |= S_008C28_NUM_LS_STACK_ENTRIES(num_ls_stack_entries);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028900_SQ_ESGS_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028904_SQ_GSVS_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028908_SQ_ESTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_02890C_SQ_GSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028910_SQ_VSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028914_SQ_PSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028900_SQ_ESGS_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028904_SQ_GSVS_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028908_SQ_ESTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02890C_SQ_GSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028910_SQ_VSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028914_SQ_PSTMP_RING_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_02891C_SQ_GS_VERT_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028920_SQ_GS_VERT_ITEMSIZE_1, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028924_SQ_GS_VERT_ITEMSIZE_2, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028928_SQ_GS_VERT_ITEMSIZE_3, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02891C_SQ_GS_VERT_ITEMSIZE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028920_SQ_GS_VERT_ITEMSIZE_1, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028924_SQ_GS_VERT_ITEMSIZE_2, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028928_SQ_GS_VERT_ITEMSIZE_3, 0x0, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A14_VGT_HOS_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A2C_VGT_GROUP_DECR, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028A40_VGT_GS_MODE, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028B94_VGT_STRMOUT_CONFIG, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028AB4_VGT_REUSE_OFF, 0x00000001, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_028AB8_VGT_VTX_CNT_EN, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONFIG, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A14_VGT_HOS_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A2C_VGT_GROUP_DECR, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028A40_VGT_GS_MODE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B94_VGT_STRMOUT_CONFIG, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028AB4_VGT_REUSE_OFF, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028AB8_VGT_VTX_CNT_EN, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONFIG, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028380_SQ_VTX_SEMANTIC_0, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028384_SQ_VTX_SEMANTIC_1, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028388_SQ_VTX_SEMANTIC_2, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02838C_SQ_VTX_SEMANTIC_3, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028390_SQ_VTX_SEMANTIC_4, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028394_SQ_VTX_SEMANTIC_5, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028398_SQ_VTX_SEMANTIC_6, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_02839C_SQ_VTX_SEMANTIC_7, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283A0_SQ_VTX_SEMANTIC_8, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283A4_SQ_VTX_SEMANTIC_9, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283A8_SQ_VTX_SEMANTIC_10, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283AC_SQ_VTX_SEMANTIC_11, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283B0_SQ_VTX_SEMANTIC_12, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283B4_SQ_VTX_SEMANTIC_13, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283B8_SQ_VTX_SEMANTIC_14, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283BC_SQ_VTX_SEMANTIC_15, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283C0_SQ_VTX_SEMANTIC_16, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283C4_SQ_VTX_SEMANTIC_17, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283C8_SQ_VTX_SEMANTIC_18, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283CC_SQ_VTX_SEMANTIC_19, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283D0_SQ_VTX_SEMANTIC_20, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283D4_SQ_VTX_SEMANTIC_21, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283D8_SQ_VTX_SEMANTIC_22, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283DC_SQ_VTX_SEMANTIC_23, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283E0_SQ_VTX_SEMANTIC_24, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283E4_SQ_VTX_SEMANTIC_25, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283E8_SQ_VTX_SEMANTIC_26, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283EC_SQ_VTX_SEMANTIC_27, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283F0_SQ_VTX_SEMANTIC_28, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283F4_SQ_VTX_SEMANTIC_29, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283F8_SQ_VTX_SEMANTIC_30, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0283FC_SQ_VTX_SEMANTIC_31, 0x0, 0xFFFFFFFF, NULL);
+
+r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028810_PA_CL_CLIP_CNTL,
+			0x0, 0xFFFFFFFF, NULL);
+
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
@@ -1342,6 +1424,9 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONFIG, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028408_VGT_INDX_OFFSET, draw.start, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
+//	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, info->max_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028400_VGT_MAX_VTX_INDX, 0x0000FFFF, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT, R_028404_VGT_MIN_VTX_INDX, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.count;
@@ -1383,7 +1468,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		if (rctx->sprite_coord_enable & (1 << i)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
 
 	exports_ps = 0;
@@ -1408,24 +1493,27 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1);
 		spi_input_z |= 1;
 	}
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286CC_SPI_PS_IN_CONTROL_0,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0286CC_SPI_PS_IN_CONTROL_0,
 				spi_ps_in_control_0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D0_SPI_PS_IN_CONTROL_1,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0286D0_SPI_PS_IN_CONTROL_1,
 				S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028840_SQ_PGM_START_PS,
 				0x00000000, 0xFFFFFFFF, shader->bo);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_028844_SQ_PGM_RESOURCES_PS,
 				S_028844_NUM_GPRS(rshader->bc.ngpr) |
 				S_028844_PRIME_CACHE_ON_DRAW(1) |
 				S_028844_STACK_SIZE(rshader->bc.nstack),
 				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
+				R_028848_SQ_PGM_RESOURCES_2_PS,
+				0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 				R_0286E0_SPI_BARYC_CNTL,
 				S_0286E0_PERSP_CENTROID_ENA(1) |
 				S_0286E0_LINEAR_CENTROID_ENA(1),
@@ -1451,27 +1539,30 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 		spi_vs_out_id[i / 4] |= tmp;
 	}
 	for (i = 0; i < 10; i++) {
-		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 					R_02861C_SPI_VS_OUT_ID_0 + i * 4,
 					spi_vs_out_id[i], 0xFFFFFFFF, NULL);
 	}
 
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 			R_0286C4_SPI_VS_OUT_CONFIG,
 			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2),
 			0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 			R_028860_SQ_PGM_RESOURCES_VS,
 			S_028860_NUM_GPRS(rshader->bc.ngpr) |
 			S_028860_STACK_SIZE(rshader->bc.nstack),
 			0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
+				R_028864_SQ_PGM_RESOURCES_2_VS,
+				0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 			R_0288A8_SQ_PGM_RESOURCES_FS,
 			0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 			R_02885C_SQ_PGM_START_VS,
 			0x00000000, 0xFFFFFFFF, shader->bo);
-	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+	r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_CONTEXT,
 			R_0288A4_SQ_PGM_START_FS,
 			0x00000000, 0xFFFFFFFF, shader->bo);
 }

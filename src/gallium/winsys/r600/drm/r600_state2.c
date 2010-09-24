@@ -986,7 +986,7 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
-#if 0
+#if 1
 	/* emit cs */
 	drmib.num_chunks = 2;
 	drmib.chunks = (uint64_t)(uintptr_t)chunk_array;
