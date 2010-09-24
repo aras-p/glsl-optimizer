@@ -409,6 +409,8 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 
 
 		/* 64-bit buffers. */
+	case PIPE_FORMAT_R16G16B16_USCALED:
+	case PIPE_FORMAT_R16G16B16A16_USCALED:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
@@ -422,6 +424,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R32G32_FLOAT:
 		return V_0280A0_COLOR_32_32_FLOAT;
 
+	case PIPE_FORMAT_R32G32_USCALED:
 	case PIPE_FORMAT_R32G32_SSCALED:
 		return V_0280A0_COLOR_32_32;
 
@@ -449,8 +452,12 @@ static INLINE void r600_translate_vertex_num_format(enum pipe_format format, uin
 	case PIPE_FORMAT_R16G16B16_SSCALED:
 	case PIPE_FORMAT_R16G16_SSCALED:
 	case PIPE_FORMAT_R32G32_SSCALED:
-		num_format = V_038008_SQ_NUM_FORMAT_SCALED;
 		format_comp = 1;
+	case PIPE_FORMAT_R16G16B16A16_USCALED:
+	case PIPE_FORMAT_R16G16B16_USCALED:
+	case PIPE_FORMAT_R16G16_USCALED:
+	case PIPE_FORMAT_R32G32_USCALED:
+		num_format = V_038008_SQ_NUM_FORMAT_SCALED;
 		break;
 	default:
 		break;
