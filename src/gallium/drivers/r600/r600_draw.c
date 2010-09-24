@@ -40,29 +40,25 @@
 
 static void r600_translate_index_buffer(struct r600_context *r600,
 					struct pipe_resource **index_buffer,
-					unsigned *index_size, unsigned index_offset,
+					unsigned *index_size,
 					unsigned *start, unsigned count)
 {
     switch (*index_size) {
         case 1:
-            util_shorten_ubyte_elts(&r600->context, index_buffer, index_offset, *start, count);
-            *index_size = 2;
-            *start = 0;
-            break;
+		util_shorten_ubyte_elts(&r600->context, index_buffer, 0, *start, count);
+		*index_size = 2;
+		*start = 0;
+		break;
 
         case 2:
-            if (*start % 2 != 0 || index_offset) {
-                util_rebuild_ushort_elts(&r600->context, index_buffer, index_offset, *start, count);
-                *start = 0;
-            }
-            break;
-
+		if (*start % 2 != 0) {
+			util_rebuild_ushort_elts(&r600->context, index_buffer, 0, *start, count);
+			*start = 0;
+		}
+		break;
+		
         case 4:
-            if (index_offset) {
-                util_rebuild_uint_elts(&r600->context, index_buffer, index_offset, *start, count);
-                *start = 0;
-            }
-            break;
+		break;
     }
 }
 
@@ -168,7 +164,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
 					    &rctx->index_buffer.index_size,
-					    0, &draw.start,
+					    &draw.start,
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
