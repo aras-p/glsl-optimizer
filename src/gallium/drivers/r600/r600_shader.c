@@ -64,6 +64,22 @@ struct r600_shader_tgsi_instruction {
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[], eg_shader_tgsi_instruction[];
 static int tgsi_helper_tempx_replicate(struct r600_shader_ctx *ctx);
 
+/* called from hw states files to find VS->FS mapping */ 
+int r600_find_vs_semantic_index(struct r600_context *rctx, struct r600_shader *rshader, int id)
+{
+	int i;
+	struct r600_shader *vs = &rctx->vs_shader->shader;
+	struct r600_shader_io *input = &rshader->input[id];
+
+	for (i = 0; i < vs->noutput; i++) {
+		if (input->name == vs->output[i].name &&
+		    input->sid == vs->output[i].sid) {
+			return i - 1;
+		}
+	}
+	return 0;
+}
+
 static int r600_shader_update(struct pipe_context *ctx, struct r600_shader *shader)
 {
 	struct r600_context *rctx = r600_context(ctx);

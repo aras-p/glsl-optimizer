@@ -279,6 +279,7 @@ extern int r600_pipe_shader_create(struct pipe_context *ctx,
 			const struct tgsi_token *tokens);
 extern int r600_pipe_shader_update(struct pipe_context *ctx,
 				struct r600_context_state *rstate);
+extern int r600_find_vs_semantic_index(struct r600_context *rctx, struct r600_shader *rshader, int id);
 
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s/%s:%d - "fmt, __FILE__, __func__, __LINE__, ##args)
