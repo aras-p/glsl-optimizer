@@ -522,7 +522,6 @@ static void eg_resource(struct pipe_context *ctx, struct radeon_state *rstate,
 	unsigned format;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4];
-	int r;
 
 	rstate->cpm4 = 0;
 	swizzle[0] = view->swizzle_r;
