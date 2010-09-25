@@ -128,27 +128,27 @@ void
 softpipe_init_rasterizer_funcs(struct pipe_context *pipe);
 
 void
-softpipe_init_streamout_funcs(struct pipe_context *pipe);
-
-
-void softpipe_set_framebuffer_state( struct pipe_context *,
-                                     const struct pipe_framebuffer_state * );
+softpipe_init_shader_funcs(struct pipe_context *pipe);
 
 void
-softpipe_init_shader_funcs(struct pipe_context *pipe);
+softpipe_init_streamout_funcs(struct pipe_context *pipe);
 
 void
 softpipe_init_vertex_funcs(struct pipe_context *pipe);
 
+void
+softpipe_set_framebuffer_state(struct pipe_context *,
+                               const struct pipe_framebuffer_state *);
 
-void softpipe_update_derived( struct softpipe_context *softpipe );
-
+void
+softpipe_update_derived( struct softpipe_context *softpipe );
 
 void
 softpipe_draw_vbo(struct pipe_context *pipe,
                   const struct pipe_draw_info *info);
 
-void softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
+void
+softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
 
 void
 softpipe_map_transfers(struct softpipe_context *sp);

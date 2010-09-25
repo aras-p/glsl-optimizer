@@ -230,10 +230,12 @@ softpipe_create_context( struct pipe_screen *screen,
    /* state setters */
    softpipe_init_blend_funcs(&softpipe->pipe);
    softpipe_init_clip_funcs(&softpipe->pipe);
+   softpipe_init_query_funcs( softpipe );
    softpipe_init_rasterizer_funcs(&softpipe->pipe);
    softpipe_init_sampler_funcs(&softpipe->pipe);
    softpipe_init_shader_funcs(&softpipe->pipe);
    softpipe_init_streamout_funcs(&softpipe->pipe);
+   softpipe_init_texture_funcs( &softpipe->pipe );
    softpipe_init_vertex_funcs(&softpipe->pipe);
 
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
@@ -245,9 +247,6 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.flush = softpipe_flush;
 
    softpipe->pipe.is_resource_referenced = softpipe_is_resource_referenced;
-
-   softpipe_init_query_funcs( softpipe );
-   softpipe_init_texture_funcs( &softpipe->pipe );
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 
