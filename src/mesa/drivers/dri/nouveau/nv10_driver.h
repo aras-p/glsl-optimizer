@@ -27,6 +27,11 @@
 #ifndef __NV10_DRIVER_H__
 #define __NV10_DRIVER_H__
 
+enum {
+	NOUVEAU_STATE_ZCLEAR = NUM_NOUVEAU_STATE,
+	NUM_NV10_STATE
+};
+
 #define NV10_TEXTURE_UNITS 2
 
 /* nv10_context.c */
@@ -51,6 +56,9 @@ nv10_emit_scissor(GLcontext *ctx, int emit);
 
 void
 nv10_emit_viewport(GLcontext *ctx, int emit);
+
+void
+nv10_emit_zclear(GLcontext *ctx, int emit);
 
 /* nv10_state_polygon.c */
 void

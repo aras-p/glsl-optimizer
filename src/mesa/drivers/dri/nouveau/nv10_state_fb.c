@@ -62,14 +62,14 @@ setup_lma_buffer(GLcontext *ctx)
 		height = align(fb->Height, 2),
 		size = pitch * height;
 
-	if (!nfb->lma_bo || nfb->lma_bo->size != size) {
-		nouveau_bo_ref(NULL, &nfb->lma_bo);
+	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
+		nouveau_bo_ref(NULL, &nfb->hierz.bo);
 		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
-			       &nfb->lma_bo);
+			       &nfb->hierz.bo);
 	}
 
 	nouveau_bo_markl(bctx, celsius, NV17TCL_LMA_DEPTH_BUFFER_OFFSET,
-			 nfb->lma_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+			 nfb->hierz.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
 
 	WAIT_RING(chan, 9);
 	BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_WINDOW_X, 4);
@@ -134,8 +134,10 @@ nv10_emit_framebuffer(GLcontext *ctx, int emit)
 		nouveau_bo_markl(bctx, celsius, NV10TCL_ZETA_OFFSET,
 				 s->bo, 0, bo_flags);
 
-		if (context_chipset(ctx) >= 0x17)
+		if (context_chipset(ctx) >= 0x17) {
 			setup_lma_buffer(ctx);
+			context_dirty(ctx, ZCLEAR);
+		}
 	}
 
 	BEGIN_RING(chan, celsius, NV10TCL_RT_FORMAT, 2);
@@ -186,4 +188,21 @@ nv10_emit_viewport(GLcontext *ctx, int emit)
 	OUT_RING(chan, (fb->Height - 1) << 16 | 0x08000800);
 
 	context_dirty(ctx, PROJECTION);
+}
+
+void
+nv10_emit_zclear(GLcontext *ctx, int emit)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_framebuffer *nfb =
+		to_nouveau_framebuffer(ctx->DrawBuffer);
+
+	if (nfb->hierz.bo) {
+		BEGIN_RING(chan, celsius, NV17TCL_ZCLEAR_ENABLE, 2);
+		OUT_RING(chan, nctx->hierz.clear_blocked ? 0 : 1);
+		OUT_RING(chan, nfb->hierz.clear_value |
+			 (nctx->hierz.clear_seq & 0xff));
+	}
 }

@@ -67,6 +67,11 @@ struct nouveau_context {
 	struct nouveau_hw_state hw;
 	struct nouveau_bo_state bo;
 	struct nouveau_render_state render;
+
+	struct {
+		GLboolean clear_blocked;
+		int clear_seq;
+	} hierz;
 };
 
 #define to_nouveau_context(ctx)	((struct nouveau_context *)(ctx))
