@@ -33,7 +33,6 @@
 #include "xmlpool.h"
 
 #include "dri_screen.h"
-#include "dri_context.h"
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
