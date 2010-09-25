@@ -123,6 +123,21 @@ static INLINE uint32_t r600_translate_stencil_op(int s_op)
 	return 0;
 }
 
+static INLINE uint32_t r600_translate_fill(uint32_t func)
+{
+	switch(func) {
+	case PIPE_POLYGON_MODE_FILL:
+		return 2;
+	case PIPE_POLYGON_MODE_LINE:
+		return 1;
+	case PIPE_POLYGON_MODE_POINT:
+		return 0;
+	default:
+		assert(0);
+		return 0;
+	}
+}
+
 /* translates straight */
 static INLINE uint32_t r600_translate_ds_func(int func)
 {

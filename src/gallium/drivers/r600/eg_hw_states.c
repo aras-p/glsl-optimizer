@@ -200,6 +200,7 @@ static void eg_rasterizer(struct r600_context *rctx, struct radeon_state *rstate
 	unsigned offset_db_fmt_cntl = 0;
 	unsigned tmp;
 	unsigned prov_vtx = 1;
+	unsigned polygon_dual_mode;
 
 	if (rctx->clip)
 		clip = &rctx->clip->state.clip;
@@ -254,6 +255,9 @@ static void eg_rasterizer(struct r600_context *rctx, struct radeon_state *rstate
 		rstate->states[EG_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_NEAR_DISABLE(clip->depth_clamp);
 		rstate->states[EG_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_FAR_DISABLE(clip->depth_clamp);
 	}
+	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
+			     state->fill_back != PIPE_POLYGON_MODE_FILL);
+
 	rstate->states[EG_RASTERIZER__PA_SU_SC_MODE_CNTL] =
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
 		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
@@ -261,7 +265,10 @@ static void eg_rasterizer(struct r600_context *rctx, struct radeon_state *rstate
 		S_028814_FACE(!state->front_ccw) |
 		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri);
+		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+		S_028814_POLY_MODE(polygon_dual_mode) |
+		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
+		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back));
 	rstate->states[EG_RASTERIZER__PA_CL_VS_OUT_CNTL] =
 			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
