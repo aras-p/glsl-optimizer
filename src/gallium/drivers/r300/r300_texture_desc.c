@@ -256,7 +256,7 @@ static void r300_setup_miptree(struct r300_screen *screen,
 {
     struct pipe_resource *base = &desc->b.b;
     unsigned stride, size, layer_size, nblocksy, i;
-    boolean rv350_mode = screen->caps.is_rv350;
+    boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean aligned_for_cbzb;
 
     desc->size_in_bytes = 0;
@@ -351,7 +351,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
 {
     struct r300_winsys_screen *rws = screen->rws;
     enum pipe_format format = desc->b.b.format;
-    boolean rv350_mode = screen->caps.is_rv350;
+    boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
 
