@@ -157,6 +157,10 @@ intelGenerateMipmap(GLcontext *ctx, GLenum target,
       /* sw path: need to map texture images */
       struct intel_context *intel = intel_context(ctx);
       struct intel_texture_object *intelObj = intel_texture_object(texObj);
+
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
+
       intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
       _mesa_generate_mipmap(ctx, target, texObj);
       intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
