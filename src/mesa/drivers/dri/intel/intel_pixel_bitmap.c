@@ -47,6 +47,7 @@
 #include "main/viewport.h"
 #include "main/context.h"
 #include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
