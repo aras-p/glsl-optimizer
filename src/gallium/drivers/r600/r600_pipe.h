@@ -60,6 +60,8 @@ struct r600_pipe_rasterizer {
 	struct r600_pipe_state		rstate;
 	bool				flatshade;
 	unsigned			sprite_coord_enable;
+	float				offset_units;
+	float				offset_scale;
 };
 
 struct r600_pipe_blend {
@@ -108,12 +110,14 @@ struct r600_pipe_context {
 	struct r600_pipe_shader 	*vs_shader;
 	struct r600_pipe_state		vs_const_buffer;
 	struct r600_pipe_state		ps_const_buffer;
+	struct r600_pipe_rasterizer	*rasterizer;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
 	struct u_upload_mgr		*upload_vb;
 	struct u_upload_mgr		*upload_ib;
 	enum radeon_family		family;
+	unsigned			any_user_vbs;
 };
 
 struct r600_drawl {
