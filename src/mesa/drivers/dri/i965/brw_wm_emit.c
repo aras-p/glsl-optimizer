@@ -173,12 +173,28 @@ void emit_delta_xy(struct brw_compile *p,
 		   GLuint mask,
 		   const struct brw_reg *arg0)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
    if (mask == 0)
       return;
 
    assert(mask == WRITEMASK_XY);
+
+   if (intel->gen >= 6) {
+       /* XXX Gen6 WM doesn't have Xstart/Ystart in payload r1.0/r1.1.
+	  Just add them with 0.0 for dst reg.. */
+       r1 = brw_imm_v(0x00000000);
+       brw_ADD(p,
+	       dst[0],
+	       retype(arg0[0], BRW_REGISTER_TYPE_UW),
+	       r1);
+       brw_ADD(p,
+	       dst[1],
+	       retype(arg0[1], BRW_REGISTER_TYPE_UW),
+	       r1);
+       return;
+   }
 
    /* Calc delta X,Y by subtracting origin in r1 from the pixel
     * centers produced by emit_pixel_xy().
