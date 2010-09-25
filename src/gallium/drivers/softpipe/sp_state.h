@@ -137,11 +137,8 @@ void softpipe_set_clip_state( struct pipe_context *,
 void
 softpipe_init_shader_funcs(struct pipe_context *pipe);
 
-void *softpipe_create_vertex_elements_state(struct pipe_context *,
-                                            unsigned count,
-                                            const struct pipe_vertex_element *);
-void softpipe_bind_vertex_elements_state(struct pipe_context *, void *);
-void softpipe_delete_vertex_elements_state(struct pipe_context *, void *);
+void
+softpipe_init_vertex_funcs(struct pipe_context *pipe);
 
 void softpipe_set_polygon_stipple( struct pipe_context *,
                                    const struct pipe_poly_stipple * );
@@ -152,13 +149,6 @@ void softpipe_set_scissor_state( struct pipe_context *,
 
 void softpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
-
-void softpipe_set_vertex_buffers(struct pipe_context *,
-                                 unsigned count,
-                                 const struct pipe_vertex_buffer *);
-
-void softpipe_set_index_buffer(struct pipe_context *,
-                               const struct pipe_index_buffer *);
 
 
 void softpipe_update_derived( struct softpipe_context *softpipe );

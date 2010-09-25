@@ -237,9 +237,7 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe_init_shader_funcs(&softpipe->pipe);
 
-   softpipe->pipe.create_vertex_elements_state = softpipe_create_vertex_elements_state;
-   softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
-   softpipe->pipe.delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
+   softpipe_init_vertex_funcs(&softpipe->pipe);
 
    softpipe->pipe.create_stream_output_state = softpipe_create_stream_output_state;
    softpipe->pipe.bind_stream_output_state = softpipe_bind_stream_output_state;
@@ -252,8 +250,6 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
-   softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
-   softpipe->pipe.set_index_buffer = softpipe_set_index_buffer;
 
    softpipe->pipe.draw_vbo = softpipe_draw_vbo;
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
