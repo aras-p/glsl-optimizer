@@ -30,24 +30,13 @@
 #include "main/image.h"
 #include "main/mtypes.h"
 #include "main/teximage.h"
-#include "main/texenv.h"
 #include "main/texobj.h"
 #include "main/texstate.h"
-#include "main/texparam.h"
-#include "main/varray.h"
-#include "main/attrib.h"
-#include "main/enable.h"
-#include "main/buffers.h"
-#include "main/fbobject.h"
-#include "main/depth.h"
-#include "main/hash.h"
-#include "main/blend.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
 #include "intel_pixel.h"
-#include "intel_fbo.h"
 
 void
 intelDrawPixels(GLcontext * ctx,
