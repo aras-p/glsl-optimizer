@@ -246,17 +246,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
    softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
 
-   softpipe->pipe.create_fs_state = softpipe_create_fs_state;
-   softpipe->pipe.bind_fs_state   = softpipe_bind_fs_state;
-   softpipe->pipe.delete_fs_state = softpipe_delete_fs_state;
-
-   softpipe->pipe.create_vs_state = softpipe_create_vs_state;
-   softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
-   softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
-
-   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
-   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
-   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
+   softpipe_init_shader_funcs(&softpipe->pipe);
 
    softpipe->pipe.create_vertex_elements_state = softpipe_create_vertex_elements_state;
    softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
@@ -270,7 +260,6 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_sample_mask = softpipe_set_sample_mask;
-   softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;

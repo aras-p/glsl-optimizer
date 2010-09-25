@@ -164,22 +164,8 @@ void softpipe_set_clip_state( struct pipe_context *,
 void softpipe_set_sample_mask( struct pipe_context *,
                                unsigned sample_mask );
 
-void softpipe_set_constant_buffer(struct pipe_context *,
-                                  uint shader, uint index,
-                                  struct pipe_resource *buf);
-
-void *softpipe_create_fs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_fs_state(struct pipe_context *, void *);
-void softpipe_delete_fs_state(struct pipe_context *, void *);
-void *softpipe_create_vs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_vs_state(struct pipe_context *, void *);
-void softpipe_delete_vs_state(struct pipe_context *, void *);
-void *softpipe_create_gs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_gs_state(struct pipe_context *, void *);
-void softpipe_delete_gs_state(struct pipe_context *, void *);
+void
+softpipe_init_shader_funcs(struct pipe_context *pipe);
 
 void *softpipe_create_vertex_elements_state(struct pipe_context *,
                                             unsigned count,
