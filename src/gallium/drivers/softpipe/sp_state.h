@@ -121,12 +121,9 @@ softpipe_init_blend_funcs(struct pipe_context *pipe);
 void
 softpipe_init_sampler_funcs(struct pipe_context *pipe);
 
+void
+softpipe_init_rasterizer_funcs(struct pipe_context *pipe);
 
-void *
-softpipe_create_rasterizer_state(struct pipe_context *,
-                                 const struct pipe_rasterizer_state *);
-void softpipe_bind_rasterizer_state(struct pipe_context *, void *);
-void softpipe_delete_rasterizer_state(struct pipe_context *, void *);
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );

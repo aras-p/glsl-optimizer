@@ -229,14 +229,9 @@ softpipe_create_context( struct pipe_screen *screen,
 
    /* state setters */
    softpipe_init_blend_funcs(&softpipe->pipe);
+   softpipe_init_rasterizer_funcs(&softpipe->pipe);
    softpipe_init_sampler_funcs(&softpipe->pipe);
-
-   softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
-   softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
-   softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
-
    softpipe_init_shader_funcs(&softpipe->pipe);
-
    softpipe_init_vertex_funcs(&softpipe->pipe);
 
    softpipe->pipe.create_stream_output_state = softpipe_create_stream_output_state;

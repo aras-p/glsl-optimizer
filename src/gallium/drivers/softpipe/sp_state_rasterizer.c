@@ -33,15 +33,17 @@
 
 
 
-void *
+static void *
 softpipe_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *rast)
 {
    return mem_dup(rast, sizeof(*rast));
 }
 
-void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                    void *rasterizer)
+
+static void
+softpipe_bind_rasterizer_state(struct pipe_context *pipe,
+                               void *rasterizer)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -56,10 +58,19 @@ void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_RASTERIZER;
 }
 
-void softpipe_delete_rasterizer_state(struct pipe_context *pipe,
-                                      void *rasterizer)
+
+static void
+softpipe_delete_rasterizer_state(struct pipe_context *pipe,
+                                 void *rasterizer)
 {
    FREE( rasterizer );
 }
 
 
+void
+softpipe_init_rasterizer_funcs(struct pipe_context *pipe)
+{
+   pipe->create_rasterizer_state = softpipe_create_rasterizer_state;
+   pipe->bind_rasterizer_state   = softpipe_bind_rasterizer_state;
+   pipe->delete_rasterizer_state = softpipe_delete_rasterizer_state;
+}
