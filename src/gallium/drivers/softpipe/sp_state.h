@@ -124,6 +124,9 @@ softpipe_init_sampler_funcs(struct pipe_context *pipe);
 void
 softpipe_init_rasterizer_funcs(struct pipe_context *pipe);
 
+void
+softpipe_init_streamout_funcs(struct pipe_context *pipe);
+
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );
@@ -176,20 +179,5 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe);
 struct vertex_info *
 softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe);
 
-void *
-softpipe_create_stream_output_state(
-   struct pipe_context *pipe,
-   const struct pipe_stream_output_state *templ);
-void
-softpipe_bind_stream_output_state(struct pipe_context *pipe,
-                                  void *so);
-void
-softpipe_delete_stream_output_state(struct pipe_context *pipe, void *so);
-
-void
-softpipe_set_stream_output_buffers(struct pipe_context *pipe,
-                                   struct pipe_resource **buffers,
-                                   int *offsets,
-                                   int num_buffers);
 
 #endif

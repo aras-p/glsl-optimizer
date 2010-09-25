@@ -232,11 +232,8 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe_init_rasterizer_funcs(&softpipe->pipe);
    softpipe_init_sampler_funcs(&softpipe->pipe);
    softpipe_init_shader_funcs(&softpipe->pipe);
+   softpipe_init_streamout_funcs(&softpipe->pipe);
    softpipe_init_vertex_funcs(&softpipe->pipe);
-
-   softpipe->pipe.create_stream_output_state = softpipe_create_stream_output_state;
-   softpipe->pipe.bind_stream_output_state = softpipe_bind_stream_output_state;
-   softpipe->pipe.delete_stream_output_state = softpipe_delete_stream_output_state;
 
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
@@ -244,7 +241,6 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
 
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
-   softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
 
    softpipe->pipe.draw_vbo = softpipe_draw_vbo;
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
