@@ -32,7 +32,6 @@
 #include "util/u_surface.h"
 #include "r600_screen.h"
 #include "r600_context.h"
-#include "r600d.h"
 
 static void r600_blitter_save_states(struct pipe_context *ctx)
 {
