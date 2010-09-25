@@ -105,14 +105,14 @@ lerp_3d(float a, float b, float c,
 
 /**
  * Compute coord % size for repeat wrap modes.
- * Note that if coord is a signed integer, coord % size doesn't give
- * the right value for coord < 0 (in terms of texture repeat).  Just
- * casting to unsigned fixes that.
+ * Note that if coord is negative, coord % size doesn't give the right
+ * value.  To avoid that problem we add a large multiple of the size
+ * (rather than using a conditional).
  */
 static INLINE int
 repeat(int coord, unsigned size)
 {
-   return (int) ((unsigned) coord % size);
+   return (coord + size * 1024) % size;
 }
 
 
