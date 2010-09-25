@@ -916,7 +916,7 @@ static int eg_draw_vgt_prim(struct r600_draw *draw,
 	draw->vgt.states[EG_VGT__VGT_PRIMITIVE_TYPE] = prim;
 	draw->vgt.states[EG_VGT__VGT_MAX_VTX_INDX] = draw->max_index;
 	draw->vgt.states[EG_VGT__VGT_MIN_VTX_INDX] = draw->min_index;
-	draw->vgt.states[EG_VGT__VGT_INDX_OFFSET] = draw->start;
+	draw->vgt.states[EG_VGT__VGT_INDX_OFFSET] = draw->index_bias;
 	draw->vgt.states[EG_VGT__VGT_DMA_INDEX_TYPE] = vgt_dma_index_type;
 	draw->vgt.states[EG_VGT__VGT_PRIMITIVEID_EN] = 0x00000000;
 	draw->vgt.states[EG_VGT__VGT_DMA_NUM_INSTANCES] = 0x00000001;
