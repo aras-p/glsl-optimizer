@@ -135,8 +135,11 @@ lerp_rgba_3d(GLfloat result[4], GLfloat a, GLfloat b, GLfloat c,
 
 
 /**
- * If A is a signed integer, A % B doesn't give the right value for A < 0
- * (in terms of texture repeat).  Just casting to unsigned fixes that.
+ * Used for GL_REPEAT wrap mode.  Using A % B doesn't produce the
+ * right results for A<0.  Casting to A to be unsigned only works if B
+ * is a power of two.  Adding a bias to A (which is a multiple of B)
+ * avoids the problems with A < 0 (for reasonable A) without using a
+ * conditional.
  */
 #define REMAINDER(A, B) (((A) + (B) * 1024) % (B))
 
