@@ -86,7 +86,6 @@
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
-#include "colortab.h"
 #include "context.h"
 #include "cpuinfo.h"
 #include "debug.h"

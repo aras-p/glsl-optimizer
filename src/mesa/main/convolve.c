@@ -35,11 +35,8 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "convolve.h"
-#include "context.h"
-#include "image.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "state.h"
 #include "main/dispatch.h"
 
 
