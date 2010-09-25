@@ -364,6 +364,7 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	struct r600_screen *rscreen = rctx->screen;
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
+	unsigned db_count_control = 0;
 	struct r600_shader *rshader;
 	struct r600_query *rquery = NULL;
 	boolean query_running;
@@ -439,7 +440,7 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 
 	if (query_running) {
 		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
-//		db_render_control |= S_028000_PERFECT_ZPASS_COUNTS(1);
+		db_count_control |= S_028004_PERFECT_ZPASS_COUNTS(1);
 	}
 
 	rstate->states[EG_DSA__DB_STENCIL_CLEAR] = 0x00000000;
@@ -455,7 +456,7 @@ static void eg_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[EG_DSA__DB_SHADER_CONTROL] = db_shader_control;
 	rstate->states[EG_DSA__DB_RENDER_CONTROL] = db_render_control;
 	rstate->states[EG_DSA__DB_RENDER_OVERRIDE] = db_render_override;
-	  
+	rstate->states[EG_DSA__DB_COUNT_CONTROL] = db_count_control;
 	rstate->states[EG_DSA__DB_SRESULTS_COMPARE_STATE1] = 0x00000000;
 	rstate->states[EG_DSA__DB_PRELOAD_CONTROL] = 0x00000000;
 	rstate->states[EG_DSA__DB_ALPHA_TO_MASK] = 0x0000AA00;
