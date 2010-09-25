@@ -73,10 +73,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
 
    DBG("%s\n", __FUNCTION__);
 
-   if (intelImage->base.Border ||
-       ((intelImage->base._BaseFormat == GL_DEPTH_COMPONENT) && 
-        ((intelObj->base.WrapS == GL_CLAMP_TO_BORDER) ||
-         (intelObj->base.WrapT == GL_CLAMP_TO_BORDER))))
+   if (intelImage->base.Border)
       return;
 
    if (intelImage->level > intelObj->base.BaseLevel &&
