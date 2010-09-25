@@ -173,6 +173,14 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_0288CC_SQ_PGM_CF_OFFSET_PS,
 				0x00000000, 0xFFFFFFFF, NULL);
+
+	if (rshader->uses_kill) {
+		/* only set some bits here, the other bits are set in the dsa state */
+		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+					R_02880C_DB_SHADER_CONTROL,
+					S_02880C_KILL_ENABLE(1),
+					S_02880C_KILL_ENABLE(1), NULL);
+	}
 }
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
