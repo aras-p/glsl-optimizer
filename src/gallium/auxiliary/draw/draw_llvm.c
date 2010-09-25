@@ -77,6 +77,11 @@ init_globals(struct draw_llvm *llvm)
       elem_types[DRAW_JIT_TEXTURE_DATA] =
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
                        DRAW_MAX_TEXTURE_LEVELS);
+      elem_types[DRAW_JIT_TEXTURE_MIN_LOD] = LLVMFloatType();
+      elem_types[DRAW_JIT_TEXTURE_MAX_LOD] = LLVMFloatType();
+      elem_types[DRAW_JIT_TEXTURE_LOD_BIAS] = LLVMFloatType();
+      elem_types[DRAW_JIT_TEXTURE_BORDER_COLOR] = 
+         LLVMArrayType(LLVMFloatType(), 4);
 
       texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
@@ -101,6 +106,18 @@ init_globals(struct draw_llvm *llvm)
       LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, data,
                              llvm->target, texture_type,
                              DRAW_JIT_TEXTURE_DATA);
+      LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, min_lod,
+                             llvm->target, texture_type,
+                             DRAW_JIT_TEXTURE_MIN_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, max_lod,
+                             llvm->target, texture_type,
+                             DRAW_JIT_TEXTURE_MAX_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, lod_bias,
+                             llvm->target, texture_type,
+                             DRAW_JIT_TEXTURE_LOD_BIAS);
+      LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, border_color,
+                             llvm->target, texture_type,
+                             DRAW_JIT_TEXTURE_BORDER_COLOR);
       LP_CHECK_STRUCT_SIZE(struct draw_jit_texture,
                            llvm->target, texture_type);
 
