@@ -71,7 +71,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_query *rquery = NULL;
-#if 1
+#if 0
 	static int dc = 0;
 	char dname[256];
 #endif
