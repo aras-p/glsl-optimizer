@@ -31,7 +31,6 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/formats.h"
-#include "main/colortab.h"
 #include "main/context.h"
 #include "main/mipmap.h"
 #include "main/mm.h"
