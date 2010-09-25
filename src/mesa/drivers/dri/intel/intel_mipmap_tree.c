@@ -333,7 +333,6 @@ intel_miptree_image_map(struct intel_context * intel,
                         GLuint * row_stride, GLuint * image_offsets)
 {
    GLuint x, y;
-   DBG("%s \n", __FUNCTION__);
 
    if (row_stride)
       *row_stride = mt->region->pitch * mt->cpp;
@@ -348,12 +347,17 @@ intel_miptree_image_map(struct intel_context * intel,
 	 image_offsets[i] = x + y * mt->region->pitch;
       }
 
+      DBG("%s \n", __FUNCTION__);
+
       return intel_region_map(intel, mt->region);
    } else {
       assert(mt->level[level].depth == 1);
       intel_miptree_get_image_offset(mt, level, face, 0,
 				     &x, &y);
       image_offsets[0] = 0;
+
+      DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
+	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
 
       return intel_region_map(intel, mt->region) +
 	 (x + y * mt->region->pitch) * mt->cpp;
@@ -385,7 +389,6 @@ intel_miptree_image_data(struct intel_context *intel,
    const GLuint depth = dst->level[level].depth;
    GLuint i;
 
-   DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
       GLuint dst_x, dst_y, height;
 
@@ -394,6 +397,12 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height = (height + 3) / 4;
+
+      DBG("%s: %d/%d %p/%d -> (%d, %d)/%d (%d, %d)\n",
+	  __FUNCTION__, face, level,
+	  src, src_row_pitch * dst->cpp,
+	  dst_x, dst_y, dst->region->pitch * dst->cpp,
+	  dst->level[level].width, height);
 
       intel_region_data(intel,
 			dst->region, 0, dst_x, dst_y,
