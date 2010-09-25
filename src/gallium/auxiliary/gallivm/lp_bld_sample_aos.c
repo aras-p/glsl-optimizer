@@ -489,10 +489,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
    /* subtract 0.5 (add -128) */
    i32_c128 = lp_build_const_int_vec(i32.type, -128);
-   if (!bld->static_state->force_nearest_s) {
-      s = LLVMBuildAdd(builder, s, i32_c128, "");
-   }
-   if (dims >= 2 && !bld->static_state->force_nearest_t) {
+   s = LLVMBuildAdd(builder, s, i32_c128, "");
+   if (dims >= 2) {
       t = LLVMBuildAdd(builder, t, i32_c128, "");
    }
    if (dims >= 3) {
@@ -709,82 +707,56 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    /*
     * Linear interpolation with 8.8 fixed point.
     */
-   if (bld->static_state->force_nearest_s) {
-      /* special case 1-D lerp */
+   if (dims == 1) {
+      /* 1-D lerp */
       packed_lo = lp_build_lerp(&h16,
-                                t_fpart_lo,
-                                neighbors_lo[0][0][0],
-                                neighbors_lo[0][0][1]);
+				s_fpart_lo,
+				neighbors_lo[0][0][0],
+				neighbors_lo[0][0][1]);
 
       packed_hi = lp_build_lerp(&h16,
-                                t_fpart_hi,
-                                neighbors_hi[0][1][0],
-                                neighbors_hi[0][1][0]);
-   }
-   else if (bld->static_state->force_nearest_t) {
-      /* special case 1-D lerp */
-      packed_lo = lp_build_lerp(&h16,
-                                s_fpart_lo,
-                                neighbors_lo[0][0][0],
-                                neighbors_lo[0][0][1]);
-
-      packed_hi = lp_build_lerp(&h16,
-                                s_fpart_hi,
-                                neighbors_hi[0][0][0],
-                                neighbors_hi[0][0][1]);
+				s_fpart_hi,
+				neighbors_hi[0][0][0],
+				neighbors_hi[0][0][1]);
    }
    else {
-      /* general 1/2/3-D lerping */
-      if (dims == 1) {
-         packed_lo = lp_build_lerp(&h16,
-                                   s_fpart_lo,
-                                   neighbors_lo[0][0][0],
-                                   neighbors_lo[0][0][1]);
+      /* 2-D lerp */
+      packed_lo = lp_build_lerp_2d(&h16,
+				   s_fpart_lo, t_fpart_lo,
+				   neighbors_lo[0][0][0],
+				   neighbors_lo[0][0][1],
+				   neighbors_lo[0][1][0],
+				   neighbors_lo[0][1][1]);
 
-         packed_hi = lp_build_lerp(&h16,
-                                   s_fpart_hi,
-                                   neighbors_hi[0][0][0],
-                                   neighbors_hi[0][0][1]);
-      }
-      else {
-         /* 2-D lerp */
-         packed_lo = lp_build_lerp_2d(&h16,
-                                      s_fpart_lo, t_fpart_lo,
-                                      neighbors_lo[0][0][0],
-                                      neighbors_lo[0][0][1],
-                                      neighbors_lo[0][1][0],
-                                      neighbors_lo[0][1][1]);
+      packed_hi = lp_build_lerp_2d(&h16,
+				   s_fpart_hi, t_fpart_hi,
+				   neighbors_hi[0][0][0],
+				   neighbors_hi[0][0][1],
+				   neighbors_hi[0][1][0],
+				   neighbors_hi[0][1][1]);
 
-         packed_hi = lp_build_lerp_2d(&h16,
-                                      s_fpart_hi, t_fpart_hi,
-                                      neighbors_hi[0][0][0],
-                                      neighbors_hi[0][0][1],
-                                      neighbors_hi[0][1][0],
-                                      neighbors_hi[0][1][1]);
+      if (dims >= 3) {
+	 LLVMValueRef packed_lo2, packed_hi2;
 
-         if (dims >= 3) {
-            LLVMValueRef packed_lo2, packed_hi2;
+	 /* lerp in the second z slice */
+	 packed_lo2 = lp_build_lerp_2d(&h16,
+				       s_fpart_lo, t_fpart_lo,
+				       neighbors_lo[1][0][0],
+				       neighbors_lo[1][0][1],
+				       neighbors_lo[1][1][0],
+				       neighbors_lo[1][1][1]);
 
-            /* lerp in the second z slice */
-            packed_lo2 = lp_build_lerp_2d(&h16,
-                                          s_fpart_lo, t_fpart_lo,
-                                          neighbors_lo[1][0][0],
-                                          neighbors_lo[1][0][1],
-                                          neighbors_lo[1][1][0],
-                                          neighbors_lo[1][1][1]);
-
-            packed_hi2 = lp_build_lerp_2d(&h16,
-                                          s_fpart_hi, t_fpart_hi,
-                                          neighbors_hi[1][0][0],
-                                          neighbors_hi[1][0][1],
-                                          neighbors_hi[1][1][0],
-                                          neighbors_hi[1][1][1]);
-            /* interp between two z slices */
-            packed_lo = lp_build_lerp(&h16, r_fpart_lo,
-                                      packed_lo, packed_lo2);
-            packed_hi = lp_build_lerp(&h16, r_fpart_hi,
-                                      packed_hi, packed_hi2);
-         }
+	 packed_hi2 = lp_build_lerp_2d(&h16,
+				       s_fpart_hi, t_fpart_hi,
+				       neighbors_hi[1][0][0],
+				       neighbors_hi[1][0][1],
+				       neighbors_hi[1][1][0],
+				       neighbors_hi[1][1][1]);
+	 /* interp between two z slices */
+	 packed_lo = lp_build_lerp(&h16, r_fpart_lo,
+				   packed_lo, packed_lo2);
+	 packed_hi = lp_build_lerp(&h16, r_fpart_hi,
+				   packed_hi, packed_hi2);
       }
    }
 
