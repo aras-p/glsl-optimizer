@@ -32,8 +32,9 @@
 #include "draw/draw_context.h"
 
 
-void softpipe_set_clip_state( struct pipe_context *pipe,
-			     const struct pipe_clip_state *clip )
+static void
+softpipe_set_clip_state(struct pipe_context *pipe,
+                        const struct pipe_clip_state *clip)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -42,8 +43,9 @@ void softpipe_set_clip_state( struct pipe_context *pipe,
 }
 
 
-void softpipe_set_viewport_state( struct pipe_context *pipe,
-                                  const struct pipe_viewport_state *viewport )
+static void
+softpipe_set_viewport_state(struct pipe_context *pipe,
+                            const struct pipe_viewport_state *viewport)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -55,8 +57,9 @@ void softpipe_set_viewport_state( struct pipe_context *pipe,
 }
 
 
-void softpipe_set_scissor_state( struct pipe_context *pipe,
-                                 const struct pipe_scissor_state *scissor )
+static void
+softpipe_set_scissor_state(struct pipe_context *pipe,
+                           const struct pipe_scissor_state *scissor)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -67,8 +70,9 @@ void softpipe_set_scissor_state( struct pipe_context *pipe,
 }
 
 
-void softpipe_set_polygon_stipple( struct pipe_context *pipe,
-                                   const struct pipe_poly_stipple *stipple )
+static void
+softpipe_set_polygon_stipple(struct pipe_context *pipe,
+                             const struct pipe_poly_stipple *stipple)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -76,4 +80,14 @@ void softpipe_set_polygon_stipple( struct pipe_context *pipe,
 
    softpipe->poly_stipple = *stipple; /* struct copy */
    softpipe->dirty |= SP_NEW_STIPPLE;
+}
+
+
+void
+softpipe_init_clip_funcs(struct pipe_context *pipe)
+{
+   pipe->set_clip_state = softpipe_set_clip_state;
+   pipe->set_viewport_state = softpipe_set_viewport_state;
+   pipe->set_scissor_state = softpipe_set_scissor_state;
+   pipe->set_polygon_stipple = softpipe_set_polygon_stipple;
 }

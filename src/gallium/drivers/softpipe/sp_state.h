@@ -119,6 +119,9 @@ void
 softpipe_init_blend_funcs(struct pipe_context *pipe);
 
 void
+softpipe_init_clip_funcs(struct pipe_context *pipe);
+
+void
 softpipe_init_sampler_funcs(struct pipe_context *pipe);
 
 void
@@ -131,24 +134,11 @@ softpipe_init_streamout_funcs(struct pipe_context *pipe);
 void softpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );
 
-void softpipe_set_clip_state( struct pipe_context *,
-                              const struct pipe_clip_state * );
-
 void
 softpipe_init_shader_funcs(struct pipe_context *pipe);
 
 void
 softpipe_init_vertex_funcs(struct pipe_context *pipe);
-
-void softpipe_set_polygon_stipple( struct pipe_context *,
-                                   const struct pipe_poly_stipple * );
-
-void softpipe_set_scissor_state( struct pipe_context *,
-                                 const struct pipe_scissor_state * );
-
-
-void softpipe_set_viewport_state( struct pipe_context *,
-                                  const struct pipe_viewport_state * );
 
 
 void softpipe_update_derived( struct softpipe_context *softpipe );

@@ -229,18 +229,14 @@ softpipe_create_context( struct pipe_screen *screen,
 
    /* state setters */
    softpipe_init_blend_funcs(&softpipe->pipe);
+   softpipe_init_clip_funcs(&softpipe->pipe);
    softpipe_init_rasterizer_funcs(&softpipe->pipe);
    softpipe_init_sampler_funcs(&softpipe->pipe);
    softpipe_init_shader_funcs(&softpipe->pipe);
    softpipe_init_streamout_funcs(&softpipe->pipe);
    softpipe_init_vertex_funcs(&softpipe->pipe);
 
-   softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
-   softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
-   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-
-   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.draw_vbo = softpipe_draw_vbo;
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
