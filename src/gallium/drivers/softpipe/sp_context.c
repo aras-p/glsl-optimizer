@@ -229,12 +229,7 @@ softpipe_create_context( struct pipe_screen *screen,
 
    /* state setters */
    softpipe_init_blend_funcs(&softpipe->pipe);
-
-   softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_fragment_sampler_states  = softpipe_bind_sampler_states;
-   softpipe->pipe.bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
-   softpipe->pipe.bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
-   softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
+   softpipe_init_sampler_funcs(&softpipe->pipe);
 
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
@@ -254,11 +249,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_fragment_sampler_views = softpipe_set_sampler_views;
-   softpipe->pipe.set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
-   softpipe->pipe.set_geometry_sampler_views = softpipe_set_geometry_sampler_views;
-   softpipe->pipe.create_sampler_view = softpipe_create_sampler_view;
-   softpipe->pipe.sampler_view_destroy = softpipe_sampler_view_destroy;
+
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
