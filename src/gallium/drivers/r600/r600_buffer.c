@@ -138,7 +138,6 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
-	struct r600_context *rctx = r600_context(pipe);
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 	struct r600_screen *rscreen = r600_screen(pipe->screen);
 	int write = 0;
