@@ -84,6 +84,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
+	case PIPE_CAP_SM3:
 		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
@@ -94,6 +95,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
         case PIPE_CAP_TIMER_QUERY:
+		return 0;
+	case PIPE_CAP_STREAM_OUTPUT:
 		return 0;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 		return 1;
@@ -137,8 +140,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	switch(shader) {
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
-	case PIPE_SHADER_GEOMETRY:
 		break;
+	case PIPE_SHADER_GEOMETRY:
 	default:
 		return 0;
 	}
@@ -158,6 +161,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 			return 64 / 4;
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return 65536 / 16;
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS: /* 16 - 1, but not implemented */
+		return 1;
 	case PIPE_SHADER_CAP_MAX_ADDRS: /* no spilling atm */
 		return 1;
 	case PIPE_SHADER_CAP_MAX_PREDS: /* not yet handled */
