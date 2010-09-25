@@ -104,7 +104,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
     */
    if (sampler->min_lod == sampler->max_lod) {
       state->min_max_lod_equal = 1;
-      state->min_max_lod = sampler->min_lod;
    }
 
    state->compare_mode      = sampler->compare_mode;
@@ -145,18 +144,19 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef depth)
 
 {
+   LLVMValueRef min_lod =
+      bld->dynamic_state->min_lod(bld->dynamic_state, bld->builder, unit);
+
    if (bld->static_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
        * This is hit during mipmap generation.
        */
-      return LLVMConstReal(LLVMFloatType(), bld->static_state->min_max_lod);
+      return min_lod;
    }
    else {
       struct lp_build_context *float_bld = &bld->float_bld;
       LLVMValueRef sampler_lod_bias =
          bld->dynamic_state->lod_bias(bld->dynamic_state, bld->builder, unit);
-      LLVMValueRef min_lod =
-         bld->dynamic_state->min_lod(bld->dynamic_state, bld->builder, unit);
       LLVMValueRef max_lod =
          bld->dynamic_state->max_lod(bld->dynamic_state, bld->builder, unit);
       LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);

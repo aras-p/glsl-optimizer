@@ -83,7 +83,6 @@ struct lp_sampler_static_state
    unsigned compare_func:3;
    unsigned normalized_coords:1;
    unsigned min_max_lod_equal:1;  /**< min_lod == max_lod ? */
-   float min_max_lod;             /**< only valid when min_max_lod_equal=1 */
 
    /* Aero hacks */
    unsigned force_nearest_s:1;
