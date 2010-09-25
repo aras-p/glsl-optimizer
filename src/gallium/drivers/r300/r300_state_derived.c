@@ -630,6 +630,7 @@ static uint32_t r300_get_border_color(enum pipe_format format,
                     ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 8);
             } else {
                 assert(0);
+                r = 0;
             }
             break;
 
