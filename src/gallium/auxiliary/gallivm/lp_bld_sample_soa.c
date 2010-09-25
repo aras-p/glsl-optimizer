@@ -280,8 +280,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          coord1 = LLVMBuildAnd(bld->builder, coord1, length_minus_one, "");
       }
       else {
-         /* Signed remainder won't give the right results for negative
-          * dividends but unsigned remainder does.*/
+         /* Add a bias to the texcoord to handle negative coords */
+         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
+         coord1 = LLVMBuildAdd(bld->builder, coord1, bias, "");
          coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
          coord1 = LLVMBuildURem(bld->builder, coord1, length, "");
       }
@@ -476,10 +478,12 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       icoord = lp_build_ifloor(coord_bld, coord);
       if (is_pot)
          icoord = LLVMBuildAnd(bld->builder, icoord, length_minus_one, "");
-      else
-         /* Signed remainder won't give the right results for negative
-          * dividends but unsigned remainder does.*/
+      else {
+         /* Add a bias to the texcoord to handle negative coords */
+         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         icoord = LLVMBuildAdd(bld->builder, icoord, bias, "");
          icoord = LLVMBuildURem(bld->builder, icoord, length, "");
+      }
       break;
 
    case PIPE_TEX_WRAP_CLAMP:
