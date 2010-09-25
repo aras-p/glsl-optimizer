@@ -132,6 +132,9 @@ static INLINE uint32_t r600_translate_fill(uint32_t func)
 		return 1;
 	case PIPE_POLYGON_MODE_POINT:
 		return 0;
+	default:
+		assert(0);
+		return 0;
 	}
 }
 
