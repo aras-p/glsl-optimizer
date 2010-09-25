@@ -236,7 +236,6 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 struct pipe_screen *r600_screen_create(struct radeon *rw)
 {
 	struct r600_screen* rscreen;
-	enum radeon_family family = radeon_get_family(rw);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
