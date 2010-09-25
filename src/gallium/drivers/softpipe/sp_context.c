@@ -228,19 +228,13 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.priv = priv;
 
    /* state setters */
-   softpipe->pipe.create_blend_state = softpipe_create_blend_state;
-   softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
-   softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+   softpipe_init_blend_funcs(&softpipe->pipe);
 
    softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
    softpipe->pipe.bind_fragment_sampler_states  = softpipe_bind_sampler_states;
    softpipe->pipe.bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
    softpipe->pipe.bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
-
-   softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
-   softpipe->pipe.bind_depth_stencil_alpha_state   = softpipe_bind_depth_stencil_state;
-   softpipe->pipe.delete_depth_stencil_alpha_state = softpipe_delete_depth_stencil_state;
 
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
@@ -256,10 +250,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.bind_stream_output_state = softpipe_bind_stream_output_state;
    softpipe->pipe.delete_stream_output_state = softpipe_delete_stream_output_state;
 
-   softpipe->pipe.set_blend_color = softpipe_set_blend_color;
-   softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
-   softpipe->pipe.set_sample_mask = softpipe_set_sample_mask;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;

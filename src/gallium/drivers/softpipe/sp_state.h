@@ -115,13 +115,8 @@ struct sp_so_state {
 };
 
 
-void *
-softpipe_create_blend_state(struct pipe_context *,
-                            const struct pipe_blend_state *);
-void softpipe_bind_blend_state(struct pipe_context *,
-                               void *);
-void softpipe_delete_blend_state(struct pipe_context *,
-                                 void *);
+void
+softpipe_init_blend_funcs(struct pipe_context *pipe);
 
 void *
 softpipe_create_sampler_state(struct pipe_context *,
@@ -138,12 +133,6 @@ softpipe_bind_geometry_sampler_states(struct pipe_context *,
 void softpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
-softpipe_create_depth_stencil_state(struct pipe_context *,
-                                    const struct pipe_depth_stencil_alpha_state *);
-void softpipe_bind_depth_stencil_state(struct pipe_context *, void *);
-void softpipe_delete_depth_stencil_state(struct pipe_context *, void *);
-
-void *
 softpipe_create_rasterizer_state(struct pipe_context *,
                                  const struct pipe_rasterizer_state *);
 void softpipe_bind_rasterizer_state(struct pipe_context *, void *);
@@ -152,17 +141,8 @@ void softpipe_delete_rasterizer_state(struct pipe_context *, void *);
 void softpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );
 
-void softpipe_set_blend_color( struct pipe_context *pipe,
-                               const struct pipe_blend_color *blend_color );
-
-void softpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref );
-
 void softpipe_set_clip_state( struct pipe_context *,
                               const struct pipe_clip_state * );
-
-void softpipe_set_sample_mask( struct pipe_context *,
-                               unsigned sample_mask );
 
 void
 softpipe_init_shader_funcs(struct pipe_context *pipe);
