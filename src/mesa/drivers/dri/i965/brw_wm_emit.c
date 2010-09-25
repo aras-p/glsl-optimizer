@@ -269,6 +269,13 @@ void emit_pixel_w(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
+   struct brw_reg src;
+   struct brw_reg temp_dst;
+
+   if (intel->gen >= 6)
+	temp_dst = dst[3];
+   else
+	temp_dst = brw_message_reg(2);
 
    assert(intel->gen < 6);
 
@@ -282,24 +289,29 @@ void emit_pixel_w(struct brw_wm_compile *c,
        * result straight into a message reg.
        */
       if (can_do_pln(intel, deltas)) {
-	 brw_PLN(p, brw_message_reg(2), interp3, deltas[0]);
+	 brw_PLN(p, temp_dst, interp3, deltas[0]);
       } else {
 	 brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
-	 brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+	 brw_MAC(p, temp_dst, suboffset(interp3, 1), deltas[1]);
       }
 
       /* Calc w */
+      if (intel->gen >= 6)
+	 src = temp_dst;
+      else
+	 src = brw_null_reg();
+
       if (c->dispatch_width == 16) {
 	 brw_math_16(p, dst[3],
 		     BRW_MATH_FUNCTION_INV,
 		     BRW_MATH_SATURATE_NONE,
-		     2, brw_null_reg(),
+		     2, src,
 		     BRW_MATH_PRECISION_FULL);
       } else {
 	 brw_math(p, dst[3],
 		  BRW_MATH_FUNCTION_INV,
 		  BRW_MATH_SATURATE_NONE,
-		  2, brw_null_reg(),
+		  2, src,
 		  BRW_MATH_DATA_VECTOR,
 		  BRW_MATH_PRECISION_FULL);
       }
