@@ -475,8 +475,8 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 }
 
 /**
- * This function returns a writemask that indicates wich components are
- * read by src and also written by dst.
+ * If src and dst use the same register, this function returns a writemask that
+ * indicates wich components are read by src.  Otherwise zero is returned.
  */
 static unsigned int src_reads_dst_mask(struct rc_src_register src,
 						struct rc_dst_register dst)
@@ -563,10 +563,18 @@ static int presub_helper(
 		 * s->Inst->U.I.DstReg, because if it does we must not
 		 * remove s->Inst. */
 		for(i = 0; i < info->NumSrcRegs; i++) {
-			if(s->Inst->U.I.DstReg.WriteMask !=
-					src_reads_dst_mask(inst->U.I.SrcReg[i],
-						s->Inst->U.I.DstReg)) {
-				continue;
+			unsigned int mask = src_reads_dst_mask(
+				inst->U.I.SrcReg[i], s->Inst->U.I.DstReg);
+			/* XXX We could be more aggressive here using
+			 * presubtract.  It is okay if SrcReg[i] only reads
+			 * from some of the mask components. */
+			if(s->Inst->U.I.DstReg.WriteMask != mask) {
+				if (s->Inst->U.I.DstReg.WriteMask & mask) {
+					can_remove = 0;
+					break;
+				} else {
+					continue;
+				}
 			}
 			if (cant_sub || !can_use_presub) {
 				can_remove = 0;
@@ -626,6 +634,21 @@ static void presub_replace_add(struct peephole_state *s,
 	inst->U.I.SrcReg[src_index].Index = presub_opcode;
 }
 
+static int is_presub_candidate(struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned int i;
+
+	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE || inst->U.I.SaturateMode)
+		return 0;
+
+	for(i = 0; i < info->NumSrcRegs; i++) {
+		if (src_reads_dst_mask(inst->U.I.SrcReg[i], inst->U.I.DstReg))
+			return 0;
+	}
+	return 1;
+}
+
 static int peephole_add_presub_add(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst_add)
@@ -635,10 +658,7 @@ static int peephole_add_presub_add(
 	unsigned int i;
 	struct peephole_state s;
 
-	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
-		return 0;
-
-	if (inst_add->U.I.SaturateMode)
+	if (!is_presub_candidate(inst_add))
 		return 0;
 
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
@@ -705,10 +725,7 @@ static int peephole_add_presub_inv(
 	unsigned int i, swz, mask;
 	struct peephole_state s;
 
-	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
-		return 0;
-
-	if (inst_add->U.I.SaturateMode)
+	if (!is_presub_candidate(inst_add))
 		return 0;
 
 	mask = inst_add->U.I.DstReg.WriteMask;
