@@ -573,3 +573,32 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 
    trace_dump_struct_end();
 }
+
+
+void trace_dump_draw_info(const struct pipe_draw_info *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_draw_info");
+
+   trace_dump_member(bool, state, indexed);
+
+   trace_dump_member(uint, state, mode);
+   trace_dump_member(uint, state, start);
+   trace_dump_member(uint, state, count);
+
+   trace_dump_member(uint, state, start_instance);
+   trace_dump_member(uint, state, instance_count);
+
+   trace_dump_member(int,  state, index_bias);
+   trace_dump_member(uint, state, min_index);
+   trace_dump_member(uint, state, max_index);
+
+   trace_dump_struct_end();
+}
