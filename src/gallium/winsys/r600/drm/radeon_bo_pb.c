@@ -175,7 +175,6 @@ radeon_bo_pb_create_buffer(struct pb_manager *_mgr,
 	struct radeon_bo_pbmgr *mgr = radeon_bo_pbmgr(_mgr);
 	struct radeon *radeon = mgr->radeon;
 	struct radeon_bo_pb *bo;
-	uint32_t domain;
 
 	bo = CALLOC_STRUCT(radeon_bo_pb);
 	if (!bo)
