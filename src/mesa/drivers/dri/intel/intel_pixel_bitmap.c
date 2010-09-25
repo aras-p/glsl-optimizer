@@ -32,7 +32,6 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/bufferobj.h"
-#include "main/polygon.h"
 #include "main/state.h"
 #include "main/texobj.h"
 #include "main/context.h"
