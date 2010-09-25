@@ -68,7 +68,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	/* FIXME vs_resource */
 	struct radeon_state *vs_resource;
 	struct r600_resource *rbuffer;
-	unsigned i, j, offset, format, prim;
+	unsigned i, j, offset, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator;
 	struct pipe_vertex_buffer *vertex_buffer;
 	int r;
