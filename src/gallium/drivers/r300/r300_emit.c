@@ -667,7 +667,7 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
-    OUT_CS_TABLE(rs->cb_main, 25);
+    OUT_CS_TABLE(rs->cb_main, RS_STATE_MAIN_SIZE);
     if (rs->polygon_offset_enable) {
         if (r300->zbuffer_bpp == 16) {
             OUT_CS_TABLE(rs->cb_poly_offset_zb16, 5);
@@ -709,6 +709,8 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
     OUT_CS(rs->vap_out_vtx_fmt[0]);
     OUT_CS(rs->vap_out_vtx_fmt[1]);
+    OUT_CS_REG_SEQ(R300_GB_ENABLE, 1);
+    OUT_CS(rs->gb_enable);
 
     if (r300->screen->caps.is_r500) {
         OUT_CS_REG_SEQ(R500_RS_IP_0, count);

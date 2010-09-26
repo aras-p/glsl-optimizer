@@ -125,6 +125,8 @@ struct r300_gpu_flush {
     uint32_t cb_flush_clean[6];
 };
 
+#define RS_STATE_MAIN_SIZE 23
+
 struct r300_rs_state {
     /* Original rasterizer state. */
     struct pipe_rasterizer_state rs;
@@ -132,7 +134,7 @@ struct r300_rs_state {
     struct pipe_rasterizer_state rs_draw;
 
     /* Command buffers. */
-    uint32_t cb_main[25];
+    uint32_t cb_main[RS_STATE_MAIN_SIZE];
     uint32_t cb_poly_offset_zb16[5];
     uint32_t cb_poly_offset_zb24[5];
 
@@ -150,6 +152,7 @@ struct r300_rs_block {
     uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
     uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
     uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
+    uint32_t gb_enable;
 
     uint32_t ip[8]; /* R300_RS_IP_[0-7], R500_RS_IP_[0-7] */
     uint32_t count; /* R300_RS_COUNT */
