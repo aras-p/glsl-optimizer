@@ -280,7 +280,10 @@ int r600_upload_index_buffer(struct r600_context *rctx,
 			goto done;
 		}
 		draw->index_buffer_offset = index_offset;
-		draw->index_buffer = upload_buffer;
+
+		/* Transfer ownership. */
+		pipe_resource_reference(&draw->index_buffer, upload_buffer);
+		pipe_resource_reference(&upload_buffer, NULL);
 	}
 
 done:

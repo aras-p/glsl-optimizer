@@ -672,7 +672,7 @@ static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
-		draw.index_buffer = rctx->index_buffer.buffer;
+		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
 		draw.index_buffer_offset = draw.start * draw.index_size;
 		draw.start = 0;
 		r600_upload_index_buffer2(rctx, &draw);
@@ -684,6 +684,8 @@ static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info
 		draw.index_bias = info->start;
 	}
 	r600_draw_common(&draw);
+
+	pipe_resource_reference(&draw.index_buffer, NULL);
 }
 
 static void r600_flush2(struct pipe_context *ctx, unsigned flags,
@@ -2463,7 +2465,10 @@ int r600_upload_index_buffer2(struct r600_pipe_context *rctx, struct r600_drawl 
 			goto done;
 		}
 		draw->index_buffer_offset = index_offset;
-		draw->index_buffer = upload_buffer;
+
+		/* Transfer ownership. */
+		pipe_resource_reference(&draw->index_buffer, upload_buffer);
+		pipe_resource_reference(&upload_buffer, NULL);
 	}
 
 done:
