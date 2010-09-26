@@ -296,6 +296,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
             reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
+    set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_W, 0,
+	    brw_vec8_grf(c->key.source_w_reg, 0));
     reg_index += c->key.nr_payload_regs;
 
     /* constants */

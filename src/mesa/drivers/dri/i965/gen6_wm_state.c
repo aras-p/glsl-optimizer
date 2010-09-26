@@ -151,6 +151,8 @@ upload_wm_state(struct brw_context *brw)
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
       dw5 |= GEN6_WM_KILL_ENABLE;
 
+   dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+
    /* This should probably be FS inputs read */
    dw6 |= brw_count_bits(brw->vs.prog_data->outputs_written) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;

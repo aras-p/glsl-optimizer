@@ -59,6 +59,7 @@
 
 struct brw_wm_prog_key {
    GLuint source_depth_reg:3;
+   GLuint source_w_reg:3;
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
    GLuint nr_payload_regs:4;
@@ -182,6 +183,8 @@ struct brw_wm_instruction {
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
+#define PAYLOAD_W         (FRAG_ATTRIB_MAX + 1)
+#define PAYLOAD_FP_REG_MAX (FRAG_ATTRIB_MAX + 2)
 
 struct brw_wm_compile {
    struct brw_compile func;
@@ -224,7 +227,7 @@ struct brw_wm_compile {
    } payload;
 
 
-   const struct brw_wm_ref *pass0_fp_reg[PROGRAM_PAYLOAD+1][256][4];
+   const struct brw_wm_ref *pass0_fp_reg[PAYLOAD_FP_REG_MAX][256][4];
 
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
@@ -252,7 +255,7 @@ struct brw_wm_compile {
    struct {
       GLboolean inited;
       struct brw_reg reg;
-   } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+   } wm_regs[PAYLOAD_FP_REG_MAX][256][4];
 
    GLboolean used_grf[BRW_WM_MAX_GRF];
    GLuint first_free_grf;

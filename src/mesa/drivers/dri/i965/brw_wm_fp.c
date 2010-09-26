@@ -336,7 +336,13 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
 
 static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
 {
-   if (src_is_undef(c->pixel_w)) {
+   /* This is only called for producing 1/w in pre-gen6 interp.  for
+    * gen6, the interp opcodes don't use this argument.
+    */
+   if (c->func.brw->intel.gen >= 6)
+      return src_undef();
+
+   if (!src_is_undef(c->pixel_w)) {
       struct prog_dst_register pixel_w = get_temp(c);
       struct prog_src_register deltas = get_delta_xy(c);
       struct prog_src_register interp_wpos = src_reg(PROGRAM_PAYLOAD, FRAG_ATTRIB_WPOS);
@@ -363,7 +369,13 @@ static void emit_interp( struct brw_wm_compile *c,
 {
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
-   struct prog_src_register deltas = get_delta_xy(c);
+   struct prog_src_register deltas;
+
+   if (c->func.brw->intel.gen < 6) {
+      deltas = get_delta_xy(c);
+   } else {
+      deltas = src_undef();
+   }
 
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
@@ -1056,6 +1068,7 @@ static void print_insns( const struct prog_instruction *insn,
  */
 void brw_wm_pass_fp( struct brw_wm_compile *c )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    struct brw_fragment_program *fp = c->fp;
    GLuint insn;
 
@@ -1067,7 +1080,14 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    }
 
    c->pixel_xy = src_undef();
-   c->delta_xy = src_undef();
+   if (intel->gen >= 6) {
+      /* The interpolation deltas come in as the perspective pixel
+       * location barycentric params.
+       */
+      c->delta_xy = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
+   } else {
+      c->delta_xy = src_undef();
+   }
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
    c->fp->tex_units_used = 0x0;

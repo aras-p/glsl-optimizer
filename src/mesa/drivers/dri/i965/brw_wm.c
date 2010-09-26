@@ -279,13 +279,52 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	 }
       }
    }
-	 
-   brw_wm_lookup_iz(intel,
-		    line_aa,
-		    lookup,
-		    uses_depth,
-		    key);
 
+   if (intel->gen >= 6) {
+      /* R0-1: masks, pixel X/Y coordinates. */
+      key->nr_payload_regs = 2;
+      /* R2: only for 32-pixel dispatch.*/
+      /* R3-4: perspective pixel location barycentric */
+      key->nr_payload_regs += 2;
+      /* R5-6: perspective pixel location bary for dispatch width != 8 */
+      if (!fp->isGLSL) { /* dispatch_width != 8 */
+	 key->nr_payload_regs += 2;
+      }
+      /* R7-10: perspective centroid barycentric */
+      /* R11-14: perspective sample barycentric */
+      /* R15-18: linear pixel location barycentric */
+      /* R19-22: linear centroid barycentric */
+      /* R23-26: linear sample barycentric */
+
+      /* R27: interpolated depth if uses source depth */
+      if (uses_depth) {
+	 key->source_depth_reg = key->nr_payload_regs;
+	 key->nr_payload_regs++;
+	 if (!fp->isGLSL) { /* dispatch_width != 8 */
+	    /* R28: interpolated depth if not 8-wide. */
+	    key->nr_payload_regs++;
+	 }
+      }
+      /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W.
+       */
+      if (uses_depth) {
+	 key->source_w_reg = key->nr_payload_regs;
+	 key->nr_payload_regs++;
+	 if (!fp->isGLSL) { /* dispatch_width != 8 */
+	    /* R30: interpolated W if not 8-wide. */
+	    key->nr_payload_regs++;
+	 }
+      }
+      /* R31: MSAA position offsets. */
+      /* R32-: bary for 32-pixel. */
+      /* R58-59: interp W for 32-pixel. */
+   } else {
+      brw_wm_lookup_iz(intel,
+	      	       line_aa,
+		       lookup,
+		       uses_depth,
+		       key);
+   }
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
    key->proj_attrib_mask = brw->wm.input_size_masks[4-1];

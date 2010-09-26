@@ -254,6 +254,8 @@ void emit_pixel_w(struct brw_wm_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
 
+   assert(intel->gen < 6);
+
    /* Don't need this if all you are doing is interpolating color, for
     * instance.
     */
@@ -288,7 +290,6 @@ void emit_pixel_w(struct brw_wm_compile *c,
    }
 }
 
-
 void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
@@ -307,7 +308,9 @@ void emit_linterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 if (can_do_pln(intel, deltas)) {
+	 if (intel->gen >= 6) {
+	    brw_PLN(p, dst[i], interp[i], brw_vec8_grf(2, 0));
+	 } else if (can_do_pln(intel, deltas)) {
 	    brw_PLN(p, dst[i], interp[i], deltas[0]);
 	 } else {
 	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
@@ -329,6 +332,11 @@ void emit_pinterp(struct brw_compile *p,
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
+
+   if (intel->gen >= 6) {
+      emit_linterp(p, dst, mask, arg0, interp);
+      return;
+   }
 
    interp[0] = brw_vec1_grf(nr, 0);
    interp[1] = brw_vec1_grf(nr, 4);
