@@ -696,6 +696,11 @@ AC_SUBST([GLESv2_PC_LIB_PRIV])
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
+PKG_CHECK_MODULES([LIBDRM_RADEON],
+		  [libdrm_radeon libdrm >= $LIBDRM_RADEON_REQUIRED],
+		  HAVE_LIBDRM_RADEON=yes,
+		  HAVE_LIBDRM_RADEON=no)
+
 dnl
 dnl More X11 setup
 dnl
@@ -914,12 +919,7 @@ esac
 
 case $DRI_DIRS in
 *radeon*|*r200*|*r300*|*r600*)
-    PKG_CHECK_MODULES([LIBDRM_RADEON],
-		      [libdrm_radeon libdrm >= $LIBDRM_RADEON_REQUIRED],
-		      HAVE_LIBDRM_RADEON=yes,
-		      HAVE_LIBDRM_RADEON=no)
-
-    if test "$HAVE_LIBDRM_RADEON" = yes; then
+    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
 	RADEON_CFLAGS="-DHAVE_LIBDRM_RADEON=1 $LIBDRM_RADEON_CFLAGS"
 	RADEON_LDFLAGS=$LIBDRM_RADEON_LIBS
     fi
@@ -1533,8 +1533,12 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon="$enableval"],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes || test "x$enable_gallium_radeon" = xauto; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
+    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
+	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+	gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
+    else
+	AC_MSG_WARN([libdrm_radeon is missing, not building gallium-radeon (r300)])
+    fi
 fi
 
 dnl
@@ -1546,8 +1550,12 @@ AC_ARG_ENABLE([gallium-r600],
     [enable_gallium_r600="$enableval"],
     [enable_gallium_r600=auto])
 if test "x$enable_gallium_r600" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-    gallium_check_st "r600/drm" "dri-r600"
+    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
+	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
+	gallium_check_st "r600/drm" "dri-r600"
+    else
+	AC_MSG_ERROR([libdrm_radeon is missing, cannot build gallium-r600])
+    fi
 fi
 
 dnl
