@@ -677,7 +677,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 20) {
+	if (dc < 4) {
 		r600_context_dump_bof(&rctx->ctx, dname);
 		R600_ERR("dumped %s\n", dname);
 	}
@@ -1191,14 +1191,11 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	bo[1] = rbuffer->bo;
 	/* FIXME depth texture decompression */
 	if (tmp->depth) {
-#if 0
-		r = r600_texture_from_depth(ctx, tmp, view->first_level);
-		if (r) {
-			return;
-		}
-		bo[0] = radeon_ws_bo_incref(rscreen->rw, tmp->uncompressed);
-		bo[1] = radeon_ws_bo_incref(rscreen->rw, tmp->uncompressed);
-#endif
+		r600_texture_depth_flush(ctx, texture);
+		tmp = (struct r600_resource_texture*)texture;
+		rbuffer = &tmp->flushed_depth_texture->resource;
+		bo[0] = rbuffer->bo;
+		bo[1] = rbuffer->bo;
 	}
 	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
 
@@ -1598,6 +1595,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	pipe_surface_reference(&rctx->framebuffer.zsbuf, state->zsbuf);
 	rctx->framebuffer = *state;
+	rctx->pframebuffer = &rctx->framebuffer;
 
 	/* build states */
 	for (int i = 0; i < state->nr_cbufs; i++) {
@@ -2133,6 +2131,44 @@ static void r600_init_query_functions2(struct r600_pipe_context *rctx)
 	rctx->context.get_query_result = r600_get_query_result;
 }
 
+static void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
+{
+	struct pipe_depth_stencil_alpha_state dsa;
+	struct r600_pipe_state *rstate;
+	boolean quirk = false;
+
+	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
+		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
+		quirk = true;
+
+	memset(&dsa, 0, sizeof(dsa));
+
+	if (quirk) {
+		dsa.depth.enabled = 1;
+		dsa.depth.func = PIPE_FUNC_LEQUAL;
+		dsa.stencil[0].enabled = 1;
+		dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
+		dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_KEEP;
+		dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_INCR;
+		dsa.stencil[0].writemask = 0xff;
+	}
+
+	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+				R_02880C_DB_SHADER_CONTROL,
+				0x0,
+				S_02880C_DUAL_EXPORT_ENABLE(1), NULL);
+	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+				R_028D0C_DB_RENDER_CONTROL,
+				S_028D0C_DEPTH_COPY_ENABLE(1) |
+				S_028D0C_STENCIL_COPY_ENABLE(1) |
+				S_028D0C_COPY_CENTROID(1),
+				S_028D0C_DEPTH_COPY_ENABLE(1) |
+				S_028D0C_STENCIL_COPY_ENABLE(1) |
+				S_028D0C_COPY_CENTROID(1), NULL);
+	return rstate;
+}
+
 static struct pipe_context *r600_create_context2(struct pipe_screen *screen, void *priv)
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
@@ -2214,6 +2250,9 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 		FREE(rctx);
 		return NULL;
 	}
+
+	LIST_INITHEAD(&rctx->query_list);
+	rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 
 	return &rctx->context;
 }

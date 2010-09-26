@@ -84,9 +84,13 @@ struct r600_vertex_element
 
 struct r600_pipe_context {
 	struct pipe_context		context;
+	struct blitter_context		*blitter;
+	struct pipe_framebuffer_state	*pframebuffer;
+	unsigned			family;
+	void				*custom_dsa_flush;
+	struct list_head		query_list; /* fake member for depth remove once merged */
 	struct r600_screen		*screen;
 	struct radeon			*radeon;
-	struct blitter_context		*blitter;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
@@ -116,7 +120,6 @@ struct r600_pipe_context {
 	bool				flatshade;
 	struct u_upload_mgr		*upload_vb;
 	struct u_upload_mgr		*upload_ib;
-	enum radeon_family		family;
 	unsigned			any_user_vbs;
 };
 
