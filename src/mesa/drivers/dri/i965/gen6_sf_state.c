@@ -87,6 +87,9 @@ upload_sf_state(struct brw_context *brw)
    if ((ctx->Polygon.FrontFace == GL_CCW) ^ render_to_fbo)
       dw2 |= GEN6_SF_WINDING_CCW;
 
+   if (ctx->Polygon.OffsetFill)
+       dw2 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
+
    /* _NEW_SCISSOR */
    if (ctx->Scissor.Enabled)
       dw3 |= GEN6_SF_SCISSOR_ENABLE;
