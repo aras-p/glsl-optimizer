@@ -75,6 +75,7 @@ static const struct r600_reg evergreen_reg_list[] = {
 	{0, 0, R_009100_SPI_CONFIG_CNTL},
 	{0, 0, R_00913C_SPI_CONFIG_CNTL_1},
 	{0, 0, R_028000_DB_RENDER_CONTROL},
+	{0, 0, R_028004_DB_COUNT_CONTROL},
 	{0, 0, R_028008_DB_DEPTH_VIEW},
 	{0, 0, R_02800C_DB_RENDER_OVERRIDE},
 	{0, 0, R_028010_DB_RENDER_OVERRIDE2},
@@ -587,6 +588,18 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		if (cb[i]) {
 			ndwords += 7;
 		}
+	}
+
+	/* queries need some special values */
+	if (ctx->num_query_running) {
+		r600_context_reg(ctx, R600_GROUP_CONTEXT,
+				R_028004_DB_COUNT_CONTROL,
+				S_028004_PERFECT_ZPASS_COUNTS(1),
+				S_028004_PERFECT_ZPASS_COUNTS(1));
+		r600_context_reg(ctx, R600_GROUP_CONTEXT,
+				R_02800C_DB_RENDER_OVERRIDE,
+				S_02800C_NOOP_CULL_DISABLE(1),
+				S_02800C_NOOP_CULL_DISABLE(1));
 	}
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {

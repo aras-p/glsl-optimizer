@@ -246,6 +246,7 @@ struct r600_context {
 	struct radeon_bo	**bo;
 	u32			*pm4;
 	struct list_head	query_list;
+	unsigned		num_query_running;
 };
 
 struct r600_draw {

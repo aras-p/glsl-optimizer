@@ -54,4 +54,25 @@ struct r600_reg {
 /* radeon_pciid.c */
 unsigned radeon_family_from_device(unsigned device);
 
+
+static void inline r600_context_reg(struct r600_context *ctx, unsigned group_id,
+					unsigned offset, unsigned value,
+					unsigned mask)
+{
+	struct r600_group *group = &ctx->groups[group_id];
+	struct r600_group_block *block;
+	unsigned id;
+
+	id = group->offset_block_id[(offset - group->start_offset) >> 2];
+	block = &group->blocks[id];
+	id = (offset - block->start_offset) >> 2;
+	block->pm4[id] &= ~mask;
+	block->pm4[id] |= value;
+	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
+		ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	}
+	block->status |= R600_BLOCK_STATUS_ENABLED;
+	block->status |= R600_BLOCK_STATUS_DIRTY;
+}
+
 #endif

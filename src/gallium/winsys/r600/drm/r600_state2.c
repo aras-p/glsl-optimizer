@@ -943,6 +943,20 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		}
 	}
 
+	/* queries need some special values */
+	if (ctx->num_query_running) {
+		if (ctx->radeon->family >= CHIP_RV770) {
+			r600_context_reg(ctx, R600_GROUP_CONTEXT,
+					R_028D0C_DB_RENDER_CONTROL,
+					S_028D0C_R700_PERFECT_ZPASS_COUNTS(1),
+					S_028D0C_R700_PERFECT_ZPASS_COUNTS(1));
+		}
+		r600_context_reg(ctx, R600_GROUP_CONTEXT,
+				R_028D10_DB_RENDER_OVERRIDE,
+				S_028D10_NOOP_CULL_DISABLE(1),
+				S_028D10_NOOP_CULL_DISABLE(1));
+	}
+
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
 		r600_context_flush(ctx);
@@ -1181,6 +1195,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	query->state |= R600_QUERY_STATE_STARTED;
 	query->state ^= R600_QUERY_STATE_ENDED;
+	ctx->num_query_running++;
 }
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
@@ -1197,6 +1212,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	query->num_results += 16;
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
+	ctx->num_query_running--;
 }
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type)
