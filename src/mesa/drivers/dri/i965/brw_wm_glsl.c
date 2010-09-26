@@ -342,8 +342,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
               }
            }
            /* number of constant regs used (each reg is float[8]) */
-           c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
-           reg_index += c->nr_creg;
+	   c->nr_creg = ALIGN(nr_params, 2) / 2;
+	   reg_index += c->nr_creg;
         }
     }
 
