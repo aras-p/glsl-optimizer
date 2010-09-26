@@ -137,7 +137,7 @@ void radeon_state_fini(struct radeon_state *state)
 	unsigned i;
 
 	if (state == NULL)
-		return NULL;
+		return;
 	for (i = 0; i < state->nbo; i++) {
 		radeon_ws_bo_reference(state->radeon, &state->bo[i], NULL);
 	}
