@@ -1631,6 +1631,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 				src_chan = 1;
 				src2_chan = 2;
 				break;
+			default:
+				assert(0);
+				src_chan = 0;
+				src2_chan = 0;
+				break;
 			}
 			r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
 			if (r)
