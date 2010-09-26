@@ -268,7 +268,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
          pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
    }
 
-   for (i = 0; i <= PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
+   for (i = 0; i <= PIPE_MAX_COLOR_BUFS; i++)
       if (ctx->fs_col[i])
          pipe->delete_fs_state(pipe, ctx->fs_col[i]);
 
