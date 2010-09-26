@@ -1,4 +1,4 @@
-#include <malloc.h>
+#include <pipe/p_compiler.h>
 #include <pipe/p_screen.h>
 #include <pipebuffer/pb_bufmgr.h>
 #include "radeon_priv.h"
