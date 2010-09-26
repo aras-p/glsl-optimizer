@@ -56,7 +56,7 @@ static int radeon_get_device(struct radeon *radeon)
 struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
-	int r, i, id, j, k;
+	int r;
 
 	radeon = calloc(1, sizeof(*radeon));
 	if (radeon == NULL) {
