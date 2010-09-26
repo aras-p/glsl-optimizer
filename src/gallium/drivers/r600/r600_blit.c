@@ -180,10 +180,8 @@ void r600_init_blit_functions(struct r600_context *rctx)
 int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_context *rctx = r600_context(ctx);
-	struct r600_screen *rscreen = rctx->screen;
-	struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
+	struct pipe_framebuffer_state *fb = rctx->pframebuffer;
 	struct pipe_surface *zsurf, *cbsurf;
-	enum radeon_family family;
 	int level = 0;
 	float depth = 1.0f;
 
@@ -196,11 +194,10 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	r600_blitter_save_states(ctx);
 	util_blitter_save_framebuffer(rctx->blitter, fb);
 
-	family = radeon_get_family(rscreen->rw);
-	if (family == CHIP_RV610 || family == CHIP_RV630 || family == CHIP_RV620 ||
-	    family == CHIP_RV635)
+	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
+		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
-	
+
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
 
 	/* resume queries */

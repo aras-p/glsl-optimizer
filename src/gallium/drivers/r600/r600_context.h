@@ -198,10 +198,14 @@ extern struct r600_context_hw_state_vtbl eg_hw_state_vtbl;
 
 struct r600_context {
 	struct pipe_context		context;
+	struct blitter_context		*blitter;
+	struct pipe_framebuffer_state	*pframebuffer;
+	unsigned			family;
+	void				*custom_dsa_flush;
+	struct list_head		query_list;
 	struct r600_screen		*screen;
 	struct radeon			*rw;
 	struct radeon_ctx		*ctx;
-	struct blitter_context		*blitter;
 	struct radeon_draw		draw;
 	struct r600_context_hw_state_vtbl *vtbl;
 	struct radeon_state		config;
@@ -238,14 +242,11 @@ struct r600_context {
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_index_buffer	index_buffer;
 	struct pipe_blend_color		blend_color;
-	struct list_head		query_list;
 
 	/* upload managers */
 	struct u_upload_mgr *upload_vb;
 	struct u_upload_mgr *upload_ib;
 	bool any_user_vbs;
-
-	void *custom_dsa_flush;
 };
 
 /* Convenience cast wrapper. */

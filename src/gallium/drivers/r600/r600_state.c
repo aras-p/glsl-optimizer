@@ -389,7 +389,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	clean_flush(rctx, &rctx->hw_states.cb_flush);
 	clean_flush(rctx, &rctx->hw_states.db_flush);
-
+	rctx->pframebuffer = NULL;
 	r600_context_state_decref(rctx->framebuffer);
 
 	rstate = r600_new_context_state(pipe_framebuffer_type);
@@ -399,6 +399,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	pipe_reference(NULL, &state->zsbuf->reference);
 	rctx->framebuffer = rstate;
+	rctx->pframebuffer = &rstate->state.framebuffer;
 	for (i = 0; i < state->nr_cbufs; i++) {
 		rctx->vtbl->cb(rctx, &rstate->rstate[i+1], state, i);
 	}
