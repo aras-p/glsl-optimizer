@@ -173,8 +173,9 @@ emit_facing_coef( LLVMBuilderRef builder,
 		  unsigned slot )
 {
    LLVMValueRef a0_0 = args->facing;
+   LLVMValueRef a0_0f = LLVMBuildSIToFP(builder, a0_0, LLVMFloatType(), "");
    LLVMValueRef zero = LLVMConstReal(LLVMFloatType(), 0.0);
-   LLVMValueRef a0      = vec4f(builder, a0_0, zero, zero, zero, "facing");
+   LLVMValueRef a0      = vec4f(builder, a0_0f, zero, zero, zero, "facing");
    LLVMValueRef zerovec = vec4f_from_scalar(builder, zero, "zero");
 
    store_coef(builder, args, slot, a0, zerovec, zerovec);
@@ -520,7 +521,7 @@ generate_setup_variant(struct llvmpipe_screen *screen,
    arg_types[4] = LLVMPointerType(vec4f_type, 0);	/* a0, aligned */
    arg_types[5] = LLVMPointerType(vec4f_type, 0);	/* dadx, aligned */
    arg_types[6] = LLVMPointerType(vec4f_type, 0);	/* dady, aligned */
-   arg_types[7] = LLVMPointerType(LLVMVoidType(), 0);      /* key, unused */
+   arg_types[7] = LLVMPointerType(vec4f_type, 0);       /* key, unused */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
