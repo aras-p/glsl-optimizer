@@ -21,7 +21,7 @@ LIBS += ../../../winsys/sw/fbdev/libfbdev.a
 endif
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
-LDADD += -lX11 -lXext -lXfixes
+LDADD += -ldrm -lX11 -lXext -lXfixes
 LIBS += ../../../winsys/sw/xlib/libws_xlib.a
 endif
 
