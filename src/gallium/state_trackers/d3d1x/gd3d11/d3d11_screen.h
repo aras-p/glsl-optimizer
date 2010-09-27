@@ -145,6 +145,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 #if API >= 11
 		immediate_context = GalliumD3D11ImmediateDeviceContext_Create(this, immediate_pipe, owns_immediate_pipe);
+		// release to the reference to ourselves that the immediate context took, to avoid a garbage cycle
+		immediate_context->Release();
 #endif
 	}
 
