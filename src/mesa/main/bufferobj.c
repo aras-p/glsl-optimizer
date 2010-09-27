@@ -74,15 +74,9 @@ get_buffer_target(GLcontext *ctx, GLenum target)
    case GL_PIXEL_UNPACK_BUFFER_EXT:
       return &ctx->Unpack.BufferObj;
    case GL_COPY_READ_BUFFER:
-      if (ctx->Extensions.ARB_copy_buffer) {
-         return &ctx->CopyReadBuffer;
-      }
-      break;
+      return &ctx->CopyReadBuffer;
    case GL_COPY_WRITE_BUFFER:
-      if (ctx->Extensions.ARB_copy_buffer) {
-         return &ctx->CopyWriteBuffer;
-      }
-      break;
+      return &ctx->CopyWriteBuffer;
 #if FEATURE_EXT_transform_feedback
    case GL_TRANSFORM_FEEDBACK_BUFFER:
       if (ctx->Extensions.EXT_transform_feedback) {

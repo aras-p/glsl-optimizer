@@ -45,7 +45,7 @@ static const struct {
    int flag_offset;
 } default_extensions[] = {
    { OFF, "GL_ARB_blend_func_extended",        F(ARB_blend_func_extended) },
-   { OFF, "GL_ARB_copy_buffer",                F(ARB_copy_buffer) },
+   { ON,  "GL_ARB_copy_buffer",                F(ARB_copy_buffer) },
    { OFF, "GL_ARB_depth_buffer_float",         F(ARB_depth_buffer_float) },
    { OFF, "GL_ARB_depth_clamp",                F(ARB_depth_clamp) },
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
@@ -229,7 +229,7 @@ static const struct {
 void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
-   ctx->Extensions.ARB_copy_buffer = GL_TRUE;
+   /*ctx->Extensions.ARB_copy_buffer = GL_TRUE;*/
    ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    /*ctx->Extensions.ARB_draw_buffers = GL_TRUE;*/
