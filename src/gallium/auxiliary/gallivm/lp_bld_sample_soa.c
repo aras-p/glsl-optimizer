@@ -171,8 +171,6 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                            i, j,
                            texel_out);
 
-   apply_sampler_swizzle(bld, texel_out);
-
    /*
     * Note: if we find an app which frequently samples the texture border
     * we might want to implement a true conditional here to avoid sampling
@@ -204,6 +202,8 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                                            border_chan_vec, texel_out[chan]);
       }
    }
+
+   apply_sampler_swizzle(bld, texel_out);
 }
 
 
