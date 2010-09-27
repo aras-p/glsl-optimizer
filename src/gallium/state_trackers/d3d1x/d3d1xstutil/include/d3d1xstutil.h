@@ -1008,7 +1008,7 @@ COM_INTERFACE(IDXGIAdapter1, IDXGIAdapter)
 COM_INTERFACE(IDXGIFactory1, IDXGIFactory)
 
 template<typename Base>
-struct GalliumDXGIDevice : public GalliumMultiPrivateDataComObject<Base, IDXGIDevice>
+struct GalliumDXGIDevice : public GalliumMultiPrivateDataComObject<Base, IDXGIDevice1>
 {
 	ComPtr<IDXGIAdapter> adapter;
 	int priority;
