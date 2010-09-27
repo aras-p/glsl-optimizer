@@ -66,10 +66,10 @@ static void inline r600_context_reg(struct r600_context *ctx, unsigned group_id,
 	id = group->offset_block_id[(offset - group->start_offset) >> 2];
 	block = &group->blocks[id];
 	id = (offset - block->start_offset) >> 2;
-	block->pm4[id] &= ~mask;
-	block->pm4[id] |= value;
+	block->reg[id] &= ~mask;
+	block->reg[id] |= value;
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 	}
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
