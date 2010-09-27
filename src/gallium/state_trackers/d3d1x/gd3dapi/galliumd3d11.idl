@@ -27,5 +27,10 @@
 import "ocidl.idl";
 import "d3d11.idl";
 
-HRESULT __stdcall GalliumD3D11DeviceCreate(struct pipe_screen* screen, struct pipe_context* context, BOOL owns_context, unsigned creation_flags, IDXGIAdapter* adapter, ID3D11Device** ppDevice);
+// just adding __stdcall to the function makes at least one version of widl crash
+[object, local]
+interface IDummyInterfaceToPutWidlInComModeForGalliumD3D11
+{}
+
+HRESULT GalliumD3D11DeviceCreate(struct pipe_screen* screen, struct pipe_context* context, BOOL owns_context, unsigned creation_flags, IDXGIAdapter* adapter, ID3D11Device** ppDevice);
 
