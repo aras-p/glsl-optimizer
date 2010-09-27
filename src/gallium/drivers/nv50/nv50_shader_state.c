@@ -362,6 +362,10 @@ nv50_geomprog_validate(struct nv50_context *nv50)
    struct nv50_program *p = nv50->geomprog;
    struct nouveau_stateobj *so = NULL;
 
+   /* GP may be NULL, but VP and FP may not */
+   if (!p)
+      return NULL; /* GP is deactivated in linkage validation */
+
    if (!p->translated) {
       if (nv50_program_validate(p))
          nv50_gp_update_stateobj(nv50, p);

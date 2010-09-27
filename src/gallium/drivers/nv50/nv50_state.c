@@ -663,7 +663,7 @@ nv50_gp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
-	nv50->fragprog = hwcso;
+	nv50->geomprog = hwcso;
 	nv50->dirty |= NV50_NEW_GEOMPROG;
 }
 
