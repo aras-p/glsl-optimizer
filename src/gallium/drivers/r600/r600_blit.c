@@ -200,6 +200,9 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
 
+	pipe_surface_reference(&zsurf, NULL);
+	pipe_surface_reference(&cbsurf, NULL);
+
 	/* resume queries */
 	r600_queries_resume(ctx);
 	return 0;
