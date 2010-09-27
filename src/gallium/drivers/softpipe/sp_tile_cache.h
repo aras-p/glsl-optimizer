@@ -57,7 +57,6 @@ union tile_address {
 
 struct softpipe_cached_tile
 {
-   union tile_address addr;
    union {
       float color[TILE_SIZE][TILE_SIZE][4];
       uint color32[TILE_SIZE][TILE_SIZE];
@@ -83,14 +82,16 @@ struct softpipe_tile_cache
    struct pipe_transfer *transfer;
    void *transfer_map;
 
-   struct softpipe_cached_tile entries[NUM_ENTRIES];
+   union tile_address tile_addrs[NUM_ENTRIES];
+   struct softpipe_cached_tile *entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    float clear_color[4];  /**< for color bufs */
    uint clear_val;        /**< for z+stencil, or packed color clear value */
    boolean depth_stencil; /**< Is the surface a depth/stencil format? */
 
-   struct softpipe_cached_tile tile;  /**< scratch tile for clears */
+   struct softpipe_cached_tile *tile;  /**< scratch tile for clears */
 
+   union tile_address last_tile_addr;
    struct softpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
 };
 
@@ -147,7 +148,7 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc,
 {
    union tile_address addr = tile_address( x, y );
 
-   if (tc->last_tile->addr.value == addr.value)
+   if (tc->last_tile_addr.value == addr.value)
       return tc->last_tile;
 
    return sp_find_cached_tile( tc, addr );
