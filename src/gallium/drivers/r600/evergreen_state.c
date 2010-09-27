@@ -491,7 +491,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
 		}
 	}
 }
@@ -513,7 +513,7 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
 	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_ps_sampler(&rctx->ctx, rstates[i], i);
+		evergreen_context_pipe_state_set_ps_sampler(&rctx->ctx, rstates[i], i);
 	}
 }
 
@@ -524,7 +524,7 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 
 	/* TODO implement */
 	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
+		evergreen_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
 	}
 }
 
@@ -1469,19 +1469,19 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			return;
 		}
 		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
-		r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT,
 				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
 				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT,
 				R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET,
 				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT,
 				R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
 				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT,
 				R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET,
 				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt, R600_GROUP_CONTEXT,
+		r600_pipe_state_add_reg(&vgt, EVERGREEN_GROUP_CONTEXT,
 				R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
 				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
 	}

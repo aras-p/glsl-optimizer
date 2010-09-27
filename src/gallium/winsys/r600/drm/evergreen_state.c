@@ -528,7 +528,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 			goto out_err;
 	}
 	/* VS RESOURCE */
-	for (int j = 0, offset = 0x1600; j < 176; j++, offset += 0x20) {
+	for (int j = 0, offset = 0x1600; j < 160; j++, offset += 0x20) {
 		r = evergreen_state_resource_init(ctx, offset);
 		if (r)
 			goto out_err;
@@ -557,6 +557,112 @@ out_err:
 	r600_context_fini(ctx);
 	return r;
 }
+
+static inline void evergreen_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+{
+	struct r600_group_block *block;
+	unsigned id;
+
+	offset -= ctx->groups[EVERGREEN_GROUP_RESOURCE].start_offset;
+	id = ctx->groups[EVERGREEN_GROUP_RESOURCE].offset_block_id[offset >> 2];
+	block = &ctx->groups[EVERGREEN_GROUP_RESOURCE].blocks[id];
+	block->pm4[0] = state->regs[0].value;
+	block->pm4[1] = state->regs[1].value;
+	block->pm4[2] = state->regs[2].value;
+	block->pm4[3] = state->regs[3].value;
+	block->pm4[4] = state->regs[4].value;
+	block->pm4[5] = state->regs[5].value;
+	block->pm4[6] = state->regs[6].value;
+	block->pm4[7] = state->regs[7].value;
+	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+	if (state->regs[0].bo) {
+		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
+		 * we have single case btw VERTEX & TEXTURE resource
+		 */
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+	} else {
+		/* TEXTURE RESOURCE */
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+	}
+	block->status |= R600_BLOCK_STATUS_ENABLED;
+	block->status |= R600_BLOCK_STATUS_DIRTY;
+	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+}
+
+void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x20 * rid;
+
+	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
+
+	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+{
+	struct r600_group_block *block;
+	unsigned id;
+
+	offset -= ctx->groups[EVERGREEN_GROUP_SAMPLER].start_offset;
+	id = ctx->groups[EVERGREEN_GROUP_SAMPLER].offset_block_id[offset >> 2];
+	block = &ctx->groups[EVERGREEN_GROUP_SAMPLER].blocks[id];
+	block->pm4[0] = state->regs[0].value;
+	block->pm4[1] = state->regs[1].value;
+	block->pm4[2] = state->regs[2].value;
+	block->status |= R600_BLOCK_STATUS_ENABLED;
+	block->status |= R600_BLOCK_STATUS_DIRTY;
+	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+}
+
+static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+{
+	struct r600_group_block *block;
+	unsigned id;
+
+	offset -= ctx->groups[EVERGREEN_GROUP_CONFIG].start_offset;
+	id = ctx->groups[EVERGREEN_GROUP_CONFIG].offset_block_id[offset >> 2];
+	block = &ctx->groups[EVERGREEN_GROUP_CONFIG].blocks[id];
+	block->pm4[0] = state->regs[3].value;
+	block->pm4[1] = state->regs[4].value;
+	block->pm4[2] = state->regs[5].value;
+	block->pm4[3] = state->regs[6].value;
+	block->status |= R600_BLOCK_STATUS_ENABLED;
+	block->status |= R600_BLOCK_STATUS_DIRTY;
+	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+}
+
+void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
+{
+	unsigned offset;
+
+	offset = 0x0003C000 + id * 0xc;
+	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
+	if (state->nregs > 3) {
+		offset = 0x0000A400 + id * 0x10;
+		//		evergreen_context_pipe_state_set_sampler_border(ctx, state, offset);
+	}
+}
+
+void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
+{
+	unsigned offset;
+
+	offset = 0x0003C0D8 + id * 0xc;
+	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
+	if (state->nregs > 3) {
+		offset = 0x0000A600 + id * 0x10;
+		//		evergreen_context_pipe_state_set_sampler_border(ctx, state, offset);
+	}
+}
+
 
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
@@ -592,11 +698,11 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
-		r600_context_reg(ctx, R600_GROUP_CONTEXT,
+		r600_context_reg(ctx, EVERGREEN_GROUP_CONTEXT,
 				R_028004_DB_COUNT_CONTROL,
 				S_028004_PERFECT_ZPASS_COUNTS(1),
 				S_028004_PERFECT_ZPASS_COUNTS(1));
-		r600_context_reg(ctx, R600_GROUP_CONTEXT,
+		r600_context_reg(ctx, EVERGREEN_GROUP_CONTEXT,
 				R_02800C_DB_RENDER_OVERRIDE,
 				S_02800C_NOOP_CULL_DISABLE(1),
 				S_02800C_NOOP_CULL_DISABLE(1));
