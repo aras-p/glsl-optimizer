@@ -37,18 +37,24 @@
 #define fail(x) throw(x)
 #endif
 
-static unsigned sm4_to_pipe_interpolation[] =
+struct tgsi_interpolation
 {
-	TGSI_INTERPOLATE_PERSPECTIVE, /* UNDEFINED */
-	TGSI_INTERPOLATE_CONSTANT,
-	TGSI_INTERPOLATE_PERSPECTIVE, /* LINEAR */
-	TGSI_INTERPOLATE_PERSPECTIVE, /* LINEAR_CENTROID */
-	TGSI_INTERPOLATE_LINEAR, /* LINEAR_NOPERSPECTIVE */
-	TGSI_INTERPOLATE_LINEAR, /* LINEAR_NOPERSPECTIVE_CENTROID */
+	unsigned interpolation;
+	bool centroid;
+};
+
+static tgsi_interpolation sm4_to_pipe_interpolation[] =
+{
+	{TGSI_INTERPOLATE_PERSPECTIVE, false}, /* UNDEFINED */
+	{TGSI_INTERPOLATE_CONSTANT, false},
+	{TGSI_INTERPOLATE_PERSPECTIVE, false}, /* LINEAR */
+	{TGSI_INTERPOLATE_PERSPECTIVE, true}, /* LINEAR_CENTROID */
+	{TGSI_INTERPOLATE_LINEAR, false}, /* LINEAR_NOPERSPECTIVE */
+	{TGSI_INTERPOLATE_LINEAR, true}, /* LINEAR_NOPERSPECTIVE_CENTROID */
 
 	// Added in D3D10.1
-	TGSI_INTERPOLATE_PERSPECTIVE, /* LINEAR_SAMPLE */
-	TGSI_INTERPOLATE_LINEAR, /* LINEAR_NOPERSPECTIVE_SAMPLE */
+	{TGSI_INTERPOLATE_PERSPECTIVE, true}, /* LINEAR_SAMPLE */
+	{TGSI_INTERPOLATE_LINEAR, true}, /* LINEAR_NOPERSPECTIVE_SAMPLE */
 };
 
 static int sm4_to_pipe_sv[] =
@@ -741,7 +747,7 @@ next:;
 				check(idx >= 0);
 				if(inputs.size() <= (unsigned)idx)
 					inputs.resize(idx + 1);
-				inputs[idx] = ureg_DECL_fs_input(ureg, TGSI_SEMANTIC_GENERIC, idx, sm4_to_pipe_interpolation[dcl.dcl_input_ps.interpolation]);
+				inputs[idx] = ureg_DECL_fs_input_cyl_centroid(ureg, TGSI_SEMANTIC_GENERIC, idx, sm4_to_pipe_interpolation[dcl.dcl_input_ps.interpolation].interpolation, 0, sm4_to_pipe_interpolation[dcl.dcl_input_ps.interpolation].centroid);
 				break;
 			case SM4_OPCODE_DCL_OUTPUT:
 				check(idx >= 0);
