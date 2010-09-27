@@ -166,7 +166,7 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 }
 
 static void
-vlVdpMacroBlocksToPipe(struct pipe_screen *screen,
+vlVdpBitstreamToMacroblocks(struct pipe_screen *screen,
                   VdpBitstreamBuffer const *bitstream_buffers,
                   unsigned int num_macroblocks,
                   struct pipe_mpeg12_macroblock *pipe_macroblocks)
@@ -221,7 +221,7 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	num_macroblocks = bitstream_buffer_count;
 	struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
 	
-	vlVdpMacroBlocksToPipe(vpipe->screen, bitstream_buffers,
+	vlVdpBitstreamToMacroblocks(vpipe->screen, bitstream_buffers,
                      num_macroblocks, pipe_macroblocks);
 		
 	vpipe->set_decode_target(vpipe,t_surf);
