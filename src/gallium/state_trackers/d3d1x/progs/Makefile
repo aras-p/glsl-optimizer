@@ -33,14 +33,14 @@ LIBS_D3D10 = ../dxgid3d10/libdxgid3d10.a ../gd3d10/libgd3d10.a $(LIBS)
 LIBS_D3D11 = ../dxgid3d11/libdxgid3d11.a ../gd3d11/libgd3d11.a $(LIBS)
 
 bin/d3d10tri: d3d10app/d3d10x11main.o d3d10tri/d3d10tri.o $(LIBS_D3D10)
-	$(CXX) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D10) -Wl,--end-group $(LDADD)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D10) -Wl,--end-group $(LDADD)
 
 bin/d3d11tri: d3d11app/d3d11x11main.o d3d11tri/d3d11tri.o $(LIBS_D3D11)
-	$(CXX) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
 
 bin/d3d11tex: d3d11app/d3d11x11main.o d3d11tex/d3d11tex.o $(LIBS_D3D11)
-	$(CXX) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
 
 bin/d3d11gears: d3d11app/d3d11x11main.o d3d11gears/d3d11gears.o $(LIBS_D3D11)
-	$(CXX) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS_D3D11) -Wl,--end-group $(LDADD)
 
