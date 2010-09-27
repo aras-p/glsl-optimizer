@@ -58,16 +58,17 @@ struct WineDXGIBackend
 		LONG ref;
 };
 
-static void* STDMETHODCALLTYPE WineDXGIBackend_BeginPresent(
+static HRESULT STDMETHODCALLTYPE WineDXGIBackend_BeginPresent(
 	IGalliumDXGIBackend* This,
 	HWND hwnd,
+	void** ppresent_cookie,
 	void** pwindow,
 	RECT* prect,
 	RGNDATA** prgndata,
 	BOOL* ppreserve_aspect_ratio)
 {
 	/* this is the parent HWND which actually has an X11 window associated */
-	HWND x11_hwnd = GetAncestor(hwnd, GA_ROOT);
+	HWND x11_hwnd;
 	HDC hdc;
 	RECT client_rect;
 	POINT x11_hwnd_origin_from_screen;
@@ -77,17 +78,14 @@ static void* STDMETHODCALLTYPE WineDXGIBackend_BeginPresent(
 	unsigned code = X11DRV_GET_DRAWABLE;
 	unsigned rgndata_size;
 	RGNDATA* rgndata;
-
-	hdc = GetDC(x11_hwnd);
-	ExtEscape(hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(drawable), (LPTSTR)&drawable);
-
-	GetDCOrgEx(hdc, &x11_hwnd_origin_from_screen);
-	ReleaseDC(x11_hwnd, hdc);
+	RECT rgn_box;
+	int rgn_box_type;
 
 	hdc = GetDC(hwnd);
 	GetDCOrgEx(hdc, &hwnd_origin_from_screen);
 	hrgn = CreateRectRgn(0, 0, 0, 0);
 	GetRandomRgn(hdc, hrgn, SYSRGN);
+	rgn_box_type = GetRgnBox(hrgn, &rgn_box);
 
 	/* the coordinate system differs depending on whether Wine is
 	 * pretending to be Win9x or WinNT, so match that behavior.
@@ -95,6 +93,25 @@ static void* STDMETHODCALLTYPE WineDXGIBackend_BeginPresent(
 	if (!(GetVersion() & 0x80000000))
 		OffsetRgn(hrgn, -hwnd_origin_from_screen.x, -hwnd_origin_from_screen.y);
 	ReleaseDC(hwnd, hdc);
+
+	if(rgn_box_type == NULLREGION)
+	{
+		DeleteObject(hrgn);
+		return DXGI_STATUS_OCCLUDED;
+	}
+
+	rgndata_size = GetRegionData(hrgn, 0, NULL);
+	rgndata = HeapAlloc(GetProcessHeap(), 0, rgndata_size);
+	GetRegionData(hrgn, rgndata_size, rgndata);
+	DeleteObject(hrgn);
+	*prgndata = rgndata;
+
+	x11_hwnd = GetAncestor(hwnd, GA_ROOT);
+	hdc = GetDC(x11_hwnd);
+	ExtEscape(hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(drawable), (LPTSTR)&drawable);
+
+	GetDCOrgEx(hdc, &x11_hwnd_origin_from_screen);
+	ReleaseDC(x11_hwnd, hdc);
 
 	*pwindow = (void*)drawable;
 	GetClientRect(hwnd, &client_rect);
@@ -105,26 +122,57 @@ static void* STDMETHODCALLTYPE WineDXGIBackend_BeginPresent(
 	prect->right = prect->left + client_rect.right;
 	prect->bottom = prect->top + client_rect.bottom;
 
-	rgndata_size = GetRegionData(hrgn, 0, NULL);
-	rgndata = HeapAlloc(GetProcessHeap(), 0, rgndata_size);
-	GetRegionData(hrgn, rgndata_size, rgndata);
-	*prgndata = rgndata;
-
 	// Windows doesn't preserve the aspect ratio
 	// TODO: maybe let the user turn this on somehow
 	*ppreserve_aspect_ratio = FALSE;
 
-	DeleteObject(hrgn);
+	*ppresent_cookie = rgndata;
 
-	return rgndata;
+	// TODO: check for errors and return them
+	return S_OK;
 }
 
 static void STDMETHODCALLTYPE WineDXGIBackend_EndPresent(
-		IGalliumDXGIBackend* This,
-		HWND hwnd,
-		void *present_cookie)
+	IGalliumDXGIBackend* This,
+	HWND hwnd,
+	void *present_cookie)
 {
 	HeapFree(GetProcessHeap(), 0, present_cookie);
+}
+
+static HRESULT STDMETHODCALLTYPE WineDXGIBackend_TestPresent(
+	IGalliumDXGIBackend* This,
+	HWND hwnd)
+{
+	HDC hdc;
+	HRGN hrgn;
+	RECT rgn_box;
+	int rgn_box_type;
+
+	// TODO: is there a simpler way to check this?
+	hdc = GetDC(hwnd);
+	hrgn = CreateRectRgn(0, 0, 0, 0);
+	GetRandomRgn(hdc, hrgn, SYSRGN);
+	rgn_box_type = GetRgnBox(hrgn, &rgn_box);
+	DeleteObject(hrgn);
+	ReleaseDC(hwnd, hdc);
+
+	return rgn_box_type == NULLREGION ? DXGI_STATUS_OCCLUDED : S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE WineDXGIBackend_GetPresentSize(
+	IGalliumDXGIBackend* This,
+	HWND hwnd,
+	unsigned* width,
+	unsigned* height)
+{
+	RECT client_rect;
+	GetClientRect(hwnd, &client_rect);
+	*width = client_rect.right - client_rect.left;
+	*height = client_rect.bottom - client_rect.top;
+
+	// TODO: check for errors and return them
+	return S_OK;
 }
 
 /* Wine should switch to C++ at least to be able to implement COM interfaces in a sensible way,
@@ -165,7 +213,9 @@ static IGalliumDXGIBackendVtbl WineDXGIBackend_vtbl =
 	WineDXGIBackend_AddRef,
 	WineDXGIBackend_Release,
 	WineDXGIBackend_BeginPresent,
-	WineDXGIBackend_EndPresent
+	WineDXGIBackend_EndPresent,
+	WineDXGIBackend_TestPresent,
+	WineDXGIBackend_GetPresentSize
 };
 
 IGalliumDXGIBackend* new_WineDXGIBackend()

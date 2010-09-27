@@ -65,10 +65,12 @@ struct GalliumDXGIObject : public GalliumPrivateDataComObject<Base>
 
 COM_INTERFACE(IGalliumDXGIBackend, IUnknown)
 
+// TODO: somehow check whether the window is fully obscured or not
 struct GalliumDXGIIdentityBackend : public GalliumComObject<IGalliumDXGIBackend>
 {
-	virtual void * STDMETHODCALLTYPE BeginPresent(
+	virtual HRESULT STDMETHODCALLTYPE BeginPresent(
 		HWND hwnd,
+		void** present_cookie,
 		void** window,
 		RECT *rect,
 		RGNDATA **rgndata,
@@ -84,7 +86,8 @@ struct GalliumDXGIIdentityBackend : public GalliumComObject<IGalliumDXGIBackend>
 
 		// yes, because we like things looking good
 		*preserve_aspect_ratio = TRUE;
-		return 0;
+		*present_cookie = 0;
+		return S_OK;
 	}
 
 	virtual void STDMETHODCALLTYPE EndPresent(
@@ -92,6 +95,45 @@ struct GalliumDXGIIdentityBackend : public GalliumComObject<IGalliumDXGIBackend>
 		void* present_cookie
 	)
 	{}
+
+	virtual HRESULT STDMETHODCALLTYPE TestPresent(HWND hwnd)
+	{
+		return S_OK;
+	}
+
+        virtual HRESULT STDMETHODCALLTYPE GetPresentSize(
+                HWND hwnd,
+                unsigned* width,
+                unsigned* height
+        )
+        {
+                *width = 0;
+                *height = 0;
+                return S_OK;
+        }
+};
+
+// TODO: maybe install an X11 error hook, so we can return errors properly
+struct GalliumDXGIX11IdentityBackend : public GalliumDXGIIdentityBackend
+{
+	Display* dpy;
+
+	GalliumDXGIX11IdentityBackend(Display* dpy)
+	: dpy(dpy)
+	{}
+
+	virtual HRESULT STDMETHODCALLTYPE GetPresentSize(
+		HWND hwnd,
+		unsigned* width,
+		unsigned* height
+	)
+        {
+		XWindowAttributes xwa;
+		XGetWindowAttributes(dpy, (Window)hwnd, &xwa);
+		*width = xwa.width;
+		*height = xwa.height;
+		return S_OK;
+        }
 };
 
 struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
@@ -107,6 +149,8 @@ struct GalliumDXGIFactory : public GalliumDXGIObject<IDXGIFactory1, IUnknown>
 	 {
 		if(p_backend)
 			backend = p_backend;
+		else if(!strcmp(platform->name, "X11"))
+			backend.reset(new GalliumDXGIX11IdentityBackend((Display*)display));
 		else
 			backend.reset(new GalliumDXGIIdentityBackend());
 	}
@@ -887,6 +931,10 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 		blitter.reset(new dxgi_blitter(pipe));
 		window = 0;
+
+		hr = resolve_zero_width_height(true);
+		if(!SUCCEEDED(hr))
+			throw hr;
 	}
 
 	void init_for_window()
@@ -1006,12 +1054,36 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		return true;
 	}
 
+	HRESULT resolve_zero_width_height(bool force = false)
+	{
+		if(!force && desc.BufferDesc.Width && desc.BufferDesc.Height)
+			return S_OK;
+
+		unsigned width, height;
+		HRESULT hr = parent->backend->GetPresentSize(desc.OutputWindow, &width, &height);
+		if(!SUCCEEDED(hr))
+			return hr;
+
+		// On Windows, 8 is used, and a debug message saying so gets printed
+		if(!width)
+			width = 8;
+		if(!height)
+			height = 8;
+
+		if(!desc.BufferDesc.Width)
+			desc.BufferDesc.Width = width;
+		if(!desc.BufferDesc.Height)
+			desc.BufferDesc.Height = height;
+		return S_OK;
+	}
+
 	virtual HRESULT STDMETHODCALLTYPE Present(
 		UINT sync_interval,
 		UINT flags)
 	{
+		HRESULT hr;
 		if(flags & DXGI_PRESENT_TEST)
-			return S_OK;
+			return parent->backend->TestPresent(desc.OutputWindow);
 
 		if(!buffer0)
 		{
@@ -1030,7 +1102,11 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		struct pipe_resource* src;
 		struct pipe_surface* dst_surface;
 
-		void* present_cookie = parent->backend->BeginPresent(desc.OutputWindow, &cur_window, &rect, &rgndata, &preserve_aspect_ratio);
+		void* present_cookie;
+		hr = parent->backend->BeginPresent(desc.OutputWindow, &present_cookie, &cur_window, &rect, &rgndata, &preserve_aspect_ratio);
+		if(hr != S_OK)
+			return hr;
+
 		if(!cur_window || rect.left >= rect.right || rect.top >= rect.bottom)
 			goto end_present;
 
@@ -1050,6 +1126,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		dst = resources[db ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT];
 		src = gallium_buffer0;
 		dst_surface = 0;
+
+		assert(src);
+		assert(dst);
 
 		/* TODO: sharing the context for blitting won't work correctly if queries are active
 		 * Hopefully no one is crazy enough to keep queries active while presenting, expecting
@@ -1235,7 +1314,7 @@ end_present:
 		desc.BufferDesc.Width = width;
 		desc.BufferDesc.Height = height;
 		desc.Flags = swap_chain_flags;
-		return S_OK;
+		return resolve_zero_width_height();
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE ResizeTarget(

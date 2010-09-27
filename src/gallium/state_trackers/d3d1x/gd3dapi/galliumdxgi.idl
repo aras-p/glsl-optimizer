@@ -65,7 +65,7 @@ import "../d3dapi/dxgi.idl";
 [object, local, uuid("c22d2f85-f7dd-40b0-a50b-5d308f973c5e")]
 interface IGalliumDXGIBackend : IUnknown
 {
-	/* Returns a cookie that is passed to EndPresent
+	/* *present_cookie is set to a cookie that is passed to EndPresent
 	 *
 	 * *window and *rect are the window and subrectangle
 	 * to present in.
@@ -81,16 +81,20 @@ interface IGalliumDXGIBackend : IUnknown
 	 * *rgndata is valid until EndPresent is called, at which point EndPresent
 	 * may free the data.
 	 *
-	 * If window is set 0, the window is fully obscured, so don't present
-	 * anything, and tell the app of the obscuration.
+	 * However, the rect field should still be set as normal if possible (especially
+	 * the dimension)..
 	 *
 	 * If preserve_aspect_ratio is set, *rgndata will be ignored. This
 	 * limitation may be lifted in future versions.
 	 *
-	 * EndPresent is still called even if you return 0 in window.
+	 * If the window is fully obscured, return DXGI_STATUS_OCCLUDED.
+	 * Everything else is ignored in that case.
+	 *
+	 * EndPresent is only called when S_OK is returned.
 	 */
-	void* BeginPresent(
+	HRESULT BeginPresent(
 		[in] HWND hwnd,
+		[out] void** present_cookie,
 		[out] void** window,
 		[out] RECT* rect,
 		[out] struct _RGNDATA** rgndata,
@@ -100,6 +104,18 @@ interface IGalliumDXGIBackend : IUnknown
 	void EndPresent(
 		[in] HWND hwnd,
 		[out] void* present_cookie
+	);
+
+	/* If the window is fully obscured, return DXGI_STATUS_OCCLUDED, else S_OK */
+	HRESULT TestPresent(
+		[in] HWND hwnd
+	);
+
+	/* Get size of rectangle that would be returned by BeginPresent */
+	HRESULT GetPresentSize(
+		[in] HWND hwnd,
+		[out] unsigned* width,
+		[out] unsigned* height
 	);
 }
 
