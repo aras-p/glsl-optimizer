@@ -684,7 +684,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.width0 = width;
 		templat.height0 = height;
 		templat.depth0 = depth;
-		templat.last_level = mip_levels ? (mip_levels - 1) : 0;
+		if(mip_levels)
+			templat.last_level = mip_levels - 1;
+		else
+			templat.last_level = MAX2(MAX2(util_logbase2(templat.width0), util_logbase2(templat.height0)), util_logbase2(templat.depth0));
 		templat.format = dxgi_to_pipe_format[format];
 		templat.bind = d3d11_to_pipe_bind_flags(bind_flags);
 		if(c_p_u_access_flags & D3D11_CPU_ACCESS_READ)
@@ -758,7 +761,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		HRESULT hr = create_resource(PIPE_TEXTURE_1D, desc->Width, 1, 1, desc->MipLevels, desc->ArraySize, desc->Format, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture1d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		*out_texture1d = new GalliumD3D11Texture1D(this, resource, *desc, dxgi_usage);
+		D3D11_TEXTURE1D_DESC cdesc = *desc;
+		cdesc.MipLevels = resource->last_level + 1;
+		*out_texture1d = new GalliumD3D11Texture1D(this, resource, cdesc, dxgi_usage);
 		return S_OK;
 	}
 
@@ -774,10 +779,12 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		HRESULT hr = create_resource(PIPE_TEXTURE_2D, desc->Width, desc->Height, 1, desc->MipLevels, desc->ArraySize, desc->Format, &desc->SampleDesc, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture2d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		if(desc->MipLevels == 1 && desc->ArraySize == 1)
-			*out_texture2d = new GalliumD3D11Surface(this, resource, *desc, dxgi_usage);
+		D3D11_TEXTURE2D_DESC cdesc = *desc;
+		cdesc.MipLevels = resource->last_level + 1;
+		if(cdesc.MipLevels == 1 && cdesc.ArraySize == 1)
+			*out_texture2d = new GalliumD3D11Surface(this, resource, cdesc, dxgi_usage);
 		else
-			*out_texture2d = new GalliumD3D11Texture2D(this, resource, *desc, dxgi_usage);
+			*out_texture2d = new GalliumD3D11Texture2D(this, resource, cdesc, dxgi_usage);
 		return S_OK;
 	}
 
@@ -793,7 +800,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		HRESULT hr = create_resource(PIPE_TEXTURE_3D, desc->Width, desc->Height, desc->Depth, desc->MipLevels, 1, desc->Format, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_texture3d ? &resource : 0);
 		if(hr != S_OK)
 			return hr;
-		*out_texture3d = new GalliumD3D11Texture3D(this, resource, *desc, dxgi_usage);
+		D3D11_TEXTURE3D_DESC cdesc = *desc;
+		cdesc.MipLevels = resource->last_level + 1;
+		*out_texture3d = new GalliumD3D11Texture3D(this, resource, cdesc, dxgi_usage);
 		return S_OK;
 	}
 
