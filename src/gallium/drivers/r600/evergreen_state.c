@@ -1349,6 +1349,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		draw.min_index = info->min_index;
 		draw.max_index = info->max_index;
 		draw.index_bias = info->index_bias;
@@ -1495,7 +1496,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (draw.index_buffer) {
 		rbuffer = (struct r600_resource*)draw.index_buffer;
 		rdraw.indices = rbuffer->bo;
-		rdraw.indices_bo_offset = 0;
+		rdraw.indices_bo_offset = draw.index_buffer_offset;
 	}
 	evergreen_context_draw(&rctx->ctx, &rdraw);
 }

@@ -589,7 +589,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 	if (draw->index_buffer) {
 		rbuffer = (struct r600_resource*)draw->index_buffer;
 		rdraw.indices = rbuffer->bo;
-		rdraw.indices_bo_offset = 0;
+		rdraw.indices_bo_offset = draw->index_buffer_offset;
 	}
 	r600_context_draw(&rctx->ctx, &rdraw);
 }
@@ -636,6 +636,7 @@ static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info
 	draw.start = info->start;
 	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		draw.min_index = info->min_index;
 		draw.max_index = info->max_index;
 		draw.index_bias = info->index_bias;
@@ -677,7 +678,7 @@ static void r600_flush2(struct pipe_context *ctx, unsigned flags,
 
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 4) {
+	if (dc < 20) {
 		r600_context_dump_bof(&rctx->ctx, dname);
 		R600_ERR("dumped %s\n", dname);
 	}
