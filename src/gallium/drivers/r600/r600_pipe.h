@@ -149,6 +149,8 @@ void r600_translate_index_buffer2(struct r600_pipe_context *r600,
 					struct pipe_resource **index_buffer,
 					unsigned *index_size,
 					unsigned *start, unsigned count);
+int r600_find_vs_semantic_index2(struct r600_shader *vs,
+				struct r600_shader *ps, int id);
 
 /* evergreen_state.c */
 void evergreen_init_state_functions2(struct r600_pipe_context *rctx);
