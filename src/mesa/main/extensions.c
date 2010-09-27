@@ -206,7 +206,7 @@ static const struct {
    { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
    { ON,  "GL_OES_read_format",                F(OES_read_format) },
    { OFF, "GL_SGI_texture_color_table",        F(SGI_texture_color_table) },
-   { OFF, "GL_SGIS_generate_mipmap",           F(SGIS_generate_mipmap) },
+   { ON,  "GL_SGIS_generate_mipmap",           F(SGIS_generate_mipmap) },
    { OFF, "GL_SGIS_texture_border_clamp",      F(ARB_texture_border_clamp) },
    { ON,  "GL_SGIS_texture_edge_clamp",        F(SGIS_texture_edge_clamp) },
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
@@ -364,7 +364,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
 #endif
    ctx->Extensions.SGI_texture_color_table = GL_TRUE;
-   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
+   /*ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;*/
    ctx->Extensions.SGIS_texture_edge_clamp = GL_TRUE;
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
@@ -437,7 +437,7 @@ _mesa_enable_1_4_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
-   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
+   /*ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;*/
 }
 
 

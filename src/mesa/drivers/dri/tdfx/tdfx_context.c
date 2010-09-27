@@ -136,8 +136,6 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 
    if ( TDFX_IS_NAPALM( fxMesa ) ) {
       driInitExtensions( ctx, napalm_extensions, GL_FALSE );
-   } else {
-      _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
    }
 }
 

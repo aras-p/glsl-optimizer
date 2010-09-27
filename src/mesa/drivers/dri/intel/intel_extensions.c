@@ -130,7 +130,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_NV_blend_square",                NULL },
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
-   { "GL_SGIS_generate_mipmap",           NULL },
 #if FEATURE_OES_EGL_image
    { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
 #endif

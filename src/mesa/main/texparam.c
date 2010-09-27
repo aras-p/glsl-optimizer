@@ -291,17 +291,10 @@ set_tex_parameteri(GLcontext *ctx,
       return GL_TRUE;
 
    case GL_GENERATE_MIPMAP_SGIS:
-      if (ctx->Extensions.SGIS_generate_mipmap) {
-         if (texObj->GenerateMipmap != params[0]) {
-            flush(ctx, texObj);
-            texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
-            return GL_TRUE;
-         }
-         return GL_FALSE;
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(pname=GL_GENERATE_MIPMAP_SGIS)");
+      if (texObj->GenerateMipmap != params[0]) {
+	 flush(ctx, texObj);
+	 texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
+	 return GL_TRUE;
       }
       return GL_FALSE;
 
@@ -1126,11 +1119,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	    error = GL_TRUE;
          break;
       case GL_GENERATE_MIPMAP_SGIS:
-         if (ctx->Extensions.SGIS_generate_mipmap) {
-            *params = (GLfloat) obj->GenerateMipmap;
-         }
-	 else 
-	    error = GL_TRUE;
+	 *params = (GLfloat) obj->GenerateMipmap;
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
@@ -1291,12 +1280,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          break;
       case GL_GENERATE_MIPMAP_SGIS:
-         if (ctx->Extensions.SGIS_generate_mipmap) {
-            *params = (GLint) obj->GenerateMipmap;
-         }
-         else {
-            error = GL_TRUE;
-         }
+	 *params = (GLint) obj->GenerateMipmap;
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
