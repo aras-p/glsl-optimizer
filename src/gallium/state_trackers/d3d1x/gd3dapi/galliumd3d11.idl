@@ -27,5 +27,5 @@
 import "ocidl.idl";
 import "d3d11.idl";
 
-HRESULT GalliumD3D11DeviceCreate(struct pipe_screen* screen, struct pipe_context* context, BOOL owns_context, unsigned creation_flags, IDXGIAdapter* adapter, ID3D11Device** ppDevice);
+HRESULT __stdcall GalliumD3D11DeviceCreate(struct pipe_screen* screen, struct pipe_context* context, BOOL owns_context, unsigned creation_flags, IDXGIAdapter* adapter, ID3D11Device** ppDevice);
 
