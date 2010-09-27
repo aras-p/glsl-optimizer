@@ -802,6 +802,12 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	offset -= ctx->groups[R600_GROUP_RESOURCE].start_offset;
 	id = ctx->groups[R600_GROUP_RESOURCE].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_RESOURCE].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+		radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		return;
+	}
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
@@ -849,6 +855,10 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	offset -= ctx->groups[R600_GROUP_SAMPLER].start_offset;
 	id = ctx->groups[R600_GROUP_SAMPLER].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_SAMPLER].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		return;
+	}
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
@@ -865,6 +875,13 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	offset -= ctx->groups[R600_GROUP_CONFIG].start_offset;
 	id = ctx->groups[R600_GROUP_CONFIG].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_CONFIG].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		return;
+	}
+	if (state->nregs <= 3) {
+		return;
+	}
 	block->reg[0] = state->regs[3].value;
 	block->reg[1] = state->regs[4].value;
 	block->reg[2] = state->regs[5].value;
@@ -880,10 +897,8 @@ void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r60
 
 	offset = 0x0003C000 + id * 0xc;
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
-	if (state->nregs > 3) {
-		offset = 0x0000A400 + id * 0x10;
-		r600_context_pipe_state_set_sampler_border(ctx, state, offset);
-	}
+	offset = 0x0000A400 + id * 0x10;
+	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -892,10 +907,8 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 
 	offset = 0x0003C0D8 + id * 0xc;
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
-	if (state->nregs > 3) {
-		offset = 0x0000A600 + id * 0x10;
-		r600_context_pipe_state_set_sampler_border(ctx, state, offset);
-	}
+	offset = 0x0000A600 + id * 0x10;
+	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
 void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group)

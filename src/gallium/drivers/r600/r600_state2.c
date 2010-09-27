@@ -127,7 +127,8 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		}
 		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
 			have_face = TRUE;
-		if (rctx->sprite_coord_enable & (1 << i)) {
+		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);

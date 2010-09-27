@@ -625,6 +625,12 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 	offset -= ctx->groups[EVERGREEN_GROUP_RESOURCE].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_RESOURCE].offset_block_id[offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_RESOURCE].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+		radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		return;
+	}
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
@@ -673,6 +679,10 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	offset -= ctx->groups[EVERGREEN_GROUP_SAMPLER].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_SAMPLER].offset_block_id[offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_SAMPLER].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		return;
+	}
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
@@ -689,6 +699,13 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	fake_offset -= ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].offset_block_id[fake_offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].blocks[id];
+	if (state == NULL) {
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		return;
+	}
+	if (state->nregs <= 3) {
+		return;
+	}
 	block->reg[0] = id;
 	block->reg[1] = state->regs[3].value;
 	block->reg[2] = state->regs[4].value;
@@ -704,9 +721,7 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 
 	offset = 0x0003C000 + id * 0xc;
 	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
-	if (state->nregs > 3) {
-		evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, id);
-	}
+	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, id);
 }
 
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -715,9 +730,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 
 	offset = 0x0003C0D8 + id * 0xc;
 	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
-	if (state->nregs > 3) {
-		evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
-	}
+	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
 }
 
 
