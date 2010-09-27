@@ -804,10 +804,6 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	{
 		SYNCHRONIZED;
 
-#if API >= 11
-		if(desc->StructureByteStride > 1)
-			return E_NOTIMPL;
-#endif
 		struct pipe_resource* resource;
 		DXGI_USAGE dxgi_usage = d3d_to_dxgi_usage(desc->BindFlags, desc->MiscFlags);
 		HRESULT hr = create_resource(PIPE_BUFFER, desc->ByteWidth, 1, 1, 1, 1, DXGI_FORMAT_R8_UNORM, 0, desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, initial_data, dxgi_usage, out_buffer ? &resource : 0);
