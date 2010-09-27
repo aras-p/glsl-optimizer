@@ -27,12 +27,12 @@
 #define PIPE_ATOMIC_MSVC_INTRINSIC
 #elif (defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86))
 #define PIPE_ATOMIC_ASM_MSVC_X86                
+#elif defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 401)
+#define PIPE_ATOMIC_GCC_INTRINSIC
 #elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86))
 #define PIPE_ATOMIC_ASM_GCC_X86
 #elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64))
 #define PIPE_ATOMIC_ASM_GCC_X86_64
-#elif defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 401)
-#define PIPE_ATOMIC_GCC_INTRINSIC
 #else
 #error "Unsupported platform"
 #endif
