@@ -1433,6 +1433,10 @@ changed:
 		return sr;
 	}
 
+	/* TODO: deferred contexts will need a different implementation of this,
+	 * because we can't put the transfer info into the resource itself.
+	 * Also, there are very different restrictions, for obvious reasons.
+	 */
 	virtual HRESULT STDMETHODCALLTYPE Map(
 		ID3D11Resource *iresource,
 		unsigned subresource,
@@ -1445,8 +1449,7 @@ changed:
 		if(resource->transfers.count(subresource))
 			return E_FAIL;
 		pipe_subresource sr = d3d11_to_pipe_subresource(resource->resource, subresource);
-		pipe_box box;
-		d3d11_to_pipe_box(resource->resource, sr.level, 0);
+		pipe_box box = d3d11_to_pipe_box(resource->resource, sr.level, 0);
 		unsigned usage = 0;
 		if(map_type == D3D11_MAP_READ)
 			usage = PIPE_TRANSFER_READ;
@@ -1470,8 +1473,7 @@ changed:
 				return E_FAIL;
 		}
 		resource->transfers[subresource] = transfer;
-		pipe->transfer_map(pipe, transfer);
-		mapped_resource->pData = transfer->data;
+		mapped_resource->pData = pipe->transfer_map(pipe, transfer);
 		mapped_resource->RowPitch = transfer->stride;
 		mapped_resource->DepthPitch = transfer->slice_stride;
 		return S_OK;
