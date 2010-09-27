@@ -107,16 +107,29 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
 				     4096, 4096);
 
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
-		PIPE_CONTROL_WRITE_TIMESTAMP);
-      OUT_RELOC(query->bo,
-		I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+      if (intel->gen >= 6) {
+	  BEGIN_BATCH(4);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
+	  OUT_RELOC(query->bo,
+		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		  0);
+	  OUT_BATCH(0);
+	  ADVANCE_BATCH();
+      
+      } else {
+	  BEGIN_BATCH(4);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		  PIPE_CONTROL_WRITE_TIMESTAMP);
+	  OUT_RELOC(query->bo,
+		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		  0);
+	  OUT_BATCH(0);
+	  OUT_BATCH(0);
+	  ADVANCE_BATCH();
+      }
    } else {
       /* Reset our driver's tracking of query state. */
       drm_intel_bo_unreference(query->bo);
@@ -140,16 +153,29 @@ brw_end_query(GLcontext *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
-		PIPE_CONTROL_WRITE_TIMESTAMP);
-      OUT_RELOC(query->bo,
-		I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		8);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+      if (intel->gen >= 6) {
+	  BEGIN_BATCH(4);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
+	  OUT_RELOC(query->bo,
+		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		  8);
+	  OUT_BATCH(0);
+	  ADVANCE_BATCH();
+      
+      } else {
+	  BEGIN_BATCH(4);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		  PIPE_CONTROL_WRITE_TIMESTAMP);
+	  OUT_RELOC(query->bo,
+		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		  8);
+	  OUT_BATCH(0);
+	  OUT_BATCH(0);
+	  ADVANCE_BATCH();
+      }
 
       intel_batchbuffer_flush(intel->batch);
    } else {
@@ -223,22 +249,43 @@ brw_emit_query_begin(struct brw_context *brw)
    if (!query || brw->query.active)
       return;
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL |
-	     PIPE_CONTROL_DEPTH_STALL |
-	     PIPE_CONTROL_WRITE_DEPTH_COUNT);
-   /* This object could be mapped cacheable, but we don't have an exposed
-    * mechanism to support that.  Since it's going uncached, tell GEM that
-    * we're writing to it.  The usual clflush should be all that's required
-    * to pick up the results.
-    */
-   OUT_RELOC(brw->query.bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-	     PIPE_CONTROL_GLOBAL_GTT_WRITE |
-	     ((brw->query.index * 2) * sizeof(uint64_t)));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (intel->gen >= 6) {
+       BEGIN_BATCH(8);
+
+       /* workaround: CS stall required before depth stall. */
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(PIPE_CONTROL_CS_STALL);
+       OUT_BATCH(0); /* write address */
+       OUT_BATCH(0); /* write data */
+
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
+	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
+       OUT_RELOC(brw->query.bo,
+	         I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		 PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		 ((brw->query.index * 2) * sizeof(uint64_t)));
+       OUT_BATCH(0);
+       ADVANCE_BATCH();
+       
+   } else {
+       BEGIN_BATCH(4);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+	       PIPE_CONTROL_DEPTH_STALL |
+	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
+       /* This object could be mapped cacheable, but we don't have an exposed
+	* mechanism to support that.  Since it's going uncached, tell GEM that
+	* we're writing to it.  The usual clflush should be all that's required
+	* to pick up the results.
+	*/
+       OUT_RELOC(brw->query.bo,
+	       I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+	       PIPE_CONTROL_GLOBAL_GTT_WRITE |
+	       ((brw->query.index * 2) * sizeof(uint64_t)));
+       OUT_BATCH(0);
+       OUT_BATCH(0);
+       ADVANCE_BATCH();
+   }
 
    if (query->bo != brw->query.bo) {
       if (query->bo != NULL)
@@ -260,17 +307,37 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.active)
       return;
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL |
-	     PIPE_CONTROL_DEPTH_STALL |
-	     PIPE_CONTROL_WRITE_DEPTH_COUNT);
-   OUT_RELOC(brw->query.bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-	     PIPE_CONTROL_GLOBAL_GTT_WRITE |
-	     ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (intel->gen >= 6) {
+       BEGIN_BATCH(8);
+       /* workaround: CS stall required before depth stall. */
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(PIPE_CONTROL_CS_STALL);
+       OUT_BATCH(0); /* write address */
+       OUT_BATCH(0); /* write data */
+
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
+	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
+       OUT_RELOC(brw->query.bo,
+	         I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		 PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		 ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
+       OUT_BATCH(0);
+       ADVANCE_BATCH();
+   
+   } else {
+       BEGIN_BATCH(4);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+	       PIPE_CONTROL_DEPTH_STALL |
+	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
+       OUT_RELOC(brw->query.bo,
+	       I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+	       PIPE_CONTROL_GLOBAL_GTT_WRITE |
+	       ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
+       OUT_BATCH(0);
+       OUT_BATCH(0);
+       ADVANCE_BATCH();
+   }
 
    brw->query.active = GL_FALSE;
    brw->query.index++;
