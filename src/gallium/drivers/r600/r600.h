@@ -137,6 +137,7 @@ enum evergreen_group_id {
 	EVERGREEN_GROUP_CTL_CONST,
 	EVERGREEN_GROUP_LOOP_CONST,
 	EVERGREEN_GROUP_BOOL_CONST,
+	EVERGREEN_GROUP_SAMPLER_BORDER,
 	EVERGREEN_NGROUPS
 };
 
@@ -183,6 +184,7 @@ struct r600_group_block {
 	unsigned		pm4_ndwords;
 	unsigned		nbo;
 	unsigned		nreg;
+	u32			*reg;
 	u32			pm4[R600_BLOCK_MAX_REG];
 	unsigned		pm4_bo_index[R600_BLOCK_MAX_REG];
 	struct r600_block_reloc	reloc[R600_BLOCK_MAX_BO];

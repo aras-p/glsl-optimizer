@@ -53,13 +53,13 @@ struct radeon_ws_bo {
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
 
 struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned group_id, unsigned offset);
-void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group, unsigned opcode);
+void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group);
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo);
-int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
+int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg, unsigned opcode);
 int r600_group_init(struct r600_group *group, unsigned start_offset, unsigned end_offset);
 
 #define GROUP_FORCE_NEW_BLOCK	0
-static const struct r600_reg evergreen_reg_list[] = {
+static const struct r600_reg evergreen_config_reg_list[] = {
 	{0, 0, R_008958_VGT_PRIMITIVE_TYPE},
 	{0, 0, R_008A14_PA_CL_ENHANCE},
 	{0, 0, R_008C00_SQ_CONFIG},
@@ -74,6 +74,9 @@ static const struct r600_reg evergreen_reg_list[] = {
 	{0, 0, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ},
 	{0, 0, R_009100_SPI_CONFIG_CNTL},
 	{0, 0, R_00913C_SPI_CONFIG_CNTL_1},
+};
+
+static const struct r600_reg evergreen_context_reg_list[] = {
 	{0, 0, R_028000_DB_RENDER_CONTROL},
 	{0, 0, R_028004_DB_COUNT_CONTROL},
 	{0, 0, R_028008_DB_DEPTH_VIEW},
@@ -450,7 +453,7 @@ static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_resource[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_resource, nreg);
+	return r600_context_add_block(ctx, r600_shader_resource, nreg, PKT3_SET_RESOURCE);
 }
 
 /* SHADER SAMPLER R600/R700 */
@@ -466,7 +469,39 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_sampler, nreg);
+	return r600_context_add_block(ctx, r600_shader_sampler, nreg, PKT3_SET_SAMPLER);
+}
+
+/* SHADER SAMPLER BORDER R600/R700 */
+static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 offset, unsigned id)
+{
+	struct r600_reg r600_shader_sampler_border[] = {
+		{0, 0, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX},
+		{0, 0, R_00A404_TD_PS_SAMPLER0_BORDER_RED},
+		{0, 0, R_00A408_TD_PS_SAMPLER0_BORDER_GREEN},
+		{0, 0, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE},
+		{0, 0, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA},
+	};
+	unsigned nreg = sizeof(r600_shader_sampler_border)/sizeof(struct r600_reg);
+	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x10 + 0x40000 + id * 0x1C;
+	struct r600_group_block *block;
+	struct r600_group *group;
+	int r;
+
+	for (int i = 0; i < nreg; i++) {
+		r600_shader_sampler_border[i].offset -= R_00A400_TD_PS_SAMPLER0_BORDER_INDEX;
+		r600_shader_sampler_border[i].offset += fake_offset;
+	}
+	r = r600_context_add_block(ctx, r600_shader_sampler_border, nreg, PKT3_SET_CONFIG_REG);
+	if (r) {
+		return r;
+	}
+	/* set proper offset */
+	group = &ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER];
+	id = group->offset_block_id[((fake_offset - group->start_offset) >> 2)];
+	block = &group->blocks[id];
+	block->pm4[1] = (offset - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
+	return 0;
 }
 
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
@@ -502,10 +537,22 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (r) {
 		goto out_err;
 	}
+	/* we use unassigned range of GPU reg to fake border color register */
+	r = r600_group_init(&ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER], 0x40000, 0x41000);
+	if (r) {
+		goto out_err;
+	}
 	ctx->ngroups = EVERGREEN_NGROUPS;
 
 	/* add blocks */
-	r = r600_context_add_block(ctx, evergreen_reg_list, sizeof(evergreen_reg_list)/sizeof(struct r600_reg));
+	r = r600_context_add_block(ctx, evergreen_config_reg_list,
+				 sizeof(evergreen_config_reg_list)/sizeof(struct r600_reg),
+					PKT3_SET_CONFIG_REG);
+	if (r)
+		goto out_err;
+	r = r600_context_add_block(ctx, evergreen_context_reg_list,
+				 sizeof(evergreen_context_reg_list)/sizeof(struct r600_reg),
+					PKT3_SET_CONTEXT_REG);
 	if (r)
 		goto out_err;
 
@@ -518,6 +565,18 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* VS SAMPLER */
 	for (int j = 0, offset = 0xD8; j < 18; j++, offset += 0xC) {
 		r = r600_state_sampler_init(ctx, offset);
+		if (r)
+			goto out_err;
+	}
+	/* PS SAMPLER BORDER */
+	for (int j = 0; j < 18; j++) {
+		r = evergreen_state_sampler_border_init(ctx, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, j);
+		if (r)
+			goto out_err;
+	}
+	/* VS SAMPLER BORDER */
+	for (int j = 0; j < 18; j++) {
+		r = evergreen_state_sampler_border_init(ctx, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, j);
 		if (r)
 			goto out_err;
 	}
@@ -566,14 +625,14 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 	offset -= ctx->groups[EVERGREEN_GROUP_RESOURCE].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_RESOURCE].offset_block_id[offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_RESOURCE].blocks[id];
-	block->pm4[0] = state->regs[0].value;
-	block->pm4[1] = state->regs[1].value;
-	block->pm4[2] = state->regs[2].value;
-	block->pm4[3] = state->regs[3].value;
-	block->pm4[4] = state->regs[4].value;
-	block->pm4[5] = state->regs[5].value;
-	block->pm4[6] = state->regs[6].value;
-	block->pm4[7] = state->regs[7].value;
+	block->reg[0] = state->regs[0].value;
+	block->reg[1] = state->regs[1].value;
+	block->reg[2] = state->regs[2].value;
+	block->reg[3] = state->regs[3].value;
+	block->reg[4] = state->regs[4].value;
+	block->reg[5] = state->regs[5].value;
+	block->reg[6] = state->regs[6].value;
+	block->reg[7] = state->regs[7].value;
 	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
@@ -589,7 +648,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 	}
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -614,29 +673,29 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	offset -= ctx->groups[EVERGREEN_GROUP_SAMPLER].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_SAMPLER].offset_block_id[offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_SAMPLER].blocks[id];
-	block->pm4[0] = state->regs[0].value;
-	block->pm4[1] = state->regs[1].value;
-	block->pm4[2] = state->regs[2].value;
+	block->reg[0] = state->regs[0].value;
+	block->reg[1] = state->regs[1].value;
+	block->reg[2] = state->regs[2].value;
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
-static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
 {
 	struct r600_group_block *block;
-	unsigned id;
+	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x10 + 0x40000 + id * 0x1C;
 
-	offset -= ctx->groups[EVERGREEN_GROUP_CONFIG].start_offset;
-	id = ctx->groups[EVERGREEN_GROUP_CONFIG].offset_block_id[offset >> 2];
-	block = &ctx->groups[EVERGREEN_GROUP_CONFIG].blocks[id];
-	block->pm4[0] = state->regs[3].value;
-	block->pm4[1] = state->regs[4].value;
-	block->pm4[2] = state->regs[5].value;
-	block->pm4[3] = state->regs[6].value;
+	fake_offset -= ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].start_offset;
+	id = ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].offset_block_id[fake_offset >> 2];
+	block = &ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER].blocks[id];
+	block->reg[0] = id;
+	block->reg[1] = state->regs[3].value;
+	block->reg[2] = state->regs[4].value;
+	block->reg[3] = state->regs[5].value;
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -646,8 +705,7 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 	offset = 0x0003C000 + id * 0xc;
 	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
 	if (state->nregs > 3) {
-		offset = 0x0000A400 + id * 0x10;
-		//		evergreen_context_pipe_state_set_sampler_border(ctx, state, offset);
+		evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, id);
 	}
 }
 
@@ -658,8 +716,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 	offset = 0x0003C0D8 + id * 0xc;
 	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
 	if (state->nregs > 3) {
-		offset = 0x0000A600 + id * 0x10;
-		//		evergreen_context_pipe_state_set_sampler_border(ctx, state, offset);
+		evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
 	}
 }
 
@@ -719,10 +776,11 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* enough room to copy packet */
-	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_CONFIG], PKT3_SET_CONFIG_REG);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_CONTEXT], PKT3_SET_CONTEXT_REG);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_RESOURCE], PKT3_SET_RESOURCE);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_SAMPLER], PKT3_SET_SAMPLER);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_CONFIG]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_CONTEXT]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_RESOURCE]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_SAMPLER]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[EVERGREEN_GROUP_SAMPLER_BORDER]);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
@@ -773,14 +831,14 @@ static inline void evergreen_resource_set(struct r600_context *ctx, struct r600_
 	offset -= ctx->groups[EVERGREEN_GROUP_RESOURCE].start_offset;
 	id = ctx->groups[EVERGREEN_GROUP_RESOURCE].offset_block_id[offset >> 2];
 	block = &ctx->groups[EVERGREEN_GROUP_RESOURCE].blocks[id];
-	block->pm4[0] = state->regs[0].value;
-	block->pm4[1] = state->regs[1].value;
-	block->pm4[2] = state->regs[2].value;
-	block->pm4[3] = state->regs[3].value;
-	block->pm4[4] = state->regs[4].value;
-	block->pm4[5] = state->regs[5].value;
-	block->pm4[6] = state->regs[6].value;
-	block->pm4[7] = state->regs[7].value;
+	block->reg[0] = state->regs[0].value;
+	block->reg[1] = state->regs[1].value;
+	block->reg[2] = state->regs[2].value;
+	block->reg[3] = state->regs[3].value;
+	block->reg[4] = state->regs[4].value;
+	block->reg[5] = state->regs[5].value;
+	block->reg[6] = state->regs[6].value;
+	block->reg[7] = state->regs[7].value;
 	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
@@ -796,7 +854,7 @@ static inline void evergreen_resource_set(struct r600_context *ctx, struct r600_
 	}
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 void evergreen_ps_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)

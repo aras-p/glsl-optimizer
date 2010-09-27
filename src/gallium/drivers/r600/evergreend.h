@@ -1113,6 +1113,22 @@
 #define   S_03000C_DST_SEL_W(x)                        (((x) & 0x7) << 12)
 #define   G_03000C_DST_SEL_W(x)                        (((x) >> 12) & 0x7)
 
+#define R_00A400_TD_PS_SAMPLER0_BORDER_INDEX         0x00A400
+#define R_00A404_TD_PS_SAMPLER0_BORDER_RED           0x00A404
+#define R_00A408_TD_PS_SAMPLER0_BORDER_GREEN         0x00A408
+#define R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE          0x00A40C
+#define R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA         0x00A410
+#define R_00A414_TD_VS_SAMPLER0_BORDER_INDEX         0x00A414
+#define R_00A418_TD_VS_SAMPLER0_BORDER_RED           0x00A418
+#define R_00A41C_TD_VS_SAMPLER0_BORDER_GREEN         0x00A41C
+#define R_00A420_TD_VS_SAMPLER0_BORDER_BLUE          0x00A420
+#define R_00A424_TD_VS_SAMPLER0_BORDER_ALPHA         0x00A424
+#define R_00A428_TD_GS_SAMPLER0_BORDER_INDEX         0x00A428
+#define R_00A42C_TD_GS_SAMPLER0_BORDER_RED           0x00A42C
+#define R_00A430_TD_GS_SAMPLER0_BORDER_GREEN         0x00A430
+#define R_00A434_TD_GS_SAMPLER0_BORDER_BLUE          0x00A434
+#define R_00A438_TD_GS_SAMPLER0_BORDER_ALPHA         0x00A438
+
 #define R_03C000_SQ_TEX_SAMPLER_WORD0_0              0x03C000
 #define   S_03C000_CLAMP_X(x)                          (((x) & 0x7) << 0)
 #define   G_03C000_CLAMP_X(x)                          (((x) >> 0) & 0x7)

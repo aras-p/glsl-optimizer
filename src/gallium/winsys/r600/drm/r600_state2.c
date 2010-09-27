@@ -75,7 +75,7 @@ static int r600_group_id_register_offset(struct r600_context *ctx, unsigned offs
 	return -1;
 }
 
-int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg)
+int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg, unsigned opcode)
 {
 	struct r600_group_block *block, *tmp;
 	struct r600_group *group;
@@ -109,6 +109,12 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		if (tmp == NULL) {
 			return -ENOMEM;
 		}
+		/* update reg pointer */
+		if (tmp != group->blocks) {
+			for (int j = 0; j < group->nblocks; j++) {
+				tmp[j].reg = &tmp[j].pm4[2];
+			}
+		}
 		group->blocks = tmp;
 		block = &group->blocks[group->nblocks++];
 		for (int j = 0; j < n; j++) {
@@ -118,7 +124,10 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		/* initialize block */
 		memset(block, 0, sizeof(struct r600_group_block));
 		block->start_offset = reg[i].offset;
-		block->pm4_ndwords = n;
+		block->pm4[block->pm4_ndwords++] = PKT3(opcode, n);
+		block->pm4[block->pm4_ndwords++] = (block->start_offset - group->start_offset) >> 2;
+		block->reg = &block->pm4[block->pm4_ndwords];
+		block->pm4_ndwords += n;
 		block->nreg = n;
 		for (j = 0; j < n; j++) {
 			if (reg[i+j].need_bo) {
@@ -168,7 +177,8 @@ static void r600_group_fini(struct r600_group *group)
 }
 
 /* R600/R700 configuration */
-static const struct r600_reg r600_reg_list[] = {
+static const struct r600_reg r600_config_reg_list[] = {
+	{0, 0, R_008958_VGT_PRIMITIVE_TYPE},
 	{0, 0, R_008C00_SQ_CONFIG},
 	{0, 0, R_008C04_SQ_GPR_RESOURCE_MGMT_1},
 	{0, 0, R_008C08_SQ_GPR_RESOURCE_MGMT_2},
@@ -180,6 +190,9 @@ static const struct r600_reg r600_reg_list[] = {
 	{0, 0, R_009714_VC_ENHANCE},
 	{0, 0, R_009830_DB_DEBUG},
 	{0, 0, R_009838_DB_WATERMARKS},
+};
+
+static const struct r600_reg r600_context_reg_list[] = {
 	{0, 0, R_028350_SX_MISC},
 	{0, 0, R_0286C8_SPI_THREAD_GROUPING},
 	{0, 0, R_0288A8_SQ_ESGS_RING_ITEMSIZE},
@@ -509,7 +522,6 @@ static const struct r600_reg r600_reg_list[] = {
 	{0, 0, R_028850_SQ_PGM_RESOURCES_PS},
 	{0, 0, R_028854_SQ_PGM_EXPORTS_PS},
 	{0, 0, R_0288CC_SQ_PGM_CF_OFFSET_PS},
-	{0, 0, R_008958_VGT_PRIMITIVE_TYPE},
 	{0, 0, R_028400_VGT_MAX_VTX_INDX},
 	{0, 0, R_028404_VGT_MIN_VTX_INDX},
 	{0, 0, R_028408_VGT_INDX_OFFSET},
@@ -534,7 +546,7 @@ static int r600_state_constant_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_constant[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_constant, nreg);
+	return r600_context_add_block(ctx, r600_shader_constant, nreg, PKT3_SET_ALU_CONST);
 }
 
 /* SHADER RESOURCE R600/R700 */
@@ -554,7 +566,7 @@ static int r600_state_resource_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_resource[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_resource, nreg);
+	return r600_context_add_block(ctx, r600_shader_resource, nreg, PKT3_SET_RESOURCE);
 }
 
 /* SHADER SAMPLER R600/R700 */
@@ -570,7 +582,7 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_sampler, nreg);
+	return r600_context_add_block(ctx, r600_shader_sampler, nreg, PKT3_SET_SAMPLER);
 }
 
 /* SHADER SAMPLER BORDER R600/R700 */
@@ -587,7 +599,7 @@ static int r600_state_sampler_border_init(struct r600_context *ctx, u32 offset)
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler_border[i].offset += offset;
 	}
-	return r600_context_add_block(ctx, r600_shader_sampler_border, nreg);
+	return r600_context_add_block(ctx, r600_shader_sampler_border, nreg, PKT3_SET_CONFIG_REG);
 }
 
 /* initialize */
@@ -644,7 +656,14 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->ngroups = R600_NGROUPS;
 
 	/* add blocks */
-	r = r600_context_add_block(ctx, r600_reg_list, sizeof(r600_reg_list)/sizeof(struct r600_reg));
+	r = r600_context_add_block(ctx, r600_config_reg_list,
+				sizeof(r600_config_reg_list)/sizeof(struct r600_reg),
+				PKT3_SET_CONFIG_REG);
+	if (r)
+		goto out_err;
+	r = r600_context_add_block(ctx, r600_context_reg_list,
+				sizeof(r600_context_reg_list)/sizeof(struct r600_reg),
+				PKT3_SET_CONTEXT_REG);
 	if (r)
 		goto out_err;
 
@@ -762,8 +781,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		id = group->offset_block_id[(state->regs[i].offset - group->start_offset) >> 2];
 		block = &group->blocks[id];
 		id = (state->regs[i].offset - block->start_offset) >> 2;
-		block->pm4[id] &= ~state->regs[i].mask;
-		block->pm4[id] |= state->regs[i].value;
+		block->reg[id] &= ~state->regs[i].mask;
+		block->reg[id] |= state->regs[i].value;
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			id = block->pm4_bo_index[id];
@@ -771,7 +790,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		}
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 	}
 }
 
@@ -783,13 +802,13 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	offset -= ctx->groups[R600_GROUP_RESOURCE].start_offset;
 	id = ctx->groups[R600_GROUP_RESOURCE].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_RESOURCE].blocks[id];
-	block->pm4[0] = state->regs[0].value;
-	block->pm4[1] = state->regs[1].value;
-	block->pm4[2] = state->regs[2].value;
-	block->pm4[3] = state->regs[3].value;
-	block->pm4[4] = state->regs[4].value;
-	block->pm4[5] = state->regs[5].value;
-	block->pm4[6] = state->regs[6].value;
+	block->reg[0] = state->regs[0].value;
+	block->reg[1] = state->regs[1].value;
+	block->reg[2] = state->regs[2].value;
+	block->reg[3] = state->regs[3].value;
+	block->reg[4] = state->regs[4].value;
+	block->reg[5] = state->regs[5].value;
+	block->reg[6] = state->regs[6].value;
 	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
@@ -805,7 +824,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	}
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -830,12 +849,12 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	offset -= ctx->groups[R600_GROUP_SAMPLER].start_offset;
 	id = ctx->groups[R600_GROUP_SAMPLER].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_SAMPLER].blocks[id];
-	block->pm4[0] = state->regs[0].value;
-	block->pm4[1] = state->regs[1].value;
-	block->pm4[2] = state->regs[2].value;
+	block->reg[0] = state->regs[0].value;
+	block->reg[1] = state->regs[1].value;
+	block->reg[2] = state->regs[2].value;
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
@@ -846,13 +865,13 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	offset -= ctx->groups[R600_GROUP_CONFIG].start_offset;
 	id = ctx->groups[R600_GROUP_CONFIG].offset_block_id[offset >> 2];
 	block = &ctx->groups[R600_GROUP_CONFIG].blocks[id];
-	block->pm4[0] = state->regs[3].value;
-	block->pm4[1] = state->regs[4].value;
-	block->pm4[2] = state->regs[5].value;
-	block->pm4[3] = state->regs[6].value;
+	block->reg[0] = state->regs[3].value;
+	block->reg[1] = state->regs[4].value;
+	block->reg[2] = state->regs[5].value;
+	block->reg[3] = state->regs[6].value;
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
-	ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+	ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 }
 
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -879,7 +898,7 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 	}
 }
 
-void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group, unsigned opcode)
+void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *group)
 {
 	struct radeon_bo *bo;
 	int id;
@@ -898,8 +917,6 @@ void r600_context_group_emit_dirty(struct r600_context *ctx, struct r600_group *
 				}
 			}
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(opcode, block->nreg);
-			ctx->pm4[ctx->pm4_cdwords++] = (block->start_offset - group->start_offset) >> 2;
 			memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 			ctx->pm4_cdwords += block->pm4_ndwords;
 			block->status ^= R600_BLOCK_STATUS_DIRTY;
@@ -968,11 +985,11 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 
 	/* enough room to copy packet */
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONFIG], PKT3_SET_CONFIG_REG);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONTEXT], PKT3_SET_CONTEXT_REG);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_ALU_CONST], PKT3_SET_ALU_CONST);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_RESOURCE], PKT3_SET_RESOURCE);
-	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_SAMPLER], PKT3_SET_SAMPLER);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONFIG]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_CONTEXT]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_ALU_CONST]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_RESOURCE]);
+	r600_context_group_emit_dirty(ctx, &ctx->groups[R600_GROUP_SAMPLER]);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
@@ -1063,7 +1080,7 @@ void r600_context_flush(struct r600_context *ctx)
 			/* mark enabled block as dirty */
 			block = &ctx->groups[i].blocks[j];
 			if (block->status & R600_BLOCK_STATUS_ENABLED) {
-				ctx->pm4_dirty_cdwords += 2 + block->pm4_ndwords;
+				ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 				block->status |= R600_BLOCK_STATUS_DIRTY;
 			}
 		}
