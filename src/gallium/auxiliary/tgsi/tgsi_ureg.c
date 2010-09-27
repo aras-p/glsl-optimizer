@@ -96,7 +96,8 @@ struct ureg_program
       unsigned semantic_name;
       unsigned semantic_index;
       unsigned interp;
-      unsigned cylindrical_wrap;
+      unsigned char cylindrical_wrap;
+      unsigned char centroid;
    } fs_input[UREG_MAX_INPUT];
    unsigned nr_fs_inputs;
 
@@ -286,11 +287,12 @@ ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
 
 
 struct ureg_src
-ureg_DECL_fs_input_cyl(struct ureg_program *ureg,
+ureg_DECL_fs_input_cyl_centroid(struct ureg_program *ureg,
                        unsigned semantic_name,
                        unsigned semantic_index,
                        unsigned interp_mode,
-                       unsigned cylindrical_wrap)
+                       unsigned cylindrical_wrap,
+                       unsigned centroid)
 {
    unsigned i;
 
@@ -306,6 +308,7 @@ ureg_DECL_fs_input_cyl(struct ureg_program *ureg,
       ureg->fs_input[i].semantic_index = semantic_index;
       ureg->fs_input[i].interp = interp_mode;
       ureg->fs_input[i].cylindrical_wrap = cylindrical_wrap;
+      ureg->fs_input[i].centroid = centroid;
       ureg->nr_fs_inputs++;
    } else {
       set_bad(ureg);
@@ -1126,7 +1129,8 @@ emit_decl_fs(struct ureg_program *ureg,
              unsigned semantic_name,
              unsigned semantic_index,
              unsigned interpolate,
-             unsigned cylindrical_wrap)
+             unsigned cylindrical_wrap,
+             unsigned centroid)
 {
    union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
 
@@ -1138,6 +1142,7 @@ emit_decl_fs(struct ureg_program *ureg,
    out[0].decl.Interpolate = interpolate;
    out[0].decl.Semantic = 1;
    out[0].decl.CylindricalWrap = cylindrical_wrap;
+   out[0].decl.Centroid = centroid;
 
    out[1].value = 0;
    out[1].decl_range.First = index;
@@ -1287,7 +1292,8 @@ static void emit_decls( struct ureg_program *ureg )
                       ureg->fs_input[i].semantic_name,
                       ureg->fs_input[i].semantic_index,
                       ureg->fs_input[i].interp,
-                      ureg->fs_input[i].cylindrical_wrap);
+                      ureg->fs_input[i].cylindrical_wrap,
+                      ureg->fs_input[i].centroid);
       }
    } else {
       for (i = 0; i < ureg->nr_gs_inputs; i++) {
