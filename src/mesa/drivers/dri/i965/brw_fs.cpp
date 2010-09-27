@@ -725,11 +725,13 @@ fs_visitor::visit(ir_expression *ir)
       emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
       break;
    case ir_binop_equal:
+   case ir_binop_all_equal: /* same as nequal for scalars */
       inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
       inst->conditional_mod = BRW_CONDITIONAL_Z;
       emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
       break;
    case ir_binop_nequal:
+   case ir_binop_any_nequal: /* same as nequal for scalars */
       inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
       emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
@@ -750,8 +752,6 @@ fs_visitor::visit(ir_expression *ir)
    case ir_binop_dot:
    case ir_binop_cross:
    case ir_unop_any:
-   case ir_binop_all_equal:
-   case ir_binop_any_nequal:
       assert(!"not reached: should be handled by brw_fs_channel_expressions");
       break;
 
