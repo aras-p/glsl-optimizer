@@ -319,8 +319,6 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
       ir->write_mask = (1 << 0);
 
       handle_rvalue(&ir->rhs);
-      ir->rhs = new(mem_ctx) ir_swizzle(ir->rhs,
-					elem, elem, elem, elem, 1);
    } else {
       handle_rvalue(&ir->rhs);
    }
