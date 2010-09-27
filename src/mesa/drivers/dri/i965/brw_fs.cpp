@@ -868,9 +868,9 @@ fs_visitor::visit(ir_assignment *ir)
 	 inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
 	 if (ir->condition)
 	    inst->predicated = true;
+	 r.reg_offset++;
       }
       l.reg_offset++;
-      r.reg_offset++;
    }
 }
 
