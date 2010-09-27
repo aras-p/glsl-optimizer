@@ -29,12 +29,59 @@
 #define PIPE_ATOMIC_ASM_MSVC_X86                
 #elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86))
 #define PIPE_ATOMIC_ASM_GCC_X86
+#elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64))
+#define PIPE_ATOMIC_ASM_GCC_X86_64
 #elif defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 401)
 #define PIPE_ATOMIC_GCC_INTRINSIC
 #else
 #error "Unsupported platform"
 #endif
 
+
+#if defined(PIPE_ATOMIC_ASM_GCC_X86_64)
+#define PIPE_ATOMIC "GCC x86_64 assembly"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
+
+static INLINE boolean
+p_atomic_dec_zero(int32_t *v)
+{
+   unsigned char c;
+
+   __asm__ __volatile__("lock; decl %0; sete %1":"+m"(*v), "=qm"(c)
+			::"memory");
+
+   return c != 0;
+}
+
+static INLINE void
+p_atomic_inc(int32_t *v)
+{
+   __asm__ __volatile__("lock; incl %0":"+m"(*v));
+}
+
+static INLINE void
+p_atomic_dec(int32_t *v)
+{
+   __asm__ __volatile__("lock; decl %0":"+m"(*v));
+}
+
+static INLINE int32_t
+p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
+{
+   return __sync_val_compare_and_swap(v, old, _new);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PIPE_ATOMIC_ASM_GCC_X86_64 */
 
 
 #if defined(PIPE_ATOMIC_ASM_GCC_X86)
