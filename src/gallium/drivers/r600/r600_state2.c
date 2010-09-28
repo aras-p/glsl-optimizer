@@ -743,6 +743,46 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 	/* TODO queries */
 }
 
+int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_texture *texture)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct pipe_framebuffer_state fb = *rctx->pframebuffer;
+	struct pipe_surface *zsurf, *cbsurf;
+	int level = 0;
+	float depth = 1.0f;
+
+	for (int i = 0; i < fb.nr_cbufs; i++) {
+		fb.cbufs[i] = NULL;
+		pipe_surface_reference(&fb.cbufs[i], rctx->pframebuffer->cbufs[i]);
+	}
+	fb.zsbuf = NULL;
+	pipe_surface_reference(&fb.zsbuf, rctx->pframebuffer->zsbuf);
+
+	zsurf = ctx->screen->get_tex_surface(ctx->screen, &texture->resource.base.b, 0, level, 0,
+					     PIPE_BIND_DEPTH_STENCIL);
+
+	cbsurf = ctx->screen->get_tex_surface(ctx->screen, texture->flushed_depth_texture, 0, level, 0,
+					      PIPE_BIND_RENDER_TARGET);
+
+	r600_blitter_save_states(ctx);
+	util_blitter_save_framebuffer(rctx->blitter, &fb);
+
+	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
+		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
+		depth = 0.0f;
+
+	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
+
+	pipe_surface_reference(&zsurf, NULL);
+	pipe_surface_reference(&cbsurf, NULL);
+	for (int i = 0; i < fb.nr_cbufs; i++) {
+		pipe_surface_reference(&fb.cbufs[i], NULL);
+	}
+	pipe_surface_reference(&fb.zsbuf, NULL);
+
+	return 0;
+}
+
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 			const float *rgba, double depth, unsigned stencil)
 {
@@ -2269,6 +2309,8 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 
 	LIST_INITHEAD(&rctx->query_list);
 	rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
+
+	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth2;
 
 	return &rctx->context;
 }

@@ -104,4 +104,6 @@ static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
 			     struct pipe_resource *texture);
+
+extern int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r600_resource_texture *texture);
 #endif

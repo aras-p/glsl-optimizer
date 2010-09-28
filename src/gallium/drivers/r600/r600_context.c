@@ -170,6 +170,7 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 
 	rctx->ctx = radeon_ctx_init(rscreen->rw);
 	radeon_draw_init(&rctx->draw, rscreen->rw);
+	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth;
 	return &rctx->context;
  out_free:
 	FREE(rctx);
