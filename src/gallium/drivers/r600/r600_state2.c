@@ -757,6 +757,7 @@ int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_t
 	int level = 0;
 	float depth = 1.0f;
 
+	r600_context_queries_suspend(&rctx->ctx);
 	for (int i = 0; i < fb.nr_cbufs; i++) {
 		fb.cbufs[i] = NULL;
 		pipe_surface_reference(&fb.cbufs[i], rctx->pframebuffer->cbufs[i]);
@@ -785,6 +786,7 @@ int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_t
 		pipe_surface_reference(&fb.cbufs[i], NULL);
 	}
 	pipe_surface_reference(&fb.zsbuf, NULL);
+	r600_context_queries_resume(&rctx->ctx);
 
 	return 0;
 }
@@ -795,10 +797,12 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
+	r600_context_queries_suspend(&rctx->ctx);
 	r600_blitter_save_states(ctx);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 				fb->nr_cbufs, buffers, rgba, depth,
 				stencil);
+	r600_context_queries_resume(&rctx->ctx);
 }
 
 static void r600_clear_render_target(struct pipe_context *ctx,
@@ -810,9 +814,11 @@ static void r600_clear_render_target(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
+	r600_context_queries_suspend(&rctx->ctx);
 	util_blitter_save_framebuffer(rctx->blitter, fb);
 	util_blitter_clear_render_target(rctx->blitter, dst, rgba,
 					 dstx, dsty, width, height);
+	r600_context_queries_resume(&rctx->ctx);
 }
 
 static void r600_clear_depth_stencil(struct pipe_context *ctx,
@@ -826,9 +832,11 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
+	r600_context_queries_suspend(&rctx->ctx);
 	util_blitter_save_framebuffer(rctx->blitter, fb);
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
 					 dstx, dsty, width, height);
+	r600_context_queries_resume(&rctx->ctx);
 }
 
 

@@ -278,6 +278,8 @@ boolean r600_context_query_result(struct r600_context *ctx,
 				boolean wait, void *vresult);
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
+void r600_context_queries_suspend(struct r600_context *ctx);
+void r600_context_queries_resume(struct r600_context *ctx);
 
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);

@@ -61,9 +61,6 @@ void radeon_bo_reference(struct radeon *radeon,
 
 unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
 
-/* queries */
-static void r600_context_queries_suspend(struct r600_context *ctx);
-static void r600_context_queries_resume(struct r600_context *ctx);
 
 static int r600_group_id_register_offset(struct r600_context *ctx, unsigned offset)
 {
@@ -1292,7 +1289,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	return TRUE;
 }
 
-static void r600_context_queries_suspend(struct r600_context *ctx)
+void r600_context_queries_suspend(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
@@ -1304,7 +1301,7 @@ static void r600_context_queries_suspend(struct r600_context *ctx)
 	}
 }
 
-static void r600_context_queries_resume(struct r600_context *ctx)
+void r600_context_queries_resume(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
