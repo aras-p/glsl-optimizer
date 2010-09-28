@@ -453,6 +453,7 @@ public:
    void emit_fb_writes();
 
    struct brw_reg interp_reg(int location, int channel);
+   int setup_uniform_values(int loc, const glsl_type *type);
 
    struct brw_context *brw;
    struct intel_context *intel;
@@ -541,6 +542,64 @@ fs_visitor::variable_storage(ir_variable *var)
    return (fs_reg *)hash_table_find(this->variable_ht, var);
 }
 
+/* Our support for uniforms is piggy-backed on the struct
+ * gl_fragment_program, because that's where the values actually
+ * get stored, rather than in some global gl_shader_program uniform
+ * store.
+ */
+int
+fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
+{
+   const struct gl_program *fp = &this->brw->fragment_program->Base;
+   unsigned int offset = 0;
+   float *vec_values;
+
+   if (type->is_matrix()) {
+      const glsl_type *column = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+							type->vector_elements,
+							1);
+
+      for (unsigned int i = 0; i < type->matrix_columns; i++) {
+	 offset += setup_uniform_values(loc + offset, column);
+      }
+
+      return offset;
+   }
+
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      vec_values = fp->Parameters->ParameterValues[loc];
+      for (unsigned int i = 0; i < type->vector_elements; i++) {
+	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
+      }
+      return 1;
+
+   case GLSL_TYPE_STRUCT:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 offset += setup_uniform_values(loc + offset,
+					type->fields.structure[i].type);
+      }
+      return offset;
+
+   case GLSL_TYPE_ARRAY:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 offset += setup_uniform_values(loc + offset, type->fields.array);
+      }
+      return offset;
+
+   case GLSL_TYPE_SAMPLER:
+      /* The sampler takes up a slot, but we don't use any values from it. */
+      return 1;
+
+   default:
+      assert(!"not reached");
+      return 0;
+   }
+}
+
 void
 fs_visitor::visit(ir_variable *ir)
 {
@@ -560,23 +619,9 @@ fs_visitor::visit(ir_variable *ir)
    }
 
    if (ir->mode == ir_var_uniform) {
-      const float *vec_values;
       int param_index = c->prog_data.nr_params;
 
-      /* FINISHME: This is wildly incomplete. */
-      assert(ir->type->is_scalar() || ir->type->is_vector() ||
-	     ir->type->is_sampler());
-
-      const struct gl_program *fp = &this->brw->fragment_program->Base;
-      /* Our support for uniforms is piggy-backed on the struct
-       * gl_fragment_program, because that's where the values actually
-       * get stored, rather than in some global gl_shader_program uniform
-       * store.
-       */
-      vec_values = fp->Parameters->ParameterValues[ir->location];
-      for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
-	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
-      }
+      setup_uniform_values(ir->location, ir->type);
 
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
    }
