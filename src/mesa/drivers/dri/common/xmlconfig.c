@@ -56,6 +56,9 @@ extern char *program_invocation_name, *program_invocation_short_name;
 #elif defined(__NetBSD__) && defined(__NetBSD_Version) && (__NetBSD_Version >= 106000100)
 #    include <stdlib.h>
 #    define GET_PROGRAM_NAME() getprogname()
+#elif defined(__APPLE__)
+#    include <stdlib.h>
+#    define GET_PROGRAM_NAME() getprogname()
 #elif defined(__sun)
 /* Solaris has getexecname() which returns the full path - return just
    the basename to match BSD getprogname() */
