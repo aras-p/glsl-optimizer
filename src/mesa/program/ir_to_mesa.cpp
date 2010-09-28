@@ -54,6 +54,7 @@ extern "C" {
 #include "program/program.h"
 #include "program/prog_uniform.h"
 #include "program/prog_parameter.h"
+#include "program/sampler.h"
 }
 
 static int swizzle_for_size(int size);
@@ -273,8 +274,6 @@ public:
 
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
-
-   int get_sampler_uniform_value(ir_dereference *deref);
 
    void *mem_ctx;
 };
@@ -1894,89 +1893,6 @@ ir_to_mesa_visitor::visit(ir_call *ir)
    this->result = entry->return_reg;
 }
 
-class get_sampler_name : public ir_hierarchical_visitor
-{
-public:
-   get_sampler_name(ir_to_mesa_visitor *mesa, ir_dereference *last)
-   {
-      this->mem_ctx = mesa->mem_ctx;
-      this->mesa = mesa;
-      this->name = NULL;
-      this->offset = 0;
-      this->last = last;
-   }
-
-   virtual ir_visitor_status visit(ir_dereference_variable *ir)
-   {
-      this->name = ir->var->name;
-      return visit_continue;
-   }
-
-   virtual ir_visitor_status visit_leave(ir_dereference_record *ir)
-   {
-      this->name = talloc_asprintf(mem_ctx, "%s.%s", name, ir->field);
-      return visit_continue;
-   }
-
-   virtual ir_visitor_status visit_leave(ir_dereference_array *ir)
-   {
-      ir_constant *index = ir->array_index->as_constant();
-      int i;
-
-      if (index) {
-	 i = index->value.i[0];
-      } else {
-	 /* GLSL 1.10 and 1.20 allowed variable sampler array indices,
-	  * while GLSL 1.30 requires that the array indices be
-	  * constant integer expressions.  We don't expect any driver
-	  * to actually work with a really variable array index, so
-	  * all that would work would be an unrolled loop counter that ends
-	  * up being constant above.
-	  */
-	 mesa->shader_program->InfoLog =
-	    talloc_asprintf_append(mesa->shader_program->InfoLog,
-				   "warning: Variable sampler array index "
-				   "unsupported.\nThis feature of the language "
-				   "was removed in GLSL 1.20 and is unlikely "
-				   "to be supported for 1.10 in Mesa.\n");
-	 i = 0;
-      }
-      if (ir != last) {
-	 this->name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
-      } else {
-	 offset = i;
-      }
-      return visit_continue;
-   }
-
-   ir_to_mesa_visitor *mesa;
-   const char *name;
-   void *mem_ctx;
-   int offset;
-   ir_dereference *last;
-};
-
-int
-ir_to_mesa_visitor::get_sampler_uniform_value(ir_dereference *sampler)
-{
-   get_sampler_name getname(this, sampler);
-
-   sampler->accept(&getname);
-
-   GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-					      getname.name);
-
-   if (index < 0) {
-      fail_link(this->shader_program,
-		"failed to find sampler named %s.\n", getname.name);
-      return 0;
-   }
-
-   index += getname.offset;
-
-   return this->prog->Parameters->ParameterValues[index][0];
-}
-
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
@@ -2076,7 +1992,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;
 
-   inst->sampler = get_sampler_uniform_value(ir->sampler);
+   inst->sampler = _mesa_get_sampler_uniform_value(ir->sampler,
+						   this->shader_program,
+						   this->prog);
 
    const glsl_type *sampler_type = ir->sampler->type;
 

@@ -250,7 +250,8 @@ PROGRAM_SOURCES = \
 	program/symbol_table.c
 
 SHADER_CXX_SOURCES = \
-	program/ir_to_mesa.cpp
+	program/ir_to_mesa.cpp \
+	program/sampler.cpp
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
