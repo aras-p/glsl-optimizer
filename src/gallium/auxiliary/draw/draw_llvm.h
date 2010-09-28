@@ -120,7 +120,7 @@ struct draw_jit_context
    lp_build_struct_get_ptr(_builder, _ptr, 0, "id")
 
 #define draw_jit_header_clip(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "clip")
+   lp_build_struct_get_ptr(_builder, _ptr, 1, "clip")
 
 #define draw_jit_header_data(_builder, _ptr)            \
    lp_build_struct_get_ptr(_builder, _ptr, 2, "data")
@@ -136,7 +136,7 @@ struct draw_jit_context
    lp_build_struct_get(_builder, _ptr, 2, "buffer_offset")
 
 
-typedef void
+typedef int
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
                       const char *vbuffers[PIPE_MAX_ATTRIBS],
@@ -147,7 +147,7 @@ typedef void
                       unsigned instance_id);
 
 
-typedef void
+typedef int
 (*draw_jit_vert_func_elts)(struct draw_jit_context *context,
                            struct vertex_header *io,
                            const char *vbuffers[PIPE_MAX_ATTRIBS],
