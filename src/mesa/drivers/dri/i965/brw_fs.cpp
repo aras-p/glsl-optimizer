@@ -1789,6 +1789,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_IF:
 	 assert(if_stack_depth < 16);
 	 if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 if_depth_in_loop[loop_stack_depth]++;
 	 if_stack_depth++;
 	 break;
       case BRW_OPCODE_ELSE:
@@ -1798,6 +1799,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_ENDIF:
 	 if_stack_depth--;
 	 brw_ENDIF(p , if_stack[if_stack_depth]);
+	 if_depth_in_loop[loop_stack_depth]--;
 	 break;
 
       case BRW_OPCODE_DO:
