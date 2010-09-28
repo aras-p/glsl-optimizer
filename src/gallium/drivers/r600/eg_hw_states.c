@@ -942,7 +942,6 @@ static int eg_ps_shader(struct r600_context *rctx, struct r600_context_state *rp
 	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(rctx, rshader, i));
-		tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||

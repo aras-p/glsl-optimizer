@@ -1514,7 +1514,6 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index2(&rctx->vs_shader->shader, rshader, i));
-		tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
