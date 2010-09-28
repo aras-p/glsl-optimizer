@@ -28,6 +28,11 @@
 #include "radeon_remove_constants.h"
 #include "radeon_dataflow.h"
 
+struct mark_used_data {
+	unsigned char * const_used;
+	unsigned * has_rel_addr;
+};
+
 static void remap_regs(void * userdata, struct rc_instruction * inst,
 			rc_register_file * pfile, unsigned int * pindex)
 {
@@ -35,6 +40,20 @@ static void remap_regs(void * userdata, struct rc_instruction * inst,
 
 	if (*pfile == RC_FILE_CONSTANT) {
 		*pindex = inv_remap_table[*pindex];
+	}
+}
+
+static void mark_used(void * userdata, struct rc_instruction * inst,
+						struct rc_src_register * src)
+{
+	struct mark_used_data * d = userdata;
+
+	if (src->File == RC_FILE_CONSTANT) {
+		if (src->RelAddr) {
+			*d->has_rel_addr = 1;
+		} else {
+			d->const_used[src->Index] = 1;
+		}
 	}
 }
 
@@ -48,6 +67,7 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	unsigned is_identity = 1;
 	unsigned are_externals_remapped = 0;
 	struct rc_constant *constants = c->Program.Constants.Constants;
+	struct mark_used_data d;
 
 	if (!c->Program.Constants.Count) {
 		*out_remap_table = NULL;
@@ -57,36 +77,13 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	const_used = malloc(c->Program.Constants.Count);
 	memset(const_used, 0, c->Program.Constants.Count);
 
+	d.const_used = const_used;
+	d.has_rel_addr = &has_rel_addr;
+
 	/* Pass 1: Mark used constants. */
 	for (struct rc_instruction *inst = c->Program.Instructions.Next;
 	     inst != &c->Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
-
-		/* XXX: This loop and the if statement after it should be
-		 * replaced by a call to one of the rc_for_all_reads_* functions.
-		 * The reason it does not use one of those functions now is
-		 * because none of them have RelAddr as an argument. */
-		for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
-			if (inst->U.I.SrcReg[i].File == RC_FILE_CONSTANT) {
-				if (inst->U.I.SrcReg[i].RelAddr) {
-					has_rel_addr = 1;
-				} else {
-					const_used[inst->U.I.SrcReg[i].Index] = 1;
-				}
-			}
-		}
-		if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
-			unsigned int i;
-			unsigned int srcp_regs = rc_presubtract_src_reg_count(
-							inst->U.I.PreSub.Opcode);
-			for( i = 0; i < srcp_regs; i++) {
-				if (inst->U.I.PreSub.SrcReg[i].File ==
-							RC_FILE_CONSTANT) {
-					const_used[
-					    inst->U.I.PreSub.SrcReg[i].Index] = 1;
-				}
-			}
-		}
+		rc_for_all_reads_src(inst, mark_used, &d);
 	}
 
 	/* Pass 2: If there is relative addressing, mark all externals as used. */
