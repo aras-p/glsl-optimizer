@@ -367,7 +367,10 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 				0xFFFFFFFF, NULL);
 
 	if (uc.ui) {
-		/* TODO border color */
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER_BORDER, R_00A404_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color[0]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER_BORDER, R_00A408_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color[1]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER_BORDER, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE, fui(state->border_color[2]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, EVERGREEN_GROUP_SAMPLER_BORDER, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color[3]), 0xFFFFFFFF, NULL);
 	}
 	return rstate;
 }
