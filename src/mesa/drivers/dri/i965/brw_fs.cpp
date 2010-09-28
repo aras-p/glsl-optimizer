@@ -34,6 +34,7 @@ extern "C" {
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/prog_optimize.h"
+#include "program/sampler.h"
 #include "program/hash_table.h"
 #include "brw_context.h"
 #include "brw_eu.h"
@@ -387,6 +388,7 @@ public:
       this->c = c;
       this->p = &c->func;
       this->brw = p->brw;
+      this->fp = brw->fragment_program;
       this->intel = &brw->intel;
       this->ctx = &intel->ctx;
       this->mem_ctx = talloc_new(NULL);
@@ -456,6 +458,7 @@ public:
    int setup_uniform_values(int loc, const glsl_type *type);
 
    struct brw_context *brw;
+   const struct gl_fragment_program *fp;
    struct intel_context *intel;
    GLcontext *ctx;
    struct brw_wm_compile *c;
@@ -550,7 +553,6 @@ fs_visitor::variable_storage(ir_variable *var)
 int
 fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 {
-   const struct gl_program *fp = &this->brw->fragment_program->Base;
    unsigned int offset = 0;
    float *vec_values;
 
@@ -571,7 +573,7 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
    case GLSL_TYPE_BOOL:
-      vec_values = fp->Parameters->ParameterValues[loc];
+      vec_values = fp->Base.Parameters->ParameterValues[loc];
       for (unsigned int i = 0; i < type->vector_elements; i++) {
 	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
       }
@@ -1044,6 +1046,12 @@ fs_visitor::visit(ir_texture *ir)
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
+
+   inst->sampler =
+      _mesa_get_sampler_uniform_value(ir->sampler,
+				      ctx->Shader.CurrentProgram,
+				      &brw->fragment_program->Base);
+   inst->sampler = c->fp->program.Base.SamplerUnits[inst->sampler];
 
    this->result = dst;
 
