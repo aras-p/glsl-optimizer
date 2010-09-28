@@ -612,6 +612,9 @@ fs_visitor::visit(ir_variable *ir)
 {
    fs_reg *reg = NULL;
 
+   if (variable_storage(ir))
+      return;
+
    if (strcmp(ir->name, "gl_FragColor") == 0) {
       this->frag_color = ir;
    } else if (strcmp(ir->name, "gl_FragData") == 0) {
@@ -1175,18 +1178,63 @@ fs_visitor::visit(ir_if *ir)
 void
 fs_visitor::visit(ir_loop *ir)
 {
-   assert(!ir->from);
-   assert(!ir->to);
-   assert(!ir->increment);
-   assert(!ir->counter);
+   fs_reg counter = reg_undef;
 
-   emit(fs_inst(BRW_OPCODE_DO));
+   if (ir->counter) {
+      this->base_ir = ir->counter;
+      ir->counter->accept(this);
+      counter = *(variable_storage(ir->counter));
+
+      if (ir->from) {
+	 this->base_ir = ir->from;
+	 ir->from->accept(this);
+
+	 emit(fs_inst(BRW_OPCODE_MOV, counter, this->result));
+      }
+   }
 
    /* Start a safety counter.  If the user messed up their loop
     * counting, we don't want to hang the GPU.
     */
    fs_reg max_iter = fs_reg(this, glsl_type::int_type);
    emit(fs_inst(BRW_OPCODE_MOV, max_iter, fs_reg(10000)));
+
+   emit(fs_inst(BRW_OPCODE_DO));
+
+   if (ir->to) {
+      this->base_ir = ir->to;
+      ir->to->accept(this);
+
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null,
+				   counter, this->result));
+      switch (ir->cmp) {
+      case ir_binop_equal:
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
+	 break;
+      case ir_binop_nequal:
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+      case ir_binop_gequal:
+	 inst->conditional_mod = BRW_CONDITIONAL_GE;
+	 break;
+      case ir_binop_lequal:
+	 inst->conditional_mod = BRW_CONDITIONAL_LE;
+	 break;
+      case ir_binop_greater:
+	 inst->conditional_mod = BRW_CONDITIONAL_G;
+	 break;
+      case ir_binop_less:
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+	 break;
+      default:
+	 assert(!"not reached: unknown loop condition");
+	 this->fail = true;
+	 break;
+      }
+
+      inst = emit(fs_inst(BRW_OPCODE_BREAK));
+      inst->predicated = true;
+   }
 
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -1201,6 +1249,12 @@ fs_visitor::visit(ir_loop *ir)
 
       inst = emit(fs_inst(BRW_OPCODE_BREAK));
       inst->predicated = true;
+   }
+
+   if (ir->increment) {
+      this->base_ir = ir->increment;
+      ir->increment->accept(this);
+      emit(fs_inst(BRW_OPCODE_ADD, counter, counter, this->result));
    }
 
    emit(fs_inst(BRW_OPCODE_WHILE));
