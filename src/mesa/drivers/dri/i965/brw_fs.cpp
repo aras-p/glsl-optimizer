@@ -499,6 +499,30 @@ fs_reg::fs_reg(enum register_file file, int hw_reg)
    this->type = BRW_REGISTER_TYPE_F;
 }
 
+int
+brw_type_for_base_type(const struct glsl_type *type)
+{
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT:
+      return BRW_REGISTER_TYPE_F;
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      return BRW_REGISTER_TYPE_D;
+   case GLSL_TYPE_UINT:
+      return BRW_REGISTER_TYPE_UD;
+   case GLSL_TYPE_ARRAY:
+   case GLSL_TYPE_STRUCT:
+      /* These should be overridden with the type of the member when
+       * dereferenced into.  BRW_REGISTER_TYPE_UD seems like a likely
+       * way to trip up if we don't.
+       */
+      return BRW_REGISTER_TYPE_UD;
+   default:
+      assert(!"not reached");
+      return BRW_REGISTER_TYPE_F;
+   }
+}
+
 /** Automatic reg constructor. */
 fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
 {
@@ -508,31 +532,7 @@ fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
    this->reg = v->next_abstract_grf;
    this->reg_offset = 0;
    v->next_abstract_grf += type_size(type);
-
-   switch (type->base_type) {
-   case GLSL_TYPE_FLOAT:
-      this->type = BRW_REGISTER_TYPE_F;
-      break;
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
-      this->type = BRW_REGISTER_TYPE_D;
-      break;
-   case GLSL_TYPE_UINT:
-      this->type = BRW_REGISTER_TYPE_UD;
-      break;
-   case GLSL_TYPE_ARRAY:
-   case GLSL_TYPE_STRUCT:
-      /* These should be overridden with the type of the member when
-       * dereferenced into.  BRW_REGISTER_TYPE_UD seems like a likely
-       * way to trip up if we don't.
-       */
-      this->type =  BRW_REGISTER_TYPE_UD;
-      break;
-   default:
-      assert(!"not reached");
-      this->type =  BRW_REGISTER_TYPE_F;
-      break;
-   }
+   this->type = brw_type_for_base_type(type);
 }
 
 fs_reg *
@@ -597,7 +597,18 @@ fs_visitor::visit(ir_dereference_variable *ir)
 void
 fs_visitor::visit(ir_dereference_record *ir)
 {
-   assert(!"FINISHME");
+   const glsl_type *struct_type = ir->record->type;
+
+   ir->record->accept(this);
+
+   unsigned int offset = 0;
+   for (unsigned int i = 0; i < struct_type->length; i++) {
+      if (strcmp(struct_type->fields.structure[i].name, ir->field) == 0)
+	 break;
+      offset += type_size(struct_type->fields.structure[i].type);
+   }
+   this->result.reg_offset += offset;
+   this->result.type = brw_type_for_base_type(ir->type);
 }
 
 void
@@ -613,21 +624,7 @@ fs_visitor::visit(ir_dereference_array *ir)
       element_size = ir->type->vector_elements;
    } else {
       element_size = type_size(ir->type);
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_UINT:
-	 this->result.type = BRW_REGISTER_TYPE_UD;
-	 break;
-      case GLSL_TYPE_INT:
-      case GLSL_TYPE_BOOL:
-	 this->result.type = BRW_REGISTER_TYPE_D;
-	 break;
-      case GLSL_TYPE_FLOAT:
-	 this->result.type = BRW_REGISTER_TYPE_F;
-	 break;
-      default:
-	 /* deref producing struct, no need to tweak type yet. */
-	 break;
-      }
+      this->result.type = brw_type_for_base_type(ir->type);
    }
 
    if (index) {
