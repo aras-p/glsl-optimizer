@@ -264,8 +264,10 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
    variable_entry *rhs = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
 
    if (lhs_deref && rhs_deref && (lhs || rhs) && !ir->condition) {
+      unsigned int rhs_chan = 0;
+
       /* Straight assignment of vector variables. */
-      for (unsigned int i = 0; i < ir->rhs->type->vector_elements; i++) {
+      for (unsigned int i = 0; i < ir->lhs->type->vector_elements; i++) {
 	 ir_dereference *new_lhs;
 	 ir_rvalue *new_rhs;
 	 void *mem_ctx = lhs ? lhs->mem_ctx : rhs->mem_ctx;
@@ -283,15 +285,18 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 	 }
 
 	 if (rhs) {
-	    new_rhs = new(mem_ctx) ir_dereference_variable(rhs->components[i]);
+	    new_rhs =
+	       new(mem_ctx) ir_dereference_variable(rhs->components[rhs_chan]);
 	 } else {
 	    new_rhs = new(mem_ctx) ir_swizzle(ir->rhs->clone(mem_ctx, NULL),
-					      i, i, i, i, 1);
+					      rhs_chan, 0, 0, 0, 1);
 	 }
 
 	 ir->insert_before(new(mem_ctx) ir_assignment(new_lhs,
 						      new_rhs,
 						      NULL, writemask));
+
+	 rhs_chan++;
       }
       ir->remove();
    } else if (lhs) {
