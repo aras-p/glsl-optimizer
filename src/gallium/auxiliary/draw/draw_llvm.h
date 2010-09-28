@@ -160,7 +160,11 @@ typedef int
 struct draw_llvm_variant_key
 {
    unsigned nr_vertex_elements:16;
-   unsigned nr_samplers:16;
+   unsigned nr_samplers:12;
+   unsigned disable_cliptest:1;
+   unsigned disable_viewport:1;
+   unsigned disable_zclipping:1;
+   unsigned enable_d3dclipping:1;
 
    /* Variable number of vertex elements:
     */

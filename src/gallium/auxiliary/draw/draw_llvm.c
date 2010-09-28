@@ -736,10 +736,10 @@ store_clip(LLVMBuilderRef builder,
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indices[1] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    
-   out[0] = LLVMBuildLoad(builder, outputs[0][0], ""); /*x0 y0 z0 w0*/
-   out[1] = LLVMBuildLoad(builder, outputs[0][1], ""); /*x1 y1 z1 w1*/
-   out[2] = LLVMBuildLoad(builder, outputs[0][2], ""); /*x2 y2 z2 w2*/
-   out[3] = LLVMBuildLoad(builder, outputs[0][3], ""); /*x3 y3 z3 w3*/  
+   out[0] = LLVMBuildLoad(builder, outputs[0][0], ""); /*x0 x1 x2 x3*/
+   out[1] = LLVMBuildLoad(builder, outputs[0][1], ""); /*y0 y1 y2 y3*/
+   out[2] = LLVMBuildLoad(builder, outputs[0][2], ""); /*z0 z1 z2 z3*/
+   out[3] = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/  
 
    io0_ptr = LLVMBuildGEP(builder, io_ptr, &ind0, 1, "");
    io1_ptr = LLVMBuildGEP(builder, io_ptr, &ind1, 1, "");
@@ -753,22 +753,22 @@ store_clip(LLVMBuilderRef builder,
 
    for (int i = 0; i<4; i++){
       clip0_ptr = LLVMBuildGEP(builder, clip_ptr0,
-                               indices, 2, ""); //x1
+                               indices, 2, ""); //x0
       clip1_ptr = LLVMBuildGEP(builder, clip_ptr1,
-                               indices, 2, ""); //y1
+                               indices, 2, ""); //x1
       clip2_ptr = LLVMBuildGEP(builder, clip_ptr2,
-                               indices, 2, ""); //z1
+                               indices, 2, ""); //x2
       clip3_ptr = LLVMBuildGEP(builder, clip_ptr3,
-                               indices, 2, ""); //w1
+                               indices, 2, ""); //x3
 
-      out0elem = LLVMBuildExtractElement(builder, out[0],
-                                         indices[1], ""); //x1
-      out1elem = LLVMBuildExtractElement(builder, out[1],
-                                         indices[1], ""); //y1
-      out2elem = LLVMBuildExtractElement(builder, out[2],
-                                         indices[1], ""); //z1
-      out3elem = LLVMBuildExtractElement(builder, out[3],
-                                         indices[1], ""); //w1
+      out0elem = LLVMBuildExtractElement(builder, out[i],
+                                         ind0, ""); //x0
+      out1elem = LLVMBuildExtractElement(builder, out[i],
+                                         ind1, ""); //x1
+      out2elem = LLVMBuildExtractElement(builder, out[i],
+                                         ind2, ""); //x2
+      out3elem = LLVMBuildExtractElement(builder, out[i],
+                                         ind3, ""); //x3
   
       LLVMBuildStore(builder, out0elem, clip0_ptr);
       LLVMBuildStore(builder, out1elem, clip1_ptr);
@@ -822,7 +822,9 @@ generate_viewport(struct draw_llvm *llvm,
  */
 static LLVMValueRef 
 generate_clipmask(LLVMBuilderRef builder,
-                  LLVMValueRef (*outputs)[NUM_CHANNELS])
+                  LLVMValueRef (*outputs)[NUM_CHANNELS],
+                  boolean disable_zclipping,
+                  boolean enable_d3dclipping)
 {
    LLVMValueRef mask; /* stores the <4xi32> clipmasks */     
    LLVMValueRef test, temp; 
@@ -866,22 +868,31 @@ generate_clipmask(LLVMBuilderRef builder,
    temp = LLVMBuildShl(builder, temp, shift, "");
    test = LLVMBuildAnd(builder, test, temp, ""); 
    mask = LLVMBuildOr(builder, mask, test, "");
-   
-   /* plane 5 */
-   test = LLVMBuildFAdd(builder, pos_z, pos_w, "");
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
-   temp = LLVMBuildShl(builder, temp, shift, "");
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = LLVMBuildOr(builder, mask, test, "");
-   
-   /* plane 6 */
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_z, pos_w);
-   temp = LLVMBuildShl(builder, temp, shift, "");
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = LLVMBuildOr(builder, mask, test, "");             
-                
+
+   if (!disable_zclipping){
+      if (enable_d3dclipping){
+         /* plane 5 */
+         test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, pos_z);
+         temp = LLVMBuildShl(builder, temp, shift, "");
+         test = LLVMBuildAnd(builder, test, temp, ""); 
+         mask = LLVMBuildOr(builder, mask, test, "");
+      }  
+      else{
+         /* plane 5 */
+         test = LLVMBuildFAdd(builder, pos_z, pos_w, "");
+         test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
+         temp = LLVMBuildShl(builder, temp, shift, "");
+         test = LLVMBuildAnd(builder, test, temp, ""); 
+         mask = LLVMBuildOr(builder, mask, test, "");
+      }
+      /* plane 6 */
+      test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_z, pos_w);
+      temp = LLVMBuildShl(builder, temp, shift, "");
+      test = LLVMBuildAnd(builder, test, temp, ""); 
+      mask = LLVMBuildOr(builder, mask, test, "");
+   }   
+
    return mask;
- 
 }
 
 /*
@@ -930,8 +941,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
-
    LLVMValueRef ret, ret_ptr;
+   boolean disable_cliptest = variant->key.disable_cliptest;
+   boolean disable_viewport = variant->key.disable_viewport;
    
    arg_types[0] = llvm->context_ptr_type;           /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;     /* vertex_header */
@@ -1040,13 +1052,23 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       /* store original positions in clip before further manipulation */
       store_clip(builder, io, outputs);
 
-      /* allocate clipmask, assign it integer type */
-      clipmask = generate_clipmask(builder, outputs);           
-      clipmask_bool(builder, clipmask, ret_ptr);
+      /* do cliptest */
+      if (!disable_cliptest){
+         /* allocate clipmask, assign it integer type */
+         clipmask = generate_clipmask(builder, outputs, 
+                       variant->key.disable_zclipping, variant->key.enable_d3dclipping);
+         /* return clipping boolean value for function */
+         clipmask_bool(builder, clipmask, ret_ptr);
+      }
+      else{
+         clipmask = lp_build_const_int_vec(lp_type_int_vec(32), 0);    
+      }
       
       /* do viewport mapping */
-      generate_viewport(llvm, builder, outputs);
-      
+      if (!disable_viewport){
+         generate_viewport(llvm, builder, outputs);
+      }
+
       /* store clipmask in vertex header and positions in data */
       convert_to_aos(builder, io, outputs, clipmask,
                      draw->vs.vertex_shader->info.num_outputs,
@@ -1115,6 +1137,8 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, ret_ptr;
+   boolean disable_cliptest = variant->key.disable_cliptest;
+   boolean disable_viewport = variant->key.disable_viewport;
 
    arg_types[0] = llvm->context_ptr_type;               /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;         /* vertex_header */
@@ -1232,13 +1256,23 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
       /* store original positions in clip before further manipulation */
       store_clip(builder, io, outputs);
 
-      /* allocate clipmask, assign it integer type */
-      clipmask = generate_clipmask(builder, outputs);
-      clipmask_bool(builder, clipmask, ret_ptr);
-
-      /* do viewport mapping */
-      generate_viewport(llvm, builder, outputs);
+      /* do cliptest */
+      if (!disable_cliptest){
+         /* allocate clipmask, assign it integer type */
+         clipmask = generate_clipmask(builder, outputs, 
+                       variant->key.disable_zclipping, variant->key.enable_d3dclipping);
+         /* return clipping boolean value for function */
+         clipmask_bool(builder, clipmask, ret_ptr);
+      }
+      else{
+         clipmask = lp_build_const_int_vec(lp_type_int_vec(32), 0);
+      }
       
+      /* do viewport mapping */
+      if (!disable_viewport){
+         generate_viewport(llvm, builder, outputs);
+      }
+
       /* store clipmask in vertex header, 
        * original positions in clip 
        * and transformed positions in data 
@@ -1302,6 +1336,12 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
     * number of vertex elements - ie the number of shader inputs.
     */
    key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
+
+   /* will have to rig this up properly later */
+   key->disable_cliptest = 0;
+   key->disable_viewport = 0;
+   key->disable_zclipping = 0;
+   key->enable_d3dclipping = 0;
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the
