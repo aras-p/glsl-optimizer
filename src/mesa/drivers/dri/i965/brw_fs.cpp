@@ -186,7 +186,6 @@ type_size(const struct glsl_type *type)
    case GLSL_TYPE_BOOL:
       return type->components();
    case GLSL_TYPE_ARRAY:
-      /* FINISHME: uniform/varying arrays. */
       return type_size(type->fields.array) * type->length;
    case GLSL_TYPE_STRUCT:
       size = 0;
