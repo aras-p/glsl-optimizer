@@ -71,6 +71,39 @@ static void scale_texcoords(struct r300_fragment_program_compiler *compiler,
 	inst->U.I.SrcReg[0].Index = temp;
 }
 
+static void projective_divide(struct r300_fragment_program_compiler *compiler,
+			      struct rc_instruction *inst)
+{
+	struct rc_instruction *inst_mul, *inst_rcp;
+
+	unsigned temp = rc_find_free_temporary(&compiler->Base);
+
+	inst_rcp = rc_insert_new_instruction(&compiler->Base, inst->Prev);
+	inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
+	inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst_rcp->U.I.DstReg.Index = temp;
+	inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
+	inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+	/* Because the input can be arbitrarily swizzled,
+	 * read the component mapped to W. */
+	inst_rcp->U.I.SrcReg[0].Swizzle =
+		RC_MAKE_SWIZZLE_SMEAR(GET_SWZ(inst->U.I.SrcReg[0].Swizzle, 3));
+
+	inst_mul = rc_insert_new_instruction(&compiler->Base, inst->Prev);
+	inst_mul->U.I.Opcode = RC_OPCODE_MUL;
+	inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst_mul->U.I.DstReg.Index = temp;
+	inst_mul->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+	inst_mul->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+	inst_mul->U.I.SrcReg[1].Index = temp;
+	inst_mul->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
+
+	reset_srcreg(&inst->U.I.SrcReg[0]);
+	inst->U.I.Opcode = RC_OPCODE_TEX;
+	inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	inst->U.I.SrcReg[0].Index = temp;
+}
+
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following ways:
  *  - implement texture compare (shadow extensions)
@@ -214,6 +247,12 @@ int radeonTransformTEX(
 	    is_rect && (!c->is_r500 || wrapmode != RC_WRAP_NONE)) {
 		scale_texcoords(compiler, inst, RC_STATE_R300_TEXRECT_FACTOR);
 		inst->U.I.TexSrcTarget = RC_TEXTURE_2D;
+	}
+
+	/* Divide by W if needed. */
+	if (inst->U.I.Opcode == RC_OPCODE_TXP &&
+	    (wrapmode == RC_WRAP_REPEAT || wrapmode == RC_WRAP_MIRRORED_REPEAT)) {
+		projective_divide(compiler, inst);
 	}
 
 	/* Texture wrap modes don't work on NPOT textures.
