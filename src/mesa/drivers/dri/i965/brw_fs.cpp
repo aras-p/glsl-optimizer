@@ -677,6 +677,15 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    int location = ir->location;
    for (unsigned int i = 0; i < array_elements; i++) {
       for (unsigned int j = 0; j < type->matrix_columns; j++) {
+	 if (!(fp->Base.InputsRead & BITFIELD64_BIT(location))) {
+	    /* If there's no incoming setup data for this slot, don't
+	     * emit interpolation for it (since it's not used, and
+	     * we'd fall over later trying to find the setup data.
+	     */
+	    attr.reg_offset += type->vector_elements;
+	    continue;
+	 }
+
 	 for (unsigned int c = 0; c < type->vector_elements; c++) {
 	    struct brw_reg interp = interp_reg(location, c);
 	    emit(fs_inst(FS_OPCODE_LINTERP,
