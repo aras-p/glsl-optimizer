@@ -320,6 +320,8 @@ public:
       this->conditional_mod = BRW_CONDITIONAL_NONE;
       this->predicated = false;
       this->sampler = 0;
+      this->target = 0;
+      this->eot = false;
       this->shadow_compare = false;
    }
 
@@ -368,8 +370,10 @@ public:
    bool predicated;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
-   int mlen; /** SEND message length */
+   int mlen; /**< SEND message length */
    int sampler;
+   int target; /**< MRT target. */
+   bool eot;
    bool shadow_compare;
 
    /** @{
@@ -1417,7 +1421,7 @@ fs_visitor::emit_pinterp(int location)
 void
 fs_visitor::emit_fb_writes()
 {
-   this->current_annotation = "FB write";
+   this->current_annotation = "FB write header";
    int nr = 0;
 
    /* m0, m1 header */
@@ -1428,15 +1432,9 @@ fs_visitor::emit_fb_writes()
 		   fs_reg(brw_vec8_grf(c->key.aa_dest_stencil_reg, 0))));
    }
 
-   assert(this->frag_color || !"FINISHME: MRT");
-   fs_reg color = *(variable_storage(this->frag_color));
-
-   for (int i = 0; i < 4; i++) {
-      emit(fs_inst(BRW_OPCODE_MOV,
-		   fs_reg(MRF, nr++),
-		   color));
-      color.reg_offset++;
-   }
+   /* Reserve space for color. It'll be filled in per MRT below. */
+   int color_mrf = nr;
+   nr += 4;
 
    if (c->key.source_depth_to_render_target) {
       if (c->key.computes_depth) {
@@ -1457,9 +1455,42 @@ fs_visitor::emit_fb_writes()
 		   fs_reg(brw_vec8_grf(c->key.dest_depth_reg, 0))));
    }
 
-   emit(fs_inst(FS_OPCODE_FB_WRITE,
-		fs_reg(0),
-		fs_reg(0)));
+   fs_reg color = reg_undef;
+   if (this->frag_color)
+      color = *(variable_storage(this->frag_color));
+   else if (this->frag_data)
+      color = *(variable_storage(this->frag_data));
+
+   for (int target = 0; target < c->key.nr_color_regions; target++) {
+      this->current_annotation = talloc_asprintf(this->mem_ctx,
+						 "FB write target %d",
+						 target);
+      if (this->frag_color || this->frag_data) {
+	 for (int i = 0; i < 4; i++) {
+	    emit(fs_inst(BRW_OPCODE_MOV,
+			 fs_reg(MRF, color_mrf + i),
+			 color));
+	    color.reg_offset++;
+	 }
+      }
+
+      if (this->frag_color)
+	 color.reg_offset -= 4;
+
+      fs_inst *inst = emit(fs_inst(FS_OPCODE_FB_WRITE,
+				   reg_undef, reg_undef));
+      inst->target = target;
+      inst->mlen = nr;
+      if (target == c->key.nr_color_regions - 1)
+	 inst->eot = true;
+   }
+
+   if (c->key.nr_color_regions == 0) {
+      fs_inst *inst = emit(fs_inst(FS_OPCODE_FB_WRITE,
+				   reg_undef, reg_undef));
+      inst->mlen = nr;
+      inst->eot = true;
+   }
 
    this->current_annotation = NULL;
 }
@@ -1467,7 +1498,7 @@ fs_visitor::emit_fb_writes()
 void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
-   GLboolean eot = 1; /* FINISHME: MRT */
+   GLboolean eot = inst->eot;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -1480,23 +1511,13 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 	   brw_vec8_grf(1, 0));
    brw_pop_insn_state(p);
 
-   int nr = 0;
-   nr += 2; /* header */
-   if (c->key.aa_dest_stencil_reg)
-      nr++;
-   nr += 4; /* color */
-   if (c->key.source_depth_to_render_target)
-      nr++;
-   if (c->key.dest_depth_reg)
-      nr++;
-
    brw_fb_WRITE(p,
 		8, /* dispatch_width */
 		retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
 		0, /* base MRF */
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
-		0, /* FINISHME: MRT target */
-		nr,
+		inst->target,
+		inst->mlen,
 		0,
 		eot);
 }
