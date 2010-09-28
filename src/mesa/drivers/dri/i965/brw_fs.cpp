@@ -75,6 +75,7 @@ enum fs_opcodes {
 };
 
 static int using_new_fs = -1;
+static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
 
 struct gl_shader *
 brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
@@ -613,7 +614,6 @@ fs_visitor::visit(ir_variable *ir)
       this->frag_data = ir;
    } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
       this->frag_depth = ir;
-      assert(!"FINISHME: this hangs currently.");
    }
 
    if (ir->mode == ir_var_in) {
@@ -1418,15 +1418,43 @@ void
 fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write";
+   int nr = 0;
+
+   /* m0, m1 header */
+   nr += 2;
+
+   if (c->key.aa_dest_stencil_reg) {
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
+		   fs_reg(brw_vec8_grf(c->key.aa_dest_stencil_reg, 0))));
+   }
 
    assert(this->frag_color || !"FINISHME: MRT");
    fs_reg color = *(variable_storage(this->frag_color));
 
    for (int i = 0; i < 4; i++) {
       emit(fs_inst(BRW_OPCODE_MOV,
-		   fs_reg(MRF, 2 + i),
+		   fs_reg(MRF, nr++),
 		   color));
       color.reg_offset++;
+   }
+
+   if (c->key.source_depth_to_render_target) {
+      if (c->key.computes_depth) {
+	 /* Hand over gl_FragDepth. */
+	 assert(this->frag_depth);
+	 fs_reg depth = *(variable_storage(this->frag_depth));
+
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++), depth));
+      } else {
+	 /* Pass through the payload depth. */
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
+		      fs_reg(brw_vec8_grf(c->key.source_depth_reg, 0))));
+      }
+   }
+
+   if (c->key.dest_depth_reg) {
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
+		   fs_reg(brw_vec8_grf(c->key.dest_depth_reg, 0))));
    }
 
    emit(fs_inst(FS_OPCODE_FB_WRITE,
@@ -1440,7 +1468,6 @@ void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
    GLboolean eot = 1; /* FINISHME: MRT */
-   /* FINISHME: AADS */
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -1453,7 +1480,15 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 	   brw_vec8_grf(1, 0));
    brw_pop_insn_state(p);
 
-   int nr = 2 + 4;
+   int nr = 0;
+   nr += 2; /* header */
+   if (c->key.aa_dest_stencil_reg)
+      nr++;
+   nr += 4; /* color */
+   if (c->key.source_depth_to_render_target)
+      nr++;
+   if (c->key.dest_depth_reg)
+      nr++;
 
    brw_fb_WRITE(p,
 		8, /* dispatch_width */
