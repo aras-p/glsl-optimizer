@@ -351,7 +351,8 @@ set_tex_parameteri(GLcontext *ctx,
       if (ctx->Extensions.ARB_depth_texture &&
           (params[0] == GL_LUMINANCE ||
            params[0] == GL_INTENSITY ||
-           params[0] == GL_ALPHA)) {
+           params[0] == GL_ALPHA ||
+	   (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED))) {
          if (texObj->DepthMode != params[0]) {
             flush(ctx, texObj);
             texObj->DepthMode = params[0];

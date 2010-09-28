@@ -3051,6 +3051,9 @@ sample_depth_texture( GLcontext *ctx,
          case GL_ALPHA:
             ASSIGN_4V(texel[i], 0.0F, 0.0F, 0.0F, result);
             break;
+         case GL_RED:
+            ASSIGN_4V(texel[i], result, 0.0F, 0.0F, 1.0F);
+            break;
          default:
             _mesa_problem(ctx, "Bad depth texture mode");
          }
