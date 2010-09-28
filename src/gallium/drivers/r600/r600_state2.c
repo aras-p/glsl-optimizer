@@ -147,6 +147,12 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		}
 		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
+	for (i = 0; i < rshader->noutput; i++) {
+		r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
+				R_02880C_DB_SHADER_CONTROL,
+				S_02880C_Z_EXPORT_ENABLE(1),
+				S_02880C_Z_EXPORT_ENABLE(1), NULL);
+	}
 
 	exports_ps = 0;
 	num_cout = 0;
@@ -981,7 +987,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	 * set by fragment shader if it export Z and KILL_ENABLE (bit 6) will
 	 * be set if shader use texkill instruction
 	 */
-	db_shader_control = 0x210;
+	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	stencil_ref_mask = 0;
 	stencil_ref_mask_bf = 0;
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
@@ -1055,7 +1061,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
-	unsigned prov_vtx = 1;
+	unsigned prov_vtx = 1, polygon_dual_mode;
 
 	if (rs == NULL) {
 		return NULL;
@@ -1085,6 +1091,8 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	}
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_0286D4_SPI_INTERP_CONTROL_0, tmp, 0xFFFFFFFF, NULL);
 
+	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
+				state->fill_back != PIPE_POLYGON_MODE_FILL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_028814_PA_SU_SC_MODE_CNTL,
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
 		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
@@ -1092,7 +1100,10 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 		S_028814_FACE(!state->front_ccw) |
 		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri), 0xFFFFFFFF, NULL);
+		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+		S_028814_POLY_MODE(polygon_dual_mode) |
+		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
+		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT, R_02881C_PA_CL_VS_OUT_CNTL,
 			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex), 0xFFFFFFFF, NULL);
@@ -1567,8 +1578,9 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_BLEND_CLAMP(1) |
-		S_0280A0_SOURCE_FORMAT(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
+		color_info |= S_0280A0_SOURCE_FORMAT(1);
 
 	r600_pipe_state_add_reg(rstate, R600_GROUP_CONTEXT,
 				R_028040_CB_COLOR0_BASE + cb * 4,
