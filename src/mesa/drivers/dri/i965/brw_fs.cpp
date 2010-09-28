@@ -405,6 +405,7 @@ public:
       this->current_annotation = NULL;
       this->annotation_string = NULL;
       this->annotation_ir = NULL;
+      this->base_ir = NULL;
    }
    ~fs_visitor()
    {
