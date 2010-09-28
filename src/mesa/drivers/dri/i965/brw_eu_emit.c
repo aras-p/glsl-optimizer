@@ -819,7 +819,9 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   /* jump count is for 64bit data chunk each, so one 128bit
+      instruction requires 2 chunks. */
+   if (intel->gen >= 5)
       br = 2;
 
    if (p->single_program_flow) {
@@ -861,7 +863,7 @@ void brw_ENDIF(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -978,7 +980,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
       br = 2;
 
    if (p->single_program_flow)
@@ -1022,7 +1024,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
