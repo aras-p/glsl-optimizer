@@ -175,17 +175,18 @@ int radeonTransformTEX(
 				inst_rcp->U.I.DstReg.Index = tmp_recip_w;
 				inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
 				inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-				/* XXX do not take W, instead, see which channel is mapped to W. */
-				inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
+				inst_rcp->U.I.SrcReg[0].Swizzle =
+					RC_MAKE_SWIZZLE_SMEAR(GET_SWZ(inst->U.I.SrcReg[0].Swizzle, 3));
 			}
 
-			/* Perspective-divide r by W (if it's TXP) and add the texture sample (see below). */
+			/* Perspective-divide Z by W (if it's TXP) and add the texture sample (see below). */
 			tmp_sum = rc_find_free_temporary(c);
 			inst_mad = rc_insert_new_instruction(c, inst_rcp ? inst_rcp : inst);
 			inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst_mad->U.I.DstReg.Index = tmp_sum;
 			inst_mad->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_ZZZZ;
+			inst_mad->U.I.SrcReg[0].Swizzle =
+				RC_MAKE_SWIZZLE_SMEAR(GET_SWZ(inst->U.I.SrcReg[0].Swizzle, 2));
 			if (inst->U.I.Opcode == RC_OPCODE_TXP) {
 				inst_mad->U.I.Opcode = RC_OPCODE_MAD;
 				inst_mad->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
