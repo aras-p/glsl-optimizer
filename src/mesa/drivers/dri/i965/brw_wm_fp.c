@@ -342,7 +342,7 @@ static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
    if (c->func.brw->intel.gen >= 6)
       return src_undef();
 
-   if (!src_is_undef(c->pixel_w)) {
+   if (src_is_undef(c->pixel_w)) {
       struct prog_dst_register pixel_w = get_temp(c);
       struct prog_src_register deltas = get_delta_xy(c);
       struct prog_src_register interp_wpos = src_reg(PROGRAM_PAYLOAD, FRAG_ATTRIB_WPOS);
