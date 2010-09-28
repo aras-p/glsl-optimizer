@@ -615,7 +615,21 @@ fs_visitor::visit(ir_variable *ir)
    }
 
    if (ir->mode == ir_var_in) {
-      reg = &this->interp_attrs[ir->location];
+      if (strcmp(ir->name, "gl_FrontFacing") == 0) {
+	 reg = new(this->mem_ctx) fs_reg(this, ir->type);
+	 struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
+	 /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
+	  * us front face
+	  */
+	 fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP,
+				      *reg,
+				      fs_reg(r1_6ud),
+				      fs_reg(1u << 31)));
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+	 emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
+      } else {
+	 reg = &this->interp_attrs[ir->location];
+      }
    }
 
    if (ir->mode == ir_var_uniform) {
@@ -1341,8 +1355,6 @@ fs_visitor::emit_interpolation()
    /* Compute the pixel W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos));
-
-   /* FINISHME: gl_FrontFacing */
 
    foreach_iter(exec_list_iterator, iter, *this->shader->ir) {
       ir_instruction *ir = (ir_instruction *)iter.get();
