@@ -326,9 +326,15 @@ intelBitmap(GLcontext * ctx,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
 {
+   struct intel_context *intel = intel_context(ctx);
+
    if (do_blit_bitmap(ctx, x, y, width, height,
                           unpack, pixels))
       return;
+
+   /* FIXME */
+   if (intel->gen == 6)
+       return _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
 
    _mesa_meta_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }
