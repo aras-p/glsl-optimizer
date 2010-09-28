@@ -857,13 +857,15 @@ struct uniform_node {
 
  */
 static void
-update_uniform_array_sizes(struct gl_shader_program *prog)
+update_array_sizes(struct gl_shader_program *prog)
 {
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform) ||
+	 if ((var == NULL) || (var->mode != ir_var_uniform &&
+			       var->mode != ir_var_in &&
+			       var->mode != ir_var_out) ||
 	     !var->type->is_array())
 	    continue;
 
@@ -880,6 +882,7 @@ update_uniform_array_sizes(struct gl_shader_program *prog)
 	       }
 	    }
 	 }
+
 	 if (size + 1 != var->type->fields.array->length) {
 	    var->type = glsl_type::get_array_instance(var->type->fields.array,
 						      size + 1);
@@ -978,8 +981,6 @@ assign_uniform_locations(struct gl_shader_program *prog)
    hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
 				    hash_table_string_compare);
    void *mem_ctx = talloc_new(NULL);
-
-   update_uniform_array_sizes(prog);
 
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       unsigned next_position = 0;
@@ -1474,6 +1475,8 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;
    }
+
+   update_array_sizes(prog);
 
    assign_uniform_locations(prog);
 
