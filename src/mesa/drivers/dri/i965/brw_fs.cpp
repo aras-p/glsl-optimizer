@@ -796,12 +796,8 @@ fs_visitor::visit(ir_dereference_array *ir)
    ir->array->accept(this);
    index = ir->array_index->as_constant();
 
-   if (ir->type->is_matrix()) {
-      element_size = ir->type->vector_elements;
-   } else {
-      element_size = type_size(ir->type);
-      this->result.type = brw_type_for_base_type(ir->type);
-   }
+   element_size = type_size(ir->type);
+   this->result.type = brw_type_for_base_type(ir->type);
 
    if (index) {
       assert(this->result.file == UNIFORM ||
@@ -809,7 +805,7 @@ fs_visitor::visit(ir_dereference_array *ir)
 	      this->result.reg != 0));
       this->result.reg_offset += index->value.i[0] * element_size;
    } else {
-      assert(!"FINISHME: non-constant matrix column");
+      assert(!"FINISHME: non-constant array element");
    }
 }
 
