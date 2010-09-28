@@ -428,6 +428,8 @@ public:
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
    void generate_discard(fs_inst *inst);
+   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
 
    void emit_dummy_fs();
    void emit_interpolation();
@@ -1496,6 +1498,69 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      BRW_SAMPLER_SIMD_MODE_SIMD8);
 }
 
+
+/* For OPCODE_DDX and OPCODE_DDY, per channel of output we've got input
+ * looking like:
+ *
+ * arg0: ss0.tl ss0.tr ss0.bl ss0.br ss1.tl ss1.tr ss1.bl ss1.br
+ *
+ * and we're trying to produce:
+ *
+ *           DDX                     DDY
+ * dst: (ss0.tr - ss0.tl)     (ss0.tl - ss0.bl)
+ *      (ss0.tr - ss0.tl)     (ss0.tr - ss0.br)
+ *      (ss0.br - ss0.bl)     (ss0.tl - ss0.bl)
+ *      (ss0.br - ss0.bl)     (ss0.tr - ss0.br)
+ *      (ss1.tr - ss1.tl)     (ss1.tl - ss1.bl)
+ *      (ss1.tr - ss1.tl)     (ss1.tr - ss1.br)
+ *      (ss1.br - ss1.bl)     (ss1.tl - ss1.bl)
+ *      (ss1.br - ss1.bl)     (ss1.tr - ss1.br)
+ *
+ * and add another set of two more subspans if in 16-pixel dispatch mode.
+ *
+ * For DDX, it ends up being easy: width = 2, horiz=0 gets us the same result
+ * for each pair, and vertstride = 2 jumps us 2 elements after processing a
+ * pair. But for DDY, it's harder, as we want to produce the pairs swizzled
+ * between each other.  We could probably do it like ddx and swizzle the right
+ * order later, but bail for now and just produce
+ * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
+ */
+void
+fs_visitor::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+{
+   struct brw_reg src0 = brw_reg(src.file, src.nr, 1,
+				 BRW_REGISTER_TYPE_F,
+				 BRW_VERTICAL_STRIDE_2,
+				 BRW_WIDTH_2,
+				 BRW_HORIZONTAL_STRIDE_0,
+				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+   struct brw_reg src1 = brw_reg(src.file, src.nr, 0,
+				 BRW_REGISTER_TYPE_F,
+				 BRW_VERTICAL_STRIDE_2,
+				 BRW_WIDTH_2,
+				 BRW_HORIZONTAL_STRIDE_0,
+				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+   brw_ADD(p, dst, src0, negate(src1));
+}
+
+void
+fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+{
+   struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
+				 BRW_REGISTER_TYPE_F,
+				 BRW_VERTICAL_STRIDE_4,
+				 BRW_WIDTH_4,
+				 BRW_HORIZONTAL_STRIDE_0,
+				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+   struct brw_reg src1 = brw_reg(src.file, src.nr, 2,
+				 BRW_REGISTER_TYPE_F,
+				 BRW_VERTICAL_STRIDE_4,
+				 BRW_WIDTH_4,
+				 BRW_HORIZONTAL_STRIDE_0,
+				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+   brw_ADD(p, dst, src0, negate(src1));
+}
+
 void
 fs_visitor::generate_discard(fs_inst *inst)
 {
@@ -1794,6 +1859,12 @@ fs_visitor::generate_code()
 	 break;
       case FS_OPCODE_DISCARD:
 	 generate_discard(inst);
+	 break;
+      case FS_OPCODE_DDX:
+	 generate_ddx(inst, dst, src[0]);
+	 break;
+      case FS_OPCODE_DDY:
+	 generate_ddy(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
