@@ -145,6 +145,7 @@ const struct brw_tracked_state *gen6_atoms[] =
    &gen6_wm_state,
 
    &gen6_scissor_state,
+   &gen6_scissor_state_pointers,
 
    &brw_state_base_address,
 
