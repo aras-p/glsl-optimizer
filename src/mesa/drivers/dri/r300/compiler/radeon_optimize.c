@@ -163,7 +163,8 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 
 	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY ||
 	    inst_mov->U.I.DstReg.RelAddr ||
-	    inst_mov->U.I.WriteALUResult)
+	    inst_mov->U.I.WriteALUResult ||
+	    inst_mov->U.I.SaturateMode)
 		return;
 
 	memset(&s, 0, sizeof(s));
