@@ -182,6 +182,8 @@ struct brw_wm_instruction {
 #define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
+#define NUM_FILES	  (PROGRAM_PAYLOAD + 1)
+
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
 #define PAYLOAD_W         (FRAG_ATTRIB_MAX + 1)
 #define PAYLOAD_FP_REG_MAX (FRAG_ATTRIB_MAX + 2)
@@ -227,7 +229,7 @@ struct brw_wm_compile {
    } payload;
 
 
-   const struct brw_wm_ref *pass0_fp_reg[PAYLOAD_FP_REG_MAX][256][4];
+   const struct brw_wm_ref *pass0_fp_reg[NUM_FILES][256][4];
 
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
@@ -255,7 +257,7 @@ struct brw_wm_compile {
    struct {
       GLboolean inited;
       struct brw_reg reg;
-   } wm_regs[PAYLOAD_FP_REG_MAX][256][4];
+   } wm_regs[NUM_FILES][256][4];
 
    GLboolean used_grf[BRW_WM_MAX_GRF];
    GLuint first_free_grf;
