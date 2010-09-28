@@ -224,6 +224,7 @@ if env['platform'] != 'winddk':
 		'program/prog_statevars.c',
 		'program/prog_uniform.c',
 		'program/programopt.c',
+		'program/sampler.cpp',
 		'program/symbol_table.c',
 	]
 	
