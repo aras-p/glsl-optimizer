@@ -85,12 +85,12 @@ struct radeon {
 	unsigned			family;
 	enum chip_class			chip_class;
 	boolean				use_mem_constant; /* true for evergreen */
-	unsigned			nstype;
-	struct radeon_stype_info	*stype;
-	unsigned max_states;
 	struct pb_manager *mman; /* malloc manager */
 	struct pb_manager *kman; /* kernel bo manager */
 	struct pb_manager *cman; /* cached bo manager */
+	unsigned			nstype;
+	struct radeon_stype_info	*stype;
+	unsigned max_states;
 };
 
 struct radeon_ws_bo {

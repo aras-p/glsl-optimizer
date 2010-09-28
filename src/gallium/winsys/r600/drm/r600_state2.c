@@ -60,7 +60,7 @@ void radeon_bo_reference(struct radeon *radeon,
 			 struct radeon_bo *src);
 
 unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
-
+void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
 
 static int r600_group_id_register_offset(struct r600_context *ctx, unsigned offset)
 {
@@ -1056,6 +1056,7 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
+	radeon_bo_pbmgr_flush_maps(ctx->radeon->kman);
 #if 1
 	/* emit cs */
 	drmib.num_chunks = 2;
