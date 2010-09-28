@@ -32,7 +32,7 @@
 
 /* Arbitrary pushbuf length we can assume we can get with a single
  * WAIT_RING. */
-#define PUSHBUF_DWORDS 2048
+#define PUSHBUF_DWORDS 65536
 
 /* Functions to set up struct nouveau_array_state from something like
  * a GL array or index buffer. */

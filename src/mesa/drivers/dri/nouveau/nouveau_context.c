@@ -128,7 +128,7 @@ nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
 
 	/* Allocate a hardware channel. */
 	ret = nouveau_channel_alloc(context_dev(ctx), 0xbeef0201, 0xbeef0202,
-				    &nctx->hw.chan);
+				    512*1024, &nctx->hw.chan);
 	if (ret) {
 		nouveau_error("Error initializing the FIFO.\n");
 		return GL_FALSE;
