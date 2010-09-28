@@ -455,6 +455,7 @@ public:
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
 
    void emit_dummy_fs();
+   void emit_fragcoord_interpolation(ir_variable *ir);
    void emit_interpolation();
    void emit_pinterp(int location);
    void emit_fb_writes();
@@ -490,6 +491,7 @@ public:
 
    fs_reg pixel_x;
    fs_reg pixel_y;
+   fs_reg wpos_w;
    fs_reg pixel_w;
    fs_reg delta_x;
    fs_reg delta_y;
@@ -608,6 +610,49 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 }
 
 void
+fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
+{
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   fs_reg wpos = *reg;
+   fs_reg neg_y = this->pixel_y;
+   neg_y.negate = true;
+
+   /* gl_FragCoord.x */
+   if (ir->pixel_center_integer) {
+      emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_x));
+   } else {
+      emit(fs_inst(BRW_OPCODE_ADD, wpos, this->pixel_x, fs_reg(0.5f)));
+   }
+   wpos.reg_offset++;
+
+   /* gl_FragCoord.y */
+   if (ir->origin_upper_left && ir->pixel_center_integer) {
+      emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_y));
+   } else {
+      fs_reg pixel_y = this->pixel_y;
+      float offset = (ir->pixel_center_integer ? 0.0 : 0.5);
+
+      if (!ir->origin_upper_left) {
+	 pixel_y.negate = true;
+	 offset += c->key.drawable_height - 1.0;
+      }
+
+      emit(fs_inst(BRW_OPCODE_ADD, wpos, pixel_y, fs_reg(offset)));
+   }
+   wpos.reg_offset++;
+
+   /* gl_FragCoord.z */
+   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+		interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   wpos.reg_offset++;
+
+   /* gl_FragCoord.w: Already set up in emit_interpolation */
+   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->wpos_w));
+
+   hash_table_insert(this->variable_ht, reg, ir);
+}
+
+void
 fs_visitor::visit(ir_variable *ir)
 {
    fs_reg *reg = NULL;
@@ -624,7 +669,10 @@ fs_visitor::visit(ir_variable *ir)
    }
 
    if (ir->mode == ir_var_in) {
-      if (strcmp(ir->name, "gl_FrontFacing") == 0) {
+      if (!strcmp(ir->name, "gl_FragCoord")) {
+	 emit_fragcoord_interpolation(ir);
+	 return;
+      } else if (!strcmp(ir->name, "gl_FrontFacing")) {
 	 reg = new(this->mem_ctx) fs_reg(this, ir->type);
 	 struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
 	 /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
@@ -1404,23 +1452,15 @@ fs_visitor::emit_interpolation()
 		fs_reg(negate(brw_vec1_grf(1, 1)))));
 
    this->current_annotation = "compute pos.w and 1/pos.w";
-   /* Compute wpos.  Unlike many other varying inputs, we usually need it
-    * to produce 1/w, and the varying variable wouldn't show up.
+   /* Compute wpos.w.  It's always in our setup, since it's needed to
+    * interpolate the other attributes.
     */
-   fs_reg wpos = fs_reg(this, glsl_type::vec4_type);
-   this->interp_attrs[FRAG_ATTRIB_WPOS] = wpos;
-   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_x)); /* FINISHME: ARB_fcc */
-   wpos.reg_offset++;
-   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_y)); /* FINISHME: ARB_fcc */
-   wpos.reg_offset++;
-   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
-		interp_reg(FRAG_ATTRIB_WPOS, 2)));
-   wpos.reg_offset++;
-   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+   this->wpos_w = fs_reg(this, glsl_type::float_type);
+   emit(fs_inst(FS_OPCODE_LINTERP, wpos_w, this->delta_x, this->delta_y,
 		interp_reg(FRAG_ATTRIB_WPOS, 3)));
-   /* Compute the pixel W value from wpos.w. */
+   /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
-   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos));
+   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
 
    foreach_iter(exec_list_iterator, iter, *this->shader->ir) {
       ir_instruction *ir = (ir_instruction *)iter.get();
