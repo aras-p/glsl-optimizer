@@ -26,6 +26,7 @@
 #define UNIFORMS_H
 
 #include "glheader.h"
+#include "program/prog_parameter.h"
 
 struct gl_program;
 struct _glapi_table;
@@ -171,5 +172,19 @@ _mesa_update_shader_textures_used(struct gl_program *prog);
 
 extern void
 _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec);
+
+struct gl_builtin_uniform_element {
+   const char *field;
+   int tokens[STATE_LENGTH];
+   int swizzle;
+};
+
+struct gl_builtin_uniform_desc {
+   const char *name;
+   struct gl_builtin_uniform_element *elements;
+   unsigned int num_elements;
+};
+
+extern const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[];
 
 #endif /* UNIFORMS_H */
