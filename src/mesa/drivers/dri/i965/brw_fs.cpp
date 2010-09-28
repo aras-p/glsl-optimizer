@@ -1335,7 +1335,7 @@ fs_visitor::emit_interpolation()
    emit(fs_inst(BRW_OPCODE_ADD,
 		this->delta_y,
 		this->pixel_y,
-		fs_reg(brw_vec1_grf(1, 1))));
+		fs_reg(negate(brw_vec1_grf(1, 1)))));
 
    this->current_annotation = "compute pos.w and 1/pos.w";
    /* Compute wpos.  Unlike many other varying inputs, we usually need it
