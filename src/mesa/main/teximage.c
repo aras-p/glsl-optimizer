@@ -403,29 +403,54 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
    if (ctx->Extensions.ARB_texture_rg) {
       switch (internalFormat) {
-      case GL_R8:
-      case GL_R16:
       case GL_R16F:
+	 /* R16F depends on both ARB_half_float_pixel and ARB_texture_float.
+	  */
+	 if (!ctx->Extensions.ARB_half_float_pixel)
+	    break;
+	 /* FALLTHROUGH */
       case GL_R32F:
+	 if (!ctx->Extensions.ARB_texture_float)
+	    break;
+         return GL_RED;
       case GL_R8I:
       case GL_R8UI:
       case GL_R16I:
       case GL_R16UI:
       case GL_R32I:
       case GL_R32UI:
-         return GL_R;
-      case GL_RG:
-      case GL_RG_INTEGER:
-      case GL_RG8:
-      case GL_RG16:
+	 if (!ctx->Extensions.EXT_texture_integer)
+	    break;
+	 /* FALLTHROUGH */
+      case GL_R8:
+      case GL_R16:
+      case GL_RED:
+      case GL_COMPRESSED_RED:
+         return GL_RED;
+
       case GL_RG16F:
+	 /* RG16F depends on both ARB_half_float_pixel and ARB_texture_float.
+	  */
+	 if (!ctx->Extensions.ARB_half_float_pixel)
+	    break;
+	 /* FALLTHROUGH */
       case GL_RG32F:
+	 if (!ctx->Extensions.ARB_texture_float)
+	    break;
+         return GL_RG;
       case GL_RG8I:
       case GL_RG8UI:
       case GL_RG16I:
       case GL_RG16UI:
       case GL_RG32I:
       case GL_RG32UI:
+	 if (!ctx->Extensions.EXT_texture_integer)
+	    break;
+	 /* FALLTHROUGH */
+      case GL_RG:
+      case GL_RG8:
+      case GL_RG16:
+      case GL_COMPRESSED_RG:
          return GL_RG;
       default:
          ; /* fallthrough */
@@ -463,11 +488,9 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
    if (ctx->Extensions.EXT_texture_compression_rgtc) {
       switch (internalFormat) {
-      case GL_COMPRESSED_RED:
       case GL_COMPRESSED_RED_RGTC1_EXT:
       case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
          return GL_RED;
-      case GL_COMPRESSED_RG:
       case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:
       case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
          return GL_RG;
