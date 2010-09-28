@@ -662,17 +662,17 @@ static int setup_db_flush(struct r600_context *rctx, struct radeon_state *flush)
 
 	surf = rctx->framebuffer->state.framebuffer.zsbuf;
 
-	if (!surf)
-		return 0;
-		
 	radeon_state_init(flush, rscreen->rw, R600_STATE_DB_FLUSH, 0, 0);
-	rtex = (struct r600_resource_texture*)surf->texture;
-	rbuffer = &rtex->resource;
-	/* just need to the bo to the flush list */
-	radeon_ws_bo_reference(rscreen->rw, &flush->bo[0], rbuffer->bo);
-	flush->placement[0] = RADEON_GEM_DOMAIN_VRAM;
 
-	flush->nbo = 1;
+	if (surf) {
+		rtex = (struct r600_resource_texture*)surf->texture;
+		rbuffer = &rtex->resource;
+		/* just need to the bo to the flush list */
+		radeon_ws_bo_reference(rscreen->rw, &flush->bo[0], rbuffer->bo);
+		flush->placement[0] = RADEON_GEM_DOMAIN_VRAM;
+
+		flush->nbo = 1;
+	}
 	return radeon_state_pm4(flush);
 }
 
