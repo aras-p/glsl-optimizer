@@ -126,11 +126,7 @@ struct r300_fragment_program_external_state {
 	struct {
 		/**
 		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
+		 * this field contains swizzle depending on the depth texture mode.
 		 */
 		unsigned depth_texture_swizzle:12;
 
@@ -150,13 +146,9 @@ struct r300_fragment_program_external_state {
 		unsigned compare_mode_enabled : 1;
 
 		/**
-		 * If the sampler needs to fake NPOT, this field is set.
-		 */
-		unsigned fake_npot : 1;
-
-		/**
-		 * If the sampler will recieve non-normalized coords,
-		 * this field is set.
+		 * If the sampler will receive non-normalized coords,
+		 * this field is set. The scaling factor is given by
+		 * RC_STATE_R300_TEXRECT_FACTOR.
 		 */
 		unsigned non_normalized_coords : 1;
 
