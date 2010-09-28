@@ -69,18 +69,20 @@ struct r600_pipe_blend {
 	unsigned			cb_target_mask;
 };
 
-struct r600_pipe_shader {
-	struct r600_shader		shader;
-	struct r600_pipe_state		rstate;
-	struct radeon_ws_bo		*bo;
-};
-
 struct r600_vertex_element
 {
 	unsigned			count;
 	unsigned			refcount;
 	struct pipe_vertex_element	elements[32];
 };
+
+struct r600_pipe_shader {
+	struct r600_shader		shader;
+	struct r600_pipe_state		rstate;
+	struct radeon_ws_bo		*bo;
+	struct r600_vertex_element	vertex_elements;
+};
+
 
 struct r600_pipe_context {
 	struct pipe_context		context;
