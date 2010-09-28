@@ -581,45 +581,18 @@ static void r300_update_rs_block(struct r300_context *r300)
 }
 
 static uint32_t r300_get_border_color(enum pipe_format format,
-                                      const unsigned char swizzle_view[4],
                                       const float border[4])
 {
     const struct util_format_description *desc;
-    unsigned char swizzle[4];
-    unsigned i;
-    float border_swizzled[4];
+    float border_swizzled[4] = {
+        border[2],
+        border[1],
+        border[0],
+        border[3]
+    };
     uint32_t r;
 
     desc = util_format_description(format);
-
-    /* Combine the swizzles. */
-    for (i = 0; i < 4; i++) {
-        swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
-                     desc->swizzle[swizzle_view[i]] : swizzle_view[i];
-    }
-
-    /* Apply swizzling. */
-    for (i = 0; i < 4; i++) {
-        switch (swizzle[i]) {
-            case UTIL_FORMAT_SWIZZLE_X:
-                border_swizzled[i] = border[0];
-                break;
-            case UTIL_FORMAT_SWIZZLE_Y:
-                border_swizzled[i] = border[1];
-                break;
-            case UTIL_FORMAT_SWIZZLE_Z:
-                border_swizzled[i] = border[2];
-                break;
-            case UTIL_FORMAT_SWIZZLE_W:
-                border_swizzled[i] = border[3];
-                break;
-            case UTIL_FORMAT_SWIZZLE_0:
-                border_swizzled[i] = 0;
-                break;
-            default: /* 1, NONE */
-                border_swizzled[i] = 1;
-        }
-    }
 
     /* We don't use util_pack_format because it does not handle the formats
      * we want, e.g. R4G4B4A4 is non-existent in Gallium. */
@@ -695,7 +668,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 
             /* Set the border color. */
             texstate->border_color =
-                r300_get_border_color(view->base.format, view->swizzle,
+                r300_get_border_color(view->base.format,
                                       sampler->state.border_color);
 
             /* determine min/max levels */
