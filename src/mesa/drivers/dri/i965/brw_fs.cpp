@@ -613,6 +613,21 @@ fs_visitor::visit(ir_dereference_array *ir)
       element_size = ir->type->vector_elements;
    } else {
       element_size = type_size(ir->type);
+      switch (ir->type->base_type) {
+      case GLSL_TYPE_UINT:
+	 this->result.type = BRW_REGISTER_TYPE_UD;
+	 break;
+      case GLSL_TYPE_INT:
+      case GLSL_TYPE_BOOL:
+	 this->result.type = BRW_REGISTER_TYPE_D;
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 this->result.type = BRW_REGISTER_TYPE_F;
+	 break;
+      default:
+	 /* deref producing struct, no need to tweak type yet. */
+	 break;
+      }
    }
 
    if (index) {
