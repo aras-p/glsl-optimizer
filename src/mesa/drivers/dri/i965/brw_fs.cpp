@@ -135,11 +135,11 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 do_sub_to_add_neg(shader->ir);
 	 do_explog_to_explog2(shader->ir);
 
-	 brw_do_channel_expressions(shader->ir);
-	 brw_do_vector_splitting(shader->ir);
-
 	 do {
 	    progress = false;
+
+	    brw_do_channel_expressions(shader->ir);
+	    brw_do_vector_splitting(shader->ir);
 
 	    progress = do_lower_jumps(shader->ir, true, true,
 				      true, /* main return */
@@ -520,6 +520,14 @@ fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
    case GLSL_TYPE_UINT:
       this->type = BRW_REGISTER_TYPE_UD;
       break;
+   case GLSL_TYPE_ARRAY:
+   case GLSL_TYPE_STRUCT:
+      /* These should be overridden with the type of the member when
+       * dereferenced into.  BRW_REGISTER_TYPE_UD seems like a likely
+       * way to trip up if we don't.
+       */
+      this->type =  BRW_REGISTER_TYPE_UD;
+      break;
    default:
       assert(!"not reached");
       this->type =  BRW_REGISTER_TYPE_F;
@@ -877,7 +885,7 @@ fs_visitor::visit(ir_assignment *ir)
    if (ir->condition) {
       /* Get the condition bool into the predicate. */
       ir->condition->accept(this);
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, fs_reg(0)));
+      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, this->result, fs_reg(0)));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    }
 
