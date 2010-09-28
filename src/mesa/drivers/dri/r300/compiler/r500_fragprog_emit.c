@@ -250,7 +250,7 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	if (inst->RGB.OutputWriteMask || inst->Alpha.OutputWriteMask || inst->Alpha.DepthWriteMask) {
 		code->inst[ip].inst0 = R500_INST_TYPE_OUT;
 		if (inst->WriteALUResult) {
-			error("%s: cannot write output and ALU result at the same time");
+			error("Cannot write output and ALU result at the same time");
 			return;
 		}
 	} else {
