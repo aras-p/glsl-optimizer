@@ -31,6 +31,7 @@ extern "C" {
 
 #include "main/macros.h"
 #include "main/shaderobj.h"
+#include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/prog_optimize.h"
@@ -461,6 +462,7 @@ public:
 
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
+   void setup_builtin_uniform_values(ir_variable *ir);
 
    struct brw_context *brw;
    const struct gl_fragment_program *fp;
@@ -604,6 +606,69 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    default:
       assert(!"not reached");
       return 0;
+   }
+}
+
+
+/* Our support for builtin uniforms is even scarier than non-builtin.
+ * It sits on top of the PROG_STATE_VAR parameters that are
+ * automatically updated from GL context state.
+ */
+void
+fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
+{
+   const struct gl_builtin_uniform_desc *statevar = NULL;
+
+   for (unsigned int i = 0; _mesa_builtin_uniform_desc[i].name; i++) {
+      statevar = &_mesa_builtin_uniform_desc[i];
+      if (strcmp(ir->name, _mesa_builtin_uniform_desc[i].name) == 0)
+	 break;
+   }
+
+   if (!statevar->name) {
+      this->fail = true;
+      printf("Failed to find builtin uniform `%s'\n", ir->name);
+      return;
+   }
+
+   int array_count;
+   if (ir->type->is_array()) {
+      array_count = ir->type->length;
+   } else {
+      array_count = 1;
+   }
+
+   for (int a = 0; a < array_count; a++) {
+      for (unsigned int i = 0; i < statevar->num_elements; i++) {
+	 struct gl_builtin_uniform_element *element = &statevar->elements[i];
+	 int tokens[STATE_LENGTH];
+
+	 memcpy(tokens, element->tokens, sizeof(element->tokens));
+	 if (ir->type->is_array()) {
+	    tokens[1] = a;
+	 }
+
+	 /* This state reference has already been setup by ir_to_mesa,
+	  * but we'll get the same index back here.
+	  */
+	 int index = _mesa_add_state_reference(this->fp->Base.Parameters,
+					       (gl_state_index *)tokens);
+	 float *vec_values = this->fp->Base.Parameters->ParameterValues[index];
+
+	 /* Add each of the unique swizzles of the element as a
+	  * parameter.  This'll end up matching the expected layout of
+	  * the array/matrix/structure we're trying to fill in.
+	  */
+	 int last_swiz = -1;
+	 for (unsigned int i = 0; i < 4; i++) {
+	    int this_swiz = GET_SWZ(element->swizzle, i);
+	    if (this_swiz == last_swiz)
+	       break;
+	    last_swiz = this_swiz;
+
+	    c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
+	 }
+      }
    }
 }
 
@@ -751,7 +816,11 @@ fs_visitor::visit(ir_variable *ir)
    if (ir->mode == ir_var_uniform) {
       int param_index = c->prog_data.nr_params;
 
-      setup_uniform_values(ir->location, ir->type);
+      if (!strncmp(ir->name, "gl_", 3)) {
+	 setup_builtin_uniform_values(ir);
+      } else {
+	 setup_uniform_values(ir->location, ir->type);
+      }
 
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
    }
