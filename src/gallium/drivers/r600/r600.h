@@ -117,32 +117,7 @@ void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
 #define R600_BLOCK_MAX_BO		32
 #define R600_BLOCK_MAX_REG		128
 
-enum r600_group_id {
-	R600_GROUP_CONFIG = 0,
-	R600_GROUP_CONTEXT,
-	R600_GROUP_ALU_CONST,
-	R600_GROUP_RESOURCE,
-	R600_GROUP_SAMPLER,
-	R600_GROUP_CTL_CONST,
-	R600_GROUP_LOOP_CONST,
-	R600_GROUP_BOOL_CONST,
-	R600_NGROUPS
-};
-
-enum evergreen_group_id {
-	EVERGREEN_GROUP_CONFIG = 0,
-	EVERGREEN_GROUP_CONTEXT,
-	EVERGREEN_GROUP_RESOURCE,
-	EVERGREEN_GROUP_SAMPLER,
-	EVERGREEN_GROUP_CTL_CONST,
-	EVERGREEN_GROUP_LOOP_CONST,
-	EVERGREEN_GROUP_BOOL_CONST,
-	EVERGREEN_GROUP_SAMPLER_BORDER,
-	EVERGREEN_NGROUPS
-};
-
 struct r600_pipe_reg {
-	unsigned			group_id;
 	u32				offset;
 	u32				mask;
 	u32				value;
@@ -156,11 +131,9 @@ struct r600_pipe_state {
 };
 
 static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
-					unsigned group_id, u32 offset,
-					u32 value, u32 mask,
+					u32 offset, u32 value, u32 mask,
 					struct radeon_ws_bo *bo)
 {
-	state->regs[state->nregs].group_id = group_id;
 	state->regs[state->nregs].offset = offset;
 	state->regs[state->nregs].value = value;
 	state->regs[state->nregs].mask = mask;
@@ -178,7 +151,7 @@ struct r600_block_reloc {
 	unsigned		bo_pm4_index[R600_BLOCK_MAX_BO];
 };
 
-struct r600_group_block {
+struct r600_block {
 	unsigned		status;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
@@ -190,12 +163,10 @@ struct r600_group_block {
 	struct r600_block_reloc	reloc[R600_BLOCK_MAX_BO];
 };
 
-struct r600_group {
+struct r600_range {
 	unsigned		start_offset;
 	unsigned		end_offset;
-	unsigned		nblocks;
-	struct r600_group_block	*blocks;
-	unsigned		*offset_block_id;
+	struct r600_block	**blocks;
 };
 
 /*
@@ -236,8 +207,11 @@ struct r600_query {
 
 struct r600_context {
 	struct radeon		*radeon;
-	unsigned		ngroups;
-	struct r600_group	groups[R600_GROUP_MAX];
+	unsigned		hash_size;
+	unsigned		hash_shift;
+	struct r600_range	range[256];
+	unsigned		nblocks;
+	struct r600_block	**blocks;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;

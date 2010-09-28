@@ -49,25 +49,30 @@ struct radeon *r600_new(int fd, unsigned device);
 void r600_delete(struct radeon *r600);
 
 struct r600_reg {
+	unsigned			opcode;
+	unsigned			offset_base;
+	unsigned			offset;
 	unsigned			need_bo;
 	unsigned			flush_flags;
-	unsigned			offset;
 };
 
 /* radeon_pciid.c */
 unsigned radeon_family_from_device(unsigned device);
 
+#define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
+#define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))
 
-static void inline r600_context_reg(struct r600_context *ctx, unsigned group_id,
+
+static void inline r600_context_reg(struct r600_context *ctx,
 					unsigned offset, unsigned value,
 					unsigned mask)
 {
-	struct r600_group *group = &ctx->groups[group_id];
-	struct r600_group_block *block;
+	struct r600_range *range;
+	struct r600_block *block;
 	unsigned id;
 
-	id = group->offset_block_id[(offset - group->start_offset) >> 2];
-	block = &group->blocks[id];
+	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
+	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	id = (offset - block->start_offset) >> 2;
 	block->reg[id] &= ~mask;
 	block->reg[id] |= value;
@@ -76,6 +81,36 @@ static void inline r600_context_reg(struct r600_context *ctx, unsigned group_id,
 	}
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
+}
+
+struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
+void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo);
+
+struct radeon_ws_bo {
+	struct pipe_reference		reference;
+	struct pb_buffer		*pb;
+};
+
+static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
+{
+	struct radeon_bo *bo;
+	int id;
+
+	for (int j = 0; j < block->nreg; j++) {
+		if (block->pm4_bo_index[j]) {
+			/* find relocation */
+			id = block->pm4_bo_index[j];
+			bo = radeon_bo_pb_get_bo(block->reloc[id].bo->pb);
+			for (int k = 0; k < block->reloc[id].nreloc; k++) {
+				r600_context_bo_reloc(ctx,
+					&block->pm4[block->reloc[id].bo_pm4_index[k]],
+					bo);
+			}
+		}
+	}
+	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
+	ctx->pm4_cdwords += block->pm4_ndwords;
+	block->status ^= R600_BLOCK_STATUS_DIRTY;
 }
 
 #endif
