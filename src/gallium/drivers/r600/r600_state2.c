@@ -343,8 +343,10 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 
 	if (family >= CHIP_R600 && family < CHIP_RV770)
 		return "R600 (HD2XXX,HD3XXX)";
-	else
+	else if (family < CHIP_CEDAR)
 		return "R700 (HD4XXX)";
+	else
+		return "EVERGREEN";
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
