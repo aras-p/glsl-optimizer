@@ -258,6 +258,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\glsl_symbol_table.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\glsl_symbol_table.h"
 					>
 				</File>
@@ -370,10 +374,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_if_return.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_if_simplification.cpp"
 					>
 				</File>
@@ -383,6 +383,10 @@
 				</File>
 				<File
 					RelativePath="..\ir_import_prototypes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_lower_jumps.cpp"
 					>
 				</File>
 				<File
@@ -502,6 +506,30 @@
 					>
 				</File>
 				<File
+					RelativePath="..\loop_analysis.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\loop_analysis.h"
+					>
+				</File>
+				<File
+					RelativePath="..\loop_controls.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\loop_unroll.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_noise.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_variable_index_to_cond_assign.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\main.cpp"
 					>
 					<FileConfiguration
@@ -520,6 +548,10 @@
 							Name="VCCLCompilerTool"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\opt_redundant_jumps.cpp"
+					>
 				</File>
 				<File
 					RelativePath="..\program.h"
