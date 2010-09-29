@@ -874,13 +874,15 @@ int r300_transform_trig_simple(struct radeon_compiler* c,
 	struct rc_instruction* inst,
 	void* unused)
 {
+	unsigned int constants[2];
+	unsigned int tempreg;
+
 	if (inst->U.I.Opcode != RC_OPCODE_COS &&
 	    inst->U.I.Opcode != RC_OPCODE_SIN &&
 	    inst->U.I.Opcode != RC_OPCODE_SCS)
 		return 0;
 
-	unsigned int constants[2];
-	unsigned int tempreg = rc_find_free_temporary(c);
+	tempreg = rc_find_free_temporary(c);
 
 	sincos_constants(c, constants);
 
@@ -918,6 +920,8 @@ int r300_transform_trig_simple(struct radeon_compiler* c,
 			swizzle_wwww(srcreg(RC_FILE_TEMPORARY, tempreg)),
 			constants);
 	} else {
+		struct rc_dst_register dst;
+
 		emit3(c, inst->Prev, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_XY),
 			swizzle_xxxx(inst->U.I.SrcReg[0]),
 			swizzle_zzzz(srcreg(RC_FILE_CONSTANT, constants[1])),
@@ -929,7 +933,7 @@ int r300_transform_trig_simple(struct radeon_compiler* c,
 			swizzle_wwww(srcreg(RC_FILE_CONSTANT, constants[1])),
 			negate(swizzle_zzzz(srcreg(RC_FILE_CONSTANT, constants[0]))));
 
-		struct rc_dst_register dst = inst->U.I.DstReg;
+		dst = inst->U.I.DstReg;
 
 		dst.WriteMask = inst->U.I.DstReg.WriteMask & RC_MASK_X;
 		sin_approx(c, inst, dst,
@@ -988,15 +992,15 @@ int radeonTransformTrigScale(struct radeon_compiler* c,
 	struct rc_instruction* inst,
 	void* unused)
 {
-	if (inst->U.I.Opcode != RC_OPCODE_COS &&
-	    inst->U.I.Opcode != RC_OPCODE_SIN &&
-	    inst->U.I.Opcode != RC_OPCODE_SCS)
-		return 0;
-
 	static const float RCP_2PI = 0.15915494309189535;
 	unsigned int temp;
 	unsigned int constant;
 	unsigned int constant_swizzle;
+
+	if (inst->U.I.Opcode != RC_OPCODE_COS &&
+	    inst->U.I.Opcode != RC_OPCODE_SIN &&
+	    inst->U.I.Opcode != RC_OPCODE_SCS)
+		return 0;
 
 	temp = rc_find_free_temporary(c);
 	constant = rc_constants_add_immediate_scalar(&c->Program.Constants, RCP_2PI, &constant_swizzle);
@@ -1020,6 +1024,10 @@ int r300_transform_trig_scale_vertex(struct radeon_compiler *c,
 	struct rc_instruction *inst,
 	void *unused)
 {
+	static const float cons[4] = {0.15915494309189535, 0.5, 6.28318530717959, -3.14159265358979};
+	unsigned int temp;
+	unsigned int constant;
+
 	if (inst->U.I.Opcode != RC_OPCODE_COS &&
 	    inst->U.I.Opcode != RC_OPCODE_SIN &&
 	    inst->U.I.Opcode != RC_OPCODE_SCS)
@@ -1029,10 +1037,6 @@ int r300_transform_trig_scale_vertex(struct radeon_compiler *c,
 	 *
 	 *   repeat(x) = frac(x / 2PI + 0.5) * 2PI - PI
 	 */
-
-	static const float cons[4] = {0.15915494309189535, 0.5, 6.28318530717959, -3.14159265358979};
-	unsigned int temp;
-	unsigned int constant;
 
 	temp = rc_find_free_temporary(c);
 	constant = rc_constants_add_immediate_vec4(&c->Program.Constants, cons);
