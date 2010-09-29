@@ -475,6 +475,12 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 {
 	struct rc_pair_instruction backup;
 
+	/*Instructions can't write output registers and ALU result at the
+	 * same time. */
+	if ((rgb->WriteALUResult && alpha->Alpha.OutputWriteMask)
+		|| (rgb->RGB.OutputWriteMask && alpha->WriteALUResult)) {
+		return 0;
+	}
 	memcpy(&backup, rgb, sizeof(struct rc_pair_instruction));
 
 	if (destructive_merge_instructions(rgb, alpha))
