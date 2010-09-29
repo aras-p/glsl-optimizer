@@ -289,7 +289,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-		((region->tiling != I915_TILING_NONE) << 27) |
+		(1 << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->buffer,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
