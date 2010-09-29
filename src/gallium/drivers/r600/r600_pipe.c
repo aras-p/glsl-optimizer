@@ -225,17 +225,36 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 	return "X.Org";
 }
 
+static const char *r600_get_family_name(enum radeon_family family)
+{
+	switch(family) {
+	case CHIP_R600: return "R600";
+	case CHIP_RV610: return "RV610";
+	case CHIP_RV630: return "RV630";
+	case CHIP_RV670: return "RV670";
+	case CHIP_RV620: return "RV620";
+	case CHIP_RV635: return "RV635";
+	case CHIP_RS780: return "RS780";
+	case CHIP_RS880: return "RS880";
+	case CHIP_RV770: return "RV770";
+	case CHIP_RV730: return "RV730";
+	case CHIP_RV710: return "RV710";
+	case CHIP_RV740: return "RV740";
+	case CHIP_CEDAR: return "CEDAR";
+	case CHIP_REDWOOD: return "REDWOOD";
+	case CHIP_JUNIPER: return "JUNIPER";
+	case CHIP_CYPRESS: return "CYPRESS";
+	case CHIP_HEMLOCK: return "HEMLOCK";
+	default: return "unknown";
+	}
+}
+
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	enum radeon_family family = r600_get_family(rscreen->radeon);
 
-	if (family >= CHIP_R600 && family < CHIP_RV770)
-		return "R600 (HD2XXX,HD3XXX)";
-	else if (family < CHIP_CEDAR)
-		return "R700 (HD4XXX)";
-	else
-		return "EVERGREEN";
+	return r600_get_family_name(family);
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
