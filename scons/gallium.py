@@ -130,7 +130,6 @@ def generate(env):
     env['msvc'] = env['CC'] == 'cl'
 
     # shortcuts
-    debug = env['debug']
     machine = env['machine']
     platform = env['platform']
     x86 = env['machine'] == 'x86'
@@ -412,7 +411,7 @@ def generate(env):
     if env['platform'] == 'windows' and msvc:
         # Choose the appropriate MSVC CRT
         # http://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx
-        if env['debug']:
+        if env['build'] in ('debug', 'checked'):
             env.Append(CCFLAGS = ['/MTd'])
             env.Append(SHCCFLAGS = ['/LDd'])
         else:
@@ -444,7 +443,7 @@ def generate(env):
         else:
             env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
-        if not env['debug']:
+        if env['build'] != 'debug':
             # enable Link-time Code Generation
             linkflags += ['/LTCG']
             env.Append(ARFLAGS = ['/LTCG'])
