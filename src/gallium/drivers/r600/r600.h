@@ -26,6 +26,7 @@
 #ifndef R600_H
 #define R600_H
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <util/u_double_list.h>

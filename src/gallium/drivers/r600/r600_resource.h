@@ -25,8 +25,15 @@
 
 #include "util/u_transfer.h"
 
-struct r600_context;
-struct r600_screen;
+/* Texture transfer. */
+struct r600_transfer {
+	/* Base class. */
+	struct pipe_transfer		transfer;
+	/* Buffer transfer. */
+	struct pipe_transfer		*buffer_transfer;
+	unsigned			offset;
+	struct pipe_resource		*linear_texture;
+};
 
 /* This gets further specialized into either buffer or texture
  * structures. Use the vtbl struct to choose between the two
@@ -58,7 +65,6 @@ struct r600_resource_texture {
 	struct r600_resource_texture    *flushed_depth_texture;
 };
 
-void r600_init_context_resource_functions(struct r600_context *r600);
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
 
 /* r600_buffer */
@@ -106,4 +112,18 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 			     struct pipe_resource *texture);
 
 extern int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r600_resource_texture *texture);
+
+/* r600_texture.c texture transfer functions. */
+struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
+						struct pipe_resource *texture,
+						struct pipe_subresource sr,
+						unsigned usage,
+						const struct pipe_box *box);
+void r600_texture_transfer_destroy(struct pipe_context *ctx,
+				   struct pipe_transfer *trans);
+void* r600_texture_transfer_map(struct pipe_context *ctx,
+				struct pipe_transfer* transfer);
+void r600_texture_transfer_unmap(struct pipe_context *ctx,
+				 struct pipe_transfer* transfer);
+
 #endif

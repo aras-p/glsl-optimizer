@@ -31,8 +31,7 @@
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include "state_tracker/drm_driver.h"
-#include "r600_screen.h"
-#include "r600_context.h"
+#include "r600_pipe.h"
 #include "r600_resource.h"
 #include "r600_state_inlines.h"
 #include "r600d.h"
@@ -123,7 +122,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	resource->base.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
-	r600_setup_miptree(rtex, radeon_get_family_class(radeon));
+	r600_setup_miptree(rtex, r600_get_family_class(radeon));
 
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);

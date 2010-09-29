@@ -26,6 +26,14 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
+#include <pipe/p_state.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_context.h>
+#include <util/u_math.h>
+#include "r600.h"
+#include "r600_shader.h"
+#include "r600_resource.h"
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -166,5 +174,17 @@ static INLINE u32 S_FIXED(float value, u32 frac_bits)
 	return value * (1 << frac_bits);
 }
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+/* r600_buffer.c */
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ);
+struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
+					      void *ptr, unsigned bytes,
+					      unsigned bind);
+unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
+					 struct pipe_resource *buf,
+					 unsigned face, unsigned level);
+struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
+					      struct winsys_handle *whandle);
 
 #endif

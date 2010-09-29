@@ -20,14 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "radeon.h"
-#include "r600_context.h"
+#include <stdio.h>
+#include <errno.h>
 #include "util/u_memory.h"
+#include "r600_pipe.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
 #include "r600_asm.h"
-#include <stdio.h>
-#include <errno.h>
 
 static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 {

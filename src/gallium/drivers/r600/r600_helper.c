@@ -26,8 +26,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <util/u_inlines.h>
-#include "r600_screen.h"
-#include "r600_context.h"
+#include "r600_pipe.h"
 #include "r600d.h"
 
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)

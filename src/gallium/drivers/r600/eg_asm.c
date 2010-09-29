@@ -20,14 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "radeon.h"
-#include "r600_asm.h"
-#include "r600_context.h"
-#include "util/u_memory.h"
-#include "eg_sq.h"
-#include "r600_opcodes.h"
 #include <stdio.h>
 #include <errno.h>
+#include "util/u_memory.h"
+#include "r600_pipe.h"
+#include "r600_asm.h"
+#include "eg_sq.h"
+#include "r600_opcodes.h"
 
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 {
