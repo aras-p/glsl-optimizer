@@ -148,9 +148,12 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 	struct rc_pair_instruction * pair,
 	struct rc_sub_instruction * inst)
 {
+	int needrgb, needalpha, istranscendent;
+	const struct rc_opcode_info * opcode;
+	int i;
+
 	memset(pair, 0, sizeof(struct rc_pair_instruction));
 
-	int needrgb, needalpha, istranscendent;
 	classify_instruction(inst, &needrgb, &needalpha, &istranscendent);
 
 	if (needrgb) {
@@ -167,8 +170,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			pair->Alpha.Saturate = 1;
 	}
 
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
-	int i;
+	opcode = rc_get_opcode_info(inst->Opcode);
 
 	/* Presubtract handling:
 	 * We need to make sure that the values used by the presubtract
@@ -330,15 +332,18 @@ void rc_pair_translate(struct radeon_compiler *cc, void *user)
 	for(struct rc_instruction * inst = c->Base.Program.Instructions.Next;
 	    inst != &c->Base.Program.Instructions;
 	    inst = inst->Next) {
+		const struct rc_opcode_info * opcode;
+		struct rc_sub_instruction copy;
+
 		if (inst->Type != RC_INSTRUCTION_NORMAL)
 			continue;
 
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+		opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		if (opcode->HasTexture || opcode->IsFlowControl || opcode->Opcode == RC_OPCODE_KIL)
 			continue;
 
-		struct rc_sub_instruction copy = inst->U.I;
+		copy = inst->U.I;
 
 		check_opcode_support(c, &copy);
 
