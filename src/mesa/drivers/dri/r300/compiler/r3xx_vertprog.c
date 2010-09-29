@@ -392,9 +392,9 @@ static void ei_if(struct r300_vertex_program_compiler * compiler,
 	 * don't already have one. */
 	if (!compiler->PredicateMask) {
 		unsigned int writemasks[RC_REGISTER_MAX_INDEX];
-		memset(writemasks, 0, sizeof(writemasks));
 		struct rc_instruction * inst;
 		unsigned int i;
+		memset(writemasks, 0, sizeof(writemasks));
 		for(inst = compiler->Base.Program.Instructions.Next;
 				inst != &compiler->Base.Program.Instructions;
 							inst = inst->Next) {
