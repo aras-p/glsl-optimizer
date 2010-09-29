@@ -11,10 +11,10 @@ void main ()
     c = (c + abs (vec2(vec2(0.0, 0.0)[j])));
     j = (j + 1);
   };
-  vec4 tmpvar_7;
-  tmpvar_7.xy = c.xy;
-  tmpvar_7.z = 0.0;
-  tmpvar_7.w = 0.0;
-  gl_FragColor = tmpvar_7;
+  vec4 tmpvar_1;
+  tmpvar_1.xy = c.xy;
+  tmpvar_1.z = 0.0;
+  tmpvar_1.w = 0.0;
+  gl_FragColor = tmpvar_1;
 }
 

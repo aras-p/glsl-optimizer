@@ -54,15 +54,15 @@ v2f vert (
     vec3 tmpvar_10;
     tmpvar_10 = (lightColor + tmpvar_9);
     lightColor = tmpvar_10;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = i;
     int tmpvar_11;
-    tmpvar_11 = i;
-    int tmpvar_12;
-    tmpvar_12 = (i + 1);
-    i = tmpvar_12;
+    tmpvar_11 = (i + 1);
+    i = tmpvar_11;
   };
-  vec3 tmpvar_13;
-  tmpvar_13 = (lightColor * v.color.w);
-  o.color = tmpvar_13;
+  vec3 tmpvar_12;
+  tmpvar_12 = (lightColor * v.color.w);
+  o.color = tmpvar_12;
   return o;
 }
 

@@ -2,16 +2,16 @@ uniform sampler2D _MainTex;
 uniform sampler2D _AdaptTex;
 void main ()
 {
-  vec2 tmpvar_19[2];
-  tmpvar_19[0] = gl_TexCoord[0].xy;
-  tmpvar_19[1] = gl_TexCoord[1].xy;
+  vec2 tmpvar_1[2];
+  tmpvar_1[0] = gl_TexCoord[0].xy;
+  tmpvar_1[1] = gl_TexCoord[1].xy;
   vec4 col;
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, tmpvar_19[0]);
-  col = tmpvar_11;
-  vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_AdaptTex, tmpvar_19[1]);
-  col.xyz = ((tmpvar_11.xyz * 1.0/(tmpvar_13.z)) + -(tmpvar_13.w)).xyz;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, tmpvar_1[0]);
+  col = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_AdaptTex, tmpvar_1[1]);
+  col.xyz = ((tmpvar_2.xyz * 1.0/(tmpvar_3.z)) + -(tmpvar_3.w)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

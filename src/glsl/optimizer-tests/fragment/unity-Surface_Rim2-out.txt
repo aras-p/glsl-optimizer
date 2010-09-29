@@ -7,14 +7,14 @@ uniform sampler2D _MainTex;
 uniform sampler2D _LightBuffer;
 void main ()
 {
-  vec3 tmpvar_11;
-  tmpvar_11 = gl_TexCoord[4].xyz;
+  vec3 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[4].xyz;
   vec4 col;
   vec4 light;
-  vec4 tmpvar_58;
-  tmpvar_58 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));
-  light = tmpvar_58;
-  light.xyz = (tmpvar_58.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_11.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_11.xy).xyz), vec3(clamp (tmpvar_11.z, 0.0, 1.0)))).xyz;
+  vec4 tmpvar_2;
+  tmpvar_2 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));
+  light = tmpvar_2;
+  light.xyz = (tmpvar_2.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0)))).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light.xyz).xyz;
   c.w = 0.0;

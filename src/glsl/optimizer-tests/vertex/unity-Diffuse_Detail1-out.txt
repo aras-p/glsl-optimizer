@@ -1,14 +1,14 @@
 attribute vec4 TANGENT;
 void main ()
 {
-  mat3 tmpvar_34;
-  tmpvar_34[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
-  tmpvar_34[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
-  tmpvar_34[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
+  mat3 tmpvar_1;
+  tmpvar_1[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
+  tmpvar_1[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
+  tmpvar_1[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  vec4 tmpvar_17;
-  tmpvar_17.xyz = (tmpvar_34 * gl_Normal.xyz).xyz;
-  tmpvar_17.w = 0.0;
-  gl_TexCoord[0] = tmpvar_17;
+  vec4 tmpvar_2;
+  tmpvar_2.xyz = (tmpvar_1 * gl_Normal.xyz).xyz;
+  tmpvar_2.w = 0.0;
+  gl_TexCoord[0] = tmpvar_2;
 }
 

@@ -2,16 +2,16 @@ void main ()
 {
   vec2 inUV;
   inUV = gl_MultiTexCoord0.xy;
-  vec4 tmpvar_19;
-  tmpvar_19.x = inUV.x;
-  tmpvar_19.y = inUV.y;
-  tmpvar_19.z = 0.0;
-  tmpvar_19.w = 0.0;
+  vec4 tmpvar_1;
+  tmpvar_1.x = inUV.x;
+  tmpvar_1.y = inUV.y;
+  tmpvar_1.z = 0.0;
+  tmpvar_1.w = 0.0;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9.xy = (gl_TextureMatrix[0] * tmpvar_19).xy;
-  tmpvar_9.z = 0.0;
-  tmpvar_9.w = 0.0;
-  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_2;
+  tmpvar_2.xy = (gl_TextureMatrix[0] * tmpvar_1).xy;
+  tmpvar_2.z = 0.0;
+  tmpvar_2.w = 0.0;
+  gl_TexCoord[0] = tmpvar_2;
 }
 

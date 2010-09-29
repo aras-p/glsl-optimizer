@@ -1,23 +1,23 @@
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec2 tmpvar_33[4];
-  tmpvar_33[0] = gl_TexCoord[0].xy;
-  tmpvar_33[1] = gl_TexCoord[1].xy;
-  tmpvar_33[2] = gl_TexCoord[2].xy;
-  tmpvar_33[3] = gl_TexCoord[3].xy;
+  vec2 tmpvar_1[4];
+  tmpvar_1[0] = gl_TexCoord[0].xy;
+  tmpvar_1[1] = gl_TexCoord[1].xy;
+  tmpvar_1[2] = gl_TexCoord[2].xy;
+  tmpvar_1[3] = gl_TexCoord[3].xy;
   vec4 res;
-  vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_MainTex, tmpvar_33[0]);
-  vec2 tmpvar_18;
-  tmpvar_18 = texture2D (_MainTex, tmpvar_33[1]).xy;
-  vec2 tmpvar_20;
-  tmpvar_20 = texture2D (_MainTex, tmpvar_33[2]).xy;
-  vec2 tmpvar_22;
-  tmpvar_22 = texture2D (_MainTex, tmpvar_33[3]).xy;
-  res.x = max (max (tmpvar_15.x, tmpvar_18.x), max (tmpvar_20.x, tmpvar_22.x));
-  res.y = (vec2(min (min (tmpvar_15.y, tmpvar_18.y), min (tmpvar_20.y, tmpvar_22.y)))).y;
-  res.zw = tmpvar_15.zw;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, tmpvar_1[0]);
+  vec2 tmpvar_3;
+  tmpvar_3 = texture2D (_MainTex, tmpvar_1[1]).xy;
+  vec2 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_1[2]).xy;
+  vec2 tmpvar_5;
+  tmpvar_5 = texture2D (_MainTex, tmpvar_1[3]).xy;
+  res.x = max (max (tmpvar_2.x, tmpvar_3.x), max (tmpvar_4.x, tmpvar_5.x));
+  res.y = (vec2(min (min (tmpvar_2.y, tmpvar_3.y), min (tmpvar_4.y, tmpvar_5.y)))).y;
+  res.zw = tmpvar_2.zw;
   gl_FragData[0] = res.xyzw;
 }
 

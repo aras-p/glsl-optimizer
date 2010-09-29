@@ -3,24 +3,24 @@ attribute vec4 TANGENT;
 uniform vec4 _ProjectionParams;
 void main ()
 {
-  vec4 tmpvar_29;
-  tmpvar_29 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   vec4 o_i0;
-  vec4 tmpvar_33;
-  tmpvar_33 = (tmpvar_29 * 0.5);
-  o_i0 = tmpvar_33;
-  vec2 tmpvar_34;
-  tmpvar_34.x = tmpvar_33.x;
-  tmpvar_34.y = (vec2((tmpvar_33.y * _ProjectionParams.x))).y;
-  o_i0.xy = (tmpvar_34 + tmpvar_33.w);
-  o_i0.zw = tmpvar_29.zw;
-  gl_Position = tmpvar_29.xyzw;
-  vec4 tmpvar_17;
-  tmpvar_17.x = tmpvar_29.z;
-  tmpvar_17.y = 0.0;
-  tmpvar_17.z = 0.0;
-  tmpvar_17.w = 0.0;
-  xlv_FOG = tmpvar_17;
+  vec4 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * 0.5);
+  o_i0 = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3.x = tmpvar_2.x;
+  tmpvar_3.y = (vec2((tmpvar_2.y * _ProjectionParams.x))).y;
+  o_i0.xy = (tmpvar_3 + tmpvar_2.w);
+  o_i0.zw = tmpvar_1.zw;
+  gl_Position = tmpvar_1.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4.x = tmpvar_1.z;
+  tmpvar_4.y = 0.0;
+  tmpvar_4.z = 0.0;
+  tmpvar_4.w = 0.0;
+  xlv_FOG = tmpvar_4;
   gl_TexCoord[0] = o_i0.xyzw;
 }
 

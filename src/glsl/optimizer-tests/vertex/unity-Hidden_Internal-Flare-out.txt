@@ -3,10 +3,10 @@ void main ()
 {
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   gl_FrontColor = gl_Color.xyzw;
-  vec4 tmpvar_13;
-  tmpvar_13.xy = ((gl_MultiTexCoord0.xy * _FlareTexture_ST.xy) + _FlareTexture_ST.zw).xy;
-  tmpvar_13.z = 0.0;
-  tmpvar_13.w = 0.0;
-  gl_TexCoord[0] = tmpvar_13;
+  vec4 tmpvar_1;
+  tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _FlareTexture_ST.xy) + _FlareTexture_ST.zw).xy;
+  tmpvar_1.z = 0.0;
+  tmpvar_1.w = 0.0;
+  gl_TexCoord[0] = tmpvar_1;
 }
 

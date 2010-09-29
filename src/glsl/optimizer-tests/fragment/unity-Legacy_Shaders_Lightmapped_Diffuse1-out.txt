@@ -6,23 +6,23 @@ uniform sampler2D _LightBuffer;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 tmpvar_3;
-  tmpvar_3 = gl_TexCoord[0].xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xyzw;
   vec4 col;
   vec4 light;
-  vec3 tmpvar_31;
-  tmpvar_31 = (texture2D (_MainTex, tmpvar_3.xy).xyz * _Color.xyz);
-  vec4 tmpvar_32;
-  tmpvar_32 = texture2D (_LightMap, tmpvar_3.zw);
-  vec4 tmpvar_39;
-  tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
-  light = tmpvar_39;
-  light.xyz = (tmpvar_39.xyz + unity_Ambient.xyz).xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = (texture2D (_MainTex, tmpvar_1.xy).xyz * _Color.xyz);
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_LightMap, tmpvar_1.zw);
+  vec4 tmpvar_4;
+  tmpvar_4 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
+  light = tmpvar_4;
+  light.xyz = (tmpvar_4.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
-  c.xyz = (tmpvar_31 * light.xyz).xyz;
-  c.w = (vec4((tmpvar_32.w * _Color.w))).w;
+  c.xyz = (tmpvar_2 * light.xyz).xyz;
+  c.w = (vec4((tmpvar_3.w * _Color.w))).w;
   col = c;
-  col.xyz = (c.xyz + (tmpvar_32.xyz * tmpvar_31.xyz)).xyz;
+  col.xyz = (c.xyz + (tmpvar_3.xyz * tmpvar_2.xyz)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

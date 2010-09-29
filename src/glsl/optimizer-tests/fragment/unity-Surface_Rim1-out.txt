@@ -8,10 +8,10 @@ void main ()
 {
   vec4 col;
   vec4 light;
-  vec4 tmpvar_52;
-  tmpvar_52 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));
-  light = tmpvar_52;
-  light.xyz = (tmpvar_52.xyz + unity_Ambient.xyz).xyz;
+  vec4 tmpvar_1;
+  tmpvar_1 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));
+  light = tmpvar_1;
+  light.xyz = (tmpvar_1.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light.xyz).xyz;
   c.w = 0.0;

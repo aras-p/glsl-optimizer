@@ -178,18 +178,18 @@ vec4 frag (
     vec2 tmpvar_18;
     tmpvar_18 = (mask.xy + (diff * sample.xy));
     mask.xy = tmpvar_18.xy;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = i_1;
     int tmpvar_19;
-    tmpvar_19 = i_1;
-    int tmpvar_20;
-    tmpvar_20 = (i_1 + 1);
-    i_1 = tmpvar_20;
+    tmpvar_19 = (i_1 + 1);
+    i_1 = tmpvar_19;
   };
-  float tmpvar_21;
-  tmpvar_21 = (mask.x / mask.y);
-  shadow = tmpvar_21;
-  vec4 tmpvar_22;
-  tmpvar_22 = vec4(shadow);
-  return tmpvar_22;
+  float tmpvar_20;
+  tmpvar_20 = (mask.x / mask.y);
+  shadow = tmpvar_20;
+  vec4 tmpvar_21;
+  tmpvar_21 = vec4(shadow);
+  return tmpvar_21;
 }
 
 void main ()

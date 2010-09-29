@@ -151,21 +151,21 @@ v2f vert (
     vec4 tmpvar_16;
     tmpvar_16 = (lightColor + (_TerrainTreeLightColors[i] * occ));
     lightColor = tmpvar_16;
+    int _post_incdec_tmp;
+    _post_incdec_tmp = i;
     int tmpvar_17;
-    tmpvar_17 = i;
-    int tmpvar_18;
-    tmpvar_18 = (i + 1);
-    i = tmpvar_18;
+    tmpvar_17 = (i + 1);
+    i = tmpvar_17;
   };
-  float tmpvar_19;
-  tmpvar_19 = 1.0;
-  lightColor.w = (vec4(tmpvar_19)).w;
-  vec4 tmpvar_20;
-  tmpvar_20 = (lightColor * _Color);
-  o.color = tmpvar_20;
-  float tmpvar_21;
-  tmpvar_21 = 1.0;
-  o.color.w = (vec4(tmpvar_21)).w;
+  float tmpvar_18;
+  tmpvar_18 = 1.0;
+  lightColor.w = (vec4(tmpvar_18)).w;
+  vec4 tmpvar_19;
+  tmpvar_19 = (lightColor * _Color);
+  o.color = tmpvar_19;
+  float tmpvar_20;
+  tmpvar_20 = 1.0;
+  o.color.w = (vec4(tmpvar_20)).w;
   return o;
 }
 

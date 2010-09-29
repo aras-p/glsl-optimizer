@@ -1,23 +1,23 @@
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 tmpvar_53;
-  vec4 tmpvar_22;
-  tmpvar_22 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_53.xyz = ((gl_Color.xyz + (gl_Normal.xyz * 0.3)) * 0.5).xyz;
-  tmpvar_53.w = 1.0;
-  gl_Position = tmpvar_22.xyzw;
-  vec4 tmpvar_13;
-  tmpvar_13.x = tmpvar_22.z;
-  tmpvar_13.y = 0.0;
-  tmpvar_13.z = 0.0;
-  tmpvar_13.w = 0.0;
-  xlv_FOG = tmpvar_13;
-  gl_FrontColor = tmpvar_53.xyzw;
-  vec4 tmpvar_17;
-  tmpvar_17.xy = gl_MultiTexCoord0.xy;
-  tmpvar_17.z = 0.0;
-  tmpvar_17.w = 0.0;
-  gl_TexCoord[0] = tmpvar_17;
+  vec4 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
+  tmpvar_1.xyz = ((gl_Color.xyz + (gl_Normal.xyz * 0.3)) * 0.5).xyz;
+  tmpvar_1.w = 1.0;
+  gl_Position = tmpvar_2.xyzw;
+  vec4 tmpvar_3;
+  tmpvar_3.x = tmpvar_2.z;
+  tmpvar_3.y = 0.0;
+  tmpvar_3.z = 0.0;
+  tmpvar_3.w = 0.0;
+  xlv_FOG = tmpvar_3;
+  gl_FrontColor = tmpvar_1.xyzw;
+  vec4 tmpvar_4;
+  tmpvar_4.xy = gl_MultiTexCoord0.xy;
+  tmpvar_4.z = 0.0;
+  tmpvar_4.w = 0.0;
+  gl_TexCoord[0] = tmpvar_4;
 }
 

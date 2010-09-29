@@ -2,10 +2,10 @@ uniform sampler2D _MainTex;
 void main ()
 {
   vec4 xlat_var_output;
-  vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  xlat_var_output = (vec4(0.191, -0.054, -0.221, 0.0) + dot (vec3(0.299, 0.587, 0.114), tmpvar_10.xyz));
-  xlat_var_output.w = tmpvar_10.w;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  xlat_var_output = (vec4(0.191, -0.054, -0.221, 0.0) + dot (vec3(0.299, 0.587, 0.114), tmpvar_1.xyz));
+  xlat_var_output.w = tmpvar_1.w;
   gl_FragData[0] = xlat_var_output.xyzw;
 }
 

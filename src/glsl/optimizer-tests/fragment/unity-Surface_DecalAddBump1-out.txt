@@ -5,10 +5,10 @@ uniform sampler2D _LightBuffer;
 void main ()
 {
   vec4 light;
-  vec4 tmpvar_28;
-  tmpvar_28 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
-  light = tmpvar_28;
-  light.xyz = (tmpvar_28.xyz + unity_Ambient.xyz).xyz;
+  vec4 tmpvar_1;
+  tmpvar_1 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
+  light = tmpvar_1;
+  light.xyz = (tmpvar_1.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = ((texture2D (_MainTex, gl_TexCoord[0].xy).xyz * 0.5) * light.xyz).xyz;
   c.w = 0.0;

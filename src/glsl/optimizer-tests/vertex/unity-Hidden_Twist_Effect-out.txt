@@ -1,23 +1,23 @@
 uniform vec4 _CenterRadius;
 void main ()
 {
-  vec2 tmpvar_19;
-  tmpvar_19 = (gl_MultiTexCoord0.xy - _CenterRadius.xy);
-  vec4 tmpvar_22;
-  tmpvar_22.x = tmpvar_19.x;
-  tmpvar_22.y = tmpvar_19.y;
-  tmpvar_22.z = 0.0;
-  tmpvar_22.w = 0.0;
+  vec2 tmpvar_1;
+  tmpvar_1 = (gl_MultiTexCoord0.xy - _CenterRadius.xy);
+  vec4 tmpvar_2;
+  tmpvar_2.x = tmpvar_1.x;
+  tmpvar_2.y = tmpvar_1.y;
+  tmpvar_2.z = 0.0;
+  tmpvar_2.w = 0.0;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9.xy = (gl_TextureMatrix[0] * tmpvar_22).xy;
-  tmpvar_9.z = 0.0;
-  tmpvar_9.w = 0.0;
-  gl_TexCoord[0] = tmpvar_9;
-  vec4 tmpvar_11;
-  tmpvar_11.xy = tmpvar_19.xy;
-  tmpvar_11.z = 0.0;
-  tmpvar_11.w = 0.0;
-  gl_TexCoord[1] = tmpvar_11;
+  vec4 tmpvar_3;
+  tmpvar_3.xy = (gl_TextureMatrix[0] * tmpvar_2).xy;
+  tmpvar_3.z = 0.0;
+  tmpvar_3.w = 0.0;
+  gl_TexCoord[0] = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4.xy = tmpvar_1.xy;
+  tmpvar_4.z = 0.0;
+  tmpvar_4.w = 0.0;
+  gl_TexCoord[1] = tmpvar_4;
 }
 

@@ -2,10 +2,10 @@ uniform vec4 _MainTex_ST;
 void main ()
 {
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_9.z = 0.0;
-  tmpvar_9.w = 0.0;
-  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_1;
+  tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_1.z = 0.0;
+  tmpvar_1.w = 0.0;
+  gl_TexCoord[0] = tmpvar_1;
 }
 

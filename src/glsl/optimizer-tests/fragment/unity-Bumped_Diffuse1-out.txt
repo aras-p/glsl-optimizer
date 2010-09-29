@@ -7,19 +7,19 @@ uniform sampler2D _BumpMap;
 void main ()
 {
   vec4 light;
-  vec2 tmpvar_74;
-  vec4 tmpvar_38;
-  tmpvar_38 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  vec2 tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_74).wy * 2.0) - 1.0);
+  normal.xy = ((texture2D (_BumpMap, tmpvar_1).wy * 2.0) - 1.0);
   normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
-  vec4 tmpvar_52;
-  tmpvar_52 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
-  light = tmpvar_52;
-  light.xyz = (tmpvar_52.xyz + unity_Ambient.xyz).xyz;
+  vec4 tmpvar_3;
+  tmpvar_3 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
+  light = tmpvar_3;
+  light.xyz = (tmpvar_3.xyz + unity_Ambient.xyz).xyz;
   vec4 c_i0;
-  c_i0.xyz = (tmpvar_38.xyz * light.xyz).xyz;
-  c_i0.w = tmpvar_38.w;
+  c_i0.xyz = (tmpvar_2.xyz * light.xyz).xyz;
+  c_i0.w = tmpvar_2.w;
   gl_FragData[0] = c_i0.xyzw;
 }
 

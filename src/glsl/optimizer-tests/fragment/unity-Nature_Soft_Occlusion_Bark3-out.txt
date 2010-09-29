@@ -7,31 +7,31 @@ uniform vec4 _LightShadowData;
 uniform vec4 _Color;
 void main ()
 {
-  vec2 tmpvar_10;
-  tmpvar_10 = gl_TexCoord[4].xy;
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[4].xy;
   vec4 res;
-  vec4 tmpvar_41;
-  tmpvar_41 = tmpvar_10.xxxx;
-  vec4 tmpvar_49;
-  tmpvar_49 = (vec4(greaterThanEqual (tmpvar_41, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_41, _LightSplitsFar)).xyzw);
-  vec4 tmpvar_50;
-  tmpvar_50.xyz = ((((gl_TexCoord[0].xyz * tmpvar_49.x) + (gl_TexCoord[1].xyz * tmpvar_49.y)) + (gl_TexCoord[2].xyz * tmpvar_49.z)) + (gl_TexCoord[3].xyz * tmpvar_49.w)).xyz;
-  tmpvar_50.w = 1.0;
-  vec4 tmpvar_52;
-  tmpvar_52 = texture2D (_ShadowMapTexture, tmpvar_50.xy);
-  float tmpvar_53;
-  if ((tmpvar_52.x < tmpvar_50.z)) {
-    tmpvar_53 = _LightShadowData.x;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1.xxxx;
+  vec4 tmpvar_3;
+  tmpvar_3 = (vec4(greaterThanEqual (tmpvar_2, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_2, _LightSplitsFar)).xyzw);
+  vec4 tmpvar_4;
+  tmpvar_4.xyz = ((((gl_TexCoord[0].xyz * tmpvar_3.x) + (gl_TexCoord[1].xyz * tmpvar_3.y)) + (gl_TexCoord[2].xyz * tmpvar_3.z)) + (gl_TexCoord[3].xyz * tmpvar_3.w)).xyz;
+  tmpvar_4.w = 1.0;
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_ShadowMapTexture, tmpvar_4.xy);
+  float tmpvar_6;
+  if ((tmpvar_5.x < tmpvar_4.z)) {
+    tmpvar_6 = _LightShadowData.x;
   } else {
-    tmpvar_53 = 1.0;
+    tmpvar_6 = 1.0;
   };
-  res.x = clamp ((tmpvar_53 + clamp (tmpvar_10.y, 0.0, 1.0)), 0.0, 1.0);
+  res.x = clamp ((tmpvar_6 + clamp (tmpvar_1.y, 0.0, 1.0)), 0.0, 1.0);
   res.y = 1.0;
   vec2 enc;
-  vec2 tmpvar_69;
-  tmpvar_69 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_41 * _ProjectionParams.w)).x));
-  enc = tmpvar_69;
-  enc.x = (tmpvar_69.x - (tmpvar_69.y * 0.00392157));
+  vec2 tmpvar_7;
+  tmpvar_7 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_2 * _ProjectionParams.w)).x));
+  enc = tmpvar_7;
+  enc.x = (tmpvar_7.x - (tmpvar_7.y * 0.00392157));
   res.zw = enc.xy;
   gl_FragData[0] = res.xyzw;
 }

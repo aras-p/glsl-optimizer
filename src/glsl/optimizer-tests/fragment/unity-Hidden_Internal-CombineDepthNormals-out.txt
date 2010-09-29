@@ -3,32 +3,32 @@ uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
-  vec2 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[0].xy;
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xy;
   vec4 n;
-  vec4 tmpvar_41;
-  tmpvar_41 = texture2D (_CameraNormalsTexture, tmpvar_2);
-  n = tmpvar_41;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_CameraNormalsTexture, tmpvar_1);
+  n = tmpvar_2;
   float _ret_val_i0;
-  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_2).x) + _ZBufferParams.y));
-  n.xyz = ((tmpvar_41.xyz * 2.0) - 1.0).xyz;
+  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_1).x) + _ZBufferParams.y));
+  n.xyz = ((tmpvar_2.xyz * 2.0) - 1.0).xyz;
   n.z = (vec3(-(n.z))).z;
-  vec4 tmpvar_48;
+  vec4 tmpvar_3;
   if ((_ret_val_i0 < 0.999985)) {
     vec3 normal;
     normal = n.xyz;
     vec4 enc;
     enc.xy = ((((normal.xy / (normal.z + 1.0)) / 1.7777) * 0.5) + 0.5);
     vec2 enc_i0_i1;
-    vec2 tmpvar_63;
-    tmpvar_63 = fract ((vec2(1.0, 255.0) * _ret_val_i0));
-    enc_i0_i1 = tmpvar_63;
-    enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.00392157));
+    vec2 tmpvar_4;
+    tmpvar_4 = fract ((vec2(1.0, 255.0) * _ret_val_i0));
+    enc_i0_i1 = tmpvar_4;
+    enc_i0_i1.x = (tmpvar_4.x - (tmpvar_4.y * 0.00392157));
     enc.zw = enc_i0_i1.xy;
-    tmpvar_48 = enc;
+    tmpvar_3 = enc;
   } else {
-    tmpvar_48 = vec4(0.5, 0.5, 1.0, 1.0);
+    tmpvar_3 = vec4(0.5, 0.5, 1.0, 1.0);
   };
-  gl_FragData[0] = tmpvar_48.xyzw;
+  gl_FragData[0] = tmpvar_3.xyzw;
 }
 

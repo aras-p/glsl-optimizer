@@ -2,9 +2,9 @@ uniform sampler2D _MainTex;
 uniform float _AccumOrig;
 void main ()
 {
-  vec4 tmpvar_10;
-  tmpvar_10.xyz = texture2D (_MainTex, gl_TexCoord[0].xy).xyz;
-  tmpvar_10.w = (vec4(_AccumOrig)).w;
-  gl_FragData[0] = tmpvar_10.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1.xyz = texture2D (_MainTex, gl_TexCoord[0].xy).xyz;
+  tmpvar_1.w = (vec4(_AccumOrig)).w;
+  gl_FragData[0] = tmpvar_1.xyzw;
 }
 

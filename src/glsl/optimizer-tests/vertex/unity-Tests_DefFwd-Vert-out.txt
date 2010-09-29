@@ -5,26 +5,26 @@ uniform vec4 _WorldSpaceLightPos0;
 uniform mat4 _Object2World;
 void main ()
 {
-  vec4 tmpvar_36;
-  tmpvar_36 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  mat3 tmpvar_43;
-  tmpvar_43[0] = _Object2World[0].xyz;
-  tmpvar_43[1] = _Object2World[1].xyz;
-  tmpvar_43[2] = _Object2World[2].xyz;
-  gl_Position = tmpvar_36.xyzw;
-  vec4 tmpvar_17;
-  tmpvar_17.x = tmpvar_36.z;
-  tmpvar_17.y = 0.0;
-  tmpvar_17.z = 0.0;
-  tmpvar_17.w = 0.0;
-  xlv_FOG = tmpvar_17;
-  vec4 tmpvar_19;
-  tmpvar_19.xyz = (tmpvar_43 * (gl_Normal.xyz * unity_Scale.w)).xyz;
-  tmpvar_19.w = 0.0;
-  gl_TexCoord[0] = tmpvar_19;
-  vec4 tmpvar_21;
-  tmpvar_21.xyz = _WorldSpaceLightPos0.xyz;
-  tmpvar_21.w = 0.0;
-  gl_TexCoord[1] = tmpvar_21;
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
+  mat3 tmpvar_2;
+  tmpvar_2[0] = _Object2World[0].xyz;
+  tmpvar_2[1] = _Object2World[1].xyz;
+  tmpvar_2[2] = _Object2World[2].xyz;
+  gl_Position = tmpvar_1.xyzw;
+  vec4 tmpvar_3;
+  tmpvar_3.x = tmpvar_1.z;
+  tmpvar_3.y = 0.0;
+  tmpvar_3.z = 0.0;
+  tmpvar_3.w = 0.0;
+  xlv_FOG = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4.xyz = (tmpvar_2 * (gl_Normal.xyz * unity_Scale.w)).xyz;
+  tmpvar_4.w = 0.0;
+  gl_TexCoord[0] = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.xyz = _WorldSpaceLightPos0.xyz;
+  tmpvar_5.w = 0.0;
+  gl_TexCoord[1] = tmpvar_5;
 }
 

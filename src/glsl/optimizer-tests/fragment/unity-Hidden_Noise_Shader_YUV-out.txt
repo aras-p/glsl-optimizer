@@ -6,12 +6,12 @@ void main ()
 {
   vec3 yuv;
   vec4 col;
-  vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  col = tmpvar_13;
-  yuv.x = dot (tmpvar_13.xyz, vec3(0.299, 0.587, 0.114));
-  yuv.y = (vec2(((tmpvar_13.z - yuv.x) * 0.492))).y;
-  yuv.z = (vec3(((tmpvar_13.x - yuv.x) * 0.877))).z;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  col = tmpvar_1;
+  yuv.x = dot (tmpvar_1.xyz, vec3(0.299, 0.587, 0.114));
+  yuv.y = (vec2(((tmpvar_1.z - yuv.x) * 0.492))).y;
+  yuv.z = (vec3(((tmpvar_1.x - yuv.x) * 0.877))).z;
   yuv = (yuv.xyz + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.0) - 1.0) * _Intensity.x)).xyz;
   col.x = ((yuv.z * 1.14) + yuv.x);
   col.y = (vec2((((yuv.z * -0.581) + (yuv.y * -0.395)) + yuv.x))).y;

@@ -13,31 +13,31 @@ void main ()
   vec4 res;
   float _ret_val_i0;
   _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
-  vec4 tmpvar_44;
-  tmpvar_44.xyz = (gl_TexCoord[1].xyz * _ret_val_i0).xyz;
-  tmpvar_44.w = 1.0;
-  float tmpvar_52;
-  tmpvar_52 = tmpvar_44.z;
-  vec4 tmpvar_61;
-  tmpvar_61 = (vec4(greaterThanEqual (vec4(tmpvar_52), _LightSplitsNear)).xyzw * vec4(lessThan (vec4(tmpvar_52), _LightSplitsFar)).xyzw);
-  vec4 tmpvar_62;
-  tmpvar_62.xyz = (((((_View2Shadow * tmpvar_44).xyz * tmpvar_61.x) + ((_View2Shadow1 * tmpvar_44).xyz * tmpvar_61.y)) + ((_View2Shadow2 * tmpvar_44).xyz * tmpvar_61.z)) + ((_View2Shadow3 * tmpvar_44).xyz * tmpvar_61.w)).xyz;
-  tmpvar_62.w = 1.0;
-  vec4 tmpvar_64;
-  tmpvar_64 = texture2D (_ShadowMapTexture, tmpvar_62.xy);
-  float tmpvar_65;
-  if ((tmpvar_64.x < tmpvar_62.z)) {
-    tmpvar_65 = _LightShadowData.x;
+  vec4 tmpvar_1;
+  tmpvar_1.xyz = (gl_TexCoord[1].xyz * _ret_val_i0).xyz;
+  tmpvar_1.w = 1.0;
+  float tmpvar_2;
+  tmpvar_2 = tmpvar_1.z;
+  vec4 tmpvar_3;
+  tmpvar_3 = (vec4(greaterThanEqual (vec4(tmpvar_2), _LightSplitsNear)).xyzw * vec4(lessThan (vec4(tmpvar_2), _LightSplitsFar)).xyzw);
+  vec4 tmpvar_4;
+  tmpvar_4.xyz = (((((_View2Shadow * tmpvar_1).xyz * tmpvar_3.x) + ((_View2Shadow1 * tmpvar_1).xyz * tmpvar_3.y)) + ((_View2Shadow2 * tmpvar_1).xyz * tmpvar_3.z)) + ((_View2Shadow3 * tmpvar_1).xyz * tmpvar_3.w)).xyz;
+  tmpvar_4.w = 1.0;
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_ShadowMapTexture, tmpvar_4.xy);
+  float tmpvar_6;
+  if ((tmpvar_5.x < tmpvar_4.z)) {
+    tmpvar_6 = _LightShadowData.x;
   } else {
-    tmpvar_65 = 1.0;
+    tmpvar_6 = 1.0;
   };
-  res.x = tmpvar_65;
+  res.x = tmpvar_6;
   res.y = 1.0;
   vec2 enc;
-  vec2 tmpvar_75;
-  tmpvar_75 = fract ((vec2(1.0, 255.0) * (1.0 - _ret_val_i0)));
-  enc = tmpvar_75;
-  enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.00392157));
+  vec2 tmpvar_7;
+  tmpvar_7 = fract ((vec2(1.0, 255.0) * (1.0 - _ret_val_i0)));
+  enc = tmpvar_7;
+  enc.x = (tmpvar_7.x - (tmpvar_7.y * 0.00392157));
   res.zw = enc.xy;
   gl_FragData[0] = res.xyzw;
 }

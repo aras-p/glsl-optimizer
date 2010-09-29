@@ -17,65 +17,65 @@ float ComputeShadow (
   in vec2 uv
 )
 {
-  mat3 tmpvar_32;
-  tmpvar_32[0] = _View2Shadow[0].xyz;
-  tmpvar_32[1] = _View2Shadow[1].xyz;
-  tmpvar_32[2] = _View2Shadow[2].xyz;
-  vec3 tmpvar_5;
-  tmpvar_5 = (tmpvar_32 * vec);
-  vec = tmpvar_5;
-  float tmpvar_8;
-  tmpvar_8 = ((length (tmpvar_5) * _LightPositionRange.w) * 0.97);
-  float tmpvar_43;
-  tmpvar_43 = dot (textureCube (_ShadowMapTexture, tmpvar_5), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
-  float tmpvar_45;
-  if ((tmpvar_43 < tmpvar_8)) {
-    tmpvar_45 = _LightShadowData.x;
+  mat3 tmpvar_1;
+  tmpvar_1[0] = _View2Shadow[0].xyz;
+  tmpvar_1[1] = _View2Shadow[1].xyz;
+  tmpvar_1[2] = _View2Shadow[2].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * vec);
+  vec = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = ((length (tmpvar_2) * _LightPositionRange.w) * 0.97);
+  float tmpvar_4;
+  tmpvar_4 = dot (textureCube (_ShadowMapTexture, tmpvar_2), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
+  float tmpvar_5;
+  if ((tmpvar_4 < tmpvar_3)) {
+    tmpvar_5 = _LightShadowData.x;
   } else {
-    tmpvar_45 = 1.0;
+    tmpvar_5 = 1.0;
   };
-  return tmpvar_45;
+  return tmpvar_5;
   return 1.0;
 }
 
 void main ()
 {
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[0].xyzw;
-  vec3 tmpvar_4;
-  tmpvar_4 = gl_TexCoord[1].xyz;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[0].xyzw;
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[1].xyz;
   vec4 res;
   float atten;
   vec3 lightDir;
   vec3 vpos;
   vec3 normal;
   vec4 nspec;
-  vec2 tmpvar_50;
-  tmpvar_50 = (tmpvar_2.xy / tmpvar_2.w);
-  vec4 tmpvar_51;
-  tmpvar_51 = texture2D (_CameraNormalsTexture, tmpvar_50);
-  nspec = tmpvar_51;
-  normal = normalize (((tmpvar_51.xyz * 2.0) - 1.0));
-  vec3 tmpvar_61;
-  tmpvar_61 = ((tmpvar_4 * (_ProjectionParams.z / tmpvar_4.z)) * 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_50).x) + _ZBufferParams.y)));
-  vpos = tmpvar_61;
-  vec3 tmpvar_62;
-  tmpvar_62 = (_LightPos.xyz - tmpvar_61);
-  lightDir = normalize (tmpvar_62);
-  atten = texture2D (_LightTextureB0, vec2((dot (tmpvar_62, tmpvar_62) * _LightPos.w))).w;
-  float tmpvar_71;
-  tmpvar_71 = ComputeShadow (-(tmpvar_62), tmpvar_50);
-  vec4 tmpvar_73;
-  tmpvar_73.xyz = vpos.xyz;
-  tmpvar_73.w = 1.0;
-  float tmpvar_75;
-  tmpvar_75 = ((atten * tmpvar_71) * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz).w);
-  atten = tmpvar_75;
-  res.xyz = (_LightColor.xyz * (max (0.0, dot (lightDir, normal)) * tmpvar_75)).xyz;
-  res.w = (vec4(((pow (max (0.0, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.0)) * clamp (tmpvar_75, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.22, 0.707, 0.071))))).w;
-  vec4 tmpvar_99;
-  tmpvar_99 = (res * clamp ((1.0 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
-  res = tmpvar_99;
-  gl_FragData[0] = exp2 (-(tmpvar_99)).xyzw;
+  vec2 tmpvar_3;
+  tmpvar_3 = (tmpvar_1.xy / tmpvar_1.w);
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_CameraNormalsTexture, tmpvar_3);
+  nspec = tmpvar_4;
+  normal = normalize (((tmpvar_4.xyz * 2.0) - 1.0));
+  vec3 tmpvar_5;
+  tmpvar_5 = ((tmpvar_2 * (_ProjectionParams.z / tmpvar_2.z)) * 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_3).x) + _ZBufferParams.y)));
+  vpos = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = (_LightPos.xyz - tmpvar_5);
+  lightDir = normalize (tmpvar_6);
+  atten = texture2D (_LightTextureB0, vec2((dot (tmpvar_6, tmpvar_6) * _LightPos.w))).w;
+  float tmpvar_7;
+  tmpvar_7 = ComputeShadow (-(tmpvar_6), tmpvar_3);
+  vec4 tmpvar_8;
+  tmpvar_8.xyz = vpos.xyz;
+  tmpvar_8.w = 1.0;
+  float tmpvar_9;
+  tmpvar_9 = ((atten * tmpvar_7) * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_8).xyz).w);
+  atten = tmpvar_9;
+  res.xyz = (_LightColor.xyz * (max (0.0, dot (lightDir, normal)) * tmpvar_9)).xyz;
+  res.w = (vec4(((pow (max (0.0, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.0)) * clamp (tmpvar_9, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.22, 0.707, 0.071))))).w;
+  vec4 tmpvar_10;
+  tmpvar_10 = (res * clamp ((1.0 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
+  res = tmpvar_10;
+  gl_FragData[0] = exp2 (-(tmpvar_10)).xyzw;
 }
 

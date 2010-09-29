@@ -4,10 +4,10 @@ uniform float _HalfOverCutoff;
 void main ()
 {
   vec4 col;
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  col = tmpvar_12;
-  col.xyz = (tmpvar_12.xyz * (2.0 * gl_Color.xyz)).xyz;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  col = tmpvar_1;
+  col.xyz = (tmpvar_1.xyz * (2.0 * gl_Color.xyz)).xyz;
   col.w = (vec4((col.w * (2.0 * _HalfOverCutoff)))).w;
   float x;
   x = (col.w - 1.0);

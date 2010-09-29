@@ -8,12 +8,12 @@ void main ()
 {
   vec4 c;
   vec4 c_i0_i1;
-  float tmpvar_44;
-  tmpvar_44 = ((dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz) * 0.5) + 0.5);
-  vec2 tmpvar_45;
-  tmpvar_45.x = (vec2(tmpvar_44)).x;
-  tmpvar_45.y = (vec2(tmpvar_44)).y;
-  c_i0_i1.xyz = ((((texture2D (_MainTex, gl_TexCoord[0].xy) * _Color).xyz * _LightColor0.xyz) * texture2D (_Ramp, tmpvar_45).xyz) * (texture2D (_LightTexture0, gl_TexCoord[3].xy).w * 2.0)).xyz;
+  float tmpvar_1;
+  tmpvar_1 = ((dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz) * 0.5) + 0.5);
+  vec2 tmpvar_2;
+  tmpvar_2.x = (vec2(tmpvar_1)).x;
+  tmpvar_2.y = (vec2(tmpvar_1)).y;
+  c_i0_i1.xyz = ((((texture2D (_MainTex, gl_TexCoord[0].xy) * _Color).xyz * _LightColor0.xyz) * texture2D (_Ramp, tmpvar_2).xyz) * (texture2D (_LightTexture0, gl_TexCoord[3].xy).w * 2.0)).xyz;
   c_i0_i1.w = 0.0;
   c = c_i0_i1;
   c.w = 0.0;

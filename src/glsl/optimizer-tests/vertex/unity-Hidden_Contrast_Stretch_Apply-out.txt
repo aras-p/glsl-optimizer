@@ -1,25 +1,25 @@
 void main ()
 {
-  vec2 tmpvar_3;
-  tmpvar_3 = gl_MultiTexCoord0.xy;
-  vec2 tmpvar_39[2];
-  vec4 tmpvar_21;
-  tmpvar_21.x = tmpvar_3.x;
-  tmpvar_21.y = tmpvar_3.y;
-  tmpvar_21.z = 0.0;
-  tmpvar_21.w = 0.0;
-  tmpvar_39[0] = (gl_TextureMatrix[0] * tmpvar_21).xy;
-  tmpvar_39[1] = vec2(0.5, 0.5);
+  vec2 tmpvar_1;
+  tmpvar_1 = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_2[2];
+  vec4 tmpvar_3;
+  tmpvar_3.x = tmpvar_1.x;
+  tmpvar_3.y = tmpvar_1.y;
+  tmpvar_3.z = 0.0;
+  tmpvar_3.w = 0.0;
+  tmpvar_2[0] = (gl_TextureMatrix[0] * tmpvar_3).xy;
+  tmpvar_2[1] = vec2(0.5, 0.5);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9.xy = tmpvar_39[0].xy;
-  tmpvar_9.z = 0.0;
-  tmpvar_9.w = 0.0;
-  gl_TexCoord[0] = tmpvar_9;
-  vec4 tmpvar_11;
-  tmpvar_11.xy = tmpvar_39[1].xy;
-  tmpvar_11.z = 0.0;
-  tmpvar_11.w = 0.0;
-  gl_TexCoord[1] = tmpvar_11;
+  vec4 tmpvar_4;
+  tmpvar_4.xy = tmpvar_2[0].xy;
+  tmpvar_4.z = 0.0;
+  tmpvar_4.w = 0.0;
+  gl_TexCoord[0] = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.xy = tmpvar_2[1].xy;
+  tmpvar_5.z = 0.0;
+  tmpvar_5.w = 0.0;
+  gl_TexCoord[1] = tmpvar_5;
 }
 
