@@ -989,28 +989,67 @@ lp_build_round_sse41(struct lp_build_context *bld,
                      enum lp_build_round_sse41_mode mode)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMTypeRef i32t = LLVMInt32Type();
    const char *intrinsic;
+   LLVMValueRef res;
 
    assert(type.floating);
-   assert(type.width*type.length == 128);
+
    assert(lp_check_value(type, a));
    assert(util_cpu_caps.has_sse4_1);
 
-   switch(type.width) {
-   case 32:
-      intrinsic = "llvm.x86.sse41.round.ps";
-      break;
-   case 64:
-      intrinsic = "llvm.x86.sse41.round.pd";
-      break;
-   default:
-      assert(0);
-      return bld->undef;
+   if (type.length == 1) {
+      LLVMTypeRef vec_type;
+      LLVMValueRef undef;
+      LLVMValueRef args[3];
+      LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
+
+      switch(type.width) {
+      case 32:
+         intrinsic = "llvm.x86.sse41.round.ss";
+         break;
+      case 64:
+         intrinsic = "llvm.x86.sse41.round.sd";
+         break;
+      default:
+         assert(0);
+         return bld->undef;
+      }
+
+      vec_type = LLVMVectorType(bld->elem_type, 4);
+
+      undef = LLVMGetUndef(vec_type);
+
+      args[0] = undef;
+      args[1] = LLVMBuildInsertElement(bld->builder, undef, a, index0, "");
+      args[2] = LLVMConstInt(i32t, mode, 0);
+
+      res = lp_build_intrinsic(bld->builder, intrinsic,
+                               vec_type, args, Elements(args));
+
+      res = LLVMBuildExtractElement(bld->builder, res, index0, "");
+   }
+   else {
+      assert(type.width*type.length == 128);
+
+      switch(type.width) {
+      case 32:
+         intrinsic = "llvm.x86.sse41.round.ps";
+         break;
+      case 64:
+         intrinsic = "llvm.x86.sse41.round.pd";
+         break;
+      default:
+         assert(0);
+         return bld->undef;
+      }
+
+      res = lp_build_intrinsic_binary(bld->builder, intrinsic,
+                                      bld->vec_type, a,
+                                      LLVMConstInt(i32t, mode, 0));
    }
 
-   return lp_build_intrinsic_binary(bld->builder, intrinsic, vec_type, a,
-                                    LLVMConstInt(LLVMInt32Type(), mode, 0));
+   return res;
 }
 
 
@@ -1028,8 +1067,10 @@ lp_build_trunc(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128)
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_TRUNCATE);
+   }
    else {
       LLVMTypeRef vec_type = lp_build_vec_type(type);
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
@@ -1056,8 +1097,10 @@ lp_build_round(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128)
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
+   }
    else {
       LLVMTypeRef vec_type = lp_build_vec_type(type);
       LLVMValueRef res;
@@ -1082,8 +1125,10 @@ lp_build_floor(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128)
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
+   }
    else {
       LLVMTypeRef vec_type = lp_build_vec_type(type);
       LLVMValueRef res;
@@ -1108,8 +1153,10 @@ lp_build_ceil(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128)
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
+   }
    else {
       LLVMTypeRef vec_type = lp_build_vec_type(type);
       LLVMValueRef res;
@@ -1170,7 +1217,8 @@ lp_build_iround(struct lp_build_context *bld,
 
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128) {
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
    }
    else {
@@ -1214,7 +1262,8 @@ lp_build_ifloor(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128) {
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
    }
    else {
@@ -1264,7 +1313,8 @@ lp_build_iceil(struct lp_build_context *bld,
    assert(type.floating);
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 && type.width*type.length == 128) {
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
    }
    else {
