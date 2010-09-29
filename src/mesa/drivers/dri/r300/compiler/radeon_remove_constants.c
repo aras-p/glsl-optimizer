@@ -68,6 +68,7 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	unsigned are_externals_remapped = 0;
 	struct rc_constant *constants = c->Program.Constants.Constants;
 	struct mark_used_data d;
+	unsigned new_count;
 
 	if (!c->Program.Constants.Count) {
 		*out_remap_table = NULL;
@@ -97,7 +98,7 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	 * This pass removes unused constants simply by overwriting them by other constants. */
 	remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
 	inv_remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
-	unsigned new_count = 0;
+	new_count = 0;
 
 	for (unsigned i = 0; i < c->Program.Constants.Count; i++) {
 		if (const_used[i]) {
