@@ -360,7 +360,7 @@ void _math_test_all_cliptest_functions( char *description )
 	    char buf[100];
 	    sprintf( buf, "%s[%d] failed test (%s)",
 		     cnames[np], psize, description );
-	    _mesa_problem( NULL, buf );
+	    _mesa_problem( NULL, "%s", buf );
 	 }
 #ifdef RUN_DEBUG_BENCHMARK
 	 if ( mesa_profile )
