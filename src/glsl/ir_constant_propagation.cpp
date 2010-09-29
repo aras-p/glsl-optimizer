@@ -1,5 +1,5 @@
 /*
- * Constantright © 2010 Intel Corporation
+ * Copyright © 2010 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * constant of this software and associated documentation files (the "Software"),
