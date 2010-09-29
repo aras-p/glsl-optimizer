@@ -176,6 +176,10 @@ struct r600_bc {
 	struct r600_cf_callstack	callstack[SQ_MAX_CALL_DEPTH];
 };
 
+/* eg_asm.c */
+int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
+
+/* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
 int r600_bc_add_literal(struct r600_bc *bc, const u32 *value);
@@ -185,5 +189,8 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
 int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
+
+/* r700_asm.c */
+int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);
 
 #endif

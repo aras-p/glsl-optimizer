@@ -1349,34 +1349,6 @@ static int tgsi_rsq(struct r600_shader_ctx *ctx)
 	return tgsi_helper_tempx_replicate(ctx);
 }
 
-static int tgsi_trans(struct r600_shader_ctx *ctx)
-{
-	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bc_alu alu;
-	int i, j, r;
-
-	for (i = 0; i < 4; i++) {
-		memset(&alu, 0, sizeof(struct r600_bc_alu));
-		if (inst->Dst[0].Register.WriteMask & (1 << i)) {
-			alu.inst = ctx->inst_info->r600_opcode;
-			for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
-				r = tgsi_src(ctx, &inst->Src[j], &alu.src[j]);
-				if (r)
-					return r;
-				alu.src[j].chan = tgsi_chan(&inst->Src[j], i);
-			}
-			r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
-			if (r)
-				return r;
-			alu.last = 1;
-			r = r600_bc_add_alu(ctx->bc, &alu);
-			if (r)
-				return r;
-		}
-	}
-	return 0;
-}
-
 static int tgsi_helper_tempx_replicate(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;

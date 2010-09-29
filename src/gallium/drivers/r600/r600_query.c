@@ -20,10 +20,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/* TODO:
- *	- fix mask for depth control & cull for query
- */
 #include "r600_pipe.h"
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
@@ -70,7 +66,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 	return r600_context_query_result(&rctx->ctx, (struct r600_query *)query, wait, vresult);
 }
 
-void r600_init_query_functions2(struct r600_pipe_context *rctx)
+void r600_init_query_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_query = r600_create_query;
 	rctx->context.destroy_query = r600_destroy_query;

@@ -1360,7 +1360,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.max_index = info->max_index;
 		draw.index_bias = info->index_bias;
 
-		r600_translate_index_buffer2(rctx, &rctx->index_buffer.buffer,
+		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
 					    &rctx->index_buffer.index_size,
 					    &draw.start,
 					    info->count);

@@ -6,14 +6,14 @@ LIBNAME = r600winsys
 
 C_SOURCES = \
 	bof.c \
-	r600_state2.c \
-	evergreen_state.c \
-	r600.c \
-	r600_drm.c \
+	evergreen_hw_context.c \
 	radeon_bo.c \
+	radeon_bo_pb.c \
 	radeon_pciid.c \
 	radeon_ws_bo.c \
-	radeon_bo_pb.c
+	r600.c \
+	r600_drm.c \
+	r600_hw_context.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
 		   $(shell pkg-config libdrm --cflags-only-I)

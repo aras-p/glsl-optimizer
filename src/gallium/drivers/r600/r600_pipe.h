@@ -31,6 +31,7 @@
 #include <pipe/p_context.h>
 #include <util/u_math.h>
 #include "r600.h"
+#include "r600_public.h"
 #include "r600_shader.h"
 #include "r600_resource.h"
 
@@ -91,14 +92,12 @@ struct r600_pipe_shader {
 	struct r600_vertex_element	vertex_elements;
 };
 
-
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
 	struct pipe_framebuffer_state	*pframebuffer;
 	unsigned			family;
 	void				*custom_dsa_flush;
-	struct list_head		query_list; /* fake member for depth remove once merged */
 	struct r600_screen		*screen;
 	struct radeon			*radeon;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
@@ -146,32 +145,12 @@ struct r600_drawl {
 	struct pipe_resource	*index_buffer;
 };
 
-uint32_t r600_translate_texformat(enum pipe_format format,
-				  const unsigned char *swizzle_view, 
-				  uint32_t *word4_p, uint32_t *yuv_format_p);
-
-/* r600_state2.c */
-int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
-void r600_translate_index_buffer2(struct r600_pipe_context *r600,
-					struct pipe_resource **index_buffer,
-					unsigned *index_size,
-					unsigned *start, unsigned count);
-int r600_find_vs_semantic_index2(struct r600_shader *vs,
-				struct r600_shader *ps, int id);
-
 /* evergreen_state.c */
 void evergreen_init_state_functions2(struct r600_pipe_context *rctx);
 void evergreen_init_config2(struct r600_pipe_context *rctx);
 void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-
-static INLINE u32 S_FIXED(float value, u32 frac_bits)
-{
-	return value * (1 << frac_bits);
-}
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
 
 /* r600_blit.c */
 void r600_init_blit_functions2(struct r600_pipe_context *rctx);
@@ -192,20 +171,42 @@ int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *
 int r600_upload_user_buffers(struct r600_pipe_context *rctx);
 
 /* r600_query.c */
-void r600_init_query_functions2(struct r600_pipe_context *rctx);
+void r600_init_query_functions(struct r600_pipe_context *rctx);
 
 /* r600_resource.c */
 void r600_init_context_resource_functions2(struct r600_pipe_context *r600);
+
+/* r600_shader.c */
+int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+int r600_find_vs_semantic_index2(struct r600_shader *vs,
+				struct r600_shader *ps, int id);
 
 /* r600_state.c */
 void r600_init_state_functions2(struct r600_pipe_context *rctx);
 void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void r600_init_config2(struct r600_pipe_context *rctx);
+void r600_translate_index_buffer(struct r600_pipe_context *r600,
+					struct pipe_resource **index_buffer,
+					unsigned *index_size,
+					unsigned *start, unsigned count);
 
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
+uint32_t r600_translate_texformat(enum pipe_format format,
+				  const unsigned char *swizzle_view, 
+				  uint32_t *word4_p, uint32_t *yuv_format_p);
+
+/*
+ * common helpers
+ */
+static INLINE u32 S_FIXED(float value, u32 frac_bits)
+{
+	return value * (1 << frac_bits);
+}
+#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
 
 #endif

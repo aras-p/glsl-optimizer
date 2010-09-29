@@ -147,7 +147,7 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	rctx->family = r600_get_family(rctx->radeon);
 
 	r600_init_blit_functions2(rctx);
-	r600_init_query_functions2(rctx);
+	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions2(rctx);
 
 	switch (r600_get_family(rctx->radeon)) {
@@ -210,7 +210,6 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 		return NULL;
 	}
 
-	LIST_INITHEAD(&rctx->query_list);
 	rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 
 	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth2;
@@ -423,7 +422,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 }
 
 
-struct pipe_screen *r600_screen_create2(struct radeon *radeon)
+struct pipe_screen *r600_screen_create(struct radeon *radeon)
 {
 	struct r600_screen *rscreen;
 

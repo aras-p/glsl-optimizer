@@ -8,6 +8,7 @@ LIBRARY_INCLUDES = \
 
 C_SOURCES = \
 	r600_asm.c \
+	r600_blit.c \
 	r600_buffer.c \
 	r600_helper.c \
 	r600_pipe.c \
