@@ -511,11 +511,12 @@ void rc_emulate_loops(struct radeon_compiler *c, void *user)
 	 * loops are unrolled first.
 	 */
 	for( i = s->LoopCount - 1; i >= 0; i-- ){
+		unsigned int iterations;
+
 		if(!s->Loops[i].EndLoop){
 			continue;
 		}
-		unsigned int iterations = loop_max_possible_iterations(
-					s->C, &s->Loops[i]);
+		iterations = loop_max_possible_iterations(s->C, &s->Loops[i]);
 		unroll_loop(s->C, &s->Loops[i], iterations);
 	}
 }
