@@ -302,6 +302,9 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_0280A0_SWAP_STD;
 
+	case PIPE_FORMAT_L8A8_UNORM:
+		return V_0280A0_SWAP_STD;
+
 		/* 32-bit buffers. */
 
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
@@ -382,6 +385,9 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_0280A0_COLOR_16;
+
+	case PIPE_FORMAT_L8A8_UNORM:
+		return V_0280A0_COLOR_8_8;
 
 		/* 32-bit buffers. */
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
