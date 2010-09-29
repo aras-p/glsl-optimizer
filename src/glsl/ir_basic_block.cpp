@@ -43,7 +43,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
       (void) ir;
-	  if (!skip_builtins || !ir->get_callee() || !ir->get_callee()->is_built_in)
+	  if (!skip_builtins || !ir->get_callee() || !ir->get_callee()->is_builtin)
 		has_call = true;
       return visit_stop;
    }

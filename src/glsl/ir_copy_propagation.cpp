@@ -195,7 +195,7 @@ ir_copy_propagation_visitor::visit_enter(ir_call *ir)
     * this call.  So kill all copies.
 	* For any built-in functions, do not do this; they are side effect-free.
     */
-   if (!ir->get_callee()->is_built_in) {
+   if (!ir->get_callee()->is_builtin) {
       acp->make_empty();
       this->killed_all = true;
    }

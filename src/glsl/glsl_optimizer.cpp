@@ -10,7 +10,6 @@
 extern "C" struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
 
-// Copied from shader_api.c for the stand-alone compiler.
 struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 {
@@ -26,13 +25,51 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 }
 
 
+static void
+initialize_mesa_context(GLcontext *ctx, gl_api api)
+{
+   memset(ctx, 0, sizeof(*ctx));
+
+   ctx->API = api;
+
+   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
+   ctx->Extensions.EXT_texture_array = GL_TRUE;
+   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+
+   /* 1.10 minimums. */
+   ctx->Const.MaxLights = 8;
+   ctx->Const.MaxClipPlanes = 8;
+   ctx->Const.MaxTextureUnits = 2;
+
+   /* More than the 1.10 minimum to appease parser tests taken from
+    * apps that (hopefully) already checked the number of coords.
+    */
+   ctx->Const.MaxTextureCoordUnits = 4;
+
+   ctx->Const.VertexProgram.MaxAttribs = 16;
+   ctx->Const.VertexProgram.MaxUniformComponents = 512;
+   ctx->Const.MaxVarying = 8;
+   ctx->Const.MaxVertexTextureImageUnits = 0;
+   ctx->Const.MaxCombinedTextureImageUnits = 2;
+   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.FragmentProgram.MaxUniformComponents = 64;
+
+   ctx->Const.MaxDrawBuffers = 2;
+
+   ctx->Driver.NewShader = _mesa_new_shader;
+}
+
+
 struct glslopt_ctx {
 	glslopt_ctx () {
 		mem_ctx = talloc_new (NULL);
+		initialize_mesa_context (&mesa_ctx, API_OPENGL);
 	}
 	~glslopt_ctx() {
 		talloc_free (mem_ctx);
 	}
+	GLcontext mesa_ctx;
 	void* mem_ctx;
 };
 
@@ -103,12 +140,12 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		return shader;
 	}
 
-	_mesa_glsl_parse_state* state = new (ctx->mem_ctx) _mesa_glsl_parse_state (NULL, glType, ctx->mem_ctx);
+	_mesa_glsl_parse_state* state = new (ctx->mem_ctx) _mesa_glsl_parse_state (&ctx->mesa_ctx, glType, ctx->mem_ctx);
 	state->error = 0;
 
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
-		state->error = preprocess (state, &shaderSource, &state->info_log, state->extensions);
+		state->error = preprocess (state, &shaderSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
 		if (state->error)
 		{
 			shader->status = !state->error;
@@ -144,17 +181,26 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_structure_splitting(ir) || progress; debug_print_ir ("After struct splitting", ir, state);
 			progress = do_if_simplification(ir) || progress; debug_print_ir ("After if simpl", ir, state);
 			progress = do_copy_propagation(ir) || progress; debug_print_ir ("After copy propagation", ir, state);
-			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state);
 			progress = do_dead_code_unlinked(ir) || progress; debug_print_ir ("After dead code unlinked", ir, state);
+			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state);
 			progress = do_tree_grafting(ir) || progress; debug_print_ir ("After tree grafting", ir, state);
 			progress = do_constant_propagation(ir) || progress; debug_print_ir ("After const propagation", ir, state);
 			progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state);
 			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state);
 			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state);
+			//@TODO progress = do_lower_jumps(ir) || progress;
 			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state);
 			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
 			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state);
 			progress = do_noop_swizzle(ir) || progress; debug_print_ir ("After noop swizzle", ir, state);
+			/*@TODO
+			progress = optimize_redundant_jumps(ir) || progress;
+
+			loop_state *ls = analyze_loop_variables(ir);
+			progress = set_loop_controls(ir, ls) || progress;
+			progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
+			delete ls;
+			*/
 		} while (progress);
 
 		validate_ir_tree(ir);

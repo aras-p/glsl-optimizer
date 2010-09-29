@@ -179,7 +179,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    /* Generate storage for the return value. */
    if (this->callee->return_type) {
       retval = new(ctx) ir_variable(this->callee->return_type, "_ret_val",
-				    ir_var_auto);
+				    ir_var_temporary);
       next_ir->insert_before(retval);
    }
 
