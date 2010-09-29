@@ -208,11 +208,14 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       lp_setup_set_fs_constants(llvmpipe->setup, 
                                 llvmpipe->constants[PIPE_SHADER_FRAGMENT][0]);
 
-   if (llvmpipe->dirty & (LP_NEW_SAMPLER_VIEW |
-                          LP_NEW_SAMPLER))
+   if (llvmpipe->dirty & (LP_NEW_SAMPLER_VIEW))
       lp_setup_set_fragment_sampler_views(llvmpipe->setup,
                                           llvmpipe->num_fragment_sampler_views,
-                                          llvmpipe->fragment_sampler_views,
+                                          llvmpipe->fragment_sampler_views);
+
+   if (llvmpipe->dirty & (LP_NEW_SAMPLER))
+      lp_setup_set_fragment_sampler_state(llvmpipe->setup,
+                                          llvmpipe->num_samplers,
                                           llvmpipe->sampler);
 
    llvmpipe->dirty = 0;

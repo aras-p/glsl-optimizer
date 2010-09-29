@@ -143,7 +143,11 @@ lp_setup_set_scissor( struct lp_setup_context *setup,
 void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
-                                    struct pipe_sampler_view **views,
+                                    struct pipe_sampler_view **views);
+
+void
+lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
+                                    unsigned num,
                                     const struct pipe_sampler_state **samplers);
 
 unsigned

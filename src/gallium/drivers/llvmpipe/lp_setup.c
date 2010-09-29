@@ -617,8 +617,7 @@ lp_setup_set_vertex_info( struct lp_setup_context *setup,
 void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
-                                    struct pipe_sampler_view **views,
-                                    const struct pipe_sampler_state **samplers)
+                                    struct pipe_sampler_view **views)
 {
    unsigned i;
 
@@ -629,7 +628,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      if(view) {
+      if (view) {
          struct pipe_resource *tex = view->texture;
          struct llvmpipe_resource *lp_tex = llvmpipe_resource(tex);
          struct lp_jit_texture *jit_tex;
@@ -638,12 +637,6 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
-
-         /* sampler state */
-         jit_tex->min_lod = samplers[i]->min_lod;
-         jit_tex->max_lod = samplers[i]->max_lod;
-         jit_tex->lod_bias = samplers[i]->lod_bias;
-         COPY_4V(jit_tex->border_color, samplers[i]->border_color);
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
@@ -686,6 +679,38 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
             jit_tex->img_stride[0] = lp_tex->img_stride[0];
             assert(jit_tex->data[0]);
          }
+      }
+   }
+
+   setup->dirty |= LP_SETUP_NEW_FS;
+}
+
+
+/**
+ * Called during state validation when LP_NEW_SAMPLER is set.
+ */
+void
+lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
+                                    unsigned num,
+                                    const struct pipe_sampler_state **samplers)
+{
+   unsigned i;
+
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      const struct pipe_sampler_state *sampler = i < num ? samplers[i] : NULL;
+
+      if (sampler) {
+         struct lp_jit_texture *jit_tex;
+         jit_tex = &setup->fs.current.jit_context.textures[i];
+
+         jit_tex->min_lod = sampler->min_lod;
+         jit_tex->max_lod = sampler->max_lod;
+         jit_tex->lod_bias = sampler->lod_bias;
+         COPY_4V(jit_tex->border_color, sampler->border_color);
       }
    }
 
