@@ -650,8 +650,6 @@ static void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_drawl draw;
 
-	assert(info->index_bias == 0);
-
 	if (rctx->any_user_vbs) {
 		r600_upload_user_buffers2(rctx);
 		rctx->any_user_vbs = FALSE;
