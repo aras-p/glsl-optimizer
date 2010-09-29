@@ -106,10 +106,12 @@ static void push_loop(struct deadcode_state * s)
 
 static void push_branch(struct deadcode_state * s)
 {
+	struct branchinfo * branch;
+
 	memory_pool_array_reserve(&s->C->Pool, struct branchinfo, s->BranchStack,
 			s->BranchStackSize, s->BranchStackReserved, 1);
 
-	struct branchinfo * branch = &s->BranchStack[s->BranchStackSize++];
+	branch = &s->BranchStack[s->BranchStackSize++];
 	branch->HaveElse = 0;
 	memcpy(&branch->StoreEndif, &s->R, sizeof(s->R));
 }
@@ -152,6 +154,7 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	struct instruction_state * insts = &s->Instructions[inst->IP];
 	unsigned int usedmask = 0;
+	unsigned int srcmasks[3];
 
 	if (opcode->HasDstReg) {
 		unsigned char * pused = get_used_ptr(s, inst->U.I.DstReg.File, inst->U.I.DstReg.Index);
@@ -180,7 +183,6 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 		}
 	}
 
-	unsigned int srcmasks[3];
 	rc_compute_sources_for_writemask(inst, usedmask, srcmasks);
 
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
@@ -219,6 +221,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 	unsigned int nr_instructions;
 	unsigned has_temp_reladdr_src = 0;
 	rc_dataflow_mark_outputs_fn dce = (rc_dataflow_mark_outputs_fn)user;
+	unsigned int ip;
 
 	/* Give up if there is relative addressing of destination operands. */
 	for(struct rc_instruction * inst = c->Program.Instructions.Next;
@@ -349,12 +352,14 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 		update_instruction(&s, inst);
 	}
 
-	unsigned int ip = 0;
+	ip = 0;
 	for(struct rc_instruction * inst = c->Program.Instructions.Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next, ++ip) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		int dead = 1;
+		unsigned int srcmasks[3];
+		unsigned int usemask;
 
 		if (!opcode->HasDstReg) {
 			dead = 0;
@@ -376,8 +381,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 			continue;
 		}
 
-		unsigned int srcmasks[3];
-		unsigned int usemask = s.Instructions[ip].WriteMask;
+		usemask = s.Instructions[ip].WriteMask;
 
 		if (inst->U.I.WriteALUResult == RC_ALURESULT_X)
 			usemask |= RC_MASK_X;
