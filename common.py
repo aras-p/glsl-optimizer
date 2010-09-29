@@ -81,8 +81,8 @@ def AddOptions(opts):
 		from SCons.Variables.EnumVariable import EnumVariable as EnumOption
 	except ImportError:
 		from SCons.Options.EnumOption import EnumOption
-	opts.Add(BoolOption('debug', 'debug build', 'yes'))
-	opts.Add(BoolOption('profile', 'profile build', 'no'))
+	opts.Add(EnumOption('build', 'build type', 'debug',
+	                  allowed_values=('debug', 'checked', 'profile', 'release')))
 	opts.Add(BoolOption('quiet', 'quiet command lines', 'yes'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
@@ -91,3 +91,5 @@ def AddOptions(opts):
 	opts.Add('toolchain', 'compiler toolchain', 'default')
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
+	opts.Add(BoolOption('debug', 'DEPRECATED: debug build', 'yes'))
+	opts.Add(BoolOption('profile', 'DEPRECATED: profile build', 'no'))

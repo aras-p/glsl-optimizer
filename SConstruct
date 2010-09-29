@@ -208,7 +208,7 @@ Export('env')
 
 SConscript(
 	'src/SConscript',
-	variant_dir = env['build'],
+	variant_dir = env['build_dir'],
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
 
