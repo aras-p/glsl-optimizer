@@ -276,9 +276,9 @@ public:
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
-   /** Abstract register number.  0 = fixed hw reg */
+   /** virtual register number.  0 = fixed hw reg */
    int reg;
-   /** Offset within the abstract register. */
+   /** Offset within the virtual register. */
    int reg_offset;
    /** HW register number.  Generally unset until register allocation. */
    int hw_reg;
@@ -399,7 +399,6 @@ public:
       this->mem_ctx = talloc_new(NULL);
       this->shader = shader;
       this->fail = false;
-      this->next_abstract_grf = 1;
       this->variable_ht = hash_table_ctor(0,
 					  hash_table_pointer_hash,
 					  hash_table_pointer_compare);
@@ -413,6 +412,10 @@ public:
       this->annotation_string = NULL;
       this->annotation_ir = NULL;
       this->base_ir = NULL;
+
+      this->virtual_grf_sizes = NULL;
+      this->virtual_grf_next = 1;
+      this->virtual_grf_array_size = 0;
    }
    ~fs_visitor()
    {
@@ -421,6 +424,7 @@ public:
    }
 
    fs_reg *variable_storage(ir_variable *var);
+   int virtual_grf_alloc(int size);
 
    void visit(ir_variable *ir);
    void visit(ir_assignment *ir);
@@ -473,7 +477,11 @@ public:
    struct brw_shader *shader;
    void *mem_ctx;
    exec_list instructions;
-   int next_abstract_grf;
+
+   int *virtual_grf_sizes;
+   int virtual_grf_next;
+   int virtual_grf_array_size;
+
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;
    int first_non_payload_grf;
@@ -500,6 +508,24 @@ public:
    int grf_used;
 
 };
+
+int
+fs_visitor::virtual_grf_alloc(int size)
+{
+   if (virtual_grf_array_size <= virtual_grf_next) {
+      if (virtual_grf_array_size == 0)
+	 virtual_grf_array_size = 16;
+      else
+	 virtual_grf_array_size *= 2;
+      virtual_grf_sizes = talloc_realloc(mem_ctx, virtual_grf_sizes,
+					 int, virtual_grf_array_size);
+
+      /* This slot is always unused. */
+      virtual_grf_sizes[0] = 0;
+   }
+   virtual_grf_sizes[virtual_grf_next] = size;
+   return virtual_grf_next++;
+}
 
 /** Fixed HW reg constructor. */
 fs_reg::fs_reg(enum register_file file, int hw_reg)
@@ -540,9 +566,8 @@ fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
    init();
 
    this->file = GRF;
-   this->reg = v->next_abstract_grf;
+   this->reg = v->virtual_grf_alloc(type_size(type));
    this->reg_offset = 0;
-   v->next_abstract_grf += type_size(type);
    this->type = brw_type_for_base_type(type);
 }
 
@@ -1898,15 +1923,6 @@ fs_visitor::generate_discard(fs_inst *inst, struct brw_reg temp)
    brw_pop_insn_state(p);
 }
 
-static void
-trivial_assign_reg(int header_size, fs_reg *reg)
-{
-   if (reg->file == GRF && reg->reg != 0) {
-      reg->hw_reg = header_size + reg->reg - 1 + reg->reg_offset;
-      reg->reg = 0;
-   }
-}
-
 void
 fs_visitor::assign_curb_setup()
 {
@@ -1980,23 +1996,37 @@ fs_visitor::assign_urb_setup()
    this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
 }
 
+static void
+trivial_assign_reg(int *reg_hw_locations, fs_reg *reg)
+{
+   if (reg->file == GRF && reg->reg != 0) {
+      reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset;
+      reg->reg = 0;
+   }
+}
+
 void
 fs_visitor::assign_regs()
 {
-   int header_size = this->first_non_payload_grf;
    int last_grf = 0;
+   int hw_reg_mapping[this->virtual_grf_next];
+   int i;
+
+   hw_reg_mapping[0] = 0;
+   hw_reg_mapping[1] = this->first_non_payload_grf;
+   for (i = 2; i < this->virtual_grf_next; i++) {
+      hw_reg_mapping[i] = (hw_reg_mapping[i - 1] +
+			   this->virtual_grf_sizes[i - 1]);
+   }
+   last_grf = hw_reg_mapping[i - 1] + this->virtual_grf_sizes[i - 1];
 
    /* FINISHME: trivial assignment of register numbers */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      trivial_assign_reg(header_size, &inst->dst);
-      trivial_assign_reg(header_size, &inst->src[0]);
-      trivial_assign_reg(header_size, &inst->src[1]);
-
-      last_grf = MAX2(last_grf, inst->dst.hw_reg);
-      last_grf = MAX2(last_grf, inst->src[0].hw_reg);
-      last_grf = MAX2(last_grf, inst->src[1].hw_reg);
+      trivial_assign_reg(hw_reg_mapping, &inst->dst);
+      trivial_assign_reg(hw_reg_mapping, &inst->src[0]);
+      trivial_assign_reg(hw_reg_mapping, &inst->src[1]);
    }
 
    this->grf_used = last_grf + 1;
