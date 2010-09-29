@@ -283,6 +283,9 @@ draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
                              LLVMValueRef context_ptr);
 
 void
+draw_llvm_set_sampler_state(struct draw_context *draw);
+
+void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
                              unsigned sampler_idx,
                              uint32_t width, uint32_t height, uint32_t depth,

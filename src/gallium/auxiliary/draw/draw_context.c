@@ -709,6 +709,11 @@ draw_set_samplers(struct draw_context *draw,
       draw->samplers[i] = NULL;
 
    draw->num_samplers = num;
+
+#ifdef HAVE_LLVM
+   if (draw->llvm)
+      draw_llvm_set_sampler_state(draw);
+#endif
 }
 
 void

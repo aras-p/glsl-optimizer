@@ -44,6 +44,7 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "util/u_cpu_detect.h"
+#include "util/u_math.h"
 #include "util/u_pointer.h"
 #include "util/u_string.h"
 
@@ -1088,6 +1089,23 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
       jit_tex->img_stride[j] = img_stride[j];
    }
 }
+
+
+void
+draw_llvm_set_sampler_state(struct draw_context *draw)
+{
+   unsigned i;
+
+   for (i = 0; i < draw->num_samplers; i++) {
+      struct draw_jit_texture *jit_tex = &draw->llvm->jit_context.textures[i];
+
+      jit_tex->min_lod = draw->samplers[i]->min_lod;
+      jit_tex->max_lod = draw->samplers[i]->max_lod;
+      jit_tex->lod_bias = draw->samplers[i]->lod_bias;
+      COPY_4V(jit_tex->border_color, draw->samplers[i]->border_color);
+   }
+}
+
 
 void
 draw_llvm_destroy_variant(struct draw_llvm_variant *variant)
