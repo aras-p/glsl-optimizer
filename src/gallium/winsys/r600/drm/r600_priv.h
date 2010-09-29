@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 
 
@@ -56,12 +57,49 @@ struct r600_reg {
 	unsigned			flush_flags;
 };
 
+struct radeon_bo {
+	struct pipe_reference		reference;
+	unsigned			handle;
+	unsigned			size;
+	unsigned			alignment;
+	unsigned			map_count;
+	void				*data;
+};
+
+struct radeon_ws_bo {
+	struct pipe_reference		reference;
+	struct pb_buffer		*pb;
+};
+
+
 /* radeon_pciid.c */
 unsigned radeon_family_from_device(unsigned device);
 
+/* r600_drm.c */
+struct radeon *radeon_decref(struct radeon *radeon);
+
+/* radeon_bo.c */
+struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
+void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo);
+struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
+			    unsigned size, unsigned alignment, void *ptr);
+int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
+void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
+void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
+			 struct radeon_bo *src);
+int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
+int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
+
+/* radeon_bo_pb.c */
+struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
+							 uint32_t handle);
+
+/* radeon_ws_bo.c */
+unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *bo);
+unsigned radeon_ws_bo_get_size(struct radeon_ws_bo *bo);
+
 #define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
 #define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))
-
 
 static void inline r600_context_reg(struct r600_context *ctx,
 					unsigned offset, unsigned value,
@@ -82,14 +120,6 @@ static void inline r600_context_reg(struct r600_context *ctx,
 	block->status |= R600_BLOCK_STATUS_ENABLED;
 	block->status |= R600_BLOCK_STATUS_DIRTY;
 }
-
-struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
-void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo);
-
-struct radeon_ws_bo {
-	struct pipe_reference		reference;
-	struct pb_buffer		*pb;
-};
 
 static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {

@@ -33,7 +33,285 @@
 #include <stdio.h>
 #include <errno.h>
 
+static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned spi_vs_out_id[10];
+	unsigned i, tmp;
 
+	/* clear previous register */
+	rstate->nregs = 0;
+
+	/* so far never got proper semantic id from tgsi */
+	for (i = 0; i < 10; i++) {
+		spi_vs_out_id[i] = 0;
+	}
+	for (i = 0; i < 32; i++) {
+		tmp = i << ((i & 3) * 8);
+		spi_vs_out_id[i / 4] |= tmp;
+	}
+	for (i = 0; i < 10; i++) {
+		r600_pipe_state_add_reg(rstate,
+					R_028614_SPI_VS_OUT_ID_0 + i * 4,
+					spi_vs_out_id[i], 0xFFFFFFFF, NULL);
+	}
+
+	r600_pipe_state_add_reg(rstate,
+			R_0286C4_SPI_VS_OUT_CONFIG,
+			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2),
+			0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_028868_SQ_PGM_RESOURCES_VS,
+			S_028868_NUM_GPRS(rshader->bc.ngpr) |
+			S_028868_STACK_SIZE(rshader->bc.nstack),
+			0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_0288A4_SQ_PGM_RESOURCES_FS,
+			0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_0288D0_SQ_PGM_CF_OFFSET_VS,
+			0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_0288DC_SQ_PGM_CF_OFFSET_FS,
+			0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_028858_SQ_PGM_START_VS,
+			0x00000000, 0xFFFFFFFF, shader->bo);
+	r600_pipe_state_add_reg(rstate,
+			R_028894_SQ_PGM_START_FS,
+			0x00000000, 0xFFFFFFFF, shader->bo);
+}
+
+int r600_find_vs_semantic_index2(struct r600_shader *vs,
+				struct r600_shader *ps, int id)
+{
+	struct r600_shader_io *input = &ps->input[id];
+
+	for (int i = 0; i < vs->noutput; i++) {
+		if (input->name == vs->output[i].name &&
+			input->sid == vs->output[i].sid) {
+			return i - 1;
+		}
+	}
+	return 0;
+}
+
+static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z;
+	boolean have_pos = FALSE, have_face = FALSE;
+
+	/* clear previous register */
+	rstate->nregs = 0;
+
+	for (i = 0; i < rshader->ninput; i++) {
+		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index2(&rctx->vs_shader->shader, rshader, i));
+		tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
+			have_pos = TRUE;
+		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
+		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
+		}
+		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			have_face = TRUE;
+		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
+			tmp |= S_028644_PT_SPRITE_TEX(1);
+		}
+		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+	}
+	for (i = 0; i < rshader->noutput; i++) {
+		r600_pipe_state_add_reg(rstate,
+				R_02880C_DB_SHADER_CONTROL,
+				S_02880C_Z_EXPORT_ENABLE(1),
+				S_02880C_Z_EXPORT_ENABLE(1), NULL);
+	}
+
+	exports_ps = 0;
+	num_cout = 0;
+	for (i = 0; i < rshader->noutput; i++) {
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+			exports_ps |= 1;
+		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
+			num_cout++;
+		}
+	}
+	exports_ps |= S_028854_EXPORT_COLORS(num_cout);
+	if (!exports_ps) {
+		/* always at least export 1 component per pixel */
+		exports_ps = 2;
+	}
+
+	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
+				S_0286CC_PERSP_GRADIENT_ENA(1);
+	spi_input_z = 0;
+	if (have_pos) {
+		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1) |
+					S_0286CC_BARYC_SAMPLE_CNTL(1);
+		spi_input_z |= 1;
+	}
+	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028840_SQ_PGM_START_PS,
+				0x00000000, 0xFFFFFFFF, shader->bo);
+	r600_pipe_state_add_reg(rstate,
+				R_028850_SQ_PGM_RESOURCES_PS,
+				S_028868_NUM_GPRS(rshader->bc.ngpr) |
+				S_028868_STACK_SIZE(rshader->bc.nstack),
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028854_SQ_PGM_EXPORTS_PS,
+				exports_ps, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_0288CC_SQ_PGM_CF_OFFSET_PS,
+				0x00000000, 0xFFFFFFFF, NULL);
+
+	if (rshader->uses_kill) {
+		/* only set some bits here, the other bits are set in the dsa state */
+		r600_pipe_state_add_reg(rstate,
+					R_02880C_DB_SHADER_CONTROL,
+					S_02880C_KILL_ENABLE(1),
+					S_02880C_KILL_ENABLE(1), NULL);
+	}
+}
+
+static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_shader *rshader = &shader->shader;
+	void *ptr;
+
+	/* copy new shader */
+	if (shader->bo == NULL) {
+		shader->bo = radeon_ws_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0);
+		if (shader->bo == NULL) {
+			return -ENOMEM;
+		}
+		ptr = radeon_ws_bo_map(rctx->radeon, shader->bo, 0, NULL);
+		memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * 4);
+		radeon_ws_bo_unmap(rctx->radeon, shader->bo);
+	}
+	/* build state */
+	rshader->flat_shade = rctx->flatshade;
+	switch (rshader->processor_type) {
+	case TGSI_PROCESSOR_VERTEX:
+		if (rshader->family >= CHIP_CEDAR) {
+			evergreen_pipe_shader_vs(ctx, shader);
+		} else {
+			r600_pipe_shader_vs(ctx, shader);
+		}
+		break;
+	case TGSI_PROCESSOR_FRAGMENT:
+		if (rshader->family >= CHIP_CEDAR) {
+			evergreen_pipe_shader_ps(ctx, shader);
+		} else {
+			r600_pipe_shader_ps(ctx, shader);
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	r600_context_pipe_state_set(&rctx->ctx, &shader->rstate);
+	return 0;
+}
+
+static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rshader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_shader *shader = &rshader->shader;
+	const struct util_format_description *desc;
+	enum pipe_format resource_format[160];
+	unsigned i, nresources = 0;
+	struct r600_bc *bc = &shader->bc;
+	struct r600_bc_cf *cf;
+	struct r600_bc_vtx *vtx;
+
+	if (shader->processor_type != TGSI_PROCESSOR_VERTEX)
+		return 0;
+	if (!memcmp(&rshader->vertex_elements, rctx->vertex_elements, sizeof(struct r600_vertex_element))) {
+		return 0;
+	}
+	rshader->vertex_elements = *rctx->vertex_elements;
+	for (i = 0; i < rctx->vertex_elements->count; i++) {
+		resource_format[nresources++] = rctx->vertex_elements->elements[i].src_format;
+	}
+	radeon_ws_bo_reference(rctx->radeon, &rshader->bo, NULL);
+	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
+		switch (cf->inst) {
+		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
+		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+				desc = util_format_description(resource_format[vtx->buffer_id]);
+				if (desc == NULL) {
+					R600_ERR("unknown format %d\n", resource_format[vtx->buffer_id]);
+					return -EINVAL;
+				}
+				vtx->dst_sel_x = desc->swizzle[0];
+				vtx->dst_sel_y = desc->swizzle[1];
+				vtx->dst_sel_z = desc->swizzle[2];
+				vtx->dst_sel_w = desc->swizzle[3];
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	return r600_bc_build(&shader->bc);
+}
+
+int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	int r;
+
+	if (shader == NULL)
+		return -EINVAL;
+	/* there should be enough input */
+	if (rctx->vertex_elements->count < shader->shader.bc.nresource) {
+		R600_ERR("%d resources provided, expecting %d\n",
+			rctx->vertex_elements->count, shader->shader.bc.nresource);
+		return -EINVAL;
+	}
+	r = r600_shader_update(ctx, shader);
+	if (r)
+		return r;
+	return r600_pipe_shader(ctx, shader);
+}
+
+int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
+int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	int r;
+
+//fprintf(stderr, "--------------------------------------------------------------\n");
+//tgsi_dump(tokens, 0);
+	shader->shader.family = r600_get_family(rctx->radeon);
+	r = r600_shader_from_tgsi(tokens, &shader->shader);
+	if (r) {
+		R600_ERR("translation from TGSI failed !\n");
+		return r;
+	}
+	r = r600_bc_build(&shader->shader.bc);
+	if (r) {
+		R600_ERR("building bytecode failed !\n");
+		return r;
+	}
+//fprintf(stderr, "______________________________________________________________\n");
+	return 0;
+}
+
+/*
+ * tgsi -> r600 shader
+ */
 struct r600_shader_tgsi_instruction;
 
 struct r600_shader_ctx {

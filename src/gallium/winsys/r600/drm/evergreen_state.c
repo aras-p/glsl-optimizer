@@ -38,17 +38,6 @@
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
-struct radeon_bo {
-	struct pipe_reference		reference;
-	unsigned			handle;
-	unsigned			size;
-	unsigned			alignment;
-	unsigned			map_count;
-	void				*data;
-};
-
-struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
-
 struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
 

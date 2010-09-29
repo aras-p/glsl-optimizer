@@ -29,7 +29,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <errno.h>
-#include "radeon_priv.h"
+#include "r600_priv.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
 

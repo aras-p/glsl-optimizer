@@ -258,3 +258,61 @@ struct u_resource_vtbl r600_buffer_vtbl =
 	r600_buffer_transfer_unmap,		/* transfer_unmap */
 	u_default_transfer_inline_write		/* transfer_inline_write */
 };
+
+int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
+{
+	struct pipe_resource *upload_buffer = NULL;
+	unsigned index_offset = draw->index_buffer_offset;
+	int ret = 0;
+
+	if (r600_buffer_is_user_buffer(draw->index_buffer)) {
+		ret = u_upload_buffer(rctx->upload_ib,
+				      index_offset,
+				      draw->count * draw->index_size,
+				      draw->index_buffer,
+				      &index_offset,
+				      &upload_buffer);
+		if (ret) {
+			goto done;
+		}
+		draw->index_buffer_offset = index_offset;
+
+		/* Transfer ownership. */
+		pipe_resource_reference(&draw->index_buffer, upload_buffer);
+		pipe_resource_reference(&upload_buffer, NULL);
+	}
+
+done:
+	return ret;
+}
+
+int r600_upload_user_buffers(struct r600_pipe_context *rctx)
+{
+	enum pipe_error ret = PIPE_OK;
+	int i, nr;
+
+	nr = rctx->vertex_elements->count;
+
+	for (i = 0; i < nr; i++) {
+		struct pipe_vertex_buffer *vb =
+			&rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
+
+		if (r600_buffer_is_user_buffer(vb->buffer)) {
+			struct pipe_resource *upload_buffer = NULL;
+			unsigned offset = 0; /*vb->buffer_offset * 4;*/
+			unsigned size = vb->buffer->width0;
+			unsigned upload_offset;
+			ret = u_upload_buffer(rctx->upload_vb,
+					      offset, size,
+					      vb->buffer,
+					      &upload_offset, &upload_buffer);
+			if (ret)
+				return ret;
+
+			pipe_resource_reference(&vb->buffer, NULL);
+			vb->buffer = upload_buffer;
+			vb->buffer_offset = upload_offset;
+		}
+	}
+	return ret;
+}

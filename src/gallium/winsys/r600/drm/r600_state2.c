@@ -40,14 +40,6 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
-struct radeon_bo {
-	struct pipe_reference		reference;
-	unsigned			handle;
-	unsigned			size;
-	unsigned			alignment;
-	unsigned			map_count;
-	void				*data;
-};
 int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
 void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
 void radeon_bo_reference(struct radeon *radeon,
@@ -1003,7 +995,6 @@ void r600_context_flush(struct r600_context *ctx)
 	struct drm_radeon_cs drmib;
 	struct drm_radeon_cs_chunk chunks[2];
 	uint64_t chunk_array[2];
-	struct r600_block *block;
 	int r;
 
 	if (!ctx->pm4_cdwords)

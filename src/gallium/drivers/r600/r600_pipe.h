@@ -153,8 +153,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 /* r600_state2.c */
 int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
-int r600_upload_index_buffer2(struct r600_pipe_context *rctx, struct r600_drawl *draw);
-int r600_upload_user_buffers2(struct r600_pipe_context *rctx);
 void r600_translate_index_buffer2(struct r600_pipe_context *r600,
 					struct pipe_resource **index_buffer,
 					unsigned *index_size,
@@ -175,6 +173,10 @@ static INLINE u32 S_FIXED(float value, u32 frac_bits)
 }
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
 
+/* r600_blit.c */
+void r600_init_blit_functions2(struct r600_pipe_context *rctx);
+int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_texture *texture);
+
 /* r600_buffer.c */
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
@@ -186,5 +188,24 @@ unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 					 unsigned face, unsigned level);
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
+int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
+int r600_upload_user_buffers(struct r600_pipe_context *rctx);
+
+/* r600_query.c */
+void r600_init_query_functions2(struct r600_pipe_context *rctx);
+
+/* r600_resource.c */
+void r600_init_context_resource_functions2(struct r600_pipe_context *r600);
+
+/* r600_state.c */
+void r600_init_state_functions2(struct r600_pipe_context *rctx);
+void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void r600_init_config2(struct r600_pipe_context *rctx);
+
+/* r600_helper.h */
+int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
+
+/* r600_texture.c */
+void r600_init_screen_texture_functions(struct pipe_screen *screen);
 
 #endif

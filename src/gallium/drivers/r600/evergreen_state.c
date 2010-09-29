@@ -42,9 +42,6 @@
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "evergreend.h"
-struct radeon_state {
-	unsigned dummy;
-};
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
@@ -1349,7 +1346,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	assert(info->index_bias == 0);
 
 	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers2(rctx);
+		r600_upload_user_buffers(rctx);
 		rctx->any_user_vbs = FALSE;
 	}
 
@@ -1372,7 +1369,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_buffer = rctx->index_buffer.buffer;
 		draw.index_buffer_offset = draw.start * draw.index_size;
 		draw.start = 0;
-		r600_upload_index_buffer2(rctx, &draw);
+		r600_upload_index_buffer(rctx, &draw);
 	} else {
 		draw.index_size = 0;
 		draw.index_buffer = NULL;

@@ -31,7 +31,8 @@
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
 #include <pipebuffer/pb_bufmgr.h>
-#include "radeon_priv.h"
+#include "r600.h"
+#include "r600_priv.h"
 #include "r600_drm_public.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
