@@ -62,9 +62,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
-	if (rctx->tran.translate_cache)
-		translate_cache_destroy(rctx->tran.translate_cache);
-
 	radeon_ctx_fini(rctx->ctx);
 	FREE(rctx);
 }
@@ -155,10 +152,6 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	if (rctx->upload_vb == NULL) {
 		goto out_free;
 	}
-
-	rctx->tran.translate_cache = translate_cache_create();
-	if (rctx->tran.translate_cache == NULL)
-		goto out_free;
 
 	rctx->vs_constant = (struct radeon_state *)calloc(R600_MAX_CONSTANT, sizeof(struct radeon_state));
 	if (!rctx->vs_constant) {

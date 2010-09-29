@@ -204,41 +204,15 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-#define FORMAT_REPLACE(what, withwhat) \
-    case PIPE_FORMAT_##what: *format = PIPE_FORMAT_##withwhat; break
-
 static void *r600_create_vertex_elements(struct pipe_context *ctx,
 				unsigned count,
 				const struct pipe_vertex_element *elements)
 {
 	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
-	unsigned i;
-	enum pipe_format *format;
 
 	assert(count < 32);
 	v->count = count;
 	memcpy(v->elements, elements, count * sizeof(struct pipe_vertex_element));
-
-	for (i = 0; i < count; i++) {
-		v->hw_format[i] = v->elements[i].src_format;
-		format = &v->hw_format[i];
-
-		switch (*format) {
-                    FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-                    FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
-		default:;
-		}
-		v->incompatible_layout =
-			v->incompatible_layout ||
-			v->elements[i].src_format != v->hw_format[i] ||
-			v->elements[i].src_offset % 4 != 0;
-
-                v->hw_format_size[i] =
-			align(util_format_get_blocksize(v->hw_format[i]), 4);
-	}
-
 	v->refcount = 1;
 	return v;
 }
@@ -481,32 +455,19 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 	struct r600_context *rctx = r600_context(ctx);
 	unsigned i;
 	boolean any_user_buffers = FALSE;
-	unsigned max_index, vbo_max_index;
-	const struct pipe_vertex_buffer *vbo;
+
 	for (i = 0; i < rctx->nvertex_buffer; i++) {
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
 	}
 	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
-	max_index = 0;
 	for (i = 0; i < count; i++) {
-		vbo = &buffers[i];
 		rctx->vertex_buffer[i].buffer = NULL;
 		if (r600_buffer_is_user_buffer(buffers[i].buffer))
 			any_user_buffers = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
-		if (vbo->max_index == ~0) {
-			if (!vbo->stride)
-				vbo_max_index = 1;
-			else
-				vbo_max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
-		} else
-			vbo_max_index = vbo->max_index;
-	
-		max_index = MIN2(vbo_max_index, max_index);
 	}
 	rctx->any_user_vbs = any_user_buffers;
 	rctx->nvertex_buffer = count;
-	rctx->vb_max_index = max_index;
 }
 
 static void r600_set_index_buffer(struct pipe_context *ctx,
