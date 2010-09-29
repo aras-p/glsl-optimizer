@@ -260,16 +260,26 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         return ~0; /* Unsupported/unknown. */
     }
 
+    /* Find the first non-VOID channel. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            break;
+        }
+    }
+
+    if (i == 4)
+        return ~0; /* Unsupported/unknown. */
+
     /* And finally, uniform formats. */
-    switch (desc->channel[0].type) {
+    switch (desc->channel[i].type) {
         case UTIL_FORMAT_TYPE_UNSIGNED:
         case UTIL_FORMAT_TYPE_SIGNED:
-            if (!desc->channel[0].normalized &&
+            if (!desc->channel[i].normalized &&
                 desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
                 return ~0;
             }
 
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 4:
                     switch (desc->nr_channels) {
                         case 2:
@@ -303,7 +313,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             return ~0;
 
         case UTIL_FORMAT_TYPE_FLOAT:
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 16:
                     switch (desc->nr_channels) {
                         case 1:
@@ -443,15 +453,25 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
 
     desc = util_format_description(format);
 
+    /* Find the first non-VOID channel. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            break;
+        }
+    }
+
+    if (i == 4)
+        return ~0; /* Unsupported/unknown. */
+
     /* Specifies how the shader output is written to the fog unit. */
-    if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
-        if (desc->channel[0].size == 32) {
+    if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT) {
+        if (desc->channel[i].size == 32) {
             modifier |= R300_US_OUT_FMT_C4_32_FP;
         } else {
             modifier |= R300_US_OUT_FMT_C4_16_FP;
         }
     } else {
-        if (desc->channel[0].size == 16) {
+        if (desc->channel[i].size == 16) {
             modifier |= R300_US_OUT_FMT_C4_16;
         } else {
             /* C4_8 seems to be used for the formats whose pixel size
