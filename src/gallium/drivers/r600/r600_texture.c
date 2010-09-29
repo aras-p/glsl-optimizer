@@ -586,16 +586,26 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		goto out_unknown;
 	}
 
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	if (i == 4)
+		goto out_unknown;
+
 	/* uniform formats */
-	switch (desc->channel[0].type) {
+	switch (desc->channel[i].type) {
 	case UTIL_FORMAT_TYPE_UNSIGNED:
 	case UTIL_FORMAT_TYPE_SIGNED:
-		if (!desc->channel[0].normalized &&
+		if (!desc->channel[i].normalized &&
 		    desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
 			goto out_unknown;
 		}
 
-		switch (desc->channel[0].size) {
+		switch (desc->channel[i].size) {
 		case 4:
 			switch (desc->nr_channels) {
 			case 2:
@@ -635,7 +645,7 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		goto out_unknown;
 
 	case UTIL_FORMAT_TYPE_FLOAT:
-		switch (desc->channel[0].size) {
+		switch (desc->channel[i].size) {
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
