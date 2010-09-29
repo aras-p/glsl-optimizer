@@ -450,7 +450,7 @@ public:
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
-   void generate_discard(fs_inst *inst);
+   void generate_discard(fs_inst *inst, struct brw_reg temp);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
 
@@ -1276,9 +1276,11 @@ fs_visitor::visit(ir_swizzle *ir)
 void
 fs_visitor::visit(ir_discard *ir)
 {
+   fs_reg temp = fs_reg(this, glsl_type::uint_type);
+
    assert(ir->condition == NULL); /* FINISHME */
 
-   emit(fs_inst(FS_OPCODE_DISCARD));
+   emit(fs_inst(FS_OPCODE_DISCARD, temp, temp));
 }
 
 void
@@ -1884,13 +1886,15 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 }
 
 void
-fs_visitor::generate_discard(fs_inst *inst)
+fs_visitor::generate_discard(fs_inst *inst, struct brw_reg temp)
 {
    struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   temp = brw_uw1_reg(temp.file, temp.nr, 0);
+
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
-   brw_AND(p, g0, c->emit_mask_reg, g0);
+   brw_NOT(p, temp, brw_mask_reg(1)); /* IMASK */
+   brw_AND(p, g0, temp, g0);
    brw_pop_insn_state(p);
 }
 
@@ -2182,7 +2186,7 @@ fs_visitor::generate_code()
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD:
-	 generate_discard(inst);
+	 generate_discard(inst, dst /* src0 == dst */);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
