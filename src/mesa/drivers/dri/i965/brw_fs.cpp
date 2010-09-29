@@ -417,6 +417,8 @@ public:
       this->virtual_grf_sizes = NULL;
       this->virtual_grf_next = 1;
       this->virtual_grf_array_size = 0;
+      this->virtual_grf_def = NULL;
+      this->virtual_grf_use = NULL;
    }
    ~fs_visitor()
    {
@@ -450,6 +452,8 @@ public:
    void assign_urb_setup();
    void assign_regs();
    void assign_regs_trivial();
+   void calculate_live_intervals();
+   bool virtual_grf_interferes(int a, int b);
    void generate_code();
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
@@ -483,6 +487,8 @@ public:
    int *virtual_grf_sizes;
    int virtual_grf_next;
    int virtual_grf_array_size;
+   int *virtual_grf_def;
+   int *virtual_grf_use;
 
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;
@@ -2042,6 +2048,8 @@ fs_visitor::assign_regs()
    int class_sizes[base_reg_count];
    int class_count = 0;
 
+   calculate_live_intervals();
+
    /* Set up the register classes.
     *
     * The base registers store a scalar value.  For texture samples,
@@ -2115,7 +2123,6 @@ fs_visitor::assign_regs()
     */
    ra_set_node_class(g, 0, classes[0]);
 
-   /* FINISHME: Proper interference (live interval analysis) */
    for (int i = 1; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
@@ -2125,7 +2132,9 @@ fs_visitor::assign_regs()
       }
 
       for (int j = 1; j < i; j++) {
-	 ra_add_node_interference(g, i, j);
+	 if (virtual_grf_interferes(i, j)) {
+	    ra_add_node_interference(g, i, j);
+	 }
       }
    }
 
@@ -2171,6 +2180,78 @@ fs_visitor::assign_regs()
 
    talloc_free(g);
    talloc_free(regs);
+}
+
+void
+fs_visitor::calculate_live_intervals()
+{
+   int num_vars = this->virtual_grf_next;
+   int *def = talloc_array(mem_ctx, int, num_vars);
+   int *use = talloc_array(mem_ctx, int, num_vars);
+   int loop_depth = 0;
+   int loop_start = 0;
+
+   for (int i = 0; i < num_vars; i++) {
+      def[i] = 1 << 30;
+      use[i] = 0;
+   }
+
+   int ip = 0;
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->opcode == BRW_OPCODE_DO) {
+	 if (loop_depth++ == 0)
+	    loop_start = ip;
+      } else if (inst->opcode == BRW_OPCODE_WHILE) {
+	 loop_depth--;
+
+	 if (loop_depth == 0) {
+	    /* FINISHME:
+	     *
+	     * Patches up any vars marked for use within the loop as
+	     * live until the end.  This is conservative, as there
+	     * will often be variables defined and used inside the
+	     * loop but dead at the end of the loop body.
+	     */
+	    for (int i = 0; i < num_vars; i++) {
+	       if (use[i] == loop_start) {
+		  use[i] = ip;
+	       }
+	    }
+	 }
+      } else {
+	 int eip = ip;
+
+	 if (loop_depth)
+	    eip = loop_start;
+
+	 for (unsigned int i = 0; i < 3; i++) {
+	    if (inst->src[i].file == GRF && inst->src[i].reg != 0) {
+	       def[inst->src[i].reg] = MIN2(def[inst->src[i].reg], eip);
+	       use[inst->src[i].reg] = MAX2(use[inst->src[i].reg], eip);
+	    }
+	 }
+	 if (inst->dst.file == GRF && inst->dst.reg != 0) {
+	    def[inst->dst.reg] = MIN2(def[inst->dst.reg], eip);
+	    use[inst->dst.reg] = MAX2(use[inst->dst.reg], eip);
+	 }
+      }
+
+      ip++;
+   }
+
+   this->virtual_grf_def = def;
+   this->virtual_grf_use = use;
+}
+
+bool
+fs_visitor::virtual_grf_interferes(int a, int b)
+{
+   int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
+   int end = MIN2(this->virtual_grf_use[a], this->virtual_grf_use[b]);
+
+   return start <= end;
 }
 
 static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
