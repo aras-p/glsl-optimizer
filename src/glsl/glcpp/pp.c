@@ -25,7 +25,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "glcpp.h"
-#include "main/imports.h"
+#include "main/core.h" /* for isblank() on MSVC */
 
 void
 glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
@@ -141,12 +141,12 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 	return clean;
 }
 
-extern int
+int
 preprocess(void *talloc_ctx, const char **shader, char **info_log,
-	   const struct gl_extensions *extensions)
+	   const struct gl_extensions *extensions, int api)
 {
 	int errors;
-	glcpp_parser_t *parser = glcpp_parser_create (extensions);
+	glcpp_parser_t *parser = glcpp_parser_create (extensions, api);
 	*shader = remove_line_continuations(parser, *shader);
 
 	glcpp_lex_set_source_string (parser, *shader);

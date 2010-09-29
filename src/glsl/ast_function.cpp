@@ -30,6 +30,10 @@
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type);
 
+bool
+apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
+                          struct _mesa_glsl_parse_state *state);
+
 static unsigned
 process_parameters(exec_list *instructions, exec_list *actual_parameters,
 		   exec_list *parameters,
@@ -429,137 +433,16 @@ process_array_constructor(exec_list *instructions,
  */
 static ir_constant *
 constant_record_constructor(const glsl_type *constructor_type,
-			    YYLTYPE *loc, exec_list *parameters,
-			    struct _mesa_glsl_parse_state *state)
+			    exec_list *parameters, void *mem_ctx)
 {
-   void *ctx = state;
-   bool all_parameters_are_constant = true;
-
-   exec_node *node = parameters->head;
-   for (unsigned i = 0; i < constructor_type->length; i++) {
-      ir_instruction *ir = (ir_instruction *) node;
-
-      if (node->is_tail_sentinel()) {
-	 _mesa_glsl_error(loc, state,
-			  "insufficient parameters to constructor for `%s'",
-			  constructor_type->name);
+   foreach_list(node, parameters) {
+      ir_constant *constant = ((ir_instruction *) node)->as_constant();
+      if (constant == NULL)
 	 return NULL;
-      }
-
-      if (ir->type != constructor_type->fields.structure[i].type) {
-	 _mesa_glsl_error(loc, state,
-			  "parameter type mismatch in constructor for `%s' "
-			  " (%s vs %s)",
-			  constructor_type->name,
-			  ir->type->name,
-			  constructor_type->fields.structure[i].type->name);
-	 return NULL;
-      }
-
-      if (ir->as_constant() == NULL)
-	 all_parameters_are_constant = false;
-
-      node = node->next;
+      node->replace_with(constant);
    }
 
-   if (!all_parameters_are_constant)
-      return NULL;
-
-   return new(ctx) ir_constant(constructor_type, parameters);
-}
-
-
-/**
- * Generate data for a constant matrix constructor w/a single scalar parameter
- *
- * Matrix constructors in GLSL can be passed a single scalar of the
- * approriate type.  In these cases, the resulting matrix is the identity
- * matrix multipled by the specified scalar.  This function generates data for
- * that matrix.
- *
- * \param type         Type of the desired matrix.
- * \param initializer  Scalar value used to initialize the matrix diagonal.
- * \param data         Location to store the resulting matrix.
- */
-void
-generate_constructor_matrix(const glsl_type *type, ir_constant *initializer,
-			    ir_constant_data *data)
-{
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->u[i] = 0;
-
-      for (unsigned i = 0; i < type->matrix_columns; i++) {
-	 /* The array offset of the ith row and column of the matrix.
-	  */
-	 const unsigned idx = (i * type->vector_elements) + i;
-
-	 data->u[idx] = initializer->value.u[0];
-      }
-      break;
-
-   case GLSL_TYPE_FLOAT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->f[i] = 0;
-
-      for (unsigned i = 0; i < type->matrix_columns; i++) {
-	 /* The array offset of the ith row and column of the matrix.
-	  */
-	 const unsigned idx = (i * type->vector_elements) + i;
-
-	 data->f[idx] = initializer->value.f[0];
-      }
-
-      break;
-
-   default:
-      assert(!"Should not get here.");
-      break;
-   }
-}
-
-
-/**
- * Generate data for a constant vector constructor w/a single scalar parameter
- *
- * Vector constructors in GLSL can be passed a single scalar of the
- * approriate type.  In these cases, the resulting vector contains the specified
- * value in all components.  This function generates data for that vector.
- *
- * \param type         Type of the desired vector.
- * \param initializer  Scalar value used to initialize the vector.
- * \param data         Location to store the resulting vector data.
- */
-void
-generate_constructor_vector(const glsl_type *type, ir_constant *initializer,
-			    ir_constant_data *data)
-{
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->u[i] = initializer->value.u[0];
-
-      break;
-
-   case GLSL_TYPE_FLOAT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->f[i] = initializer->value.f[0];
-
-      break;
-
-   case GLSL_TYPE_BOOL:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->b[i] = initializer->value.b[0];
-
-      break;
-
-   default:
-      assert(!"Should not get here.");
-      break;
-   }
+   return new(mem_ctx) ir_constant(constructor_type, parameters);
 }
 
 
@@ -621,6 +504,70 @@ emit_inline_vector_constructor(const glsl_type *type,
       instructions->push_tail(inst);
    } else {
       unsigned base_component = 0;
+      unsigned base_lhs_component = 0;
+      ir_constant_data data;
+      unsigned constant_mask = 0, constant_components = 0;
+
+      memset(&data, 0, sizeof(data));
+
+      foreach_list(node, parameters) {
+	 ir_rvalue *param = (ir_rvalue *) node;
+	 unsigned rhs_components = param->type->components();
+
+	 /* Do not try to assign more components to the vector than it has!
+	  */
+	 if ((rhs_components + base_lhs_component) > lhs_components) {
+	    rhs_components = lhs_components - base_lhs_component;
+	 }
+
+	 const ir_constant *const c = param->as_constant();
+	 if (c != NULL) {
+	    for (unsigned i = 0; i < rhs_components; i++) {
+	       switch (c->type->base_type) {
+	       case GLSL_TYPE_UINT:
+		  data.u[i + base_component] = c->get_uint_component(i);
+		  break;
+	       case GLSL_TYPE_INT:
+		  data.i[i + base_component] = c->get_int_component(i);
+		  break;
+	       case GLSL_TYPE_FLOAT:
+		  data.f[i + base_component] = c->get_float_component(i);
+		  break;
+	       case GLSL_TYPE_BOOL:
+		  data.b[i + base_component] = c->get_bool_component(i);
+		  break;
+	       default:
+		  assert(!"Should not get here.");
+		  break;
+	       }
+	    }
+
+	    /* Mask of fields to be written in the assignment.
+	     */
+	    constant_mask |= ((1U << rhs_components) - 1) << base_lhs_component;
+	    constant_components++;
+
+	    base_component += rhs_components;
+	 }
+	 /* Advance the component index by the number of components
+	  * that were just assigned.
+	  */
+	 base_lhs_component += rhs_components;
+      }
+
+      if (constant_mask != 0) {
+	 ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+	 const glsl_type *rhs_type = glsl_type::get_instance(var->type->base_type,
+							     constant_components,
+							     1);
+	 ir_rvalue *rhs = new(ctx) ir_constant(rhs_type, &data);
+
+	 ir_instruction *inst =
+	    new(ctx) ir_assignment(lhs, rhs, NULL, constant_mask);
+	 instructions->push_tail(inst);
+      }
+
+      base_component = 0;
       foreach_list(node, parameters) {
 	 ir_rvalue *param = (ir_rvalue *) node;
 	 unsigned rhs_components = param->type->components();
@@ -631,24 +578,25 @@ emit_inline_vector_constructor(const glsl_type *type,
 	    rhs_components = lhs_components - base_component;
 	 }
 
-	 /* Generate a swizzle that puts the first element of the source at
-	  * the location of the first element of the destination.
-	  */
-	 unsigned swiz[4] = { 0, 0, 0, 0 };
-	 for (unsigned i = 0; i < rhs_components; i++)
-	    swiz[i + base_component] = i;
+	 const ir_constant *const c = param->as_constant();
+	 if (c == NULL) {
+	    /* Generate a swizzle in case rhs_components != rhs->type->vector_elements. */
+	    unsigned swiz[4] = { 0, 0, 0, 0 };
+	    for (unsigned i = 0; i < rhs_components; i++)
+	       swiz[i] = i;
 
-	 /* Mask of fields to be written in the assignment.
-	  */
-	 const unsigned write_mask = ((1U << rhs_components) - 1)
-	    << base_component;
+	    /* Mask of fields to be written in the assignment.
+	     */
+	    const unsigned write_mask = ((1U << rhs_components) - 1)
+	       << base_component;
 
-	 ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, lhs_components);
+	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, rhs_components);
 
-	 ir_instruction *inst =
-	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
-	 instructions->push_tail(inst);
+	    ir_instruction *inst =
+	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
+	    instructions->push_tail(inst);
+	 }
 
 	 /* Advance the component index by the number of components that were
 	  * just assigned.
@@ -688,10 +636,10 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
     */
    unsigned swiz[4] = { src_base, src_base, src_base, src_base };
    for (unsigned i = 0; i < count; i++)
-      swiz[i + row_base] = src_base + i;
+      swiz[i + row_base] = i;
 
    ir_rvalue *const rhs =
-      new(mem_ctx) ir_swizzle(src, swiz, column_ref->type->components());
+      new(mem_ctx) ir_swizzle(src, swiz, count);
 
    /* Mask of fields to be written in the assignment.
     */
@@ -866,14 +814,16 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	 new(ctx) ir_assignment(rhs_var_ref, first_param, NULL);
       instructions->push_tail(inst);
 
-
-      unsigned swiz[4] = { 0, 0, 0, 0 };
-      for (unsigned i = 1; i < src_matrix->type->vector_elements; i++)
-	 swiz[i] = i;
-
+      const unsigned last_row = MIN2(src_matrix->type->vector_elements,
+				     var->type->vector_elements);
       const unsigned last_col = MIN2(src_matrix->type->matrix_columns,
 				     var->type->matrix_columns);
-      const unsigned write_mask = (1U << var->type->vector_elements) - 1;
+
+      unsigned swiz[4] = { 0, 0, 0, 0 };
+      for (unsigned i = 1; i < last_row; i++)
+	 swiz[i] = i;
+
+      const unsigned write_mask = (1U << last_row) - 1;
 
       for (unsigned i = 0; i < last_col; i++) {
 	 ir_dereference *const lhs =
@@ -891,13 +841,10 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  */
 	 ir_rvalue *rhs;
 	 if (lhs->type->vector_elements != rhs_col->type->vector_elements) {
-	    rhs = new(ctx) ir_swizzle(rhs_col, swiz,
-				      lhs->type->vector_elements);
+	    rhs = new(ctx) ir_swizzle(rhs_col, swiz, last_row);
 	 } else {
 	    rhs = rhs_col;
 	 }
-
-	 assert(lhs->type == rhs->type);
 
 	 ir_instruction *inst =
 	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
@@ -980,6 +927,39 @@ emit_inline_matrix_constructor(const glsl_type *type,
 
 
 ir_rvalue *
+emit_inline_record_constructor(const glsl_type *type,
+			       exec_list *instructions,
+			       exec_list *parameters,
+			       void *mem_ctx)
+{
+   ir_variable *const var =
+      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary);
+   ir_dereference_variable *const d = new(mem_ctx) ir_dereference_variable(var);
+
+   instructions->push_tail(var);
+
+   exec_node *node = parameters->head;
+   for (unsigned i = 0; i < type->length; i++) {
+      assert(!node->is_tail_sentinel());
+
+      ir_dereference *const lhs =
+	 new(mem_ctx) ir_dereference_record(d->clone(mem_ctx, NULL),
+					    type->fields.structure[i].name);
+
+      ir_rvalue *const rhs = ((ir_instruction *) node)->as_rvalue();
+      assert(rhs != NULL);
+
+      ir_instruction *const assign = new(mem_ctx) ir_assignment(lhs, rhs, NULL);
+
+      instructions->push_tail(assign);
+      node = node->next;
+   }
+
+   return d;
+}
+
+
+ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
@@ -1019,6 +999,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 return process_array_constructor(instructions, constructor_type,
 					  & loc, &this->expressions, state);
       }
+
 
       /* There are two kinds of constructor call.  Constructors for built-in
        * language types, such as mat4 and vec2, are free form.  The only
@@ -1083,7 +1064,7 @@ ast_function_expression::hir(exec_list *instructions,
        *    "It is an error to construct matrices from other matrices. This
        *    is reserved for future use."
        */
-      if ((state->language_version <= 110) && (matrix_parameters > 0)
+      if (state->language_version == 110 && matrix_parameters > 0
 	  && constructor_type->is_matrix()) {
 	 _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			  "matrix in GLSL 1.10",
@@ -1111,7 +1092,8 @@ ast_function_expression::hir(exec_list *instructions,
        *    arguments to provide an initializer for every component in the
        *    constructed value."
        */
-      if ((components_used < type_components) && (components_used != 1)) {
+      if (components_used < type_components && components_used != 1
+	  && matrix_parameters == 0) {
 	 _mesa_glsl_error(& loc, state, "too few components to construct "
 			  "`%s'",
 			  constructor_type->name);
@@ -1178,32 +1160,7 @@ ast_function_expression::hir(exec_list *instructions,
        * constant representing the complete collection of parameters.
        */
       if (all_parameters_are_constant) {
-	 if (components_used >= type_components)
-	    return new(ctx) ir_constant(constructor_type,
-					& actual_parameters);
-
-	 /* The above case must handle all scalar constructors.
-	  */
-	 assert(constructor_type->is_vector()
-		|| constructor_type->is_matrix());
-
-	 /* Constructors with exactly one component are special for
-	  * vectors and matrices.  For vectors it causes all elements of
-	  * the vector to be filled with the value.  For matrices it
-	  * causes the matrix to be filled with 0 and the diagonal to be
-	  * filled with the value.
-	  */
-	 ir_constant_data data;
-	 ir_constant *const initializer =
-	    (ir_constant *) actual_parameters.head;
-	 if (constructor_type->is_matrix())
-	    generate_constructor_matrix(constructor_type, initializer,
-					&data);
-	 else
-	    generate_constructor_vector(constructor_type, initializer,
-					&data);
-
-	 return new(ctx) ir_constant(constructor_type, &data);
+	 return new(ctx) ir_constant(constructor_type, &actual_parameters);
       } else if (constructor_type->is_scalar()) {
 	 return dereference_component((ir_rvalue *) actual_parameters.head,
 				      0);
@@ -1231,11 +1188,48 @@ ast_function_expression::hir(exec_list *instructions,
 	 state->symbols->get_type(id->primary_expression.identifier);
 
       if ((type != NULL) && type->is_record()) {
-	 ir_constant *constant =
-	    constant_record_constructor(type, &loc, &actual_parameters, state);
+	 exec_node *node = actual_parameters.head;
+	 for (unsigned i = 0; i < type->length; i++) {
+	    ir_rvalue *ir = (ir_rvalue *) node;
 
-	 if (constant != NULL)
-	    return constant;
+	    if (node->is_tail_sentinel()) {
+	       _mesa_glsl_error(&loc, state,
+				"insufficient parameters to constructor "
+				"for `%s'",
+				type->name);
+	       return ir_call::get_error_instruction(ctx);
+	    }
+
+	    if (apply_implicit_conversion(type->fields.structure[i].type, ir,
+					  state)) {
+	       node->replace_with(ir);
+	    } else {
+	       _mesa_glsl_error(&loc, state,
+				"parameter type mismatch in constructor "
+				"for `%s.%s' (%s vs %s)",
+				type->name,
+				type->fields.structure[i].name,
+				ir->type->name,
+				type->fields.structure[i].type->name);
+	       return ir_call::get_error_instruction(ctx);;
+	    }
+
+	    node = node->next;
+	 }
+
+	 if (!node->is_tail_sentinel()) {
+	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
+			     "for `%s'", type->name);
+	    return ir_call::get_error_instruction(ctx);
+	 }
+
+	 ir_rvalue *const constant =
+	    constant_record_constructor(type, &actual_parameters, state);
+
+	 return (constant != NULL)
+	    ? constant
+	    : emit_inline_record_constructor(type, instructions,
+					     &actual_parameters, state);
       }
 
       return match_function_by_name(instructions, 

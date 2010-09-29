@@ -28,7 +28,7 @@
  * Prototypes for optimization passes to be called by the compiler and drivers.
  */
 
-bool do_common_optimization(exec_list *ir, bool linked);
+bool do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations);
 
 bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);
@@ -43,7 +43,7 @@ bool do_dead_functions(exec_list *instructions);
 bool do_div_to_mul_rcp(exec_list *instructions);
 bool do_explog_to_explog2(exec_list *instructions);
 bool do_function_inlining(exec_list *instructions);
-bool do_if_return(exec_list *instructions);
+bool do_lower_jumps(exec_list *instructions, bool pull_out_jumps = true, bool lower_sub_return = true, bool lower_main_return = false, bool lower_continue = false, bool lower_break = false);
 bool do_if_simplification(exec_list *instructions);
 bool do_if_to_cond_assign(exec_list *instructions);
 bool do_mat_op_to_vec(exec_list *instructions);
@@ -55,3 +55,7 @@ bool do_swizzle_swizzle(exec_list *instructions);
 bool do_tree_grafting(exec_list *instructions);
 bool do_vec_index_to_cond_assign(exec_list *instructions);
 bool do_vec_index_to_swizzle(exec_list *instructions);
+bool lower_noise(exec_list *instructions);
+bool lower_variable_index_to_cond_assign(exec_list *instructions,
+    bool lower_input, bool lower_output, bool lower_temp, bool lower_uniform);
+bool optimize_redundant_jumps(exec_list *instructions);

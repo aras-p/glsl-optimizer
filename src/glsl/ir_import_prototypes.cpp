@@ -86,7 +86,7 @@ public:
 	 new(mem_ctx) ir_function_signature(ir->return_type);
 
       copy->is_defined = false;
-      copy->is_built_in = ir->is_built_in;
+      copy->is_builtin = ir->is_builtin;
 
       /* Clone the parameter list, but NOT the body.
        */

@@ -62,7 +62,13 @@ glsl_SOURCES = \
 	ir_to_mesa.h \
 	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
-	linker.cpp
+	linker.cpp \
+	loop_analysis.cpp \
+	loop_controls.cpp \
+	loop_unroll.cpp \
+	lower_noise.cpp \
+	lower_variable_index_to_cond_assign.cpp \
+	opt_redundant_jumps.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)

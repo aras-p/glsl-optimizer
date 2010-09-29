@@ -153,20 +153,16 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
-   bool found_non_builtin_proto = false;
-
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
-      if (sig->is_defined || !sig->is_built_in)
-	 found_non_builtin_proto = true;
-   }
-   if (!found_non_builtin_proto)
+   if (!ir->has_user_signature())
       return;
 
    printf("(function %s\n", ir->name);
    indentation++;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
+
+      if (sig->is_builtin)
+	 continue;
 
       indent();
       sig->accept(this);
@@ -411,19 +407,23 @@ ir_print_visitor::visit(ir_if *ir)
    printf(")\n");
 
    indent();
-   printf("(\n");
-   indentation++;
+   if (!ir->else_instructions.is_empty()) {
+      printf("(\n");
+      indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+      foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
+	 ir_instruction *const inst = (ir_instruction *) iter.get();
 
+	 indent();
+	 inst->accept(this);
+	 printf("\n");
+      }
+      indentation--;
       indent();
-      inst->accept(this);
-      printf("\n");
+      printf("))\n");
+   } else {
+      printf("())\n");
    }
-   indentation--;
-   indent();
-   printf("))\n");
 }
 
 

@@ -25,6 +25,12 @@
 #ifndef GLSL_PARSER_EXTRAS_H
 #define GLSL_PARSER_EXTRAS_H
 
+/*
+ * Most of the definitions here only apply to C++
+ */
+#ifdef __cplusplus
+
+
 #include <cstdlib>
 #include "glsl_symbol_table.h"
 
@@ -62,6 +68,7 @@ struct _mesa_glsl_parse_state {
    exec_list translation_unit;
    glsl_symbol_table *symbols;
 
+   bool es_shader;
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;
 
@@ -175,14 +182,6 @@ extern void _mesa_glsl_warning(const YYLTYPE *locp,
 			       _mesa_glsl_parse_state *state,
 			       const char *fmt, ...);
 
-extern "C" {
-extern int preprocess(void *ctx, const char **shader, char **info_log,
-		      const struct gl_extensions *extensions);
-
-extern void _mesa_destroy_shader_compiler();
-extern void _mesa_destroy_shader_compiler_caches();
-}
-
 extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
 				  const char *string);
 
@@ -211,5 +210,27 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
  */
 extern const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
+
+
+#endif /* __cplusplus */
+
+
+/*
+ * These definitions apply to C and C++
+ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int preprocess(void *ctx, const char **shader, char **info_log,
+                      const struct gl_extensions *extensions, int api);
+
+extern void _mesa_destroy_shader_compiler();
+extern void _mesa_destroy_shader_compiler_caches();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* GLSL_PARSER_EXTRAS_H */

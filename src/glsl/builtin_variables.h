@@ -39,6 +39,13 @@ static const builtin_variable builtin_core_fs_variables[] = {
    { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
    { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
    { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
+};
+
+static const builtin_variable builtin_100ES_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+};
+
+static const builtin_variable builtin_110_fs_variables[] = {
    { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
 };
 

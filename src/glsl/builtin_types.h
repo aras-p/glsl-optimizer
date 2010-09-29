@@ -51,16 +51,8 @@ const glsl_type glsl_type::builtin_core_types[] = {
    glsl_type(GL_FLOAT_MAT2,   GLSL_TYPE_FLOAT, 2, 2, "mat2"),
    glsl_type(GL_FLOAT_MAT3,   GLSL_TYPE_FLOAT, 3, 3, "mat3"),
    glsl_type(GL_FLOAT_MAT4,   GLSL_TYPE_FLOAT, 4, 4, "mat4"),
-   glsl_type(GL_SAMPLER_1D,   GLSL_SAMPLER_DIM_1D, 0, 0, GLSL_TYPE_FLOAT,
-	     "sampler1D"),
-   glsl_type(GL_SAMPLER_1D_SHADOW, GLSL_SAMPLER_DIM_1D, 1, 0, GLSL_TYPE_FLOAT,
-	     "sampler1DShadow"),
    glsl_type(GL_SAMPLER_2D,   GLSL_SAMPLER_DIM_2D, 0, 0, GLSL_TYPE_FLOAT,
 	     "sampler2D"),
-   glsl_type(GL_SAMPLER_2D_SHADOW, GLSL_SAMPLER_DIM_2D, 1, 0, GLSL_TYPE_FLOAT,
-	     "sampler2DShadow"),
-   glsl_type(GL_SAMPLER_3D,   GLSL_SAMPLER_DIM_3D, 0, 0, GLSL_TYPE_FLOAT,
-	     "sampler3D"),
    glsl_type(GL_SAMPLER_CUBE, GLSL_SAMPLER_DIM_CUBE, 0, 0, GLSL_TYPE_FLOAT,
 	     "samplerCube"),
 };
@@ -175,6 +167,21 @@ const glsl_type glsl_type::builtin_110_deprecated_structure_types[] = {
    glsl_type(gl_FogParameters_fields,
              Elements(gl_FogParameters_fields),
              "gl_FogParameters"),
+};
+/*@}*/
+
+/** \name Types in GLSL 1.10 (but not GLSL ES 1.00)
+ */
+/*@{*/
+const glsl_type glsl_type::builtin_110_types[] = {
+   glsl_type(GL_SAMPLER_1D,   GLSL_SAMPLER_DIM_1D, 0, 0, GLSL_TYPE_FLOAT,
+	     "sampler1D"),
+   glsl_type(GL_SAMPLER_1D_SHADOW, GLSL_SAMPLER_DIM_1D, 1, 0, GLSL_TYPE_FLOAT,
+	     "sampler1DShadow"),
+   glsl_type(GL_SAMPLER_2D_SHADOW, GLSL_SAMPLER_DIM_2D, 1, 0, GLSL_TYPE_FLOAT,
+	     "sampler2DShadow"),
+   glsl_type(GL_SAMPLER_3D,   GLSL_SAMPLER_DIM_3D, 0, 0, GLSL_TYPE_FLOAT,
+	     "sampler3D"),
 };
 /*@}*/
 

@@ -343,12 +343,26 @@ cross_validate_globals(struct gl_shader_program *prog,
 	 ir_variable *const existing = variables.get_variable(var->name);
 	 if (existing != NULL) {
 	    if (var->type != existing->type) {
-	       linker_error_printf(prog, "%s `%s' declared as type "
-				   "`%s' and type `%s'\n",
-				   mode_string(var),
-				   var->name, var->type->name,
-				   existing->type->name);
-	       return false;
+	       /* Consider the types to be "the same" if both types are arrays
+		* of the same type and one of the arrays is implicitly sized.
+		* In addition, set the type of the linked variable to the
+		* explicitly sized array.
+		*/
+	       if (var->type->is_array()
+		   && existing->type->is_array()
+		   && (var->type->fields.array == existing->type->fields.array)
+		   && ((var->type->length == 0)
+		       || (existing->type->length == 0))) {
+		  if (existing->type->length == 0)
+		     existing->type = var->type;
+	       } else {
+		  linker_error_printf(prog, "%s `%s' declared as type "
+				      "`%s' and type `%s'\n",
+				      mode_string(var),
+				      var->name, var->type->name,
+				      existing->type->name);
+		  return false;
+	       }
 	    }
 
 	    /* FINISHME: Handle non-constant initializers.
@@ -443,7 +457,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	  */
 	 if (input->type != output->type) {
 	    linker_error_printf(prog,
-				"%s shader output `%s' delcared as "
+				"%s shader output `%s' declared as "
 				"type `%s', but %s shader input declared "
 				"as type `%s'\n",
 				producer_stage, output->name,
@@ -726,14 +740,14 @@ link_intrastage_shaders(GLcontext *ctx,
 	       ir_function_signature *sig =
 		  (ir_function_signature *) iter.get();
 
-	       if (!sig->is_defined || sig->is_built_in)
+	       if (!sig->is_defined || sig->is_builtin)
 		  continue;
 
 	       ir_function_signature *other_sig =
 		  other->exact_matching_signature(& sig->parameters);
 
 	       if ((other_sig != NULL) && other_sig->is_defined
-		   && !other_sig->is_built_in) {
+		   && !other_sig->is_builtin) {
 		  linker_error_printf(prog,
 				      "function `%s' is multiply defined",
 				      f->name);
@@ -843,13 +857,15 @@ struct uniform_node {
 
  */
 static void
-update_uniform_array_sizes(struct gl_shader_program *prog)
+update_array_sizes(struct gl_shader_program *prog)
 {
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform) ||
+	 if ((var == NULL) || (var->mode != ir_var_uniform &&
+			       var->mode != ir_var_in &&
+			       var->mode != ir_var_out) ||
 	     !var->type->is_array())
 	    continue;
 
@@ -866,6 +882,7 @@ update_uniform_array_sizes(struct gl_shader_program *prog)
 	       }
 	    }
 	 }
+
 	 if (size + 1 != var->type->fields.array->length) {
 	    var->type = glsl_type::get_array_instance(var->type->fields.array,
 						      size + 1);
@@ -877,6 +894,84 @@ update_uniform_array_sizes(struct gl_shader_program *prog)
    }
 }
 
+static void
+add_uniform(void *mem_ctx, exec_list *uniforms, struct hash_table *ht,
+	    const char *name, const glsl_type *type, GLenum shader_type,
+	    unsigned *next_shader_pos, unsigned *total_uniforms)
+{
+   if (type->is_record()) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+					    type->fields.structure[i].name);
+
+	 add_uniform(mem_ctx, uniforms, ht, field_name, field_type,
+		     shader_type, next_shader_pos, total_uniforms);
+      }
+   } else {
+      uniform_node *n = (uniform_node *) hash_table_find(ht, name);
+      unsigned int vec4_slots;
+      const glsl_type *array_elem_type = NULL;
+
+      if (type->is_array()) {
+	 array_elem_type = type->fields.array;
+	 /* Array of structures. */
+	 if (array_elem_type->is_record()) {
+	    for (unsigned int i = 0; i < type->length; i++) {
+	       char *elem_name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
+	       add_uniform(mem_ctx, uniforms, ht, elem_name, array_elem_type,
+			   shader_type, next_shader_pos, total_uniforms);
+	    }
+	    return;
+	 }
+      }
+
+      /* Fix the storage size of samplers at 1 vec4 each. Be sure to pad out
+       * vectors to vec4 slots.
+       */
+      if (type->is_array()) {
+	 if (array_elem_type->is_sampler())
+	    vec4_slots = type->length;
+	 else
+	    vec4_slots = type->length * array_elem_type->matrix_columns;
+      } else if (type->is_sampler()) {
+	 vec4_slots = 1;
+      } else {
+	 vec4_slots = type->matrix_columns;
+      }
+
+      if (n == NULL) {
+	 n = (uniform_node *) calloc(1, sizeof(struct uniform_node));
+	 n->u = (gl_uniform *) calloc(1, sizeof(struct gl_uniform));
+	 n->slots = vec4_slots;
+
+	 n->u->Name = strdup(name);
+	 n->u->Type = type;
+	 n->u->VertPos = -1;
+	 n->u->FragPos = -1;
+	 n->u->GeomPos = -1;
+	 (*total_uniforms)++;
+
+	 hash_table_insert(ht, n, name);
+	 uniforms->push_tail(& n->link);
+      }
+
+      switch (shader_type) {
+      case GL_VERTEX_SHADER:
+	 n->u->VertPos = *next_shader_pos;
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 n->u->FragPos = *next_shader_pos;
+	 break;
+      case GL_GEOMETRY_SHADER:
+	 n->u->GeomPos = *next_shader_pos;
+	 break;
+      }
+
+      (*next_shader_pos) += vec4_slots;
+   }
+}
+
 void
 assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -885,8 +980,7 @@ assign_uniform_locations(struct gl_shader_program *prog)
    unsigned total_uniforms = 0;
    hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
 				    hash_table_string_compare);
-
-   update_uniform_array_sizes(prog);
+   void *mem_ctx = talloc_new(NULL);
 
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       unsigned next_position = 0;
@@ -897,53 +991,22 @@ assign_uniform_locations(struct gl_shader_program *prog)
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
 	    continue;
 
-	 const unsigned vec4_slots = (var->component_slots() + 3) / 4;
-	 if (vec4_slots == 0) {
-	    /* If we've got a sampler or an aggregate of them, the size can
-	     * end up zero.  Don't allocate any space.
+	 if (strncmp(var->name, "gl_", 3) == 0) {
+	    /* At the moment, we don't allocate uniform locations for
+	     * builtin uniforms.  It's permitted by spec, and we'll
+	     * likely switch to doing that at some point, but not yet.
 	     */
 	    continue;
 	 }
 
-	 uniform_node *n = (uniform_node *) hash_table_find(ht, var->name);
-	 if (n == NULL) {
-	    n = (uniform_node *) calloc(1, sizeof(struct uniform_node));
-	    n->u = (gl_uniform *) calloc(vec4_slots, sizeof(struct gl_uniform));
-	    n->slots = vec4_slots;
-
-	    n->u[0].Name = strdup(var->name);
-	    for (unsigned j = 1; j < vec4_slots; j++)
-	       n->u[j].Name = strdup(var->name);
-
-	    hash_table_insert(ht, n, n->u[0].Name);
-	    uniforms.push_tail(& n->link);
-	    total_uniforms += vec4_slots;
-	 }
-
-	 if (var->constant_value != NULL)
-	    for (unsigned j = 0; j < vec4_slots; j++)
-	       n->u[j].Initialized = true;
-
 	 var->location = next_position;
-
-	 for (unsigned j = 0; j < vec4_slots; j++) {
-	    switch (prog->_LinkedShaders[i]->Type) {
-	    case GL_VERTEX_SHADER:
-	       n->u[j].VertPos = next_position;
-	       break;
-	    case GL_FRAGMENT_SHADER:
-	       n->u[j].FragPos = next_position;
-	       break;
-	    case GL_GEOMETRY_SHADER:
-	       /* FINISHME: Support geometry shaders. */
-	       assert(prog->_LinkedShaders[i]->Type != GL_GEOMETRY_SHADER);
-	       break;
-	    }
-
-	    next_position++;
-	 }
+	 add_uniform(mem_ctx, &uniforms, ht, var->name, var->type,
+		     prog->_LinkedShaders[i]->Type,
+		     &next_position, &total_uniforms);
       }
    }
+
+   talloc_free(mem_ctx);
 
    gl_uniform_list *ul = (gl_uniform_list *)
       calloc(1, sizeof(gl_uniform_list));
@@ -960,8 +1023,8 @@ assign_uniform_locations(struct gl_shader_program *prog)
       next = (uniform_node *) node->link.next;
 
       node->link.remove();
-      memcpy(&ul->Uniforms[idx], node->u, sizeof(gl_uniform) * node->slots);
-      idx += node->slots;
+      memcpy(&ul->Uniforms[idx], node->u, sizeof(gl_uniform));
+      idx++;
 
       free(node->u);
       free(node);
@@ -1234,15 +1297,24 @@ assign_varying_locations(struct gl_shader_program *prog,
 
       assert(input_var->location == -1);
 
-      /* FINISHME: Location assignment will need some changes when arrays,
-       * FINISHME: matrices, and structures are allowed as shader inputs /
-       * FINISHME: outputs.
-       */
       output_var->location = output_index;
       input_var->location = input_index;
 
-      output_index++;
-      input_index++;
+      /* FINISHME: Support for "varying" records in GLSL 1.50. */
+      assert(!output_var->type->is_record());
+
+      if (output_var->type->is_array()) {
+	 const unsigned slots = output_var->type->length
+	    * output_var->type->fields.array->matrix_columns;
+
+	 output_index += slots;
+	 input_index += slots;
+      } else {
+	 const unsigned slots = output_var->type->matrix_columns;
+
+	 output_index += slots;
+	 input_index += slots;
+      }
    }
 
    demote_unread_shader_outputs(producer);
@@ -1331,9 +1403,10 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
     * match shading language versions.  With GLSL 1.30 and later, the versions
     * of all shaders must match.
     */
-   assert(min_version >= 110);
+   assert(min_version >= 100);
    assert(max_version <= 130);
-   if ((max_version >= 130) && (min_version != max_version)) {
+   if ((max_version >= 130 || min_version == 100)
+       && min_version != max_version) {
       linker_error_printf(prog, "all shaders must use same shading "
 			  "language version\n");
       goto done;
@@ -1399,13 +1472,15 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
     * some of that unused.
     */
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-      while (do_common_optimization(prog->_LinkedShaders[i]->ir, true))
+      while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;
    }
 
+   update_array_sizes(prog);
+
    assign_uniform_locations(prog);
 
-   if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER) {
+   if (prog->_NumLinkedShaders && prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER) {
       /* FINISHME: The value of the max_attribute_index parameter is
        * FINISHME: implementation dependent based on the value of
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be

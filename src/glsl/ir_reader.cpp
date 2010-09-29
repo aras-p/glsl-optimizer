@@ -32,6 +32,8 @@ extern "C" {
 #include "glsl_types.h"
 #include "s_expression.h"
 
+const static bool debug = false;
+
 static void ir_read_error(_mesa_glsl_parse_state *, s_expression *,
 			  const char *fmt, ...);
 static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
@@ -84,6 +86,9 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 
    read_instructions(state, instructions, expr, NULL);
    talloc_free(expr);
+
+   if (debug)
+      validate_ir_tree(instructions);
 }
 
 static void
@@ -94,6 +99,10 @@ ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
 
    state->error = true;
 
+   if (state->current_function != NULL)
+      state->info_log = talloc_asprintf_append(state->info_log,
+			   "In function %s:\n",
+			   state->current_function->function_name());
    state->info_log = talloc_strdup_append(state->info_log, "error: ");
 
    va_start(ap, fmt);
@@ -281,7 +290,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
    if (sig == NULL && skip_body) {
       /* If scanning for prototypes, generate a new signature. */
       sig = new(ctx) ir_function_signature(return_type);
-      sig->is_built_in = true;
+      sig->is_builtin = true;
       f->add_signature(sig);
    } else if (sig != NULL) {
       const char *badvar = sig->qualifiers_match(&hir_parameters);
@@ -310,7 +319,9 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 	 ir_read_error(st, list, "function %s redefined", f->name);
 	 return;
       }
+      st->current_function = sig;
       read_instructions(st, &sig->body, body_list, NULL);
+      st->current_function = NULL;
       sig->is_defined = true;
    }
 
@@ -331,8 +342,17 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
    foreach_iter(exec_list_iterator, it, list->subexpressions) {
       s_expression *sub = (s_expression*) it.get();
       ir_instruction *ir = read_instruction(st, sub, loop_ctx);
-      if (ir != NULL)
-	 instructions->push_tail(ir);
+      if (ir != NULL) {
+	 /* Global variable declarations should be moved to the top, before
+	  * any functions that might use them.  Functions are added to the
+	  * instruction stream when scanning for prototypes, so without this
+	  * hack, they always appear before variable declarations.
+	  */
+	 if (st->current_function == NULL && ir->as_variable() != NULL)
+	    instructions->push_head(ir);
+	 else
+	    instructions->push_tail(ir);
+      }
    }
 }
 
@@ -575,23 +595,56 @@ static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 4) {
-      ir_read_error(st, list, "expected (assign <condition> <lhs> <rhs>)");
+   if (list->length() != 5) {
+      ir_read_error(st, list, "expected (assign <condition> (<write mask>) "
+			      "<lhs> <rhs>)");
       return NULL;
    }
 
    s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
-   s_expression *lhs_expr  = (s_expression*) cond_expr->next;
+   s_list       *mask_list = SX_AS_LIST(cond_expr->next);
+   s_expression *lhs_expr  = (s_expression*) cond_expr->next->next;
    s_expression *rhs_expr  = (s_expression*) lhs_expr->next;
 
-   // FINISHME: Deal with "true" condition
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
       ir_read_error(st, NULL, "when reading condition of assignment");
       return NULL;
    }
 
-   ir_rvalue *lhs = read_rvalue(st, lhs_expr);
+   if (mask_list == NULL || mask_list->length() > 1) {
+      ir_read_error(st, mask_list, "expected () or (<write mask>)");
+      return NULL;
+   }
+
+   unsigned mask = 0;
+   if (mask_list->length() == 1) {
+      s_symbol *mask_symbol = SX_AS_SYMBOL(mask_list->subexpressions.head);
+      if (mask_symbol == NULL) {
+	 ir_read_error(st, list, "expected a write mask; found non-symbol");
+	 return NULL;
+      }
+
+      const char *mask_str = mask_symbol->value();
+      unsigned mask_length = strlen(mask_str);
+      if (mask_length > 4) {
+	 ir_read_error(st, list, "invalid write mask: %s", mask_str);
+	 return NULL;
+      }
+
+      const unsigned idx_map[] = { 3, 0, 1, 2 }; /* w=bit 3, x=0, y=1, z=2 */
+
+      for (unsigned i = 0; i < mask_length; i++) {
+	 if (mask_str[i] < 'w' || mask_str[i] > 'z') {
+	    ir_read_error(st, list, "write mask contains invalid character: %c",
+			  mask_str[i]);
+	    return NULL;
+	 }
+	 mask |= 1 << idx_map[mask_str[i] - 'w'];
+      }
+   }
+
+   ir_dereference *lhs = read_dereference(st, lhs_expr);
    if (lhs == NULL) {
       ir_read_error(st, NULL, "when reading left-hand side of assignment");
       return NULL;
@@ -603,7 +656,12 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new(ctx) ir_assignment(lhs, rhs, condition);
+   if (mask == 0 && (lhs->type->is_vector() || lhs->type->is_scalar())) {
+      ir_read_error(st, list, "non-zero write mask required.");
+      return NULL;
+   }
+
+   return new(ctx) ir_assignment(lhs, rhs, condition, mask);
 }
 
 static ir_call *
@@ -803,7 +861,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
    const glsl_type *const base_type = type->get_base_type();
 
-   ir_constant_data data;
+   ir_constant_data data = { { 0 } };
 
    // Read in list of values (at most 16).
    int k = 0;

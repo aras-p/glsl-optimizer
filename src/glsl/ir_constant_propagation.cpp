@@ -1,5 +1,5 @@
 /*
- * Constantright © 2010 Intel Corporation
+ * Copyright © 2010 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * constant of this software and associated documentation files (the "Software"),
@@ -90,7 +90,7 @@ public:
    virtual ir_visitor_status visit_enter(class ir_loop *);
    virtual ir_visitor_status visit_enter(class ir_function_signature *);
    virtual ir_visitor_status visit_enter(class ir_function *);
-   virtual ir_visitor_status visit_enter(class ir_assignment *);
+   virtual ir_visitor_status visit_leave(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
 
@@ -119,7 +119,7 @@ public:
 void
 ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
-   if (!*rvalue)
+   if (this->in_assignee || !*rvalue)
       return;
 
    const glsl_type *type = (*rvalue)->type;
@@ -168,18 +168,26 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
       if (!found)
 	 return;
 
+      int rhs_channel = 0;
+      for (int j = 0; j < 4; j++) {
+	 if (j == channel)
+	    break;
+	 if (found->write_mask & (1 << j))
+	    rhs_channel++;
+      }
+
       switch (type->base_type) {
       case GLSL_TYPE_FLOAT:
-	 data.f[i] = found->constant->value.f[channel];
+	 data.f[i] = found->constant->value.f[rhs_channel];
 	 break;
       case GLSL_TYPE_INT:
-	 data.i[i] = found->constant->value.i[channel];
+	 data.i[i] = found->constant->value.i[rhs_channel];
 	 break;
       case GLSL_TYPE_UINT:
-	 data.u[i] = found->constant->value.u[channel];
+	 data.u[i] = found->constant->value.u[rhs_channel];
 	 break;
       case GLSL_TYPE_BOOL:
-	 data.b[i] = found->constant->value.b[channel];
+	 data.b[i] = found->constant->value.b[rhs_channel];
 	 break;
       default:
 	 assert(!"not reached");
@@ -216,22 +224,16 @@ ir_constant_propagation_visitor::visit_enter(ir_function_signature *ir)
 }
 
 ir_visitor_status
-ir_constant_propagation_visitor::visit_enter(ir_assignment *ir)
+ir_constant_propagation_visitor::visit_leave(ir_assignment *ir)
 {
-   /* Inline accepting children, skipping the LHS. */
-   ir->rhs->accept(this);
-   handle_rvalue(&ir->rhs);
-
-   if (ir->condition) {
-      ir->condition->accept(this);
-      handle_rvalue(&ir->condition);
-   }
+   if (this->in_assignee)
+      return visit_continue;
 
    kill(ir->lhs->variable_referenced(), ir->write_mask);
 
    add_constant(ir);
 
-   return visit_continue_with_parent;
+   return visit_continue;
 }
 
 ir_visitor_status

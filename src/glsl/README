@@ -156,10 +156,10 @@ for the 965 fragment shader backend when that is developed.
 Q: How should I expand instructions that take multiple backend instructions?
 
 Sometimes you'll have to do the expansion in your code generation --
-see, for example, ir_to_mesa.cpp's handling of ir_binop_mul for
-matrices.  However, in many cases you'll want to do a pass over the IR
-to convert non-native instructions to a series of native instructions.
-For example, for the Mesa backend we have ir_div_to_mul_rcp.cpp because
+see, for example, ir_to_mesa.cpp's handling of ir_unop_sqrt.  However,
+in many cases you'll want to do a pass over the IR to convert
+non-native instructions to a series of native instructions.  For
+example, for the Mesa backend we have ir_div_to_mul_rcp.cpp because
 Mesa IR (and many hardware backends) only have a reciprocal
 instruction, not a divide.  Implementing non-native instructions this
 way gives the chance for constant folding to occur, so (a / 2.0)
@@ -189,3 +189,41 @@ You may also need to update the backends if they will see the new expr type:
 You can then use the new expression from builtins (if all backends
 would rather see it), or scan the IR and convert to use your new
 expression type (see ir_mod_to_fract, for example).
+
+Q: How is memory management handled in the compiler?
+
+The hierarchical memory allocator "talloc" developed for the Samba
+project is used, so that things like optimization passes don't have to
+worry about their garbage collection so much.  It has a few nice
+features, including low performance overhead and good debugging
+support that's trivially available.
+
+Generally, each stage of the compile creates a talloc context and
+allocates its memory out of that or children of it.  At the end of the
+stage, the pieces still live are stolen to a new context and the old
+one freed, or the whole context is kept for use by the next stage.
+
+For IR transformations, a temporary context is used, then at the end
+of all transformations, reparent_ir reparents all live nodes under the
+shader's IR list, and the old context full of dead nodes is freed.
+When developing a single IR transformation pass, this means that you
+want to allocate instruction nodes out of the temporary context, so if
+it becomes dead it doesn't live on as the child of a live node.  At
+the moment, optimization passes aren't passed that temporary context,
+so they find it by calling talloc_parent() on a nearby IR node.  The
+talloc_parent() call is expensive, so many passes will cache the
+result of the first talloc_parent().  Cleaning up all the optimization
+passes to take a context argument and not call talloc_parent() is left
+as an exercise.
+
+Q: What is the file naming convention in this directory?
+
+Initially, there really wasn't one.  We have since adopted one:
+
+ - Files that implement code lowering passes should be named lower_*
+   (e.g., lower_noise.cpp).
+ - Files that implement optimization passes should be named opt_*.
+ - Files that implement a class that is used throught the code should
+   take the name of that class (e.g., ir_hierarchical_visitor.cpp).
+ - Files that contain code not fitting in one of the previous
+   categories should have a sensible name (e.g., glsl_parser.ypp).

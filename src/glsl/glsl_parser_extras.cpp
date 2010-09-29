@@ -34,6 +34,7 @@ extern "C" {
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "ir_optimization.h"
+#include "loop_analysis.h"
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
 					       GLenum target, void *mem_ctx)
@@ -50,58 +51,34 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
    this->info_log = talloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_or_switch_nesting = NULL;
+
+   /* Set default language version and extensions */
+   this->language_version = 110;
+   this->es_shader = false;
    this->ARB_texture_rectangle_enable = true;
 
-   if (ctx != NULL) {
-      this->extensions = &ctx->Extensions;
-
-      this->Const.MaxLights = ctx->Const.MaxLights;
-      this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
-      this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
-      this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
-      this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
-      this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
-      this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
-      this->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
-      this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
-      this->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
-      this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
-
-      this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
-   } else {
-      /* If there is no GL context (standalone compiler), fill in constants
-       * with the minimum required values.
-       */
-      static struct gl_extensions null_extensions;
-
-      memset(&null_extensions, 0, sizeof(null_extensions));
-      null_extensions.ARB_draw_buffers = GL_TRUE;
-      null_extensions.ARB_fragment_coord_conventions = GL_TRUE;
-      null_extensions.EXT_texture_array = GL_TRUE;
-      null_extensions.NV_texture_rectangle = GL_TRUE;
-
-      this->extensions = &null_extensions;
-
-      /* 1.10 minimums. */
-      this->Const.MaxLights = 8;
-      this->Const.MaxClipPlanes = 8;
-      this->Const.MaxTextureUnits = 2;
-
-      /* More than the 1.10 minimum to appease parser tests taken from
-       * apps that (hopefully) already checked the number of coords.
-       */
-      this->Const.MaxTextureCoords = 4;
-
-      this->Const.MaxVertexAttribs = 16;
-      this->Const.MaxVertexUniformComponents = 512;
-      this->Const.MaxVaryingFloats = 32;
-      this->Const.MaxVertexTextureImageUnits = 0;
-      this->Const.MaxCombinedTextureImageUnits = 2;
-      this->Const.MaxTextureImageUnits = 2;
-      this->Const.MaxFragmentUniformComponents = 64;
-
-      this->Const.MaxDrawBuffers = 2;
+   /* OpenGL ES 2.0 has different defaults from desktop GL. */
+   if (ctx->API == API_OPENGLES2) {
+      this->language_version = 100;
+      this->es_shader = true;
+      this->ARB_texture_rectangle_enable = false;
    }
+
+   this->extensions = &ctx->Extensions;
+
+   this->Const.MaxLights = ctx->Const.MaxLights;
+   this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
+   this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
+   this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
+   this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
+   this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
+   this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
+   this->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
+   this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
+   this->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+   this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
+
+   this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 }
 
 const char *
@@ -703,12 +680,17 @@ ast_struct_specifier::print(void) const
 ast_struct_specifier::ast_struct_specifier(char *identifier,
 					   ast_node *declarator_list)
 {
+   if (identifier == NULL) {
+      static unsigned anon_count = 1;
+      identifier = talloc_asprintf(this, "#anon_struct_%04x", anon_count);
+      anon_count++;
+   }
    name = identifier;
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
 bool
-do_common_optimization(exec_list *ir, bool linked)
+do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations)
 {
    GLboolean progress = GL_FALSE;
 
@@ -734,10 +716,17 @@ do_common_optimization(exec_list *ir, bool linked)
       progress = do_constant_variable_unlinked(ir) || progress;
    progress = do_constant_folding(ir) || progress;
    progress = do_algebraic(ir) || progress;
-   progress = do_if_return(ir) || progress;
+   progress = do_lower_jumps(ir) || progress;
    progress = do_vec_index_to_swizzle(ir) || progress;
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
+
+   progress = optimize_redundant_jumps(ir) || progress;
+
+   loop_state *ls = analyze_loop_variables(ir);
+   progress = set_loop_controls(ir, ls) || progress;
+   progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
+   delete ls;
 
    return progress;
 }

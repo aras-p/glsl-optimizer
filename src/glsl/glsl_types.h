@@ -207,10 +207,6 @@ struct glsl_type {
    static const glsl_type *get_record_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
 					       const char *name);
-   /**
-    * Generate the constructor for this type and add it to the symbol table
-    */
-   class ir_function *generate_constructor(glsl_symbol_table *) const;
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
@@ -434,6 +430,7 @@ private:
    static const glsl_type builtin_core_types[];
    static const glsl_type builtin_structure_types[];
    static const glsl_type builtin_110_deprecated_structure_types[];
+   static const glsl_type builtin_110_types[];
    static const glsl_type builtin_120_types[];
    static const glsl_type builtin_130_types[];
    static const glsl_type builtin_ARB_texture_rectangle_types[];
@@ -450,13 +447,12 @@ private:
     * the world in a public header file.
     */
    /*@{*/
+   static void generate_100ES_types(glsl_symbol_table *);
    static void generate_110_types(glsl_symbol_table *);
    static void generate_120_types(glsl_symbol_table *);
    static void generate_130_types(glsl_symbol_table *);
-   static void generate_ARB_texture_rectangle_types(glsl_symbol_table *,
-						    bool);
-   static void generate_EXT_texture_array_types(glsl_symbol_table *,
-						bool);
+   static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
+   static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
    /*@}*/
 
    /**

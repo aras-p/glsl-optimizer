@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 from glob import glob
@@ -128,11 +128,14 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
 gl_shader *
 read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
 {
+   GLcontext fakeCtx;
+   fakeCtx.API = API_OPENGL;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
-      new(sh) _mesa_glsl_parse_state(NULL, target, sh);
+      new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
 
    st->language_version = 130;
+   st->symbols->language_version = 130;
    st->ARB_texture_rectangle_enable = true;
    st->EXT_texture_array_enable = true;
    _mesa_glsl_initialize_types(st);
@@ -152,6 +155,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
 
       if (st->error) {
          printf("error reading builtin: %.35s ...\\n", functions[i]);
+         printf("Info log:\\n%s\\n", st->info_log);
          talloc_free(sh);
          return NULL;
       }
@@ -167,26 +171,55 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
     write_function_definitions()
     write_profiles()
 
+    profiles = get_profile_list()
+
+    print 'static gl_shader *builtin_profiles[%d];' % len(profiles)
+
     print """
 void *builtin_mem_ctx = NULL;
 
 void
 _mesa_glsl_release_functions(void)
 {
-    talloc_free(builtin_mem_ctx);
+   talloc_free(builtin_mem_ctx);
+   builtin_mem_ctx = NULL;
+   memset(builtin_profiles, 0, sizeof(builtin_profiles));
+}
+
+static void
+_mesa_read_profile(struct _mesa_glsl_parse_state *state,
+		   exec_list *instructions,
+                   int profile_index,
+		   const char *prototypes,
+		   const char **functions,
+                   int count)
+{
+   gl_shader *sh = builtin_profiles[profile_index];
+
+   if (sh == NULL) {
+      sh = read_builtins(GL_VERTEX_SHADER, prototypes, functions, count);
+      talloc_steal(builtin_mem_ctx, sh);
+      builtin_profiles[profile_index] = sh;
+   }
+
+   import_prototypes(sh->ir, instructions, state->symbols, state);
+   state->builtins_to_link[state->num_builtins_to_link] = sh;
+   state->num_builtins_to_link++;
 }
 
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
                                 struct _mesa_glsl_parse_state *state)
 {
-   if (builtin_mem_ctx == NULL)
+   if (builtin_mem_ctx == NULL) {
       builtin_mem_ctx = talloc_init("GLSL built-in functions");
+      memset(&builtin_profiles, 0, sizeof(builtin_profiles));
+   }
 
    state->num_builtins_to_link = 0;
 """
 
-    profiles = get_profile_list()
+    i=0
     for (filename, profile) in profiles:
         if profile.endswith('_vert'):
             check = 'state->target == vertex_shader && '
@@ -200,21 +233,12 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
             check += 'state->' + version + '_enable'
 
         print '   if (' + check + ') {'
-        print '      static gl_shader *sh = NULL;'
-        print '      if (sh == NULL) {'
-        print '         sh = read_builtins(GL_VERTEX_SHADER,'
-        print '                            prototypes_for_' + profile + ','
-        print '                            functions_for_' + profile + ','
-        print '                            Elements(functions_for_' + profile,
-        print '));'
-        print '         talloc_steal(builtin_mem_ctx, sh);'
-        print '      }'
-        print
-        print '      import_prototypes(sh->ir, instructions, state->symbols,'
-        print '                        state);'
-        print '      state->builtins_to_link[state->num_builtins_to_link] = sh;'
-        print '      state->num_builtins_to_link++;'
+        print '      _mesa_read_profile(state, instructions, %d,' % i
+        print '                         prototypes_for_' + profile + ','
+        print '                         functions_for_' + profile + ','
+        print '                         Elements(functions_for_' + profile + '));'
         print '   }'
         print
+        i = i + 1
     print '}'
 

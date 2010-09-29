@@ -270,6 +270,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       case ir_binop_gequal:  new_op = ir_binop_less;    break;
       case ir_binop_equal:   new_op = ir_binop_nequal;  break;
       case ir_binop_nequal:  new_op = ir_binop_equal;   break;
+      case ir_binop_all_equal:   new_op = ir_binop_any_nequal;  break;
+      case ir_binop_any_nequal:  new_op = ir_binop_all_equal;   break;
 
       default:
 	 /* The default case handler is here to silence a warning from GCC.
@@ -363,6 +365,58 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (is_vec_one(op_const[1])) {
 	 this->progress = true;
 	 return swizzle_if_required(ir, ir->operands[0]);
+      }
+      break;
+
+   case ir_binop_logic_and:
+      /* FINISHME: Also simplify (a && a) to (a). */
+      if (is_vec_one(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_one(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir_constant::zero(mem_ctx, ir->type);
+      }
+      break;
+
+   case ir_binop_logic_xor:
+      /* FINISHME: Also simplify (a ^^ a) to (false). */
+      if (is_vec_zero(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_one(op_const[0])) {
+	 this->progress = true;
+	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
+					   ir->operands[1], NULL);
+      } else if (is_vec_one(op_const[1])) {
+	 this->progress = true;
+	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
+					   ir->operands[0], NULL);
+      }
+      break;
+
+   case ir_binop_logic_or:
+      /* FINISHME: Also simplify (a || a) to (a). */
+      if (is_vec_zero(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_one(op_const[0]) || is_vec_one(op_const[1])) {
+	 ir_constant_data data;
+
+	 for (unsigned i = 0; i < 16; i++)
+	    data.b[i] = true;
+
+	 this->progress = true;
+	 return new(mem_ctx) ir_constant(ir->type, &data);
       }
       break;
 

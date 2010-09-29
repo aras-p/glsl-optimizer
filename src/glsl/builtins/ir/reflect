@@ -8,7 +8,7 @@
 	       (expression float *
 		(constant float (2.0))
 		(expression float *
-		 (expression float dot
+		 (expression float *
 		  (var_ref n)
 		  (var_ref i))
 		 (var_ref n)))))))

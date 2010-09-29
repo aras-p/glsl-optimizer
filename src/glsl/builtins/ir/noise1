@@ -2,17 +2,17 @@
    (signature float
      (parameters
        (declare (in) float x))
-     ((return (constant float (0)))))
+     ((return (expression float noise (var_ref x)))))
    (signature float
      (parameters
        (declare (in) vec2 x))
-     ((return (constant float (0)))))
+     ((return (expression float noise (var_ref x)))))
    (signature float
      (parameters
        (declare (in) vec3 x))
-     ((return (constant float (0)))))
+     ((return (expression float noise (var_ref x)))))
    (signature float
      (parameters
        (declare (in) vec4 x))
-     ((return (constant float (0)))))
+     ((return (expression float noise (var_ref x)))))
 ))

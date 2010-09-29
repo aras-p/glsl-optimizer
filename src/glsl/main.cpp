@@ -35,6 +35,7 @@
 #include "ir_optimization.h"
 #include "ir_print_visitor.h"
 #include "program.h"
+#include "loop_analysis.h"
 
 extern "C" struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
@@ -56,6 +57,41 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
       shader->RefCount = 1;
    }
    return shader;
+}
+
+static void
+initialize_context(GLcontext *ctx, gl_api api)
+{
+   memset(ctx, 0, sizeof(*ctx));
+
+   ctx->API = api;
+
+   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
+   ctx->Extensions.EXT_texture_array = GL_TRUE;
+   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+
+   /* 1.10 minimums. */
+   ctx->Const.MaxLights = 8;
+   ctx->Const.MaxClipPlanes = 8;
+   ctx->Const.MaxTextureUnits = 2;
+
+   /* More than the 1.10 minimum to appease parser tests taken from
+    * apps that (hopefully) already checked the number of coords.
+    */
+   ctx->Const.MaxTextureCoordUnits = 4;
+
+   ctx->Const.VertexProgram.MaxAttribs = 16;
+   ctx->Const.VertexProgram.MaxUniformComponents = 512;
+   ctx->Const.MaxVarying = 8;
+   ctx->Const.MaxVertexTextureImageUnits = 0;
+   ctx->Const.MaxCombinedTextureImageUnits = 2;
+   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.FragmentProgram.MaxUniformComponents = 64;
+
+   ctx->Const.MaxDrawBuffers = 2;
+
+   ctx->Driver.NewShader = _mesa_new_shader;
 }
 
 /* Returned string will have 'ctx' as its talloc owner. */
@@ -108,12 +144,14 @@ usage_fail(const char *name)
 }
 
 
+int glsl_es = 0;
 int dump_ast = 0;
 int dump_hir = 0;
 int dump_lir = 0;
 int do_link = 0;
 
 const struct option compiler_opts[] = {
+   { "glsl-es",  0, &glsl_es,  1 },
    { "dump-ast", 0, &dump_ast, 1 },
    { "dump-hir", 0, &dump_hir, 1 },
    { "dump-lir", 0, &dump_lir, 1 },
@@ -122,14 +160,14 @@ const struct option compiler_opts[] = {
 };
 
 void
-compile_shader(struct gl_shader *shader)
+compile_shader(GLcontext *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(NULL, shader->Type, shader);
+      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log,
-			     state->extensions);
+			     state->extensions, ctx->API);
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);
@@ -174,6 +212,11 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
 	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
+
+	 loop_state *ls = analyze_loop_variables(shader->ir);
+	 progress = set_loop_controls(shader->ir, ls) || progress;
+	 progress = unroll_loops(shader->ir, ls, 32) || progress;
+	 delete ls;
       } while (progress);
 
       validate_ir_tree(shader->ir);
@@ -212,8 +255,6 @@ main(int argc, char **argv)
    GLcontext local_ctx;
    GLcontext *ctx = &local_ctx;
 
-   ctx->Driver.NewShader = _mesa_new_shader;
-
    int c;
    int idx = 0;
    while ((c = getopt_long(argc, argv, "", compiler_opts, &idx)) != -1)
@@ -222,6 +263,8 @@ main(int argc, char **argv)
 
    if (argc <= optind)
       usage_fail(argv[0]);
+
+   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL);
 
    struct gl_shader_program *whole_program;
 
@@ -259,7 +302,7 @@ main(int argc, char **argv)
 	 exit(EXIT_FAILURE);
       }
 
-      compile_shader(shader);
+      compile_shader(ctx, shader);
 
       if (!shader->CompileStatus) {
 	 printf("Info log for %s:\n%s\n", argv[optind], shader->InfoLog);

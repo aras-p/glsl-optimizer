@@ -165,6 +165,12 @@ struct exec_node {
       this->prev->next = before;
       this->prev = before;
    }
+
+   /**
+    * Insert another list in the list before the current node
+    */
+   void insert_before(struct exec_list *before);
+
    /**
     * Replace the current node with the given node.
     */
@@ -378,6 +384,23 @@ struct exec_list {
    }
 
    /**
+    * Remove the first node from a list and return it
+    *
+    * \return
+    * The first node in the list or \c NULL if the list is empty.
+    *
+    * \sa exec_list::get_head
+    */
+   exec_node *pop_head()
+   {
+      exec_node *const n = this->get_head();
+      if (n != NULL)
+	 n->remove();
+
+      return n;
+   }
+
+   /**
     * Move all of the nodes from this list to the target list
     */
    void move_nodes_to(exec_list *target)
@@ -431,6 +454,23 @@ struct exec_list {
    }
 #endif
 };
+
+
+#ifdef __cplusplus
+inline void exec_node::insert_before(exec_list *before)
+{
+   if (before->is_empty())
+      return;
+
+   before->tail_pred->next = this;
+   before->head->prev = this->prev;
+
+   this->prev->next = before->head;
+   this->prev = before->tail_pred;
+
+   before->make_empty();
+}
+#endif
 
 /**
  * This version is safe even if the current node is removed.

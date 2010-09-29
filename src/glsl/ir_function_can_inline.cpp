@@ -63,8 +63,11 @@ can_inline(ir_call *call)
 
    v.run((exec_list *) &callee->body);
 
+   /* If the function is empty (no last instruction) or does not end with a
+    * return statement, we need to count the implicit return.
+    */
    ir_instruction *last = (ir_instruction *)callee->body.get_tail();
-   if (last && !last->as_return())
+   if (last == NULL || !last->as_return())
       v.num_returns++;
 
    return v.num_returns == 1;

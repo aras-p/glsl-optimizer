@@ -64,4 +64,21 @@ public:
    /*@}*/
 };
 
+/* NOTE: function calls may never return due to discards inside them
+ * This is usually not an issue, but if it is, keep it in mind
+ */
+class ir_control_flow_visitor : public ir_visitor {
+public:
+   virtual void visit(class ir_variable *) {}
+   virtual void visit(class ir_expression *) {}
+   virtual void visit(class ir_texture *) {}
+   virtual void visit(class ir_swizzle *) {}
+   virtual void visit(class ir_dereference_variable *) {}
+   virtual void visit(class ir_dereference_array *) {}
+   virtual void visit(class ir_dereference_record *) {}
+   virtual void visit(class ir_assignment *) {}
+   virtual void visit(class ir_constant *) {}
+   virtual void visit(class ir_call *) {}
+};
+
 #endif /* IR_VISITOR_H */

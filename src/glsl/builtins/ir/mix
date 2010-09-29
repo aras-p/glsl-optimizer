@@ -61,8 +61,8 @@
        (declare (in) vec2 v1)
        (declare (in) vec2 v2)
        (declare (in) bvec2 a))
-     ((assign (swiz x (var_ref a)) (swiz x (var_ref v1)) (swiz x (var_ref v2)))
-      (assign (swiz y (var_ref a)) (swiz y (var_ref v1)) (swiz y (var_ref v2)))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
       (return (var_ref v1))))
 
    (signature vec3
@@ -70,9 +70,9 @@
        (declare (in) vec3 v1)
        (declare (in) vec3 v2)
        (declare (in) bvec3 a))
-     ((assign (swiz x (var_ref a)) (swiz x (var_ref v1)) (swiz x (var_ref v2)))
-      (assign (swiz y (var_ref a)) (swiz y (var_ref v1)) (swiz y (var_ref v2)))
-      (assign (swiz z (var_ref a)) (swiz z (var_ref v1)) (swiz z (var_ref v2)))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
+      (assign (swiz z (var_ref a)) (z) (var_ref v1) (swiz z (var_ref v2)))
       (return (var_ref v1))))
 
    (signature vec4
@@ -80,9 +80,9 @@
        (declare (in) vec4 v1)
        (declare (in) vec4 v2)
        (declare (in) bvec4 a))
-     ((assign (swiz x (var_ref a)) (swiz x (var_ref v1)) (swiz x (var_ref v2)))
-      (assign (swiz y (var_ref a)) (swiz y (var_ref v1)) (swiz y (var_ref v2)))
-      (assign (swiz z (var_ref a)) (swiz z (var_ref v1)) (swiz z (var_ref v2)))
-      (assign (swiz w (var_ref a)) (swiz w (var_ref v1)) (swiz w (var_ref v2)))
+     ((assign (swiz x (var_ref a)) (x) (var_ref v1) (swiz x (var_ref v2)))
+      (assign (swiz y (var_ref a)) (y) (var_ref v1) (swiz y (var_ref v2)))
+      (assign (swiz z (var_ref a)) (z) (var_ref v1) (swiz z (var_ref v2)))
+      (assign (swiz w (var_ref a)) (w) (var_ref v1) (swiz w (var_ref v2)))
       (return (var_ref v1))))
 ))

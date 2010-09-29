@@ -28,6 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include "glcpp.h"
+#include "main/mtypes.h"
 
 extern int yydebug;
 
@@ -111,7 +112,7 @@ main (int argc, char *argv[])
 	if (shader == NULL)
 	   return 1;
 
-	ret = preprocess(ctx, &shader, &info_log, NULL);
+	ret = preprocess(ctx, &shader, &info_log, NULL, API_OPENGL);
 
 	printf("%s", shader);
 	fprintf(stderr, "%s", info_log);

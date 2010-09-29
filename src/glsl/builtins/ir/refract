@@ -5,14 +5,14 @@
        (declare (in) float n)
        (declare (in) float eta))
      ((declare () float k)
-      (assign (constant bool (1)) (var_ref k)
+      (assign (constant bool (1)) (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
 	          (expression float * (var_ref eta)
 		    (expression float - (constant float (1.0))
 		      (expression float * 
-		        (expression float dot (var_ref n) (var_ref i))
-		        (expression float dot (var_ref n) (var_ref i))))))))
+		        (expression float * (var_ref n) (var_ref i))
+		        (expression float * (var_ref n) (var_ref i))))))))
       (if (expression bool < (var_ref k) (constant float (0.0)))
           ((return (constant float (0.0))))
 	  ((return (expression float -
@@ -20,7 +20,7 @@
 		     (expression float *
 		       (expression float +
 		         (expression float * (var_ref eta)
-			   (expression float dot (var_ref n) (var_ref i)))
+			   (expression float * (var_ref n) (var_ref i)))
 		         (expression float sqrt (var_ref k)))
 		       (var_ref n))))))))
 
@@ -30,7 +30,7 @@
        (declare (in) vec2 n)
        (declare (in) float eta))
      ((declare () float k)
-      (assign (constant bool (1)) (var_ref k)
+      (assign (constant bool (1)) (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
 	          (expression float * (var_ref eta)
@@ -55,7 +55,7 @@
        (declare (in) vec3 n)
        (declare (in) float eta))
      ((declare () float k)
-      (assign (constant bool (1)) (var_ref k)
+      (assign (constant bool (1)) (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
 	          (expression float * (var_ref eta)
@@ -80,7 +80,7 @@
        (declare (in) vec4 n)
        (declare (in) float eta))
      ((declare () float k)
-      (assign (constant bool (1)) (var_ref k)
+      (assign (constant bool (1)) (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
 	          (expression float * (var_ref eta)

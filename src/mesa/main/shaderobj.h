@@ -61,9 +61,14 @@ extern void
 _mesa_reference_shader_program(GLcontext *ctx,
                                struct gl_shader_program **ptr,
                                struct gl_shader_program *shProg);
+extern void
+_mesa_init_shader(GLcontext *ctx, struct gl_shader *shader);
 
 extern struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+extern void
+_mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog);
 
 extern struct gl_shader_program *
 _mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
@@ -90,6 +95,37 @@ _mesa_init_shader_state(GLcontext *ctx);
 
 extern void
 _mesa_free_shader_state(GLcontext *ctx);
+
+static INLINE GLuint
+_mesa_shader_type_to_index(GLenum v)
+{
+   switch(v)
+   {
+   case GL_VERTEX_SHADER:
+      return MESA_SHADER_VERTEX;
+   case GL_FRAGMENT_SHADER:
+      return MESA_SHADER_FRAGMENT;
+   case GL_GEOMETRY_SHADER:
+      return MESA_SHADER_GEOMETRY;
+   default:
+      ASSERT(0);
+      return ~0;
+   }
+}
+
+static INLINE GLenum
+_mesa_shader_index_to_type(GLuint i)
+{
+   GLenum enums[MESA_SHADER_TYPES] = {
+         GL_VERTEX_SHADER,
+         GL_FRAGMENT_SHADER,
+         GL_GEOMETRY_SHADER ,
+   };
+   if(i >= MESA_SHADER_TYPES)
+      return 0;
+   else
+      return enums[i];
+}
 
 #ifdef __cplusplus
 }

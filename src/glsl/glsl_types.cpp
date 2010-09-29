@@ -111,9 +111,8 @@ add_types_to_symbol_table(glsl_symbol_table *symtab,
    }
 }
 
-
 void
-glsl_type::generate_110_types(glsl_symbol_table *symtab)
+glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 {
    add_types_to_symbol_table(symtab, builtin_core_types,
 			     Elements(builtin_core_types),
@@ -121,10 +120,20 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_structure_types,
 			     Elements(builtin_structure_types),
 			     false);
+   add_types_to_symbol_table(symtab, &void_type, 1, false);
+}
+
+void
+glsl_type::generate_110_types(glsl_symbol_table *symtab)
+{
+   generate_100ES_types(symtab);
+
+   add_types_to_symbol_table(symtab, builtin_110_types,
+			     Elements(builtin_110_types),
+			     false);
    add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
 			     Elements(builtin_110_deprecated_structure_types),
 			     false);
-   add_types_to_symbol_table(symtab, & void_type, 1, false);
 }
 
 
@@ -173,6 +182,10 @@ void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
+   case 100:
+      assert(state->es_shader);
+      glsl_type::generate_100ES_types(state->symbols);
+      break;
    case 110:
       glsl_type::generate_110_types(state->symbols);
       break;
@@ -229,68 +242,6 @@ _mesa_glsl_release_types(void)
       hash_table_dtor(glsl_type::record_types);
       glsl_type::record_types = NULL;
    }
-}
-
-
-ir_function *
-glsl_type::generate_constructor(glsl_symbol_table *symtab) const
-{
-   void *ctx = symtab;
-
-   /* Generate the function name and add it to the symbol table.
-    */
-   ir_function *const f = new(ctx) ir_function(name);
-
-   bool added = symtab->add_function(name, f);
-   assert(added);
-   (void) added;
-
-   ir_function_signature *const sig = new(ctx) ir_function_signature(this);
-   f->add_signature(sig);
-
-   ir_variable **declarations =
-      (ir_variable **) malloc(sizeof(ir_variable *) * this->length);
-   for (unsigned i = 0; i < length; i++) {
-      char *const param_name = (char *) malloc(10);
-
-      snprintf(param_name, 10, "p%08X", i);
-
-      ir_variable *var = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? new(ctx) ir_variable(fields.array, param_name, ir_var_in)
-	 : new(ctx) ir_variable(fields.structure[i].type, param_name, ir_var_in);
-
-      declarations[i] = var;
-      sig->parameters.push_tail(var);
-   }
-
-   /* Generate the body of the constructor.  The body assigns each of the
-    * parameters to a portion of a local variable called _ret_val that has
-    * the same type as the constructor.  After initializing _ret_val,
-    * _ret_val is returned.
-    */
-   ir_variable *retval = new(ctx) ir_variable(this, "_ret_val", ir_var_auto);
-   sig->body.push_tail(retval);
-
-   for (unsigned i = 0; i < length; i++) {
-      ir_dereference *const lhs = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? (ir_dereference *) new(ctx) ir_dereference_array(retval,
-							    new(ctx) ir_constant(i))
-	 : (ir_dereference *) new(ctx) ir_dereference_record(retval,
-							     fields.structure[i].name);
-
-      ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[i]);
-      ir_instruction *const assign = new(ctx) ir_assignment(lhs, rhs, NULL);
-
-      sig->body.push_tail(assign);
-   }
-
-   free(declarations);
-
-   ir_dereference *const retref = new(ctx) ir_dereference_variable(retval);
-   ir_instruction *const inst = new(ctx) ir_return(retref);
-   sig->body.push_tail(inst);
-
-   return f;
 }
 
 

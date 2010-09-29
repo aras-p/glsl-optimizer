@@ -61,11 +61,13 @@ public:
    virtual ir_visitor_status visit(ir_dereference_variable *ir);
    virtual ir_visitor_status visit(ir_if *ir);
 
+   virtual ir_visitor_status visit_leave(ir_loop *ir);
    virtual ir_visitor_status visit_enter(ir_function *ir);
    virtual ir_visitor_status visit_leave(ir_function *ir);
    virtual ir_visitor_status visit_enter(ir_function_signature *ir);
 
    virtual ir_visitor_status visit_leave(ir_expression *ir);
+   virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
 
@@ -107,6 +109,42 @@ ir_validate::visit(ir_if *ir)
       ir->print();
       printf("\n");
       abort();
+   }
+
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_validate::visit_leave(ir_loop *ir)
+{
+   if (ir->counter != NULL) {
+      if ((ir->from == NULL) || (ir->from == NULL) || (ir->increment == NULL)) {
+	 printf("ir_loop has invalid loop controls:\n"
+		"    counter:   %p\n"
+		"    from:      %p\n"
+		"    to:        %p\n"
+		"    increment: %p\n",
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
+	 abort();
+      }
+
+      if ((ir->cmp < ir_binop_less) || (ir->cmp > ir_binop_nequal)) {
+	 printf("ir_loop has invalid comparitor %d\n", ir->cmp);
+	 abort();
+      }
+   } else {
+      if ((ir->from != NULL) || (ir->from != NULL) || (ir->increment != NULL)) {
+	 printf("ir_loop has invalid loop controls:\n"
+		"    counter:   %p\n"
+		"    from:      %p\n"
+		"    to:        %p\n"
+		"    increment: %p\n",
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
+	 abort();
+      }
    }
 
    return visit_continue;
@@ -240,6 +278,10 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->type);
       break;
 
+   case ir_unop_noise:
+      /* XXX what can we assert here? */
+      break;
+
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_mul:
@@ -258,24 +300,30 @@ ir_validate::visit_leave(ir_expression *ir)
 	 assert(ir->operands[0]->type == ir->type);
       }
       break;
+
    case ir_binop_less:
    case ir_binop_greater:
    case ir_binop_lequal:
    case ir_binop_gequal:
-      /* GLSL < > <= >= operators take scalar floats/ints, but in the
-       * IR we may want to do them for vectors instead to support the
-       * lessEqual() and friends builtins.
-       */
-      assert(ir->type == glsl_type::bool_type);
-      assert(ir->operands[0]->type == ir->operands[1]->type);
-      break;
-
    case ir_binop_equal:
    case ir_binop_nequal:
-      /* GLSL == and != operate on vectors and return a bool, and the
-       * IR matches that.  We may want to switch up the IR to work on
-       * vectors and return a bvec and make the operators break down
-       * to ANDing/ORing the results of the vector comparison.
+      /* The semantics of the IR operators differ from the GLSL <, >, <=, >=,
+       * ==, and != operators.  The IR operators perform a component-wise
+       * comparison on scalar or vector types and return a boolean scalar or
+       * vector type of the same size.
+       */
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      assert(ir->operands[0]->type->is_vector()
+	     || ir->operands[0]->type->is_scalar());
+      assert(ir->operands[0]->type->vector_elements
+	     == ir->type->vector_elements);
+      break;
+
+   case ir_binop_all_equal:
+   case ir_binop_any_nequal:
+      /* GLSL == and != operate on scalars, vectors, matrices and arrays, and
+       * return a scalar boolean.  The IR matches that.
        */
       assert(ir->type == glsl_type::bool_type);
       assert(ir->operands[0]->type == ir->operands[1]->type);
@@ -303,6 +351,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_dot:
       assert(ir->type == glsl_type::float_type);
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type->is_vector());
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
@@ -311,6 +360,23 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[1]->type == glsl_type::vec3_type);
       assert(ir->type == glsl_type::vec3_type);
       break;
+   }
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_leave(ir_swizzle *ir)
+{
+   int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
+
+   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
+      if (chans[i] >= ir->val->type->vector_elements) {
+	 printf("ir_swizzle @ %p specifies a channel not present "
+		"in the value.\n", (void *) ir);
+	 ir->print();
+	 abort();
+      }
    }
 
    return visit_continue;
@@ -343,14 +409,16 @@ ir_validate::visit_enter(ir_assignment *ir)
 	 abort();
       }
 
-      /* Mask of fields that do not exist in the destination.  These should
-       * not be written by the assignment.
-       */
-      const unsigned invalid_mask = ~((1U << lhs->type->components()) - 1);
+      int lhs_components = 0;
+      for (int i = 0; i < 4; i++) {
+	 if (ir->write_mask & (1 << i))
+	    lhs_components++;
+      }
 
-      if ((invalid_mask & ir->write_mask) != 0) {
-	 printf("Assignment write mask enables invalid components for "
-		"type %s:\n", lhs->type->name);
+      if (lhs_components != ir->rhs->type->vector_elements) {
+	 printf("Assignment count of LHS write mask channels enabled not\n"
+		"matching RHS vector size (%d LHS, %d RHS).\n",
+		lhs_components, ir->rhs->type->vector_elements);
 	 ir->print();
 	 abort();
       }
