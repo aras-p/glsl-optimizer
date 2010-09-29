@@ -411,27 +411,34 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 
 	/* Replace 0.0, 1.0 and 0.5 immediates by their explicit swizzles */
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
+		struct rc_constant * constant;
+		struct rc_src_register newsrc;
+		int have_real_reference;
+
 		if (inst->U.I.SrcReg[src].File != RC_FILE_CONSTANT ||
 		    inst->U.I.SrcReg[src].RelAddr ||
 		    inst->U.I.SrcReg[src].Index >= c->Program.Constants.Count)
 			continue;
 
-		struct rc_constant * constant =
+		constant =
 			&c->Program.Constants.Constants[inst->U.I.SrcReg[src].Index];
 
 		if (constant->Type != RC_CONSTANT_IMMEDIATE)
 			continue;
 
-		struct rc_src_register newsrc = inst->U.I.SrcReg[src];
-		int have_real_reference = 0;
+		newsrc = inst->U.I.SrcReg[src];
+		have_real_reference = 0;
 		for(unsigned int chan = 0; chan < 4; ++chan) {
 			unsigned int swz = GET_SWZ(newsrc.Swizzle, chan);
+			unsigned int newswz;
+			float imm;
+			float baseimm;
+
 			if (swz >= 4)
 				continue;
 
-			unsigned int newswz;
-			float imm = constant->u.Immediate[swz];
-			float baseimm = imm;
+			imm = constant->u.Immediate[swz];
+			baseimm = imm;
 			if (imm < 0.0)
 				baseimm = -baseimm;
 
