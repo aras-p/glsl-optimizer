@@ -26,6 +26,7 @@
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "ir_unused_structs.h"
+#include "program/hash_table.h"
 #include <math.h>
 
 static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
@@ -44,14 +45,24 @@ public:
 		buffer = buf;
 		mode = mode_;
 		writeMask = ~0;
+		temp_var_counter = 0;
+		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	}
 
 	virtual ~ir_print_glsl_visitor()
 	{
-		/* empty */
+		clear_temps ();
+		hash_table_dtor (temp_var_hash);
+	}
+
+	void clear_temps ()
+	{
+		hash_table_clear (temp_var_hash);
+		temp_var_counter = 0;
 	}
 
 	void indent(void);
+	void print_var_name (ir_variable* v);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -75,6 +86,8 @@ public:
 	char* buffer;
 	PrintGlslMode mode;
 	unsigned writeMask;
+	unsigned	temp_var_counter;
+	hash_table*	temp_var_hash;
 };
 
 
@@ -133,6 +146,25 @@ void ir_print_glsl_visitor::indent(void)
       buffer = talloc_asprintf_append(buffer, "  ");
 }
 
+void ir_print_glsl_visitor::print_var_name (ir_variable* v)
+{
+	if (v->mode == ir_var_temporary)
+	{
+		int tempID = (int)hash_table_find (temp_var_hash, v);
+		if (tempID == 0)
+		{
+			tempID = ++temp_var_counter;
+			hash_table_insert (temp_var_hash, (void*)tempID, v);
+		}
+		buffer = talloc_asprintf_append(buffer, "tmpvar_%d", tempID);
+	}
+	else
+	{
+		buffer = talloc_asprintf_append(buffer, "%s", v->name);
+	}
+}
+
+
 static char*
 print_type(char* buffer, const glsl_type *t, bool arraySize)
 {
@@ -175,13 +207,15 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
    buffer = print_type(buffer, ir->type, false);
-   buffer = talloc_asprintf_append(buffer, " %s", ir->name);
+   buffer = talloc_asprintf_append(buffer, " ");
+   print_var_name (ir);
    buffer = print_type_post(buffer, ir->type, false);
 }
 
 
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
+   this->temp_var_counter = 0;
    buffer = print_type(buffer, ir->return_type, true);
    buffer = talloc_asprintf_append(buffer, " %s (", ir->function_name());
 
@@ -437,7 +471,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 void ir_print_glsl_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   buffer = talloc_asprintf_append(buffer, "%s", var->name);
+   print_var_name (var);
 }
 
 

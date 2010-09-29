@@ -2115,8 +2115,6 @@ ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
 {
-   ir_variable::temp_var_counter = 0;
-
    void *ctx = state;
    ir_function *f = NULL;
    ir_function_signature *sig = NULL;
