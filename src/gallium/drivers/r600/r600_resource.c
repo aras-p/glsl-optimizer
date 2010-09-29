@@ -53,7 +53,7 @@ void r600_init_screen_resource_functions(struct pipe_screen *screen)
 	screen->user_buffer_create = r600_user_buffer_create;
 }
 
-void r600_init_context_resource_functions2(struct r600_pipe_context *r600)
+void r600_init_context_resource_functions(struct r600_pipe_context *r600)
 {
 	r600->context.get_transfer = u_get_transfer_vtbl;
 	r600->context.transfer_map = u_transfer_map_vtbl;

@@ -80,9 +80,9 @@ static void r600_draw_common(struct r600_drawl *draw)
 
 
 	/* rebuild vertex shader if input format changed */
-	if (r600_pipe_shader_update2(&rctx->context, rctx->vs_shader))
+	if (r600_pipe_shader_update(&rctx->context, rctx->vs_shader))
 		return;
-	if (r600_pipe_shader_update2(&rctx->context, rctx->ps_shader))
+	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
 		return;
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
@@ -205,7 +205,7 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 	}
 }
 
-void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info *info)
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_drawl draw;
@@ -1191,7 +1191,7 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
-	r =  r600_pipe_shader_create2(ctx, shader, state->tokens);
+	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
 	if (r) {
 		return NULL;
 	}
@@ -1238,7 +1238,7 @@ static void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 	free(shader);
 }
 
-void r600_init_state_functions2(struct r600_pipe_context *rctx)
+void r600_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -1279,7 +1279,7 @@ void r600_init_state_functions2(struct r600_pipe_context *rctx)
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 }
 
-void r600_init_config2(struct r600_pipe_context *rctx)
+void r600_init_config(struct r600_pipe_context *rctx)
 {
 	int ps_prio;
 	int vs_prio;

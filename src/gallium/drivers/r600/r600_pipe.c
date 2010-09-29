@@ -87,7 +87,7 @@ static void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-static void r600_flush2(struct pipe_context *ctx, unsigned flags,
+static void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -128,7 +128,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	FREE(rctx);
 }
 
-static struct pipe_context *r600_create_context2(struct pipe_screen *screen, void *priv)
+static struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
@@ -139,16 +139,16 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
-	rctx->context.flush = r600_flush2;
+	rctx->context.flush = r600_flush;
 
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
 	rctx->radeon = rscreen->radeon;
 	rctx->family = r600_get_family(rctx->radeon);
 
-	r600_init_blit_functions2(rctx);
+	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
-	r600_init_context_resource_functions2(rctx);
+	r600_init_context_resource_functions(rctx);
 
 	switch (r600_get_family(rctx->radeon)) {
 	case CHIP_R600:
@@ -163,13 +163,13 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		rctx->context.draw_vbo = r600_draw_vbo2;
-		r600_init_state_functions2(rctx);
+		rctx->context.draw_vbo = r600_draw_vbo;
+		r600_init_state_functions(rctx);
 		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
-		r600_init_config2(rctx);
+		r600_init_config(rctx);
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
@@ -177,12 +177,12 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 		rctx->context.draw_vbo = evergreen_draw;
-		evergreen_init_state_functions2(rctx);
+		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
-		evergreen_init_config2(rctx);
+		evergreen_init_config(rctx);
 		break;
 	default:
 		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
@@ -212,7 +212,7 @@ static struct pipe_context *r600_create_context2(struct pipe_screen *screen, voi
 
 	rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 
-	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth2;
+	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth;
 
 	return &rctx->context;
 }
@@ -440,7 +440,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
-	rscreen->screen.context_create = r600_create_context2;
+	rscreen->screen.context_create = r600_create_context;
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
 

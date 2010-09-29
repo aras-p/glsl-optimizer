@@ -83,7 +83,7 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 			0x00000000, 0xFFFFFFFF, shader->bo);
 }
 
-int r600_find_vs_semantic_index2(struct r600_shader *vs,
+int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id)
 {
 	struct r600_shader_io *input = &ps->input[id];
@@ -109,7 +109,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index2(&rctx->vs_shader->shader, rshader, i));
+		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
 		tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
@@ -267,7 +267,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	return r600_bc_build(&shader->bc);
 }
 
-int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;
@@ -287,7 +287,7 @@ int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *
 }
 
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
-int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
+int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;

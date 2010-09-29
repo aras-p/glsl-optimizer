@@ -50,7 +50,7 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 	/* TODO queries */
 }
 
-int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_texture *texture)
+int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_framebuffer_state fb = *rctx->pframebuffer;
@@ -155,7 +155,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				  src, subsrc, srcx, srcy, srcz, width, height);
 }
 
-void r600_init_blit_functions2(struct r600_pipe_context *rctx)
+void r600_init_blit_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.clear = r600_clear;
 	rctx->context.clear_render_target = r600_clear_render_target;

@@ -146,15 +146,15 @@ struct r600_drawl {
 };
 
 /* evergreen_state.c */
-void evergreen_init_state_functions2(struct r600_pipe_context *rctx);
-void evergreen_init_config2(struct r600_pipe_context *rctx);
+void evergreen_init_state_functions(struct r600_pipe_context *rctx);
+void evergreen_init_config(struct r600_pipe_context *rctx);
 void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 
 /* r600_blit.c */
-void r600_init_blit_functions2(struct r600_pipe_context *rctx);
-int r600_blit_uncompress_depth2(struct pipe_context *ctx, struct r600_resource_texture *texture);
+void r600_init_blit_functions(struct r600_pipe_context *rctx);
+int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 
 /* r600_buffer.c */
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
@@ -174,18 +174,18 @@ int r600_upload_user_buffers(struct r600_pipe_context *rctx);
 void r600_init_query_functions(struct r600_pipe_context *rctx);
 
 /* r600_resource.c */
-void r600_init_context_resource_functions2(struct r600_pipe_context *r600);
+void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader_update2(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-int r600_pipe_shader_create2(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
-int r600_find_vs_semantic_index2(struct r600_shader *vs,
+int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);
 
 /* r600_state.c */
-void r600_init_state_functions2(struct r600_pipe_context *rctx);
-void r600_draw_vbo2(struct pipe_context *ctx, const struct pipe_draw_info *info);
-void r600_init_config2(struct r600_pipe_context *rctx);
+void r600_init_state_functions(struct r600_pipe_context *rctx);
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void r600_init_config(struct r600_pipe_context *rctx);
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
 					struct pipe_resource **index_buffer,
 					unsigned *index_size,

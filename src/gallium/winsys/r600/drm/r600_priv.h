@@ -89,8 +89,10 @@ void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
+void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
 
 /* radeon_bo_pb.c */
+struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon);
 struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
 							 uint32_t handle);
 

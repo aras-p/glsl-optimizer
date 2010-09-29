@@ -40,15 +40,6 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
-int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
-void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
-void radeon_bo_reference(struct radeon *radeon,
-			 struct radeon_bo **dst,
-			 struct radeon_bo *src);
-
-unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo);
-void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
-
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg)
 {
 	struct r600_block *block;

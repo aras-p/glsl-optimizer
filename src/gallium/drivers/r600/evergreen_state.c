@@ -974,7 +974,7 @@ static void *evergreen_create_shader_state(struct pipe_context *ctx,
 	int r;
 
 	shader->shader.use_mem_constant = TRUE;
-	r =  r600_pipe_shader_create2(ctx, shader, state->tokens);
+	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
 	if (r) {
 		return NULL;
 	}
@@ -1021,7 +1021,7 @@ static void evergreen_delete_vs_shader(struct pipe_context *ctx, void *state)
 	free(shader);
 }
 
-void evergreen_init_state_functions2(struct r600_pipe_context *rctx)
+void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
@@ -1062,7 +1062,7 @@ void evergreen_init_state_functions2(struct r600_pipe_context *rctx)
 	rctx->context.sampler_view_destroy = evergreen_sampler_view_destroy;
 }
 
-void evergreen_init_config2(struct r600_pipe_context *rctx)
+void evergreen_init_config(struct r600_pipe_context *rctx)
 {
 	struct r600_pipe_state *rstate = &rctx->config;
 	int ps_prio;
@@ -1399,9 +1399,9 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 
 	/* rebuild vertex shader if input format changed */
-	if (r600_pipe_shader_update2(&rctx->context, rctx->vs_shader))
+	if (r600_pipe_shader_update(&rctx->context, rctx->vs_shader))
 		return;
-	if (r600_pipe_shader_update2(&rctx->context, rctx->ps_shader))
+	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
 		return;
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
@@ -1519,7 +1519,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index2(&rctx->vs_shader->shader, rshader, i));
+		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
