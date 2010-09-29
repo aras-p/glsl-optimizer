@@ -317,7 +317,7 @@ void _math_test_all_transform_functions( char *description )
 	    char buf[100];
 	    sprintf(buf, "_mesa_transform_tab[0][%d][%s] failed test (%s)",
 		    psize, mstrings[mtype], description );
-	    _mesa_problem( NULL, buf );
+	    _mesa_problem( NULL, "%s", buf );
 	 }
 #ifdef RUN_DEBUG_BENCHMARK
 	 if ( mesa_profile )
