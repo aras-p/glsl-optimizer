@@ -1400,12 +1400,6 @@ fs_visitor::visit(ir_loop *ir)
       }
    }
 
-   /* Start a safety counter.  If the user messed up their loop
-    * counting, we don't want to hang the GPU.
-    */
-   fs_reg max_iter = fs_reg(this, glsl_type::int_type);
-   emit(fs_inst(BRW_OPCODE_MOV, max_iter, fs_reg(10000)));
-
    emit(fs_inst(BRW_OPCODE_DO));
 
    if (ir->to) {
@@ -1445,17 +1439,9 @@ fs_visitor::visit(ir_loop *ir)
 
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      fs_inst *inst;
 
       this->base_ir = ir;
       ir->accept(this);
-
-      /* Check the maximum loop iters counter. */
-      inst = emit(fs_inst(BRW_OPCODE_ADD, max_iter, max_iter, fs_reg(-1)));
-      inst->conditional_mod = BRW_CONDITIONAL_Z;
-
-      inst = emit(fs_inst(BRW_OPCODE_BREAK));
-      inst->predicated = true;
    }
 
    if (ir->increment) {
