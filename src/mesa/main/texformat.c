@@ -429,6 +429,29 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ARB_texture_rg) {
+      switch (internalFormat) {
+      case GL_R8:
+      case GL_RED:
+      case GL_COMPRESSED_RED:
+	 return MESA_FORMAT_R8;
+
+      case GL_R16:
+         return MESA_FORMAT_R16;
+
+      case GL_RG:
+      case GL_RG8:
+      case GL_COMPRESSED_RG:
+	 return MESA_FORMAT_RG88;
+
+      case GL_RG16:
+	 return MESA_FORMAT_RG1616;
+
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return MESA_FORMAT_NONE;
 }

@@ -76,6 +76,12 @@ typedef enum
    MESA_FORMAT_CI8,		/*                               CCCC CCCC */
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
+   MESA_FORMAT_R8,		/*                               RRRR RRRR */
+   MESA_FORMAT_RG88,		/*                     RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_RG88_REV,	/*                     GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_R16,		/*                     RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_RG1616,		/* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
+   MESA_FORMAT_RG1616_REV,	/* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
    MESA_FORMAT_Z24_S8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
    MESA_FORMAT_S8_Z24,          /* SSSS SSSS ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    MESA_FORMAT_Z16,             /*                     ZZZZ ZZZZ ZZZZ ZZZZ */

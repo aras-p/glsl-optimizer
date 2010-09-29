@@ -66,6 +66,7 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
 
    /* additional checks */
    switch (format) {
+   case GL_RG:
    case GL_RED:
    case GL_GREEN:
    case GL_BLUE:
