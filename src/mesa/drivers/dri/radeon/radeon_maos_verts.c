@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "math/m_translate.h"
 #include "radeon_context.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
