@@ -30,7 +30,6 @@
 #include "i915_context.h"
 #include "i915_batch.h"
 #include "i915_debug.h"
-#include "i915_reg.h"
 #include "i915_resource.h"
 
 #include "pipe/p_context.h"
