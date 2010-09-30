@@ -26,7 +26,6 @@
 #include <stdio.h>
 
 #include "main/context.h"
-#include "main/context.h"
 #include "main/matrix.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
