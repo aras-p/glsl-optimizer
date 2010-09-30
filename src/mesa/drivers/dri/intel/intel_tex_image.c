@@ -10,7 +10,6 @@
 #include "main/texstore.h"
 #include "main/texgetimage.h"
 #include "main/texobj.h"
-#include "main/texstore.h"
 #include "main/teximage.h"
 
 #include "intel_context.h"
