@@ -89,8 +89,6 @@ typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
 typedef struct __GLXDRIscreenRec __GLXDRIscreen;
 typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
 
-#include "glxextensions.h"
-
 struct __GLXDRIdisplayRec
 {
     /**
