@@ -40,7 +40,6 @@
 #include "i915_reg.h"
 #include "i915_program.h"
 
-#include "intel_tris.h"
 #include "intel_span.h"
 
 /***************************************
