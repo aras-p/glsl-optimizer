@@ -99,61 +99,64 @@ struct lp_sampler_static_state
 struct lp_sampler_dynamic_state
 {
 
-   /** Obtain the base texture width. */
+   /** Obtain the base texture width (returns int32) */
    LLVMValueRef
    (*width)( const struct lp_sampler_dynamic_state *state,
              LLVMBuilderRef builder,
              unsigned unit);
 
-   /** Obtain the base texture height. */
+   /** Obtain the base texture height (returns int32) */
    LLVMValueRef
    (*height)( const struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder,
               unsigned unit);
 
-   /** Obtain the base texture depth. */
+   /** Obtain the base texture depth (returns int32) */
    LLVMValueRef
    (*depth)( const struct lp_sampler_dynamic_state *state,
              LLVMBuilderRef builder,
              unsigned unit);
 
-   /** Obtain the number of mipmap levels (minus one). */
+   /** Obtain the number of mipmap levels minus one (returns int32) */
    LLVMValueRef
    (*last_level)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
+   /** Obtain stride in bytes between image rows/blocks (returns int32) */
    LLVMValueRef
    (*row_stride)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
+   /** Obtain stride in bytes between image slices (returns int32) */
    LLVMValueRef
    (*img_stride)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
+   /** Obtain pointer to array of pointers to mimpap levels */
    LLVMValueRef
    (*data_ptr)( const struct lp_sampler_dynamic_state *state,
                 LLVMBuilderRef builder,
                 unsigned unit);
 
-   /** Obtain texture min lod */
+   /** Obtain texture min lod (returns float) */
    LLVMValueRef
    (*min_lod)(const struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder, unsigned unit);
 
-   /** Obtain texture max lod */
+   /** Obtain texture max lod (returns float) */
    LLVMValueRef
    (*max_lod)(const struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder, unsigned unit);
 
-   /** Obtain texture lod bias */
+   /** Obtain texture lod bias (returns float) */
    LLVMValueRef
    (*lod_bias)(const struct lp_sampler_dynamic_state *state,
                LLVMBuilderRef builder, unsigned unit);
 
-   /** Obtain texture border color */
+   /** Obtain texture border color (returns ptr to float[4]) */
    LLVMValueRef
    (*border_color)(const struct lp_sampler_dynamic_state *state,
                    LLVMBuilderRef builder, unsigned unit);

@@ -331,6 +331,11 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Return pointer to a single mipmap level.
+ * \param data_array  array of pointers to mipmap levels
+ * \param level  integer mipmap level
+ */
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
                           LLVMValueRef data_array, LLVMValueRef level)
