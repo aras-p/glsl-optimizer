@@ -83,6 +83,7 @@ struct lp_sampler_static_state
    unsigned compare_func:3;
    unsigned normalized_coords:1;
    unsigned min_max_lod_equal:1;  /**< min_lod == max_lod ? */
+   unsigned lod_bias_non_zero:1;
 };
 
 

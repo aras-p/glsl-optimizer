@@ -132,6 +132,10 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
       state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    }
 
+   if (sampler->lod_bias != 0.0) {
+      state->lod_bias_non_zero = 1;
+   }
+
    /* If min_lod == max_lod we can greatly simplify mipmap selection.
     * This is a case that occurs during automatic mipmap generation.
     */
@@ -258,7 +262,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       }
 
       /* add sampler lod bias */
-      lod = LLVMBuildFAdd(bld->builder, lod, sampler_lod_bias, "sampler_lod_bias");
+      if (bld->static_state->lod_bias_non_zero)
+         lod = LLVMBuildFAdd(bld->builder, lod, sampler_lod_bias, "sampler_lod_bias");
 
       /* clamp lod */
       lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
