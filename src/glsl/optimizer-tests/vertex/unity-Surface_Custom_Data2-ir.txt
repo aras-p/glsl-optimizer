@@ -54,14 +54,14 @@ vec4 ComputeScreenPos (
   tmpvar_1 = (pos * 0.5);
   o = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.x = (vec2(o.x)).x;
-  tmpvar_2.y = (vec2((o.y * _ProjectionParams.x))).y;
+  tmpvar_2.x = o.x;
+  tmpvar_2.y = (o.y * _ProjectionParams.x);
   vec2 tmpvar_3;
   tmpvar_3 = (tmpvar_2 + o.w);
-  o.xy = tmpvar_3.xy;
+  o.xy = tmpvar_3.xy.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = tmpvar_4.xy;
+  o.zw = tmpvar_4.xxxy.zw;
   return o;
 }
 
@@ -83,10 +83,10 @@ v2f_surf vert_surf (
   o.hip_screen = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = ((v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
-  o.hip_lmapFade.xy = tmpvar_4.xy;
+  o.hip_lmapFade.xy = tmpvar_4.xy.xy;
   float tmpvar_5;
   tmpvar_5 = ((-((gl_ModelViewMatrix * v.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
-  o.hip_lmapFade.z = (vec3(tmpvar_5)).z;
+  o.hip_lmapFade.z = vec3(tmpvar_5).z;
   return o;
 }
 
@@ -135,16 +135,14 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.x = (vec4(xl_retval.fog)).x;
-  tmpvar_17.y = (vec4(0.0)).y;
-  tmpvar_17.z = (vec4(0.0)).z;
-  tmpvar_17.w = (vec4(0.0)).w;
+  tmpvar_17.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_17.x = xl_retval.fog;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
+  tmpvar_19.w = 0.0;
   tmpvar_19.xyz = xl_retval.cust_foo.xyz;
-  tmpvar_19.w = (vec4(0.0)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
@@ -154,8 +152,8 @@ void main ()
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
   vec4 tmpvar_23;
+  tmpvar_23.w = 0.0;
   tmpvar_23.xyz = xl_retval.hip_lmapFade.xyz;
-  tmpvar_23.w = (vec4(0.0)).w;
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[2] = tmpvar_24;

@@ -15,12 +15,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -57,8 +57,8 @@ vec4 frag (
   tmpvar_9 = tmpvar_8;
   fresnel = tmpvar_9;
   vec2 tmpvar_10;
-  tmpvar_10.x = (vec2(fresnel)).x;
-  tmpvar_10.y = (vec2(fresnel)).y;
+  tmpvar_10.x = fresnel;
+  tmpvar_10.y = fresnel;
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_ColorControl, tmpvar_10);
   vec4 tmpvar_12;
@@ -70,10 +70,10 @@ vec4 frag (
   tmpvar_14 = mix (water.xyz, _horizonColor.xyz, tmpvar_13);
   vec3 tmpvar_15;
   tmpvar_15 = tmpvar_14;
-  col.xyz = tmpvar_15.xyz;
+  col.xyz = tmpvar_15.xyz.xyz;
   float tmpvar_16;
   tmpvar_16 = _horizonColor.w;
-  col.w = (vec4(tmpvar_16)).w;
+  col.w = vec4(tmpvar_16).w;
   return col;
 }
 

@@ -98,10 +98,10 @@ vec4 frag_surf (
   tmpvar_13 = min (lmFull, tmpvar_12);
   vec3 tmpvar_14;
   tmpvar_14 = (o.Albedo * tmpvar_13);
-  c.xyz = tmpvar_14.xyz;
+  c.xyz = tmpvar_14.xyz.xyz;
   float tmpvar_15;
   tmpvar_15 = o.Alpha;
-  c.w = (vec4(tmpvar_15)).w;
+  c.w = vec4(tmpvar_15).w;
   return c;
 }
 

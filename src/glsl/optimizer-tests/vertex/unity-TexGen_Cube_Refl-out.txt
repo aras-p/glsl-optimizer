@@ -4,18 +4,16 @@ uniform mat4 _World2Object;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _WorldSpaceCameraPos;
   vec4 tmpvar_2;
-  tmpvar_2.xyz = _WorldSpaceCameraPos.xyz;
-  tmpvar_2.w = 1.0;
+  tmpvar_2.w = 0.0;
+  tmpvar_2.xyz = reflect (-(normalize ((((_World2Object * tmpvar_1).xyz * unity_Scale.w) - gl_Vertex.xyz))), gl_Normal);
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_FrontColor = gl_Color;
   vec4 tmpvar_3;
-  tmpvar_3.xyz = reflect (-(normalize ((((_World2Object * tmpvar_2).xyz * unity_Scale.w) - tmpvar_1.xyz))), gl_Normal.xyz).xyz;
   tmpvar_3.w = 0.0;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
-  gl_FrontColor = gl_Color.xyzw;
-  vec4 tmpvar_4;
-  tmpvar_4.xyz = (gl_ModelViewMatrix * tmpvar_3).xyz;
-  tmpvar_4.w = 0.0;
-  gl_TexCoord[0] = tmpvar_4;
+  tmpvar_3.xyz = (gl_ModelViewMatrix * tmpvar_2).xyz;
+  gl_TexCoord[0] = tmpvar_3;
 }
 

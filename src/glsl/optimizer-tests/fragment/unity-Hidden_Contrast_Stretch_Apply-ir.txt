@@ -30,7 +30,7 @@ vec4 frag (
   vadd = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = ((col.xyz * vmul) + vadd);
-  col.xyz = tmpvar_7.xyz;
+  col.xyz = tmpvar_7.xyz.xyz;
   return col;
 }
 

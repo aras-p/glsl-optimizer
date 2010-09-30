@@ -177,10 +177,10 @@ vec4 LightingBlinnPhong_PrePass (
   spec = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = ((s.Albedo * light.xyz) + ((light.xyz * _SpecColor.xyz) * spec));
-  c.xyz = tmpvar_2.xyz;
+  c.xyz = tmpvar_2.xyz.xyz;
   float tmpvar_3;
   tmpvar_3 = (s.Alpha + (spec * _SpecColor.w));
-  c.w = (vec4(tmpvar_3)).w;
+  c.w = vec4(tmpvar_3).w;
   return c;
 }
 
@@ -259,7 +259,7 @@ vec4 frag_surf (
   lm = tmpvar_21;
   vec3 tmpvar_22;
   tmpvar_22 = (light.xyz + lm);
-  light.xyz = tmpvar_22.xyz;
+  light.xyz = tmpvar_22.xyz.xyz;
   vec4 tmpvar_23;
   tmpvar_23 = LightingBlinnPhong_PrePass (o, light);
   vec4 tmpvar_24;
@@ -267,7 +267,7 @@ vec4 frag_surf (
   col = tmpvar_24;
   vec3 tmpvar_25;
   tmpvar_25 = (col.xyz + o.Emission);
-  col.xyz = tmpvar_25.xyz;
+  col.xyz = tmpvar_25.xyz.xyz;
   return col;
 }
 

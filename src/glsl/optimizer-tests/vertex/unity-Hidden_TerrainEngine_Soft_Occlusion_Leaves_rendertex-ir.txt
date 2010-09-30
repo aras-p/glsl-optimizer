@@ -32,9 +32,8 @@ vec4 Squash (
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = (vec3(0.0)).x;
-  tmpvar_2.y = (vec3(_SquashPlaneNormal.w)).y;
-  tmpvar_2.z = (vec3(0.0)).z;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   planePoint = tmpvar_3;
@@ -53,8 +52,8 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
   tmpvar_10.xyz = tmpvar_9.xyz;
-  tmpvar_10.w = (vec4(1.0)).w;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   pos = tmpvar_11;
@@ -69,10 +68,10 @@ void TerrainAnimateTree (
   vec3 bent;
   vec3 tmpvar_1;
   tmpvar_1 = (pos.xyz * _Scale.xyz);
-  pos.xyz = tmpvar_1.xyz;
+  pos.xyz = tmpvar_1.xyz.xyz;
   vec4 tmpvar_2;
+  tmpvar_2.w = 0.0;
   tmpvar_2.xyz = pos.xyz.xyz;
-  tmpvar_2.w = (vec4(0.0)).w;
   vec3 tmpvar_3;
   tmpvar_3 = (_TerrainEngineBendTree * tmpvar_2).xyz;
   bent = tmpvar_3;
@@ -82,7 +81,7 @@ void TerrainAnimateTree (
   tmpvar_5 = mix (pos.xyz, bent, tmpvar_4);
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
-  pos.xyz = tmpvar_6.xyz;
+  pos.xyz = tmpvar_6.xyz.xyz;
   vec4 tmpvar_7;
   tmpvar_7 = Squash (pos);
   vec4 tmpvar_8;
@@ -124,7 +123,7 @@ v2f vert (
   o.uv = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = _AO;
-  lightDir.w = (vec4(tmpvar_8)).w;
+  lightDir.w = vec4(tmpvar_8).w;
   vec4 tmpvar_9;
   tmpvar_9 = gl_LightModel.ambient;
   lightColor = tmpvar_9;
@@ -134,7 +133,7 @@ v2f vert (
     };
     vec3 tmpvar_10;
     tmpvar_10 = _TerrainTreeLightDirections[i];
-    lightDir.xyz = tmpvar_10.xyz;
+    lightDir.xyz = tmpvar_10.xyz.xyz;
     float tmpvar_11;
     tmpvar_11 = dot (lightDir.xyz, v.normal);
     float tmpvar_12;
@@ -159,13 +158,13 @@ v2f vert (
   };
   float tmpvar_18;
   tmpvar_18 = 1.0;
-  lightColor.w = (vec4(tmpvar_18)).w;
+  lightColor.w = vec4(tmpvar_18).w;
   vec4 tmpvar_19;
   tmpvar_19 = (lightColor * _Color);
   o.color = tmpvar_19;
   float tmpvar_20;
   tmpvar_20 = 1.0;
-  o.color.w = (vec4(tmpvar_20)).w;
+  o.color.w = vec4(tmpvar_20).w;
   return o;
 }
 
@@ -209,10 +208,8 @@ void main ()
   tmpvar_14 = tmpvar_13;
   gl_Position = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.x = (vec4(xl_retval.fog)).x;
-  tmpvar_15.y = (vec4(0.0)).y;
-  tmpvar_15.z = (vec4(0.0)).z;
-  tmpvar_15.w = (vec4(0.0)).w;
+  tmpvar_15.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_15.x = xl_retval.fog;
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   xlv_FOG = tmpvar_16;

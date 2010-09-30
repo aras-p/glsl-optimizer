@@ -5,8 +5,8 @@ uniform sampler2D _Decal;
 void main ()
 {
   vec4 c;
-  c.xyz = ((texture2D (_Decal, gl_TexCoord[0].xy).xyz * 0.5) * min ((2.0 * texture2D (unity_Lightmap, gl_TexCoord[2].xy).xyz), vec3((texture2DProj (_ShadowMapTexture, gl_TexCoord[3].xyzw).x * 2.0)))).xyz;
+  c.xyz = ((texture2D (_Decal, gl_TexCoord[0].xy).xyz * 0.5) * min ((2.0 * texture2D (unity_Lightmap, gl_TexCoord[2].xy).xyz), vec3((texture2DProj (_ShadowMapTexture, gl_TexCoord[3]).x * 2.0))));
   c.w = 0.0;
-  gl_FragData[0] = c.xyzw;
+  gl_FragData[0] = c;
 }
 

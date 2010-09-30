@@ -49,10 +49,10 @@ vec4 frag (
   tmpvar_15 = min (tmpvar_13, tmpvar_14);
   float tmpvar_16;
   tmpvar_16 = tmpvar_15;
-  res.y = (vec2(tmpvar_16)).y;
+  res.y = vec2(tmpvar_16).y;
   vec2 tmpvar_17;
   tmpvar_17 = v00.zw;
-  res.zw = tmpvar_17.xy;
+  res.zw = tmpvar_17.xxxy.zw;
   return res;
 }
 

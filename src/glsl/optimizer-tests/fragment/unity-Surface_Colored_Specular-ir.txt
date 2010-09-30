@@ -115,10 +115,10 @@ vec4 LightingColoredSpecular (
   specCol = tmpvar_11;
   vec3 tmpvar_12;
   tmpvar_12 = ((((s.Albedo * _LightColor0.xyz) * diff) + (_LightColor0.xyz * specCol)) * (atten * 2.0));
-  c.xyz = tmpvar_12.xyz;
+  c.xyz = tmpvar_12.xyz.xyz;
   float tmpvar_13;
   tmpvar_13 = s.Alpha;
-  c.w = (vec4(tmpvar_13)).w;
+  c.w = vec4(tmpvar_13).w;
   return c;
 }
 
@@ -175,7 +175,7 @@ vec4 frag_surf (
   c = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = 0.0;
-  c.w = (vec4(tmpvar_17)).w;
+  c.w = vec4(tmpvar_17).w;
   return c;
 }
 

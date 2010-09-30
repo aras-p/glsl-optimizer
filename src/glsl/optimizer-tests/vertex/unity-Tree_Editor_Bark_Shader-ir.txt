@@ -39,9 +39,8 @@ vec4 Squash (
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = (vec3(0.0)).x;
-  tmpvar_2.y = (vec3(_SquashPlaneNormal.w)).y;
-  tmpvar_2.z = (vec3(0.0)).z;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   planePoint = tmpvar_3;
@@ -60,8 +59,8 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
   tmpvar_10.xyz = tmpvar_9.xyz;
-  tmpvar_10.w = (vec4(1.0)).w;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   pos = tmpvar_11;
@@ -134,8 +133,8 @@ vec4 AnimateVertex (
   tmpvar_8 = tmpvar_7;
   fVtxPhase = tmpvar_8;
   vec2 tmpvar_9;
-  tmpvar_9.x = (vec2(fVtxPhase)).x;
-  tmpvar_9.y = (vec2(fBranchPhase)).y;
+  tmpvar_9.x = fVtxPhase;
+  tmpvar_9.y = fBranchPhase;
   vec2 tmpvar_10;
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
@@ -157,13 +156,13 @@ vec4 AnimateVertex (
   bend = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = (animParams.w * fBranchAmp);
-  bend.y = (vec2(tmpvar_17)).y;
+  bend.y = vec2(tmpvar_17).y;
   vec3 tmpvar_18;
   tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
-  pos.xyz = tmpvar_18.xyz;
+  pos.xyz = tmpvar_18.xyz.xyz;
   vec3 tmpvar_19;
   tmpvar_19 = (pos.xyz + (animParams.z * _Wind.xyz));
-  pos.xyz = tmpvar_19.xyz;
+  pos.xyz = tmpvar_19.xyz.xyz;
   return pos;
 }
 
@@ -173,7 +172,7 @@ void TreeVertBark (
 {
   vec3 tmpvar_1;
   tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
-  v.vertex.xyz = tmpvar_1.xyz;
+  v.vertex.xyz = tmpvar_1.xyz.xyz;
   vec4 tmpvar_2;
   tmpvar_2.xy = v.color.xy.xy;
   tmpvar_2.zw = v.texcoord1.xy.xy;
@@ -189,7 +188,7 @@ void TreeVertBark (
   v.vertex = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.xyz = (v.color.w * _Color.xyz).xyz;
-  tmpvar_7.w = (vec4(_Color.w)).w;
+  tmpvar_7.w = _Color.w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   v.color = tmpvar_8;
@@ -202,7 +201,7 @@ void TreeVertBark (
   tmpvar_11 = normalize (v.tangent.xyz);
   vec3 tmpvar_12;
   tmpvar_12 = tmpvar_11;
-  v.tangent.xyz = tmpvar_12.xyz;
+  v.tangent.xyz = tmpvar_12.xyz.xyz;
 }
 
 void PositionFog (
@@ -225,8 +224,8 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos;
   vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
   tmpvar_1.xyz = _WorldSpaceCameraPos.xyz.xyz;
-  tmpvar_1.w = (vec4(1.0)).w;
   vec3 tmpvar_2;
   tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
   objSpaceCameraPos = tmpvar_2;
@@ -255,7 +254,7 @@ v2f_surf vert_surf (
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
   tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  o.hip_pack0 = tmpvar_1.xy;
+  o.hip_pack0 = tmpvar_1.xy.xy;
   vec4 tmpvar_2;
   tmpvar_2 = v.color;
   o.lop_color = tmpvar_2;
@@ -267,31 +266,31 @@ v2f_surf vert_surf (
   mat3 tmpvar_5;
   float tmpvar_6;
   tmpvar_6 = v.tangent.x;
-  tmpvar_5[0].x = (vec3(tmpvar_6)).x;
+  tmpvar_5[0].x = tmpvar_6;
   float tmpvar_7;
   tmpvar_7 = binormal.x;
-  tmpvar_5[0].y = (vec3(tmpvar_7)).y;
+  tmpvar_5[0].y = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = v.normal.x;
-  tmpvar_5[0].z = (vec3(tmpvar_8)).z;
+  tmpvar_5[0].z = tmpvar_8;
   float tmpvar_9;
   tmpvar_9 = v.tangent.y;
-  tmpvar_5[1].x = (vec3(tmpvar_9)).x;
+  tmpvar_5[1].x = tmpvar_9;
   float tmpvar_10;
   tmpvar_10 = binormal.y;
-  tmpvar_5[1].y = (vec3(tmpvar_10)).y;
+  tmpvar_5[1].y = tmpvar_10;
   float tmpvar_11;
   tmpvar_11 = v.normal.y;
-  tmpvar_5[1].z = (vec3(tmpvar_11)).z;
+  tmpvar_5[1].z = tmpvar_11;
   float tmpvar_12;
   tmpvar_12 = v.tangent.z;
-  tmpvar_5[2].x = (vec3(tmpvar_12)).x;
+  tmpvar_5[2].x = tmpvar_12;
   float tmpvar_13;
   tmpvar_13 = binormal.z;
-  tmpvar_5[2].y = (vec3(tmpvar_13)).y;
+  tmpvar_5[2].y = tmpvar_13;
   float tmpvar_14;
   tmpvar_14 = v.normal.z;
-  tmpvar_5[2].z = (vec3(tmpvar_14)).z;
+  tmpvar_5[2].z = tmpvar_14;
   mat3 tmpvar_15;
   tmpvar_15 = (tmpvar_5);
   rotation = (tmpvar_15);
@@ -353,17 +352,14 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.x = (vec4(xl_retval.fog)).x;
-  tmpvar_17.y = (vec4(0.0)).y;
-  tmpvar_17.z = (vec4(0.0)).z;
-  tmpvar_17.w = (vec4(0.0)).w;
+  tmpvar_17.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_17.x = xl_retval.fog;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
+  tmpvar_19.zw = vec2(0.0, 0.0);
   tmpvar_19.xy = xl_retval.hip_pack0.xy;
-  tmpvar_19.z = (vec4(0.0)).z;
-  tmpvar_19.w = (vec4(0.0)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
@@ -373,14 +369,14 @@ void main ()
   tmpvar_22 = tmpvar_21;
   gl_FrontColor = tmpvar_22;
   vec4 tmpvar_23;
+  tmpvar_23.w = 0.0;
   tmpvar_23.xyz = xl_retval.lightDir.xyz;
-  tmpvar_23.w = (vec4(0.0)).w;
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[1] = tmpvar_24;
   vec4 tmpvar_25;
+  tmpvar_25.w = 0.0;
   tmpvar_25.xyz = xl_retval.viewDir.xyz;
-  tmpvar_25.w = (vec4(0.0)).w;
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;
   gl_TexCoord[2] = tmpvar_26;

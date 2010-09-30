@@ -43,7 +43,7 @@ vec4 frag (
   if ((len >= _Treshold)) {
     vec3 tmpvar_11;
     tmpvar_11 = vec3(0.0, 0.0, 0.0);
-    original.xyz = tmpvar_11.xyz;
+    original.xyz = tmpvar_11.xyz.xyz;
   };
   return original;
 }

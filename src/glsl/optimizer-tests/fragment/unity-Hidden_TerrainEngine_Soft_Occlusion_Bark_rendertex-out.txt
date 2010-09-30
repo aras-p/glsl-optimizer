@@ -2,11 +2,9 @@ varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Color.xyzw;
   vec4 col;
-  col = tmpvar_1;
-  col.xyz = (tmpvar_1.xyz * (2.0 * texture2D (_MainTex, gl_TexCoord[0].xy).xyz)).xyz;
-  gl_FragData[0] = col.xyzw;
+  col = gl_Color;
+  col.xyz = (gl_Color.xyz * (2.0 * texture2D (_MainTex, gl_TexCoord[0].xy).xyz));
+  gl_FragData[0] = col;
 }
 

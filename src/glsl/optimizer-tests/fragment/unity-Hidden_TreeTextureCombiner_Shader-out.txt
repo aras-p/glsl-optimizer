@@ -5,6 +5,6 @@ void main ()
   vec4 c;
   c = texture2D (_RGBSource, gl_TexCoord[0].xy);
   c.x = _Color.w;
-  gl_FragData[0] = c.xyzw;
+  gl_FragData[0] = c;
 }
 

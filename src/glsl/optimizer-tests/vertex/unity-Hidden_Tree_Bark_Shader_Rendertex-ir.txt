@@ -41,7 +41,7 @@ v2f vert (
     };
     vec3 tmpvar_5;
     tmpvar_5 = _TerrainTreeLightDirections[i];
-    lightDir = tmpvar_5.xyz;
+    lightDir = tmpvar_5.xyz.xyz;
     float tmpvar_6;
     tmpvar_6 = dot (lightDir.xyz, v.normal);
     float tmpvar_7;
@@ -111,15 +111,14 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
   tmpvar_17.xy = xl_retval.uv.xy;
-  tmpvar_17.z = (vec4(0.0)).z;
-  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;
   vec4 tmpvar_19;
+  tmpvar_19.w = 0.0;
   tmpvar_19.xyz = xl_retval.color.xyz;
-  tmpvar_19.w = (vec4(0.0)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[1] = tmpvar_20;

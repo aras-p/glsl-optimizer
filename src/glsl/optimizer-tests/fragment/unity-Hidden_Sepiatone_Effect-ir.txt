@@ -29,7 +29,7 @@ vec4 frag (
   xlat_var_output = tmpvar_6;
   float tmpvar_7;
   tmpvar_7 = original.w;
-  xlat_var_output.w = (vec4(tmpvar_7)).w;
+  xlat_var_output.w = vec4(tmpvar_7).w;
   return xlat_var_output;
 }
 

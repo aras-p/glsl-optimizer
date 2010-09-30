@@ -26,10 +26,10 @@ vec4 frag (
   col = tmpvar_2;
   vec3 tmpvar_3;
   tmpvar_3 = (col.xyz * (i.color * 2.0));
-  col.xyz = tmpvar_3.xyz;
+  col.xyz = tmpvar_3.xyz.xyz;
   float tmpvar_4;
   tmpvar_4 = (col.w * (2.0 * _HalfOverCutoff));
-  col.w = (vec4(tmpvar_4)).w;
+  col.w = vec4(tmpvar_4).w;
   xll_clip ((col.w - 1.0));
   return col;
 }

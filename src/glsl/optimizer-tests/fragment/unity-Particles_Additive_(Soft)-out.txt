@@ -3,9 +3,9 @@ void main ()
 {
   vec4 prev;
   vec4 tmpvar_1;
-  tmpvar_1 = (gl_Color.xyzw * texture2D (_MainTex, gl_TexCoord[0].xy));
+  tmpvar_1 = (gl_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
   prev = tmpvar_1;
-  prev.xyz = (tmpvar_1.xyz * tmpvar_1.w).xyz;
-  gl_FragData[0] = prev.xyzw;
+  prev.xyz = (tmpvar_1.xyz * tmpvar_1.w);
+  gl_FragData[0] = prev;
 }
 

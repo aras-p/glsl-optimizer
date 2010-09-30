@@ -138,12 +138,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -193,10 +193,10 @@ vec4 LightingBlinnPhong_PrePass (
   spec = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = ((s.Albedo * light.xyz) + ((light.xyz * _SpecColor.xyz) * spec));
-  c.xyz = tmpvar_2.xyz;
+  c.xyz = tmpvar_2.xyz.xyz;
   float tmpvar_3;
   tmpvar_3 = (s.Alpha + (spec * _SpecColor.w));
-  c.w = (vec4(tmpvar_3)).w;
+  c.w = vec4(tmpvar_3).w;
   return c;
 }
 
@@ -272,7 +272,7 @@ vec4 frag_surf (
   lm = tmpvar_20;
   vec3 tmpvar_21;
   tmpvar_21 = (light.xyz + lm);
-  light.xyz = tmpvar_21.xyz;
+  light.xyz = tmpvar_21.xyz.xyz;
   vec4 tmpvar_22;
   tmpvar_22 = LightingBlinnPhong_PrePass (o, light);
   vec4 tmpvar_23;

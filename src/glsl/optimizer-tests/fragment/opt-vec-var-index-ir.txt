@@ -24,9 +24,8 @@ void main ()
     j = tmpvar_6;
   };
   vec4 tmpvar_7;
+  tmpvar_7.zw = vec2(0.0, 0.0);
   tmpvar_7.xy = c.xy;
-  tmpvar_7.z = (vec4(0.0)).z;
-  tmpvar_7.w = (vec4(0.0)).w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   gl_FragColor = tmpvar_8;

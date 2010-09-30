@@ -4,8 +4,8 @@ void main ()
   float tmpvar_1;
   tmpvar_1 = texture2D (_HaloFalloff, gl_TexCoord[0].xy).w;
   vec4 tmpvar_2;
-  tmpvar_2.xyz = (gl_Color.xyz * tmpvar_1).xyz;
-  tmpvar_2.w = (vec4(tmpvar_1)).w;
-  gl_FragData[0] = tmpvar_2.xyzw;
+  tmpvar_2.xyz = (gl_Color.xyz * tmpvar_1);
+  tmpvar_2.w = tmpvar_1;
+  gl_FragData[0] = tmpvar_2;
 }
 

@@ -42,7 +42,7 @@ vec4 frag (
   tmpvar_8 = vec2(z);
   vec2 tmpvar_9;
   tmpvar_9 = tmpvar_8;
-  col.xy = tmpvar_9.xy;
+  col.xy = tmpvar_9.xy.xy;
   return col;
 }
 

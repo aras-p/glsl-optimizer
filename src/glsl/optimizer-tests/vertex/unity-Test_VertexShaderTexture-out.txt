@@ -2,21 +2,15 @@ uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
+  tmpvar_1 = gl_Vertex;
   vec4 tmpvar_2;
-  tmpvar_2 = gl_MultiTexCoord0.xyzw;
+  tmpvar_2.zw = vec2(0.0, 0.0);
+  tmpvar_2.xy = gl_MultiTexCoord0.xy;
+  tmpvar_1.y = (gl_Vertex.y + (texture2DLod (_MainTex, tmpvar_2.xy, 0.0).x * 2.0));
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 tmpvar_3;
-  tmpvar_3 = tmpvar_1;
-  vec4 tmpvar_4;
-  tmpvar_4.xy = tmpvar_2.xy;
-  tmpvar_4.z = 0.0;
-  tmpvar_4.w = 0.0;
-  tmpvar_3.y = (vec2((tmpvar_1.y + (texture2DLod (_MainTex, tmpvar_4.xy, 0.0).x * 2.0)))).y;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_3).xyzw;
-  vec4 tmpvar_5;
-  tmpvar_5.xy = tmpvar_2.xy;
-  tmpvar_5.z = 0.0;
-  tmpvar_5.w = 0.0;
-  gl_TexCoord[0] = tmpvar_5;
+  tmpvar_3.zw = vec2(0.0, 0.0);
+  tmpvar_3.xy = gl_MultiTexCoord0.xy;
+  gl_TexCoord[0] = tmpvar_3;
 }
 

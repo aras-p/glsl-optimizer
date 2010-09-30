@@ -13,10 +13,9 @@ vec2 MultiplyUV (
 {
   vec4 temp;
   vec4 tmpvar_1;
-  tmpvar_1.x = (vec4(inUV.x)).x;
-  tmpvar_1.y = (vec4(inUV.y)).y;
-  tmpvar_1.z = (vec4(0.0)).z;
-  tmpvar_1.w = (vec4(0.0)).w;
+  tmpvar_1.zw = vec2(0.0, 0.0);
+  tmpvar_1.x = inUV.x;
+  tmpvar_1.y = inUV.y;
   vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   temp = tmpvar_2;
@@ -70,16 +69,14 @@ void main ()
   tmpvar_8 = tmpvar_7;
   gl_Position = tmpvar_8;
   vec4 tmpvar_9;
+  tmpvar_9.zw = vec2(0.0, 0.0);
   tmpvar_9.xy = xl_retval.uv[0].xy;
-  tmpvar_9.z = (vec4(0.0)).z;
-  tmpvar_9.w = (vec4(0.0)).w;
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   gl_TexCoord[0] = tmpvar_10;
   vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
   tmpvar_11.xy = xl_retval.uv[1].xy;
-  tmpvar_11.z = (vec4(0.0)).z;
-  tmpvar_11.w = (vec4(0.0)).w;
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_TexCoord[1] = tmpvar_12;

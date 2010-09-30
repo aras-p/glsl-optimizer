@@ -57,8 +57,8 @@ vec4 LightingToonRamp (
   tmpvar_2 = ((tmpvar_1 * 0.5) + 0.5);
   d = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.x = (vec2(d)).x;
-  tmpvar_3.y = (vec2(d)).y;
+  tmpvar_3.x = d;
+  tmpvar_3.y = d;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_Ramp, tmpvar_3);
   vec3 tmpvar_5;
@@ -66,10 +66,10 @@ vec4 LightingToonRamp (
   ramp = tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = (((s.Albedo * _LightColor0.xyz) * ramp) * (atten * 2.0));
-  c.xyz = tmpvar_6.xyz;
+  c.xyz = tmpvar_6.xyz.xyz;
   float tmpvar_7;
   tmpvar_7 = 0.0;
-  c.w = (vec4(tmpvar_7)).w;
+  c.w = vec4(tmpvar_7).w;
   return c;
 }
 
@@ -115,7 +115,7 @@ vec4 frag_surf (
   c = tmpvar_11;
   float tmpvar_12;
   tmpvar_12 = 0.0;
-  c.w = (vec4(tmpvar_12)).w;
+  c.w = vec4(tmpvar_12).w;
   return c;
 }
 

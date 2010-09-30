@@ -31,7 +31,7 @@ vec4 frag (
   c = tmpvar_8;
   vec3 tmpvar_9;
   tmpvar_9 = (c.xyz * _Color.xyz);
-  c.xyz = tmpvar_9.xyz;
+  c.xyz = tmpvar_9.xyz.xyz;
   return (c * _Color.w);
 }
 

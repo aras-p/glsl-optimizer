@@ -165,10 +165,10 @@ vec4 LightingLambert_PrePass (
   vec4 c;
   vec3 tmpvar_1;
   tmpvar_1 = (s.Albedo * light.xyz);
-  c.xyz = tmpvar_1.xyz;
+  c.xyz = tmpvar_1.xyz.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = (vec4(tmpvar_2)).w;
+  c.w = vec4(tmpvar_2).w;
   return c;
 }
 
@@ -247,7 +247,7 @@ vec4 frag_surf (
   lm = tmpvar_21;
   vec3 tmpvar_22;
   tmpvar_22 = (light.xyz + lm);
-  light.xyz = tmpvar_22.xyz;
+  light.xyz = tmpvar_22.xyz.xyz;
   vec4 tmpvar_23;
   tmpvar_23 = LightingLambert_PrePass (o, light);
   vec4 tmpvar_24;
@@ -255,7 +255,7 @@ vec4 frag_surf (
   col = tmpvar_24;
   vec3 tmpvar_25;
   tmpvar_25 = (col.xyz + o.Emission);
-  col.xyz = tmpvar_25.xyz;
+  col.xyz = tmpvar_25.xyz.xyz;
   return col;
 }
 

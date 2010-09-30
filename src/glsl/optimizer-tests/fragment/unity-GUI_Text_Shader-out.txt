@@ -4,7 +4,7 @@ void main ()
 {
   vec4 col;
   col = _Color;
-  col.w = (vec4((_Color.w * texture2D (_MainTex, gl_TexCoord[0].xy).w))).w;
-  gl_FragData[0] = col.xyzw;
+  col.w = (_Color.w * texture2D (_MainTex, gl_TexCoord[0].xy).w);
+  gl_FragData[0] = col;
 }
 

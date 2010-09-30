@@ -3,43 +3,36 @@ uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = TANGENT.xyzw;
-  vec3 tmpvar_2;
-  tmpvar_2 = gl_Normal.xyz;
-  vec4 tmpvar_3;
-  tmpvar_3 = gl_Color.xyzw;
-  vec3 tmpvar_4;
+  vec3 tmpvar_1;
   int i;
   vec3 lightColor;
   i = 0;
-  float tmpvar_5;
-  tmpvar_5 = (1.0 - abs (tmpvar_1.w));
-  vec4 tmpvar_6;
-  tmpvar_6.xyz = tmpvar_2.xyz;
-  tmpvar_6.w = 0.0;
-  tmpvar_4 = mix (tmpvar_2, normalize ((tmpvar_6 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_5));
-  vec4 tmpvar_7;
-  tmpvar_7 = (gl_ModelViewProjectionMatrix * (gl_Vertex.xyzw + ((tmpvar_1 * gl_ModelViewMatrixInverseTranspose) * tmpvar_5)));
-  vec2 tmpvar_8;
-  tmpvar_8 = gl_MultiTexCoord0.xy;
+  float tmpvar_2;
+  tmpvar_2 = (1.0 - abs (TANGENT.w));
+  vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
+  tmpvar_3.xyz = gl_Normal;
+  tmpvar_1 = mix (gl_Normal, normalize ((tmpvar_3 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_2));
+  vec4 tmpvar_4;
+  tmpvar_4 = (gl_ModelViewProjectionMatrix * (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * tmpvar_2)));
+  vec2 tmpvar_5;
+  tmpvar_5 = gl_MultiTexCoord0.xy;
   lightColor = gl_LightModel.ambient.xyz;
   while (true) {
     if ((i >= 4)) {
       break;
     };
-    lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i].xyz, tmpvar_4) * 0.5) + 0.5))).xyz);
+    lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_1) * 0.5) + 0.5))).xyz);
     i = (i + 1);
   };
-  gl_Position = tmpvar_7.xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9.xy = tmpvar_8.xy;
-  tmpvar_9.z = 0.0;
-  tmpvar_9.w = 0.0;
-  gl_TexCoord[0] = tmpvar_9;
-  vec4 tmpvar_10;
-  tmpvar_10.xyz = (lightColor * tmpvar_3.w).xyz;
-  tmpvar_10.w = 0.0;
-  gl_TexCoord[1] = tmpvar_10;
+  gl_Position = tmpvar_4;
+  vec4 tmpvar_6;
+  tmpvar_6.zw = vec2(0.0, 0.0);
+  tmpvar_6.xy = tmpvar_5;
+  gl_TexCoord[0] = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 0.0;
+  tmpvar_7.xyz = (lightColor * gl_Color.w);
+  gl_TexCoord[1] = tmpvar_7;
 }
 

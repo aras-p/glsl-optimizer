@@ -28,7 +28,7 @@ vec4 frag (
   tmpvar_4 = vec3((tmpvar_3 * (1.0 + (col.w * 2.0))));
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
-  col.xyz = tmpvar_5.xyz;
+  col.xyz = tmpvar_5.xyz.xyz;
   return col;
 }
 

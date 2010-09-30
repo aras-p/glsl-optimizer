@@ -16,14 +16,14 @@ v2f vert (
   tmpvar_2 = (gl_ModelViewProjectionMatrix * vertex);
   o.vertex = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.x = (vec2(o.vertex.x)).x;
-  tmpvar_3.y = (vec2((o.vertex.y * scale))).y;
+  tmpvar_3.x = o.vertex.x;
+  tmpvar_3.y = (o.vertex.y * scale);
   vec2 tmpvar_4;
   tmpvar_4 = ((tmpvar_3 + o.vertex.w) * 0.5);
-  o.uv.xy = tmpvar_4.xy;
+  o.uv.xy = tmpvar_4.xy.xy;
   vec2 tmpvar_5;
   tmpvar_5 = o.vertex.zw;
-  o.uv.zw = tmpvar_5.xy;
+  o.uv.zw = tmpvar_5.xxxy.zw;
   return o;
 }
 

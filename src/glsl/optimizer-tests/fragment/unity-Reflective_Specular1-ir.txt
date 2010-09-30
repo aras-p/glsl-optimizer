@@ -88,10 +88,10 @@ vec4 frag_surf (
   surf (surfIN, o);
   vec3 tmpvar_7;
   tmpvar_7 = ((o.Normal * vec3(0.5, 0.5, -0.5)) + 0.5);
-  res.xyz = tmpvar_7.xyz;
+  res.xyz = tmpvar_7.xyz.xyz;
   float tmpvar_8;
   tmpvar_8 = o.Specular;
-  res.w = (vec4(tmpvar_8)).w;
+  res.w = vec4(tmpvar_8).w;
   return res;
 }
 

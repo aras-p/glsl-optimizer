@@ -11,7 +11,7 @@ void main ()
   col = tmpvar_2;
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_AdaptTex, tmpvar_1[1]);
-  col.xyz = ((tmpvar_2.xyz * 1.0/(tmpvar_3.z)) + -(tmpvar_3.w)).xyz;
-  gl_FragData[0] = col.xyzw;
+  col.xyz = ((tmpvar_2.xyz * 1.0/(tmpvar_3.z)) + -(tmpvar_3.w));
+  gl_FragData[0] = col;
 }
 

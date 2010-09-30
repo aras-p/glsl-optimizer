@@ -17,6 +17,6 @@ void main ()
   if ((tmpvar_4 >= _Treshold)) {
     original.xyz = vec3(0.0, 0.0, 0.0);
   };
-  gl_FragData[0] = original.xyzw;
+  gl_FragData[0] = original;
 }
 

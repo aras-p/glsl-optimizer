@@ -247,7 +247,7 @@ vec4 frag (
   uv.x = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = ((sinLength * offset.x) + (cosLength * offset.y));
-  uv.y = (vec2(tmpvar_8)).y;
+  uv.y = vec2(tmpvar_8).y;
   vec2 tmpvar_9;
   tmpvar_9 = (uv + _CenterRadius.xy);
   uv = tmpvar_9;

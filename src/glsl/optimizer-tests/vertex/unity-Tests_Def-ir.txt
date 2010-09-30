@@ -95,8 +95,8 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
+  tmpvar_17.w = 0.0;
   tmpvar_17.xyz = xl_retval.normal.xyz;
-  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;

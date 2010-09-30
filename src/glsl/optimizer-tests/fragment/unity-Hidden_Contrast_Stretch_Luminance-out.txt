@@ -6,6 +6,6 @@ void main ()
   tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col = tmpvar_1;
   col.xyz = vec3((dot (tmpvar_1.xyz, vec3(0.22, 0.707, 0.071)) * (1.0 + (tmpvar_1.w * 2.0))));
-  gl_FragData[0] = col.xyzw;
+  gl_FragData[0] = col;
 }
 

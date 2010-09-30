@@ -12,7 +12,7 @@ vec4 frag (
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
   vec4 tmpvar_2;
   tmpvar_2.xyz = tmpvar_1.xyz.xyz;
-  tmpvar_2.w = (vec4(_AccumOrig)).w;
+  tmpvar_2.w = _AccumOrig;
   return tmpvar_2;
 }
 

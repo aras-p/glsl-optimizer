@@ -16,12 +16,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -45,7 +45,7 @@ vec4 frag (
   offset = tmpvar_4;
   vec2 tmpvar_5;
   tmpvar_5 = ((offset * i.uvgrab.z) + i.uvgrab.xy);
-  i.uvgrab.xy = tmpvar_5.xy;
+  i.uvgrab.xy = tmpvar_5.xy.xy;
   vec4 tmpvar_6;
   tmpvar_6 = texture2DProj (_GrabTexture, i.uvgrab);
   vec4 tmpvar_7;

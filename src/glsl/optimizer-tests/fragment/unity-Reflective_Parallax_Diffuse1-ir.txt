@@ -42,12 +42,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -68,7 +68,7 @@ vec2 ParallaxOffset (
   v = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.z + 0.42);
-  v.z = (vec3(tmpvar_4)).z;
+  v.z = vec3(tmpvar_4).z;
   return (h * (v.xy / v.z));
 }
 
@@ -126,9 +126,9 @@ void surf (
   float tmpvar_17;
   tmpvar_17 = dot (IN.TtoW2, o.Normal);
   vec3 tmpvar_18;
-  tmpvar_18.x = (vec3(tmpvar_15)).x;
-  tmpvar_18.y = (vec3(tmpvar_16)).y;
-  tmpvar_18.z = (vec3(tmpvar_17)).z;
+  tmpvar_18.x = tmpvar_15;
+  tmpvar_18.y = tmpvar_16;
+  tmpvar_18.z = tmpvar_17;
   vec3 tmpvar_19;
   tmpvar_19 = reflect (IN.worldRefl, tmpvar_18);
   vec3 tmpvar_20;
@@ -158,10 +158,10 @@ vec4 LightingLambert_PrePass (
   vec4 c;
   vec3 tmpvar_1;
   tmpvar_1 = (s.Albedo * light.xyz);
-  c.xyz = tmpvar_1.xyz;
+  c.xyz = tmpvar_1.xyz.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = (vec4(tmpvar_2)).w;
+  c.w = vec4(tmpvar_2).w;
   return c;
 }
 
@@ -180,9 +180,9 @@ vec4 frag_surf (
   tmpvar_2 = IN.hip_pack0.zw;
   surfIN.uv_BumpMap = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3.x = (vec3(IN.TtoW0.w)).x;
-  tmpvar_3.y = (vec3(IN.TtoW1.w)).y;
-  tmpvar_3.z = (vec3(IN.TtoW2.w)).z;
+  tmpvar_3.x = IN.TtoW0.w;
+  tmpvar_3.y = IN.TtoW1.w;
+  tmpvar_3.z = IN.TtoW2.w;
   vec3 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   surfIN.worldRefl = tmpvar_4;
@@ -226,7 +226,7 @@ vec4 frag_surf (
   light = tmpvar_17;
   vec3 tmpvar_18;
   tmpvar_18 = (light.xyz + unity_Ambient.xyz);
-  light.xyz = tmpvar_18.xyz;
+  light.xyz = tmpvar_18.xyz.xyz;
   vec4 tmpvar_19;
   tmpvar_19 = LightingLambert_PrePass (o, light);
   vec4 tmpvar_20;
@@ -234,7 +234,7 @@ vec4 frag_surf (
   col = tmpvar_20;
   vec3 tmpvar_21;
   tmpvar_21 = (col.xyz + o.Emission);
-  col.xyz = tmpvar_21.xyz;
+  col.xyz = tmpvar_21.xyz.xyz;
   return col;
 }
 

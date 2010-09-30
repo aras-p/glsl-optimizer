@@ -3,7 +3,7 @@ uniform float _Cutoff;
 void main ()
 {
   float x;
-  x = ((texture2D (_MainTex, gl_TexCoord[1].xy) * gl_Color.xyzw).w - _Cutoff);
+  x = ((texture2D (_MainTex, gl_TexCoord[1].xy) * gl_Color).w - _Cutoff);
   if ((x < 0.0)) {
     discard;
   };

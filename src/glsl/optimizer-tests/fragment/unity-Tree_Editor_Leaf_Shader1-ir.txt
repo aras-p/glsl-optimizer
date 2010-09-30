@@ -154,12 +154,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -290,8 +290,8 @@ vec4 frag_surf (
   tmpvar_15 = (near * far);
   weights = tmpvar_15;
   vec4 tmpvar_16;
+  tmpvar_16.w = 1.0;
   tmpvar_16.xyz = ((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w)).xyz;
-  tmpvar_16.w = (vec4(1.0)).w;
   vec4 tmpvar_17;
   tmpvar_17 = tmpvar_16;
   coord = tmpvar_17;
@@ -318,12 +318,12 @@ vec4 frag_surf (
   res.x = tmpvar_24;
   float tmpvar_25;
   tmpvar_25 = 1.0;
-  res.y = (vec2(tmpvar_25)).y;
+  res.y = vec2(tmpvar_25).y;
   vec2 tmpvar_26;
   tmpvar_26 = EncodeFloatRG ((1.0 - (z * _ProjectionParams.w)).x);
   vec2 tmpvar_27;
   tmpvar_27 = tmpvar_26;
-  res.zw = tmpvar_27.xy;
+  res.zw = tmpvar_27.xxxy.zw;
   return res;
 }
 

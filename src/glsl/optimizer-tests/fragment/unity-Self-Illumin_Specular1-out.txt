@@ -5,8 +5,8 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 res;
-  res.xyz = ((gl_TexCoord[0].xyz * vec3(0.5, 0.5, -0.5)) + 0.5).xyz;
-  res.w = (vec4(_Shininess)).w;
-  gl_FragData[0] = res.xyzw;
+  res.xyz = ((gl_TexCoord[0].xyz * vec3(0.5, 0.5, -0.5)) + 0.5);
+  res.w = _Shininess;
+  gl_FragData[0] = res;
 }
 

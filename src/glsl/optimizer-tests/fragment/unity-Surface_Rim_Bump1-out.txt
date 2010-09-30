@@ -15,12 +15,12 @@ void main ()
   tmpvar_2 = gl_TexCoord[0].xy;
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, tmpvar_2).wy * 2.0) - 1.0);
-  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   vec4 c_i0;
-  c_i0.xyz = ((texture2D (_MainTex, tmpvar_2).xyz * _LightColor0.xyz) * ((max (0.0, dot (normal.xyz, normalize (gl_TexCoord[1].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)) * 2.0)).xyz;
+  c_i0.xyz = ((texture2D (_MainTex, tmpvar_2).xyz * _LightColor0.xyz) * ((max (0.0, dot (normal.xyz, normalize (gl_TexCoord[1].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)) * 2.0));
   c_i0.w = 0.0;
   c = c_i0;
   c.w = 0.0;
-  gl_FragData[0] = c.xyzw;
+  gl_FragData[0] = c;
 }
 

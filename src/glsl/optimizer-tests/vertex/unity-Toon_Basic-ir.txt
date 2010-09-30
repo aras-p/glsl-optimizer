@@ -21,8 +21,8 @@ v2f vert (
   tmpvar_2 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   o.texcoord = tmpvar_2;
   vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
   tmpvar_3.xyz = v.normal.xyz;
-  tmpvar_3.w = (vec4(0.0)).w;
   vec3 tmpvar_4;
   tmpvar_4 = (gl_ModelViewMatrix * tmpvar_3).xyz;
   vec3 tmpvar_5;
@@ -61,15 +61,14 @@ void main ()
   tmpvar_10 = tmpvar_9;
   gl_Position = tmpvar_10;
   vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
   tmpvar_11.xy = xl_retval.texcoord.xy;
-  tmpvar_11.z = (vec4(0.0)).z;
-  tmpvar_11.w = (vec4(0.0)).w;
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_TexCoord[0] = tmpvar_12;
   vec4 tmpvar_13;
+  tmpvar_13.w = 0.0;
   tmpvar_13.xyz = xl_retval.cubenormal.xyz;
-  tmpvar_13.w = (vec4(0.0)).w;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   gl_TexCoord[1] = tmpvar_14;

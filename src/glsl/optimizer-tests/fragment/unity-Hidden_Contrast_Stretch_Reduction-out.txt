@@ -16,8 +16,8 @@ void main ()
   vec2 tmpvar_5;
   tmpvar_5 = texture2D (_MainTex, tmpvar_1[3]).xy;
   res.x = max (max (tmpvar_2.x, tmpvar_3.x), max (tmpvar_4.x, tmpvar_5.x));
-  res.y = (vec2(min (min (tmpvar_2.y, tmpvar_3.y), min (tmpvar_4.y, tmpvar_5.y)))).y;
+  res.y = min (min (tmpvar_2.y, tmpvar_3.y), min (tmpvar_4.y, tmpvar_5.y));
   res.zw = tmpvar_2.zw;
-  gl_FragData[0] = res.xyzw;
+  gl_FragData[0] = res;
 }
 

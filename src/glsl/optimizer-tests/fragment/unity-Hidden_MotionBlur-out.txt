@@ -4,7 +4,7 @@ void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1.xyz = texture2D (_MainTex, gl_TexCoord[0].xy).xyz;
-  tmpvar_1.w = (vec4(_AccumOrig)).w;
-  gl_FragData[0] = tmpvar_1.xyzw;
+  tmpvar_1.w = _AccumOrig;
+  gl_FragData[0] = tmpvar_1;
 }
 

@@ -321,8 +321,8 @@ vec4 frag (
   tmpvar_23 = (atten * tmpvar_22);
   atten = tmpvar_23;
   vec4 tmpvar_24;
+  tmpvar_24.w = 1.0;
   tmpvar_24.xyz = vpos.xyz;
-  tmpvar_24.w = (vec4(1.0)).w;
   vec4 tmpvar_25;
   tmpvar_25 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_24).xyz);
   float tmpvar_26;
@@ -358,12 +358,12 @@ vec4 frag (
   spec = tmpvar_38;
   vec3 tmpvar_39;
   tmpvar_39 = (_LightColor.xyz * (diff * atten));
-  res.xyz = tmpvar_39.xyz;
+  res.xyz = tmpvar_39.xyz.xyz;
   float tmpvar_40;
   tmpvar_40 = Luminance (_LightColor.xyz);
   float tmpvar_41;
   tmpvar_41 = (spec * tmpvar_40);
-  res.w = (vec4(tmpvar_41)).w;
+  res.w = vec4(tmpvar_41).w;
   float tmpvar_42;
   tmpvar_42 = ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w);
   fade = tmpvar_42;

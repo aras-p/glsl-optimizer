@@ -33,10 +33,10 @@ v2f vert (
   PositionFog (v.vertex, o.pos, o.fog);
   vec3 tmpvar_1;
   tmpvar_1 = ((v.color.xyz + (v.normal * 0.3)) * 0.5);
-  o.color.xyz = tmpvar_1.xyz;
+  o.color.xyz = tmpvar_1.xyz.xyz;
   float tmpvar_2;
   tmpvar_2 = 1.0;
-  o.color.w = (vec4(tmpvar_2)).w;
+  o.color.w = vec4(tmpvar_2).w;
   vec2 tmpvar_3;
   tmpvar_3 = v.texcoord;
   o.texcoord = tmpvar_3;
@@ -78,10 +78,8 @@ void main ()
   tmpvar_12 = tmpvar_11;
   gl_Position = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.x = (vec4(xl_retval.fog)).x;
-  tmpvar_13.y = (vec4(0.0)).y;
-  tmpvar_13.z = (vec4(0.0)).z;
-  tmpvar_13.w = (vec4(0.0)).w;
+  tmpvar_13.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_13.x = xl_retval.fog;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   xlv_FOG = tmpvar_14;
@@ -91,9 +89,8 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_FrontColor = tmpvar_16;
   vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
   tmpvar_17.xy = xl_retval.texcoord.xy;
-  tmpvar_17.z = (vec4(0.0)).z;
-  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;

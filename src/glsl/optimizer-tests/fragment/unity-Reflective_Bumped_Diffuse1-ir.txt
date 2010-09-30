@@ -145,12 +145,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -190,9 +190,9 @@ void surf (
   float tmpvar_11;
   tmpvar_11 = dot (IN.TtoW2, o.Normal);
   vec3 tmpvar_12;
-  tmpvar_12.x = (vec3(tmpvar_9)).x;
-  tmpvar_12.y = (vec3(tmpvar_10)).y;
-  tmpvar_12.z = (vec3(tmpvar_11)).z;
+  tmpvar_12.x = tmpvar_9;
+  tmpvar_12.y = tmpvar_10;
+  tmpvar_12.z = tmpvar_11;
   vec3 tmpvar_13;
   tmpvar_13 = reflect (IN.worldRefl, tmpvar_12);
   vec3 tmpvar_14;
@@ -222,10 +222,10 @@ vec4 LightingLambert_PrePass (
   vec4 c;
   vec3 tmpvar_1;
   tmpvar_1 = (s.Albedo * light.xyz);
-  c.xyz = tmpvar_1.xyz;
+  c.xyz = tmpvar_1.xyz.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = (vec4(tmpvar_2)).w;
+  c.w = vec4(tmpvar_2).w;
   return c;
 }
 
@@ -254,9 +254,9 @@ vec4 frag_surf (
   tmpvar_2 = IN.hip_pack0.zw;
   surfIN.uv_BumpMap = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3.x = (vec3(IN.TtoW0.w)).x;
-  tmpvar_3.y = (vec3(IN.TtoW1.w)).y;
-  tmpvar_3.z = (vec3(IN.TtoW2.w)).z;
+  tmpvar_3.x = IN.TtoW0.w;
+  tmpvar_3.y = IN.TtoW1.w;
+  tmpvar_3.z = IN.TtoW2.w;
   vec3 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   surfIN.worldRefl = tmpvar_4;
@@ -320,7 +320,7 @@ vec4 frag_surf (
   lm = tmpvar_26;
   vec3 tmpvar_27;
   tmpvar_27 = (light.xyz + lm);
-  light.xyz = tmpvar_27.xyz;
+  light.xyz = tmpvar_27.xyz.xyz;
   vec4 tmpvar_28;
   tmpvar_28 = LightingLambert_PrePass (o, light);
   vec4 tmpvar_29;
@@ -328,7 +328,7 @@ vec4 frag_surf (
   col = tmpvar_29;
   vec3 tmpvar_30;
   tmpvar_30 = (col.xyz + o.Emission);
-  col.xyz = tmpvar_30.xyz;
+  col.xyz = tmpvar_30.xyz.xyz;
   return col;
 }
 

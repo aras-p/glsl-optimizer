@@ -1,5 +1,5 @@
 void main ()
 {
-  gl_FragData[0] = gl_Color.xyzw;
+  gl_FragData[0] = gl_Color;
 }
 

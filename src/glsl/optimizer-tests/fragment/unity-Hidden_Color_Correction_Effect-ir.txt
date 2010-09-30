@@ -34,10 +34,10 @@ vec4 frag (
   tmpvar_8 = (tmpvar_7.z + 3e-005);
   bb = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.x = (vec4(rr)).x;
-  tmpvar_9.y = (vec4(gg)).y;
-  tmpvar_9.z = (vec4(bb)).z;
-  tmpvar_9.w = (vec4(orig.w)).w;
+  tmpvar_9.x = rr;
+  tmpvar_9.y = gg;
+  tmpvar_9.z = bb;
+  tmpvar_9.w = orig.w;
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   color = tmpvar_10;

@@ -27,7 +27,7 @@ vec4 frag (
   col = tmpvar_2;
   vec3 tmpvar_3;
   tmpvar_3 = (col.xyz * xlat_var_input.color.xyz);
-  col.xyz = tmpvar_3.xyz;
+  col.xyz = tmpvar_3.xyz.xyz;
   xll_clip (col.w);
   return col;
 }

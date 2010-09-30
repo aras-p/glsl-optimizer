@@ -140,12 +140,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -166,7 +166,7 @@ vec2 ParallaxOffset (
   v = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.z + 0.42);
-  v.z = (vec3(tmpvar_4)).z;
+  v.z = vec3(tmpvar_4).z;
   return (h * (v.xy / v.z));
 }
 
@@ -224,10 +224,10 @@ vec4 LightingLambert_PrePass (
   vec4 c;
   vec3 tmpvar_1;
   tmpvar_1 = (s.Albedo * light.xyz);
-  c.xyz = tmpvar_1.xyz;
+  c.xyz = tmpvar_1.xyz.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = (vec4(tmpvar_2)).w;
+  c.w = vec4(tmpvar_2).w;
   return c;
 }
 
@@ -309,7 +309,7 @@ vec4 frag_surf (
   lm = tmpvar_22;
   vec3 tmpvar_23;
   tmpvar_23 = (light.xyz + lm);
-  light.xyz = tmpvar_23.xyz;
+  light.xyz = tmpvar_23.xyz.xyz;
   vec4 tmpvar_24;
   tmpvar_24 = LightingLambert_PrePass (o, light);
   vec4 tmpvar_25;

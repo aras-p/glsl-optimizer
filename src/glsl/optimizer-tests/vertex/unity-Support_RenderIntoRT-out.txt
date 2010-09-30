@@ -1,6 +1,6 @@
 void main ()
 {
-  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
-  gl_FrontColor = gl_Color.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_FrontColor = gl_Color;
 }
 

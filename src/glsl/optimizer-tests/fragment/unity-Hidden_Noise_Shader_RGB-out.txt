@@ -8,8 +8,8 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col = tmpvar_1;
-  col.xyz = (tmpvar_1.xyz + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.0) - 1.0) * _Intensity.x)).xyz;
-  col.xyz = (col.xyz + (((texture2D (_ScratchTex, gl_TexCoord[2].xy).xyz * 2.0) - 1.0) * _Intensity.y)).xyz;
-  gl_FragData[0] = col.xyzw;
+  col.xyz = (tmpvar_1.xyz + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.0) - 1.0) * _Intensity.x));
+  col.xyz = (col.xyz + (((texture2D (_ScratchTex, gl_TexCoord[2].xy).xyz * 2.0) - 1.0) * _Intensity.y));
+  gl_FragData[0] = col;
 }
 

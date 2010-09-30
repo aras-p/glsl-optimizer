@@ -20,12 +20,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -60,12 +60,12 @@ vec4 frag (
   tmpvar_8 = dot (i.TtoW1, normal.xyz);
   float tmpvar_9;
   tmpvar_9 = tmpvar_8;
-  wn.y = (vec2(tmpvar_9)).y;
+  wn.y = vec2(tmpvar_9).y;
   float tmpvar_10;
   tmpvar_10 = dot (i.TtoW2, normal.xyz);
   float tmpvar_11;
   tmpvar_11 = tmpvar_10;
-  wn.z = (vec3(tmpvar_11)).z;
+  wn.z = vec3(tmpvar_11).z;
   vec3 tmpvar_12;
   tmpvar_12 = reflect (i.I, wn);
   vec3 tmpvar_13;
@@ -76,7 +76,7 @@ vec4 frag (
   c = tmpvar_14;
   vec3 tmpvar_15;
   tmpvar_15 = (c.xyz * 2.0);
-  c.xyz = tmpvar_15.xyz;
+  c.xyz = tmpvar_15.xyz.xyz;
   vec4 tmpvar_16;
   tmpvar_16 = textureCube (_Cube, r);
   vec4 tmpvar_17;

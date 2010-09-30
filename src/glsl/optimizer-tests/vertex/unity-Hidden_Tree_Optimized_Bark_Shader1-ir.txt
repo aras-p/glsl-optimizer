@@ -29,9 +29,8 @@ vec4 Squash (
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = (vec3(0.0)).x;
-  tmpvar_2.y = (vec3(_SquashPlaneNormal.w)).y;
-  tmpvar_2.z = (vec3(0.0)).z;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   planePoint = tmpvar_3;
@@ -50,8 +49,8 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
   tmpvar_10.xyz = tmpvar_9.xyz;
-  tmpvar_10.w = (vec4(1.0)).w;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   pos = tmpvar_11;
@@ -124,8 +123,8 @@ vec4 AnimateVertex (
   tmpvar_8 = tmpvar_7;
   fVtxPhase = tmpvar_8;
   vec2 tmpvar_9;
-  tmpvar_9.x = (vec2(fVtxPhase)).x;
-  tmpvar_9.y = (vec2(fBranchPhase)).y;
+  tmpvar_9.x = fVtxPhase;
+  tmpvar_9.y = fBranchPhase;
   vec2 tmpvar_10;
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
@@ -147,13 +146,13 @@ vec4 AnimateVertex (
   bend = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = (animParams.w * fBranchAmp);
-  bend.y = (vec2(tmpvar_17)).y;
+  bend.y = vec2(tmpvar_17).y;
   vec3 tmpvar_18;
   tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
-  pos.xyz = tmpvar_18.xyz;
+  pos.xyz = tmpvar_18.xyz.xyz;
   vec3 tmpvar_19;
   tmpvar_19 = (pos.xyz + (animParams.z * _Wind.xyz));
-  pos.xyz = tmpvar_19.xyz;
+  pos.xyz = tmpvar_19.xyz.xyz;
   return pos;
 }
 
@@ -163,7 +162,7 @@ void TreeVertBark (
 {
   vec3 tmpvar_1;
   tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
-  v.vertex.xyz = tmpvar_1.xyz;
+  v.vertex.xyz = tmpvar_1.xyz.xyz;
   vec4 tmpvar_2;
   tmpvar_2.xy = v.color.xy.xy;
   tmpvar_2.zw = v.texcoord1.xy.xy;
@@ -179,7 +178,7 @@ void TreeVertBark (
   v.vertex = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.xyz = (v.color.w * _Color.xyz).xyz;
-  tmpvar_7.w = (vec4(_Color.w)).w;
+  tmpvar_7.w = _Color.w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   v.color = tmpvar_8;
@@ -192,7 +191,7 @@ void TreeVertBark (
   tmpvar_11 = normalize (v.tangent.xyz);
   vec3 tmpvar_12;
   tmpvar_12 = tmpvar_11;
-  v.tangent.xyz = tmpvar_12.xyz;
+  v.tangent.xyz = tmpvar_12.xyz.xyz;
 }
 
 v2f_surf vert_surf (
@@ -206,11 +205,11 @@ v2f_surf vert_surf (
   o.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = (o.pos.z + unity_LightShadowBias.x);
-  o.pos.z = (vec3(tmpvar_2)).z;
+  o.pos.z = vec3(tmpvar_2).z;
   if ((o.pos.z < -(o.pos.w))) {
     float tmpvar_3;
     tmpvar_3 = -(o.pos.w);
-    o.pos.z = (vec3(tmpvar_3)).z;
+    o.pos.z = vec3(tmpvar_3).z;
   };
   return o;
 }

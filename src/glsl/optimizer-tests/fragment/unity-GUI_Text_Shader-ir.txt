@@ -16,7 +16,7 @@ vec4 frag (
   tmpvar_2 = texture2D (_MainTex, i.texcoord);
   float tmpvar_3;
   tmpvar_3 = (col.w * tmpvar_2.w);
-  col.w = (vec4(tmpvar_3)).w;
+  col.w = vec4(tmpvar_3).w;
   return col;
 }
 

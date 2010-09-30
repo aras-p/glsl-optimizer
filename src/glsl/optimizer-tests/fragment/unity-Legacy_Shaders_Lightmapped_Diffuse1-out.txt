@@ -7,7 +7,7 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xyzw;
+  tmpvar_1 = gl_TexCoord[0];
   vec4 col;
   vec4 light;
   vec3 tmpvar_2;
@@ -15,14 +15,14 @@ void main ()
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_LightMap, tmpvar_1.zw);
   vec4 tmpvar_4;
-  tmpvar_4 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
+  tmpvar_4 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light = tmpvar_4;
-  light.xyz = (tmpvar_4.xyz + unity_Ambient.xyz).xyz;
+  light.xyz = (tmpvar_4.xyz + unity_Ambient.xyz);
   vec4 c;
-  c.xyz = (tmpvar_2 * light.xyz).xyz;
-  c.w = (vec4((tmpvar_3.w * _Color.w))).w;
+  c.xyz = (tmpvar_2 * light.xyz);
+  c.w = (tmpvar_3.w * _Color.w);
   col = c;
-  col.xyz = (c.xyz + (tmpvar_3.xyz * tmpvar_2.xyz)).xyz;
-  gl_FragData[0] = col.xyzw;
+  col.xyz = (c.xyz + (tmpvar_3.xyz * tmpvar_2));
+  gl_FragData[0] = col;
 }
 

@@ -45,7 +45,7 @@ void surf (
   tmpvar_6 = mix (c.xyz, decal.xyz, tmpvar_5);
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
-  c.xyz = tmpvar_7.xyz;
+  c.xyz = tmpvar_7.xyz.xyz;
   vec4 tmpvar_8;
   tmpvar_8 = (c * _Color);
   c = tmpvar_8;
@@ -74,10 +74,10 @@ vec4 LightingLambert (
   diff = tmpvar_3;
   vec3 tmpvar_4;
   tmpvar_4 = ((s.Albedo * _LightColor0.xyz) * ((diff * atten) * 2.0));
-  c.xyz = tmpvar_4.xyz;
+  c.xyz = tmpvar_4.xyz.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = (vec4(tmpvar_5)).w;
+  c.w = vec4(tmpvar_5).w;
   return c;
 }
 
@@ -124,7 +124,7 @@ vec4 frag_surf (
   c = tmpvar_11;
   float tmpvar_12;
   tmpvar_12 = 0.0;
-  c.w = (vec4(tmpvar_12)).w;
+  c.w = vec4(tmpvar_12).w;
   return c;
 }
 

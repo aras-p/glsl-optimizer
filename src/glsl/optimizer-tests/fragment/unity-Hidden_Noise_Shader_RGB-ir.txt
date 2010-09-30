@@ -27,7 +27,7 @@ vec4 frag (
   grain = tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = (col.xyz + (grain * _Intensity.x));
-  col.xyz = tmpvar_5.xyz;
+  col.xyz = tmpvar_5.xyz.xyz;
   vec4 tmpvar_6;
   tmpvar_6 = texture2D (_ScratchTex, i.uvs);
   vec3 tmpvar_7;
@@ -35,7 +35,7 @@ vec4 frag (
   scratch = tmpvar_7;
   vec3 tmpvar_8;
   tmpvar_8 = (col.xyz + (scratch * _Intensity.y));
-  col.xyz = tmpvar_8.xyz;
+  col.xyz = tmpvar_8.xyz.xyz;
   return col;
 }
 

@@ -3,7 +3,7 @@ uniform float _Cutoff;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[1].xyzw;
+  tmpvar_1 = gl_TexCoord[1];
   float x;
   x = (texture2D (_MainTex, gl_TexCoord[0].xy).w - _Cutoff);
   if ((x < 0.0)) {
@@ -18,7 +18,7 @@ void main ()
   tmpvar_2 = fract ((vec2(1.0, 255.0) * tmpvar_1.w));
   enc_i0_i1 = tmpvar_2;
   enc_i0_i1.x = (tmpvar_2.x - (tmpvar_2.y * 0.00392157));
-  enc.zw = enc_i0_i1.xy;
-  gl_FragData[0] = enc.xyzw;
+  enc.zw = enc_i0_i1;
+  gl_FragData[0] = enc;
 }
 

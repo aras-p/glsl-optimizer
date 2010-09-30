@@ -10,6 +10,6 @@ void main ()
   if ((x < 0.0)) {
     discard;
   };
-  gl_FragData[0] = tmpvar_1.xyzw;
+  gl_FragData[0] = tmpvar_1;
 }
 

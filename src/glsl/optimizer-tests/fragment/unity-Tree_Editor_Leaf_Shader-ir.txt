@@ -152,12 +152,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -269,7 +269,7 @@ vec4 LightingTreeLeaf (
   col = tmpvar_19;
   vec3 tmpvar_20;
   tmpvar_20 = (col * (atten * 2.0));
-  c.xyz = tmpvar_20.xyz;
+  c.xyz = tmpvar_20.xyz.xyz;
   return c;
 }
 
@@ -330,7 +330,7 @@ vec4 frag_surf (
   c = tmpvar_18;
   float tmpvar_19;
   tmpvar_19 = o.Alpha;
-  c.w = (vec4(tmpvar_19)).w;
+  c.w = vec4(tmpvar_19).w;
   return c;
 }
 

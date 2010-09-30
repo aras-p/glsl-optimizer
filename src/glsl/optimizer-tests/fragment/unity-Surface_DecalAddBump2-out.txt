@@ -5,13 +5,13 @@ uniform sampler2D _Decal;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xyzw;
+  tmpvar_1 = gl_TexCoord[0];
   vec4 c;
   vec4 normal;
   normal.xy = ((texture2D (_DecalBump, tmpvar_1.zw).wy * 2.0) - 1.0);
-  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
-  c.xyz = ((texture2D (_Decal, tmpvar_1.xy).xyz * 0.5) * (2.0 * texture2D (unity_Lightmap, gl_TexCoord[1].xy).xyz)).xyz;
+  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  c.xyz = ((texture2D (_Decal, tmpvar_1.xy).xyz * 0.5) * (2.0 * texture2D (unity_Lightmap, gl_TexCoord[1].xy).xyz));
   c.w = 0.0;
-  gl_FragData[0] = c.xyzw;
+  gl_FragData[0] = c;
 }
 

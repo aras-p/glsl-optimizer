@@ -14,10 +14,10 @@ void main ()
   float tmpvar_3;
   tmpvar_3 = tmpvar_2.w;
   vec4 c_i0_i1;
-  c_i0_i1.xyz = ((tmpvar_2.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, normalize (gl_TexCoord[2].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)) * 2.0)).xyz;
-  c_i0_i1.w = (vec4(tmpvar_3)).w;
+  c_i0_i1.xyz = ((tmpvar_2.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, normalize (gl_TexCoord[2].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)) * 2.0));
+  c_i0_i1.w = tmpvar_3;
   c = c_i0_i1;
-  c.w = (vec4(tmpvar_3)).w;
-  gl_FragData[0] = c.xyzw;
+  c.w = tmpvar_3;
+  gl_FragData[0] = c;
 }
 

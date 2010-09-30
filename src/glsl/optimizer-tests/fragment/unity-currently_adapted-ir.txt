@@ -43,10 +43,10 @@ vec4 frag (
   tmpvar_12 = max (0.00392157, tmpvar_11);
   float tmpvar_13;
   tmpvar_13 = (tmpvar_10 * tmpvar_12);
-  delta.y = (vec2(tmpvar_13)).y;
+  delta.y = vec2(tmpvar_13).y;
   vec2 tmpvar_14;
   tmpvar_14 = (valAdapted + delta);
-  valNew.xy = tmpvar_14.xy;
+  valNew.xy = tmpvar_14.xy.xy;
   float tmpvar_15;
   tmpvar_15 = max (valNew.x, _AdaptParams.z);
   float tmpvar_16;
@@ -56,13 +56,13 @@ vec4 frag (
   tmpvar_17 = min (valNew.y, _AdaptParams.y);
   float tmpvar_18;
   tmpvar_18 = tmpvar_17;
-  valNew.y = (vec2(tmpvar_18)).y;
+  valNew.y = vec2(tmpvar_18).y;
   float tmpvar_19;
   tmpvar_19 = ((valNew.x - valNew.y) + 0.01);
-  valNew.z = (vec3(tmpvar_19)).z;
+  valNew.z = vec3(tmpvar_19).z;
   float tmpvar_20;
   tmpvar_20 = (valNew.y / valNew.z);
-  valNew.w = (vec4(tmpvar_20)).w;
+  valNew.w = vec4(tmpvar_20).w;
   return valNew;
 }
 

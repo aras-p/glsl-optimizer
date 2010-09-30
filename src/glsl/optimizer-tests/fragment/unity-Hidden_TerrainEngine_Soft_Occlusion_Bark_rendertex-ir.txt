@@ -18,7 +18,7 @@ vec4 frag (
   tmpvar_2 = texture2D (_MainTex, xlat_var_input.uv.xy);
   vec3 tmpvar_3;
   tmpvar_3 = (col.xyz * (2.0 * tmpvar_2.xyz));
-  col.xyz = tmpvar_3.xyz;
+  col.xyz = tmpvar_3.xyz.xyz;
   return col;
 }
 

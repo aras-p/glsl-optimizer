@@ -37,12 +37,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
-  normal.xy = tmpvar_1.xy;
+  normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = (vec3(tmpvar_3)).z;
+  normal.z = vec3(tmpvar_3).z;
   return normal;
 }
 
@@ -63,7 +63,7 @@ vec2 ParallaxOffset (
   v = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.z + 0.42);
-  v.z = (vec3(tmpvar_4)).z;
+  v.z = vec3(tmpvar_4).z;
   return (h * (v.xy / v.z));
 }
 
@@ -162,10 +162,10 @@ vec4 LightingLambert (
   diff = tmpvar_3;
   vec3 tmpvar_4;
   tmpvar_4 = ((s.Albedo * _LightColor0.xyz) * ((diff * atten) * 2.0));
-  c.xyz = tmpvar_4.xyz;
+  c.xyz = tmpvar_4.xyz.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = (vec4(tmpvar_5)).w;
+  c.w = vec4(tmpvar_5).w;
   return c;
 }
 
@@ -221,7 +221,7 @@ vec4 frag_surf (
   c = tmpvar_15;
   float tmpvar_16;
   tmpvar_16 = 0.0;
-  c.w = (vec4(tmpvar_16)).w;
+  c.w = vec4(tmpvar_16).w;
   return c;
 }
 

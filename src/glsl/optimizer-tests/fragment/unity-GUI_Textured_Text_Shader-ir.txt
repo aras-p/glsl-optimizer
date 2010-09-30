@@ -13,10 +13,10 @@ vec4 frag (
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
   vec3 tmpvar_2;
   tmpvar_2 = (tmpvar_1.xyz * _Color.xyz);
-  col.xyz = tmpvar_2.xyz;
+  col.xyz = tmpvar_2.xyz.xyz;
   float tmpvar_3;
   tmpvar_3 = _Color.w;
-  col.w = (vec4(tmpvar_3)).w;
+  col.w = vec4(tmpvar_3).w;
   return col;
 }
 

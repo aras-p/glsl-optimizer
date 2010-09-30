@@ -33,8 +33,8 @@ vec4 frag (
   tmpvar_4 = tmpvar_3;
   grayscale = tmpvar_4;
   vec2 tmpvar_5;
-  tmpvar_5.x = (vec2((grayscale + _RampOffset))).x;
-  tmpvar_5.y = (vec2(0.5)).y;
+  tmpvar_5.y = 0.5;
+  tmpvar_5.x = (grayscale + _RampOffset);
   vec2 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   remap = tmpvar_6;
@@ -45,7 +45,7 @@ vec4 frag (
   xlat_var_output = tmpvar_8;
   float tmpvar_9;
   tmpvar_9 = original.w;
-  xlat_var_output.w = (vec4(tmpvar_9)).w;
+  xlat_var_output.w = vec4(tmpvar_9).w;
   return xlat_var_output;
 }
 

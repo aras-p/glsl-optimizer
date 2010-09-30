@@ -16,7 +16,7 @@ vec4 frag (
   prev = tmpvar_2;
   vec3 tmpvar_3;
   tmpvar_3 = (prev.xyz * prev.w);
-  prev.xyz = tmpvar_3.xyz;
+  prev.xyz = tmpvar_3.xyz.xyz;
   return prev;
 }
 

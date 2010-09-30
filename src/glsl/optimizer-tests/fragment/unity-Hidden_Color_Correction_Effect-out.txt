@@ -5,10 +5,10 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, gl_TexCoord[0].xy);
   vec4 tmpvar_2;
-  tmpvar_2.x = (vec4((texture2D (_RampTex, tmpvar_1.xx).x + 1e-005))).x;
-  tmpvar_2.y = (vec4((texture2D (_RampTex, tmpvar_1.yy).y + 2e-005))).y;
-  tmpvar_2.z = (vec4((texture2D (_RampTex, tmpvar_1.zz).z + 3e-005))).z;
+  tmpvar_2.x = (texture2D (_RampTex, tmpvar_1.xx).x + 1e-005);
+  tmpvar_2.y = (texture2D (_RampTex, tmpvar_1.yy).y + 2e-005);
+  tmpvar_2.z = (texture2D (_RampTex, tmpvar_1.zz).z + 3e-005);
   tmpvar_2.w = tmpvar_1.w;
-  gl_FragData[0] = tmpvar_2.xyzw;
+  gl_FragData[0] = tmpvar_2;
 }
 

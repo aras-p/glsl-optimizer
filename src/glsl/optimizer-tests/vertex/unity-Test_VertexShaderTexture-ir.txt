@@ -25,9 +25,8 @@ v2f vert (
   v2f o;
   vec4 tex;
   vec4 tmpvar_1;
+  tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = v.texcoord.xy.xy;
-  tmpvar_1.z = (vec4(0.0)).z;
-  tmpvar_1.w = (vec4(0.0)).w;
   vec4 tmpvar_2;
   tmpvar_2 = xll_tex2Dlod (_MainTex, tmpvar_1);
   vec4 tmpvar_3;
@@ -35,7 +34,7 @@ v2f vert (
   tex = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.vertex.y + (tex.x * 2.0));
-  v.vertex.y = (vec2(tmpvar_4)).y;
+  v.vertex.y = vec2(tmpvar_4).y;
   vec4 tmpvar_5;
   tmpvar_5 = (gl_ModelViewProjectionMatrix * v.vertex);
   o.pos = tmpvar_5;
@@ -75,9 +74,8 @@ void main ()
   tmpvar_10 = tmpvar_9;
   gl_Position = tmpvar_10;
   vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
   tmpvar_11.xy = xl_retval.uv.xy;
-  tmpvar_11.z = (vec4(0.0)).z;
-  tmpvar_11.w = (vec4(0.0)).w;
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_TexCoord[0] = tmpvar_12;

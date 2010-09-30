@@ -40,11 +40,11 @@ void TerrainBillboardTree (
   if ((treeDistanceSqr > _TreeBillboardDistances.x)) {
     vec2 tmpvar_4;
     tmpvar_4 = vec2(0.0, 0.0);
-    offset = tmpvar_4.xy;
+    offset = tmpvar_4.xy.xy;
   };
   vec3 tmpvar_5;
   tmpvar_5 = (pos.xyz + (_TreeBillboardCameraRight.xyz * offset.x));
-  pos.xyz = tmpvar_5.xyz;
+  pos.xyz = tmpvar_5.xyz.xyz;
   float tmpvar_6;
   tmpvar_6 = _TreeBillboardCameraPos.w;
   billboardAngleFactor = tmpvar_6;
@@ -72,7 +72,7 @@ void TerrainBillboardTree (
   tmpvar_15 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_13) * 2.0) - (vec3(0.0, 1.0, 0.0) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), tmpvar_14);
   vec3 tmpvar_16;
   tmpvar_16 = (pos.xyz + tmpvar_15);
-  pos.xyz = tmpvar_16.xyz;
+  pos.xyz = tmpvar_16.xyz.xyz;
 }
 
 v2f vert (
@@ -92,7 +92,7 @@ v2f vert (
   o.uv.x = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = float((v.texcoord.y > 0.0));
-  o.uv.y = (vec2(tmpvar_4)).y;
+  o.uv.y = vec2(tmpvar_4).y;
   vec4 tmpvar_5;
   tmpvar_5 = v.color;
   o.color = tmpvar_5;
@@ -134,10 +134,8 @@ void main ()
   tmpvar_12 = tmpvar_11;
   gl_Position = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.x = (vec4(xl_retval.fog)).x;
-  tmpvar_13.y = (vec4(0.0)).y;
-  tmpvar_13.z = (vec4(0.0)).z;
-  tmpvar_13.w = (vec4(0.0)).w;
+  tmpvar_13.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_13.x = xl_retval.fog;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   xlv_FOG = tmpvar_14;
@@ -147,9 +145,8 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_FrontColor = tmpvar_16;
   vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
   tmpvar_17.xy = xl_retval.uv.xy;
-  tmpvar_17.z = (vec4(0.0)).z;
-  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;

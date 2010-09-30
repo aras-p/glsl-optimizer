@@ -8,6 +8,6 @@ void main ()
   vec4 col;
   col = texture2D (_MainTex, tmpvar_1);
   col.xy = vec2((1.0/(((_ZBufferParams.z * texture2D (_CameraDepthTexture, tmpvar_1).x) + _ZBufferParams.w)) * 0.01));
-  gl_FragData[0] = col.xyzw;
+  gl_FragData[0] = col;
 }
 

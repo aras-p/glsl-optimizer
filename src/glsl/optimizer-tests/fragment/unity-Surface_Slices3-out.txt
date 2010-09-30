@@ -27,10 +27,10 @@ void main ()
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_5.xxxx;
   vec4 tmpvar_8;
-  tmpvar_8 = (vec4(greaterThanEqual (tmpvar_7, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_7, _LightSplitsFar)).xyzw);
+  tmpvar_8 = (vec4(greaterThanEqual (tmpvar_7, _LightSplitsNear)) * vec4(lessThan (tmpvar_7, _LightSplitsFar)));
   vec4 tmpvar_9;
-  tmpvar_9.xyz = ((((tmpvar_1 * tmpvar_8.x) + (tmpvar_2 * tmpvar_8.y)) + (tmpvar_3 * tmpvar_8.z)) + (tmpvar_4 * tmpvar_8.w)).xyz;
   tmpvar_9.w = 1.0;
+  tmpvar_9.xyz = ((((tmpvar_1 * tmpvar_8.x) + (tmpvar_2 * tmpvar_8.y)) + (tmpvar_3 * tmpvar_8.z)) + (tmpvar_4 * tmpvar_8.w));
   vec4 tmpvar_10;
   tmpvar_10 = texture2D (_ShadowMapTexture, tmpvar_9.xy);
   float tmpvar_11;
@@ -46,7 +46,7 @@ void main ()
   tmpvar_12 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_7 * _ProjectionParams.w)).x));
   enc = tmpvar_12;
   enc.x = (tmpvar_12.x - (tmpvar_12.y * 0.00392157));
-  res.zw = enc.xy;
-  gl_FragData[0] = res.xyzw;
+  res.zw = enc;
+  gl_FragData[0] = res;
 }
 

@@ -15,12 +15,12 @@ vec4 frag (
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
   vec3 tmpvar_2;
   tmpvar_2 = (tmpvar_1.xyz * i.color.xyz);
-  col.xyz = tmpvar_2.xyz;
+  col.xyz = tmpvar_2.xyz.xyz;
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_GUIClipTexture, i.texgencoord);
   float tmpvar_4;
   tmpvar_4 = (i.color.w * tmpvar_3.w);
-  col.w = (vec4(tmpvar_4)).w;
+  col.w = vec4(tmpvar_4).w;
   return col;
 }
 

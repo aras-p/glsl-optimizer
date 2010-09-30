@@ -41,9 +41,8 @@ vec4 Squash (
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = (vec3(0.0)).x;
-  tmpvar_2.y = (vec3(_SquashPlaneNormal.w)).y;
-  tmpvar_2.z = (vec3(0.0)).z;
+  tmpvar_2.xz = vec2(0.0, 0.0);
+  tmpvar_2.y = _SquashPlaneNormal.w;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   planePoint = tmpvar_3;
@@ -62,8 +61,8 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
+  tmpvar_10.w = 1.0;
   tmpvar_10.xyz = tmpvar_9.xyz;
-  tmpvar_10.w = (vec4(1.0)).w;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   pos = tmpvar_11;
@@ -86,8 +85,8 @@ void ExpandBillboard (
   tmpvar_2 = (1.0 - tmpvar_1);
   isBillboard = tmpvar_2;
   vec4 tmpvar_3;
+  tmpvar_3.w = 0.0;
   tmpvar_3.xyz = normal.xyz;
-  tmpvar_3.w = (vec4(0.0)).w;
   vec4 tmpvar_4;
   tmpvar_4 = normalize ((tmpvar_3 * mat));
   vec3 tmpvar_5;
@@ -96,10 +95,9 @@ void ExpandBillboard (
   tmpvar_6 = tmpvar_5;
   norb = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.x = (vec4(normal.z)).x;
-  tmpvar_7.y = (vec4(0.0)).y;
-  tmpvar_7.z = (vec4(-(normal.x))).z;
-  tmpvar_7.w = (vec4(0.0)).w;
+  tmpvar_7.yw = vec2(0.0, 0.0);
+  tmpvar_7.x = normal.z;
+  tmpvar_7.z = -(normal.x);
   vec4 tmpvar_8;
   tmpvar_8 = normalize ((tmpvar_7 * mat));
   vec3 tmpvar_9;
@@ -118,8 +116,8 @@ void ExpandBillboard (
   tmpvar_14 = tmpvar_13;
   normal = tmpvar_14;
   vec4 tmpvar_15;
+  tmpvar_15.w = -1.0;
   tmpvar_15.xyz = tanb.xyz;
-  tmpvar_15.w = (vec4(-1.0)).w;
   vec4 tmpvar_16;
   tmpvar_16 = vec4(isBillboard);
   vec4 tmpvar_17;
@@ -195,8 +193,8 @@ vec4 AnimateVertex (
   tmpvar_8 = tmpvar_7;
   fVtxPhase = tmpvar_8;
   vec2 tmpvar_9;
-  tmpvar_9.x = (vec2(fVtxPhase)).x;
-  tmpvar_9.y = (vec2(fBranchPhase)).y;
+  tmpvar_9.x = fVtxPhase;
+  tmpvar_9.y = fBranchPhase;
   vec2 tmpvar_10;
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
@@ -218,13 +216,13 @@ vec4 AnimateVertex (
   bend = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = (animParams.w * fBranchAmp);
-  bend.y = (vec2(tmpvar_17)).y;
+  bend.y = vec2(tmpvar_17).y;
   vec3 tmpvar_18;
   tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
-  pos.xyz = tmpvar_18.xyz;
+  pos.xyz = tmpvar_18.xyz.xyz;
   vec3 tmpvar_19;
   tmpvar_19 = (pos.xyz + (animParams.z * _Wind.xyz));
-  pos.xyz = tmpvar_19.xyz;
+  pos.xyz = tmpvar_19.xyz.xyz;
   return pos;
 }
 
@@ -235,7 +233,7 @@ void TreeVertLeaf (
   ExpandBillboard (gl_ModelViewMatrixInverseTranspose, v.vertex, v.normal, v.tangent);
   vec3 tmpvar_1;
   tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
-  v.vertex.xyz = tmpvar_1.xyz;
+  v.vertex.xyz = tmpvar_1.xyz.xyz;
   vec4 tmpvar_2;
   tmpvar_2.xy = v.color.xy.xy;
   tmpvar_2.zw = v.texcoord1.xy.xy;
@@ -251,7 +249,7 @@ void TreeVertLeaf (
   v.vertex = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.xyz = (v.color.w * _Color.xyz).xyz;
-  tmpvar_7.w = (vec4(_Color.w)).w;
+  tmpvar_7.w = _Color.w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   v.color = tmpvar_8;
@@ -264,7 +262,7 @@ void TreeVertLeaf (
   tmpvar_11 = normalize (v.tangent.xyz);
   vec3 tmpvar_12;
   tmpvar_12 = tmpvar_11;
-  v.tangent.xyz = tmpvar_12.xyz;
+  v.tangent.xyz = tmpvar_12.xyz.xyz;
 }
 
 v2f_surf vert_surf (
@@ -277,7 +275,7 @@ v2f_surf vert_surf (
   TreeVertLeaf (v);
   vec2 tmpvar_1;
   tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  o.hip_pack0 = tmpvar_1.xy;
+  o.hip_pack0 = tmpvar_1.xy.xy;
   vec4 tmpvar_2;
   tmpvar_2 = v.color;
   o.lop_color = tmpvar_2;
@@ -292,7 +290,7 @@ v2f_surf vert_surf (
   o._ShadowZFade.x = tmpvar_5;
   float tmpvar_6;
   tmpvar_6 = ((z * _LightShadowData.z) + _LightShadowData.w);
-  o._ShadowZFade.y = (vec2(tmpvar_6)).y;
+  o._ShadowZFade.y = vec2(tmpvar_6).y;
   vec4 tmpvar_7;
   tmpvar_7 = (_Object2World * v.vertex);
   wpos = tmpvar_7;
@@ -356,40 +354,38 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
+  tmpvar_17.w = 0.0;
   tmpvar_17.xyz = xl_retval._ShadowCoord0.xyz;
-  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;
   vec4 tmpvar_19;
+  tmpvar_19.w = 0.0;
   tmpvar_19.xyz = xl_retval._ShadowCoord1.xyz;
-  tmpvar_19.w = (vec4(0.0)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[1] = tmpvar_20;
   vec4 tmpvar_21;
+  tmpvar_21.w = 0.0;
   tmpvar_21.xyz = xl_retval._ShadowCoord2.xyz;
-  tmpvar_21.w = (vec4(0.0)).w;
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[2] = tmpvar_22;
   vec4 tmpvar_23;
+  tmpvar_23.w = 0.0;
   tmpvar_23.xyz = xl_retval._ShadowCoord3.xyz;
-  tmpvar_23.w = (vec4(0.0)).w;
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[3] = tmpvar_24;
   vec4 tmpvar_25;
+  tmpvar_25.zw = vec2(0.0, 0.0);
   tmpvar_25.xy = xl_retval._ShadowZFade.xy;
-  tmpvar_25.z = (vec4(0.0)).z;
-  tmpvar_25.w = (vec4(0.0)).w;
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;
   gl_TexCoord[4] = tmpvar_26;
   vec4 tmpvar_27;
+  tmpvar_27.zw = vec2(0.0, 0.0);
   tmpvar_27.xy = xl_retval.hip_pack0.xy;
-  tmpvar_27.z = (vec4(0.0)).z;
-  tmpvar_27.w = (vec4(0.0)).w;
   vec4 tmpvar_28;
   tmpvar_28 = tmpvar_27;
   gl_TexCoord[5] = tmpvar_28;

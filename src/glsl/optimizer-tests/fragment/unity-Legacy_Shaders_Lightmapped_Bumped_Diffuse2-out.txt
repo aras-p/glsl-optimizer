@@ -8,7 +8,7 @@ uniform sampler2D _BumpMap;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xyzw;
+  tmpvar_1 = gl_TexCoord[0];
   vec4 col;
   vec4 light;
   vec2 tmpvar_2;
@@ -18,16 +18,16 @@ void main ()
   tmpvar_4 = texture2D (_LightMap, tmpvar_1.zw);
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, tmpvar_2).wy * 2.0) - 1.0);
-  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   vec4 tmpvar_5;
-  tmpvar_5 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
+  tmpvar_5 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light = tmpvar_5;
-  light.xyz = (tmpvar_5.xyz + unity_Ambient.xyz).xyz;
+  light.xyz = (tmpvar_5.xyz + unity_Ambient.xyz);
   vec4 c;
-  c.xyz = (tmpvar_3 * light.xyz).xyz;
-  c.w = (vec4((tmpvar_4.w * _Color.w))).w;
+  c.xyz = (tmpvar_3 * light.xyz);
+  c.w = (tmpvar_4.w * _Color.w);
   col = c;
-  col.xyz = (c.xyz + (tmpvar_4.xyz * tmpvar_3.xyz)).xyz;
-  gl_FragData[0] = col.xyzw;
+  col.xyz = (c.xyz + (tmpvar_4.xyz * tmpvar_3));
+  gl_FragData[0] = col;
 }
 
