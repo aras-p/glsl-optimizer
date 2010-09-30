@@ -451,7 +451,11 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          if (baseFormat != GL_RGB &&
              baseFormat != GL_RGBA &&
 	     (!ctx->Extensions.ARB_framebuffer_object ||
-	      baseFormat != GL_ALPHA)) {
+	      baseFormat != GL_ALPHA) &&
+	     (!ctx->Extensions.ARB_texture_rg ||
+	      baseFormat != GL_RED) &&
+	     (!ctx->Extensions.ARB_texture_rg ||
+	      baseFormat != GL_RG)) {
             att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
@@ -631,7 +635,9 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          numImages++;
          if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT
              && f != GL_DEPTH_STENCIL_EXT
-	     && (!ctx->Extensions.ARB_framebuffer_object || f != GL_ALPHA)) {
+	     && (!ctx->Extensions.ARB_framebuffer_object || f != GL_ALPHA)
+	     && (!ctx->Extensions.ARB_texture_rg || f != GL_RED)
+	     && (!ctx->Extensions.ARB_texture_rg || f != GL_RG)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
             return;
