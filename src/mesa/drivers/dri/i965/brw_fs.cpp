@@ -696,12 +696,12 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	  */
 	 int last_swiz = -1;
 	 for (unsigned int i = 0; i < 4; i++) {
-	    int this_swiz = GET_SWZ(element->swizzle, i);
-	    if (this_swiz == last_swiz)
+	    int swiz = GET_SWZ(element->swizzle, i);
+	    if (swiz == last_swiz)
 	       break;
-	    last_swiz = this_swiz;
+	    last_swiz = swiz;
 
-	    c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
+	    c->prog_data.param[c->prog_data.nr_params++] = &vec_values[swiz];
 	 }
       }
    }
