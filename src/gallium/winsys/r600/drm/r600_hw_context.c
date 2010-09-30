@@ -253,6 +253,10 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028124_CB_CLEAR_GREEN, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028128_CB_CLEAR_BLUE, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02812C_CB_CLEAR_ALPHA, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028140_ALU_CONST_BUFFER_SIZE_PS_0, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028180_ALU_CONST_BUFFER_SIZE_VS_0, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028940_ALU_CONST_CACHE_PS_0, 1, S_0085F0_SH_ACTION_ENA(1)},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028980_ALU_CONST_CACHE_VS_0, 1, S_0085F0_SH_ACTION_ENA(1)},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02823C_CB_SHADER_MASK, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028238_CB_TARGET_MASK, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028410_SX_ALPHA_TEST_CONTROL, 0, 0},
@@ -479,23 +483,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0, 0},
 };
 
-/* SHADER CONSTANT R600/R700 */
-static int r600_state_constant_init(struct r600_context *ctx, u32 offset)
-{
-	struct r600_reg r600_shader_constant[] = {
-		{PKT3_SET_ALU_CONST, R600_ALU_CONST_OFFSET, R_030000_SQ_ALU_CONSTANT0_0, 0, 0},
-		{PKT3_SET_ALU_CONST, R600_ALU_CONST_OFFSET, R_030004_SQ_ALU_CONSTANT1_0, 0, 0},
-		{PKT3_SET_ALU_CONST, R600_ALU_CONST_OFFSET, R_030008_SQ_ALU_CONSTANT2_0, 0, 0},
-		{PKT3_SET_ALU_CONST, R600_ALU_CONST_OFFSET, R_03000C_SQ_ALU_CONSTANT3_0, 0, 0},
-	};
-	unsigned nreg = sizeof(r600_shader_constant)/sizeof(struct r600_reg);
-
-	for (int i = 0; i < nreg; i++) {
-		r600_shader_constant[i].offset += offset;
-	}
-	return r600_context_add_block(ctx, r600_shader_constant, nreg);
-}
-
 /* SHADER RESOURCE R600/R700 */
 static int r600_state_resource_init(struct r600_context *ctx, u32 offset)
 {
@@ -578,6 +565,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
+	radeon->use_mem_constant = TRUE;
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 
@@ -637,18 +625,6 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* VS RESOURCE */
 	for (int j = 0, offset = 0x1180; j < 160; j++, offset += 0x1C) {
 		r = r600_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* PS CONSTANT */
-	for (int j = 0, offset = 0; j < 256; j++, offset += 0x10) {
-		r = r600_state_constant_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* VS CONSTANT */
-	for (int j = 0, offset = 0x1000; j < 256; j++, offset += 0x10) {
-		r = r600_state_constant_init(ctx, offset);
 		if (r)
 			goto out_err;
 	}

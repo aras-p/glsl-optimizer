@@ -2200,4 +2200,9 @@
 #define R_038014_RESOURCE0_WORD5                     0x038014
 #define R_038018_RESOURCE0_WORD6                     0x038018
 
+#define R_028140_ALU_CONST_BUFFER_SIZE_PS_0          0x00028140
+#define R_028180_ALU_CONST_BUFFER_SIZE_VS_0          0x00028180
+#define R_028940_ALU_CONST_CACHE_PS_0                0x00028940
+#define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
+
 #endif

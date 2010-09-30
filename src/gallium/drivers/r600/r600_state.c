@@ -1148,40 +1148,34 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 					struct pipe_resource *buffer)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate;
-	struct pipe_transfer *transfer;
-	unsigned *nconst = NULL;
-	u32 *ptr, offset;
+	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
-		rstate = rctx->vs_const;
-		nconst = &rctx->vs_nconst;
-		offset = R_030000_SQ_ALU_CONSTANT0_0 + 0x1000;
+		rctx->vs_const_buffer.nregs = 0;
+		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
+					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
+					ALIGN_DIVUP(buffer->width0 >> 4, 16),
+					0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
+					R_028980_ALU_CONST_CACHE_VS_0,
+					0, 0xFFFFFFFF, rbuffer->bo);
+		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
-		rstate = rctx->ps_const;
-		nconst = &rctx->ps_nconst;
-		offset = R_030000_SQ_ALU_CONSTANT0_0;
+		rctx->ps_const_buffer.nregs = 0;
+		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
+					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
+					ALIGN_DIVUP(buffer->width0 >> 4, 16),
+					0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
+					R_028940_ALU_CONST_CACHE_PS_0,
+					0, 0xFFFFFFFF, rbuffer->bo);
+		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:
 		R600_ERR("unsupported %d\n", shader);
 		return;
-	}
-	if (buffer && buffer->width0 > 0) {
-		*nconst = buffer->width0 / 16;
-		ptr = pipe_buffer_map(ctx, buffer, PIPE_TRANSFER_READ, &transfer);
-		if (ptr == NULL)
-			return;
-		for (int i = 0; i < *nconst; i++, offset += 0x10) {
-			rstate[i].nregs = 0;
-			r600_pipe_state_add_reg(&rstate[i], offset + 0x0, ptr[i * 4 + 0], 0xFFFFFFFF, NULL);
-			r600_pipe_state_add_reg(&rstate[i], offset + 0x4, ptr[i * 4 + 1], 0xFFFFFFFF, NULL);
-			r600_pipe_state_add_reg(&rstate[i], offset + 0x8, ptr[i * 4 + 2], 0xFFFFFFFF, NULL);
-			r600_pipe_state_add_reg(&rstate[i], offset + 0xC, ptr[i * 4 + 3], 0xFFFFFFFF, NULL);
-			r600_context_pipe_state_set(&rctx->ctx, &rstate[i]);
-		}
-		pipe_buffer_unmap(ctx, buffer, transfer);
 	}
 }
 
@@ -1191,6 +1185,7 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
+	shader->shader.use_mem_constant = TRUE;
 	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
 	if (r) {
 		return NULL;
@@ -1436,7 +1431,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 		tmp |= S_008C00_VC_ENABLE(1);
 		break;
 	}
-	tmp |= S_008C00_DX9_CONSTS(1);
+	tmp |= S_008C00_DX9_CONSTS(0);
 	tmp |= S_008C00_ALU_INST_PREFER_VECTOR(1);
 	tmp |= S_008C00_PS_PRIO(ps_prio);
 	tmp |= S_008C00_VS_PRIO(vs_prio);
