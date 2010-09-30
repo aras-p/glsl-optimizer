@@ -190,7 +190,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state, ctx->mem_ctx);
 			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state, ctx->mem_ctx);
 			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state, ctx->mem_ctx);
-			//@TODO progress = do_lower_jumps(ir) || progress;
+			progress = do_lower_jumps(ir) || progress; debug_print_ir ("After lower jumps", ir, state, ctx->mem_ctx);
 			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state, ctx->mem_ctx);
 			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
 			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state, ctx->mem_ctx);
