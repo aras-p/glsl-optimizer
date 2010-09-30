@@ -57,7 +57,6 @@
 #include "mgatris.h"
 #include "mgavb.h"
 #include "mgapixel.h"
-#include "mga_xmesa.h"
 #include "mga_dri.h"
 
 #include "utils.h"
