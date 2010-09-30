@@ -30,7 +30,6 @@
 #include "util/u_format.h"
 #include "vmw_screen.h"
 
-#include "vmw_screen.h"
 #include "vmw_surface.h"
 #include "svga_drm_public.h"
 
