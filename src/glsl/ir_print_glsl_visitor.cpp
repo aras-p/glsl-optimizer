@@ -698,6 +698,53 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 		return;
 	}
 
+	bool canonicalFor = (ir->counter && ir->from && ir->to && ir->increment);
+	if (canonicalFor)
+	{
+		buffer = talloc_asprintf_append(buffer, "for (");
+		ir->counter->accept (this);
+		buffer = talloc_asprintf_append(buffer, " = ");
+		ir->from->accept (this);
+		buffer = talloc_asprintf_append(buffer, "; ");
+		print_var_name (ir->counter);
+
+		// IR cmp operator is when to terminate loop; whereas GLSL for loop syntax
+		// is while to continue the loop. Invert the meaning of operator when outputting.
+		const char* termOp = NULL;
+		switch (ir->cmp) {
+		case ir_binop_less: termOp = ">="; break;
+		case ir_binop_greater: termOp = "<="; break;
+		case ir_binop_lequal: termOp = ">"; break;
+		case ir_binop_gequal: termOp = "<"; break;
+		case ir_binop_equal: termOp = "!="; break;
+		case ir_binop_nequal: termOp = "=="; break;
+		default: assert(false);
+		}
+		buffer = talloc_asprintf_append(buffer, " %s ", termOp);
+		ir->to->accept (this);
+		buffer = talloc_asprintf_append(buffer, "; ");
+		// IR already has instructions that modify the loop counter in the body
+		//print_var_name (ir->counter);
+		//buffer = talloc_asprintf_append(buffer, " = ");
+		//print_var_name (ir->counter);
+		//buffer = talloc_asprintf_append(buffer, "+(");
+		//ir->increment->accept (this);
+		//buffer = talloc_asprintf_append(buffer, ")");
+		buffer = talloc_asprintf_append(buffer, ") {\n");
+		indentation++;
+		foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
+			ir_instruction *const inst = (ir_instruction *) iter.get();
+			indent();
+			inst->accept(this);
+			buffer = talloc_asprintf_append(buffer, ";\n");
+		}
+		indentation--;
+		indent();
+		buffer = talloc_asprintf_append(buffer, "}");
+		return;
+	}
+
+
    buffer = talloc_asprintf_append(buffer, "( TODO loop (");
    if (ir->counter != NULL)
       ir->counter->accept(this);

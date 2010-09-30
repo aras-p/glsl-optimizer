@@ -5,6 +5,7 @@
 #include "ir_optimization.h"
 #include "ir_print_glsl_visitor.h"
 #include "ir_print_visitor.h"
+#include "loop_analysis.h"
 #include "program.h"
 
 extern "C" struct gl_shader *
@@ -192,17 +193,15 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state, ctx->mem_ctx);
 			progress = do_lower_jumps(ir) || progress; debug_print_ir ("After lower jumps", ir, state, ctx->mem_ctx);
 			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state, ctx->mem_ctx);
-			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
+			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state, ctx->mem_ctx);
 			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state, ctx->mem_ctx);
 			progress = do_noop_swizzle(ir) || progress; debug_print_ir ("After noop swizzle", ir, state, ctx->mem_ctx);
-			/*@TODO
-			progress = optimize_redundant_jumps(ir) || progress;
+			progress = optimize_redundant_jumps(ir) || progress; debug_print_ir ("After redundant jumps", ir, state, ctx->mem_ctx);
 
 			loop_state *ls = analyze_loop_variables(ir);
 			progress = set_loop_controls(ir, ls) || progress;
-			progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
+			progress = unroll_loops(ir, ls, 8) || progress;
 			delete ls;
-			*/
 		} while (progress);
 
 		validate_ir_tree(ir);
