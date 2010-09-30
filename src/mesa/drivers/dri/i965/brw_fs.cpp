@@ -469,6 +469,8 @@ public:
    void emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup();
    void emit_fb_writes();
+   void emit_assignment_writes(fs_reg &l, fs_reg &r,
+			       const glsl_type *type, bool predicated);
 
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
@@ -1138,11 +1140,50 @@ fs_visitor::visit(ir_expression *ir)
 }
 
 void
+fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
+				   const glsl_type *type, bool predicated)
+{
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      for (unsigned int i = 0; i < type->components(); i++) {
+	 l.type = brw_type_for_base_type(type);
+	 r.type = brw_type_for_base_type(type);
+
+	 fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
+	 inst->predicated = predicated;
+
+	 l.reg_offset++;
+	 r.reg_offset++;
+      }
+      break;
+   case GLSL_TYPE_ARRAY:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 emit_assignment_writes(l, r, type->fields.array, predicated);
+      }
+
+   case GLSL_TYPE_STRUCT:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 emit_assignment_writes(l, r, type->fields.structure[i].type,
+				predicated);
+      }
+      break;
+
+   case GLSL_TYPE_SAMPLER:
+      break;
+
+   default:
+      assert(!"not reached");
+      break;
+   }
+}
+
+void
 fs_visitor::visit(ir_assignment *ir)
 {
    struct fs_reg l, r;
-   int i;
-   int write_mask;
    fs_inst *inst;
 
    /* FINISHME: arrays on the lhs */
@@ -1151,18 +1192,6 @@ fs_visitor::visit(ir_assignment *ir)
 
    ir->rhs->accept(this);
    r = this->result;
-
-   /* FINISHME: This should really set to the correct maximal writemask for each
-    * FINISHME: component written (in the loops below).  This case can only
-    * FINISHME: occur for matrices, arrays, and structures.
-    */
-   if (ir->write_mask == 0) {
-      assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
-      write_mask = WRITEMASK_XYZW;
-   } else {
-      assert(ir->lhs->type->is_vector() || ir->lhs->type->is_scalar());
-      write_mask = ir->write_mask;
-   }
 
    assert(l.file != BAD_FILE);
    assert(r.file != BAD_FILE);
@@ -1174,14 +1203,19 @@ fs_visitor::visit(ir_assignment *ir)
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    }
 
-   for (i = 0; i < type_size(ir->lhs->type); i++) {
-      if (i >= 4 || (write_mask & (1 << i))) {
-	 inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
-	 if (ir->condition)
-	    inst->predicated = true;
-	 r.reg_offset++;
+   if (ir->lhs->type->is_scalar() ||
+       ir->lhs->type->is_vector()) {
+      for (int i = 0; i < ir->lhs->type->vector_elements; i++) {
+	 if (ir->write_mask & (1 << i)) {
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
+	    if (ir->condition)
+	       inst->predicated = true;
+	    r.reg_offset++;
+	 }
+	 l.reg_offset++;
       }
-      l.reg_offset++;
+   } else {
+      emit_assignment_writes(l, r, ir->lhs->type, ir->condition != NULL);
    }
 }
 
