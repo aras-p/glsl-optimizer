@@ -118,9 +118,9 @@ static void inline r600_context_reg(struct r600_context *ctx,
 	block->reg[id] |= value;
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
+		block->status |= R600_BLOCK_STATUS_ENABLED;
+		block->status |= R600_BLOCK_STATUS_DIRTY;
 	}
-	block->status |= R600_BLOCK_STATUS_ENABLED;
-	block->status |= R600_BLOCK_STATUS_DIRTY;
 }
 
 static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
