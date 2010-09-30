@@ -51,7 +51,6 @@ egl_g3d_st_manager(struct st_manager *smapi)
 
 static boolean
 egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
-                                 struct st_context_iface *stctx,
                                  void *egl_image,
                                  struct st_egl_image *out)
 {
