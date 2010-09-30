@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "vdpau_private.h"
+#include "mpeg2_bitstream_parser.h"
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <pipe/p_video_context.h>
@@ -165,15 +166,6 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 	return VDP_STATUS_OK;
 }
 
-static void
-vlVdpBitstreamToMacroblocks(struct pipe_screen *screen,
-                  VdpBitstreamBuffer const *bitstream_buffers,
-                  unsigned int num_macroblocks,
-                  struct pipe_mpeg12_macroblock *pipe_macroblocks)
-{
-	debug_printf("NAF!\n");
-}
-
 VdpStatus
 vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 							vlVdpSurface *vlsurf,
@@ -190,6 +182,7 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	struct pipe_surface *p_surf;
 	struct pipe_surface *f_surf;
 	uint32_t num_macroblocks;
+	struct pipe_mpeg12_macroblock *pipe_macroblocks;
 	VdpStatus ret;
 	
 
@@ -217,15 +210,12 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	if (f_vdp_surf ==  VDP_INVALID_HANDLE) f_vdp_surf = NULL;
 	
 	ret = vlVdpCreateSurfaceTarget(vldecoder,t_vdp_surf);
-		
-	num_macroblocks = bitstream_buffer_count;
-	struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
-	
-	vlVdpBitstreamToMacroblocks(vpipe->screen, bitstream_buffers,
-                     num_macroblocks, pipe_macroblocks);
+
+	vlVdpBitstreamToMacroblock(vpipe->screen, bitstream_buffers,
+                     &num_macroblocks, &pipe_macroblocks);
 		
 	vpipe->set_decode_target(vpipe,t_surf);
-	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, &pipe_macroblocks->base, NULL);
+	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, pipe_macroblocks, NULL);
 	return ret;
 }
 

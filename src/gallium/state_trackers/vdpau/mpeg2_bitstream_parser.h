@@ -28,6 +28,14 @@
 #ifndef MPEG2_BITSTREAM_PARSER_H
 #define MPEG2_BITSTREAM_PARSER_H
 
+#include <vdpau/vdpau.h>
+#include <pipe/p_video_state.h>
+#include "vdpau_private.h"
 
+void
+vlVdpBitstreamToMacroblock(struct pipe_screen *screen,
+                  VdpBitstreamBuffer const *bitstream_buffers,
+                  unsigned int *num_macroblocks,
+                  struct pipe_mpeg12_macroblock **pipe_macroblocks);
 
 #endif // MPEG2_BITSTREAM_PARSER_H

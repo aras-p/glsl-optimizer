@@ -19,6 +19,7 @@ C_SOURCES = htab.c \
 	    decode.c \
 	    presentation.c \
 	    bitmap.c \
+	    mpeg2_bitstream_parser.c \
 	    output.c
 
 
