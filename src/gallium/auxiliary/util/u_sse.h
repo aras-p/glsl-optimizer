@@ -78,8 +78,6 @@ _mm_castps_si128(__m128 a)
 
 #else /* !PIPE_ARCH_SSSE3 */
 
-#include <emmintrin.h>
-
 /**
  * Describe _mm_shuffle_epi8() with gcc extended inline assembly, for cases
  * where -mssse3 is not supported/enabled.
