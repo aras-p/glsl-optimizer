@@ -3,36 +3,33 @@ uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
 void main ()
 {
-  vec3 tmpvar_1;
   int i;
   vec3 lightColor;
   i = 0;
-  float tmpvar_2;
-  tmpvar_2 = (1.0 - abs (TANGENT.w));
-  vec4 tmpvar_3;
-  tmpvar_3.w = 0.0;
-  tmpvar_3.xyz = gl_Normal;
-  tmpvar_1 = mix (gl_Normal, normalize ((tmpvar_3 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_2));
-  vec4 tmpvar_4;
-  tmpvar_4 = (gl_ModelViewProjectionMatrix * (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * tmpvar_2)));
-  vec2 tmpvar_5;
-  tmpvar_5 = gl_MultiTexCoord0.xy;
+  float tmpvar_1;
+  tmpvar_1 = (1.0 - abs (TANGENT.w));
+  vec4 tmpvar_2;
+  tmpvar_2.w = 0.0;
+  tmpvar_2.xyz = gl_Normal;
+  vec3 tmpvar_3;
+  tmpvar_3 = mix (gl_Normal, normalize ((tmpvar_2 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_1));
   lightColor = gl_LightModel.ambient.xyz;
-  while (true) {
-    if ((i >= 4)) {
-      break;
-    };
-    lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_1) * 0.5) + 0.5))).xyz);
-    i = (i + 1);
-  };
-  gl_Position = tmpvar_4;
-  vec4 tmpvar_6;
-  tmpvar_6.zw = vec2(0.0, 0.0);
-  tmpvar_6.xy = tmpvar_5;
-  gl_TexCoord[0] = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (lightColor * gl_Color.w);
-  gl_TexCoord[1] = tmpvar_7;
+  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_3) * 0.5) + 0.5))).xyz);
+  i = (i + 1);
+  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_3) * 0.5) + 0.5))).xyz);
+  i = (i + 1);
+  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_3) * 0.5) + 0.5))).xyz);
+  i = (i + 1);
+  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i], tmpvar_3) * 0.5) + 0.5))).xyz);
+  i = (i + 1);
+  gl_Position = (gl_ModelViewProjectionMatrix * (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * tmpvar_1)));
+  vec4 tmpvar_4;
+  tmpvar_4.zw = vec2(0.0, 0.0);
+  tmpvar_4.xy = gl_MultiTexCoord0.xy;
+  gl_TexCoord[0] = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.w = 0.0;
+  tmpvar_5.xyz = (lightColor * gl_Color.w);
+  gl_TexCoord[1] = tmpvar_5;
 }
 

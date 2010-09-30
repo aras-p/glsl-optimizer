@@ -7,10 +7,7 @@ void main ()
   };
   a = 4.0;
   i = 0;
-  while (true) {
-    if ((i >= 10)) {
-      break;
-    };
+  for (int i = 0; i < 10; ) {
     a = (a + 1.0);
     i = (i + 1);
   };

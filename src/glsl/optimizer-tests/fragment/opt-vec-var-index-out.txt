@@ -1,19 +1,8 @@
 void main ()
 {
-  int j;
-  vec2 c;
-  c = vec2(0.0, 0.0);
-  j = 0;
-  while (true) {
-    if ((j >= 2)) {
-      break;
-    };
-    c = (c + abs (vec2(vec2(0.0, 0.0)[j])));
-    j = (j + 1);
-  };
   vec4 tmpvar_1;
   tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.xy = c;
+  tmpvar_1.xy = vec2(0.0, 0.0);
   gl_FragColor = tmpvar_1;
 }
 
