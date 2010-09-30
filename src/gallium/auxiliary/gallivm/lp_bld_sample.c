@@ -46,6 +46,39 @@
 
 
 /**
+ * Does the given texture wrap mode allow sampling the texture border color?
+ * XXX maybe move this into gallium util code.
+ */
+boolean
+lp_sampler_wrap_mode_uses_border_color(unsigned mode,
+                                       unsigned min_img_filter,
+                                       unsigned mag_img_filter)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      return FALSE;
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      if (min_img_filter == PIPE_TEX_FILTER_NEAREST &&
+          mag_img_filter == PIPE_TEX_FILTER_NEAREST) {
+         return FALSE;
+      } else {
+         return TRUE;
+      }
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      return TRUE;
+   default:
+      assert(0 && "unexpected wrap mode");
+      return FALSE;
+   }
+}
+
+
+/**
  * Initialize lp_sampler_static_state object with the gallium sampler
  * and texture state.
  * The former is considered to be static and the later dynamic.

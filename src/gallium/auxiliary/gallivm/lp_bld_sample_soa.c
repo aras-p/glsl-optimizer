@@ -59,31 +59,6 @@
 
 
 /**
- * Does the given texture wrap mode allow sampling the texture border color?
- * XXX maybe move this into gallium util code.
- */
-static boolean
-wrap_mode_uses_border_color(unsigned mode)
-{
-   switch (mode) {
-   case PIPE_TEX_WRAP_REPEAT:
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-   case PIPE_TEX_WRAP_MIRROR_REPEAT:
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      return FALSE;
-   case PIPE_TEX_WRAP_CLAMP:
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-   case PIPE_TEX_WRAP_MIRROR_CLAMP:
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-      return TRUE;
-   default:
-      assert(0 && "unexpected wrap mode");
-      return FALSE;
-   }
-}
-
-
-/**
  * Generate code to fetch a texel from a texture at int coords (x, y, z).
  * The computation depends on whether the texture is 1D, 2D or 3D.
  * The result, texel, will be float vectors:
@@ -106,21 +81,27 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef data_ptr,
                           LLVMValueRef texel_out[4])
 {
-   const int dims = texture_dims(bld->static_state->target);
+   const struct lp_sampler_static_state *static_state = bld->static_state;
+   const int dims = texture_dims(static_state->target);
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
    LLVMValueRef i, j;
    LLVMValueRef use_border = NULL;
 
    /* use_border = x < 0 || x >= width || y < 0 || y >= height */
-   if (wrap_mode_uses_border_color(bld->static_state->wrap_s)) {
+   if (lp_sampler_wrap_mode_uses_border_color(static_state->wrap_s,
+                                              static_state->min_img_filter,
+                                              static_state->mag_img_filter)) {
       LLVMValueRef b1, b2;
       b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
       b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
       use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
    }
 
-   if (dims >= 2 && wrap_mode_uses_border_color(bld->static_state->wrap_t)) {
+   if (dims >= 2 &&
+       lp_sampler_wrap_mode_uses_border_color(static_state->wrap_t,
+                                              static_state->min_img_filter,
+                                              static_state->mag_img_filter)) {
       LLVMValueRef b1, b2;
       b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, y, int_coord_bld->zero);
       b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, y, height);
@@ -133,7 +114,10 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       }
    }
 
-   if (dims == 3 && wrap_mode_uses_border_color(bld->static_state->wrap_r)) {
+   if (dims == 3 &&
+       lp_sampler_wrap_mode_uses_border_color(static_state->wrap_r,
+                                              static_state->min_img_filter,
+                                              static_state->mag_img_filter)) {
       LLVMValueRef b1, b2;
       b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, z, int_coord_bld->zero);
       b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, z, depth);

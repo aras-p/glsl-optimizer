@@ -254,6 +254,11 @@ texture_dims(enum pipe_texture_target tex)
 }
 
 
+boolean
+lp_sampler_wrap_mode_uses_border_color(unsigned mode,
+                                       unsigned min_img_filter,
+                                       unsigned mag_img_filter);
+
 /**
  * Derive the sampler static state.
  */
