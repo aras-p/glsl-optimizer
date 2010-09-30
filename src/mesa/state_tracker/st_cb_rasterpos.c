@@ -44,7 +44,6 @@
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_cb_rasterpos.h"
-#include "st_draw.h"
 #include "draw/draw_context.h"
 #include "draw/draw_pipe.h"
 #include "vbo/vbo.h"
