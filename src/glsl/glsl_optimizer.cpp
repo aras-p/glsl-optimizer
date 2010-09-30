@@ -114,11 +114,13 @@ struct glslopt_shader {
 	bool	status;
 };
 
-static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_parse_state* state)
+static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_parse_state* state, void* memctx)
 {
 	#if 0
 	printf("**** %s:\n", name);
 	_mesa_print_ir (ir, state);
+	//char* foobar = _mesa_print_ir_glsl(ir, state, talloc_strdup(memctx, ""), kPrintGlslFragment);
+	//printf(foobar);
 	validate_ir_tree(ir);
 	#endif
 }
@@ -175,24 +177,24 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		bool progress;
 		do {
 			progress = false;
-			debug_print_ir ("Initial", ir, state);
-			progress = do_function_inlining(ir) || progress; debug_print_ir ("After inlining", ir, state);
-			progress = do_dead_functions(ir) || progress; debug_print_ir ("After dead functions", ir, state);
-			progress = do_structure_splitting(ir) || progress; debug_print_ir ("After struct splitting", ir, state);
-			progress = do_if_simplification(ir) || progress; debug_print_ir ("After if simpl", ir, state);
-			progress = do_copy_propagation(ir) || progress; debug_print_ir ("After copy propagation", ir, state);
-			progress = do_dead_code_unlinked(ir) || progress; debug_print_ir ("After dead code unlinked", ir, state);
-			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state);
-			progress = do_tree_grafting(ir) || progress; debug_print_ir ("After tree grafting", ir, state);
-			progress = do_constant_propagation(ir) || progress; debug_print_ir ("After const propagation", ir, state);
-			progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state);
-			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state);
-			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state);
+			debug_print_ir ("Initial", ir, state, ctx->mem_ctx);
+			progress = do_function_inlining(ir) || progress; debug_print_ir ("After inlining", ir, state, ctx->mem_ctx);
+			progress = do_dead_functions(ir) || progress; debug_print_ir ("After dead functions", ir, state, ctx->mem_ctx);
+			progress = do_structure_splitting(ir) || progress; debug_print_ir ("After struct splitting", ir, state, ctx->mem_ctx);
+			progress = do_if_simplification(ir) || progress; debug_print_ir ("After if simpl", ir, state, ctx->mem_ctx);
+			progress = do_copy_propagation(ir) || progress; debug_print_ir ("After copy propagation", ir, state, ctx->mem_ctx);
+			progress = do_dead_code_unlinked(ir) || progress; debug_print_ir ("After dead code unlinked", ir, state, ctx->mem_ctx);
+			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
+			progress = do_tree_grafting(ir) || progress; debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
+			progress = do_constant_propagation(ir) || progress; debug_print_ir ("After const propagation", ir, state, ctx->mem_ctx);
+			progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state, ctx->mem_ctx);
+			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state, ctx->mem_ctx);
+			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state, ctx->mem_ctx);
 			//@TODO progress = do_lower_jumps(ir) || progress;
-			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state);
+			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state, ctx->mem_ctx);
 			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
-			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state);
-			progress = do_noop_swizzle(ir) || progress; debug_print_ir ("After noop swizzle", ir, state);
+			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state, ctx->mem_ctx);
+			progress = do_noop_swizzle(ir) || progress; debug_print_ir ("After noop swizzle", ir, state, ctx->mem_ctx);
 			/*@TODO
 			progress = optimize_redundant_jumps(ir) || progress;
 
