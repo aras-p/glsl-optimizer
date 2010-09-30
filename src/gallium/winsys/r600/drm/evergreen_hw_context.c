@@ -35,6 +35,7 @@
 #include "bof.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
@@ -432,7 +433,7 @@ static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
 		{PKT3_SET_RESOURCE, EVERGREEN_RESOURCE_OFFSET, R_030018_RESOURCE0_WORD6, 0, 0},
 		{PKT3_SET_RESOURCE, EVERGREEN_RESOURCE_OFFSET, R_03001C_RESOURCE0_WORD7, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_resource)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_resource);
 
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_resource[i].offset += offset;
@@ -448,7 +449,7 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 		{PKT3_SET_SAMPLER, EVERGREEN_SAMPLER_OFFSET, R_03C004_SQ_TEX_SAMPLER_WORD1_0, 0, 0},
 		{PKT3_SET_SAMPLER, EVERGREEN_SAMPLER_OFFSET, R_03C008_SQ_TEX_SAMPLER_WORD2_0, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_sampler)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_sampler);
 
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler[i].offset += offset;
@@ -466,7 +467,7 @@ static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 off
 		{PKT3_SET_CONFIG_REG, 0, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE, 0, 0},
 		{PKT3_SET_CONFIG_REG, 0, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_sampler_border)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_sampler_border);
 	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
 	struct r600_range *range;
 	struct r600_block *block;
@@ -510,11 +511,11 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* add blocks */
 	r = r600_context_add_block(ctx, evergreen_config_reg_list,
-				 sizeof(evergreen_config_reg_list)/sizeof(struct r600_reg));
+				   Elements(evergreen_config_reg_list));
 	if (r)
 		goto out_err;
 	r = r600_context_add_block(ctx, evergreen_context_reg_list,
-				 sizeof(evergreen_context_reg_list)/sizeof(struct r600_reg));
+				   Elements(evergreen_context_reg_list));
 	if (r)
 		goto out_err;
 

@@ -35,6 +35,7 @@
 #include "bof.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
@@ -495,7 +496,7 @@ static int r600_state_resource_init(struct r600_context *ctx, u32 offset)
 		{PKT3_SET_RESOURCE, R600_RESOURCE_OFFSET, R_038014_RESOURCE0_WORD5, 0, 0},
 		{PKT3_SET_RESOURCE, R600_RESOURCE_OFFSET, R_038018_RESOURCE0_WORD6, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_resource)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_resource);
 
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_resource[i].offset += offset;
@@ -511,7 +512,7 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 		{PKT3_SET_SAMPLER, R600_SAMPLER_OFFSET, R_03C004_SQ_TEX_SAMPLER_WORD1_0, 0, 0},
 		{PKT3_SET_SAMPLER, R600_SAMPLER_OFFSET, R_03C008_SQ_TEX_SAMPLER_WORD2_0, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_sampler)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_sampler);
 
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler[i].offset += offset;
@@ -528,7 +529,7 @@ static int r600_state_sampler_border_init(struct r600_context *ctx, u32 offset)
 		{PKT3_SET_CONFIG_REG, R600_CONFIG_REG_OFFSET, R_00A408_TD_PS_SAMPLER0_BORDER_BLUE, 0, 0},
 		{PKT3_SET_CONFIG_REG, R600_CONFIG_REG_OFFSET, R_00A40C_TD_PS_SAMPLER0_BORDER_ALPHA, 0, 0},
 	};
-	unsigned nreg = sizeof(r600_shader_sampler_border)/sizeof(struct r600_reg);
+	unsigned nreg = Elements(r600_shader_sampler_border);
 
 	for (int i = 0; i < nreg; i++) {
 		r600_shader_sampler_border[i].offset += offset;
@@ -583,11 +584,11 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* add blocks */
 	r = r600_context_add_block(ctx, r600_config_reg_list,
-				sizeof(r600_config_reg_list)/sizeof(struct r600_reg));
+				   Elements(r600_config_reg_list));
 	if (r)
 		goto out_err;
 	r = r600_context_add_block(ctx, r600_context_reg_list,
-				sizeof(r600_context_reg_list)/sizeof(struct r600_reg));
+				   Elements(r600_context_reg_list));
 	if (r)
 		goto out_err;
 
