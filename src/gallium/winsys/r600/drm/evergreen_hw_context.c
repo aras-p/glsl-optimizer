@@ -467,7 +467,7 @@ static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 off
 		{PKT3_SET_CONFIG_REG, 0, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, 0, 0},
 	};
 	unsigned nreg = sizeof(r600_shader_sampler_border)/sizeof(struct r600_reg);
-	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x10 + 0x40000 + id * 0x1C;
+	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
 	struct r600_range *range;
 	struct r600_block *block;
 	int r;
@@ -665,7 +665,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 
 static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
 {
-	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x10 + 0x40000 + id * 0x1C;
+	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
 	struct r600_range *range;
 	struct r600_block *block;
 
