@@ -33,6 +33,43 @@
 #include "xf86drm.h"
 #include "radeon_drm.h"
 
+static int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
+{
+	struct drm_radeon_gem_mmap args;
+	void *ptr;
+	int r;
+
+	/* Zero out args to make valgrind happy */
+	memset(&args, 0, sizeof(args));
+	args.handle = bo->handle;
+	args.offset = 0;
+	args.size = (uint64_t)bo->size;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_MMAP,
+				&args, sizeof(args));
+	if (r) {
+		fprintf(stderr, "error mapping %p 0x%08X (error = %d)\n",
+			bo, bo->handle, r);
+		return r;
+	}
+	ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, radeon->fd, args.addr_ptr);
+	if (ptr == MAP_FAILED) {
+		fprintf(stderr, "%s failed to map bo\n", __func__);
+		return -errno;
+	}
+	bo->data = ptr;
+
+success:
+	bo->map_count++;
+
+	return 0;
+}
+
+static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
+{
+	munmap(bo->data, bo->size);
+	bo->data = NULL;
+}
+
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			unsigned size, unsigned alignment, void *ptr)
 {
@@ -79,65 +116,23 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			return NULL;
 		}
 	}
+	if (radeon_bo_fixed_map(radeon, bo)) {
+		R600_ERR("failed to map bo\n");
+		radeon_bo_reference(radeon, &bo, NULL);
+		return bo;
+	}
 	if (ptr) {
-		if (radeon_bo_map(radeon, bo)) {
-			fprintf(stderr, "%s failed to copy data into bo\n", __func__);
-			radeon_bo_reference(radeon, &bo, NULL);
-			return bo;
-		}
 		memcpy(bo->data, ptr, size);
-		radeon_bo_unmap(radeon, bo);
 	}
 	return bo;
 }
 
-int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
-{
-	struct drm_radeon_gem_mmap args;
-	void *ptr;
-	int r;
-
-	if (bo->map_count != 0) {
-		goto success;
-	}
-	/* Zero out args to make valgrind happy */
-	memset(&args, 0, sizeof(args));
-	args.handle = bo->handle;
-	args.offset = 0;
-	args.size = (uint64_t)bo->size;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_MMAP,
-				&args, sizeof(args));
-	if (r) {
-		fprintf(stderr, "error mapping %p 0x%08X (error = %d)\n",
-			bo, bo->handle, r);
-		return r;
-	}
-	ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, radeon->fd, args.addr_ptr);
-	if (ptr == MAP_FAILED) {
-		fprintf(stderr, "%s failed to map bo\n", __func__);
-		return -errno;
-	}
-	bo->data = ptr;
-
-success:
-	bo->map_count++;
-
-	return 0;
-}
-
-void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
-{
-	if (--bo->map_count > 0) {
-		return;
-	}
-	munmap(bo->data, bo->size);
-	bo->data = NULL;
-}
 
 static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_gem_close args;
 
+	radeon_bo_fixed_unmap(radeon, bo);
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
 	drmIoctl(radeon->fd, DRM_IOCTL_GEM_CLOSE, &args);

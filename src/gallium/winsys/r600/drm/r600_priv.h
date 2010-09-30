@@ -33,7 +33,6 @@
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 
-
 struct radeon {
 	int				fd;
 	int				refcount;
@@ -83,8 +82,6 @@ struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo *bo);
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			    unsigned size, unsigned alignment, void *ptr);
-int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo);
-void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
@@ -143,6 +140,17 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
+}
+
+static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
+{
+	bo->map_count++;
+}
+
+static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
+{
+	bo->map_count--;
+	assert(bo->map_count >= 0);
 }
 
 #endif
