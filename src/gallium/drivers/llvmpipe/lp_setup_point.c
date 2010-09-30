@@ -33,7 +33,6 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_perf.h"
-#include "lp_setup_context.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
 #include "tgsi/tgsi_scan.h"
