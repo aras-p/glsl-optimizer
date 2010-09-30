@@ -518,10 +518,6 @@ dri2_display_convert_config(struct native_display *ndpy,
    if (!(mode->renderType & GLX_RGBA_BIT) || !mode->rgbMode)
       return FALSE;
 
-   /* skip single-buffered configs */
-   if (!mode->doubleBufferMode)
-      return FALSE;
-
    /* only interested in native renderable configs */
    if (!mode->xRenderable || !mode->drawableType)
       return FALSE;

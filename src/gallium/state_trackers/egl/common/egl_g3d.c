@@ -258,6 +258,10 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    EGLint buffer_mask, api_mask;
    EGLBoolean valid;
 
+   /* skip single-buffered configs */
+   if (!(nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT)))
+      return EGL_FALSE;
+
    buffer_mask = 0x0;
    if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT))
       buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
