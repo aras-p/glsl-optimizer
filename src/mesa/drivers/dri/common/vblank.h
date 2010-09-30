@@ -61,10 +61,6 @@ extern int driWaitForVBlank( __DRIdrawable *priv,
 #include <unistd.h>  /* for usleep() */
 #include <sched.h>   /* for sched_yield() */
 
-#ifdef linux
-#include <sched.h>   /* for sched_yield() */
-#endif
-
 #define DO_USLEEP(nr)							\
    do {								 	\
       if (0) fprintf(stderr, "%s: usleep for %u\n", __FUNCTION__, nr );	\
