@@ -52,7 +52,6 @@
 #include "hash.h"
 #include "image.h"
 #include "light.h"
-#include "dlist.h"
 #include "macros.h"
 #include "queryobj.h"
 #include "teximage.h"

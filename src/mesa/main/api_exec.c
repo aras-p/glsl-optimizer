@@ -91,10 +91,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "viewport.h"
-#if FEATURE_NV_vertex_program
-#include "nvprogram.h"
-#endif
-#if FEATURE_NV_fragment_program
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects

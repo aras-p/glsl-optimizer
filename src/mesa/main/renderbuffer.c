@@ -46,7 +46,6 @@
 #include "fbobject.h"
 #include "formats.h"
 #include "mtypes.h"
-#include "fbobject.h"
 #include "renderbuffer.h"
 
 
