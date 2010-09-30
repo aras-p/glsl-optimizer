@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r600_cmdbuf.h"
 #include "radeon_bocs_wrapper.h"
-#include "radeon_reg.h"
 
 #ifdef HAVE_LIBDRM_RADEON
 #include "radeon_cs_int.h"
