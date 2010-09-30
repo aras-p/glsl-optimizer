@@ -33,7 +33,6 @@
 #include "util/u_inlines.h"
 
 #include "draw/draw_context.h"
-#include "draw/draw_context.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
