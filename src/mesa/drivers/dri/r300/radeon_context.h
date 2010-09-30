@@ -49,8 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "dri_util.h"
 
-#include "radeon_screen.h"
-
 #define FALLBACK( radeon, bit, mode ) fprintf(stderr, "%s:%s\n", __LINE__, __FILE__);
 
 /* TCL fallbacks */
