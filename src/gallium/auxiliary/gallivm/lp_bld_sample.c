@@ -362,9 +362,16 @@ lp_build_minify(struct lp_build_sample_context *bld,
                 LLVMValueRef base_size,
                 LLVMValueRef level)
 {
-   LLVMValueRef size = LLVMBuildLShr(bld->builder, base_size, level, "minify");
-   size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
-   return size;
+   if (level == bld->int_coord_bld.zero) {
+      /* if we're using mipmap level zero, no minification is needed */
+      return base_size;
+   }
+   else {
+      LLVMValueRef size =
+         LLVMBuildLShr(bld->builder, base_size, level, "minify");
+      size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
+      return size;
+   }
 }
 
 
