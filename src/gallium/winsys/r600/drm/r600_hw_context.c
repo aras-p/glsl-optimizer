@@ -134,6 +134,11 @@ static const struct r600_reg r600_config_reg_list[] = {
 	{PKT3_SET_CONFIG_REG, R600_CONFIG_REG_OFFSET, R_009838_DB_WATERMARKS, 0, 0},
 };
 
+static const struct r600_reg r600_ctl_const_list[] = {
+	{PKT3_SET_CTL_CONST, R600_CTL_CONST_OFFSET, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0},
+	{PKT3_SET_CTL_CONST, R600_CTL_CONST_OFFSET, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
+};
+
 static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028350_SX_MISC, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0286C8_SPI_THREAD_GROUPING, 0, 0},
@@ -589,6 +594,10 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		goto out_err;
 	r = r600_context_add_block(ctx, r600_context_reg_list,
 				   Elements(r600_context_reg_list));
+	if (r)
+		goto out_err;
+	r = r600_context_add_block(ctx, r600_ctl_const_list,
+				   Elements(r600_ctl_const_list));
 	if (r)
 		goto out_err;
 

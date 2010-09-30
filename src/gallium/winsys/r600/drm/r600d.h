@@ -2205,4 +2205,7 @@
 #define R_028940_ALU_CONST_CACHE_PS_0                0x00028940
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
 
+#define R_03CFF0_SQ_VTX_BASE_VTX_LOC                 0x03CFF0
+#define R_03CFF4_SQ_VTX_START_INST_LOC               0x03CFF4
+
 #endif

@@ -61,6 +61,11 @@ static const struct r600_reg evergreen_config_reg_list[] = {
 	{PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET, R_00913C_SPI_CONFIG_CNTL_1, 0, 0},
 };
 
+static const struct r600_reg evergreen_ctl_const_list[] = {
+	{PKT3_SET_CTL_CONST, EVERGREEN_CTL_CONST_OFFSET, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0},
+	{PKT3_SET_CTL_CONST, EVERGREEN_CTL_CONST_OFFSET, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
+};
+
 static const struct r600_reg evergreen_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, EVERGREEN_CONTEXT_REG_OFFSET, R_028000_DB_RENDER_CONTROL, 0, 0},
 	{PKT3_SET_CONTEXT_REG, EVERGREEN_CONTEXT_REG_OFFSET, R_028004_DB_COUNT_CONTROL, 0, 0},
@@ -518,6 +523,11 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 				   Elements(evergreen_context_reg_list));
 	if (r)
 		goto out_err;
+	r = r600_context_add_block(ctx, evergreen_ctl_const_list,
+				   Elements(evergreen_ctl_const_list));
+	if (r)
+		goto out_err;
+
 
 	/* PS SAMPLER */
 	for (int j = 0, offset = 0; j < 18; j++, offset += 0xC) {

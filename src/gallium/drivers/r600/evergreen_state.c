@@ -1450,6 +1450,8 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_028400_VGT_MAX_VTX_INDX, draw.max_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw.min_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
 
 	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
 		float offset_units = rctx->rasterizer->offset_units;

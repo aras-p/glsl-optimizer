@@ -40,6 +40,9 @@
 #define EVERGREEN_SAMPLER_OFFSET                    0X0003C000
 #define EVERGREEN_SAMPLER_END                       0X0003CFF0
 
+#define EVERGREEN_CTL_CONST_OFFSET                  0x0003CFF0
+#define EVERGREEN_CTL_CONST_END                     0x0003E200
+
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
 
@@ -1889,5 +1892,8 @@
 #define   C_0085F0_CR2_ACTION_ENA                      0x7FFFFFFF
 #define R_008970_VGT_NUM_INDICES                     0x008970
 #define R_0287F0_VGT_DRAW_INITIATOR                  0x0287F0
+
+#define R_03CFF0_SQ_VTX_BASE_VTX_LOC                    0x03CFF0
+#define R_03CFF4_SQ_VTX_START_INST_LOC                  0x03CFF4
 
 #endif
