@@ -471,8 +471,8 @@ public:
    void emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
-   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf);
-   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf);
+   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate);
+   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
@@ -1226,12 +1226,23 @@ fs_visitor::visit(ir_assignment *ir)
 }
 
 fs_inst *
-fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf)
+fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 {
-   /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
-   int mlen = 3;
+   int mlen;
+   int base_mrf = 2;
+   bool simd16 = false;
+   fs_reg orig_dst;
 
    if (ir->shadow_comparitor) {
+      for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      coordinate));
+	 coordinate.reg_offset++;
+	 mlen++;
+      }
+      /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
+      mlen = 3;
+
       if (ir->op == ir_tex) {
 	 /* There's no plain shadow compare message, so we use shadow
 	  * compare with a bias of 0.0.
@@ -1255,11 +1266,57 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf)
       ir->shadow_comparitor->accept(this);
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
       mlen++;
+   } else if (ir->op == ir_tex) {
+      for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      coordinate));
+	 coordinate.reg_offset++;
+      }
+      /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
+      mlen = 3;
    } else {
-      /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare sampler
+      /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
        */
-      abort();
+      assert(ir->op == ir_txb || ir->op == ir_txl);
+
+      for (mlen = 0; mlen < ir->coordinate->type->vector_elements * 2;) {
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      coordinate));
+	 coordinate.reg_offset++;
+	 mlen++;
+
+	 /* The unused upper half. */
+	 mlen++;
+      }
+
+      /* lod/bias appears after u/v/r. */
+      mlen = 6;
+
+      if (ir->op == ir_txb) {
+	 ir->lod_info.bias->accept(this);
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      this->result));
+	 mlen++;
+      } else {
+	 ir->lod_info.lod->accept(this);
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      this->result));
+	 mlen++;
+      }
+
+      /* The unused upper half. */
+      mlen++;
+
+      /* Now, since we're doing simd16, the return is 2 interleaved
+       * vec4s where the odd-indexed ones are junk. We'll need to move
+       * this weirdness around to the expected layout.
+       */
+      simd16 = true;
+      orig_dst = dst;
+      dst = fs_reg(this, glsl_type::get_array_instance(glsl_type::vec4_type,
+						       2));
+      dst.type = BRW_REGISTER_TYPE_F;
    }
 
    fs_inst *inst = NULL;
@@ -1280,11 +1337,19 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf)
    }
    inst->mlen = mlen;
 
+   if (simd16) {
+      for (int i = 0; i < 4; i++) {
+	 emit(fs_inst(BRW_OPCODE_MOV, orig_dst, dst));
+	 orig_dst.reg_offset++;
+	 dst.reg_offset += 2;
+      }
+   }
+
    return inst;
 }
 
 fs_inst *
-fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf)
+fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 {
    /* gen5's SIMD8 sampler has slots for u, v, r, array index, then
     * optional parameters like shadow comparitor or LOD bias.  If
@@ -1294,7 +1359,14 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf)
     * We don't fill in the unnecessary slots regardless, which may
     * look surprising in the disassembly.
     */
-   int mlen = ir->coordinate->type->vector_elements;
+   int mlen;
+   int base_mrf = 2;
+
+   for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate));
+      coordinate.reg_offset++;
+      mlen++;
+   }
 
    if (ir->shadow_comparitor) {
       mlen = MAX2(mlen, 4);
@@ -1338,9 +1410,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf)
 void
 fs_visitor::visit(ir_texture *ir)
 {
-   int base_mrf = 2;
    fs_inst *inst = NULL;
-   unsigned int mlen = 0;
 
    ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
@@ -1348,20 +1418,15 @@ fs_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
-   for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
-      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate));
-      coordinate.reg_offset++;
-   }
-
    /* Writemasking doesn't eliminate channels on SIMD8 texture
     * samples, so don't worry about them.
     */
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
 
    if (intel->gen < 5) {
-      inst = emit_texture_gen4(ir, dst, base_mrf);
+      inst = emit_texture_gen4(ir, dst, coordinate);
    } else {
-      inst = emit_texture_gen5(ir, dst, base_mrf);
+      inst = emit_texture_gen5(ir, dst, coordinate);
    }
 
    inst->sampler =
@@ -1919,6 +1984,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
    int msg_type = -1;
    int rlen = 4;
+   uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
 
    if (intel->gen == 5) {
       switch (inst->opcode) {
@@ -1943,23 +2009,31 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 /* Note that G45 and older determines shadow compare and dispatch width
 	  * from message length for most messages.
 	  */
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
+	    assert(inst->mlen == 5);
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+	    assert(inst->mlen <= 6);
 	 }
+	 break;
       case FS_OPCODE_TXB:
 	 if (inst->shadow_compare) {
-	    assert(!"FINISHME: shadow compare with bias.");
-	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
+	    assert(inst->mlen == 5);
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 } else {
+	    assert(inst->mlen == 8);
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
-	    rlen = 8;
+	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
 	 break;
       }
    }
    assert(msg_type != -1);
+
+   if (simd_mode == BRW_SAMPLER_SIMD_MODE_SIMD16) {
+      rlen = 8;
+      dst = vec16(dst);
+   }
 
    /* g0 header. */
    src.nr--;
@@ -1976,7 +2050,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      inst->mlen + 1,
 	      0,
 	      1,
-	      BRW_SAMPLER_SIMD_MODE_SIMD8);
+	      simd_mode);
 }
 
 
