@@ -786,6 +786,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	     * we'd fall over later trying to find the setup data.
 	     */
 	    attr.reg_offset += type->vector_elements;
+	    location++;
 	    continue;
 	 }
 
