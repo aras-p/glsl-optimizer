@@ -2293,6 +2293,11 @@ fs_visitor::assign_regs()
 	    break;
       }
       if (i == class_count) {
+	 if (this->virtual_grf_sizes[r] >= base_reg_count) {
+	    fprintf(stderr, "Object too large to register allocate.\n");
+	    this->fail = true;
+	 }
+
 	 class_sizes[class_count++] = this->virtual_grf_sizes[r];
       }
    }
