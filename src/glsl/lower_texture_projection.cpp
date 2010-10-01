@@ -36,7 +36,6 @@
  */
 
 #include "ir.h"
-#include "ir_rvalue_visitor.h"
 
 class lower_texture_projection_visitor : public ir_hierarchical_visitor {
 public:
