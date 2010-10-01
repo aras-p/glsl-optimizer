@@ -101,6 +101,11 @@ struct r600_bc_vtx {
 	unsigned			dst_sel_y;
 	unsigned			dst_sel_z;
 	unsigned			dst_sel_w;
+	unsigned			use_const_fields;
+	unsigned			data_format;
+	unsigned			num_format_all;
+	unsigned			format_comp_all;
+	unsigned			srf_mode_all;
 };
 
 struct r600_bc_output {

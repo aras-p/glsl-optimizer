@@ -439,6 +439,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			vtx.dst_sel_y = 1;
 			vtx.dst_sel_z = 2;
 			vtx.dst_sel_w = 3;
+			vtx.use_const_fields = 1;
 			r = r600_bc_add_vtx(ctx->bc, &vtx);
 			if (r)
 				return r;

@@ -601,7 +601,11 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_DST_SEL_Y(vtx->dst_sel_y) |
 				S_SQ_VTX_WORD1_DST_SEL_Z(vtx->dst_sel_z) |
 				S_SQ_VTX_WORD1_DST_SEL_W(vtx->dst_sel_w) |
-				S_SQ_VTX_WORD1_USE_CONST_FIELDS(1) |
+				S_SQ_VTX_WORD1_USE_CONST_FIELDS(vtx->use_const_fields) |
+				S_SQ_VTX_WORD1_DATA_FORMAT(vtx->data_format) |
+				S_SQ_VTX_WORD1_NUM_FORMAT_ALL(vtx->num_format_all) |
+				S_SQ_VTX_WORD1_FORMAT_COMP_ALL(vtx->format_comp_all) |
+				S_SQ_VTX_WORD1_SRF_MODE_ALL(vtx->srf_mode_all) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id++] = S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	bc->bytecode[id++] = 0;
