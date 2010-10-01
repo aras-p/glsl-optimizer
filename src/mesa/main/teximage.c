@@ -486,13 +486,13 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.EXT_texture_compression_rgtc) {
+   if (ctx->Extensions.ARB_texture_compression_rgtc) {
       switch (internalFormat) {
-      case GL_COMPRESSED_RED_RGTC1_EXT:
-      case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
+      case GL_COMPRESSED_RED_RGTC1:
+      case GL_COMPRESSED_SIGNED_RED_RGTC1:
          return GL_RED;
-      case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:
-      case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
+      case GL_COMPRESSED_RG_RGTC2:
+      case GL_COMPRESSED_SIGNED_RG_RGTC2:
          return GL_RG;
       default:
          ; /* fallthrough */

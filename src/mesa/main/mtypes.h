@@ -2594,6 +2594,7 @@ struct gl_extensions
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_buffer_object;
    GLboolean ARB_texture_compression;
+   GLboolean ARB_texture_compression_rgtc;
    GLboolean ARB_texture_cube_map;
    GLboolean ARB_texture_env_combine;
    GLboolean ARB_texture_env_crossbar;
@@ -2656,7 +2657,6 @@ struct gl_extensions
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_array;
    GLboolean EXT_texture_compression_s3tc;
-   GLboolean EXT_texture_compression_rgtc;
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
    GLboolean EXT_texture_env_dot3;
