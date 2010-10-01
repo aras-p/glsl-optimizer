@@ -1445,6 +1445,11 @@ fs_visitor::visit(ir_swizzle *ir)
    ir->val->accept(this);
    fs_reg val = this->result;
 
+   if (ir->type->vector_elements == 1) {
+      this->result.reg_offset += ir->mask.x;
+      return;
+   }
+
    fs_reg result = fs_reg(this, ir->type);
    this->result = result;
 
