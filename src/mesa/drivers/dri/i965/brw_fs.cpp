@@ -1238,7 +1238,6 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
 		      coordinate));
 	 coordinate.reg_offset++;
-	 mlen++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen = 3;
@@ -1365,7 +1364,6 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate));
       coordinate.reg_offset++;
-      mlen++;
    }
 
    if (ir->shadow_comparitor) {
