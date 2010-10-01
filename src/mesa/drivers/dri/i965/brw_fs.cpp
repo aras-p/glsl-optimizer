@@ -138,6 +138,7 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 do_div_to_mul_rcp(shader->ir);
 	 do_sub_to_add_neg(shader->ir);
 	 do_explog_to_explog2(shader->ir);
+	 do_lower_texture_projection(shader->ir);
 
 	 do {
 	    progress = false;
@@ -1229,22 +1230,8 @@ fs_visitor::visit(ir_texture *ir)
    ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
 
-   if (ir->projector) {
-      fs_reg inv_proj = fs_reg(this, glsl_type::float_type);
-
-      ir->projector->accept(this);
-      emit(fs_inst(FS_OPCODE_RCP, inv_proj, this->result));
-
-      fs_reg proj_coordinate = fs_reg(this, ir->coordinate->type);
-      for (unsigned int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(fs_inst(BRW_OPCODE_MUL, proj_coordinate, coordinate, inv_proj));
-	 coordinate.reg_offset++;
-	 proj_coordinate.reg_offset++;
-      }
-      proj_coordinate.reg_offset = 0;
-
-      coordinate = proj_coordinate;
-   }
+   /* Should be lowered by do_lower_texture_projection */
+   assert(!ir->projector);
 
    for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate));
