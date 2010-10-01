@@ -151,6 +151,7 @@ void evergreen_init_config(struct r600_pipe_context *rctx);
 void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
@@ -190,7 +191,7 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 					struct pipe_resource **index_buffer,
 					unsigned *index_size,
 					unsigned *start, unsigned count);
-
+void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 

@@ -49,44 +49,6 @@
 /*
  * pipe_context
  */
-static void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
-{
-	struct pipe_depth_stencil_alpha_state dsa;
-	struct r600_pipe_state *rstate;
-	boolean quirk = false;
-
-	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
-		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
-		quirk = true;
-
-	memset(&dsa, 0, sizeof(dsa));
-
-	if (quirk) {
-		dsa.depth.enabled = 1;
-		dsa.depth.func = PIPE_FUNC_LEQUAL;
-		dsa.stencil[0].enabled = 1;
-		dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-		dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_KEEP;
-		dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_INCR;
-		dsa.stencil[0].writemask = 0xff;
-	}
-
-	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	r600_pipe_state_add_reg(rstate,
-				R_02880C_DB_SHADER_CONTROL,
-				0x0,
-				S_02880C_DUAL_EXPORT_ENABLE(1), NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028D0C_DB_RENDER_CONTROL,
-				S_028D0C_DEPTH_COPY_ENABLE(1) |
-				S_028D0C_STENCIL_COPY_ENABLE(1) |
-				S_028D0C_COPY_CENTROID(1),
-				S_028D0C_DEPTH_COPY_ENABLE(1) |
-				S_028D0C_STENCIL_COPY_ENABLE(1) |
-				S_028D0C_COPY_CENTROID(1), NULL);
-	return rstate;
-}
-
 static void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
@@ -132,6 +94,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	enum chip_class class;
 
 	if (rctx == NULL)
 		return NULL;
@@ -210,7 +173,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
+	class = r600_get_family_class(rctx->radeon);
+	if (class == R600 || class == R700)
+		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
+	else
+		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
 	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth;
 

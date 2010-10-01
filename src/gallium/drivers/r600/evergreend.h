@@ -1424,8 +1424,16 @@
 #define R_008C0C_SQ_THREAD_RESOURCE_MGMT             0x00008C0C
 #define R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ        0x00008D8C
 #define R_028000_DB_RENDER_CONTROL                   0x00028000
+#define   S_028000_DEPTH_CLEAR_ENABLE(x)               (((x) & 0x1) << 0)
+#define   S_028000_STENCIL_CLEAR_ENABLE(x)             (((x) & 0x1) << 1)
+#define   S_028000_DEPTH_COPY_ENABLE(x)                (((x) & 0x1) << 2)
+#define   S_028000_STENCIL_COPY_ENABLE(x)              (((x) & 0x1) << 3)
+#define   S_028000_RESUMMARIZE_ENABLE(x)               (((x) & 0x1) << 4)
 #define   S_028000_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
 #define   S_028000_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028000_COPY_CENTROID(x)                    (((x) & 0x1) << 7)
+#define   S_028000_COPY_SAMPLE(x)                      (((x) & 0x7) << 8)
+#define   S_028000_COLOR_DISABLE(x)                    (((x) & 0x1) << 12)
 #define R_028004_DB_COUNT_CONTROL                    0x00028004
 #define   S_028004_ZPASS_INCREMENT_DISABLE        (((x) & 0x1) << 0)
 #define   S_028004_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 1)
