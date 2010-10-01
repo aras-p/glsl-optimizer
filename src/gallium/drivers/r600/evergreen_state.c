@@ -1341,14 +1341,13 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_pipe_state vgt;
 	struct r600_drawl draw;
 
-	assert(info->index_bias == 0);
-
 	if (rctx->any_user_vbs) {
 		r600_upload_user_buffers(rctx);
 		rctx->any_user_vbs = FALSE;
 	}
 
 	memset(&draw, 0, sizeof(struct r600_drawl));
+	draw.ctx = ctx;
 	draw.mode = info->mode;
 	draw.start = info->start;
 	draw.count = info->count;
@@ -1364,7 +1363,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
-		draw.index_buffer = rctx->index_buffer.buffer;
+		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
 		draw.index_buffer_offset = draw.start * draw.index_size;
 		draw.start = 0;
 		r600_upload_index_buffer(rctx, &draw);
@@ -1505,6 +1504,8 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rdraw.indices_bo_offset = draw.index_buffer_offset;
 	}
 	evergreen_context_draw(&rctx->ctx, &rdraw);
+
+	pipe_resource_reference(&draw.index_buffer, NULL);
 }
 
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
