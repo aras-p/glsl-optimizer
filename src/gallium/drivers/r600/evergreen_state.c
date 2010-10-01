@@ -1650,23 +1650,8 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
 	struct r600_pipe_state *rstate;
-	boolean quirk = false;
-
-	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
-		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
-		quirk = true;
 
 	memset(&dsa, 0, sizeof(dsa));
-
-	if (quirk) {
-		dsa.depth.enabled = 1;
-		dsa.depth.func = PIPE_FUNC_LEQUAL;
-		dsa.stencil[0].enabled = 1;
-		dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-		dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_KEEP;
-		dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_INCR;
-		dsa.stencil[0].writemask = 0xff;
-	}
 
 	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
 	r600_pipe_state_add_reg(rstate,
