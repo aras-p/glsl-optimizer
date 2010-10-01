@@ -695,6 +695,10 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SLUMINANCE_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
 #endif /* FEATURE_EXT_texture_sRGB */
+      case GL_COMPRESSED_RED_RGTC1:
+      case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      case GL_COMPRESSED_RG_RGTC2:
+      case GL_COMPRESSED_SIGNED_RG_RGTC2:
          return GL_TRUE;
       /* signed texture formats */
       case GL_RGBA_SNORM:
@@ -887,6 +891,11 @@ _mesa_is_compressed_format(GLcontext *ctx, GLenum format)
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
       return ctx->Extensions.TDFX_texture_compression_FXT1;
+   case GL_COMPRESSED_RED_RGTC1:
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+   case GL_COMPRESSED_RG_RGTC2:
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      return ctx->Extensions.ARB_texture_compression_rgtc;
    default:
       return GL_FALSE;
    }
