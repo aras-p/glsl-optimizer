@@ -469,6 +469,8 @@ public:
    void emit_fragcoord_interpolation(ir_variable *ir);
    void emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup();
+   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf);
+   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf);
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
@@ -1220,6 +1222,116 @@ fs_visitor::visit(ir_assignment *ir)
    }
 }
 
+fs_inst *
+fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf)
+{
+   /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
+   int mlen = 3;
+
+   if (ir->shadow_comparitor) {
+      if (ir->op == ir_tex) {
+	 /* There's no plain shadow compare message, so we use shadow
+	  * compare with a bias of 0.0.
+	  */
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      fs_reg(0.0f)));
+	 mlen++;
+      } else if (ir->op == ir_txb) {
+	 ir->lod_info.bias->accept(this);
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      this->result));
+	 mlen++;
+      } else {
+	 assert(ir->op == ir_txl);
+	 ir->lod_info.lod->accept(this);
+	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+		      this->result));
+	 mlen++;
+      }
+
+      ir->shadow_comparitor->accept(this);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+   } else {
+      /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare sampler
+       * instructions.  We'll need to do SIMD16 here.
+       */
+      abort();
+   }
+
+   fs_inst *inst = NULL;
+   switch (ir->op) {
+   case ir_tex:
+      inst = emit(fs_inst(FS_OPCODE_TEX, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txb:
+      inst = emit(fs_inst(FS_OPCODE_TXB, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txl:
+      inst = emit(fs_inst(FS_OPCODE_TXL, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+   inst->mlen = mlen;
+
+   return inst;
+}
+
+fs_inst *
+fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf)
+{
+   /* gen5's SIMD8 sampler has slots for u, v, r, array index, then
+    * optional parameters like shadow comparitor or LOD bias.  If
+    * optional parameters aren't present, those base slots are
+    * optional and don't need to be included in the message.
+    *
+    * We don't fill in the unnecessary slots regardless, which may
+    * look surprising in the disassembly.
+    */
+   int mlen = ir->coordinate->type->vector_elements;
+
+   if (ir->shadow_comparitor) {
+      mlen = MAX2(mlen, 4);
+
+      ir->shadow_comparitor->accept(this);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+   }
+
+   fs_inst *inst = NULL;
+   switch (ir->op) {
+   case ir_tex:
+      inst = emit(fs_inst(FS_OPCODE_TEX, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txb:
+      ir->lod_info.bias->accept(this);
+      mlen = MAX2(mlen, 4);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+
+      inst = emit(fs_inst(FS_OPCODE_TXB, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txl:
+      ir->lod_info.lod->accept(this);
+      mlen = MAX2(mlen, 4);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+
+      inst = emit(fs_inst(FS_OPCODE_TXL, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+   inst->mlen = mlen;
+
+   return inst;
+}
+
 void
 fs_visitor::visit(ir_texture *ir)
 {
@@ -1238,46 +1350,15 @@ fs_visitor::visit(ir_texture *ir)
       coordinate.reg_offset++;
    }
 
-   /* Pre-Ironlake, the 8-wide sampler always took u,v,r. */
-   if (intel->gen < 5)
-      mlen = 3;
-
-   if (ir->shadow_comparitor) {
-      /* For shadow comparisons, we have to supply u,v,r. */
-      mlen = 3;
-
-      ir->shadow_comparitor->accept(this);
-      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
-      mlen++;
-   }
-
-   /* Do we ever want to handle writemasking on texture samples?  Is it
-    * performance relevant?
+   /* Writemasking doesn't eliminate channels on SIMD8 texture
+    * samples, so don't worry about them.
     */
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
 
-   switch (ir->op) {
-   case ir_tex:
-      inst = emit(fs_inst(FS_OPCODE_TEX, dst, fs_reg(MRF, base_mrf)));
-      break;
-   case ir_txb:
-      ir->lod_info.bias->accept(this);
-      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
-      mlen++;
-
-      inst = emit(fs_inst(FS_OPCODE_TXB, dst, fs_reg(MRF, base_mrf)));
-      break;
-   case ir_txl:
-      ir->lod_info.lod->accept(this);
-      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
-      mlen++;
-
-      inst = emit(fs_inst(FS_OPCODE_TXL, dst, fs_reg(MRF, base_mrf)));
-      break;
-   case ir_txd:
-   case ir_txf:
-      assert(!"GLSL 1.30 features unsupported");
-      break;
+   if (intel->gen < 5) {
+      inst = emit_texture_gen4(ir, dst, base_mrf);
+   } else {
+      inst = emit_texture_gen5(ir, dst, base_mrf);
    }
 
    inst->sampler =
@@ -1290,7 +1371,6 @@ fs_visitor::visit(ir_texture *ir)
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
-   inst->mlen = mlen;
 }
 
 void
