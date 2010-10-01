@@ -275,7 +275,6 @@ static void evergreenSetupVTXConstants(GLcontext  * ctx,
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
-    unsigned int nVBsize;
     BATCH_LOCALS(&context->radeon);
 
     unsigned int uSQ_VTX_CONSTANT_WORD0_0;
@@ -289,21 +288,11 @@ static void evergreenSetupVTXConstants(GLcontext  * ctx,
 
 	r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
-    if(0 == pStreamDesc->stride)
-    {
-        nVBsize = paos->count * pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-    else
-    {
-        nVBsize = (paos->count - 1) * pStreamDesc->stride
-                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-
     //uSQ_VTX_CONSTANT_WORD0_0
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
 
     //uSQ_VTX_CONSTANT_WORD1_0
-    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize;
+    uSQ_VTX_CONSTANT_WORD1_0 = paos->bo->size - paos->offset - 1;
         
     //uSQ_VTX_CONSTANT_WORD2_0
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 
@@ -391,17 +380,6 @@ static void evergreenSendVTX(GLcontext *ctx, struct radeon_state_atom *atom)
     if (context->radeon.tcl.aos_count == 0)
 	    return;
 
-    BEGIN_BATCH_NO_AUTOSTATE(6);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-    END_BATCH();
-    COMMIT_BATCH();
-    
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
 	    if(vp->mesa_program->Base.InputsRead & (1 << i))
 	    {
@@ -410,7 +388,7 @@ static void evergreenSendVTX(GLcontext *ctx, struct radeon_state_atom *atom)
 				      &(context->stream_desc[j]));
 		    j++;
 	    }
-    } 
+    }
 }
 static void evergreenSendPA(GLcontext *ctx, struct radeon_state_atom *atom)
 {
@@ -1522,7 +1500,7 @@ void evergreenInitAtoms(context_t *context)
     context->radeon.hw.atomlist.name = "atom-list";
 
     EVERGREEN_ALLOC_STATE(init, always, 19, evergreenSendSQConfig);
-    EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (6 + (VERT_ATTRIB_MAX * 12)), evergreenSendVTX);
+    EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (VERT_ATTRIB_MAX * 12), evergreenSendVTX);
     EVERGREEN_ALLOC_STATE(pa,        always,        124, evergreenSendPA);
     EVERGREEN_ALLOC_STATE(tp,        always,        0,   evergreenSendTP);
     EVERGREEN_ALLOC_STATE(sq,        always,        86,  evergreenSendSQ); /* 85 */

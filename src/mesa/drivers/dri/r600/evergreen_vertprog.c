@@ -459,11 +459,11 @@ static void evergreenTranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, co
 	stride = (input->StrideB == 0) ? evergreen_getTypeSize(input->Type) * input->Size 
                                    : input->StrideB;
 
-    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
+    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT
 #if MESA_BIG_ENDIAN
-        evergreen_getTypeSize(input->Type) != 4 ||
+        || evergreen_getTypeSize(input->Type) != 4
 #endif
-        stride < 4) 
+        )
     {
         pStreamDesc->type = GL_FLOAT;
 
