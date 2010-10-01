@@ -58,7 +58,7 @@ struct r600_bc_alu {
 	unsigned			bank_swizzle;
 	unsigned			bank_swizzle_force;
 	u32				value[4];
-	int hw_gpr[NUM_OF_CYCLES][NUM_OF_COMPONENTS];
+	int				hw_gpr[NUM_OF_CYCLES][NUM_OF_COMPONENTS];
 };
 
 struct r600_bc_tex {

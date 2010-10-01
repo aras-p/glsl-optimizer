@@ -43,23 +43,23 @@ u32 r600_domain_from_usage(unsigned usage)
 	u32 domain = RADEON_GEM_DOMAIN_GTT;
 
 	if (usage & PIPE_BIND_RENDER_TARGET) {
-	    domain |= RADEON_GEM_DOMAIN_VRAM;
+		domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
 	if (usage & PIPE_BIND_DEPTH_STENCIL) {
-	    domain |= RADEON_GEM_DOMAIN_VRAM;
+		domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
 	if (usage & PIPE_BIND_SAMPLER_VIEW) {
-	    domain |= RADEON_GEM_DOMAIN_VRAM;
+		domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
 	/* also need BIND_BLIT_SOURCE/DESTINATION ? */
 	if (usage & PIPE_BIND_VERTEX_BUFFER) {
-	    domain |= RADEON_GEM_DOMAIN_GTT;
+		domain |= RADEON_GEM_DOMAIN_GTT;
 	}
 	if (usage & PIPE_BIND_INDEX_BUFFER) {
-	    domain |= RADEON_GEM_DOMAIN_GTT;
+		domain |= RADEON_GEM_DOMAIN_GTT;
 	}
 	if (usage & PIPE_BIND_CONSTANT_BUFFER) {
-	    domain |= RADEON_GEM_DOMAIN_VRAM;
+		domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
 
 	return domain;
