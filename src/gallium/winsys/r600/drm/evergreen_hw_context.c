@@ -493,6 +493,22 @@ static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 off
 	return 0;
 }
 
+static int evergreen_loop_const_init(struct r600_context *ctx, u32 offset)
+{
+	unsigned nreg = 32;
+	struct r600_reg r600_loop_consts[32];
+	int i;
+
+	for (i = 0; i < nreg; i++) {
+		r600_loop_consts[i].opcode = PKT3_SET_LOOP_CONST;
+		r600_loop_consts[i].offset_base = EVERGREEN_LOOP_CONST_OFFSET;
+		r600_loop_consts[i].offset = EVERGREEN_LOOP_CONST_OFFSET + ((offset + i) * 4);
+		r600_loop_consts[i].need_bo = 0;
+		r600_loop_consts[i].flush_flags = 0;
+	}
+	return r600_context_add_block(ctx, r600_loop_consts, nreg);
+}
+
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 {
 	int r;
@@ -565,6 +581,11 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
+
+	/* PS loop const */
+	evergreen_loop_const_init(ctx, 0);
+	/* VS loop const */
+	evergreen_loop_const_init(ctx, 32);
 
 	/* setup block table */
 	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));

@@ -81,6 +81,11 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 	r600_pipe_state_add_reg(rstate,
 			R_028894_SQ_PGM_START_FS,
 			0x00000000, 0xFFFFFFFF, shader->bo);
+
+	r600_pipe_state_add_reg(rstate,
+				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
+				0xFFFFFFFF, NULL);
+
 }
 
 int r600_find_vs_semantic_index(struct r600_shader *vs,
@@ -182,6 +187,9 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 					S_02880C_KILL_ENABLE(1),
 					S_02880C_KILL_ENABLE(1), NULL);
 	}
+	r600_pipe_state_add_reg(rstate,
+				R_03E200_SQ_LOOP_CONST_0, 0x01000FFF,
+				0xFFFFFFFF, NULL);
 }
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)

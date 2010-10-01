@@ -1593,6 +1593,10 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 					S_02880C_KILL_ENABLE(1),
 					S_02880C_KILL_ENABLE(1), NULL);
 	}
+
+	r600_pipe_state_add_reg(rstate,
+				R_03A200_SQ_LOOP_CONST_0, 0x01000FFF,
+				0xFFFFFFFF, NULL);
 }
 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -1640,6 +1644,10 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 			R_0288A4_SQ_PGM_START_FS,
 			0x00000000, 0xFFFFFFFF, shader->bo);
+
+	r600_pipe_state_add_reg(rstate,
+				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
+				0xFFFFFFFF, NULL);
 }
 
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)

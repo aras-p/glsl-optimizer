@@ -1910,4 +1910,5 @@
 #define R_03CFF0_SQ_VTX_BASE_VTX_LOC                    0x03CFF0
 #define R_03CFF4_SQ_VTX_START_INST_LOC                  0x03CFF4
 
+#define R_03A200_SQ_LOOP_CONST_0                     0x3A200
 #endif

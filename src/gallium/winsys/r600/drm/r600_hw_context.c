@@ -542,6 +542,22 @@ static int r600_state_sampler_border_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_shader_sampler_border, nreg);
 }
 
+static int r600_loop_const_init(struct r600_context *ctx, u32 offset)
+{
+	unsigned nreg = 32;
+	struct r600_reg r600_loop_consts[32];
+	int i;
+
+	for (i = 0; i < nreg; i++) {
+		r600_loop_consts[i].opcode = PKT3_SET_LOOP_CONST;
+		r600_loop_consts[i].offset_base = R600_LOOP_CONST_OFFSET;
+		r600_loop_consts[i].offset = R600_LOOP_CONST_OFFSET + ((offset + i) * 4);
+		r600_loop_consts[i].need_bo = 0;
+		r600_loop_consts[i].flush_flags = 0;
+	}
+	return r600_context_add_block(ctx, r600_loop_consts, nreg);
+}
+
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -638,6 +654,11 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
+
+	/* PS loop const */
+	r600_loop_const_init(ctx, 0);
+	/* VS loop const */
+	r600_loop_const_init(ctx, 32);
 
 	/* setup block table */
 	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
