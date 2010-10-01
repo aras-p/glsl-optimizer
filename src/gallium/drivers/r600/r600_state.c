@@ -52,7 +52,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)draw->ctx;
 	struct r600_pipe_state *rstate;
 	struct r600_resource *rbuffer;
-	unsigned i, j, offset, format, prim;
+	unsigned i, j, offset, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
 	struct pipe_vertex_buffer *vertex_buffer;
 	struct r600_draw rdraw;
@@ -86,27 +86,24 @@ static void r600_draw_common(struct r600_drawl *draw)
 		return;
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
-		unsigned num_format = 0, format_comp = 0;
+		uint32_t word2, format;
 
 		rstate = &rctx->vs_resource[i];
+		rstate->id = R600_PIPE_STATE_RESOURCE;
+		rstate->nregs = 0;
+
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
 		vertex_buffer = &rctx->vertex_buffer[j];
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
-		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
 
-		r600_translate_vertex_num_format(rctx->vertex_elements->elements[i].src_format, &num_format, &format_comp);
+		format = r600_translate_vertex_data_type(rctx->vertex_elements->elements[i].src_format);
+
+		word2 = format | S_038008_STRIDE(vertex_buffer->stride);
+
 		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate,
-					R_038008_RESOURCE0_WORD2,
-					S_038008_STRIDE(vertex_buffer->stride) |
-					S_038008_DATA_FORMAT(format) |
-					S_038008_NUM_FORMAT_ALL(num_format) |
-					S_038008_FORMAT_COMP_ALL(format_comp),
-					0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2, word2, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);

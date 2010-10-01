@@ -464,29 +464,6 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	}
 }
 
-static INLINE void r600_translate_vertex_num_format(enum pipe_format format, uint32_t *num_format_p,
-						    uint32_t *format_comp_p)
-{
-	uint32_t num_format = 0, format_comp = 0;
-	switch (format) {
-	case PIPE_FORMAT_R16G16B16A16_SSCALED:
-	case PIPE_FORMAT_R16G16B16_SSCALED:
-	case PIPE_FORMAT_R16G16_SSCALED:
-	case PIPE_FORMAT_R32G32_SSCALED:
-		format_comp = 1;
-	case PIPE_FORMAT_R16G16B16A16_USCALED:
-	case PIPE_FORMAT_R16G16B16_USCALED:
-	case PIPE_FORMAT_R16G16_USCALED:
-	case PIPE_FORMAT_R32G32_USCALED:
-		num_format = V_038008_SQ_NUM_FORMAT_SCALED;
-		break;
-	default:
-		break;
-	}
-	*num_format_p = num_format;
-	*format_comp_p = format_comp;
-}
-
 static INLINE boolean r600_is_sampler_format_supported(enum pipe_format format)
 {
 	return r600_translate_texformat(format, NULL, NULL, NULL) != ~0;
@@ -506,6 +483,141 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
 {
 	return r600_translate_colorformat(format) != ~0;
+}
+
+static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
+{
+	uint32_t result = 0;
+	const struct util_format_description *desc;
+	unsigned i;
+
+	desc = util_format_description(format);
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
+		goto out_unknown;
+	}
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	switch (desc->channel[i].type) {
+		/* Half-floats, floats, doubles */
+        case UTIL_FORMAT_TYPE_FLOAT:
+		switch (desc->channel[i].size) {
+                case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result = V_038008_FMT_16_FLOAT;
+				break;
+			case 2:
+				result = V_038008_FMT_16_16_FLOAT;
+				break;
+			case 3:
+				result = V_038008_FMT_16_16_16_FLOAT;
+				break;
+			case 4:
+				result = V_038008_FMT_16_16_16_16_FLOAT;
+				break;
+			}
+			break;
+                case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result = V_038008_FMT_32_FLOAT;
+				break;
+			case 2:
+				result = V_038008_FMT_32_32_FLOAT;
+				break;
+			case 3:
+				result = V_038008_FMT_32_32_32_FLOAT;
+				break;
+			case 4:
+				result = V_038008_FMT_32_32_32_32_FLOAT;
+				break;
+			}
+			break;
+                default:
+			goto out_unknown;
+		}
+		break;
+		/* Unsigned ints */
+        case UTIL_FORMAT_TYPE_UNSIGNED:
+		/* Signed ints */
+        case UTIL_FORMAT_TYPE_SIGNED:
+		switch (desc->channel[i].size) {
+                case 8:
+			switch (desc->nr_channels) {
+			case 1:
+				result = V_038008_FMT_8;
+				break;
+			case 2:
+				result = V_038008_FMT_8_8;
+				break;
+			case 3:
+			//	result = V_038008_FMT_8_8_8; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				result = V_038008_FMT_8_8_8_8;
+				break;
+			}
+			break;
+                case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result = V_038008_FMT_16;
+				break;
+			case 2:
+				result = V_038008_FMT_16_16;
+				break;
+			case 3:
+			//	result = V_038008_FMT_16_16_16; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				result = V_038008_FMT_16_16_16_16;
+				break;
+			}
+			break;
+                case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result = V_038008_FMT_32;
+				break;
+			case 2:
+				result = V_038008_FMT_32_32;
+				break;
+			case 3:
+				result = V_038008_FMT_32_32_32;
+				break;
+			case 4:
+				result = V_038008_FMT_32_32_32_32;
+				break;
+			}
+			break;
+                default:
+			goto out_unknown;
+		}
+		break;
+        default:
+		goto out_unknown;
+	}
+	
+	result = S_038008_DATA_FORMAT(result);
+
+	if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+		result |= S_038008_FORMAT_COMP_ALL(1);
+	}
+	if (desc->channel[i].normalized) {
+		result |= S_038008_NUM_FORMAT_ALL(0);
+	} else {
+		result |= S_038008_NUM_FORMAT_ALL(2);
+	}
+	return result;
+out_unknown:
+	R600_ERR("unsupported vertex format %s\n", util_format_name(format));
+	return ~0;
 }
 
 #endif
