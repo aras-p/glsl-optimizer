@@ -1740,7 +1740,7 @@
 #define R_028CA8_CB_COLOR1_VIEW                      0x00028CA8
 #define R_028CAC_CB_COLOR1_INFO                      0x00028CAC
 #define R_028CB0_CB_COLOR1_ATTRIB                    0x00028CB0
-#define R_028CB8_CB_COLOR1_DIM                       0x00028CB8
+#define R_028CB4_CB_COLOR1_DIM                       0x00028CB4
 #define R_028CD8_CB_COLOR2_BASE                      0x00028CD8
 #define R_028CDC_CB_COLOR2_PITCH                     0x00028CDC
 #define R_028CE0_CB_COLOR2_SLICE                     0x00028CE0
