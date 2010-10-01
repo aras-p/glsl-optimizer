@@ -1749,8 +1749,14 @@ fs_visitor::emit_interpolation_setup_gen4()
 		fs_reg(brw_imm_v(0x11001100))));
 
    this->current_annotation = "compute pixel deltas from v0";
-   this->delta_x = fs_reg(this, glsl_type::float_type);
-   this->delta_y = fs_reg(this, glsl_type::float_type);
+   if (brw->has_pln) {
+      this->delta_x = fs_reg(this, glsl_type::vec2_type);
+      this->delta_y = this->delta_x;
+      this->delta_y.reg_offset++;
+   } else {
+      this->delta_x = fs_reg(this, glsl_type::float_type);
+      this->delta_y = fs_reg(this, glsl_type::float_type);
+   }
    emit(fs_inst(BRW_OPCODE_ADD,
 		this->delta_x,
 		this->pixel_x,
@@ -2133,14 +2139,6 @@ fs_visitor::assign_curb_setup()
    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
 
-   if (intel->gen == 5 && (c->prog_data.first_curbe_grf +
-			   c->prog_data.curb_read_length) & 1) {
-      /* Align the start of the interpolation coefficients so that we can use
-       * the PLN instruction.
-       */
-      c->prog_data.first_curbe_grf++;
-   }
-
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -2263,6 +2261,7 @@ fs_visitor::assign_regs()
    int base_reg_count = BRW_MAX_GRF - this->first_non_payload_grf;
    int class_sizes[base_reg_count];
    int class_count = 0;
+   int aligned_pair_class = -1;
 
    calculate_live_intervals();
 
@@ -2275,6 +2274,12 @@ fs_visitor::assign_regs()
     * time.
     */
    class_sizes[class_count++] = 1;
+   if (brw->has_pln && intel->gen < 6) {
+      /* Always set up the (unaligned) pairs for gen5, so we can find
+       * them for making the aligned pair class.
+       */
+      class_sizes[class_count++] = 2;
+   }
    for (int r = 1; r < this->virtual_grf_next; r++) {
       int i;
 
@@ -2290,7 +2295,7 @@ fs_visitor::assign_regs()
    int ra_reg_count = 0;
    int class_base_reg[class_count];
    int class_reg_count[class_count];
-   int classes[class_count];
+   int classes[class_count + 1];
 
    for (int i = 0; i < class_count; i++) {
       class_base_reg[i] = ra_reg_count;
@@ -2330,6 +2335,27 @@ fs_visitor::assign_regs()
       }
    }
 
+   /* Add a special class for aligned pairs, which we'll put delta_x/y
+    * in on gen5 so that we can do PLN.
+    */
+   if (brw->has_pln && intel->gen < 6) {
+      int reg_count = (base_reg_count - 1) / 2;
+      int unaligned_pair_class = 1;
+      assert(class_sizes[unaligned_pair_class] == 2);
+
+      aligned_pair_class = class_count;
+      classes[aligned_pair_class] = ra_alloc_reg_class(regs);
+      class_base_reg[aligned_pair_class] = 0;
+      class_reg_count[aligned_pair_class] = 0;
+      int start = (this->first_non_payload_grf & 1) ? 1 : 0;
+
+      for (int i = 0; i < reg_count; i++) {
+	 ra_class_add_reg(regs, classes[aligned_pair_class],
+			  class_base_reg[unaligned_pair_class] + i * 2 + start);
+      }
+      class_count++;
+   }
+
    ra_set_finalize(regs);
 
    struct ra_graph *g = ra_alloc_interference_graph(regs,
@@ -2342,7 +2368,12 @@ fs_visitor::assign_regs()
    for (int i = 1; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-	    ra_set_node_class(g, i, classes[c]);
+	    if (aligned_pair_class >= 0 &&
+		this->delta_x.reg == i) {
+	       ra_set_node_class(g, i, classes[aligned_pair_class]);
+	    } else {
+	       ra_set_node_class(g, i, classes[c]);
+	    }
 	    break;
 	 }
       }
