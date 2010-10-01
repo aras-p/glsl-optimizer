@@ -703,24 +703,25 @@ static void evergreenSetDepthState(GLcontext * ctx) //same
 
 static void evergreenSetStencilState(GLcontext * ctx, GLboolean state)  //same
 {
-	context_t *context = EVERGREEN_CONTEXT(ctx);
-	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
-	GLboolean hw_stencil = GL_FALSE;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
+    GLboolean hw_stencil = GL_FALSE;
 
-	if (ctx->DrawBuffer) {
-		struct radeon_renderbuffer *rrbStencil
-			= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
-		hw_stencil = (rrbStencil && rrbStencil->bo);
-	}
+    if (ctx->DrawBuffer) {
+        struct radeon_renderbuffer *rrbStencil
+            = radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
+        hw_stencil = (rrbStencil && rrbStencil->bo);
+    }
 
-	if (hw_stencil) {
-		EVERGREEN_STATECHANGE(context, db);
-		if (state) {
-			SETbit(evergreen->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
-			SETbit(evergreen->DB_DEPTH_CONTROL.u32All, BACKFACE_ENABLE_bit);
-		} else
-			CLEARbit(evergreen->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
-	}
+    if (hw_stencil) {
+        EVERGREEN_STATECHANGE(context, db);
+        if (state) {
+            SETbit(evergreen->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
+            SETbit(evergreen->DB_DEPTH_CONTROL.u32All, BACKFACE_ENABLE_bit);
+            SETbit(evergreen->DB_STENCIL_INFO.u32All,  EG_DB_STENCIL_INFO__FORMAT_bit);
+        } else
+            CLEARbit(evergreen->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
+    }
 }
 
 static void evergreenUpdateCulling(GLcontext * ctx) //same
@@ -1699,7 +1700,7 @@ void evergreenInitState(GLcontext * ctx) //diff
 
     evergreen->DB_STENCIL_INFO.u32All = 0;
     CLEARbit(evergreen->DB_STENCIL_INFO.u32All, EG_DB_STENCIL_INFO__FORMAT_bit);
-    SETfield(evergreen->DB_STENCIL_INFO.u32All, EG_ADDR_SURF_TILE_SPLIT_256B,
+    SETfield(evergreen->DB_STENCIL_INFO.u32All, 0,
         EG_DB_STENCIL_INFO__TILE_SPLIT_shift, EG_DB_STENCIL_INFO__TILE_SPLIT_mask);
 
     evergreen->DB_RENDER_CONTROL.u32All = 0;
@@ -1708,6 +1709,15 @@ void evergreenInitState(GLcontext * ctx) //diff
     SETfield(evergreen->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
 	SETfield(evergreen->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
 	SETfield(evergreen->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+    /* stencil */
+    evergreenEnable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
+    evergreenStencilMaskSeparate(ctx, 0, ctx->Stencil.WriteMask[0]);
+    evergreenStencilFuncSeparate(ctx, 0, ctx->Stencil.Function[0],
+			                     ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);
+    evergreenStencilOpSeparate(ctx, 0, ctx->Stencil.FailFunc[0],
+			                   ctx->Stencil.ZFailFunc[0],
+			                   ctx->Stencil.ZPassFunc[0]);
 
     // Disable ROP3 modes by setting src to dst copy:
     SETfield(evergreen->CB_COLOR_CONTROL.u32All, 0xCC, 
