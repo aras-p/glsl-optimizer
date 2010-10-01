@@ -2518,7 +2518,7 @@ fs_visitor::generate_code()
 	 struct brw_instruction *inst0, *inst1;
 	 GLuint br = 1;
 
-	 if (intel->gen == 5)
+	 if (intel->gen >= 5)
 	    br = 2;
 
 	 assert(loop_stack_depth > 0);
