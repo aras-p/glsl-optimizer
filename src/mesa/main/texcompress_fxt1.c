@@ -25,7 +25,7 @@
 
 /**
  * \file texcompress_fxt1.c
- * GL_EXT_texture_compression_fxt1 support.
+ * GL_3DFX_texture_compression_FXT1 support.
  */
 
 
