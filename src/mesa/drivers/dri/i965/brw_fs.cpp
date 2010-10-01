@@ -450,6 +450,7 @@ public:
 
    fs_inst *emit(fs_inst inst);
    void assign_curb_setup();
+   void calculate_urb_setup();
    void assign_urb_setup();
    void assign_regs();
    void assign_regs_trivial();
@@ -499,6 +500,7 @@ public:
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;
    int first_non_payload_grf;
+   int urb_setup[FRAG_ATTRIB_MAX];
 
    /** @{ debug annotation info */
    const char *current_annotation;
@@ -780,10 +782,9 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    int location = ir->location;
    for (unsigned int i = 0; i < array_elements; i++) {
       for (unsigned int j = 0; j < type->matrix_columns; j++) {
-	 if (!(fp->Base.InputsRead & BITFIELD64_BIT(location))) {
+	 if (urb_setup[location] == -1) {
 	    /* If there's no incoming setup data for this slot, don't
-	     * emit interpolation for it (since it's not used, and
-	     * we'd fall over later trying to find the setup data.
+	     * emit interpolation for it.
 	     */
 	    attr.reg_offset += type->vector_elements;
 	    location++;
@@ -1656,8 +1657,10 @@ fs_visitor::emit_dummy_fs()
 struct brw_reg
 fs_visitor::interp_reg(int location, int channel)
 {
-   int regnr = location * 2 + channel / 2;
+   int regnr = urb_setup[location] * 2 + channel / 2;
    int stride = (channel & 1) * 4;
+
+   assert(urb_setup[location] != -1);
 
    return brw_vec1_grf(regnr, stride);
 }
@@ -2085,28 +2088,51 @@ fs_visitor::assign_curb_setup()
 }
 
 void
+fs_visitor::calculate_urb_setup()
+{
+   for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+      urb_setup[i] = -1;
+   }
+
+   int urb_next = 0;
+   /* Figure out where each of the incoming setup attributes lands. */
+   if (intel->gen >= 6) {
+      for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+	 if (i == FRAG_ATTRIB_WPOS ||
+	     (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(i))) {
+	    urb_setup[i] = urb_next++;
+	 }
+      }
+   } else {
+      /* FINISHME: The sf doesn't map VS->FS inputs for us very well. */
+      for (unsigned int i = 0; i < VERT_RESULT_MAX; i++) {
+	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
+	    int fp_index;
+
+	    if (i >= VERT_RESULT_VAR0)
+	       fp_index = i - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
+	    else if (i <= VERT_RESULT_TEX7)
+	       fp_index = i;
+	    else
+	       fp_index = -1;
+
+	    if (fp_index >= 0)
+	       urb_setup[fp_index] = urb_next++;
+	 }
+      }
+   }
+
+   /* Each attribute is 4 setup channels, each of which is half a reg. */
+   c->prog_data.urb_read_length = urb_next * 2;
+}
+
+void
 fs_visitor::assign_urb_setup()
 {
    int urb_start = c->prog_data.first_curbe_grf + c->prog_data.curb_read_length;
-   int interp_reg_nr[FRAG_ATTRIB_MAX];
 
-   c->prog_data.urb_read_length = 0;
-
-   /* Figure out where each of the incoming setup attributes lands. */
-   for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
-      interp_reg_nr[i] = -1;
-
-      if (i != FRAG_ATTRIB_WPOS &&
-	  !(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(i)))
-	 continue;
-
-      /* Each attribute is 4 setup channels, each of which is half a reg. */
-      interp_reg_nr[i] = urb_start + c->prog_data.urb_read_length;
-      c->prog_data.urb_read_length += 2;
-   }
-
-   /* Map the register numbers for FS_OPCODE_LINTERP so that it uses
-    * the correct setup input.
+   /* Offset all the urb_setup[] index by the actual position of the
+    * setup regs, now that the location of the constants has been chosen.
     */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -2116,10 +2142,7 @@ fs_visitor::assign_urb_setup()
 
       assert(inst->src[2].file == FIXED_HW_REG);
 
-      int location = inst->src[2].fixed_hw_reg.nr / 2;
-      assert(interp_reg_nr[location] != -1);
-      inst->src[2].fixed_hw_reg.nr = (interp_reg_nr[location] +
-				      (inst->src[2].fixed_hw_reg.nr & 1));
+      inst->src[2].fixed_hw_reg.nr += urb_start;
    }
 
    this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
@@ -2648,6 +2671,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    if (0) {
       v.emit_dummy_fs();
    } else {
+      v.calculate_urb_setup();
       if (intel->gen < 6)
 	 v.emit_interpolation_setup_gen4();
       else
