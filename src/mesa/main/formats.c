@@ -1339,11 +1339,11 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_SRGBA_DXT3:
    case MESA_FORMAT_SRGBA_DXT5:
 #endif
+#endif
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;
       return;
-#endif
 
    case MESA_FORMAT_RGBA_FLOAT32:
       *datatype = GL_FLOAT;
