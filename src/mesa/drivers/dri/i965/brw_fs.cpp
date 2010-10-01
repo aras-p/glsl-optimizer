@@ -468,7 +468,8 @@ public:
    void emit_dummy_fs();
    void emit_fragcoord_interpolation(ir_variable *ir);
    void emit_general_interpolation(ir_variable *ir);
-   void emit_interpolation_setup();
+   void emit_interpolation_setup_gen4();
+   void emit_interpolation_setup_gen6();
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, int base_mrf);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, int base_mrf);
    void emit_fb_writes();
@@ -1662,7 +1663,7 @@ fs_visitor::interp_reg(int location, int channel)
 
 /** Emits the interpolation for the varying inputs. */
 void
-fs_visitor::emit_interpolation_setup()
+fs_visitor::emit_interpolation_setup_gen4()
 {
    struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
 
@@ -1702,6 +1703,38 @@ fs_visitor::emit_interpolation_setup()
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
+   this->current_annotation = NULL;
+}
+
+/** Emits the interpolation for the varying inputs. */
+void
+fs_visitor::emit_interpolation_setup_gen6()
+{
+   struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
+
+   /* If the pixel centers end up used, the setup is the same as for gen4. */
+   this->current_annotation = "compute pixel centers";
+   this->pixel_x = fs_reg(this, glsl_type::uint_type);
+   this->pixel_y = fs_reg(this, glsl_type::uint_type);
+   this->pixel_x.type = BRW_REGISTER_TYPE_UW;
+   this->pixel_y.type = BRW_REGISTER_TYPE_UW;
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->pixel_x,
+		fs_reg(stride(suboffset(g1_uw, 4), 2, 4, 0)),
+		fs_reg(brw_imm_v(0x10101010))));
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->pixel_y,
+		fs_reg(stride(suboffset(g1_uw, 5), 2, 4, 0)),
+		fs_reg(brw_imm_v(0x11001100))));
+
+   this->current_annotation = "compute 1/pos.w";
+   this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
+   this->pixel_w = fs_reg(this, glsl_type::float_type);
+   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
+
+   this->delta_x = fs_reg(brw_vec8_grf(2, 0));
+   this->delta_y = fs_reg(brw_vec8_grf(3, 0));
+
    this->current_annotation = NULL;
 }
 
@@ -2614,7 +2647,10 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    if (0) {
       v.emit_dummy_fs();
    } else {
-      v.emit_interpolation_setup();
+      if (intel->gen < 6)
+	 v.emit_interpolation_setup_gen4();
+      else
+	 v.emit_interpolation_setup_gen6();
 
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
