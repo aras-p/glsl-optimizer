@@ -727,6 +727,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	struct radeon_bo *cb[12];
+	struct radeon_bo *db;
 	unsigned ndwords = 9;
 
 	if (draw->indices) {
@@ -738,6 +739,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* find number of color buffer */
+	db = r600_context_reg_bo(ctx, R_028048_DB_Z_READ_BASE);
 	cb[0] = r600_context_reg_bo(ctx, R_028C60_CB_COLOR0_BASE);
 	cb[1] = r600_context_reg_bo(ctx, R_028C9C_CB_COLOR1_BASE);
 	cb[2] = r600_context_reg_bo(ctx, R_028CD8_CB_COLOR2_BASE);
@@ -755,6 +757,8 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 			ndwords += 7;
 		}
 	}
+	if (db)
+		ndwords += 7;
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -808,11 +812,15 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
 
 	/* flush color buffer */
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 12; i++) {
 		if (cb[i]) {
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
-			ctx->pm4[ctx->pm4_cdwords++] = (S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
-							S_0085F0_CB_ACTION_ENA(1);
+			if (i > 7)
+				ctx->pm4[ctx->pm4_cdwords++] = (S_0085F0_CB8_DEST_BASE_ENA(1) << (i - 8)) |
+					S_0085F0_CB_ACTION_ENA(1);
+			else
+				ctx->pm4[ctx->pm4_cdwords++] = (S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
+					S_0085F0_CB_ACTION_ENA(1);
 			ctx->pm4[ctx->pm4_cdwords++] = (cb[i]->size + 255) >> 8;
 			ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 			ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
@@ -820,6 +828,17 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 			ctx->pm4[ctx->pm4_cdwords++] = 0;
 			r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], cb[i]);
 		}
+	}
+	if (db) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
+		ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_DB_DEST_BASE_ENA(1) |
+			S_0085F0_DB_ACTION_ENA(1);
+		ctx->pm4[ctx->pm4_cdwords++] = (db->size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], db);
 	}
 
 	/* all dirty state have been scheduled in current cs */

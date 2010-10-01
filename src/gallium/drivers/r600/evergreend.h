@@ -1865,9 +1865,18 @@
 #define   S_0085F0_DB_DEST_BASE_ENA(x)                 (((x) & 0x1) << 14)
 #define   G_0085F0_DB_DEST_BASE_ENA(x)                 (((x) >> 14) & 0x1)
 #define   C_0085F0_DB_DEST_BASE_ENA                    0xFFFFBFFF
-#define   S_0085F0_CR_DEST_BASE_ENA(x)                 (((x) & 0x1) << 15)
-#define   G_0085F0_CR_DEST_BASE_ENA(x)                 (((x) >> 15) & 0x1)
-#define   C_0085F0_CR_DEST_BASE_ENA                    0xFFFF7FFF
+#define   S_0085F0_CB8_DEST_BASE_ENA(x)                (((x) & 0x1) << 15)
+#define   G_0085F0_CB8_DEST_BASE_ENA(x)                (((x) >> 15) & 0x1)
+
+#define   S_0085F0_CB9_DEST_BASE_ENA(x)                (((x) & 0x1) << 16)
+#define   G_0085F0_CB9_DEST_BASE_ENA(x)                (((x) >> 16) & 0x1)
+
+#define   S_0085F0_CB10_DEST_BASE_ENA(x)               (((x) & 0x1) << 17)
+#define   G_0085F0_CB10_DEST_BASE_ENA(x)               (((x) >> 17) & 0x1)
+
+#define   S_0085F0_CB11_DEST_BASE_ENA(x)               (((x) & 0x1) << 18)
+#define   G_0085F0_CB11_DEST_BASE_ENA(x)               (((x) >> 18) & 0x1)
+
 #define   S_0085F0_TC_ACTION_ENA(x)                    (((x) & 0x1) << 23)
 #define   G_0085F0_TC_ACTION_ENA(x)                    (((x) >> 23) & 0x1)
 #define   C_0085F0_TC_ACTION_ENA                       0xFF7FFFFF

@@ -878,6 +878,7 @@ struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	struct radeon_bo *cb[8];
+	struct radeon_bo *db;
 	unsigned ndwords = 9;
 
 	if (draw->indices) {
@@ -889,6 +890,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 
 	/* find number of color buffer */
+	db = r600_context_reg_bo(ctx, R_02800C_DB_DEPTH_BASE);
 	cb[0] = r600_context_reg_bo(ctx, R_028040_CB_COLOR0_BASE);
 	cb[1] = r600_context_reg_bo(ctx, R_028044_CB_COLOR1_BASE);
 	cb[2] = r600_context_reg_bo(ctx, R_028048_CB_COLOR2_BASE);
@@ -902,6 +904,8 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 			ndwords += 7;
 		}
 	}
+	if (db)
+		ndwords += 7;
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -969,6 +973,17 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 			ctx->pm4[ctx->pm4_cdwords++] = 0;
 			r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], cb[i]);
 		}
+	}
+	if (db) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
+		ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_DB_DEST_BASE_ENA(1) |
+			S_0085F0_DB_ACTION_ENA(1);
+		ctx->pm4[ctx->pm4_cdwords++] = (db->size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], db);
 	}
 
 	/* all dirty state have been scheduled in current cs */
