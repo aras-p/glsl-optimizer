@@ -2326,15 +2326,15 @@ fs_visitor::assign_regs()
        * that alias base regs, or the base regs themselves for classes[0].
        */
       for (int c = 0; c <= i; c++) {
-	 for (int i_r = 0; i_r < class_reg_count[i] - 1; i_r++) {
+	 for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
 	    for (int c_r = MAX2(0, i_r - (class_sizes[c] - 1));
-		 c_r <= MIN2(class_reg_count[c] - 1, i_r + class_sizes[i] - 1);
+		 c_r < MIN2(class_reg_count[c], i_r + class_sizes[i]);
 		 c_r++) {
 
 	       if (0) {
 		  printf("%d/%d conflicts %d/%d\n",
-			 class_sizes[i], i_r,
-			 class_sizes[c], c_r);
+			 class_sizes[i], this->first_non_payload_grf + i_r,
+			 class_sizes[c], this->first_non_payload_grf + c_r);
 	       }
 
 	       ra_add_reg_conflict(regs,
@@ -2413,7 +2413,7 @@ fs_visitor::assign_regs()
 
       for (int c = 0; c < class_count; c++) {
 	 if (reg >= class_base_reg[c] &&
-	     reg < class_base_reg[c] + class_reg_count[c] - 1) {
+	     reg < class_base_reg[c] + class_reg_count[c]) {
 	    hw_reg = reg - class_base_reg[c];
 	    break;
 	 }
