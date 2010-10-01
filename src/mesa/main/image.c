@@ -663,6 +663,8 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_LUMINANCE:
       case GL_COMPRESSED_LUMINANCE_ALPHA:
       case GL_COMPRESSED_INTENSITY:
+      case GL_COMPRESSED_RED:
+      case GL_COMPRESSED_RG:
       case GL_COMPRESSED_RGB:
       case GL_COMPRESSED_RGBA:
       case GL_RGB_S3TC:
