@@ -60,7 +60,6 @@ upload_clip_state(struct brw_context *brw)
 	     depth_clamp |
 	     provoking);
    OUT_BATCH(GEN6_CLIP_FORCE_ZERO_RTAINDEX);
-   OUT_BATCH(0);
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
