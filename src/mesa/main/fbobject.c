@@ -409,6 +409,9 @@ is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
    case GL_RGB:
    case GL_RGBA:
       return GL_TRUE;
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+   case GL_INTENSITY:
    case GL_ALPHA:
       return ctx->Extensions.ARB_framebuffer_object;
    case GL_RED:
