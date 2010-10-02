@@ -41,7 +41,6 @@
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
-#include "r700_sq.h"
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"

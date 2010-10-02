@@ -36,11 +36,9 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include <util/u_upload_mgr.h>
-#include <util/u_index_modify.h>
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
-#include "r700_sq.h"
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
