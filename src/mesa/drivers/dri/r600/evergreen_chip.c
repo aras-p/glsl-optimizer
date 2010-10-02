@@ -843,7 +843,7 @@ static void evergreenSetDepthTarget(context_t *context)
 {
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel, height;
+    unsigned int nPitchInPixel, height, offtostencil;
 
     rrb = radeon_get_depthbuffer(&context->radeon);
     if (!rrb)
@@ -889,6 +889,12 @@ static void evergreenSetDepthTarget(context_t *context)
     SETfield(evergreen->DB_Z_INFO.u32All, ARRAY_1D_TILED_THIN1,
              EG_DB_Z_INFO__ARRAY_MODE_shift, 
              EG_DB_Z_INFO__ARRAY_MODE_mask);        
+
+
+    offtostencil = ((height * rrb->pitch) + 255) & ~255;
+    evergreen->DB_STENCIL_WRITE_BASE.u32All = offtostencil >> 8;
+    evergreen->DB_STENCIL_READ_BASE.u32All = offtostencil >> 8;
+
 }
 
 static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -896,7 +902,6 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_renderbuffer *rrb;
-    unsigned int zheight, zpitch, offtostencil;
 	BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);  
     
@@ -951,16 +956,6 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
     
     rrb = radeon_get_depthbuffer(&context->radeon);
     
-    if (context->radeon.radeonScreen->driScreen->dri2.enabled)
-    {
-        zheight = rrb->base.Height;
-    }
-    else
-    {
-        zheight =  context->radeon.radeonScreen->driScreen->fbHeight;
-    }
-    zpitch = rrb->pitch;
-
 	if( (rrb != NULL) && (rrb->bo != NULL) )
     {
 
@@ -1032,10 +1027,9 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
             //10
             if((evergreen->DB_DEPTH_CONTROL.u32All & STENCIL_ENABLE_bit) > 0)
             {
-                offtostencil = ((zheight * zpitch + 255) >> 8) & 0xffffffff;
 
                 BEGIN_BATCH_NO_AUTOSTATE(3 + 2);                
-                EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_READ_BASE, offtostencil);	
+                EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_READ_BASE, evergreen->DB_STENCIL_READ_BASE.u32All);	
 	            R600_OUT_BATCH_RELOC(evergreen->DB_STENCIL_READ_BASE.u32All,
 			                         rrb->bo,
 			                         evergreen->DB_STENCIL_READ_BASE.u32All,
@@ -1043,7 +1037,7 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
                 END_BATCH();
 
                 BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
-                EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_WRITE_BASE, offtostencil);	
+                EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_WRITE_BASE, evergreen->DB_STENCIL_WRITE_BASE.u32All);	
 	            R600_OUT_BATCH_RELOC(evergreen->DB_STENCIL_WRITE_BASE.u32All,
 			                         rrb->bo,
 			                         evergreen->DB_STENCIL_WRITE_BASE.u32All,
