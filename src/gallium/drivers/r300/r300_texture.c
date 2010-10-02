@@ -369,6 +369,10 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
             return R300_COLOR_FORMAT_I8;
 
         /* 16-bit buffers. */
+        case PIPE_FORMAT_R8G8_UNORM:
+        case PIPE_FORMAT_R8G8_SNORM:
+            return R300_COLOR_FORMAT_UV88;
+
         case PIPE_FORMAT_B5G6R5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
 
@@ -488,7 +492,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
 
     /* Add swizzles and return. */
     switch (format) {
-        /* 8-bit outputs.
+        /* 8-bit outputs, one channel.
          * COLORFORMAT_I8 stores the C2 component. */
         case PIPE_FORMAT_A8_UNORM:
             return modifier | R300_C2_SEL_A;
@@ -497,6 +501,12 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
+
+        /* 16-bit outputs, two channels.
+         * COLORFORMAT_UV88 stores C2 and C0. */
+        case PIPE_FORMAT_R8G8_UNORM:
+        case PIPE_FORMAT_R8G8_SNORM:
+            return modifier | R300_C0_SEL_G | R300_C2_SEL_R;
 
         /* BGRA outputs. */
         case PIPE_FORMAT_B5G6R5_UNORM:
