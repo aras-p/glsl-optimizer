@@ -2808,7 +2808,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 v.assign_regs();
    }
 
-   v.generate_code();
+   if (!v.fail)
+      v.generate_code();
 
    assert(!v.fail); /* FINISHME: Cleanly fail, tested at link time, etc. */
 
