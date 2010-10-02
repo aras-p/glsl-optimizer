@@ -815,7 +815,7 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx, struct r600_
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu alu;
-	int i, j, k, nliteral, r, index;
+	int i, j, k, nliteral, r;
 
 	for (i = 0, nliteral = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		if (inst->Src[i].Register.File == TGSI_FILE_IMMEDIATE) {
