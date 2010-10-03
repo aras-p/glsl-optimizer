@@ -74,6 +74,7 @@ bool lower_quadop_vector(exec_list *instructions, bool dont_lower_swz);
 bool lower_clip_distance(exec_list *instructions);
 void lower_output_reads(exec_list *instructions);
 bool optimize_redundant_jumps(exec_list *instructions);
+bool optimize_split_arrays(exec_list *instructions, bool linked);
 
 ir_rvalue *
 compare_index_block(exec_list *instructions, ir_variable *index,
