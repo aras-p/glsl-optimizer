@@ -455,6 +455,7 @@ public:
    void assign_regs();
    void assign_regs_trivial();
    void calculate_live_intervals();
+   bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
    void generate_fb_write(fs_inst *inst);
@@ -2289,8 +2290,6 @@ fs_visitor::assign_regs()
    int class_count = 0;
    int aligned_pair_class = -1;
 
-   calculate_live_intervals();
-
    /* Set up the register classes.
     *
     * The base registers store a scalar value.  For texture samples,
@@ -2517,8 +2516,48 @@ fs_visitor::calculate_live_intervals()
       ip++;
    }
 
+   talloc_free(this->virtual_grf_def);
+   talloc_free(this->virtual_grf_use);
    this->virtual_grf_def = def;
    this->virtual_grf_use = use;
+}
+
+/**
+ * Must be called after calculate_live_intervales() to remove unused
+ * writes to registers -- register allocation will fail otherwise
+ * because something deffed but not used won't be considered to
+ * interfere with other regs.
+ */
+bool
+fs_visitor::dead_code_eliminate()
+{
+   bool progress = false;
+   int num_vars = this->virtual_grf_next;
+   bool dead[num_vars];
+
+   for (int i = 0; i < num_vars; i++) {
+      /* This would be ">=", but FS_OPCODE_DISCARD has a src == dst where
+       * it writes dst then reads it as src.
+       */
+      dead[i] = this->virtual_grf_def[i] > this->virtual_grf_use[i];
+
+      if (dead[i]) {
+	 /* Mark off its interval so it won't interfere with anything. */
+	 this->virtual_grf_def[i] = -1;
+	 this->virtual_grf_use[i] = -1;
+      }
+   }
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->dst.file == GRF && dead[inst->dst.reg]) {
+	 inst->remove();
+	 progress = true;
+      }
+   }
+
+   return progress;
 }
 
 bool
@@ -2831,6 +2870,15 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       v.emit_fb_writes();
       v.assign_curb_setup();
       v.assign_urb_setup();
+
+      bool progress;
+      do {
+	 progress = false;
+
+	 v.calculate_live_intervals();
+	 progress = v.dead_code_eliminate() || progress;
+      } while (progress);
+
       if (0)
 	 v.assign_regs_trivial();
       else
