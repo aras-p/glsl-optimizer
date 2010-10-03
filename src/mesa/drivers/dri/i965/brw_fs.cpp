@@ -1437,6 +1437,27 @@ fs_visitor::visit(ir_texture *ir)
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
+
+   if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
+      fs_reg swizzle_dst = fs_reg(this, glsl_type::vec4_type);
+
+      for (int i = 0; i < 4; i++) {
+	 int swiz = GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
+	 fs_reg l = swizzle_dst;
+	 l.reg_offset += i;
+
+	 if (swiz == SWIZZLE_ZERO) {
+	    emit(fs_inst(BRW_OPCODE_MOV, l, fs_reg(0.0f)));
+	 } else if (swiz == SWIZZLE_ONE) {
+	    emit(fs_inst(BRW_OPCODE_MOV, l, fs_reg(1.0f)));
+	 } else {
+	    fs_reg r = dst;
+	    r.reg_offset += GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
+	    emit(fs_inst(BRW_OPCODE_MOV, l, r));
+	 }
+      }
+      this->result = swizzle_dst;
+   }
 }
 
 void
