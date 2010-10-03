@@ -2471,7 +2471,7 @@ fs_visitor::calculate_live_intervals()
 
    for (int i = 0; i < num_vars; i++) {
       def[i] = 1 << 30;
-      use[i] = 0;
+      use[i] = -1;
    }
 
    int ip = 0;
@@ -2506,13 +2506,11 @@ fs_visitor::calculate_live_intervals()
 
 	 for (unsigned int i = 0; i < 3; i++) {
 	    if (inst->src[i].file == GRF && inst->src[i].reg != 0) {
-	       def[inst->src[i].reg] = MIN2(def[inst->src[i].reg], eip);
 	       use[inst->src[i].reg] = MAX2(use[inst->src[i].reg], eip);
 	    }
 	 }
 	 if (inst->dst.file == GRF && inst->dst.reg != 0) {
 	    def[inst->dst.reg] = MIN2(def[inst->dst.reg], eip);
-	    use[inst->dst.reg] = MAX2(use[inst->dst.reg], eip);
 	 }
       }
 
@@ -2528,6 +2526,16 @@ fs_visitor::virtual_grf_interferes(int a, int b)
 {
    int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
    int end = MIN2(this->virtual_grf_use[a], this->virtual_grf_use[b]);
+
+   /* For dead code, just check if the def interferes with the other range. */
+   if (this->virtual_grf_use[a] == -1) {
+      return (this->virtual_grf_def[a] >= this->virtual_grf_def[b] &&
+	      this->virtual_grf_def[a] < this->virtual_grf_use[b]);
+   }
+   if (this->virtual_grf_use[b] == -1) {
+      return (this->virtual_grf_def[b] >= this->virtual_grf_def[a] &&
+	      this->virtual_grf_def[b] < this->virtual_grf_use[a]);
+   }
 
    return start <= end;
 }
