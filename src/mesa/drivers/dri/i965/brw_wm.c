@@ -342,13 +342,44 @@ static void brw_wm_populate_key( struct brw_context *brw,
       if (unit->_ReallyEnabled) {
          const struct gl_texture_object *t = unit->_Current;
          const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+
+	 key->tex_swizzles[i] = SWIZZLE_NOOP;
+
+	 /* GL_DEPTH_TEXTURE_MODE is normally handled through
+	  * brw_wm_surface_state, but it applies to shadow compares as
+	  * well and our shadow compares always return the result in
+	  * all 4 channels.
+	  */
+	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    if (t->DepthMode == GL_ALPHA) {
+	       key->tex_swizzles[i] =
+		  MAKE_SWIZZLE4(SWIZZLE_ZERO,
+				SWIZZLE_ZERO,
+				SWIZZLE_ZERO,
+				SWIZZLE_X);
+	    } else if (t->DepthMode == GL_LUMINANCE) {
+	       key->tex_swizzles[i] =
+		  MAKE_SWIZZLE4(SWIZZLE_X,
+				SWIZZLE_X,
+				SWIZZLE_X,
+				SWIZZLE_ONE);
+	    }
+	 }
+
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1 << i;
 	    if (img->TexFormat == MESA_FORMAT_YCBCR)
 		key->yuvtex_swap_mask |= 1 << i;
 	 }
 
-         key->tex_swizzles[i] = t->_Swizzle;
+	 key->tex_swizzles[i] = MAKE_SWIZZLE4(GET_SWZ(key->tex_swizzles[i],
+						      GET_SWZ(t->_Swizzle, 0)),
+					      GET_SWZ(key->tex_swizzles[i],
+						      GET_SWZ(t->_Swizzle, 1)),
+					      GET_SWZ(key->tex_swizzles[i],
+						      GET_SWZ(t->_Swizzle, 2)),
+					      GET_SWZ(key->tex_swizzles[i],
+						      GET_SWZ(t->_Swizzle, 3)));
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;
