@@ -342,6 +342,15 @@ static void brw_wm_populate_key( struct brw_context *brw,
       if (unit->_ReallyEnabled) {
          const struct gl_texture_object *t = unit->_Current;
          const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 int swizzles[SWIZZLE_NIL + 1] = {
+	    SWIZZLE_X,
+	    SWIZZLE_Y,
+	    SWIZZLE_Z,
+	    SWIZZLE_W,
+	    SWIZZLE_ZERO,
+	    SWIZZLE_ONE,
+	    SWIZZLE_NIL
+	 };
 
 	 key->tex_swizzles[i] = SWIZZLE_NOOP;
 
@@ -352,17 +361,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  */
 	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
 	    if (t->DepthMode == GL_ALPHA) {
-	       key->tex_swizzles[i] =
-		  MAKE_SWIZZLE4(SWIZZLE_ZERO,
-				SWIZZLE_ZERO,
-				SWIZZLE_ZERO,
-				SWIZZLE_X);
+	       swizzles[0] = SWIZZLE_ZERO;
+	       swizzles[1] = SWIZZLE_ZERO;
+	       swizzles[2] = SWIZZLE_ZERO;
 	    } else if (t->DepthMode == GL_LUMINANCE) {
-	       key->tex_swizzles[i] =
-		  MAKE_SWIZZLE4(SWIZZLE_X,
-				SWIZZLE_X,
-				SWIZZLE_X,
-				SWIZZLE_ONE);
+	       swizzles[3] = SWIZZLE_ONE;
 	    }
 	 }
 
@@ -372,14 +375,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
 		key->yuvtex_swap_mask |= 1 << i;
 	 }
 
-	 key->tex_swizzles[i] = MAKE_SWIZZLE4(GET_SWZ(key->tex_swizzles[i],
-						      GET_SWZ(t->_Swizzle, 0)),
-					      GET_SWZ(key->tex_swizzles[i],
-						      GET_SWZ(t->_Swizzle, 1)),
-					      GET_SWZ(key->tex_swizzles[i],
-						      GET_SWZ(t->_Swizzle, 2)),
-					      GET_SWZ(key->tex_swizzles[i],
-						      GET_SWZ(t->_Swizzle, 3)));
+	 key->tex_swizzles[i] =
+	    MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
+			  swizzles[GET_SWZ(t->_Swizzle, 1)],
+			  swizzles[GET_SWZ(t->_Swizzle, 2)],
+			  swizzles[GET_SWZ(t->_Swizzle, 3)]);
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;
