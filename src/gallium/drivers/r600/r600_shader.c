@@ -245,7 +245,9 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	if (shader->processor_type != TGSI_PROCESSOR_VERTEX)
 		return 0;
-	if (!memcmp(&rshader->vertex_elements, rctx->vertex_elements, sizeof(struct r600_vertex_element))) {
+	/* doing a full memcmp fell over the refcount */
+	if ((rshader->vertex_elements.count == rctx->vertex_elements->count) &&
+	    (!memcmp(&rshader->vertex_elements.elements, &rctx->vertex_elements->elements, 32 * sizeof(struct pipe_vertex_element)))) {
 		return 0;
 	}
 	rshader->vertex_elements = *rctx->vertex_elements;
