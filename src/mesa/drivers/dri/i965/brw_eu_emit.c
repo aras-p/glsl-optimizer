@@ -787,6 +787,7 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
 
    if (p->single_program_flow) {
@@ -800,9 +801,15 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 
    /* Override the defaults for this instruction:
     */
-   brw_set_dest(insn, brw_ip_reg());
-   brw_set_src0(insn, brw_ip_reg());
-   brw_set_src1(insn, brw_imm_d(0x0));
+   if (intel->gen < 6) {
+      brw_set_dest(insn, brw_ip_reg());
+      brw_set_src0(insn, brw_ip_reg());
+      brw_set_src1(insn, brw_imm_d(0x0));
+   } else {
+      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_src0(insn, brw_null_reg());
+      brw_set_src1(insn, brw_null_reg());
+   }
 
    insn->header.execution_size = execute_size;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
@@ -835,9 +842,15 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       insn = next_insn(p, BRW_OPCODE_ELSE);
    }
 
-   brw_set_dest(insn, brw_ip_reg());
-   brw_set_src0(insn, brw_ip_reg());
-   brw_set_src1(insn, brw_imm_d(0x0));
+   if (intel->gen < 6) {
+      brw_set_dest(insn, brw_ip_reg());
+      brw_set_src0(insn, brw_ip_reg());
+      brw_set_src1(insn, brw_imm_d(0x0));
+   } else {
+      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_src0(insn, brw_null_reg());
+      brw_set_src1(insn, brw_null_reg());
+   }
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = if_insn->header.execution_size;
@@ -854,9 +867,13 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    } else {
       assert(if_insn->header.opcode == BRW_OPCODE_IF);
 
-      if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
-      if_insn->bits3.if_else.pop_count = 0;
-      if_insn->bits3.if_else.pad0 = 0;
+      if (intel->gen < 6) {
+	 if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
+	 if_insn->bits3.if_else.pop_count = 0;
+	 if_insn->bits3.if_else.pad0 = 0;
+      } else {
+	 if_insn->bits1.branch_gen6.jump_count = br * (insn - if_insn + 1);
+      }
    }
 
    return insn;
@@ -884,9 +901,15 @@ void brw_ENDIF(struct brw_compile *p,
    } else {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);
 
-      brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src1(insn, brw_imm_d(0x0));
+      if (intel->gen < 6) {
+	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+	 brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+	 brw_set_src1(insn, brw_imm_d(0x0));
+      } else {
+	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_W));
+	 brw_set_src0(insn, brw_null_reg());
+	 brw_set_src1(insn, brw_null_reg());
+      }
 
       insn->header.compression_control = BRW_COMPRESSION_NONE;
       insn->header.execution_size = patch_insn->header.execution_size;
@@ -900,26 +923,41 @@ void brw_ENDIF(struct brw_compile *p,
        */
       if (patch_insn->header.opcode == BRW_OPCODE_IF) {
 	 if (intel->gen < 6) {
-	    /* Automagically turn it into an IFF:
+	    /* Turn it into an IFF, which means no mask stack operations for
+	     * all-false and jumping past the ENDIF.
 	     */
 	    patch_insn->header.opcode = BRW_OPCODE_IFF;
+	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
+	    patch_insn->bits3.if_else.pop_count = 0;
+	    patch_insn->bits3.if_else.pad0 = 0;
+	 } else {
+	    /* As of gen6, there is no IFF and IF must point to the ENDIF. */
+	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
 	 }
-	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	 patch_insn->bits3.if_else.pop_count = 0;
-	 patch_insn->bits3.if_else.pad0 = 0;
-      } else if (patch_insn->header.opcode == BRW_OPCODE_ELSE) {
-	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	 patch_insn->bits3.if_else.pop_count = 1;
-	 patch_insn->bits3.if_else.pad0 = 0;
       } else {
-	 assert(0);
+	 assert(patch_insn->header.opcode == BRW_OPCODE_ELSE);
+	 if (intel->gen < 6) {
+	    /* BRW_OPCODE_ELSE pre-gen6 should point just past the
+	     * matching ENDIF.
+	     */
+	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
+	    patch_insn->bits3.if_else.pop_count = 1;
+	    patch_insn->bits3.if_else.pad0 = 0;
+	 } else {
+	    /* BRW_OPCODE_ELSE on gen6 should point to the matching ENDIF. */
+	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
+	 }
       }
 
       /* Also pop item off the stack in the endif instruction:
        */
-      insn->bits3.if_else.jump_count = 0;
-      insn->bits3.if_else.pop_count = 1;
-      insn->bits3.if_else.pad0 = 0;
+      if (intel->gen < 6) {
+	 insn->bits3.if_else.jump_count = 0;
+	 insn->bits3.if_else.pop_count = 1;
+	 insn->bits3.if_else.pad0 = 0;
+      } else {
+	 insn->bits1.branch_gen6.jump_count = 2;
+      }
    }
 }
 
