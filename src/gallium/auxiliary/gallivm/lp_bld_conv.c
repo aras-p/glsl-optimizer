@@ -69,6 +69,7 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_intr.h"
 
 
 /**
@@ -240,6 +241,89 @@ lp_build_conv(LLVMBuilderRef builder,
       tmp[i] = src[i];
    }
    num_tmps = num_srcs;
+
+
+   /* Special case 4x4f --> 1x16ub 
+    */
+   if (src_type.floating == 1 &&
+       src_type.fixed    == 0 &&
+       src_type.sign     == 1 &&
+       src_type.norm     == 0 &&
+       src_type.width    == 32 &&
+       src_type.length   == 4 &&
+
+       dst_type.floating == 0 &&
+       dst_type.fixed    == 0 &&
+       dst_type.sign     == 0 &&
+       dst_type.norm     == 1 &&
+       dst_type.width    == 8 &&
+       dst_type.length   == 16)
+   {
+      int i;
+
+      for (i = 0; i < num_dsts; i++, src += 4) {
+         struct lp_type int16_type = dst_type;
+         struct lp_type int32_type = dst_type;
+         LLVMValueRef lo, hi;
+         LLVMValueRef src_int0;
+         LLVMValueRef src_int1;
+         LLVMValueRef src_int2;
+         LLVMValueRef src_int3;
+         LLVMTypeRef int16_vec_type;
+         LLVMTypeRef int32_vec_type;
+         LLVMTypeRef src_vec_type;
+         LLVMTypeRef dst_vec_type;
+         LLVMValueRef const_255f;
+
+         int16_type.width *= 2;
+         int16_type.length /= 2;
+         int16_type.sign = 1;
+
+         int32_type.width *= 4;
+         int32_type.length /= 4;
+         int32_type.sign = 1;
+
+         src_vec_type   = lp_build_vec_type(src_type);
+         dst_vec_type   = lp_build_vec_type(dst_type);
+         int16_vec_type = lp_build_vec_type(int16_type);
+         int32_vec_type = lp_build_vec_type(int32_type);
+
+         const_255f = lp_build_const_vec(src_type, 255.0);
+
+         src_int0 = LLVMBuildFPToSI(builder,
+                                    LLVMBuildFMul(builder, src[0], const_255f, ""),
+                                    int32_vec_type, "");
+
+         src_int1 = LLVMBuildFPToSI(builder,
+                                    LLVMBuildFMul(builder, src[1], const_255f, ""),
+                                    int32_vec_type, "");
+
+         src_int2 = LLVMBuildFPToSI(builder,
+                                    LLVMBuildFMul(builder, src[2], const_255f, ""),
+                                    int32_vec_type, "");
+
+         src_int3 = LLVMBuildFPToSI(builder,
+                                    LLVMBuildFMul(builder, src[3], const_255f, ""),
+                                    int32_vec_type, "");
+
+#if HAVE_LLVM >= 0x0207
+         lo = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
+                                        int16_vec_type, src_int0, src_int1);
+         hi = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
+                                        int16_vec_type, src_int2, src_int3);
+         dst[i] = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128",
+                                            dst_vec_type, lo, hi);
+#else
+         lo = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
+                                        int32_vec_type, src_int0, src_int1);
+         hi = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
+                                        int32_vec_type, src_int2, src_int3);
+         dst[i] = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128",
+                                            int16_vec_type, lo, hi);
+#endif
+      }
+      return; 
+   }
 
    /*
     * Clamp if necessary
