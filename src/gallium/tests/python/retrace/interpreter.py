@@ -610,6 +610,15 @@ class Context(Object):
             _rgba[i] = rgba[i]
         self.real.clear(buffers, _rgba, depth, stencil)
         
+    def clear_render_target(self, dst, rgba, dstx, dsty, width, height):
+        _rgba = gallium.FloatArray(4)
+        for i in range(4):
+            _rgba[i] = rgba[i]
+        self.real.clear_render_target(dst, _rgba, dstx, dsty, width, height)
+
+    def clear_depth_stencil(self, dst, clear_flags, depth, stencil, dstx, dsty, width, height):
+        self.real.clear_depth_stencil(dst, clear_flags, depth, stencil, dstx, dsty, width, height)
+
     def _present(self):
         self.real.flush()
     
