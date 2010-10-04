@@ -455,6 +455,7 @@ public:
    void assign_regs();
    void assign_regs_trivial();
    void calculate_live_intervals();
+   bool propagate_constants();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
@@ -2523,6 +2524,94 @@ fs_visitor::calculate_live_intervals()
 }
 
 /**
+ * Attempts to move immediate constants into the immediate
+ * constant slot of following instructions.
+ *
+ * Immediate constants are a bit tricky -- they have to be in the last
+ * operand slot, you can't do abs/negate on them,
+ */
+
+bool
+fs_visitor::propagate_constants()
+{
+   bool progress = false;
+
+   return false;
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->opcode != BRW_OPCODE_MOV ||
+	  inst->predicated ||
+	  inst->dst.file != GRF || inst->src[0].file != IMM ||
+	  inst->dst.type != inst->src[0].type)
+	 continue;
+
+      /* Don't bother with cases where we should have had the
+       * operation on the constant folded in GLSL already.
+       */
+      if (inst->saturate)
+	 continue;
+
+      /* Found a move of a constant to a GRF.  Find anything else using the GRF
+       * before it's written, and replace it with the constant if we can.
+       */
+      exec_list_iterator scan_iter = iter;
+      scan_iter.next();
+      for (; scan_iter.has_next(); scan_iter.next()) {
+	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
+
+	 if (scan_inst->opcode == BRW_OPCODE_DO ||
+	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ELSE ||
+	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	    break;
+	 }
+
+	 for (int i = 2; i >= 0; i--) {
+	    if (scan_inst->src[i].file != GRF ||
+		scan_inst->src[i].reg != inst->dst.reg ||
+		scan_inst->src[i].reg_offset != inst->dst.reg_offset)
+	       continue;
+
+	    /* Don't bother with cases where we should have had the
+	     * operation on the constant folded in GLSL already.
+	     */
+	    if (scan_inst->src[i].negate || scan_inst->src[i].abs)
+	       continue;
+
+	    switch (scan_inst->opcode) {
+	    case BRW_OPCODE_MOV:
+	       scan_inst->src[i] = inst->src[0];
+	       progress = true;
+	       break;
+
+	    case BRW_OPCODE_MUL:
+	    case BRW_OPCODE_ADD:
+	       if (i == 1) {
+		  scan_inst->src[i] = inst->src[0];
+		  progress = true;
+	       } else if (i == 0 && scan_inst->src[1].file != IMM) {
+		  /* Fit this constant in by commuting the operands */
+		  scan_inst->src[0] = scan_inst->src[1];
+		  scan_inst->src[1] = inst->src[0];
+	       }
+	       break;
+	    }
+	 }
+
+	 if (scan_inst->dst.file == GRF &&
+	     scan_inst->dst.reg == inst->dst.reg &&
+	     (scan_inst->dst.reg_offset == inst->dst.reg_offset ||
+	      scan_inst->opcode == FS_OPCODE_TEX)) {
+	    break;
+	 }
+      }
+   }
+
+   return progress;
+}
+/**
  * Must be called after calculate_live_intervales() to remove unused
  * writes to registers -- register allocation will fail otherwise
  * because something deffed but not used won't be considered to
@@ -2876,6 +2965,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 progress = false;
 
 	 v.calculate_live_intervals();
+	 progress = v.propagate_constants() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
 
