@@ -899,9 +899,11 @@ void brw_ENDIF(struct brw_compile *p,
        * instruction respectively.
        */
       if (patch_insn->header.opcode == BRW_OPCODE_IF) {
-	 /* Automagically turn it into an IFF:
-	  */
-	 patch_insn->header.opcode = BRW_OPCODE_IFF;
+	 if (intel->gen < 6) {
+	    /* Automagically turn it into an IFF:
+	     */
+	    patch_insn->header.opcode = BRW_OPCODE_IFF;
+	 }
 	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
 	 patch_insn->bits3.if_else.pop_count = 0;
 	 patch_insn->bits3.if_else.pad0 = 0;
