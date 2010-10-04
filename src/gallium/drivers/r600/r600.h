@@ -102,7 +102,7 @@ enum chip_class {
 enum radeon_family r600_get_family(struct radeon *rw);
 enum chip_class r600_get_family_class(struct radeon *radeon);
 
-/* lowlevel WS bo */
+/* r600_bo.c */
 struct r600_bo;
 struct r600_bo *r600_bo(struct radeon *radeon,
 				  unsigned size, unsigned alignment, unsigned usage);
@@ -112,6 +112,11 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
 			    struct r600_bo *src);
+static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
+{
+	return 0;
+}
+
 
 /* R600/R700 STATES */
 #define R600_GROUP_MAX			16

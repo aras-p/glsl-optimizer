@@ -458,9 +458,9 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 				S_030004_TEX_DEPTH(texture->depth0 - 1),
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-				tmp->offset[0] >> 8, 0xFFFFFFFF, bo[0]);
+				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
-				tmp->offset[1] >> 8, 0xFFFFFFFF, bo[1]);
+				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
 				word4 | S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_NORM) |
 				S_030010_SRF_MODE_ALL(V_030010_SFR_MODE_NO_ZERO) |
@@ -765,7 +765,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
-				state->cbufs[cb]->offset >> 8, 0xFFFFFFFF, bo[0]);
+				(state->cbufs[cb]->offset +  r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
 				0x0, 0xFFFFFFFF, NULL);
@@ -813,9 +813,9 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
-				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(state->zsbuf->offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
-				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(state->zsbuf->offset  + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 //	r600_pipe_state_add_reg(rstate, R_028014_DB_HTILE_DATA_BASE, state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
@@ -945,7 +945,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					0, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -956,7 +956,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					0, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:
@@ -1412,7 +1412,9 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
 		vertex_buffer = &rctx->vertex_buffer[j];
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
+		offset = rctx->vertex_elements->elements[i].src_offset +
+			vertex_buffer->buffer_offset +
+			r600_bo_offset(rbuffer->bo);
 
 		format = r600_translate_vertex_data_type(rctx->vertex_elements->elements[i].src_format);
 
@@ -1567,7 +1569,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
-				0x00000000, 0xFFFFFFFF, shader->bo);
+				(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 				R_028844_SQ_PGM_RESOURCES_PS,
 				S_028844_NUM_GPRS(rshader->bc.ngpr) |
@@ -1640,10 +1642,10 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_02885C_SQ_PGM_START_VS,
-			0x00000000, 0xFFFFFFFF, shader->bo);
+			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 			R_0288A4_SQ_PGM_START_FS,
-			0x00000000, 0xFFFFFFFF, shader->bo);
+			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,

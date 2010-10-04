@@ -967,7 +967,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_instances;
 	if (draw->indices) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3);
-		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset;
+		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
@@ -1180,7 +1180,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results;
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1196,7 +1196,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8;
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8 + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;

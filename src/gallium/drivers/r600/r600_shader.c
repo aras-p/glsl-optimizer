@@ -77,10 +77,10 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_028858_SQ_PGM_START_VS,
-			0x00000000, 0xFFFFFFFF, shader->bo);
+			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 			R_028894_SQ_PGM_START_FS,
-			0x00000000, 0xFFFFFFFF, shader->bo);
+			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
@@ -167,7 +167,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
-				0x00000000, 0xFFFFFFFF, shader->bo);
+				r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 				R_028850_SQ_PGM_RESOURCES_PS,
 				S_028868_NUM_GPRS(rshader->bc.ngpr) |

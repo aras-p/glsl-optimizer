@@ -94,7 +94,9 @@ static void r600_draw_common(struct r600_drawl *draw)
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
 		vertex_buffer = &rctx->vertex_buffer[j];
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
+		offset = rctx->vertex_elements->elements[i].src_offset +
+			vertex_buffer->buffer_offset +
+			r600_bo_offset(rbuffer->bo);
 
 		format = r600_translate_vertex_data_type(rctx->vertex_elements->elements[i].src_format);
 
@@ -660,9 +662,9 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				S_038004_TEX_DEPTH(texture->depth0 - 1) |
 				S_038004_DATA_FORMAT(format), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-				tmp->offset[0] >> 8, 0xFFFFFFFF, bo[0]);
+				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
-				tmp->offset[1] >> 8, 0xFFFFFFFF, bo[1]);
+				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
 				word4 | S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
 				S_038010_SRF_MODE_ALL(V_038010_SFR_MODE_NO_ZERO) |
@@ -966,7 +968,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
-				state->cbufs[cb]->offset >> 8, 0xFFFFFFFF, bo[0]);
+				(state->cbufs[cb]->offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
 				color_info, 0xFFFFFFFF, bo[0]);
@@ -980,10 +982,10 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_0280E0_CB_COLOR0_FRAG + cb * 4,
-				0x00000000, 0xFFFFFFFF, bo[1]);
+				r600_bo_offset(bo[1]) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280C0_CB_COLOR0_TILE + cb * 4,
-				0x00000000, 0xFFFFFFFF, bo[2]);
+				r600_bo_offset(bo[2]) >> 8, 0xFFFFFFFF, bo[2]);
 	r600_pipe_state_add_reg(rstate,
 				R_028100_CB_COLOR0_MASK + cb * 4,
 				0x00000000, 0xFFFFFFFF, NULL);
@@ -1013,7 +1015,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
-				state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(state->zsbuf->offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL);
@@ -1157,7 +1159,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					0, 0xFFFFFFFF, rbuffer->bo);
+					r600_bo_offset(rbuffer->bo) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -1168,7 +1170,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					0, 0xFFFFFFFF, rbuffer->bo);
+					r600_bo_offset(rbuffer->bo) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:
