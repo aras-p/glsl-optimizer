@@ -306,21 +306,9 @@ lp_build_conv(LLVMBuilderRef builder,
                                     LLVMBuildFMul(builder, src[3], const_255f, ""),
                                     int32_vec_type, "");
 
-#if HAVE_LLVM >= 0x0207
-         lo = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
-                                        int16_vec_type, src_int0, src_int1);
-         hi = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
-                                        int16_vec_type, src_int2, src_int3);
-         dst[i] = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128",
-                                            dst_vec_type, lo, hi);
-#else
-         lo = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
-                                        int32_vec_type, src_int0, src_int1);
-         hi = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128",
-                                        int32_vec_type, src_int2, src_int3);
-         dst[i] = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128",
-                                            int16_vec_type, lo, hi);
-#endif
+         lo = lp_build_pack2(builder, int32_type, int16_type, src_int0, src_int1);
+         hi = lp_build_pack2(builder, int32_type, int16_type, src_int2, src_int3);
+         dst[i] = lp_build_pack2(builder, int16_type, dst_type, lo, hi);
       }
       return; 
    }
