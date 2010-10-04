@@ -823,13 +823,21 @@ generate_viewport(struct draw_llvm *llvm,
 static LLVMValueRef 
 generate_clipmask(LLVMBuilderRef builder,
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
-                  boolean disable_zclipping,
-                  boolean enable_d3dclipping)
+                  boolean clip_xy,
+                  boolean clip_z,
+                  boolean clip_user,
+                  boolean enable_d3dclipping,
+                  struct draw_llvm *llvm)
 {
    LLVMValueRef mask; /* stores the <4xi32> clipmasks */     
    LLVMValueRef test, temp; 
    LLVMValueRef zero, shift;
    LLVMValueRef pos_x, pos_y, pos_z, pos_w;
+   LLVMValueRef planes, sum;
+
+   unsigned nr;
+   unsigned i;
+   float (*plane)[4];
 
    struct lp_type f32_type = lp_type_float_vec(32); 
 
@@ -843,33 +851,35 @@ generate_clipmask(LLVMBuilderRef builder,
    pos_w = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/   
 
    /* Cliptest, for hardwired planes */
-   /* plane 1 */
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_x , pos_w);
-   temp = shift;
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = test;
+   if (clip_xy){
+      /* plane 1 */
+      test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_x , pos_w);
+      temp = shift;
+      test = LLVMBuildAnd(builder, test, temp, ""); 
+      mask = test;
    
-   /* plane 2 */
-   test = LLVMBuildFAdd(builder, pos_x, pos_w, "");
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
-   temp = LLVMBuildShl(builder, temp, shift, "");
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = LLVMBuildOr(builder, mask, test, "");
+      /* plane 2 */
+      test = LLVMBuildFAdd(builder, pos_x, pos_w, "");
+      test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
+      temp = LLVMBuildShl(builder, temp, shift, "");
+      test = LLVMBuildAnd(builder, test, temp, ""); 
+      mask = LLVMBuildOr(builder, mask, test, "");
    
-   /* plane 3 */
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_y, pos_w);
-   temp = LLVMBuildShl(builder, temp, shift, "");
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = LLVMBuildOr(builder, mask, test, "");
+      /* plane 3 */
+      test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, pos_y, pos_w);
+      temp = LLVMBuildShl(builder, temp, shift, "");
+      test = LLVMBuildAnd(builder, test, temp, ""); 
+      mask = LLVMBuildOr(builder, mask, test, "");
 
-   /* plane 4 */
-   test = LLVMBuildFAdd(builder, pos_y, pos_w, "");
-   test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
-   temp = LLVMBuildShl(builder, temp, shift, "");
-   test = LLVMBuildAnd(builder, test, temp, ""); 
-   mask = LLVMBuildOr(builder, mask, test, "");
+      /* plane 4 */
+      test = LLVMBuildFAdd(builder, pos_y, pos_w, "");
+      test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
+      temp = LLVMBuildShl(builder, temp, shift, "");
+      test = LLVMBuildAnd(builder, test, temp, ""); 
+      mask = LLVMBuildOr(builder, mask, test, "");
+   }
 
-   if (!disable_zclipping){
+   if (clip_z){
       if (enable_d3dclipping){
          /* plane 5 */
          test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, pos_z);
@@ -892,6 +902,32 @@ generate_clipmask(LLVMBuilderRef builder,
       mask = LLVMBuildOr(builder, mask, test, "");
    }   
 
+   if (clip_user){
+      /* userclip planes */
+      nr = llvm->draw->nr_planes;
+      plane = llvm->draw->plane;
+      for (i = 6; i < nr; i++) {
+         planes = lp_build_const_vec(f32_type, plane[i][0]);
+         sum = LLVMBuildMul(builder, planes, pos_x, "");
+
+         planes = lp_build_const_vec(f32_type, plane[i][1]);
+         test = LLVMBuildMul(builder, planes, pos_y, "");
+         sum = LLVMBuildFAdd(builder, sum, test, "");
+
+         planes = lp_build_const_vec(f32_type, plane[i][2]);
+         test = LLVMBuildMul(builder, planes, pos_z, "");
+         sum = LLVMBuildFAdd(builder, sum, test, "");
+
+         planes = lp_build_const_vec(f32_type, plane[i][3]);
+         test = LLVMBuildMul(builder, planes, pos_w, "");
+         sum = LLVMBuildFAdd(builder, sum, test, "");
+
+         test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, sum);
+         temp = LLVMBuildShl(builder, temp, shift, "");
+         test = LLVMBuildAnd(builder, test, temp, ""); 
+         mask = LLVMBuildOr(builder, mask, test, "");
+      }
+   }
    return mask;
 }
 
@@ -942,8 +978,10 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, ret_ptr;
-   boolean disable_cliptest = variant->key.disable_cliptest;
-   boolean disable_viewport = variant->key.disable_viewport;
+   boolean bypass_viewport = variant->key.bypass_viewport;
+   boolean enable_cliptest = variant->key.clip_xy || 
+                             variant->key.clip_z  ||
+                             variant->key.clip_user;
    
    arg_types[0] = llvm->context_ptr_type;           /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;     /* vertex_header */
@@ -1053,10 +1091,14 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       store_clip(builder, io, outputs);
 
       /* do cliptest */
-      if (!disable_cliptest){
+      if (enable_cliptest){
          /* allocate clipmask, assign it integer type */
-         clipmask = generate_clipmask(builder, outputs, 
-                       variant->key.disable_zclipping, variant->key.enable_d3dclipping);
+         clipmask = generate_clipmask(builder, outputs,
+                                      variant->key.clip_xy,
+                                      variant->key.clip_z, 
+                                      variant->key.clip_user,
+                                      variant->key.enable_d3dclipping,
+                                      llvm);
          /* return clipping boolean value for function */
          clipmask_bool(builder, clipmask, ret_ptr);
       }
@@ -1065,7 +1107,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       }
       
       /* do viewport mapping */
-      if (!disable_viewport){
+      if (!bypass_viewport){
          generate_viewport(llvm, builder, outputs);
       }
 
@@ -1137,9 +1179,11 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, ret_ptr;
-   boolean disable_cliptest = variant->key.disable_cliptest;
-   boolean disable_viewport = variant->key.disable_viewport;
-
+   boolean bypass_viewport = variant->key.bypass_viewport;
+   boolean enable_cliptest = variant->key.clip_xy || 
+                             variant->key.clip_z  ||
+                             variant->key.clip_user;
+   
    arg_types[0] = llvm->context_ptr_type;               /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;         /* vertex_header */
    arg_types[2] = llvm->buffer_ptr_type;                /* vbuffers */
@@ -1257,10 +1301,14 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
       store_clip(builder, io, outputs);
 
       /* do cliptest */
-      if (!disable_cliptest){
+      if (enable_cliptest){
          /* allocate clipmask, assign it integer type */
-         clipmask = generate_clipmask(builder, outputs, 
-                       variant->key.disable_zclipping, variant->key.enable_d3dclipping);
+         clipmask = generate_clipmask(builder, outputs,
+                                      variant->key.clip_xy,
+                                      variant->key.clip_z, 
+                                      variant->key.clip_user,
+                                      variant->key.enable_d3dclipping,
+                                      llvm);
          /* return clipping boolean value for function */
          clipmask_bool(builder, clipmask, ret_ptr);
       }
@@ -1269,7 +1317,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
       }
       
       /* do viewport mapping */
-      if (!disable_viewport){
+      if (!bypass_viewport){
          generate_viewport(llvm, builder, outputs);
       }
 
@@ -1338,10 +1386,12 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
 
    /* will have to rig this up properly later */
-   key->disable_cliptest = 0;
-   key->disable_viewport = 0;
-   key->disable_zclipping = 0;
-   key->enable_d3dclipping = 0;
+   key->clip_xy = llvm->draw->clip_xy;
+   key->clip_z = llvm->draw->clip_z;
+   key->clip_user = llvm->draw->clip_user;
+   key->bypass_viewport = llvm->draw->identity_viewport;
+   key->enable_d3dclipping = (boolean)!llvm->draw->rasterizer->gl_rasterization_rules;
+   key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the
