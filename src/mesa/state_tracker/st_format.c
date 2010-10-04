@@ -210,6 +210,8 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_R8G8_UNORM;
    case MESA_FORMAT_RG1616:
       return PIPE_FORMAT_R16G16_UNORM;
+   case MESA_FORMAT_RGBA_16:
+      return PIPE_FORMAT_R16G16B16A16_UNORM;
 
    /* signed int formats */
    case MESA_FORMAT_RGBA_INT8:
@@ -270,6 +272,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_S8_USCALED:
       return MESA_FORMAT_S8;
 
+   case PIPE_FORMAT_R16G16B16A16_UNORM:
+      return MESA_FORMAT_RGBA_16;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       return MESA_FORMAT_SIGNED_RGBA_16;
 
@@ -469,14 +473,19 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_RGBA:
    case GL_RGBA8:
    case GL_RGB10_A2:
-   case GL_RGBA12:
       return default_rgba_format( screen, target, sample_count, bindings,
                                   geom_flags );
+
    case 3:
    case GL_RGB:
       return default_rgb_format( screen, target, sample_count, bindings,
                                  geom_flags );
+   case GL_RGBA12:
    case GL_RGBA16:
+      if (screen->is_format_supported( screen, PIPE_FORMAT_R16G16B16A16_UNORM,
+                                             target, sample_count, bindings,
+                                             geom_flags ))
+         return PIPE_FORMAT_R16G16B16A16_UNORM;
       return default_rgba_format( screen, target, sample_count, bindings,
                                   geom_flags );
 
