@@ -715,6 +715,7 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo 
 			reloc_id = i * sizeof(struct r600_reloc) / 4;
 			/* set PKT3 to point to proper reloc */
 			*pm4 = reloc_id;
+			break;
 		}
 	}
 	if (reloc_id == -1) {
