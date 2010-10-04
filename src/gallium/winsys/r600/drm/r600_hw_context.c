@@ -725,8 +725,8 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct radeon_bo 
 		}
 		reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
 		ctx->reloc[ctx->creloc].handle = bo->handle;
-		ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT;
-		ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT;
+		ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+		ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
 		ctx->reloc[ctx->creloc].flags = 0;
 		radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
 		ctx->creloc++;
