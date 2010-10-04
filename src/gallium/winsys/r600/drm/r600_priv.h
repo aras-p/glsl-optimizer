@@ -145,6 +145,7 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
 {
 	bo->map_count++;
+	return 0;
 }
 
 static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
