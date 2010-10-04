@@ -37,6 +37,7 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 
 	desc.alignment = alignment;
 	desc.usage = usage;
+	ws_bo->size = size;
 
 	if (!radeon->use_mem_constant && (usage & PIPE_BIND_CONSTANT_BUFFER)) {
 		man = radeon->mman;
@@ -59,12 +60,15 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 					 unsigned handle)
 {
 	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
+	struct radeon_bo *bo;
 
 	ws_bo->pb = radeon_bo_pb_create_buffer_from_handle(radeon->kman, handle);
 	if (!ws_bo->pb) {
 		free(ws_bo);
 		return NULL;
 	}
+	bo = radeon_bo_pb_get_bo(ws_bo->pb);
+	ws_bo->size = bo->size;
 	pipe_reference_init(&ws_bo->reference, 1);
 	return ws_bo;
 }

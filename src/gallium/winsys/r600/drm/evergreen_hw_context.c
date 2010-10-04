@@ -39,9 +39,6 @@
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
-struct radeon_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
-int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
-
 #define GROUP_FORCE_NEW_BLOCK	0
 
 static const struct r600_reg evergreen_config_reg_list[] = {
@@ -747,8 +744,8 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
-	struct radeon_bo *cb[12];
-	struct radeon_bo *db;
+	struct r600_bo *cb[12];
+	struct r600_bo *db;
 	unsigned ndwords = 9;
 
 	if (draw->indices) {
@@ -823,7 +820,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], radeon_bo_pb_get_bo(draw->indices->pb));
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
