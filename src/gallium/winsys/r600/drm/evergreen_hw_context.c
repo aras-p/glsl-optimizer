@@ -632,8 +632,8 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -644,18 +644,18 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 	block->reg[5] = state->regs[5].value;
 	block->reg[6] = state->regs[6].value;
 	block->reg[7] = state->regs[7].value;
-	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
 		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 		 * we have single case btw VERTEX & TEXTURE resource
 		 */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
 	} else {
 		/* TEXTURE RESOURCE */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -881,18 +881,18 @@ static inline void evergreen_resource_set(struct r600_context *ctx, struct r600_
 	block->reg[5] = state->regs[5].value;
 	block->reg[6] = state->regs[6].value;
 	block->reg[7] = state->regs[7].value;
-	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
 		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 		 * we have single case btw VERTEX & TEXTURE resource
 		 */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
 	} else {
 		/* TEXTURE RESOURCE */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;

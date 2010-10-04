@@ -69,7 +69,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
 	struct r600_resource_buffer *rbuffer;
-	struct radeon_ws_bo *bo;
+	struct r600_bo *bo;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
@@ -86,7 +86,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.base.vtbl = &r600_buffer_vtbl;
 	rbuffer->r.size = rbuffer->r.base.b.width0;
 	rbuffer->r.domain = r600_domain_from_usage(rbuffer->r.base.b.bind);
-	bo = radeon_ws_bo((struct radeon*)screen->winsys, rbuffer->r.base.b.width0, alignment, rbuffer->r.base.b.bind);
+	bo = r600_bo((struct radeon*)screen->winsys, rbuffer->r.base.b.width0, alignment, rbuffer->r.base.b.bind);
 	if (bo == NULL) {
 		FREE(rbuffer);
 		return NULL;
@@ -129,7 +129,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
 	if (rbuffer->r.bo) {
-		radeon_ws_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
+		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
 	}
 	FREE(rbuffer);
 }
@@ -153,9 +153,9 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				flush = TRUE;
 			
 			if (flush) {
-				radeon_ws_bo_reference((struct radeon*)pipe->winsys, &rbuffer->r.bo, NULL);
+				r600_bo_reference((struct radeon*)pipe->winsys, &rbuffer->r.bo, NULL);
 				rbuffer->num_ranges = 0;
-				rbuffer->r.bo = radeon_ws_bo((struct radeon*)pipe->winsys,
+				rbuffer->r.bo = r600_bo((struct radeon*)pipe->winsys,
 							     rbuffer->r.base.b.width0, 0,
 							     rbuffer->r.base.b.bind);
 				break;
@@ -168,7 +168,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
-	data = radeon_ws_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
+	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
 	if (!data)
 		return NULL;
 
@@ -181,7 +181,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 
 	if (rbuffer->r.bo)
-		radeon_ws_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
+		r600_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
@@ -225,16 +225,16 @@ struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 {
 	struct radeon *rw = (struct radeon*)screen->winsys;
 	struct r600_resource *rbuffer;
-	struct radeon_ws_bo *bo = NULL;
+	struct r600_bo *bo = NULL;
 
-	bo = radeon_ws_bo_handle(rw, whandle->handle);
+	bo = r600_bo_handle(rw, whandle->handle);
 	if (bo == NULL) {
 		return NULL;
 	}
 
 	rbuffer = CALLOC_STRUCT(r600_resource);
 	if (rbuffer == NULL) {
-		radeon_ws_bo_reference(rw, &bo, NULL);
+		r600_bo_reference(rw, &bo, NULL);
 		return NULL;
 	}
 

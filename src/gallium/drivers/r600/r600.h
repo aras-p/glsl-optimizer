@@ -103,15 +103,15 @@ enum radeon_family r600_get_family(struct radeon *rw);
 enum chip_class r600_get_family_class(struct radeon *radeon);
 
 /* lowlevel WS bo */
-struct radeon_ws_bo;
-struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
+struct r600_bo;
+struct r600_bo *r600_bo(struct radeon *radeon,
 				  unsigned size, unsigned alignment, unsigned usage);
-struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
+struct r600_bo *r600_bo_handle(struct radeon *radeon,
 					 unsigned handle);
-void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned usage, void *ctx);
-void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo);
-void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
-			    struct radeon_ws_bo *src);
+void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
+void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
+void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
+			    struct r600_bo *src);
 
 /* R600/R700 STATES */
 #define R600_GROUP_MAX			16
@@ -122,7 +122,7 @@ struct r600_pipe_reg {
 	u32				offset;
 	u32				mask;
 	u32				value;
-	struct radeon_ws_bo		*bo;
+	struct r600_bo		*bo;
 };
 
 struct r600_pipe_state {
@@ -133,7 +133,7 @@ struct r600_pipe_state {
 
 static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
 					u32 offset, u32 value, u32 mask,
-					struct radeon_ws_bo *bo)
+					struct r600_bo *bo)
 {
 	state->regs[state->nregs].offset = offset;
 	state->regs[state->nregs].value = value;
@@ -147,7 +147,7 @@ static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 
 struct r600_block_reloc {
-	struct radeon_ws_bo	*bo;
+	struct r600_bo	*bo;
 	unsigned		nreloc;
 	unsigned		bo_pm4_index[R600_BLOCK_MAX_BO];
 };
@@ -195,7 +195,7 @@ struct r600_query {
 	/* if we've flushed the query */
 	unsigned				state;
 	/* The buffer where query results are stored. */
-	struct radeon_ws_bo			*buffer;
+	struct r600_bo			*buffer;
 	unsigned				buffer_size;
 	/* linked list of queries */
 	struct list_head			list;
@@ -232,7 +232,7 @@ struct r600_draw {
 	u32			vgt_index_type;
 	u32			vgt_draw_initiator;
 	u32			indices_bo_offset;
-	struct radeon_ws_bo	*indices;
+	struct r600_bo		*indices;
 };
 
 int r600_context_init(struct r600_context *ctx, struct radeon *radeon);

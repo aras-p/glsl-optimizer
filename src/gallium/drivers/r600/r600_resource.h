@@ -41,7 +41,7 @@ struct r600_transfer {
  */
 struct r600_resource {
 	struct u_resource		base;
-	struct radeon_ws_bo		*bo;
+	struct r600_bo			*bo;
 	u32				domain;
 	u32				flink;
 	u32				size;

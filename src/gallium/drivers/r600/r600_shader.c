@@ -200,13 +200,13 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 	/* copy new shader */
 	if (shader->bo == NULL) {
-		shader->bo = radeon_ws_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0);
+		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0);
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = radeon_ws_bo_map(rctx->radeon, shader->bo, 0, NULL);
+		ptr = r600_bo_map(rctx->radeon, shader->bo, 0, NULL);
 		memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * 4);
-		radeon_ws_bo_unmap(rctx->radeon, shader->bo);
+		r600_bo_unmap(rctx->radeon, shader->bo);
 	}
 	/* build state */
 	rshader->flat_shade = rctx->flatshade;
@@ -254,7 +254,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	for (i = 0; i < rctx->vertex_elements->count; i++) {
 		resource_format[nresources++] = rctx->vertex_elements->elements[i].src_format;
 	}
-	radeon_ws_bo_reference(rctx->radeon, &rshader->bo, NULL);
+	r600_bo_reference(rctx->radeon, &rshader->bo, NULL);
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		switch (cf->inst) {
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:

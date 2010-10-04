@@ -606,7 +606,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	unsigned format;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
-	struct radeon_ws_bo *bo[2];
+	struct r600_bo *bo[2];
 
 	if (resource == NULL)
 		return NULL;
@@ -739,7 +739,7 @@ static void r600_delete_state(struct pipe_context *ctx, void *state)
 		rctx->states[rstate->id] = NULL;
 	}
 	for (int i = 0; i < rstate->nregs; i++) {
-		radeon_ws_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
+		r600_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
 	}
 	free(rstate);
 }
@@ -940,7 +940,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned color_info;
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
-	struct radeon_ws_bo *bo[3];
+	struct r600_bo *bo[3];
 
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;

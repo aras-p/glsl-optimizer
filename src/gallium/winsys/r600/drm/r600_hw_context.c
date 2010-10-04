@@ -751,7 +751,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			id = block->pm4_bo_index[id];
-			radeon_ws_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
+			r600_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
 		}
 		if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 			block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -770,8 +770,8 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -781,18 +781,18 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	block->reg[4] = state->regs[4].value;
 	block->reg[5] = state->regs[5].value;
 	block->reg[6] = state->regs[6].value;
-	radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-	radeon_ws_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
 		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 		 * we have single case btw VERTEX & TEXTURE resource
 		 */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
 	} else {
 		/* TEXTURE RESOURCE */
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-		radeon_ws_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -1151,7 +1151,7 @@ static void r600_query_result(struct r600_context *ctx, struct r600_query *query
 	u32 *results;
 	int i;
 
-	results = radeon_ws_bo_map(ctx->radeon, query->buffer, 0, NULL);
+	results = r600_bo_map(ctx->radeon, query->buffer, 0, NULL);
 	for (i = 0; i < query->num_results; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
@@ -1159,7 +1159,7 @@ static void r600_query_result(struct r600_context *ctx, struct r600_query *query
 			query->result += end - start;
 		}
 	}
-	radeon_ws_bo_unmap(ctx->radeon, query->buffer);
+	r600_bo_unmap(ctx->radeon, query->buffer);
 	query->num_results = 0;
 }
 
@@ -1222,7 +1222,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	query->type = query_type;
 	query->buffer_size = 4096;
 
-	query->buffer = radeon_ws_bo(ctx->radeon, query->buffer_size, 1, 0);
+	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0);
 	if (!query->buffer) {
 		free(query);
 		return NULL;
@@ -1235,7 +1235,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	radeon_ws_bo_reference(ctx->radeon, &query->buffer, NULL);
+	r600_bo_reference(ctx->radeon, &query->buffer, NULL);
 	LIST_DEL(&query->list);
 	free(query);
 }

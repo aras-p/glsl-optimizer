@@ -65,7 +65,7 @@ struct radeon_bo {
 	void				*data;
 };
 
-struct radeon_ws_bo {
+struct r600_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*pb;
 };
@@ -93,9 +93,9 @@ struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon);
 struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
 							 uint32_t handle);
 
-/* radeon_ws_bo.c */
-unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *bo);
-unsigned radeon_ws_bo_get_size(struct radeon_ws_bo *bo);
+/* r600_bo.c */
+unsigned r600_bo_get_handle(struct r600_bo *bo);
+unsigned r600_bo_get_size(struct r600_bo *bo);
 
 #define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
 #define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))

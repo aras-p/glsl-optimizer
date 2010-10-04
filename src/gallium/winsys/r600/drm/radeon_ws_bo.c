@@ -28,10 +28,10 @@
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
-struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
+struct r600_bo *r600_bo(struct radeon *radeon,
 				  unsigned size, unsigned alignment, unsigned usage)
 {
-	struct radeon_ws_bo *ws_bo = calloc(1, sizeof(struct radeon_ws_bo));
+	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
 	struct pb_desc desc;
 	struct pb_manager *man;
 
@@ -55,10 +55,10 @@ struct radeon_ws_bo *radeon_ws_bo(struct radeon *radeon,
 	return ws_bo;
 }
 
-struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
+struct r600_bo *r600_bo_handle(struct radeon *radeon,
 					 unsigned handle)
 {
-	struct radeon_ws_bo *ws_bo = calloc(1, sizeof(struct radeon_ws_bo));
+	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
 
 	ws_bo->pb = radeon_bo_pb_create_buffer_from_handle(radeon->kman, handle);
 	if (!ws_bo->pb) {
@@ -69,35 +69,35 @@ struct radeon_ws_bo *radeon_ws_bo_handle(struct radeon *radeon,
 	return ws_bo;
 }
 
-void *radeon_ws_bo_map(struct radeon *radeon, struct radeon_ws_bo *bo, unsigned usage, void *ctx)
+void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx)
 {
 	return pb_map(bo->pb, usage, ctx);
 }
 
-void radeon_ws_bo_unmap(struct radeon *radeon, struct radeon_ws_bo *bo)
+void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 {
 	pb_unmap(bo->pb);
 }
 
-static void radeon_ws_bo_destroy(struct radeon *radeon, struct radeon_ws_bo *bo)
+static void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 {
 	if (bo->pb)
 		pb_reference(&bo->pb, NULL);
 	free(bo);
 }
 
-void radeon_ws_bo_reference(struct radeon *radeon, struct radeon_ws_bo **dst,
-			    struct radeon_ws_bo *src)
+void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
+			    struct r600_bo *src)
 {
-	struct radeon_ws_bo *old = *dst;
+	struct r600_bo *old = *dst;
  		
 	if (pipe_reference(&(*dst)->reference, &src->reference)) {
-		radeon_ws_bo_destroy(radeon, old);
+		r600_bo_destroy(radeon, old);
 	}
 	*dst = src;
 }
 
-unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo)
+unsigned r600_bo_get_handle(struct r600_bo *pb_bo)
 {
 	struct radeon_bo *bo;
 
@@ -108,7 +108,7 @@ unsigned radeon_ws_bo_get_handle(struct radeon_ws_bo *pb_bo)
 	return bo->handle;
 }
 
-unsigned radeon_ws_bo_get_size(struct radeon_ws_bo *pb_bo)
+unsigned r600_bo_get_size(struct r600_bo *pb_bo)
 {
 	struct radeon_bo *bo;
 

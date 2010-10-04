@@ -127,7 +127,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
 	resource->size = rtex->size;
-	resource->bo = radeon_ws_bo(radeon, rtex->size, 4096, 0);
+	resource->bo = r600_bo(radeon, rtex->size, 4096, 0);
 	if (resource->bo == NULL) {
 		FREE(rtex);
 		return NULL;
@@ -146,7 +146,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
 	if (resource->bo) {
-		radeon_ws_bo_reference(radeon, &resource->bo, NULL);
+		r600_bo_reference(radeon, &resource->bo, NULL);
 	}
 	FREE(rtex);
 }
@@ -190,7 +190,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	struct radeon *rw = (struct radeon*)screen->winsys;
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
-	struct radeon_ws_bo *bo = NULL;
+	struct r600_bo *bo = NULL;
 
 	/* Support only 2D textures without mipmaps */
 	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
@@ -201,7 +201,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	if (rtex == NULL)
 		return NULL;
 
-	bo = radeon_ws_bo_handle(rw, whandle->handle);
+	bo = r600_bo_handle(rw, whandle->handle);
 	if (bo == NULL) {
 		FREE(rtex);
 		return NULL;
@@ -359,7 +359,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct radeon_ws_bo *bo;
+	struct r600_bo *bo;
 	enum pipe_format format = transfer->resource->format;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
 	unsigned long offset = 0;
@@ -379,7 +379,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
-	map = radeon_ws_bo_map(radeon, bo, 0, ctx);
+	map = r600_bo_map(radeon, bo, 0, ctx);
 	if (!map) {
 		return NULL;
 	}
@@ -392,7 +392,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
-	struct radeon_ws_bo *bo;
+	struct r600_bo *bo;
 
 	if (rtransfer->linear_texture) {
 		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
@@ -405,7 +405,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 			bo = ((struct r600_resource *)transfer->resource)->bo;
 		}
 	}
-	radeon_ws_bo_unmap(radeon, bo);
+	r600_bo_unmap(radeon, bo);
 }
 
 struct u_resource_vtbl r600_texture_vtbl =
