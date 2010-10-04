@@ -1558,7 +1558,7 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 			struct nvfx_fragment_program_bo* next = fpbo->next;
 			nouveau_bo_unmap(fpbo->bo);
 			nouveau_bo_ref(0, &fpbo->bo);
-			free(fpbo);
+			os_free_aligned(fpbo);
 			fpbo = next;
 		}
 		while(fpbo != fp->fpbo);
