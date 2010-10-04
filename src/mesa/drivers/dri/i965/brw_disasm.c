@@ -886,7 +886,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	string (file, ")");
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND)
+    if (inst->header.opcode == BRW_OPCODE_SEND && gen < 6)
 	format (file, " %d", inst->header.destreg__conditionalmod);
 
     if (opcode[inst->header.opcode].ndst > 0) {
