@@ -10,8 +10,8 @@ C_SOURCES = \
 	radeon_bo.c \
 	radeon_bo_pb.c \
 	radeon_pciid.c \
-	radeon_ws_bo.c \
 	r600.c \
+	r600_bo.c \
 	r600_drm.c \
 	r600_hw_context.c
 
