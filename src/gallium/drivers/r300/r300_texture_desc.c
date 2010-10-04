@@ -44,7 +44,7 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
             {{ 32, 1}, { 8,  4}, { 0,  0}}, /*   8 bits per pixel */
             {{ 16, 1}, { 8,  2}, { 4,  4}}, /*  16 bits per pixel */
             {{  8, 1}, { 4,  2}, { 0,  0}}, /*  32 bits per pixel */
-            {{  4, 1}, { 0,  0}, { 2,  2}}, /*  64 bits per pixel */
+            {{  4, 1}, { 2,  2}, { 0,  0}}, /*  64 bits per pixel */
             {{  2, 1}, { 0,  0}, { 0,  0}}  /* 128 bits per pixel */
         },
         {
@@ -53,7 +53,7 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
             {{256, 8}, {64, 32}, { 0,  0}}, /*   8 bits per pixel */
             {{128, 8}, {64, 16}, {32, 32}}, /*  16 bits per pixel */
             {{ 64, 8}, {32, 16}, { 0,  0}}, /*  32 bits per pixel */
-            {{ 32, 8}, { 0,  0}, {16, 16}}, /*  64 bits per pixel */
+            {{ 32, 8}, {16, 16}, { 0,  0}}, /*  64 bits per pixel */
             {{ 16, 8}, { 0,  0}, { 0,  0}}  /* 128 bits per pixel */
         }
     };
@@ -368,11 +368,11 @@ static void r300_setup_tiling(struct r300_screen *screen,
     switch (util_format_get_blocksize(format)) {
         case 1:
         case 4:
+        case 8:
             desc->microtile = R300_BUFFER_TILED;
             break;
 
         case 2:
-        case 8:
             if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT)) {
                 desc->microtile = R300_BUFFER_SQUARETILED;
             }
