@@ -448,6 +448,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint msg_control,
 				      GLuint msg_type,
 				      GLuint msg_length,
+				      GLboolean header_present,
 				      GLuint pixel_scoreboard_clear,
 				      GLuint response_length,
 				      GLuint end_of_thread,
@@ -462,7 +463,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_render_cache.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_render_cache.msg_type = msg_type;
        insn->bits3.dp_render_cache.send_commit_msg = send_commit_msg;
-       insn->bits3.dp_render_cache.header_present = 0; /* XXX */
+       insn->bits3.dp_render_cache.header_present = header_present;
        insn->bits3.dp_render_cache.response_length = response_length;
        insn->bits3.dp_render_cache.msg_length = msg_length;
        insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
@@ -476,7 +477,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write_gen5.msg_type = msg_type;
        insn->bits3.dp_write_gen5.send_commit_msg = send_commit_msg;
-       insn->bits3.dp_write_gen5.header_present = 1;
+       insn->bits3.dp_write_gen5.header_present = header_present;
        insn->bits3.dp_write_gen5.response_length = response_length;
        insn->bits3.dp_write_gen5.msg_length = msg_length;
        insn->bits3.dp_write_gen5.end_of_thread = end_of_thread;
@@ -1293,6 +1294,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 			       BRW_DATAPORT_OWORD_BLOCK_4_OWORDS, /* msg_control */
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
 			       msg_length,
+			       GL_TRUE, /* header_present */
 			       0, /* pixel scoreboard */
 			       send_commit_msg, /* response_length */
 			       0, /* eot */
@@ -1530,12 +1532,16 @@ void brw_fb_WRITE(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_control, msg_type;
+   GLboolean header_present = GL_TRUE;
 
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (intel->gen >= 6) {
+      if (msg_length == 4)
+	 header_present = GL_FALSE;
+
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
@@ -1559,6 +1565,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_control,
 			    msg_type,
 			    msg_length,
+			    header_present,
 			    1,	/* pixel scoreboard */
 			    response_length,
 			    eot,

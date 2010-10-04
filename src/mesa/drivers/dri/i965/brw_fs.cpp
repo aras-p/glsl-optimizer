@@ -1920,6 +1920,7 @@ void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
    GLboolean eot = inst->eot;
+   struct brw_reg implied_header;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -1927,16 +1928,27 @@ fs_visitor::generate_fb_write(fs_inst *inst)
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+
+   if (intel->gen >= 6) {
+      brw_MOV(p,
+	      brw_message_reg(0),
+	      brw_vec8_grf(0, 0));
+      implied_header = brw_null_reg();
+   } else {
+      implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   }
+
    brw_MOV(p,
 	   brw_message_reg(1),
 	   brw_vec8_grf(1, 0));
+
    brw_pop_insn_state(p);
 
    brw_fb_WRITE(p,
 		8, /* dispatch_width */
 		retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
 		0, /* base MRF */
-		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
+		implied_header,
 		inst->target,
 		inst->mlen,
 		0,
