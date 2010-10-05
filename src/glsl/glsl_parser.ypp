@@ -977,11 +977,11 @@ layout_qualifier_id_list:
 layout_qualifier_id:
 	IDENTIFIER
 	{
+	   bool got_one = false;
+
 	   $$.i = 0;
 
 	   if (state->ARB_fragment_coord_conventions_enable) {
-	      bool got_one = false;
-
 	      if (strcmp($1, "origin_upper_left") == 0) {
 		 got_one = true;
 		 $$.q.origin_upper_left = 1;
@@ -989,21 +989,19 @@ layout_qualifier_id:
 		 got_one = true;
 		 $$.q.pixel_center_integer = 1;
 	      }
-
-	      if (state->ARB_fragment_coord_conventions_warn && got_one) {
-		 _mesa_glsl_warning(& @1, state,
-				    "GL_ARB_fragment_coord_conventions layout "
-				    "identifier `%s' used\n", $1);
-	      }
 	   }
 
 	   /* If the identifier didn't match any known layout identifiers,
 	    * emit an error.
 	    */
-	   if ($$.i == 0) {
+	   if (!got_one) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
 	      YYERROR;
+	   } else if (state->ARB_fragment_coord_conventions_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "GL_ARB_fragment_coord_conventions layout "
+				 "identifier `%s' used\n", $1);
 	   }
 	}
 	;
