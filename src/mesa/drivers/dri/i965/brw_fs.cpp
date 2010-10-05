@@ -2607,6 +2607,11 @@ fs_visitor::propagate_constants()
 		  scan_inst->src[1] = inst->src[0];
 	       }
 	       break;
+	    case BRW_OPCODE_CMP:
+	       if (i == 1) {
+		  scan_inst->src[i] = inst->src[0];
+		  progress = true;
+	       }
 	    }
 	 }
 
