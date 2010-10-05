@@ -137,6 +137,7 @@ static void inline r600_context_reg(struct r600_context *ctx,
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 

@@ -613,6 +613,9 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		r = -ENOMEM;
 		goto out_err;
 	}
+
+	/* init dirty list */
+	LIST_INITHEAD(&ctx->dirty);
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -630,6 +633,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		LIST_DEL(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -657,6 +661,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 
@@ -683,6 +688,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		LIST_DEL(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -692,6 +698,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 
@@ -705,6 +712,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	block = range->blocks[CTX_BLOCK_ID(ctx, fake_offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		LIST_DEL(&block->list);
 		return;
 	}
 	if (state->nregs <= 3) {
@@ -719,6 +727,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 
@@ -746,6 +755,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	struct r600_bo *cb[12];
 	struct r600_bo *db;
 	unsigned ndwords = 9, flush;
+	struct r600_block *dirty_block;
 
 	if (draw->indices) {
 		ndwords = 13;
@@ -800,11 +810,10 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* enough room to copy packet */
-	for (int i = 0; i < ctx->nblocks; i++) {
-		if (ctx->blocks[i]->status & R600_BLOCK_STATUS_DIRTY) {
-			r600_context_block_emit_dirty(ctx, ctx->blocks[i]);
-		}
+	LIST_FOR_EACH_ENTRY(dirty_block,&ctx->dirty,list) {
+		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
+	LIST_INITHEAD(&ctx->dirty);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
@@ -884,6 +893,7 @@ static inline void evergreen_resource_set(struct r600_context *ctx, struct r600_
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 

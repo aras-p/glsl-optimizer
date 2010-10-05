@@ -160,6 +160,7 @@ struct r600_block_reloc {
 };
 
 struct r600_block {
+	struct list_head	list;
 	unsigned		status;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
@@ -221,6 +222,7 @@ struct r600_context {
 	struct r600_range	range[256];
 	unsigned		nblocks;
 	struct r600_block	**blocks;
+	struct list_head	dirty;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
