@@ -222,7 +222,7 @@ pb_cache_buffer_vtbl = {
 };
 
 
-static INLINE boolean
+static INLINE int
 pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,  
                           pb_size size,
                           const struct pb_desc *desc)
@@ -230,26 +230,26 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    void *map;
 
    if(buf->base.base.size < size)
-      return FALSE;
+      return 0;
 
    /* be lenient with size */
    if(buf->base.base.size >= 2*size)
-      return FALSE;
+      return 0;
    
    if(!pb_check_alignment(desc->alignment, buf->base.base.alignment))
-      return FALSE;
+      return 0;
    
    if(!pb_check_usage(desc->usage, buf->base.base.usage))
-      return FALSE;
+      return 0;
 
    map = pb_map(buf->buffer, PB_USAGE_DONTBLOCK, NULL);
    if (!map) {
-      return FALSE;
+      return -1;
    }
 
    pb_unmap(buf->buffer);
    
-   return TRUE;
+   return 1;
 }
 
 
@@ -263,7 +263,8 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_cache_buffer *curr_buf;
    struct list_head *curr, *next;
    int64_t now;
-   
+   int ret = 0;
+
    pipe_mutex_lock(mgr->mutex);
 
    buf = NULL;
@@ -274,25 +275,30 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    now = os_time_get();
    while(curr != &mgr->delayed) {
       curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
-      if(!buf && pb_cache_is_buffer_compat(curr_buf, size, desc))
-	 buf = curr_buf;
+      if(!buf && (ret = pb_cache_is_buffer_compat(curr_buf, size, desc) > 0))
+         buf = curr_buf;
       else if(os_time_timeout(curr_buf->start, curr_buf->end, now))
-	 _pb_cache_buffer_destroy(curr_buf);
+         _pb_cache_buffer_destroy(curr_buf);
       else
          /* This buffer (and all hereafter) are still hot in cache */
+         break;
+      if (ret == -1)
          break;
       curr = next; 
       next = curr->next;
    }
 
    /* keep searching in the hot buffers */
-   if(!buf) {
+   if(!buf && ret != -1) {
       while(curr != &mgr->delayed) {
          curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
-         if(pb_cache_is_buffer_compat(curr_buf, size, desc)) {
+         ret = pb_cache_is_buffer_compat(curr_buf, size, desc);
+         if (ret > 0) {
             buf = curr_buf;
             break;
          }
+         if (ret == -1)
+            break;
          /* no need to check the timeout here */
          curr = next;
          next = curr->next;
