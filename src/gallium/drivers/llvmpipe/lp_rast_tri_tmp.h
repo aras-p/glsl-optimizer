@@ -309,7 +309,7 @@ TRI_16(struct lp_rasterizer_task *task,
       partial_mask &= ~(1 << i);
 
       for (j = 0; j < NR_PLANES; j++) {
-         const int cx = (plane[j].c 
+         const int cx = (plane[j].c - 1
 			 - plane[j].dcdx * px
 			 + plane[j].dcdy * py) * 4;
 
