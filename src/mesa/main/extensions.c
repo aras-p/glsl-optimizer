@@ -75,6 +75,7 @@ static const struct {
    { OFF, "GL_ARB_sampler_objects",            F(ARB_sampler_objects) },
    { OFF, "GL_ARB_seamless_cube_map",          F(ARB_seamless_cube_map) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
+   { OFF, "GL_ARB_shader_stencil_export",      F(ARB_shader_stencil_export) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(ARB_shadow_ambient) },
