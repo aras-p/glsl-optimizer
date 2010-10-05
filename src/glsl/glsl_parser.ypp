@@ -793,10 +793,25 @@ parameter_declaration:
 	;
 
 parameter_qualifier:
-	/* empty */	{ $$.i = 0; }
-	| IN_TOK	{ $$.i = 0; $$.q.in = 1; }
-	| OUT_TOK	{ $$.i = 0; $$.q.out = 1; }
-	| INOUT_TOK	{ $$.i = 0; $$.q.in = 1; $$.q.out = 1; }
+	/* empty */
+	{
+	   memset(& $$, 0, sizeof($$));
+	}
+	| IN_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.in = 1;
+	}
+	| OUT_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.out = 1;
+	}
+	| INOUT_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.in = 1; $$.q.out = 1;
+	}
 	;
 
 parameter_type_specifier:
@@ -979,7 +994,7 @@ layout_qualifier_id:
 	{
 	   bool got_one = false;
 
-	   $$.i = 0;
+	   memset(& $$, 0, sizeof($$));
 
 	   if (state->ARB_fragment_coord_conventions_enable) {
 	      if (strcmp($1, "origin_upper_left") == 0) {
@@ -1007,13 +1022,29 @@ layout_qualifier_id:
 	;
 
 interpolation_qualifier:
-	SMOOTH		{ $$.i = 0; $$.q.smooth = 1; }
-	| FLAT		{ $$.i = 0; $$.q.flat = 1; }
-	| NOPERSPECTIVE	{ $$.i = 0; $$.q.noperspective = 1; }
+	SMOOTH
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.smooth = 1;
+	}
+	| FLAT
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.flat = 1;
+	}
+	| NOPERSPECTIVE
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.noperspective = 1;
+	}
 	;
 
 parameter_type_qualifier:
-	CONST_TOK	{ $$.i = 0; $$.q.constant = 1; }
+	CONST_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.constant = 1;
+	}
 	;
 
 type_qualifier:
@@ -1040,21 +1071,57 @@ type_qualifier:
 	}
 	| INVARIANT
 	{
-	   $$.i = 0;
+	   memset(& $$, 0, sizeof($$));
 	   $$.q.invariant = 1;
 	}
 	;
 
 storage_qualifier:
-	CONST_TOK		{ $$.i = 0; $$.q.constant = 1; }
-	| ATTRIBUTE 		{ $$.i = 0; $$.q.attribute = 1; }
-	| VARYING		{ $$.i = 0; $$.q.varying = 1; }
-	| CENTROID VARYING	{ $$.i = 0; $$.q.centroid = 1; $$.q.varying = 1; }
-	| IN_TOK		{ $$.i = 0; $$.q.in = 1; }
-	| OUT_TOK		{ $$.i = 0; $$.q.out = 1; }
-	| CENTROID IN_TOK	{ $$.i = 0; $$.q.centroid = 1; $$.q.in = 1; }
-	| CENTROID OUT_TOK	{ $$.i = 0; $$.q.centroid = 1; $$.q.out = 1; }
-	| UNIFORM		{ $$.i = 0; $$.q.uniform = 1; }
+	CONST_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.constant = 1;
+	}
+	| ATTRIBUTE
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.attribute = 1;
+	}
+	| VARYING
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.varying = 1;
+	}
+	| CENTROID VARYING
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.centroid = 1; $$.q.varying = 1;
+	}
+	| IN_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.in = 1;
+	}
+	| OUT_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.out = 1;
+	}
+	| CENTROID IN_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.centroid = 1; $$.q.in = 1;
+	}
+	| CENTROID OUT_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.centroid = 1; $$.q.out = 1;
+	}
+	| UNIFORM
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.q.uniform = 1;
+	}
 	;
 
 type_specifier:
