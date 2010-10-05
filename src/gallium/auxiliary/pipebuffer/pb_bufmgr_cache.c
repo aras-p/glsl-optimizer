@@ -307,6 +307,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    
    if(buf) {
       LIST_DEL(&buf->head);
+      --mgr->numDelayed;
       pipe_mutex_unlock(mgr->mutex);
       /* Increase refcount */
       pipe_reference_init(&buf->base.base.reference, 1);
