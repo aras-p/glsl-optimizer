@@ -60,6 +60,7 @@ struct tgsi_shader_info
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    boolean writes_z;  /**< does fragment shader write Z value? */
+   boolean writes_stencil; /**< does fragment shader write stencil value? */
    boolean writes_edgeflag; /**< vertex shader outputs edgeflag */
    boolean uses_kill;  /**< KIL or KILP instruction used? */
 

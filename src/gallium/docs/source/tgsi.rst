@@ -1415,6 +1415,12 @@ Edge flags are used to control which lines or points are actually
 drawn when the polygon mode converts triangles/quads/polygons into
 points or lines.
 
+TGSI_SEMANTIC_STENCIL
+""""""""""""""""""""""
+
+For fragment shaders, this semantic label indicates than an output
+is a writable stencil reference value. Only the Y component is writable.
+This allows the fragment shader to change the fragments stencilref value.
 
 
 Properties

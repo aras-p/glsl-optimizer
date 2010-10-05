@@ -157,9 +157,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                   /* extra info for special outputs */
                   if (procType == TGSI_PROCESSOR_FRAGMENT &&
-                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
-                     info->writes_z = TRUE;
-                  }
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION)
+                        info->writes_z = TRUE;
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_STENCIL)
+                        info->writes_stencil = TRUE;
                   if (procType == TGSI_PROCESSOR_VERTEX &&
                       fulldecl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG) {
                      info->writes_edgeflag = TRUE;
