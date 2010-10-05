@@ -66,6 +66,8 @@ struct radeon_bo {
 	boolean				shared;
 	int64_t				last_busy;
 	boolean				set_busy;
+	struct r600_reloc		*reloc;
+	unsigned			reloc_id;
 };
 
 struct r600_bo {

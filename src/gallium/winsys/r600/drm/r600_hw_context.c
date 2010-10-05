@@ -707,33 +707,23 @@ out_err:
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
-	int i, reloc_id;
 
 	bo = r600_bo_get_bo(rbo);
 	assert(bo != NULL);
-	for (i = 0, reloc_id = -1; i < ctx->creloc; i++) {
-		if (ctx->reloc[i].handle == bo->handle) {
-			reloc_id = i * sizeof(struct r600_reloc) / 4;
-			/* set PKT3 to point to proper reloc */
-			*pm4 = reloc_id;
-			break;
-		}
+	if (bo->reloc) {
+		*pm4 = bo->reloc_id;
+		return;
 	}
-	if (reloc_id == -1) {
-		/* add new relocation */
-		if (ctx->creloc >= ctx->nreloc) {
-			r600_context_flush(ctx);
-		}
-		reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
-		ctx->reloc[ctx->creloc].handle = bo->handle;
-		ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
-		ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
-		ctx->reloc[ctx->creloc].flags = 0;
-		radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
-		ctx->creloc++;
-		/* set PKT3 to point to proper reloc */
-		*pm4 = reloc_id;
-	}
+	bo->reloc = &ctx->reloc[ctx->creloc];
+	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
+	ctx->reloc[ctx->creloc].handle = bo->handle;
+	ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	ctx->reloc[ctx->creloc].flags = 0;
+	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
+	ctx->creloc++;
+	/* set PKT3 to point to proper reloc */
+	*pm4 = bo->reloc_id;
 }
 
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state)
@@ -1045,6 +1035,7 @@ void r600_context_flush(struct r600_context *ctx)
 	/* restart */
 	radeon_bo_fencelist(ctx->radeon, ctx->bo, ctx->creloc);
 	for (int i = 0; i < ctx->creloc; i++) {
+		ctx->bo[i]->reloc = NULL;
 		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;
