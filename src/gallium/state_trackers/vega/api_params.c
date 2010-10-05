@@ -32,6 +32,7 @@
 #include "image.h"
 #include "matrix.h"
 #include "api_consts.h"
+#include "api.h"
 
 #include "pipe/p_compiler.h"
 #include "util/u_pointer.h"
@@ -63,7 +64,7 @@ static INLINE VGboolean count_in_bounds(VGParamType type, VGint count)
    }
 }
 
-void vgSetf (VGParamType type, VGfloat value)
+void vegaSetf (VGParamType type, VGfloat value)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_state *state = current_state();
@@ -123,7 +124,7 @@ void vgSetf (VGParamType type, VGfloat value)
    vg_set_error(ctx, error);
 }
 
-void vgSeti (VGParamType type, VGint value)
+void vegaSeti (VGParamType type, VGint value)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_state *state = current_state();
@@ -254,8 +255,8 @@ void vgSeti (VGParamType type, VGint value)
    vg_set_error(ctx, error);
 }
 
-void vgSetfv(VGParamType type, VGint count,
-             const VGfloat * values)
+void vegaSetfv(VGParamType type, VGint count,
+               const VGfloat * values)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_state *state = current_state();
@@ -382,8 +383,8 @@ void vgSetfv(VGParamType type, VGint count,
    vg_set_error(ctx, error);
 }
 
-void vgSetiv(VGParamType type, VGint count,
-             const VGint * values)
+void vegaSetiv(VGParamType type, VGint count,
+               const VGint * values)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_state *state = current_state();
@@ -506,7 +507,7 @@ void vgSetiv(VGParamType type, VGint count,
    }
 }
 
-VGfloat vgGetf(VGParamType type)
+VGfloat vegaGetf(VGParamType type)
 {
    struct vg_context *ctx = vg_current_context();
    const struct vg_state *state = current_state();
@@ -568,7 +569,7 @@ VGfloat vgGetf(VGParamType type)
    return value;
 }
 
-VGint vgGeti(VGParamType type)
+VGint vegaGeti(VGParamType type)
 {
    const struct vg_state *state = current_state();
    struct vg_context *ctx = vg_current_context();
@@ -683,7 +684,7 @@ VGint vgGeti(VGParamType type)
    return value;
 }
 
-VGint vgGetVectorSize(VGParamType type)
+VGint vegaGetVectorSize(VGParamType type)
 {
    struct vg_context *ctx = vg_current_context();
    const struct vg_state *state = current_state();
@@ -757,8 +758,8 @@ VGint vgGetVectorSize(VGParamType type)
    }
 }
 
-void vgGetfv(VGParamType type, VGint count,
-             VGfloat * values)
+void vegaGetfv(VGParamType type, VGint count,
+               VGfloat * values)
 {
    const struct vg_state *state = current_state();
    struct vg_context *ctx = vg_current_context();
@@ -858,8 +859,8 @@ void vgGetfv(VGParamType type, VGint count,
    }
 }
 
-void vgGetiv(VGParamType type, VGint count,
-             VGint * values)
+void vegaGetiv(VGParamType type, VGint count,
+               VGint * values)
 {
    const struct vg_state *state = current_state();
    struct vg_context *ctx = vg_current_context();
@@ -964,9 +965,9 @@ void vgGetiv(VGParamType type, VGint count,
    }
 }
 
-void vgSetParameterf(VGHandle object,
-                     VGint paramType,
-                     VGfloat value)
+void vegaSetParameterf(VGHandle object,
+                       VGint paramType,
+                       VGfloat value)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1018,9 +1019,9 @@ void vgSetParameterf(VGHandle object,
    }
 }
 
-void vgSetParameteri(VGHandle object,
-                     VGint paramType,
-                     VGint value)
+void vegaSetParameteri(VGHandle object,
+                       VGint paramType,
+                       VGint value)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1093,10 +1094,10 @@ void vgSetParameteri(VGHandle object,
    }
 }
 
-void vgSetParameterfv(VGHandle object,
-                      VGint paramType,
-                      VGint count,
-                      const VGfloat * values)
+void vegaSetParameterfv(VGHandle object,
+                        VGint paramType,
+                        VGint count,
+                        const VGfloat * values)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1206,10 +1207,10 @@ void vgSetParameterfv(VGHandle object,
    }
 }
 
-void vgSetParameteriv(VGHandle object,
-                      VGint paramType,
-                      VGint count,
-                      const VGint * values)
+void vegaSetParameteriv(VGHandle object,
+                        VGint paramType,
+                        VGint count,
+                        const VGint * values)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1311,8 +1312,8 @@ void vgSetParameteriv(VGHandle object,
    }
 }
 
-VGint vgGetParameterVectorSize(VGHandle object,
-                               VGint paramType)
+VGint vegaGetParameterVectorSize(VGHandle object,
+                                 VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1367,8 +1368,8 @@ VGint vgGetParameterVectorSize(VGHandle object,
 }
 
 
-VGfloat vgGetParameterf(VGHandle object,
-                        VGint paramType)
+VGfloat vegaGetParameterf(VGHandle object,
+                          VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1424,8 +1425,8 @@ VGfloat vgGetParameterf(VGHandle object,
    return 0;
 }
 
-VGint vgGetParameteri(VGHandle object,
-                      VGint paramType)
+VGint vegaGetParameteri(VGHandle object,
+                        VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1511,10 +1512,10 @@ VGint vgGetParameteri(VGHandle object,
    return 0;
 }
 
-void vgGetParameterfv(VGHandle object,
-                      VGint paramType,
-                      VGint count,
-                      VGfloat * values)
+void vegaGetParameterfv(VGHandle object,
+                        VGint paramType,
+                        VGint count,
+                        VGfloat * values)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;
@@ -1598,10 +1599,10 @@ void vgGetParameterfv(VGHandle object,
    }
 }
 
-void vgGetParameteriv(VGHandle object,
-                      VGint paramType,
-                      VGint count,
-                      VGint * values)
+void vegaGetParameteriv(VGHandle object,
+                        VGint paramType,
+                        VGint count,
+                        VGint * values)
 {
    struct vg_context *ctx = vg_current_context();
    void *ptr = (void*)object;

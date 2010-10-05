@@ -257,6 +257,15 @@ update_blend( struct st_context *st )
    if (st->ctx->Color.DitherFlag)
       blend->dither = 1;
 
+   if (st->ctx->Multisample.Enabled) {
+      /* unlike in gallium/d3d10 these operations are only performed
+         if msaa is enabled */
+      if (st->ctx->Multisample.SampleAlphaToCoverage)
+         blend->alpha_to_coverage = 1;
+      if (st->ctx->Multisample.SampleAlphaToOne)
+         blend->alpha_to_one = 1;
+   }
+
    cso_set_blend(st->cso_context, blend);
 
    {
@@ -270,7 +279,7 @@ update_blend( struct st_context *st )
 const struct st_tracked_state st_update_blend = {
    "st_update_blend",					/* name */
    {							/* dirty */
-      (_NEW_COLOR),  /* XXX _NEW_BLEND someday? */	/* mesa */
+      (_NEW_COLOR | _NEW_MULTISAMPLE),  /* XXX _NEW_BLEND someday? */	/* mesa */
       0,						/* st */
    },
    update_blend,					/* update */

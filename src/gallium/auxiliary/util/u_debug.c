@@ -42,6 +42,7 @@
 #include "util/u_tile.h" 
 #include "util/u_prim.h" 
 
+#include <limits.h> /* CHAR_BIT */
 
 void _debug_vprintf(const char *format, va_list ap)
 {
@@ -87,7 +88,7 @@ debug_get_option_should_print(void)
     * but its cool since we set first to false
     */
    first = FALSE;
-   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", TRUE);
+   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", FALSE);
    /* XXX should we print this option? Currently it wont */
    return value;
 }
@@ -123,7 +124,11 @@ debug_get_bool_option(const char *name, boolean dfault)
       result = FALSE;
    else if(!util_strcmp(str, "f"))
       result = FALSE;
+   else if(!util_strcmp(str, "F"))
+      result = FALSE;
    else if(!util_strcmp(str, "false"))
+      result = FALSE;
+   else if(!util_strcmp(str, "FALSE"))
       result = FALSE;
    else
       result = TRUE;
@@ -177,16 +182,21 @@ debug_get_flags_option(const char *name,
 {
    unsigned long result;
    const char *str;
+   const struct debug_named_value *orig = flags;
+   int namealign = 0;
    
    str = os_get_option(name);
    if(!str)
       result = dfault;
    else if (!util_strcmp(str, "help")) {
       result = dfault;
-      while (flags->name) {
-         debug_printf("%s: help for %s: %s [0x%lx]\n", __FUNCTION__, name, flags->name, flags->value);
-         flags++;
-      }
+      _debug_printf("%s: help for %s:\n", __FUNCTION__, name);
+      for (; flags->name; ++flags)
+         namealign = MAX2(namealign, strlen(flags->name));
+      for (flags = orig; flags->name; ++flags)
+         _debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
+                      (int)sizeof(unsigned long)*CHAR_BIT/4, flags->value,
+                      flags->desc ? " " : "", flags->desc ? flags->desc : "");
    }
    else {
       result = 0;

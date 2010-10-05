@@ -38,22 +38,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
-#define NEED_REPLIES
 #include <X11/Xlibint.h>
+#include <X11/Xfuncproto.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include "xf86dristr.h"
-
-
-#if defined(__GNUC__)
-#  define PUBLIC __attribute__((visibility("default")))
-#  define USED __attribute__((used))
-#else
-#  define PUBLIC
-#  define USED
-#endif
-
-
 
 static XExtensionInfo _xf86dri_info_data;
 static XExtensionInfo *xf86dri_info = &_xf86dri_info_data;

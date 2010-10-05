@@ -33,6 +33,8 @@
   */
  
 
+#include <assert.h>
+
 #include "st_context.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"

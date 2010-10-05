@@ -55,7 +55,7 @@ cell_get_name(struct pipe_screen *screen)
 
 
 static int
-cell_get_param(struct pipe_screen *screen, int param)
+cell_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -76,6 +76,8 @@ cell_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
+   case PIPE_CAP_TIMER_QUERY:
+      return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 10;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -88,8 +90,6 @@ cell_get_param(struct pipe_screen *screen, int param)
       return 1; /* XXX not really true */
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 0; /* XXX to do */
-   case PIPE_CAP_TGSI_CONT_SUPPORTED:
-      return 1;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
@@ -103,9 +103,23 @@ cell_get_param(struct pipe_screen *screen, int param)
    }
 }
 
+static int
+cell_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+{
+   switch(shader)
+   {
+   case PIPE_SHADER_FRAGMENT:
+      return tgsi_exec_get_shader_param(param);
+   case PIPE_SHADER_VERTEX:
+   case PIPE_SHADER_GEOMETRY:
+      return draw_get_shader_param(shader, param);
+   default:
+      return 0;
+   }
+}
 
 static float
-cell_get_paramf(struct pipe_screen *screen, int param)
+cell_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_LINE_WIDTH:
@@ -132,12 +146,16 @@ cell_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 cell_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, 
+                          enum pipe_format format,
                           enum pipe_texture_target target,
-                          unsigned tex_usage, 
+                          unsigned sample_count,
+                          unsigned tex_usage,
                           unsigned geom_flags )
 {
    struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
+   if (sample_count > 1)
+      return FALSE;
 
    if (tex_usage & (PIPE_BIND_DISPLAY_TARGET |
                     PIPE_BIND_SCANOUT |
@@ -194,6 +212,7 @@ cell_create_screen(struct sw_winsys *winsys)
    screen->base.get_name = cell_get_name;
    screen->base.get_vendor = cell_get_vendor;
    screen->base.get_param = cell_get_param;
+   screen->base.get_shader_param = cell_get_shader_param;
    screen->base.get_paramf = cell_get_paramf;
    screen->base.is_format_supported = cell_is_format_supported;
    screen->base.context_create = cell_create_context;

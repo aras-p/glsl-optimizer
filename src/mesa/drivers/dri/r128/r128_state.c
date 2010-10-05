@@ -42,6 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/colormac.h"
+#include "main/macros.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"

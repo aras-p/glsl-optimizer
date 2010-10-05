@@ -29,6 +29,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/extensions.h"
+#include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/points.h"
@@ -38,8 +39,6 @@
 #include "tnl/tnl.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
-
-#include "i830_dri.h"
 
 #include "intel_chipset.h"
 #include "intel_buffers.h"
@@ -164,6 +163,19 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_ILM_G:
          chipset = "Intel(R) Ironlake Mobile";
          break;
+      case PCI_CHIP_SANDYBRIDGE_GT1:
+      case PCI_CHIP_SANDYBRIDGE_GT2:
+      case PCI_CHIP_SANDYBRIDGE_GT2_PLUS:
+	 chipset = "Intel(R) Sandybridge Desktop";
+	 break;
+      case PCI_CHIP_SANDYBRIDGE_M_GT1:
+      case PCI_CHIP_SANDYBRIDGE_M_GT2:
+      case PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS:
+	 chipset = "Intel(R) Sandybridge Mobile";
+	 break;
+      case PCI_CHIP_SANDYBRIDGE_S:
+	 chipset = "Intel(R) Sandybridge Server";
+	 break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
@@ -174,6 +186,30 @@ intelGetString(GLcontext * ctx, GLenum name)
 
    default:
       return NULL;
+   }
+}
+
+static void
+intel_flush_front(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+    __DRIcontext *driContext = intel->driContext;
+    __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
+
+   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
+      if (screen->dri2.loader &&
+          (screen->dri2.loader->base.version >= 2)
+	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
+          driContext->driDrawablePriv &&
+	  driContext->driDrawablePriv->loaderPrivate) {
+	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
+						  driContext->driDrawablePriv->loaderPrivate);
+
+	 /* We set the dirty bit in intel_prepare_render() if we're
+	  * front buffer rendering once we get there.
+	  */
+	 intel->front_buffer_dirty = GL_FALSE;
+      }
    }
 }
 
@@ -203,8 +239,10 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
     * real front buffer contents will get copied to the new fake front
     * buffer.
     */
-   if (intel->is_front_buffer_rendering)
-      intel_flush(&intel->ctx, GL_FALSE);
+   if (intel->is_front_buffer_rendering) {
+      intel_flush(&intel->ctx);
+      intel_flush_front(&intel->ctx);
+   }
 
    /* Set this up front, so that in case our buffers get invalidated
     * while we're getting new buffers, we don't clobber the stamp and
@@ -329,7 +367,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        case __DRI_BUFFER_ACCUM:
        default:
 	   fprintf(stderr,
-		   "unhandled buffer attach event, attacment type %d\n",
+		   "unhandled buffer attach event, attachment type %d\n",
 		   buffers[i].attachment);
 	   return;
        }
@@ -352,7 +390,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	  intel_region_reference(&region, depth_region);
        }
        else
-          region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
+          region = intel_region_alloc_for_handle(intel->intelScreen,
+						 buffers[i].cpp,
 						 drawable->w,
 						 drawable->h,
 						 buffers[i].pitch / buffers[i].cpp,
@@ -362,7 +401,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH)
 	  depth_region = region;
 
-       intel_renderbuffer_set_region(rb, region);
+       intel_renderbuffer_set_region(intel, rb, region);
        intel_region_release(&region);
 
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
@@ -374,7 +413,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		   continue;
 
 	     intel_region_reference(&stencil_region, region);
-	     intel_renderbuffer_set_region(rb, stencil_region);
+	     intel_renderbuffer_set_region(intel, rb, stencil_region);
 	     intel_region_release(&stencil_region);
 	  }
        }
@@ -383,6 +422,10 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
 
+/**
+ * intel_prepare_render should be called anywhere that curent read/drawbuffer
+ * state is required.
+ */
 void
 intel_prepare_render(struct intel_context *intel)
 {
@@ -390,7 +433,7 @@ intel_prepare_render(struct intel_context *intel)
    __DRIdrawable *drawable;
 
    drawable = driContext->driDrawablePriv;
-   if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
+   if (drawable && drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
       intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
@@ -398,21 +441,52 @@ intel_prepare_render(struct intel_context *intel)
    }
 
    drawable = driContext->driReadablePriv;
-   if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
+   if (drawable && drawable->dri2.stamp != driContext->dri2.read_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
       driContext->dri2.read_stamp = drawable->dri2.stamp;
    }
+
+   /* If we're currently rendering to the front buffer, the rendering
+    * that will happen next will probably dirty the front buffer.  So
+    * mark it as dirty here.
+    */
+   if (intel->is_front_buffer_rendering)
+      intel->front_buffer_dirty = GL_TRUE;
+
+   /* Wait for the swapbuffers before the one we just emitted, so we
+    * don't get too many swaps outstanding for apps that are GPU-heavy
+    * but not CPU-heavy.
+    *
+    * We're using intelDRI2Flush (called from the loader before
+    * swapbuffer) and glFlush (for front buffer rendering) as the
+    * indicator that a frame is done and then throttle when we get
+    * here as we prepare to render the next frame.  At this point for
+    * round trips for swap/copy and getting new buffers are done and
+    * we'll spend less time waiting on the GPU.
+    *
+    * Unfortunately, we don't have a handle to the batch containing
+    * the swap, and getting our hands on that doesn't seem worth it,
+    * so we just us the first batch we emitted after the last swap.
+    */
+   if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
+      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
+      intel->first_post_swapbuffers_batch = NULL;
+      intel->need_throttle = GL_FALSE;
+   }
 }
 
-void
+static void
 intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
 
-    if (!intel->using_dri2_swapbuffers &&
-	!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (intel->saved_viewport)
+	intel->saved_viewport(ctx, x, y, w, h);
+
+    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        dri2InvalidateDrawable(driContext->driDrawablePriv);
        dri2InvalidateDrawable(driContext->driReadablePriv);
     }
@@ -431,12 +505,12 @@ static const struct dri_debug_control debug_control[] = {
    { "buf",   DEBUG_BUFMGR},
    { "reg",   DEBUG_REGION},
    { "fbo",   DEBUG_FBO},
-   { "lock",  DEBUG_LOCK},
+   { "gs",    DEBUG_GS},
    { "sync",  DEBUG_SYNC},
    { "prim",  DEBUG_PRIMS },
    { "vert",  DEBUG_VERTS },
    { "dri",   DEBUG_DRI },
-   { "dma",   DEBUG_DMA },
+   { "sf",    DEBUG_SF },
    { "san",   DEBUG_SANITY },
    { "sleep", DEBUG_SLEEP },
    { "stats", DEBUG_STATS },
@@ -447,6 +521,7 @@ static const struct dri_debug_control debug_control[] = {
    { "glsl_force", DEBUG_GLSL_FORCE },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },
+   { "clip",  DEBUG_CLIP },
    { NULL,    0 }
 };
 
@@ -469,10 +544,9 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
 }
 
 void
-intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
+intel_flush(GLcontext *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-    __DRIcontext *driContext = intel->driContext;
 
    if (intel->Fallback)
       _swrast_flush(ctx);
@@ -482,35 +556,6 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
-
-   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
-      __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
-
-      if (screen->dri2.loader &&
-          (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
-          driContext->driDrawablePriv &&
-	  driContext->driDrawablePriv->loaderPrivate) {
-	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
-						  driContext->driDrawablePriv->loaderPrivate);
-
-	 /* Only clear the dirty bit if front-buffer rendering is no longer
-	  * enabled.  This is done so that the dirty bit can only be set in
-	  * glDrawBuffer.  Otherwise the dirty bit would have to be set at
-	  * each of N places that do rendering.  This has worse performances,
-	  * but it is much easier to get correct.
-	  */
-	 if (!intel->is_front_buffer_rendering) {
-	    intel->front_buffer_dirty = GL_FALSE;
-	 }
-      }
-   }
-}
-
-void
-intelFlush(GLcontext * ctx)
-{
-   intel_flush(ctx, GL_FALSE);
 }
 
 static void
@@ -518,26 +563,9 @@ intel_glFlush(GLcontext *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   intel_flush(ctx, GL_TRUE);
-
-   /* We're using glFlush as an indicator that a frame is done, which is
-    * what DRI2 does before calling SwapBuffers (and means we should catch
-    * people doing front-buffer rendering, as well)..
-    *
-    * Wait for the swapbuffers before the one we just emitted, so we don't
-    * get too many swaps outstanding for apps that are GPU-heavy but not
-    * CPU-heavy.
-    *
-    * Unfortunately, we don't have a handle to the batch containing the swap,
-    * and getting our hands on that doesn't seem worth it, so we just us the
-    * first batch we emitted after the last swap.
-    */
-   if (!intel->using_dri2_swapbuffers &&
-       intel->first_post_swapbuffers_batch != NULL) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
-   }
+   intel_flush(ctx);
+   intel_flush_front(ctx);
+   intel->need_throttle = GL_TRUE;
 }
 
 void
@@ -546,7 +574,8 @@ intelFinish(GLcontext * ctx)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
 
-   intelFlush(ctx);
+   intel_flush(ctx);
+   intel_flush_front(ctx);
 
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
        struct intel_renderbuffer *irb;
@@ -554,7 +583,7 @@ intelFinish(GLcontext * ctx)
        irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
        if (irb && irb->region)
-	  dri_bo_wait_rendering(irb->region->buffer);
+	  drm_intel_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
       /* XXX: Wait on buffer idle */
@@ -586,6 +615,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 
 GLboolean
 intelInitContext(struct intel_context *intel,
+		 int api,
                  const __GLcontextModes * mesaVis,
                  __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
@@ -596,13 +626,25 @@ intelInitContext(struct intel_context *intel,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
+   __GLcontextModes visual;
 
    /* we can't do anything without a connection to the device */
    if (intelScreen->bufmgr == NULL)
       return GL_FALSE;
 
-   if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
-                                 functions, (void *) intel)) {
+   /* Can't rely on invalidate events, fall back to glViewport hack */
+   if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
+      intel->saved_viewport = functions->Viewport;
+      functions->Viewport = intel_viewport;
+   }
+
+   if (mesaVis == NULL) {
+      memset(&visual, 0, sizeof visual);
+      mesaVis = &visual;
+   }
+
+   if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
+					 functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -612,6 +654,7 @@ intelInitContext(struct intel_context *intel,
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
+   intel->has_xrgb_textures = GL_TRUE;
    if (IS_GEN6(intel->intelScreen->deviceID)) {
       intel->gen = 6;
       intel->needs_ff_sync = GL_TRUE;
@@ -633,6 +676,10 @@ intelInitContext(struct intel_context *intel,
       }
    } else {
       intel->gen = 2;
+      if (intel->intelScreen->deviceID == PCI_CHIP_I830_M ||
+	  intel->intelScreen->deviceID == PCI_CHIP_845_G) {
+	 intel->has_xrgb_textures = GL_FALSE;
+      }
    }
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
@@ -687,13 +734,14 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
+   ctx->Const.MaxSamples = 1.0;
+
    /* reinitialize the context point state.
     * It depend on constants in __GLcontextRec::Const
     */
    _mesa_init_point(ctx);
 
    meta_init_metaops(ctx, &intel->meta);
-   ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
    if (intel->gen >= 4) {
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
@@ -736,11 +784,25 @@ intelInitContext(struct intel_context *intel,
 
    intel->RenderIndex = ~0;
 
-   intelInitExtensions(ctx);
+   switch (ctx->API) {
+   case API_OPENGL:
+      intelInitExtensions(ctx);
+      break;
+   case API_OPENGLES:
+      break;
+   case API_OPENGLES2:
+      intelInitExtensionsES2(ctx);
+      break;
+   }
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
+
+   /* XXX force SIMD8 kernel for Sandybridge before we fixed
+      SIMD16 interpolation. */
+   if (intel->gen == 6)
+       INTEL_DEBUG |= DEBUG_GLSL_FORCE;
 
    intel->batch = intel_batchbuffer_alloc(intel);
 
@@ -791,8 +853,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
    assert(intel);               /* should never be null */
    if (intel) {
-      GLboolean release_texture_heaps;
-
       INTEL_FIREVERTICES(intel);
 
       _mesa_meta_free(&intel->ctx);
@@ -801,7 +861,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       intel->vtbl.destroy(intel);
 
-      release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
       _swsetup_DestroyContext(&intel->ctx);
       _tnl_DestroyContext(&intel->ctx);
       _vbo_DestroyContext(&intel->ctx);
@@ -814,22 +873,10 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       free(intel->prim.vb);
       intel->prim.vb = NULL;
-      dri_bo_unreference(intel->prim.vb_bo);
+      drm_intel_bo_unreference(intel->prim.vb_bo);
       intel->prim.vb_bo = NULL;
-      dri_bo_unreference(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
-
-      if (release_texture_heaps) {
-         /* Nothing is currently done here to free texture heaps;
-          * but we're not using the texture heap utilities, so I
-          * rather think we shouldn't.  I've taken a look, and can't
-          * find any private texture data hanging around anywhere, but
-          * I'm not yet certain there isn't any at all...
-          */
-         /* if (INTEL_DEBUG & DEBUG_TEXTURE)
-            fprintf(stderr, "do something to free texture heaps\n");
-          */
-      }
 
       driDestroyOptionCache(&intel->optionCache);
 
@@ -844,6 +891,9 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontext * driContextPriv)
 {
+   /* Unset current context and dispath table */
+   _mesa_make_current(NULL, NULL, NULL);
+
    return GL_TRUE;
 }
 
@@ -869,13 +919,26 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
    }
 
    if (driContextPriv) {
-      struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
-      struct gl_framebuffer *readFb = driReadPriv->driverPrivate;
+      struct gl_framebuffer *fb, *readFb;
+      
+      if (driDrawPriv == NULL && driReadPriv == NULL) {
+	 fb = _mesa_get_incomplete_framebuffer();
+	 readFb = _mesa_get_incomplete_framebuffer();
+      } else {
+	 fb = driDrawPriv->driverPrivate;
+	 readFb = driReadPriv->driverPrivate;
+	 driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
+	 driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
+      }
 
-      driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
-      driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       intel_prepare_render(intel);
       _mesa_make_current(&intel->ctx, fb, readFb);
+      
+      /* We do this in intel_prepare_render() too, but intel->ctx.DrawBuffer
+       * is NULL at that point.  We can't call _mesa_makecurrent()
+       * first, since we need the buffer size for the initial
+       * viewport.  So just call intel_draw_buffer() again here. */
+      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

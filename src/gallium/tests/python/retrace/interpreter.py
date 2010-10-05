@@ -111,6 +111,7 @@ struct_factories = {
     #"pipe_texture": gallium.Texture,
     'pipe_subresource': gallium.pipe_subresource,
     'pipe_box': gallium.pipe_box,
+    'pipe_draw_info': gallium.pipe_draw_info,
 }
 
 
@@ -230,8 +231,8 @@ class Screen(Object):
         context = self.real.context_create()
         return Context(self.interpreter, context)
     
-    def is_format_supported(self, format, target, bind, geom_flags):
-        return self.real.is_format_supported(format, target, bind, geom_flags)
+    def is_format_supported(self, format, target, sample_count, bind, geom_flags):
+        return self.real.is_format_supported(format, target, sample_count, bind, geom_flags)
     
     def resource_create(self, templat):
         return self.real.resource_create(
@@ -432,6 +433,9 @@ class Context(Object):
                        swizzle_b = templ.swizzle_g,
                        swizzle_a = templ.swizzle_a)
 
+    def sampler_view_destroy(self, view):
+        pass
+
     def set_fragment_sampler_views(self, num, views):
         for i in range(num):
             self.real.set_fragment_sampler_view(i, views[i])
@@ -456,6 +460,10 @@ class Context(Object):
         return elements[0:num_elements]
 
     def bind_vertex_elements_state(self, state):
+        if state is None:
+            self.real.set_vertex_elements(0)
+            return
+
         elements = state
         num_elements = len(elements)
         self.velems = elements
@@ -526,43 +534,31 @@ class Context(Object):
 
         return minindex + ibias, maxindex + ibias
 
-    def draw_arrays(self, mode, start, count):
-        self.dump_vertices(start, count)
-            
-        self.real.draw_arrays(mode, start, count)
-        self._set_dirty()
-    
-    def draw_elements(self, indexBuffer, indexSize, indexBias, mode, start, count):
-        if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
-            self.dump_vertices(minindex, maxindex - minindex)
+    def set_index_buffer(self, ib):
+        if ib:
+            self.real.set_index_buffer(ib.index_size, ib.offset, ib.buffer)
+        else:
+            self.real.set_index_buffer(0, 0, None)
 
-        self.real.draw_elements(indexBuffer, indexSize, indexBias, mode, start, count)
-        self._set_dirty()
-        
-    def draw_range_elements(self, indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count):
+    def draw_vbo(self, info):
         if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
-            minindex = min(minindex, minIndex)
-            maxindex = min(maxindex, maxIndex)
-            self.dump_vertices(minindex, maxindex - minindex)
+            if 0:
+                minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
 
-        self.real.draw_range_elements(indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count)
+            self.dump_vertices(info.minindex, info.maxindex + 1 - info.minindex)
+
+        self.real.draw_vbo(info)
         self._set_dirty()
-        
-    def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
-        if dest is not None and src is not None:
+
+    def resource_copy_region(self, dst, subdst, dstx, dsty, dstz, src, subsrc, srcx, srcy, srcz, width, height):
+        if dst is not None and src is not None:
             if self.interpreter.options.all:
-                self.interpreter.present(self.real, src, 'surface_copy_src', srcx, srcy, width, height)
-            self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
-            if dest in self.cbufs:
-                self._set_dirty()
-                flags = gallium.PIPE_FLUSH_FRAME
-            else:
-                flags = 0
+                self.interpreter.present(self.real, src, 'resource_copy_src', srcx, srcy, width, height)
+            self.real.resource_copy_region(dst, subdst, dstx, dsty, dstx, src, subsrc, srcx, srcy, srcz, width, height)
+            flags = 0
             self.flush(flags)
             if self.interpreter.options.all:
-                self.interpreter.present(self.real, dest, 'surface_copy_dest', destx, desty, width, height)
+                self.interpreter.present(self.real, dst, 'resource_copy_dst', dstx, dsty, width, height)
 
     def is_resource_referenced(self, texture, face, level):
         #return self.real.is_resource_referenced(format, texture, face, level)

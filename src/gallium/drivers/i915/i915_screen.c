@@ -26,16 +26,19 @@
  **************************************************************************/
 
 
+#include "draw/draw_context.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
 
 #include "i915_reg.h"
+#include "i915_debug.h"
 #include "i915_context.h"
 #include "i915_screen.h"
 #include "i915_surface.h"
 #include "i915_resource.h"
 #include "i915_winsys.h"
+#include "i915_public.h"
 
 
 /*
@@ -55,7 +58,7 @@ i915_get_name(struct pipe_screen *screen)
    static char buffer[128];
    const char *chipset;
 
-   switch (i915_screen(screen)->pci_id) {
+   switch (i915_screen(screen)->iws->pci_id) {
    case PCI_CHIP_I915_G:
       chipset = "915G";
       break;
@@ -90,7 +93,7 @@ i915_get_name(struct pipe_screen *screen)
 }
 
 static int
-i915_get_param(struct pipe_screen *screen, int param)
+i915_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -113,6 +116,8 @@ i915_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 0;
+   case PIPE_CAP_TIMER_QUERY:
+      return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -127,13 +132,60 @@ i915_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+      /* disable for now */
+      return 0;
    default:
       return 0;
    }
 }
 
+static int
+i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+{
+   switch(shader) {
+   case PIPE_SHADER_VERTEX:
+      return draw_get_shader_param(shader, param);
+   case PIPE_SHADER_FRAGMENT:
+      break;
+   default:
+      return 0;
+   }
+
+   /* XXX: these are just shader model 2.0 values, fix this! */
+   switch(param) {
+      case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+         return 96;
+      case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+         return 64;
+      case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+         return 32;
+      case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
+         return 8;
+      case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
+         return 0;
+      case PIPE_SHADER_CAP_MAX_INPUTS:
+         return 10;
+      case PIPE_SHADER_CAP_MAX_CONSTS:
+         return 32;
+      case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
+         return 1;
+      case PIPE_SHADER_CAP_MAX_TEMPS:
+         return 12; /* XXX: 12 -> 32 ? */
+      case PIPE_SHADER_CAP_MAX_ADDRS:
+         return 0;
+      case PIPE_SHADER_CAP_MAX_PREDS:
+         return 0;
+      case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+         return 0;
+      default:
+         assert(0);
+         return 0;
+   }
+}
+
 static float
-i915_get_paramf(struct pipe_screen *screen, int param)
+i915_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_LINE_WIDTH:
@@ -159,9 +211,10 @@ i915_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 i915_is_format_supported(struct pipe_screen *screen,
-                         enum pipe_format format, 
+                         enum pipe_format format,
                          enum pipe_texture_target target,
-                         unsigned tex_usage, 
+                         unsigned sample_count,
+                         unsigned tex_usage,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
@@ -178,20 +231,34 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_L8A8_UNORM,
       PIPE_FORMAT_UYVY,
       PIPE_FORMAT_YUYV,
+      /* XXX why not?
+      PIPE_FORMAT_Z16_UNORM, */
+      PIPE_FORMAT_Z24X8_UNORM,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
-   static const enum pipe_format surface_supported[] = {
+   static const enum pipe_format render_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
+   };
+   static const enum pipe_format depth_supported[] = {
+      /* XXX why not?
+      PIPE_FORMAT_Z16_UNORM, */
+      PIPE_FORMAT_Z24X8_UNORM,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
    uint i;
 
-   if(tex_usage & PIPE_BIND_RENDER_TARGET)
-      list = surface_supported;
+   if (sample_count > 1)
+      return FALSE;
+
+   if(tex_usage & PIPE_BIND_DEPTH_STENCIL)
+      list = depth_supported;
+   else if (tex_usage & PIPE_BIND_RENDER_TARGET)
+      list = render_supported;
    else
       list = tex_supported;
 
@@ -260,14 +327,14 @@ i915_destroy_screen(struct pipe_screen *screen)
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct i915_winsys *iws, uint pci_id)
+i915_screen_create(struct i915_winsys *iws)
 {
    struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
    if (!is)
       return NULL;
 
-   switch (pci_id) {
+   switch (iws->pci_id) {
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
       is->is_i945 = FALSE;
@@ -284,12 +351,11 @@ i915_create_screen(struct i915_winsys *iws, uint pci_id)
 
    default:
       debug_printf("%s: unknown pci id 0x%x, cannot create screen\n", 
-                   __FUNCTION__, pci_id);
+                   __FUNCTION__, iws->pci_id);
       FREE(is);
       return NULL;
    }
 
-   is->pci_id = pci_id;
    is->iws = iws;
 
    is->base.winsys = NULL;
@@ -299,6 +365,7 @@ i915_create_screen(struct i915_winsys *iws, uint pci_id)
    is->base.get_name = i915_get_name;
    is->base.get_vendor = i915_get_vendor;
    is->base.get_param = i915_get_param;
+   is->base.get_shader_param = i915_get_shader_param;
    is->base.get_paramf = i915_get_paramf;
    is->base.is_format_supported = i915_is_format_supported;
 
@@ -310,6 +377,8 @@ i915_create_screen(struct i915_winsys *iws, uint pci_id)
 
    i915_init_screen_resource_functions(is);
    i915_init_screen_surface_functions(is);
+
+   i915_debug_init(is);
 
    return &is->base;
 }

@@ -264,6 +264,8 @@ void r200TclPrimitive( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint newprim = hw_prim | R200_VF_TCL_OUTPUT_VTX_ENABLE;
 
+   radeon_prepare_render(&rmesa->radeon);
+
    if (newprim != rmesa->tcl.hw_primitive ||
        !discrete_prim[hw_prim&0xf]) {
       /* need to disable perspective-correct texturing for point sprites */

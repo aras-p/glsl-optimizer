@@ -65,7 +65,8 @@ INCLUDES = -I. -Iinclude -I..\
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mapi \
+	-I$(TOP)/src/mapi/glapi \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS) \
 	$(X11_INCLUDES)

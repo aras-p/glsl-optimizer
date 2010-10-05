@@ -231,7 +231,7 @@ static int brw_prepare_indices(struct brw_context *brw)
    struct pipe_resource *upload_buf = NULL;
    struct brw_winsys_buffer *bo = NULL;
    GLuint offset;
-   GLuint index_size;
+   GLuint index_size, index_offset;
    GLuint ib_size;
    int ret;
 
@@ -246,13 +246,14 @@ static int brw_prepare_indices(struct brw_context *brw)
 
    ib_size = index_buffer->width0;
    index_size = brw->curr.index_size;
+   index_offset = brw->curr.index_offset;
 
    /* Turn userbuffer into a proper hardware buffer?
     */
    if (brw_buffer_is_user_buffer(index_buffer)) {
 
       ret = u_upload_buffer( brw->vb.upload_index,
-			     0,
+			     index_offset,
 			     ib_size,
 			     index_buffer,
 			     &offset,
@@ -269,7 +270,7 @@ static int brw_prepare_indices(struct brw_context *brw)
    else {
       bo = brw_buffer(index_buffer)->bo;
       ib_size = bo->size;
-      offset = 0;
+      offset = index_offset;
    }
 
    /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading the

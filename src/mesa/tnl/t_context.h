@@ -53,9 +53,7 @@
 #include "main/bitset.h"
 #include "main/mtypes.h"
 
-#include "math/m_matrix.h"
 #include "math/m_vector.h"
-#include "math/m_xform.h"
 
 #include "vbo/vbo.h"
 

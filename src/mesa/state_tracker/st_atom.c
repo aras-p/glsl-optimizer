@@ -47,6 +47,7 @@ static const struct st_tracked_state *atoms[] =
 
    &st_finalize_textures,
    &st_update_fp,
+   &st_update_gp,
    &st_update_vp,
 
    &st_update_rasterizer,
@@ -57,7 +58,9 @@ static const struct st_tracked_state *atoms[] =
    &st_update_sampler,
    &st_update_texture,
    &st_update_framebuffer,
+   &st_update_msaa,
    &st_update_vs_constants,
+   &st_update_gs_constants,
    &st_update_fs_constants,
    &st_update_pixel_transfer
 };
@@ -114,6 +117,8 @@ static void check_program_state( struct st_context *st )
    if (ctx->FragmentProgram._Current != &st->fp->Base)
       st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
+   if (ctx->GeometryProgram._Current != &st->gp->Base)
+      st->dirty.st |= ST_NEW_GEOMETRY_PROGRAM;
 }
 
 

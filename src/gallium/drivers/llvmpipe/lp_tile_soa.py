@@ -75,13 +75,13 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     src_native_type = native_type(format)
 
     print 'static void'
-    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, dst_suffix, dst_native_type)
+    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0)' % (name, dst_suffix, dst_native_type)
     print '{'
     print '   unsigned x, y;'
     print '   const uint8_t *src_row = src + y0*src_stride;'
-    print '   for (y = 0; y < h; ++y) {'
+    print '   for (y = 0; y < TILE_SIZE; ++y) {'
     print '      const %s *src_pixel = (const %s *)(src_row + x0*%u);' % (src_native_type, src_native_type, format.stride())
-    print '      for (x = 0; x < w; ++x) {'
+    print '      for (x = 0; x < TILE_SIZE; ++x) {'
 
     names = ['']*4
     if format.colorspace in ('rgb', 'srgb'):
@@ -202,9 +202,9 @@ def emit_unrolled_unswizzle_code(format, src_channel):
     print '   %s *dstpix = (%s *) dst;' % (dst_native_type, dst_native_type)
     print '   unsigned int qx, qy, i;'
     print
-    print '   for (qy = 0; qy < h; qy += TILE_VECTOR_HEIGHT) {'
+    print '   for (qy = 0; qy < TILE_SIZE; qy += TILE_VECTOR_HEIGHT) {'
     print '      const unsigned py = y0 + qy;'
-    print '      for (qx = 0; qx < w; qx += TILE_VECTOR_WIDTH) {'
+    print '      for (qx = 0; qx < TILE_SIZE; qx += TILE_VECTOR_WIDTH) {'
     print '         const unsigned px = x0 + qx;'
     print '         const uint8_t *r = src + 0 * TILE_C_STRIDE;'
     print '         const uint8_t *g = src + 1 * TILE_C_STRIDE;'
@@ -231,9 +231,9 @@ def emit_tile_pixel_unswizzle_code(format, src_channel):
 
     print '   unsigned x, y;'
     print '   uint8_t *dst_row = dst + y0*dst_stride;'
-    print '   for (y = 0; y < h; ++y) {'
+    print '   for (y = 0; y < TILE_SIZE; ++y) {'
     print '      %s *dst_pixel = (%s *)(dst_row + x0*%u);' % (dst_native_type, dst_native_type, format.stride())
-    print '      for (x = 0; x < w; ++x) {'
+    print '      for (x = 0; x < TILE_SIZE; ++x) {'
 
     if format.layout == PLAIN:
         if not format.is_array():
@@ -273,7 +273,7 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     name = format.short_name()
 
     print 'static void'
-    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
+    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0)' % (name, src_suffix, src_native_type)
     print '{'
     if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
@@ -289,6 +289,175 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     print
     
 
+def generate_ssse3():
+    print '''
+#if defined(PIPE_ARCH_SSE)
+
+#include "util/u_sse.h"
+
+static void
+lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
+                                         const uint8_t *src, unsigned src_stride,
+                                         unsigned x0, unsigned y0)
+{
+
+   unsigned x, y;
+   __m128i *pdst = (__m128i*) dst;
+   const uint8_t *ysrc0 = src + y0*src_stride + x0*sizeof(uint32_t);
+   unsigned int tile_stridex = src_stride*(TILE_VECTOR_HEIGHT - 1) - sizeof(uint32_t)*TILE_VECTOR_WIDTH;
+   unsigned int tile_stridey = src_stride*TILE_VECTOR_HEIGHT;
+
+   const __m128i shuffle00 = _mm_setr_epi8(0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle01 = _mm_setr_epi8(0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle02 = _mm_setr_epi8(0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle03 = _mm_setr_epi8(0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+
+   const __m128i shuffle10 = _mm_setr_epi8(0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle11 = _mm_setr_epi8(0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle12 = _mm_setr_epi8(0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   const __m128i shuffle13 = _mm_setr_epi8(0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+
+   const __m128i shuffle20 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff);
+   const __m128i shuffle21 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff);
+   const __m128i shuffle22 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff);
+   const __m128i shuffle23 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff);
+
+   const __m128i shuffle30 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e);
+   const __m128i shuffle31 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d);
+   const __m128i shuffle32 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c);
+   const __m128i shuffle33 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f);
+
+   for (y = 0; y < TILE_SIZE; y += TILE_VECTOR_HEIGHT) {
+      __m128i line0 = *(__m128i*)ysrc0;
+      const uint8_t *ysrc = ysrc0 + src_stride;
+      ysrc0 += tile_stridey;
+
+      for (x = 0; x < TILE_SIZE; x += TILE_VECTOR_WIDTH) {
+         __m128i r, g, b, a, line1;
+         line1 = *(__m128i*)ysrc;
+         PIPE_READ_WRITE_BARRIER();
+         ysrc += src_stride;
+         r = _mm_shuffle_epi8(line0, shuffle00);
+         g = _mm_shuffle_epi8(line0, shuffle01);
+         b = _mm_shuffle_epi8(line0, shuffle02);
+         a = _mm_shuffle_epi8(line0, shuffle03);
+
+         line0 = *(__m128i*)ysrc;
+         PIPE_READ_WRITE_BARRIER();
+         ysrc += src_stride;
+         r = _mm_or_si128(r, _mm_shuffle_epi8(line1, shuffle10));
+         g = _mm_or_si128(g, _mm_shuffle_epi8(line1, shuffle11));
+         b = _mm_or_si128(b, _mm_shuffle_epi8(line1, shuffle12));
+         a = _mm_or_si128(a, _mm_shuffle_epi8(line1, shuffle13));
+
+         line1 = *(__m128i*)ysrc;
+         PIPE_READ_WRITE_BARRIER();
+         ysrc -= tile_stridex;
+         r = _mm_or_si128(r, _mm_shuffle_epi8(line0, shuffle20));
+         g = _mm_or_si128(g, _mm_shuffle_epi8(line0, shuffle21));
+         b = _mm_or_si128(b, _mm_shuffle_epi8(line0, shuffle22));
+         a = _mm_or_si128(a, _mm_shuffle_epi8(line0, shuffle23));
+
+         if (x + 1 < TILE_SIZE) {
+            line0 = *(__m128i*)ysrc;
+            ysrc += src_stride;
+         }
+
+         PIPE_READ_WRITE_BARRIER();
+         r = _mm_or_si128(r, _mm_shuffle_epi8(line1, shuffle30));
+         g = _mm_or_si128(g, _mm_shuffle_epi8(line1, shuffle31));
+         b = _mm_or_si128(b, _mm_shuffle_epi8(line1, shuffle32));
+         a = _mm_or_si128(a, _mm_shuffle_epi8(line1, shuffle33));
+
+         *pdst++ = r;
+         *pdst++ = g;
+         *pdst++ = b;
+         *pdst++ = a;
+      }
+   }
+
+}
+
+static void
+lp_tile_b8g8r8a8_unorm_unswizzle_4ub_ssse3(const uint8_t *src,
+                                          uint8_t *dst, unsigned dst_stride,
+                                          unsigned x0, unsigned y0)
+{
+   unsigned int x, y;
+   const __m128i *psrc = (__m128i*) src;
+   const __m128i *end = (__m128i*) (src + (y0 + TILE_SIZE - 1)*dst_stride + (x0 + TILE_SIZE - 1)*sizeof(uint32_t));
+   uint8_t *pdst = dst + y0 * dst_stride + x0 * sizeof(uint32_t);
+   __m128i c0 = *psrc++;
+   __m128i c1;
+
+   const __m128i shuffle00 = _mm_setr_epi8(0xff,0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff);
+   const __m128i shuffle01 = _mm_setr_epi8(0xff,0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff);
+   const __m128i shuffle02 = _mm_setr_epi8(0xff,0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff);
+   const __m128i shuffle03 = _mm_setr_epi8(0xff,0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff);
+
+   const __m128i shuffle10 = _mm_setr_epi8(0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff,0xff);
+   const __m128i shuffle11 = _mm_setr_epi8(0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff,0xff);
+   const __m128i shuffle12 = _mm_setr_epi8(0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff,0xff);
+   const __m128i shuffle13 = _mm_setr_epi8(0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff,0xff);
+
+   const __m128i shuffle20 = _mm_setr_epi8(0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff,0xff,0xff);
+   const __m128i shuffle21 = _mm_setr_epi8(0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff,0xff,0xff);
+   const __m128i shuffle22 = _mm_setr_epi8(0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff,0xff,0xff);
+   const __m128i shuffle23 = _mm_setr_epi8(0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff,0xff,0xff);
+
+   const __m128i shuffle30 = _mm_setr_epi8(0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05);
+   const __m128i shuffle31 = _mm_setr_epi8(0xff,0xff,0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07);
+   const __m128i shuffle32 = _mm_setr_epi8(0xff,0xff,0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d);
+   const __m128i shuffle33 = _mm_setr_epi8(0xff,0xff,0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f);
+
+   for (y = 0; y < TILE_SIZE; y += TILE_VECTOR_HEIGHT) {
+      __m128i *tile = (__m128i*) pdst;
+      pdst += dst_stride * TILE_VECTOR_HEIGHT;
+      for (x = 0; x < TILE_SIZE; x += TILE_VECTOR_WIDTH) {
+         uint8_t *linep = (uint8_t*) (tile++);
+         __m128i line0, line1, line2, line3;
+
+         c1 = *psrc++; /* r */
+         PIPE_READ_WRITE_BARRIER();
+         line0 = _mm_shuffle_epi8(c0, shuffle00);
+         line1 = _mm_shuffle_epi8(c0, shuffle01);
+         line2 = _mm_shuffle_epi8(c0, shuffle02);
+         line3 = _mm_shuffle_epi8(c0, shuffle03);
+
+         c0 = *psrc++; /* g */
+         PIPE_READ_WRITE_BARRIER();
+         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c1, shuffle10));
+         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c1, shuffle11));
+         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c1, shuffle12));
+         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c1, shuffle13));
+
+         c1 = *psrc++; /* b */
+         PIPE_READ_WRITE_BARRIER();
+         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c0, shuffle20));
+         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c0, shuffle21));
+         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c0, shuffle22));
+         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c0, shuffle23));
+
+         if (psrc != end)
+                 c0 = *psrc++; /* a */
+         PIPE_READ_WRITE_BARRIER();
+         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c1, shuffle30));
+         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c1, shuffle31));
+         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c1, shuffle32));
+         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c1, shuffle33));
+
+         *(__m128i*) (linep) = line0;
+         *(__m128i*) (((char*)linep) + dst_stride) = line1;
+         *(__m128i*) (((char*)linep) + 2 * dst_stride) = line2;
+         *(__m128i*) (((char*)linep) + 3 * dst_stride) = line3;
+      }
+   }
+}
+
+#endif /* PIPE_ARCH_SSSE3 */
+'''
+
+
 def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
     '''Generate the dispatch function to read pixels from any format'''
 
@@ -297,9 +466,9 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
             generate_format_read(format, dst_channel, dst_native_type, dst_suffix)
 
     print 'void'
-    print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (dst_suffix, dst_native_type)
+    print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y)' % (dst_suffix, dst_native_type)
     print '{'
-    print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % dst_native_type
+    print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0);' % dst_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_swizzle_count += 1;'
     print '#endif'
@@ -307,13 +476,21 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_swizzle_%s;' % (format.short_name(), dst_suffix)
+            func_name = 'lp_tile_%s_swizzle_%s' % (format.short_name(), dst_suffix)
+            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
+                print '#ifdef PIPE_ARCH_SSE'
+                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '#else'
+                print '      func = %s;' % (func_name,)
+                print '#endif'
+            else:
+                print '      func = %s;' % (func_name,)
             print '      break;'
     print '   default:'
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
-    print '   func(dst, (const uint8_t *)src, src_stride, x, y, w, h);'
+    print '   func(dst, (const uint8_t *)src, src_stride, x, y);'
     print '}'
     print
 
@@ -326,10 +503,10 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
             generate_format_write(format, src_channel, src_native_type, src_suffix)
 
     print 'void'
-    print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (src_suffix, src_native_type)
+    print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y)' % (src_suffix, src_native_type)
     
     print '{'
-    print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % src_native_type
+    print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0);' % src_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_unswizzle_count += 1;'
     print '#endif'
@@ -337,13 +514,21 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_unswizzle_%s;' % (format.short_name(), src_suffix)
+            func_name = 'lp_tile_%s_unswizzle_%s' % (format.short_name(), src_suffix)
+            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
+                print '#ifdef PIPE_ARCH_SSE'
+                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '#else'
+                print '      func = %s;' % (func_name,)
+                print '#endif'
+            else:
+                print '      func = %s;' % (func_name,)
             print '      break;'
     print '   default:'
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
-    print '   func(src, (uint8_t *)dst, dst_stride, x, y, w, h);'
+    print '   func(src, (uint8_t *)dst, dst_stride, x, y);'
     print '}'
     print
 
@@ -362,6 +547,7 @@ def main():
     print '#include "util/u_format.h"'
     print '#include "util/u_math.h"'
     print '#include "util/u_half.h"'
+    print '#include "util/u_cpu_detect.h"'
     print '#include "lp_tile_soa.h"'
     print
     print '#ifdef DEBUG'
@@ -390,6 +576,8 @@ def main():
     print '   2, 2, 3, 3, 2, 2, 3, 3'
     print '};'
     print
+
+    generate_ssse3()
 
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'

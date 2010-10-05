@@ -29,6 +29,9 @@
 #ifndef ST_ATOM_CONSTBUF_H
 #define ST_ATOM_CONSTBUF_H
 
+struct gl_program_parameter_list;
+struct st_context;
+
 
 void st_upload_constants( struct st_context *st,
                           struct gl_program_parameter_list *params,

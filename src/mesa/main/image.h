@@ -79,6 +79,9 @@ extern GLboolean
 _mesa_is_dudv_format(GLenum format);
 
 extern GLboolean
+_mesa_is_integer_format(GLenum format);
+
+extern GLboolean
 _mesa_is_compressed_format(GLcontext *ctx, GLenum format);
 
 extern GLvoid *
@@ -159,11 +162,6 @@ _mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
 
 extern void
 _mesa_map_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
-
-
-extern void
-_mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
-
 
 extern void
 _mesa_lookup_rgba_float(const struct gl_color_table *table,

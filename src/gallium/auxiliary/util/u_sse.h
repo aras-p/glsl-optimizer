@@ -41,7 +41,6 @@
 
 #if defined(PIPE_ARCH_SSE)
 
-#include <xmmintrin.h>
 #include <emmintrin.h>
 
 
@@ -71,6 +70,33 @@ _mm_castps_si128(__m128 a)
 }
 
 #endif /* defined(_MSC_VER) && _MSC_VER < 1500 */
+
+
+#if defined(PIPE_ARCH_SSSE3)
+
+#include <tmmintrin.h>
+
+#else /* !PIPE_ARCH_SSSE3 */
+
+/**
+ * Describe _mm_shuffle_epi8() with gcc extended inline assembly, for cases
+ * where -mssse3 is not supported/enabled.
+ *
+ * MSVC will never get in here as its intrinsics support do not rely on
+ * compiler command line options.
+ */
+static __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_shuffle_epi8(__m128i a, __m128i mask)
+{
+    __m128i result;
+    __asm__("pshufb %1, %0"
+            : "=x" (result)
+            : "xm" (mask), "0" (a));
+    return result;
+}
+
+#endif /* !PIPE_ARCH_SSSE3 */
+
 
 #endif /* PIPE_ARCH_X86 || PIPE_ARCH_X86_64 */
 

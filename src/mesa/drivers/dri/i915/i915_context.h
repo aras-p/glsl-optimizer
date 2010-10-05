@@ -237,7 +237,7 @@ struct i915_hw_state
     * be from a PBO or FBO.  Will have to do this for draw and depth for
     * FBO's...
     */
-   dri_bo *tex_buffer[I915_TEX_UNITS];
+   drm_intel_bo *tex_buffer[I915_TEX_UNITS];
    GLuint tex_offset[I915_TEX_UNITS];
 
 
@@ -261,6 +261,7 @@ struct i915_context
    struct i915_fragment_program *current_program;
 
    struct i915_hw_state state;
+   uint32_t last_draw_offset;
 };
 
 
@@ -318,7 +319,8 @@ do {									\
 /*======================================================================
  * i915_context.c
  */
-extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i915CreateContext(int api,
+				   const __GLcontextModes * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 

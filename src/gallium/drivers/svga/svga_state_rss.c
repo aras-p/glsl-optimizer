@@ -146,13 +146,13 @@ static int emit_rss( struct svga_context *svga,
           * then our definition of front face agrees with hardware.
           * Otherwise need to flip.
           */
-         if (rast->templ.front_winding == PIPE_WINDING_CW) {
-            cw = 0;
-            ccw = 1;
+         if (rast->templ.front_ccw) {
+            ccw = 0;
+            cw = 1;
          }
          else {
-            cw = 1;
-            ccw = 0;
+            ccw = 1;
+            cw = 0;
          }
 
          /* Twoside stencil

@@ -41,14 +41,13 @@
 #include "lp_scene.h"
 
 #include "draw/draw_vbuf.h"
+#include "util/u_rect.h"
 
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
 #define LP_SETUP_NEW_SCISSOR     0x08
 
-
-struct lp_scene_queue;
 
 
 /** Max number of scenes */
@@ -69,10 +68,12 @@ struct lp_setup_context
 {
    struct vbuf_render base;
 
+   struct pipe_context *pipe;
    struct vertex_info *vertex_info;
    uint prim;
    uint vertex_size;
    uint nr_vertices;
+   uint sprite_coord_enable, sprite_coord_origin;
    uint vertex_buffer_size;
    void *vertex_buffer;
 
@@ -81,29 +82,39 @@ struct lp_setup_context
     */
    struct draw_stage *vbuf;
    unsigned num_threads;
-   struct lp_rasterizer *rast;
+   unsigned scene_idx;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
-   struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
+
+   struct lp_fence *last_fence;
+   struct llvmpipe_query *active_query;
 
    boolean flatshade_first;
    boolean ccw_is_frontface;
    boolean scissor_test;
+   boolean point_size_per_vertex;
    unsigned cullmode;
    float pixel_offset;
+   float line_width;
+   float point_size;
+   float psize;
 
    struct pipe_framebuffer_state fb;
+   struct u_rect framebuffer;
+   struct u_rect scissor;
+   struct u_rect draw_region;   /* intersection of fb & scissor */
 
    struct {
       unsigned flags;
       union lp_rast_cmd_arg color;    /**< lp_rast_clear_color() cmd */
-      union lp_rast_cmd_arg zstencil; /**< lp_rast_clear_zstencil() cmd */
+      unsigned zsmask;
+      unsigned zsvalue;               /**< lp_rast_clear_zstencil() cmd */
    } clear;
 
    enum setup_state {
-      SETUP_FLUSHED,
-      SETUP_CLEARED,
-      SETUP_ACTIVE
+      SETUP_FLUSHED,    /**< scene is null */
+      SETUP_CLEARED,    /**< scene exists but has only clears */
+      SETUP_ACTIVE      /**< scene exists and has at least one draw/query */
    } state;
    
    struct {
@@ -127,10 +138,6 @@ struct lp_setup_context
       uint8_t *stored;
    } blend_color;
 
-   struct {
-      struct pipe_scissor_state current;
-      const void *stored;
-   } scissor;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 
@@ -151,12 +158,39 @@ void lp_setup_choose_triangle( struct lp_setup_context *setup );
 void lp_setup_choose_line( struct lp_setup_context *setup );
 void lp_setup_choose_point( struct lp_setup_context *setup );
 
-struct lp_scene *lp_setup_get_current_scene(struct lp_setup_context *setup);
-
 void lp_setup_init_vbuf(struct lp_setup_context *setup);
 
-void lp_setup_update_state( struct lp_setup_context *setup );
+void lp_setup_update_state( struct lp_setup_context *setup,
+                            boolean update_scene);
 
 void lp_setup_destroy( struct lp_setup_context *setup );
+
+void lp_setup_flush_and_restart(struct lp_setup_context *setup);
+
+void
+lp_setup_print_triangle(struct lp_setup_context *setup,
+                        const float (*v0)[4],
+                        const float (*v1)[4],
+                        const float (*v2)[4]);
+
+void
+lp_setup_print_vertex(struct lp_setup_context *setup,
+                      const char *name,
+                      const float (*v)[4]);
+
+
+struct lp_rast_triangle *
+lp_setup_alloc_triangle(struct lp_scene *scene,
+                        unsigned nr_inputs,
+                        unsigned nr_planes,
+                        unsigned *tri_size);
+
+boolean
+lp_setup_bin_triangle( struct lp_setup_context *setup,
+                       struct lp_rast_triangle *tri,
+                       const struct u_rect *bbox,
+                       int nr_planes );
+
+void lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 #endif

@@ -240,9 +240,9 @@ svga_vbuf_render_draw_arrays( struct vbuf_render *render,
 
 
 static void
-svga_vbuf_render_draw( struct vbuf_render *render,
-                       const ushort *indices,
-                       uint nr_indices)
+svga_vbuf_render_draw_elements( struct vbuf_render *render,
+                                const ushort *indices,
+                                uint nr_indices)
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
@@ -341,7 +341,7 @@ svga_vbuf_render_create( struct svga_context *svga )
    svga_render->base.map_vertices = svga_vbuf_render_map_vertices;
    svga_render->base.unmap_vertices = svga_vbuf_render_unmap_vertices;
    svga_render->base.set_primitive = svga_vbuf_render_set_primitive;
-   svga_render->base.draw = svga_vbuf_render_draw;
+   svga_render->base.draw_elements = svga_vbuf_render_draw_elements;
    svga_render->base.draw_arrays = svga_vbuf_render_draw_arrays;
    svga_render->base.release_vertices = svga_vbuf_render_release_vertices;
    svga_render->base.destroy = svga_vbuf_render_destroy;

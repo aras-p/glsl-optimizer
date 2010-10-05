@@ -56,37 +56,7 @@ struct trace_screen
    struct pipe_screen base;
 
    struct pipe_screen *screen;
-   struct pipe_context *private_context;
-
-   /* remote debugger */
-   struct trace_rbug *rbug;
-
-   pipe_mutex list_mutex;
-   int num_buffers;
-   int num_contexts;
-   int num_textures;
-   int num_surfaces;
-   int num_transfers;
-   struct tr_list buffers;
-   struct tr_list contexts;
-   struct tr_list textures;
-   struct tr_list surfaces;
-   struct tr_list transfers;
 };
-
-
-/*
- * tr_rbug.c
- */
-
-
-struct trace_rbug;
-
-struct trace_rbug *
-trace_rbug_start(struct trace_screen *tr_scr);
-
-void
-trace_rbug_stop(struct trace_rbug *tr_rbug);
 
 
 /*
@@ -94,28 +64,8 @@ trace_rbug_stop(struct trace_rbug *tr_rbug);
  */
 
 
-boolean
-trace_enabled(void);
-
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
-
-#define trace_screen_add_to_list(tr_scr, name, obj) \
-   do {                                             \
-      pipe_mutex_lock(tr_scr->list_mutex);          \
-      insert_at_head(&tr_scr->name, &obj->list);    \
-      tr_scr->num_##name++;                         \
-      pipe_mutex_unlock(tr_scr->list_mutex);        \
-   } while (0)
-
-#define trace_screen_remove_from_list(tr_scr, name, obj) \
-   do {                                                  \
-      pipe_mutex_lock(tr_scr->list_mutex);               \
-      remove_from_list(&obj->list);                      \
-      tr_scr->num_##name--;                              \
-      pipe_mutex_unlock(tr_scr->list_mutex);             \
-   } while (0)
-
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=7
-MESA_MINOR=9
+MESA_MINOR=10
 MESA_TINY=0
 MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
@@ -52,20 +52,24 @@ INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 GL_LIB = GL
 GLU_LIB = GLU
 GLUT_LIB = glut
-GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 EGL_LIB = EGL
+GLESv1_CM_LIB = GLESv1_CM
+GLESv2_LIB = GLESv2
+VG_LIB = OpenVG
 
 
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
-GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 EGL_LIB_NAME = lib$(EGL_LIB).so
+GLESv1_CM_LIB_NAME = lib$(GLESv1_CM_LIB).so
+GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
+VG_LIB_NAME = lib$(VG_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -74,6 +78,12 @@ GLUT_LIB_GLOB = $(GLUT_LIB_NAME)*
 GLW_LIB_GLOB = $(GLW_LIB_NAME)*
 OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
 EGL_LIB_GLOB = $(EGL_LIB_NAME)*
+GLESv1_CM_LIB_GLOB = $(GLESv1_CM_LIB_NAME)*
+GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
+VG_LIB_GLOB = $(VG_LIB_NAME)*
+
+TALLOC_LIBS = `pkg-config --libs talloc`
+TALLOC_CFLAGS = `pkg-config --cflags talloc`
 
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
@@ -86,11 +96,10 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = glsl mesa gallium egl gallium/winsys gallium/targets glu glut/glx glew glw
+SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
+	gallium egl gallium/winsys gallium/targets glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
-# Which subdirs under $(TOP)/progs/ to enter:
-PROGRAM_DIRS = demos redbook samples glsl objviewer xdemos
 
 # EGL drivers to build
 EGL_DRIVERS_DIRS = glx
@@ -98,28 +107,34 @@ EGL_DRIVERS_DIRS = glx
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
-GALLIUM_DRIVERS_DIRS = softpipe trace identity i915 i965 svga r300 nvfx nv50 failover
+GALLIUM_DRIVERS_DIRS = softpipe trace rbug identity galahad i915 i965 svga r300 nvfx nv50 failover
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = sw sw/xlib
 GALLIUM_TARGET_DIRS = libgl-xlib
 GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
-# native displays EGL should support
-EGL_DISPLAYS = x11
+# native platforms EGL should support
+EGL_PLATFORMS = x11
+EGL_CLIENT_APIS = $(GL_LIB)
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
-GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
+GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread $(TALLOC_LIBS)
 EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -ldl -lpthread
 OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS   = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lm
 GLW_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
 APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
+GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
+GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
+VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
 X11_LIBS = -lX11
+
+DLOPEN_LIBS = -ldl
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
@@ -153,3 +168,12 @@ GLW_PC_LIB_PRIV =
 GLW_PC_CFLAGS =
 OSMESA_PC_REQ =
 OSMESA_PC_LIB_PRIV =
+GLESv1_CM_PC_REQ_PRIV =
+GLESv1_CM_PC_LIB_PRIV =
+GLESv1_CM_PC_CFLAGS =
+GLESv2_PC_REQ_PRIV =
+GLESv2_PC_LIB_PRIV =
+GLESv2_PC_CFLAGS =
+VG_PC_REQ_PRIV =
+VG_PC_LIB_PRIV =
+VG_PC_CFLAGS =

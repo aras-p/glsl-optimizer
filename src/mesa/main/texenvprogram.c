@@ -28,13 +28,13 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_cache.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
-#include "shader/programopt.h"
+#include "program/program.h"
+#include "program/prog_parameter.h"
+#include "program/prog_cache.h"
+#include "program/prog_instruction.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
+#include "program/programopt.h"
 #include "texenvprogram.h"
 
 
@@ -98,6 +98,7 @@ struct state_key {
    GLuint fog_enabled:1;
    GLuint fog_mode:2;          /**< FOG_x */
    GLuint inputs_available:12;
+   GLuint num_draw_buffers:4;
 
    /* NOTE: This array of structs must be last! (see "keySize" below) */
    struct {
@@ -484,6 +485,9 @@ static GLuint make_state_key( GLcontext *ctx,  struct state_key *key )
       key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
       inputs_referenced |= FRAG_BIT_FOGC; /* maybe */
    }
+
+   /* _NEW_BUFFERS */
+   key->num_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
 
    key->inputs_available = (inputs_available & inputs_referenced);
 
@@ -903,7 +907,7 @@ static struct ureg get_zero( struct texenv_fragment_program *p )
 
 static void program_error( struct texenv_fragment_program *p, const char *msg )
 {
-   _mesa_problem(NULL, msg);
+   _mesa_problem(NULL, "%s", msg);
    p->error = 1;
 }
 
@@ -1199,11 +1203,14 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    else
       alpha_saturate = GL_FALSE;
 
-   /* If this is the very last calculation, emit direct to output reg:
+   /* If this is the very last calculation (and various other conditions
+    * are met), emit directly to the color output register.  Otherwise,
+    * emit to a temporary register.
     */
    if (key->separate_specular ||
        unit != p->last_tex_stage ||
        alpha_shift ||
+       key->num_draw_buffers != 1 ||
        rgb_shift)
       dest = get_temp( p );
    else
@@ -1438,10 +1445,10 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.Parameters = _mesa_new_parameter_list();
    p.program->Base.InputsRead = 0x0;
 
-   if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+   if (key->num_draw_buffers == 1)
       p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
    else {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++)
+      for (i = 0; i < key->num_draw_buffers; i++)
 	 p.program->Base.OutputsWritten |= (1 << (FRAG_RESULT_DATA0 + i));
    }
 
@@ -1493,8 +1500,8 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
 
-   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-      if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+   for (i = 0; i < key->num_draw_buffers; i++) {
+      if (key->num_draw_buffers == 1)
 	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
       else {
 	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i );

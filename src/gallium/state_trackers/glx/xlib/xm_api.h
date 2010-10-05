@@ -57,7 +57,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 #define XMESA_H
 
 
-#include "main/mtypes.h"
+#include "main/core.h" /* for GLvisual and MESA_VERSION_STRING */
 #include "state_tracker/st_api.h"
 #include "os/os_thread.h"
 
@@ -361,6 +361,9 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height);
 
 extern void
+xmesa_notify_invalid_buffer(XMesaBuffer b);
+
+extern void
 xmesa_check_buffer_size(XMesaBuffer b);
 
 extern void
@@ -378,6 +381,6 @@ xmesa_buffer_height(XMesaBuffer b)
    return b->height;
 }
 
-
+extern boolean xmesa_strict_invalidate;
 
 #endif

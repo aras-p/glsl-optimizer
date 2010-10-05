@@ -26,20 +26,67 @@
  **************************************************************************/
 
 
-/**
- * Pipe copy/fill rect helpers.
- */
-
-
 #ifndef U_RECT_H
 #define U_RECT_H
 
+#include "pipe/p_compiler.h"
+
+struct u_rect {
+   int x0, x1;
+   int y0, y1;
+};
+
+/* Do two rectangles intersect?
+ */
+static INLINE boolean
+u_rect_test_intersection(const struct u_rect *a,
+                         const struct u_rect *b)
+{
+   return (!(a->x1 < b->x0 ||
+             b->x1 < a->x0 ||
+             a->y1 < b->y0 ||
+             b->y1 < a->y0));
+}
+
+/* Find the intersection of two rectangles known to intersect.
+ */
+static INLINE void
+u_rect_find_intersection(const struct u_rect *a,
+                         struct u_rect *b)
+{
+   /* Caller should verify intersection exists before calling.
+    */
+   if (b->x0 < a->x0) b->x0 = a->x0;
+   if (b->x1 > a->x1) b->x1 = a->x1;
+   if (b->y0 < a->y0) b->y0 = a->y0;
+   if (b->y1 > a->y1) b->y1 = a->y1;
+}
+
+
+static INLINE void
+u_rect_possible_intersection(const struct u_rect *a,
+                             struct u_rect *b)
+{
+   if (u_rect_test_intersection(a,b)) {
+      u_rect_find_intersection(a,b);
+   }
+   else {
+      b->x0 = b->x1 = b->y0 = b->y1 = 0;
+   }
+}
 
 #include "pipe/p_format.h"
+#include "util/u_pack_color.h"
 
-struct pipe_context;
-struct pipe_surface;
 
+
+/**********************************************************************
+ * Pipe copy/fill rect helpers.
+ */
+
+/* These really should move to a different file:
+ */
+#include "pipe/p_format.h"
 
 extern void
 util_copy_rect(ubyte * dst, enum pipe_format format,
@@ -50,23 +97,7 @@ util_copy_rect(ubyte * dst, enum pipe_format format,
 extern void
 util_fill_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-               unsigned width, unsigned height, uint32_t value);
-
-
-extern void
-util_surface_copy(struct pipe_context *pipe,
-                  boolean do_flip,
-                  struct pipe_surface *dst,
-                  unsigned dst_x, unsigned dst_y,
-                  struct pipe_surface *src,
-                  unsigned src_x, unsigned src_y, 
-                  unsigned w, unsigned h);
-
-extern void
-util_surface_fill(struct pipe_context *pipe,
-                  struct pipe_surface *dst,
-                  unsigned dstx, unsigned dsty,
-                  unsigned width, unsigned height, unsigned value);
+               unsigned width, unsigned height, union util_color *uc);
 
 
 #endif /* U_RECT_H */

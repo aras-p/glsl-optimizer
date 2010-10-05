@@ -27,8 +27,11 @@
  */
 
 #include "util/u_memory.h"
+#include "util/u_string.h"
 #include "util/u_inlines.h"
+#include "util/u_pointer.h"
 #include "util/u_dl.h"
+#include "egldriver.h"
 #include "eglimage.h"
 #include "eglmutex.h"
 
@@ -46,50 +49,13 @@ egl_g3d_st_manager(struct st_manager *smapi)
    return (struct egl_g3d_st_manager *) smapi;
 }
 
-struct st_api *
-egl_g3d_create_st_api(enum st_api_type api)
-{
-   struct util_dl_library *lib;
-   const char *proc_name;
-   struct st_api * (*proc)(void) = NULL;
-
-   switch (api) {
-   case ST_API_OPENGL:
-      proc_name = ST_CREATE_OPENGL_SYMBOL;
-      break;
-   case ST_API_OPENGL_ES1:
-      proc_name = ST_CREATE_OPENGL_ES1_SYMBOL;
-      break;
-   case ST_API_OPENGL_ES2:
-      proc_name = ST_CREATE_OPENGL_ES2_SYMBOL;
-      break;
-   case ST_API_OPENVG:
-      proc_name = ST_CREATE_OPENVG_SYMBOL;
-      break;
-   default:
-      assert(!"Unknown API Type\n");
-      return NULL;
-   }
-
-   lib = util_dl_open(NULL);
-   if (lib) {
-      proc = util_dl_get_proc_address(lib, proc_name);
-      debug_printf("%s: %s %p\n", __func__, proc_name, proc);
-      util_dl_close(lib);
-   }
-
-   if (!proc)
-      return NULL;
-
-   return proc();
-}
-
 static boolean
 egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
-                                 struct st_egl_image *stimg)
+                                 void *egl_image,
+                                 struct st_egl_image *out)
 {
    struct egl_g3d_st_manager *gsmapi = egl_g3d_st_manager(smapi);
-   EGLImageKHR handle = (EGLImageKHR) stimg->egl_image;
+   EGLImageKHR handle = (EGLImageKHR) egl_image;
    _EGLImage *img;
    struct egl_g3d_image *gimg;
 
@@ -104,15 +70,22 @@ egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
 
    gimg = egl_g3d_image(img);
 
-   stimg->texture = NULL;
-   pipe_resource_reference(&stimg->texture, gimg->texture);
-   stimg->face = gimg->face;
-   stimg->level = gimg->level;
-   stimg->zslice = gimg->zslice;
+   out->texture = NULL;
+   pipe_resource_reference(&out->texture, gimg->texture);
+   out->face = gimg->face;
+   out->level = gimg->level;
+   out->zslice = gimg->zslice;
 
    _eglUnlockMutex(&gsmapi->display->Mutex);
 
    return TRUE;
+}
+
+static int
+egl_g3d_st_manager_get_param(struct st_manager *smapi,
+                             enum st_manager_param param)
+{
+   return 0;
 }
 
 struct st_manager *
@@ -127,6 +100,7 @@ egl_g3d_create_st_manager(_EGLDisplay *dpy)
 
       gsmapi->base.screen = gdpy->native->screen;
       gsmapi->base.get_egl_image = egl_g3d_st_manager_get_egl_image;
+      gsmapi->base.get_param = egl_g3d_st_manager_get_param;
    }
 
    return &gsmapi->base;;
@@ -146,7 +120,34 @@ egl_g3d_st_framebuffer_flush_front_pbuffer(struct st_framebuffer_iface *stfbi,
    return TRUE;
 }
 
-static boolean 
+static void
+pbuffer_reference_openvg_image(struct egl_g3d_surface *gsurf)
+{
+   /* TODO */
+}
+
+static void
+pbuffer_allocate_render_texture(struct egl_g3d_surface *gsurf)
+{
+   struct egl_g3d_display *gdpy =
+      egl_g3d_display(gsurf->base.Resource.Display);
+   struct pipe_screen *screen = gdpy->native->screen;
+   struct pipe_resource templ, *ptex;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = gsurf->base.Width;
+   templ.height0 = gsurf->base.Height;
+   templ.depth0 = 1;
+   templ.format = gsurf->stvis.color_format;
+   templ.bind = PIPE_BIND_RENDER_TARGET;
+
+   ptex = screen->resource_create(screen, &templ);
+   gsurf->render_texture = ptex;
+}
+
+static boolean
 egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
                                         const enum st_attachment_type *statts,
                                         unsigned count,
@@ -154,7 +155,6 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
 {
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   struct pipe_resource templ;
    unsigned i;
 
    for (i = 0; i < count; i++) {
@@ -164,20 +164,19 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
          continue;
 
       if (!gsurf->render_texture) {
-         struct egl_g3d_display *gdpy =
-            egl_g3d_display(gsurf->base.Resource.Display);
-         struct pipe_screen *screen = gdpy->native->screen;
+         switch (gsurf->client_buffer_type) {
+         case EGL_NONE:
+            pbuffer_allocate_render_texture(gsurf);
+            break;
+         case EGL_OPENVG_IMAGE:
+            pbuffer_reference_openvg_image(gsurf);
+            break;
+         default:
+            break;
+         }
 
-         memset(&templ, 0, sizeof(templ));
-         templ.target = PIPE_TEXTURE_2D;
-         templ.last_level = 0;
-         templ.width0 = gsurf->base.Width;
-         templ.height0 = gsurf->base.Height;
-         templ.depth0 = 1;
-         templ.format = gsurf->stvis.color_format;
-         templ.bind = PIPE_BIND_RENDER_TARGET;
-
-         gsurf->render_texture = screen->resource_create(screen, &templ);
+         if (!gsurf->render_texture)
+            return FALSE;
       }
 
       pipe_resource_reference(&out[i], gsurf->render_texture);

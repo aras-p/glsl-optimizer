@@ -59,7 +59,7 @@ static GLuint half_float_types[5] = {
    0,
    BRW_SURFACEFORMAT_R16_FLOAT,
    BRW_SURFACEFORMAT_R16G16_FLOAT,
-   0, /* can't seem to render this one */
+   BRW_SURFACEFORMAT_R16G16B16A16_FLOAT,
    BRW_SURFACEFORMAT_R16G16B16A16_FLOAT
 };
 
@@ -247,14 +247,14 @@ static void wrap_buffers( struct brw_context *brw,
    brw->vb.upload.offset = 0;
 
    if (brw->vb.upload.bo != NULL)
-      dri_bo_unreference(brw->vb.upload.bo);
-   brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
-				    size, 1);
+      drm_intel_bo_unreference(brw->vb.upload.bo);
+   brw->vb.upload.bo = drm_intel_bo_alloc(brw->intel.bufmgr, "temporary VBO",
+					  size, 1);
 }
 
 static void get_space( struct brw_context *brw,
 		       GLuint size,
-		       dri_bo **bo_return,
+		       drm_intel_bo **bo_return,
 		       GLuint *offset_return )
 {
    size = ALIGN(size, 64);
@@ -265,7 +265,7 @@ static void get_space( struct brw_context *brw,
    }
 
    assert(*bo_return == NULL);
-   dri_bo_reference(brw->vb.upload.bo);
+   drm_intel_bo_reference(brw->vb.upload.bo);
    *bo_return = brw->vb.upload.bo;
    *offset_return = brw->vb.upload.offset;
    brw->vb.upload.offset += size;
@@ -361,10 +361,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    intel_buffer_object(input->glarray->BufferObj);
 
 	 /* Named buffer object: Just reference its contents directly. */
-	 dri_bo_unreference(input->bo);
+	 drm_intel_bo_unreference(input->bo);
 	 input->bo = intel_bufferobj_buffer(intel, intel_buffer,
 					    INTEL_READ);
-	 dri_bo_reference(input->bo);
+	 drm_intel_bo_reference(input->bo);
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
 	 input->count = input->glarray->_MaxElement;
@@ -439,7 +439,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 upload[i]->offset = upload[0]->offset +
 	    ((const unsigned char *)upload[i]->glarray->Ptr - ptr);
 	 upload[i]->bo = upload[0]->bo;
-	 dri_bo_reference(upload[i]->bo);
+	 drm_intel_bo_reference(upload[i]->bo);
       }
    }
    else {
@@ -476,7 +476,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    if (brw->vb.nr_enabled == 0) {
       BEGIN_BATCH(3);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
-      if (IS_GEN6(intel->intelScreen->deviceID)) {
+      if (intel->gen >= 6) {
 	 OUT_BATCH((0 << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
@@ -553,7 +553,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 break;
       }
 
-      if (IS_GEN6(intel->intelScreen->deviceID)) {
+      if (intel->gen >= 6) {
 	 OUT_BATCH((i << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (format << BRW_VE0_FORMAT_SHIFT) |
@@ -596,7 +596,7 @@ static void brw_prepare_indices(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint ib_size;
-   dri_bo *bo = NULL;
+   drm_intel_bo *bo = NULL;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
    GLuint ib_type_size;
@@ -638,13 +638,13 @@ static void brw_prepare_indices(struct brw_context *brw)
 
 	   get_space(brw, ib_size, &bo, &offset);
 
-	   dri_bo_subdata(bo, offset, ib_size, map);
+	   drm_intel_bo_subdata(bo, offset, ib_size, map);
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
 	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
 				      INTEL_READ);
-	  dri_bo_reference(bo);
+	  drm_intel_bo_reference(bo);
 
 	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
 	   * the index buffer state when we're just moving the start index

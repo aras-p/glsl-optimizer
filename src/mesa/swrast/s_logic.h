@@ -27,7 +27,8 @@
 #define S_LOGIC_H
 
 
-#include "swrast.h"
+#include "main/mtypes.h"
+#include "s_span.h"
 
 extern void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,

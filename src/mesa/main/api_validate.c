@@ -105,20 +105,30 @@ check_valid_to_render(GLcontext *ctx, const char *function)
       return GL_FALSE;
    }
 
+   switch (ctx->API) {
 #if FEATURE_es2_glsl
-   /* For ES2, we can draw if any vertex array is enabled (and we should
-    * always have a vertex program/shader).
-    */
-   if (ctx->Array.ArrayObj->_Enabled == 0x0 || !ctx->VertexProgram._Current)
-      return GL_FALSE;
-#else
-   /* For regular OpenGL, only draw if we have vertex positions (regardless
-    * of whether or not we have a vertex program/shader).
-    */
-   if (!ctx->Array.ArrayObj->Vertex.Enabled &&
-       !ctx->Array.ArrayObj->VertexAttrib[0].Enabled)
-      return GL_FALSE;
+   case API_OPENGLES2:
+      /* For ES2, we can draw if any vertex array is enabled (and we
+       * should always have a vertex program/shader). */
+      if (ctx->Array.ArrayObj->_Enabled == 0x0 || !ctx->VertexProgram._Current)
+	 return GL_FALSE;
+      break;
 #endif
+
+#if FEATURE_ES1 || FEATURE_GL
+   case API_OPENGLES:
+   case API_OPENGL:
+      /* For regular OpenGL, only draw if we have vertex positions
+       * (regardless of whether or not we have a vertex program/shader). */
+      if (!ctx->Array.ArrayObj->Vertex.Enabled &&
+	  !ctx->Array.ArrayObj->VertexAttrib[0].Enabled)
+	 return GL_FALSE;
+      break;
+#endif
+
+   default:
+      ASSERT_NO_FEATURE();
+   }
 
    return GL_TRUE;
 }
@@ -183,7 +193,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)" );
       return GL_FALSE;
    }
@@ -240,7 +250,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)" );
       return GL_FALSE;
    }
@@ -299,7 +309,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
@@ -329,7 +339,7 @@ _mesa_validate_DrawArraysInstanced(GLcontext *ctx, GLenum mode, GLint first,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawArraysInstanced(mode=0x%x)", mode);
       return GL_FALSE;
@@ -374,7 +384,7 @@ _mesa_validate_DrawElementsInstanced(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawElementsInstanced(mode = 0x%x)", mode);
       return GL_FALSE;

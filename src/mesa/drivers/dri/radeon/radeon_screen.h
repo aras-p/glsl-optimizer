@@ -112,6 +112,13 @@ typedef struct radeon_screen {
    int kernel_mm;
    drm_radeon_sarea_t *sarea;	/* Private SAREA data */
    struct radeon_bo_manager *bom;
+
+   /* r6xx+ tiling */
+   GLuint tile_config;
+   GLint group_bytes;
+   GLint num_channels;
+   GLint num_banks;
+   GLint r7xx_bank_op;
 } radeonScreenRec, *radeonScreenPtr;
 
 #define IS_R100_CLASS(screen) \

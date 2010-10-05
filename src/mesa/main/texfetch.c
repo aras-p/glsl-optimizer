@@ -34,7 +34,7 @@
 
 
 #include "colormac.h"
-#include "context.h"
+#include "macros.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"
@@ -60,7 +60,7 @@ nonlinear_to_linear(GLubyte cs8)
             table[i] = cs / 12.92f;
          }
          else {
-            table[i] = (GLfloat) _mesa_pow((cs + 0.055) / 1.055, 2.4);
+            table[i] = (GLfloat) pow((cs + 0.055) / 1.055, 2.4);
          }
       }
       tableReady = GL_TRUE;
@@ -314,6 +314,48 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_ycbcr_rev
    },
    {
+      MESA_FORMAT_R8,
+      fetch_texel_1d_f_r8,
+      fetch_texel_2d_f_r8,
+      fetch_texel_3d_f_r8,
+      store_texel_r8,
+   },
+   {
+      MESA_FORMAT_RG88,
+      fetch_texel_1d_f_rg88,
+      fetch_texel_2d_f_rg88,
+      fetch_texel_3d_f_rg88,
+      store_texel_rg88,
+   },
+   {
+      MESA_FORMAT_RG88_REV,
+      fetch_texel_1d_f_rg88_rev,
+      fetch_texel_2d_f_rg88_rev,
+      fetch_texel_3d_f_rg88_rev,
+      store_texel_rg88_rev,
+   },
+   {
+      MESA_FORMAT_R16,
+      fetch_texel_1d_f_r16,
+      fetch_texel_2d_f_r16,
+      fetch_texel_3d_f_r16,
+      store_texel_r16,
+   },
+   {
+      MESA_FORMAT_RG1616,
+      fetch_texel_1d_f_rg1616,
+      fetch_texel_2d_f_rg1616,
+      fetch_texel_3d_f_rg1616,
+      store_texel_rg1616,
+   },
+   {
+      MESA_FORMAT_RG1616_REV,
+      fetch_texel_1d_f_rg1616_rev,
+      fetch_texel_2d_f_rg1616_rev,
+      fetch_texel_3d_f_rg1616_rev,
+      store_texel_rg1616_rev,
+   },
+   {
       MESA_FORMAT_Z24_S8,
       fetch_texel_1d_f_z24_s8,
       fetch_texel_2d_f_z24_s8,
@@ -552,6 +594,54 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_f_intensity_f16,
       store_texel_intensity_f16
    },
+
+   /* non-normalized, signed int */
+   {
+      MESA_FORMAT_RGBA_INT8,
+      fetch_texel_1d_rgba_int8,
+      fetch_texel_2d_rgba_int8,
+      fetch_texel_3d_rgba_int8,
+      store_texel_rgba_int8
+   },
+   {
+      MESA_FORMAT_RGBA_INT16,
+      fetch_texel_1d_rgba_int16,
+      fetch_texel_2d_rgba_int16,
+      fetch_texel_3d_rgba_int16,
+      store_texel_rgba_int16
+   },
+   {
+      MESA_FORMAT_RGBA_INT32,
+      fetch_texel_1d_rgba_int32,
+      fetch_texel_2d_rgba_int32,
+      fetch_texel_3d_rgba_int32,
+      store_texel_rgba_int32
+   },
+
+   /* non-normalized, unsigned int */
+   {
+      MESA_FORMAT_RGBA_UINT8,
+      fetch_texel_1d_rgba_uint8,
+      fetch_texel_2d_rgba_uint8,
+      fetch_texel_3d_rgba_uint8,
+      store_texel_rgba_uint8
+   },
+   {
+      MESA_FORMAT_RGBA_UINT16,
+      fetch_texel_1d_rgba_uint16,
+      fetch_texel_2d_rgba_uint16,
+      fetch_texel_3d_rgba_uint16,
+      store_texel_rgba_uint16
+   },
+   {
+      MESA_FORMAT_RGBA_UINT32,
+      fetch_texel_1d_rgba_uint32,
+      fetch_texel_2d_rgba_uint32,
+      fetch_texel_3d_rgba_uint32,
+      store_texel_rgba_uint32
+   },
+
+   /* dudv */
    {
       MESA_FORMAT_DUDV8,
       fetch_texel_1d_dudv8,
@@ -559,6 +649,8 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_dudv8,
       NULL
    },
+
+   /* signed, normalized */
    {
       MESA_FORMAT_SIGNED_R8,
       fetch_texel_1d_signed_r8,
@@ -622,6 +714,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_signed_rgba_16,
       store_texel_signed_rgba_16
    },
+   {
+      MESA_FORMAT_RGBA_16,
+      fetch_texel_1d_rgba_16,
+      fetch_texel_2d_rgba_16,
+      fetch_texel_3d_rgba_16,
+      store_texel_rgba_16
+   }
 };
 
 

@@ -4,6 +4,9 @@
 #include "egltypedefs.h"
 
 
+#ifdef EGL_MESA_screen_surface
+
+
 #define EGL_NO_MODE_MESA 0
 
 
@@ -52,6 +55,9 @@ _eglGetModeAttribMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *m,
 
 extern const char *
 _eglQueryModeStringMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *m);
+
+
+#endif /* EGL_MESA_screen_surface */
 
 
 #endif /* EGLMODE_INCLUDED */

@@ -36,7 +36,7 @@
 #include "draw/draw_context.h"
 
 
-void *
+static void *
 cell_create_vertex_elements_state(struct pipe_context *pipe,
                                   unsigned count,
                                   const struct pipe_vertex_element *attribs)
@@ -51,7 +51,7 @@ cell_create_vertex_elements_state(struct pipe_context *pipe,
    return velems;
 }
 
-void
+static void
 cell_bind_vertex_elements_state(struct pipe_context *pipe,
                                 void *velems)
 {
@@ -66,7 +66,7 @@ cell_bind_vertex_elements_state(struct pipe_context *pipe,
       draw_set_vertex_elements(cell->draw, cell_velems->count, cell_velems->velem);
 }
 
-void
+static void
 cell_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
 {
    FREE( velems );
@@ -91,10 +91,26 @@ cell_set_vertex_buffers(struct pipe_context *pipe,
 }
 
 
+static void
+cell_set_index_buffer(struct pipe_context *pipe,
+                      const struct pipe_index_buffer *ib)
+{
+   struct cell_context *cell = cell_context(pipe);
+
+   if (ib)
+      memcpy(&cell->index_buffer, ib, sizeof(cell->index_buffer));
+   else
+      memset(&cell->index_buffer, 0, sizeof(cell->index_buffer));
+
+   draw_set_index_buffer(cell->draw, ib);
+}
+
+
 void
 cell_init_vertex_functions(struct cell_context *cell)
 {
    cell->pipe.set_vertex_buffers = cell_set_vertex_buffers;
+   cell->pipe.set_index_buffer = cell_set_index_buffer;
    cell->pipe.create_vertex_elements_state = cell_create_vertex_elements_state;
    cell->pipe.bind_vertex_elements_state = cell_bind_vertex_elements_state;
    cell->pipe.delete_vertex_elements_state = cell_delete_vertex_elements_state;

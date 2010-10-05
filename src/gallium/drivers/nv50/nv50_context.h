@@ -16,12 +16,13 @@
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_stateobj.h"
+#include "nv50_reg.h"
 
 #include "nv50_screen.h"
 #include "nv50_program.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
-	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
+	fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
@@ -50,6 +51,7 @@
 #define NV50_NEW_SAMPLER	(1 << 15)
 #define NV50_NEW_TEXTURE	(1 << 16)
 #define NV50_NEW_STENCIL_REF	(1 << 17)
+#define NV50_NEW_CLIP		(1 << 18)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -140,12 +142,14 @@ struct nv50_context {
 	struct pipe_scissor_state scissor;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	struct pipe_clip_state clip;
 	struct nv50_program *vertprog;
 	struct nv50_program *fragprog;
 	struct nv50_program *geomprog;
 	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
+	struct pipe_index_buffer idxbuf;
 	struct nv50_vtxelt_stateobj *vtxelt;
 	struct nv50_sampler_stateobj *sampler[3][PIPE_MAX_SAMPLERS];
 	unsigned sampler_nr[3];
@@ -153,6 +157,7 @@ struct nv50_context {
 	unsigned sampler_view_nr[3];
 
 	unsigned vbo_fifo;
+	unsigned req_lmem;
 };
 
 static INLINE struct nv50_context *
@@ -177,24 +182,8 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 
 /* nv50_vbo.c */
-extern void nv50_draw_arrays(struct pipe_context *, unsigned mode,
-				unsigned start, unsigned count);
-extern void nv50_draw_arrays_instanced(struct pipe_context *, unsigned mode,
-					unsigned start, unsigned count,
-					unsigned startInstance,
-					unsigned instanceCount);
-extern void nv50_draw_elements(struct pipe_context *pipe,
-				  struct pipe_resource *indexBuffer,
-				  unsigned indexSize, int indexBias,
-				  unsigned mode, unsigned start,
-				  unsigned count);
-extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
-					 struct pipe_resource *indexBuffer,
-					 unsigned indexSize, int indexBias,
-					 unsigned mode, unsigned start,
-					 unsigned count,
-					 unsigned startInstance,
-					 unsigned instanceCount);
+extern void nv50_draw_vbo(struct pipe_context *pipe,
+                          const struct pipe_draw_info *info);
 extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
 extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
 

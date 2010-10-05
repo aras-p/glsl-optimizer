@@ -47,6 +47,11 @@
 #include "drivers/common/meta.h"
 #include "utils.h"
 
+#include "main/teximage.h"
+#include "main/texfetch.h"
+#include "main/texformat.h"
+#include "main/texstate.h"
+
 #include "swrast_priv.h"
 
 
@@ -54,7 +59,59 @@
  * Screen and config-related functions
  */
 
+static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
+				GLint texture_format, __DRIdrawable *dPriv)
+{
+    struct dri_context *dri_ctx;
+    int x, y, w, h;
+    __DRIscreen *sPriv = dPriv->driScreenPriv;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
+    uint32_t internalFormat;
+
+    dri_ctx = pDRICtx->driverPrivate;
+
+    internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
+
+    texUnit = _mesa_get_current_tex_unit(&dri_ctx->Base);
+    texObj = _mesa_select_tex_object(&dri_ctx->Base, texUnit, target);
+    texImage = _mesa_get_tex_image(&dri_ctx->Base, texObj, target, 0);
+
+    _mesa_lock_texture(&dri_ctx->Base, texObj);
+
+    sPriv->swrast_loader->getDrawableInfo(dPriv, &x, &y, &w, &h, dPriv->loaderPrivate);
+
+    _mesa_init_teximage_fields(&dri_ctx->Base, target, texImage,
+			       w, h, 1, 0, internalFormat);
+
+    if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
+	texImage->TexFormat = MESA_FORMAT_XRGB8888;
+    else
+	texImage->TexFormat = MESA_FORMAT_ARGB8888;
+
+    _mesa_set_fetch_functions(texImage, 2);
+
+    sPriv->swrast_loader->getImage(dPriv, x, y, w, h, (char *)texImage->Data,
+				   dPriv->loaderPrivate);
+
+    _mesa_unlock_texture(&dri_ctx->Base, texObj);
+}
+
+static void swrastSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
+			       __DRIdrawable *dPriv)
+{
+    swrastSetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
+}
+
+static const __DRItexBufferExtension swrastTexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+    swrastSetTexBuffer,
+    swrastSetTexBuffer2,
+};
+
 static const __DRIextension *dri_screen_extensions[] = {
+    &swrastTexBufferExtension.base,
     NULL
 };
 
@@ -486,6 +543,16 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     swrast_check_and_update_window_size(ctx, read);
 }
 
+static gl_format swrastChooseTextureFormat(GLcontext * ctx,
+					   GLint internalFormat,
+					   GLenum format,
+					   GLenum type)
+{
+    if (internalFormat == GL_RGB)
+	return MESA_FORMAT_XRGB8888;
+    return _mesa_choose_tex_format(ctx, internalFormat, format, type);
+}
+
 static void
 swrast_init_driver_functions(struct dd_function_table *driver)
 {
@@ -493,6 +560,7 @@ swrast_init_driver_functions(struct dd_function_table *driver)
     driver->UpdateState = update_state;
     driver->GetBufferSize = NULL;
     driver->Viewport = viewport;
+    driver->ChooseTextureFormat = swrastChooseTextureFormat;
 }
 
 
@@ -501,7 +569,8 @@ swrast_init_driver_functions(struct dd_function_table *driver)
  */
 
 static GLboolean
-dri_create_context(const __GLcontextModes * visual,
+dri_create_context(gl_api api,
+		   const __GLcontextModes * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
     struct dri_context *ctx = NULL;
@@ -644,6 +713,10 @@ dri_unbind_context(__DRIcontext * cPriv)
 {
     TRACE;
     (void) cPriv;
+
+    /* Unset current context and dispath table */
+    _mesa_make_current(NULL, NULL, NULL);
+
     return GL_TRUE;
 }
 

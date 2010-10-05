@@ -82,7 +82,7 @@
  * broken.
  */
 void
-__glXSendLargeImage(__GLXcontext * gc, GLint compsize, GLint dim,
+__glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
                     GLint width, GLint height, GLint depth,
                     GLenum format, GLenum type, const GLvoid * src,
                     GLubyte * pc, GLubyte * modes)

@@ -72,7 +72,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(screen, internalFormat);
+      format = st_choose_renderbuffer_format(screen, internalFormat, rb->NumSamples);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;
@@ -108,7 +108,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       /* Setup new texture template.
        */
       memset(&template, 0, sizeof(template));
-      template.target = PIPE_TEXTURE_2D;
+      template.target = st->internal_target;
       template.format = format;
       template.width0 = width;
       template.height0 = height;
@@ -260,6 +260,18 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
       break;
+   case PIPE_FORMAT_R8_UNORM:
+      strb->Base.InternalFormat = GL_R8;
+      break;
+   case PIPE_FORMAT_R8G8_UNORM:
+      strb->Base.InternalFormat = GL_RG8;
+      break;
+   case PIPE_FORMAT_R16_UNORM:
+      strb->Base.InternalFormat = GL_R16;
+      break;
+   case PIPE_FORMAT_R16G16_UNORM:
+      strb->Base.InternalFormat = GL_RG16;
+      break;
    default:
       _mesa_problem(NULL,
 		    "Unexpected format in st_new_renderbuffer_fb");
@@ -321,15 +333,13 @@ st_render_texture(GLcontext *ctx,
    struct pipe_resource *pt = st_get_texobj_resource(att->Texture);
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
-   GLint pt_level;
 
    /* When would this fail?  Perhaps assert? */
    if (!pt) 
       return;
 
-   /* The first gallium texture level = Mesa BaseLevel */
-   pt_level = MAX2(0, (GLint) att->TextureLevel - att->Texture->BaseLevel);
-   texImage = att->Texture->Image[att->CubeMapFace][pt_level];
+   /* get pointer to texture image we're rendeing to */
+   texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
 
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
@@ -350,7 +360,7 @@ st_render_texture(GLcontext *ctx,
 
    /* point renderbuffer at texobject */
    strb->rtt = stObj;
-   strb->rtt_level = pt_level;
+   strb->rtt_level = att->TextureLevel;
    strb->rtt_face = att->CubeMapFace;
    strb->rtt_slice = att->Zoffset;
 
@@ -444,9 +454,34 @@ st_validate_attachment(struct pipe_screen *screen,
       return GL_FALSE;
 
    return screen->is_format_supported(screen, stObj->pt->format,
-				      PIPE_TEXTURE_2D, bindings, 0);
+                                      PIPE_TEXTURE_2D,
+                                      stObj->pt->nr_samples, bindings, 0);
 }
 
+
+/**
+ * Check if two renderbuffer attachments name a combined depth/stencil
+ * renderbuffer.
+ */
+GLboolean
+st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
+                             const struct gl_renderbuffer_attachment *stencil)
+{
+   assert(depth && stencil);
+
+   if (depth->Type == stencil->Type) {
+      if (depth->Type == GL_RENDERBUFFER_EXT &&
+          depth->Renderbuffer == stencil->Renderbuffer)
+         return GL_TRUE;
+
+      if (depth->Type == GL_TEXTURE &&
+          depth->Texture == stencil->Texture)
+         return GL_TRUE;
+   }
+
+   return GL_FALSE;
+}
+ 
 
 /**
  * Check that the framebuffer configuration is valid in terms of what
@@ -459,25 +494,37 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_screen *screen = st->pipe->screen;
-   const struct gl_renderbuffer *depthRb =
-      fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   const struct gl_renderbuffer *stencilRb =
-      fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   const struct gl_renderbuffer_attachment *depth =
+         &fb->Attachment[BUFFER_DEPTH];
+   const struct gl_renderbuffer_attachment *stencil =
+         &fb->Attachment[BUFFER_STENCIL];
    GLuint i;
 
-   if (stencilRb && depthRb && stencilRb != depthRb) {
+   if (depth->Type && stencil->Type && depth->Type != stencil->Type) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   if (depth->Type == GL_RENDERBUFFER_EXT &&
+       stencil->Type == GL_RENDERBUFFER_EXT &&
+       depth->Renderbuffer != stencil->Renderbuffer) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   if (depth->Type == GL_TEXTURE &&
+       stencil->Type == GL_TEXTURE &&
+       depth->Texture != stencil->Texture) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
 
    if (!st_validate_attachment(screen,
-			       &fb->Attachment[BUFFER_DEPTH],
+                               depth,
 			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
    if (!st_validate_attachment(screen,
-			       &fb->Attachment[BUFFER_STENCIL],
+                               stencil,
 			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
@@ -532,6 +579,7 @@ st_ReadBuffer(GLcontext *ctx, GLenum buffer)
 
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
+#if FEATURE_EXT_framebuffer_object
    functions->NewFramebuffer = st_new_framebuffer;
    functions->NewRenderbuffer = st_new_renderbuffer;
    functions->BindFramebuffer = st_bind_framebuffer;
@@ -539,6 +587,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
    functions->ValidateFramebuffer = st_validate_framebuffer;
+#endif
    /* no longer needed by core Mesa, drivers handle resizes...
    functions->ResizeBuffers = st_resize_buffers;
    */
@@ -547,6 +596,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->ReadBuffer = st_ReadBuffer;
 }
 
+/* XXX unused ? */
 struct pipe_sampler_view *
 st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe)

@@ -30,6 +30,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_framebuffer.h"
 #include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_scene.h"
@@ -58,6 +59,10 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    if (changed) {
 
       util_copy_framebuffer_state(&lp->framebuffer, fb);
+
+      if (LP_PERF & PERF_NO_DEPTH) {
+	 pipe_surface_reference(&lp->framebuffer.zsbuf, NULL);
+      }
 
       /* Tell draw module how deep the Z/depth buffer is */
       if (lp->framebuffer.zsbuf) {

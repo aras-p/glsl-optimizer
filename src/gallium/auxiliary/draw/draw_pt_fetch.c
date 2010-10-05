@@ -29,7 +29,6 @@
 #include "util/u_math.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
-#include "draw/draw_vbuf.h"
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
@@ -69,31 +68,12 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
    fetch->vertex_size = vertex_size;
 
-   /* Always emit/leave space for a vertex header.
-    *
-    * It's worth considering whether the vertex headers should contain
-    * a pointer to the 'data', rather than having it inline.
-    * Something to look at after we've fully switched over to the pt
-    * paths.
+   /* Leave the clipmask/edgeflags/pad/vertex_id untouched
     */
-   {
-      /* Need to set header->vertex_id = 0xffff somehow.
-       */
-      key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
-      key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;
-      key.element[nr].input_buffer = draw->pt.nr_vertex_buffers;
-      key.element[nr].input_offset = 0;
-      key.element[nr].instance_divisor = 0;
-      key.element[nr].output_format = PIPE_FORMAT_R32_FLOAT;
-      key.element[nr].output_offset = dst_offset;
-      dst_offset += 1 * sizeof(float);
-      nr++;
-
-
-      /* Just leave the clip[] array untouched.
-       */
-      dst_offset += 4 * sizeof(float);
-   }
+   dst_offset += 1 * sizeof(float);
+   /* Just leave the clip[] array untouched.
+    */
+   dst_offset += 4 * sizeof(float);
 
    if (instance_id_index != ~0) {
       num_extra_inputs++;
@@ -132,26 +112,11 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    key.nr_elements = nr;
    key.output_stride = vertex_size;
 
-
    if (!fetch->translate ||
        translate_key_compare(&fetch->translate->key, &key) != 0)
    {
       translate_key_sanitize(&key);
       fetch->translate = translate_cache_find(fetch->cache, &key);
-
-      {
-         static struct vertex_header vh = { 0,
-                                            1,
-                                            0,
-                                            UNDEFINED_VERTEX_ID,
-                                            { .0f, .0f, .0f, .0f } };
-
-	 fetch->translate->set_buffer(fetch->translate,
-				      draw->pt.nr_vertex_buffers,
-				      &vh,
-				      0,
-				      ~0);
-      }
    }
 
 }

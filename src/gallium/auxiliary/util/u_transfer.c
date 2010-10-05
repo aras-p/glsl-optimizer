@@ -35,12 +35,12 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
    
    util_copy_rect(map,
 		  resource->format,
-		  transfer->stride, /* bytes? */
+		  transfer->stride, /* bytes */
 		  0, 0,
 		  box->width,
 		  box->height,
 		  data,
-		  box->width,	/* bytes? texels? */
+		  stride,       /* bytes */
 		  0, 0);
 
 out:

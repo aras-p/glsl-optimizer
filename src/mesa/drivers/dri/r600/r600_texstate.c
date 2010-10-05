@@ -50,6 +50,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
 
+#include "evergreen_tex.h"
+
 void r600UpdateTextureState(GLcontext * ctx);
 
 void r600UpdateTextureState(GLcontext * ctx)
@@ -605,17 +607,17 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 		}
 		break;
 	/* EXT_texture_sRGB */
-	case MESA_FORMAT_SRGBA8:
+	case MESA_FORMAT_SARGB8:
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
-		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
-			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Z,
-			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Y,
-			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		SETbit(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__FORCE_DEGAMMA_bit);
 		break;
@@ -878,6 +880,18 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 						  RADEON_GEM_DOMAIN_GTT, 0);
 	}
 
+	pbo = (struct radeon_bo *)r700GetActiveFpShaderConstBo(ctx);
+	if (pbo) {
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, pbo,
+						  RADEON_GEM_DOMAIN_GTT, 0);
+	}
+
+	pbo = (struct radeon_bo *)r700GetActiveVpShaderConstBo(ctx);
+	if (pbo) {
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, pbo,
+						  RADEON_GEM_DOMAIN_GTT, 0);
+	}	
+
 	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, first_elem(&rmesa->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
 	if (ret)
 		return GL_FALSE;
@@ -896,6 +910,12 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	if (!tObj)
 		return;
+
+    if(rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenSetTexOffset(pDRICtx, texname, offset, depth, pitch);
+        return;
+    }    
 
 	t->image_override = GL_TRUE;
 
@@ -988,6 +1008,12 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 
 	radeon = pDRICtx->driverPrivate;
 	rmesa = pDRICtx->driverPrivate;
+
+    if(rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenSetTexBuffer(pDRICtx, target, glx_texture_format, dPriv);
+        return;
+    }   
 
 	rfb = dPriv->driverPrivate;
         texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];

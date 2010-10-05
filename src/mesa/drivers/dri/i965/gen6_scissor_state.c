@@ -35,7 +35,7 @@ prepare_scissor_state(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
-   struct gen6_scissor_state scissor;
+   struct gen6_scissor_rect scissor;
 
    /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT */
 
@@ -63,8 +63,7 @@ prepare_scissor_state(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->sf.state_bo);
    brw->sf.state_bo = brw_cache_data(&brw->cache, BRW_SF_UNIT,
-				     &scissor, sizeof(scissor),
-				     NULL, 0);
+				     &scissor, sizeof(scissor));
 }
 
 const struct brw_tracked_state gen6_scissor_state = {
@@ -85,7 +84,6 @@ static void upload_scissor_state_pointers(struct brw_context *brw)
    OUT_RELOC(brw->sf.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 

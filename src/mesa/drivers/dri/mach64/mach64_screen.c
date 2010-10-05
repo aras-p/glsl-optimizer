@@ -256,7 +256,6 @@ mach64CreateScreen( __DRIscreen *sPriv )
    mach64Screen->driScreen = sPriv;
 
    i = 0;
-   mach64Screen->extensions[i++] = &driFrameTrackingExtension.base;
    if ( mach64Screen->irq != 0 ) {
       mach64Screen->extensions[i++] = &driSwapControlExtension.base;
       mach64Screen->extensions[i++] = &driMediaStreamCounterExtension.base;

@@ -37,6 +37,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_state.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_debug.h"
 #include "tgsi/tgsi_ureg.h"
@@ -87,16 +88,24 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
  *  MOV OUT[0], IMM[0]                    // (if writemask != 0xf)
  *  TEX OUT[0].writemask, IN[0], SAMP[0], 2D;
  *  END;
+ *
+ * \param tex_target  one of PIPE_TEXTURE_x
+ * \parma interp_mode  either TGSI_INTERPOLATE_LINEAR or PERSPECTIVE
+ * \param writemask  mask of TGSI_WRITEMASK_x
  */
 void *
 util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
                                         unsigned tex_target,
+                                        unsigned interp_mode,
                                         unsigned writemask )
 {
    struct ureg_program *ureg;
    struct ureg_src sampler;
    struct ureg_src tex;
    struct ureg_dst out;
+
+   assert(interp_mode == TGSI_INTERPOLATE_LINEAR ||
+          interp_mode == TGSI_INTERPOLATE_PERSPECTIVE);
 
    ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)
@@ -106,7 +115,7 @@ util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
 
    tex = ureg_DECL_fs_input( ureg, 
                              TGSI_SEMANTIC_GENERIC, 0, 
-                             TGSI_INTERPOLATE_PERSPECTIVE );
+                             interp_mode );
 
    out = ureg_DECL_output( ureg, 
                            TGSI_SEMANTIC_COLOR,
@@ -133,10 +142,12 @@ util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
  * \param tex_target  one of PIPE_TEXTURE_x
  */
 void *
-util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target )
+util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target,
+                              unsigned interp_mode)
 {
    return util_make_fragment_tex_shader_writemask( pipe,
                                                    tex_target,
+                                                   interp_mode,
                                                    TGSI_WRITEMASK_XYZW );
 }
 
@@ -147,7 +158,8 @@ util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target )
  */
 void *
 util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
-                                         unsigned tex_target)
+                                         unsigned tex_target,
+                                         unsigned interp_mode)
 {
    struct ureg_program *ureg;
    struct ureg_src sampler;
@@ -163,7 +175,7 @@ util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
 
    tex = ureg_DECL_fs_input( ureg,
                              TGSI_SEMANTIC_GENERIC, 0,
-                             TGSI_INTERPOLATE_PERSPECTIVE );
+                             interp_mode );
 
    out = ureg_DECL_output( ureg,
                            TGSI_SEMANTIC_COLOR,

@@ -38,26 +38,45 @@ int rc_pair_alloc_source(struct rc_pair_instruction *pair,
 {
 	int candidate = -1;
 	int candidate_quality = -1;
+	unsigned int alpha_used = 0;
+	unsigned int rgb_used = 0;
 	int i;
 
 	if ((!rgb && !alpha) || file == RC_FILE_NONE)
 		return 0;
+
+	/* Make sure only one presubtract operation is used per instruction. */
+	if (file == RC_FILE_PRESUB) {
+		if (rgb && pair->RGB.Src[RC_PAIR_PRESUB_SRC].Used
+			&& index != pair->RGB.Src[RC_PAIR_PRESUB_SRC].Index) {
+				return -1;
+		}
+
+		if (alpha && pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Used
+			&& index != pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Index) {
+				return -1;
+		}
+	}
 
 	for(i = 0; i < 3; ++i) {
 		int q = 0;
 		if (rgb) {
 			if (pair->RGB.Src[i].Used) {
 				if (pair->RGB.Src[i].File != file ||
-				    pair->RGB.Src[i].Index != index)
+				    pair->RGB.Src[i].Index != index) {
+					rgb_used++;
 					continue;
+				}
 				q++;
 			}
 		}
 		if (alpha) {
 			if (pair->Alpha.Src[i].Used) {
 				if (pair->Alpha.Src[i].File != file ||
-				    pair->Alpha.Src[i].Index != index)
+				    pair->Alpha.Src[i].Index != index) {
+					alpha_used++;
 					continue;
+				}
 				q++;
 			}
 		}
@@ -67,18 +86,154 @@ int rc_pair_alloc_source(struct rc_pair_instruction *pair,
 		}
 	}
 
-	if (candidate >= 0) {
-		if (rgb) {
-			pair->RGB.Src[candidate].Used = 1;
-			pair->RGB.Src[candidate].File = file;
-			pair->RGB.Src[candidate].Index = index;
+	if (file == RC_FILE_PRESUB) {
+		candidate = RC_PAIR_PRESUB_SRC;
+	} else if (candidate < 0 || (rgb && rgb_used > 2)
+			|| (alpha && alpha_used > 2)) {
+		return -1;
+	}
+
+	/* candidate >= 0 */
+
+	if (rgb) {
+		pair->RGB.Src[candidate].Used = 1;
+		pair->RGB.Src[candidate].File = file;
+		pair->RGB.Src[candidate].Index = index;
+		if (candidate == RC_PAIR_PRESUB_SRC) {
+			/* For registers with the RC_FILE_PRESUB file,
+			 * the index stores the presubtract op. */
+			int src_regs = rc_presubtract_src_reg_count(index);
+			for(i = 0; i < src_regs; i++) {
+				pair->RGB.Src[i].Used = 1;
+			}
 		}
-		if (alpha) {
-			pair->Alpha.Src[candidate].Used = 1;
-			pair->Alpha.Src[candidate].File = file;
-			pair->Alpha.Src[candidate].Index = index;
+	}
+	if (alpha) {
+		pair->Alpha.Src[candidate].Used = 1;
+		pair->Alpha.Src[candidate].File = file;
+		pair->Alpha.Src[candidate].Index = index;
+		if (candidate == RC_PAIR_PRESUB_SRC) {
+			/* For registers with the RC_FILE_PRESUB file,
+			 * the index stores the presubtract op. */
+			int src_regs = rc_presubtract_src_reg_count(index);
+			for(i=0; i < src_regs; i++) {
+				pair->Alpha.Src[i].Used = 1;
+			}
 		}
 	}
 
 	return candidate;
+}
+
+static void pair_foreach_source_callback(
+	struct rc_pair_instruction * pair,
+	void * data,
+	rc_pair_foreach_src_fn cb,
+	unsigned int swz,
+	unsigned int src)
+{
+	/* swz > 3 means that the swizzle is either not used, or a constant
+	 * swizzle (e.g. 0, 1, 0.5). */
+	if(swz > 3)
+		return;
+
+	if(swz == RC_SWIZZLE_W) {
+		if (src == RC_PAIR_PRESUB_SRC) {
+			unsigned int i;
+			unsigned int src_count = rc_presubtract_src_reg_count(
+				pair->Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
+			for(i = 0; i < src_count; i++) {
+				cb(data, &pair->Alpha.Src[i]);
+			}
+		} else {
+			cb(data, &pair->Alpha.Src[src]);
+		}
+	} else {
+		if (src == RC_PAIR_PRESUB_SRC) {
+			unsigned int i;
+			unsigned int src_count = rc_presubtract_src_reg_count(
+				pair->RGB.Src[RC_PAIR_PRESUB_SRC].Index);
+			for(i = 0; i < src_count; i++) {
+				cb(data, &pair->RGB.Src[i]);
+			}
+		}
+		else {
+			cb(data, &pair->RGB.Src[src]);
+		}
+	}
+}
+
+void rc_pair_foreach_source_that_alpha_reads(
+	struct rc_pair_instruction * pair,
+	void * data,
+	rc_pair_foreach_src_fn cb)
+{
+	unsigned int i;
+	const struct rc_opcode_info * info =
+				rc_get_opcode_info(pair->Alpha.Opcode);
+	for(i = 0; i < info->NumSrcRegs; i++) {
+		pair_foreach_source_callback(pair, data, cb,
+					GET_SWZ(pair->Alpha.Arg[i].Swizzle, 0),
+					pair->Alpha.Arg[i].Source);
+	}
+}
+
+void rc_pair_foreach_source_that_rgb_reads(
+	struct rc_pair_instruction * pair,
+	void * data,
+	rc_pair_foreach_src_fn cb)
+{
+	unsigned int i;
+	const struct rc_opcode_info * info =
+				rc_get_opcode_info(pair->RGB.Opcode);
+	for(i = 0; i < info->NumSrcRegs; i++) {
+		unsigned int chan;
+		unsigned int swz = RC_SWIZZLE_UNUSED;
+		/* Find a swizzle that is either X,Y,Z,or W.  We assume here
+		 * that if one channel swizzles X,Y, or Z, then none of the
+		 * other channels swizzle W, and vice-versa. */
+		for(chan = 0; chan < 4; chan++) {
+			swz = GET_SWZ(pair->RGB.Arg[i].Swizzle, chan);
+			if(swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y
+			|| swz == RC_SWIZZLE_Z || swz == RC_SWIZZLE_W)
+				continue;
+		}
+		pair_foreach_source_callback(pair, data, cb,
+					swz,
+					pair->RGB.Arg[i].Source);
+	}
+}
+
+/*return 0 for rgb, 1 for alpha -1 for error. */
+
+rc_pair_source_type rc_source_type_that_arg_reads(
+	unsigned int source,
+	unsigned int swizzle,
+	unsigned int channels)
+{
+	unsigned int chan;
+	unsigned int swz = RC_SWIZZLE_UNUSED;
+	int isRGB = 0;
+	int isAlpha = 0;
+	/* Find a swizzle that is either X,Y,Z,or W.  We assume here
+	 * that if one channel swizzles X,Y, or Z, then none of the
+	 * other channels swizzle W, and vice-versa. */
+	for(chan = 0; chan < channels; chan++) {
+		swz = GET_SWZ(swizzle, chan);
+		if (swz == RC_SWIZZLE_W) {
+			isAlpha = 1;
+		} else if (swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y
+						|| swz == RC_SWIZZLE_Z) {
+			isRGB = 1;
+		}
+	}
+	assert(!isRGB || !isAlpha);
+
+	if(!isRGB && !isAlpha)
+		return RC_PAIR_SOURCE_NONE;
+
+	if (isRGB)
+		return RC_PAIR_SOURCE_RGB;
+	/*isAlpha*/
+	return RC_PAIR_SOURCE_ALPHA;
 }

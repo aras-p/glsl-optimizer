@@ -1,6 +1,0 @@
-!!ARBfp1.0
-# expected: the yellow vertex is the top one
-# if it is the bottom one, the wrong origin convention is being used
-MOV result.color, {0}.x;
-MUL result.color.xy, fragment.position, {.005}.x;
-END

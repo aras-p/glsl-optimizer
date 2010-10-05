@@ -1,12 +1,12 @@
 # -*-makefile-*-
 
+
 ifeq ($(MESA_LLVM),1)
-DRIVER_DEFINES += -DGALLIUM_LLVMPIPE
 PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 LDFLAGS += $(LLVM_LDFLAGS)
-LD = g++
 DRIVER_EXTRAS = $(LLVM_LIBS)
-USE_CXX=1
+else
+LDFLAGS += -lstdc++
 endif
 
 MESA_MODULES = \
@@ -42,13 +42,13 @@ SHARED_INCLUDES = \
 	-Iserver \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/winsys \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
-	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/math \
 	-I$(TOP)/src/mesa/transform \
 	-I$(TOP)/src/mesa/shader \
@@ -57,6 +57,8 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \
 	$(LIBDRM_CFLAGS)
+
+LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 
 ##### RULES #####
@@ -70,26 +72,22 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
+default: depend symlinks $(TOP)/$(LIB_DIR)/gallium $(LIBNAME) $(LIBNAME_STAGING)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
-	$(MKLIB) -o $@.tmp -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(PIPE_DRIVERS) \
                 -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \
                  $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
-	if [ "x${USE_CXX}" == "x" ]; then \
-		$(CC) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS); \
-	else \
-		$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS); \
-	fi
+	$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS);
 	@rm -f $@.test
 	mv -f $@.tmp $@
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
 
-$(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(LIBNAME) $(TOP)/$(LIB_DIR)/gallium
+$(LIBNAME_STAGING): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR)/gallium
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)

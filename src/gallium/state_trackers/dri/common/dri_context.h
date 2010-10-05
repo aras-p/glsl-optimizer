@@ -37,7 +37,8 @@
 
 struct pipe_context;
 struct pipe_fence;
-struct st_context;
+struct st_api;
+struct st_context_iface;
 struct dri_drawable;
 
 struct dri_context
@@ -58,12 +59,15 @@ struct dri_context
    unsigned int bind_count;
 
    /* gallium */
+   struct st_api *stapi;
    struct st_context_iface *st;
 };
 
 static INLINE struct dri_context *
 dri_context(__DRIcontext * driContextPriv)
 {
+   if (!driContextPriv)
+     return NULL;
    return (struct dri_context *)driContextPriv->driverPrivate;
 }
 
@@ -83,7 +87,8 @@ struct dri_context *
 dri_get_current(__DRIscreen * driScreenPriv);
 
 boolean
-dri_create_context(const __GLcontextModes * visual,
+dri_create_context(gl_api api,
+		   const __GLcontextModes * visual,
 		   __DRIcontext * driContextPriv,
 		   void *sharedContextPrivate);
 

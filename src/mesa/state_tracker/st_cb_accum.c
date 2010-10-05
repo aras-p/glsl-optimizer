@@ -39,12 +39,13 @@
 #include "st_cb_accum.h"
 #include "st_cb_fbo.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_tile.h"
 
+
+#if FEATURE_accum
 
 /**
  * For hardware that supports deep color buffers, we could accelerate
@@ -136,7 +137,7 @@ accum_accum(struct st_context *st, GLfloat value,
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-   color_trans = st_cond_flush_get_tex_transfer(st,
+   color_trans = pipe_get_transfer(st->pipe,
 						color_strb->texture,
 						0, 0, 0,
 						PIPE_TRANSFER_READ, xpos, ypos,
@@ -185,7 +186,7 @@ accum_load(struct st_context *st, GLfloat value,
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+   color_trans = pipe_get_transfer(st->pipe, color_strb->texture,
 						0, 0, 0,
 						PIPE_TRANSFER_READ, xpos, ypos,
 						width, height);
@@ -241,7 +242,7 @@ accum_return(GLcontext *ctx, GLfloat value,
    else
       usage = PIPE_TRANSFER_WRITE;
    
-   color_trans = st_cond_flush_get_tex_transfer(st_context(ctx),
+   color_trans = pipe_get_transfer(st_context(ctx)->pipe,
 						color_strb->texture, 0, 0, 0,
 						usage,
 						xpos, ypos,
@@ -301,9 +302,6 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    if(!acc_strb->data)
       return;
    
-   /* make sure color bufs aren't cached */
-   st_flush( st, PIPE_FLUSH_RENDER_CACHE, NULL );
-
    switch (op) {
    case GL_ADD:
       if (value != 0.0F) {
@@ -337,3 +335,5 @@ void st_init_accum_functions(struct dd_function_table *functions)
 {
    functions->Accum = st_Accum;
 }
+
+#endif /* FEATURE_accum */

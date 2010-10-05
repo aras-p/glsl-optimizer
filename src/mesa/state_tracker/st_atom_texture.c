@@ -33,15 +33,146 @@
  
 
 #include "main/macros.h"
+#include "program/prog_instruction.h"
 
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_texture.h"
+#include "st_format.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
+#include "util/u_format.h"
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
+/**
+ * Combine depth texture mode with "swizzle" so that depth mode swizzling
+ * takes place before texture swizzling, and return the resulting swizzle.
+ * If the format is not a depth format, return "swizzle" unchanged.
+ *
+ * \param format     PIPE_FORMAT_*.
+ * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
+ * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA, GL_RED.
+ */
+static GLuint apply_depthmode(enum pipe_format format,
+                              GLuint swizzle, GLenum depthmode)
+{
+   const struct util_format_description *desc =
+         util_format_description(format);
+   unsigned char swiz[4];
+   unsigned i;
+
+   if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS ||
+       desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_NONE) {
+      /* Not a depth format. */
+      return swizzle;
+   }
+
+   for (i = 0; i < 4; i++)
+      swiz[i] = GET_SWZ(swizzle, i);
+
+   switch (depthmode) {
+      case GL_LUMINANCE:
+         /* Rewrite reads from W to ONE, and reads from XYZ to XXX. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] == SWIZZLE_W)
+               swiz[i] = SWIZZLE_ONE;
+            else if (swiz[i] < SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+         break;
+
+      case GL_INTENSITY:
+         /* Rewrite reads from XYZW to XXXX. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] <= SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+         break;
+
+      case GL_ALPHA:
+         /* Rewrite reads from W to X, and reads from XYZ to 000. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] == SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+            else if (swiz[i] < SWIZZLE_W)
+               swiz[i] = SWIZZLE_ZERO;
+         break;
+      case GL_RED:
+	 /* Rewrite reads W to 1, XYZ to X00 */
+	 for (i = 0; i < 4; i++)
+	    if (swiz[i] == SWIZZLE_W)
+	       swiz[i] = SWIZZLE_ONE;
+	    else if (swiz[i] == SWIZZLE_Y || swiz[i] == SWIZZLE_Z)
+	       swiz[i] = SWIZZLE_ZERO;
+	 break;
+   }
+
+   return MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
+}
+
+/**
+ * Return TRUE if the swizzling described by "swizzle" and
+ * "depthmode" (for depth textures only) is different from the swizzling
+ * set in the given sampler view.
+ *
+ * \param sv         A sampler view.
+ * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
+ * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA.
+ */
+static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
+                                     GLuint swizzle, GLenum depthmode)
+{
+   swizzle = apply_depthmode(sv->texture->format, swizzle, depthmode);
+
+   if ((sv->swizzle_r != GET_SWZ(swizzle, 0)) ||
+       (sv->swizzle_g != GET_SWZ(swizzle, 1)) ||
+       (sv->swizzle_b != GET_SWZ(swizzle, 2)) ||
+       (sv->swizzle_a != GET_SWZ(swizzle, 3)))
+      return true;
+   return false;
+}
+
+static INLINE struct pipe_sampler_view *
+st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
+					  struct st_texture_object *stObj,
+					  enum pipe_format format)
+					  
+{
+   struct pipe_sampler_view templ;
+   GLuint swizzle = apply_depthmode(stObj->pt->format,
+                                    stObj->base._Swizzle,
+                                    stObj->base.DepthMode);
+
+   u_sampler_view_default_template(&templ,
+                                   stObj->pt,
+                                   format);
+
+   if (swizzle != SWIZZLE_NOOP) {
+      templ.swizzle_r = GET_SWZ(swizzle, 0);
+      templ.swizzle_g = GET_SWZ(swizzle, 1);
+      templ.swizzle_b = GET_SWZ(swizzle, 2);
+      templ.swizzle_a = GET_SWZ(swizzle, 3);
+   }
+
+   return pipe->create_sampler_view(pipe, stObj->pt, &templ);
+}
+
+
+static INLINE struct pipe_sampler_view *
+st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
+				       struct pipe_context *pipe,
+				       enum pipe_format format)
+
+{
+   if (!stObj || !stObj->pt) {
+      return NULL;
+   }
+
+   if (!stObj->sampler_view) {
+      stObj->sampler_view = st_create_texture_sampler_view_from_stobj(pipe, stObj, format);
+   }
+
+   return stObj->sampler_view;
+}
 
 static void 
 update_textures(struct st_context *st)
@@ -58,11 +189,11 @@ update_textures(struct st_context *st)
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_view *sampler_view = NULL;
-
+      enum pipe_format st_view_format;
       if (samplersUsed & (1 << su)) {
          struct gl_texture_object *texObj;
          struct st_texture_object *stObj;
-         GLboolean flush, retval;
+         GLboolean retval;
          GLuint texUnit;
 
          if (fprog->Base.SamplersUsed & (1 << su))
@@ -77,26 +208,35 @@ update_textures(struct st_context *st)
          }
          stObj = st_texture_object(texObj);
 
-         retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+         retval = st_finalize_texture(st->ctx, st->pipe, texObj);
          if (!retval) {
             /* out of mem */
             continue;
          }
 
+	 st_view_format = stObj->pt->format;
+	 {
+	    struct st_texture_image *firstImage;
+	    enum pipe_format firstImageFormat;
+	    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+
+	    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
+	    if (firstImageFormat != stObj->pt->format)
+	       st_view_format = firstImageFormat;
+
+	 }
          st->state.num_textures = su + 1;
 
-         sampler_view = st_get_texture_sampler_view(stObj, pipe);
-      }
+	 /* if sampler view has changed dereference it */
+	 if (stObj->sampler_view)
+            if (check_sampler_swizzle(stObj->sampler_view,
+                                      stObj->base._Swizzle,
+                                      stObj->base.DepthMode) ||
+                (st_view_format != stObj->sampler_view->format))
+	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
-      /*
-      if (pt) {
-         printf("%s su=%u non-null\n", __FUNCTION__, su);
+         sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe, st_view_format);
       }
-      else {
-         printf("%s su=%u null\n", __FUNCTION__, su);
-      }
-      */
-
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 
@@ -138,19 +278,16 @@ finalize_textures(struct st_context *st)
          const GLuint texUnit = fprog->Base.SamplerUnits[su];
          struct gl_texture_object *texObj
             = st->ctx->Texture.Unit[texUnit]._Current;
-         struct st_texture_object *stObj = st_texture_object(texObj);
 
          if (texObj) {
-            GLboolean flush, retval;
+            GLboolean retval;
 
-            retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+            retval = st_finalize_texture(st->ctx, st->pipe, texObj);
             if (!retval) {
                /* out of mem */
                st->missing_textures = GL_TRUE;
                continue;
             }
-
-            stObj->teximage_realloc = TRUE;
          }
       }
    }

@@ -1,3 +1,0 @@
-!!ARBfp1.0
-MUL result.color, fragment.color.zyxw, fragment.color;
-END

@@ -31,9 +31,10 @@ import common
 # Configuration options
 
 default_statetrackers = 'mesa'
+default_targets = 'graw-null'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
+	default_drivers = 'softpipe,galahad,failover,svga,i915,i965,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
@@ -48,11 +49,34 @@ else:
 opts = Variables('config.py')
 common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
-                     ['mesa', 'python', 'xorg']))
+                     ['mesa', 'python', 'xorg', 'egl']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
+                     ['softpipe', 'galahad', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'r600', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'graw-xlib']))
+                     ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'r600', 'graw-xlib']))
+
+opts.Add(ListVariable('targets', 'driver targets to build', default_targets,
+		      ['dri-i915',
+		       'dri-i965',
+		       'dri-nouveau',
+		       'dri-radeong',
+		       'dri-swrast',
+		       'dri-vmwgfx',
+		       'egl-i915',
+		       'egl-i965',
+		       'egl-nouveau',
+		       'egl-radeon',
+		       'egl-swrast',
+		       'egl-vmwgfx',
+		       'graw-xlib',
+		       'graw-null',
+		       'libgl-gdi',
+		       'libgl-xlib',
+		       'xorg-i915',
+		       'xorg-i965',
+		       'xorg-nouveau',
+		       'xorg-radeon',
+		       'xorg-vmwgfx']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 
@@ -102,15 +126,21 @@ Export([
 #######################################################################
 # Environment setup
 
-# Always build trace, identity, softpipe, and llvmpipe (where possible)
+# Always build trace, rbug, identity, softpipe, and llvmpipe (where possible)
 if 'trace' not in env['drivers']:
     env['drivers'].append('trace')
+if 'rbug' not in env['drivers']:
+    env['drivers'].append('rbug')
+if 'galahad' not in env['drivers']:
+    env['drivers'].append('galahad')
 if 'identity' not in env['drivers']:
     env['drivers'].append('identity')
 if 'softpipe' not in env['drivers']:
     env['drivers'].append('softpipe')
 if env['llvm'] and 'llvmpipe' not in env['drivers']:
     env['drivers'].append('llvmpipe')
+if 'sw' not in env['drivers']:
+    env['drivers'].append('sw')
 
 # Includes
 env.Prepend(CPPPATH = [
@@ -151,10 +181,11 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'_SVID_SOURCE',
 		'_BSD_SOURCE', 
 		'_GNU_SOURCE',
-		
 		'PTHREADS',
 		'HAVE_POSIX_MEMALIGN',
 	])
+	if gcc:
+		env.Append(CFLAGS = ['-fvisibility=hidden'])
 	if platform == 'darwin':
 		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(LIBS = [
@@ -175,38 +206,11 @@ Export('env')
 # TODO: Build several variants at the same time?
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
-if env['platform'] != common.default_platform:
-    # GLSL code has to be built twice -- one for the host OS, another for the target OS...
-
-    host_env = Environment(
-        # options are ignored
-        # default tool is used
-        tools = ['default', 'custom'],
-        toolpath = ['#scons'],	
-        ENV = os.environ,
-    )
-
-    host_env['platform'] = common.default_platform
-    host_env['machine'] = common.default_machine
-    host_env['debug'] = env['debug']
-
-    SConscript(
-        'src/glsl/SConscript',
-        variant_dir = os.path.join(env['build'], 'host'),
-        duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-        exports={'env':host_env},
-    )
-
 SConscript(
 	'src/SConscript',
-	variant_dir = env['build'],
+	variant_dir = env['build_dir'],
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
 
 env.Default('src')
 
-SConscript(
-    'progs/SConscript',
-    variant_dir = os.path.join('progs', env['build']),
-    duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-)

@@ -8,6 +8,7 @@
 #include "pipe/p_state.h"
 
 struct pipe_context;
+struct winsys_handle;
 
 boolean u_default_resource_get_handle(struct pipe_screen *screen,
 				      struct pipe_resource *resource,

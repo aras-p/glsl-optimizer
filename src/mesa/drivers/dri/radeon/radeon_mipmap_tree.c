@@ -133,7 +133,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	height = _mesa_next_pow_two_32(lvl->height);
 
 	lvl->rowstride = get_texture_image_row_stride(rmesa, mt->mesaFormat, lvl->width, mt->tilebits);
-	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, lvl->height, lvl->depth, mt->tilebits);
+	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, height, lvl->depth, mt->tilebits);
 
 	assert(lvl->size > 0);
 
@@ -199,10 +199,10 @@ static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_
 
 		for(face = 0; face < mt->faces; face++)
 			compute_tex_image_offset(rmesa, mt, face, level, &curOffset);
-		/* r600 cube levels seems to be aligned to 8 faces but
-		 * we have separate register for 1'st level offset so add
+		/* from r700? cube levels seems to be aligned to 8 faces,
+		 * as we have separate register for 1'st level offset add
 		 * 2 image alignment after 1'st mip level */
-		if(rmesa->radeonScreen->chip_family >= CHIP_FAMILY_R600 &&
+		if(rmesa->radeonScreen->chip_family >= CHIP_FAMILY_RV770 &&
 		   mt->target == GL_TEXTURE_CUBE_MAP && level >= 1)
 			curOffset += 2 * mt->levels[level].size;
 	}
@@ -602,17 +602,17 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 			__FUNCTION__, texObj ,t->minLod, t->maxLod);
 
 	radeon_mipmap_tree *dst_miptree;
-	dst_miptree = get_biggest_matching_miptree(t, t->minLod, t->maxLod);
+	dst_miptree = get_biggest_matching_miptree(t, t->base.BaseLevel, t->base.MaxLevel);
 
+	radeon_miptree_unreference(&t->mt);
 	if (!dst_miptree) {
-		radeon_miptree_unreference(&t->mt);
 		radeon_try_alloc_miptree(rmesa, t);
-		dst_miptree = t->mt;
 		radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
 			"%s: No matching miptree found, allocated new one %p\n",
 			__FUNCTION__, t->mt);
 
 	} else {
+		radeon_miptree_reference(dst_miptree, &t->mt);
 		radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
 			"%s: Using miptree %p\n", __FUNCTION__, t->mt);
 	}
@@ -629,7 +629,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 				"Checking image level %d, face %d, mt %p ... ",
 				level, face, img->mt);
 			
-			if (img->mt != dst_miptree) {
+			if (img->mt != t->mt) {
 				radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 					"MIGRATING\n");
 
@@ -637,7 +637,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 				if (src_bo && radeon_bo_is_referenced_by_cs(src_bo, rmesa->cmdbuf.cs)) {
 					radeon_firevertices(rmesa);
 				}
-				migrate_image_to_miptree(dst_miptree, img, face, level);
+				migrate_image_to_miptree(t->mt, img, face, level);
 			} else
 				radeon_print(RADEON_TEXTURE, RADEON_TRACE, "OK\n");
 		}

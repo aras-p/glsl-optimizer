@@ -32,8 +32,14 @@
 
 #include "vmw_hook.h"
 #include "vmw_driver.h"
+#include <pipe/p_context.h>
 
 #include "cursorstr.h"
+#include "../../winsys/svga/drm/vmwgfx_drm.h"
+
+void vmw_winsys_screen_set_throttling(struct pipe_screen *screen,
+				      uint32_t throttle_us);
+
 
 /* modified version of crtc functions */
 xf86CrtcFuncsRec vmw_screen_crtc_funcs;
@@ -83,13 +89,93 @@ vmw_screen_cursor_close(struct vmw_customizer *vmw)
 	config->crtc[i]->funcs = vmw->cursor_priv;
 }
 
+static void
+vmw_context_throttle(CustomizerPtr cust,
+		     struct pipe_context *pipe,
+		     enum xorg_throttling_reason reason)
+{
+    switch (reason) {
+    case THROTTLE_RENDER:
+	vmw_winsys_screen_set_throttling(pipe->screen, 20000);
+	break;
+    default:
+      vmw_winsys_screen_set_throttling(pipe->screen, 0);
+    }
+}
+
+static void
+vmw_context_no_throttle(CustomizerPtr cust,
+		     struct pipe_context *pipe,
+		     enum xorg_throttling_reason reason)
+{
+    vmw_winsys_screen_set_throttling(pipe->screen, 0);
+}
+
 static Bool
-vmw_screen_init(CustomizerPtr cust, int fd)
+vmw_check_fb_size(CustomizerPtr cust,
+		  unsigned long pitch,
+		  unsigned long height)
 {
     struct vmw_customizer *vmw = vmw_customizer(cust);
 
+    /**
+     *  1) Is there a pitch alignment?
+     *  2) The 1024 byte pad is an arbitrary value to be on
+     */
+
+    return ((uint64_t) pitch * height + 1024ULL < vmw->max_fb_size);
+}
+
+static Bool
+vmw_pre_init(CustomizerPtr cust, int fd)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
+    drmVersionPtr ver;
+
     vmw->fd = fd;
+
+    ver = drmGetVersion(vmw->fd);
+    if (ver == NULL ||
+	(ver->version_major == 1 && ver->version_minor < 1)) {
+	cust->swap_throttling = TRUE;
+	cust->dirty_throttling = TRUE;
+	cust->winsys_context_throttle = vmw_context_no_throttle;
+    } else {
+	cust->swap_throttling = TRUE;
+	cust->dirty_throttling = FALSE;
+	cust->winsys_context_throttle = vmw_context_throttle;
+	debug_printf("%s: Enabling kernel throttling.\n", __func__);
+
+	if (ver->version_major > 1 ||
+	    (ver->version_major == 1 && ver->version_minor >= 3)) {
+	    struct drm_vmw_getparam_arg arg;
+	    int ret;
+
+	    arg.param = DRM_VMW_PARAM_MAX_FB_SIZE;
+	    ret = drmCommandWriteRead(fd, DRM_VMW_GET_PARAM, &arg,
+				      sizeof(arg));
+	    if (!ret) {
+		vmw->max_fb_size = arg.value;
+		cust->winsys_check_fb_size = vmw_check_fb_size;
+		debug_printf("%s: Enabling fb size check.\n", __func__);
+	    }
+	}
+    }
+
+    if (ver)
+	drmFreeVersion(ver);
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_init(CustomizerPtr cust)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
+
     vmw_screen_cursor_init(vmw);
+
+    vmw_ctrl_ext_init(vmw);
 
     /* if gallium is used then we don't need to do anything more. */
     if (xorg_has_gallium(vmw->pScrn))
@@ -153,10 +239,12 @@ vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
 
     cust = &vmw->base;
 
+    cust->winsys_pre_init = vmw_pre_init;
     cust->winsys_screen_init = vmw_screen_init;
     cust->winsys_screen_close = vmw_screen_close;
     cust->winsys_enter_vt = vmw_screen_enter_vt;
     cust->winsys_leave_vt = vmw_screen_leave_vt;
+    cust->no_3d = TRUE;
     vmw->pScrn = pScrn;
 
     pScrn->driverPrivate = cust;

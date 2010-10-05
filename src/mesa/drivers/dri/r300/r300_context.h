@@ -43,7 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_common.h"
 
 #include "main/mtypes.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "compiler/radeon_code.h"
 
 struct r300_context;
@@ -543,7 +543,8 @@ struct r300_context {
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
 extern void r300DestroyContext(__DRIcontext * driContextPriv);
-extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+extern GLboolean r300CreateContext(gl_api api,
+				   const __GLcontextModes * glVisual,
 				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 

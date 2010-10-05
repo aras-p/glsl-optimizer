@@ -6,17 +6,11 @@
 #include "eglmutex.h"
 
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-
 static _EGL_DECLARE_MUTEX(_eglGlobalMutex);
 struct _egl_global _eglGlobal =
 {
    &_eglGlobalMutex,       /* Mutex */
    NULL,                   /* DisplayList */
-   1,                      /* FreeScreenHandle */
-   0,                      /* NumDrivers */
-   { NULL },               /* Drivers */
    2,                      /* NumAtExitCalls */
    {
       /* default AtExitCalls, called in reverse order */

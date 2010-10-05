@@ -2,6 +2,10 @@ Import('*')
 
 env = env.Clone()
 
+if msvc:
+	print 'warning: not building i915g'
+	Return()
+
 i915 = env.ConvenienceLibrary(
 	target = 'i915',
 	source = [
@@ -20,9 +24,11 @@ i915 = env.ConvenienceLibrary(
 		'i915_state.c',
 		'i915_state_derived.c',
 		'i915_state_dynamic.c',
+		'i915_state_fpc.c',
 		'i915_state_emit.c',
 		'i915_state_immediate.c',
 		'i915_state_sampler.c',
+		'i915_state_static.c',
 		'i915_surface.c',
 		'i915_resource.c',
 		'i915_resource_texture.c',

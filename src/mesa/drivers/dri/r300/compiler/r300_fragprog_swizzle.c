@@ -44,23 +44,24 @@ struct swizzle_data {
 	unsigned int hash; /**< swizzle value this matches */
 	unsigned int base; /**< base value for hw swizzle */
 	unsigned int stride; /**< difference in base between arg0/1/2 */
+	unsigned int srcp_stride; /**< difference in base between arg0/scrp */
 };
 
 static const struct swizzle_data native_swizzles[] = {
-	{MAKE_SWZ3(X, Y, Z), R300_ALU_ARGC_SRC0C_XYZ, 4},
-	{MAKE_SWZ3(X, X, X), R300_ALU_ARGC_SRC0C_XXX, 4},
-	{MAKE_SWZ3(Y, Y, Y), R300_ALU_ARGC_SRC0C_YYY, 4},
-	{MAKE_SWZ3(Z, Z, Z), R300_ALU_ARGC_SRC0C_ZZZ, 4},
-	{MAKE_SWZ3(W, W, W), R300_ALU_ARGC_SRC0A, 1},
-	{MAKE_SWZ3(Y, Z, X), R300_ALU_ARGC_SRC0C_YZX, 1},
-	{MAKE_SWZ3(Z, X, Y), R300_ALU_ARGC_SRC0C_ZXY, 1},
-	{MAKE_SWZ3(W, Z, Y), R300_ALU_ARGC_SRC0CA_WZY, 1},
-	{MAKE_SWZ3(ONE, ONE, ONE), R300_ALU_ARGC_ONE, 0},
-	{MAKE_SWZ3(ZERO, ZERO, ZERO), R300_ALU_ARGC_ZERO, 0}
+	{MAKE_SWZ3(X, Y, Z), R300_ALU_ARGC_SRC0C_XYZ, 4, 15},
+	{MAKE_SWZ3(X, X, X), R300_ALU_ARGC_SRC0C_XXX, 4, 15},
+	{MAKE_SWZ3(Y, Y, Y), R300_ALU_ARGC_SRC0C_YYY, 4, 15},
+	{MAKE_SWZ3(Z, Z, Z), R300_ALU_ARGC_SRC0C_ZZZ, 4, 15},
+	{MAKE_SWZ3(W, W, W), R300_ALU_ARGC_SRC0A, 1, 7},
+	{MAKE_SWZ3(Y, Z, X), R300_ALU_ARGC_SRC0C_YZX, 1, 0},
+	{MAKE_SWZ3(Z, X, Y), R300_ALU_ARGC_SRC0C_ZXY, 1, 0},
+	{MAKE_SWZ3(W, Z, Y), R300_ALU_ARGC_SRC0CA_WZY, 1, 0},
+	{MAKE_SWZ3(ONE, ONE, ONE), R300_ALU_ARGC_ONE, 0, 0},
+	{MAKE_SWZ3(ZERO, ZERO, ZERO), R300_ALU_ARGC_ZERO, 0, 0},
+	{MAKE_SWZ3(HALF, HALF, HALF), R300_ALU_ARGC_HALF, 0, 0}
 };
 
 static const int num_native_swizzles = sizeof(native_swizzles)/sizeof(native_swizzles[0]);
-
 
 /**
  * Find a native RGB swizzle that matches the given swizzle.
@@ -93,6 +94,9 @@ static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
  */
 static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
+	unsigned int relevant;
+	int j;
+
 	if (reg.Abs)
 		reg.Negate = RC_MASK_NONE;
 
@@ -100,8 +104,6 @@ static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	    opcode == RC_OPCODE_TEX ||
 	    opcode == RC_OPCODE_TXB ||
 	    opcode == RC_OPCODE_TXP) {
-		int j;
-
 		if (reg.Abs || reg.Negate)
 			return 0;
 
@@ -116,8 +118,7 @@ static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 		return 1;
 	}
 
-	unsigned int relevant = 0;
-	int j;
+	relevant = 0;
 
 	for(j = 0; j < 3; ++j)
 		if (GET_SWZ(reg.Swizzle, j) != RC_SWIZZLE_UNUSED)
@@ -153,9 +154,10 @@ static void r300_swizzle_split(
 			unsigned int matchcount = 0;
 			unsigned int matchmask = 0;
 			for(comp = 0; comp < 3; ++comp) {
+				unsigned int swz;
 				if (!GET_BIT(mask, comp))
 					continue;
-				unsigned int swz = GET_SWZ(src.Swizzle, comp);
+				swz = GET_SWZ(src.Swizzle, comp);
 				if (swz == RC_SWIZZLE_UNUSED)
 					continue;
 				if (swz == GET_SWZ(sd->hash, comp)) {
@@ -204,7 +206,11 @@ unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle)
 		return 0;
 	}
 
-	return sd->base + src*sd->stride;
+	if (src == RC_PAIR_PRESUB_SRC) {
+		return sd->base + sd->srcp_stride;
+	} else {
+		return sd->base + src*sd->stride;
+	}
 }
 
 
@@ -214,6 +220,9 @@ unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle)
  */
 unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle)
 {
+	if (src == RC_PAIR_PRESUB_SRC) {
+		return R300_ALU_ARGA_SRCP_X + swizzle;
+	}
 	if (swizzle < 3)
 		return swizzle + 3*src;
 
@@ -221,6 +230,7 @@ unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle)
 	case RC_SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
 	case RC_SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
 	case RC_SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;
+	case RC_SWIZZLE_HALF: return R300_ALU_ARGA_HALF;
 	default: return R300_ALU_ARGA_ONE;
 	}
 }

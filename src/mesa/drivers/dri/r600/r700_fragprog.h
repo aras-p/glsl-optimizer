@@ -43,6 +43,9 @@ struct r700_fragment_program
 
     void * shaderbo;
 
+	GLuint k0used;
+    void * constbo0;
+
 	GLboolean WritesDepth;
 	GLuint optimization;
 };
@@ -66,5 +69,7 @@ extern void r700SelectFragmentShader(GLcontext *ctx);
 extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
 
 extern void *    r700GetActiveFpShaderBo(GLcontext * ctx);
+
+extern void *    r700GetActiveFpShaderConstBo(GLcontext * ctx);
 
 #endif /*_R700_FRAGPROG_H_*/

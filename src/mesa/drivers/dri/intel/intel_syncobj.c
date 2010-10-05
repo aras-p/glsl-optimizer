@@ -77,7 +77,7 @@ intel_fence_sync(GLcontext *ctx, struct gl_sync_object *s,
    sync->bo = intel->batch->buf;
    drm_intel_bo_reference(sync->bo);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 }
 
 /* We ignore the user-supplied timeout.  This is weaselly -- we're allowed to

@@ -66,7 +66,7 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-static dri_bo *upload_default_color( struct brw_context *brw,
+static drm_intel_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
    struct brw_sampler_default_color sdc;
@@ -74,7 +74,7 @@ static dri_bo *upload_default_color( struct brw_context *brw,
    COPY_4V(sdc.color, color); 
    
    return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
-			 &sdc, sizeof(sdc), NULL, 0);
+			 &sdc, sizeof(sdc));
 }
 
 
@@ -100,10 +100,13 @@ struct wm_sampler_key {
  * Sets the sampler state for a single unit based off of the sampler key
  * entry.
  */
-static void brw_update_sampler_state(struct wm_sampler_entry *key,
-				     dri_bo *sdc_bo,
+static void brw_update_sampler_state(struct brw_context *brw,
+				     struct wm_sampler_entry *key,
+				     drm_intel_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
+   struct intel_context *intel = &brw->intel;
+
    memset(sampler, 0, sizeof(*sampler));
 
    switch (key->minfilter) {
@@ -162,6 +165,10 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
    sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
    sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
    sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
+
+   if (intel->gen >= 6 &&
+       sampler->ss0.min_filter != sampler->ss0.mag_filter)
+	sampler->ss0.min_mag_neq = 1;
 
    /* Cube-maps on 965 and later must use the same wrap mode for all 3
     * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
@@ -264,7 +271,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->comparemode = texObj->CompareMode;
          entry->comparefunc = texObj->CompareFunc;
 
-	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 drm_intel_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
 	       texObj->BorderColor.f[0],
@@ -305,7 +312,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
-   dri_bo_unreference(brw->wm.sampler_bo);
+   drm_intel_bo_unreference(brw->wm.sampler_bo);
    brw->wm.sampler_bo = NULL;
    if (brw->wm.sampler_count == 0)
       return;
@@ -329,7 +336,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 	 if (brw->wm.sdc_bo[i] == NULL)
 	    continue;
 
-	 brw_update_sampler_state(&key.sampler[i], brw->wm.sdc_bo[i],
+	 brw_update_sampler_state(brw, &key.sampler[i], brw->wm.sdc_bo[i],
 				  &sampler[i]);
       }
 
@@ -343,12 +350,11 @@ static void upload_wm_samplers( struct brw_context *brw )
 	 if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	    continue;
 
-	 dri_bo_emit_reloc(brw->wm.sampler_bo,
-			   I915_GEM_DOMAIN_SAMPLER, 0,
-			   0,
-			   i * sizeof(struct brw_sampler_state) +
-			   offsetof(struct brw_sampler_state, ss2),
-			   brw->wm.sdc_bo[i]);
+	 drm_intel_bo_emit_reloc(brw->wm.sampler_bo,
+				 i * sizeof(struct brw_sampler_state) +
+				 offsetof(struct brw_sampler_state, ss2),
+				 brw->wm.sdc_bo[i], 0,
+				 I915_GEM_DOMAIN_SAMPLER, 0);
       }
    }
 }

@@ -34,6 +34,7 @@ extern "C" {
 
 struct tgsi_src_register;
 struct tgsi_full_src_register;
+struct tgsi_full_instruction;
 
 void *
 tgsi_align_128bit(
@@ -70,6 +71,10 @@ void
 tgsi_util_set_full_src_register_sign_mode(
    struct tgsi_full_src_register *reg,
    unsigned sign_mode );
+
+unsigned
+tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
+                              unsigned src_idx);
 
 #if defined __cplusplus
 }

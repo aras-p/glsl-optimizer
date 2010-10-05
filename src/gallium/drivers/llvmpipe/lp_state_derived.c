@@ -50,7 +50,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
    struct vertex_info *vinfo = &llvmpipe->vertex_info;
-   struct lp_shader_input inputs[1 + PIPE_MAX_SHADER_INPUTS];
+   struct lp_shader_input *inputs = llvmpipe->inputs;
    unsigned vs_index;
    uint i;
 
@@ -74,9 +74,35 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       vs_index = draw_find_shader_output(llvmpipe->draw,
                                          lpfs->info.input_semantic_name[i],
                                          lpfs->info.input_semantic_index[i]);
+      if (vs_index < 0) {
+         /*
+          * This can happen with sprite coordinates - the vertex
+          * shader doesn't need to provide an output as we generate
+          * them internally.  However, lets keep pretending that there
+          * is something there to not confuse other code.
+          */
+         vs_index = 0;
+      }
 
       /* This can be pre-computed, except for flatshade:
        */
+      inputs[i].usage_mask = lpfs->info.input_usage_mask[i];
+
+      switch (lpfs->info.input_interpolate[i]) {
+      case TGSI_INTERPOLATE_CONSTANT:
+         inputs[i].interp = LP_INTERP_CONSTANT;
+         break;
+      case TGSI_INTERPOLATE_LINEAR:
+         inputs[i].interp = LP_INTERP_LINEAR;
+         break;
+      case TGSI_INTERPOLATE_PERSPECTIVE:
+         inputs[i].interp = LP_INTERP_PERSPECTIVE;
+         break;
+      default:
+         assert(0);
+         break;
+      }
+
       switch (lpfs->info.input_semantic_name[i]) {
       case TGSI_SEMANTIC_FACE:
          inputs[i].interp = LP_INTERP_FACING;
@@ -95,25 +121,10 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
           */
          if (llvmpipe->rasterizer->flatshade)
             inputs[i].interp = LP_INTERP_CONSTANT;
-         else
-            inputs[i].interp = LP_INTERP_LINEAR;
          break;
 
       default:
-         switch (lpfs->info.input_interpolate[i]) {
-         case TGSI_INTERPOLATE_CONSTANT:
-            inputs[i].interp = LP_INTERP_CONSTANT;
-            break;
-         case TGSI_INTERPOLATE_LINEAR:
-            inputs[i].interp = LP_INTERP_LINEAR;
-            break;
-         case TGSI_INTERPOLATE_PERSPECTIVE:
-            inputs[i].interp = LP_INTERP_PERSPECTIVE;
-            break;
-         default:
-            assert(0);
-            break;
-         }
+         break;
       }
 
       /*
@@ -123,6 +134,18 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       inputs[i].src_index = vinfo->num_attribs;
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
    }
+
+   /* Figure out if we need pointsize as well.
+    */
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_PSIZE, 0);
+
+   if (vs_index > 0) {
+      llvmpipe->psize_slot = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+   }
+
+   llvmpipe->num_inputs = lpfs->info.num_inputs;
 
    draw_compute_vertex_size(vinfo);
 
@@ -163,7 +186,8 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_RASTERIZER |
                           LP_NEW_SAMPLER |
-                          LP_NEW_SAMPLER_VIEW))
+                          LP_NEW_SAMPLER_VIEW |
+                          LP_NEW_QUERY))
       llvmpipe_update_fs( llvmpipe );
 
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)
@@ -182,12 +206,17 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
    if (llvmpipe->dirty & LP_NEW_CONSTANTS)
       lp_setup_set_fs_constants(llvmpipe->setup, 
-                                llvmpipe->constants[PIPE_SHADER_FRAGMENT]);
+                                llvmpipe->constants[PIPE_SHADER_FRAGMENT][0]);
 
-   if (llvmpipe->dirty & LP_NEW_SAMPLER_VIEW)
-      lp_setup_set_fragment_sampler_views(llvmpipe->setup, 
+   if (llvmpipe->dirty & (LP_NEW_SAMPLER_VIEW))
+      lp_setup_set_fragment_sampler_views(llvmpipe->setup,
                                           llvmpipe->num_fragment_sampler_views,
                                           llvmpipe->fragment_sampler_views);
+
+   if (llvmpipe->dirty & (LP_NEW_SAMPLER))
+      lp_setup_set_fragment_sampler_state(llvmpipe->setup,
+                                          llvmpipe->num_samplers,
+                                          llvmpipe->sampler);
 
    llvmpipe->dirty = 0;
 }

@@ -55,8 +55,8 @@ struct nouveau_array_state {
 	extract_f_t extract_f;
 };
 
-#define RENDER_SCRATCH_COUNT 32
-#define RENDER_SCRATCH_SIZE 64*1024
+#define RENDER_SCRATCH_COUNT 2
+#define RENDER_SCRATCH_SIZE 2*1024*1024
 
 struct nouveau_scratch_state {
 	struct nouveau_bo *bo[RENDER_SCRATCH_COUNT];

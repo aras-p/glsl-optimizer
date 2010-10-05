@@ -400,6 +400,46 @@
 #define PCI_CHIP_RV740_94B5             0x94B5
 #define PCI_CHIP_RV740_94B9             0x94B9
 
+#define PCI_CHIP_CEDAR_68E0             0x68E0
+#define PCI_CHIP_CEDAR_68E1             0x68E1
+#define PCI_CHIP_CEDAR_68E4             0x68E4
+#define PCI_CHIP_CEDAR_68E5             0x68E5
+#define PCI_CHIP_CEDAR_68E8             0x68E8
+#define PCI_CHIP_CEDAR_68E9             0x68E9
+#define PCI_CHIP_CEDAR_68F1             0x68F1
+#define PCI_CHIP_CEDAR_68F8             0x68F8
+#define PCI_CHIP_CEDAR_68F9             0x68F9
+#define PCI_CHIP_CEDAR_68FE             0x68FE
+
+#define PCI_CHIP_REDWOOD_68C0           0x68C0
+#define PCI_CHIP_REDWOOD_68C1           0x68C1
+#define PCI_CHIP_REDWOOD_68C8           0x68C8
+#define PCI_CHIP_REDWOOD_68C9           0x68C9
+#define PCI_CHIP_REDWOOD_68D8           0x68D8
+#define PCI_CHIP_REDWOOD_68D9           0x68D9
+#define PCI_CHIP_REDWOOD_68DA           0x68DA
+#define PCI_CHIP_REDWOOD_68DE           0x68DE
+
+#define PCI_CHIP_JUNIPER_68A0           0x68A0
+#define PCI_CHIP_JUNIPER_68A1           0x68A1
+#define PCI_CHIP_JUNIPER_68A8           0x68A8
+#define PCI_CHIP_JUNIPER_68A9           0x68A9
+#define PCI_CHIP_JUNIPER_68B0           0x68B0
+#define PCI_CHIP_JUNIPER_68B8           0x68B8
+#define PCI_CHIP_JUNIPER_68B9           0x68B9
+#define PCI_CHIP_JUNIPER_68BE           0x68BE
+
+#define PCI_CHIP_CYPRESS_6880           0x6880
+#define PCI_CHIP_CYPRESS_6888           0x6888
+#define PCI_CHIP_CYPRESS_6889           0x6889
+#define PCI_CHIP_CYPRESS_688A           0x688A
+#define PCI_CHIP_CYPRESS_6898           0x6898
+#define PCI_CHIP_CYPRESS_6899           0x6899
+#define PCI_CHIP_CYPRESS_689E           0x689E
+
+#define PCI_CHIP_HEMLOCK_689C           0x689C
+#define PCI_CHIP_HEMLOCK_689D           0x689D
+
 enum {
    CHIP_FAMILY_R100,
    CHIP_FAMILY_RV100,
@@ -414,9 +454,9 @@ enum {
    CHIP_FAMILY_R350,
    CHIP_FAMILY_RV350,
    CHIP_FAMILY_RV380,
+   CHIP_FAMILY_RS400,
    CHIP_FAMILY_R420,
    CHIP_FAMILY_RV410,
-   CHIP_FAMILY_RS400,
    CHIP_FAMILY_RS600,
    CHIP_FAMILY_RS690,
    CHIP_FAMILY_RS740,
@@ -438,6 +478,11 @@ enum {
    CHIP_FAMILY_RV730,
    CHIP_FAMILY_RV710,
    CHIP_FAMILY_RV740,
+   CHIP_FAMILY_CEDAR,
+   CHIP_FAMILY_REDWOOD,
+   CHIP_FAMILY_JUNIPER,
+   CHIP_FAMILY_CYPRESS,
+   CHIP_FAMILY_HEMLOCK,
    CHIP_FAMILY_LAST
 };
 

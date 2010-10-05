@@ -46,14 +46,7 @@
 #include "fbobject.h"
 #include "formats.h"
 #include "mtypes.h"
-#include "fbobject.h"
 #include "renderbuffer.h"
-
-#include "rbadaptors.h"
-
-
-/* 32-bit color index format.  Not a public format. */
-#define COLOR_INDEX32 0x424243
 
 
 /*
@@ -992,6 +985,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       pixelSize = 4 * sizeof(GLubyte);
       break;
    case GL_RGBA16:
+   case GL_RGBA16_SNORM:
       /* for accum buffer */
       rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
       rb->DataType = GL_SHORT;
@@ -1090,21 +1084,6 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
       pixelSize = sizeof(GLuint);
-      break;
-   case GL_COLOR_INDEX8_EXT:
-   case GL_COLOR_INDEX16_EXT:
-   case COLOR_INDEX32:
-      rb->Format = MESA_FORMAT_CI8;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte;
-      rb->GetRow = get_row_ubyte;
-      rb->GetValues = get_values_ubyte;
-      rb->PutRow = put_row_ubyte;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ubyte;
-      rb->PutValues = put_values_ubyte;
-      rb->PutMonoValues = put_mono_values_ubyte;
-      pixelSize = sizeof(GLubyte);
       break;
    default:
       _mesa_problem(ctx, "Bad internalFormat in _mesa_soft_renderbuffer_storage");
@@ -1777,7 +1756,7 @@ _mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    }
 
    rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
-   rb->InternalFormat = GL_RGBA16;
+   rb->InternalFormat = GL_RGBA16_SNORM;
    rb->AllocStorage = _mesa_soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_ACCUM, rb);
 
@@ -1909,8 +1888,6 @@ void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,
                        GLuint bufferName, struct gl_renderbuffer *rb)
 {
-   GLenum baseFormat;
-
    assert(fb);
    assert(rb);
    assert(bufferName < BUFFER_COUNT);
@@ -1929,26 +1906,6 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
    }
    else {
       assert(!rb->Name);
-   }
-
-   /* If Mesa's compiled with deep color channels (16 or 32 bits / channel)
-    * and the device driver is expecting 8-bit values (GLubyte), we can
-    * use a "renderbuffer adaptor/wrapper" to do the necessary conversions.
-    */
-   baseFormat = _mesa_get_format_base_format(rb->Format);
-   if (baseFormat == GL_RGBA) {
-      if (CHAN_BITS == 16 && rb->DataType == GL_UNSIGNED_BYTE) {
-         GET_CURRENT_CONTEXT(ctx);
-         rb = _mesa_new_renderbuffer_16wrap8(ctx, rb);
-      }
-      else if (CHAN_BITS == 32 && rb->DataType == GL_UNSIGNED_BYTE) {
-         GET_CURRENT_CONTEXT(ctx);
-         rb = _mesa_new_renderbuffer_32wrap8(ctx, rb);
-      }
-      else if (CHAN_BITS == 32 && rb->DataType == GL_UNSIGNED_SHORT) {
-         GET_CURRENT_CONTEXT(ctx);
-         rb = _mesa_new_renderbuffer_32wrap16(ctx, rb);
-      }
    }
 
    fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;

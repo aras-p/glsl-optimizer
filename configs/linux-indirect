@@ -47,6 +47,5 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
 
 
 # Directories
-SRC_DIRS = glx glu glut/glx glew glw
+SRC_DIRS = glx glu glut/glx glw
 DRIVER_DIRS =
-PROGRAM_DIRS = 

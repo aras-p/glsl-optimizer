@@ -32,12 +32,13 @@
 
 #include "main/mtypes.h"
 #include "main/imports.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 
 #include "radeon_debug.h"
 #include "r600_context.h"
 
 #include "r700_assembler.h"
+#include "evergreen_sq.h"
 
 #define USE_CF_FOR_CONTINUE_BREAK 1
 #define USE_CF_FOR_POP_AFTER      1
@@ -258,6 +259,18 @@ GLboolean is_reduction_opcode(PVSDWORD* dest)
     return GL_FALSE;
 }
 
+GLboolean EG_is_reduction_opcode(PVSDWORD* dest)
+{
+    if (dest->dst.op3 == 0) 
+    {
+        if ( (dest->dst.opcode == EG_OP2_INST_DOT4 || dest->dst.opcode == EG_OP2_INST_DOT4_IEEE || dest->dst.opcode == EG_OP2_INST_CUBE) ) 
+        {
+            return GL_TRUE;
+        }
+    }
+    return GL_FALSE;
+}
+
 GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
 {
     GLuint format = FMT_INVALID;
@@ -275,7 +288,10 @@ GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
                 case 2:
                     format = FMT_8_8; break;
                 case 3:
-                    format = FMT_8_8_8; break;
+                    /* for some (small/unaligned) strides using 4 comps works
+                     * better, probably same as GL_SHORT below
+                     * test piglit/draw-vertices */
+                    format = FMT_8_8_8_8; break;
                 case 4:
                     format = FMT_8_8_8_8; break;
                 default:
@@ -293,7 +309,9 @@ GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
                 case 2:
                     format = FMT_16_16; break;
                 case 3:
-                    format = FMT_16_16_16; break;
+                    /* 3 comp GL_SHORT vertex format doesnt work on r700
+                       4 somehow works, test - sauerbraten  */
+                    format = FMT_16_16_16_16; break;
                 case 4:
                     format = FMT_16_16_16_16; break;
                 default:
@@ -409,6 +427,60 @@ unsigned int r700GetNumOperands(GLuint opcode, GLuint nIsOp3)
     case SQ_OP2_INST_FLT_TO_INT:
     case SQ_OP2_INST_SIN:
     case SQ_OP2_INST_COS:
+        return 1;
+        
+    default: radeon_error(
+		    "Need instruction operand number for %x.\n", opcode); 
+    };
+
+    return 3;
+}
+
+unsigned int EG_GetNumOperands(GLuint opcode, GLuint nIsOp3) 
+{
+    if(nIsOp3 > 0)
+    {
+        return 3;
+    }
+
+    switch (opcode)
+    {
+    case EG_OP2_INST_ADD:
+    case EG_OP2_INST_KILLE:
+    case EG_OP2_INST_KILLGT:
+    case EG_OP2_INST_KILLGE:
+    case EG_OP2_INST_KILLNE:
+    case EG_OP2_INST_MUL: 
+    case EG_OP2_INST_MAX:
+    case EG_OP2_INST_MIN:
+    //case EG_OP2_INST_MAX_DX10:
+    //case EG_OP2_INST_MIN_DX10:
+    case EG_OP2_INST_SETE: 
+    case EG_OP2_INST_SETNE:
+    case EG_OP2_INST_SETGT:
+    case EG_OP2_INST_SETGE:
+    case EG_OP2_INST_PRED_SETE:
+    case EG_OP2_INST_PRED_SETGT:
+    case EG_OP2_INST_PRED_SETGE:
+    case EG_OP2_INST_PRED_SETNE:
+    case EG_OP2_INST_DOT4:
+    case EG_OP2_INST_DOT4_IEEE:
+    case EG_OP2_INST_CUBE:
+        return 2;  
+
+    case EG_OP2_INST_MOV: 
+    //case SQ_OP2_INST_MOVA_FLOOR:
+    case EG_OP2_INST_FRACT:
+    case EG_OP2_INST_FLOOR:
+    case EG_OP2_INST_TRUNC:
+    case EG_OP2_INST_EXP_IEEE:
+    case EG_OP2_INST_LOG_CLAMPED:
+    case EG_OP2_INST_LOG_IEEE:
+    case EG_OP2_INST_RECIP_IEEE:
+    case EG_OP2_INST_RECIPSQRT_IEEE:
+    case EG_OP2_INST_FLT_TO_INT:
+    case EG_OP2_INST_SIN:
+    case EG_OP2_INST_COS:
         return 1;
         
     default: radeon_error(
@@ -547,7 +619,7 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
 GLboolean IsTex(gl_inst_opcode Opcode)
 {
     if( (OPCODE_TEX==Opcode) || (OPCODE_TXP==Opcode) || (OPCODE_TXB==Opcode) ||
-        (OPCODE_DDX==Opcode) || (OPCODE_DDY==Opcode) )
+        (OPCODE_DDX==Opcode) || (OPCODE_DDY==Opcode) || (OPCODE_TXL==Opcode) )
     {
         return GL_TRUE;
     }
@@ -713,21 +785,55 @@ GLboolean add_vfetch_instruction(r700_AssemblerBase*     pAsm,
 			return GL_FALSE;
 		}
 
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.pop_count        = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cf_const         = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.count            = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_VTX;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.barrier          = 0x1;
+        if(8 == pAsm->unAsic)
+        {
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, EG_CF_INST_VC,
+                     EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask); 
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, SQ_CF_COND_ACTIVE,
+                     EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 1,
+                     EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        }
+        else
+        {
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.pop_count        = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cf_const         = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.count            = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_VTX;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.barrier          = 0x1;
+        }
 
 		LinkVertexInstruction(pAsm->cf_current_vtx_clause_ptr, vertex_instruction_ptr );
 	}
 	else
 	{
-		pAsm->cf_current_vtx_clause_ptr->m_Word1.f.count++;
+        if(8 == pAsm->unAsic)
+        {
+            unsigned int count = GETbits(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, 
+                                         EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask) + 1;
+            SETfield(pAsm->cf_current_vtx_clause_ptr->m_Word1.val, count,
+                     EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+        }
+        else
+        {
+		    pAsm->cf_current_vtx_clause_ptr->m_Word1.f.count++;
+        }
 	}
 
 	AddVTXInstruction(pAsm->pR700Shader, vertex_instruction_ptr);
@@ -762,25 +868,65 @@ GLboolean add_tex_instruction(r700_AssemblerBase*     pAsm,
             radeon_error("Could not allocate a new TEX CF instruction.\n");
 			return GL_FALSE;
 		}
-        
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.pop_count        = 0x0;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.cf_const         = 0x0;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_TEX;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.barrier          = 0x0;   //0x1;
+        if(8 == pAsm->unAsic)
+        {
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, EG_CF_INST_TC,
+                     EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask); 
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, SQ_CF_COND_ACTIVE,
+                     EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit);
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);
+#ifdef FORCE_CF_TEX_BARRIER
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 1,
+                     EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+#else
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 0,
+                     EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+#endif
+        }
+        else
+        {        
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.pop_count        = 0x0;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.cf_const         = 0x0;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_TEX;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.barrier          = 0x0;   //0x1;
+        }
     }
     else 
-    {        
-        pAsm->cf_current_tex_clause_ptr->m_Word1.f.count++;
+    {      
+        if(8 == pAsm->unAsic)
+        {
+            unsigned int count = GETbits(pAsm->cf_current_tex_clause_ptr->m_Word1.val, 
+                                         EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask) + 1;
+            SETfield(pAsm->cf_current_tex_clause_ptr->m_Word1.val, count,
+                     EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+        }
+        else
+        {        
+            pAsm->cf_current_tex_clause_ptr->m_Word1.f.count++;
+        }
     }
 
-    // If this clause constains any TEX instruction that is dependent on a previous instruction, 
-    // set the barrier bit
-    if( pAsm->pInstDeps[pAsm->uiCurInst].nDstDep > (-1) || pAsm->need_tex_barrier == GL_TRUE )
+    // If this clause constains any TEX instruction that is dependent on a 
+    // previous instruction, set the barrier bit, also always set for vert 
+    // programs as tex deps are not(yet) computed for them
+    if( pAsm->currentShaderType == SPT_VP || pAsm->pInstDeps[pAsm->uiCurInst].nDstDep > (-1) || pAsm->need_tex_barrier == GL_TRUE )
     {
         pAsm->cf_current_tex_clause_ptr->m_Word1.f.barrier = 0x1;  
     }
@@ -880,6 +1026,188 @@ GLboolean assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
 		else 
 		{
 			pAsm->vfetch_instruction_ptr_array[ gl_client_id ] = vfetch_instruction_ptr;
+		}
+	}
+
+	return GL_TRUE;
+}
+
+GLboolean EG_assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
+                                       GLuint              destination_register,								       
+                                       GLenum              type,
+                                       GLint               size,
+                                       GLubyte             element,
+                                       GLuint              _signed,
+                                       GLboolean           normalize,
+                                       GLenum              format,
+                                       VTX_FETCH_METHOD  * pFetchMethod)
+{
+    GLuint client_size_inbyte;
+	GLuint data_format;
+    GLuint mega_fetch_count;
+	GLuint is_mega_fetch_flag;
+
+    GLuint dst_sel_x, dst_sel_y, dst_sel_z, dst_sel_w;
+
+    R700VertexGenericFetch*   vfetch_instruction_ptr;
+	R700VertexGenericFetch*   assembled_vfetch_instruction_ptr 
+                                     = pAsm->vfetch_instruction_ptr_array[element];
+
+    if (assembled_vfetch_instruction_ptr == NULL) 
+	{
+		vfetch_instruction_ptr = (R700VertexGenericFetch*) CALLOC_STRUCT(R700VertexGenericFetch);
+		if (vfetch_instruction_ptr == NULL) 
+		{
+			return GL_FALSE;
+		}
+        Init_R700VertexGenericFetch(vfetch_instruction_ptr);
+    }
+	else 
+	{
+		vfetch_instruction_ptr = assembled_vfetch_instruction_ptr;
+	}
+
+    data_format = GetSurfaceFormat(type, size, &client_size_inbyte);	
+
+	if(GL_TRUE == pFetchMethod->bEnableMini) //More conditions here
+	{
+		//TODO : mini fetch
+		mega_fetch_count = 0;
+		is_mega_fetch_flag = 0;
+	}
+	else
+	{
+		mega_fetch_count = MEGA_FETCH_BYTES - 1;
+		is_mega_fetch_flag       = 0x1;
+		pFetchMethod->mega_fetch_remainder = MEGA_FETCH_BYTES - client_size_inbyte;
+	}
+
+    SETfield(vfetch_instruction_ptr->m_Word0.val, EG_VC_INST_FETCH,
+             EG_VTX_WORD0__VC_INST_shift,
+             EG_VTX_WORD0__VC_INST_mask);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, EG_VTX_FETCH_VERTEX_DATA,
+             EG_VTX_WORD0__FETCH_TYPE_shift,
+             EG_VTX_WORD0__FETCH_TYPE_mask);
+    CLEARbit(vfetch_instruction_ptr->m_Word0.val, 
+             EG_VTX_WORD0__FWQ_bit);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, element,
+             EG_VTX_WORD0__BUFFER_ID_shift,
+             EG_VTX_WORD0__BUFFER_ID_mask);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, 0x0,
+             EG_VTX_WORD0__SRC_GPR_shift,
+             EG_VTX_WORD0__SRC_GPR_mask);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, SQ_ABSOLUTE,
+             EG_VTX_WORD0__SRC_REL_shift,
+             EG_VTX_WORD0__SRC_REL_bit);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, SQ_SEL_X,
+             EG_VTX_WORD0__SRC_SEL_X_shift,
+             EG_VTX_WORD0__SRC_SEL_X_mask);
+    SETfield(vfetch_instruction_ptr->m_Word0.val, mega_fetch_count,
+             EG_VTX_WORD0__MFC_shift,
+             EG_VTX_WORD0__MFC_mask);
+			
+	if(format == GL_BGRA)
+	{        
+		dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_Z;
+		dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
+		dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_X;
+		dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+	}
+	else
+	{
+		dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_X;
+		dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
+		dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_Z;
+		dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+
+	}
+    SETfield(vfetch_instruction_ptr->m_Word1.val, dst_sel_x,
+             EG_VTX_WORD1__DST_SEL_X_shift,
+             EG_VTX_WORD1__DST_SEL_X_mask);
+    SETfield(vfetch_instruction_ptr->m_Word1.val, dst_sel_y,
+             EG_VTX_WORD1__DST_SEL_Y_shift,
+             EG_VTX_WORD1__DST_SEL_Y_mask);
+    SETfield(vfetch_instruction_ptr->m_Word1.val, dst_sel_z,
+             EG_VTX_WORD1__DST_SEL_Z_shift,
+             EG_VTX_WORD1__DST_SEL_Z_mask);
+    SETfield(vfetch_instruction_ptr->m_Word1.val, dst_sel_w,
+             EG_VTX_WORD1__DST_SEL_W_shift,
+             EG_VTX_WORD1__DST_SEL_W_mask);
+    
+    SETfield(vfetch_instruction_ptr->m_Word1.val, 0, /* use format here, in r6/r7, format used set in const, need to use same */
+             EG_VTX_WORD1__UCF_shift,
+             EG_VTX_WORD1__UCF_bit);
+    SETfield(vfetch_instruction_ptr->m_Word1.val, data_format,
+             EG_VTX_WORD1__DATA_FORMAT_shift,
+             EG_VTX_WORD1__DATA_FORMAT_mask);	
+#ifdef TEST_VFETCH
+    SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_FORMAT_COMP_SIGNED,
+                 EG_VTX_WORD1__FCA_shift,
+                 EG_VTX_WORD1__FCA_bit);
+#else
+    if(1 == _signed)
+    {
+        SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_FORMAT_COMP_SIGNED,
+                 EG_VTX_WORD1__FCA_shift,
+                 EG_VTX_WORD1__FCA_bit);        
+    }
+    else
+    {
+        SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_FORMAT_COMP_UNSIGNED,
+                 EG_VTX_WORD1__FCA_shift,
+                 EG_VTX_WORD1__FCA_bit);           
+    }
+#endif /* TEST_VFETCH */
+
+    if(GL_TRUE == normalize)
+    {
+        SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_NUM_FORMAT_NORM,
+                 EG_VTX_WORD1__NFA_shift,
+                 EG_VTX_WORD1__NFA_mask);          
+    }
+    else
+    {
+        SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_NUM_FORMAT_SCALED,
+                 EG_VTX_WORD1__NFA_shift,
+                 EG_VTX_WORD1__NFA_mask);        
+    }
+
+	/* Destination register */
+    SETfield(vfetch_instruction_ptr->m_Word1.val, destination_register,
+             EG_VTX_WORD1_GPR__DST_GPR_shift,
+             EG_VTX_WORD1_GPR__DST_GPR_mask);
+	SETfield(vfetch_instruction_ptr->m_Word1.val, SQ_ABSOLUTE,
+             EG_VTX_WORD1_GPR__DST_REL_shift,
+             EG_VTX_WORD1_GPR__DST_REL_bit); 
+	
+
+    SETfield(vfetch_instruction_ptr->m_Word2.val, 0,
+             EG_VTX_WORD2__OFFSET_shift,
+             EG_VTX_WORD2__OFFSET_mask); 
+    SETfield(vfetch_instruction_ptr->m_Word2.val, SQ_ENDIAN_NONE,
+             EG_VTX_WORD2__ENDIAN_SWAP_shift,
+             EG_VTX_WORD2__ENDIAN_SWAP_mask);
+    SETfield(vfetch_instruction_ptr->m_Word2.val, 0,
+             EG_VTX_WORD2__CBNS_shift,
+             EG_VTX_WORD2__CBNS_bit);
+    SETfield(vfetch_instruction_ptr->m_Word2.val, is_mega_fetch_flag,
+             EG_VTX_WORD2__MEGA_FETCH_shift,
+             EG_VTX_WORD2__MEGA_FETCH_mask);
+	
+	if (assembled_vfetch_instruction_ptr == NULL) 
+	{
+		if ( GL_FALSE == add_vfetch_instruction(pAsm, (R700VertexInstruction *)vfetch_instruction_ptr) ) 
+        {   
+			return GL_FALSE;
+		}
+
+		if (pAsm->vfetch_instruction_ptr_array[element] != NULL) 
+		{
+			return GL_FALSE;
+		}
+		else 
+		{
+			pAsm->vfetch_instruction_ptr_array[element] = vfetch_instruction_ptr;
 		}
 	}
 
@@ -1051,6 +1379,56 @@ void checkop_init(r700_AssemblerBase* pAsm)
     pAsm->aArgSubst[3] = -1;
 }
 
+static GLboolean next_ins(r700_AssemblerBase *pAsm)
+{
+    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
+
+    if (GL_TRUE == pAsm->is_tex)
+    {
+        if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX)
+        {
+            if (GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE))
+            {
+                radeon_error("Error assembling TEX instruction\n");
+                return GL_FALSE;
+            }
+        }
+        else
+        {
+            if (GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE))
+            {
+                radeon_error("Error assembling TEX instruction\n");
+                return GL_FALSE;
+            }
+        }
+    }
+    else
+    {   //ALU
+        if (GL_FALSE == assemble_alu_instruction(pAsm))
+        {
+            radeon_error("Error assembling ALU instruction\n");
+            return GL_FALSE;
+        }
+    }
+
+    if (pAsm->D.dst.rtype == DST_REG_OUT)
+    {
+        assert(pAsm->D.dst.reg >= pAsm->starting_export_register_number);
+    }
+
+    //reset for next inst.
+    pAsm->D.bits    = 0;
+    pAsm->D2.bits   = 0;
+    pAsm->S[0].bits = 0;
+    pAsm->S[1].bits = 0;
+    pAsm->S[2].bits = 0;
+    pAsm->is_tex = GL_FALSE;
+    pAsm->need_tex_barrier = GL_FALSE;
+    pAsm->D2.bits = 0;
+    pAsm->C[0].bits = pAsm->C[1].bits = pAsm->C[2].bits = pAsm->C[3].bits = 0;
+    return GL_TRUE;
+}
+
 GLboolean mov_temp(r700_AssemblerBase* pAsm, int src)
 {
     GLuint tmp = gethelpr(pAsm);
@@ -1201,7 +1579,7 @@ GLboolean checkop3(r700_AssemblerBase* pAsm)
 	    {
             if( GL_FALSE == mov_temp(pAsm, 1) )
             {
-                return 1;
+                return GL_FALSE;
             }
         }
 
@@ -1257,10 +1635,17 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
     }
     else 
     {
+        if (1 == pILInst->SrcReg[src].RelAddr)
+        {
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_RELATIVE_A0);
+        }
+        else
+        {
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
+        }
         switch (pILInst->SrcReg[src].File)
         {
         case PROGRAM_TEMPORARY:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
             pAsm->S[fld].src.rtype = SRC_REG_TEMPORARY;
             pAsm->S[fld].src.reg = pILInst->SrcReg[src].Index + pAsm->starting_temp_register_number;
             break;
@@ -1269,15 +1654,6 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
         case PROGRAM_ENV_PARAM:
         case PROGRAM_STATE_VAR:
         case PROGRAM_UNIFORM:
-            if (1 == pILInst->SrcReg[src].RelAddr)
-            {
-                setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_RELATIVE_A0);
-            }
-            else
-            {
-                setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);              
-            }
-
             pAsm->S[fld].src.rtype = SRC_REG_CONSTANT;
             if(pILInst->SrcReg[src].Index < 0)
             {
@@ -1290,8 +1666,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             }
             break;      
         case PROGRAM_INPUT:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE); 
-            pAsm->S[fld].src.rtype = SRC_REG_INPUT;
+            pAsm->S[fld].src.rtype = SRC_REG_GPR;
             switch (pAsm->currentShaderType)
             {
             case SPT_FP:
@@ -1302,6 +1677,18 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
                 break;
             }
             break;      
+        case PROGRAM_OUTPUT:
+            pAsm->S[fld].src.rtype = SRC_REG_GPR;
+            switch (pAsm->currentShaderType)
+            {
+            case SPT_FP:
+                pAsm->S[fld].src.reg = pAsm->uiFP_OutputMap[pILInst->SrcReg[src].Index];
+                break;
+            case SPT_VP:
+                pAsm->S[fld].src.reg = pAsm->ucVP_OutputMap[pILInst->SrcReg[src].Index];
+                break;
+            }
+            break;
         default:
             radeon_error("Invalid source argument type : %d \n", pILInst->SrcReg[src].File);
             return GL_FALSE;
@@ -1327,7 +1714,14 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
     switch (pILInst->DstReg.File) 
     {
     case PROGRAM_TEMPORARY:
+        if (1 == pILInst->DstReg.RelAddr)
+        {
+            setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_RELATIVE_A0);
+        }
+        else
+        {
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        }
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
         pAsm->D.dst.reg = pILInst->DstReg.Index + pAsm->starting_temp_register_number;
         break;
@@ -1337,7 +1731,14 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
         pAsm->D.dst.reg = 0;
         break;
     case PROGRAM_OUTPUT:
+        if (1 == pILInst->DstReg.RelAddr)
+        {
+            setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_RELATIVE_A0);
+        }
+        else
+        {
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        }
         pAsm->D.dst.rtype = DST_REG_OUT;
         switch (pAsm->currentShaderType)
         {
@@ -1455,7 +1856,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                         bValidTexCoord = GL_TRUE;
                         pAsm->S[0].src.reg   =
                             pAsm->ucVP_AttributeMap[pILInst->SrcReg[0].Index];
-                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        pAsm->S[0].src.rtype = SRC_REG_GPR;
                         break;
                 }
             }
@@ -1478,7 +1879,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                         bValidTexCoord = GL_TRUE;
                         pAsm->S[0].src.reg   =
                             pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        pAsm->S[0].src.rtype = SRC_REG_GPR;
                         break;
                     case FRAG_ATTRIB_FACE:
                         fprintf(stderr, "FRAG_ATTRIB_FACE unsupported\n");
@@ -1494,7 +1895,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
 				    bValidTexCoord = GL_TRUE;
                     pAsm->S[0].src.reg   =
                         pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-                    pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                    pAsm->S[0].src.rtype = SRC_REG_GPR;
                 }
             }
 
@@ -1540,19 +1941,68 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     texture_coordinate_source = &(pAsm->S[0].src);
     texture_unit_source       = &(pAsm->S[1].src);
 
-    tex_instruction_ptr->m_Word0.f.tex_inst         = pAsm->D.dst.opcode;
-    tex_instruction_ptr->m_Word0.f.bc_frac_mode     = 0x0;
-    tex_instruction_ptr->m_Word0.f.fetch_whole_quad = 0x0;
-    tex_instruction_ptr->m_Word0.f.alt_const        = 0;
-
-    if(SPT_VP == pAsm->currentShaderType)
+    if(8 == pAsm->unAsic) /* evergreen */
     {
-        tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg + VERT_ATTRIB_MAX;
-        pAsm->unVetTexBits |= 1 << texture_unit_source->reg;
+    
+        SETfield(tex_instruction_ptr->m_Word0.val, pAsm->D.dst.opcode,
+                 EG_TEX_WORD0__TEX_INST_shift,
+                 EG_TEX_WORD0__TEX_INST_mask);
+
+        if(  (SQ_TEX_INST_GET_GRADIENTS_H == pAsm->D.dst.opcode)
+           ||(SQ_TEX_INST_GET_GRADIENTS_V == pAsm->D.dst.opcode) )
+        {
+            /* Use fine texel derivative calculation rather than use quad derivative */
+            SETfield(tex_instruction_ptr->m_Word0.val, 1,
+                     EG_TEX_WORD0__INST_MOD_shift,
+                     EG_TEX_WORD0__INST_MOD_mask);
+        }
+        else
+        {
+            SETfield(tex_instruction_ptr->m_Word0.val, 0,
+                     EG_TEX_WORD0__INST_MOD_shift,
+                     EG_TEX_WORD0__INST_MOD_mask);
+        }
+
+        CLEARbit(tex_instruction_ptr->m_Word0.val, EG_TEX_WORD0__FWQ_bit);                 
+
+        if(SPT_VP == pAsm->currentShaderType)
+        {
+            SETfield(tex_instruction_ptr->m_Word0.val, (texture_unit_source->reg + VERT_ATTRIB_MAX),
+                     EG_TEX_WORD0__RESOURCE_ID_shift,
+                     EG_TEX_WORD0__RESOURCE_ID_mask);
+            pAsm->unVetTexBits |= 1 << texture_unit_source->reg;
+        }
+        else
+        {
+            SETfield(tex_instruction_ptr->m_Word0.val, texture_unit_source->reg,
+                     EG_TEX_WORD0__RESOURCE_ID_shift,
+                     EG_TEX_WORD0__RESOURCE_ID_mask);
+        }
+        
+        CLEARbit(tex_instruction_ptr->m_Word0.val, EG_TEX_WORD0__ALT_CONST_bit);
+        SETfield(tex_instruction_ptr->m_Word0.val, 0,
+                 EG_TEX_WORD0__RIM_shift,
+                 EG_TEX_WORD0__RIM_mask);
+        SETfield(tex_instruction_ptr->m_Word0.val, 0,
+                 EG_TEX_WORD0__SIM_shift,
+                 EG_TEX_WORD0__SIM_mask);
     }
     else
     {
-        tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg;
+        tex_instruction_ptr->m_Word0.f.tex_inst         = pAsm->D.dst.opcode;
+        tex_instruction_ptr->m_Word0.f.bc_frac_mode     = 0x0;
+        tex_instruction_ptr->m_Word0.f.fetch_whole_quad = 0x0;
+        tex_instruction_ptr->m_Word0.f.alt_const        = 0;
+
+        if(SPT_VP == pAsm->currentShaderType)
+        {
+            tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg + VERT_ATTRIB_MAX;
+            pAsm->unVetTexBits |= 1 << texture_unit_source->reg;
+        }
+        else
+        {
+            tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg;
+        }
     }
 
     tex_instruction_ptr->m_Word1.f.lod_bias     = 0x0;
@@ -1578,8 +2028,20 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     if ( (pAsm->D.dst.rtype == DST_REG_TEMPORARY) || 
          (pAsm->D.dst.rtype == DST_REG_OUT) ) 
     {
-        tex_instruction_ptr->m_Word0.f.src_gpr    = texture_coordinate_source->reg;
-        tex_instruction_ptr->m_Word0.f.src_rel    = SQ_ABSOLUTE;
+        if(8 == pAsm->unAsic) /* evergreen */
+        {
+            SETfield(tex_instruction_ptr->m_Word0.val, texture_coordinate_source->reg,
+                     EG_TEX_WORD0__SRC_GPR_shift,
+                     EG_TEX_WORD0__SRC_GPR_mask);
+            SETfield(tex_instruction_ptr->m_Word0.val, SQ_ABSOLUTE,
+                     EG_TEX_WORD0__SRC_REL_shift,
+                     EG_TEX_WORD0__SRC_REL_bit);
+        }
+        else
+        {
+            tex_instruction_ptr->m_Word0.f.src_gpr    = texture_coordinate_source->reg;
+            tex_instruction_ptr->m_Word0.f.src_rel    = SQ_ABSOLUTE;
+        }
 
         tex_instruction_ptr->m_Word1.f.dst_gpr    = pAsm->D.dst.reg;
         tex_instruction_ptr->m_Word1.f.dst_rel    = SQ_ABSOLUTE;
@@ -1630,7 +2092,8 @@ void initialize(r700_AssemblerBase *pAsm)
 GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
                            int                  source_index,
                            PVSSRC*              pSource,
-                           BITS                 scalar_channel_index)
+                           BITS                 scalar_channel_index,
+                           r700_AssemblerBase  *pAsm)
 {
     BITS src_sel;
     BITS src_rel;
@@ -1679,14 +2142,23 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
     else 
     {
         if ( (pSource->rtype == SRC_REG_TEMPORARY) || 
-             (pSource->rtype == SRC_REG_INPUT)
+             (pSource->rtype == SRC_REG_GPR)
         ) 
         {
             src_sel = pSource->reg;
         }
         else if (pSource->rtype == SRC_REG_CONSTANT)
         {
-            src_sel = pSource->reg + CFILE_REGISTER_OFFSET;            
+            /* TODO : 4 const buffers */
+            if(GL_TRUE == pAsm->bUseMemConstant) 
+            {
+                src_sel = pSource->reg + SQ_ALU_SRC_KCACHE0_BASE;
+                pAsm->kcacheUsed = SQ_ALU_SRC_KCACHE0_BASE;
+            }
+            else
+            {
+                src_sel = pSource->reg + CFILE_REGISTER_OFFSET;   
+            }
         }
         else if (pSource->rtype == SRC_REC_LITERAL)
         {
@@ -1836,6 +2308,17 @@ GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
         pAsm->cf_current_alu_clause_ptr->m_Word1.f.count += (GetInstructionSize(alu_instruction_ptr->m_ShaderInstType) / 2);
     }
 
+    /* TODO : handle 4 bufs */
+    if( (pAsm->kcacheUsed > 0) && (GL_TRUE == pAsm->bUseMemConstant) )
+    {
+        pAsm->cf_current_alu_clause_ptr->m_Word0.f.kcache_bank0 = 0x0;
+        pAsm->cf_current_alu_clause_ptr->m_Word0.f.kcache_bank1 = 0x0;
+        pAsm->cf_current_alu_clause_ptr->m_Word0.f.kcache_mode0 = SQ_CF_KCACHE_LOCK_2;
+        pAsm->cf_current_alu_clause_ptr->m_Word1.f.kcache_mode1 = SQ_CF_KCACHE_NOP;
+        pAsm->cf_current_alu_clause_ptr->m_Word1.f.kcache_addr0 = 0x0;
+        pAsm->cf_current_alu_clause_ptr->m_Word1.f.kcache_addr1 = 0x0;
+    }
+
     // If this clause constains any instruction that is forward dependent on a TEX instruction, 
     // set the whole_quad_mode for this clause
     if ( pAsm->pInstDeps[pAsm->uiCurInst].nDstDep > (-1) ) 
@@ -1855,6 +2338,80 @@ GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
     }
     
     AddALUInstruction(pAsm->pR700Shader, alu_instruction_ptr);
+
+    return GL_TRUE;
+}
+
+GLboolean EG_add_ps_interp(r700_AssemblerBase* pAsm)
+{
+    R700ALUInstruction * alu_instruction_ptr = NULL;
+
+    int          ui;
+    unsigned int uj;
+    unsigned int unWord0Temp = 0x380C00;
+    unsigned int unWord1Temp = 0x146B10;    //SQ_SEL_X
+
+    if(pAsm->uIIns > 0)
+    {                
+        for(ui=(pAsm->uIIns-1); ui>=0; ui--)
+        {                        
+            for(uj=0; uj<8; uj++)
+            {
+                alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
+                Init_R700ALUInstruction(alu_instruction_ptr);
+                alu_instruction_ptr->m_Word0.val = unWord0Temp;  
+                alu_instruction_ptr->m_Word1.val = unWord1Temp;
+
+                if(uj < 4)
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, EG_OP2_INST_INTERP_ZW,
+                             EG_ALU_WORD1_OP2__ALU_INST_shift, EG_ALU_WORD1_OP2__ALU_INST_mask);
+                }
+                else
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, EG_OP2_INST_INTERP_XY,
+                             EG_ALU_WORD1_OP2__ALU_INST_shift, EG_ALU_WORD1_OP2__ALU_INST_mask);
+                }
+                if( (uj > 1) && (uj < 6) )
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, 1,
+                             EG_ALU_WORD1_OP2__WRITE_MASK_shift, EG_ALU_WORD1_OP2__WRITE_MASK_bit);
+                }
+                else
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, 0,
+                             EG_ALU_WORD1_OP2__WRITE_MASK_shift, EG_ALU_WORD1_OP2__WRITE_MASK_bit);
+                }
+                if( (uj > 1) && (uj < 6) )
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, ui,
+                             EG_ALU_WORD1__DST_GPR_shift, EG_ALU_WORD1__DST_GPR_mask);
+                }  
+                else
+                {
+                    SETfield(alu_instruction_ptr->m_Word1.val, 111,
+                             EG_ALU_WORD1__DST_GPR_shift, EG_ALU_WORD1__DST_GPR_mask);
+                }                
+
+                SETfield(alu_instruction_ptr->m_Word1.val, (uj % 4),
+                         EG_ALU_WORD1__DST_CHAN_shift, EG_ALU_WORD1__DST_CHAN_mask);
+                SETfield(alu_instruction_ptr->m_Word0.val, (1 - (uj % 2)),
+                         EG_ALU_WORD0__SRC0_CHAN_shift, EG_ALU_WORD0__SRC0_CHAN_mask);
+                SETfield(alu_instruction_ptr->m_Word0.val, (EG_ALU_SRC_PARAM_BASE + ui),
+                         EG_ALU_WORD0__SRC1_SEL_shift, EG_ALU_WORD0__SRC1_SEL_mask);
+                if(3 == (uj % 4))
+                {
+                    SETfield(alu_instruction_ptr->m_Word0.val, 1,
+                             EG_ALU_WORD0__LAST_shift, EG_ALU_WORD0__LAST_bit);
+                }
+
+                if(GL_FALSE == add_alu_instruction(pAsm, alu_instruction_ptr, 4) )
+                {            
+                    return GL_FALSE;
+                }
+            }            
+        }
+    }
 
     return GL_TRUE;
 }
@@ -2109,8 +2666,16 @@ GLboolean check_scalar(r700_AssemblerBase* pAsm,
     BITS src_neg [3] = {0,0,0};
 
     GLuint swizzle_key;
+    GLuint number_of_operands;
 
-    GLuint number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    if(8 == pAsm->unAsic)
+    {
+        number_of_operands = EG_GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
+    else
+    {
+        number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
 
     for (src=0; src<number_of_operands; src++) 
     {
@@ -2198,8 +2763,16 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
     BITS src_neg [3] = {0,0,0};
 
     GLuint swizzle_key;
+    GLuint number_of_operands;
 
-    GLuint number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    if(8 == pAsm->unAsic)
+    {
+        number_of_operands = EG_GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
+    else
+    {
+        number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
 
     for (src=0; src<number_of_operands; src++) 
     {
@@ -2279,12 +2852,23 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
     PVSSRC * pcurrent_source;
     int    current_source_index;
     GLuint contiguous_slots_needed;
+    GLuint uNumSrc;
+    GLboolean bSplitInst;
+    
+    if(8 == pAsm->unAsic)
+    {
+        uNumSrc = EG_GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
+    else
+    {
+        uNumSrc = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
+    }
 
-    GLuint    uNumSrc = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
     //GLuint    channel_swizzle, j;
     //GLuint    chan_counter[4] = {0, 0, 0, 0};
     //PVSSRC *  pSource[3];
-    GLboolean bSplitInst = GL_FALSE;
+    bSplitInst       = GL_FALSE;
+    pAsm->kcacheUsed = 0;
 
     if (1 == pAsm->D.dst.math) 
     {
@@ -2318,7 +2902,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                     default: channel_swizzle = SQ_SEL_MASK; break;
                 }
                 if ( ((pSource[j]->rtype == SRC_REG_TEMPORARY) || 
-                     (pSource[j]->rtype == SRC_REG_INPUT))
+                     (pSource[j]->rtype == SRC_REG_GPR))
                      && (channel_swizzle <= SQ_SEL_W) )
                 {                    
                     chan_counter[channel_swizzle]++;                        
@@ -2383,7 +2967,8 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
                                          current_source_index,
                                          pcurrent_source, 
-                                         scalar_channel_index) )     
+                                         scalar_channel_index,
+                                         pAsm) )     
         {            
             return GL_FALSE;
         }
@@ -2397,7 +2982,8 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
                                              current_source_index,
                                              pcurrent_source, 
-                                             scalar_channel_index) ) 
+                                             scalar_channel_index,
+                                             pAsm) ) 
             {                
                 return GL_FALSE;
             }
@@ -2440,7 +3026,14 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             return GL_FALSE;
         }
 
-        alu_instruction_ptr->m_Word1.f.dst_rel  = SQ_ABSOLUTE;  //D.rtype
+        if ( ADDR_RELATIVE_A0 == addrmode_PVSDST(&(pAsm->D.dst)) )
+        {
+            alu_instruction_ptr->m_Word1.f.dst_rel = SQ_RELATIVE;
+        }
+        else
+        {
+            alu_instruction_ptr->m_Word1.f.dst_rel = SQ_ABSOLUTE;
+        }
 
         if ( is_single_scalar_operation == GL_TRUE ) 
         {
@@ -2480,7 +3073,8 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             if ( GL_FALSE == assemble_alu_src(alu_instruction_ptr,
                                               current_source_index,
                                               pcurrent_source, 
-                                              scalar_channel_index) ) 
+                                              scalar_channel_index,
+                                              pAsm) ) 
             {
                 return GL_FALSE;
             }
@@ -2578,62 +3172,6 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-GLboolean next_ins(r700_AssemblerBase *pAsm)
-{
-    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
-
-    if( GL_TRUE == pAsm->is_tex )
-    {
-	    if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX) {
-		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE) ) 
-		    {
-			    radeon_error("Error assembling TEX instruction\n");
-			    return GL_FALSE;
-		    }
-	    } else {
-		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE) ) 
-		    {
-			    radeon_error("Error assembling TEX instruction\n");
-			    return GL_FALSE;
-		    }
-	    }
-    }
-    else 
-    {   //ALU      
-        if( GL_FALSE == assemble_alu_instruction(pAsm) ) 
-        {
-            radeon_error("Error assembling ALU instruction\n");
-            return GL_FALSE;
-        }
-    } 
-      
-    if(pAsm->D.dst.rtype == DST_REG_OUT) 
-    {
-        if(pAsm->D.dst.op3) 
-        {        
-            // There is no mask for OP3 instructions, so all channels are written        
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
-        }
-        else 
-        {
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] 
-               |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
-        }
-    }
-    
-    //reset for next inst.
-    pAsm->D.bits    = 0;
-    pAsm->D2.bits   = 0;
-    pAsm->S[0].bits = 0;
-    pAsm->S[1].bits = 0;
-    pAsm->S[2].bits = 0;
-    pAsm->is_tex = GL_FALSE;
-    pAsm->need_tex_barrier = GL_FALSE;
-    pAsm->D2.bits = 0;
-    pAsm->C[0].bits = pAsm->C[1].bits = pAsm->C[2].bits = pAsm->C[3].bits = 0;
-    return GL_TRUE;
-}
-
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode)
 {
     BITS tmp;
@@ -2657,6 +3195,9 @@ GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode)
     {
         return GL_FALSE;
     }
+
+    if( pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_RSQ )
+        pAsm->S[0].src.abs = 1;
 
     if ( GL_FALSE == next_ins(pAsm) ) 
     {
@@ -2865,25 +3406,92 @@ GLboolean assemble_CMP(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode)
 {
+    /* 
+     * r600 - trunc to -PI..PI range
+     * r700 - normalize by dividing by 2PI
+     * see fdo bug 27901
+     */
+  
     int tmp;
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
     pAsm->D.dst.reg    = tmp;
-    pAsm->D.dst.writex = 1;
 
     assemble_src(pAsm, 0, -1);
 
     pAsm->S[1].src.rtype = SRC_REC_LITERAL;
     setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+    
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
     pAsm->D2.dst2.literal_slots = 1;
     pAsm->C[0].f = 1/(3.1415926535 * 2);
-    pAsm->C[1].f = 0.0F;
-    next_ins(pAsm);
+    pAsm->C[1].f = 0.5f;
+    
+    if ( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_FRACT;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
+    pAsm->D2.dst2.literal_slots = 1;
+
+    if (pAsm->bR6xx)
+    {
+       pAsm->C[0].f = 3.1415926535897f * 2.0f;
+       pAsm->C[1].f = -3.1415926535897f;
+    }
+    else 
+    {
+       pAsm->C[0].f = 1.0f;
+       pAsm->C[1].f = -0.5f;
+    }
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
 
     pAsm->D.dst.opcode = opcode;
     pAsm->D.dst.math = 1;
@@ -2910,7 +3518,14 @@ GLboolean assemble_DOT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
  
-    pAsm->D.dst.opcode = SQ_OP2_INST_DOT4;  
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_DOT4;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_DOT4;  
+    }
 
     if( GL_FALSE == assemble_dst(pAsm) )
     {
@@ -2927,7 +3542,14 @@ GLboolean assemble_DOT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    if(OPCODE_DP3 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
+    if(OPCODE_DP2 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
+    {
+       zerocomp_PVSSRC(&(pAsm->S[0].src),2);
+       zerocomp_PVSSRC(&(pAsm->S[0].src),3);
+       zerocomp_PVSSRC(&(pAsm->S[1].src),2);
+       zerocomp_PVSSRC(&(pAsm->S[1].src),3);
+    }
+    else if(OPCODE_DP3 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
     {
         zerocomp_PVSSRC(&(pAsm->S[0].src), 3);
         zerocomp_PVSSRC(&(pAsm->S[1].src), 3);
@@ -2985,6 +3607,11 @@ GLboolean assemble_DST(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_EX2(r700_AssemblerBase *pAsm)
 {
+    if(8 == pAsm->unAsic)
+    {
+        return assemble_math_function(pAsm, EG_OP2_INST_EXP_IEEE);
+    }
+
     return assemble_math_function(pAsm, SQ_OP2_INST_EXP_IEEE);
 }
 
@@ -3017,7 +3644,14 @@ GLboolean assemble_EXP(r700_AssemblerBase *pAsm)
             return GL_FALSE;
         }
 
-        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP2_INST_EXP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        }
         pAsm->D.dst.math = 1;
 
         if( GL_FALSE == assemble_dst(pAsm) )
@@ -3066,7 +3700,14 @@ GLboolean assemble_EXP(r700_AssemblerBase *pAsm)
     // EX2     dst.z,    a.x
 
     if ((pAsm->pILInst->DstReg.WriteMask >> 2) & 0x1) {
-        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP2_INST_EXP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        }
         pAsm->D.dst.math = 1;
 
         if( GL_FALSE == assemble_dst(pAsm) )
@@ -3141,6 +3782,11 @@ GLboolean assemble_FLR(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_FLR_INT(r700_AssemblerBase *pAsm)
 {
+    if(8 == pAsm->unAsic)
+    {
+        return assemble_math_function(pAsm, EG_OP2_INST_FLT_TO_INT);
+    }
+
     return assemble_math_function(pAsm, SQ_OP2_INST_FLT_TO_INT);
 }
 
@@ -3223,6 +3869,11 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
 
 GLboolean assemble_LG2(r700_AssemblerBase *pAsm) 
 { 
+    if(8 == pAsm->unAsic)
+    {
+        return assemble_math_function(pAsm, EG_OP2_INST_LOG_IEEE);
+    }
+
     return assemble_math_function(pAsm, SQ_OP2_INST_LOG_IEEE);
 }
 
@@ -3262,7 +3913,14 @@ GLboolean assemble_LRP(r700_AssemblerBase *pAsm)
 	    return GL_FALSE;
     }
 
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -3360,7 +4018,14 @@ GLboolean assemble_LOG(r700_AssemblerBase *pAsm)
     // LG2     tmp2.x,   tmp1.x
     // FLOOR   tmp3.x,   tmp2.x
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_LOG_IEEE;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_LOG_IEEE;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_LOG_IEEE;
+    }
     pAsm->D.dst.math = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -3451,7 +4116,14 @@ GLboolean assemble_LOG(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_EXP_IEEE;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+    }
     pAsm->D.dst.math = 1;
 
     if( GL_FALSE == assemble_dst(pAsm) )
@@ -3533,7 +4205,14 @@ GLboolean assemble_MAD(struct r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-	pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;  
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+	    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;  
+    }
 	pAsm->D.dst.op3     = 1; 
 
 	tmp = (-1);
@@ -3624,8 +4303,6 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
 {
     unsigned int dstReg;
     unsigned int dstType;
-    unsigned int srcReg;
-    unsigned int srcType;
     checkop1(pAsm);
     int tmp = gethelpr(pAsm);
 
@@ -3633,161 +4310,178 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     {
         return GL_FALSE;
     }
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
     dstReg  = pAsm->D.dst.reg;
     dstType = pAsm->D.dst.rtype;
-    srcReg  = pAsm->S[0].src.reg;
-    srcType = pAsm->S[0].src.rtype;
 
     /* dst.xw, <- 1.0  */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_MOV;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 1;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 1;
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_1;
-    pAsm->S[0].src.swizzley = SQ_SEL_1;
-    pAsm->S[0].src.swizzlez = SQ_SEL_1;
-    pAsm->S[0].src.swizzlew = SQ_SEL_1;
-    if( GL_FALSE == next_ins(pAsm) )
+    if( pAsm->D.dst.writex || pAsm->D.dst.writew )
+    {
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.opcode   = SQ_OP2_INST_MOV;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 0;
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+        pAsm->S[0].src.swizzlex = SQ_SEL_1;
+        pAsm->S[0].src.swizzley = SQ_SEL_1;
+        pAsm->S[0].src.swizzlez = SQ_SEL_1;
+        pAsm->S[0].src.swizzlew = SQ_SEL_1;
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    if( GL_FALSE == assemble_dst(pAsm) )
     {
         return GL_FALSE;
     }
 
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    if( pAsm->D.dst.writey ) { 
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.y = max(src.x, 0.0) */
+        pAsm->D.dst.opcode   = SQ_OP2_INST_MAX;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 1;
+        pAsm->D.dst.writez   = 0;
+        pAsm->D.dst.writew   = 0;
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
+        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[1].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[1].src));
+        pAsm->S[1].src.swizzlex = SQ_SEL_0;
+        pAsm->S[1].src.swizzley = SQ_SEL_0;
+        pAsm->S[1].src.swizzlez = SQ_SEL_0;
+        pAsm->S[1].src.swizzlew = SQ_SEL_0;
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    if( GL_FALSE == assemble_dst(pAsm) )
     {
         return GL_FALSE;
     }
+    if ( pAsm->D.dst.writez) {
 
-    /* dst.y = max(src.x, 0.0) */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_MAX;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 1;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 0;
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
-    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[1].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_0;
-    pAsm->S[1].src.swizzley = SQ_SEL_0;
-    pAsm->S[1].src.swizzlez = SQ_SEL_0;
-    pAsm->S[1].src.swizzlew = SQ_SEL_0;
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.z = log(src.y) */
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode   = EG_OP2_INST_LOG_CLAMPED;
+        }
+        else
+        {
+            pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 1;
+        pAsm->D.dst.writew   = 0;
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y);
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, 2) )
+        {
+            return GL_FALSE;
+        }
+
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_W, SQ_SEL_W, SQ_SEL_W, SQ_SEL_W);
+
+        swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
+
+        /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP3_INST_MUL_LIT;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP3_INST_MUL_LIT;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.op3      = 1;
+        pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
+        pAsm->D.dst.reg      = tmp;
+        pAsm->D.dst.writex   = 1;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 0;
+        pAsm->D.dst.writew   = 0;
+
+
+        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[1].src.reg   = dstReg;
+        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[1].src));
+        pAsm->S[1].src.swizzlex = SQ_SEL_Z;
+        pAsm->S[1].src.swizzley = SQ_SEL_Z;
+        pAsm->S[1].src.swizzlez = SQ_SEL_Z;
+        pAsm->S[1].src.swizzlew = SQ_SEL_Z;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.z = exp(tmp.x) */
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode   = EG_OP2_INST_EXP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode   = SQ_OP2_INST_EXP_IEEE;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 1;
+        pAsm->D.dst.writew   = 0;
+
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+        pAsm->S[0].src.swizzlex = SQ_SEL_X;
+        pAsm->S[0].src.swizzley = SQ_SEL_X;
+        pAsm->S[0].src.swizzlez = SQ_SEL_X;
+        pAsm->S[0].src.swizzlew = SQ_SEL_X;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
     }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
-
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y);
-
-    /* dst.z = log(src.y) */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 1;
-    pAsm->D.dst.writew   = 0;
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, 2) )
-    {
-        return GL_FALSE;
-    }
-
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_W, SQ_SEL_W, SQ_SEL_W, SQ_SEL_W);
-
-    swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
-
-    /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
-    pAsm->D.dst.opcode   = SQ_OP3_INST_MUL_LIT;
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.op3      = 1;
-    pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg      = tmp;
-    pAsm->D.dst.writex   = 1;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 0;
-
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-
-    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[1].src.reg   = dstReg;
-    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_Z;
-    pAsm->S[1].src.swizzley = SQ_SEL_Z;
-    pAsm->S[1].src.swizzlez = SQ_SEL_Z;
-    pAsm->S[1].src.swizzlew = SQ_SEL_Z;
-
-    pAsm->S[2].src.rtype = srcType;
-    pAsm->S[2].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    /* dst.z = exp(tmp.x) */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_EXP_IEEE;
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 1;
-    pAsm->D.dst.writew   = 0;
-
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_X;
-    pAsm->S[0].src.swizzley = SQ_SEL_X;
-    pAsm->S[0].src.swizzlez = SQ_SEL_X;
-    pAsm->S[0].src.swizzlew = SQ_SEL_X;
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
     return GL_TRUE;
 }
  
@@ -3920,7 +4614,14 @@ GLboolean assemble_POW(r700_AssemblerBase *pAsm)
     tmp = gethelpr(pAsm);
 
     // LG2 tmp.x,     a.swizzle
-    pAsm->D.dst.opcode = SQ_OP2_INST_LOG_IEEE;  
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_LOG_IEEE;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_LOG_IEEE;  
+    }
     pAsm->D.dst.math = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -3964,7 +4665,14 @@ GLboolean assemble_POW(r700_AssemblerBase *pAsm)
 
     // EX2 dst.mask,          tmp.x
     // EX2 tmp.x,             tmp.x
-    pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_EXP_IEEE;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+    }
     pAsm->D.dst.math = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -4008,11 +4716,21 @@ GLboolean assemble_POW(r700_AssemblerBase *pAsm)
  
 GLboolean assemble_RCP(r700_AssemblerBase *pAsm) 
 {
+    if(8 == pAsm->unAsic)
+    {
+        return assemble_math_function(pAsm, EG_OP2_INST_RECIP_IEEE);
+    }
+
     return assemble_math_function(pAsm, SQ_OP2_INST_RECIP_IEEE);
 }
  
 GLboolean assemble_RSQ(r700_AssemblerBase *pAsm) 
 {
+    if(8 == pAsm->unAsic)
+    {
+        return assemble_math_function(pAsm, EG_OP2_INST_RECIPSQRT_IEEE);
+    }
+
     return assemble_math_function(pAsm, SQ_OP2_INST_RECIPSQRT_IEEE);
 }
  
@@ -4023,25 +4741,89 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
-    /* tmp.x = src /2*PI */
-    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
     pAsm->D.dst.reg    = tmp;
-    pAsm->D.dst.writex = 1;
 
     assemble_src(pAsm, 0, -1);
 
     pAsm->S[1].src.rtype = SRC_REC_LITERAL;
     setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
     pAsm->D2.dst2.literal_slots = 1;
     pAsm->C[0].f = 1/(3.1415926535 * 2);
-    pAsm->C[1].f = 0.0F;
+    pAsm->C[1].f = 0.5F;
 
-    next_ins(pAsm);
+    if ( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_FRACT;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
+    pAsm->D2.dst2.literal_slots = 1;
+
+    if(pAsm->bR6xx) {
+       pAsm->C[0].f = 3.1415926535897f * 2.0f;
+       pAsm->C[1].f = -3.1415926535897f;
+    } else {
+       pAsm->C[0].f = 1.0f;
+       pAsm->C[1].f = -0.5f;
+    }
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
 
     // COS dst.x,    a.x
-    pAsm->D.dst.opcode = SQ_OP2_INST_COS;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_COS;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_COS;
+    }
     pAsm->D.dst.math = 1;
 
     assemble_dst(pAsm);
@@ -4060,7 +4842,14 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
     }
 
     // SIN dst.y,    a.x
-    pAsm->D.dst.opcode = SQ_OP2_INST_SIN;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP2_INST_SIN;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_SIN;
+    }
     pAsm->D.dst.math = 1;
 
     assemble_dst(pAsm);
@@ -4215,6 +5004,65 @@ GLboolean assemble_SLT(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
  
+GLboolean assemble_SSG(r700_AssemblerBase *pAsm)
+{
+    checkop1(pAsm);
+    
+    GLuint tmp = gethelpr(pAsm);
+    /* tmp = (src > 0 ? 1 : src) */
+    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    pAsm->D.dst.op3    = 1;
+    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg   = tmp;
+
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_1);
+
+    if( GL_FALSE == assemble_src(pAsm, 0, 2) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    /* dst = (-tmp > 0 ? -1 : tmp) */
+    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    pAsm->D.dst.op3    = 1;
+
+    if( GL_FALSE == assemble_dst(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    noswizzle_PVSSRC(&(pAsm->S[0].src));
+    neg_PVSSRC(&(pAsm->S[0].src));
+
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_1);
+    neg_PVSSRC(&(pAsm->S[1].src));
+
+    setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
+    pAsm->S[2].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[2].src.reg   = tmp;
+    noswizzle_PVSSRC(&(pAsm->S[2].src));
+
+    if( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    return GL_TRUE;
+}
+
 GLboolean assemble_STP(r700_AssemblerBase *pAsm) 
 {
     return GL_TRUE;
@@ -4253,7 +5101,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
     if (pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_TXP)
     {
         GLuint tmp = gethelpr(pAsm);
-        pAsm->D.dst.opcode = SQ_OP2_INST_RECIP_IEEE;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP2_INST_RECIP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP2_INST_RECIP_IEEE;
+        }
         pAsm->D.dst.math = 1;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -4303,7 +5158,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         GLuint tmp2 = gethelpr(pAsm);
         
         /* tmp1.xyzw = CUBE(R0.zzxy, R0.yxzz) */
-        pAsm->D.dst.opcode = SQ_OP2_INST_CUBE;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP2_INST_CUBE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP2_INST_CUBE;
+        }
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
         pAsm->D.dst.reg   = tmp1;
@@ -4328,7 +5190,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         }
  
         /* tmp1.z = RCP_e(|tmp1.z|) */
-        pAsm->D.dst.opcode = SQ_OP2_INST_RECIP_IEEE;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP2_INST_RECIP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP2_INST_RECIP_IEEE;
+        }
         pAsm->D.dst.math = 1;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -4347,7 +5216,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
          * MULADD R0.y,  R0.y,  PS1,  (0x3FC00000, 1.5f).x
          * muladd has no writemask, have to use another temp 
          */
-        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+        }
         pAsm->D.dst.op3    = 1;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -4402,6 +5278,11 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             pAsm->D.dst.opcode = SQ_TEX_INST_GET_GRADIENTS_V;
             break;
         case OPCODE_TXB:
+	    /* this should actually be SAMPLE_LB but that needs bias to be 
+             * embedded in the instruction - cant do here */ 
+            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
+            break;
+        case OPCODE_TXL:
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
             break;
         default:
@@ -4534,7 +5415,14 @@ GLboolean assemble_XPD(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     if(0xF != pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask)
@@ -4691,16 +5579,49 @@ GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset)
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = pops;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_JUMP,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 pops,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = pops;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_JUMP;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_JUMP;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr = pAsm->cf_current_cf_clause_ptr->m_uIndex + offset;
 
@@ -4714,17 +5635,50 @@ GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops)
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = pops;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_POP,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 pops,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = pops;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
  
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr             = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
 
     return GL_TRUE;
@@ -4742,23 +5696,66 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
         return GL_FALSE;
     }
 
-    if(GL_TRUE != bHasElse)
-    {
-        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 1; 
+    if(8 == pAsm->unAsic)
+     { 
+        if(GL_TRUE != bHasElse)
+        {            
+            SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                     1,
+                     EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);
+        }
+        else
+        {            
+            SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                     0,
+                     EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);
+        }
+
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_JUMP,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
     }
     else
     {
-        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 0;
+        if(GL_TRUE != bHasElse)
+        {
+            pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 1; 
+        }
+        else
+        {
+            pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 0;
+        }
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_JUMP;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
     }
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
-
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_JUMP;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
-
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
 
     pAsm->FCSP++;
 	pAsm->fc_stack[pAsm->FCSP].type  = FC_IF;
@@ -4785,16 +5782,49 @@ GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1; ///
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_ELSE,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1; ///
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_ELSE;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_ELSE;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->fc_stack[pAsm->FCSP].mid = (R700ControlFlowGenericClause **)_mesa_realloc( (void *)pAsm->fc_stack[pAsm->FCSP].mid,
                                                                                      0,
@@ -4854,17 +5884,49 @@ GLboolean assemble_BGNLOOP(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_LOOP_START_NO_AL,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_START_NO_AL;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_START_NO_AL;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->FCSP++;
 	pAsm->fc_stack[pAsm->FCSP].type  = FC_LOOP;
@@ -4905,18 +5967,50 @@ GLboolean assemble_BRK(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_LOOP_BREAK,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_BREAK;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_BREAK;
  
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->fc_stack[unFCSP].mid = (R700ControlFlowGenericClause **)_mesa_realloc( 
                                               (void *)pAsm->fc_stack[unFCSP].mid,
@@ -4930,18 +6024,52 @@ GLboolean assemble_BRK(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_POP,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
  
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
-    pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr             = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
+
+    pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
 
     checkStackDepth(pAsm, FC_PUSH_VPM, GL_TRUE);
 
@@ -4975,18 +6103,50 @@ GLboolean assemble_CONT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_LOOP_CONTINUE,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_CONTINUE;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_CONTINUE;
  
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->fc_stack[unFCSP].mid = (R700ControlFlowGenericClause **)_mesa_realloc( 
                                               (void *)pAsm->fc_stack[unFCSP].mid,
@@ -5000,17 +6160,51 @@ GLboolean assemble_CONT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_POP,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_POP;
  
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
+
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr             = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
 
     checkStackDepth(pAsm, FC_PUSH_VPM, GL_TRUE);
@@ -5029,17 +6223,49 @@ GLboolean assemble_ENDLOOP(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_LOOP_END,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_END;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_END;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr   = pAsm->fc_stack[pAsm->FCSP].first->m_uIndex + 1;
     pAsm->fc_stack[pAsm->FCSP].first->m_Word0.f.addr = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
@@ -5101,17 +6327,51 @@ void add_return_inst(r700_AssemblerBase *pAsm)
     {
         return;
     }
-    //pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_RETURN;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_RETURN,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        //pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_RETURN;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 }
 
 GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex, GLuint uiIL_Shift)
@@ -5234,17 +6494,50 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
         return GL_FALSE;
     }
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.call_count       = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_CALL,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.call_count       = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_CALL;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_CALL;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     /* Put in caller */
     if( (pAsm->unCallerArrayPointer + 1) > pAsm->unCallerArraySize )
@@ -5445,16 +6738,49 @@ GLboolean breakLoopOnFlag(r700_AssemblerBase *pAsm, GLuint unFCSP)
         return GL_FALSE;
     }
     
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
+    if(8 == pAsm->unAsic)
+    {                  
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__POP_COUNT_shift, EG_CF_WORD1__POP_COUNT_mask);        
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_LOOP_BREAK,
+                 EG_CF_WORD1__CF_INST_shift, EG_CF_WORD1__CF_INST_mask);         
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__CF_CONST_shift, EG_CF_WORD1__CF_CONST_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 SQ_CF_COND_ACTIVE,
+                 EG_CF_WORD1__COND_shift, EG_CF_WORD1__COND_mask);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__EOP_shift, EG_CF_WORD1__EOP_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__VPM_shift, EG_CF_WORD1__VPM_bit); 
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_WORD1__WQM_shift, EG_CF_WORD1__WQM_bit);                               
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__BARRIER_shift, EG_CF_WORD1__BARRIER_bit);
+        SETfield(pAsm->cf_current_cf_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_WORD1__COUNT_shift, EG_CF_WORD1__COUNT_mask);
+    }
+    else
+    {
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_BREAK;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_LOOP_BREAK;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     pAsm->fc_stack[unFCSP].mid = (R700ControlFlowGenericClause **)_mesa_realloc( 
                                               (void *)pAsm->fc_stack[unFCSP].mid,
@@ -5543,10 +6869,19 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
         case OPCODE_COS: 
-            if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_COS) ) 
-                return GL_FALSE;
+            if(8 == pR700AsmCode->unAsic)
+            {
+                if ( GL_FALSE == assemble_TRIG(pR700AsmCode, EG_OP2_INST_COS) ) 
+                    return GL_FALSE;
+            }
+            else
+            {
+                if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_COS) ) 
+                    return GL_FALSE;
+            }
             break;  
 
+        case OPCODE_DP2:
         case OPCODE_DP3: 
         case OPCODE_DP4: 
         case OPCODE_DPH: 
@@ -5660,8 +6995,16 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
         case OPCODE_SIN: 
-            if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_SIN) ) 
-                return GL_FALSE;
+            if(8 == pR700AsmCode->unAsic)
+            {
+                if ( GL_FALSE == assemble_TRIG(pR700AsmCode, EG_OP2_INST_SIN) ) 
+                    return GL_FALSE;
+            }
+            else
+            {
+                if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_SIN) ) 
+                    return GL_FALSE;
+            }
             break;  
         case OPCODE_SCS: 
             if ( GL_FALSE == assemble_SCS(pR700AsmCode) ) 
@@ -5738,6 +7081,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         //        return GL_FALSE;
         //    break;
 
+        case OPCODE_SSG:
+            if ( GL_FALSE == assemble_SSG(pR700AsmCode) )
+            {
+                return GL_FALSE;
+            }
+            break;
+
         case OPCODE_SWZ: 
             if ( GL_FALSE == assemble_MOV(pR700AsmCode) ) 
             {
@@ -5760,7 +7110,8 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         case OPCODE_DDX:
         case OPCODE_DDY:
         case OPCODE_TEX: 
-        case OPCODE_TXB:  
+        case OPCODE_TXB:
+        case OPCODE_TXL:
         case OPCODE_TXP: 
             if ( GL_FALSE == assemble_TEX(pR700AsmCode) ) 
                 return GL_FALSE;
@@ -5872,7 +7223,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             return GL_TRUE;
 
         default:
-            radeon_error("internal: unknown instruction\n");
+            radeon_error("r600: unknown instruction %d\n", pILInst[i].Opcode);
             return GL_FALSE;
         }
     }
@@ -5882,7 +7233,15 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
 
 GLboolean InitShaderProgram(r700_AssemblerBase * pAsm)
 {
+#ifndef GENERATE_SHADER_FOR_2D
     setRetInLoopFlag(pAsm, SQ_SEL_0);
+#endif
+
+    if((SPT_FP == pAsm->currentShaderType) && (8 == pAsm->unAsic))
+    {
+        EG_add_ps_interp(pAsm);
+    }
+
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     return GL_TRUE;
 }
@@ -5905,6 +7264,7 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm, struct gl_program * pILProg)
 
     plstCFmain = pAsm->CALLSTACK[0].plstCFInstructions_local;
 
+#ifndef GENERATE_SHADER_FOR_2D
     /* remove flags init if they are not used */
     if((pAsm->unCFflags & HAS_LOOPRET) == 0)
     {
@@ -5935,6 +7295,7 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm, struct gl_program * pILProg)
             pInst = pInst->pNextInst;
         };
     }
+#endif /* GENERATE_SHADER_FOR_2D */
 
     if(pAsm->CALLSTACK[0].max > 0)
     {
@@ -6041,13 +7402,20 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm, struct gl_program * pILProg)
                         }
                         else
                         {
-                            if(pAsm->bR6xx)
+                            if(8 == pAsm->unAsic)
                             {
-                                uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f6.alu_inst, 0);
+                                 uNumSrc = EG_GetNumOperands(pALU->m_Word1_OP2.f.alu_inst, 0);
                             }
                             else
                             {
-                                uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f.alu_inst, 0);
+                                if(pAsm->bR6xx)
+                                {
+                                    uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f6.alu_inst, 0);
+                                }
+                                else
+                                {
+                                    uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f.alu_inst, 0);
+                                }
                             }
                             if(2 == uNumSrc)
                             {   /* 2 srcs */
@@ -6154,7 +7522,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
     }
     if(uNumValidSrc > 0)
     {
-        prelude_cf_ptr     = pAsm->cf_current_alu_clause_ptr;
+        prelude_cf_ptr     = (R700ControlFlowGenericClause*) pAsm->cf_current_alu_clause_ptr;
         pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     }
 
@@ -6274,7 +7642,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
 
         next_ins(pAsm);        
 
-        pAsm->callers[pAsm->unCallerArrayPointer - 1].finale_cf_ptr  = pAsm->cf_current_alu_clause_ptr;
+        pAsm->callers[pAsm->unCallerArrayPointer - 1].finale_cf_ptr  = (R700ControlFlowGenericClause*) pAsm->cf_current_alu_clause_ptr;
         pAsm->callers[pAsm->unCallerArrayPointer - 1].prelude_cf_ptr = prelude_cf_ptr;
         pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     }
@@ -6298,8 +7666,6 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
                          GLuint starting_register_number,
                          GLboolean is_depth_export)
 {
-    unsigned char ucWriteMask;
-
     check_current_clause(pAsm, CF_EMPTY_CLAUSE);
     check_current_clause(pAsm, CF_EXPORT_CLAUSE); //alloc the cf_current_export_clause_ptr
 
@@ -6338,51 +7704,61 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     pAsm->cf_current_export_clause_ptr->m_Word0.f.index_gpr   = 0x0;
     pAsm->cf_current_export_clause_ptr->m_Word0.f.elem_size   = 0x3; 
 
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.burst_count      = (export_count - 1);
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_EXPORT;  // _DONE
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
-    pAsm->cf_current_export_clause_ptr->m_Word1.f.barrier          = 0x1;
+    if(8 == pAsm->unAsic)
+    {
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 (export_count - 1),
+                 EG_CF_ALLOC_EXPORT_WORD1__BURST_COUNT_shift,
+                 EG_CF_ALLOC_EXPORT_WORD1__BURST_COUNT_mask);
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_ALLOC_EXPORT_WORD1__EOP_shift,
+                 EG_CF_ALLOC_EXPORT_WORD1__EOP_bit);
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_ALLOC_EXPORT_WORD1__VPM_shift,
+                 EG_CF_ALLOC_EXPORT_WORD1__VPM_bit);
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 EG_CF_INST_EXPORT,
+                 EG_CF_WORD1__CF_INST_shift, 
+                 EG_CF_WORD1__CF_INST_mask);
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 0,
+                 EG_CF_ALLOC_EXPORT_WORD1__MARK_shift,
+                 EG_CF_ALLOC_EXPORT_WORD1__MARK_bit);
+        SETfield(pAsm->cf_current_export_clause_ptr->m_Word1.val, 
+                 1,
+                 EG_CF_ALLOC_EXPORT_WORD1__BARRIER_shift,
+                 EG_CF_ALLOC_EXPORT_WORD1__BARRIER_bit);
+    }
+    else
+    {
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.burst_count      = (export_count - 1);
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.end_of_program   = 0x0;
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_EXPORT;  // _DONE
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
+        pAsm->cf_current_export_clause_ptr->m_Word1.f.barrier          = 0x1;
+    }
 
     if (export_count == 1) 
     {
-        ucWriteMask = pAsm->pucOutMask[starting_register_number - pAsm->starting_export_register_number];
+        assert(starting_register_number >= pAsm->starting_export_register_number);
+
 	/* exports Z as a float into Red channel */
 	if (GL_TRUE == is_depth_export)
-	    ucWriteMask = 0x1;
-
-        if( (ucWriteMask & 0x1) != 0)
+        {
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_Z;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_MASK;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_MASK;
+            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_MASK;
+        }
+        else
         {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_X;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_x = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>1) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_Y;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>2) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_Z;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_MASK;
-        }
-        if( ((ucWriteMask>>3) & 0x1) != 0)
-        {
             pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_W;
-        }
-        else
-        {
-            pAsm->cf_current_export_clause_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_MASK;
         }
     }
     else 
@@ -6399,92 +7775,51 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     return GL_TRUE;
 }
 
-GLboolean Move_Depth_Exports_To_Correct_Channels(r700_AssemblerBase *pAsm, BITS depth_channel_select)
-{
-	gl_inst_opcode Opcode_save = pAsm->pILInst[pAsm->uiCurInst].Opcode; //Should be OPCODE_END
-    pAsm->pILInst[pAsm->uiCurInst].Opcode = OPCODE_MOV;
-
-    // MOV depth_export_register.hw_depth_channel, depth_export_register.depth_channel_select
-
-    pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
-
-    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg   = pAsm->depth_export_register_number;
-
-    pAsm->D.dst.writex = 1;   // depth          goes in R channel for HW                       
-
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    pAsm->S[0].src.rtype = DST_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = pAsm->depth_export_register_number;
-
-    setswizzle_PVSSRC(&(pAsm->S[0].src), depth_channel_select);
-
-    noneg_PVSSRC(&(pAsm->S[0].src));
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    pAsm->pILInst[pAsm->uiCurInst].Opcode = Opcode_save;
-
-    return GL_TRUE;
-}
- 
 GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
                                    GLbitfield          OutputsWritten)  
 { 
     unsigned int unBit;
     GLuint export_count = 0;
+    unsigned int i;
 
-    if(pR700AsmCode->depth_export_register_number >= 0) 
+    for (i = 0; i < FRAG_RESULT_MAX; ++i)
     {
-        if( GL_FALSE == Move_Depth_Exports_To_Correct_Channels(pR700AsmCode, SQ_SEL_Z) )  // depth
-		{
-			return GL_FALSE;
-		}
+        unBit = 1 << i;
+
+        if (OutputsWritten & unBit)
+        {
+            GLboolean is_depth = i == FRAG_RESULT_DEPTH ? GL_TRUE : GL_FALSE;
+            if (!Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, pR700AsmCode->uiFP_OutputMap[i], is_depth))
+                return GL_FALSE;
+            ++export_count;
+        }
     }
 
-    unBit = 1 << FRAG_RESULT_COLOR;
-	if(OutputsWritten & unBit)
-	{
-		if( GL_FALSE == Process_Export(pR700AsmCode,
-                                       SQ_EXPORT_PIXEL, 
-                                       0, 
-                                       1, 
-                                       pR700AsmCode->uiFP_OutputMap[FRAG_RESULT_COLOR], 
-                                       GL_FALSE) ) 
-        {
-            return GL_FALSE;
-        }
-        export_count++;
-	}
-	unBit = 1 << FRAG_RESULT_DEPTH;
-	if(OutputsWritten & unBit)
-	{
-        if( GL_FALSE == Process_Export(pR700AsmCode,
-                                       SQ_EXPORT_PIXEL, 
-                                       0, 
-                                       1, 
-                                       pR700AsmCode->uiFP_OutputMap[FRAG_RESULT_DEPTH], 
-                                       GL_TRUE)) 
-        {
-            return GL_FALSE;
-        }
-        export_count++;
-	}
     /* Need to export something, otherwise we'll hang
      * results are undefined anyway */
     if(export_count == 0)
     {
-        Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, 0, GL_FALSE);
+        Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, pR700AsmCode->starting_export_register_number, GL_FALSE);
     }
     
     if(pR700AsmCode->cf_last_export_ptr != NULL) 
     {
-        pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst        = SQ_CF_INST_EXPORT_DONE;
-        pR700AsmCode->cf_last_export_ptr->m_Word1.f.end_of_program = 0x1;
+        if(8 == pR700AsmCode->unAsic)
+        {            
+            SETfield(pR700AsmCode->cf_last_export_ptr->m_Word1.val, 
+                     1,
+                     EG_CF_ALLOC_EXPORT_WORD1__EOP_shift,
+                     EG_CF_ALLOC_EXPORT_WORD1__EOP_bit);            
+            SETfield(pR700AsmCode->cf_last_export_ptr->m_Word1.val, 
+                     EG_CF_INST_EXPORT_DONE,
+                     EG_CF_WORD1__CF_INST_shift, 
+                     EG_CF_WORD1__CF_INST_mask);
+        }
+        else
+        {
+            pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst        = SQ_CF_INST_EXPORT_DONE;
+            pR700AsmCode->cf_last_export_ptr->m_Word1.f.end_of_program = 0x1;
+        }
     }
 
     return GL_TRUE;
@@ -6530,7 +7865,17 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
         export_count--;
     }
 
-    pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
+    if(8 == pR700AsmCode->unAsic)
+    {                                   
+        SETfield(pR700AsmCode->cf_last_export_ptr->m_Word1.val, 
+                 EG_CF_INST_EXPORT_DONE,
+                 EG_CF_WORD1__CF_INST_shift, 
+                 EG_CF_WORD1__CF_INST_mask);
+    }
+    else
+    {
+        pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
+    }
 
 
     pR700AsmCode->number_of_exports = export_count;
@@ -6625,7 +7970,17 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
     // At least one param should be exported
     if (export_count) 
     {
-        pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;    
+        if(8 == pR700AsmCode->unAsic)
+        {                                   
+            SETfield(pR700AsmCode->cf_last_export_ptr->m_Word1.val, 
+                     EG_CF_INST_EXPORT_DONE,
+                     EG_CF_WORD1__CF_INST_shift, 
+                     EG_CF_WORD1__CF_INST_mask);
+        }
+        else
+        {
+            pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;    
+        }
     }
     else
     {
@@ -6643,7 +7998,17 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
         pR700AsmCode->cf_last_export_ptr->m_Word1_SWIZ.f.sel_y = SQ_SEL_0;
         pR700AsmCode->cf_last_export_ptr->m_Word1_SWIZ.f.sel_z = SQ_SEL_0;
         pR700AsmCode->cf_last_export_ptr->m_Word1_SWIZ.f.sel_w = SQ_SEL_1;
-        pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
+        if(8 == pR700AsmCode->unAsic)
+        {                                   
+            SETfield(pR700AsmCode->cf_last_export_ptr->m_Word1.val, 
+                     EG_CF_INST_EXPORT_DONE,
+                     EG_CF_WORD1__CF_INST_shift, 
+                     EG_CF_WORD1__CF_INST_mask);
+        }
+        else
+        {
+            pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
+        }
     }
 
     pR700AsmCode->cf_last_export_ptr->m_Word1.f.end_of_program = 0x1;
@@ -6653,21 +8018,27 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
 
 GLboolean Clean_Up_Assembler(r700_AssemblerBase *pR700AsmCode)
 {
-    FREE(pR700AsmCode->pucOutMask);
-    FREE(pR700AsmCode->pInstDeps);
+    if(NULL != pR700AsmCode->pInstDeps)
+    {
+        FREE(pR700AsmCode->pInstDeps);
+        pR700AsmCode->pInstDeps = NULL;
+    }
 
     if(NULL != pR700AsmCode->subs)
     {
         FREE(pR700AsmCode->subs);
+        pR700AsmCode->subs = NULL;
     }
     if(NULL != pR700AsmCode->callers)
     {
         FREE(pR700AsmCode->callers);
+        pR700AsmCode->callers = NULL;
     }
 
     if(NULL != pR700AsmCode->presubs)
     {
         FREE(pR700AsmCode->presubs);
+         pR700AsmCode->presubs = NULL;
     }
 
     return GL_TRUE;

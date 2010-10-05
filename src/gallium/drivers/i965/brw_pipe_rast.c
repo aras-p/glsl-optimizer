@@ -42,7 +42,7 @@ calculate_clip_key_rast( const struct brw_context *brw,
 
    key->do_flat_shading = templ->flatshade;
 
-   if (templ->cull_mode == PIPE_WINDING_BOTH) {
+   if (templ->cull_face == PIPE_FACE_FRONT_AND_BACK) {
       key->clip_mode = BRW_CLIPMODE_REJECT_ALL;
       return;
    }
@@ -50,12 +50,18 @@ calculate_clip_key_rast( const struct brw_context *brw,
    key->fill_ccw = CLIP_CULL;
    key->fill_cw = CLIP_CULL;
 
-   if (!(templ->cull_mode & PIPE_WINDING_CCW)) {
-      key->fill_ccw = translate_fill(templ->fill_ccw);
+   if (!(templ->cull_face & PIPE_FACE_FRONT)) {
+      if (templ->front_ccw)
+         key->fill_ccw = translate_fill(templ->fill_front);
+      else 
+         key->fill_cw = translate_fill(templ->fill_front);
    }
 
-   if (!(templ->cull_mode & PIPE_WINDING_CW)) {
-      key->fill_cw = translate_fill(templ->fill_cw);
+   if (!(templ->cull_face & PIPE_FACE_BACK)) {
+      if (templ->front_ccw)
+         key->fill_cw = translate_fill(templ->fill_back);
+      else 
+         key->fill_ccw = translate_fill(templ->fill_back);
    }
 
    if (key->fill_cw == CLIP_LINE ||
@@ -66,8 +72,29 @@ calculate_clip_key_rast( const struct brw_context *brw,
       key->clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
    }
 
-   key->offset_ccw = templ->offset_ccw;
-   key->offset_cw = templ->offset_cw;
+   switch (key->fill_cw) {
+   case CLIP_POINT:
+      key->offset_cw = templ->offset_point;
+      break;
+   case CLIP_LINE:
+      key->offset_cw = templ->offset_line;
+      break;
+   case CLIP_FILL:
+      key->offset_cw = templ->offset_tri;
+      break;
+   }
+
+   switch (key->fill_ccw) {
+   case CLIP_POINT:
+      key->offset_ccw = templ->offset_point;
+      break;
+   case CLIP_LINE:
+      key->offset_ccw = templ->offset_line;
+      break;
+   case CLIP_FILL:
+      key->offset_ccw = templ->offset_tri;
+      break;
+   }
 
    if (templ->light_twoside && key->fill_cw != CLIP_CULL) 
       key->copy_bfc_cw = 1;
@@ -111,12 +138,12 @@ static void *brw_create_rasterizer_state( struct pipe_context *pipe,
    /* Caclculate lookup value for WM IZ table.
     */
    if (templ->line_smooth) {
-      if (templ->fill_cw == PIPE_POLYGON_MODE_LINE &&
-	  templ->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      if (templ->fill_front == PIPE_POLYGON_MODE_LINE &&
+	  templ->fill_back == PIPE_POLYGON_MODE_LINE) {
 	 rast->unfilled_aa_line = AA_ALWAYS;
       }
-      else if (templ->fill_cw == PIPE_POLYGON_MODE_LINE ||
-	       templ->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      else if (templ->fill_front == PIPE_POLYGON_MODE_LINE ||
+	       templ->fill_back == PIPE_POLYGON_MODE_LINE) {
 	 rast->unfilled_aa_line = AA_SOMETIMES;
       }
       else {

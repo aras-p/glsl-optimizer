@@ -2,7 +2,7 @@
 
 TOP = .
 
-SUBDIRS = src progs
+SUBDIRS = src
 
 
 default: $(TOP)/configs/current
@@ -180,11 +180,16 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.9-devel
+VERSION=7.10-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
-DEMO_NAME = MesaDemos-$(VERSION)
 GLUT_NAME = MesaGLUT-$(VERSION)
+
+# This is part of MAIN_FILES
+MAIN_ES_FILES = \
+	$(DIRECTORY)/src/mesa/main/*.xml				\
+	$(DIRECTORY)/src/mesa/main/*.py					\
+	$(DIRECTORY)/src/mesa/main/*.dtd
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -219,13 +224,14 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
-	$(DIRECTORY)/include/VG/*.h					\
-	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
-	$(DIRECTORY)/src/glsl/*/Makefile				\
-	$(DIRECTORY)/src/glsl/*/*.[ch]					\
+	$(DIRECTORY)/src/glsl/*.[ch]					\
+	$(DIRECTORY)/src/glsl/*.[cly]pp					\
+	$(DIRECTORY)/src/glsl/README					\
+	$(DIRECTORY)/src/glsl/glcpp/*.[chly]				\
+	$(DIRECTORY)/src/glsl/glcpp/README				\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources.mak				\
@@ -233,18 +239,15 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/gl.pc.in					\
 	$(DIRECTORY)/src/mesa/osmesa.pc.in				\
 	$(DIRECTORY)/src/mesa/depend					\
+	$(MAIN_ES_FILES)						\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
-	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
-	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
-	$(DIRECTORY)/src/mesa/shader/Makefile				\
-	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
-	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
+	$(DIRECTORY)/src/mesa/program/*.[chly]				\
+	$(DIRECTORY)/src/mesa/program/*.cpp				\
+	$(DIRECTORY)/src/mesa/program/Makefile				\
+	$(DIRECTORY)/src/mesa/program/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
@@ -273,8 +276,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/glslcompiler/Makefile		\
-	$(DIRECTORY)/src/mesa/drivers/glslcompiler/glslcompiler.c	\
 	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/Makefile				\
@@ -283,30 +284,35 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/x86/rtasm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/x86-64/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86-64/Makefile				\
-	$(DIRECTORY)/progs/Makefile					\
-	$(DIRECTORY)/progs/util/README					\
-	$(DIRECTORY)/progs/util/*.[ch]					\
-	$(DIRECTORY)/progs/util/sampleMakefile				\
 	$(DIRECTORY)/windows/VC8/
 
-ES_FILES = \
+MAPI_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
 	$(DIRECTORY)/include/GLES2/*.h					\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.xml				\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.py				\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.dtd				\
-	$(DIRECTORY)/src/mesa/es/glapi/Makefile				\
-	$(DIRECTORY)/src/mesa/es/glapi/*.xml				\
-	$(DIRECTORY)/src/mesa/es/glapi/*.py				\
-	$(DIRECTORY)/src/mesa/es/state_tracker/*.[ch]			\
-	$(DIRECTORY)/src/mesa/es/main/*.[ch]				\
-	$(DIRECTORY)/src/mesa/es/main/*.xml				\
-	$(DIRECTORY)/src/mesa/es/main/*.py				\
-	$(DIRECTORY)/src/mesa/es/main/*.dtd				\
-	$(DIRECTORY)/src/mesa/es/Makefile				\
-	$(DIRECTORY)/src/mesa/es/sources.mak				\
+	$(DIRECTORY)/include/VG/*.h					\
+	$(DIRECTORY)/src/mapi/es?api/Makefile				\
+	$(DIRECTORY)/src/mapi/es?api/*.pc.in				\
+	$(DIRECTORY)/src/mapi/glapi/gen/Makefile			\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.xml				\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.py				\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.dtd				\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/Makefile			\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/*.xml			\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/*.py				\
+	$(DIRECTORY)/src/mapi/glapi/Makefile				\
+	$(DIRECTORY)/src/mapi/glapi/SConscript				\
+	$(DIRECTORY)/src/mapi/glapi/sources.mak				\
+	$(DIRECTORY)/src/mapi/glapi/*.[chS]				\
+	$(DIRECTORY)/src/mapi/mapi/mapi_abi.py				\
+	$(DIRECTORY)/src/mapi/mapi/sources.mak				\
+	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
+	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
+	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
+	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in				\
+	$(DIRECTORY)/src/mapi/vgapi/*.h
 
 EGL_FILES = \
+	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
@@ -314,6 +320,8 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
 	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/main/*.pc.in				\
+	$(DIRECTORY)/src/egl/main/*.def
 
 GALLIUM_FILES = \
 	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
@@ -321,22 +329,20 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/Makefile.template			\
 	$(DIRECTORY)/src/gallium/SConscript				\
 	$(DIRECTORY)/src/gallium/targets/Makefile.dri			\
-	$(DIRECTORY)/src/gallium/targets/Makefile.egl			\
+	$(DIRECTORY)/src/gallium/targets/Makefile.xorg			\
+	$(DIRECTORY)/src/gallium/targets/SConscript.dri			\
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
-	$(DIRECTORY)/src/gallium/*/*/Makefile.egl			\
-	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/auxiliary/gallivm/*.cpp		\
 	$(DIRECTORY)/src/gallium/*/*/*.py				\
 	$(DIRECTORY)/src/gallium/*/*/*.csv				\
 	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
-	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
-	$(DIRECTORY)/src/gallium/*/*/*/*/Makefile			\
-	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*/*.py
 
 
 DRI_FILES = \
@@ -352,6 +358,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*/Makefile			\
@@ -388,63 +395,6 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/glw.pc.in			\
 	$(DIRECTORY)/src/glw/depend
 
-GLEW_FILES = \
-	$(DIRECTORY)/include/GL/glew.h			\
-	$(DIRECTORY)/include/GL/glxew.h			\
-	$(DIRECTORY)/include/GL/wglew.h			\
-	$(DIRECTORY)/src/glew/*.c			\
-	$(DIRECTORY)/src/glew/Makefile			\
-	$(DIRECTORY)/src/glew/SConscript		\
-	$(DIRECTORY)/src/glew/LICENSE.txt
-
-DEMO_FILES = \
-	$(GLEW_FILES)					\
-	$(DIRECTORY)/progs/beos/*.cpp			\
-	$(DIRECTORY)/progs/beos/Makefile		\
-	$(DIRECTORY)/progs/images/*.rgb			\
-	$(DIRECTORY)/progs/images/*.rgba		\
-	$(DIRECTORY)/progs/demos/Makefile*		\
-	$(DIRECTORY)/progs/demos/descrip.mms		\
-	$(DIRECTORY)/progs/demos/*.[ch]			\
-	$(DIRECTORY)/progs/demos/*.cxx			\
-	$(DIRECTORY)/progs/demos/*.dat			\
-	$(DIRECTORY)/progs/demos/README			\
-	$(DIRECTORY)/progs/egl/eglut/Makefile		\
-	$(DIRECTORY)/progs/egl/eglut/*.[ch]		\
-	$(DIRECTORY)/progs/egl/opengl/Makefile		\
-	$(DIRECTORY)/progs/egl/opengl/*.[ch]		\
-	$(DIRECTORY)/progs/egl/opengles1/Makefile	\
-	$(DIRECTORY)/progs/egl/opengles1/*.[ch]		\
-	$(DIRECTORY)/progs/egl/opengles2/Makefile	\
-	$(DIRECTORY)/progs/egl/opengles2/*.[ch]		\
-	$(DIRECTORY)/progs/egl/openvg/Makefile		\
-	$(DIRECTORY)/progs/egl/openvg/*.[ch]		\
-	$(DIRECTORY)/progs/egl/openvg/*/Makefile	\
-	$(DIRECTORY)/progs/egl/openvg/*/*.[ch]		\
-	$(DIRECTORY)/progs/fbdev/Makefile		\
-	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
-	$(DIRECTORY)/progs/objviewer/*.[ch]		\
-	$(DIRECTORY)/progs/objviewer/*.obj		\
-	$(DIRECTORY)/progs/objviewer/*.mtl		\
-	$(DIRECTORY)/progs/objviewer/*.rgb		\
-	$(DIRECTORY)/progs/objviewer/Makefile		\
-	$(DIRECTORY)/progs/objviewer/README.txt		\
-	$(DIRECTORY)/progs/osdemos/Makefile		\
-	$(DIRECTORY)/progs/osdemos/*.c			\
-	$(DIRECTORY)/progs/xdemos/Makefile*		\
-	$(DIRECTORY)/progs/xdemos/*.[chf]		\
-	$(DIRECTORY)/progs/redbook/Makefile*		\
-	$(DIRECTORY)/progs/redbook/README		\
-	$(DIRECTORY)/progs/redbook/*.[ch]		\
-	$(DIRECTORY)/progs/samples/Makefile*		\
-	$(DIRECTORY)/progs/samples/README		\
-	$(DIRECTORY)/progs/samples/*.c			\
-	$(DIRECTORY)/progs/glsl/Makefile*		\
-	$(DIRECTORY)/progs/glsl/*.c			\
-	$(DIRECTORY)/progs/glsl/*.frag			\
-	$(DIRECTORY)/progs/glsl/*.vert			\
-	$(DIRECTORY)/progs/glsl/*.shtest
-
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
 	$(DIRECTORY)/include/GL/glutf90.h		\
@@ -467,6 +417,7 @@ DEPEND_FILES = \
 
 LIB_FILES = \
 	$(MAIN_FILES)		\
+	$(MAPI_FILES)		\
 	$(ES_FILES)		\
 	$(EGL_FILES)		\
 	$(GALLIUM_FILES)	\
@@ -476,8 +427,8 @@ LIB_FILES = \
 
 
 # Everything for new a Mesa release:
-tarballs: rm_depend configure aclocal.m4 lib_gz demo_gz glut_gz \
-	lib_bz2 demo_bz2 glut_bz2 lib_zip demo_zip glut_zip md5
+tarballs: rm_depend configure aclocal.m4 lib_gz glut_gz \
+	lib_bz2 glut_bz2 lib_zip glut_zip md5
 
 
 # Helper for autoconf builds
@@ -506,12 +457,6 @@ lib_gz: rm_config
 	gzip $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.gz $(DIRECTORY)
 
-demo_gz:
-	cd .. ; \
-	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) ; \
-	gzip $(DEMO_NAME).tar ; \
-	mv $(DEMO_NAME).tar.gz $(DIRECTORY)
-
 glut_gz:
 	cd .. ; \
 	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
@@ -523,12 +468,6 @@ lib_bz2: rm_config
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	bzip2 $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.bz2 $(DIRECTORY)
-
-demo_bz2:
-	cd .. ; \
-	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) ; \
-	bzip2 $(DEMO_NAME).tar ; \
-	mv $(DEMO_NAME).tar.bz2 $(DIRECTORY)
 
 glut_bz2:
 	cd .. ; \
@@ -542,12 +481,6 @@ lib_zip: rm_config
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
-demo_zip:
-	rm -f $(DEMO_NAME).zip ; \
-	cd .. ; \
-	zip -qr $(DEMO_NAME).zip $(DEMO_FILES) ; \
-	mv $(DEMO_NAME).zip $(DIRECTORY)
-
 glut_zip:
 	rm -f $(GLUT_NAME).zip ; \
 	cd .. ; \
@@ -558,14 +491,11 @@ md5:
 	@-md5sum $(LIB_NAME).tar.gz
 	@-md5sum $(LIB_NAME).tar.bz2
 	@-md5sum $(LIB_NAME).zip
-	@-md5sum $(DEMO_NAME).tar.gz
-	@-md5sum $(DEMO_NAME).tar.bz2
-	@-md5sum $(DEMO_NAME).zip
 	@-md5sum $(GLUT_NAME).tar.gz
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
 
 .PHONY: tarballs rm_depend rm_config md5 \
-	lib_gz demo_gz glut_gz \
-	lib_bz2 demo_bz2 glut_bz2 \
-	lib_zip demo_zip glut_zip
+	lib_gz glut_gz \
+	lib_bz2 glut_bz2 \
+	lib_zip glut_zip

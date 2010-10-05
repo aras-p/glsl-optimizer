@@ -40,7 +40,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "mtypes.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 
 
@@ -331,6 +331,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       struct gl_texture_object *oldTex = *ptr;
 
       ASSERT(valid_texture_object(oldTex));
+      (void) valid_texture_object; /* silence warning in release builds */
 
       _glthread_LOCK_MUTEX(oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
@@ -416,7 +417,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
     */
    if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       char s[100];
-      sprintf(s, "base level = %d is invalid", baseLevel);
+      _mesa_snprintf(s, sizeof(s), "base level = %d is invalid", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;
@@ -425,7 +426,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       char s[100];
-      sprintf(s, "Image[baseLevel=%d] == NULL", baseLevel);
+      _mesa_snprintf(s, sizeof(s), "Image[baseLevel=%d] == NULL", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;

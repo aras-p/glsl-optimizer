@@ -31,19 +31,12 @@
 #ifndef CLIP_H
 #define CLIP_H
 
-#include "mtypes.h"
+#include "glheader.h"
 
 extern void GLAPIENTRY 
 _mesa_ClipPlane( GLenum plane, const GLdouble *equation );
 
 extern void GLAPIENTRY 
 _mesa_GetClipPlane( GLenum plane, GLdouble *equation );
-
-extern void GLAPIENTRY 
-_mesa_CullParameterfvEXT (GLenum cap, GLfloat *v);
-
-extern void GLAPIENTRY 
-_mesa_CullParameterdvEXT (GLenum cap, GLdouble *v);
-
 
 #endif

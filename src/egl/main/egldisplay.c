@@ -15,6 +15,62 @@
 
 
 /**
+ * Return the native platform by parsing EGL_PLATFORM.
+ */
+static _EGLPlatformType
+_eglGetNativePlatformFromEnv(void)
+{
+   /* map --with-egl-platforms names to platform types */
+   static const struct {
+      _EGLPlatformType platform;
+      const char *name;
+   } egl_platforms[_EGL_NUM_PLATFORMS] = {
+      { _EGL_PLATFORM_WINDOWS, "gdi" },
+      { _EGL_PLATFORM_X11, "x11" },
+      { _EGL_PLATFORM_DRM, "drm" },
+      { _EGL_PLATFORM_FBDEV, "fbdev" }
+   };
+   _EGLPlatformType plat = _EGL_INVALID_PLATFORM;
+   const char *plat_name;
+   EGLint i;
+
+   plat_name = getenv("EGL_PLATFORM");
+   /* try deprecated env variable */
+   if (!plat_name || !plat_name[0])
+      plat_name = getenv("EGL_DISPLAY");
+   if (!plat_name || !plat_name[0])
+      return _EGL_INVALID_PLATFORM;
+
+   for (i = 0; i < _EGL_NUM_PLATFORMS; i++) {
+      if (strcmp(egl_platforms[i].name, plat_name) == 0) {
+         plat = egl_platforms[i].platform;
+         break;
+      }
+   }
+
+   return plat;
+}
+
+
+/**
+ * Return the native platform.  It is the platform of the EGL native types.
+ */
+_EGLPlatformType
+_eglGetNativePlatform(void)
+{
+   static _EGLPlatformType native_platform = _EGL_INVALID_PLATFORM;
+
+   if (native_platform == _EGL_INVALID_PLATFORM) {
+      native_platform = _eglGetNativePlatformFromEnv();
+      if (native_platform == _EGL_INVALID_PLATFORM)
+         native_platform = _EGL_NATIVE_PLATFORM;
+   }
+
+   return native_platform;
+}
+
+
+/**
  * Finish display management.
  */
 void
@@ -49,16 +105,19 @@ _eglFiniDisplay(void)
  * new one.
  */
 _EGLDisplay *
-_eglFindDisplay(EGLNativeDisplayType nativeDisplay)
+_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
 {
    _EGLDisplay *dpy;
+
+   if (plat == _EGL_INVALID_PLATFORM)
+      return NULL;
 
    _eglLockMutex(_eglGlobal.Mutex);
 
    /* search the display list first */
    dpy = _eglGlobal.DisplayList;
    while (dpy) {
-      if (dpy->NativeDisplay == nativeDisplay)
+      if (dpy->Platform == plat && dpy->PlatformDisplay == plat_dpy)
          break;
       dpy = dpy->Next;
    }
@@ -68,7 +127,8 @@ _eglFindDisplay(EGLNativeDisplayType nativeDisplay)
       dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
       if (dpy) {
          _eglInitMutex(&dpy->Mutex);
-         dpy->NativeDisplay = nativeDisplay;
+         dpy->Platform = plat;
+         dpy->PlatformDisplay = plat_dpy;
 
          /* add to the display list */ 
          dpy->Next = _eglGlobal.DisplayList;
@@ -119,15 +179,9 @@ _eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *display)
 void
 _eglCleanupDisplay(_EGLDisplay *disp)
 {
-   EGLint i;
-
    if (disp->Configs) {
-      for (i = 0; i < disp->NumConfigs; i++)
-         free(disp->Configs[i]);
-      free(disp->Configs);
+      _eglDestroyArray(disp->Configs, free);
       disp->Configs = NULL;
-      disp->NumConfigs = 0;
-      disp->MaxConfigs = 0;
    }
 
    /* XXX incomplete */

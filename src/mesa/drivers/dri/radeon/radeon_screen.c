@@ -52,7 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tex.h"
 #elif defined(RADEON_R200)
 #include "r200_context.h"
-#include "r200_ioctl.h"
 #include "r200_tex.h"
 #elif defined(RADEON_R300)
 #include "r300_context.h"
@@ -214,6 +213,10 @@ static const GLuint __driNConfigOptions = 17;
 
 static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
+#ifndef RADEON_INFO_TILE_CONFIG
+#define RADEON_INFO_TILE_CONFIG 0x6
+#endif
+
 static int
 radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
@@ -232,6 +235,9 @@ radeonGetParam(__DRIscreen *sPriv, int param, void *value)
           break;
       case RADEON_PARAM_NUM_Z_PIPES:
           info.request = RADEON_INFO_NUM_Z_PIPES;
+          break;
+      case RADEON_INFO_TILE_CONFIG:
+	  info.request = RADEON_INFO_TILE_CONFIG;
           break;
       default:
           return -EINVAL;
@@ -338,12 +344,6 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
 #endif
 
 #if defined(RADEON_R200)
-static const __DRIallocateExtension r200AllocateExtension = {
-    { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
-    r200AllocateMemoryMESA,
-    r200FreeMemoryMESA,
-    r200GetMemoryOffsetMESA
-};
 
 static const __DRItexOffsetExtension r200texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
@@ -382,6 +382,21 @@ static const __DRItexBufferExtension r600TexBufferExtension = {
    r600SetTexBuffer2, /* +r6/r7 */
 };
 #endif
+
+static void
+radeonDRI2Flush(__DRIdrawable *drawable)
+{
+    radeonContextPtr rmesa;
+
+    rmesa = (radeonContextPtr) drawable->driContextPriv->driverPrivate;
+    radeonFlush(rmesa->glCtx);
+}
+
+static const struct __DRI2flushExtensionRec radeonFlushExtension = {
+    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+    radeonDRI2Flush,
+    dri2InvalidateDrawable,
+};
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
@@ -901,6 +916,61 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
+    case PCI_CHIP_CEDAR_68E0:
+    case PCI_CHIP_CEDAR_68E1:
+    case PCI_CHIP_CEDAR_68E4:
+    case PCI_CHIP_CEDAR_68E5:
+    case PCI_CHIP_CEDAR_68E8:
+    case PCI_CHIP_CEDAR_68E9:
+    case PCI_CHIP_CEDAR_68F1:
+    case PCI_CHIP_CEDAR_68F8:
+    case PCI_CHIP_CEDAR_68F9:
+    case PCI_CHIP_CEDAR_68FE:
+       screen->chip_family = CHIP_FAMILY_CEDAR;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+    case PCI_CHIP_REDWOOD_68C0:
+    case PCI_CHIP_REDWOOD_68C1:
+    case PCI_CHIP_REDWOOD_68C8:
+    case PCI_CHIP_REDWOOD_68C9:
+    case PCI_CHIP_REDWOOD_68D8:
+    case PCI_CHIP_REDWOOD_68D9:
+    case PCI_CHIP_REDWOOD_68DA:
+    case PCI_CHIP_REDWOOD_68DE:
+       screen->chip_family = CHIP_FAMILY_REDWOOD;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+    case PCI_CHIP_JUNIPER_68A0:
+    case PCI_CHIP_JUNIPER_68A1:
+    case PCI_CHIP_JUNIPER_68A8:
+    case PCI_CHIP_JUNIPER_68A9:
+    case PCI_CHIP_JUNIPER_68B0:
+    case PCI_CHIP_JUNIPER_68B8:
+    case PCI_CHIP_JUNIPER_68B9:
+    case PCI_CHIP_JUNIPER_68BE:
+       screen->chip_family = CHIP_FAMILY_JUNIPER;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+    case PCI_CHIP_CYPRESS_6880:
+    case PCI_CHIP_CYPRESS_6888:
+    case PCI_CHIP_CYPRESS_6889:
+    case PCI_CHIP_CYPRESS_688A:
+    case PCI_CHIP_CYPRESS_6898:
+    case PCI_CHIP_CYPRESS_6899:
+    case PCI_CHIP_CYPRESS_689E:
+       screen->chip_family = CHIP_FAMILY_CYPRESS;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+    case PCI_CHIP_HEMLOCK_689C:
+    case PCI_CHIP_HEMLOCK_689D:
+       screen->chip_family = CHIP_FAMILY_HEMLOCK;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      device_id);
@@ -1101,7 +1171,7 @@ radeonCreateScreen( __DRIscreen *sPriv )
             }
         }
         else
-        {
+        {            
             screen->fbLocation = (temp & 0xffff) << 16;
         }
    }
@@ -1209,7 +1279,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
 
    if ( screen->irq != 0 ) {
@@ -1222,9 +1291,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-      screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
@@ -1316,6 +1382,56 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
+   /* r6xx+ tiling */
+   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6)) {
+	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
+	   if (ret)
+		   fprintf(stderr, "failed to get tiling info\n");
+	   else {
+		   screen->tile_config = temp;
+		   screen->r7xx_bank_op = 0;
+		   switch((screen->tile_config & 0xe) >> 1) {
+		   case 0:
+			   screen->num_channels = 1;
+			   break;
+		   case 1:
+			   screen->num_channels = 2;
+			   break;
+		   case 2:
+			   screen->num_channels = 4;
+			   break;
+		   case 3:
+			   screen->num_channels = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad channels\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0x30) >> 4) {
+		   case 0:
+			   screen->num_banks = 4;
+			   break;
+		   case 1:
+			   screen->num_banks = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad banks\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0xc0) >> 6) {
+		   case 0:
+			   screen->group_bytes = 256;
+			   break;
+		   case 1:
+			   screen->group_bytes = 512;
+			   break;
+		   default:
+			   fprintf(stderr, "bad group_bytes\n");
+			   break;
+		   }
+	   }
+   }
+
    if (IS_R300_CLASS(screen)) {
        ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
        if (ret) {
@@ -1366,8 +1482,8 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
+   screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 
    if ( screen->irq != 0 ) {
        screen->extensions[i++] = &driSwapControlExtension.base;
@@ -1379,9 +1495,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-       screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 
@@ -1392,6 +1505,8 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #if defined(RADEON_R600)
    screen->extensions[i++] = &r600TexBufferExtension.base;
 #endif
+
+   screen->extensions[i++] = &radeonFlushExtension.base;
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;

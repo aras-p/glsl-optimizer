@@ -33,6 +33,7 @@
 
 #include "target-helpers/wrap_screen.h"
 #include "trace/tr_public.h"
+#include "rbug/rbug_public.h"
 #include "identity/id_public.h"
 #include "util/u_debug.h"
 
@@ -55,6 +56,9 @@ gallium_wrap_screen( struct pipe_screen *screen )
 
    /* Trace does its own checking if it should run */
    screen = trace_screen_create(screen);
+
+   /* Rbug does its own checking if it should run */
+   screen = rbug_screen_create(screen);
 
    return screen;
 }

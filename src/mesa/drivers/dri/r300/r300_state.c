@@ -49,8 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drivers/common/meta.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 

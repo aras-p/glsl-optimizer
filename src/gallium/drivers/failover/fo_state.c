@@ -125,6 +125,19 @@ failover_set_clip_state( struct pipe_context *pipe,
    failover->hw->set_clip_state( failover->hw, clip );
 }
 
+static void
+failover_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sample_mask = sample_mask;
+   failover->dirty |= FO_NEW_SAMPLE_MASK;
+   failover->sw->set_sample_mask( failover->sw, sample_mask );
+   failover->hw->set_sample_mask( failover->hw, sample_mask );
+
+}
+
 
 static void *
 failover_create_depth_stencil_state(struct pipe_context *pipe,
@@ -570,6 +583,23 @@ failover_set_vertex_buffers(struct pipe_context *pipe,
 }
 
 
+static void
+failover_set_index_buffer(struct pipe_context *pipe,
+                          const struct pipe_index_buffer *ib)
+{
+   struct failover_context *failover = failover_context(pipe);
+
+   if (ib)
+      memcpy(&failover->index_buffer, ib, sizeof(failover->index_buffer));
+   else
+      memset(&failover->index_buffer, 0, sizeof(failover->index_buffer));
+
+   failover->dirty |= FO_NEW_INDEX_BUFFER;
+   failover->sw->set_index_buffer( failover->sw, ib );
+   failover->hw->set_index_buffer( failover->hw, ib );
+}
+
+
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
@@ -614,6 +644,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_stencil_ref = failover_set_stencil_ref;
    failover->pipe.set_clip_state = failover_set_clip_state;
+   failover->pipe.set_sample_mask = failover_set_sample_mask;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
@@ -621,6 +652,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_vertex_sampler_views = failover_set_vertex_sampler_views;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffers = failover_set_vertex_buffers;
+   failover->pipe.set_index_buffer = failover_set_index_buffer;
    failover->pipe.set_constant_buffer = failover_set_constant_buffer;
    failover->pipe.create_sampler_view = failover_create_sampler_view;
    failover->pipe.sampler_view_destroy = failover_sampler_view_destroy;

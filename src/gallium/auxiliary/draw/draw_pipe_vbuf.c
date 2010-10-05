@@ -159,19 +159,8 @@ vbuf_tri( struct draw_stage *stage,
 
    check_space( vbuf, 3 );
 
-   if (vbuf->stage.draw->rasterizer->flatshade_first) {
-      /* Put provoking vertex in position expected by the driver.
-       * Emit last provoking vertex in first pos.
-       * Swap verts 0 & 1 to preserve polygon winding.
-       */
-      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[2] );
-      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[0] );
-      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[1] );
-   }
-   else {
-      for (i = 0; i < 3; i++) {
-         vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[i] );
-      }
+   for (i = 0; i < 3; i++) {
+      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[i] );
    }
 }
 
@@ -335,9 +324,9 @@ vbuf_flush_vertices( struct vbuf_stage *vbuf )
 
       if (vbuf->nr_indices) 
       {
-         vbuf->render->draw(vbuf->render, 
-                            vbuf->indices, 
-                            vbuf->nr_indices );
+         vbuf->render->draw_elements(vbuf->render, 
+                                     vbuf->indices, 
+                                     vbuf->nr_indices );
    
          vbuf->nr_indices = 0;
       }
@@ -363,9 +352,6 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
-
-   /* even number */
-   vbuf->max_vertices = vbuf->max_vertices & ~1;
 
    if(vbuf->max_vertices >= UNDEFINED_VERTEX_ID)
       vbuf->max_vertices = UNDEFINED_VERTEX_ID - 1;

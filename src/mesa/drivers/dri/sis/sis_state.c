@@ -37,6 +37,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 
 #include "main/context.h"
+#include "main/macros.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"

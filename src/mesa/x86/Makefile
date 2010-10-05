@@ -7,10 +7,10 @@ include $(TOP)/configs/current
 INCLUDE_DIRS = \
 	-I$(TOP)/include/GL \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I.. \
 	-I../main \
 	-I../math \
-	-I../glapi \
 	-I../tnl
 
 

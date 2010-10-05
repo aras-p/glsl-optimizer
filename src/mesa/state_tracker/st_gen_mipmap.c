@@ -39,9 +39,9 @@
 
 #include "st_debug.h"
 #include "st_context.h"
+#include "st_texture.h"
 #include "st_gen_mipmap.h"
 #include "st_cb_texture.h"
-#include "st_inlines.h"
 
 
 /**
@@ -79,10 +79,11 @@ st_render_mipmap(struct st_context *st,
    struct pipe_sampler_view *psv = st_get_texture_sampler_view(stObj, pipe);
    const uint face = _mesa_tex_target_to_face(target);
 
+   assert(psv->texture == stObj->pt);
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
+   if (!screen->is_format_supported(screen, psv->format, psv->texture->target, 0,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
       return FALSE;
    }
@@ -104,10 +105,32 @@ decompress_image(enum pipe_format format,
                  unsigned width, unsigned height)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint dst_stride = 4 * width;
+   const uint bw = util_format_get_blockwidth(format);
+   const uint bh = util_format_get_blockheight(format);
+   const uint dst_stride = 4 * MAX2(width, bw);
    const uint src_stride = util_format_get_stride(format, width);
 
    desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+
+   if (width < bw || height < bh) {
+      /* We're decompressing an image smaller than the compression
+       * block size.  We don't want garbage pixel values in the region
+       * outside (width x height) so replicate pixels from the (width
+       * x height) region to fill out the (bw x bh) block size.
+       */
+      uint x, y;
+      for (y = 0; y < bh; y++) {
+         for (x = 0; x < bw; x++) {
+            if (x >= width || y >= height) {
+               uint p = (y * bw + x) * 4;
+               dst[p + 0] = dst[0];
+               dst[p + 1] = dst[1];
+               dst[p + 2] = dst[2];
+               dst[p + 3] = dst[3];
+            }
+         }
+      }
+   }
 }
 
 
@@ -176,13 +199,13 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       ubyte *dstData;
       int srcStride, dstStride;
 
-      srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
 						srcLevel, zslice,
 						PIPE_TRANSFER_READ, 0, 0,
                                                 srcWidth, srcHeight);
 						
 
-      dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
 						dstLevel, zslice,
 						PIPE_TRANSFER_WRITE, 0, 0,
 						dstWidth, dstHeight);
@@ -221,7 +244,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                      dstWidth2); /* stride in texels */
 
          /* compress the new image: dstTemp -> dstData */
-         compress_image(format, dstTemp, dstData, dstWidth2, dstHeight2);
+         compress_image(format, dstTemp, dstData, dstWidth, dstHeight);
 
          free(srcTemp);
          free(dstTemp);
@@ -261,7 +284,6 @@ compute_num_levels(GLcontext *ctx,
       return 1;
    }
    else {
-      const GLuint maxLevels = texObj->MaxLevel - texObj->BaseLevel + 1;
       const struct gl_texture_image *baseImage = 
          _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
       GLuint size, numLevels;
@@ -269,14 +291,16 @@ compute_num_levels(GLcontext *ctx,
       size = MAX2(baseImage->Width2, baseImage->Height2);
       size = MAX2(size, baseImage->Depth2);
 
-      numLevels = 0;
+      numLevels = texObj->BaseLevel;
 
       while (size > 0) {
          numLevels++;
          size >>= 1;
       }
 
-      numLevels = MIN2(numLevels, maxLevels);
+      numLevels = MIN2(numLevels, texObj->MaxLevel + 1);
+
+      assert(numLevels >= 1);
 
       return numLevels;
    }
@@ -300,7 +324,11 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    if (!pt)
       return;
 
-   /* find expected last mipmap level */
+   /* not sure if this ultimately actually should work,
+      but we're not supporting multisampled textures yet. */
+   assert(pt->nr_samples < 2);
+
+   /* find expected last mipmap level to generate*/
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
    if (lastLevel == 0)
@@ -311,7 +339,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
        * mipmap levels we need to generate.  So allocate a new texture.
        */
       struct pipe_resource *oldTex = stObj->pt;
-      GLboolean needFlush;
 
       /* create new texture with space for more levels */
       stObj->pt = st_texture_create(st,
@@ -331,7 +358,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* This will copy the old texture's base image into the new texture
        * which we just allocated.
        */
-      st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
+      st_finalize_texture(ctx, st->pipe, texObj);
 
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);
@@ -340,12 +367,12 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       pt = stObj->pt;
    }
 
-   assert(lastLevel <= pt->last_level);
+   assert(pt->last_level >= lastLevel);
 
-   /* Recall that the Mesa BaseLevel image is stored in the gallium
-    * texture's level[0] position.  So pass baseLevel=0 here.
+   /* Try to generate the mipmap by rendering/texturing.  If that fails,
+    * use the software fallback.
     */
-   if (!st_render_mipmap(st, target, stObj, 0, lastLevel)) {
+   if (!st_render_mipmap(st, target, stObj, baseLevel, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 

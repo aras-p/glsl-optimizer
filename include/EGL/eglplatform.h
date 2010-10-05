@@ -80,6 +80,14 @@ typedef void *EGLNativePixmapType;
 
 #elif defined(__unix__) || defined(__unix)
 
+#ifdef MESA_EGL_NO_X11_HEADERS
+
+typedef void            *EGLNativeDisplayType;
+typedef khronos_uint32_t EGLNativePixmapType;
+typedef khronos_uint32_t EGLNativeWindowType;
+
+#else
+
 /* X11 (tentative)  */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -87,6 +95,8 @@ typedef void *EGLNativePixmapType;
 typedef Display *EGLNativeDisplayType;
 typedef Pixmap   EGLNativePixmapType;
 typedef Window   EGLNativeWindowType;
+
+#endif /* MESA_EGL_NO_X11_HEADERS */
 
 #else
 #error "Platform not recognized"

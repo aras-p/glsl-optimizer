@@ -170,58 +170,42 @@ static void do_triangle( struct draw_context *draw,
  * Set up macros for draw_pt_decompose.h template code.
  * This code uses vertex indexes / elements.
  */
-#define QUAD(i0,i1,i2,i3)                       \
-   do_triangle( draw,                           \
-                ( DRAW_PIPE_RESET_STIPPLE |     \
-                  DRAW_PIPE_EDGE_FLAG_0 |       \
-                  DRAW_PIPE_EDGE_FLAG_2 ),      \
-                verts + stride * elts[i0],      \
-                verts + stride * elts[i1],      \
-                verts + stride * elts[i3]);     \
-   do_triangle( draw,                           \
-                ( DRAW_PIPE_EDGE_FLAG_0 |       \
-                  DRAW_PIPE_EDGE_FLAG_1 ),      \
-                verts + stride * elts[i1],      \
-                verts + stride * elts[i2],      \
-                verts + stride * elts[i3])
 
-#define TRIANGLE(flags,i0,i1,i2)                                        \
-   do_triangle( draw,                                                   \
-                elts[i0],  /* flags */                                  \
-                verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
-                verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK),     \
-                verts + stride * (elts[i2] & ~DRAW_PIPE_FLAG_MASK) );
+#define TRIANGLE(flags,i0,i1,i2)                                  \
+   do {                                                           \
+      do_triangle( draw,                                          \
+                   flags,                                         \
+                   verts + stride * (i0),                         \
+                   verts + stride * (i1),                         \
+                   verts + stride * (i2) );                       \
+   } while (0)
 
-#define LINE(flags,i0,i1)                                       \
-   do_line( draw,                                               \
-            elts[i0],                                           \
-            verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK) );
+#define LINE(flags,i0,i1)                                         \
+   do {                                                           \
+      do_line( draw,                                              \
+               flags,                                             \
+               verts + stride * (i0),                             \
+               verts + stride * (i1) );                           \
+   } while (0)
 
 #define POINT(i0)                               \
-   do_point( draw,                              \
-             verts + stride * elts[i0] )
+   do {                                         \
+      do_point( draw, verts + stride * (i0) );  \
+   } while (0)
 
-#define FUNC pipe_run
-#define ARGS                                    \
+#define GET_ELT(idx) (elts[idx])
+
+#define FUNC pipe_run_elts
+#define FUNC_VARS                               \
     struct draw_context *draw,                  \
     unsigned prim,                              \
+    unsigned prim_flags,                        \
     struct vertex_header *vertices,             \
     unsigned stride,                            \
-    const ushort *elts
-
-#define LOCAL_VARS                                           \
-   char *verts = (char *)vertices;                           \
-   boolean flatfirst = (draw->rasterizer->flatshade &&       \
-                        draw->rasterizer->flatshade_first);  \
-   unsigned i;                                               \
-   ushort flags
-
-#define FLUSH
+    const ushort *elts,                         \
+    unsigned count
 
 #include "draw_pt_decompose.h"
-#undef ARGS
-#undef LOCAL_VARS
 
 
 
@@ -238,78 +222,84 @@ static void do_triangle( struct draw_context *draw,
  * draw_vbuf.c code uses when it has to perform a flush.
  */
 void draw_pipeline_run( struct draw_context *draw,
-                        unsigned prim,
-                        struct vertex_header *vertices,
-                        unsigned vertex_count,
-                        unsigned stride,
-                        const ushort *elts,
-                        unsigned count )
+                        const struct draw_vertex_info *vert_info,
+                        const struct draw_prim_info *prim_info)
 {
-   char *verts = (char *)vertices;
+   unsigned i, start;
 
-   draw->pipeline.verts = verts;
-   draw->pipeline.vertex_stride = stride;
-   draw->pipeline.vertex_count = vertex_count;
-   
-   pipe_run(draw, prim, vertices, stride, elts, count);
-   
+   draw->pipeline.verts = (char *)vert_info->verts;
+   draw->pipeline.vertex_stride = vert_info->stride;
+   draw->pipeline.vertex_count = vert_info->count;
+
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      const unsigned count = prim_info->primitive_lengths[i];
+
+#if DEBUG
+      /* Warn if one of the element indexes go outside the vertex buffer */
+      {
+         unsigned max_index = 0x0, i;
+         /* find the largest element index */
+         for (i = 0; i < count; i++) {
+            unsigned int index = prim_info->elts[start + i];
+            if (index > max_index)
+               max_index = index;
+         }
+         if (max_index >= vert_info->count) {
+            debug_printf("%s: max_index (%u) outside vertex buffer (%u)\n",
+                         __FUNCTION__,
+                         max_index,
+                         vert_info->count);
+         }
+      }
+#endif
+
+      pipe_run_elts(draw,
+                    prim_info->prim,
+                    prim_info->flags,
+                    vert_info->verts,
+                    vert_info->stride,
+                    prim_info->elts + start,
+                    count);
+   }
+
    draw->pipeline.verts = NULL;
    draw->pipeline.vertex_count = 0;
 }
 
 
-
 /*
  * Set up macros for draw_pt_decompose.h template code.
- * This code is for non-indexed rendering (no elts).
+ * This code is for non-indexed (aka linear) rendering (no elts).
  */
-#define QUAD(i0,i1,i2,i3)                                        \
-   do_triangle( draw,                                            \
-                ( DRAW_PIPE_RESET_STIPPLE |                      \
-                  DRAW_PIPE_EDGE_FLAG_0 |                        \
-                  DRAW_PIPE_EDGE_FLAG_2 ),                       \
-                verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1),                           \
-                verts + stride * (i3));                          \
-   do_triangle( draw,                                            \
-                ( DRAW_PIPE_EDGE_FLAG_0 |                        \
-                  DRAW_PIPE_EDGE_FLAG_1 ),                       \
-                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i2),                           \
-                verts + stride * (i3))
 
-#define TRIANGLE(flags,i0,i1,i2)                                 \
-   do_triangle( draw,                                            \
-                flags,  /* flags */                              \
-                verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1),                           \
-                verts + stride * (i2))
+#define TRIANGLE(flags,i0,i1,i2)       \
+   do_triangle( draw, flags,           \
+                verts + stride * (i0), \
+                verts + stride * (i1), \
+                verts + stride * (i2) )
 
-#define LINE(flags,i0,i1)                                   \
-   do_line( draw,                                           \
-            flags,                                          \
-            verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * (i1))
+#define LINE(flags,i0,i1)              \
+   do_line( draw, flags,               \
+            verts + stride * (i0),     \
+            verts + stride * (i1) )
 
-#define POINT(i0)                               \
-   do_point( draw,                              \
-             verts + stride * i0 )
+#define POINT(i0)                      \
+   do_point( draw, verts + stride * (i0) )
+
+
+#define GET_ELT(idx) (idx)
 
 #define FUNC pipe_run_linear
-#define ARGS                                    \
-    struct draw_context *draw,                  \
-    unsigned prim,                              \
-    struct vertex_header *vertices,             \
-    unsigned stride
-
-#define LOCAL_VARS                                           \
-   char *verts = (char *)vertices;                           \
-   boolean flatfirst = (draw->rasterizer->flatshade &&       \
-                        draw->rasterizer->flatshade_first);  \
-   unsigned i;                                               \
-   ushort flags
-
-#define FLUSH
+#define FUNC_VARS                      \
+    struct draw_context *draw,         \
+    unsigned prim,                     \
+    unsigned prim_flags,               \
+    struct vertex_header *vertices,    \
+    unsigned stride,                   \
+    unsigned count
 
 #include "draw_pt_decompose.h"
 
@@ -318,17 +308,32 @@ void draw_pipeline_run( struct draw_context *draw,
  * For drawing non-indexed primitives.
  */
 void draw_pipeline_run_linear( struct draw_context *draw,
-                               unsigned prim,
-                               struct vertex_header *vertices,
-                               unsigned count,
-                               unsigned stride )
+                               const struct draw_vertex_info *vert_info,
+                               const struct draw_prim_info *prim_info)
 {
-   char *verts = (char *)vertices;
-   draw->pipeline.verts = verts;
-   draw->pipeline.vertex_stride = stride;
-   draw->pipeline.vertex_count = count;
+   unsigned i, start;
 
-   pipe_run_linear(draw, prim, vertices, stride, count);
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      unsigned count = prim_info->primitive_lengths[i];
+      char *verts = ((char*)vert_info->verts) +
+                    (start * vert_info->stride);
+
+      draw->pipeline.verts = verts;
+      draw->pipeline.vertex_stride = vert_info->stride;
+      draw->pipeline.vertex_count = count;
+
+      assert(count <= vert_info->count);
+
+      pipe_run_linear(draw,
+                      prim_info->prim,
+                      prim_info->flags,
+                      (struct vertex_header*)verts,
+                      vert_info->stride,
+                      count);
+   }
 
    draw->pipeline.verts = NULL;
    draw->pipeline.vertex_count = 0;

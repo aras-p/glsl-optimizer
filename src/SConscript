@@ -1,12 +1,19 @@
 Import('*')
 
-SConscript('glsl/SConscript')
+if 'egl' in env['statetrackers']:
+    SConscript('mapi/vgapi/SConscript')
+    SConscript('egl/main/SConscript')
 
 if 'mesa' in env['statetrackers']:
+    if platform == 'windows':
+        SConscript('talloc/SConscript')
+
+    SConscript('glsl/SConscript')
+    SConscript('mapi/glapi/SConscript')
     SConscript('mesa/SConscript')
+
+    if platform != 'embedded':
+        SConscript('glut/glx/SConscript')
 
 SConscript('gallium/SConscript')
 
-if platform != 'embedded':
-    SConscript('glut/glx/SConscript')
-    SConscript('glew/SConscript')

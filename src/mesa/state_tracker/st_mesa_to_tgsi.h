@@ -30,8 +30,10 @@
 #define ST_MESA_TO_TGSI_H
 
 #include "main/mtypes.h"
-#include "tgsi/tgsi_ureg.h"
 
+#include "pipe/p_compiler.h"
+
+struct ureg_program;
 
 #if defined __cplusplus
 extern "C" {

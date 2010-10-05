@@ -14,7 +14,7 @@ struct nouveau_screen {
 	unsigned index_buffer_flags;
 };
 
-static inline struct nouveau_screen *
+static INLINE struct nouveau_screen *
 nouveau_screen(struct pipe_screen *pscreen)
 {
 	return (struct nouveau_screen *)pscreen;
@@ -67,13 +67,13 @@ void nouveau_screen_fini(struct nouveau_screen *);
 
 
 
-static __inline__ unsigned
+static INLINE unsigned
 RING_3D(unsigned mthd, unsigned size)
 {
 	return (7 << 13) | (size << 18) | mthd;
 }
 
-static __inline__ unsigned
+static INLINE unsigned
 RING_3D_NI(unsigned mthd, unsigned size)
 {
 	return 0x40000000 | (7 << 13) | (size << 18) | mthd;

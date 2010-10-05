@@ -31,6 +31,20 @@
 #include "nouveau_class.h"
 #include "nv04_driver.h"
 
+static GLboolean
+texunit_needs_combiners(struct gl_texture_unit *u)
+{
+	struct gl_texture_object *t = u->_Current;
+	struct gl_texture_image *ti = t->Image[0][t->BaseLevel];
+
+	return ti->TexFormat == MESA_FORMAT_A8 ||
+		ti->TexFormat == MESA_FORMAT_L8 ||
+		u->EnvMode == GL_COMBINE ||
+		u->EnvMode == GL_COMBINE4_NV ||
+		u->EnvMode == GL_BLEND ||
+		u->EnvMode == GL_ADD;
+}
+
 struct nouveau_grobj *
 nv04_context_engine(GLcontext *ctx)
 {
@@ -38,11 +52,14 @@ nv04_context_engine(GLcontext *ctx)
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
 	struct nouveau_grobj *fahrenheit;
 
-	if (ctx->Texture.Unit[0].EnvMode == GL_COMBINE ||
-	    ctx->Texture.Unit[0].EnvMode == GL_BLEND ||
-	    ctx->Texture.Unit[0].EnvMode == GL_ADD ||
+	if ((ctx->Texture.Unit[0]._ReallyEnabled &&
+	     texunit_needs_combiners(&ctx->Texture.Unit[0])) ||
 	    ctx->Texture.Unit[1]._ReallyEnabled ||
-	    ctx->Stencil.Enabled)
+	    ctx->Stencil.Enabled ||
+	    !(ctx->Color.ColorMask[0][RCOMP] &&
+	      ctx->Color.ColorMask[0][GCOMP] &&
+	      ctx->Color.ColorMask[0][BCOMP] &&
+	      ctx->Color.ColorMask[0][ACOMP]))
 		fahrenheit = hw->eng3dm;
 	else
 		fahrenheit = hw->eng3d;
@@ -76,15 +93,15 @@ nv04_channel_flush_notify(struct nouveau_channel *chan)
 	GLcontext *ctx = &nctx->base;
 
 	if (nctx->fallback < SWRAST) {
-		/* Flushing seems to clobber the engine context. */
+		nouveau_bo_state_emit(ctx);
+
+		/* Reemit the engine state. */
 		context_emit(ctx, TEX_OBJ0);
 		context_emit(ctx, TEX_OBJ1);
 		context_emit(ctx, TEX_ENV0);
 		context_emit(ctx, TEX_ENV1);
 		context_emit(ctx, CONTROL);
 		context_emit(ctx, BLEND);
-
-		nouveau_bo_state_emit(ctx);
 	}
 }
 
@@ -171,6 +188,7 @@ nv04_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 	hw->chan->flush_notify = nv04_channel_flush_notify;
 
 	/* GL constants. */
+	ctx->Const.MaxTextureLevels = 11;
 	ctx->Const.MaxTextureCoordUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureImageUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureUnits = NV04_TEXTURE_UNITS;

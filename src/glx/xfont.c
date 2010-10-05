@@ -212,9 +212,8 @@ isvalid(XFontStruct * fs, int which)
 }
 
 _X_HIDDEN void
-DRI_glXUseXFont(Font font, int first, int count, int listbase)
+DRI_glXUseXFont(struct glx_context *CC, Font font, int first, int count, int listbase)
 {
-   GLXContext CC;
    Display *dpy;
    Window win;
    Pixmap pixmap;
@@ -231,7 +230,6 @@ DRI_glXUseXFont(Font font, int first, int count, int listbase)
 
    int i;
 
-   CC = __glXGetCurrentContext();
    dpy = CC->currentDpy;
    win = CC->currentDrawable;
 

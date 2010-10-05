@@ -16,13 +16,20 @@
 #include <string.h>
 
 #include "egldisplay.h"
-#include "eglglobals.h"
 #include "eglcurrent.h"
 #include "eglmode.h"
 #include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglmutex.h"
+
+
+#ifdef EGL_MESA_screen_surface
+
+
+/* ugh, no atomic op? */
+static _EGL_DECLARE_MUTEX(_eglNextScreenHandleMutex);
+static EGLScreenMESA _eglNextScreenHandle = 1;
 
 
 /**
@@ -33,10 +40,10 @@ static EGLScreenMESA
 _eglAllocScreenHandle(void)
 {
    EGLScreenMESA s;
-   
-   _eglLockMutex(_eglGlobal.Mutex);
-   s = _eglGlobal.FreeScreenHandle++;
-   _eglUnlockMutex(_eglGlobal.Mutex);
+
+   _eglLockMutex(&_eglNextScreenHandleMutex);
+   s = _eglNextScreenHandle++;
+   _eglUnlockMutex(&_eglNextScreenHandleMutex);
 
    return s;
 }
@@ -62,9 +69,13 @@ _eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *display)
 {
    EGLint i;
 
-   for (i = 0; i < display->NumScreens; i++) {
-      if (display->Screens[i]->Handle == screen)
-         return display->Screens[i];
+   if (!display || !display->Screens)
+      return NULL;
+
+   for (i = 0; i < display->Screens->Size; i++) {
+      _EGLScreen *scr = (_EGLScreen *) display->Screens->Elements[i];
+      if (scr->Handle == screen)
+         return scr;
    }
    return NULL;
 }
@@ -76,40 +87,36 @@ _eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *display)
 void
 _eglAddScreen(_EGLDisplay *display, _EGLScreen *screen)
 {
-   EGLint n;
-
    assert(display);
    assert(screen);
 
+   if (!display->Screens) {
+      display->Screens = _eglCreateArray("Screen", 4);
+      if (!display->Screens)
+         return;
+   }
    screen->Handle = _eglAllocScreenHandle();
-   n = display->NumScreens;
-   display->Screens = realloc(display->Screens, (n+1) * sizeof(_EGLScreen *));
-   display->Screens[n] = screen;
-   display->NumScreens++;
+   _eglAppendArray(display->Screens, (void *) screen);
 }
 
+
+
+static EGLBoolean
+_eglFlattenScreen(void *elem, void *buffer)
+{
+   _EGLScreen *scr = (_EGLScreen *) elem;
+   EGLScreenMESA *handle = (EGLScreenMESA *) buffer;
+   *handle = scr->Handle;
+   return EGL_TRUE;
+}
 
 
 EGLBoolean
 _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *display, EGLScreenMESA *screens,
                    EGLint max_screens, EGLint *num_screens)
 {
-   EGLint n;
-
-   if (display->NumScreens > max_screens) {
-      n = max_screens;
-   }
-   else {
-      n = display->NumScreens;
-   }
-
-   if (screens) {
-      EGLint i;
-      for (i = 0; i < n; i++)
-         screens[i] = display->Screens[i]->Handle;
-   }
-   if (num_screens)
-      *num_screens = n;
+   *num_screens = _eglFlattenArray(display->Screens, (void *) screens,
+         sizeof(screens[0]), max_screens, _eglFlattenScreen);
 
    return EGL_TRUE;
 }
@@ -263,3 +270,5 @@ _eglDestroyScreen(_EGLScreen *scrn)
    free(scrn);
 }
 
+
+#endif /* EGL_MESA_screen_surface */

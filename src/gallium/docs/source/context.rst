@@ -1,3 +1,5 @@
+.. _context:
+
 Context
 =======
 
@@ -43,6 +45,7 @@ buffers, surfaces) are bound to the driver.
 
 * ``set_vertex_buffers``
 
+* ``set_index_buffer``
 
 Non-CSO State
 ^^^^^^^^^^^^^
@@ -54,12 +57,15 @@ objects. They all follow simple, one-method binding calls, e.g.
 * ``set_stencil_ref`` sets the stencil front and back reference values
   which are used as comparison values in stencil test.
 * ``set_blend_color``
+* ``set_sample_mask``
 * ``set_clip_state``
 * ``set_polygon_stipple``
 * ``set_scissor_state`` sets the bounds for the scissor test, which culls
   pixels before blending to render targets. If the :ref:`Rasterizer` does
   not have the scissor test enabled, then the scissor bounds never need to
-  be set since they will not be used.
+  be set since they will not be used.  Note that scissor xmin and ymin are
+  inclusive, but  xmax and ymax are exclusive.  The inclusive ranges in x
+  and y would be [xmin..xmax-1] and [ymin..ymax-1].
 * ``set_viewport_state``
 
 
@@ -101,63 +107,54 @@ the LOD range the texture is going to be constrained to.
 Clearing
 ^^^^^^^^
 
+Clear is one of the most difficult concepts to nail down to a single
+interface (due to both different requirements from APIs and also driver/hw
+specific differences).
+
 ``clear`` initializes some or all of the surfaces currently bound to
 the framebuffer to particular RGBA, depth, or stencil values.
+Currently, this does not take into account color or stencil write masks (as
+used by GL), and always clears the whole surfaces (no scissoring as used by
+GL clear or explicit rectangles like d3d9 uses). It can, however, also clear
+only depth or stencil in a combined depth/stencil surface, if the driver
+supports PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE.
+If a surface includes several layers/slices (XXX: not yet...) then all layers
+will be cleared.
 
-Clear is one of the most difficult concepts to nail down to a single
-interface and it seems likely that we will want to add additional
-clear paths, for instance clearing surfaces not bound to the
-framebuffer, or read-modify-write clears such as depth-only or
-stencil-only clears of packed depth-stencil buffers.  
+``clear_render_target`` clears a single color rendertarget with the specified
+color value. While it is only possible to clear one surface at a time (which can
+include several layers), this surface need not be bound to the framebuffer.
+
+``clear_depth_stencil`` clears a single depth, stencil or depth/stencil surface
+with the specified depth and stencil values (for combined depth/stencil buffers,
+is is also possible to only clear one or the other part). While it is only
+possible to clear one surface at a time (which can include several layers),
+this surface need not be bound to the framebuffer.
 
 
 Drawing
 ^^^^^^^
 
-``draw_arrays`` draws a specified primitive.
+``draw_vbo`` draws a specified primitive.  The primitive mode and other
+properties are described by ``pipe_draw_info``.
 
-This command is equivalent to calling ``draw_arrays_instanced``
-with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
+The ``mode``, ``start``, and ``count`` fields of ``pipe_draw_info`` specify the
+the mode of the primitive and the vertices to be fetched, in the range between
+``start`` to ``start``+``count``-1, inclusive.
 
-``draw_elements`` draws a specified primitive using an optional
-index buffer.
+Every instance with instanceID in the range between ``start_instance`` and
+``start_instance``+``instance_count``-1, inclusive, will be drawn.
 
-This command is equivalent to calling ``draw_elements_instanced``
-with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
+All vertex indices must fall inside the range given by ``min_index`` and
+``max_index``.  In case non-indexed draw, ``min_index`` should be set to
+``start`` and ``max_index`` should be set to ``start``+``count``-1.
 
-``draw_range_elements``
+``index_bias`` is a value added to every vertex index before fetching vertex
+attributes.  It does not affect ``min_index`` and ``max_index``.
 
-XXX: this is (probably) a temporary entrypoint, as the range
-information should be available from the vertex_buffer state.
-Using this to quickly evaluate a specialized path in the draw
-module.
-
-``draw_arrays_instanced`` draws multiple instances of the same primitive.
-
-This command is equivalent to calling ``draw_elements_instanced``
-with ``indexBuffer`` set to NULL and ``indexSize`` set to 0.
-
-``draw_elements_instanced`` draws multiple instances of the same primitive
-using an optional index buffer.
-
-For instanceID in the range between ``startInstance``
-and ``startInstance``+``instanceCount``-1, inclusive, draw a primitive
-specified by ``mode`` and sequential numbers in the range between ``start``
-and ``start``+``count``-1, inclusive.
-
-If ``indexBuffer`` is not NULL, it specifies an index buffer with index
-byte size of ``indexSize``. The sequential numbers are used to lookup
-the index buffer and the resulting indices in turn are used to fetch
-vertex attributes.
-
-If ``indexBuffer`` is NULL, the sequential numbers are used directly
-as indices to fetch vertex attributes.
-
-``indexBias`` is a value which is added to every index read from the index 
-buffer before fetching vertex attributes.
-
-``minIndex`` and ``maxIndex`` describe minimum and maximum index contained in
-the index buffer.
+If there is an index buffer bound, and ``indexed`` field is true, all vertex
+indices will be looked up in the index buffer.  ``min_index``, ``max_index``,
+and ``index_bias`` apply after index lookup.
 
 If a given vertex element has ``instance_divisor`` set to 0, it is said
 it contains per-vertex data and effective vertex attribute address needs
@@ -200,9 +197,16 @@ returned).  Otherwise, if the ``wait`` parameter is FALSE, the call
 will not block and the return value will be TRUE if the query has
 completed or FALSE otherwise.
 
-A common type of query is the occlusion query which counts the number of
-fragments/pixels which are written to the framebuffer (and not culled by
-Z/stencil/alpha testing or shader KILL instructions).
+The most common type of query is the occlusion query,
+``PIPE_QUERY_OCCLUSION_COUNTER``, which counts the number of fragments which
+are written to the framebuffer without being culled by
+:ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
+
+Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
+time, in nanoseconds, the context takes to perform operations.
+
+Gallium does not guarantee the availability of any query types; one must
+always check the capabilities of the :ref:`Screen` first.
 
 
 Conditional Rendering
@@ -252,22 +256,43 @@ Resource Busy Queries
 Blitting
 ^^^^^^^^
 
-These methods emulate classic blitter controls. They are not guaranteed to be
-available; if they are set to NULL, then they are not present.
+These methods emulate classic blitter controls.
 
-These methods operate directly on ``pipe_surface`` objects, and stand
+These methods operate directly on ``pipe_resource`` objects, and stand
 apart from any 3D state in the context.  Blitting functionality may be
 moved to a separate abstraction at some point in the future.
 
-``surface_fill`` performs a fill operation on a section of a surface.
+``resource_copy_region`` blits a region of a subresource of a resource to a
+region of another subresource of a resource, provided that both resources have
+the same format, or compatible formats, i.e., formats for which copying the
+bytes from the source resource unmodified to the destination resource will
+achieve the same effect of a textured quad blitter. The source and destination
+may be the same resource, but overlapping blits are not permitted.
 
-``surface_copy`` blits a region of a surface to a region of another surface,
-provided that both surfaces are the same format. The source and destination
-may be the same surface, and overlapping blits are permitted.
+``resource_resolve`` resolves a multisampled resource into a non-multisampled
+one. Formats and dimensions must match. This function must be present if a driver
+supports multisampling.
 
 The interfaces to these calls are likely to change to make it easier
 for a driver to batch multiple blits with the same source and
 destination.
+
+
+Stream Output
+^^^^^^^^^^^^^
+
+Stream output, also known as transform feedback allows writing the results of the
+vertex pipeline (after the geometry shader or vertex shader if no geometry shader
+is present) to be written to a buffer created with a ``PIPE_BIND_STREAM_OUTPUT``
+flag.
+
+First a stream output state needs to be created with the
+``create_stream_output_state`` call. It specific the details of what's being written,
+to which buffer and with what kind of a writemask.
+
+Then target buffers needs to be set with the call to ``set_stream_output_buffers``
+which sets the buffers and the offsets from the start of those buffer to where
+the data will be written to.
 
 
 Transfers
@@ -284,17 +309,22 @@ data to be written to the resource at this point.
 The returned map points to the start of the mapped range according to
 the box region, not the beginning of the resource.
 
-.. _transfer_flush_region:
-``transfer_flush_region`` If a transfer was created with TRANFER_FLUSH_EXPLICIT,
-only the region specified is guaranteed to be written to. This is relative to
-the mapped range, not the beginning of the resource.
-
 ``transfer_unmap`` remove the memory mapping for the transfer object.
 Any pointers into the map should be considered invalid and discarded.
 
 ``transfer_inline_write`` performs a simplified transfer for simple writes.
 Basically get_transfer, transfer_map, data write, transfer_unmap, and
 transfer_destroy all in one.
+
+.. _transfer_flush_region:
+
+transfer_flush_region
+%%%%%%%%%%%%%%%%%%%%%
+
+If a transfer was created with ``FLUSH_EXPLICIT``, it will not automatically
+be flushed on write or unmap. Flushes must be requested with
+``transfer_flush_region``. Flush ranges are relative to the mapped range, not
+the beginning of the resource.
 
 .. _pipe_transfer:
 
@@ -315,5 +345,4 @@ These flags control the behavior of a transfer object.
   operations pending on the resource are undefined. Cannot be used with
   ``READ``.
 * ``FLUSH_EXPLICIT``: Written ranges will be notified later with
-  :ref:`transfer_flush_region`. Cannot be used with
-  ``READ``.
+  :ref:`transfer_flush_region`. Cannot be used with ``READ``.

@@ -142,7 +142,7 @@ do_blit_copypixels(GLcontext * ctx,
    if (!src || !dst)
       return GL_FALSE;
 
-   intelFlush(&intel->ctx);
+   intel_flush(&intel->ctx);
 
    /* Clip to destination buffer. */
    orig_dstx = dstx;

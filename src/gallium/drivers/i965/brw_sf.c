@@ -166,8 +166,8 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    case PIPE_PRIM_TRIANGLES: 
       /* PIPE_NEW_RAST
        */
-      if (rast->fill_cw != PIPE_POLYGON_MODE_FILL ||
-	  rast->fill_ccw != PIPE_POLYGON_MODE_FILL)
+      if (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
+	  rast->fill_back != PIPE_POLYGON_MODE_FILL)
 	 key.primitive = SF_UNFILLED_TRIS;
       else
 	 key.primitive = SF_TRIANGLES;
@@ -187,7 +187,7 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    key.do_twoside_color = rast->light_twoside;
 
    if (key.do_twoside_color) {
-      key.frontface_ccw = (rast->front_winding == PIPE_WINDING_CCW);
+      key.frontface_ccw = rast->front_ccw;
    }
 
    if (brw_search_cache(&brw->cache, BRW_SF_PROG,

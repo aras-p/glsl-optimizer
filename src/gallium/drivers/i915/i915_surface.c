@@ -28,12 +28,14 @@
 #include "i915_surface.h"
 #include "i915_resource.h"
 #include "i915_blit.h"
+#include "i915_reg.h"
 #include "i915_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -
@@ -41,15 +43,41 @@
  */
 static void
 i915_surface_copy(struct pipe_context *pipe,
-		  struct pipe_surface *dst,
-		  unsigned dstx, unsigned dsty,
-		  struct pipe_surface *src,
-		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+                  struct pipe_resource *dst, struct pipe_subresource subdst,
+                  unsigned dstx, unsigned dsty, unsigned dstz,
+                  struct pipe_resource *src, struct pipe_subresource subsrc,
+                  unsigned srcx, unsigned srcy, unsigned srcz,
+                  unsigned width, unsigned height)
 {
-   struct i915_texture *dst_tex = i915_texture(dst->texture);
-   struct i915_texture *src_tex = i915_texture(src->texture);
+   struct i915_texture *dst_tex = i915_texture(dst);
+   struct i915_texture *src_tex = i915_texture(src);
    struct pipe_resource *dpt = &dst_tex->b.b;
    struct pipe_resource *spt = &src_tex->b.b;
+   unsigned dst_offset, src_offset;  /* in bytes */
+
+   if (dst->target == PIPE_TEXTURE_CUBE) {
+      dst_offset = dst_tex->image_offset[subdst.level][subdst.face];
+   }
+   else if (dst->target == PIPE_TEXTURE_3D) {
+      dst_offset = dst_tex->image_offset[subdst.level][dstz];
+   }
+   else {
+      dst_offset = dst_tex->image_offset[subdst.level][0];
+      assert(subdst.face == 0);
+      assert(dstz == 0);
+   }
+   if (src->target == PIPE_TEXTURE_CUBE) {
+      src_offset = src_tex->image_offset[subsrc.level][subsrc.face];
+   }
+   else if (src->target == PIPE_TEXTURE_3D) {
+      src_offset = src_tex->image_offset[subsrc.level][srcz];
+   }
+   else {
+      src_offset = src_tex->image_offset[subsrc.level][0];
+      assert(subsrc.face == 0);
+      assert(srcz == 0);
+   }
+
 
    assert( dst != src );
    assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
@@ -59,35 +87,75 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( util_format_get_blockheight(dpt->format) == 1 );
 
    i915_copy_blit( i915_context(pipe),
-                   FALSE,
                    util_format_get_blocksize(dpt->format),
-                   (unsigned short) src_tex->stride, src_tex->buffer, src->offset,
-                   (unsigned short) dst_tex->stride, dst_tex->buffer, dst->offset,
+                   (unsigned short) src_tex->stride, src_tex->buffer, src_offset,
+                   (unsigned short) dst_tex->stride, dst_tex->buffer, dst_offset,
                    (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
 }
 
 
 static void
-i915_surface_fill(struct pipe_context *pipe,
-		  struct pipe_surface *dst,
-		  unsigned dstx, unsigned dsty,
-		  unsigned width, unsigned height, unsigned value)
+i915_clear_render_target(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
    struct i915_texture *tex = i915_texture(dst->texture);
    struct pipe_resource *pt = &tex->b.b;
+   union util_color uc;
 
    assert(util_format_get_blockwidth(pt->format) == 1);
    assert(util_format_get_blockheight(pt->format) == 1);
 
+   util_pack_color(rgba, dst->format, &uc);
    i915_fill_blit( i915_context(pipe),
                    util_format_get_blocksize(pt->format),
+                   XY_COLOR_BLT_WRITE_ALPHA | XY_COLOR_BLT_WRITE_RGB,
                    (unsigned short) tex->stride,
                    tex->buffer, dst->offset,
                    (short) dstx, (short) dsty,
                    (short) width, (short) height,
-                   value );
+                   uc.ui );
 }
 
+static void
+i915_clear_depth_stencil(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         unsigned clear_flags,
+                         double depth,
+                         unsigned stencil,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
+{
+   struct i915_texture *tex = i915_texture(dst->texture);
+   struct pipe_resource *pt = &tex->b.b;
+   unsigned packedds;
+   unsigned mask = 0;
+
+   assert(util_format_get_blockwidth(pt->format) == 1);
+   assert(util_format_get_blockheight(pt->format) == 1);
+
+   packedds = util_pack_z_stencil(dst->format, depth, stencil);
+
+   if (clear_flags & PIPE_CLEAR_DEPTH)
+      mask |= XY_COLOR_BLT_WRITE_RGB;
+   /* XXX presumably this does read-modify-write
+      (otherwise this won't work anyway). Hence will only want to
+      do it if really have stencil and it isn't cleared */
+   if ((clear_flags & PIPE_CLEAR_STENCIL) ||
+       (dst->format != PIPE_FORMAT_Z24_UNORM_S8_USCALED))
+      mask |= XY_COLOR_BLT_WRITE_ALPHA;
+
+   i915_fill_blit( i915_context(pipe),
+                   util_format_get_blocksize(pt->format),
+                   mask,
+                   (unsigned short) tex->stride,
+                   tex->buffer, dst->offset,
+                   (short) dstx, (short) dsty,
+                   (short) width, (short) height,
+                   packedds );
+}
 
 /*
  * Screen surface functions
@@ -137,13 +205,12 @@ i915_tex_surface_destroy(struct pipe_surface *surf)
 }
 
 
-/* Probably going to make blits work on textures rather than surfaces.
- */
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
-   i915->base.surface_copy = i915_surface_copy;
-   i915->base.surface_fill = i915_surface_fill;
+   i915->base.resource_copy_region = i915_surface_copy;
+   i915->base.clear_render_target = i915_clear_render_target;
+   i915->base.clear_depth_stencil = i915_clear_depth_stencil;
 }
 
 /* No good reason for these to be in the screen.

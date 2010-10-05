@@ -1,5 +1,0 @@
-!!ARBvp1.0
-XPD result.color, vertex.color, {2,2,2,0};
-MOV  result.position, vertex.position;
-END
-

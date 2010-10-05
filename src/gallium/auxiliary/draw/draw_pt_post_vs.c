@@ -26,22 +26,38 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "pipe/p_context.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
-#include "draw/draw_vbuf.h"
 #include "draw/draw_pt.h"
+
+
+#define DO_CLIP_XY           0x1
+#define DO_CLIP_FULL_Z       0x2
+#define DO_CLIP_HALF_Z       0x4
+#define DO_CLIP_USER         0x8
+#define DO_VIEWPORT          0x10
+#define DO_EDGEFLAG          0x20
+
 
 struct pt_post_vs {
    struct draw_context *draw;
 
+   unsigned flags;
+
    boolean (*run)( struct pt_post_vs *pvs,
-		struct vertex_header *vertices,
-		unsigned count,
-		unsigned stride );
+                   struct draw_vertex_info *info );
 };
 
-
+static INLINE void
+initialize_vertex_header(struct vertex_header *header)
+{
+   header->clipmask = 0;
+   header->edgeflag = 1;
+   header->pad = 0;
+   header->vertex_id = UNDEFINED_VERTEX_ID;
+}
 
 static INLINE float
 dot4(const float *a, const float *b)
@@ -52,215 +68,121 @@ dot4(const float *a, const float *b)
            a[3]*b[3]);
 }
 
+#define FLAGS (0)
+#define TAG(x) x##_none
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_XY | DO_CLIP_FULL_Z | DO_VIEWPORT)
+#define TAG(x) x##_xy_fullz_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_XY | DO_CLIP_HALF_Z | DO_VIEWPORT)
+#define TAG(x) x##_xy_halfz_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_FULL_Z | DO_VIEWPORT)
+#define TAG(x) x##_fullz_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_HALF_Z | DO_VIEWPORT)
+#define TAG(x) x##_halfz_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_XY | DO_CLIP_FULL_Z | DO_CLIP_USER | DO_VIEWPORT)
+#define TAG(x) x##_xy_fullz_user_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_XY | DO_CLIP_FULL_Z | DO_CLIP_USER | DO_VIEWPORT | DO_EDGEFLAG)
+#define TAG(x) x##_xy_fullz_user_viewport_edgeflag
+#include "draw_cliptest_tmp.h"
 
 
-static INLINE unsigned
-compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
-{
-   unsigned mask = 0x0;
-   unsigned i;
 
-#if 0
-   debug_printf("compute clipmask %f %f %f %f\n",
-                clip[0], clip[1], clip[2], clip[3]);
-   assert(clip[3] != 0.0);
-#endif
-
-   /* Do the hardwired planes first:
-    */
-   if (-clip[0] + clip[3] < 0) mask |= (1<<0);
-   if ( clip[0] + clip[3] < 0) mask |= (1<<1);
-   if (-clip[1] + clip[3] < 0) mask |= (1<<2);
-   if ( clip[1] + clip[3] < 0) mask |= (1<<3);
-   if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
-   if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
-
-   /* Followed by any remaining ones:
-    */
-   for (i = 6; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
-         mask |= (1<<i);
-   }
-
-   return mask;
-}
-
-
-/* The normal case - cliptest, rhw divide, viewport transform.
- *
- * Also handle identity viewport here at the expense of a few wasted
- * instructions
+/* Don't want to create 64 versions of this function, so catch the
+ * less common ones here.  This is looking like something which should
+ * be code-generated, perhaps appended to the end of the vertex
+ * shader.
  */
-static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
-					  struct vertex_header *vertices,
-					  unsigned count,
-					  unsigned stride )
-{
-   struct vertex_header *out = vertices;
-   const float *scale = pvs->draw->viewport.scale;
-   const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = draw_current_shader_position_output(pvs->draw);
-   unsigned clipped = 0;
-   unsigned j;
-
-   if (0) debug_printf("%s\n", __FUNCTION__);
-
-   for (j = 0; j < count; j++) {
-      float *position = out->data[pos];
-
-#if 0
-      debug_printf("%d) io = %p, data = %p = [%f, %f, %f, %f]\n",
-                   j, out, position, position[0], position[1], position[2], position[3]);
-#endif
-
-      out->clip[0] = position[0];
-      out->clip[1] = position[1];
-      out->clip[2] = position[2];
-      out->clip[3] = position[3];
-
-      out->vertex_id = 0xffff;
-      out->clipmask = compute_clipmask_gl(out->clip, 
-					  pvs->draw->plane,
-					  pvs->draw->nr_planes);
-      clipped += out->clipmask;
-
-      if (out->clipmask == 0)
-      {
-	 /* divide by w */
-	 float w = 1.0f / position[3];
-
-	 /* Viewport mapping */
-	 position[0] = position[0] * w * scale[0] + trans[0];
-	 position[1] = position[1] * w * scale[1] + trans[1];
-	 position[2] = position[2] * w * scale[2] + trans[2];
-	 position[3] = w;
-#if 0
-         debug_printf("post viewport: %f %f %f %f\n",
-                      position[0],
-                      position[1],
-                      position[2],
-                      position[3]);
-#endif
-      }
-
-      out = (struct vertex_header *)( (char *)out + stride );
-   }
-
-   return clipped != 0;
-}
+#define FLAGS (pvs->flags)
+#define TAG(x) x##_generic
+#include "draw_cliptest_tmp.h"
 
 
-
-/* As above plus edgeflags
- */
-static boolean 
-post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
-                                      struct vertex_header *vertices,
-                                      unsigned count,
-                                      unsigned stride )
-{
-   unsigned j;
-   boolean needpipe;
-
-   needpipe = post_vs_cliptest_viewport_gl( pvs, vertices, count, stride);
-
-   /* If present, copy edgeflag VS output into vertex header.
-    * Otherwise, leave header as is.
-    */
-   if (pvs->draw->vs.edgeflag_output) {
-      struct vertex_header *out = vertices;
-      int ef = pvs->draw->vs.edgeflag_output;
-
-      for (j = 0; j < count; j++) {
-         const float *edgeflag = out->data[ef];
-         out->edgeflag = !(edgeflag[0] != 1.0f);
-         needpipe |= !out->edgeflag;
-         out = (struct vertex_header *)( (char *)out + stride );
-      }
-   }
-   return needpipe;
-}
-
-
-
-
-/* If bypass_clipping is set, skip cliptest and rhw divide.
- */
-static boolean post_vs_viewport( struct pt_post_vs *pvs,
-			      struct vertex_header *vertices,
-			      unsigned count,
-			      unsigned stride )
-{
-   struct vertex_header *out = vertices;
-   const float *scale = pvs->draw->viewport.scale;
-   const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = draw_current_shader_position_output(pvs->draw);
-   unsigned j;
-
-   if (0) debug_printf("%s\n", __FUNCTION__);
-   for (j = 0; j < count; j++) {
-      float *position = out->data[pos];
-
-      /* Viewport mapping only, no cliptest/rhw divide
-       */
-      position[0] = position[0] * scale[0] + trans[0];
-      position[1] = position[1] * scale[1] + trans[1];
-      position[2] = position[2] * scale[2] + trans[2];
-
-      out = (struct vertex_header *)((char *)out + stride);
-   }
-   
-   return FALSE;
-}
-
-
-/* If bypass_clipping is set and we have an identity viewport, nothing
- * to do.
- */
-static boolean post_vs_none( struct pt_post_vs *pvs,
-			     struct vertex_header *vertices,
-			     unsigned count,
-			     unsigned stride )
-{
-   if (0) debug_printf("%s\n", __FUNCTION__);
-   return FALSE;
-}
 
 boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
-			     struct vertex_header *pipeline_verts,
-			     unsigned count,
-			     unsigned stride )
+			     struct draw_vertex_info *info )
 {
-   return pvs->run( pvs, pipeline_verts, count, stride );
+   return pvs->run( pvs, info );
 }
 
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
-			      boolean bypass_clipping,
+			      boolean clip_xy,
+			      boolean clip_z,
+                              boolean clip_user,
 			      boolean bypass_viewport,
 			      boolean opengl,
 			      boolean need_edgeflags )
 {
-   if (!need_edgeflags) {
-      if (bypass_clipping) {
-         if (bypass_viewport)
-            pvs->run = post_vs_none;
-         else
-            pvs->run = post_vs_viewport;
-      }
-      else {
-         /* if (opengl) */
-         pvs->run = post_vs_cliptest_viewport_gl;
-      }
+   pvs->flags = 0;
+
+   if (clip_xy)
+      pvs->flags |= DO_CLIP_XY;
+   
+   if (clip_z && opengl) {
+      pvs->flags |= DO_CLIP_FULL_Z;
+      ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 1 );
    }
-   else {
-      /* If we need to copy edgeflags to the vertex header, it should
-       * mean we're running the primitive pipeline.  Hence the bypass
-       * flags should be false.
-       */
-      assert(!bypass_clipping);
-      assert(!bypass_viewport);
-      pvs->run = post_vs_cliptest_viewport_gl_edgeflag;
+
+   if (clip_z && !opengl) {
+      pvs->flags |= DO_CLIP_HALF_Z;
+      ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 0 );
+   }
+
+   if (clip_user)
+      pvs->flags |= DO_CLIP_USER;
+
+   if (!bypass_viewport)
+      pvs->flags |= DO_VIEWPORT;
+
+   if (need_edgeflags)
+      pvs->flags |= DO_EDGEFLAG;
+
+   /* Now select the relevant function:
+    */
+   switch (pvs->flags) {
+   case 0:
+      pvs->run = do_cliptest_none;
+      break;
+
+   case DO_CLIP_XY | DO_CLIP_FULL_Z | DO_VIEWPORT:
+      pvs->run = do_cliptest_xy_fullz_viewport;
+      break;
+
+   case DO_CLIP_XY | DO_CLIP_HALF_Z | DO_VIEWPORT:
+      pvs->run = do_cliptest_xy_halfz_viewport;
+      break;
+
+   case DO_CLIP_FULL_Z | DO_VIEWPORT:
+      pvs->run = do_cliptest_fullz_viewport;
+      break;
+
+   case DO_CLIP_HALF_Z | DO_VIEWPORT:
+      pvs->run = do_cliptest_halfz_viewport;
+      break;
+
+   case DO_CLIP_XY | DO_CLIP_FULL_Z | DO_CLIP_USER | DO_VIEWPORT:
+      pvs->run = do_cliptest_xy_fullz_user_viewport;
+      break;
+
+   case (DO_CLIP_XY | DO_CLIP_FULL_Z | DO_CLIP_USER |
+         DO_VIEWPORT | DO_EDGEFLAG):
+      pvs->run = do_cliptest_xy_fullz_user_viewport_edgeflag;
+      break;
+      
+   default:
+      pvs->run = do_cliptest_generic;
+      break;
    }
 }
 
@@ -272,7 +194,7 @@ struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw )
       return NULL;
 
    pvs->draw = draw;
-   
+
    return pvs;
 }
 

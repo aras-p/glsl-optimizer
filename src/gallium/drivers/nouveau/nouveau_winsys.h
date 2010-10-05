@@ -6,14 +6,17 @@
 
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_channel.h"
-#include "nouveau/nouveau_class.h"
 #include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_pushbuf.h"
 
-static inline uint32_t
+#ifndef NV04_PFIFO_MAX_PACKET_LEN
+#define NV04_PFIFO_MAX_PACKET_LEN 2047
+#endif
+
+static INLINE uint32_t
 nouveau_screen_transfer_flags(unsigned pipe)
 {
 	uint32_t flags = 0;
@@ -24,11 +27,10 @@ nouveau_screen_transfer_flags(unsigned pipe)
 		flags |= NOUVEAU_BO_WR;
 	if (pipe & PIPE_TRANSFER_DISCARD)
 		flags |= NOUVEAU_BO_INVAL;
-	if (pipe & PIPE_TRANSFER_DONTBLOCK)
-		flags |= NOUVEAU_BO_NOWAIT;
-	else
 	if (pipe & PIPE_TRANSFER_UNSYNCHRONIZED)
 		flags |= NOUVEAU_BO_NOSYNC;
+	else if (pipe & PIPE_TRANSFER_DONTBLOCK)
+		flags |= NOUVEAU_BO_NOWAIT;
 
 	return flags;
 }

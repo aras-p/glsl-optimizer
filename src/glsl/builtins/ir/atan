@@ -1,0 +1,141 @@
+((function atan
+   (signature float
+     (parameters
+       (declare (in) float x))
+     ((return (call asin ((expression float *
+			   (var_ref x)
+			   (expression float rsq
+			    (expression float +
+			     (expression float *
+			      (var_ref x)
+			      (var_ref x))
+			     (constant float (1.0))))))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 y_over_x))
+     ((return (call asin ((expression vec2 *
+			   (var_ref y_over_x)
+			   (expression vec2 rsq
+			    (expression vec2 +
+			     (expression vec2 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 y_over_x))
+     ((return (call asin ((expression vec3 *
+			   (var_ref y_over_x)
+			   (expression vec3 rsq
+			    (expression vec3 +
+			     (expression vec3 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 y_over_x))
+     ((return (call asin ((expression vec4 *
+			   (var_ref y_over_x)
+			   (expression vec4 rsq
+			    (expression vec4 +
+			     (expression vec4 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+  (signature float
+    (parameters
+      (declare (in ) float y)
+      (declare (in ) float x)
+    )
+    (
+      (declare () float r)
+      (declare ( ) float abs_retval)
+      (assign (constant bool (1)) (x) (var_ref abs_retval)  (call abs ((var_ref x) ))
+)
+      (if (expression bool > (var_ref abs_retval) (constant float (0.000100)) ) (
+        (declare ( ) float atan_retval)
+        (assign (constant bool (1)) (x) (var_ref atan_retval)  (call atan ((expression float / (var_ref y) (var_ref x) ) ))
+)
+        (assign (constant bool (1)) (x) (var_ref r)  (var_ref atan_retval) )
+        (if (expression bool < (var_ref x) (constant float (0.000000)) ) (
+          (if (expression bool >= (var_ref y) (constant float (0.000000)) ) (
+            (declare ( ) float assignment_tmp)
+            (assign (constant bool (1)) (x) (var_ref assignment_tmp)  (expression float + (var_ref r) (constant float (3.141593)) ) )
+            (assign (constant bool (1)) (x) (var_ref r)  (var_ref assignment_tmp) )
+          )
+          (
+            (declare ( ) float assignment_tmp)
+            (assign (constant bool (1)) (x) (var_ref assignment_tmp)  (expression float - (var_ref r) (constant float (3.141593)) ) )
+            (assign (constant bool (1)) (x) (var_ref r)  (var_ref assignment_tmp) )
+          ))
+
+        )
+        (
+        ))
+
+      )
+      (
+        (declare () float sgn)
+        (assign (constant bool (1)) (x) (var_ref sgn) (expression float sign (var_ref y)))
+        (assign (constant bool (1)) (x) (var_ref r) (expression float * (var_ref sgn) (constant float (1.5707965))))
+      ))
+
+      (return (var_ref r) )
+    ))
+
+
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 y)
+       (declare (in) vec2 x))
+     ((declare () vec2 r)
+      (assign (constant bool (1)) (x) (var_ref r)
+	      (call atan ((swiz x (var_ref y))
+			  (swiz x (var_ref x)))))
+      (assign (constant bool (1)) (y) (var_ref r)
+	      (call atan ((swiz y (var_ref y))
+			  (swiz y (var_ref x)))))
+      (return (var_ref r))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 y)
+       (declare (in) vec3 x))
+     ((declare () vec3 r)
+      (assign (constant bool (1)) (x) (var_ref r)
+	      (call atan ((swiz x (var_ref y))
+			  (swiz x (var_ref x)))))
+      (assign (constant bool (1)) (y) (var_ref r)
+	      (call atan ((swiz y (var_ref y))
+			  (swiz y (var_ref x)))))
+      (assign (constant bool (1)) (z) (var_ref r)
+	      (call atan ((swiz z (var_ref y))
+			  (swiz z (var_ref x)))))
+      (return (var_ref r))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 y)
+       (declare (in) vec4 x))
+     ((declare () vec4 r)
+      (assign (constant bool (1)) (x) (var_ref r)
+	      (call atan ((swiz x (var_ref y))
+			  (swiz x (var_ref x)))))
+      (assign (constant bool (1)) (y) (var_ref r)
+	      (call atan ((swiz y (var_ref y))
+			  (swiz y (var_ref x)))))
+      (assign (constant bool (1)) (z) (var_ref r)
+	      (call atan ((swiz z (var_ref y))
+			  (swiz z (var_ref x)))))
+      (assign (constant bool (1)) (w) (var_ref r)
+	      (call atan ((swiz w (var_ref y))
+			  (swiz w (var_ref x)))))
+      (return (var_ref r)))))
+
+))

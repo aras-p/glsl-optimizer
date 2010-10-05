@@ -45,6 +45,15 @@ struct lp_build_context;
 struct lp_build_mask_context;
 
 
+enum lp_build_tex_modifier {
+   LP_BLD_TEX_MODIFIER_NONE = 0,
+   LP_BLD_TEX_MODIFIER_PROJECTED,
+   LP_BLD_TEX_MODIFIER_LOD_BIAS,
+   LP_BLD_TEX_MODIFIER_EXPLICIT_LOD,
+   LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV
+};
+
+
 /**
  * Sampler code generation interface.
  *
@@ -59,14 +68,31 @@ struct lp_build_sampler_soa
    (*destroy)( struct lp_build_sampler_soa *sampler );
 
    void
-   (*emit_fetch_texel)( struct lp_build_sampler_soa *sampler,
+   (*emit_fetch_texel)( const struct lp_build_sampler_soa *sampler,
                         LLVMBuilderRef builder,
                         struct lp_type type,
                         unsigned unit,
                         unsigned num_coords,
                         const LLVMValueRef *coords,
-                        LLVMValueRef lodbias,
+                        const LLVMValueRef *ddx,
+                        const LLVMValueRef *ddy,
+                        LLVMValueRef lod_bias, /* optional */
+                        LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef *texel);
+};
+
+
+struct lp_build_sampler_aos
+{
+   LLVMValueRef
+   (*emit_fetch_texel)( struct lp_build_sampler_aos *sampler,
+                        struct lp_build_context *bld,
+                        unsigned target, /* TGSI_TEXTURE_* */
+                        unsigned unit,
+                        LLVMValueRef coords,
+                        LLVMValueRef ddx,
+                        LLVMValueRef ddy,
+                        enum lp_build_tex_modifier modifier);
 };
 
 
@@ -80,7 +106,19 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
                   struct lp_build_sampler_soa *sampler,
-                  struct tgsi_shader_info *info);
+                  const struct tgsi_shader_info *info);
+
+
+void
+lp_build_tgsi_aos(LLVMBuilderRef builder,
+                  const struct tgsi_token *tokens,
+                  struct lp_type type,
+                  const unsigned char swizzles[4],
+                  LLVMValueRef consts_ptr,
+                  const LLVMValueRef *inputs,
+                  LLVMValueRef *outputs,
+                  struct lp_build_sampler_aos *sampler,
+                  const struct tgsi_shader_info *info);
 
 
 #endif /* LP_BLD_TGSI_H */

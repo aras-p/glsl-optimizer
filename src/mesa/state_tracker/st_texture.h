@@ -38,6 +38,9 @@
 struct pipe_resource;
 
 
+/**
+ * Subclass of gl_texure_image.
+ */
 struct st_texture_image
 {
    struct gl_texture_image base;
@@ -57,7 +60,9 @@ struct st_texture_image
 };
 
 
-
+/**
+ * Subclass of gl_texure_object.
+ */
 struct st_texture_object
 {
    struct gl_texture_object base;       /* The "parent" object */
@@ -65,6 +70,9 @@ struct st_texture_object
    /* The texture must include at levels [0..lastLevel] once validated:
     */
    GLuint lastLevel;
+
+   /** The size of the level=0 mipmap image */
+   GLuint width0, height0, depth0;
 
    /* On validation any active images held in main memory or in other
     * textures will be copied to this texture and the old storage freed.
@@ -75,8 +83,6 @@ struct st_texture_object
     * on first binding.
     */
    struct pipe_sampler_view *sampler_view;
-
-   GLboolean teximage_realloc;
 
    /* True if there is/was a surface bound to this texture object.  It helps
     * track whether the texture object is surface based or not.
@@ -185,18 +191,6 @@ extern const GLuint *
 st_texture_depth_offsets(struct pipe_resource *pt, GLuint level);
 
 
-/* Return the linear offset of an image relative to the start of its region.
- */
-extern GLuint
-st_texture_image_offset(const struct pipe_resource *pt,
-                        GLuint face, GLuint level);
-
-extern GLuint
-st_texture_texel_offset(const struct pipe_resource * pt,
-                        GLuint face, GLuint level,
-                        GLuint col, GLuint row, GLuint img);
-
-
 /* Upload an image into a texture
  */
 extern void
@@ -211,13 +205,7 @@ st_texture_image_data(struct st_context *st,
 extern void
 st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *dst, GLuint dstLevel,
-                      struct pipe_resource *src,
+                      struct pipe_resource *src, GLuint srcLevel,
                       GLuint face);
 
-extern void
-st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_resource *pt,
-			     unsigned int face,
-			     unsigned int level,
-			     enum pipe_transfer_usage usage);
 #endif

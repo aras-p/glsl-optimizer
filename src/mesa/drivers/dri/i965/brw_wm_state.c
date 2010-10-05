@@ -104,8 +104,22 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
    key->is_glsl = bfp->isGLSL;
 
-   /* temporary sanity check assertion */
-   ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
+   /* If using the fragment shader backend, the program is always
+    * 8-wide.
+    */
+   if (ctx->Shader.CurrentProgram) {
+      int i;
+
+      for (i = 0; i < ctx->Shader.CurrentProgram->_NumLinkedShaders; i++) {
+	 struct brw_shader *shader =
+	    (struct brw_shader *)ctx->Shader.CurrentProgram->_LinkedShaders[i];;
+
+	 if (shader->base.Type == GL_FRAGMENT_SHADER &&
+	     shader->ir != NULL) {
+	    key->is_glsl = GL_TRUE;
+	 }
+      }
+   }
 
    /* _NEW_DEPTH */
    key->stats_wm = intel->stats_wm;
@@ -122,13 +136,13 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 /**
  * Setup wm hardware state.  See page 225 of Volume 2
  */
-static dri_bo *
+static drm_intel_bo *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			dri_bo **reloc_bufs)
+			drm_intel_bo **reloc_bufs)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_state wm;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&wm, 0, sizeof(wm));
 
@@ -213,28 +227,24 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			 &wm, sizeof(wm));
 
    /* Emit WM program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     wm.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_wm_unit_state, thread0),
-		     brw->wm.prog_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread0),
+			   brw->wm.prog_bo, wm.thread0.grf_reg_count << 1,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      dri_bo_emit_reloc(bo,
-			0, 0,
-			wm.thread2.per_thread_scratch_space,
-			offsetof(struct brw_wm_unit_state, thread2),
-			brw->wm.scratch_bo);
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread2),
+			      brw->wm.scratch_bo,
+			      wm.thread2.per_thread_scratch_space,
+			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_INSTRUCTION, 0,
-			wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-			offsetof(struct brw_wm_unit_state, wm4),
-			brw->wm.sampler_bo);
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, wm4),
+			      brw->wm.sampler_bo, (wm.wm4.stats_enable |
+						   (wm.wm4.sampler_count << 2)),
+			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
    return bo;
@@ -245,7 +255,7 @@ static void upload_wm_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
-   dri_bo *reloc_bufs[3];
+   drm_intel_bo *reloc_bufs[3];
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -257,14 +267,14 @@ static void upload_wm_unit( struct brw_context *brw )
       GLuint total = key.total_scratch * brw->wm_max_threads;
 
       if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
-	 dri_bo_unreference(brw->wm.scratch_bo);
+	 drm_intel_bo_unreference(brw->wm.scratch_bo);
 	 brw->wm.scratch_bo = NULL;
       }
       if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = dri_bo_alloc(intel->bufmgr,
-                                           "wm scratch",
-                                           total,
-                                           4096);
+	 brw->wm.scratch_bo = drm_intel_bo_alloc(intel->bufmgr,
+						 "wm scratch",
+						 total,
+						 4096);
       }
    }
 
@@ -272,7 +282,7 @@ static void upload_wm_unit( struct brw_context *brw )
    reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
-   dri_bo_unreference(brw->wm.state_bo);
+   drm_intel_bo_unreference(brw->wm.state_bo);
    brw->wm.state_bo = brw_search_cache(&brw->cache, BRW_WM_UNIT,
 				       &key, sizeof(key),
 				       reloc_bufs, 3,

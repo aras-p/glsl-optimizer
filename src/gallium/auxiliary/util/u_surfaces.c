@@ -1,42 +1,50 @@
+/**************************************************************************
+ *
+ * Copyright 2010 Luca Barbieri
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
 #include "u_surfaces.h"
 #include "util/u_hash_table.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 
-/* TODO: ouch, util_hash_table should do these by default when passed a null function pointer
- * this indirect function call is quite bad
- */
-static unsigned
-hash(void *key)
-{
-   return (unsigned)(uintptr_t)key;
-}
-
-static int
-compare(void *key1, void *key2)
-{
-   return (unsigned)(uintptr_t)key1 - (unsigned)(uintptr_t)key2;
-}
-
 struct pipe_surface *
 util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags)
 {
    struct pipe_surface *ps;
-   void *key = NULL;
 
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
-   {	/* or 2D array */
-      if(!us->u.table)
-	 us->u.table = util_hash_table_create(hash, compare);
-      key = (void *)(((zslice + face) << 8) | level);
-      /* TODO: ouch, should have a get-reference function...
-       * also, shouldn't allocate a two-pointer structure for each item... */
-      ps = util_hash_table_get(us->u.table, key);
+   {    /* or 2D array */
+      if(!us->u.hash)
+         us->u.hash = cso_hash_create();
+
+      ps = cso_hash_iter_data(cso_hash_find(us->u.hash, ((zslice + face) << 8) | level));
    }
    else
    {
       if(!us->u.array)
-	 us->u.array = CALLOC(pt->last_level + 1, sizeof(struct pipe_surface *));
+         us->u.array = CALLOC(pt->last_level + 1, sizeof(struct pipe_surface *));
       ps = us->u.array[level];
    }
 
@@ -54,7 +62,7 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, str
    ps->offset = ~0;
 
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
-      util_hash_table_set(us->u.table, key, ps);
+      cso_hash_insert(us->u.hash, ((zslice + face) << 8) | level, ps);
    else
       us->u.array[level] = ps;
 
@@ -66,47 +74,44 @@ util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps)
 {
    struct pipe_resource *pt = ps->texture;
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
-   {	/* or 2D array */
-      void* key = (void*)(uintptr_t)(((ps->zslice + ps->face) << 8) | ps->level);
-      util_hash_table_remove(us->u.table, key);
+   {    /* or 2D array */
+      cso_hash_erase(us->u.hash, cso_hash_find(us->u.hash, ((ps->zslice + ps->face) << 8) | ps->level));
    }
    else
       us->u.array[ps->level] = 0;
-}
-
-static enum pipe_error
-util_surfaces_destroy_callback(void *key, void *value, void *data)
-{
-   void (*destroy_surface) (struct pipe_surface * ps) = data;
-   destroy_surface((struct pipe_surface *)value);
-   return PIPE_OK;
 }
 
 void
 util_surfaces_destroy(struct util_surfaces *us, struct pipe_resource *pt, void (*destroy_surface) (struct pipe_surface *))
 {
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
-   {	/* or 2D array */
-      if(us->u.table)
+   {    /* or 2D array */
+      if(us->u.hash)
       {
-	 util_hash_table_foreach(us->u.table, util_surfaces_destroy_callback, destroy_surface);
-	 util_hash_table_destroy(us->u.table);
-	 us->u.table = NULL;
+         struct cso_hash_iter iter;
+         iter = cso_hash_first_node(us->u.hash);
+         while (!cso_hash_iter_is_null(iter)) {
+            destroy_surface(cso_hash_iter_data(iter));
+            iter = cso_hash_iter_next(iter);
+         }
+
+         cso_hash_delete(us->u.hash);
+         us->u.hash = NULL;
       }
    }
    else
    {
       if(us->u.array)
       {
-	 unsigned i;
-	 for(i = 0; i < pt->last_level; ++i)
-	 {
-	    struct pipe_surface *ps = us->u.array[i];
-	    if(ps)
-	       destroy_surface(ps);
-	 }
-	 FREE(us->u.array);
-	 us->u.array = NULL;
+         unsigned i;
+         for(i = 0; i <= pt->last_level; ++i)
+         {
+            struct pipe_surface *ps = us->u.array[i];
+            if(ps)
+               destroy_surface(ps);
+         }
+         FREE(us->u.array);
+         us->u.array = NULL;
       }
    }
 }

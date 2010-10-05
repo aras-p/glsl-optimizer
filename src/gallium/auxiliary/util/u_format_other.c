@@ -121,6 +121,15 @@ util_format_r1_unorm_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
  * A.k.a. D3DFMT_CxV8U8
  */
 
+static uint8_t
+r8g8bx_derive(int16_t r, int16_t g)
+{
+   /* Derive blue from red and green components.
+    * Apparently, we must always use integers to perform calculations,
+    * otherwise the results won't match D3D's CxV8U8 definition.
+    */
+   return (uint8_t)sqrtf(0x7f * 0x7f - r * r - g * g) * 0xff / 0x7f;
+}
 
 void
 util_format_r8g8bx_snorm_unpack_rgba_float(float *dst_row, unsigned dst_stride,
@@ -145,7 +154,7 @@ util_format_r8g8bx_snorm_unpack_rgba_float(float *dst_row, unsigned dst_stride,
 
          dst[0] = (float)(r * (1.0f/0x7f)); /* r */
          dst[1] = (float)(g * (1.0f/0x7f)); /* g */
-         dst[2] = sqrtf(1.0f - dst[0] * dst[0] - dst[1] * dst[1]); /* b */
+         dst[2] = r8g8bx_derive(r, g) * (1.0f/0xff); /* b */
          dst[3] = 1.0f; /* a */
          dst += 4;
       }
@@ -177,7 +186,7 @@ util_format_r8g8bx_snorm_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_strid
 
          dst[0] = (uint8_t)(((uint16_t)MAX2(r, 0)) * 0xff / 0x7f); /* r */
          dst[1] = (uint8_t)(((uint16_t)MAX2(g, 0)) * 0xff / 0x7f); /* g */
-         dst[2] = (uint8_t)sqrtf(0x7f*0x7f - r * r - g * g) * 0xff / 0x7f; /* b */
+         dst[2] = r8g8bx_derive(r, g); /* b */
          dst[3] = 255; /* a */
          dst += 4;
       }
@@ -262,6 +271,6 @@ util_format_r8g8bx_snorm_fetch_rgba_float(float *dst, const uint8_t *src,
 
    dst[0] = r * (1.0f/0x7f); /* r */
    dst[1] = g * (1.0f/0x7f); /* g */
-   dst[2] = sqrtf(1.0f - dst[0] * dst[0] - dst[1] * dst[1]); /* b */
+   dst[2] = r8g8bx_derive(r, g) * (1.0f/0xff); /* b */
    dst[3] = 1.0f; /* a */
 }

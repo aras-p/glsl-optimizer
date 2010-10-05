@@ -25,3 +25,4 @@ cscope*
 .scon*
 config.py
 build
+.dir-locals.el

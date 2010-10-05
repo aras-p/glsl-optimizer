@@ -127,6 +127,18 @@ static void classify_instruction(struct rc_sub_instruction * inst,
 	}
 }
 
+static void src_uses(struct rc_src_register src, unsigned int * rgb,
+							unsigned int * alpha)
+{
+	int j;
+	for(j = 0; j < 4; ++j) {
+		unsigned int swz = GET_SWZ(src.Swizzle, j);
+		if (swz < 3)
+			*rgb = 1;
+		else if (swz < 4)
+			*alpha = 1;
+	}
+}
 
 /**
  * Fill the given ALU instruction's opcodes and source operands into the given pair,
@@ -136,9 +148,12 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 	struct rc_pair_instruction * pair,
 	struct rc_sub_instruction * inst)
 {
+	int needrgb, needalpha, istranscendent;
+	const struct rc_opcode_info * opcode;
+	int i;
+
 	memset(pair, 0, sizeof(struct rc_pair_instruction));
 
-	int needrgb, needalpha, istranscendent;
 	classify_instruction(inst, &needrgb, &needalpha, &istranscendent);
 
 	if (needrgb) {
@@ -155,8 +170,43 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			pair->Alpha.Saturate = 1;
 	}
 
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
-	int i;
+	opcode = rc_get_opcode_info(inst->Opcode);
+
+	/* Presubtract handling:
+	 * We need to make sure that the values used by the presubtract
+	 * operation end up in src0 or src1. */
+	if(inst->PreSub.Opcode != RC_PRESUB_NONE) {
+		/* rc_pair_alloc_source() will fill in data for
+		 * pair->{RGB,ALPHA}.Src[RC_PAIR_PRESUB_SRC] */
+		int j;
+		for(j = 0; j < 3; j++) {
+			int src_regs;
+			if(inst->SrcReg[j].File != RC_FILE_PRESUB)
+				continue;
+
+			src_regs = rc_presubtract_src_reg_count(
+							inst->PreSub.Opcode);
+			for(i = 0; i < src_regs; i++) {
+				unsigned int rgb = 0;
+				unsigned int alpha = 0;
+				src_uses(inst->SrcReg[j], &rgb, &alpha);
+				if(rgb) {
+					pair->RGB.Src[i].File =
+						inst->PreSub.SrcReg[i].File;
+					pair->RGB.Src[i].Index =
+						inst->PreSub.SrcReg[i].Index;
+					pair->RGB.Src[i].Used = 1;
+				}
+				if(alpha) {
+					pair->Alpha.Src[i].File =
+						inst->PreSub.SrcReg[i].File;
+					pair->Alpha.Src[i].Index =
+						inst->PreSub.SrcReg[i].Index;
+					pair->Alpha.Src[i].Used = 1;
+				}
+			}
+		}
+	}
 
 	for(i = 0; i < opcode->NumSrcRegs; ++i) {
 		int source;
@@ -164,6 +214,9 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			unsigned int srcrgb = 0;
 			unsigned int srcalpha = 0;
 			int j;
+			/* We don't care about the alpha channel here.  We only
+			 * want the part of the swizzle that writes to rgb,
+			 * since we are creating an rgb instruction. */
 			for(j = 0; j < 3; ++j) {
 				unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
 				if (swz < 3)
@@ -173,6 +226,11 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			}
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
+			if (source < 0) {
+				rc_error(&c->Base, "Failed to translate "
+							"rgb instruction.\n");
+				return;
+			}
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
@@ -188,6 +246,11 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 				srcalpha = 1;
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
+			if (source < 0) {
+				rc_error(&c->Base, "Failed to translate "
+							"alpha instruction.\n");
+				return;
+			}
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
@@ -230,24 +293,59 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 }
 
 
+static void check_opcode_support(struct r300_fragment_program_compiler *c,
+				 struct rc_sub_instruction *inst)
+{
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
+
+	if (opcode->HasDstReg) {
+		if (inst->DstReg.RelAddr) {
+			rc_error(&c->Base, "Fragment program does not support relative addressing "
+				 "of destination operands.\n");
+			return;
+		}
+
+		if (inst->SaturateMode == RC_SATURATE_MINUS_PLUS_ONE) {
+			rc_error(&c->Base, "Fragment program does not support signed Saturate.\n");
+			return;
+		}
+	}
+
+	for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
+		if (inst->SrcReg[i].RelAddr) {
+			rc_error(&c->Base, "Fragment program does not support relative addressing "
+				 " of source operands.\n");
+			return;
+		}
+	}
+}
+
+
 /**
  * Translate all ALU instructions into corresponding pair instructions,
  * performing no other changes.
  */
-void rc_pair_translate(struct r300_fragment_program_compiler *c)
+void rc_pair_translate(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
+
 	for(struct rc_instruction * inst = c->Base.Program.Instructions.Next;
 	    inst != &c->Base.Program.Instructions;
 	    inst = inst->Next) {
+		const struct rc_opcode_info * opcode;
+		struct rc_sub_instruction copy;
+
 		if (inst->Type != RC_INSTRUCTION_NORMAL)
 			continue;
 
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+		opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		if (opcode->HasTexture || opcode->IsFlowControl || opcode->Opcode == RC_OPCODE_KIL)
 			continue;
 
-		struct rc_sub_instruction copy = inst->U.I;
+		copy = inst->U.I;
+
+		check_opcode_support(c, &copy);
 
 		final_rewrite(&copy);
 		inst->Type = RC_INSTRUCTION_PAIR;

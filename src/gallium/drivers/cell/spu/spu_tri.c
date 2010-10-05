@@ -568,7 +568,7 @@ setup_sort_vertices(const qword vs)
    ASSERT(CELL_FACING_FRONT == 0);
    ASSERT(CELL_FACING_BACK == 1);
    setup.facing = (area * sign > 0.0f)
-      ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
+      ^ (!spu.rasterizer.front_ccw);
 
    return TRUE;
 }

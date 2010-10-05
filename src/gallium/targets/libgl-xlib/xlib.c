@@ -36,15 +36,8 @@
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
+#include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
-
-/* piggy back on this libGL for OpenGL support in EGL */
-struct st_api *
-st_api_create_OpenGL()
-{
-   return st_gl_api_create();
-}
-
 
 /* Helper function to choose and instantiate one of the software rasterizers:
  * cell, llvmpipe, softpipe.
@@ -75,6 +68,10 @@ st_api_create_OpenGL()
 
 #ifdef GALLIUM_CELL
 #include "cell/ppu/cell_public.h"
+#endif
+
+#ifdef GALLIUM_GALAHAD
+#include "galahad/glhd_public.h"
 #endif
 
 static struct pipe_screen *
@@ -109,6 +106,14 @@ swrast_create_screen(struct sw_winsys *winsys)
 #if defined(GALLIUM_SOFTPIPE)
    if (screen == NULL)
       screen = softpipe_create_screen( winsys );
+#endif
+
+#if defined(GALLIUM_GALAHAD)
+   if (screen) {
+      struct pipe_screen *galahad_screen = galahad_screen_create(screen);
+      if (galahad_screen)
+         screen = galahad_screen;
+   }
 #endif
 
    return screen;

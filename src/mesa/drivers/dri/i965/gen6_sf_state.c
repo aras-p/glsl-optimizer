@@ -33,20 +33,29 @@
 #include "intel_batchbuffer.h"
 
 static uint32_t
-get_attr_override(struct brw_context *brw, int attr)
+get_attr_override(struct brw_context *brw, int fs_attr)
 {
-   uint32_t attr_override;
-   int attr_index = 0, i;
+   int attr_index = 0, i, vs_attr;
+
+   if (fs_attr <= FRAG_ATTRIB_TEX7)
+      vs_attr = fs_attr;
+   else if (fs_attr == FRAG_ATTRIB_FACE)
+      vs_attr = 0; /* XXX */
+   else if (fs_attr == FRAG_ATTRIB_PNTC)
+      vs_attr = 0; /* XXX */
+   else {
+      assert(fs_attr >= FRAG_ATTRIB_VAR0);
+      vs_attr = fs_attr - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+   }
 
    /* Find the source index (0 = first attribute after the 4D position)
     * for this output attribute.  attr is currently a VERT_RESULT_* but should
     * be FRAG_ATTRIB_*.
     */
-   for (i = 0; i < attr; i++) {
+   for (i = 0; i < vs_attr; i++) {
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
-   attr_override = attr_index;
 
    return attr_index;
 }
@@ -58,9 +67,8 @@ upload_sf_state(struct brw_context *brw)
    GLcontext *ctx = &intel->ctx;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
-   /* This should probably be FS inputs read */
-   uint32_t num_outputs = brw_count_bits(brw->vs.prog_data->outputs_written);
-   uint32_t dw1, dw2, dw3, dw4;
+   uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
+   uint32_t dw1, dw2, dw3, dw4, dw16;
    int i;
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
@@ -69,15 +77,19 @@ upload_sf_state(struct brw_context *brw)
    dw1 =
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-      3 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
+      1 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
    dw2 = GEN6_SF_VIEWPORT_TRANSFORM_ENABLE |
       GEN6_SF_STATISTICS_ENABLE;
    dw3 = 0;
    dw4 = 0;
+   dw16 = 0;
 
    /* _NEW_POLYGON */
    if ((ctx->Polygon.FrontFace == GL_CCW) ^ render_to_fbo)
       dw2 |= GEN6_SF_WINDING_CCW;
+
+   if (ctx->Polygon.OffsetFill)
+       dw2 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
 
    /* _NEW_SCISSOR */
    if (ctx->Scissor.Enabled)
@@ -87,7 +99,7 @@ upload_sf_state(struct brw_context *brw)
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_FRONT:
-	 dw3 |= GEN6_SF_CULL_BOTH;
+	 dw3 |= GEN6_SF_CULL_FRONT;
 	 break;
       case GL_BACK:
 	 dw3 |= GEN6_SF_CULL_BACK;
@@ -118,7 +130,7 @@ upload_sf_state(struct brw_context *brw)
 
    dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 225.875), 3) <<
       GEN6_SF_POINT_WIDTH_SHIFT;
-   if (render_to_fbo)
+   if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
       dw1 |= GEN6_SF_POINT_SPRITE_LOWERLEFT;
 
    /* _NEW_LIGHT */
@@ -130,6 +142,13 @@ upload_sf_state(struct brw_context *brw)
    } else {
       dw4 |=
 	 (1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT);
+   }
+
+   if (ctx->Point.PointSprite) {
+       for (i = 0; i < 8; i++) { 
+	   if (ctx->Point.CoordReplace[i])
+	       dw16 |= (1 << i);
+       }
    }
 
    BEGIN_BATCH(20);
@@ -144,11 +163,8 @@ upload_sf_state(struct brw_context *brw)
    for (i = 0; i < 8; i++) {
       uint32_t attr_overrides = 0;
 
-      /* These should be generating FS inputs read instead of VS
-       * outputs written
-       */
       for (; attr < 64; attr++) {
-	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
 	    attr_overrides |= get_attr_override(brw, attr);
 	    attr++;
 	    break;
@@ -156,7 +172,7 @@ upload_sf_state(struct brw_context *brw)
       }
 
       for (; attr < 64; attr++) {
-	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
 	    attr_overrides |= get_attr_override(brw, attr) << 16;
 	    attr++;
 	    break;
@@ -164,7 +180,7 @@ upload_sf_state(struct brw_context *brw)
       }
       OUT_BATCH(attr_overrides);
    }
-   OUT_BATCH(0); /* point sprite texcoord bitmask */
+   OUT_BATCH(dw16); /* point sprite texcoord bitmask */
    OUT_BATCH(0); /* constant interp bitmask */
    OUT_BATCH(0); /* wrapshortest enables 0-7 */
    OUT_BATCH(0); /* wrapshortest enables 8-15 */

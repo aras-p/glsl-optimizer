@@ -50,17 +50,18 @@
 static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_multitexture",	NULL },
 	{ "GL_ARB_texture_env_add",	NULL },
-	{ "GL_ARB_texture_env_combine",	NULL },
-	{ "GL_ARB_texture_env_dot3",	NULL },
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
 	{ "GL_EXT_framebuffer_blit",	NULL },
 	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
+	{ "GL_EXT_packed_depth_stencil", NULL},
 	{ "GL_EXT_secondary_color",	GL_EXT_secondary_color_functions },
 	{ "GL_EXT_stencil_wrap",	NULL },
+	{ "GL_EXT_texture_env_combine",	NULL },
+	{ "GL_EXT_texture_filter_anisotropic", NULL },
 	{ "GL_EXT_texture_lod_bias",	NULL },
 	{ "GL_NV_blend_square",         NULL },
-	{ "GL_SGIS_generate_mipmap",	NULL },
+	{ "GL_NV_texture_env_combine4",	NULL },
 	{ NULL,				NULL }
 };
 
@@ -75,7 +76,8 @@ nouveau_channel_flush_notify(struct nouveau_channel *chan)
 }
 
 GLboolean
-nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,
+nouveau_context_create(gl_api api,
+		       const __GLcontextModes *visual, __DRIcontext *dri_ctx,
 		       void *share_ctx)
 {
 	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;
@@ -180,6 +182,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	GLcontext *ctx = dri_ctx->driverPrivate;
 	__DRIscreen *screen = dri_ctx->driScreenPriv;
 	struct gl_framebuffer *fb = draw->driverPrivate;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	unsigned int attachments[10];
 	__DRIbuffer *buffers = NULL;
 	int i = 0, count, ret;
@@ -188,7 +191,8 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		return;
 	draw->lastStamp = *draw->pStamp;
 
-	attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+	if (nfb->need_front)
+		attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	if (fb->Visual.doubleBufferMode)
 		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
 	if (fb->Visual.haveDepthBuffer && fb->Visual.haveStencilBuffer)
@@ -207,7 +211,6 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	for (i = 0; i < count; i++) {
 		struct gl_renderbuffer *rb;
 		struct nouveau_surface *s;
-		uint32_t old_handle;
 		int index;
 
 		switch (buffers[i].attachment) {
@@ -237,19 +240,10 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		s->pitch = buffers[i].pitch;
 		s->cpp = buffers[i].cpp;
 
-		/* Don't bother to reopen the bo if it happens to be
-		 * the same. */
-		if (s->bo) {
-			ret = nouveau_bo_handle_get(s->bo, &old_handle);
-			assert(!ret);
-		}
-
-		if (!s->bo || old_handle != buffers[i].name) {
-			nouveau_bo_ref(NULL, &s->bo);
-			ret = nouveau_bo_handle_ref(context_dev(ctx),
-						    buffers[i].name, &s->bo);
-			assert(!ret);
-		}
+		nouveau_bo_ref(NULL, &s->bo);
+		ret = nouveau_bo_handle_ref(context_dev(ctx),
+					    buffers[i].name, &s->bo);
+		assert(!ret);
 	}
 
 	_mesa_resize_framebuffer(NULL, fb, draw->w, draw->h);
@@ -267,7 +261,10 @@ update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 	nouveau_update_renderbuffers(dri_ctx, draw);
 	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
 
+	/* Clean up references to the old framebuffer objects. */
 	context_dirty(ctx, FRAMEBUFFER);
+	context_bctx(ctx, FRAMEBUFFER);
+	FIRE_RING(context_chan(ctx));
 }
 
 GLboolean
@@ -293,8 +290,6 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 				   dri_read->driverPrivate);
 		_mesa_update_state(ctx);
 
-		FIRE_RING(context_chan(ctx));
-
 	} else {
 		_mesa_make_current(NULL, NULL, NULL);
 	}
@@ -305,6 +300,9 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 GLboolean
 nouveau_context_unbind(__DRIcontext *dri_ctx)
 {
+	/* Unset current context and dispath table */
+	_mesa_make_current(NULL, NULL, NULL);
+
 	return GL_TRUE;
 }
 
@@ -321,6 +319,25 @@ nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode)
 		FIRE_RING(context_chan(ctx));
 }
 
+static void
+validate_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
+		     int *stamp)
+{
+	struct gl_framebuffer *fb = draw->driverPrivate;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
+	GLboolean need_front =
+		(fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT ||
+		 fb->_ColorReadBufferIndex == BUFFER_FRONT_LEFT);
+
+	if (nfb->need_front != need_front) {
+		nfb->need_front = need_front;
+		dri2InvalidateDrawable(draw);
+	}
+
+	if (*draw->pStamp != *stamp)
+		update_framebuffer(dri_ctx, draw, stamp);
+}
+
 void
 nouveau_validate_framebuffer(GLcontext *ctx)
 {
@@ -328,18 +345,14 @@ nouveau_validate_framebuffer(GLcontext *ctx)
 	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;
 	__DRIdrawable *dri_read = dri_ctx->driReadablePriv;
 
-	if (ctx->DrawBuffer->Name == 0 &&
-	    dri_ctx->dri2.draw_stamp != *dri_draw->pStamp)
-		update_framebuffer(dri_ctx, dri_draw,
-				   &dri_ctx->dri2.draw_stamp);
+	if (ctx->DrawBuffer->Name == 0)
+		validate_framebuffer(dri_ctx, dri_draw,
+				     &dri_ctx->dri2.draw_stamp);
 
-	if (ctx->ReadBuffer->Name == 0 && dri_draw != dri_read &&
-	    dri_ctx->dri2.read_stamp != *dri_read->pStamp)
-		update_framebuffer(dri_ctx, dri_read,
-				   &dri_ctx->dri2.read_stamp);
+	if (ctx->ReadBuffer->Name == 0)
+		validate_framebuffer(dri_ctx, dri_read,
+				     &dri_ctx->dri2.read_stamp);
 
-	if (nouveau_next_dirty_state(ctx) >= 0) {
+	if (nouveau_next_dirty_state(ctx) >= 0)
 		nouveau_state_emit(ctx);
-		FIRE_RING(context_chan(ctx));
-	}
 }

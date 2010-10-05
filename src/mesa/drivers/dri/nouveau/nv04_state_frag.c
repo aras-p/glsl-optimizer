@@ -44,6 +44,7 @@ struct combiner_state {
 	GLcontext *ctx;
 	int unit;
 	GLboolean alpha;
+	GLboolean premodulate;
 
 	/* GL state */
 	GLenum mode;
@@ -66,6 +67,7 @@ struct combiner_state {
 		(rc)->ctx = ctx;				\
 		(rc)->unit = i;					\
 		(rc)->alpha = __INIT_COMBINER_ALPHA_##chan;	\
+		(rc)->premodulate = c->_NumArgs##chan == 4;	\
 		(rc)->mode = c->Mode##chan;			\
 		(rc)->source = c->Source##chan;			\
 		(rc)->operand = c->Operand##chan;		\
@@ -79,6 +81,9 @@ static uint32_t
 get_input_source(struct combiner_state *rc, int source)
 {
 	switch (source) {
+	case GL_ZERO:
+		return COMBINER_SOURCE(ZERO);
+
 	case GL_TEXTURE:
 		return rc->unit ? COMBINER_SOURCE(TEXTURE1) :
 			COMBINER_SOURCE(TEXTURE0);
@@ -195,11 +200,24 @@ setup_combiner(struct combiner_state *rc)
 		break;
 
 	case GL_ADD:
-		INPUT_ARG(rc, 0, 0, 0);
-		INPUT_SRC(rc, 1, ZERO, INVERT);
-		INPUT_ARG(rc, 2, 1, 0);
-		INPUT_SRC(rc, 3, ZERO, INVERT);
-		UNSIGNED_OP(rc);
+	case GL_ADD_SIGNED:
+		if (rc->premodulate) {
+			INPUT_ARG(rc, 0, 0, 0);
+			INPUT_ARG(rc, 1, 1, 0);
+			INPUT_ARG(rc, 2, 2, 0);
+			INPUT_ARG(rc, 3, 3, 0);
+		} else {
+			INPUT_ARG(rc, 0, 0, 0);
+			INPUT_SRC(rc, 1, ZERO, INVERT);
+			INPUT_ARG(rc, 2, 1, 0);
+			INPUT_SRC(rc, 3, ZERO, INVERT);
+		}
+
+		if (rc->mode == GL_ADD_SIGNED)
+			SIGNED_OP(rc);
+		else
+			UNSIGNED_OP(rc);
+
 		break;
 
 	case GL_INTERPOLATE:
@@ -208,14 +226,6 @@ setup_combiner(struct combiner_state *rc)
 		INPUT_ARG(rc, 2, 1, 0);
 		INPUT_ARG(rc, 3, 2, INVERT);
 		UNSIGNED_OP(rc);
-		break;
-
-	case GL_ADD_SIGNED:
-		INPUT_ARG(rc, 0, 0, 0);
-		INPUT_SRC(rc, 1, ZERO, INVERT);
-		INPUT_ARG(rc, 2, 1, 0);
-		INPUT_SRC(rc, 3, ZERO, INVERT);
-		SIGNED_OP(rc);
 		break;
 
 	default:

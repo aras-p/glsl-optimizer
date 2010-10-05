@@ -54,9 +54,7 @@
 #include "vbo.h"
 #include "vbo_attrib.h"
 #include "vbo_exec.h"
-#if FEATURE_dlist
 #include "vbo_save.h"
-#endif
 
 
 struct vbo_context {

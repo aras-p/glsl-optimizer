@@ -39,6 +39,7 @@ if env['platform'] == 'linux':
 
 	env.Prepend(LIBS = [
 		trace,
+		rbug,
 		st_xorg,
 		svgadrm,
 		svga,
@@ -47,6 +48,7 @@ if env['platform'] == 'linux':
 
 	sources = [
 		'vmw_ioctl.c',
+		'vmw_ctrl.c',
 		'vmw_screen.c',
 		'vmw_video.c',
 		'vmw_xorg.c',

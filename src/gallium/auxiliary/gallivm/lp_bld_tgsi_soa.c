@@ -45,20 +45,19 @@
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
-#include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_bitarit.h"
+#include "lp_bld_gather.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
+#include "lp_bld_quad.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
-
-
-#define LP_MAX_TEMPS 256
-#define LP_MAX_IMMEDIATES 256
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -78,13 +77,10 @@
 #define CHAN_Y 1
 #define CHAN_Z 2
 #define CHAN_W 3
+#define NUM_CHANNELS 4
 
-#define QUAD_TOP_LEFT     0
-#define QUAD_TOP_RIGHT    1
-#define QUAD_BOTTOM_LEFT  2
-#define QUAD_BOTTOM_RIGHT 3
+#define LP_MAX_INSTRUCTIONS 256
 
-#define LP_TGSI_MAX_NESTING 16
 
 struct lp_exec_mask {
    struct lp_build_context *bld;
@@ -93,22 +89,28 @@ struct lp_exec_mask {
 
    LLVMTypeRef int_vec_type;
 
-   LLVMValueRef cond_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
    int cond_stack_size;
    LLVMValueRef cond_mask;
 
-   LLVMValueRef break_stack[LP_TGSI_MAX_NESTING];
-   int break_stack_size;
-   LLVMValueRef break_mask;
-
-   LLVMValueRef cont_stack[LP_TGSI_MAX_NESTING];
-   int cont_stack_size;
-   LLVMValueRef cont_mask;
-
-   LLVMBasicBlockRef loop_stack[LP_TGSI_MAX_NESTING];
-   int loop_stack_size;
    LLVMBasicBlockRef loop_block;
+   LLVMValueRef cont_mask;
+   LLVMValueRef break_mask;
+   LLVMValueRef break_var;
+   struct {
+      LLVMBasicBlockRef loop_block;
+      LLVMValueRef cont_mask;
+      LLVMValueRef break_mask;
+      LLVMValueRef break_var;
+   } loop_stack[LP_MAX_TGSI_NESTING];
+   int loop_stack_size;
 
+   LLVMValueRef ret_mask;
+   struct {
+      int pc;
+      LLVMValueRef ret_mask;
+   } call_stack[LP_MAX_TGSI_NESTING];
+   int call_stack_size;
 
    LLVMValueRef exec_mask;
 };
@@ -117,48 +119,36 @@ struct lp_build_tgsi_soa_context
 {
    struct lp_build_context base;
 
+   /* Builder for integer masks and indices */
+   struct lp_build_context uint_bld;
+
    LLVMValueRef consts_ptr;
    const LLVMValueRef *pos;
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
 
-   struct lp_build_sampler_soa *sampler;
+   const struct lp_build_sampler_soa *sampler;
 
-   LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
-   LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
-   LLVMValueRef addr[LP_MAX_TEMPS][NUM_CHANNELS];
+   LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][NUM_CHANNELS];
+   LLVMValueRef temps[LP_MAX_TGSI_TEMPS][NUM_CHANNELS];
+   LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
+   LLVMValueRef preds[LP_MAX_TGSI_PREDS][NUM_CHANNELS];
 
-   /* we allocate an array of temps if we have indirect
-    * addressing and then the temps above is unused */
+   /* We allocate/use this array of temps if (1 << TGSI_FILE_TEMPORARY) is
+    * set in the indirect_files field.
+    * The temps[] array above is unused then.
+    */
    LLVMValueRef temps_array;
-   boolean has_indirect_addressing;
+
+   const struct tgsi_shader_info *info;
+   /** bitmask indicating which register files are accessed indirectly */
+   unsigned indirect_files;
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
-};
 
-static const unsigned char
-swizzle_left[4] = {
-   QUAD_TOP_LEFT,     QUAD_TOP_LEFT,
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_LEFT
-};
-
-static const unsigned char
-swizzle_right[4] = {
-   QUAD_TOP_RIGHT,    QUAD_TOP_RIGHT,
-   QUAD_BOTTOM_RIGHT, QUAD_BOTTOM_RIGHT
-};
-
-static const unsigned char
-swizzle_top[4] = {
-   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT,
-   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT
-};
-
-static const unsigned char
-swizzle_bottom[4] = {
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT,
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT
+   struct tgsi_full_instruction *instructions;
+   uint max_instructions;
 };
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
@@ -167,10 +157,11 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->has_mask = FALSE;
    mask->cond_stack_size = 0;
    mask->loop_stack_size = 0;
-   mask->break_stack_size = 0;
-   mask->cont_stack_size = 0;
+   mask->call_stack_size = 0;
 
    mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
+   mask->exec_mask = mask->ret_mask = mask->break_mask = mask->cont_mask = mask->cond_mask =
+         LLVMConstAllOnes(mask->int_vec_type);
 }
 
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
@@ -190,32 +181,46 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
    } else
       mask->exec_mask = mask->cond_mask;
 
+   if (mask->call_stack_size) {
+      mask->exec_mask = LLVMBuildAnd(mask->bld->builder,
+                                     mask->exec_mask,
+                                     mask->ret_mask,
+                                     "callmask");
+   }
 
    mask->has_mask = (mask->cond_stack_size > 0 ||
-                     mask->loop_stack_size > 0);
+                     mask->loop_stack_size > 0 ||
+                     mask->call_stack_size > 0);
 }
 
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
                                    LLVMValueRef val)
 {
+   assert(mask->cond_stack_size < LP_MAX_TGSI_NESTING);
+   if (mask->cond_stack_size == 0) {
+      assert(mask->cond_mask == LLVMConstAllOnes(mask->int_vec_type));
+   }
    mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
-   mask->cond_mask = LLVMBuildBitCast(mask->bld->builder, val,
-                                      mask->int_vec_type, "");
-
+   assert(LLVMTypeOf(val) == mask->int_vec_type);
+   mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
+                                  mask->cond_mask,
+                                  val,
+                                  "");
    lp_exec_mask_update(mask);
 }
 
 static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
 {
-   LLVMValueRef prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
-   LLVMValueRef inv_mask = LLVMBuildNot(mask->bld->builder,
-                                        mask->cond_mask, "");
+   LLVMValueRef prev_mask;
+   LLVMValueRef inv_mask;
 
-   /* means that we didn't have any mask before and that
-    * we were fully enabled */
-   if (mask->cond_stack_size <= 1) {
-      prev_mask = LLVMConstAllOnes(mask->int_vec_type);
+   assert(mask->cond_stack_size);
+   prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
+   if (mask->cond_stack_size == 1) {
+      assert(prev_mask == LLVMConstAllOnes(mask->int_vec_type));
    }
+
+   inv_mask = LLVMBuildNot(mask->bld->builder, mask->cond_mask, "");
 
    mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
                                   inv_mask,
@@ -225,26 +230,36 @@ static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
 
 static void lp_exec_mask_cond_pop(struct lp_exec_mask *mask)
 {
+   assert(mask->cond_stack_size);
    mask->cond_mask = mask->cond_stack[--mask->cond_stack_size];
    lp_exec_mask_update(mask);
 }
 
 static void lp_exec_bgnloop(struct lp_exec_mask *mask)
 {
+   if (mask->loop_stack_size == 0) {
+      assert(mask->loop_block == NULL);
+      assert(mask->cont_mask == LLVMConstAllOnes(mask->int_vec_type));
+      assert(mask->break_mask == LLVMConstAllOnes(mask->int_vec_type));
+      assert(mask->break_var == NULL);
+   }
 
-   if (mask->cont_stack_size == 0)
-      mask->cont_mask = LLVMConstAllOnes(mask->int_vec_type);
-   if (mask->break_stack_size == 0)
-      mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
-   if (mask->cond_stack_size == 0)
-      mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
+   assert(mask->loop_stack_size < LP_MAX_TGSI_NESTING);
 
-   mask->break_stack[mask->break_stack_size++] = mask->break_mask;
-   mask->cont_stack[mask->cont_stack_size++] = mask->cont_mask;
-   mask->loop_stack[mask->loop_stack_size++] = mask->loop_block;
+   mask->loop_stack[mask->loop_stack_size].loop_block = mask->loop_block;
+   mask->loop_stack[mask->loop_stack_size].cont_mask = mask->cont_mask;
+   mask->loop_stack[mask->loop_stack_size].break_mask = mask->break_mask;
+   mask->loop_stack[mask->loop_stack_size].break_var = mask->break_var;
+   ++mask->loop_stack_size;
+
+   mask->break_var = lp_build_alloca(mask->bld->builder, mask->int_vec_type, "");
+   LLVMBuildStore(mask->bld->builder, mask->break_mask, mask->break_var);
+
    mask->loop_block = lp_build_insert_new_block(mask->bld->builder, "bgnloop");
    LLVMBuildBr(mask->bld->builder, mask->loop_block);
    LLVMPositionBuilderAtEnd(mask->bld->builder, mask->loop_block);
+
+   mask->break_mask = LLVMBuildLoad(mask->bld->builder, mask->break_var, "");
 
    lp_exec_mask_update(mask);
 }
@@ -255,16 +270,9 @@ static void lp_exec_break(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "break");
 
-   /* mask->break_stack_size > 1 implies that we encountered a break
-    * statemant already and if that's the case we want to make sure
-    * our mask is a combination of the previous break and the current
-    * execution mask */
-   if (mask->break_stack_size > 1) {
-      mask->break_mask = LLVMBuildAnd(mask->bld->builder,
-                                      mask->break_mask,
-                                      exec_mask, "break_full");
-   } else
-      mask->break_mask = exec_mask;
+   mask->break_mask = LLVMBuildAnd(mask->bld->builder,
+                                   mask->break_mask,
+                                   exec_mask, "break_full");
 
    lp_exec_mask_update(mask);
 }
@@ -275,12 +283,9 @@ static void lp_exec_continue(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "");
 
-   if (mask->cont_stack_size > 1) {
-      mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
-                                     mask->cont_mask,
-                                     exec_mask, "");
-   } else
-      mask->cont_mask = exec_mask;
+   mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
+                                  mask->cont_mask,
+                                  exec_mask, "");
 
    lp_exec_mask_update(mask);
 }
@@ -295,11 +300,24 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
 
    assert(mask->break_mask);
 
+   /*
+    * Restore the cont_mask, but don't pop
+    */
+   assert(mask->loop_stack_size);
+   mask->cont_mask = mask->loop_stack[mask->loop_stack_size - 1].cont_mask;
+   lp_exec_mask_update(mask);
+
+   /*
+    * Unlike the continue mask, the break_mask must be preserved across loop
+    * iterations
+    */
+   LLVMBuildStore(mask->bld->builder, mask->break_mask, mask->break_var);
+
    /* i1cond = (mask == 0) */
    i1cond = LLVMBuildICmp(
       mask->bld->builder,
       LLVMIntNE,
-      LLVMBuildBitCast(mask->bld->builder, mask->break_mask, reg_type, ""),
+      LLVMBuildBitCast(mask->bld->builder, mask->exec_mask, reg_type, ""),
       LLVMConstNull(reg_type), "");
 
    endloop = lp_build_insert_new_block(mask->bld->builder, "endloop");
@@ -309,15 +327,12 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
 
    LLVMPositionBuilderAtEnd(mask->bld->builder, endloop);
 
-   mask->loop_block = mask->loop_stack[--mask->loop_stack_size];
-   /* pop the cont mask */
-   if (mask->cont_stack_size) {
-      mask->cont_mask = mask->cont_stack[--mask->cont_stack_size];
-   }
-   /* pop the break mask */
-   if (mask->break_stack_size) {
-      mask->break_mask = mask->break_stack[--mask->break_stack_size];
-   }
+   assert(mask->loop_stack_size);
+   --mask->loop_stack_size;
+   mask->loop_block = mask->loop_stack[mask->loop_stack_size].loop_block;
+   mask->cont_mask = mask->loop_stack[mask->loop_stack_size].cont_mask;
+   mask->break_mask = mask->loop_stack[mask->loop_stack_size].break_mask;
+   mask->break_var = mask->loop_stack[mask->loop_stack_size].break_var;
 
    lp_exec_mask_update(mask);
 }
@@ -328,15 +343,25 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
  * (0 means don't store this bit, 1 means do store).
  */
 static void lp_exec_mask_store(struct lp_exec_mask *mask,
+                               LLVMValueRef pred,
                                LLVMValueRef val,
                                LLVMValueRef dst)
 {
+   /* Mix the predicate and execution mask */
    if (mask->has_mask) {
+      if (pred) {
+         pred = LLVMBuildAnd(mask->bld->builder, pred, mask->exec_mask, "");
+      } else {
+         pred = mask->exec_mask;
+      }
+   }
+
+   if (pred) {
       LLVMValueRef real_val, dst_val;
 
       dst_val = LLVMBuildLoad(mask->bld->builder, dst, "");
       real_val = lp_build_select(mask->bld,
-                                 mask->exec_mask,
+                                 pred,
                                  val, dst_val);
 
       LLVMBuildStore(mask->bld->builder, real_val, dst);
@@ -344,43 +369,148 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
       LLVMBuildStore(mask->bld->builder, val, dst);
 }
 
-
-static LLVMValueRef
-emit_ddx(struct lp_build_tgsi_soa_context *bld,
-         LLVMValueRef src)
+static void lp_exec_mask_call(struct lp_exec_mask *mask,
+                              int func,
+                              int *pc)
 {
-   LLVMValueRef src_left  = lp_build_swizzle1_aos(&bld->base, src, swizzle_left);
-   LLVMValueRef src_right = lp_build_swizzle1_aos(&bld->base, src, swizzle_right);
-   return lp_build_sub(&bld->base, src_right, src_left);
+   assert(mask->call_stack_size < LP_MAX_TGSI_NESTING);
+   mask->call_stack[mask->call_stack_size].pc = *pc;
+   mask->call_stack[mask->call_stack_size].ret_mask = mask->ret_mask;
+   mask->call_stack_size++;
+   *pc = func;
+}
+
+static void lp_exec_mask_ret(struct lp_exec_mask *mask, int *pc)
+{
+   LLVMValueRef exec_mask;
+
+   if (mask->call_stack_size == 0) {
+      /* returning from main() */
+      *pc = -1;
+      return;
+   }
+   exec_mask = LLVMBuildNot(mask->bld->builder,
+                            mask->exec_mask,
+                            "ret");
+
+   mask->ret_mask = LLVMBuildAnd(mask->bld->builder,
+                                 mask->ret_mask,
+                                 exec_mask, "ret_full");
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_mask_bgnsub(struct lp_exec_mask *mask)
+{
+}
+
+static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
+{
+   assert(mask->call_stack_size);
+   mask->call_stack_size--;
+   *pc = mask->call_stack[mask->call_stack_size].pc;
+   mask->ret_mask = mask->call_stack[mask->call_stack_size].ret_mask;
+   lp_exec_mask_update(mask);
 }
 
 
-static LLVMValueRef
-emit_ddy(struct lp_build_tgsi_soa_context *bld,
-         LLVMValueRef src)
-{
-   LLVMValueRef src_top    = lp_build_swizzle1_aos(&bld->base, src, swizzle_top);
-   LLVMValueRef src_bottom = lp_build_swizzle1_aos(&bld->base, src, swizzle_bottom);
-   return lp_build_sub(&bld->base, src_top, src_bottom);
-}
-
+/**
+ * Return pointer to a temporary register channel (src or dest).
+ * Note that indirect addressing cannot be handled here.
+ * \param index  which temporary register
+ * \param chan  which channel of the temp register.
+ */
 static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
-             unsigned swizzle,
-             boolean is_indirect,
-             LLVMValueRef addr)
+             unsigned chan)
 {
-   if (!bld->has_indirect_addressing) {
-      return bld->temps[index][swizzle];
-   } else {
-      LLVMValueRef lindex =
-         LLVMConstInt(LLVMInt32Type(), index*4 + swizzle, 0);
-      if (is_indirect)
-         lindex = lp_build_add(&bld->base, lindex, addr);
+   assert(chan < 4);
+   if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+      LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
    }
+   else {
+      return bld->temps[index][chan];
+   }
 }
+
+
+/**
+ * Gather vector.
+ * XXX the lp_build_gather() function should be capable of doing this
+ * with a little work.
+ */
+static LLVMValueRef
+build_gather(struct lp_build_tgsi_soa_context *bld,
+             LLVMValueRef base_ptr,
+             LLVMValueRef indexes)
+{
+   LLVMValueRef res = bld->base.undef;
+   unsigned i;
+
+   /*
+    * Loop over elements of index_vec, load scalar value, insert it into 'res'.
+    */
+   for (i = 0; i < bld->base.type.length; i++) {
+      LLVMValueRef ii = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef index = LLVMBuildExtractElement(bld->base.builder,
+                                                   indexes, ii, "");
+      LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, base_ptr,
+                                             &index, 1, "");
+      LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+
+      res = LLVMBuildInsertElement(bld->base.builder, res, scalar, ii, "");
+   }
+
+   return res;
+}
+
+
+/**
+ * Read the current value of the ADDR register, convert the floats to
+ * ints, multiply by four and return the vector of offsets.
+ * The offsets will be used to index into the constant buffer or
+ * temporary register file.
+ */
+static LLVMValueRef
+get_indirect_index(struct lp_build_tgsi_soa_context *bld,
+                   unsigned reg_file, unsigned reg_index,
+                   const struct tgsi_src_register *indirect_reg)
+{
+   struct lp_build_context *uint_bld = &bld->uint_bld;
+   /* always use X component of address register */
+   unsigned swizzle = indirect_reg->SwizzleX;
+   LLVMValueRef base;
+   LLVMValueRef rel;
+   LLVMValueRef max_index;
+   LLVMValueRef index;
+
+   assert(bld->indirect_files & (1 << reg_file));
+
+   base = lp_build_const_int_vec(uint_bld->type, reg_index);
+
+   assert(swizzle < 4);
+   rel = LLVMBuildLoad(bld->base.builder,
+                        bld->addr[indirect_reg->Index][swizzle],
+                        "load addr reg");
+
+   /* for indexing we want integers */
+   rel = LLVMBuildFPToSI(bld->base.builder,
+                         rel,
+                         uint_bld->vec_type, "");
+
+   index = lp_build_add(uint_bld, base, rel);
+
+   max_index = lp_build_const_int_vec(uint_bld->type,
+                                      bld->info->file_max[reg_file]);
+
+   assert(!uint_bld->type.sign);
+   index = lp_build_min(uint_bld, index, max_index);
+
+   return index;
+}
+
 
 /**
  * Register fetch.
@@ -389,81 +519,102 @@ static LLVMValueRef
 emit_fetch(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
-   unsigned index,
+   unsigned src_op,
    const unsigned chan_index )
 {
-   const struct tgsi_full_src_register *reg = &inst->Src[index];
-   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
+   struct lp_build_context *uint_bld = &bld->uint_bld;
+   const struct tgsi_full_src_register *reg = &inst->Src[src_op];
+   const unsigned swizzle =
+      tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    LLVMValueRef res;
-   LLVMValueRef addr;
+   LLVMValueRef indirect_index = NULL;
 
-   switch (swizzle) {
-   case TGSI_SWIZZLE_X:
-   case TGSI_SWIZZLE_Y:
-   case TGSI_SWIZZLE_Z:
-   case TGSI_SWIZZLE_W:
+   if (swizzle > 3) {
+      assert(0 && "invalid swizzle in emit_fetch()");
+      return bld->base.undef;
+   }
 
+   if (reg->Register.Indirect) {
+      indirect_index = get_indirect_index(bld,
+                                          reg->Register.File,
+                                          reg->Register.Index,
+                                          &reg->Indirect);
+   } else {
+      assert(reg->Register.Index <= bld->info->file_max[reg->Register.File]);
+   }
+
+   switch (reg->Register.File) {
+   case TGSI_FILE_CONSTANT:
       if (reg->Register.Indirect) {
-         LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-         unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
-         addr = LLVMBuildLoad(bld->base.builder,
-                              bld->addr[reg->Indirect.Index][swizzle],
-                              "");
-         /* for indexing we want integers */
-         addr = LLVMBuildFPToSI(bld->base.builder, addr,
-                                int_vec_type, "");
-         addr = LLVMBuildExtractElement(bld->base.builder,
-                                        addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                        "");
-         addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
-      }
+         LLVMValueRef swizzle_vec =
+            lp_build_const_int_vec(uint_bld->type, swizzle);
+         LLVMValueRef index_vec;  /* index into the const buffer */
 
-      switch (reg->Register.File) {
-      case TGSI_FILE_CONSTANT: {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
+         /* index_vec = indirect_index * 4 + swizzle */
+         index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+         index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
+
+         /* Gather values from the constant buffer */
+         res = build_gather(bld, bld->consts_ptr, index_vec);
+      }
+      else {
+         LLVMValueRef index;  /* index into the const buffer */
          LLVMValueRef scalar, scalar_ptr;
 
-         if (reg->Register.Indirect) {
-            /*lp_build_printf(bld->base.builder,
-              "\taddr = %d\n", addr);*/
-            index = lp_build_add(&bld->base, index, addr);
-         }
-         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
+         index = lp_build_const_int32(reg->Register.Index*4 + swizzle);
+
+         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
+                                   &index, 1, "");
          scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
 
          res = lp_build_broadcast_scalar(&bld->base, scalar);
-         break;
       }
+      break;
 
-      case TGSI_FILE_IMMEDIATE:
-         res = bld->immediates[reg->Register.Index][swizzle];
-         assert(res);
-         break;
+   case TGSI_FILE_IMMEDIATE:
+      res = bld->immediates[reg->Register.Index][swizzle];
+      assert(res);
+      break;
 
-      case TGSI_FILE_INPUT:
-         res = bld->inputs[reg->Register.Index][swizzle];
-         assert(res);
-         break;
+   case TGSI_FILE_INPUT:
+      res = bld->inputs[reg->Register.Index][swizzle];
+      assert(res);
+      break;
 
-      case TGSI_FILE_TEMPORARY: {
-         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                              swizzle,
-                                              reg->Register.Indirect,
-                                              addr);
+   case TGSI_FILE_TEMPORARY:
+      if (reg->Register.Indirect) {
+         LLVMValueRef swizzle_vec =
+            lp_build_const_int_vec(uint_bld->type, swizzle);
+         LLVMValueRef length_vec =
+            lp_build_const_int_vec(uint_bld->type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* index into the const buffer */
+         LLVMValueRef temps_array;
+         LLVMTypeRef float4_ptr_type;
+
+         /* index_vec = (indirect_index * 4 + swizzle) * length */
+         index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+         index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
+         index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+
+         /* cast temps_array pointer to float* */
+         float4_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         temps_array = LLVMBuildBitCast(uint_bld->builder, bld->temps_array,
+                                        float4_ptr_type, "");
+
+         /* Gather values from the temporary register array */
+         res = build_gather(bld, temps_array, index_vec);
+      }
+      else {
+         LLVMValueRef temp_ptr;
+         temp_ptr = get_temp_ptr(bld, reg->Register.Index, swizzle);
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
-         if(!res)
+         if (!res)
             return bld->base.undef;
-         break;
-      }
-
-      default:
-         assert( 0 );
-         return bld->base.undef;
       }
       break;
 
    default:
-      assert( 0 );
+      assert(0 && "invalid src register in emit_fetch()");
       return bld->base.undef;
    }
 
@@ -473,13 +624,10 @@ emit_fetch(
       break;
 
    case TGSI_UTIL_SIGN_SET:
-      /* TODO: Use bitwese OR for floating point */
       res = lp_build_abs( &bld->base, res );
-      res = LLVMBuildNeg( bld->base.builder, res, "" );
-      break;
-
+      /* fall through */
    case TGSI_UTIL_SIGN_TOGGLE:
-      res = LLVMBuildNeg( bld->base.builder, res, "" );
+      res = lp_build_negate( &bld->base, res );
       break;
 
    case TGSI_UTIL_SIGN_KEEP:
@@ -513,10 +661,77 @@ emit_fetch_deriv(
    /* TODO: use interpolation coeffs for inputs */
 
    if(ddx)
-      *ddx = emit_ddx(bld, src);
+      *ddx = lp_build_ddx(&bld->base, src);
 
    if(ddy)
-      *ddy = emit_ddy(bld, src);
+      *ddy = lp_build_ddy(&bld->base, src);
+}
+
+
+/**
+ * Predicate.
+ */
+static void
+emit_fetch_predicate(
+   struct lp_build_tgsi_soa_context *bld,
+   const struct tgsi_full_instruction *inst,
+   LLVMValueRef *pred)
+{
+   unsigned index;
+   unsigned char swizzles[4];
+   LLVMValueRef unswizzled[4] = {NULL, NULL, NULL, NULL};
+   LLVMValueRef value;
+   unsigned chan;
+
+   if (!inst->Instruction.Predicate) {
+      FOR_EACH_CHANNEL( chan ) {
+         pred[chan] = NULL;
+      }
+      return;
+   }
+
+   swizzles[0] = inst->Predicate.SwizzleX;
+   swizzles[1] = inst->Predicate.SwizzleY;
+   swizzles[2] = inst->Predicate.SwizzleZ;
+   swizzles[3] = inst->Predicate.SwizzleW;
+
+   index = inst->Predicate.Index;
+   assert(index < LP_MAX_TGSI_PREDS);
+
+   FOR_EACH_CHANNEL( chan ) {
+      unsigned swizzle = swizzles[chan];
+
+      /*
+       * Only fetch the predicate register channels that are actually listed
+       * in the swizzles
+       */
+      if (!unswizzled[swizzle]) {
+         value = LLVMBuildLoad(bld->base.builder,
+                               bld->preds[index][swizzle], "");
+
+         /*
+          * Convert the value to an integer mask.
+          *
+          * TODO: Short-circuit this comparison -- a D3D setp_xx instructions
+          * is needlessly causing two comparisons due to storing the intermediate
+          * result as float vector instead of an integer mask vector.
+          */
+         value = lp_build_compare(bld->base.builder,
+                                  bld->base.type,
+                                  PIPE_FUNC_NOTEQUAL,
+                                  value,
+                                  bld->base.zero);
+         if (inst->Predicate.Negate) {
+            value = LLVMBuildNot(bld->base.builder, value, "");
+         }
+
+         unswizzled[swizzle] = value;
+      } else {
+         value = unswizzled[swizzle];
+      }
+
+      pred[chan] = value;
+   }
 }
 
 
@@ -529,10 +744,11 @@ emit_store(
    const struct tgsi_full_instruction *inst,
    unsigned index,
    unsigned chan_index,
+   LLVMValueRef pred,
    LLVMValueRef value)
 {
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
-   LLVMValueRef addr;
+   LLVMValueRef indirect_index = NULL;
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -553,43 +769,41 @@ emit_store(
    }
 
    if (reg->Register.Indirect) {
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-      unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
-      addr = LLVMBuildLoad(bld->base.builder,
-                           bld->addr[reg->Indirect.Index][swizzle],
-                           "");
-      /* for indexing we want integers */
-      addr = LLVMBuildFPToSI(bld->base.builder, addr,
-                             int_vec_type, "");
-      addr = LLVMBuildExtractElement(bld->base.builder,
-                                     addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                     "");
-      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+      indirect_index = get_indirect_index(bld,
+                                          reg->Register.File,
+                                          reg->Register.Index,
+                                          &reg->Indirect);
+   } else {
+      assert(reg->Register.Index <= bld->info->file_max[reg->Register.File]);
    }
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      lp_exec_mask_store(&bld->exec_mask, value,
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
                          bld->outputs[reg->Register.Index][chan_index]);
       break;
 
-   case TGSI_FILE_TEMPORARY: {
-      LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                           chan_index,
-                                           reg->Register.Indirect,
-                                           addr);
-      lp_exec_mask_store(&bld->exec_mask, value, temp_ptr);
+   case TGSI_FILE_TEMPORARY:
+      if (reg->Register.Indirect) {
+         /* XXX not done yet */
+         debug_printf("WARNING: LLVM scatter store of temp regs"
+                      " not implemented\n");
+      }
+      else {
+         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
+                                              chan_index);
+         lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+      }
       break;
-   }
 
    case TGSI_FILE_ADDRESS:
-      lp_exec_mask_store(&bld->exec_mask, value,
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
                          bld->addr[reg->Indirect.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
-      /* FIXME */
-      assert(0);
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
+                         bld->preds[reg->Register.Index][chan_index]);
       break;
 
    default:
@@ -602,20 +816,28 @@ emit_store(
  * High-level instruction translators.
  */
 
-
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
-          boolean apply_lodbias,
-          boolean projected,
+          enum lp_build_tex_modifier modifier,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->Src[1].Register.Index;
-   LLVMValueRef lodbias;
+   unsigned unit;
+   LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
+   LLVMValueRef ddx[3];
+   LLVMValueRef ddy[3];
    unsigned num_coords;
    unsigned i;
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      for (i = 0; i < 4; i++) {
+         texel[i] = bld->base.undef;
+      }
+      return;
+   }
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
@@ -637,29 +859,57 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if(apply_lodbias)
-      lodbias = emit_fetch( bld, inst, 0, 3 );
-   else
-      lodbias = bld->base.zero;
+   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
+      lod_bias = emit_fetch( bld, inst, 0, 3 );
+      explicit_lod = NULL;
+   }
+   else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+      lod_bias = NULL;
+      explicit_lod = emit_fetch( bld, inst, 0, 3 );
+   }
+   else {
+      lod_bias = NULL;
+      explicit_lod = NULL;
+   }
 
-   if (projected) {
+   if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED) {
       oow = emit_fetch( bld, inst, 0, 3 );
       oow = lp_build_rcp(&bld->base, oow);
    }
 
    for (i = 0; i < num_coords; i++) {
       coords[i] = emit_fetch( bld, inst, 0, i );
-      if (projected)
+      if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
    for (i = num_coords; i < 3; i++) {
       coords[i] = bld->base.undef;
    }
 
+   if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = emit_fetch( bld, inst, 1, i );
+         ddy[i] = emit_fetch( bld, inst, 2, i );
+      }
+      unit = inst->Src[3].Register.Index;
+   }  else {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = lp_build_ddx( &bld->base, coords[i] );
+         ddy[i] = lp_build_ddy( &bld->base, coords[i] );
+      }
+      unit = inst->Src[1].Register.Index;
+   }
+   for (i = num_coords; i < 3; i++) {
+      ddx[i] = bld->base.undef;
+      ddy[i] = bld->base.undef;
+   }
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->base.builder,
                                   bld->base.type,
-                                  unit, num_coords, coords, lodbias,
+                                  unit, num_coords, coords,
+                                  ddx, ddy,
+                                  lod_bias, explicit_lod,
                                   texel);
 }
 
@@ -739,25 +989,27 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    lp_build_mask_update(bld->mask, mask);
 }
 
-static int
+static void
 emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_declaration *decl)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(bld->base.type);
+   LLVMTypeRef vec_type = bld->base.vec_type;
 
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
    unsigned idx, i;
 
    for (idx = first; idx <= last; ++idx) {
+      assert(last <= bld->info->file_max[decl->Declaration.File]);
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
-         if (bld->has_indirect_addressing) {
-            LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
-                                            last*4 + 4, 0);
+         assert(idx < LP_MAX_TGSI_TEMPS);
+         if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+            LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                                   last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
-                                                     vec_type, val, "");
+                                                     vec_type, array_size, "");
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
@@ -772,9 +1024,17 @@ emit_declaration(
          break;
 
       case TGSI_FILE_ADDRESS:
+         assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(bld->base.builder,
                                                 vec_type, "");
+         break;
+
+      case TGSI_FILE_PREDICATE:
+         assert(idx < LP_MAX_TGSI_PREDS);
+         for (i = 0; i < NUM_CHANNELS; i++)
+            bld->preds[idx][i] = lp_build_alloca(bld->base.builder,
+                                                 vec_type, "");
          break;
 
       default:
@@ -782,8 +1042,6 @@ emit_declaration(
          break;
       }
    }
-
-   return TRUE;
 }
 
 
@@ -795,7 +1053,8 @@ static boolean
 emit_instruction(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
-   const struct tgsi_opcode_info *info)
+   const struct tgsi_opcode_info *info,
+   int *pc)
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
@@ -819,8 +1078,10 @@ emit_instruction(
     * redundant code.
     */
 
+   (*pc)++;
+
    assert(info->num_dst <= 1);
-   if(info->num_dst) {
+   if (info->num_dst) {
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          dst0[chan_index] = bld->base.undef;
       }
@@ -1359,12 +1620,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex( bld, inst, FALSE, FALSE, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_NONE, dst0 );
       break;
 
    case TGSI_OPCODE_TXD:
-      /* FIXME */
-      return FALSE;
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV, dst0 );
       break;
 
    case TGSI_OPCODE_UP2H:
@@ -1418,16 +1678,18 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CAL:
-      /* FIXME */
-      return FALSE;
+      lp_exec_mask_call(&bld->exec_mask,
+                        inst->Label.Label,
+                        pc);
+
       break;
 
    case TGSI_OPCODE_RET:
-      /* FIXME */
-      return FALSE;
+      lp_exec_mask_ret(&bld->exec_mask, pc);
       break;
 
    case TGSI_OPCODE_END:
+      *pc = -1;
       break;
 
    case TGSI_OPCODE_SSG:
@@ -1466,7 +1728,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_LOD_BIAS, dst0 );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -1571,11 +1833,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD, dst0 );
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex( bld, inst, FALSE, TRUE, dst0 );
+      emit_tex( bld, inst, LP_BLD_TEX_MODIFIER_PROJECTED, dst0 );
       break;
 
    case TGSI_OPCODE_BRK:
@@ -1593,6 +1855,10 @@ emit_instruction(
       lp_exec_bgnloop(&bld->exec_mask);
       break;
 
+   case TGSI_OPCODE_BGNSUB:
+      lp_exec_mask_bgnsub(&bld->exec_mask);
+      break;
+
    case TGSI_OPCODE_ELSE:
       lp_exec_mask_cond_invert(&bld->exec_mask);
       break;
@@ -1603,6 +1869,10 @@ emit_instruction(
 
    case TGSI_OPCODE_ENDLOOP:
       lp_exec_endloop(&bld->exec_mask);
+      break;
+
+   case TGSI_OPCODE_ENDSUB:
+      lp_exec_mask_endsub(&bld->exec_mask, pc);
       break;
 
    case TGSI_OPCODE_PUSHA:
@@ -1717,8 +1987,12 @@ emit_instruction(
    }
    
    if(info->num_dst) {
+      LLVMValueRef pred[NUM_CHANNELS];
+
+      emit_fetch_predicate( bld, inst, pred );
+
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, dst0[chan_index]);
+         emit_store( bld, inst, 0, chan_index, pred[chan_index], dst0[chan_index]);
       }
    }
 
@@ -1736,24 +2010,42 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
                   struct lp_build_sampler_soa *sampler,
-                  struct tgsi_shader_info *info)
+                  const struct tgsi_shader_info *info)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
    uint num_immediates = 0;
+   uint num_instructions = 0;
    unsigned i;
+   int pc = 0;
+
+   struct lp_type res_type;
+
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+   memset(&res_type, 0, sizeof res_type);
+   res_type.width = type.width;
+   res_type.length = type.length;
+   res_type.sign = 1;
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
+   lp_build_context_init(&bld.uint_bld, builder, lp_uint_type(type));
    bld.mask = mask;
    bld.pos = pos;
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.sampler = sampler;
-   bld.has_indirect_addressing = info->opcode_count[TGSI_OPCODE_ARR] > 0 ||
-                                 info->opcode_count[TGSI_OPCODE_ARL] > 0;
+   bld.info = info;
+   bld.indirect_files = info->indirect_files;
+   bld.instructions = (struct tgsi_full_instruction *)
+                      MALLOC( LP_MAX_INSTRUCTIONS * sizeof(struct tgsi_full_instruction) );
+   bld.max_instructions = LP_MAX_INSTRUCTIONS;
+
+   if (!bld.instructions) {
+      return;
+   }
 
    lp_exec_mask_init(&bld.exec_mask, &bld.base);
 
@@ -1765,19 +2057,31 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* Inputs already interpolated */
-         {
-            if (!emit_declaration( &bld, &parse.FullToken.FullDeclaration ))
-               _debug_printf("warning: failed to define LLVM variable\n");
-         }
+         emit_declaration( &bld, &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          {
-            unsigned opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-            const struct tgsi_opcode_info *opcode_info = tgsi_get_opcode_info(opcode);
-            if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, opcode_info ))
-               _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
-                             opcode_info->mnemonic);
+            /* save expanded instruction */
+            if (num_instructions == bld.max_instructions) {
+               struct tgsi_full_instruction *instructions;
+               instructions = REALLOC(bld.instructions,
+                                      bld.max_instructions
+                                      * sizeof(struct tgsi_full_instruction),
+                                      (bld.max_instructions + LP_MAX_INSTRUCTIONS)
+                                      * sizeof(struct tgsi_full_instruction));
+               if (!instructions) {
+                  break;
+               }
+               bld.instructions = instructions;
+               bld.max_instructions += LP_MAX_INSTRUCTIONS;
+            }
+
+            memcpy(bld.instructions + num_instructions,
+                   &parse.FullToken.FullInstruction,
+                   sizeof(bld.instructions[0]));
+
+            num_instructions++;
          }
 
          break;
@@ -1787,7 +2091,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             assert(size <= 4);
-            assert(num_immediates < LP_MAX_IMMEDIATES);
+            assert(num_immediates < LP_MAX_TGSI_IMMEDIATES);
             for( i = 0; i < size; ++i )
                bld.immediates[num_immediates][i] =
                   lp_build_const_vec(type, parse.FullToken.FullImmediate.u[i].Float);
@@ -1804,14 +2108,33 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          assert( 0 );
       }
    }
+
+   while (pc != -1) {
+      struct tgsi_full_instruction *instr = bld.instructions + pc;
+      const struct tgsi_opcode_info *opcode_info =
+         tgsi_get_opcode_info(instr->Instruction.Opcode);
+      if (!emit_instruction( &bld, instr, opcode_info, &pc ))
+         _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
+                       opcode_info->mnemonic);
+   }
+
    if (0) {
       LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
       LLVMValueRef function = LLVMGetBasicBlockParent(block);
       debug_printf("11111111111111111111111111111 \n");
       tgsi_dump(tokens, 0);
-      LLVMDumpValue(function);
+      lp_debug_dump_value(function);
       debug_printf("2222222222222222222222222222 \n");
    }
    tgsi_parse_free( &parse );
+
+   if (0) {
+      LLVMModuleRef module = LLVMGetGlobalParent(
+         LLVMGetBasicBlockParent(LLVMGetInsertBlock(bld.base.builder)));
+      LLVMDumpModule(module);
+
+   }
+
+   FREE( bld.instructions );
 }
 

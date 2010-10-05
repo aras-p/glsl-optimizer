@@ -125,7 +125,7 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
        */
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4]) shader->base.immediates,
-                   (const float (*)[4])constants[0],
+                   (float (*)[4])constants[0],
                    ppc_builtin_constants);
 
       /* convert (up to) four output verts from SoA back to AoS format */
@@ -190,7 +190,7 @@ draw_create_vs_ppc(struct draw_context *draw,
       vs->base.create_varient = draw_vs_varient_aos_ppc;
    else
 #endif
-      vs->base.create_varient = draw_vs_varient_generic;
+      vs->base.create_varient = draw_vs_create_varient_generic;
    vs->base.prepare = vs_ppc_prepare;
    vs->base.run_linear = vs_ppc_run_linear;
    vs->base.delete = vs_ppc_delete;

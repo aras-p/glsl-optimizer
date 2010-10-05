@@ -63,9 +63,9 @@ void intel_get_texture_alignment_unit(GLenum internalFormat, GLuint *w, GLuint *
     }
 }
 
-void i945_miptree_layout_2d( struct intel_context *intel,
-			     struct intel_mipmap_tree *mt,
-			     uint32_t tiling )
+void i945_miptree_layout_2d(struct intel_context *intel,
+			    struct intel_mipmap_tree *mt,
+			    uint32_t tiling, int nr_images)
 {
    GLuint align_h = 2, align_w = 4;
    GLuint level;
@@ -107,7 +107,7 @@ void i945_miptree_layout_2d( struct intel_context *intel,
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
-      intel_miptree_set_level_info(mt, level, 1, x, y, width, 
+      intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
 				   height, 1);
 
       if (mt->compressed)

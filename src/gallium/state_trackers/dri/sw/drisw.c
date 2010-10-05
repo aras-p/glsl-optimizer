@@ -43,9 +43,9 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri1_helper.h"
-#include "drisw.h"
 
+DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
+static boolean swrast_no_present = FALSE;
 
 static INLINE void
 get_drawable_info(__DRIdrawable *dPriv, int *w, int *h)
@@ -87,6 +87,24 @@ drisw_put_image(struct dri_drawable *drawable,
    put_image(dPriv, data, width, height);
 }
 
+static struct pipe_surface *
+drisw_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
+{
+   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->base.screen;
+   struct pipe_surface *psurf = drawable->drisw_surface;
+
+   if (!psurf || psurf->texture != ptex) {
+      pipe_surface_reference(&drawable->drisw_surface, NULL);
+
+      drawable->drisw_surface = pipe_screen->get_tex_surface(pipe_screen,
+            ptex, 0, 0, 0, 0/* no bind flag???*/);
+
+      psurf = drawable->drisw_surface;
+   }
+
+   return psurf;
+}
+
 static INLINE void
 drisw_present_texture(__DRIdrawable *dPriv,
                       struct pipe_resource *ptex)
@@ -95,7 +113,10 @@ drisw_present_texture(__DRIdrawable *dPriv,
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    struct pipe_surface *psurf;
 
-   psurf = dri1_get_pipe_surface(drawable, ptex);
+   if (swrast_no_present)
+      return;
+
+   psurf = drisw_get_pipe_surface(drawable, ptex);
    if (!psurf)
       return;
 
@@ -128,7 +149,7 @@ drisw_copy_to_front(__DRIdrawable * dPriv,
  * Backend functions for st_framebuffer interface and swap_buffers.
  */
 
-void
+static void
 drisw_swap_buffers(__DRIdrawable *dPriv)
 {
    struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
@@ -170,10 +191,6 @@ drisw_flush_frontbuffer(struct dri_drawable *drawable,
  * During fixed-size operation, the function keeps allocating new attachments
  * as they are requested. Unused attachments are not removed, not until the
  * framebuffer is resized or destroyed.
- *
- * It should be possible for DRI1 and DRISW to share this function, but it
- * seems a better seperation and safer for each DRI version to provide its own
- * function.
  */
 static void
 drisw_allocate_textures(struct dri_drawable *drawable,
@@ -184,7 +201,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    struct pipe_resource templ;
    unsigned width, height;
    boolean resized;
-   int i;
+   unsigned i;
 
    width  = drawable->dPriv->w;
    height = drawable->dPriv->h;
@@ -199,13 +216,13 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    }
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = screen->target;
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
    templ.last_level = 0;
 
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+   for (i = 0; i < count; i++) {
       enum pipe_format format;
       unsigned bind;
 
@@ -215,7 +232,8 @@ drisw_allocate_textures(struct dri_drawable *drawable,
 
       dri_drawable_get_format(drawable, statts[i], &format, &bind);
 
-      if (statts[i] != ST_ATTACHMENT_DEPTH_STENCIL)
+      /* if we don't do any present, no need for display targets */
+      if (statts[i] != ST_ATTACHMENT_DEPTH_STENCIL && !swrast_no_present)
          bind |= PIPE_BIND_DISPLAY_TARGET;
 
       if (format == PIPE_FORMAT_NONE)
@@ -244,7 +262,7 @@ static struct drisw_loader_funcs drisw_lf = {
    .put_image = drisw_put_image
 };
 
-const __DRIconfig **
+static const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
@@ -255,12 +273,10 @@ drisw_init_screen(__DRIscreen * sPriv)
    if (!screen)
       return NULL;
 
-   screen->api = NULL; /* not needed */
    screen->sPriv = sPriv;
    screen->fd = -1;
-   screen->allocate_textures = drisw_allocate_textures;
-   screen->update_drawable_info = drisw_update_drawable_info;
-   screen->flush_frontbuffer = drisw_flush_frontbuffer;
+
+   swrast_no_present = debug_get_option_swrast_no_present();
 
    sPriv->private = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
@@ -278,6 +294,43 @@ fail:
    FREE(screen);
    return NULL;
 }
+
+static boolean
+drisw_create_buffer(__DRIscreen * sPriv,
+                    __DRIdrawable * dPriv,
+                    const __GLcontextModes * visual, boolean isPixmap)
+{
+   struct dri_drawable *drawable = NULL;
+
+   if (!dri_create_buffer(sPriv, dPriv, visual, isPixmap))
+      return FALSE;
+
+   drawable = dPriv->driverPrivate;
+
+   drawable->allocate_textures = drisw_allocate_textures;
+   drawable->update_drawable_info = drisw_update_drawable_info;
+   drawable->flush_frontbuffer = drisw_flush_frontbuffer;
+
+   return TRUE;
+}
+
+/**
+ * DRI driver virtual function table.
+ *
+ * DRI versions differ in their implementation of init_screen and swap_buffers.
+ */
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen = drisw_init_screen,
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = drisw_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .SwapBuffers = drisw_swap_buffers,
+};
 
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {

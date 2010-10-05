@@ -348,41 +348,43 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     switch (pipe_count) {
         case 1:
             return R300_GB_TILE_PIPE_COUNT_RV300;
-            break;
         case 2:
             return R300_GB_TILE_PIPE_COUNT_R300;
-            break;
         case 3:
             return R300_GB_TILE_PIPE_COUNT_R420_3P;
-            break;
         case 4:
             return R300_GB_TILE_PIPE_COUNT_R420;
-            break;
     }
     return 0;
 }
+
 
 /* Translate pipe_formats into PSC vertex types. */
 static INLINE uint16_t
 r300_translate_vertex_data_type(enum pipe_format format) {
     uint32_t result = 0;
     const struct util_format_description *desc;
+    unsigned i;
 
     desc = util_format_description(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_name(format),
-            __FUNCTION__, __LINE__);
-        assert(0);
-        abort();
+        return R300_INVALID_FORMAT;
     }
 
-    switch (desc->channel[0].type) {
+    /* Find the first non-VOID channel. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            break;
+        }
+    }
+
+    switch (desc->channel[i].type) {
         /* Half-floats, floats, doubles */
         case UTIL_FORMAT_TYPE_FLOAT:
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 16:
-                    /* XXX Supported only on RV350 and later. */
+                    /* Supported only on RV350 and later. */
                     if (desc->nr_channels > 2) {
                         result = R300_DATA_TYPE_FLT16_4;
                     } else {
@@ -393,17 +395,14 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     result = R300_DATA_TYPE_FLOAT_1 + (desc->nr_channels - 1);
                     break;
                 default:
-                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
-                    assert(0);
-                    abort();
+                    return R300_INVALID_FORMAT;
             }
             break;
         /* Unsigned ints */
         case UTIL_FORMAT_TYPE_UNSIGNED:
         /* Signed ints */
         case UTIL_FORMAT_TYPE_SIGNED:
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 8:
                     result = R300_DATA_TYPE_BYTE;
                     break;
@@ -415,25 +414,17 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     }
                     break;
                 default:
-                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
-                    fprintf(stderr, "r300: desc->channel[0].size == %d\n",
-                        desc->channel[0].size);
-                    assert(0);
-                    abort();
+                    return R300_INVALID_FORMAT;
             }
             break;
         default:
-            fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                util_format_name(format), __FUNCTION__, __LINE__);
-            assert(0);
-            abort();
+            return R300_INVALID_FORMAT;
     }
 
-    if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+    if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
         result |= R300_SIGNED;
     }
-    if (desc->channel[0].normalized) {
+    if (desc->channel[i].normalized) {
         result |= R300_NORMALIZE;
     }
 
@@ -449,7 +440,7 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-            util_format_name(format), __FUNCTION__, __LINE__);
+            util_format_short_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 

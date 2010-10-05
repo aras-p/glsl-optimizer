@@ -40,7 +40,7 @@
  */
 void
 i915_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
-	   double depth, unsigned stencil)
+           double depth, unsigned stencil)
 {
    util_clear(pipe, &i915_context(pipe)->framebuffer, buffers, rgba, depth,
               stencil);

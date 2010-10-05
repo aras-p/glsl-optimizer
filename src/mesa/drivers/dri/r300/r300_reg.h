@@ -441,6 +441,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_GB_HORZ_CLIP_ADJ                   0x2228
 #define R300_VAP_GB_HORZ_DISC_ADJ                   0x222c
 
+#define R300_VAP_PVS_FLOW_CNTL_ADDRS_0      0x2230
+#define R300_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R300_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 8)
+#define R300_PVS_FC_LAST_INST(x)            ((x) << 16)
+#define R300_PVS_FC_RTN_INST(x)             ((x) << 24)
+
 /* gap */
 
 /* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
@@ -458,6 +464,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VAP_PVS_VTX_TIMEOUT_REG             0x2288
 #       define R300_2288_R300                    0x00750000 /* -- nh */
 #       define R300_2288_RV350                   0x0000FFFF /* -- Vladimir */
+
+#define R300_VAP_PVS_FLOW_CNTL_LOOP_INDEX_0 0x2290
+#define R300_PVS_FC_LOOP_INIT_VAL(x)        ((x) << 0)
+#define R300_PVS_FC_LOOP_STEP_VAL(x)        ((x) << 8)
 
 /* gap */
 
@@ -489,6 +499,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
 #       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
 #define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC
+#define R300_VAP_PVS_FC_OPC_JUMP(x)         (1 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_LOOP(x)         (2 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_JSR(x)          (3 << (2 * (x)))
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
@@ -504,6 +517,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_VTX_POS_0_Z_2              0x24A8
 /* write 0 to indicate end of packet? */
 #define R300_VAP_VTX_END_OF_PKT             0x24AC
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_LW_0   0x2500
+#define R500_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R500_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 16)
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_UW_0   0x2504
+#define R500_PVS_FC_LAST_INST(x)            ((x) << 0)
+#define R500_PVS_FC_RTN_INST(x)             ((x) << 16)
 
 /* gap */
 
@@ -3066,8 +3087,8 @@ enum {
 #   define R500_FC_B_OP0_NONE				(0 << 24)
 #   define R500_FC_B_OP0_DECR				(1 << 24)
 #   define R500_FC_B_OP0_INCR				(2 << 24)
-#   define R500_FC_B_OP1_DECR				(0 << 26)
-#   define R500_FC_B_OP1_NONE				(1 << 26)
+#   define R500_FC_B_OP1_NONE				(0 << 26)
+#   define R500_FC_B_OP1_DECR				(1 << 26)
 #   define R500_FC_B_OP1_INCR				(2 << 26)
 #   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
 #define R500_US_FC_INT_CONST_0				0x4c00

@@ -438,7 +438,8 @@ enum _sis_verbose {
 	VERBOSE_SIS_MEMORY  = 0x2
 };
 
-extern GLboolean sisCreateContext( const __GLcontextModes *glVisual,
+extern GLboolean sisCreateContext( gl_api api,
+				   const __GLcontextModes *glVisual,
 				   __DRIcontext *driContextPriv,
                                    void *sharedContextPrivate );
 extern void sisDestroyContext( __DRIcontext * );

@@ -51,6 +51,8 @@
 #define SP_NEW_VS            0x2000
 #define SP_NEW_QUERY         0x4000
 #define SP_NEW_GS            0x8000
+#define SP_NEW_SO            0x10000
+#define SP_NEW_SO_BUFFERS    0x20000
 
 
 struct tgsi_sampler;
@@ -67,6 +69,8 @@ struct sp_fragment_shader {
    struct pipe_shader_state shader;
 
    struct tgsi_shader_info info;
+
+   struct draw_fragment_shader *draw_shader;
 
    boolean origin_lower_left; /**< fragment shader uses lower left position origin? */
    boolean pixel_center_integer; /**< fragment shader uses integer pixel center? */
@@ -98,6 +102,7 @@ struct sp_vertex_shader {
 struct sp_geometry_shader {
    struct pipe_shader_state shader;
    struct draw_geometry_shader *draw_data;
+   int max_sampler;
 };
 
 struct sp_velems_state {
@@ -105,141 +110,45 @@ struct sp_velems_state {
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
+struct sp_so_state {
+   struct pipe_stream_output_state base;
+};
 
-void *
-softpipe_create_blend_state(struct pipe_context *,
-                            const struct pipe_blend_state *);
-void softpipe_bind_blend_state(struct pipe_context *,
-                               void *);
-void softpipe_delete_blend_state(struct pipe_context *,
-                                 void *);
-
-void *
-softpipe_create_sampler_state(struct pipe_context *,
-                              const struct pipe_sampler_state *);
-void softpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
-void
-softpipe_bind_vertex_sampler_states(struct pipe_context *,
-                                    unsigned num_samplers,
-                                    void **samplers);
-void softpipe_delete_sampler_state(struct pipe_context *, void *);
-
-void *
-softpipe_create_depth_stencil_state(struct pipe_context *,
-                                    const struct pipe_depth_stencil_alpha_state *);
-void softpipe_bind_depth_stencil_state(struct pipe_context *, void *);
-void softpipe_delete_depth_stencil_state(struct pipe_context *, void *);
-
-void *
-softpipe_create_rasterizer_state(struct pipe_context *,
-                                 const struct pipe_rasterizer_state *);
-void softpipe_bind_rasterizer_state(struct pipe_context *, void *);
-void softpipe_delete_rasterizer_state(struct pipe_context *, void *);
-
-void softpipe_set_framebuffer_state( struct pipe_context *,
-                                     const struct pipe_framebuffer_state * );
-
-void softpipe_set_blend_color( struct pipe_context *pipe,
-                               const struct pipe_blend_color *blend_color );
-
-void softpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref );
-
-void softpipe_set_clip_state( struct pipe_context *,
-                              const struct pipe_clip_state * );
-
-void softpipe_set_constant_buffer(struct pipe_context *,
-                                  uint shader, uint index,
-                                  struct pipe_resource *buf);
-
-void *softpipe_create_fs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_fs_state(struct pipe_context *, void *);
-void softpipe_delete_fs_state(struct pipe_context *, void *);
-void *softpipe_create_vs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_vs_state(struct pipe_context *, void *);
-void softpipe_delete_vs_state(struct pipe_context *, void *);
-void *softpipe_create_gs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void softpipe_bind_gs_state(struct pipe_context *, void *);
-void softpipe_delete_gs_state(struct pipe_context *, void *);
-
-void *softpipe_create_vertex_elements_state(struct pipe_context *,
-                                            unsigned count,
-                                            const struct pipe_vertex_element *);
-void softpipe_bind_vertex_elements_state(struct pipe_context *, void *);
-void softpipe_delete_vertex_elements_state(struct pipe_context *, void *);
-
-void softpipe_set_polygon_stipple( struct pipe_context *,
-                                   const struct pipe_poly_stipple * );
-
-void softpipe_set_scissor_state( struct pipe_context *,
-                                 const struct pipe_scissor_state * );
-
-void softpipe_set_sampler_views( struct pipe_context *,
-                                 unsigned num,
-                                 struct pipe_sampler_view ** );
 
 void
-softpipe_set_vertex_sampler_views(struct pipe_context *,
-                                  unsigned num,
-                                  struct pipe_sampler_view **);
-
-struct pipe_sampler_view *
-softpipe_create_sampler_view(struct pipe_context *pipe,
-                             struct pipe_resource *texture,
-                             const struct pipe_sampler_view *templ);
+softpipe_init_blend_funcs(struct pipe_context *pipe);
 
 void
-softpipe_sampler_view_destroy(struct pipe_context *pipe,
-                              struct pipe_sampler_view *view);
-
-void softpipe_set_viewport_state( struct pipe_context *,
-                                  const struct pipe_viewport_state * );
-
-void softpipe_set_vertex_buffers(struct pipe_context *,
-                                 unsigned count,
-                                 const struct pipe_vertex_buffer *);
-
-
-void softpipe_update_derived( struct softpipe_context *softpipe );
-
-
-void softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                          unsigned start, unsigned count);
-
-void softpipe_draw_elements(struct pipe_context *pipe,
-                            struct pipe_resource *indexBuffer,
-                            unsigned indexSize, int indexBias,
-                            unsigned mode, unsigned start, unsigned count);
-void
-softpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_resource *indexBuffer,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned min_index,
-                             unsigned max_index,
-                             unsigned mode, unsigned start, unsigned count);
+softpipe_init_clip_funcs(struct pipe_context *pipe);
 
 void
-softpipe_draw_arrays_instanced(struct pipe_context *pipe,
-                               unsigned mode,
-                               unsigned start,
-                               unsigned count,
-                               unsigned startInstance,
-                               unsigned instanceCount);
+softpipe_init_sampler_funcs(struct pipe_context *pipe);
 
 void
-softpipe_draw_elements_instanced(struct pipe_context *pipe,
-                                 struct pipe_resource *indexBuffer,
-                                 unsigned indexSize,
-                                 int indexBias,
-                                 unsigned mode,
-                                 unsigned start,
-                                 unsigned count,
-                                 unsigned startInstance,
-                                 unsigned instanceCount);
+softpipe_init_rasterizer_funcs(struct pipe_context *pipe);
+
+void
+softpipe_init_shader_funcs(struct pipe_context *pipe);
+
+void
+softpipe_init_streamout_funcs(struct pipe_context *pipe);
+
+void
+softpipe_init_vertex_funcs(struct pipe_context *pipe);
+
+void
+softpipe_set_framebuffer_state(struct pipe_context *,
+                               const struct pipe_framebuffer_state *);
+
+void
+softpipe_update_derived( struct softpipe_context *softpipe );
+
+void
+softpipe_draw_vbo(struct pipe_context *pipe,
+                  const struct pipe_draw_info *info);
+
+void
+softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
 
 void
 softpipe_map_transfers(struct softpipe_context *sp);

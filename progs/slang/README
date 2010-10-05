@@ -1,7 +1,0 @@
-GLSL regression tests.
-
-Type "make" to build all test apps.
-
-Type "make tests" to build and run all test apps. If any
-error is detected, a line starting with *** is output.
-

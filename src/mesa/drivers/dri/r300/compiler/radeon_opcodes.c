@@ -95,6 +95,12 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_DP2,
+		.Name = "DP2",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
+	},
+	{
 		.Opcode = RC_OPCODE_DP3,
 		.Name = "DP3",
 		.NumSrcRegs = 2,
@@ -295,6 +301,13 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_SSG,
+		.Name = "SSG",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1,
+		.IsComponentwise = 1
+	},
+	{
 		.Opcode = RC_OPCODE_SUB,
 		.Name = "SUB",
 		.NumSrcRegs = 2,
@@ -368,6 +381,30 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.NumSrcRegs = 0
 	},
 	{
+		.Opcode = RC_OPCODE_BGNLOOP,
+		.Name = "BGNLOOP",
+		.IsFlowControl = 1,
+		.NumSrcRegs = 0
+	},
+	{
+		.Opcode = RC_OPCODE_BRK,
+		.Name = "BRK",
+		.IsFlowControl = 1,
+		.NumSrcRegs = 0
+	},
+	{
+		.Opcode = RC_OPCODE_ENDLOOP,
+		.Name = "ENDLOOP",
+		.IsFlowControl = 1,
+		.NumSrcRegs = 0,
+	},
+	{
+		.Opcode = RC_OPCODE_CONT,
+		.Name = "CONT",
+		.IsFlowControl = 1,
+		.NumSrcRegs = 0
+	},
+	{
 		.Opcode = RC_OPCODE_REPL_ALPHA,
 		.Name = "REPL_ALPHA",
 		.HasDstReg = 1
@@ -375,6 +412,10 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_BEGIN_TEX,
 		.Name = "BEGIN_TEX"
+	},
+	{
+		.Opcode = RC_OPCODE_KILP,
+		.Name = "KILP",
 	}
 };
 
@@ -406,6 +447,10 @@ void rc_compute_sources_for_writemask(
 		switch(opcode->Opcode) {
 		case RC_OPCODE_ARL:
 			srcmasks[0] |= RC_MASK_X;
+			break;
+		case RC_OPCODE_DP2:
+			srcmasks[0] |= RC_MASK_XY;
+			srcmasks[1] |= RC_MASK_XY;
 			break;
 		case RC_OPCODE_DP3:
 			srcmasks[0] |= RC_MASK_XYZ;

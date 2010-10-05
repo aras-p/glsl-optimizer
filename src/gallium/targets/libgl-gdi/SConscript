@@ -17,6 +17,7 @@ if env['platform'] == 'windows':
         'user32',
         'kernel32',
         'ws2_32',
+        talloc,
     ])
 
     sources = []
@@ -35,7 +36,7 @@ if env['platform'] == 'windows':
     else:
         sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
         
-    drivers += [trace]
+    drivers += [trace, rbug]
 
     env['no_import_lib'] = 1
 

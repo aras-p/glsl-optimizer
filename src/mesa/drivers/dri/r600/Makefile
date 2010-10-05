@@ -59,6 +59,16 @@ DRIVER_SOURCES = \
 		 r600_texstate.c      \
 		 r600_blit.c     \
 		 r700_debug.c    \
+         evergreen_context.c    \
+         evergreen_state.c      \
+         evergreen_tex.c        \
+         evergreen_ioctl.c      \
+         evergreen_render.c     \
+         evergreen_chip.c       \
+         evergreen_vertprog.c   \
+         evergreen_fragprog.c   \
+         evergreen_oglprog.c    \
+		 evergreen_blit.c     \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)

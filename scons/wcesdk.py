@@ -122,7 +122,7 @@ def get_wce600_paths(env):
     host_cpu = os.environ.get('_HOSTCPUTYPE', 'i386')
     target_cpu = os.environ.get('_TGTCPU', 'x86')
 
-    if env['debug']:
+    if env['build'] == 'debug':
         build = 'debug'
     else:
         build = 'retail'

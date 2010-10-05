@@ -37,7 +37,6 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
-struct pipe_buffer;
 struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;

@@ -49,7 +49,7 @@
 
 /* Declare common variables used during a single command */
 #define __GLX_SINGLE_DECLARE_VARIABLES()         \
-   __GLXcontext *gc = __glXGetCurrentContext();  \
+   struct glx_context *gc = __glXGetCurrentContext();  \
    GLubyte *pc, *pixelHeaderPC;                  \
    GLuint compsize, cmdlen;                      \
    Display *dpy = gc->currentDpy;                \

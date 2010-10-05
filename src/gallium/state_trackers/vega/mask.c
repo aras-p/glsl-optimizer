@@ -520,7 +520,7 @@ void mask_layer_destroy(struct vg_mask_layer *layer)
 
    vg_context_remove_object(ctx, VG_OBJECT_MASK, layer);
    pipe_resource_release(&layer->texture);
-   free(layer);
+   FREE(layer);
 }
 
 void mask_layer_fill(struct vg_mask_layer *layer,

@@ -44,7 +44,7 @@ struct lp_build_mask_context;
 
 void
 lp_build_alpha_test(LLVMBuilderRef builder,
-                    const struct pipe_alpha_state *state,
+                    unsigned func,
                     struct lp_type type,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef alpha,

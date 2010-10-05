@@ -80,7 +80,7 @@ static const GLubyte HighBitsMask[9] = {
 ** set of pixel modes that are to be done by the server.
 */
 static void
-FillBitmap(__GLXcontext * gc, GLint width, GLint height,
+FillBitmap(struct glx_context * gc, GLint width, GLint height,
            GLenum format, const GLvoid * userdata, GLubyte * destImage)
 {
    const __GLXattribute *state = gc->client_state_private;
@@ -161,7 +161,7 @@ FillBitmap(__GLXcontext * gc, GLint width, GLint height,
 ** ALIGNMENT = 1.
 */
 void
-__glFillImage(__GLXcontext * gc, GLint dim, GLint width, GLint height,
+__glFillImage(struct glx_context * gc, GLint dim, GLint width, GLint height,
               GLint depth, GLenum format, GLenum type,
               const GLvoid * userdata, GLubyte * newimage, GLubyte * modes)
 {
@@ -268,7 +268,7 @@ __glFillImage(__GLXcontext * gc, GLint dim, GLint width, GLint height,
 ** into the clients memory using the pixel store PACK modes.
 */
 static void
-EmptyBitmap(__GLXcontext * gc, GLint width, GLint height,
+EmptyBitmap(struct glx_context * gc, GLint width, GLint height,
             GLenum format, const GLubyte * sourceImage, GLvoid * userdata)
 {
    const __GLXattribute *state = gc->client_state_private;
@@ -388,7 +388,7 @@ EmptyBitmap(__GLXcontext * gc, GLint width, GLint height,
 */
 /* ARGSUSED */
 void
-__glEmptyImage(__GLXcontext * gc, GLint dim, GLint width, GLint height,
+__glEmptyImage(struct glx_context * gc, GLint dim, GLint width, GLint height,
                GLint depth, GLenum format, GLenum type,
                const GLubyte * sourceImage, GLvoid * userdata)
 {

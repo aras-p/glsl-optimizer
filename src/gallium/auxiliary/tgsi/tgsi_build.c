@@ -164,6 +164,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Declaration  = tgsi_default_declaration();
    full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
+   full_declaration.ImmediateData.u = NULL;
 
    return full_declaration;
 }
@@ -180,7 +181,7 @@ tgsi_build_full_declaration(
    struct tgsi_declaration_range *dr;
 
    if( maxsize <= size )
-     return 0;
+      return 0;
    declaration = (struct tgsi_declaration *) &tokens[size];
    size++;
 
@@ -233,6 +234,24 @@ tgsi_build_full_declaration(
          full_decl->Semantic.Index,
          declaration,
          header );
+   }
+
+   if (full_decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+      unsigned i, j;
+      union tgsi_immediate_data *data;
+
+      for (i = 0; i <= dr->Last; ++i) {
+         for (j = 0; j < 4; ++j) {
+            unsigned idx = i*4 + j;
+            if (maxsize <= size)
+               return 0;
+            data = (union tgsi_immediate_data *) &tokens[size];
+            ++size;
+
+            *data = full_decl->ImmediateData.u[idx];
+            declaration_grow( declaration, header );
+         }
+      }
    }
 
    return size;
@@ -613,6 +632,7 @@ tgsi_build_full_instruction(
          reg->Register.File,
          reg->Register.WriteMask,
          reg->Register.Indirect,
+         reg->Register.Dimension,
          reg->Register.Index,
          instruction,
          header );
@@ -639,6 +659,46 @@ tgsi_build_full_instruction(
             reg->Indirect.Index,
             instruction,
             header );
+      }
+
+      if( reg->Register.Dimension ) {
+         struct  tgsi_dimension *dim;
+
+         assert( !reg->Dimension.Dimension );
+
+         if( maxsize <= size )
+            return 0;
+         dim = (struct tgsi_dimension *) &tokens[size];
+         size++;
+
+         *dim = tgsi_build_dimension(
+            reg->Dimension.Indirect,
+            reg->Dimension.Index,
+            instruction,
+            header );
+
+         if( reg->Dimension.Indirect ) {
+            struct tgsi_src_register *ind;
+
+            if( maxsize <= size )
+               return 0;
+            ind = (struct tgsi_src_register *) &tokens[size];
+            size++;
+
+            *ind = tgsi_build_src_register(
+               reg->DimIndirect.File,
+               reg->DimIndirect.SwizzleX,
+               reg->DimIndirect.SwizzleY,
+               reg->DimIndirect.SwizzleZ,
+               reg->DimIndirect.SwizzleW,
+               reg->DimIndirect.Negate,
+               reg->DimIndirect.Absolute,
+               reg->DimIndirect.Indirect,
+               reg->DimIndirect.Dimension,
+               reg->DimIndirect.Index,
+               instruction,
+               header );
+         }
       }
    }
 
@@ -959,6 +1019,7 @@ tgsi_build_dst_register(
    unsigned file,
    unsigned mask,
    unsigned indirect,
+   unsigned dimension,
    int index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -974,6 +1035,7 @@ tgsi_build_dst_register(
    dst_register.WriteMask = mask;
    dst_register.Index = index;
    dst_register.Indirect = indirect;
+   dst_register.Dimension = dimension;
 
    instruction_grow( instruction, header );
 
@@ -987,6 +1049,8 @@ tgsi_default_full_dst_register( void )
 
    full_dst_register.Register = tgsi_default_dst_register();
    full_dst_register.Indirect = tgsi_default_src_register();
+   full_dst_register.Dimension = tgsi_default_dimension();
+   full_dst_register.DimIndirect = tgsi_default_src_register();
 
    return full_dst_register;
 }

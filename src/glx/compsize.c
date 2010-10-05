@@ -52,15 +52,11 @@ __glElementsPerGroup(GLenum format, GLenum type)
    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
    case GL_UNSIGNED_SHORT_8_8_APPLE:
    case GL_UNSIGNED_SHORT_8_8_REV_APPLE:
-   case GL_UNSIGNED_SHORT_15_1_MESA:
-   case GL_UNSIGNED_SHORT_1_15_REV_MESA:
    case GL_UNSIGNED_INT_8_8_8_8:
    case GL_UNSIGNED_INT_8_8_8_8_REV:
    case GL_UNSIGNED_INT_10_10_10_2:
    case GL_UNSIGNED_INT_2_10_10_10_REV:
    case GL_UNSIGNED_INT_24_8_NV:
-   case GL_UNSIGNED_INT_24_8_MESA:
-   case GL_UNSIGNED_INT_8_24_REV_MESA:
       return 1;
    default:
       break;
@@ -70,6 +66,7 @@ __glElementsPerGroup(GLenum format, GLenum type)
    case GL_RGB:
    case GL_BGR:
       return 3;
+   case GL_RG:
    case GL_422_EXT:
    case GL_422_REV_EXT:
    case GL_422_AVERAGE_EXT:
@@ -114,8 +111,6 @@ __glBytesPerElement(GLenum type)
    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
    case GL_UNSIGNED_SHORT_8_8_APPLE:
    case GL_UNSIGNED_SHORT_8_8_REV_APPLE:
-   case GL_UNSIGNED_SHORT_15_1_MESA:
-   case GL_UNSIGNED_SHORT_1_15_REV_MESA:
       return 2;
    case GL_UNSIGNED_BYTE:
    case GL_BYTE:
@@ -130,8 +125,6 @@ __glBytesPerElement(GLenum type)
    case GL_UNSIGNED_INT_10_10_10_2:
    case GL_UNSIGNED_INT_2_10_10_10_REV:
    case GL_UNSIGNED_INT_24_8_NV:
-   case GL_UNSIGNED_INT_24_8_MESA:
-   case GL_UNSIGNED_INT_8_24_REV_MESA:
       return 4;
    default:
       return 0;

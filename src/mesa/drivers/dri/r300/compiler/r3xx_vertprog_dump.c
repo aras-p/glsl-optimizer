@@ -20,7 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "radeon_compiler.h"
 #include "radeon_code.h"
+#include "../r300_reg.h"
 
 #include <stdio.h>
 
@@ -50,6 +52,9 @@ static char* r300_vs_ve_ops[] = {
 	"         VE_COND_WRITE_GT",
 	"        VE_COND_WRITE_GTE",
 	"        VE_COND_WRITE_NEQ",
+	"           VE_COND_MUX_EQ",
+	"           VE_COND_MUX_GT",
+	"          VE_COND_MUX_GTE",
 	"      VE_SET_GREATER_THAN",
 	"             VE_SET_EQUAL",
 	"         VE_SET_NOT_EQUAL",
@@ -130,6 +135,10 @@ static void r300_vs_op_dump(uint32_t op)
 {
 	fprintf(stderr, " dst: %d%s op: ",
 			(op >> 13) & 0x7f, r300_vs_dst_debug[(op >> 8) & 0x7]);
+	if ((op >> PVS_DST_PRED_ENABLE_SHIFT) & 0x1) {
+		fprintf(stderr, "PRED %u",
+				(op >> PVS_DST_PRED_SENSE_SHIFT) & 0x1);
+	}
 	if (op & 0x80) {
 		if (op & 0x1) {
 			fprintf(stderr, "PVS_MACRO_OP_2CLK_M2X_ADD\n");
@@ -157,10 +166,14 @@ static void r300_vs_src_dump(uint32_t src)
 			r300_vs_swiz_debug[(src >> 22) & 0x7]);
 }
 
-void r300_vertex_program_dump(struct r300_vertex_program_code * vs)
+void r300_vertex_program_dump(struct radeon_compiler *compiler, void *user)
 {
+	struct r300_vertex_program_compiler *c = (struct r300_vertex_program_compiler*)compiler;
+	struct r300_vertex_program_code * vs = c->code;
 	unsigned instrcount = vs->length / 4;
 	unsigned i;
+
+	fprintf(stderr, "Final vertex program code:\n");
 
 	for(i = 0; i < instrcount; i++) {
 		unsigned offset = i*4;
@@ -172,6 +185,23 @@ void r300_vertex_program_dump(struct r300_vertex_program_code * vs)
 		for(src = 0; src < 3; ++src) {
 			fprintf(stderr, " src%i: 0x%08x", src, vs->body.d[offset+1+src]);
 			r300_vs_src_dump(vs->body.d[offset+1+src]);
+		}
+	}
+
+	fprintf(stderr, "Flow Control Ops: 0x%08x\n",vs->fc_ops);
+	for(i = 0; i < vs->num_fc_ops; i++) {
+		switch((vs->fc_ops >> (i * 2)) & 0x3 ) {
+		case 0: fprintf(stderr, "NOP"); break;
+		case 1: fprintf(stderr, "JUMP"); break;
+		case 2: fprintf(stderr, "LOOP"); break;
+		case 3: fprintf(stderr, "JSR"); break;
+		}
+		if (c->Base.is_r500) {
+			fprintf(stderr,": uw-> 0x%08x lw-> 0x%08x\n",
+				vs->fc_op_addrs.r500[i].uw,
+				vs->fc_op_addrs.r500[i].lw);
+		} else {
+			fprintf(stderr,": 0x%08x\n", vs->fc_op_addrs.r300[i]);
 		}
 	}
 }

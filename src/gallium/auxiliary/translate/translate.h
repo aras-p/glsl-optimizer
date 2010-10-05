@@ -85,6 +85,18 @@ struct translate {
                                 unsigned instance_id,
                                 void *output_buffer);
 
+   void (PIPE_CDECL *run_elts16)( struct translate *,
+                                const uint16_t *elts,
+                                unsigned count,
+                                unsigned instance_id,
+                                void *output_buffer);
+
+   void (PIPE_CDECL *run_elts8)( struct translate *,
+                                const uint8_t *elts,
+                                unsigned count,
+                                unsigned instance_id,
+                                void *output_buffer);
+
    void (PIPE_CDECL *run)( struct translate *,
                            unsigned start,
                            unsigned count,
@@ -104,6 +116,8 @@ struct translate *translate_lookup_or_create( struct translate_context *tctx,
 
 
 struct translate *translate_create( const struct translate_key *key );
+
+boolean translate_is_output_format_supported(enum pipe_format format);
 
 static INLINE int translate_keysize( const struct translate_key *key )
 {
@@ -138,5 +152,6 @@ struct translate *translate_sse2_create( const struct translate_key *key );
 
 struct translate *translate_generic_create( const struct translate_key *key );
 
+boolean translate_generic_is_output_format_supported(enum pipe_format format);
 
 #endif

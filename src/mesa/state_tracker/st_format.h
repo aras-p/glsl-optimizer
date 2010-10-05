@@ -31,7 +31,12 @@
 #define ST_FORMAT_H
 
 #include "main/formats.h"
+#include "main/mtypes.h"
 
+#include "pipe/p_defines.h"
+#include "pipe/p_format.h"
+
+struct pipe_screen;
 
 extern GLenum
 st_format_datatype(enum pipe_format format);
@@ -46,11 +51,12 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat);
 
 extern enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
-                 enum pipe_texture_target target, unsigned tex_usage);
+                 enum pipe_texture_target target, unsigned sample_count,
+                 unsigned tex_usage);
 
 extern enum pipe_format
 st_choose_renderbuffer_format(struct pipe_screen *screen,
-                              GLenum internalFormat);
+                              GLenum internalFormat, unsigned sample_count);
 
 
 extern gl_format
@@ -61,5 +67,9 @@ st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 extern GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
 
+/* can we use a sampler view to translate these formats
+   only used to make TFP so far */
+extern GLboolean
+st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2);
 
 #endif /* ST_FORMAT_H */

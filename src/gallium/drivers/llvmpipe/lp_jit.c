@@ -38,7 +38,7 @@
 #include "util/u_memory.h"
 #include "util/u_cpu_detect.h"
 #include "gallivm/lp_bld_init.h"
-#include "lp_debug.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_screen.h"
 #include "gallivm/lp_bld_intr.h"
 #include "lp_jit.h"
@@ -64,6 +64,11 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       elem_types[LP_JIT_TEXTURE_DATA] =
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
                        LP_MAX_TEXTURE_LEVELS);
+      elem_types[LP_JIT_TEXTURE_MIN_LOD] = LLVMFloatType();
+      elem_types[LP_JIT_TEXTURE_MAX_LOD] = LLVMFloatType();
+      elem_types[LP_JIT_TEXTURE_LOD_BIAS] = LLVMFloatType();
+      elem_types[LP_JIT_TEXTURE_BORDER_COLOR] = 
+         LLVMArrayType(LLVMFloatType(), 4);
 
       texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
@@ -88,6 +93,19 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, data,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_DATA);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, min_lod,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_MIN_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, max_lod,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_MAX_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, lod_bias,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_LOD_BIAS);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, border_color,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_BORDER_COLOR);
+
       LP_CHECK_STRUCT_SIZE(struct lp_jit_texture,
                            screen->target, texture_type);
 
@@ -103,10 +121,6 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       elem_types[LP_JIT_CTX_ALPHA_REF] = LLVMFloatType();
       elem_types[LP_JIT_CTX_STENCIL_REF_FRONT] = LLVMInt32Type();
       elem_types[LP_JIT_CTX_STENCIL_REF_BACK] = LLVMInt32Type();
-      elem_types[LP_JIT_CTX_SCISSOR_XMIN] = LLVMFloatType();
-      elem_types[LP_JIT_CTX_SCISSOR_YMIN] = LLVMFloatType();
-      elem_types[LP_JIT_CTX_SCISSOR_XMAX] = LLVMFloatType();
-      elem_types[LP_JIT_CTX_SCISSOR_YMAX] = LLVMFloatType();
       elem_types[LP_JIT_CTX_BLEND_COLOR] = LLVMPointerType(LLVMInt8Type(), 0);
       elem_types[LP_JIT_CTX_TEXTURES] = LLVMArrayType(texture_type,
                                                       PIPE_MAX_SAMPLERS);
@@ -125,18 +139,6 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, stencil_ref_back,
                              screen->target, context_type,
                              LP_JIT_CTX_STENCIL_REF_BACK);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_xmin,
-                             screen->target, context_type,
-                             LP_JIT_CTX_SCISSOR_XMIN);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_ymin,
-                             screen->target, context_type,
-                             LP_JIT_CTX_SCISSOR_YMIN);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_xmax,
-                             screen->target, context_type,
-                             LP_JIT_CTX_SCISSOR_XMAX);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_ymax,
-                             screen->target, context_type,
-                             LP_JIT_CTX_SCISSOR_YMAX);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, blend_color,
                              screen->target, context_type,
                              LP_JIT_CTX_BLEND_COLOR);
@@ -151,9 +153,9 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       screen->context_ptr_type = LLVMPointerType(context_type, 0);
    }
 
-#ifdef DEBUG
-   LLVMDumpModule(screen->module);
-#endif
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      LLVMDumpModule(screen->module);
+   }
 }
 
 
@@ -181,10 +183,12 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    screen->pass = LLVMCreateFunctionPassManager(screen->provider);
    LLVMAddTargetData(screen->target, screen->pass);
 
-   if ((LP_DEBUG & DEBUG_NO_LLVM_OPT) == 0) {
+   if ((gallivm_debug & GALLIVM_DEBUG_NO_OPT) == 0) {
       /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
        * but there are more on SVN. */
       /* TODO: Add more passes */
+      LLVMAddCFGSimplificationPass(screen->pass);
+      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
       LLVMAddConstantPropagationPass(screen->pass);
       if(util_cpu_caps.has_sse4_1) {
          /* FIXME: There is a bug in this pass, whereby the combination of fptosi
@@ -193,9 +197,12 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
           */
          LLVMAddInstructionCombiningPass(screen->pass);
       }
-      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
       LLVMAddGVNPass(screen->pass);
-      LLVMAddCFGSimplificationPass(screen->pass);
+   } else {
+      /* We need at least this pass to prevent the backends to fail in
+       * unexpected ways.
+       */
+      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
    }
 
    lp_jit_init_globals(screen);

@@ -28,7 +28,9 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_ureg.h"
 
+#include "r300_cb.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_fs.h"
 #include "r300_reg.h"
@@ -68,6 +70,11 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
             case TGSI_SEMANTIC_POSITION:
                 assert(index == 0);
                 fs_inputs->wpos = i;
+                break;
+
+            case TGSI_SEMANTIC_FACE:
+                assert(index == 0);
+                fs_inputs->face = i;
                 break;
 
             default:
@@ -118,6 +125,9 @@ static void allocate_hardware_inputs(
             allocate(mydata, inputs->color[i], reg++);
         }
     }
+    if (inputs->face != ATTR_UNUSED) {
+        allocate(mydata, inputs->face, reg++);
+    }
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
         if (inputs->generic[i] != ATTR_UNUSED) {
             allocate(mydata, inputs->generic[i], reg++);
@@ -137,18 +147,32 @@ static void get_external_state(
 {
     struct r300_textures_state *texstate = r300->textures_state.state;
     unsigned i;
+    unsigned char *swizzle;
 
     for (i = 0; i < texstate->sampler_state_count; i++) {
-        struct r300_sampler_state* s = texstate->sampler_states[i];
+        struct r300_sampler_state *s = texstate->sampler_states[i];
+        struct r300_sampler_view *v = texstate->sampler_views[i];
+        struct r300_texture *t;
 
-        if (!s) {
+        if (!s || !v) {
             continue;
         }
 
+        t = r300_texture(texstate->sampler_views[i]->base.texture);
+
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-            /* XXX Gallium doesn't provide us with any information regarding
-             * this mode, so we are screwed. I'm setting 0 = LUMINANCE. */
-            state->unit[i].depth_texture_mode = 0;
+            state->unit[i].compare_mode_enabled = 1;
+
+            /* Pass depth texture swizzling to the compiler. */
+            if (texstate->sampler_views[i]) {
+                swizzle = texstate->sampler_views[i]->swizzle;
+
+                state->unit[i].depth_texture_swizzle =
+                    RC_MAKE_SWIZZLE(swizzle[0], swizzle[1],
+                                    swizzle[2], swizzle[3]);
+            } else {
+                state->unit[i].depth_texture_swizzle = RC_SWIZZLE_XYZW;
+            }
 
             /* Fortunately, no need to translate this. */
             state->unit[i].texture_compare_func = s->state.compare_func;
@@ -156,35 +180,29 @@ static void get_external_state(
 
         state->unit[i].non_normalized_coords = !s->state.normalized_coords;
 
-        if (texstate->sampler_views[i]) {
-            struct r300_texture *t;
-            t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
+        /* XXX this should probably take into account STR, not just S. */
+        if (t->desc.is_npot) {
+            switch (s->state.wrap_s) {
+            case PIPE_TEX_WRAP_REPEAT:
+                state->unit[i].wrap_mode = RC_WRAP_REPEAT;
+                break;
 
-            /* XXX this should probably take into account STR, not just S. */
-            if (t->uses_pitch) {
-                switch (s->state.wrap_s) {
-                    case PIPE_TEX_WRAP_REPEAT:
-                        state->unit[i].wrap_mode = RC_WRAP_REPEAT;
-                        state->unit[i].fake_npot = TRUE;
-                        break;
+            case PIPE_TEX_WRAP_MIRROR_REPEAT:
+                state->unit[i].wrap_mode = RC_WRAP_MIRRORED_REPEAT;
+                break;
 
-                    case PIPE_TEX_WRAP_MIRROR_REPEAT:
-                        state->unit[i].wrap_mode = RC_WRAP_MIRRORED_REPEAT;
-                        state->unit[i].fake_npot = TRUE;
-                        break;
+            case PIPE_TEX_WRAP_MIRROR_CLAMP:
+            case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+            case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+                state->unit[i].wrap_mode = RC_WRAP_MIRRORED_CLAMP;
+                break;
 
-                    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-                    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-                    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-                        state->unit[i].wrap_mode = RC_WRAP_MIRRORED_CLAMP;
-                        state->unit[i].fake_npot = TRUE;
-                        break;
-
-                    default:
-                        state->unit[i].wrap_mode = RC_WRAP_NONE;
-                        break;
-                }
+            default:
+                state->unit[i].wrap_mode = RC_WRAP_NONE;
             }
+
+            if (t->desc.b.b.target == PIPE_TEXTURE_3D)
+                state->unit[i].clamp_and_scale_before_fetch = TRUE;
         }
     }
 }
@@ -219,6 +237,128 @@ static void r300_dummy_fragment_shader(
     ureg_destroy(ureg);
 }
 
+static void r300_emit_fs_code_to_buffer(
+    struct r300_context *r300,
+    struct r300_fragment_shader_code *shader)
+{
+    struct rX00_fragment_program_code *generic_code = &shader->code;
+    unsigned imm_count = shader->immediates_count;
+    unsigned imm_first = shader->externals_count;
+    unsigned imm_end = generic_code->constants.Count;
+    struct rc_constant *constants = generic_code->constants.Constants;
+    unsigned i;
+    CB_LOCALS;
+
+    if (r300->screen->caps.is_r500) {
+        struct r500_fragment_program_code *code = &generic_code->code.r500;
+
+        shader->cb_code_size = 19 +
+                               ((code->inst_end + 1) * 6) +
+                               imm_count * 7 +
+                               code->int_constant_count * 2;
+
+        NEW_CB(shader->cb_code, shader->cb_code_size);
+        OUT_CB_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
+        OUT_CB_REG(R500_US_PIXSIZE, code->max_temp_idx);
+        OUT_CB_REG(R500_US_FC_CTRL, code->us_fc_ctrl);
+        for(i = 0; i < code->int_constant_count; i++){
+                OUT_CB_REG(R500_US_FC_INT_CONST_0 + (i * 4),
+                                                code->int_constants[i]);
+        }
+        OUT_CB_REG(R500_US_CODE_RANGE,
+                   R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
+        OUT_CB_REG(R500_US_CODE_OFFSET, 0);
+        OUT_CB_REG(R500_US_CODE_ADDR,
+                   R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(code->inst_end));
+
+        OUT_CB_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
+        OUT_CB_ONE_REG(R500_GA_US_VECTOR_DATA, (code->inst_end + 1) * 6);
+        for (i = 0; i <= code->inst_end; i++) {
+            OUT_CB(code->inst[i].inst0);
+            OUT_CB(code->inst[i].inst1);
+            OUT_CB(code->inst[i].inst2);
+            OUT_CB(code->inst[i].inst3);
+            OUT_CB(code->inst[i].inst4);
+            OUT_CB(code->inst[i].inst5);
+        }
+
+        /* Emit immediates. */
+        if (imm_count) {
+            for(i = imm_first; i < imm_end; ++i) {
+                if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                    const float *data = constants[i].u.Immediate;
+
+                    OUT_CB_REG(R500_GA_US_VECTOR_INDEX,
+                               R500_GA_US_VECTOR_INDEX_TYPE_CONST |
+                               (i & R500_GA_US_VECTOR_INDEX_MASK));
+                    OUT_CB_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
+                    OUT_CB_TABLE(data, 4);
+                }
+            }
+        }
+    } else { /* r300 */
+        struct r300_fragment_program_code *code = &generic_code->code.r300;
+
+        shader->cb_code_size = 19 +
+                               (r300->screen->caps.is_r400 ? 2 : 0) +
+                               code->alu.length * 4 +
+                               (code->tex.length ? (1 + code->tex.length) : 0) +
+                               imm_count * 5;
+
+        NEW_CB(shader->cb_code, shader->cb_code_size);
+
+        if (r300->screen->caps.is_r400)
+            OUT_CB_REG(R400_US_CODE_BANK, 0);
+
+        OUT_CB_REG(R300_US_CONFIG, code->config);
+        OUT_CB_REG(R300_US_PIXSIZE, code->pixsize);
+        OUT_CB_REG(R300_US_CODE_OFFSET, code->code_offset);
+
+        OUT_CB_REG_SEQ(R300_US_CODE_ADDR_0, 4);
+        OUT_CB_TABLE(code->code_addr, 4);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].rgb_inst);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].rgb_addr);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].alpha_inst);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].alpha_addr);
+
+        if (code->tex.length) {
+            OUT_CB_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
+            OUT_CB_TABLE(code->tex.inst, code->tex.length);
+        }
+
+        /* Emit immediates. */
+        if (imm_count) {
+            for(i = imm_first; i < imm_end; ++i) {
+                if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                    const float *data = constants[i].u.Immediate;
+
+                    OUT_CB_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
+                    OUT_CB(pack_float24(data[0]));
+                    OUT_CB(pack_float24(data[1]));
+                    OUT_CB(pack_float24(data[2]));
+                    OUT_CB(pack_float24(data[3]));
+                }
+            }
+        }
+    }
+
+    OUT_CB_REG(R300_FG_DEPTH_SRC, shader->fg_depth_src);
+    OUT_CB_REG(R300_US_W_FMT, shader->us_out_w);
+    END_CB;
+}
+
 static void r300_translate_fragment_shader(
     struct r300_context* r300,
     struct r300_fragment_shader_code* shader,
@@ -226,13 +366,14 @@ static void r300_translate_fragment_shader(
 {
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
-    int wpos;
+    int wpos, face;
     unsigned i;
 
     tgsi_scan_shader(tokens, &shader->info);
     r300_shader_read_fs_inputs(&shader->info, &shader->inputs);
 
     wpos = shader->inputs.wpos;
+    face = shader->inputs.face;
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
@@ -241,15 +382,21 @@ static void r300_translate_fragment_shader(
 
     compiler.code = &shader->code;
     compiler.state = shader->compare_state;
-    compiler.is_r500 = r300->screen->caps.is_r500;
-    compiler.max_temp_regs = compiler.is_r500 ? 128 : 32;
+    compiler.Base.is_r500 = r300->screen->caps.is_r500;
+    compiler.Base.disable_optimizations = DBG_ON(r300, DBG_NO_OPT);
+    compiler.Base.has_half_swizzles = TRUE;
+    compiler.Base.has_presub = TRUE;
+    compiler.Base.max_temp_regs = compiler.Base.is_r500 ? 128 : 32;
+    compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;
+    compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 512 : 64;
+    compiler.Base.remove_unused_constants = TRUE;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = &shader->inputs;
 
     find_output_registers(&compiler, shader);
 
     if (compiler.Base.Debug) {
-        debug_printf("r300: Initial fragment program\n");
+        DBG(r300, DBG_FP, "r300: Initial fragment program\n");
         tgsi_dump(tokens, 0);
     }
 
@@ -272,16 +419,12 @@ static void r300_translate_fragment_shader(
         rc_transform_fragment_wpos(&compiler.Base, wpos, wpos, TRUE);
     }
 
+    if (face != ATTR_UNUSED) {
+        rc_transform_fragment_face(&compiler.Base, face);
+    }
+
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
-
-    /* Shaders with zero instructions are invalid,
-     * use the dummy shader instead. */
-    if (shader->code.code.r500.inst_end == -1) {
-        rc_destroy(&compiler.Base);
-        r300_dummy_fragment_shader(r300, shader);
-        return;
-    }
 
     if (compiler.Base.Error) {
         fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
@@ -298,8 +441,21 @@ static void r300_translate_fragment_shader(
         return;
     }
 
+    /* Shaders with zero instructions are invalid,
+     * use the dummy shader instead. */
+    if (shader->code.code.r500.inst_end == -1) {
+        rc_destroy(&compiler.Base);
+        r300_dummy_fragment_shader(r300, shader);
+        return;
+    }
+
     /* Initialize numbers of constants for each type. */
-    shader->externals_count = ttr.immediate_offset;
+    shader->externals_count = 0;
+    for (i = 0;
+         i < shader->code.constants.Count &&
+         shader->code.constants.Constants[i].Type == RC_CONSTANT_EXTERNAL; i++) {
+        shader->externals_count = i+1;
+    }
     shader->immediates_count = 0;
     shader->rc_state_count = 0;
 
@@ -327,6 +483,9 @@ static void r300_translate_fragment_shader(
 
     /* And, finally... */
     rc_destroy(&compiler.Base);
+
+    /* Build the command buffer. */
+    r300_emit_fs_code_to_buffer(r300, shader);
 }
 
 boolean r300_pick_fragment_shader(struct r300_context* r300)

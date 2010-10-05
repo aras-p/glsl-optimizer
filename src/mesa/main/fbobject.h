@@ -26,9 +26,13 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+#include "mtypes.h"
 
 extern void
 _mesa_init_fbobjects(GLcontext *ctx);
+
+extern struct gl_framebuffer *
+_mesa_get_incomplete_framebuffer(void);
 
 extern struct gl_renderbuffer *
 _mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id);
@@ -89,6 +93,10 @@ _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
                                      GLsizei width, GLsizei height);
 
 extern void GLAPIENTRY
+_es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
+			   GLsizei width, GLsizei height);
+
+extern void GLAPIENTRY
 _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image);
 
 extern void GLAPIENTRY
@@ -144,6 +152,14 @@ extern void GLAPIENTRY
 _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                          GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                          GLbitfield mask, GLenum filter);
+
+extern void GLAPIENTRY
+_mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
+                            GLuint texture, GLint level);
+
+extern void GLAPIENTRY
+_mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
+                                GLuint texture, GLint level, GLenum face);
 
 
 #endif /* FBOBJECT_H */

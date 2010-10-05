@@ -81,7 +81,7 @@ vmw_svga_winsys_buffer_map(struct svga_winsys_screen *sws,
                            unsigned flags)
 {
    (void)sws;
-   return pb_map(vmw_pb_buffer(buf), flags);
+   return pb_map(vmw_pb_buffer(buf), flags, NULL);
 }
 
 

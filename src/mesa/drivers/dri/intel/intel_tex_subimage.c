@@ -35,6 +35,7 @@
 #include "intel_context.h"
 #include "intel_tex.h"
 #include "intel_mipmap_tree.h"
+#include "intel_blit.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -54,12 +55,14 @@ intelTexSubimage(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
    GLuint dstRowStride = 0;
-   
+   drm_intel_bo *temp_bo = NULL, *dst_bo = NULL;
+   unsigned int blit_x = 0, blit_y = 0;
+
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        level, xoffset, yoffset, width, height);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    if (compressed)
       pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize,
@@ -77,14 +80,45 @@ intelTexSubimage(GLcontext * ctx,
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */
-   if (intelImage->mt) 
-      texImage->Data = intel_miptree_image_map(intel,
-                                               intelImage->mt,
-                                               intelImage->face,
-                                               intelImage->level,
-                                               &dstRowStride,
-                                               texImage->ImageOffsets);
-   else {
+   if (intelImage->mt) {
+      dst_bo = intel_region_buffer(intel, intelImage->mt->region,
+				   INTEL_WRITE_PART);
+
+      if (!compressed &&
+	  intelImage->mt->region->tiling != I915_TILING_Y &&
+	  intel->gen < 6 && target == GL_TEXTURE_2D &&
+	  drm_intel_bo_busy(dst_bo))
+      {
+	 unsigned long pitch;
+	 uint32_t tiling_mode = I915_TILING_NONE;
+	 temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
+					    "subimage blit bo",
+					    width, height,
+					    intelImage->mt->cpp,
+					    &tiling_mode,
+					    &pitch,
+					    0);
+	 drm_intel_gem_bo_map_gtt(temp_bo);
+	 texImage->Data = temp_bo->virtual;
+	 texImage->ImageOffsets[0] = 0;
+	 dstRowStride = pitch;
+
+	 intel_miptree_get_image_offset(intelImage->mt, level,
+					intelImage->face, 0,
+					&blit_x, &blit_y);
+	 blit_x += xoffset;
+	 blit_y += yoffset;
+	 xoffset = 0;
+	 yoffset = 0;
+      } else {
+	 texImage->Data = intel_miptree_image_map(intel,
+						  intelImage->mt,
+						  intelImage->face,
+						  intelImage->level,
+						  &dstRowStride,
+						  texImage->ImageOffsets);
+      }
+   } else {
       if (_mesa_is_format_compressed(texImage->TexFormat)) {
          dstRowStride =
             _mesa_format_row_stride(texImage->TexFormat, width);
@@ -121,11 +155,33 @@ intelTexSubimage(GLcontext * ctx,
                           format, type, pixels, packing)) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
       }
+
+      if (temp_bo) {
+	 GLboolean ret;
+	 unsigned int dst_pitch = intelImage->mt->region->pitch *
+	    intelImage->mt->cpp;
+
+	 drm_intel_gem_bo_unmap_gtt(temp_bo);
+	 texImage->Data = NULL;
+
+	 ret = intelEmitCopyBlit(intel,
+				 intelImage->mt->cpp,
+				 dstRowStride / intelImage->mt->cpp,
+				 temp_bo, 0, GL_FALSE,
+				 dst_pitch / intelImage->mt->cpp, dst_bo, 0,
+				 intelImage->mt->region->tiling,
+				 0, 0, blit_x, blit_y, width, height,
+				 GL_COPY);
+	 assert(ret);
+      }
    }
 
    _mesa_unmap_teximage_pbo(ctx, packing);
 
-   if (intelImage->mt) {
+   if (temp_bo) {
+      drm_intel_bo_unreference(temp_bo);
+      temp_bo = NULL;
+   } else if (intelImage->mt) {
       intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }

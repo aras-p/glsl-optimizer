@@ -90,10 +90,9 @@ else
 endif
 
 # Directories
-SRC_DIRS = gallium mesa glu glut/beos glew
+SRC_DIRS = gallium mesa glu glut/beos
 GLU_DIRS = sgi
 DRIVER_DIRS = beos
-PROGRAM_DIRS = beos samples redbook demos tests
 
 # Library/program dependencies
 GL_LIB_DEPS = 

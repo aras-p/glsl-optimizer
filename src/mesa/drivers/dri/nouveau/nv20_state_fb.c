@@ -72,7 +72,7 @@ nv20_emit_framebuffer(GLcontext *ctx, int emit)
 			fb->_ColorDrawBuffers[0])->surface;
 
 		rt_format |= get_rt_format(s->format);
-		zeta_pitch = rt_pitch = s->pitch;
+		rt_pitch = s->pitch;
 
 		nouveau_bo_markl(bctx, kelvin, NV20TCL_COLOR_OFFSET,
 				 s->bo, 0, bo_flags);
@@ -88,6 +88,9 @@ nv20_emit_framebuffer(GLcontext *ctx, int emit)
 
 		nouveau_bo_markl(bctx, kelvin, NV20TCL_ZETA_OFFSET,
 				 s->bo, 0, bo_flags);
+	} else {
+		rt_format |= get_rt_format(MESA_FORMAT_Z24_S8);
+		zeta_pitch = rt_pitch;
 	}
 
 	BEGIN_RING(chan, kelvin, NV20TCL_RT_FORMAT, 2);

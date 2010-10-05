@@ -29,10 +29,8 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
-#ifndef I915
-#include "brw_state.h"
-#endif
 #include "main/enums.h"
+#include "main/formats.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -116,17 +114,16 @@ intel_miptree_create(struct intel_context *intel,
 		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
-   uint32_t tiling;
+   uint32_t tiling = I915_TILING_NONE;
 
    if (intel->use_texture_tiling && compress_byte == 0) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
-      else
+      else if (width0 >= 64)
 	 tiling = I915_TILING_X;
-   } else
-      tiling = I915_TILING_NONE;
+   }
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
 				      first_level, last_level, width0,
@@ -140,7 +137,7 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
    }
 
-   mt->region = intel_region_alloc(intel,
+   mt->region = intel_region_alloc(intel->intelScreen,
 				   tiling,
 				   mt->cpp,
 				   mt->total_width,
@@ -203,19 +200,6 @@ intel_miptree_release(struct intel_context *intel,
       GLuint i;
 
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
-
-#ifndef I915
-      /* Free up cached binding tables holding a reference on our buffer, to
-       * avoid excessive memory consumption.
-       *
-       * This isn't as aggressive as we could be, as we'd like to do
-       * it from any time we free the last ref on a region.  But intel_region.c
-       * is context-agnostic.  Perhaps our constant state cache should be, as
-       * well.
-       */
-      brw_state_cache_bo_delete(&brw_context(&intel->ctx)->surface_cache,
-				(*mt)->region->buffer);
-#endif
 
       intel_region_release(&((*mt)->region));
 
@@ -349,7 +333,6 @@ intel_miptree_image_map(struct intel_context * intel,
                         GLuint * row_stride, GLuint * image_offsets)
 {
    GLuint x, y;
-   DBG("%s \n", __FUNCTION__);
 
    if (row_stride)
       *row_stride = mt->region->pitch * mt->cpp;
@@ -364,12 +347,17 @@ intel_miptree_image_map(struct intel_context * intel,
 	 image_offsets[i] = x + y * mt->region->pitch;
       }
 
+      DBG("%s \n", __FUNCTION__);
+
       return intel_region_map(intel, mt->region);
    } else {
       assert(mt->level[level].depth == 1);
       intel_miptree_get_image_offset(mt, level, face, 0,
 				     &x, &y);
       image_offsets[0] = 0;
+
+      DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
+	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
 
       return intel_region_map(intel, mt->region) +
 	 (x + y * mt->region->pitch) * mt->cpp;
@@ -401,7 +389,6 @@ intel_miptree_image_data(struct intel_context *intel,
    const GLuint depth = dst->level[level].depth;
    GLuint i;
 
-   DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
       GLuint dst_x, dst_y, height;
 
@@ -410,6 +397,12 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height = (height + 3) / 4;
+
+      DBG("%s: %d/%d %p/%d -> (%d, %d)/%d (%d, %d)\n",
+	  __FUNCTION__, face, level,
+	  src, src_row_pitch * dst->cpp,
+	  dst_x, dst_y, dst->region->pitch * dst->cpp,
+	  dst->level[level].width, height);
 
       intel_region_data(intel,
 			dst->region, 0, dst_x, dst_y,

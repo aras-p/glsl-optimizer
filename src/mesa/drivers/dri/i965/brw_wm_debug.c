@@ -44,16 +44,16 @@ void brw_wm_print_value( struct brw_wm_compile *c,
       printf("undef");
    else if( value - c->vreg >= 0 &&
 	    value - c->vreg < BRW_WM_MAX_VREG)
-      printf("r%d", value - c->vreg);
+      printf("r%ld", (long) (value - c->vreg));
    else if (value - c->creg >= 0 &&
 	    value - c->creg < BRW_WM_MAX_PARAM)
-      printf("c%d", value - c->creg);
+      printf("c%ld", (long) (value - c->creg));
    else if (value - c->payload.input_interp >= 0 &&
 	    value - c->payload.input_interp < FRAG_ATTRIB_MAX)
-      printf("i%d", value - c->payload.input_interp);
+      printf("i%ld", (long) (value - c->payload.input_interp));
    else if (value - c->payload.depth >= 0 &&
 	    value - c->payload.depth < FRAG_ATTRIB_MAX)
-      printf("d%d", value - c->payload.depth);
+      printf("d%ld", (long) (value - c->payload.depth));
    else 
       printf("?");
 }

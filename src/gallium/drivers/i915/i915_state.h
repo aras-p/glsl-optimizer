@@ -35,16 +35,22 @@ struct i915_context;
 
 
 struct i915_tracked_state {
+   const char *name;
+   void (*update)(struct i915_context *);
    unsigned dirty;
-   void (*update)( struct i915_context * );
 };
 
-void i915_update_immediate( struct i915_context *i915 );
-void i915_update_dynamic( struct i915_context *i915 );
-void i915_update_derived( struct i915_context *i915 );
-void i915_update_samplers( struct i915_context *i915 );
-void i915_update_textures(struct i915_context *i915);
+extern struct i915_tracked_state i915_update_vertex_layout;
 
-void i915_emit_hardware_state( struct i915_context *i915 );
+extern struct i915_tracked_state i915_hw_samplers;
+extern struct i915_tracked_state i915_hw_sampler_views;
+extern struct i915_tracked_state i915_hw_immediate;
+extern struct i915_tracked_state i915_hw_dynamic;
+extern struct i915_tracked_state i915_hw_fs;
+extern struct i915_tracked_state i915_hw_framebuffer;
+extern struct i915_tracked_state i915_hw_constants;
+
+void i915_update_derived(struct i915_context *i915);
+void i915_emit_hardware_state(struct i915_context *i915);
 
 #endif

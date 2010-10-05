@@ -236,7 +236,7 @@ void paint_destroy(struct vg_paint *paint)
 
    free(paint->gradient.ramp_stopsi);
    free(paint->gradient.ramp_stops);
-   free(paint);
+   FREE(paint);
 }
 
 void paint_set_color(struct vg_paint *paint,

@@ -39,19 +39,19 @@ list of keywords to control some aspects of the GLSL compiler and shader
 execution.  These are generally used for debugging.
 </p>
 <ul>
-<li>dump - print GLSL shader code to stdout at link time
-<li>log - log all GLSL shaders to files.
+<li><b>dump</b> - print GLSL shader code to stdout at link time
+<li><b>log</b> - log all GLSL shaders to files.
     The filenames will be "shader_X.vert" or "shader_X.frag" where X
     the shader ID.
-<li>nopt - disable compiler optimizations
-<li>opt - force compiler optimizations
-<li>uniform - print message to stdout when glUniform is called
-<li>nopvert - force vertex shaders to be a simple shader that just transforms
+<li><b>nopt</b> - disable compiler optimizations
+<li><b>opt</b> - force compiler optimizations
+<li><b>uniform</b> - print message to stdout when glUniform is called
+<li><b>nopvert</b> - force vertex shaders to be a simple shader that just transforms
     the vertex position with ftransform() and passes through the color and
     texcoord[0] attributes.
-<li>nopfrag - force fragment shader to be a simple shader that passes
+<li><b>nopfrag</b> - force fragment shader to be a simple shader that passes
     through the color attribute.
-<li>useprog - log glUseProgram calls to stderr
+<li><b>useprog</b> - log glUseProgram calls to stderr
 </ul>
 <p>
 Example:  export MESA_GLSL=dump,nopt
@@ -59,29 +59,27 @@ Example:  export MESA_GLSL=dump,nopt
 
 
 <a name="120">
-<h2>GLSL 1.20 support</h2>
+<h2>GLSL Version</h2>
 
 <p>
-GLSL version 1.20 is supported in Mesa 7.3 and later.
-Among the features/differences of GLSL 1.20 are:
-<ul>
-<li><code>mat2x3, mat2x4</code>, etc. types and functions
-<li><code>transpose(), outerProduct(), matrixCompMult()</code> functions
-(but untested)
-<li>precision qualifiers (lowp, mediump, highp)
-<li><code>invariant</code> qualifier
-<li><code>array.length()</code> method
-<li><code>float[5] a;</code> array syntax
-<li><code>centroid</code> qualifier
-<li>unsized array constructors
-<li>initializers for uniforms
-<li>const initializers calling built-in functions
-</ul>
+The GLSL compiler currently supports version 1.20 of the shading language.
+</p>
 
+<p>
+Several GLSL extensions are also supported:
+</p>
+<ul>
+<li>GL_ARB_draw_buffers
+<li>GL_ARB_texture_rectangle
+<li>GL_ARB_fragment_coord_conventions
+<li>GL_EXT_texture_array
+</ul>
 
 
 <a name="unsup">
 <h2>Unsupported Features</h2>
+
+<p>XXX update this section</p>
 
 <p>
 The following features of the shading language are not yet fully supported
@@ -130,39 +128,6 @@ These issues will be addressed/resolved in the future.
 <h2>Programming Hints</h2>
 
 <ul>
-<li>Declare <em>in</em> function parameters as <em>const</em> whenever possible.
-    This improves the efficiency of function inlining.
-</li>
-<br>
-<li>To reduce register usage, declare variables within smaller scopes.
-    For example, the following code:
-<pre>
-    void main()
-    {
-       vec4 a1, a2, b1, b2;
-       gl_Position = expression using a1, a2.
-       gl_Color = expression using b1, b2;
-    }
-</pre>
-    Can be rewritten as follows to use half as many registers:
-<pre>
-    void main()
-    {
-       {
-          vec4 a1, a2;
-          gl_Position = expression using a1, a2.
-       }
-       {
-          vec4 b1, b2;
-          gl_Color = expression using b1, b2;
-       }
-    }
-</pre>
-    Alternately, rather than using several float variables, use
-    a vec4 instead.  Use swizzling and writemasks to access the
-    components of the vec4 as floats.
-</li>
-<br>
 <li>Use the built-in library functions whenever possible.
     For example, instead of writing this:
 <pre>
@@ -172,8 +137,6 @@ These issues will be addressed/resolved in the future.
 <pre>
         float x = inversesqrt(y);
 </pre>
-<li>
-   Use ++i when possible as it's more efficient than i++
 </li>
 </ul>
 
@@ -182,13 +145,8 @@ These issues will be addressed/resolved in the future.
 <h2>Stand-alone GLSL Compiler</h2>
 
 <p>
-A unique stand-alone GLSL compiler driver has been added to Mesa.
-<p>
-
-<p>
-The stand-alone compiler (like a conventional command-line compiler)
-is a tool that accepts Shading Language programs and emits low-level
-GPU programs.
+The stand-alone GLSL compiler program can be used to compile GLSL shaders
+into low-level GPU code.
 </p>
 
 <p>
@@ -201,59 +159,25 @@ This tool is useful for:
 </ul>
 
 <p>
-After building Mesa, the glslcompiler can be built by manually running:
+After building Mesa, the compiler can be found at src/glsl/glsl_compiler
 </p>
-<pre>
-    make realclean
-    make linux
-    cd src/mesa/drivers/glslcompiler
-    make
-</pre>
-
 
 <p>
 Here's an example of using the compiler to compile a vertex shader and
 emit GL_ARB_vertex_program-style instructions:
 </p>
 <pre>
-    bin/glslcompiler --debug --numbers --fs progs/glsl/CH06-brick.frag.txt
-</pre>
-<p>
-results in:
-</p>
-<pre>
-# Fragment Program/Shader
-  0: RCP TEMP[4].x, UNIFORM[2].xxxx;
-  1: RCP TEMP[4].y, UNIFORM[2].yyyy;
-  2: MUL TEMP[3].xy, VARYING[0], TEMP[4];
-  3: MOV TEMP[1], TEMP[3];
-  4: MUL TEMP[0].w, TEMP[1].yyyy, CONST[4].xxxx;
-  5: FRC TEMP[1].z, TEMP[0].wwww;
-  6: SGT.C TEMP[0].w, TEMP[1].zzzz, CONST[4].xxxx;
-  7: IF (NE.wwww); # (if false, goto 9);
-  8:    ADD TEMP[1].x, TEMP[1].xxxx, CONST[4].xxxx;
-  9: ENDIF;
- 10: FRC TEMP[1].xy, TEMP[1];
- 11: SGT TEMP[2].xy, UNIFORM[3], TEMP[1];
- 12: MUL TEMP[1].z, TEMP[2].xxxx, TEMP[2].yyyy;
- 13: LRP TEMP[0], TEMP[1].zzzz, UNIFORM[0], UNIFORM[1];
- 14: MUL TEMP[0].xyz, TEMP[0], VARYING[1].xxxx;
- 15: MOV OUTPUT[0].xyz, TEMP[0];
- 16: MOV OUTPUT[0].w, CONST[4].yyyy;
- 17: END
+    src/glsl/glslcompiler --dump-ast myshader.vert
 </pre>
 
-<p>
-Note that some shading language constructs (such as uniform and varying
-variables) aren't expressible in ARB or NV-style programs.
-Therefore, the resulting output is not always legal by definition of
-those program languages.
-</p>
-<p>
-Also note that this compiler driver is still under development.
-Over time, the correctness of the GPU programs, with respect to the ARB
-and NV languagues, should improve.
-</p>
+Options include
+<ul>
+<li><b>--dump-ast</b> - dump GPU code
+<li><b>--dump-hir</b> - dump high-level IR code
+<li><b>--dump-lir</b> - dump low-level IR code
+<li><b>--link</b> - ???
+</ul>
+
 
 
 
@@ -262,38 +186,12 @@ and NV languagues, should improve.
 
 <p>
 The source code for Mesa's shading language compiler is in the
-<code>src/mesa/shader/slang/</code> directory.
+<code>src/glsl/</code> directory.
 </p>
 
 <p>
-The compiler follows a fairly standard design and basically works as follows:
+XXX provide some info about the compiler....
 </p>
-<ul>
-<li>The input string is tokenized (see grammar.c) and parsed
-(see slang_compiler_*.c) to produce an Abstract Syntax Tree (AST).
-The nodes in this tree are slang_operation structures
-(see slang_compile_operation.h).
-The nodes are decorated with symbol table, scoping and datatype information.
-<li>The AST is converted into an Intermediate representation (IR) tree
-(see the slang_codegen.c file).
-The IR nodes represent basic GPU instructions, like add, dot product,
-move, etc. 
-The IR tree is mostly a binary tree, but a few nodes have three or four
-children.
-In principle, the IR tree could be executed by doing an in-order traversal.
-<li>The IR tree is traversed in-order to emit code (see slang_emit.c).
-This is also when registers are allocated to store variables and temps.
-<li>In the future, a pattern-matching code generator-generator may be
-used for code generation.
-Programs such as L-BURG (Bottom-Up Rewrite Generator) and Twig look for
-patterns in IR trees, compute weights for subtrees and use the weights
-to select the best instructions to represent the sub-tree.
-<li>The emitted GPU instructions (see prog_instruction.h) are stored in a
-gl_program object (see mtypes.h).
-<li>When a fragment shader and vertex shader are linked (see slang_link.c)
-the varying vars are matched up, uniforms are merged, and vertex
-attributes are resolved (rewriting instructions as needed).
-</ul>
 
 <p>
 The final vertex and fragment programs may be interpreted in software
@@ -351,20 +249,20 @@ Extra NOP instructions will also be inserted.
 <h2>Compiler Validation</h2>
 
 <p>
-A <a href="http://glean.sf.net" target="_parent">Glean</a> test has
-been create to exercise the GLSL compiler.
-</p>
-<p>
-The <em>glsl1</em> test runs over 170 sub-tests to check that the language
-features and built-in functions work properly.
-This test should be run frequently while working on the compiler to catch
+Developers working on the GLSL compiler should test frequently to avoid
 regressions.
 </p>
+
 <p>
-The test coverage is reasonably broad and complete but additional tests
-should be added.
+The <a href="http://people.freedesktop.org/~nh/piglit/">Piglit</a> project
+has many GLSL tests and the
+<a href="http://glean.sf.net" target="_parent">Glean</a> glsl1 test 
+tests GLSL features.
 </p>
 
+<p>
+The Mesa demos repository also has some good GLSL tests.
+</p>
 
 </BODY>
 </HTML>

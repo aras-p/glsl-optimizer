@@ -44,7 +44,6 @@ extern void _tnl_install_pipeline( GLcontext *ctx,
 /* These are implemented in the t_vb_*.c files:
  */
 extern const struct tnl_pipeline_stage _tnl_vertex_transform_stage;
-extern const struct tnl_pipeline_stage _tnl_vertex_cull_stage;
 extern const struct tnl_pipeline_stage _tnl_normal_transform_stage;
 extern const struct tnl_pipeline_stage _tnl_lighting_stage;
 extern const struct tnl_pipeline_stage _tnl_fog_coordinate_stage;

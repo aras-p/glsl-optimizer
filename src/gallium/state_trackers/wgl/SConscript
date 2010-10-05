@@ -7,6 +7,7 @@ if env['platform'] in ['windows']:
     env = env.Clone()
      
     env.Append(CPPPATH = [
+    	'#src/mapi',
     	'#src/mesa',
     	'.',
     ])

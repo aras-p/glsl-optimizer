@@ -5,7 +5,7 @@ LIBNAME = i965drm
 
 C_SOURCES = \
 	i965_drm_buffer.c \
-	i965_drm_api.c
+	i965_drm_winsys.c
 
 LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
 

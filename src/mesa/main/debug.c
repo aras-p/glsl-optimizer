@@ -85,13 +85,12 @@ void
 _mesa_print_state( const char *msg, GLuint state )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
 	   (state & _NEW_PROJECTION)      ? "ctx->Projection, " : "",
 	   (state & _NEW_TEXTURE_MATRIX)  ? "ctx->TextureMatrix, " : "",
-	   (state & _NEW_COLOR_MATRIX)    ? "ctx->ColorMatrix, " : "",
 	   (state & _NEW_ACCUM)           ? "ctx->Accum, " : "",
 	   (state & _NEW_COLOR)           ? "ctx->Color, " : "",
 	   (state & _NEW_DEPTH)           ? "ctx->Depth, " : "",
@@ -315,7 +314,7 @@ write_texture_image(struct gl_texture_object *texObj,
                               buffer, texObj, img);
 
       /* make filename */
-      sprintf(s, "/tmp/tex%u.l%u.f%u.ppm", texObj->Name, level, face);
+      _mesa_snprintf(s, sizeof(s), "/tmp/tex%u.l%u.f%u.ppm", texObj->Name, level, face);
 
       printf("  Writing image level %u to %s\n", level, s);
       write_ppm(s, buffer, img->Width, img->Height, 4, 0, 1, 2, GL_FALSE);
@@ -357,7 +356,7 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
                           format, type, &ctx->DefaultPacking, buffer);
 
    /* make filename */
-   sprintf(s, "/tmp/renderbuffer%u.ppm", rb->Name);
+   _mesa_snprintf(s, sizeof(s), "/tmp/renderbuffer%u.ppm", rb->Name);
 
    printf("  Writing renderbuffer image to %s\n", s);
    write_ppm(s, buffer, rb->Width, rb->Height, 4, 0, 1, 2, GL_TRUE);

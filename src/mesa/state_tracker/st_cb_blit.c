@@ -33,7 +33,6 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "shader/program.h"
 
 #include "st_context.h"
 #include "st_texture.h"
@@ -60,6 +59,7 @@ st_destroy_blit(struct st_context *st)
 
 
 #if FEATURE_EXT_framebuffer_blit
+
 static void
 st_BlitFramebuffer(GLcontext *ctx,
                    GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -69,7 +69,6 @@ st_BlitFramebuffer(GLcontext *ctx,
    const GLbitfield depthStencil = (GL_DEPTH_BUFFER_BIT |
                                     GL_STENCIL_BUFFER_BIT);
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    const uint pFilter = ((filter == GL_NEAREST)
                          ? PIPE_TEX_MIPFILTER_NEAREST
                          : PIPE_TEX_MIPFILTER_LINEAR);
@@ -112,33 +111,23 @@ st_BlitFramebuffer(GLcontext *ctx,
          &readFB->Attachment[readFB->_ColorReadBufferIndex];
 
       if(srcAtt->Type == GL_TEXTURE) {
-         struct pipe_screen *screen = pipe->screen;
          struct st_texture_object *srcObj =
             st_texture_object(srcAtt->Texture);
          struct st_renderbuffer *dstRb =
             st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
-         struct pipe_surface *srcSurf;
+         struct pipe_subresource srcSub;
          struct pipe_surface *dstSurf = dstRb->surface;
 
          if (!srcObj->pt)
             return;
 
-         srcSurf = screen->get_tex_surface(screen,
-                                           srcObj->pt,
-                                           srcAtt->CubeMapFace,
-                                           srcAtt->TextureLevel,
-                                           srcAtt->Zoffset,
-                                           PIPE_BIND_BLIT_SOURCE);
-         if(!srcSurf)
-            return;
+         srcSub.face = srcAtt->CubeMapFace;
+         srcSub.level = srcAtt->TextureLevel;
 
-         util_blit_pixels(st->blit,
-                          srcSurf, st_get_texture_sampler_view(srcObj, pipe),
-                          srcX0, srcY0, srcX1, srcY1,
+         util_blit_pixels(st->blit, srcObj->pt, srcSub,
+                          srcX0, srcY0, srcX1, srcY1, srcAtt->Zoffset,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
-
-         pipe_surface_reference(&srcSurf, NULL);
       }
       else {
          struct st_renderbuffer *srcRb =
@@ -146,11 +135,15 @@ st_BlitFramebuffer(GLcontext *ctx,
          struct st_renderbuffer *dstRb =
             st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
          struct pipe_surface *srcSurf = srcRb->surface;
-         struct pipe_sampler_view *srcView = st_get_renderbuffer_sampler_view(srcRb, pipe);
          struct pipe_surface *dstSurf = dstRb->surface;
+         struct pipe_subresource srcSub;
+
+         srcSub.face = srcSurf->face;
+         srcSub.level = srcSurf->level;
 
          util_blit_pixels(st->blit,
-                          srcSurf, srcView, srcX0, srcY0, srcX1, srcY1,
+                          srcRb->texture, srcSub, srcX0, srcY0, srcX1, srcY1,
+                          srcSurf->zslice,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
       }
@@ -160,35 +153,34 @@ st_BlitFramebuffer(GLcontext *ctx,
       /* depth and/or stencil blit */
 
       /* get src/dst depth surfaces */
-      struct st_renderbuffer *srcDepthRb = 
+      struct gl_renderbuffer_attachment *srcDepth =
+         &readFB->Attachment[BUFFER_DEPTH];
+      struct gl_renderbuffer_attachment *dstDepth =
+         &drawFB->Attachment[BUFFER_DEPTH];
+      struct gl_renderbuffer_attachment *srcStencil =
+         &readFB->Attachment[BUFFER_STENCIL];
+      struct gl_renderbuffer_attachment *dstStencil =
+         &drawFB->Attachment[BUFFER_STENCIL];
+
+      struct st_renderbuffer *srcDepthRb =
          st_renderbuffer(readFB->Attachment[BUFFER_DEPTH].Renderbuffer);
       struct st_renderbuffer *dstDepthRb = 
          st_renderbuffer(drawFB->Attachment[BUFFER_DEPTH].Renderbuffer);
-      struct pipe_surface *srcDepthSurf =
-         srcDepthRb ? srcDepthRb->surface : NULL;
       struct pipe_surface *dstDepthSurf =
          dstDepthRb ? dstDepthRb->surface : NULL;
 
-      /* get src/dst stencil surfaces */
-      struct st_renderbuffer *srcStencilRb = 
-         st_renderbuffer(readFB->Attachment[BUFFER_STENCIL].Renderbuffer);
-      struct st_renderbuffer *dstStencilRb = 
-         st_renderbuffer(drawFB->Attachment[BUFFER_STENCIL].Renderbuffer);
-      struct pipe_surface *srcStencilSurf =
-         srcStencilRb ? srcStencilRb->surface : NULL;
-      struct pipe_surface *dstStencilSurf =
-         dstStencilRb ? dstStencilRb->surface : NULL;
-
       if ((mask & depthStencil) == depthStencil &&
-          srcDepthSurf == srcStencilSurf &&
-          dstDepthSurf == dstStencilSurf) {
-         struct pipe_sampler_view *srcView = st_get_renderbuffer_sampler_view(srcDepthRb, pipe);
+          st_is_depth_stencil_combined(srcDepth, srcStencil) &&
+          st_is_depth_stencil_combined(dstDepth, dstStencil)) {
 
          /* Blitting depth and stencil values between combined
           * depth/stencil buffers.  This is the ideal case for such buffers.
           */
-         util_blit_pixels(st->blit,
-                          srcDepthSurf, srcView, srcX0, srcY0, srcX1, srcY1,
+         util_blit_pixels(st->blit, srcDepthRb->texture,
+                          u_subresource(srcDepthRb->surface->face,
+                                        srcDepthRb->surface->level),
+                          srcX0, srcY0, srcX1, srcY1,
+                          srcDepthRb->surface->zslice,
                           dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
       }
@@ -196,8 +188,13 @@ st_BlitFramebuffer(GLcontext *ctx,
          /* blitting depth and stencil separately */
 
          if (mask & GL_DEPTH_BUFFER_BIT) {
-            /* blit Z only */
-            _mesa_problem(ctx, "st_BlitFramebuffer(DEPTH) not completed");
+            util_blit_pixels(st->blit, srcDepthRb->texture,
+                             u_subresource(srcDepthRb->surface->face,
+                                           srcDepthRb->surface->level),
+                             srcX0, srcY0, srcX1, srcY1,
+                             srcDepthRb->surface->zslice,
+                             dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
+                             0.0, pFilter);
          }
 
          if (mask & GL_STENCIL_BUFFER_BIT) {
@@ -207,14 +204,12 @@ st_BlitFramebuffer(GLcontext *ctx,
       }
    }
 }
-#endif /* FEATURE_EXT_framebuffer_blit */
-
 
 
 void
 st_init_blit_functions(struct dd_function_table *functions)
 {
-#if FEATURE_EXT_framebuffer_blit
    functions->BlitFramebuffer = st_BlitFramebuffer;
-#endif
 }
+
+#endif /* FEATURE_EXT_framebuffer_blit */

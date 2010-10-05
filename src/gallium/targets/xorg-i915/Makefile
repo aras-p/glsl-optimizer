@@ -1,57 +1,24 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-TARGET     = modesetting_drv.so
-CFILES     = $(wildcard ./*.c)
-OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
+LIBNAME = modesetting_drv.so
 
-INCLUDES = \
-	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
-	-I$(TOP)/src/gallium/winsys/drm/intel/gem \
-	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/gallium/auxiliary \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/include \
-	-I$(TOP)/src/egl/main
+C_SOURCES = \
+	intel_target.c \
+	intel_xorg.c
 
-LIBS = \
+DRIVER_DEFINES = \
+	-DHAVE_CONFIG_H -DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_GALAHAD
+
+DRIVER_PIPES = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a \
+	$(TOP)/src/gallium/drivers/galahad/libgalahad.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(GALLIUM_AUXILIARIES)
+	$(TOP)/src/gallium/drivers/rbug/librbug.a
 
-DRIVER_DEFINES = \
-	-DHAVE_CONFIG_H
+DRIVER_LINKS = \
+	$(shell pkg-config --libs libdrm libdrm_intel)
 
-
-#############################################
-
-
-
-all default: $(TARGET)
-
-$(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
-	$(TOP)/bin/mklib -noprefix -o $@ \
-	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_intel
-
-clean:
-	rm -rf $(OBJECTS) $(TARGET)
-
-install:
-	$(INSTALL) -d $(DESTDIR)/$(XORG_DRIVER_INSTALL_DIR)
-	$(MINSTALL) -m 755 $(TARGET) $(DESTDIR)/$(XORG_DRIVER_INSTALL_DIR)
-
-
-##############################################
-
-
-.c.o:
-	$(CC) -c $(CFLAGS) $(INCLUDES) $(DRIVER_DEFINES) $< -o $@
-
-
-##############################################
-
-.PHONY	= all clean install
+include ../Makefile.xorg

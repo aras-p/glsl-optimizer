@@ -30,10 +30,30 @@
 #define ST_CB_ACCUM_H
 
 
+#include "main/mtypes.h"
+
+#if FEATURE_accum
+
 extern void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb);
 
 extern void st_init_accum_functions(struct dd_function_table *functions);
 
+#else
+
+#include "main/compiler.h"
+
+static INLINE void
+st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+st_init_accum_functions(struct dd_function_table *functions)
+{
+}
+
+#endif /* FEATURE_accum */
 
 #endif /* ST_CB_ACCUM_H */

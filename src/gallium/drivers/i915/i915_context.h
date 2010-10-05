@@ -221,6 +221,7 @@ struct i915_context
    struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
 
    unsigned dirty;
 
@@ -237,8 +238,6 @@ struct i915_context
 
    struct i915_state current;
    unsigned hardware_dirty;
-   
-   unsigned debug;
 };
 
 /* A flag for each state_tracker state object:
@@ -318,8 +317,6 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen,
 					 void *priv);
 
 
-
-
 /***********************************************************************
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
@@ -329,7 +326,6 @@ i915_context( struct pipe_context *pipe )
 {
    return (struct i915_context *)pipe;
 }
-
 
 
 #endif

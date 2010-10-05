@@ -33,7 +33,7 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "intel_batchbuffer.h"
 
@@ -134,7 +134,6 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     GLboolean force_edgeflag)
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = get_tmp(c);
    GLuint i;
 
@@ -149,12 +148,9 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    /* Iterate over each attribute (could be done in pairs?)
     */
    for (i = 0; i < c->nr_attrs; i++) {
-      GLuint delta = i*16 + 32;
+      GLuint delta = c->offset[c->idx_to_attr[i]];
 
-      if (intel->gen == 5)
-          delta = i * 16 + 32 * 3;
-
-      if (delta == c->offset[VERT_RESULT_EDGE]) {
+      if (c->idx_to_attr[i] == VERT_RESULT_EDGE) {
 	 if (force_edgeflag) 
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
@@ -183,10 +179,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    }
 
    if (i & 1) {
-      GLuint delta = i*16 + 32;
-
-      if (intel->gen == 5)
-          delta = i * 16 + 32 * 3;
+      GLuint delta = c->offset[c->idx_to_attr[c->nr_attrs - 1]] + ATTR_SIZE;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
    }
@@ -199,11 +192,6 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    brw_clip_project_vertex(c, dest_ptr );
 }
 
-
-
-
-#define MAX_MRF 16
-
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
 		       GLboolean allocate,
@@ -211,27 +199,14 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
 		       GLuint header)
 {
    struct brw_compile *p = &c->func;
-   GLuint start = c->last_mrf;
 
    brw_clip_ff_sync(c);
 
    assert(!(allocate && eot));
-   
-   /* Cycle through mrf regs - probably futile as we have to wait for
-    * the allocation response anyway.  Also, the order this function
-    * is invoked doesn't correspond to the order the instructions will
-    * be executed, so it won't have any effect in many cases.
-    */
-#if 0
-   if (start + c->nr_regs + 1 >= MAX_MRF)
-      start = 0;
 
-   c->last_mrf = start + c->nr_regs + 1;
-#endif
-	
    /* Copy the vertex from vertn into m1..mN+1:
     */
-   brw_copy_from_indirect(p, brw_message_reg(start+1), vert, c->nr_regs);
+   brw_copy_from_indirect(p, brw_message_reg(1), vert, c->nr_regs);
 
    /* Overwrite PrimType and PrimStart in the message header, for
     * each vertex in turn:
@@ -247,7 +222,7 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
     */
    brw_urb_WRITE(p, 
 		 allocate ? c->reg.R0 : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-		 start,
+		 0,
 		 c->reg.R0,
 		 allocate,
 		 1,		/* used */
@@ -370,18 +345,13 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
         need_ff_sync = brw_IF(p, BRW_EXECUTE_1);
         {
             brw_OR(p, c->reg.ff_sync, c->reg.ff_sync, brw_imm_ud(0x1));
-            brw_ff_sync(p, 
-                    c->reg.R0,
-                    0,
-                    c->reg.R0,
-                    1,	
-                    1,		/* used */
-                    1,  	/* msg length */
-                    1,		/* response length */
-                    0,		/* eot */
-                    1,		/* write compelete */
-                    0,		/* urb offset */
-                    BRW_URB_SWIZZLE_NONE);
+            brw_ff_sync(p,
+			c->reg.R0,
+			0,
+			c->reg.R0,
+			1, /* allocate */
+			1, /* response length */
+			0 /* eot */);
         }
         brw_ENDIF(p, need_ff_sync);
         brw_set_predicate_control(p, BRW_PREDICATE_NONE);

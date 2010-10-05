@@ -1,9 +1,0 @@
-!!ARBvp1.0
-PARAM arr[5]  = { {0,1,2,3}, {4,5,6,7}, {8,9,10,11}, {12,13,14,14}, {16,17,18,19} };
-ADDRESS addr;
-TEMP R0;
-MAD R0, {5.0}.x, vertex.color, {2.0}.x; 
-ARL addr.x, R0.x;
-MUL result.color, arr[addr.x-2], {.07}.x;
-MOV result.position, vertex.position;
-END

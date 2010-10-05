@@ -92,6 +92,11 @@
 #else
 #define PIPE_ARCH_SSE
 #endif
+#if defined(PIPE_CC_GCC) && !defined(__SSSE3__)
+/* #warning SSE3 support requires -msse3 compiler options */
+#else
+#define PIPE_ARCH_SSSE3
+#endif
 #endif
 
 #if defined(__PPC__)
@@ -146,6 +151,11 @@
 #define PIPE_OS_UNIX
 #endif
 
+#if defined(__GNU__)
+#define PIPE_OS_HURD
+#define PIPE_OS_UNIX
+#endif
+
 #if defined(__sun)
 #define PIPE_OS_SOLARIS
 #define PIPE_OS_UNIX
@@ -162,6 +172,11 @@
 
 #if defined(__HAIKU__)
 #define PIPE_OS_HAIKU
+#define PIPE_OS_UNIX
+#endif
+
+#if defined(__CYGWIN__)
+#define PIPE_OS_CYGWIN
 #define PIPE_OS_UNIX
 #endif
 

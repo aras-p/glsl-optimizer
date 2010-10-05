@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_pack_color.h"
+#include "util/u_math.h"
 
 #include "pipe/p_state.h"
 
@@ -42,12 +43,12 @@
  * Note: we can't use the ctx->DrawBuffer->_ColorDrawBufferIndexes field
  * since that might include software renderbuffers or renderbuffers
  * which we're clearing with triangles.
- * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear
  */
 static enum pipe_error
 try_clear( struct brw_context *brw,
            struct brw_surface *surface,
-           unsigned value )
+           unsigned value,
+           unsigned rgba_mask)
 {
    uint32_t BR13, CMD;
    int x1 = 0;
@@ -67,12 +68,11 @@ try_clear( struct brw_context *brw,
                 x1, y1, x2 - x1, y2 - y1);
 
    BR13 = 0xf0 << 16;
-   CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_RGB | XY_BLT_WRITE_ALPHA;
+   CMD = XY_COLOR_BLT_CMD | rgba_mask;
 
    /* Setup the blit command */
    if (cpp == 4) {
       BR13 |= BR13_8888;
-      CMD |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
    }
    else {
       assert(cpp == 2);
@@ -121,24 +121,36 @@ static void color_clear(struct brw_context *brw,
    if (bsurface->cpp == 2)
       value.ui |= value.ui << 16;
 
-   ret = try_clear( brw, bsurface, value.ui );
+   ret = try_clear( brw, bsurface, value.ui,
+                    XY_BLT_WRITE_RGB | XY_BLT_WRITE_ALPHA );
 
    if (ret != 0) {
       brw_context_flush( brw );
-      ret = try_clear( brw, bsurface, value.ui );
+      ret = try_clear( brw, bsurface, value.ui,
+                       XY_BLT_WRITE_RGB | XY_BLT_WRITE_ALPHA );
       assert( ret == 0 );
    }
 }
 
-static void zstencil_clear(struct brw_context *brw, 
+static void zstencil_clear(struct brw_context *brw,
                            struct brw_surface *bsurface,
+                           unsigned clear_flags,
                            double depth,
                            unsigned stencil )
 {
    enum pipe_error ret;
    unsigned value;
+   unsigned mask = 0;
+   union fi tmp;
+
+   if (clear_flags & PIPE_CLEAR_DEPTH)
+      mask |= XY_BLT_WRITE_RGB;
 
    switch (bsurface->base.format) {
+   case PIPE_FORMAT_Z32_FLOAT:
+      tmp.f = (float)depth;
+      value = tmp.ui;
+      break;
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       value = ((unsigned)(depth * MASK24) & MASK24);
@@ -152,24 +164,31 @@ static void zstencil_clear(struct brw_context *brw,
    }
 
    switch (bsurface->base.format) {
+   case PIPE_FORMAT_Z32_FLOAT:
+      mask |= XY_BLT_WRITE_ALPHA;
+      break;
    case PIPE_FORMAT_Z24X8_UNORM:
+      value = value | (stencil << 24);
+      mask |= XY_BLT_WRITE_ALPHA;
+      break;
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       value = value | (stencil << 24);
+      if (clear_flags & PIPE_CLEAR_STENCIL)
+         mask |= XY_BLT_WRITE_ALPHA;
       break;
-
    case PIPE_FORMAT_Z16_UNORM:
       value = value | (value << 16);
+      mask |= XY_BLT_WRITE_ALPHA;
       break;
-
    default:
       break;
    }
 
-   ret = try_clear( brw, bsurface, value );
+   ret = try_clear( brw, bsurface, value, mask );
 
    if (ret != 0) {
       brw_context_flush( brw );
-      ret = try_clear( brw, bsurface, value );
+      ret = try_clear( brw, bsurface, value, mask );
       assert( ret == 0 );
    }
 }
@@ -201,15 +220,48 @@ static void brw_clear(struct pipe_context *pipe,
       if (brw->curr.fb.zsbuf) {
          zstencil_clear( brw,
                          brw_surface(brw->curr.fb.zsbuf),
+                         buffers & PIPE_CLEAR_DEPTHSTENCIL,
                          depth, stencil );
       }
    }
 }
 
+/* XXX should respect region */
+static void brw_clear_render_target(struct pipe_context *pipe,
+                                    struct pipe_surface *dst,
+                                    const float *rgba,
+                                    unsigned dstx, unsigned dsty,
+                                    unsigned width, unsigned height)
+{
+   struct brw_context *brw = brw_context( pipe );
+
+   color_clear( brw,
+                brw_surface(dst),
+                rgba );
+}
+
+/* XXX should respect region */
+static void brw_clear_depth_stencil(struct pipe_context *pipe,
+                                    struct pipe_surface *dst,
+                                    unsigned clear_flags,
+                                    double depth,
+                                    unsigned stencil,
+                                    unsigned dstx, unsigned dsty,
+                                    unsigned width, unsigned height)
+{
+   struct brw_context *brw = brw_context( pipe );
+
+   zstencil_clear( brw,
+                   brw_surface(dst),
+                   clear_flags,
+                   depth, stencil );
+}
 
 void brw_pipe_clear_init( struct brw_context *brw )
 {
    brw->base.clear = brw_clear;
+   brw->base.clear_render_target = brw_clear_render_target;
+   brw->base.clear_depth_stencil = brw_clear_depth_stencil;
 }
 
 

@@ -45,7 +45,6 @@ struct i915_screen
    struct i915_winsys *iws;
 
    boolean is_i945;
-   uint pci_id;
 };
 
 /**

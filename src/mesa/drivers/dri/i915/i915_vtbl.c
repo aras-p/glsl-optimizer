@@ -287,7 +287,7 @@ i915_emit_state(struct intel_context *intel)
    struct i915_hw_state *state = &i915->state;
    int i, count, aper_count;
    GLuint dirty;
-   dri_bo *aper_array[3 + I915_TEX_UNITS];
+   drm_intel_bo *aper_array[3 + I915_TEX_UNITS];
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
@@ -366,13 +366,16 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {
-      GLuint count = 15;
+      GLuint count;
 
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
 
+      count = 14;
+      if (state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP)
+         count++;
       if (state->depth_region)
-          count += 3;
+         count += 3;
 
       BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
@@ -394,8 +397,8 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR2]);
 
-      assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
-      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
+      if (state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP)
+         OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
       OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
@@ -494,7 +497,7 @@ i915_destroy_context(struct intel_context *intel)
 
    for (i = 0; i < I915_TEX_UNITS; i++) {
       if (i915->state.tex_buffer[i] != NULL) {
-	 dri_bo_unreference(i915->state.tex_buffer[i]);
+	 drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	 i915->state.tex_buffer[i] = NULL;
       }
    }
@@ -532,7 +535,7 @@ i915_set_draw_region(struct intel_context *intel,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
    struct i915_hw_state *state = &i915->state;
-   uint32_t draw_x, draw_y;
+   uint32_t draw_x, draw_y, draw_offset;
 
    if (state->draw_region != color_regions[0]) {
       intel_region_release(&state->draw_region);
@@ -621,15 +624,26 @@ i915_set_draw_region(struct intel_context *intel,
       draw_y = 0;
    }
 
+   draw_offset = (draw_y << 16) | draw_x;
+
    /* When changing drawing rectangle offset, an MI_FLUSH is first required. */
-   state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH;
+   if (draw_offset != i915->last_draw_offset) {
+      FALLBACK(intel, I915_FALLBACK_DRAW_OFFSET,
+               (ctx->DrawBuffer->Width + draw_x > 2048) ||
+               (ctx->DrawBuffer->Height + draw_y > 2048));
+
+      state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE;
+      i915->last_draw_offset = draw_offset;
+   } else
+      state->Buffer[I915_DESTREG_DRAWRECT0] = MI_NOOP;
+
    state->Buffer[I915_DESTREG_DRAWRECT1] = _3DSTATE_DRAWRECT_INFO;
    state->Buffer[I915_DESTREG_DRAWRECT2] = 0;
-   state->Buffer[I915_DESTREG_DRAWRECT3] = (draw_y << 16) | draw_x;
+   state->Buffer[I915_DESTREG_DRAWRECT3] = draw_offset;
    state->Buffer[I915_DESTREG_DRAWRECT4] =
-      ((ctx->DrawBuffer->Width + draw_x) & 0xffff) |
-      ((ctx->DrawBuffer->Height + draw_y) << 16);
-   state->Buffer[I915_DESTREG_DRAWRECT5] = (draw_y << 16) | draw_x;
+      ((ctx->DrawBuffer->Width + draw_x - 1) & 0xffff) |
+      ((ctx->DrawBuffer->Height + draw_y - 1) << 16);
+   state->Buffer[I915_DESTREG_DRAWRECT5] = draw_offset;
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
 }
@@ -646,6 +660,7 @@ i915_new_batch(struct intel_context *intel)
     * difficulties associated with them (physical address requirements).
     */
    i915->state.emitted = 0;
+   i915->last_draw_offset = 0;
 }
 
 static void 

@@ -415,7 +415,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       GLuint i, j, k;
       const GLuint *rowA = (const GLuint *) srcRowA;
       const GLuint *rowB = (const GLuint *) srcRowB;
-      GLfloat *dst = (GLfloat *) dstRow;
+      GLuint *dst = (GLuint *) dstRow;
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
          dst[i] = (GLfloat)(rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4);
@@ -1005,21 +1005,28 @@ make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
    const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
-   GLint row;
+   GLint row, srcRowStep;
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
-   if (srcHeight > 1) 
+   if (srcHeight > 1 && srcHeight > dstHeight) {
+      /* sample from two source rows */
       srcB = srcA + srcRowBytes;
-   else
+      srcRowStep = 2;
+   }
+   else {
+      /* sample from one source row */
       srcB = srcA;
+      srcRowStep = 1;
+   }
+
    dst = dstPtr + border * ((dstWidth + 1) * bpt);
 
    for (row = 0; row < dstHeightNB; row++) {
       do_row(datatype, comps, srcWidthNB, srcA, srcB,
              dstWidthNB, dst);
-      srcA += 2 * srcRowBytes;
-      srcB += 2 * srcRowBytes;
+      srcA += srcRowStep * srcRowBytes;
+      srcB += srcRowStep * srcRowBytes;
       dst += dstRowBytes;
    }
 

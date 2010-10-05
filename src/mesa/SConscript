@@ -9,6 +9,8 @@ if env['platform'] != 'winddk':
 	env = env.Clone()
 	
 	env.Append(CPPPATH = [
+		'#/src/mapi',
+		'#/src/glsl',
 		'#/src/mesa',
 	])
 	
@@ -18,6 +20,7 @@ if env['platform'] != 'winddk':
 			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
 			'WIN32_THREADS', # use Win32 thread API
 		])	 
+        env.Prepend(CPPPATH = ['#src/talloc'])
 
 	#
 	# Source files
@@ -30,6 +33,8 @@ if env['platform'] != 'winddk':
 		'main/api_noop.c',
 		'main/api_validate.c',
 		'main/accum.c',
+		'main/arbprogram.c',
+		'main/atifragshader.c',
 		'main/attrib.c',
 		'main/arrayobj.c',
 		'main/blend.c',
@@ -48,6 +53,7 @@ if env['platform'] != 'winddk':
 		'main/dlist.c',
 		'main/dlopen.c',
 		'main/drawpix.c',
+		'main/drawtex.c',
 		'main/enable.c',
 		'main/enums.c',
 		'main/eval.c',
@@ -72,18 +78,20 @@ if env['platform'] != 'winddk':
 		'main/mipmap.c',
 		'main/mm.c',
 		'main/multisample.c',
+		'main/nvprogram.c',
 		'main/pixel.c',
 		'main/pixelstore.c',
 		'main/points.c',
 		'main/polygon.c',
+		'main/querymatrix.c',
 		'main/queryobj.c',
 		'main/rastpos.c',
-		'main/rbadaptors.c',
 		'main/readpix.c',
 		'main/remap.c',
 		'main/renderbuffer.c',
 		'main/scissor.c',
-		'main/shaders.c',
+		'main/shaderapi.c',
+		'main/shaderobj.c',
 		'main/shared.c',
 		'main/state.c',
 		'main/stencil.c',
@@ -99,11 +107,13 @@ if env['platform'] != 'winddk':
 		'main/texgetimage.c',
 		'main/teximage.c',
 		'main/texobj.c',
+		'main/texpal.c',
 		'main/texparam.c',
 		'main/texrender.c',
 		'main/texstate.c',
 		'main/texstore.c',
 		'main/transformfeedback.c',
+		'main/uniforms.c',
 		'main/varray.c',
 		'main/version.c',
 		'main/viewport.c',
@@ -151,6 +161,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_atom_constbuf.c',
 		'state_tracker/st_atom_depth.c',
 		'state_tracker/st_atom_framebuffer.c',
+		'state_tracker/st_atom_msaa.c',
 		'state_tracker/st_atom_pixeltransfer.c',
 		'state_tracker/st_atom_sampler.c',
 		'state_tracker/st_atom_scissor.c',
@@ -167,6 +178,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_condrender.c',
 		'state_tracker/st_cb_flush.c',
 		'state_tracker/st_cb_drawpixels.c',
+		'state_tracker/st_cb_drawtex.c',
 		'state_tracker/st_cb_eglimage.c',
 		'state_tracker/st_cb_fbo.c',
 		'state_tracker/st_cb_feedback.c',
@@ -176,6 +188,8 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_readpixels.c',
 		'state_tracker/st_cb_strings.c',
 		'state_tracker/st_cb_texture.c',
+		'state_tracker/st_cb_viewport.c',
+		'state_tracker/st_cb_xformfb.c',
 		'state_tracker/st_context.c',
 		'state_tracker/st_debug.c',
 		'state_tracker/st_draw.c',
@@ -189,75 +203,40 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_texture.c',
 	]
 	
-	shader_sources = [
-		'shader/arbprogparse.c',
-		'shader/arbprogram.c',
-		'shader/atifragshader.c',
-		'shader/hash_table.c',
-		'shader/lex.yy.c',
-		'shader/nvfragparse.c',
-		'shader/nvprogram.c',
-		'shader/nvvertparse.c',
-		'shader/program.c',
-		'shader/program_parse.tab.c',
-		'shader/program_parse_extra.c',
-		'shader/prog_cache.c',
-		'shader/prog_execute.c',
-		'shader/prog_instruction.c',
-		'shader/prog_noise.c',
-		'shader/prog_optimize.c',
-		'shader/prog_parameter.c',
-		'shader/prog_parameter_layout.c',
-		'shader/prog_print.c',
-		'shader/prog_statevars.c',
-		'shader/prog_uniform.c',
-		'shader/programopt.c',
-		'shader/symbol_table.c',
-		'shader/shader_api.c',
-	]
-	
-	slang_sources = [
-		'shader/slang/slang_builtin.c',
-		'shader/slang/slang_codegen.c',
-		'shader/slang/slang_compile.c',
-		'shader/slang/slang_compile_function.c',
-		'shader/slang/slang_compile_operation.c',
-		'shader/slang/slang_compile_struct.c',
-		'shader/slang/slang_compile_variable.c',
-		'shader/slang/slang_emit.c',
-		'shader/slang/slang_ir.c',
-		'shader/slang/slang_label.c',
-		'shader/slang/slang_link.c',
-		'shader/slang/slang_log.c',
-		'shader/slang/slang_mem.c',
-		'shader/slang/slang_print.c',
-		'shader/slang/slang_simplify.c',
-		'shader/slang/slang_storage.c',
-		'shader/slang/slang_typeinfo.c',
-		'shader/slang/slang_vartable.c',
-		'shader/slang/slang_utility.c',
+	program_sources = [
+		'program/arbprogparse.c',
+		'program/hash_table.c',
+        'program/ir_to_mesa.cpp',
+		'program/lex.yy.c',
+		'program/nvfragparse.c',
+		'program/nvvertparse.c',
+		'program/program.c',
+		'program/program_parse.tab.c',
+		'program/program_parse_extra.c',
+		'program/prog_cache.c',
+		'program/prog_execute.c',
+		'program/prog_instruction.c',
+		'program/prog_noise.c',
+		'program/prog_optimize.c',
+		'program/prog_parameter.c',
+		'program/prog_parameter_layout.c',
+		'program/prog_print.c',
+		'program/prog_statevars.c',
+		'program/prog_uniform.c',
+		'program/programopt.c',
+		'program/sampler.cpp',
+		'program/symbol_table.c',
 	]
 	
 	mesa_sources = (
 		main_sources +
 		math_sources +
+		program_sources +
 		vbo_sources +
 		vf_sources +
-		statetracker_sources +
-		shader_sources +
-		slang_sources
+		statetracker_sources
 	)
 
-	glapi_sources = [
-		'glapi/glapi.c',
-		'glapi/glapi_dispatch.c',
-		'glapi/glapi_entrypoint.c',
-		'glapi/glapi_execmem.c',
-		'glapi/glapi_getproc.c',
-		'glapi/glapi_nop.c',
-		'glapi/glthread.c',
-	]
-	
 	#
 	# Assembly sources
 	#
@@ -291,9 +270,6 @@ if env['platform'] != 'winddk':
 			'x86/sse_normal.S',
 			'x86/read_rgba_span_x86.S',
 		]
-		glapi_sources += [
-			'x86/glapi_x86.S',
-		]
 	elif gcc and env['machine'] == 'x86_64':
 		env.Append(CPPDEFINES = [
 			'USE_X86_64_ASM', 
@@ -301,9 +277,6 @@ if env['platform'] != 'winddk':
 		mesa_sources += [
 			'x86-64/x86-64.c',
 			'x86-64/xform4.S',
-		]
-		glapi_sources += [
-			'x86-64/glapi_x86-64.S'
 		]
 	elif gcc and env['machine'] == 'ppc':
 		env.Append(CPPDEFINES = [
@@ -313,17 +286,12 @@ if env['platform'] != 'winddk':
 		mesa_sources += [
 			'ppc/common_ppc.c',
 		]
-		glapi_sources += [
-		]
 	elif gcc and env['machine'] == 'sparc':
 		mesa_sources += [
 			'sparc/sparc.c',
 			'sparc/clip.S',
 			'sparc/norm.S',
 			'sparc/xform.S',
-		]
-		glapi_sources += [
-			'sparc/glapi_sparc.S'
 		]
 	else:
 		pass
@@ -344,8 +312,6 @@ if env['platform'] != 'winddk':
 		# build dir) to the include path  
 		env.Append(CPPPATH = [matypes[0].dir])
 
-	SConscript('shader/slang/library/SConscript')
-
 	#
 	# Libraries
 	# 
@@ -355,10 +321,3 @@ if env['platform'] != 'winddk':
 		source = mesa_sources,
 	)
 	Export('mesa')
-	
-	glapi = env.ConvenienceLibrary(
-		target = 'glapi',
-		source = glapi_sources,
-	)
-	Export('glapi')
-

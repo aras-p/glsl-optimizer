@@ -24,100 +24,10 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_split_prim.h"
 
-#include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 #include "nv50_resource.h"
-
-static INLINE uint32_t
-nv50_vbo_type_to_hw(enum pipe_format format)
-{
-	const struct util_format_description *desc;
-
-	desc = util_format_description(format);
-	assert(desc);
-
-	switch (desc->channel[0].type) {
-	case UTIL_FORMAT_TYPE_FLOAT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
-	case UTIL_FORMAT_TYPE_UNSIGNED:
-		if (desc->channel[0].normalized) {
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
-		}
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
-	case UTIL_FORMAT_TYPE_SIGNED:
-		if (desc->channel[0].normalized) {
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
-		}
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
-	/*
-	case PIPE_FORMAT_TYPE_UINT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT;
-	case PIPE_FORMAT_TYPE_SINT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SINT; */
-	default:
-		return 0;
-	}
-}
-
-static INLINE uint32_t
-nv50_vbo_size_to_hw(unsigned size, unsigned nr_c)
-{
-	static const uint32_t hw_values[] = {
-		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16_16,
-		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32_32 };
-
-	/* we'd also have R11G11B10 and R10G10B10A2 */
-
-	assert(nr_c > 0 && nr_c <= 4);
-
-	if (size > 32)
-		return 0;
-	size >>= (3 - 2);
-
-	return hw_values[size + (nr_c - 1)];
-}
-
-static INLINE uint32_t
-nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
-{
-	uint32_t hw_type, hw_size;
-	enum pipe_format pf = ve->src_format;
-	const struct util_format_description *desc;
-	unsigned size, nr_components;
-
-	desc = util_format_description(pf);
-	assert(desc);
-
-	size = util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0);
-	nr_components = util_format_get_nr_components(pf);
-
-	hw_type = nv50_vbo_type_to_hw(pf);
-	hw_size = nv50_vbo_size_to_hw(size, nr_components);
-
-	if (!hw_type || !hw_size) {
-		NOUVEAU_ERR("unsupported vbo format: %s\n", util_format_name(pf));
-		abort();
-		return 0x24e80000;
-	}
-
-	if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z) /* BGRA */
-		hw_size |= (1 << 31); /* no real swizzle bits :-( */
-
-	return (hw_type | hw_size);
-}
 
 struct instance {
 	struct nouveau_bo *bo;
@@ -173,7 +83,7 @@ instance_step(struct nv50_context *nv50, struct instance *a)
 	}
 }
 
-void
+static void
 nv50_draw_arrays_instanced(struct pipe_context *pipe,
 			   unsigned mode, unsigned start, unsigned count,
 			   unsigned startInstance, unsigned instanceCount)
@@ -218,13 +128,6 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 		prim |= (1 << 28);
 	}
-}
-
-void
-nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
-		 unsigned count)
-{
-	nv50_draw_arrays_instanced(pipe, mode, start, count, 0, 1);
 }
 
 struct inline_ctx {
@@ -318,7 +221,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_transfer *transfer;
 	struct instance a[16];
 	struct inline_ctx ctx;
-	struct u_split_prim s;
+	struct util_split_prim s;
 	boolean nzi = FALSE;
 	unsigned overhead;
 
@@ -354,7 +257,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 		unsigned max_verts;
 		boolean done;
 
-		u_split_prim_init(&s, mode, start, count);
+		util_split_prim_init(&s, mode, start, count);
 		do {
 			if (AVAIL_RING(chan) < (overhead + 6)) {
 				FIRE_RING(chan);
@@ -373,7 +276,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 			OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1<<28) : 0));
-			done = u_split_prim_next(&s, max_verts);
+			done = util_split_prim_next(&s, max_verts);
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 			OUT_RING  (chan, 0);
 		} while (!done);
@@ -384,7 +287,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	pipe_buffer_unmap(pipe, indexBuffer, transfer);
 }
 
-void
+static void
 nv50_draw_elements_instanced(struct pipe_context *pipe,
 			     struct pipe_resource *indexBuffer,
 			     unsigned indexSize, int indexBias,
@@ -464,13 +367,34 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 }
 
 void
-nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_resource *indexBuffer,
-		   unsigned indexSize, int indexBias,
-		   unsigned mode, unsigned start, unsigned count)
+nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
-	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize, indexBias,
-				     mode, start, count, 0, 1);
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (info->indexed && nv50->idxbuf.buffer) {
+		unsigned offset;
+
+		assert(nv50->idxbuf.offset % nv50->idxbuf.index_size == 0);
+		offset = nv50->idxbuf.offset / nv50->idxbuf.index_size;
+
+		nv50_draw_elements_instanced(pipe,
+					     nv50->idxbuf.buffer,
+					     nv50->idxbuf.index_size,
+					     info->index_bias,
+					     info->mode,
+					     info->start + offset,
+					     info->count,
+					     info->start_instance,
+					     info->instance_count);
+	}
+	else {
+		nv50_draw_arrays_instanced(pipe,
+					   info->mode,
+					   info->start,
+					   info->count,
+					   info->start_instance,
+					   info->instance_count);
+	}
 }
 
 static INLINE boolean
@@ -519,7 +443,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		so_data  (so, fui(v[1]));
 		break;
 	case 1:
-		if (attrib == nv50->vertprog->cfg.edgeflag_in) {
+		if (attrib == nv50->vertprog->vp.edgeflag) {
 			so_method(so, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
 			so_data  (so, v[0] ? 1 : 0);
 		}
@@ -540,11 +464,8 @@ nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso)
 {
 	unsigned i;
 
-	for (i = 0; i < cso->num_elements; ++i) {
-		struct pipe_vertex_element *ve = &cso->pipe[i];
-
-		cso->hw[i] = nv50_vbo_vtxelt_to_hw(ve);
-	}
+	for (i = 0; i < cso->num_elements; ++i)
+		cso->hw[i] = nv50_format_table[cso->pipe[i].src_format].vtx;
 }
 
 struct nouveau_stateobj *
@@ -560,7 +481,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	nv50->vbo_fifo = 0;
 	if (nv50->screen->force_push ||
-	    nv50->vertprog->cfg.edgeflag_in < 16)
+	    nv50->vertprog->vp.edgeflag < 16)
 		nv50->vbo_fifo = 0xffff;
 
 	for (i = 0; i < nv50->vtxbuf_nr; i++) {

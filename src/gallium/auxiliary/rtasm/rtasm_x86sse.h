@@ -24,22 +24,31 @@
 #ifndef _RTASM_X86SSE_H_
 #define _RTASM_X86SSE_H_
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_config.h"
 
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 
 /* It is up to the caller to ensure that instructions issued are
  * suitable for the host cpu.  There are no checks made in this module
  * for mmx/sse/sse2 support on the cpu.
  */
 struct x86_reg {
-   unsigned file:3;
-   unsigned idx:3;
+   unsigned file:2;
+   unsigned idx:4;
    unsigned mod:2;		/* mod_REG if this is just a register */
    int      disp:24;		/* only +/- 23bits of offset - should be enough... */
 };
 
+#define X86_MMX 1
+#define X86_MMX2 2
+#define X86_SSE 4
+#define X86_SSE2 8
+#define X86_SSE3 0x10
+#define X86_SSE4_1 0x20
+
 struct x86_function {
+   unsigned caps;
    unsigned size;
    unsigned char *store;
    unsigned char *csr;
@@ -75,7 +84,15 @@ enum x86_reg_name {
    reg_SP,
    reg_BP,
    reg_SI,
-   reg_DI
+   reg_DI,
+   reg_R8,
+   reg_R9,
+   reg_R10,
+   reg_R11,
+   reg_R12,
+   reg_R13,
+   reg_R14,
+   reg_R15
 };
 
 
@@ -102,14 +119,42 @@ enum sse_cc {
 #define cc_Z  cc_E
 #define cc_NZ cc_NE
 
+
+/** generic pointer to function */
+typedef void (*x86_func)(void);
+
+
 /* Begin/end/retrieve function creation:
  */
 
+enum x86_target
+{
+   X86_32,
+   X86_64_STD_ABI,
+   X86_64_WIN64_ABI
+};
+
+/* make this read a member of x86_function if target != host is desired */
+static INLINE enum x86_target x86_target( struct x86_function* p )
+{
+#ifdef PIPE_ARCH_X86
+   return X86_32;
+#elif defined(_WIN64)
+   return X86_64_WIN64_ABI;
+#elif defined(PIPE_ARCH_X86_64)
+   return X86_64_STD_ABI;
+#endif
+}
+
+static INLINE unsigned x86_target_caps( struct x86_function* p )
+{
+   return p->caps;
+}
 
 void x86_init_func( struct x86_function *p );
 void x86_init_func_size( struct x86_function *p, unsigned code_size );
 void x86_release_func( struct x86_function *p );
-void (*x86_get_func( struct x86_function *p ))( void );
+x86_func x86_get_func( struct x86_function *p );
 
 /* Debugging:
  */
@@ -132,6 +177,8 @@ struct x86_reg x86_get_base_reg( struct x86_reg reg );
 /* Labels, jumps and fixup:
  */
 int x86_get_label( struct x86_function *p );
+
+void x64_rexw(struct x86_function *p);
 
 void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
@@ -173,18 +220,54 @@ void mmx_movq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void mmx_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void mmx_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
+void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movdqu( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movdqa( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movsd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movupd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movapd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+
 void sse2_cvtps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_cvttps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_cvtdq2ps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_cvtsd2ss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_cvtpd2ps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+
 void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packsswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_pshufd( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
                   unsigned char shuf );
+void sse2_pshuflw( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
+                  unsigned char shuf );
+void sse2_pshufhw( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
+                  unsigned char shuf );
 void sse2_rcpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_rcpss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
+void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_punpcklwd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_punpckldq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_punpcklqdq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+
+void sse2_psllw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+void sse2_pslld_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+void sse2_psllq_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+
+void sse2_psrlw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+void sse2_psrld_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+void sse2_psrlq_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+
+void sse2_psraw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+void sse2_psrad_imm( struct x86_function *p, struct x86_reg dst, unsigned imm );
+
+void sse2_por( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+
+void sse2_pshuflw( struct x86_function *p, struct x86_reg dst, struct x86_reg src, uint8_t imm );
+void sse2_pshufhw( struct x86_function *p, struct x86_reg dst, struct x86_reg src, uint8_t imm );
+void sse2_pshufd( struct x86_function *p, struct x86_reg dst, struct x86_reg src, uint8_t imm );
 
 void sse_prefetchnta( struct x86_function *p, struct x86_reg ptr);
 void sse_prefetch0( struct x86_function *p, struct x86_reg ptr);
@@ -222,7 +305,6 @@ void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg
 void sse_unpckhps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_unpcklps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
-void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_movmskps( struct x86_function *p, struct x86_reg dst, struct x86_reg src);
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -232,6 +314,14 @@ void x86_dec( struct x86_function *p, struct x86_reg reg );
 void x86_inc( struct x86_function *p, struct x86_reg reg );
 void x86_lea( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_mov( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x64_mov64( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_mov8( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_mov16( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_movzx8(struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_movzx16(struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_mov_imm(struct x86_function *p, struct x86_reg dst, int imm );
+void x86_mov8_imm(struct x86_function *p, struct x86_reg dst, uint8_t imm );
+void x86_mov16_imm(struct x86_function *p, struct x86_reg dst, uint16_t imm );
 void x86_mul( struct x86_function *p, struct x86_reg src );
 void x86_imul( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -245,7 +335,10 @@ void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_sahf( struct x86_function *p );
 void x86_div( struct x86_function *p, struct x86_reg src );
-
+void x86_bswap( struct x86_function *p, struct x86_reg src );
+void x86_shr_imm( struct x86_function *p, struct x86_reg reg, unsigned imm );
+void x86_sar_imm( struct x86_function *p, struct x86_reg reg, unsigned imm );
+void x86_shl_imm( struct x86_function *p, struct x86_reg reg, unsigned imm  );
 
 void x86_cdecl_caller_push_regs( struct x86_function *p );
 void x86_cdecl_caller_pop_regs( struct x86_function *p );

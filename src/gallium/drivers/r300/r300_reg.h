@@ -496,6 +496,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_GB_HORZ_CLIP_ADJ                   0x2228
 #define R300_VAP_GB_HORZ_DISC_ADJ                   0x222c
 
+#define R300_VAP_PVS_FLOW_CNTL_ADDRS_0      0x2230
+#define R300_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R300_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 8)
+#define R300_PVS_FC_LAST_INST(x)            ((x) << 16)
+#define R300_PVS_FC_RTN_INST(x)             ((x) << 24)
+
 /* gap */
 
 /* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
@@ -513,6 +519,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VAP_PVS_VTX_TIMEOUT_REG             0x2288
 #       define R300_2288_R300                    0x00750000 /* -- nh */
 #       define R300_2288_RV350                   0x0000FFFF /* -- Vladimir */
+
+#define R300_VAP_PVS_FLOW_CNTL_LOOP_INDEX_0 0x2290
+#define R300_PVS_FC_LOOP_INIT_VAL(x)        ((x) << 0)
+#define R300_PVS_FC_LOOP_STEP_VAL(x)        ((x) << 8)
 
 /* gap */
 
@@ -548,6 +558,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
 #       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
 #define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC
+#define R300_VAP_PVS_FC_OPC_JUMP(x)         (1 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_LOOP(x)         (2 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_JSR(x)          (3 << (2 * (x)))
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
@@ -563,6 +576,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_VTX_POS_0_Z_2              0x24A8
 /* write 0 to indicate end of packet? */
 #define R300_VAP_VTX_END_OF_PKT             0x24AC
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_LW_0   0x2500
+#define R500_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R500_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 16)
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_UW_0   0x2504
+#define R500_PVS_FC_LAST_INST(x)            ((x) << 0)
+#define R500_PVS_FC_RTN_INST(x)             ((x) << 16)
 
 /* gap */
 
@@ -1575,6 +1596,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R500_TX_FORMAT_Y10X10                0x3
 #       define R500_TX_FORMAT_W10Z10Y10X10          0x4
 #       define R500_TX_FORMAT_ATI1N                 0x5
+#       define R500_TX_FORMAT_Y8X24                 0x6
 
 
 #       define R300_TX_FORMAT_SIGNED_W             (1 << 5)
@@ -1585,6 +1607,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #	define R300_TX_FORMAT_3D		   (1 << 25)
 #	define R300_TX_FORMAT_CUBIC_MAP		   (2 << 25)
+#	define R300_TX_FORMAT_TEX_COORD_TYPE_MASK  (0x3 << 25)
 
 	/* alpha modes, convenience mostly */
 	/* if you have alpha, pick constant appropriate to the
@@ -1628,6 +1651,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #       define R300_TX_FORMAT_GAMMA               (1 << 21)
 #       define R300_TX_FORMAT_YUV_TO_RGB          (1 << 22)
+
+#       define R300_TX_CACHE(x)                 ((x) << 27)
+#       define R300_TX_CACHE_WHOLE              0
+/* reserved */
+#       define R300_TX_CACHE_HALF_0             2
+#       define R300_TX_CACHE_HALF_1             3
+#       define R300_TX_CACHE_FOURTH_0           4
+#       define R300_TX_CACHE_FOURTH_1           5
+#       define R300_TX_CACHE_FOURTH_2           6
+#       define R300_TX_CACHE_FOURTH_3           7
+#       define R300_TX_CACHE_EIGHTH_0           8
+#       define R300_TX_CACHE_EIGHTH_1           9
+#       define R300_TX_CACHE_EIGHTH_2           10
+#       define R300_TX_CACHE_EIGHTH_3           11
+#       define R300_TX_CACHE_EIGHTH_4           12
+#       define R300_TX_CACHE_EIGHTH_5           13
+#       define R300_TX_CACHE_EIGHTH_6           14
+#       define R300_TX_CACHE_EIGHTH_7           15
+#       define R300_TX_CACHE_SIXTEENTH_0        16
+#       define R300_TX_CACHE_SIXTEENTH_1        17
+#       define R300_TX_CACHE_SIXTEENTH_2        18
+#       define R300_TX_CACHE_SIXTEENTH_3        19
+#       define R300_TX_CACHE_SIXTEENTH_4        20
+#       define R300_TX_CACHE_SIXTEENTH_5        21
+#       define R300_TX_CACHE_SIXTEENTH_6        22
+#       define R300_TX_CACHE_SIXTEENTH_7        23
+#       define R300_TX_CACHE_SIXTEENTH_8        24
+#       define R300_TX_CACHE_SIXTEENTH_9        25
+#       define R300_TX_CACHE_SIXTEENTH_10       26
+#       define R300_TX_CACHE_SIXTEENTH_11       27
+#       define R300_TX_CACHE_SIXTEENTH_12       28
+#       define R300_TX_CACHE_SIXTEENTH_13       29
+#       define R300_TX_CACHE_SIXTEENTH_14       30
+#       define R300_TX_CACHE_SIXTEENTH_15       31
 
 #define R300_TX_FORMAT2_0		    0x4500 /* obvious missing in gap */
 #       define R300_TX_PITCHMASK_SHIFT           0
@@ -2582,7 +2639,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_WR_COMP_DISABLE                          (0 << 4)
 #	define R300_WR_COMP_ENABLE                           (1 << 4)
 #	define R300_ZB_CB_CLEAR_RMW                          (0 << 5)
-#	define R300_ZB_CB_CLEAR_CACHE_LINEAR                 (1 << 5)
+#	define R300_ZB_CB_CLEAR_CACHE_LINE_WRITE_ONLY        (1 << 5)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_DISABLE   (0 << 6)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE    (1 << 6)
 
@@ -2637,6 +2694,24 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Z Buffer Clear Value */
 #define R300_ZB_DEPTHCLEARVALUE                  0x4f28
+
+/* Z Mask RAM is a Z compression buffer.
+ * Each dword of the Z Mask contains compression info for 16 4x4 pixel blocks,
+ * that is 2 bits for each block.
+ * On chips with 2 Z pipes, every other dword maps to a different pipe.
+ */
+
+/* The dword offset into Z mask RAM (bits 18:4) */
+#define R300_ZB_ZMASK_OFFSET                     0x4f30
+
+/* Z Mask Pitch. */
+#define R300_ZB_ZMASK_PITCH                      0x4f34
+
+/* Access to Z Mask RAM in a manner similar to HiZ RAM.
+ * The indices are autoincrementing. */
+#define R300_ZB_ZMASK_WRINDEX                    0x4f38
+#define R300_ZB_ZMASK_DWORD                      0x4f3c
+#define R300_ZB_ZMASK_RDINDEX                    0x4f40
 
 /* Hierarchical Z Memory Offset */
 #define R300_ZB_HIZ_OFFSET                       0x4f44
@@ -3229,8 +3304,8 @@ enum {
 #   define R500_FC_B_OP0_NONE				(0 << 24)
 #   define R500_FC_B_OP0_DECR				(1 << 24)
 #   define R500_FC_B_OP0_INCR				(2 << 24)
-#   define R500_FC_B_OP1_DECR				(0 << 26)
-#   define R500_FC_B_OP1_NONE				(1 << 26)
+#   define R500_FC_B_OP1_NONE				(0 << 26)
+#   define R500_FC_B_OP1_DECR				(1 << 26)
 #   define R500_FC_B_OP1_INCR				(2 << 26)
 #   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
 #define R500_US_FC_INT_CONST_0				0x4c00
@@ -3383,6 +3458,7 @@ enum {
 #   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)
 #   define R300_VBPNTR_STRIDE1(x)  (((x) >> 2) << 24)
 
+#define R300_PACKET3_3D_CLEAR_ZMASK         0x00003200
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0
 #    define R300_INDX_BUFFER_SKIP_SHIFT         16
@@ -3436,9 +3512,18 @@ enum {
 #       define RADEON_WAIT_3D_IDLECLEAN     (1 << 17)
 #       define RADEON_WAIT_HOST_IDLECLEAN   (1 << 18)
 
+#define R200_3D_DRAW_IMMD_2      0xC0003500
+
+#define RADEON_CP_PACKET0 0x0 /* XXX stolen from radeon_reg.h */
 #define RADEON_CP_PACKET3                           0xC0000000
 
-#define R200_3D_DRAW_IMMD_2      0xC0003500
+#define RADEON_ONE_REG_WR        (1 << 15)
+
+#define CP_PACKET0(register, count) \
+    (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
+
+#define CP_PACKET3(op, count) \
+    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
 
 #endif /* _R300_REG_H */
 

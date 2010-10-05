@@ -33,6 +33,8 @@
 #include "vbo_context.h"
 
 
+#if FEATURE_dlist
+
 
 static void vbo_save_callback_init( GLcontext *ctx )
 {
@@ -117,3 +119,4 @@ void vbo_save_fallback( GLcontext *ctx, GLboolean fallback )
 }
 
 
+#endif /* FEATURE_dlist */

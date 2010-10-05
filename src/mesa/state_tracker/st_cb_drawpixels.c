@@ -36,8 +36,8 @@
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 
 #include "st_debug.h"
 #include "st_context.h"
@@ -49,7 +49,6 @@
 #include "st_cb_fbo.h"
 #include "st_format.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -59,9 +58,11 @@
 #include "util/u_draw_quad.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
+
+#if FEATURE_drawpix
 
 /**
  * Check if the given program is:
@@ -300,37 +301,10 @@ static struct pipe_resource *
 alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
               enum pipe_format texFormat)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_resource *pt;
-   int ptw, pth;
 
-   ptw = width;
-   pth = height;
-
-   /* Need to use POT texture? */
-   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
-      int l2pt, maxSize;
-
-      l2pt = util_logbase2(width);
-      if (1 << l2pt != width) {
-         ptw = 1 << (l2pt + 1);
-      }
-
-      l2pt = util_logbase2(height);
-      if (1 << l2pt != height) {
-         pth = 1 << (l2pt + 1);
-      }
-
-      /* Check against maximum texture size */
-      maxSize = 1 << (pipe->screen->get_param(pipe->screen,
-                               PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
-      assert(ptw <= maxSize);
-      assert(pth <= maxSize);
-   }
-
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, texFormat, 0,
-                          ptw, pth, 1, PIPE_BIND_SAMPLER_VIEW);
+   pt = st_texture_create(st, st->internal_target, texFormat, 0,
+                          width, height, 1, PIPE_BIND_SAMPLER_VIEW);
 
    return pt;
 }
@@ -384,7 +358,7 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      transfer = st_no_flush_get_tex_transfer(st, pt, 0, 0, 0,
+      transfer = pipe_get_transfer(st->pipe, pt, 0, 0, 0,
 					      PIPE_TRANSFER_WRITE, 0, 0,
 					      width, height);
 
@@ -508,7 +482,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       buf = pipe_buffer_create(pipe->screen,
 			       PIPE_BIND_VERTEX_BUFFER,
                                sizeof(verts));
-      st_no_flush_pipe_buffer_write(st, buf, 0, sizeof(verts), verts);
+      pipe_buffer_write(st->pipe, buf, 0, sizeof(verts), verts);
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
@@ -535,6 +509,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    struct cso_context *cso = st->cso_context;
    GLfloat x0, y0, x1, y1;
    GLsizei maxSize;
+   boolean normalized = sv->texture->target != PIPE_TEXTURE_RECT;
 
    /* limit checks */
    /* XXX if DrawPixels image is larger than max texture size, break
@@ -578,7 +553,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.normalized_coords = 1;
+      sampler.normalized_coords = normalized;
 
       cso_single_sampler(cso, 0, &sampler);
       if (st->pixel_xfer.pixelmap_enabled) {
@@ -634,8 +609,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-             (GLfloat) width / sv->texture->width0,
-             (GLfloat) height / sv->texture->height0);
+             normalized ? ((GLfloat) width / sv->texture->width0) : (GLfloat)width,
+             normalized ? ((GLfloat) height / sv->texture->height0) : (GLfloat)height);
 
    /* restore state */
    cso_restore_rasterizer(cso);
@@ -685,7 +660,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture, 0, 0, 0,
+   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture, 0, 0, 0,
 				       usage, x, y,
 				       width, height);
 
@@ -857,7 +832,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
-   struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
+   struct st_renderbuffer *rbDraw;
    struct pipe_context *pipe = st_context(ctx)->pipe;
    enum pipe_transfer_usage usage;
    struct pipe_transfer *ptDraw;
@@ -870,6 +845,13 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
       return;
    }
+
+   /* Get the dest renderbuffer.  If there's a wrapper, use the
+    * underlying renderbuffer.
+    */
+   rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
+   if (rbDraw->Base.Wrapped)
+      rbDraw = st_renderbuffer(rbDraw->Base.Wrapped);
 
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height,
@@ -885,7 +867,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
-   ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
+   ptDraw = pipe_get_transfer(st_context(ctx)->pipe,
 					   rbDraw->texture, 0, 0, 0,
 					   usage, dstx, dsty,
 					   width, height);
@@ -968,9 +950,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    enum pipe_format srcFormat, texFormat;
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
+   GLuint sample_count;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
-
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
 
@@ -994,9 +975,18 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
+   if (rbRead->Base.Wrapped)
+      rbRead = st_renderbuffer(rbRead->Base.Wrapped);
+
+   sample_count = rbRead->texture->nr_samples;
+   /* I believe this would be legal, presumably would need to do a resolve
+      for color, and for depth/stencil spec says to just use one of the
+      depth/stencil samples per pixel? Need some transfer clarifications. */
+   assert(sample_count < 2);
+
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE_2D, 
+   if (screen->is_format_supported(screen, srcFormat, st->internal_target, sample_count,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       texFormat = srcFormat;
    }
@@ -1004,14 +994,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
-                                      PIPE_TEXTURE_2D, 
+                                      st->internal_target, sample_count,
                                       PIPE_BIND_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(screen, GL_RGBA, PIPE_TEXTURE_2D, 
-                                      PIPE_BIND_SAMPLER_VIEW);
+         texFormat = st_choose_format(screen, GL_RGBA, st->internal_target,
+                                      sample_count, PIPE_BIND_SAMPLER_VIEW);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
    }
@@ -1050,32 +1040,25 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* Make temporary texture which is a copy of the src region.
     */
    if (srcFormat == texFormat) {
+      struct pipe_subresource srcsub, dstsub;
+      srcsub.face = 0;
+      srcsub.level = 0;
+      dstsub.face = 0;
+      dstsub.level = 0;
       /* copy source framebuffer surface into mipmap/texture */
-      struct pipe_surface *psRead = screen->get_tex_surface(screen,
-                                       rbRead->texture, 0, 0, 0,
-                                       PIPE_BIND_BLIT_SOURCE);
-      struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
-                                       PIPE_BIND_RENDER_TARGET |
-                                       PIPE_BIND_BLIT_DESTINATION);
-      pipe->surface_copy(pipe,
-                         psTex,                               /* dest surf */
-                         pack.SkipPixels, pack.SkipRows,      /* dest pos */
-                         psRead,                              /* src surf */
-                         readX, readY, readW, readH);         /* src region */
+      pipe->resource_copy_region(pipe,
+                                 pt,                                /* dest tex */
+                                 dstsub,
+                                 pack.SkipPixels, pack.SkipRows, 0, /* dest pos */
+                                 rbRead->texture,                   /* src tex */
+                                 srcsub,
+                                 readX, readY, 0, readW, readH);    /* src region */
 
-      if (0) {
-         /* debug */
-         debug_dump_surface(pipe, "copypixsrcsurf", psRead);
-         debug_dump_surface(pipe, "copypixtemptex", psTex);
-      }
-
-      pipe_surface_reference(&psRead, NULL); 
-      pipe_surface_reference(&psTex, NULL);
    }
    else {
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
-         st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
+         pipe_get_transfer(st->pipe, rbRead->texture, 0, 0, 0,
                                         PIPE_TRANSFER_READ,
                                         readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
@@ -1089,7 +1072,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
 
-      ptTex = st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, transfer_usage,
+      ptTex = pipe_get_transfer(st->pipe, pt, 0, 0, 0, transfer_usage,
                                              0, 0, width, height);
 
       /* copy image from ptRead surface to ptTex surface */
@@ -1143,7 +1126,9 @@ st_destroy_drawpix(struct st_context *st)
    st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
    if (st->drawpix.vert_shaders[0])
-      free(st->drawpix.vert_shaders[0]);
+      ureg_free_tokens(st->drawpix.vert_shaders[0]);
    if (st->drawpix.vert_shaders[1])
-      free(st->drawpix.vert_shaders[1]);
+      ureg_free_tokens(st->drawpix.vert_shaders[1]);
 }
+
+#endif /* FEATURE_drawpix */

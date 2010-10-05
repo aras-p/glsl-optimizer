@@ -60,28 +60,53 @@ lp_build_broadcast(LLVMBuilderRef builder,
 }
 
 
+/**
+ * Broadcast
+ */
 LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
    const struct lp_type type = bld->type;
-   LLVMValueRef res;
-   unsigned i;
 
-   res = bld->undef;
-   for(i = 0; i < type.length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+   assert(lp_check_elem_type(type, LLVMTypeOf(scalar)));
+
+   if (type.length == 1) {
+      return scalar;
    }
+   else {
+      LLVMValueRef res;
 
-   return res;
+#if HAVE_LLVM >= 0x207
+      /* The shuffle vector is always made of int32 elements */
+      struct lp_type i32_vec_type = lp_type_int_vec(32);
+      i32_vec_type.length = type.length;
+
+      res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
+                                   LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+      res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
+                                   lp_build_const_int_vec(i32_vec_type, 0), "");
+#else
+      /* XXX: The above path provokes a bug in LLVM 2.6 */
+      unsigned i;
+      res = bld->undef;
+      for(i = 0; i < type.length; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+      }
+#endif
+      return res;
+   }
 }
 
 
+/**
+ * Swizzle one channel into all other three channels.
+ */
 LLVMValueRef
-lp_build_broadcast_aos(struct lp_build_context *bld,
-                       LLVMValueRef a,
-                       unsigned channel)
+lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
+                            LLVMValueRef a,
+                            unsigned channel)
 {
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
@@ -93,7 +118,7 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
    /* XXX: SSE3 has PSHUFB which should be better than bitmasks, but forcing
     * using shuffles here actually causes worst results. More investigation is
     * needed. */
-   if (n <= 4) {
+   if (type.width >= 16) {
       /*
        * Shuffle.
        */
@@ -115,21 +140,25 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
        *   YY00 YY00 .... YY00
        *   YYYY YYYY .... YYYY  <= output
        */
-      struct lp_type type4 = type;
+      struct lp_type type4;
       const char shifts[4][2] = {
          { 1,  2},
          {-1,  2},
          { 1, -2},
          {-1, -2}
       };
-      boolean cond[4];
       unsigned i;
 
-      memset(cond, 0, sizeof cond);
-      cond[channel] = 1;
+      a = LLVMBuildAnd(bld->builder, a,
+                       lp_build_const_mask_aos(type, 1 << channel), "");
 
-      a = LLVMBuildAnd(bld->builder, a, lp_build_const_mask_aos(type, cond), "");
+      /*
+       * Build a type where each element is an integer that cover the four
+       * channels.
+       */
 
+      type4 = type;
+      type4.floating = FALSE;
       type4.width *= 4;
       type4.length /= 4;
 
@@ -159,81 +188,248 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 
 
 LLVMValueRef
-lp_build_swizzle1_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      const unsigned char swizzle[4])
+lp_build_swizzle_aos(struct lp_build_context *bld,
+                     LLVMValueRef a,
+                     const unsigned char swizzles[4])
 {
-   const unsigned n = bld->type.length;
+   const struct lp_type type = bld->type;
+   const unsigned n = type.length;
    unsigned i, j;
 
-   if(a == bld->undef || a == bld->zero || a == bld->one)
+   if (swizzles[0] == PIPE_SWIZZLE_RED &&
+       swizzles[1] == PIPE_SWIZZLE_GREEN &&
+       swizzles[2] == PIPE_SWIZZLE_BLUE &&
+       swizzles[3] == PIPE_SWIZZLE_ALPHA) {
       return a;
+   }
 
-   if(swizzle[0] == swizzle[1] && swizzle[1] == swizzle[2] && swizzle[2] == swizzle[3])
-      return lp_build_broadcast_aos(bld, a, swizzle[0]);
+   if (swizzles[0] == swizzles[1] &&
+       swizzles[1] == swizzles[2] &&
+       swizzles[2] == swizzles[3]) {
+      switch (swizzles[0]) {
+      case PIPE_SWIZZLE_RED:
+      case PIPE_SWIZZLE_GREEN:
+      case PIPE_SWIZZLE_BLUE:
+      case PIPE_SWIZZLE_ALPHA:
+         return lp_build_swizzle_scalar_aos(bld, a, swizzles[0]);
+      case PIPE_SWIZZLE_ZERO:
+         return bld->zero;
+      case PIPE_SWIZZLE_ONE:
+         return bld->one;
+      default:
+         assert(0);
+         return bld->undef;
+      }
+   }
 
-   {
+   if (type.width >= 16) {
       /*
        * Shuffle.
        */
-      LLVMTypeRef elem_type = LLVMInt32Type();
+      LLVMValueRef undef = LLVMGetUndef(lp_build_elem_type(type));
+      LLVMTypeRef i32t = LLVMInt32Type();
       LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef aux[LP_MAX_VECTOR_LENGTH];
 
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
-            shuffles[j + i] = LLVMConstInt(elem_type, j + swizzle[i], 0);
+      memset(aux, 0, sizeof aux);
 
-      return LLVMBuildShuffleVector(bld->builder, a, bld->undef, LLVMConstVector(shuffles, n), "");
+      for(j = 0; j < n; j += 4) {
+         for(i = 0; i < 4; ++i) {
+            unsigned shuffle;
+            switch (swizzles[i]) {
+            default:
+               assert(0);
+               /* fall through */
+            case PIPE_SWIZZLE_RED:
+            case PIPE_SWIZZLE_GREEN:
+            case PIPE_SWIZZLE_BLUE:
+            case PIPE_SWIZZLE_ALPHA:
+               shuffle = j + swizzles[i];
+               break;
+            case PIPE_SWIZZLE_ZERO:
+               shuffle = type.length + 0;
+               if (!aux[0]) {
+                  aux[0] = lp_build_const_elem(type, 0.0);
+               }
+               break;
+            case PIPE_SWIZZLE_ONE:
+               shuffle = type.length + 1;
+               if (!aux[1]) {
+                  aux[1] = lp_build_const_elem(type, 1.0);
+               }
+               break;
+            }
+            shuffles[j + i] = LLVMConstInt(i32t, shuffle, 0);
+         }
+      }
+
+      for (i = 0; i < n; ++i) {
+         if (!aux[i]) {
+            aux[i] = undef;
+         }
+      }
+
+      return LLVMBuildShuffleVector(bld->builder, a,
+                                    LLVMConstVector(aux, n),
+                                    LLVMConstVector(shuffles, n), "");
+   } else {
+      /*
+       * Bit mask and shifts.
+       *
+       * For example, this will convert BGRA to RGBA by doing
+       *
+       *   rgba = (bgra & 0x00ff0000) >> 16
+       *        | (bgra & 0xff00ff00)
+       *        | (bgra & 0x000000ff) << 16
+       *
+       * This is necessary not only for faster cause, but because X86 backend
+       * will refuse shuffles of <4 x i8> vectors
+       */
+      LLVMValueRef res;
+      struct lp_type type4;
+      unsigned cond = 0;
+      unsigned chan;
+      int shift;
+
+      /*
+       * Start with a mixture of 1 and 0.
+       */
+      for (chan = 0; chan < 4; ++chan) {
+         if (swizzles[chan] == PIPE_SWIZZLE_ONE) {
+            cond |= 1 << chan;
+         }
+      }
+      res = lp_build_select_aos(bld, cond, bld->one, bld->zero);
+
+      /*
+       * Build a type where each element is an integer that cover the four
+       * channels.
+       */
+      type4 = type;
+      type4.floating = FALSE;
+      type4.width *= 4;
+      type4.length /= 4;
+
+      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(type4), "");
+      res = LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(type4), "");
+
+      /*
+       * Mask and shift the channels, trying to group as many channels in the
+       * same shift as possible
+       */
+      for (shift = -3; shift <= 3; ++shift) {
+         unsigned long long mask = 0;
+
+         assert(type4.width <= sizeof(mask)*8);
+
+         for (chan = 0; chan < 4; ++chan) {
+            /* FIXME: big endian */
+            if (swizzles[chan] < 4 &&
+                chan - swizzles[chan] == shift) {
+               mask |= ((1ULL << type.width) - 1) << (swizzles[chan] * type.width);
+            }
+         }
+
+         if (mask) {
+            LLVMValueRef masked;
+            LLVMValueRef shifted;
+
+            if (0)
+               debug_printf("shift = %i, mask = 0x%08llx\n", shift, mask);
+
+            masked = LLVMBuildAnd(bld->builder, a,
+                                  lp_build_const_int_vec(type4, mask), "");
+            if (shift > 0) {
+               shifted = LLVMBuildShl(bld->builder, masked,
+                                      lp_build_const_int_vec(type4, shift*type.width), "");
+            } else if (shift < 0) {
+               shifted = LLVMBuildLShr(bld->builder, masked,
+                                       lp_build_const_int_vec(type4, -shift*type.width), "");
+            } else {
+               shifted = masked;
+            }
+
+            res = LLVMBuildOr(bld->builder, res, shifted, "");
+         }
+      }
+
+      return LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(type), "");
    }
 }
 
 
+/**
+ * Extended swizzle of a single channel of a SoA vector.
+ *
+ * @param bld         building context
+ * @param unswizzled  array with the 4 unswizzled values
+ * @param swizzle     one of the PIPE_SWIZZLE_*
+ *
+ * @return  the swizzled value.
+ */
 LLVMValueRef
-lp_build_swizzle2_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      LLVMValueRef b,
-                      const unsigned char swizzle[4])
+lp_build_swizzle_soa_channel(struct lp_build_context *bld,
+                             const LLVMValueRef *unswizzled,
+                             unsigned swizzle)
 {
-   const unsigned n = bld->type.length;
-   unsigned i, j;
-
-   if(swizzle[0] < 4 && swizzle[1] < 4 && swizzle[2] < 4 && swizzle[3] < 4)
-      return lp_build_swizzle1_aos(bld, a, swizzle);
-
-   if(a == b) {
-      unsigned char swizzle1[4];
-      swizzle1[0] = swizzle[0] % 4;
-      swizzle1[1] = swizzle[1] % 4;
-      swizzle1[2] = swizzle[2] % 4;
-      swizzle1[3] = swizzle[3] % 4;
-      return lp_build_swizzle1_aos(bld, a, swizzle1);
-   }
-
-   if(swizzle[0] % 4 == 0 &&
-      swizzle[1] % 4 == 1 &&
-      swizzle[2] % 4 == 2 &&
-      swizzle[3] % 4 == 3) {
-      boolean cond[4];
-      cond[0] = swizzle[0] / 4;
-      cond[1] = swizzle[1] / 4;
-      cond[2] = swizzle[2] / 4;
-      cond[3] = swizzle[3] / 4;
-      return lp_build_select_aos(bld, a, b, cond);
-   }
-
-   {
-      /*
-       * Shuffle.
-       */
-      LLVMTypeRef elem_type = LLVMInt32Type();
-      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
-
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
-            shuffles[j + i] = LLVMConstInt(elem_type, j + (swizzle[i] % 4) + (swizzle[i] / 4 * n), 0);
-
-      return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
+   switch (swizzle) {
+   case PIPE_SWIZZLE_RED:
+   case PIPE_SWIZZLE_GREEN:
+   case PIPE_SWIZZLE_BLUE:
+   case PIPE_SWIZZLE_ALPHA:
+      return unswizzled[swizzle];
+   case PIPE_SWIZZLE_ZERO:
+      return bld->zero;
+   case PIPE_SWIZZLE_ONE:
+      return bld->one;
+   default:
+      assert(0);
+      return bld->undef;
    }
 }
 
 
+/**
+ * Extended swizzle of a SoA vector.
+ *
+ * @param bld         building context
+ * @param unswizzled  array with the 4 unswizzled values
+ * @param swizzles    array of PIPE_SWIZZLE_*
+ * @param swizzled    output swizzled values
+ */
+void
+lp_build_swizzle_soa(struct lp_build_context *bld,
+                     const LLVMValueRef *unswizzled,
+                     const unsigned char swizzles[4],
+                     LLVMValueRef *swizzled)
+{
+   unsigned chan;
+
+   for (chan = 0; chan < 4; ++chan) {
+      swizzled[chan] = lp_build_swizzle_soa_channel(bld, unswizzled,
+                                                    swizzles[chan]);
+   }
+}
+
+
+/**
+ * Do an extended swizzle of a SoA vector inplace.
+ *
+ * @param bld         building context
+ * @param values      intput/output array with the 4 values
+ * @param swizzles    array of PIPE_SWIZZLE_*
+ */
+void
+lp_build_swizzle_soa_inplace(struct lp_build_context *bld,
+                             LLVMValueRef *values,
+                             const unsigned char swizzles[4])
+{
+   LLVMValueRef unswizzled[4];
+   unsigned chan;
+
+   for (chan = 0; chan < 4; ++chan) {
+      unswizzled[chan] = values[chan];
+   }
+
+   lp_build_swizzle_soa(bld, unswizzled, swizzles, values);
+}

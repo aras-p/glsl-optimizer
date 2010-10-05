@@ -31,7 +31,6 @@
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/colormac.h"
-#include "main/texobj.h"
 #include "main/mm.h"
 
 #include "texmem.h"

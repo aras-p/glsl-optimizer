@@ -255,11 +255,17 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
       }
       else {
          FREE(xm_dt->data);
+         if (xm_dt->tempImage && xm_dt->tempImage->data == xm_dt->data) {
+            xm_dt->tempImage->data = NULL;
+         }
+         xm_dt->data = NULL;
       }
    }
 
-   if (xm_dt->tempImage)
+   if (xm_dt->tempImage) {
       XDestroyImage(xm_dt->tempImage);
+      xm_dt->tempImage = NULL;
+   }
 
    if (xm_dt->gc)
       XFreeGC(xm_dt->display, xm_dt->gc);

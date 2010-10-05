@@ -21,3 +21,7 @@ Glossary
    LOD
       Level of Detail. Also spelled "LoD." The value that determines when the
       switches between mipmaps occur during texture sampling.
+
+   GLSL
+      GL Shading Language. The official, common high-level shader language used
+      in GL 2.0 and above.

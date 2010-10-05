@@ -97,7 +97,7 @@ struct sw_winsys
     */
    struct sw_displaytarget *
    (*displaytarget_from_handle)( struct sw_winsys *ws,
-                                 const struct pipe_resource *template,
+                                 const struct pipe_resource *templat,
                                  struct winsys_handle *whandle,
                                  unsigned *stride );
 

@@ -27,7 +27,7 @@
 
 #include <windows.h>
 
-#include "glapi/glthread.h"
+#include "glapi/glapi.h"
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -48,6 +48,12 @@ extern _glthread_Mutex OneTimeLock;
 
 struct stw_device *stw_dev = NULL;
 
+static int
+stw_get_param(struct st_manager *smapi,
+              enum st_manager_param param)
+{
+   return 0;
+}
 
 boolean
 stw_init(const struct stw_winsys *stw_winsys)
@@ -87,6 +93,7 @@ stw_init(const struct stw_winsys *stw_winsys)
       stw_winsys->get_adapter_luid(screen, &stw_dev->AdapterLuid);
 
    stw_dev->smapi->screen = screen;
+   stw_dev->smapi->get_param = stw_get_param;
    stw_dev->screen = screen;
 
    pipe_mutex_init( stw_dev->ctx_mutex );

@@ -1,0 +1,23 @@
+
+TOP = ../../../../..
+include $(TOP)/configs/current
+
+LIBNAME = r600winsys
+
+C_SOURCES = \
+	bof.c \
+	evergreen_hw_context.c \
+	radeon_bo.c \
+	radeon_bo_pb.c \
+	radeon_pciid.c \
+	r600.c \
+	r600_bo.c \
+	r600_drm.c \
+	r600_hw_context.c
+
+LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
+		   $(shell pkg-config libdrm --cflags-only-I)
+
+include ../../../Makefile.template
+
+symlinks:

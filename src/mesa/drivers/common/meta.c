@@ -34,12 +34,12 @@
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "main/imports.h"
+#include "main/arbprogram.h"
 #include "main/arrayobj.h"
 #include "main/blend.h"
 #include "main/bufferobj.h"
 #include "main/buffers.h"
 #include "main/colortab.h"
-#include "main/convolve.h"
 #include "main/depth.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
@@ -51,7 +51,7 @@
 #include "main/polygon.h"
 #include "main/readpix.h"
 #include "main/scissor.h"
-#include "main/shaders.h"
+#include "main/shaderapi.h"
 #include "main/state.h"
 #include "main/stencil.h"
 #include "main/texobj.h"
@@ -61,8 +61,7 @@
 #include "main/texstate.h"
 #include "main/varray.h"
 #include "main/viewport.h"
-#include "shader/program.h"
-#include "shader/arbprogram.h"
+#include "program/program.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -128,9 +127,6 @@ struct save_state
    GLfloat AlphaBias, AlphaScale;
    GLfloat DepthBias, DepthScale;
    GLboolean MapColorFlag;
-   GLboolean Convolution1DEnabled;
-   GLboolean Convolution2DEnabled;
-   GLboolean Separable2DEnabled;
 
    /** META_RASTERIZATION */
    GLenum FrontPolygonMode, BackPolygonMode;
@@ -389,9 +385,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->AlphaScale = ctx->Pixel.AlphaScale;
       save->AlphaBias = ctx->Pixel.AlphaBias;
       save->MapColorFlag = ctx->Pixel.MapColorFlag;
-      save->Convolution1DEnabled = ctx->Pixel.Convolution1DEnabled;
-      save->Convolution2DEnabled = ctx->Pixel.Convolution2DEnabled;
-      save->Separable2DEnabled = ctx->Pixel.Separable2DEnabled;
       ctx->Pixel.RedScale = 1.0F;
       ctx->Pixel.RedBias = 0.0F;
       ctx->Pixel.GreenScale = 1.0F;
@@ -401,9 +394,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       ctx->Pixel.AlphaScale = 1.0F;
       ctx->Pixel.AlphaBias = 0.0F;
       ctx->Pixel.MapColorFlag = GL_FALSE;
-      ctx->Pixel.Convolution1DEnabled = GL_FALSE;
-      ctx->Pixel.Convolution2DEnabled = GL_FALSE;
-      ctx->Pixel.Separable2DEnabled = GL_FALSE;
       /* XXX more state */
       ctx->NewState |=_NEW_PIXEL;
    }
@@ -638,9 +628,6 @@ _mesa_meta_end(GLcontext *ctx)
       ctx->Pixel.AlphaScale = save->AlphaScale;
       ctx->Pixel.AlphaBias = save->AlphaBias;
       ctx->Pixel.MapColorFlag = save->MapColorFlag;
-      ctx->Pixel.Convolution1DEnabled = save->Convolution1DEnabled;
-      ctx->Pixel.Convolution2DEnabled = save->Convolution2DEnabled;
-      ctx->Pixel.Separable2DEnabled = save->Separable2DEnabled;
       /* XXX more state */
       ctx->NewState |=_NEW_PIXEL;
    }
@@ -818,6 +805,21 @@ _mesa_meta_end(GLcontext *ctx)
 
 
 /**
+ * Convert Z from a normalized value in the range [0, 1] to an object-space
+ * Z coordinate in [-1, +1] so that drawing at the new Z position with the
+ * default/identity ortho projection results in the original Z value.
+ * Used by the meta-Clear, Draw/CopyPixels and Bitmap functions where the Z
+ * value comes from the clear value or raster position.
+ */
+static INLINE GLfloat
+invert_z(GLfloat normZ)
+{
+   GLfloat objZ = 1.0 - 2.0 * normZ;
+   return objZ;
+}
+
+
+/**
  * One-time init for a temp_texture object.
  * Choose tex target, compute max tex size, etc.
  */
@@ -840,7 +842,6 @@ init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
    assert(tex->MaxSize > 0);
 
    _mesa_GenTextures(1, &tex->TexObj);
-   _mesa_BindTexture(tex->Target, tex->TexObj);
 }
 
 
@@ -1438,7 +1439,7 @@ _mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
       const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin;
       const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax;
       const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax;
-      const GLfloat z = 1.0 - 2.0 * ctx->Depth.Clear;
+      const GLfloat z = invert_z(ctx->Depth.Clear);
       GLuint i;
 
       verts[0].x = x0;
@@ -1544,7 +1545,7 @@ _mesa_meta_CopyPixels(GLcontext *ctx, GLint srcX, GLint srcY,
       const GLfloat dstY0 = (GLfloat) dstY;
       const GLfloat dstX1 = dstX + width * ctx->Pixel.ZoomX;
       const GLfloat dstY1 = dstY + height * ctx->Pixel.ZoomY;
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
 
       verts[0].x = dstX0;
       verts[0].y = dstY0;
@@ -1833,7 +1834,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       const GLfloat y0 = (GLfloat) y;
       const GLfloat x1 = x + width * ctx->Pixel.ZoomX;
       const GLfloat y1 = y + height * ctx->Pixel.ZoomY;
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
 
       verts[0].x = x0;
       verts[0].y = y0;
@@ -2036,7 +2037,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
       const GLfloat y0 = (GLfloat) y;
       const GLfloat x1 = (GLfloat) (x + width);
       const GLfloat y1 = (GLfloat) (y + height);
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
       GLuint i;
 
       verts[0].x = x0;
@@ -2385,6 +2386,9 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          break;
       }
 
+      /* Set MaxLevel large enough to hold the new level when we allocate it  */
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, dstLevel);
+
       /* Create empty dest image */
       if (target == GL_TEXTURE_1D) {
          _mesa_TexImage1D(target, dstLevel, srcImage->InternalFormat,
@@ -2552,12 +2556,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }
 
-   if (texImage->TexFormat == MESA_FORMAT_NONE)
-      texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
-                                                            internalFormat,
-                                                            format,
-                                                            type);
-
    _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
 
    /*
@@ -2568,16 +2566,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
 			  format, type, &ctx->Pack, buf);
    _mesa_meta_end(ctx);
 
-   /*
-    * Prepare for new texture image size/data
-    */
-#if FEATURE_convolve
-   if (_mesa_is_color_format(internalFormat)) {
-      _mesa_adjust_image_for_convolution(ctx, 2,
-                                         &postConvWidth, &postConvHeight);
-   }
-#endif
-
    if (texImage->Data) {
       ctx->Driver.FreeTexImageData(ctx, texImage);
    }
@@ -2585,6 +2573,9 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    _mesa_init_teximage_fields(ctx, target, texImage,
                               postConvWidth, postConvHeight, 1,
                               border, internalFormat);
+
+   _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                               internalFormat, GL_NONE, GL_NONE);
 
    /*
     * Store texture data (with pixel transfer ops)
@@ -2787,67 +2778,6 @@ _mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
                           GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
 
    _mesa_ColorSubTable(target, start, width, GL_RGBA, GL_FLOAT, buf);
-
-   _mesa_meta_end(ctx);
-
-   free(buf);
-}
-
-
-void
-_mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
-                                   GLenum internalFormat,
-                                   GLint x, GLint y, GLsizei width)
-{
-   GLfloat *buf;
-
-   buf = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
-   if (!buf) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
-      return;
-   }
-
-   /*
-    * Read image from framebuffer (disable pixel transfer ops)
-    */
-   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
-   _mesa_update_state(ctx);
-   ctx->Driver.ReadPixels(ctx, x, y, width, 1,
-                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
-
-   _mesa_ConvolutionFilter1D(target, internalFormat, width,
-                             GL_RGBA, GL_FLOAT, buf);
-
-   _mesa_meta_end(ctx);
-
-   free(buf);
-}
-
-
-void
-_mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
-                                   GLenum internalFormat, GLint x, GLint y,
-                                   GLsizei width, GLsizei height)
-{
-   GLfloat *buf;
-
-   buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   if (!buf) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
-      return;
-   }
-
-   /*
-    * Read image from framebuffer (disable pixel transfer ops)
-    */
-   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
-   _mesa_update_state(ctx);
-
-   ctx->Driver.ReadPixels(ctx, x, y, width, height,
-                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
-
-   _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
-                             GL_RGBA, GL_FLOAT, buf);
 
    _mesa_meta_end(ctx);
 

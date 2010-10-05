@@ -91,7 +91,7 @@ __glXReadReply(Display * dpy, size_t size, void *dest,
 }
 
 NOINLINE void
-__glXReadPixelReply(Display * dpy, __GLXcontext * gc, unsigned max_dim,
+__glXReadPixelReply(Display * dpy, struct glx_context *gc, unsigned max_dim,
                     GLint width, GLint height, GLint depth, GLenum format,
                     GLenum type, void *dest, GLboolean dimensions_in_reply)
 {
@@ -138,7 +138,7 @@ __glXReadPixelReply(Display * dpy, __GLXcontext * gc, unsigned max_dim,
 #define X_GLXSingle 0
 
 NOINLINE FASTCALL GLubyte *
-__glXSetupSingleRequest(__GLXcontext * gc, GLint sop, GLint cmdlen)
+__glXSetupSingleRequest(struct glx_context *gc, GLint sop, GLint cmdlen)
 {
     xGLXSingleReq *req;
     Display *const dpy = gc->currentDpy;
@@ -153,7 +153,7 @@ __glXSetupSingleRequest(__GLXcontext * gc, GLint sop, GLint cmdlen)
 }
 
 NOINLINE FASTCALL GLubyte *
-__glXSetupVendorRequest(__GLXcontext * gc, GLint code, GLint vop,
+__glXSetupVendorRequest(struct glx_context *gc, GLint code, GLint vop,
                         GLint cmdlen)
 {
     xGLXVendorPrivateReq *req;
@@ -185,7 +185,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 static FASTCALL NOINLINE void
 generic_3_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -199,7 +199,7 @@ generic_3_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_4_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -213,7 +213,7 @@ generic_4_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_6_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -227,7 +227,7 @@ generic_6_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_8_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -241,7 +241,7 @@ generic_8_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_12_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -255,7 +255,7 @@ generic_12_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_16_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -269,7 +269,7 @@ generic_16_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_24_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -283,7 +283,7 @@ generic_24_byte(GLint rop, const void *ptr)
 static FASTCALL NOINLINE void
 generic_32_byte(GLint rop, const void *ptr)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -298,7 +298,7 @@ generic_32_byte(GLint rop, const void *ptr)
 void
 __indirect_glNewList(GLuint list, GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -324,7 +324,7 @@ __indirect_glNewList(GLuint list, GLenum mode)
 void
 __indirect_glEndList(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 0;
@@ -347,7 +347,7 @@ __indirect_glEndList(void)
 void
 __indirect_glCallList(GLuint list)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_CallList, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&list), 4);
@@ -361,7 +361,7 @@ __indirect_glCallList(GLuint list)
 void
 __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glCallLists_size(type);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * n));
     if (n < 0) {
@@ -399,7 +399,7 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
 void
 __indirect_glDeleteLists(GLuint list, GLsizei range)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -425,7 +425,7 @@ __indirect_glDeleteLists(GLuint list, GLsizei range)
 GLuint
 __indirect_glGenLists(GLsizei range)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLuint retval = (GLuint) 0;
 #ifndef USE_XCB
@@ -458,7 +458,7 @@ __indirect_glGenLists(GLsizei range)
 void
 __indirect_glListBase(GLuint base)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ListBase, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&base), 4);
@@ -472,7 +472,7 @@ __indirect_glListBase(GLuint base)
 void
 __indirect_glBegin(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Begin, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -488,7 +488,7 @@ __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
                     GLfloat yorig, GLfloat xmove, GLfloat ymove,
                     const GLubyte *bitmap)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (bitmap != NULL) ? __glImageSize(width, height, 1, GL_COLOR_INDEX,
                                          GL_BITMAP, 0) : 0;
@@ -539,7 +539,7 @@ __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
 void
 __indirect_glColor3b(GLbyte red, GLbyte green, GLbyte blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Color3bv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -562,7 +562,7 @@ __indirect_glColor3bv(const GLbyte *v)
 void
 __indirect_glColor3d(GLdouble red, GLdouble green, GLdouble blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_Color3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 8);
@@ -585,7 +585,7 @@ __indirect_glColor3dv(const GLdouble * v)
 void
 __indirect_glColor3f(GLfloat red, GLfloat green, GLfloat blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Color3fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -608,7 +608,7 @@ __indirect_glColor3fv(const GLfloat * v)
 void
 __indirect_glColor3i(GLint red, GLint green, GLint blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Color3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -631,7 +631,7 @@ __indirect_glColor3iv(const GLint * v)
 void
 __indirect_glColor3s(GLshort red, GLshort green, GLshort blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Color3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -654,7 +654,7 @@ __indirect_glColor3sv(const GLshort * v)
 void
 __indirect_glColor3ub(GLubyte red, GLubyte green, GLubyte blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Color3ubv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -677,7 +677,7 @@ __indirect_glColor3ubv(const GLubyte *v)
 void
 __indirect_glColor3ui(GLuint red, GLuint green, GLuint blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Color3uiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -700,7 +700,7 @@ __indirect_glColor3uiv(const GLuint * v)
 void
 __indirect_glColor3us(GLushort red, GLushort green, GLushort blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Color3usv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -723,7 +723,7 @@ __indirect_glColor3usv(const GLushort * v)
 void
 __indirect_glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Color4bv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -748,7 +748,7 @@ void
 __indirect_glColor4d(GLdouble red, GLdouble green, GLdouble blue,
                      GLdouble alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_Color4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 8);
@@ -772,7 +772,7 @@ __indirect_glColor4dv(const GLdouble * v)
 void
 __indirect_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Color4fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -796,7 +796,7 @@ __indirect_glColor4fv(const GLfloat * v)
 void
 __indirect_glColor4i(GLint red, GLint green, GLint blue, GLint alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Color4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -820,7 +820,7 @@ __indirect_glColor4iv(const GLint * v)
 void
 __indirect_glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Color4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -844,7 +844,7 @@ __indirect_glColor4sv(const GLshort * v)
 void
 __indirect_glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Color4ubv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -868,7 +868,7 @@ __indirect_glColor4ubv(const GLubyte *v)
 void
 __indirect_glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Color4uiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -893,7 +893,7 @@ void
 __indirect_glColor4us(GLushort red, GLushort green, GLushort blue,
                       GLushort alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Color4usv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -917,7 +917,7 @@ __indirect_glColor4usv(const GLushort * v)
 void
 __indirect_glEdgeFlag(GLboolean flag)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_EdgeFlagv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&flag), 1);
@@ -931,7 +931,7 @@ __indirect_glEdgeFlag(GLboolean flag)
 void
 __indirect_glEdgeFlagv(const GLboolean * flag)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_EdgeFlagv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (flag), 1);
@@ -945,7 +945,7 @@ __indirect_glEdgeFlagv(const GLboolean * flag)
 void
 __indirect_glEnd(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_End, cmdlen);
     gc->pc += cmdlen;
@@ -958,7 +958,7 @@ __indirect_glEnd(void)
 void
 __indirect_glIndexd(GLdouble c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Indexdv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 8);
@@ -979,7 +979,7 @@ __indirect_glIndexdv(const GLdouble * c)
 void
 __indirect_glIndexf(GLfloat c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 4);
@@ -1000,7 +1000,7 @@ __indirect_glIndexfv(const GLfloat * c)
 void
 __indirect_glIndexi(GLint c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 4);
@@ -1021,7 +1021,7 @@ __indirect_glIndexiv(const GLint * c)
 void
 __indirect_glIndexs(GLshort c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexsv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 2);
@@ -1035,7 +1035,7 @@ __indirect_glIndexs(GLshort c)
 void
 __indirect_glIndexsv(const GLshort * c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexsv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (c), 2);
@@ -1049,7 +1049,7 @@ __indirect_glIndexsv(const GLshort * c)
 void
 __indirect_glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Normal3bv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&nx), 1);
@@ -1072,7 +1072,7 @@ __indirect_glNormal3bv(const GLbyte *v)
 void
 __indirect_glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_Normal3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&nx), 8);
@@ -1095,7 +1095,7 @@ __indirect_glNormal3dv(const GLdouble * v)
 void
 __indirect_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Normal3fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&nx), 4);
@@ -1118,7 +1118,7 @@ __indirect_glNormal3fv(const GLfloat * v)
 void
 __indirect_glNormal3i(GLint nx, GLint ny, GLint nz)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Normal3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&nx), 4);
@@ -1141,7 +1141,7 @@ __indirect_glNormal3iv(const GLint * v)
 void
 __indirect_glNormal3s(GLshort nx, GLshort ny, GLshort nz)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Normal3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&nx), 2);
@@ -1164,7 +1164,7 @@ __indirect_glNormal3sv(const GLshort * v)
 void
 __indirect_glRasterPos2d(GLdouble x, GLdouble y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_RasterPos2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -1186,7 +1186,7 @@ __indirect_glRasterPos2dv(const GLdouble * v)
 void
 __indirect_glRasterPos2f(GLfloat x, GLfloat y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_RasterPos2fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1208,7 +1208,7 @@ __indirect_glRasterPos2fv(const GLfloat * v)
 void
 __indirect_glRasterPos2i(GLint x, GLint y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_RasterPos2iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1230,7 +1230,7 @@ __indirect_glRasterPos2iv(const GLint * v)
 void
 __indirect_glRasterPos2s(GLshort x, GLshort y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_RasterPos2sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -1252,7 +1252,7 @@ __indirect_glRasterPos2sv(const GLshort * v)
 void
 __indirect_glRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_RasterPos3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -1275,7 +1275,7 @@ __indirect_glRasterPos3dv(const GLdouble * v)
 void
 __indirect_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_RasterPos3fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1298,7 +1298,7 @@ __indirect_glRasterPos3fv(const GLfloat * v)
 void
 __indirect_glRasterPos3i(GLint x, GLint y, GLint z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_RasterPos3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1321,7 +1321,7 @@ __indirect_glRasterPos3iv(const GLint * v)
 void
 __indirect_glRasterPos3s(GLshort x, GLshort y, GLshort z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_RasterPos3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -1344,7 +1344,7 @@ __indirect_glRasterPos3sv(const GLshort * v)
 void
 __indirect_glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_RasterPos4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -1368,7 +1368,7 @@ __indirect_glRasterPos4dv(const GLdouble * v)
 void
 __indirect_glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_RasterPos4fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1392,7 +1392,7 @@ __indirect_glRasterPos4fv(const GLfloat * v)
 void
 __indirect_glRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_RasterPos4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1416,7 +1416,7 @@ __indirect_glRasterPos4iv(const GLint * v)
 void
 __indirect_glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_RasterPos4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -1440,7 +1440,7 @@ __indirect_glRasterPos4sv(const GLshort * v)
 void
 __indirect_glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_Rectdv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x1), 8);
@@ -1457,7 +1457,7 @@ __indirect_glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
 void
 __indirect_glRectdv(const GLdouble * v1, const GLdouble * v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_Rectdv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v1), 16);
@@ -1472,7 +1472,7 @@ __indirect_glRectdv(const GLdouble * v1, const GLdouble * v2)
 void
 __indirect_glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Rectfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x1), 4);
@@ -1489,7 +1489,7 @@ __indirect_glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 void
 __indirect_glRectfv(const GLfloat * v1, const GLfloat * v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Rectfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v1), 8);
@@ -1504,7 +1504,7 @@ __indirect_glRectfv(const GLfloat * v1, const GLfloat * v2)
 void
 __indirect_glRecti(GLint x1, GLint y1, GLint x2, GLint y2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Rectiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x1), 4);
@@ -1521,7 +1521,7 @@ __indirect_glRecti(GLint x1, GLint y1, GLint x2, GLint y2)
 void
 __indirect_glRectiv(const GLint * v1, const GLint * v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Rectiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v1), 8);
@@ -1536,7 +1536,7 @@ __indirect_glRectiv(const GLint * v1, const GLint * v2)
 void
 __indirect_glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Rectsv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x1), 2);
@@ -1553,7 +1553,7 @@ __indirect_glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
 void
 __indirect_glRectsv(const GLshort * v1, const GLshort * v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Rectsv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v1), 4);
@@ -1568,7 +1568,7 @@ __indirect_glRectsv(const GLshort * v1, const GLshort * v2)
 void
 __indirect_glTexCoord1d(GLdouble s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_TexCoord1dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -1589,7 +1589,7 @@ __indirect_glTexCoord1dv(const GLdouble * v)
 void
 __indirect_glTexCoord1f(GLfloat s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_TexCoord1fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1610,7 +1610,7 @@ __indirect_glTexCoord1fv(const GLfloat * v)
 void
 __indirect_glTexCoord1i(GLint s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_TexCoord1iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1631,7 +1631,7 @@ __indirect_glTexCoord1iv(const GLint * v)
 void
 __indirect_glTexCoord1s(GLshort s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_TexCoord1sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 2);
@@ -1645,7 +1645,7 @@ __indirect_glTexCoord1s(GLshort s)
 void
 __indirect_glTexCoord1sv(const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_TexCoord1sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 2);
@@ -1659,7 +1659,7 @@ __indirect_glTexCoord1sv(const GLshort * v)
 void
 __indirect_glTexCoord2d(GLdouble s, GLdouble t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_TexCoord2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -1681,7 +1681,7 @@ __indirect_glTexCoord2dv(const GLdouble * v)
 void
 __indirect_glTexCoord2f(GLfloat s, GLfloat t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_TexCoord2fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1703,7 +1703,7 @@ __indirect_glTexCoord2fv(const GLfloat * v)
 void
 __indirect_glTexCoord2i(GLint s, GLint t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_TexCoord2iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1725,7 +1725,7 @@ __indirect_glTexCoord2iv(const GLint * v)
 void
 __indirect_glTexCoord2s(GLshort s, GLshort t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_TexCoord2sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 2);
@@ -1747,7 +1747,7 @@ __indirect_glTexCoord2sv(const GLshort * v)
 void
 __indirect_glTexCoord3d(GLdouble s, GLdouble t, GLdouble r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_TexCoord3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -1770,7 +1770,7 @@ __indirect_glTexCoord3dv(const GLdouble * v)
 void
 __indirect_glTexCoord3f(GLfloat s, GLfloat t, GLfloat r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexCoord3fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1793,7 +1793,7 @@ __indirect_glTexCoord3fv(const GLfloat * v)
 void
 __indirect_glTexCoord3i(GLint s, GLint t, GLint r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexCoord3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1816,7 +1816,7 @@ __indirect_glTexCoord3iv(const GLint * v)
 void
 __indirect_glTexCoord3s(GLshort s, GLshort t, GLshort r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_TexCoord3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 2);
@@ -1839,7 +1839,7 @@ __indirect_glTexCoord3sv(const GLshort * v)
 void
 __indirect_glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_TexCoord4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -1863,7 +1863,7 @@ __indirect_glTexCoord4dv(const GLdouble * v)
 void
 __indirect_glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_TexCoord4fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1887,7 +1887,7 @@ __indirect_glTexCoord4fv(const GLfloat * v)
 void
 __indirect_glTexCoord4i(GLint s, GLint t, GLint r, GLint q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_TexCoord4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -1911,7 +1911,7 @@ __indirect_glTexCoord4iv(const GLint * v)
 void
 __indirect_glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_TexCoord4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 2);
@@ -1935,7 +1935,7 @@ __indirect_glTexCoord4sv(const GLshort * v)
 void
 __indirect_glVertex2d(GLdouble x, GLdouble y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Vertex2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -1957,7 +1957,7 @@ __indirect_glVertex2dv(const GLdouble * v)
 void
 __indirect_glVertex2f(GLfloat x, GLfloat y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Vertex2fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -1979,7 +1979,7 @@ __indirect_glVertex2fv(const GLfloat * v)
 void
 __indirect_glVertex2i(GLint x, GLint y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Vertex2iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2001,7 +2001,7 @@ __indirect_glVertex2iv(const GLint * v)
 void
 __indirect_glVertex2s(GLshort x, GLshort y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Vertex2sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -2023,7 +2023,7 @@ __indirect_glVertex2sv(const GLshort * v)
 void
 __indirect_glVertex3d(GLdouble x, GLdouble y, GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_Vertex3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -2046,7 +2046,7 @@ __indirect_glVertex3dv(const GLdouble * v)
 void
 __indirect_glVertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Vertex3fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2069,7 +2069,7 @@ __indirect_glVertex3fv(const GLfloat * v)
 void
 __indirect_glVertex3i(GLint x, GLint y, GLint z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Vertex3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2092,7 +2092,7 @@ __indirect_glVertex3iv(const GLint * v)
 void
 __indirect_glVertex3s(GLshort x, GLshort y, GLshort z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Vertex3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -2115,7 +2115,7 @@ __indirect_glVertex3sv(const GLshort * v)
 void
 __indirect_glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_Vertex4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -2139,7 +2139,7 @@ __indirect_glVertex4dv(const GLdouble * v)
 void
 __indirect_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Vertex4fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2163,7 +2163,7 @@ __indirect_glVertex4fv(const GLfloat * v)
 void
 __indirect_glVertex4i(GLint x, GLint y, GLint z, GLint w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Vertex4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2187,7 +2187,7 @@ __indirect_glVertex4iv(const GLint * v)
 void
 __indirect_glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Vertex4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 2);
@@ -2211,7 +2211,7 @@ __indirect_glVertex4sv(const GLshort * v)
 void
 __indirect_glClipPlane(GLenum plane, const GLdouble * equation)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_ClipPlane, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (equation), 32);
@@ -2226,7 +2226,7 @@ __indirect_glClipPlane(GLenum plane, const GLdouble * equation)
 void
 __indirect_glColorMaterial(GLenum face, GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_ColorMaterial, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
@@ -2241,7 +2241,7 @@ __indirect_glColorMaterial(GLenum face, GLenum mode)
 void
 __indirect_glCullFace(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_CullFace, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -2255,7 +2255,7 @@ __indirect_glCullFace(GLenum mode)
 void
 __indirect_glFogf(GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Fogf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -2270,7 +2270,7 @@ __indirect_glFogf(GLenum pname, GLfloat param)
 void
 __indirect_glFogfv(GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glFogfv_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Fogfv, cmdlen);
@@ -2286,7 +2286,7 @@ __indirect_glFogfv(GLenum pname, const GLfloat * params)
 void
 __indirect_glFogi(GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Fogi, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -2301,7 +2301,7 @@ __indirect_glFogi(GLenum pname, GLint param)
 void
 __indirect_glFogiv(GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glFogiv_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Fogiv, cmdlen);
@@ -2317,7 +2317,7 @@ __indirect_glFogiv(GLenum pname, const GLint * params)
 void
 __indirect_glFrontFace(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_FrontFace, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -2331,7 +2331,7 @@ __indirect_glFrontFace(GLenum mode)
 void
 __indirect_glHint(GLenum target, GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Hint, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -2346,7 +2346,7 @@ __indirect_glHint(GLenum target, GLenum mode)
 void
 __indirect_glLightf(GLenum light, GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Lightf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&light), 4);
@@ -2362,7 +2362,7 @@ __indirect_glLightf(GLenum light, GLenum pname, GLfloat param)
 void
 __indirect_glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Lightfv, cmdlen);
@@ -2379,7 +2379,7 @@ __indirect_glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 void
 __indirect_glLighti(GLenum light, GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Lighti, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&light), 4);
@@ -2395,7 +2395,7 @@ __indirect_glLighti(GLenum light, GLenum pname, GLint param)
 void
 __indirect_glLightiv(GLenum light, GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightiv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Lightiv, cmdlen);
@@ -2412,7 +2412,7 @@ __indirect_glLightiv(GLenum light, GLenum pname, const GLint * params)
 void
 __indirect_glLightModelf(GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_LightModelf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -2427,7 +2427,7 @@ __indirect_glLightModelf(GLenum pname, GLfloat param)
 void
 __indirect_glLightModelfv(GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightModelfv_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_LightModelfv, cmdlen);
@@ -2443,7 +2443,7 @@ __indirect_glLightModelfv(GLenum pname, const GLfloat * params)
 void
 __indirect_glLightModeli(GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_LightModeli, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -2458,7 +2458,7 @@ __indirect_glLightModeli(GLenum pname, GLint param)
 void
 __indirect_glLightModeliv(GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightModeliv_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_LightModeliv, cmdlen);
@@ -2474,7 +2474,7 @@ __indirect_glLightModeliv(GLenum pname, const GLint * params)
 void
 __indirect_glLineStipple(GLint factor, GLushort pattern)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_LineStipple, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&factor), 4);
@@ -2489,7 +2489,7 @@ __indirect_glLineStipple(GLint factor, GLushort pattern)
 void
 __indirect_glLineWidth(GLfloat width)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_LineWidth, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&width), 4);
@@ -2503,7 +2503,7 @@ __indirect_glLineWidth(GLfloat width)
 void
 __indirect_glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Materialf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
@@ -2519,7 +2519,7 @@ __indirect_glMaterialf(GLenum face, GLenum pname, GLfloat param)
 void
 __indirect_glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glMaterialfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Materialfv, cmdlen);
@@ -2536,7 +2536,7 @@ __indirect_glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 void
 __indirect_glMateriali(GLenum face, GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Materiali, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
@@ -2552,7 +2552,7 @@ __indirect_glMateriali(GLenum face, GLenum pname, GLint param)
 void
 __indirect_glMaterialiv(GLenum face, GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glMaterialiv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_Materialiv, cmdlen);
@@ -2569,7 +2569,7 @@ __indirect_glMaterialiv(GLenum face, GLenum pname, const GLint * params)
 void
 __indirect_glPointSize(GLfloat size)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_PointSize, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&size), 4);
@@ -2583,7 +2583,7 @@ __indirect_glPointSize(GLfloat size)
 void
 __indirect_glPolygonMode(GLenum face, GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PolygonMode, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
@@ -2598,7 +2598,7 @@ __indirect_glPolygonMode(GLenum face, GLenum mode)
 void
 __indirect_glPolygonStipple(const GLubyte *mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (mask != NULL) ? __glImageSize(32, 32, 1, GL_COLOR_INDEX, GL_BITMAP,
                                        0) : 0;
@@ -2621,7 +2621,7 @@ __indirect_glPolygonStipple(const GLubyte *mask)
 void
 __indirect_glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Scissor, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -2638,7 +2638,7 @@ __indirect_glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 void
 __indirect_glShadeModel(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ShadeModel, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -2652,7 +2652,7 @@ __indirect_glShadeModel(GLenum mode)
 void
 __indirect_glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexParameterf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -2669,7 +2669,7 @@ void
 __indirect_glTexParameterfv(GLenum target, GLenum pname,
                             const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexParameterfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexParameterfv, cmdlen);
@@ -2686,7 +2686,7 @@ __indirect_glTexParameterfv(GLenum target, GLenum pname,
 void
 __indirect_glTexParameteri(GLenum target, GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexParameteri, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -2702,7 +2702,7 @@ __indirect_glTexParameteri(GLenum target, GLenum pname, GLint param)
 void
 __indirect_glTexParameteriv(GLenum target, GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexParameteriv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexParameteriv, cmdlen);
@@ -2721,7 +2721,7 @@ __glx_TexImage_1D2D(unsigned opcode, unsigned dim, GLenum target, GLint level,
                     GLint border, GLenum format, GLenum type,
                     const GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         __glImageSize(width, height, 1, format, type, target);
     const GLuint cmdlen = 56 + __GLX_PAD(compsize);
@@ -2795,7 +2795,7 @@ __indirect_glTexImage2D(GLenum target, GLint level, GLint internalformat,
 void
 __indirect_glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexEnvf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -2811,7 +2811,7 @@ __indirect_glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 void
 __indirect_glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexEnvfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexEnvfv, cmdlen);
@@ -2828,7 +2828,7 @@ __indirect_glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 void
 __indirect_glTexEnvi(GLenum target, GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexEnvi, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -2844,7 +2844,7 @@ __indirect_glTexEnvi(GLenum target, GLenum pname, GLint param)
 void
 __indirect_glTexEnviv(GLenum target, GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexEnviv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexEnviv, cmdlen);
@@ -2861,7 +2861,7 @@ __indirect_glTexEnviv(GLenum target, GLenum pname, const GLint * params)
 void
 __indirect_glTexGend(GLenum coord, GLenum pname, GLdouble param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_TexGend, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&param), 8);
@@ -2877,7 +2877,7 @@ __indirect_glTexGend(GLenum coord, GLenum pname, GLdouble param)
 void
 __indirect_glTexGendv(GLenum coord, GLenum pname, const GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGendv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 8));
     emit_header(gc->pc, X_GLrop_TexGendv, cmdlen);
@@ -2894,7 +2894,7 @@ __indirect_glTexGendv(GLenum coord, GLenum pname, const GLdouble * params)
 void
 __indirect_glTexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexGenf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
@@ -2910,7 +2910,7 @@ __indirect_glTexGenf(GLenum coord, GLenum pname, GLfloat param)
 void
 __indirect_glTexGenfv(GLenum coord, GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGenfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexGenfv, cmdlen);
@@ -2927,7 +2927,7 @@ __indirect_glTexGenfv(GLenum coord, GLenum pname, const GLfloat * params)
 void
 __indirect_glTexGeni(GLenum coord, GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_TexGeni, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
@@ -2943,7 +2943,7 @@ __indirect_glTexGeni(GLenum coord, GLenum pname, GLint param)
 void
 __indirect_glTexGeniv(GLenum coord, GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGeniv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_TexGeniv, cmdlen);
@@ -2960,7 +2960,7 @@ __indirect_glTexGeniv(GLenum coord, GLenum pname, const GLint * params)
 void
 __indirect_glInitNames(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_InitNames, cmdlen);
     gc->pc += cmdlen;
@@ -2973,7 +2973,7 @@ __indirect_glInitNames(void)
 void
 __indirect_glLoadName(GLuint name)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_LoadName, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&name), 4);
@@ -2987,7 +2987,7 @@ __indirect_glLoadName(GLuint name)
 void
 __indirect_glPassThrough(GLfloat token)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_PassThrough, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&token), 4);
@@ -3001,7 +3001,7 @@ __indirect_glPassThrough(GLfloat token)
 void
 __indirect_glPopName(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_PopName, cmdlen);
     gc->pc += cmdlen;
@@ -3014,7 +3014,7 @@ __indirect_glPopName(void)
 void
 __indirect_glPushName(GLuint name)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_PushName, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&name), 4);
@@ -3028,7 +3028,7 @@ __indirect_glPushName(GLuint name)
 void
 __indirect_glDrawBuffer(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_DrawBuffer, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -3042,7 +3042,7 @@ __indirect_glDrawBuffer(GLenum mode)
 void
 __indirect_glClear(GLbitfield mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Clear, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mask), 4);
@@ -3057,7 +3057,7 @@ void
 __indirect_glClearAccum(GLfloat red, GLfloat green, GLfloat blue,
                         GLfloat alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_ClearAccum, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -3074,7 +3074,7 @@ __indirect_glClearAccum(GLfloat red, GLfloat green, GLfloat blue,
 void
 __indirect_glClearIndex(GLfloat c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ClearIndex, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 4);
@@ -3089,7 +3089,7 @@ void
 __indirect_glClearColor(GLclampf red, GLclampf green, GLclampf blue,
                         GLclampf alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_ClearColor, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -3106,7 +3106,7 @@ __indirect_glClearColor(GLclampf red, GLclampf green, GLclampf blue,
 void
 __indirect_glClearStencil(GLint s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ClearStencil, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 4);
@@ -3120,7 +3120,7 @@ __indirect_glClearStencil(GLint s)
 void
 __indirect_glClearDepth(GLclampd depth)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_ClearDepth, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&depth), 8);
@@ -3134,7 +3134,7 @@ __indirect_glClearDepth(GLclampd depth)
 void
 __indirect_glStencilMask(GLuint mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_StencilMask, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mask), 4);
@@ -3149,7 +3149,7 @@ void
 __indirect_glColorMask(GLboolean red, GLboolean green, GLboolean blue,
                        GLboolean alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ColorMask, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -3166,7 +3166,7 @@ __indirect_glColorMask(GLboolean red, GLboolean green, GLboolean blue,
 void
 __indirect_glDepthMask(GLboolean flag)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_DepthMask, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&flag), 1);
@@ -3180,7 +3180,7 @@ __indirect_glDepthMask(GLboolean flag)
 void
 __indirect_glIndexMask(GLuint mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_IndexMask, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mask), 4);
@@ -3194,7 +3194,7 @@ __indirect_glIndexMask(GLuint mask)
 void
 __indirect_glAccum(GLenum op, GLfloat value)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_Accum, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&op), 4);
@@ -3209,7 +3209,7 @@ __indirect_glAccum(GLenum op, GLfloat value)
 void
 __indirect_glPopAttrib(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_PopAttrib, cmdlen);
     gc->pc += cmdlen;
@@ -3222,7 +3222,7 @@ __indirect_glPopAttrib(void)
 void
 __indirect_glPushAttrib(GLbitfield mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_PushAttrib, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mask), 4);
@@ -3236,7 +3236,7 @@ __indirect_glPushAttrib(GLbitfield mask)
 void
 __indirect_glMapGrid1d(GLint un, GLdouble u1, GLdouble u2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MapGrid1d, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u1), 8);
@@ -3252,7 +3252,7 @@ __indirect_glMapGrid1d(GLint un, GLdouble u1, GLdouble u2)
 void
 __indirect_glMapGrid1f(GLint un, GLfloat u1, GLfloat u2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MapGrid1f, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&un), 4);
@@ -3269,7 +3269,7 @@ void
 __indirect_glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn,
                        GLdouble v1, GLdouble v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_MapGrid2d, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u1), 8);
@@ -3289,7 +3289,7 @@ void
 __indirect_glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1,
                        GLfloat v2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_MapGrid2f, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&un), 4);
@@ -3308,7 +3308,7 @@ __indirect_glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1,
 void
 __indirect_glEvalCoord1d(GLdouble u)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_EvalCoord1dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u), 8);
@@ -3329,7 +3329,7 @@ __indirect_glEvalCoord1dv(const GLdouble * u)
 void
 __indirect_glEvalCoord1f(GLfloat u)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_EvalCoord1fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u), 4);
@@ -3350,7 +3350,7 @@ __indirect_glEvalCoord1fv(const GLfloat * u)
 void
 __indirect_glEvalCoord2d(GLdouble u, GLdouble v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_EvalCoord2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u), 8);
@@ -3372,7 +3372,7 @@ __indirect_glEvalCoord2dv(const GLdouble * u)
 void
 __indirect_glEvalCoord2f(GLfloat u, GLfloat v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_EvalCoord2fv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&u), 4);
@@ -3394,7 +3394,7 @@ __indirect_glEvalCoord2fv(const GLfloat * u)
 void
 __indirect_glEvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_EvalMesh1, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -3410,7 +3410,7 @@ __indirect_glEvalMesh1(GLenum mode, GLint i1, GLint i2)
 void
 __indirect_glEvalPoint1(GLint i)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_EvalPoint1, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&i), 4);
@@ -3424,7 +3424,7 @@ __indirect_glEvalPoint1(GLint i)
 void
 __indirect_glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_EvalMesh2, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -3442,7 +3442,7 @@ __indirect_glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 void
 __indirect_glEvalPoint2(GLint i, GLint j)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_EvalPoint2, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&i), 4);
@@ -3457,7 +3457,7 @@ __indirect_glEvalPoint2(GLint i, GLint j)
 void
 __indirect_glAlphaFunc(GLenum func, GLclampf ref)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_AlphaFunc, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&func), 4);
@@ -3472,7 +3472,7 @@ __indirect_glAlphaFunc(GLenum func, GLclampf ref)
 void
 __indirect_glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BlendFunc, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&sfactor), 4);
@@ -3487,7 +3487,7 @@ __indirect_glBlendFunc(GLenum sfactor, GLenum dfactor)
 void
 __indirect_glLogicOp(GLenum opcode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_LogicOp, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&opcode), 4);
@@ -3501,7 +3501,7 @@ __indirect_glLogicOp(GLenum opcode)
 void
 __indirect_glStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_StencilFunc, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&func), 4);
@@ -3517,7 +3517,7 @@ __indirect_glStencilFunc(GLenum func, GLint ref, GLuint mask)
 void
 __indirect_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_StencilOp, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&fail), 4);
@@ -3533,7 +3533,7 @@ __indirect_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 void
 __indirect_glDepthFunc(GLenum func)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_DepthFunc, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&func), 4);
@@ -3547,7 +3547,7 @@ __indirect_glDepthFunc(GLenum func)
 void
 __indirect_glPixelZoom(GLfloat xfactor, GLfloat yfactor)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PixelZoom, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&xfactor), 4);
@@ -3562,7 +3562,7 @@ __indirect_glPixelZoom(GLfloat xfactor, GLfloat yfactor)
 void
 __indirect_glPixelTransferf(GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PixelTransferf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -3577,7 +3577,7 @@ __indirect_glPixelTransferf(GLenum pname, GLfloat param)
 void
 __indirect_glPixelTransferi(GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PixelTransferi, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -3592,7 +3592,7 @@ __indirect_glPixelTransferi(GLenum pname, GLint param)
 void
 __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 4));
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -3629,7 +3629,7 @@ __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
 void
 __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 4));
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -3666,7 +3666,7 @@ __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
 void
 __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 2));
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -3703,7 +3703,7 @@ __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
 void
 __indirect_glReadBuffer(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ReadBuffer, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -3718,7 +3718,7 @@ void
 __indirect_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                         GLenum type)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_CopyPixels, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -3737,7 +3737,7 @@ void
 __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                         GLenum format, GLenum type, GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -3786,7 +3786,7 @@ void
 __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
                         GLenum type, const GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, 1, format, type,
                                          0) : 0;
@@ -3832,7 +3832,7 @@ __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
 void
 __indirect_glGetClipPlane(GLenum plane, GLdouble * equation)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -3867,7 +3867,7 @@ __indirect_glGetClipPlane(GLenum plane, GLdouble * equation)
 void
 __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -3907,7 +3907,7 @@ __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat * params)
 void
 __indirect_glGetLightiv(GLenum light, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -3947,7 +3947,7 @@ __indirect_glGetLightiv(GLenum light, GLenum pname, GLint * params)
 void
 __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -3985,7 +3985,7 @@ __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble * v)
 void
 __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4023,7 +4023,7 @@ __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat * v)
 void
 __indirect_glGetMapiv(GLenum target, GLenum query, GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4061,7 +4061,7 @@ __indirect_glGetMapiv(GLenum target, GLenum query, GLint * v)
 void
 __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4101,7 +4101,7 @@ __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat * params)
 void
 __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4141,7 +4141,7 @@ __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint * params)
 void
 __indirect_glGetPixelMapfv(GLenum map, GLfloat * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -4179,7 +4179,7 @@ __indirect_glGetPixelMapfv(GLenum map, GLfloat * values)
 void
 __indirect_glGetPixelMapuiv(GLenum map, GLuint * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -4218,7 +4218,7 @@ __indirect_glGetPixelMapuiv(GLenum map, GLuint * values)
 void
 __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -4257,7 +4257,7 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
 void
 __indirect_glGetPolygonStipple(GLubyte *mask)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -4294,7 +4294,7 @@ __indirect_glGetPolygonStipple(GLubyte *mask)
 void
 __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4334,7 +4334,7 @@ __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
 void
 __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4374,7 +4374,7 @@ __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint * params)
 void
 __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4414,7 +4414,7 @@ __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble * params)
 void
 __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4454,7 +4454,7 @@ __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat * params)
 void
 __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4495,7 +4495,7 @@ void
 __indirect_glGetTexImage(GLenum target, GLint level, GLenum format,
                          GLenum type, GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -4542,7 +4542,7 @@ __indirect_glGetTexImage(GLenum target, GLint level, GLenum format,
 void
 __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4583,7 +4583,7 @@ __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat * params)
 void
 __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -4625,7 +4625,7 @@ void
 __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname,
                                     GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 12;
@@ -4668,7 +4668,7 @@ void
 __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname,
                                     GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 12;
@@ -4710,7 +4710,7 @@ __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname,
 GLboolean
 __indirect_glIsList(GLuint list)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
 #ifndef USE_XCB
@@ -4742,7 +4742,7 @@ __indirect_glIsList(GLuint list)
 void
 __indirect_glDepthRange(GLclampd zNear, GLclampd zFar)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_DepthRange, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&zNear), 8);
@@ -4758,7 +4758,7 @@ void
 __indirect_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
                      GLdouble top, GLdouble zNear, GLdouble zFar)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 52;
     emit_header(gc->pc, X_GLrop_Frustum, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&left), 8);
@@ -4777,7 +4777,7 @@ __indirect_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 void
 __indirect_glLoadIdentity(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_LoadIdentity, cmdlen);
     gc->pc += cmdlen;
@@ -4790,7 +4790,7 @@ __indirect_glLoadIdentity(void)
 void
 __indirect_glLoadMatrixf(const GLfloat * m)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 68;
     emit_header(gc->pc, X_GLrop_LoadMatrixf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (m), 64);
@@ -4804,7 +4804,7 @@ __indirect_glLoadMatrixf(const GLfloat * m)
 void
 __indirect_glLoadMatrixd(const GLdouble * m)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 132;
     emit_header(gc->pc, X_GLrop_LoadMatrixd, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (m), 128);
@@ -4818,7 +4818,7 @@ __indirect_glLoadMatrixd(const GLdouble * m)
 void
 __indirect_glMatrixMode(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_MatrixMode, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -4832,7 +4832,7 @@ __indirect_glMatrixMode(GLenum mode)
 void
 __indirect_glMultMatrixf(const GLfloat * m)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 68;
     emit_header(gc->pc, X_GLrop_MultMatrixf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (m), 64);
@@ -4846,7 +4846,7 @@ __indirect_glMultMatrixf(const GLfloat * m)
 void
 __indirect_glMultMatrixd(const GLdouble * m)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 132;
     emit_header(gc->pc, X_GLrop_MultMatrixd, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (m), 128);
@@ -4861,7 +4861,7 @@ void
 __indirect_glOrtho(GLdouble left, GLdouble right, GLdouble bottom,
                    GLdouble top, GLdouble zNear, GLdouble zFar)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 52;
     emit_header(gc->pc, X_GLrop_Ortho, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&left), 8);
@@ -4880,7 +4880,7 @@ __indirect_glOrtho(GLdouble left, GLdouble right, GLdouble bottom,
 void
 __indirect_glPopMatrix(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_PopMatrix, cmdlen);
     gc->pc += cmdlen;
@@ -4893,7 +4893,7 @@ __indirect_glPopMatrix(void)
 void
 __indirect_glPushMatrix(void)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 4;
     emit_header(gc->pc, X_GLrop_PushMatrix, cmdlen);
     gc->pc += cmdlen;
@@ -4906,7 +4906,7 @@ __indirect_glPushMatrix(void)
 void
 __indirect_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_Rotated, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&angle), 8);
@@ -4923,7 +4923,7 @@ __indirect_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
 void
 __indirect_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Rotatef, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&angle), 4);
@@ -4940,7 +4940,7 @@ __indirect_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 void
 __indirect_glScaled(GLdouble x, GLdouble y, GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_Scaled, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -4956,7 +4956,7 @@ __indirect_glScaled(GLdouble x, GLdouble y, GLdouble z)
 void
 __indirect_glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Scalef, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -4972,7 +4972,7 @@ __indirect_glScalef(GLfloat x, GLfloat y, GLfloat z)
 void
 __indirect_glTranslated(GLdouble x, GLdouble y, GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_Translated, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 8);
@@ -4988,7 +4988,7 @@ __indirect_glTranslated(GLdouble x, GLdouble y, GLdouble z)
 void
 __indirect_glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Translatef, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -5004,7 +5004,7 @@ __indirect_glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 void
 __indirect_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Viewport, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -5021,7 +5021,7 @@ __indirect_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 void
 __indirect_glBindTexture(GLenum target, GLuint texture)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BindTexture, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5036,7 +5036,7 @@ __indirect_glBindTexture(GLenum target, GLuint texture)
 void
 __indirect_glIndexub(GLubyte c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexubv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&c), 1);
@@ -5050,7 +5050,7 @@ __indirect_glIndexub(GLubyte c)
 void
 __indirect_glIndexubv(const GLubyte *c)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_Indexubv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (c), 1);
@@ -5064,7 +5064,7 @@ __indirect_glIndexubv(const GLubyte *c)
 void
 __indirect_glPolygonOffset(GLfloat factor, GLfloat units)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PolygonOffset, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&factor), 4);
@@ -5080,7 +5080,7 @@ void
 __indirect_glCopyTexImage1D(GLenum target, GLint level, GLenum internalformat,
                             GLint x, GLint y, GLsizei width, GLint border)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_CopyTexImage1D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5102,7 +5102,7 @@ __indirect_glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat,
                             GLint x, GLint y, GLsizei width, GLsizei height,
                             GLint border)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_CopyTexImage2D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5124,7 +5124,7 @@ void
 __indirect_glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset,
                                GLint x, GLint y, GLsizei width)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_CopyTexSubImage1D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5145,7 +5145,7 @@ __indirect_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset,
                                GLint yoffset, GLint x, GLint y, GLsizei width,
                                GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 36;
     emit_header(gc->pc, X_GLrop_CopyTexSubImage2D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5166,7 +5166,7 @@ __indirect_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset,
 void
 __indirect_glDeleteTextures(GLsizei n, const GLuint * textures)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
@@ -5196,15 +5196,15 @@ __indirect_glDeleteTextures(GLsizei n, const GLuint * textures)
 void
 glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_DeleteTextures(GET_DISPATCH(), (n, textures));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
         if (n < 0) {
@@ -5228,7 +5228,7 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 void
 __indirect_glGenTextures(GLsizei n, GLuint * textures)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -5267,15 +5267,15 @@ __indirect_glGenTextures(GLsizei n, GLuint * textures)
 void
 glGenTexturesEXT(GLsizei n, GLuint * textures)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GenTextures(GET_DISPATCH(), (n, textures));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4;
         if (n < 0) {
@@ -5299,7 +5299,7 @@ glGenTexturesEXT(GLsizei n, GLuint * textures)
 GLboolean
 __indirect_glIsTexture(GLuint texture)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
 #ifndef USE_XCB
@@ -5332,15 +5332,15 @@ __indirect_glIsTexture(GLuint texture)
 GLboolean
 glIsTextureEXT(GLuint texture)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         return CALL_IsTexture(GET_DISPATCH(), (texture));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         GLboolean retval = (GLboolean) 0;
         const GLuint cmdlen = 4;
@@ -5362,7 +5362,7 @@ void
 __indirect_glPrioritizeTextures(GLsizei n, const GLuint * textures,
                                 const GLclampf * priorities)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8 + __GLX_PAD((n * 4)) + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -5387,7 +5387,7 @@ __glx_TexSubImage_1D2D(unsigned opcode, unsigned dim, GLenum target,
                        GLsizei width, GLsizei height, GLenum format,
                        GLenum type, const GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, 1, format, type,
                                          target) : 0;
@@ -5464,7 +5464,7 @@ void
 __indirect_glBlendColor(GLclampf red, GLclampf green, GLclampf blue,
                         GLclampf alpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_BlendColor, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -5481,7 +5481,7 @@ __indirect_glBlendColor(GLclampf red, GLclampf green, GLclampf blue,
 void
 __indirect_glBlendEquation(GLenum mode)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_BlendEquation, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&mode), 4);
@@ -5496,7 +5496,7 @@ void
 __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width,
                         GLenum format, GLenum type, const GLvoid * table)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (table != NULL) ? __glImageSize(width, 1, 1, format, type,
                                         target) : 0;
@@ -5546,7 +5546,7 @@ void
 __indirect_glColorTableParameterfv(GLenum target, GLenum pname,
                                    const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glColorTableParameterfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_ColorTableParameterfv, cmdlen);
@@ -5564,7 +5564,7 @@ void
 __indirect_glColorTableParameteriv(GLenum target, GLenum pname,
                                    const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glColorTableParameteriv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_ColorTableParameteriv, cmdlen);
@@ -5582,7 +5582,7 @@ void
 __indirect_glCopyColorTable(GLenum target, GLenum internalformat, GLint x,
                             GLint y, GLsizei width)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_CopyColorTable, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5601,7 +5601,7 @@ void
 __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type,
                            GLvoid * table)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -5648,15 +5648,15 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type,
 void
 glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetColorTable(GET_DISPATCH(), (target, format, type, table));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 16;
@@ -5683,7 +5683,7 @@ void
 __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname,
                                       GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -5724,16 +5724,16 @@ __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname,
 void
 glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetColorTableParameterfv(GET_DISPATCH(),
                                       (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -5756,7 +5756,7 @@ void
 __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname,
                                       GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -5797,16 +5797,16 @@ __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname,
 void
 glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetColorTableParameteriv(GET_DISPATCH(),
                                       (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -5829,7 +5829,7 @@ void
 __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count,
                            GLenum format, GLenum type, const GLvoid * data)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (data != NULL) ? __glImageSize(count, 1, 1, format, type, target) : 0;
     const GLuint cmdlen = 44 + __GLX_PAD(compsize);
@@ -5877,7 +5877,7 @@ void
 __indirect_glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y,
                                GLsizei width)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_CopyColorSubTable, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5897,7 +5897,7 @@ __glx_ConvolutionFilter_1D2D(unsigned opcode, unsigned dim, GLenum target,
                              GLsizei height, GLenum format, GLenum type,
                              const GLvoid * image)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (image != NULL) ? __glImageSize(width, height, 1, format, type,
                                         target) : 0;
@@ -5971,7 +5971,7 @@ void
 __indirect_glConvolutionParameterf(GLenum target, GLenum pname,
                                    GLfloat params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_ConvolutionParameterf, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -5988,7 +5988,7 @@ void
 __indirect_glConvolutionParameterfv(GLenum target, GLenum pname,
                                     const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glConvolutionParameterfv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_ConvolutionParameterfv, cmdlen);
@@ -6005,7 +6005,7 @@ __indirect_glConvolutionParameterfv(GLenum target, GLenum pname,
 void
 __indirect_glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_ConvolutionParameteri, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6022,7 +6022,7 @@ void
 __indirect_glConvolutionParameteriv(GLenum target, GLenum pname,
                                     const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glConvolutionParameteriv_size(pname);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_ConvolutionParameteriv, cmdlen);
@@ -6040,7 +6040,7 @@ void
 __indirect_glCopyConvolutionFilter1D(GLenum target, GLenum internalformat,
                                      GLint x, GLint y, GLsizei width)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_CopyConvolutionFilter1D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6060,7 +6060,7 @@ __indirect_glCopyConvolutionFilter2D(GLenum target, GLenum internalformat,
                                      GLint x, GLint y, GLsizei width,
                                      GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_CopyConvolutionFilter2D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6080,7 +6080,7 @@ void
 __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                                   GLvoid * image)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -6123,16 +6123,16 @@ void
 gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
                      GLvoid * image)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetConvolutionFilter(GET_DISPATCH(),
                                   (target, format, type, image));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 16;
@@ -6160,7 +6160,7 @@ void
 __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname,
                                        GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6201,16 +6201,16 @@ __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname,
 void
 gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetConvolutionParameterfv(GET_DISPATCH(),
                                        (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6233,7 +6233,7 @@ void
 __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname,
                                        GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6274,16 +6274,16 @@ __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname,
 void
 gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetConvolutionParameteriv(GET_DISPATCH(),
                                        (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6306,7 +6306,7 @@ void
 __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format,
                           GLenum type, GLvoid * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -6354,16 +6354,16 @@ void
 gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
                      GLenum type, GLvoid * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetHistogram(GET_DISPATCH(),
                           (target, reset, format, type, values));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 16;
@@ -6391,7 +6391,7 @@ void
 __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname,
                                      GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6431,15 +6431,15 @@ __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname,
 void
 gl_dispatch_stub_362(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetHistogramParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6462,7 +6462,7 @@ void
 __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname,
                                      GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6502,15 +6502,15 @@ __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname,
 void
 gl_dispatch_stub_363(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetHistogramParameteriv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6533,7 +6533,7 @@ void
 __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format,
                        GLenum type, GLvoid * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
@@ -6577,15 +6577,15 @@ void
 gl_dispatch_stub_364(GLenum target, GLboolean reset, GLenum format,
                      GLenum type, GLvoid * values)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetMinmax(GET_DISPATCH(), (target, reset, format, type, values));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 16;
@@ -6613,7 +6613,7 @@ void
 __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname,
                                   GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6651,15 +6651,15 @@ __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname,
 void
 gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetMinmaxParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6681,7 +6681,7 @@ gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 void
 __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -6719,15 +6719,15 @@ __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint * params)
 void
 gl_dispatch_stub_366(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-    if (gc->driContext) {
+    if (gc->isDirect) {
         CALL_GetMinmaxParameteriv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
-        __GLXcontext *const gc = __glXGetCurrentContext();
+        struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
         if (__builtin_expect(dpy != NULL, 1)) {
@@ -6750,7 +6750,7 @@ void
 __indirect_glHistogram(GLenum target, GLsizei width, GLenum internalformat,
                        GLboolean sink)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_Histogram, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6767,7 +6767,7 @@ __indirect_glHistogram(GLenum target, GLsizei width, GLenum internalformat,
 void
 __indirect_glMinmax(GLenum target, GLenum internalformat, GLboolean sink)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_Minmax, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6783,7 +6783,7 @@ __indirect_glMinmax(GLenum target, GLenum internalformat, GLboolean sink)
 void
 __indirect_glResetHistogram(GLenum target)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ResetHistogram, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6797,7 +6797,7 @@ __indirect_glResetHistogram(GLenum target)
 void
 __indirect_glResetMinmax(GLenum target)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ResetMinmax, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6813,7 +6813,7 @@ __glx_TexImage_3D4D(unsigned opcode, unsigned dim, GLenum target, GLint level,
                     GLsizei depth, GLsizei extent, GLint border,
                     GLenum format, GLenum type, const GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, depth, format, type,
                                          target) : 0;
@@ -6890,7 +6890,7 @@ __glx_TexSubImage_3D4D(unsigned opcode, unsigned dim, GLenum target,
                        GLsizei height, GLsizei depth, GLsizei extent,
                        GLenum format, GLenum type, const GLvoid * pixels)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, depth, format, type,
                                          target) : 0;
@@ -6968,7 +6968,7 @@ __indirect_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset,
                                GLint yoffset, GLint zoffset, GLint x, GLint y,
                                GLsizei width, GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_CopyTexSubImage3D, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -6990,7 +6990,7 @@ __indirect_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 void
 __indirect_glActiveTextureARB(GLenum texture)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ActiveTextureARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&texture), 4);
@@ -7004,7 +7004,7 @@ __indirect_glActiveTextureARB(GLenum texture)
 void
 __indirect_glMultiTexCoord1dARB(GLenum target, GLdouble s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -7019,7 +7019,7 @@ __indirect_glMultiTexCoord1dARB(GLenum target, GLdouble s)
 void
 __indirect_glMultiTexCoord1dvARB(GLenum target, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 8);
@@ -7034,7 +7034,7 @@ __indirect_glMultiTexCoord1dvARB(GLenum target, const GLdouble * v)
 void
 __indirect_glMultiTexCoord1fARB(GLenum target, GLfloat s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7049,7 +7049,7 @@ __indirect_glMultiTexCoord1fARB(GLenum target, GLfloat s)
 void
 __indirect_glMultiTexCoord1fvARB(GLenum target, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7064,7 +7064,7 @@ __indirect_glMultiTexCoord1fvARB(GLenum target, const GLfloat * v)
 void
 __indirect_glMultiTexCoord1iARB(GLenum target, GLint s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7079,7 +7079,7 @@ __indirect_glMultiTexCoord1iARB(GLenum target, GLint s)
 void
 __indirect_glMultiTexCoord1ivARB(GLenum target, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7094,7 +7094,7 @@ __indirect_glMultiTexCoord1ivARB(GLenum target, const GLint * v)
 void
 __indirect_glMultiTexCoord1sARB(GLenum target, GLshort s)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7109,7 +7109,7 @@ __indirect_glMultiTexCoord1sARB(GLenum target, GLshort s)
 void
 __indirect_glMultiTexCoord1svARB(GLenum target, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord1svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7124,7 +7124,7 @@ __indirect_glMultiTexCoord1svARB(GLenum target, const GLshort * v)
 void
 __indirect_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -7140,7 +7140,7 @@ __indirect_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
 void
 __indirect_glMultiTexCoord2dvARB(GLenum target, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 16);
@@ -7155,7 +7155,7 @@ __indirect_glMultiTexCoord2dvARB(GLenum target, const GLdouble * v)
 void
 __indirect_glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7171,7 +7171,7 @@ __indirect_glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
 void
 __indirect_glMultiTexCoord2fvARB(GLenum target, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7186,7 +7186,7 @@ __indirect_glMultiTexCoord2fvARB(GLenum target, const GLfloat * v)
 void
 __indirect_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7202,7 +7202,7 @@ __indirect_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
 void
 __indirect_glMultiTexCoord2ivARB(GLenum target, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7217,7 +7217,7 @@ __indirect_glMultiTexCoord2ivARB(GLenum target, const GLint * v)
 void
 __indirect_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7233,7 +7233,7 @@ __indirect_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
 void
 __indirect_glMultiTexCoord2svARB(GLenum target, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_MultiTexCoord2svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7249,7 +7249,7 @@ void
 __indirect_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t,
                                 GLdouble r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -7266,7 +7266,7 @@ __indirect_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t,
 void
 __indirect_glMultiTexCoord3dvARB(GLenum target, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 24);
@@ -7282,7 +7282,7 @@ void
 __indirect_glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t,
                                 GLfloat r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7299,7 +7299,7 @@ __indirect_glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t,
 void
 __indirect_glMultiTexCoord3fvARB(GLenum target, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7314,7 +7314,7 @@ __indirect_glMultiTexCoord3fvARB(GLenum target, const GLfloat * v)
 void
 __indirect_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7331,7 +7331,7 @@ __indirect_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
 void
 __indirect_glMultiTexCoord3ivARB(GLenum target, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7347,7 +7347,7 @@ void
 __indirect_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t,
                                 GLshort r)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7364,7 +7364,7 @@ __indirect_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t,
 void
 __indirect_glMultiTexCoord3svARB(GLenum target, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord3svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7380,7 +7380,7 @@ void
 __indirect_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t,
                                 GLdouble r, GLdouble q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
@@ -7398,7 +7398,7 @@ __indirect_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t,
 void
 __indirect_glMultiTexCoord4dvARB(GLenum target, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 32);
@@ -7414,7 +7414,7 @@ void
 __indirect_glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t,
                                 GLfloat r, GLfloat q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7432,7 +7432,7 @@ __indirect_glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t,
 void
 __indirect_glMultiTexCoord4fvARB(GLenum target, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7448,7 +7448,7 @@ void
 __indirect_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r,
                                 GLint q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7466,7 +7466,7 @@ __indirect_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r,
 void
 __indirect_glMultiTexCoord4ivARB(GLenum target, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7482,7 +7482,7 @@ void
 __indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t,
                                 GLshort r, GLshort q)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7500,7 +7500,7 @@ __indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t,
 void
 __indirect_glMultiTexCoord4svARB(GLenum target, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_MultiTexCoord4svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7515,7 +7515,7 @@ __indirect_glMultiTexCoord4svARB(GLenum target, const GLshort * v)
 void
 __indirect_glSampleCoverageARB(GLclampf value, GLboolean invert)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_SampleCoverageARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&value), 4);
@@ -7530,7 +7530,7 @@ __indirect_glSampleCoverageARB(GLclampf value, GLboolean invert)
 void
 __indirect_glGetProgramStringARB(GLenum target, GLenum pname, GLvoid * string)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -7550,7 +7550,7 @@ __indirect_glGetProgramStringARB(GLenum target, GLenum pname, GLvoid * string)
 void
 __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -7571,7 +7571,7 @@ void
 __indirect_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x,
                                       GLdouble y, GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_ProgramEnvParameter4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7591,7 +7591,7 @@ void
 __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                        const GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_ProgramEnvParameter4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7608,7 +7608,7 @@ void
 __indirect_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x,
                                       GLfloat y, GLfloat z, GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_ProgramEnvParameter4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7628,7 +7628,7 @@ void
 __indirect_glProgramEnvParameter4fvARB(GLenum target, GLuint index,
                                        const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_ProgramEnvParameter4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7646,7 +7646,7 @@ __indirect_glProgramLocalParameter4dARB(GLenum target, GLuint index,
                                         GLdouble x, GLdouble y, GLdouble z,
                                         GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_ProgramLocalParameter4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7666,7 +7666,7 @@ void
 __indirect_glProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                          const GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_ProgramLocalParameter4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7684,7 +7684,7 @@ __indirect_glProgramLocalParameter4fARB(GLenum target, GLuint index,
                                         GLfloat x, GLfloat y, GLfloat z,
                                         GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_ProgramLocalParameter4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7704,7 +7704,7 @@ void
 __indirect_glProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                          const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_ProgramLocalParameter4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -7721,7 +7721,7 @@ void
 __indirect_glProgramStringARB(GLenum target, GLenum format, GLsizei len,
                               const GLvoid * string)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -7759,7 +7759,7 @@ __indirect_glProgramStringARB(GLenum target, GLenum format, GLsizei len,
 void
 __indirect_glVertexAttrib1dARB(GLuint index, GLdouble x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7774,7 +7774,7 @@ __indirect_glVertexAttrib1dARB(GLuint index, GLdouble x)
 void
 __indirect_glVertexAttrib1dvARB(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7789,7 +7789,7 @@ __indirect_glVertexAttrib1dvARB(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib1fARB(GLuint index, GLfloat x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7804,7 +7804,7 @@ __indirect_glVertexAttrib1fARB(GLuint index, GLfloat x)
 void
 __indirect_glVertexAttrib1fvARB(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7819,7 +7819,7 @@ __indirect_glVertexAttrib1fvARB(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib1sARB(GLuint index, GLshort x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7834,7 +7834,7 @@ __indirect_glVertexAttrib1sARB(GLuint index, GLshort x)
 void
 __indirect_glVertexAttrib1svARB(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7849,7 +7849,7 @@ __indirect_glVertexAttrib1svARB(GLuint index, const GLshort * v)
 void
 __indirect_glVertexAttrib2dARB(GLuint index, GLdouble x, GLdouble y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7865,7 +7865,7 @@ __indirect_glVertexAttrib2dARB(GLuint index, GLdouble x, GLdouble y)
 void
 __indirect_glVertexAttrib2dvARB(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7880,7 +7880,7 @@ __indirect_glVertexAttrib2dvARB(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib2fARB(GLuint index, GLfloat x, GLfloat y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib2fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7896,7 +7896,7 @@ __indirect_glVertexAttrib2fARB(GLuint index, GLfloat x, GLfloat y)
 void
 __indirect_glVertexAttrib2fvARB(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib2fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7911,7 +7911,7 @@ __indirect_glVertexAttrib2fvARB(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib2sARB(GLuint index, GLshort x, GLshort y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib2svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7927,7 +7927,7 @@ __indirect_glVertexAttrib2sARB(GLuint index, GLshort x, GLshort y)
 void
 __indirect_glVertexAttrib2svARB(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib2svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7943,7 +7943,7 @@ void
 __indirect_glVertexAttrib3dARB(GLuint index, GLdouble x, GLdouble y,
                                GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7960,7 +7960,7 @@ __indirect_glVertexAttrib3dARB(GLuint index, GLdouble x, GLdouble y,
 void
 __indirect_glVertexAttrib3dvARB(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7975,7 +7975,7 @@ __indirect_glVertexAttrib3dvARB(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib3fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_VertexAttrib3fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -7992,7 +7992,7 @@ __indirect_glVertexAttrib3fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 void
 __indirect_glVertexAttrib3fvARB(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_VertexAttrib3fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8007,7 +8007,7 @@ __indirect_glVertexAttrib3fvARB(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib3sARB(GLuint index, GLshort x, GLshort y, GLshort z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib3svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8024,7 +8024,7 @@ __indirect_glVertexAttrib3sARB(GLuint index, GLshort x, GLshort y, GLshort z)
 void
 __indirect_glVertexAttrib3svARB(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib3svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8039,7 +8039,7 @@ __indirect_glVertexAttrib3svARB(GLuint index, const GLshort * v)
 void
 __indirect_glVertexAttrib4NbvARB(GLuint index, const GLbyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NbvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8054,7 +8054,7 @@ __indirect_glVertexAttrib4NbvARB(GLuint index, const GLbyte *v)
 void
 __indirect_glVertexAttrib4NivARB(GLuint index, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8069,7 +8069,7 @@ __indirect_glVertexAttrib4NivARB(GLuint index, const GLint * v)
 void
 __indirect_glVertexAttrib4NsvARB(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NsvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8085,7 +8085,7 @@ void
 __indirect_glVertexAttrib4NubARB(GLuint index, GLubyte x, GLubyte y,
                                  GLubyte z, GLubyte w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NubvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8103,7 +8103,7 @@ __indirect_glVertexAttrib4NubARB(GLuint index, GLubyte x, GLubyte y,
 void
 __indirect_glVertexAttrib4NubvARB(GLuint index, const GLubyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NubvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8118,7 +8118,7 @@ __indirect_glVertexAttrib4NubvARB(GLuint index, const GLubyte *v)
 void
 __indirect_glVertexAttrib4NuivARB(GLuint index, const GLuint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NuivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8133,7 +8133,7 @@ __indirect_glVertexAttrib4NuivARB(GLuint index, const GLuint * v)
 void
 __indirect_glVertexAttrib4NusvARB(GLuint index, const GLushort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4NusvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8148,7 +8148,7 @@ __indirect_glVertexAttrib4NusvARB(GLuint index, const GLushort * v)
 void
 __indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4bvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8164,7 +8164,7 @@ void
 __indirect_glVertexAttrib4dARB(GLuint index, GLdouble x, GLdouble y,
                                GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8182,7 +8182,7 @@ __indirect_glVertexAttrib4dARB(GLuint index, GLdouble x, GLdouble y,
 void
 __indirect_glVertexAttrib4dvARB(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8198,7 +8198,7 @@ void
 __indirect_glVertexAttrib4fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z,
                                GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8216,7 +8216,7 @@ __indirect_glVertexAttrib4fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z,
 void
 __indirect_glVertexAttrib4fvARB(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8231,7 +8231,7 @@ __indirect_glVertexAttrib4fvARB(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib4ivARB(GLuint index, const GLint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4ivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8247,7 +8247,7 @@ void
 __indirect_glVertexAttrib4sARB(GLuint index, GLshort x, GLshort y, GLshort z,
                                GLshort w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8265,7 +8265,7 @@ __indirect_glVertexAttrib4sARB(GLuint index, GLshort x, GLshort y, GLshort z,
 void
 __indirect_glVertexAttrib4svARB(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4svARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8280,7 +8280,7 @@ __indirect_glVertexAttrib4svARB(GLuint index, const GLshort * v)
 void
 __indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4ubvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8295,7 +8295,7 @@ __indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte *v)
 void
 __indirect_glVertexAttrib4uivARB(GLuint index, const GLuint * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4uivARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8310,7 +8310,7 @@ __indirect_glVertexAttrib4uivARB(GLuint index, const GLuint * v)
 void
 __indirect_glVertexAttrib4usvARB(GLuint index, const GLushort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4usvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -8325,7 +8325,7 @@ __indirect_glVertexAttrib4usvARB(GLuint index, const GLushort * v)
 void
 __indirect_glBeginQueryARB(GLenum target, GLuint id)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BeginQueryARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -8340,7 +8340,7 @@ __indirect_glBeginQueryARB(GLenum target, GLuint id)
 void
 __indirect_glDeleteQueriesARB(GLsizei n, const GLuint * ids)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
@@ -8370,7 +8370,7 @@ __indirect_glDeleteQueriesARB(GLsizei n, const GLuint * ids)
 void
 __indirect_glEndQueryARB(GLenum target)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_EndQueryARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -8384,7 +8384,7 @@ __indirect_glEndQueryARB(GLenum target)
 void
 __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 4;
@@ -8423,7 +8423,7 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
 void
 __indirect_glGetQueryObjectivARB(GLuint id, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -8461,7 +8461,7 @@ __indirect_glGetQueryObjectivARB(GLuint id, GLenum pname, GLint * params)
 void
 __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -8499,7 +8499,7 @@ __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint * params)
 void
 __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
     const GLuint cmdlen = 8;
@@ -8540,7 +8540,7 @@ __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params)
 GLboolean
 __indirect_glIsQueryARB(GLuint id)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
 #ifndef USE_XCB
@@ -8574,7 +8574,7 @@ __indirect_glIsQueryARB(GLuint id)
 void
 __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -8610,7 +8610,7 @@ __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples,
                                             GLenum internalformat,
                                             GLsizei width, GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_RenderbufferStorageMultisample, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -8628,7 +8628,7 @@ __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples,
 void
 __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_SampleMaskSGIS, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&value), 4);
@@ -8643,7 +8643,7 @@ __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert)
 void
 __indirect_glSamplePatternSGIS(GLenum pattern)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_SamplePatternSGIS, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pattern), 4);
@@ -8657,7 +8657,7 @@ __indirect_glSamplePatternSGIS(GLenum pattern)
 void
 __indirect_glPointParameterfEXT(GLenum pname, GLfloat param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PointParameterfEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -8672,7 +8672,7 @@ __indirect_glPointParameterfEXT(GLenum pname, GLfloat param)
 void
 __indirect_glPointParameterfvEXT(GLenum pname, const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glPointParameterfvEXT_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_PointParameterfvEXT, cmdlen);
@@ -8688,7 +8688,7 @@ __indirect_glPointParameterfvEXT(GLenum pname, const GLfloat * params)
 void
 __indirect_glSecondaryColor3bEXT(GLbyte red, GLbyte green, GLbyte blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_SecondaryColor3bvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -8711,7 +8711,7 @@ __indirect_glSecondaryColor3bvEXT(const GLbyte *v)
 void
 __indirect_glSecondaryColor3dEXT(GLdouble red, GLdouble green, GLdouble blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_SecondaryColor3dvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 8);
@@ -8734,7 +8734,7 @@ __indirect_glSecondaryColor3dvEXT(const GLdouble * v)
 void
 __indirect_glSecondaryColor3fEXT(GLfloat red, GLfloat green, GLfloat blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_SecondaryColor3fvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -8757,7 +8757,7 @@ __indirect_glSecondaryColor3fvEXT(const GLfloat * v)
 void
 __indirect_glSecondaryColor3iEXT(GLint red, GLint green, GLint blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_SecondaryColor3ivEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -8780,7 +8780,7 @@ __indirect_glSecondaryColor3ivEXT(const GLint * v)
 void
 __indirect_glSecondaryColor3sEXT(GLshort red, GLshort green, GLshort blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_SecondaryColor3svEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -8803,7 +8803,7 @@ __indirect_glSecondaryColor3svEXT(const GLshort * v)
 void
 __indirect_glSecondaryColor3ubEXT(GLubyte red, GLubyte green, GLubyte blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_SecondaryColor3ubvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
@@ -8826,7 +8826,7 @@ __indirect_glSecondaryColor3ubvEXT(const GLubyte *v)
 void
 __indirect_glSecondaryColor3uiEXT(GLuint red, GLuint green, GLuint blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_SecondaryColor3uivEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
@@ -8849,7 +8849,7 @@ __indirect_glSecondaryColor3uivEXT(const GLuint * v)
 void
 __indirect_glSecondaryColor3usEXT(GLushort red, GLushort green, GLushort blue)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_SecondaryColor3usvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
@@ -8872,7 +8872,7 @@ __indirect_glSecondaryColor3usvEXT(const GLushort * v)
 void
 __indirect_glFogCoorddEXT(GLdouble coord)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_FogCoorddvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 8);
@@ -8893,7 +8893,7 @@ __indirect_glFogCoorddvEXT(const GLdouble * coord)
 void
 __indirect_glFogCoordfEXT(GLfloat coord)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_FogCoordfvEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
@@ -8915,7 +8915,7 @@ void
 __indirect_glBlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
                                   GLenum sfactorAlpha, GLenum dfactorAlpha)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_BlendFuncSeparateEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&sfactorRGB), 4);
@@ -8932,7 +8932,7 @@ __indirect_glBlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
 void
 __indirect_glWindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_WindowPos3fvMESA, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
@@ -8956,7 +8956,7 @@ GLboolean
 __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids,
                                    GLboolean * residences)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
@@ -8981,7 +8981,7 @@ __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids,
 void
 __indirect_glBindProgramNV(GLenum target, GLuint program)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BindProgramNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -8996,7 +8996,7 @@ __indirect_glBindProgramNV(GLenum target, GLuint program)
 void
 __indirect_glDeleteProgramsNV(GLsizei n, const GLuint * programs)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
     if (n < 0) {
@@ -9020,7 +9020,7 @@ void
 __indirect_glExecuteProgramNV(GLenum target, GLuint id,
                               const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_ExecuteProgramNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -9036,7 +9036,7 @@ __indirect_glExecuteProgramNV(GLenum target, GLuint id,
 void
 __indirect_glGenProgramsNV(GLsizei n, GLuint * programs)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (n < 0) {
@@ -9060,7 +9060,7 @@ void
 __indirect_glGetProgramParameterdvNV(GLenum target, GLuint index,
                                      GLenum pname, GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9082,7 +9082,7 @@ void
 __indirect_glGetProgramParameterfvNV(GLenum target, GLuint index,
                                      GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9103,7 +9103,7 @@ __indirect_glGetProgramParameterfvNV(GLenum target, GLuint index,
 void
 __indirect_glGetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9123,7 +9123,7 @@ __indirect_glGetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 void
 __indirect_glGetProgramivNV(GLuint id, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9144,7 +9144,7 @@ void
 __indirect_glGetTrackMatrixivNV(GLenum target, GLuint address, GLenum pname,
                                 GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9166,7 +9166,7 @@ void
 __indirect_glGetVertexAttribdvNV(GLuint index, GLenum pname,
                                  GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9186,7 +9186,7 @@ __indirect_glGetVertexAttribdvNV(GLuint index, GLenum pname,
 void
 __indirect_glGetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9206,7 +9206,7 @@ __indirect_glGetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat * params)
 void
 __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -9226,7 +9226,7 @@ __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params)
 GLboolean
 __indirect_glIsProgramNV(GLuint program)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
@@ -9247,7 +9247,7 @@ void
 __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len,
                            const GLubyte *program)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9271,7 +9271,7 @@ void
 __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLuint num,
                                     const GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD((num * 32));
     if (num < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9295,7 +9295,7 @@ void
 __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLuint num,
                                     const GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD((num * 16));
     if (num < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9318,7 +9318,7 @@ __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLuint num,
 void
 __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9340,7 +9340,7 @@ void
 __indirect_glTrackMatrixNV(GLenum target, GLuint address, GLenum matrix,
                            GLenum transform)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_TrackMatrixNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -9357,7 +9357,7 @@ __indirect_glTrackMatrixNV(GLenum target, GLuint address, GLenum matrix,
 void
 __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9372,7 +9372,7 @@ __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x)
 void
 __indirect_glVertexAttrib1dvNV(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9387,7 +9387,7 @@ __indirect_glVertexAttrib1dvNV(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib1fNV(GLuint index, GLfloat x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9402,7 +9402,7 @@ __indirect_glVertexAttrib1fNV(GLuint index, GLfloat x)
 void
 __indirect_glVertexAttrib1fvNV(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9417,7 +9417,7 @@ __indirect_glVertexAttrib1fvNV(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib1sNV(GLuint index, GLshort x)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9432,7 +9432,7 @@ __indirect_glVertexAttrib1sNV(GLuint index, GLshort x)
 void
 __indirect_glVertexAttrib1svNV(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib1svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9447,7 +9447,7 @@ __indirect_glVertexAttrib1svNV(GLuint index, const GLshort * v)
 void
 __indirect_glVertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9463,7 +9463,7 @@ __indirect_glVertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 void
 __indirect_glVertexAttrib2dvNV(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9478,7 +9478,7 @@ __indirect_glVertexAttrib2dvNV(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib2fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9494,7 +9494,7 @@ __indirect_glVertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 void
 __indirect_glVertexAttrib2fvNV(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib2fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9509,7 +9509,7 @@ __indirect_glVertexAttrib2fvNV(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib2svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9525,7 +9525,7 @@ __indirect_glVertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
 void
 __indirect_glVertexAttrib2svNV(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib2svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9541,7 +9541,7 @@ void
 __indirect_glVertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y,
                               GLdouble z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9558,7 +9558,7 @@ __indirect_glVertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y,
 void
 __indirect_glVertexAttrib3dvNV(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9573,7 +9573,7 @@ __indirect_glVertexAttrib3dvNV(GLuint index, const GLdouble * v)
 void
 __indirect_glVertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_VertexAttrib3fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9590,7 +9590,7 @@ __indirect_glVertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 void
 __indirect_glVertexAttrib3fvNV(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_VertexAttrib3fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9605,7 +9605,7 @@ __indirect_glVertexAttrib3fvNV(GLuint index, const GLfloat * v)
 void
 __indirect_glVertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib3svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9622,7 +9622,7 @@ __indirect_glVertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 void
 __indirect_glVertexAttrib3svNV(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib3svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9638,7 +9638,7 @@ void
 __indirect_glVertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y,
                               GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9656,7 +9656,7 @@ __indirect_glVertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y,
 void
 __indirect_glVertexAttrib4dvNV(GLuint index, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9672,7 +9672,7 @@ void
 __indirect_glVertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z,
                               GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9690,7 +9690,7 @@ __indirect_glVertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z,
 void
 __indirect_glVertexAttrib4fvNV(GLuint index, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib4fvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9706,7 +9706,7 @@ void
 __indirect_glVertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z,
                               GLshort w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9724,7 +9724,7 @@ __indirect_glVertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z,
 void
 __indirect_glVertexAttrib4svNV(GLuint index, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib4svNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9740,7 +9740,7 @@ void
 __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z,
                                GLubyte w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4ubvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9758,7 +9758,7 @@ __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z,
 void
 __indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_VertexAttrib4ubvNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
@@ -9773,7 +9773,7 @@ __indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte *v)
 void
 __indirect_glVertexAttribs1dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9795,7 +9795,7 @@ __indirect_glVertexAttribs1dvNV(GLuint index, GLsizei n, const GLdouble * v)
 void
 __indirect_glVertexAttribs1fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9817,7 +9817,7 @@ __indirect_glVertexAttribs1fvNV(GLuint index, GLsizei n, const GLfloat * v)
 void
 __indirect_glVertexAttribs1svNV(GLuint index, GLsizei n, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 2));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9839,7 +9839,7 @@ __indirect_glVertexAttribs1svNV(GLuint index, GLsizei n, const GLshort * v)
 void
 __indirect_glVertexAttribs2dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 16));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9861,7 +9861,7 @@ __indirect_glVertexAttribs2dvNV(GLuint index, GLsizei n, const GLdouble * v)
 void
 __indirect_glVertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9883,7 +9883,7 @@ __indirect_glVertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat * v)
 void
 __indirect_glVertexAttribs2svNV(GLuint index, GLsizei n, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9905,7 +9905,7 @@ __indirect_glVertexAttribs2svNV(GLuint index, GLsizei n, const GLshort * v)
 void
 __indirect_glVertexAttribs3dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 24));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9927,7 +9927,7 @@ __indirect_glVertexAttribs3dvNV(GLuint index, GLsizei n, const GLdouble * v)
 void
 __indirect_glVertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 12));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9949,7 +9949,7 @@ __indirect_glVertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat * v)
 void
 __indirect_glVertexAttribs3svNV(GLuint index, GLsizei n, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 6));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9971,7 +9971,7 @@ __indirect_glVertexAttribs3svNV(GLuint index, GLsizei n, const GLshort * v)
 void
 __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 32));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -9993,7 +9993,7 @@ __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, const GLdouble * v)
 void
 __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 16));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10015,7 +10015,7 @@ __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v)
 void
 __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10037,7 +10037,7 @@ __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
 void
 __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10059,7 +10059,7 @@ __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 void
 __indirect_glPointParameteriNV(GLenum pname, GLint param)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PointParameteriNV, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
@@ -10074,7 +10074,7 @@ __indirect_glPointParameteriNV(GLenum pname, GLint param)
 void
 __indirect_glPointParameterivNV(GLenum pname, const GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glPointParameterivNV_size(pname);
     const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
     emit_header(gc->pc, X_GLrop_PointParameterivNV, cmdlen);
@@ -10090,7 +10090,7 @@ __indirect_glPointParameterivNV(GLenum pname, const GLint * params)
 void
 __indirect_glActiveStencilFaceEXT(GLenum face)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_ActiveStencilFaceEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
@@ -10106,7 +10106,7 @@ __indirect_glGetProgramNamedParameterdvNV(GLuint id, GLsizei len,
                                           const GLubyte *name,
                                           GLdouble * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8 + __GLX_PAD(len);
     if (len < 0) {
@@ -10134,7 +10134,7 @@ __indirect_glGetProgramNamedParameterfvNV(GLuint id, GLsizei len,
                                           const GLubyte *name,
                                           GLfloat * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8 + __GLX_PAD(len);
     if (len < 0) {
@@ -10162,7 +10162,7 @@ __indirect_glProgramNamedParameter4dNV(GLuint id, GLsizei len,
                                        const GLubyte *name, GLdouble x,
                                        GLdouble y, GLdouble z, GLdouble w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10190,7 +10190,7 @@ __indirect_glProgramNamedParameter4dvNV(GLuint id, GLsizei len,
                                         const GLubyte *name,
                                         const GLdouble * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10215,7 +10215,7 @@ __indirect_glProgramNamedParameter4fNV(GLuint id, GLsizei len,
                                        const GLubyte *name, GLfloat x,
                                        GLfloat y, GLfloat z, GLfloat w)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10243,7 +10243,7 @@ __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len,
                                         const GLubyte *name,
                                         const GLfloat * v)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28 + __GLX_PAD(len);
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10266,7 +10266,7 @@ __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len,
 void
 __indirect_glBlendEquationSeparateEXT(GLenum modeRGB, GLenum modeA)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BlendEquationSeparateEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&modeRGB), 4);
@@ -10281,7 +10281,7 @@ __indirect_glBlendEquationSeparateEXT(GLenum modeRGB, GLenum modeA)
 void
 __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BindFramebufferEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10296,7 +10296,7 @@ __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer)
 void
 __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BindRenderbufferEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10311,7 +10311,7 @@ __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 GLenum
 __indirect_glCheckFramebufferStatusEXT(GLenum target)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLenum retval = (GLenum) 0;
     const GLuint cmdlen = 4;
@@ -10332,7 +10332,7 @@ __indirect_glCheckFramebufferStatusEXT(GLenum target)
 void
 __indirect_glDeleteFramebuffersEXT(GLsizei n, const GLuint * framebuffers)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10354,7 +10354,7 @@ __indirect_glDeleteFramebuffersEXT(GLsizei n, const GLuint * framebuffers)
 void
 __indirect_glDeleteRenderbuffersEXT(GLsizei n, const GLuint * renderbuffers)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
@@ -10378,7 +10378,7 @@ __indirect_glFramebufferRenderbufferEXT(GLenum target, GLenum attachment,
                                         GLenum renderbuffertarget,
                                         GLuint renderbuffer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_FramebufferRenderbufferEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10397,7 +10397,7 @@ __indirect_glFramebufferTexture1DEXT(GLenum target, GLenum attachment,
                                      GLenum textarget, GLuint texture,
                                      GLint level)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_FramebufferTexture1DEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10417,7 +10417,7 @@ __indirect_glFramebufferTexture2DEXT(GLenum target, GLenum attachment,
                                      GLenum textarget, GLuint texture,
                                      GLint level)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_FramebufferTexture2DEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10437,7 +10437,7 @@ __indirect_glFramebufferTexture3DEXT(GLenum target, GLenum attachment,
                                      GLenum textarget, GLuint texture,
                                      GLint level, GLint zoffset)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 28;
     emit_header(gc->pc, X_GLrop_FramebufferTexture3DEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10456,7 +10456,7 @@ __indirect_glFramebufferTexture3DEXT(GLenum target, GLenum attachment,
 void
 __indirect_glGenFramebuffersEXT(GLsizei n, GLuint * framebuffers)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (n < 0) {
@@ -10479,7 +10479,7 @@ __indirect_glGenFramebuffersEXT(GLsizei n, GLuint * framebuffers)
 void
 __indirect_glGenRenderbuffersEXT(GLsizei n, GLuint * renderbuffers)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (n < 0) {
@@ -10502,7 +10502,7 @@ __indirect_glGenRenderbuffersEXT(GLsizei n, GLuint * renderbuffers)
 void
 __indirect_glGenerateMipmapEXT(GLenum target)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
     emit_header(gc->pc, X_GLrop_GenerateMipmapEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10519,7 +10519,7 @@ __indirect_glGetFramebufferAttachmentParameterivEXT(GLenum target,
                                                     GLenum pname,
                                                     GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -10542,7 +10542,7 @@ void
 __indirect_glGetRenderbufferParameterivEXT(GLenum target, GLenum pname,
                                            GLint * params)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
@@ -10563,7 +10563,7 @@ __indirect_glGetRenderbufferParameterivEXT(GLenum target, GLenum pname,
 GLboolean
 __indirect_glIsFramebufferEXT(GLuint framebuffer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
@@ -10583,7 +10583,7 @@ __indirect_glIsFramebufferEXT(GLuint framebuffer)
 GLboolean
 __indirect_glIsRenderbufferEXT(GLuint renderbuffer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
@@ -10604,7 +10604,7 @@ void
 __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat,
                                     GLsizei width, GLsizei height)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
     emit_header(gc->pc, X_GLrop_RenderbufferStorageEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
@@ -10624,7 +10624,7 @@ __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1,
                                 GLint dstX1, GLint dstY1, GLbitfield mask,
                                 GLenum filter)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 44;
     emit_header(gc->pc, X_GLrop_BlitFramebufferEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&srcX0), 4);
@@ -10649,7 +10649,7 @@ __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
                                         GLuint texture, GLint level,
                                         GLint layer)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+    struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_FramebufferTextureLayerEXT, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);

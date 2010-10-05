@@ -33,7 +33,6 @@
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
-#include "context.h"
 #include "formats.h"
 #include "texcompress.h"
 
@@ -107,6 +106,24 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
    }
 #endif /* FEATURE_EXT_texture_sRGB */
    return n;
+
+#if FEATURE_ES1 || FEATURE_ES2
+   if (formats) {
+      formats[n++] = GL_PALETTE4_RGB8_OES;
+      formats[n++] = GL_PALETTE4_RGBA8_OES;
+      formats[n++] = GL_PALETTE4_R5_G6_B5_OES;
+      formats[n++] = GL_PALETTE4_RGBA4_OES;
+      formats[n++] = GL_PALETTE4_RGB5_A1_OES;
+      formats[n++] = GL_PALETTE8_RGB8_OES;
+      formats[n++] = GL_PALETTE8_RGBA8_OES;
+      formats[n++] = GL_PALETTE8_R5_G6_B5_OES;
+      formats[n++] = GL_PALETTE8_RGBA4_OES;
+      formats[n++] = GL_PALETTE8_RGB5_A1_OES;
+   }
+   else {
+      n += 10;
+   }
+#endif
 }
 
 

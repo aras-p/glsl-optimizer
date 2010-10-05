@@ -30,6 +30,10 @@
 #define ST_GEN_MIPMAP_H
 
 
+#include "main/mtypes.h"
+
+struct st_context;
+
 extern void
 st_init_generate_mipmap(struct st_context *st);
 

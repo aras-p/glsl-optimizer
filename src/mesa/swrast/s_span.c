@@ -33,7 +33,6 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
-#include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/image.h"
@@ -971,6 +970,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
          convert_color_type(span, GL_FLOAT, 0);
       }
+      else {
+         span->array->rgba = (void *) span->array->attribs[FRAG_ATTRIB_COL0];
+      }
+
       if (span->primitive != GL_POINT ||
 	  (span->interpMask & SPAN_RGBA) ||
 	  ctx->Point.PointSprite) {
@@ -1222,8 +1225,21 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
             GLchan rgbaSave[MAX_WIDTH][4];
             const GLuint fragOutput = multiFragOutputs ? buf : 0;
 
+            /* set span->array->rgba to colors for render buffer's datatype */
             if (rb->DataType != span->array->ChanType || fragOutput > 0) {
                convert_color_type(span, rb->DataType, fragOutput);
+            }
+            else {
+               if (rb->DataType == GL_UNSIGNED_BYTE) {
+                  span->array->rgba = span->array->rgba8;
+               }
+               else if (rb->DataType == GL_UNSIGNED_SHORT) {
+                  span->array->rgba = (void *) span->array->rgba16;
+               }
+               else {
+                  span->array->rgba = (void *)
+                     span->array->attribs[FRAG_ATTRIB_COL0];
+               }
             }
 
             if (!multiFragOutputs && numBuffers > 1) {
@@ -1232,7 +1248,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                       4 * span->end * sizeof(GLchan));
             }
 
-            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+		   rb->_BaseFormat == GL_ALPHA);
 
             if (ctx->Color._LogicOpEnabled) {
                _swrast_logicop_rgba_span(ctx, rb, span);
@@ -1330,7 +1347,8 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
 
       ASSERT(rb);
       ASSERT(rb->GetRow);
-      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
+      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA ||
+	     rb->_BaseFormat == GL_ALPHA);
 
       if (rb->DataType == dstType) {
          rb->GetRow(ctx, rb, length, x + skip, y,

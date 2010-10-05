@@ -637,7 +637,8 @@ struct r200_context {
 
 
 extern void r200DestroyContext( __DRIcontext *driContextPriv );
-extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
+extern GLboolean r200CreateContext( gl_api api,
+				    const __GLcontextModes *glVisual,
 				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
 extern GLboolean r200MakeCurrent( __DRIcontext *driContextPriv,

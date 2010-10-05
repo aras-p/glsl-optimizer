@@ -69,14 +69,23 @@ Requirements
    http://people.freedesktop.org/~jrfonseca/llvm/ and set the LLVM environment
    variable to the extracted path.
 
-   The version of LLVM from SVN ("2.7svn") from mid-March 2010 seems pretty
+   For MSVC there are two set of binaries: llvm-x.x-msvc32mt.7z and
+   llvm-x.x-msvc32mtd.7z .
+
+   You have to set the LLVM=/path/to/llvm-x.x-msvc32mtd env var when passing
+   debug=yes to scons, and LLVM=/path/to/llvm-x.x-msvc32mt when building with
+   debug=no. This is necessary as LLVM builds as static library so the chosen
+   MS CRT must match.
+
+   The version of LLVM from SVN ("2.7svn") from mid-March 2010 is pretty
    stable and has some features not in version 2.6.
 
  - scons (optional)
 
- - udis86, http://udis86.sourceforge.net/ (optional):
+ - udis86, http://udis86.sourceforge.net/ (optional). My personal repository
+   supports more opcodes which haven't been merged upstream yet:
  
-     git clone git://udis86.git.sourceforge.net/gitroot/udis86/udis86
+     git clone git://anongit.freedesktop.org/~jrfonseca/udis86
      cd udis86
      ./autogen.sh
      ./configure --with-pic
@@ -120,6 +129,44 @@ On Windows, building will create a drop-in alternative for opengl32.dll. To use
 it put it in the same directory as the application. It can also be used by
 replacing the native ICD driver, but it's quite an advanced usage, so if you
 need to ask, don't even try it.
+
+
+Profiling
+=========
+
+To profile llvmpipe you should pass the options
+
+  scons debug=no profile=yes <same-as-before>
+
+This will ensure that frame pointers are used both in C and JIT functions, and
+that no tail call optimizations are done by gcc.
+
+
+To better profile JIT code you'll need to build LLVM with oprofile integration.
+
+  source_dir=$PWD/llvm-2.6
+  build_dir=$source_dir/build/profile
+  install_dir=$source_dir-profile
+
+  mkdir -p "$build_dir"
+  cd "$build_dir" && \
+  $source_dir/configure \
+      --prefix=$install_dir \
+      --enable-optimized \
+      --disable-profiling \
+      --enable-targets=host-only \
+      --with-oprofile
+
+  make -C "$build_dir"
+  make -C "$build_dir" install
+
+  find "$install_dir/lib" -iname '*.a' -print0 | xargs -0 strip --strip-debug
+
+The you should define
+
+  export LLVM=/path/to/llvm-2.6-profile
+
+and rebuild.
 
 
 Unit testing

@@ -101,7 +101,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -206,9 +205,10 @@ static void r100_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific context.
  */
 GLboolean
-r100CreateContext( const __GLcontextModes *glVisual,
-                     __DRIcontext *driContextPriv,
-                     void *sharedContextPrivate)
+r100CreateContext( gl_api api,
+		   const __GLcontextModes *glVisual,
+		   __DRIcontext *driContextPriv,
+		   void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);

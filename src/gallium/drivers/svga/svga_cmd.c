@@ -67,7 +67,7 @@ void surface_to_surfaceid(struct svga_winsys_context *swc, // IN
       id->mipmap = s->real_level;
    }
    else {
-      id->sid = SVGA3D_INVALID_ID;
+      swc->surface_relocation(swc, &id->sid, NULL, flags);
       id->face = 0;
       id->mipmap = 0;
    }

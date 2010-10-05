@@ -395,6 +395,7 @@ xlib_create_brw_winsys_screen( void )
       return NULL;
 
    ws->used = 0;
+   ws->base.pci_id = PCI_CHIP_GM45_GM;
 
    ws->base.destroy              = xlib_brw_winsys_destroy;
    ws->base.bo_alloc             = xlib_brw_bo_alloc;
@@ -452,7 +453,7 @@ xlib_create_i965_screen( void )
    if (winsys == NULL)
       return NULL;
 
-   screen = brw_create_screen(winsys, PCI_CHIP_GM45_GM);
+   screen = brw_create_screen(winsys);
    if (screen == NULL)
       goto fail;
 

@@ -33,10 +33,11 @@
 #ifndef ST_CACHE_H
 #define ST_CACHE_H
 
-#include "cso_cache/cso_cache.h"
-
 struct pipe_blend_state;
+struct pipe_depth_stencil_alpha_state;
+struct pipe_rasterizer_state;
 struct pipe_sampler_state;
+struct pipe_shader_state;
 struct st_context;
 
 

@@ -25,14 +25,13 @@
  * 
  **************************************************************************/
 
+#include <stdio.h>
+
 #include "st_context.h"
 #include "st_format.h"
 #include "st_texture.h"
 #include "st_cb_fbo.h"
-#include "st_inlines.h"
 #include "main/enums.h"
-
-#undef Elements  /* fix re-defined macro warning */
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
@@ -44,24 +43,6 @@
 
 
 #define DBG if(0) printf
-
-#if 0
-static GLenum
-target_to_target(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return GL_TEXTURE_CUBE_MAP_ARB;
-   default:
-      return target;
-   }
-}
-#endif
 
 
 /**
@@ -83,14 +64,17 @@ st_texture_create(struct st_context *st,
    struct pipe_resource pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
 
-   assert(target <= PIPE_TEXTURE_CUBE);
+   assert(target < PIPE_MAX_TEXTURE_TYPES);
+   assert(width0 > 0);
+   assert(height0 > 0);
+   assert(depth0 > 0);
 
    DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
-   assert(screen->is_format_supported(screen, format, target, 
+   assert(screen->is_format_supported(screen, format, target, 0,
                                       PIPE_BIND_SAMPLER_VIEW, 0));
 
    memset(&pt, 0, sizeof(pt));
@@ -142,47 +126,13 @@ st_texture_match_image(const struct pipe_resource *pt,
 }
 
 
-#if 000
-/* Although we use the image_offset[] array to store relative offsets
- * to cube faces, Mesa doesn't know anything about this and expects
- * each cube face to be treated as a separate image.
- *
- * These functions present that view to mesa:
- */
-const GLuint *
-st_texture_depth_offsets(struct pipe_resource *pt, GLuint level)
-{
-   static const GLuint zero = 0;
-
-   if (pt->target != PIPE_TEXTURE_3D || pt->level[level].nr_images == 1)
-      return &zero;
-   else
-      return pt->level[level].image_offset;
-}
-
-
 /**
- * Return the offset to the given mipmap texture image within the
- * texture memory buffer, in bytes.
- */
-GLuint
-st_texture_image_offset(const struct pipe_resource * pt,
-                        GLuint face, GLuint level)
-{
-   if (pt->target == PIPE_TEXTURE_CUBE)
-      return (pt->level[level].level_offset +
-              pt->level[level].image_offset[face] * pt->cpp);
-   else
-      return pt->level[level].level_offset;
-}
-#endif
-
-
-/**
- * Map a teximage in a mipmap texture.
- * \param row_stride  returns row stride in bytes
- * \param image_stride  returns image stride in bytes (for 3D textures).
- * \return address of mapping
+ * Map a texture image and return the address for a particular 2D face/slice/
+ * layer.  The stImage indicates the cube face and mipmap level.  The slice
+ * of the 3D texture is passed in 'zoffset'.
+ * \param usage  one of the PIPE_TRANSFER_x values
+ * \param x, y, w, h  the region of interest of the 2D image.
+ * \return address of mapping or NULL if any error
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
@@ -194,7 +144,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = st_no_flush_get_tex_transfer(st, pt, stImage->face,
+   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->face,
 						    stImage->level, zoffset,
 						    usage, x, y, w, h);
 
@@ -269,7 +219,7 @@ st_texture_image_data(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < depth; i++) {
-      dst_transfer = st_no_flush_get_tex_transfer(st, dst, face, level, i,
+      dst_transfer = pipe_get_transfer(st->pipe, dst, face, level, i,
 						  PIPE_TRANSFER_WRITE, 0, 0,
 						  u_minify(dst->width0, level),
                                                   u_minify(dst->height0, level));
@@ -289,82 +239,78 @@ st_texture_image_data(struct st_context *st,
 }
 
 
-/* Copy mipmap image between textures
+/**
+ * For debug only: get/print center pixel in the src resource.
+ */
+static void
+print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
+{
+   struct pipe_subresource rect;
+   struct pipe_transfer *xfer;
+   struct pipe_box region;
+   ubyte *map;
+
+   rect.face = 0;
+   rect.level = 0;
+
+   region.x = src->width0 / 2;
+   region.y = src->height0 / 2;
+   region.z = 0;
+   region.width = 1;
+   region.height = 1;
+   region.depth = 1;
+
+   xfer = pipe->get_transfer(pipe, src, rect, PIPE_TRANSFER_READ, &region);
+   map = pipe->transfer_map(pipe, xfer);
+
+   printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
+
+   pipe->transfer_unmap(pipe, xfer);
+   pipe->transfer_destroy(pipe, xfer);
+}
+
+
+/**
+ * Copy the image at level=0 in 'src' to the 'dst' resource at 'dstLevel'.
+ * This is used to copy mipmap images from one texture buffer to another.
+ * This typically happens when our initial guess at the total texture size
+ * is incorrect (see the guess_and_alloc_texture() function).
  */
 void
 st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *dst, GLuint dstLevel,
-                      struct pipe_resource *src,
+                      struct pipe_resource *src, GLuint srcLevel,
                       GLuint face)
 {
-   struct pipe_screen *screen = pipe->screen;
    GLuint width = u_minify(dst->width0, dstLevel); 
    GLuint height = u_minify(dst->height0, dstLevel); 
    GLuint depth = u_minify(dst->depth0, dstLevel); 
-   struct pipe_surface *src_surface;
-   struct pipe_surface *dst_surface;
+   struct pipe_subresource dstsub, srcsub;
    GLuint i;
 
+   assert(u_minify(src->width0, srcLevel) == width);
+   assert(u_minify(src->height0, srcLevel) == height);
+   assert(u_minify(src->depth0, srcLevel) == depth);
+
+   dstsub.face = face;
+   dstsub.level = dstLevel;
+   srcsub.face = face;
+   srcsub.level = srcLevel;
+   /* Loop over 3D image slices */
    for (i = 0; i < depth; i++) {
-      GLuint srcLevel;
 
-      /* find src texture level of needed size */
-      for (srcLevel = 0; srcLevel <= src->last_level; srcLevel++) {
-         if (u_minify(src->width0, srcLevel) == width &&
-             u_minify(src->height0, srcLevel) == height) {
-            break;
-         }
+      if (0)  {
+         print_center_pixel(pipe, src);
       }
-      assert(u_minify(src->width0, srcLevel) == width);
-      assert(u_minify(src->height0, srcLevel) == height);
 
-#if 0
-      {
-         src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
-                                               PIPE_BUFFER_USAGE_CPU_READ);
-         ubyte *map = screen->surface_map(screen, src_surface, PIPE_BUFFER_USAGE_CPU_READ);
-         map += src_surface->width * src_surface->height * 4 / 2;
-         printf("%s center pixel: %d %d %d %d (pt %p[%d] -> %p[%d])\n",
-                __FUNCTION__,
-                map[0], map[1], map[2], map[3],
-                src, srcLevel, dst, dstLevel);
-
-         screen->surface_unmap(screen, src_surface);
-         pipe_surface_reference(&src_surface, NULL);
-      }
-#endif
-
-      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
-                                            PIPE_BIND_BLIT_DESTINATION);
-
-      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
-                                            PIPE_BIND_BLIT_SOURCE);
-
-      pipe->surface_copy(pipe,
-                         dst_surface,
-                         0, 0, /* destX, Y */
-                         src_surface,
-                         0, 0, /* srcX, Y */
-                         width, height);
-
-      pipe_surface_reference(&src_surface, NULL);
-      pipe_surface_reference(&dst_surface, NULL);
+      pipe->resource_copy_region(pipe,
+                                 dst,
+                                 dstsub,
+                                 0, 0, i,/* destX, Y, Z */
+                                 src,
+                                 srcsub,
+                                 0, 0, i,/* srcX, Y, Z */
+                                 width, height);
    }
 }
 
-
-void
-st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_resource *pt,
-			     unsigned int face,
-			     unsigned int level,
-			     enum pipe_transfer_usage usage)
-{
-   struct pipe_context *pipe = st->pipe;
-   unsigned referenced =
-      pipe->is_resource_referenced(pipe, pt, face, level);
-
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (usage & PIPE_TRANSFER_WRITE)))
-      st->pipe->flush(st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-}

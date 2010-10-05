@@ -61,12 +61,9 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
    (void) type;
 
    switch (internalFormat) {
-      /* RGBA formats */
+      /* shallow RGBA formats */
       case 4:
       case GL_RGBA:
-      case GL_RGB10_A2:
-      case GL_RGBA12:
-      case GL_RGBA16:
       case GL_RGBA8:
          return MESA_FORMAT_RGBA8888;
       case GL_RGB5_A1:
@@ -76,12 +73,15 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_RGBA4:
          return MESA_FORMAT_ARGB4444;
 
-      /* RGB formats */
+      /* deep RGBA formats */
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return MESA_FORMAT_RGBA_16;
+
+      /* shallow RGB formats */
       case 3:
       case GL_RGB:
-      case GL_RGB10:
-      case GL_RGB12:
-      case GL_RGB16:
       case GL_RGB8:
          return MESA_FORMAT_RGB888;
       case GL_R3_G3_B2:
@@ -90,6 +90,12 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          return MESA_FORMAT_RGB565_REV; /* just to test another format */
       case GL_RGB5:
          return MESA_FORMAT_RGB565;
+
+      /* deep RGB formats */
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+         return MESA_FORMAT_RGBA_16;
 
       /* Alpha formats */
       case GL_ALPHA:
@@ -375,6 +381,76 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       }
    }
 #endif /* FEATURE_EXT_texture_sRGB */
+
+   if (ctx->Extensions.EXT_texture_integer) {
+      switch (internalFormat) {
+      case GL_RGBA32UI_EXT:
+      case GL_RGB32UI_EXT:
+      case GL_ALPHA32UI_EXT:
+      case GL_INTENSITY32UI_EXT:
+      case GL_LUMINANCE32UI_EXT:
+      case GL_LUMINANCE_ALPHA32UI_EXT:
+         return MESA_FORMAT_RGBA_UINT32;
+      case GL_RGBA16UI_EXT:
+      case GL_RGB16UI_EXT:
+      case GL_ALPHA16UI_EXT:
+      case GL_INTENSITY16UI_EXT:
+      case GL_LUMINANCE16UI_EXT:
+      case GL_LUMINANCE_ALPHA16UI_EXT:
+         return MESA_FORMAT_RGBA_UINT16;
+      case GL_RGBA8UI_EXT:
+      case GL_RGB8UI_EXT:
+      case GL_ALPHA8UI_EXT:
+      case GL_INTENSITY8UI_EXT:
+      case GL_LUMINANCE8UI_EXT:
+      case GL_LUMINANCE_ALPHA8UI_EXT:
+         return MESA_FORMAT_RGBA_UINT8;
+      case GL_RGBA32I_EXT:
+      case GL_RGB32I_EXT:
+      case GL_ALPHA32I_EXT:
+      case GL_INTENSITY32I_EXT:
+      case GL_LUMINANCE32I_EXT:
+      case GL_LUMINANCE_ALPHA32I_EXT:
+         return MESA_FORMAT_RGBA_INT32;
+      case GL_RGBA16I_EXT:
+      case GL_RGB16I_EXT:
+      case GL_ALPHA16I_EXT:
+      case GL_INTENSITY16I_EXT:
+      case GL_LUMINANCE16I_EXT:
+      case GL_LUMINANCE_ALPHA16I_EXT:
+         return MESA_FORMAT_RGBA_INT16;
+      case GL_RGBA8I_EXT:
+      case GL_RGB8I_EXT:
+      case GL_ALPHA8I_EXT:
+      case GL_INTENSITY8I_EXT:
+      case GL_LUMINANCE8I_EXT:
+      case GL_LUMINANCE_ALPHA8I_EXT:
+         return MESA_FORMAT_RGBA_INT8;
+      }
+   }
+
+   if (ctx->Extensions.ARB_texture_rg) {
+      switch (internalFormat) {
+      case GL_R8:
+      case GL_RED:
+      case GL_COMPRESSED_RED:
+	 return MESA_FORMAT_R8;
+
+      case GL_R16:
+         return MESA_FORMAT_R16;
+
+      case GL_RG:
+      case GL_RG8:
+      case GL_COMPRESSED_RG:
+	 return MESA_FORMAT_RG88;
+
+      case GL_RG16:
+	 return MESA_FORMAT_RG1616;
+
+      default:
+         ; /* fallthrough */
+      }
+   }
 
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return MESA_FORMAT_NONE;

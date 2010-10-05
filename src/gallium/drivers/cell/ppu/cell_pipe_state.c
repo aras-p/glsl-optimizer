@@ -125,6 +125,7 @@ cell_set_stencil_ref(struct pipe_context *pipe,
    cell->dirty |= CELL_NEW_DEPTH_STENCIL;
 }
 
+
 static void
 cell_set_clip_state(struct pipe_context *pipe,
                     const struct pipe_clip_state *clip)
@@ -135,6 +136,12 @@ cell_set_clip_state(struct pipe_context *pipe,
    draw_set_clip_state(cell->draw, clip);
 }
 
+
+static void
+cell_set_sample_mask(struct pipe_context *pipe,
+                     unsigned sample_mask)
+{
+}
 
 
 /* Called when driver state tracker notices changes to the viewport
@@ -197,7 +204,7 @@ cell_bind_rasterizer_state(struct pipe_context *pipe, void *rast)
    struct cell_context *cell = cell_context(pipe);
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(cell->draw, rasterizer);
+   draw_set_rasterizer_state(cell->draw, rasterizer, rast);
 
    cell->rasterizer = rasterizer;
 
@@ -274,7 +281,7 @@ cell_set_fragment_sampler_views(struct pipe_context *pipe,
          struct pipe_resource *new_tex = new_view ? new_view->texture : NULL;
 
          pipe_sampler_view_reference(&cell->fragment_sampler_views[i],
-                                     views[i]);
+                                     new_view);
          pipe_resource_reference((struct pipe_resource **) &cell->texture[i],
                                 (struct pipe_resource *) new_tex);
 
@@ -430,7 +437,6 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
 }
 
 
-
 void
 cell_init_state_functions(struct cell_context *cell)
 {
@@ -457,6 +463,7 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.set_blend_color = cell_set_blend_color;
    cell->pipe.set_stencil_ref = cell_set_stencil_ref;
    cell->pipe.set_clip_state = cell_set_clip_state;
+   cell->pipe.set_sample_mask = cell_set_sample_mask;
 
    cell->pipe.set_framebuffer_state = cell_set_framebuffer_state;
 

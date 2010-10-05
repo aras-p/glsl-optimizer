@@ -16,6 +16,7 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_clear.c \
 	intel_extensions.c \
+	intel_extensions_es2.c \
 	intel_mipmap_tree.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
@@ -55,7 +56,7 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
+DRIVER_DEFINES = -I../intel -DI915 \
 	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 

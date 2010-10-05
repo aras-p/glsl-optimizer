@@ -86,7 +86,7 @@ static void rewrite_source(struct radeon_compiler * c,
 	}
 }
 
-void rc_dataflow_swizzles(struct radeon_compiler * c)
+void rc_dataflow_swizzles(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst;
 

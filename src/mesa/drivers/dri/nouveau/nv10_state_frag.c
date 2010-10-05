@@ -63,6 +63,7 @@
 struct combiner_state {
 	GLcontext *ctx;
 	int unit;
+	GLboolean premodulate;
 
 	/* GL state */
 	GLenum mode;
@@ -82,6 +83,7 @@ struct combiner_state {
 			ctx->Texture.Unit[i]._CurrentCombine;	\
 		(rc)->ctx = ctx;				\
 		(rc)->unit = i;					\
+		(rc)->premodulate = c->_NumArgs##chan == 4;	\
 		(rc)->mode = c->Mode##chan;			\
 		(rc)->source = c->Source##chan;			\
 		(rc)->operand = c->Operand##chan;		\
@@ -95,6 +97,9 @@ static uint32_t
 get_input_source(struct combiner_state *rc, int source)
 {
 	switch (source) {
+	case GL_ZERO:
+		return RC_IN_SOURCE(ZERO);
+
 	case GL_TEXTURE:
 		return RC_IN_SOURCE(TEXTURE0) + rc->unit;
 
@@ -228,21 +233,21 @@ setup_combiner(struct combiner_state *rc)
 		break;
 
 	case GL_ADD:
-		INPUT_ARG(rc, A, 0, 0);
-		INPUT_ONE(rc, B, 0);
-		INPUT_ARG(rc, C, 1, 0);
-		INPUT_ONE(rc, D, 0);
-
-		rc->out = RC_OUT_SUM;
-		break;
-
 	case GL_ADD_SIGNED:
-		INPUT_ARG(rc, A, 0, 0);
-		INPUT_ONE(rc, B, 0);
-		INPUT_ARG(rc, C, 1, 0);
-		INPUT_ONE(rc, D, 0);
+		if (rc->premodulate) {
+			INPUT_ARG(rc, A, 0, 0);
+			INPUT_ARG(rc, B, 1, 0);
+			INPUT_ARG(rc, C, 2, 0);
+			INPUT_ARG(rc, D, 3, 0);
+		} else {
+			INPUT_ARG(rc, A, 0, 0);
+			INPUT_ONE(rc, B, 0);
+			INPUT_ARG(rc, C, 1, 0);
+			INPUT_ONE(rc, D, 0);
+		}
 
-		rc->out = RC_OUT_SUM | RC_OUT_BIAS;
+		rc->out = RC_OUT_SUM |
+			(rc->mode == GL_ADD_SIGNED ? RC_OUT_BIAS : 0);
 		break;
 
 	case GL_INTERPOLATE:

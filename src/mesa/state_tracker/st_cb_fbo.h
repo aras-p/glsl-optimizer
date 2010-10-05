@@ -29,6 +29,15 @@
 #ifndef ST_CB_FBO_H
 #define ST_CB_FBO_H
 
+#include "main/compiler.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
+
+struct dd_function_table;
+struct pipe_context;
 
 /**
  * Derived renderbuffer class.  Just need to add a pointer to the
@@ -73,9 +82,15 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);
 
+/* XXX unused ? */
 extern struct pipe_sampler_view *
 st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe);
+
+
+extern GLboolean
+st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
+                             const struct gl_renderbuffer_attachment *stencil);
 
 
 #endif /* ST_CB_FBO_H */

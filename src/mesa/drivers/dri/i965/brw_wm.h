@@ -34,7 +34,7 @@
 #define BRW_WM_H
 
 
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 
@@ -59,15 +59,16 @@
 
 struct brw_wm_prog_key {
    GLuint source_depth_reg:3;
+   GLuint source_w_reg:3;
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
-   GLuint nr_depth_regs:3;
+   GLuint nr_payload_regs:4;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;
    GLuint flat_shade:1;
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint runtime_check_aads_emit:1;
-   GLuint nr_color_regions:2;
+   GLuint nr_color_regions:5;
    
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
@@ -181,7 +182,11 @@ struct brw_wm_instruction {
 #define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
+#define NUM_FILES	  (PROGRAM_PAYLOAD + 1)
+
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
+#define PAYLOAD_W         (FRAG_ATTRIB_MAX + 1)
+#define PAYLOAD_FP_REG_MAX (FRAG_ATTRIB_MAX + 2)
 
 struct brw_wm_compile {
    struct brw_compile func;
@@ -224,7 +229,7 @@ struct brw_wm_compile {
    } payload;
 
 
-   const struct brw_wm_ref *pass0_fp_reg[PROGRAM_PAYLOAD+1][256][4];
+   const struct brw_wm_ref *pass0_fp_reg[NUM_FILES][256][4];
 
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
@@ -252,7 +257,7 @@ struct brw_wm_compile {
    struct {
       GLboolean inited;
       struct brw_reg reg;
-   } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+   } wm_regs[NUM_FILES][256][4];
 
    GLboolean used_grf[BRW_WM_MAX_GRF];
    GLuint first_free_grf;
@@ -299,13 +304,15 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 void brw_wm_print_program( struct brw_wm_compile *c,
 			   const char *stage );
 
-void brw_wm_lookup_iz( GLuint line_aa,
+void brw_wm_lookup_iz( struct intel_context *intel,
+		       GLuint line_aa,
 		       GLuint lookup,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,
@@ -343,6 +350,11 @@ void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
 		   GLuint mask,
 		   const struct brw_reg *arg0);
+void emit_dp2(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
 void emit_dp3(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -367,6 +379,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 void emit_frontfacing(struct brw_compile *p,
 		      const struct brw_reg *dst,
 		      GLuint mask);
+void emit_kil_nv(struct brw_wm_compile *c);
 void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
@@ -425,6 +438,10 @@ void emit_sop(struct brw_compile *p,
 	      GLuint cond,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0);
 void emit_tex(struct brw_wm_compile *c,
 	      struct brw_reg *dst,
 	      GLuint dst_flags,
@@ -449,5 +466,14 @@ void emit_xpd(struct brw_compile *p,
 	      GLuint mask,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+
+GLboolean brw_compile_shader(GLcontext *ctx,
+			     struct gl_shader *shader);
+GLboolean brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
+struct gl_shader *brw_new_shader(GLcontext *ctx, GLuint name, GLuint type);
+struct gl_shader_program *brw_new_shader_program(GLcontext *ctx, GLuint name);
+
+GLboolean brw_do_channel_expressions(struct exec_list *instructions);
+GLboolean brw_do_vector_splitting(struct exec_list *instructions);
 
 #endif

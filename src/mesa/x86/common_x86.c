@@ -55,7 +55,7 @@
 /** Bitmask of X86_FEATURE_x bits */
 int _mesa_x86_cpu_features = 0x0;
 
-
+static int detection_debug = GL_FALSE;
 
 /* No reason for this to be public.
  */
@@ -190,7 +190,8 @@ void _mesa_check_os_sse_support( void )
 #else
    /* Do nothing on other platforms for now.
     */
-   _mesa_debug(NULL, "Not testing OS support for SSE, leaving enabled.\n");
+   if (detection_debug)
+      _mesa_debug(NULL, "Not testing OS support for SSE, leaving enabled.\n");
 #endif /* __FreeBSD__ */
 }
 
@@ -232,7 +233,8 @@ _mesa_get_x86_features(void)
        _mesa_x86_cpuid(0, &result, (GLuint *)(cpu_vendor + 0), (GLuint *)(cpu_vendor + 8), (GLuint *)(cpu_vendor + 4));
        cpu_vendor[12] = '\0';
 
-       _mesa_debug(NULL, "CPU vendor: %s\n", cpu_vendor);
+       if (detection_debug)
+	  _mesa_debug(NULL, "CPU vendor: %s\n", cpu_vendor);
 
        /* get cpu features */
        cpu_features = _mesa_x86_cpuid_edx(1);
@@ -284,10 +286,51 @@ _mesa_get_x86_features(void)
 		   _mesa_x86_cpuid(0x80000002+ofs, (GLuint *)(cpu_name + (16*ofs)+0), (GLuint *)(cpu_name + (16*ofs)+4), (GLuint *)(cpu_name + (16*ofs)+8), (GLuint *)(cpu_name + (16*ofs)+12));
 	       cpu_name[48] = '\0'; /* the name should be NULL terminated, but just to be sure */
 
-	       _mesa_debug(NULL, "CPU name: %s\n", cpu_name);
+	       if (detection_debug)
+		  _mesa_debug(NULL, "CPU name: %s\n", cpu_name);
 	   }
        }
 
    }
+
+#ifdef USE_MMX_ASM
+   if ( cpu_has_mmx ) {
+      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
+	 if (detection_debug)
+	    _mesa_debug(NULL, "MMX cpu detected.\n");
+      } else {
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
+      }
+   }
+#endif
+
+#ifdef USE_3DNOW_ASM
+   if ( cpu_has_3dnow ) {
+      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
+	 if (detection_debug)
+	    _mesa_debug(NULL, "3DNow! cpu detected.\n");
+      } else {
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
+      }
+   }
+#endif
+
+#ifdef USE_SSE_ASM
+   if ( cpu_has_xmm ) {
+      if ( _mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
+	 if (detection_debug)
+	    _mesa_debug(NULL, "SSE cpu detected.\n");
+         if ( _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
+            _mesa_check_os_sse_support();
+         }
+      } else {
+         _mesa_debug(NULL, "SSE cpu detected, but switched off by user.\n");
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+      }
+   }
+#endif
+
 #endif /* USE_X86_ASM */
+
+   (void) detection_debug;
 }

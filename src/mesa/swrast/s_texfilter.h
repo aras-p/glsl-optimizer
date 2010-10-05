@@ -27,7 +27,8 @@
 #define S_TEXFILTER_H
 
 
-#include "swrast.h"
+#include "main/mtypes.h"
+#include "s_context.h"
 
 
 extern texture_sample_func

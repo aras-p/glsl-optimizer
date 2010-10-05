@@ -161,9 +161,7 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
    if (offset == NULL)
-      return NULL;
-
-   draw_alloc_temp_verts( &offset->stage, 3 );
+      goto fail;
 
    offset->stage.draw = draw;
    offset->stage.name = "offset";
@@ -175,5 +173,14 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
    offset->stage.reset_stipple_counter = offset_reset_stipple_counter;
    offset->stage.destroy = offset_destroy;
 
+   if (!draw_alloc_temp_verts( &offset->stage, 3 ))
+      goto fail;
+
    return &offset->stage;
+
+fail:
+   if (offset)
+      offset->stage.destroy( &offset->stage );
+
+   return NULL;
 }

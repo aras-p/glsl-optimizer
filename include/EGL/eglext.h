@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright (c) 2007-2009 The Khronos Group Inc.
+** Copyright (c) 2007-2010 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -34,8 +34,8 @@ extern "C" {
 
 /* Header file version number */
 /* Current version at http://www.khronos.org/registry/egl/ */
-/* $Revision: 10185 $ on $Date: 2010-01-22 11:38:01 -0800 (Fri, 22 Jan 2010) $ */
-#define EGL_EGLEXT_VERSION 5
+/* $Revision: 12124 $ on $Date: 2010-07-27 20:12:35 -0700 (Tue, 27 Jul 2010) $ */
+#define EGL_EGLEXT_VERSION 7
 
 #ifndef EGL_KHR_config_attribs
 #define EGL_KHR_config_attribs 1
@@ -120,6 +120,30 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYIMAGEKHRPROC) (EGLDisplay dpy, EGL
 #define EGL_GL_RENDERBUFFER_KHR			0x30B9	/* eglCreateImageKHR target */
 #endif
 
+#ifndef EGL_MESA_drm_image
+#define EGL_MESA_drm_image 1
+#define EGL_DRM_BUFFER_FORMAT_MESA		0x31D0	/* eglCreateImageKHR attribute */
+#define EGL_DRM_BUFFER_USE_MESA			0x31D1
+
+/* EGL_DRM_BUFFER_FORMAT_MESA tokens */
+#define EGL_DRM_BUFFER_FORMAT_ARGB32_MESA	0x31D2
+
+/* EGL_DRM_BUFFER_USE_MESA bits */
+#define EGL_DRM_BUFFER_USE_SCANOUT_MESA		0x0001
+#define EGL_DRM_BUFFER_USE_SHARE_MESA		0x0002
+
+#define EGL_DRM_BUFFER_MESA			0x31D3  /* eglCreateImageKHR target */
+#define EGL_DRM_BUFFER_STRIDE_MESA		0x31D4	/* eglCreateImageKHR attribute */
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLImageKHR EGLAPIENTRY eglCreateDRMImageMESA(EGLDisplay dpy, const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglExportDRMImageMESA(EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+typedef EGLImageKHR (EGLAPIENTRYP PFNEGLCREATEDRMIMAGEMESA) (EGLDisplay dpy, const EGLint *attrib_list);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDRMIMAGEMESA) (EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+
+#if KHRONOS_SUPPORT_INT64   /* EGLTimeKHR requires 64-bit uint support */
 #ifndef EGL_KHR_reusable_sync
 #define EGL_KHR_reusable_sync 1
 
@@ -149,6 +173,7 @@ typedef EGLint (EGLAPIENTRYP PFNEGLCLIENTWAITSYNCKHRPROC) (EGLDisplay dpy, EGLSy
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLSIGNALSYNCKHRPROC) (EGLDisplay dpy, EGLSyncKHR sync, EGLenum mode);
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLGETSYNCATTRIBKHRPROC) (EGLDisplay dpy, EGLSyncKHR sync, EGLint attribute, EGLint *value);
 #endif
+#endif
 
 /* EGL_MESA_screen extension  >>> PRELIMINARY <<< */
 #ifndef EGL_MESA_screen_surface
@@ -165,8 +190,8 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLGETSYNCATTRIBKHRPROC) (EGLDisplay dpy, EG
 #define EGL_INTERLACED_MESA                    0x4008
 #define EGL_SCREEN_BIT_MESA                    0x08
 
-typedef uint32_t EGLScreenMESA;
-typedef uint32_t EGLModeMESA;
+typedef khronos_uint32_t EGLScreenMESA;
+typedef khronos_uint32_t EGLModeMESA;
 
 #ifdef EGL_EGLEXT_PROTOTYPES
 EGLAPI EGLBoolean EGLAPIENTRY eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
@@ -208,6 +233,17 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLCOPYCONTEXTMESA) (EGLDisplay dpy, EGLCont
 
 #endif /* EGL_MESA_copy_context */
 
+#ifndef EGL_MESA_drm_display
+#define EGL_MESA_drm_display 1
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLDisplay EGLAPIENTRY eglGetDRMDisplayMESA(int fd);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+
+typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETDRMDISPLAYMESA) (int fd);
+
+#endif /* EGL_MESA_drm_display */
+
 #ifndef EGL_KHR_image_base
 #define EGL_KHR_image_base 1
 /* Most interfaces defined by EGL_KHR_image_pixmap above */
@@ -226,6 +262,120 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLCOPYCONTEXTMESA) (EGLDisplay dpy, EGLCont
 #define EGL_CONTEXT_PRIORITY_MEDIUM_IMG		0x3102
 #define EGL_CONTEXT_PRIORITY_LOW_IMG		0x3103
 #endif
+
+#ifndef EGL_KHR_lock_surface2
+#define EGL_KHR_lock_surface2 1
+#define EGL_BITMAP_PIXEL_SIZE_KHR		0x3110
+#endif
+
+#ifndef EGL_NV_coverage_sample
+#define EGL_NV_coverage_sample 1
+#define EGL_COVERAGE_BUFFERS_NV 0x30E0
+#define EGL_COVERAGE_SAMPLES_NV 0x30E1
+#endif
+
+#ifndef EGL_NV_depth_nonlinear
+#define EGL_NV_depth_nonlinear 1
+#define EGL_DEPTH_ENCODING_NV 0x30E2
+#define EGL_DEPTH_ENCODING_NONE_NV 0
+#define EGL_DEPTH_ENCODING_NONLINEAR_NV 0x30E3
+#endif
+
+#if KHRONOS_SUPPORT_INT64   /* EGLTimeNV requires 64-bit uint support */
+#ifndef EGL_NV_sync
+#define EGL_NV_sync 1
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_NV	0x30E6
+#define EGL_SYNC_STATUS_NV			0x30E7
+#define EGL_SIGNALED_NV				0x30E8
+#define EGL_UNSIGNALED_NV			0x30E9
+#define EGL_SYNC_FLUSH_COMMANDS_BIT_NV		0x0001
+#define EGL_FOREVER_NV				0xFFFFFFFFFFFFFFFFull
+#define EGL_ALREADY_SIGNALED_NV			0x30EA
+#define EGL_TIMEOUT_EXPIRED_NV			0x30EB
+#define EGL_CONDITION_SATISFIED_NV		0x30EC
+#define EGL_SYNC_TYPE_NV			0x30ED
+#define EGL_SYNC_CONDITION_NV			0x30EE
+#define EGL_SYNC_FENCE_NV			0x30EF
+#define EGL_NO_SYNC_NV				((EGLSyncNV)0)
+typedef void* EGLSyncNV;
+typedef khronos_utime_nanoseconds_t EGLTimeNV;
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLSyncNV eglCreateFenceSyncNV (EGLDisplay dpy, EGLenum condition, const EGLint *attrib_list);
+EGLBoolean eglDestroySyncNV (EGLSyncNV sync);
+EGLBoolean eglFenceNV (EGLSyncNV sync);
+EGLint eglClientWaitSyncNV (EGLSyncNV sync, EGLint flags, EGLTimeNV timeout);
+EGLBoolean eglSignalSyncNV (EGLSyncNV sync, EGLenum mode);
+EGLBoolean eglGetSyncAttribNV (EGLSyncNV sync, EGLint attribute, EGLint *value);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+typedef EGLSyncNV (EGLAPIENTRYP PFNEGLCREATEFENCESYNCNVPROC) (EGLDisplay dpy, EGLenum condition, const EGLint *attrib_list);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYSYNCNVPROC) (EGLSyncNV sync);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLFENCENVPROC) (EGLSyncNV sync);
+typedef EGLint (EGLAPIENTRYP PFNEGLCLIENTWAITSYNCNVPROC) (EGLSyncNV sync, EGLint flags, EGLTimeNV timeout);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSIGNALSYNCNVPROC) (EGLSyncNV sync, EGLenum mode);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLGETSYNCATTRIBNVPROC) (EGLSyncNV sync, EGLint attribute, EGLint *value);
+#endif
+#endif
+
+#if KHRONOS_SUPPORT_INT64   /* Dependent on EGL_KHR_reusable_sync which requires 64-bit uint support */
+#ifndef EGL_KHR_fence_sync
+#define EGL_KHR_fence_sync 1
+/* Reuses most tokens and entry points from EGL_KHR_reusable_sync */
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR	0x30F0
+#define EGL_SYNC_CONDITION_KHR			0x30F8
+#define EGL_SYNC_FENCE_KHR			0x30F9
+#endif
+#endif
+
+#ifndef EGL_HI_clientpixmap
+#define EGL_HI_clientpixmap 1
+
+/* Surface Attribute */
+#define EGL_CLIENT_PIXMAP_POINTER_HI		0x8F74
+/*
+ * Structure representing a client pixmap
+ * (pixmap's data is in client-space memory).
+ */
+struct EGLClientPixmapHI
+{
+	void*		pData;
+	EGLint		iWidth;
+	EGLint		iHeight;
+	EGLint		iStride;
+};
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLSurface EGLAPIENTRY eglCreatePixmapSurfaceHI(EGLDisplay dpy, EGLConfig config, struct EGLClientPixmapHI* pixmap);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+typedef EGLSurface (EGLAPIENTRYP PFNEGLCREATEPIXMAPSURFACEHIPROC) (EGLDisplay dpy, EGLConfig config, struct EGLClientPixmapHI* pixmap);
+#endif	/* EGL_HI_clientpixmap */
+
+#ifndef EGL_HI_colorformats
+#define EGL_HI_colorformats 1
+/* Config Attribute */
+#define EGL_COLOR_FORMAT_HI			0x8F70
+/* Color Formats */
+#define EGL_COLOR_RGB_HI			0x8F71
+#define EGL_COLOR_RGBA_HI			0x8F72
+#define EGL_COLOR_ARGB_HI			0x8F73
+#endif /* EGL_HI_colorformats */
+
+#ifndef EGL_NOK_swap_region
+#define EGL_NOK_swap_region 1
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint* rects);
+#endif
+
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGIONNOK) (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint* rects);
+#endif
+
+
+#ifndef EGL_NOK_texture_from_pixmap
+#define EGL_NOK_texture_from_pixmap 1
+
+#define EGL_Y_INVERTED_NOK			0x307F
+#endif /* EGL_NOK_texture_from_pixmap */
+
 
 #ifdef __cplusplus
 }

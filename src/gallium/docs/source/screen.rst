@@ -1,3 +1,5 @@
+.. _screen:
+
 Screen
 ======
 
@@ -33,7 +35,10 @@ The integer capabilities:
 * ``MAX_RENDER_TARGETS``: The maximum number of render targets that may be
   bound.
 * ``OCCLUSION_QUERY``: Whether occlusion queries are available.
-* ``TEXTURE_SHADOW_MAP``: XXX
+* ``TIMER_QUERY``: Whether timer queries are available.
+* ``TEXTURE_SHADOW_MAP``: indicates whether the fragment shader hardware
+  can do the depth texture / Z comparison operation in TEX instructions
+  for shadow testing.
 * ``MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
   for a 2D texture.
 * ``MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
@@ -52,7 +57,13 @@ The integer capabilities:
   from color blend equations, in :ref:`Blend` state.
 * ``SM3``: Whether the vertex shader and fragment shader support equivalent
   opcodes to the Shader Model 3 specification. XXX oh god this is horrible
-* ``MAX_PREDICATE_REGISTERS``: XXX
+* ``MAX_PREDICATE_REGISTERS``: indicates the number of predicate registers
+  available.  Predicate register may be set as a side-effect of ALU
+  instructions to indicate less than, greater than or equal to zero.
+  Later instructions can use a predicate register to control writing to
+  each channel of destination registers.  NOTE: predicate registers have
+  not been fully implemented in Gallium at this time.  See the
+  GL_NV_fragment_program extension for more info (look for "condition codes").
 * ``MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
   the vertex and fragment shader, inclusive.
 * ``MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound
@@ -101,6 +112,22 @@ The floating-point capabilities:
 * ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
   ``GUARD_BAND_BOTTOM``: XXX
 
+Fragment shader limits:
+
+* ``PIPE_CAP_MAX_FS_INSTRUCTIONS``: The maximum number of instructions.
+* ``PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS``: The maximum number of arithmetic instructions.
+* ``PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS``: The maximum number of texture instructions.
+* ``PIPE_CAP_MAX_FS_TEX_INDIRECTIONS``: The maximum number of texture indirections.
+* ``PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH``: The maximum nested control flow depth.
+* ``PIPE_CAP_MAX_FS_INPUTS``: The maximum number of input registers.
+* ``PIPE_CAP_MAX_FS_CONSTS``: The maximum number of constants.
+* ``PIPE_CAP_MAX_FS_TEMPS``: The maximum number of temporary registers.
+* ``PIPE_CAP_MAX_FS_ADDRS``: The maximum number of address registers.
+* ``PIPE_CAP_MAX_FS_PREDS``: The maximum number of predicate registers.
+
+Vertex shader limits:
+
+* ``PIPE_CAP_MAX_VS_*``: Identical to ``PIPE_CAP_MAX_FS_*``.
 
 
 .. _pipe_bind:
@@ -128,9 +155,6 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_VERTEX_BUFFER``: A vertex buffer.
 * ``PIPE_BIND_INDEX_BUFFER``: An vertex index/element buffer.
 * ``PIPE_BIND_CONSTANT_BUFFER``: A buffer of shader constants.
-* ``PIPE_BIND_BLIT_SOURCE``: A blit source, as given to surface_copy.
-* ``PIPE_BIND_BLIT_DESTINATION``: A blit destination, as given to surface_copy
-  and surface_fill.
 * ``PIPE_BIND_TRANSFER_WRITE``: A transfer object which will be written to.
 * ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
 * ``PIPE_BIND_CUSTOM``:
@@ -217,12 +241,14 @@ Determine if a resource in the given format can be used in a specific manner.
 
 **target** one of the PIPE_TEXTURE_x flags
 
+**sample_count** the number of samples. 0 and 1 mean no multisampling,
+the maximum allowed legal value is 32.
+
 **bindings** is a bitmask of :ref:`PIPE_BIND` flags.
 
 **geom_flags** is a bitmask of PIPE_TEXTURE_GEOM_x flags.
 
 Returns TRUE if all usages can be satisfied.
-
 
 .. _resource_create:
 

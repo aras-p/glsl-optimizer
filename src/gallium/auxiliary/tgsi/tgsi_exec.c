@@ -557,6 +557,23 @@ print_temp(const struct tgsi_exec_machine *mach, uint index)
 #endif
 
 
+void
+tgsi_exec_set_constant_buffers(struct tgsi_exec_machine *mach,
+                               unsigned num_bufs,
+                               const void **bufs,
+                               const unsigned *buf_sizes)
+{
+   unsigned i;
+
+   for (i = 0; i < num_bufs; i++) {
+      mach->Consts[i] = bufs[i];
+      mach->ConstsSize[i] = buf_sizes[i];
+   }
+}
+
+
+
+
 /**
  * Check if there's a potential src/dst register data dependency when
  * using SOA execution.
@@ -588,8 +605,10 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       if ((inst->Src[i].Register.File ==
            inst->Dst[0].Register.File) &&
-          (inst->Src[i].Register.Index ==
-           inst->Dst[0].Register.Index)) {
+          ((inst->Src[i].Register.Index ==
+            inst->Dst[0].Register.Index) ||
+	   inst->Src[i].Register.Indirect ||
+	   inst->Dst[0].Register.Indirect)) {
          /* loop over dest channels */
          uint channelsWritten = 0x0;
          FOR_EACH_ENABLED_CHANNEL(*inst, chan) {
@@ -621,12 +640,10 @@ tgsi_exec_machine_bind_shader(
 {
    uint k;
    struct tgsi_parse_context parse;
-   struct tgsi_exec_labels *labels = &mach->Labels;
    struct tgsi_full_instruction *instructions;
    struct tgsi_full_declaration *declarations;
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
-   uint instno = 0;
 
 #if 0
    tgsi_dump(tokens, 0);
@@ -634,8 +651,29 @@ tgsi_exec_machine_bind_shader(
 
    util_init_math();
 
+   if (numSamplers) {
+      assert(samplers);
+   }
+
    mach->Tokens = tokens;
    mach->Samplers = samplers;
+
+   if (!tokens) {
+      /* unbind and free all */
+      if (mach->Declarations) {
+         FREE( mach->Declarations );
+      }
+      mach->Declarations = NULL;
+      mach->NumDeclarations = 0;
+
+      if (mach->Instructions) {
+         FREE( mach->Instructions );
+      }
+      mach->Instructions = NULL;
+      mach->NumInstructions = 0;
+
+      return;
+   }
 
    k = tgsi_parse_init (&parse, mach->Tokens);
    if (k != TGSI_PARSE_OK) {
@@ -645,7 +683,6 @@ tgsi_exec_machine_bind_shader(
 
    mach->Processor = parse.FullHeader.Processor.Processor;
    mach->ImmLimit = 0;
-   labels->count = 0;
 
    declarations = (struct tgsi_full_declaration *)
       MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
@@ -663,7 +700,6 @@ tgsi_exec_machine_bind_shader(
    }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      uint pointer = parse.Position;
       uint i;
 
       tgsi_parse_token( &parse );
@@ -684,6 +720,19 @@ tgsi_exec_machine_bind_shader(
                  reg <= parse.FullToken.FullDeclaration.Range.Last;
                  ++reg) {
                ++mach->NumOutputs;
+            }
+         }
+         if (parse.FullToken.FullDeclaration.Declaration.File ==
+             TGSI_FILE_IMMEDIATE_ARRAY) {
+            unsigned reg;
+            struct tgsi_full_declaration *decl =
+               &parse.FullToken.FullDeclaration;
+            debug_assert(decl->Range.Last < TGSI_EXEC_NUM_IMMEDIATES);
+            for (reg = decl->Range.First; reg <= decl->Range.Last; ++reg) {
+               for( i = 0; i < 4; i++ ) {
+                  int idx = reg * 4 + i;
+                  mach->ImmArray[reg][i] = decl->ImmediateData.u[idx].Float;
+               }
             }
          }
          memcpy(declarations + numDeclarations,
@@ -707,11 +756,6 @@ tgsi_exec_machine_bind_shader(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         assert( labels->count < MAX_LABELS );
-
-         labels->labels[labels->count][0] = instno;
-         labels->labels[labels->count][1] = pointer;
-         labels->count++;
 
          /* save expanded instruction */
          if (numInstructions == maxInstructions) {
@@ -801,7 +845,9 @@ void
 tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
 {
    if (mach) {
-      FREE(mach->Instructions);
+      if (mach->Instructions)
+         FREE(mach->Instructions);
+      if (mach->Declarations)
       FREE(mach->Declarations);
    }
 
@@ -1017,6 +1063,8 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
 {
    uint i;
 
+   assert(swizzle < 4);
+
    switch (file) {
    case TGSI_FILE_CONSTANT:
       for (i = 0; i < QUAD_SIZE; i++) {
@@ -1026,9 +1074,23 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
          if (index->i[i] < 0) {
             chan->u[i] = 0;
          } else {
-            const uint *p = (const uint *)mach->Consts[index2D->i[i]];
-
-            chan->u[i] = p[index->i[i] * 4 + swizzle];
+            /* NOTE: copying the const value as a uint instead of float */
+            const uint constbuf = index2D->i[i];
+            const uint *buf = (const uint *)mach->Consts[constbuf];
+            const int pos = index->i[i] * 4 + swizzle;
+            /* const buffer bounds check */
+            if (pos < 0 || pos >= mach->ConstsSize[constbuf]) {
+               if (0) {
+                  /* Debug: print warning */
+                  static int count = 0;
+                  if (count++ < 100)
+                     debug_printf("TGSI Exec: const buffer index %d"
+                                  " out of bounds\n", pos);
+               }
+               chan->u[i] = 0;
+            }
+            else
+               chan->u[i] = buf[pos];
          }
       }
       break;
@@ -1036,8 +1098,16 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
    case TGSI_FILE_INPUT:
    case TGSI_FILE_SYSTEM_VALUE:
       for (i = 0; i < QUAD_SIZE; i++) {
-         /* XXX: 2D indexing */
-         chan->u[i] = mach->Inputs[index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i]].xyzw[swizzle].u[i];
+         /*
+         if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
+            debug_printf("Fetching Input[%d] (2d=%d, 1d=%d)\n",
+                         index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i],
+                         index2D->i[i], index->i[i]);
+                         }*/
+         int pos = index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i];
+         assert(pos >= 0);
+         assert(pos < Elements(mach->Inputs));
+         chan->u[i] = mach->Inputs[pos].xyzw[swizzle].u[i];
       }
       break;
 
@@ -1050,12 +1120,30 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
       }
       break;
 
+   case TGSI_FILE_TEMPORARY_ARRAY:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] < TGSI_EXEC_NUM_TEMPS);
+         assert(index2D->i[i] < TGSI_EXEC_NUM_TEMP_ARRAYS);
+
+         chan->u[i] =
+            mach->TempArray[index2D->i[i]][index->i[i]].xyzw[swizzle].u[i];
+      }
+      break;
+
    case TGSI_FILE_IMMEDIATE:
       for (i = 0; i < QUAD_SIZE; i++) {
          assert(index->i[i] >= 0 && index->i[i] < (int)mach->ImmLimit);
          assert(index2D->i[i] == 0);
 
          chan->f[i] = mach->Imms[index->i[i]][swizzle];
+      }
+      break;
+
+   case TGSI_FILE_IMMEDIATE_ARRAY:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index2D->i[i] == 0);
+
+         chan->f[i] = mach->ImmArray[index->i[i]][swizzle];
       }
       break;
 
@@ -1139,7 +1227,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
       index2.i[1] =
       index2.i[2] =
       index2.i[3] = reg->Indirect.Index;
-
+      assert(reg->Indirect.File == TGSI_FILE_ADDRESS);
       /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
       fetch_src_file_channel(mach,
@@ -1270,6 +1358,7 @@ store_dest(struct tgsi_exec_machine *mach,
    uint i;
    union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
+   union tgsi_exec_channel index2D;
    uint execmask = mach->ExecMask;
    int offset = 0;  /* indirection offset */
    int index;
@@ -1315,6 +1404,77 @@ store_dest(struct tgsi_exec_machine *mach,
       offset = indir_index.i[0];
    }
 
+   /* There is an extra source register that is a second
+    * subscript to a register file. Effectively it means that
+    * the register file is actually a 2D array of registers.
+    *
+    *    file[3][1],
+    *    where:
+    *       [3] = Dimension.Index
+    */
+   if (reg->Register.Dimension) {
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = reg->Dimension.Index;
+
+      /* Again, the second subscript index can be addressed indirectly
+       * identically to the first one.
+       * Nothing stops us from indirectly addressing the indirect register,
+       * but there is no need for that, so we won't exercise it.
+       *
+       *    file[ind[4].y+3][1],
+       *    where:
+       *       ind = DimIndirect.File
+       *       [4] = DimIndirect.Index
+       *       .y = DimIndirect.SwizzleX
+       */
+      if (reg->Dimension.Indirect) {
+         union tgsi_exec_channel index2;
+         union tgsi_exec_channel indir_index;
+         const uint execmask = mach->ExecMask;
+         unsigned swizzle;
+         uint i;
+
+         index2.i[0] =
+         index2.i[1] =
+         index2.i[2] =
+         index2.i[3] = reg->DimIndirect.Index;
+
+         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
+         fetch_src_file_channel(mach,
+                                reg->DimIndirect.File,
+                                swizzle,
+                                &index2,
+                                &ZeroVec,
+                                &indir_index);
+
+         index2D.i[0] += indir_index.i[0];
+         index2D.i[1] += indir_index.i[1];
+         index2D.i[2] += indir_index.i[2];
+         index2D.i[3] += indir_index.i[3];
+
+         /* for disabled execution channels, zero-out the index to
+          * avoid using a potential garbage value.
+          */
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if ((execmask & (1 << i)) == 0) {
+               index2D.i[i] = 0;
+            }
+         }
+      }
+
+      /* If by any chance there was a need for a 3D array of register
+       * files, we would have to check whether Dimension is followed
+       * by a dimension register and continue the saga.
+       */
+   } else {
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = 0;
+   }
+
    switch (reg->Register.File) {
    case TGSI_FILE_NULL:
       dst = &null;
@@ -1341,16 +1501,19 @@ store_dest(struct tgsi_exec_machine *mach,
       dst = &mach->Temps[offset + index].xyzw[chan_index];
       break;
 
+   case TGSI_FILE_TEMPORARY_ARRAY:
+      index = reg->Register.Index;
+      assert( index < TGSI_EXEC_NUM_TEMPS );
+      assert( index2D.i[0] < TGSI_EXEC_NUM_TEMP_ARRAYS );
+      /* XXX we use index2D.i[0] here but somehow we might
+       * end up with someone trying to store indirectly in
+       * different buffers */
+      dst = &mach->TempArray[index2D.i[0]][offset + index].xyzw[chan_index];
+      break;
+
    case TGSI_FILE_ADDRESS:
       index = reg->Register.Index;
       dst = &mach->Addrs[index].xyzw[chan_index];
-      break;
-
-   case TGSI_FILE_LOOP:
-      assert(reg->Register.Index == 0);
-      assert(mach->LoopCounterStackTop > 0);
-      assert(chan_index == CHAN_X);
-      dst = &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[chan_index];
       break;
 
    case TGSI_FILE_PREDICATE:
@@ -1532,6 +1695,19 @@ emit_primitive(struct tgsi_exec_machine *mach)
       mach->Primitives[*prim_count] = 0;
    }
 }
+
+static void
+conditional_emit_primitive(struct tgsi_exec_machine *mach)
+{
+   if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
+      int emitted_verts =
+         mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]];
+      if (emitted_verts) {
+         emit_primitive(mach);
+      }
+   }
+}
+
 
 /*
  * Fetch four texture samples using STR texture coordinates.
@@ -3065,6 +3241,8 @@ exec_instruction(
 
          if (mach->CallStackTop == 0) {
             /* returning from main() */
+            mach->CondStackTop = 0;
+            mach->LoopStackTop = 0;
             *pc = -1;
             return;
          }
@@ -3133,7 +3311,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_DIV:
-      assert( 0 );
+      exec_vector_binary(mach, inst, micro_div, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DP2:
@@ -3182,6 +3360,9 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_END:
+      /* make sure we end primitives which haven't
+       * been explicitly emitted */
+      conditional_emit_primitive(mach);
       /* halt execution */
       *pc = -1;
       break;
@@ -3590,6 +3771,9 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    }
 #endif
 
+   /* Strictly speaking, these assertions aren't really needed but they
+    * can potentially catch some bugs in the control flow code.
+    */
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);

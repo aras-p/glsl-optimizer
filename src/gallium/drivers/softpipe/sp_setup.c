@@ -111,34 +111,13 @@ struct setup_context {
    uint numFragsWritten;  /**< per primitive */
 #endif
 
-   unsigned winding;		/* which winding to cull */
+   unsigned cull_face;		/* which faces cull */
    unsigned nr_vertex_attrs;
 };
 
 
 
 
-/**
- * Do triangle cull test using tri determinant (sign indicates orientation)
- * \return true if triangle is to be culled.
- */
-static INLINE boolean
-cull_tri(const struct setup_context *setup, float det)
-{
-   if (det != 0) {   
-      /* if (det < 0 then Z points toward camera and triangle is 
-       * counter-clockwise winding.
-       */
-      unsigned winding = (det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
-
-      if ((winding & setup->winding) == 0)
-	 return FALSE;
-   }
-
-   /* Culled:
-    */
-   return TRUE;
-}
 
 
 
@@ -304,7 +283,10 @@ setup_sort_vertices(struct setup_context *setup,
                     const float (*v1)[4],
                     const float (*v2)[4])
 {
-   setup->vprovoke = v2;
+   if (setup->softpipe->rasterizer->flatshade_first)
+      setup->vprovoke = v0;
+   else
+      setup->vprovoke = v2;
 
    /* determine bottom to top order of vertices */
    {
@@ -390,8 +372,16 @@ setup_sort_vertices(struct setup_context *setup,
     * 0 = front-facing, 1 = back-facing
     */
    setup->facing = 
-      ((det > 0.0) ^ 
-       (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW));
+      ((det < 0.0) ^ 
+       (setup->softpipe->rasterizer->front_ccw));
+
+   {
+      unsigned face = setup->facing == 0 ? PIPE_FACE_FRONT : PIPE_FACE_BACK;
+
+      if (face & setup->cull_face)
+	 return FALSE;
+   }
+
 
    /* Prepare pixel offset for rasterisation:
     *  - pixel center (0.5, 0.5) for GL, or
@@ -829,11 +819,9 @@ sp_setup_tri(struct setup_context *setup,
    setup->numFragsWritten = 0;
 #endif
 
-   if (cull_tri( setup, det ))
-      return;
-
    if (!setup_sort_vertices( setup, det, v0, v1, v2 ))
       return;
+
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -1417,14 +1405,14 @@ sp_setup_prepare(struct setup_context *setup)
    sp->quad.first->begin( sp->quad.first );
 
    if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
-       sp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
-       sp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
+       sp->rasterizer->fill_front == PIPE_POLYGON_MODE_FILL &&
+       sp->rasterizer->fill_back == PIPE_POLYGON_MODE_FILL) {
       /* we'll do culling */
-      setup->winding = sp->rasterizer->cull_mode;
+      setup->cull_face = sp->rasterizer->cull_face;
    }
    else {
       /* 'draw' will do culling */
-      setup->winding = PIPE_WINDING_NONE;
+      setup->cull_face = PIPE_FACE_NONE;
    }
 }
 

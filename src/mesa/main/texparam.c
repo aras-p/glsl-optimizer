@@ -39,7 +39,7 @@
 #include "main/texparam.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 
 /**
@@ -291,17 +291,10 @@ set_tex_parameteri(GLcontext *ctx,
       return GL_TRUE;
 
    case GL_GENERATE_MIPMAP_SGIS:
-      if (ctx->Extensions.SGIS_generate_mipmap) {
-         if (texObj->GenerateMipmap != params[0]) {
-            flush(ctx, texObj);
-            texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
-            return GL_TRUE;
-         }
-         return GL_FALSE;
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(pname=GL_GENERATE_MIPMAP_SGIS)");
+      if (texObj->GenerateMipmap != params[0]) {
+	 flush(ctx, texObj);
+	 texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
+	 return GL_TRUE;
       }
       return GL_FALSE;
 
@@ -358,7 +351,8 @@ set_tex_parameteri(GLcontext *ctx,
       if (ctx->Extensions.ARB_depth_texture &&
           (params[0] == GL_LUMINANCE ||
            params[0] == GL_INTENSITY ||
-           params[0] == GL_ALPHA)) {
+           params[0] == GL_ALPHA ||
+	   (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED))) {
          if (texObj->DepthMode != params[0]) {
             flush(ctx, texObj);
             texObj->DepthMode = params[0];
@@ -877,7 +871,17 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Border;
          break;
       case GL_TEXTURE_RED_SIZE:
+         if (img->_BaseFormat == GL_RED) {
+            *params = _mesa_get_format_bits(texFormat, pname);
+	    break;
+	 }
+	 /* FALLTHROUGH */
       case GL_TEXTURE_GREEN_SIZE:
+         if (img->_BaseFormat == GL_RG) {
+            *params = _mesa_get_format_bits(texFormat, pname);
+	    break;
+	 }
+	 /* FALLTHROUGH */
       case GL_TEXTURE_BLUE_SIZE:
          if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
             *params = _mesa_get_format_bits(texFormat, pname);
@@ -1126,11 +1130,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	    error = GL_TRUE;
          break;
       case GL_GENERATE_MIPMAP_SGIS:
-         if (ctx->Extensions.SGIS_generate_mipmap) {
-            *params = (GLfloat) obj->GenerateMipmap;
-         }
-	 else 
-	    error = GL_TRUE;
+	 *params = (GLfloat) obj->GenerateMipmap;
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
@@ -1291,12 +1291,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          break;
       case GL_GENERATE_MIPMAP_SGIS:
-         if (ctx->Extensions.SGIS_generate_mipmap) {
-            *params = (GLint) obj->GenerateMipmap;
-         }
-         else {
-            error = GL_TRUE;
-         }
+	 *params = (GLint) obj->GenerateMipmap;
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {

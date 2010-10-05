@@ -60,6 +60,7 @@ enum {
 
 	RC_STATE_R300_WINDOW_DIMENSION,
 	RC_STATE_R300_TEXRECT_FACTOR,
+	RC_STATE_R300_TEXSCALE_FACTOR,
 	RC_STATE_R300_VIEWPORT_SCALE,
 	RC_STATE_R300_VIEWPORT_OFFSET
 };
@@ -89,6 +90,7 @@ unsigned rc_constants_add(struct rc_constant_list * c, struct rc_constant * cons
 unsigned rc_constants_add_state(struct rc_constant_list * c, unsigned state1, unsigned state2);
 unsigned rc_constants_add_immediate_vec4(struct rc_constant_list * c, const float * data);
 unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float data, unsigned * swizzle);
+void rc_constants_print(struct rc_constant_list * c);
 
 /**
  * Compare functions.
@@ -126,13 +128,9 @@ struct r300_fragment_program_external_state {
 	struct {
 		/**
 		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
+		 * this field contains swizzle depending on the depth texture mode.
 		 */
-		unsigned depth_texture_mode : 2;
+		unsigned depth_texture_swizzle:12;
 
 		/**
 		 * If the sampler is used as a shadow sampler,
@@ -144,13 +142,15 @@ struct r300_fragment_program_external_state {
 		unsigned texture_compare_func : 3;
 
 		/**
-		 * If the sampler needs to fake NPOT, this field is set.
+		 * No matter what the sampler type is,
+		 * this field turns it into a shadow sampler.
 		 */
-		unsigned fake_npot : 1;
+		unsigned compare_mode_enabled : 1;
 
 		/**
-		 * If the sampler will recieve non-normalized coords,
-		 * this field is set.
+		 * If the sampler will receive non-normalized coords,
+		 * this field is set. The scaling factor is given by
+		 * RC_STATE_R300_TEXRECT_FACTOR.
 		 */
 		unsigned non_normalized_coords : 1;
 
@@ -160,7 +160,13 @@ struct r300_fragment_program_external_state {
 		 * If this field is \ref RC_WRAP_NONE (aka 0), no wrapping maths
 		 * will be performed on the coordinates.
 		 */
-		unsigned wrap_mode : 2;
+		unsigned wrap_mode : 3;
+
+		/**
+		 * The coords are scaled after applying the wrap mode emulation
+		 * and right before texture fetch. The scaling factor is given by
+		 * RC_STATE_R300_TEXSCALE_FACTOR. */
+		unsigned clamp_and_scale_before_fetch : 1;
 	} unit[16];
 };
 
@@ -215,6 +221,9 @@ struct r500_fragment_program_code {
 	int max_temp_idx;
 
 	uint32_t us_fc_ctrl;
+
+	uint32_t int_constants[32];
+	uint32_t int_constant_count;
 };
 
 struct rX00_fragment_program_code {
@@ -226,11 +235,21 @@ struct rX00_fragment_program_code {
 	unsigned writes_depth:1;
 
 	struct rc_constant_list constants;
+	unsigned *constants_remap_table;
 };
 
 
-#define VSF_MAX_FRAGMENT_LENGTH (255*4)
-#define VSF_MAX_FRAGMENT_TEMPS (14)
+#define R300_VS_MAX_ALU		256
+#define R300_VS_MAX_ALU_DWORDS  (R300_VS_MAX_ALU * 4)
+#define R500_VS_MAX_ALU	        1024
+#define R500_VS_MAX_ALU_DWORDS  (R500_VS_MAX_ALU * 4)
+#define R300_VS_MAX_TEMPS	32
+/* This is the max for all chipsets (r300-r500) */
+#define R300_VS_MAX_FC_OPS 16
+/* The r500 maximum depth is not just for loops, but any combination of loops
+ * and subroutine jumps. */
+#define R500_VS_MAX_FC_DEPTH 8
+#define R300_VS_MAX_LOOP_DEPTH 1
 
 #define VSF_MAX_INPUTS 32
 #define VSF_MAX_OUTPUTS 32
@@ -238,8 +257,8 @@ struct rX00_fragment_program_code {
 struct r300_vertex_program_code {
 	int length;
 	union {
-		uint32_t d[VSF_MAX_FRAGMENT_LENGTH];
-		float f[VSF_MAX_FRAGMENT_LENGTH];
+		uint32_t d[R500_VS_MAX_ALU_DWORDS];
+		float f[R500_VS_MAX_ALU_DWORDS];
 	} body;
 
 	int pos_end;
@@ -248,12 +267,22 @@ struct r300_vertex_program_code {
 	int outputs[VSF_MAX_OUTPUTS];
 
 	struct rc_constant_list constants;
+	unsigned *constants_remap_table;
 
 	uint32_t InputsRead;
 	uint32_t OutputsWritten;
-};
 
-void r300_vertex_program_dump(struct r300_vertex_program_code * vs);
+	unsigned int num_fc_ops;
+	uint32_t fc_ops;
+	union {
+	        uint32_t r300[R300_VS_MAX_FC_OPS];
+		struct {
+			uint32_t lw;
+			uint32_t uw;
+		} r500[R300_VS_MAX_FC_OPS];
+	} fc_op_addrs;
+	int32_t fc_loop_index[R300_VS_MAX_FC_OPS];
+};
 
 #endif /* RADEON_CODE_H */
 

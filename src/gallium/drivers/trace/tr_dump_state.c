@@ -136,12 +136,13 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
    trace_dump_member(bool, state, flatshade);
    trace_dump_member(bool, state, light_twoside);
-   trace_dump_member(uint, state, front_winding);
-   trace_dump_member(uint, state, cull_mode);
-   trace_dump_member(uint, state, fill_cw);
-   trace_dump_member(uint, state, fill_ccw);
-   trace_dump_member(bool, state, offset_cw);
-   trace_dump_member(bool, state, offset_ccw);
+   trace_dump_member(uint, state, front_ccw);
+   trace_dump_member(uint, state, cull_face);
+   trace_dump_member(uint, state, fill_front);
+   trace_dump_member(uint, state, fill_back);
+   trace_dump_member(bool, state, offset_point);
+   trace_dump_member(bool, state, offset_line);
+   trace_dump_member(bool, state, offset_tri);
    trace_dump_member(bool, state, scissor);
    trace_dump_member(bool, state, poly_smooth);
    trace_dump_member(bool, state, poly_stipple_enable);
@@ -532,6 +533,26 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
 }
 
 
+void trace_dump_index_buffer(const struct pipe_index_buffer *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_index_buffer");
+
+   trace_dump_member(uint, state, index_size);
+   trace_dump_member(uint, state, offset);
+   trace_dump_member(resource_ptr, state, buffer);
+
+   trace_dump_struct_end();
+}
+
+
 void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 {
    if (!trace_dumping_enabled_locked())
@@ -549,6 +570,35 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
    trace_dump_member(uint, state, vertex_buffer_index);
 
    trace_dump_member(format, state, src_format);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_draw_info(const struct pipe_draw_info *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_draw_info");
+
+   trace_dump_member(bool, state, indexed);
+
+   trace_dump_member(uint, state, mode);
+   trace_dump_member(uint, state, start);
+   trace_dump_member(uint, state, count);
+
+   trace_dump_member(uint, state, start_instance);
+   trace_dump_member(uint, state, instance_count);
+
+   trace_dump_member(int,  state, index_bias);
+   trace_dump_member(uint, state, min_index);
+   trace_dump_member(uint, state, max_index);
 
    trace_dump_struct_end();
 }

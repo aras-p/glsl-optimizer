@@ -38,7 +38,7 @@
 #include "lp_bld_flow.h"
 
 
-#define LP_BUILD_FLOW_MAX_VARIABLES 32
+#define LP_BUILD_FLOW_MAX_VARIABLES 64
 #define LP_BUILD_FLOW_MAX_DEPTH 32
 
 /**
@@ -407,6 +407,7 @@ lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
    /* for each variable, update the Phi node with a (variable, block) pair */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
+      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
    }
 
@@ -433,6 +434,7 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
    /* add (variable, block) tuples to the phi nodes */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
+      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
       *flow->variables[i] = skip->phi[i];
    }
@@ -821,8 +823,11 @@ lp_build_alloca(LLVMBuilderRef builder,
    LLVMBuilderRef first_builder = LLVMCreateBuilder();
    LLVMValueRef res;
 
-   LLVMPositionBuilderAtEnd(first_builder, first_block);
-   LLVMPositionBuilderBefore(first_builder, first_instr);
+   if (first_instr) {
+      LLVMPositionBuilderBefore(first_builder, first_instr);
+   } else {
+      LLVMPositionBuilderAtEnd(first_builder, first_block);
+   }
 
    res = LLVMBuildAlloca(first_builder, type, name);
 
@@ -840,7 +845,7 @@ lp_build_alloca(LLVMBuilderRef builder,
  * first block may prevent the X86 backend from successfully align the stack as
  * required.
  *
- * Also the scalarrepl pass is supossedly more powerful and can promote
+ * Also the scalarrepl pass is supposedly more powerful and can promote
  * arrays in many cases.
  *
  * See also:
@@ -859,7 +864,11 @@ lp_build_array_alloca(LLVMBuilderRef builder,
    LLVMBuilderRef first_builder = LLVMCreateBuilder();
    LLVMValueRef res;
 
-   LLVMPositionBuilderBefore(first_builder, first_instr);
+   if (first_instr) {
+      LLVMPositionBuilderBefore(first_builder, first_instr);
+   } else {
+      LLVMPositionBuilderAtEnd(first_builder, first_block);
+   }
 
    res = LLVMBuildArrayAlloca(first_builder, type, count, name);
 

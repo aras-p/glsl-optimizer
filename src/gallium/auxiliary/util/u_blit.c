@@ -47,8 +47,6 @@
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
-#include "util/u_surface.h"
-#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -59,15 +57,18 @@ struct blit_state
    struct cso_context *cso;
 
    struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state depthstencil;
+   struct pipe_depth_stencil_alpha_state depthstencil_keep;
+   struct pipe_depth_stencil_alpha_state depthstencil_write;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
    struct pipe_clip_state clip;
    struct pipe_vertex_element velem[2];
+   enum pipe_texture_target internal_target;
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
+   void *fs_depth;
 
    struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -98,12 +99,15 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
-   memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
+   memset(&ctx->depthstencil_keep, 0, sizeof(ctx->depthstencil_keep));
+   memset(&ctx->depthstencil_write, 0, sizeof(ctx->depthstencil_write));
+   ctx->depthstencil_write.depth.enabled = 1;
+   ctx->depthstencil_write.depth.writemask = 1;
+   ctx->depthstencil_write.depth.func = PIPE_FUNC_ALWAYS;
 
    /* rasterizer */
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
-   ctx->rasterizer.front_winding = PIPE_WINDING_CW;
-   ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
+   ctx->rasterizer.cull_face = PIPE_FACE_NONE;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* samplers */
@@ -114,7 +118,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->sampler.min_img_filter = 0; /* set later */
    ctx->sampler.mag_img_filter = 0; /* set later */
-   ctx->sampler.normalized_coords = 1;
 
    /* vertex elements state */
    memset(&ctx->velem[0], 0, sizeof(ctx->velem[0]) * 2);
@@ -138,7 +141,8 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* fragment shader */
    ctx->fs[TGSI_WRITEMASK_XYZW] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
+                                    TGSI_INTERPOLATE_LINEAR);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -147,6 +151,11 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
       ctx->vertices[i][1][2] = 0.0f; /* r */
       ctx->vertices[i][1][3] = 1.0f; /* q */
    }
+
+   if(pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
+      ctx->internal_target = PIPE_TEXTURE_2D;
+   else
+      ctx->internal_target = PIPE_TEXTURE_RECT;
 
    return ctx;
 }
@@ -166,6 +175,9 @@ util_destroy_blit(struct blit_state *ctx)
    for (i = 0; i < Elements(ctx->fs); i++)
       if (ctx->fs[i])
          pipe->delete_fs_state(pipe, ctx->fs[i]);
+
+   if (ctx->fs_depth)
+      pipe->delete_fs_state(pipe, ctx->fs_depth);
 
    pipe_resource_reference(&ctx->vbuf, NULL);
 
@@ -192,7 +204,6 @@ get_next_slot( struct blit_state *ctx )
    
    return ctx->vbuf_slot++ * sizeof ctx->vertices;
 }
-                               
 
 
 
@@ -275,14 +286,15 @@ regions_overlap(int srcX0, int srcY0,
  * \param writemask  controls which channels in the dest surface are sourced
  *                   from the src surface.  Disabled channels are sourced
  *                   from (0,0,0,1).
- * XXX need some control over blitting Z and/or stencil.
+ * XXX need some control over blitting stencil.
  */
 void
 util_blit_pixels_writemask(struct blit_state *ctx,
-                           struct pipe_surface *src,
-                           struct pipe_sampler_view *src_sampler_view,
+                           struct pipe_resource *src_tex,
+                           struct pipe_subresource srcsub,
                            int srcX0, int srcY0,
                            int srcX1, int srcY1,
+                           int srcZ0,
                            struct pipe_surface *dst,
                            int dstX0, int dstY0,
                            int dstX1, int dstY1,
@@ -292,23 +304,25 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_sampler_view *sampler_view = NULL;
+   struct pipe_sampler_view sv_templ;
    struct pipe_framebuffer_state fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
    unsigned offset;
-   boolean overlap;
+   boolean overlap, dst_is_depth;
    float s0, t0, s1, t1;
+   boolean normalized;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
-   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
+   assert(srcsub.level <= src_tex->last_level);
 
    /* do the regions overlap? */
-   overlap = util_same_surface(src, dst) &&
+   overlap = src_tex == dst->texture &&
+             dst->face == srcsub.face &&
+             dst->level == srcsub.level &&
+             dst->zslice == srcZ0 &&
       regions_overlap(srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1);
 
@@ -317,8 +331,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (pipe->surface_copy &&
-       dst->format == src->format &&
+   if (dst->format == src_tex->format &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
@@ -326,29 +339,36 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        (dstX1 - dstX0) == (srcX1 - srcX0) &&
        (dstY1 - dstY0) == (srcY1 - srcY0) &&
        !overlap) {
-      pipe->surface_copy(pipe,
-			 dst, dstX0, dstY0, /* dest */
-			 src, srcX0, srcY0, /* src */
-			 srcW, srcH);       /* size */
+      struct pipe_subresource subdst;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      pipe->resource_copy_region(pipe,
+                                 dst->texture, subdst,
+                                 dstX0, dstY0, dst->zslice,/* dest */
+                                 src_tex, srcsub,
+                                 srcX0, srcY0, srcZ0,/* src */
+                                 srcW, srcH);       /* size */
       return;
    }
-   
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
 
    /* Create a temporary texture when src and dest alias or when src
-    * is anything other than a single-level 2d texture.
+    * is anything other than a 2d texture.
+    * XXX should just use appropriate shader to access 1d / 3d slice / cube face,
+    * much like the u_blitter code does (should be pretty trivial).
     * 
     * This can still be improved upon.
     */
-   if (util_same_surface(src, dst) ||
-       src->texture->target != PIPE_TEXTURE_2D ||
-       src->texture->last_level != 0)
+   if ((src_tex == dst->texture &&
+       dst->face == srcsub.face &&
+       dst->level == srcsub.level &&
+       dst->zslice == srcZ0) ||
+       (src_tex->target != PIPE_TEXTURE_2D &&
+       src_tex->target != PIPE_TEXTURE_RECT))
    {
       struct pipe_resource texTemp;
       struct pipe_resource *tex;
       struct pipe_sampler_view sv_templ;
-      struct pipe_surface *texSurf;
+      struct pipe_subresource texsub;
       const int srcLeft = MIN2(srcX0, srcX1);
       const int srcTop = MIN2(srcY0, srcY1);
 
@@ -368,8 +388,8 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
       /* create temp texture */
       memset(&texTemp, 0, sizeof(texTemp));
-      texTemp.target = PIPE_TEXTURE_2D;
-      texTemp.format = src->format;
+      texTemp.target = ctx->internal_target;
+      texTemp.format = src_tex->format;
       texTemp.last_level = 0;
       texTemp.width0 = srcW;
       texTemp.height0 = srcH;
@@ -380,50 +400,69 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       if (!tex)
          return;
 
-      u_sampler_view_default_template(&sv_templ, tex, tex->format);
+      texsub.face = 0;
+      texsub.level = 0;
+      /* load temp texture */
+      pipe->resource_copy_region(pipe,
+                                 tex, texsub, 0, 0, 0,  /* dest */
+                                 src_tex, srcsub, srcLeft, srcTop, srcZ0, /* src */
+                                 srcW, srcH);     /* size */
 
-      sampler_view = ctx->pipe->create_sampler_view(ctx->pipe, tex, &sv_templ);
+      normalized = tex->target != PIPE_TEXTURE_RECT;
+      if(normalized) {
+         s0 = 0.0f;
+         s1 = 1.0f;
+         t0 = 0.0f;
+         t1 = 1.0f;
+      }
+      else {
+         s0 = 0;
+         s1 = srcW;
+         t0 = 0;
+         t1 = srcH;
+      }
+
+      u_sampler_view_default_template(&sv_templ, tex, tex->format);
+      sampler_view = pipe->create_sampler_view(pipe, tex, &sv_templ);
+
       if (!sampler_view) {
          pipe_resource_reference(&tex, NULL);
          return;
       }
-
-      texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
-                                        PIPE_BIND_BLIT_DESTINATION);
-
-      /* load temp texture */
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-                            texSurf, 0, 0,   /* dest */
-                            src, srcLeft, srcTop, /* src */
-                            srcW, srcH);     /* size */
-      } else {
-         util_surface_copy(pipe, FALSE,
-                           texSurf, 0, 0,   /* dest */
-                           src, srcLeft, srcTop, /* src */
-                           srcW, srcH);     /* size */
-      }
-
-      /* free the surface, update the texture if necessary.
-       */
-      pipe_surface_reference(&texSurf, NULL);
-      s0 = 0.0f; 
-      s1 = 1.0f;
-      t0 = 0.0f;
-      t1 = 1.0f;
-
       pipe_resource_reference(&tex, NULL);
    }
    else {
-      pipe_sampler_view_reference(&sampler_view, src_sampler_view);
-      s0 = srcX0 / (float)src->texture->width0;
-      s1 = srcX1 / (float)src->texture->width0;
-      t0 = srcY0 / (float)src->texture->height0;
-      t1 = srcY1 / (float)src->texture->height0;
+      u_sampler_view_default_template(&sv_templ, src_tex, src_tex->format);
+      sv_templ.first_level = sv_templ.last_level = srcsub.level;
+      sampler_view = pipe->create_sampler_view(pipe, src_tex, &sv_templ);
+
+      if (!sampler_view) {
+         return;
+      }
+
+      s0 = srcX0;
+      s1 = srcX1;
+      t0 = srcY0;
+      t1 = srcY1;
+      normalized = sampler_view->texture->target != PIPE_TEXTURE_RECT;
+      if(normalized)
+      {
+         s0 /= (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+         s1 /= (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+         t0 /= (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+         t1 /= (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+      }
    }
 
-   
+   dst_is_depth = util_format_is_depth_or_stencil(dst->format);
 
+   assert(screen->is_format_supported(screen, sampler_view->format, ctx->internal_target,
+                                      sampler_view->texture->nr_samples,
+                                      PIPE_BIND_SAMPLER_VIEW, 0));
+   assert(screen->is_format_supported(screen, dst->format, ctx->internal_target,
+                                      dst->texture->nr_samples,
+                                      dst_is_depth ? PIPE_BIND_DEPTH_STENCIL :
+                                                     PIPE_BIND_RENDER_TARGET, 0));
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
    cso_save_depth_stencil_alpha(ctx->cso);
@@ -439,14 +478,20 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
-   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_depth_stencil_alpha(ctx->cso,
+                               dst_is_depth ? &ctx->depthstencil_write :
+                                              &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
+   ctx->sampler.normalized_coords = normalized;
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
+   /* we've limited this already with the sampler view but you never know... */
+   ctx->sampler.min_lod = srcsub.level;
+   ctx->sampler.max_lod = srcsub.level;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
 
@@ -464,21 +509,35 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    /* texture */
    cso_set_fragment_sampler_views(ctx->cso, 1, &sampler_view);
 
-   if (ctx->fs[writemask] == NULL)
-      ctx->fs[writemask] =
-         util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
-                                                 writemask);
-
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+   if (dst_is_depth) {
+      if (ctx->fs_depth == NULL)
+         ctx->fs_depth =
+            util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D,
+                                                     TGSI_INTERPOLATE_LINEAR);
+
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+   } else {
+      if (ctx->fs[writemask] == NULL)
+         ctx->fs[writemask] =
+            util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
+                                                    TGSI_INTERPOLATE_LINEAR,
+                                                    writemask);
+
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+   }
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
    fb.width = dst->width;
    fb.height = dst->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst;
+   if (dst_is_depth) {
+      fb.zsbuf = dst;
+   } else {
+      fb.nr_cbufs = 1;
+      fb.cbufs[0] = dst;
+   }
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
@@ -515,18 +574,21 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
 void
 util_blit_pixels(struct blit_state *ctx,
-                 struct pipe_surface *src,
-                 struct pipe_sampler_view *src_sampler_view,
+                 struct pipe_resource *src_tex,
+                 struct pipe_subresource srcsub,
                  int srcX0, int srcY0,
                  int srcX1, int srcY1,
+                 int srcZ,
                  struct pipe_surface *dst,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
                  float z, uint filter )
 {
-   util_blit_pixels_writemask( ctx, src, src_sampler_view,
+   util_blit_pixels_writemask( ctx, src_tex,
+                               srcsub,
                                srcX0, srcY0,
                                srcX1, srcY1,
+                               srcZ,
                                dst,
                                dstX0, dstY0,
                                dstX1, dstY1,
@@ -548,7 +610,6 @@ void util_blit_flush( struct blit_state *ctx )
 
 /**
  * Copy pixel block from src texture to dst surface.
- * Overlapping regions are acceptable.
  *
  * XXX Should support selection of level.
  * XXX need some control over blitting Z and/or stencil.
@@ -563,6 +624,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
                      int dstX1, int dstY1,
                      float z, uint filter)
 {
+   boolean normalized = src_sampler_view->texture->target != PIPE_TEXTURE_RECT;
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    unsigned offset;
@@ -575,13 +637,22 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
-   s0 = srcX0 / (float)tex->width0;
-   s1 = srcX1 / (float)tex->width0;
-   t0 = srcY0 / (float)tex->height0;
-   t1 = srcY1 / (float)tex->height0;
+   s0 = srcX0;
+   s1 = srcX1;
+   t0 = srcY0;
+   t1 = srcY1;
+
+   if(normalized)
+   {
+      s0 /= (float)tex->width0;
+      s1 /= (float)tex->width0;
+      t0 /= (float)tex->height0;
+      t1 /= (float)tex->height0;
+   }
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
+                                                 dst->texture->nr_samples,
                                                  PIPE_BIND_RENDER_TARGET,
                                                  0));
 
@@ -599,12 +670,13 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
-   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
+   ctx->sampler.normalized_coords = normalized;
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);

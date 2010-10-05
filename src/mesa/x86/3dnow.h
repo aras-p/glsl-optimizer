@@ -31,8 +31,6 @@
 #ifndef __3DNOW_H__
 #define __3DNOW_H__
 
-#include "math/m_xform.h"
-
 void _mesa_init_3dnow_transform_asm( void );
 
 #endif

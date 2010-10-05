@@ -40,7 +40,7 @@ int r300_transform_vertex_alu(
 	struct rc_instruction * inst,
 	void*);
 
-int radeonTransformTrigSimple(
+int r300_transform_trig_simple(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
@@ -50,9 +50,17 @@ int radeonTransformTrigScale(
 	struct rc_instruction * inst,
 	void*);
 
+int r300_transform_trig_scale_vertex(
+	struct radeon_compiler *c,
+	struct rc_instruction *inst,
+	void*);
+
 int radeonTransformDeriv(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
+
+void rc_transform_KILP(struct radeon_compiler * c,
+		       void *user);
 
 #endif /* __RADEON_PROGRAM_ALU_H_ */

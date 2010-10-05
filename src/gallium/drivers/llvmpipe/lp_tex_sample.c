@@ -48,6 +48,7 @@
 #include "gallivm/lp_bld_tgsi.h"
 #include "lp_jit.h"
 #include "lp_tex_sample.h"
+#include "lp_debug.h"
 
 
 /**
@@ -87,7 +88,7 @@ struct lp_llvm_sampler_soa
  * @sa http://llvm.org/docs/GetElementPtr.html
  */
 static LLVMValueRef
-lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
+lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
                        LLVMBuilderRef builder,
                        unsigned unit,
                        unsigned member_index,
@@ -135,7 +136,7 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
  */
 #define LP_LLVM_TEXTURE_MEMBER(_name, _index, _emit_load)  \
    static LLVMValueRef \
-   lp_llvm_texture_##_name( struct lp_sampler_dynamic_state *base, \
+   lp_llvm_texture_##_name( const struct lp_sampler_dynamic_state *base, \
                             LLVMBuilderRef builder, \
                             unsigned unit) \
    { \
@@ -150,6 +151,10 @@ LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL, TRUE)
 LP_LLVM_TEXTURE_MEMBER(row_stride, LP_JIT_TEXTURE_ROW_STRIDE, FALSE)
 LP_LLVM_TEXTURE_MEMBER(img_stride, LP_JIT_TEXTURE_IMG_STRIDE, FALSE)
 LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA, FALSE)
+LP_LLVM_TEXTURE_MEMBER(min_lod,    LP_JIT_TEXTURE_MIN_LOD, TRUE)
+LP_LLVM_TEXTURE_MEMBER(max_lod,    LP_JIT_TEXTURE_MAX_LOD, TRUE)
+LP_LLVM_TEXTURE_MEMBER(lod_bias,   LP_JIT_TEXTURE_LOD_BIAS, TRUE)
+LP_LLVM_TEXTURE_MEMBER(border_color, LP_JIT_TEXTURE_BORDER_COLOR, FALSE)
 
 
 static void
@@ -164,27 +169,35 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
  * The 'texel' parameter returns four vectors corresponding to R, G, B, A.
  */
 static void
-lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
+lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,
                                      struct lp_type type,
                                      unsigned unit,
                                      unsigned num_coords,
                                      const LLVMValueRef *coords,
-                                     LLVMValueRef lodbias,
+                                     const LLVMValueRef *ddx,
+                                     const LLVMValueRef *ddy,
+                                     LLVMValueRef lod_bias, /* optional */
+                                     LLVMValueRef explicit_lod, /* optional */
                                      LLVMValueRef *texel)
 {
    struct lp_llvm_sampler_soa *sampler = (struct lp_llvm_sampler_soa *)base;
 
    assert(unit < PIPE_MAX_SAMPLERS);
+   
+   if (LP_PERF & PERF_NO_TEX) {
+      lp_build_sample_nop(type, texel);
+      return;
+   }
 
    lp_build_sample_soa(builder,
                        &sampler->dynamic_state.static_state[unit],
                        &sampler->dynamic_state.base,
                        type,
                        unit,
-                       num_coords,
-                       coords,
-                       lodbias,
+                       num_coords, coords,
+                       ddx, ddy,
+                       lod_bias, explicit_lod,
                        texel);
 }
 
@@ -208,6 +221,11 @@ lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
    sampler->dynamic_state.base.row_stride = lp_llvm_texture_row_stride;
    sampler->dynamic_state.base.img_stride = lp_llvm_texture_img_stride;
    sampler->dynamic_state.base.data_ptr = lp_llvm_texture_data_ptr;
+   sampler->dynamic_state.base.min_lod = lp_llvm_texture_min_lod;
+   sampler->dynamic_state.base.max_lod = lp_llvm_texture_max_lod;
+   sampler->dynamic_state.base.lod_bias = lp_llvm_texture_lod_bias;
+   sampler->dynamic_state.base.border_color = lp_llvm_texture_border_color;
+
    sampler->dynamic_state.static_state = static_state;
    sampler->dynamic_state.context_ptr = context_ptr;
 

@@ -11,12 +11,14 @@ if 'xorg' in env['statetrackers']:
 	'#/src/mesa',
     ])
 
-    env.ParseConfig('pkg-config --cflags --libs xorg-server')
+    env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
 
     conf = env.Configure()
 
     if conf.CheckHeader('X11/extensions/dpmsconst.h'):
         env.Append(CPPDEFINES = [('HAVE_XEXTPROTO_71', '1')])
+
+    conf.Finish()
 
     st_xorg = env.ConvenienceLibrary(
 	target = 'st_xorg',

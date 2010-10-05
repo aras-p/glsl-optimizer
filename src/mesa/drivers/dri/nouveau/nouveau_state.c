@@ -113,14 +113,9 @@ nouveau_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 }
 
 static void
-nouveau_draw_buffer(GLcontext *ctx, GLenum buffer)
-{
-	context_dirty(ctx, FRAMEBUFFER);
-}
-
-static void
 nouveau_draw_buffers(GLcontext *ctx, GLsizei n, const GLenum *buffers)
 {
+	nouveau_validate_framebuffer(ctx);
 	context_dirty(ctx, FRAMEBUFFER);
 }
 
@@ -464,8 +459,6 @@ nouveau_state_emit(GLcontext *ctx)
 	}
 
 	BITSET_ZERO(nctx->dirty);
-
-	nouveau_bo_state_emit(ctx);
 }
 
 static void
@@ -519,7 +512,6 @@ nouveau_state_init(GLcontext *ctx)
 	ctx->Driver.DepthFunc = nouveau_depth_func;
 	ctx->Driver.DepthMask = nouveau_depth_mask;
 	ctx->Driver.DepthRange = nouveau_depth_range;
-	ctx->Driver.DrawBuffer = nouveau_draw_buffer;
 	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
 	ctx->Driver.Enable = nouveau_enable;
 	ctx->Driver.Fogfv = nouveau_fog;

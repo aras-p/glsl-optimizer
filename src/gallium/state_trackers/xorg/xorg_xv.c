@@ -413,7 +413,7 @@ setup_fs_video_constants(struct xorg_renderer *r, boolean hdtv)
 
 static void
 draw_yuv(struct xorg_xv_port_priv *port,
-         int src_x, int src_y, int src_w, int src_h,
+         float src_x, float src_y, float src_w, float src_h,
          int dst_x, int dst_y, int dst_w, int dst_h)
 {
    struct pipe_resource **textures = port->yuv[port->current_set];
@@ -562,10 +562,10 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       int box_y2 = pbox->y2;
       float diff_x = (float)src_w / (float)dst_w;
       float diff_y = (float)src_h / (float)dst_h;
-      int offset_x = box_x1 - dstX + pPixmap->screen_x;
-      int offset_y = box_y1 - dstY + pPixmap->screen_y;
-      int offset_w;
-      int offset_h;
+      float offset_x = box_x1 - dstX + pPixmap->screen_x;
+      float offset_y = box_y1 - dstY + pPixmap->screen_y;
+      float offset_w;
+      float offset_h;
 
       x = box_x1;
       y = box_y1;
@@ -576,8 +576,8 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       offset_h = dst_h - h;
 
       draw_yuv(pPriv,
-               src_x + offset_x*diff_x, src_y + offset_y*diff_y,
-               src_w - offset_w*diff_x, src_h - offset_h*diff_y,
+               (float) src_x + offset_x*diff_x, (float) src_y + offset_y*diff_y,
+               (float) src_w - offset_w*diff_x, (float) src_h - offset_h*diff_y,
                x, y, w, h);
 
       pbox++;

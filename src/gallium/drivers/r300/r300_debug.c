@@ -22,76 +22,119 @@
 
 #include "r300_context.h"
 
+#include "util/u_debug.h"
+
 #include <stdio.h>
 
-struct debug_option {
-    const char * name;
-    unsigned flag;
-    const char * description;
-};
-
-static struct debug_option debug_options[] = {
-    { "help", DBG_HELP, "Helpful meta-information about the driver" },
-    { "fp", DBG_FP, "Fragment program handling (for debugging)" },
-    { "vp", DBG_VP, "Vertex program handling (for debugging)" },
-    { "cs", DBG_CS, "Command submissions (for debugging)" },
-    { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
-    { "tex", DBG_TEX, "Textures (for debugging)" },
-    { "fall", DBG_FALL, "Fallbacks (for debugging)" },
-    { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
-    { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
-    { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
-    { "stats", DBG_STATS, "Gather statistics (for lulz)" },
-
-    { "all", ~0, "Convenience option that enables all debug flags" },
+static const struct debug_named_value debug_options[] = {
+    { "fp", DBG_FP, "Log fragment program compilation" },
+    { "vp", DBG_VP, "Log vertex program compilation" },
+    { "draw", DBG_DRAW, "Log draw calls" },
+    { "swtcl", DBG_SWTCL, "Log SWTCL-specific info" },
+    { "rsblock", DBG_RS_BLOCK, "Log rasterizer registers" },
+    { "psc", DBG_PSC, "Log vertex stream registers" },
+    { "tex", DBG_TEX, "Log basic info about textures" },
+    { "texalloc", DBG_TEXALLOC, "Log texture mipmap tree info" },
+    { "fall", DBG_FALL, "Log fallbacks" },
+    { "rs", DBG_RS, "Log rasterizer" },
+    { "fb", DBG_FB, "Log framebuffer" },
+    { "cbzb", DBG_CBZB, "Log fast color clear info" },
+    { "stats", DBG_STATS, "Log emission statistics" },
+    { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
+    { "scissor", DBG_SCISSOR, "Log scissor info" },
+    { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },
+    { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
+    { "notiling", DBG_NO_TILING, "Disable tiling" },
+    { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },
+    { "noopt", DBG_NO_OPT, "Disable shader optimizations" },
+    { "nocbzb", DBG_NO_CBZB, "Disable fast color clear" },
 
     /* must be last */
-    { 0, 0, 0 }
+    DEBUG_NAMED_VALUE_END
 };
 
 void r300_init_debug(struct r300_screen * screen)
 {
-    const char * options = debug_get_option("RADEON_DEBUG", 0);
-    boolean printhint = FALSE;
-    size_t length;
-    struct debug_option * opt;
+    screen->debug = debug_get_flags_option("RADEON_DEBUG", debug_options, 0);
+}
 
-    if (options) {
-        while(*options) {
-            if (*options == ' ' || *options == ',') {
-                options++;
-                continue;
-            }
+void r500_dump_rs_block(struct r300_rs_block *rs)
+{
+    unsigned count, ip, it_count, ic_count, i, j;
+    unsigned tex_ptr;
+    unsigned col_ptr, col_fmt;
 
-            length = strcspn(options, " ,");
+    count = rs->inst_count & 0xf;
+    count++;
 
-            for(opt = debug_options; opt->name; ++opt) {
-                if (!strncmp(options, opt->name, length)) {
-                    screen->debug |= opt->flag;
-                    break;
+    it_count = rs->count & 0x7f;
+    ic_count = (rs->count >> 7) & 0xf;
+
+    fprintf(stderr, "RS Block: %d texcoords (linear), %d colors (perspective)\n",
+        it_count, ic_count);
+    fprintf(stderr, "%d instructions\n", count);
+
+    for (i = 0; i < count; i++) {
+        if (rs->inst[i] & 0x10) {
+            ip = rs->inst[i] & 0xf;
+            fprintf(stderr, "texture: ip %d to psf %d\n",
+                ip, (rs->inst[i] >> 5) & 0x7f);
+
+            tex_ptr = rs->ip[ip] & 0xffffff;
+            fprintf(stderr, "       : ");
+
+            j = 3;
+            do {
+                if ((tex_ptr & 0x3f) == 63) {
+                    fprintf(stderr, "1.0");
+                } else if ((tex_ptr & 0x3f) == 62) {
+                    fprintf(stderr, "0.0");
+                } else {
+                    fprintf(stderr, "[%d]", tex_ptr & 0x3f);
                 }
-            }
-
-            if (!opt->name) {
-                fprintf(stderr, "Unknown debug option: %s\n", options);
-                printhint = TRUE;
-            }
-
-            options += length;
+            } while (j-- && fprintf(stderr, "/"));
+            fprintf(stderr, "\n");
         }
 
-        if (!screen->debug)
-            printhint = TRUE;
-    }
+        if (rs->inst[i] & 0x10000) {
+            ip = (rs->inst[i] >> 12) & 0xf;
+            fprintf(stderr, "color: ip %d to psf %d\n",
+                ip, (rs->inst[i] >> 18) & 0x7f);
 
-    if (printhint || screen->debug & DBG_HELP) {
-        fprintf(stderr, "You can enable debug output by setting "
-                        "the RADEON_DEBUG environment variable\n"
-                        "to a comma-separated list of debug options. "
-                        "Available options are:\n");
+            col_ptr = (rs->ip[ip] >> 24) & 0x7;
+            col_fmt = (rs->ip[ip] >> 27) & 0xf;
+            fprintf(stderr, "     : offset %d ", col_ptr);
 
-        for(opt = debug_options; opt->name; ++opt) {
-            fprintf(stderr, "    %s: %s\n", opt->name, opt->description);
+            switch (col_fmt) {
+                case 0:
+                    fprintf(stderr, "(R/G/B/A)");
+                    break;
+                case 1:
+                    fprintf(stderr, "(R/G/B/0)");
+                    break;
+                case 2:
+                    fprintf(stderr, "(R/G/B/1)");
+                    break;
+                case 4:
+                    fprintf(stderr, "(0/0/0/A)");
+                    break;
+                case 5:
+                    fprintf(stderr, "(0/0/0/0)");
+                    break;
+                case 6:
+                    fprintf(stderr, "(0/0/0/1)");
+                    break;
+                case 8:
+                    fprintf(stderr, "(1/1/1/A)");
+                    break;
+                case 9:
+                    fprintf(stderr, "(1/1/1/0)");
+                    break;
+                case 10:
+                    fprintf(stderr, "(1/1/1/1)");
+                    break;
+            }
+            fprintf(stderr, "\n");
         }
     }
 }

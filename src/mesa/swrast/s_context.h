@@ -43,8 +43,9 @@
 #ifndef S_CONTEXT_H
 #define S_CONTEXT_H
 
+#include "main/compiler.h"
 #include "main/mtypes.h"
-#include "shader/prog_execute.h"
+#include "program/prog_execute.h"
 #include "swrast.h"
 #include "s_span.h"
 

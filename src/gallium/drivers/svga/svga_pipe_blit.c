@@ -32,29 +32,42 @@
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
 
+/* XXX I got my doubts about this, should maybe use svga_texture_copy_handle directly? */
 static void svga_surface_copy(struct pipe_context *pipe,
-                              struct pipe_surface *dest,
-                              unsigned destx, unsigned desty,
-                              struct pipe_surface *src,
-                              unsigned srcx, unsigned srcy,
+                              struct pipe_resource* dst_tex,
+                              struct pipe_subresource subdst,
+                              unsigned dstx, unsigned dsty, unsigned dstz,
+                              struct pipe_resource* src_tex,
+                              struct pipe_subresource subsrc,
+                              unsigned srcx, unsigned srcy, unsigned srcz,
                               unsigned width, unsigned height)
 {
    struct svga_context *svga = svga_context(pipe);
+   struct pipe_screen *screen = pipe->screen;
    SVGA3dCopyBox *box;
    enum pipe_error ret;
+   struct pipe_surface *srcsurf, *dstsurf;
 
    svga_hwtnl_flush_retry( svga );
 
+   srcsurf = screen->get_tex_surface(screen, src_tex,
+                                     subsrc.face, subsrc.level, srcz,
+                                     PIPE_BIND_SAMPLER_VIEW);
+
+   dstsurf = screen->get_tex_surface(screen, dst_tex,
+                                     subdst.face, subdst.level, dstz,
+                                     PIPE_BIND_RENDER_TARGET);
+
    SVGA_DBG(DEBUG_DMA, "blit to sid %p (%d,%d), from sid %p (%d,%d) sz %dx%d\n",
-            svga_surface(dest)->handle,
-            destx, desty,
-            svga_surface(src)->handle,
+            svga_surface(dstsurf)->handle,
+            dstx, dsty,
+            svga_surface(srcsurf)->handle,
             srcx, srcy,
             width, height);
 
    ret = SVGA3D_BeginSurfaceCopy(svga->swc,
-                                 src,
-                                 dest,
+                                 srcsurf,
+                                 dstsurf,
                                  &box,
                                  1);
    if(ret != PIPE_OK) {
@@ -62,15 +75,15 @@ static void svga_surface_copy(struct pipe_context *pipe,
       svga_context_flush(svga, NULL);
 
       ret = SVGA3D_BeginSurfaceCopy(svga->swc,
-                                    src,
-                                    dest,
+                                    srcsurf,
+                                    dstsurf,
                                     &box,
                                     1);
       assert(ret == PIPE_OK);
    }
 
-   box->x = destx;
-   box->y = desty;
+   box->x = dstx;
+   box->y = dsty;
    box->z = 0;
    box->w = width;
    box->h = height;
@@ -81,13 +94,17 @@ static void svga_surface_copy(struct pipe_context *pipe,
 
    SVGA_FIFOCommitAll(svga->swc);
 
-   svga_surface(dest)->dirty = TRUE;
-   svga_propagate_surface(pipe, dest);
+   svga_surface(dstsurf)->dirty = TRUE;
+   svga_propagate_surface(pipe, dstsurf);
+
+   pipe_surface_reference(&srcsurf, NULL);
+   pipe_surface_reference(&dstsurf, NULL);
+
 }
 
 
 void
 svga_init_blit_functions(struct svga_context *svga)
 {
-   svga->pipe.surface_copy = svga_surface_copy;
+   svga->pipe.resource_copy_region = svga_surface_copy;
 }

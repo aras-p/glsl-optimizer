@@ -63,19 +63,21 @@ sp_create_tex_tile_cache( struct pipe_context *pipe )
 void
 sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
 {
-   uint pos;
+   if (tc) {
+      uint pos;
 
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      /*assert(tc->entries[pos].x < 0);*/
-   }
-   if (tc->transfer) {
-      tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
-   }
-   if (tc->tex_trans) {
-      tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
-   }
+      for (pos = 0; pos < NUM_ENTRIES; pos++) {
+         /*assert(tc->entries[pos].x < 0);*/
+      }
+      if (tc->transfer) {
+         tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
+      }
+      if (tc->tex_trans) {
+         tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
+      }
 
-   FREE( tc );
+      FREE( tc );
+   }
 }
 
 
@@ -115,6 +117,20 @@ sp_tex_tile_cache_validate_texture(struct softpipe_tex_tile_cache *tc)
    }
 }
 
+static boolean
+sp_tex_tile_is_compat_view(struct softpipe_tex_tile_cache *tc,
+                           struct pipe_sampler_view *view)
+{
+   if (!view)
+      return FALSE;
+   return (tc->texture == view->texture &&
+           tc->format == view->format &&
+           tc->swizzle_r == view->swizzle_r &&
+           tc->swizzle_g == view->swizzle_g &&
+           tc->swizzle_b == view->swizzle_b &&
+           tc->swizzle_a == view->swizzle_a);
+}
+
 /**
  * Specify the sampler view to cache.
  */
@@ -127,7 +143,7 @@ sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
 
    assert(!tc->transfer);
 
-   if (tc->texture != texture) {
+   if (!sp_tex_tile_is_compat_view(tc, view)) {
       pipe_resource_reference(&tc->texture, texture);
 
       if (tc->tex_trans) {
@@ -282,3 +298,23 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
 
 
+/**
+ * Return the swizzled border color.
+ */
+const float *
+sp_tex_tile_cache_border_color(struct softpipe_tex_tile_cache *tc,
+                               const float border_color[4])
+{
+   float rgba01[6];
+
+   COPY_4V(rgba01, border_color);
+   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
+   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
+
+   tc->swz_border_color[0] = rgba01[tc->swizzle_r];
+   tc->swz_border_color[1] = rgba01[tc->swizzle_g];
+   tc->swz_border_color[2] = rgba01[tc->swizzle_b];
+   tc->swz_border_color[3] = rgba01[tc->swizzle_a];
+
+   return tc->swz_border_color;
+}

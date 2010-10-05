@@ -523,8 +523,7 @@ static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *in
 			r300ConvertAttrib(ctx, count, input[i], &vbuf->attribs[index]);
 		} else {
 			if (input[i]->BufferObj->Name) {
-				if (stride % 4 != 0) {
-					assert(((intptr_t) input[i]->Ptr) % input[i]->StrideB == 0);
+				if (stride % 4 != 0 || (intptr_t)input[i]->Ptr % 4 != 0) {
 					r300AlignDataToDword(ctx, input[i], count, &vbuf->attribs[index]);
 					vbuf->attribs[index].is_named_bo = GL_FALSE;
 				} else {

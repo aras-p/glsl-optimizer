@@ -134,7 +134,6 @@ static const struct dri_extension card_extensions[] = {
   {"GL_MESAX_texture_float",		NULL},
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
-  {"GL_SGIS_generate_mipmap",		NULL},
   {NULL,				NULL}
   /* *INDENT-ON* */
 };
@@ -376,13 +375,12 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxDrawBuffers = 1;
 	ctx->Const.MaxColorAttachments = 1;
 
-	/* currently bogus data */
 	if (r300->options.hw_tcl_enabled) {
-		ctx->Const.VertexProgram.MaxNativeInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAluInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeInstructions = 255;
+		ctx->Const.VertexProgram.MaxNativeAluInstructions = 255;
+		ctx->Const.VertexProgram.MaxNativeAttribs = 16;
 		ctx->Const.VertexProgram.MaxNativeTemps = 32;
-		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeParameters = 256;
 		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 	}
 
@@ -462,7 +460,7 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
 		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 	}
-	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350)
+        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_R420)
   		_mesa_enable_extension(ctx, "GL_ARB_half_float_vertex");
 
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
@@ -478,7 +476,8 @@ static void r300InitIoctlFuncs(struct dd_function_table *functions)
 
 /* Create the device specific rendering context.
  */
-GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+GLboolean r300CreateContext(gl_api api,
+			    const __GLcontextModes * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {

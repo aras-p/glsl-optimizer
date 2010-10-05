@@ -280,31 +280,45 @@ lp_build_one(struct lp_type type)
                
 
 /**
+ * Build constant-valued element from a scalar value.
+ */
+LLVMValueRef
+lp_build_const_elem(struct lp_type type,
+                    double val)
+{
+   LLVMTypeRef elem_type = lp_build_elem_type(type);
+   LLVMValueRef elem;
+
+   if(type.floating) {
+      elem = LLVMConstReal(elem_type, val);
+   }
+   else {
+      double dscale = lp_const_scale(type);
+
+      elem = LLVMConstInt(elem_type, val*dscale + 0.5, 0);
+   }
+
+   return elem;
+}
+
+
+/**
  * Build constant-valued vector from a scalar value.
  */
 LLVMValueRef
 lp_build_const_vec(struct lp_type type,
                    double val)
 {
-   LLVMTypeRef elem_type = lp_build_elem_type(type);
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
-
-   assert(type.length <= LP_MAX_VECTOR_LENGTH);
-
-   if(type.floating) {
-      elems[0] = LLVMConstReal(elem_type, val);
+   if (type.length == 1) {
+      return lp_build_const_elem(type, val);
+   } else {
+      LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+      unsigned i;
+      elems[0] = lp_build_const_elem(type, val);
+      for(i = 1; i < type.length; ++i)
+         elems[i] = elems[0];
+      return LLVMConstVector(elems, type.length);
    }
-   else {
-      double dscale = lp_const_scale(type);
-
-      elems[0] = LLVMConstInt(elem_type, val*dscale + 0.5, 0);
-   }
-
-   for(i = 1; i < type.length; ++i)
-      elems[i] = elems[0];
-
-   return LLVMConstVector(elems, type.length);
 }
 
 
@@ -320,6 +334,9 @@ lp_build_const_int_vec(struct lp_type type,
 
    for(i = 0; i < type.length; ++i)
       elems[i] = LLVMConstInt(elem_type, val, type.sign ? 1 : 0);
+
+   if (type.length == 1)
+      return elems[0];
 
    return LLVMConstVector(elems, type.length);
 }
@@ -365,9 +382,12 @@ lp_build_const_aos(struct lp_type type,
 }
 
 
+/**
+ * @param mask TGSI_WRITEMASK_xxx
+ */
 LLVMValueRef
 lp_build_const_mask_aos(struct lp_type type,
-                        const boolean cond[4])
+                        unsigned mask)
 {
    LLVMTypeRef elem_type = LLVMIntType(type.width);
    LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];
@@ -375,9 +395,13 @@ lp_build_const_mask_aos(struct lp_type type,
 
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   for(j = 0; j < type.length; j += 4)
-      for(i = 0; i < 4; ++i)
-         masks[j + i] = LLVMConstInt(elem_type, cond[i] ? ~0 : 0, 0);
+   for (j = 0; j < type.length; j += 4) {
+      for( i = 0; i < 4; ++i) {
+         masks[j + i] = LLVMConstInt(elem_type,
+                                     mask & (1 << i) ? ~0ULL : 0,
+                                     1);
+      }
+   }
 
    return LLVMConstVector(masks, type.length);
 }

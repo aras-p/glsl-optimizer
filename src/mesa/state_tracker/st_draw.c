@@ -43,7 +43,7 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "shader/prog_uniform.h"
+#include "program/prog_uniform.h"
 
 #include "vbo/vbo.h"
 
@@ -57,6 +57,9 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_prim.h"
+#include "util/u_draw_quad.h"
+#include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -492,6 +495,49 @@ setup_non_interleaved_attribs(GLcontext *ctx,
 }
 
 
+static void
+setup_index_buffer(GLcontext *ctx,
+                   const struct _mesa_index_buffer *ib,
+                   struct pipe_index_buffer *ibuffer)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+
+   memset(ibuffer, 0, sizeof(*ibuffer));
+   if (ib) {
+      struct gl_buffer_object *bufobj = ib->obj;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+         ibuffer->index_size = 4;
+         break;
+      case GL_UNSIGNED_SHORT:
+         ibuffer->index_size = 2;
+         break;
+      case GL_UNSIGNED_BYTE:
+         ibuffer->index_size = 1;
+         break;
+      default:
+         assert(0);
+	 return;
+      }
+
+      /* get/create the index buffer object */
+      if (bufobj && bufobj->Name) {
+         /* elements/indexes are in a real VBO */
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
+         ibuffer->offset = pointer_to_offset(ib->ptr);
+      }
+      else {
+         /* element/indicies are in user space memory */
+         ibuffer->buffer =
+            pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
+                                    ib->count * ibuffer->index_size,
+                                    PIPE_BIND_INDEX_BUFFER);
+      }
+   }
+}
 
 /**
  * Prior to drawing, check that any uniforms referenced by the
@@ -516,10 +562,21 @@ check_uniforms(GLcontext *ctx)
 }
 
 
-static unsigned translate_prim( GLcontext *ctx,
-                                unsigned prim )
+/**
+ * Translate OpenGL primtive type (GL_POINTS, GL_TRIANGLE_STRIP, etc) to
+ * the corresponding Gallium type.
+ */
+static unsigned
+translate_prim(const GLcontext *ctx, unsigned prim)
 {
+   /* GL prims should match Gallium prims, spot-check a few */
+   assert(GL_POINTS == PIPE_PRIM_POINTS);
+   assert(GL_QUADS == PIPE_PRIM_QUADS);
+   assert(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
+
    /* Avoid quadstrips if it's easy to do so:
+    * Note: it's imporant to do the correct trimming if we change the prim type!
+    * We do that wherever this function is called.
     */
    if (prim == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
@@ -529,6 +586,8 @@ static unsigned translate_prim( GLcontext *ctx,
 
    return prim;
 }
+
+
 
 /**
  * This function gets plugged into the VBO module and is called when
@@ -553,8 +612,11 @@ st_draw_vbo(GLcontext *ctx,
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
+   struct pipe_index_buffer ibuffer;
    GLboolean userSpace = GL_FALSE;
    GLboolean vertDataEdgeFlags;
+   struct pipe_draw_info info;
+   unsigned i;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
@@ -629,99 +691,35 @@ st_draw_vbo(GLcontext *ctx,
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
    cso_set_vertex_elements(st->cso_context, num_velements, velements);
 
-   if (num_vbuffers == 0 || num_velements == 0)
-      return;
+   setup_index_buffer(ctx, ib, &ibuffer);
+   pipe->set_index_buffer(pipe, &ibuffer);
+
+   util_draw_init_info(&info);
+   if (ib) {
+      info.indexed = TRUE;
+      if (min_index != ~0 && max_index != ~0) {
+         info.min_index = min_index;
+         info.max_index = max_index;
+      }
+   }
 
    /* do actual drawing */
-   if (ib) {
-      /* indexed primitive */
-      struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_resource *indexBuf = NULL;
-      unsigned indexSize, indexOffset, i;
-      unsigned prim;
-
-      switch (ib->type) {
-      case GL_UNSIGNED_INT:
-         indexSize = 4;
-         break;
-      case GL_UNSIGNED_SHORT:
-         indexSize = 2;
-         break;
-      case GL_UNSIGNED_BYTE:
-         indexSize = 1;
-         break;
-      default:
-         assert(0);
-	 return;
+   for (i = 0; i < nr_prims; i++) {
+      info.mode = translate_prim( ctx, prims[i].mode );
+      info.start = prims[i].start;
+      info.count = prims[i].count;
+      info.instance_count = prims[i].num_instances;
+      info.index_bias = prims[i].basevertex;
+      if (!ib) {
+         info.min_index = info.start;
+         info.max_index = info.start + info.count - 1;
       }
 
-      /* get/create the index buffer object */
-      if (bufobj && bufobj->Name) {
-         /* elements/indexes are in a real VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_resource_reference(&indexBuf, stobj->buffer);
-         indexOffset = pointer_to_offset(ib->ptr) / indexSize;
-      }
-      else {
-         /* element/indicies are in user space memory */
-         indexBuf = pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                            ib->count * indexSize,
-					    PIPE_BIND_INDEX_BUFFER);
-         indexOffset = 0;
-      }
-
-      /* draw */
-      if (pipe->draw_range_elements && min_index != ~0 && max_index != ~0) {
-         /* XXX: exercise temporary path to pass min/max directly
-          * through to driver & draw module.  These interfaces still
-          * need a bit of work...
-          */
-         for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
-
-            pipe->draw_range_elements(pipe, indexBuf, indexSize, 0,
-                                      min_index, max_index, prim,
-                                      prims[i].start + indexOffset, prims[i].count);
-         }
-      }
-      else {
-         for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
-            
-            if (prims[i].num_instances == 1) {
-               pipe->draw_elements(pipe, indexBuf, indexSize, 0, prim,
-                                   prims[i].start + indexOffset,
-                                   prims[i].count);
-            }
-            else {
-               pipe->draw_elements_instanced(pipe, indexBuf, indexSize, 0, prim,
-                                             prims[i].start + indexOffset,
-                                             prims[i].count,
-                                             0, prims[i].num_instances);
-            }
-         }
-      }
-
-      pipe_resource_reference(&indexBuf, NULL);
+      if (u_trim_pipe_prim(info.mode, &info.count))
+         pipe->draw_vbo(pipe, &info);
    }
-   else {
-      /* non-indexed */
-      GLuint i;
-      GLuint prim;
 
-      for (i = 0; i < nr_prims; i++) {
-         prim = translate_prim( ctx, prims[i].mode );
-
-         if (prims[i].num_instances == 1) {
-            pipe->draw_arrays(pipe, prim, prims[i].start, prims[i].count);
-         }
-         else {
-            pipe->draw_arrays_instanced(pipe, prim, prims[i].start,
-                                        prims[i].count,
-                                        0, prims[i].num_instances);
-         }
-      }
-   }
+   pipe_resource_reference(&ibuffer.buffer, NULL);
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < num_vbuffers; attr++) {
@@ -741,11 +739,26 @@ void st_init_draw( struct st_context *st )
    GLcontext *ctx = st->ctx;
 
    vbo_set_draw_func(ctx, st_draw_vbo);
+
+#if FEATURE_feedback || FEATURE_rastpos
+   st->draw = draw_create(st->pipe); /* for selection/feedback */
+
+   /* Disable draw options that might convert points/lines to tris, etc.
+    * as that would foul-up feedback/selection mode.
+    */
+   draw_wide_line_threshold(st->draw, 1000.0f);
+   draw_wide_point_threshold(st->draw, 1000.0f);
+   draw_enable_line_stipple(st->draw, FALSE);
+   draw_enable_point_sprites(st->draw, FALSE);
+#endif
 }
 
 
 void st_destroy_draw( struct st_context *st )
 {
+#if FEATURE_feedback || FEATURE_rastpos
+   draw_destroy(st->draw);
+#endif
 }
 
 

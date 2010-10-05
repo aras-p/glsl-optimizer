@@ -270,7 +270,7 @@ struct vg_image * image_create(VGImageFormat format,
    image->sampler.normalized_coords = 1;
 
    assert(screen->is_format_supported(screen, pformat, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;
@@ -355,7 +355,7 @@ void image_destroy(struct vg_image *img)
    }
 
    pipe_sampler_view_reference(&img->sampler_view, NULL);
-   free(img);
+   FREE(img);
 }
 
 void image_clear(struct vg_image *img,
@@ -576,7 +576,7 @@ void image_set_pixels(VGint dx, VGint dy,
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    surf = screen->get_tex_surface(screen, image_texture(src),  0, 0, 0,
-                                  PIPE_BIND_BLIT_SOURCE);
+                                  0 /* no bind flags as surf isn't actually used??? */);
 
    vg_copy_surface(ctx, strb->surface, dx, dy,
                    surf, sx+src->x, sy+src->y, width, height);
@@ -601,7 +601,7 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    surf = screen->get_tex_surface(screen, image_texture(dst),  0, 0, 0,
-                                  PIPE_BIND_BLIT_SOURCE);
+                                  0 /* no bind flags as surf isn't actually used??? */);
 
    vg_copy_surface(ctx, surf, dst->x + dx, dst->y + dy,
                    strb->surface, sx, sy, width, height);

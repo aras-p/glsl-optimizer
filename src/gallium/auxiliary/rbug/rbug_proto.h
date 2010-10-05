@@ -91,4 +91,9 @@ struct rbug_proto_header
  */
 struct rbug_connection;
 
+/**
+ * Get printable string for opcode.
+ */
+const char* rbug_proto_get_name(enum rbug_opcode opcode);
+
 #endif

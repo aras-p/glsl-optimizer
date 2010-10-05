@@ -31,10 +31,17 @@
 #ifndef SYNCOBJ_H
 #define SYNCOBJ_H
 
-#include "context.h"
+#include "main/mtypes.h"
+
+struct dd_function_table;
+
+#if FEATURE_ARB_sync
 
 extern void
 _mesa_init_sync_object_functions(struct dd_function_table *driver);
+
+extern void
+_mesa_init_sync_dispatch(struct _glapi_table *disp);
 
 extern void
 _mesa_init_sync(GLcontext *);
@@ -66,5 +73,43 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
 extern void GLAPIENTRY
 _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
 		GLint *values);
+
+#else /* FEATURE_ARB_sync */
+
+#include "main/compiler.h"
+
+static INLINE void
+_mesa_init_sync_object_functions(struct dd_function_table *driver)
+{
+}
+
+static INLINE void
+_mesa_init_sync_dispatch(struct _glapi_table *disp)
+{
+}
+
+static INLINE void
+_mesa_init_sync(GLcontext *ctx)
+{
+}
+
+static INLINE void
+_mesa_free_sync_data(GLcontext *ctx)
+{
+}
+
+static INLINE void
+_mesa_ref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
+{
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_unref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
+{
+   ASSERT_NO_FEATURE();
+}
+
+#endif /* FEATURE_ARB_sync */
 
 #endif /* SYNCOBJ_H */

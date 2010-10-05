@@ -15,6 +15,8 @@ if platform != 'embedded':
 	SConscript('state_trackers/glx/xlib/SConscript')
 	SConscript('state_trackers/dri/SConscript')
 	SConscript('state_trackers/xorg/SConscript')
+	SConscript('state_trackers/egl/SConscript')
+	SConscript('state_trackers/vega/SConscript')
 
 if platform == 'windows':
 	SConscript('state_trackers/wgl/SConscript')
@@ -25,4 +27,4 @@ SConscript('targets/SConscript')
 
 if platform != 'embedded':
 	SConscript('tests/unit/SConscript')
-	#SConscript('tests/raw/SConscript')
+	SConscript('tests/graw/SConscript')

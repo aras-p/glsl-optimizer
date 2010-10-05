@@ -36,7 +36,7 @@
 #include "draw/draw_context.h"
 
 
-void *
+static void *
 softpipe_create_vertex_elements_state(struct pipe_context *pipe,
                                       unsigned count,
                                       const struct pipe_vertex_element *attribs)
@@ -51,7 +51,8 @@ softpipe_create_vertex_elements_state(struct pipe_context *pipe,
    return velems;
 }
 
-void
+
+static void
 softpipe_bind_vertex_elements_state(struct pipe_context *pipe,
                                     void *velems)
 {
@@ -66,13 +67,15 @@ softpipe_bind_vertex_elements_state(struct pipe_context *pipe,
       draw_set_vertex_elements(softpipe->draw, sp_velems->count, sp_velems->velem);
 }
 
-void
+
+static void
 softpipe_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
 {
    FREE( velems );
 }
 
-void
+
+static void
 softpipe_set_vertex_buffers(struct pipe_context *pipe,
                             unsigned count,
                             const struct pipe_vertex_buffer *buffers)
@@ -87,4 +90,31 @@ softpipe_set_vertex_buffers(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_VERTEX;
 
    draw_set_vertex_buffers(softpipe->draw, count, buffers);
+}
+
+
+static void
+softpipe_set_index_buffer(struct pipe_context *pipe,
+                          const struct pipe_index_buffer *ib)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   if (ib)
+      memcpy(&softpipe->index_buffer, ib, sizeof(softpipe->index_buffer));
+   else
+      memset(&softpipe->index_buffer, 0, sizeof(softpipe->index_buffer));
+
+   draw_set_index_buffer(softpipe->draw, ib);
+}
+
+
+void
+softpipe_init_vertex_funcs(struct pipe_context *pipe)
+{
+   pipe->create_vertex_elements_state = softpipe_create_vertex_elements_state;
+   pipe->bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
+   pipe->delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
+
+   pipe->set_vertex_buffers = softpipe_set_vertex_buffers;
+   pipe->set_index_buffer = softpipe_set_index_buffer;
 }

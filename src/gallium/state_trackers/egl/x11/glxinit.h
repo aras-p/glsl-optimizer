@@ -2,10 +2,21 @@
 #define GLXINIT_INCLUDED
 
 #include <X11/Xlib.h>
-#include "glxclient.h"
+#include <GL/gl.h>
 
-/* this is used by DRI loaders */
-extern void
-_gl_context_modes_destroy(__GLcontextModes * modes);
+typedef struct {
+   __GLcontextModes *configs;
+   char *serverGLXexts;
+} __GLXscreenConfigs;
+
+typedef struct {
+   Display *dpy;
+   __GLXscreenConfigs **screenConfigs;
+   char *serverGLXversion;
+   int majorOpcode;
+   struct x11_screen *xscr;
+} __GLXdisplayPrivate;
+
+extern __GLXdisplayPrivate *__glXInitialize(Display * dpy);
 
 #endif /* GLXINIT_INCLUDED */

@@ -3,6 +3,7 @@
 #include "util/u_memory.h"
 
 #include "i915_drm.h"
+#include "i915/i915_debug.h"
 
 #define BATCH_RESERVED 16
 
@@ -151,7 +152,6 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned used = 0;
    int ret = 0;
-   int i;
 
    assert(i915_winsys_batchbuffer_space(ibatch) >= 0);
 
@@ -186,20 +186,28 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
 #endif
 
    /* Do the sending to HW */
-   ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
-   assert(ret == 0);
+   if (i915_drm_winsys(ibatch->iws)->send_cmd)
+      ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+   else
+      ret = 0;
 
-   if (i915_drm_winsys(ibatch->iws)->dump_cmd) {
-      unsigned *ptr;
-      drm_intel_bo_map(batch->bo, FALSE);
-      ptr = (unsigned*)batch->bo->virtual;
-
-      debug_printf("%s:\n", __func__);
-      for (i = 0; i < used / 4; i++, ptr++) {
-         debug_printf("\t%08x:    %08x\n", i*4, *ptr);
-      }
-
-      drm_intel_bo_unmap(batch->bo);
+   if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
+#ifdef INTEL_MAP_BATCHBUFFER
+#ifdef INTEL_MAP_GTT
+      drm_intel_gem_bo_map_gtt(batch->bo);
+#else
+      drm_intel_bo_map(batch->bo, 0);
+#endif
+#endif
+      i915_dump_batchbuffer(ibatch);
+      assert(ret == 0);
+#ifdef INTEL_MAP_BATCHBUFFER
+#ifdef INTEL_MAP_GTT
+   drm_intel_gem_bo_unmap_gtt(batch->bo);
+#else
+   drm_intel_bo_unmap(batch->bo);
+#endif
+#endif
    } else {
 #ifdef INTEL_RUN_SYNC
       drm_intel_bo_map(batch->bo, FALSE);

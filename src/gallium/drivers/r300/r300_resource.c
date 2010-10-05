@@ -23,19 +23,9 @@
  * Authors: Dave Airlie
  */
 
-#include <stdio.h>
-
-#include "util/u_inlines.h"
-#include "util/u_format.h"
-#include "util/u_memory.h"
-#include "util/u_upload_mgr.h"
-#include "util/u_math.h"
-
 #include "r300_context.h"
 #include "r300_texture.h"
-#include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_winsys.h"
 
 static struct pipe_resource *
 r300_resource_create(struct pipe_screen *screen,

@@ -165,9 +165,9 @@ cell_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 
 
 static void
-cell_vbuf_draw(struct vbuf_render *vbr,
-	       const ushort *indices,
-               uint nr_indices)
+cell_vbuf_draw_elements(struct vbuf_render *vbr,
+                        const ushort *indices,
+                        uint nr_indices)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    struct cell_context *cell = cvbr->cell;
@@ -319,7 +319,7 @@ cell_init_vbuf(struct cell_context *cell)
    cell->vbuf_render->base.map_vertices = cell_vbuf_map_vertices;
    cell->vbuf_render->base.unmap_vertices = cell_vbuf_unmap_vertices;
    cell->vbuf_render->base.set_primitive = cell_vbuf_set_primitive;
-   cell->vbuf_render->base.draw = cell_vbuf_draw;
+   cell->vbuf_render->base.draw_elements = cell_vbuf_draw_elements;
    cell->vbuf_render->base.release_vertices = cell_vbuf_release_vertices;
    cell->vbuf_render->base.destroy = cell_vbuf_destroy;
 

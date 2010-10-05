@@ -20,7 +20,6 @@ OSMESA_LIB_NAME = libOSMesa.a
 # Directories
 SRC_DIRS = mesa glu
 DRIVER_DIRS = osmesa
-PROGRAM_DIRS = osdemos
 
 
 # Dependencies

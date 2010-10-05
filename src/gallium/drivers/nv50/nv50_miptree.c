@@ -159,6 +159,9 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *tmp
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		tile_flags = 0x2800;
 		break;
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+		tile_flags = 0xe000;
+		break;
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 	case PIPE_FORMAT_R32G32B32_FLOAT:
 		tile_flags = 0x7400;
@@ -235,7 +238,8 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
 	unsigned stride;
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
-	if (template->target != PIPE_TEXTURE_2D ||
+	if ((template->target != PIPE_TEXTURE_2D &&
+	      template->target != PIPE_TEXTURE_RECT) ||
 	    template->last_level != 0 ||
 	    template->depth0 != 1)
 		return NULL;

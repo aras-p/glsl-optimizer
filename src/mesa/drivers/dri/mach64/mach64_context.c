@@ -79,14 +79,14 @@ static const struct dri_extension card_extensions[] =
     { "GL_ARB_multitexture",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
 
 /* Create the device specific context.
   */
-GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
+GLboolean mach64CreateContext( gl_api api,
+			       const __GLcontextModes *glVisual,
 			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate )
 {

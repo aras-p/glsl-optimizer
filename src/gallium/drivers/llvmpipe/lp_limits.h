@@ -66,5 +66,10 @@
  */
 #define LP_MAX_SCENE_SIZE (512 * 1024 * 1024)
 
+/**
+ * Max number of shader variants (for all shaders combined,
+ * per context) that will be kept around.
+ */
+#define LP_MAX_SHADER_VARIANTS 1024
 
 #endif /* LP_LIMITS_H */

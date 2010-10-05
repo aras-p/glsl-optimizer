@@ -50,8 +50,7 @@
 #define PB_BUFMGR_H_
 
 
-#include "pipe/p_compiler.h"
-#include "pipe/p_defines.h"
+#include "pb_buffer.h"
 
 
 #ifdef __cplusplus

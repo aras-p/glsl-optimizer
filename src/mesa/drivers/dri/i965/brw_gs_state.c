@@ -68,12 +68,12 @@ gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    key->urb_size = brw->urb.vsize;
 }
 
-static dri_bo *
+static drm_intel_bo *
 gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_gs_unit_state gs;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&gs, 0, sizeof(gs));
 
@@ -111,11 +111,9 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 
    if (key->prog_active) {
       /* Emit GS program relocation */
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_INSTRUCTION, 0,
-			gs.thread0.grf_reg_count << 1,
-			offsetof(struct brw_gs_unit_state, thread0),
-			brw->gs.prog_bo);
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_gs_unit_state, thread0),
+			      brw->gs.prog_bo, gs.thread0.grf_reg_count << 1,
+			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
    return bo;
@@ -127,7 +125,7 @@ static void prepare_gs_unit(struct brw_context *brw)
 
    gs_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->gs.state_bo);
+   drm_intel_bo_unreference(brw->gs.state_bo);
    brw->gs.state_bo = brw_search_cache(&brw->cache, BRW_GS_UNIT,
 				       &key, sizeof(key),
 				       &brw->gs.prog_bo, 1,

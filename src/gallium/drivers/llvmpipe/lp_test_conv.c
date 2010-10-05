@@ -34,6 +34,8 @@
  */
 
 
+#include "util/u_pointer.h"
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_conv.h"
@@ -151,8 +153,7 @@ test_one(unsigned verbose,
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef func = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMExecutionEngineRef engine = lp_build_engine;
    LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    conv_test_ptr_t conv_test_ptr;
@@ -164,20 +165,28 @@ test_one(unsigned verbose,
    unsigned num_dsts;
    double eps;
    unsigned i, j;
+   void *code;
+
+   if (src_type.width * src_type.length != dst_type.width * dst_type.length &&
+       src_type.length != dst_type.length) {
+      return TRUE;
+   }
 
    if(verbose >= 1)
       dump_conv_types(stdout, src_type, dst_type);
 
-   if(src_type.length > dst_type.length) {
+   if (src_type.length > dst_type.length) {
       num_srcs = 1;
       num_dsts = src_type.length/dst_type.length;
    }
-   else  {
+   else if (src_type.length < dst_type.length) {
       num_dsts = 1;
       num_srcs = dst_type.length/src_type.length;
    }
-
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
+   else  {
+      num_dsts = 1;
+      num_srcs = 1;
+   }
 
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
@@ -193,15 +202,6 @@ test_one(unsigned verbose,
       abort();
    }
    LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      if(verbose < 1)
-         dump_conv_types(stderr, src_type, dst_type);
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
-      abort();
-   }
 
 #if 0
    pass = LLVMCreatePassManager();
@@ -221,10 +221,11 @@ test_one(unsigned verbose,
    if(verbose >= 2)
       LLVMDumpModule(module);
 
-   conv_test_ptr = (conv_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+   code = LLVMGetPointerToGlobal(engine, func);
+   conv_test_ptr = (conv_test_ptr_t)pointer_to_func(code);
 
    if(verbose >= 2)
-      lp_disassemble(conv_test_ptr);
+      lp_disassemble(code);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
@@ -257,10 +258,15 @@ test_one(unsigned verbose,
             success = FALSE;
       }
 
-      if (!success) {
+      if (!success || verbose >= 3) {
          if(verbose < 1)
             dump_conv_types(stderr, src_type, dst_type);
-         fprintf(stderr, "MISMATCH\n");
+         if (success) {
+            fprintf(stderr, "PASS\n");
+         }
+         else {
+            fprintf(stderr, "MISMATCH\n");
+         }
 
          for(j = 0; j < num_srcs; ++j) {
             fprintf(stderr, "  Src%u: ", j);
@@ -336,7 +342,6 @@ test_one(unsigned verbose,
 
    LLVMFreeMachineCodeForFunction(engine, func);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 
@@ -373,6 +378,11 @@ const struct lp_type conv_types[] = {
    {  FALSE, FALSE,  TRUE, FALSE,     8,  16 },
    {  FALSE, FALSE, FALSE,  TRUE,     8,  16 },
    {  FALSE, FALSE, FALSE, FALSE,     8,  16 },
+
+   {  FALSE, FALSE,  TRUE,  TRUE,     8,   4 },
+   {  FALSE, FALSE,  TRUE, FALSE,     8,   4 },
+   {  FALSE, FALSE, FALSE,  TRUE,     8,   4 },
+   {  FALSE, FALSE, FALSE, FALSE,     8,   4 },
 };
 
 
@@ -384,7 +394,7 @@ test_all(unsigned verbose, FILE *fp)
 {
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(src_type = conv_types; src_type < &conv_types[num_types]; ++src_type) {
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
@@ -411,7 +421,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
    unsigned long i;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(i = 0; i < n; ++i) {
       src_type = &conv_types[rand() % num_types];
@@ -423,6 +433,23 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
       if(!test_one(verbose, fp, *src_type, *dst_type))
         success = FALSE;
    }
+
+   return success;
+}
+
+
+boolean
+test_single(unsigned verbose, FILE *fp)
+{
+   /*    float, fixed,  sign,  norm, width, len */
+   struct lp_type f32x4_type =
+      {   TRUE, FALSE,  TRUE,  TRUE,    32,   4 };
+   struct lp_type ub8x4_type =
+      {  FALSE, FALSE, FALSE,  TRUE,     8,  16 };
+
+   boolean success;
+
+   success = test_one(verbose, fp, f32x4_type, ub8x4_type);
 
    return success;
 }

@@ -62,7 +62,8 @@ struct svga_shader_emitter
 
    int imm_start;
 
-   int nr_hw_const;
+   int nr_hw_float_const;
+   int nr_hw_int_const;
    int nr_hw_temp;
    
    int insn_offset;
@@ -353,6 +354,7 @@ static INLINE ubyte svga_tgsi_sampler_type( struct svga_shader_emitter *emit,
    case PIPE_TEXTURE_1D:
       return SVGA3DSAMP_2D;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       return SVGA3DSAMP_2D;
    case PIPE_TEXTURE_3D:
       return SVGA3DSAMP_VOLUME;

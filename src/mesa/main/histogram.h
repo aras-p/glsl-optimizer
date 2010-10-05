@@ -52,6 +52,4 @@ _mesa_init_histogram_dispatch(struct _glapi_table *disp)
 
 #endif /* FEATURE_histogram */
 
-extern void _mesa_init_histogram( GLcontext * ctx );
-
 #endif /* HISTOGRAM_H */

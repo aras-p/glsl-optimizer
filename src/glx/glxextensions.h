@@ -41,7 +41,6 @@ enum
    EXT_visual_rating_bit,
    EXT_import_context_bit,
    MESA_agp_offset_bit,
-   MESA_allocate_memory_bit,    /* Replaces MESA_agp_offset & NV_vertex_array_range */
    MESA_copy_sub_buffer_bit,
    MESA_depth_float_bit,
    MESA_pixmap_colormap_bit,
@@ -94,6 +93,7 @@ enum
    GL_ARB_texture_mirrored_repeat_bit,
    GL_ARB_texture_non_power_of_two_bit,
    GL_ARB_texture_rectangle_bit,
+   GL_ARB_texture_rg_bit,
    GL_ARB_transpose_matrix_bit,
    GL_ARB_vertex_buffer_object_bit,
    GL_ARB_vertex_program_bit,
@@ -235,30 +235,29 @@ enum
 
 #define __GL_EXT_BYTES   ((__NUM_GL_EXTS + 7) / 8)
 
-struct __GLXscreenConfigsRec;
-struct __GLXcontextRec;
+struct glx_screen;
+struct glx_context;
 
-extern GLboolean __glXExtensionBitIsEnabled(struct __GLXscreenConfigsRec *psc,
+extern GLboolean __glXExtensionBitIsEnabled(struct glx_screen *psc,
                                             unsigned bit);
 extern const char *__glXGetClientExtensions(void);
-extern void __glXCalculateUsableExtensions(struct __GLXscreenConfigsRec *psc,
+extern void __glXCalculateUsableExtensions(struct glx_screen *psc,
                                            GLboolean
                                            display_is_direct_capable,
                                            int server_minor_version);
 
-extern void __glXCalculateUsableGLExtensions(struct __GLXcontextRec *gc,
+extern void __glXCalculateUsableGLExtensions(struct glx_context *gc,
                                              const char *server_string,
                                              int major_version,
                                              int minor_version);
 extern void __glXGetGLVersion(int *major_version, int *minor_version);
 extern char *__glXGetClientGLExtensionString(void);
 
-extern GLboolean __glExtensionBitIsEnabled(const struct __GLXcontextRec *gc,
+extern GLboolean __glExtensionBitIsEnabled(struct glx_context *gc,
                                            unsigned bit);
 
 extern void
-__glXEnableDirectExtension(struct __GLXscreenConfigsRec *psc,
-                           const char *name);
+__glXEnableDirectExtension(struct glx_screen *psc, const char *name);
 
 /* Source-level backwards compatibility with old drivers. They won't
  * find the respective functions, though. 

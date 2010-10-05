@@ -36,7 +36,7 @@
 struct gl_pixelstore_attrib;
 struct gl_display_list;
 
-#if FEATURE_ARB_vertex_buffer_object
+/* GL_ARB_vertex_buffer_object */
 /* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
  * NULL) if buffer is unavailable for immediate mapping.
  *
@@ -49,7 +49,6 @@ struct gl_display_list;
  * respect the contents of already referenced data.
  */
 #define MESA_MAP_NOWAIT_BIT       0x0040
-#endif
 
 
 /**
@@ -559,15 +558,6 @@ struct dd_function_table {
    void (*CopyColorSubTable)( GLcontext *ctx,
 			      GLenum target, GLsizei start,
 			      GLint x, GLint y, GLsizei width );
-
-   void (*CopyConvolutionFilter1D)( GLcontext *ctx, GLenum target,
-				    GLenum internalFormat,
-				    GLint x, GLint y, GLsizei width );
-
-   void (*CopyConvolutionFilter2D)( GLcontext *ctx, GLenum target,
-				    GLenum internalFormat,
-				    GLint x, GLint y,
-				    GLsizei width, GLsizei height );
    /*@}*/
 
 
@@ -595,6 +585,27 @@ struct dd_function_table {
    
    /*@}*/
 
+   /**
+    * \name GLSL shader/program functions.
+    */
+   /*@{*/
+   /**
+    * Called when a shader is compiled.
+    *
+    * Note that not all shader objects get ShaderCompile called on
+    * them.  Notably, the shaders containing builtin functions do not
+    * have CompileShader() called, so if lowering passes are done they
+    * need to also be performed in LinkShader().
+    */
+   GLboolean (*CompileShader)(GLcontext *ctx, struct gl_shader *shader);
+   /**
+    * Called when a shader program is linked.
+    *
+    * This gives drivers an opportunity to clone the IR and make their
+    * own transformations on it for the purposes of code generation.
+    */
+   GLboolean (*LinkShader)(GLcontext *ctx, struct gl_shader_program *shader);
+   /*@}*/
 
    /**
     * \name State-changing functions.
@@ -706,31 +717,9 @@ struct dd_function_table {
    /*@}*/
 
 
-   /** 
-    * \name State-query functions
-    *
-    * Return GL_TRUE if query was completed, GL_FALSE otherwise.
-    */
-   /*@{*/
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetBooleanv)(GLcontext *ctx, GLenum pname, GLboolean *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetDoublev)(GLcontext *ctx, GLenum pname, GLdouble *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetInteger64v)(GLcontext *ctx, GLenum pname, GLint64 *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
-   /*@}*/
-   
-
    /**
     * \name Vertex/pixel buffer object functions
     */
-#if FEATURE_ARB_vertex_buffer_object
    /*@{*/
    void (*BindBuffer)( GLcontext *ctx, GLenum target,
 		       struct gl_buffer_object *obj );
@@ -774,12 +763,10 @@ struct dd_function_table {
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
    /*@}*/
-#endif
 
    /**
     * \name Functions for GL_APPLE_object_purgeable
     */
-#if FEATURE_APPLE_object_purgeable
    /*@{*/
    /* variations on ObjectPurgeable */
    GLenum (*BufferObjectPurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
@@ -791,12 +778,10 @@ struct dd_function_table {
    GLenum (*RenderObjectUnpurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
    GLenum (*TextureObjectUnpurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
    /*@}*/
-#endif
 
    /**
-    * \name Functions for GL_EXT_framebuffer_object
+    * \name Functions for GL_EXT_framebuffer_{object,blit}.
     */
-#if FEATURE_EXT_framebuffer_object
    /*@{*/
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
@@ -815,13 +800,10 @@ struct dd_function_table {
    void (*ValidateFramebuffer)(GLcontext *ctx,
                                struct gl_framebuffer *fb);
    /*@}*/
-#endif
-#if FEATURE_EXT_framebuffer_blit
    void (*BlitFramebuffer)(GLcontext *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
-#endif
 
    /**
     * \name Query objects
@@ -849,54 +831,12 @@ struct dd_function_table {
     * \name GLSL-related functions (ARB extensions and OpenGL 2.x)
     */
    /*@{*/
-   void (*AttachShader)(GLcontext *ctx, GLuint program, GLuint shader);
-   void (*BindAttribLocation)(GLcontext *ctx, GLuint program, GLuint index,
-                              const GLcharARB *name);
-   void (*CompileShader)(GLcontext *ctx, GLuint shader);
-   GLuint (*CreateShader)(GLcontext *ctx, GLenum type);
-   GLuint (*CreateProgram)(GLcontext *ctx);
-   void (*DeleteProgram2)(GLcontext *ctx, GLuint program);
-   void (*DeleteShader)(GLcontext *ctx, GLuint shader);
-   void (*DetachShader)(GLcontext *ctx, GLuint program, GLuint shader);
-   void (*GetActiveAttrib)(GLcontext *ctx, GLuint program, GLuint index,
-                           GLsizei maxLength, GLsizei * length, GLint * size,
-                           GLenum * type, GLcharARB * name);
-   void (*GetActiveUniform)(GLcontext *ctx, GLuint program, GLuint index,
-                            GLsizei maxLength, GLsizei *length, GLint *size,
-                            GLenum *type, GLcharARB *name);
-   void (*GetAttachedShaders)(GLcontext *ctx, GLuint program, GLsizei maxCount,
-                              GLsizei *count, GLuint *obj);
-   GLint (*GetAttribLocation)(GLcontext *ctx, GLuint program,
-                              const GLcharARB *name);
-   GLuint (*GetHandle)(GLcontext *ctx, GLenum pname);
-   void (*GetProgramiv)(GLcontext *ctx, GLuint program,
-                        GLenum pname, GLint *params);
-   void (*GetProgramInfoLog)(GLcontext *ctx, GLuint program, GLsizei bufSize,
-                             GLsizei *length, GLchar *infoLog);
-   void (*GetShaderiv)(GLcontext *ctx, GLuint shader,
-                       GLenum pname, GLint *params);
-   void (*GetShaderInfoLog)(GLcontext *ctx, GLuint shader, GLsizei bufSize,
-                            GLsizei *length, GLchar *infoLog);
-   void (*GetShaderSource)(GLcontext *ctx, GLuint shader, GLsizei maxLength,
-                           GLsizei *length, GLcharARB *sourceOut);
-   void (*GetUniformfv)(GLcontext *ctx, GLuint program, GLint location,
-                        GLfloat *params);
-   void (*GetUniformiv)(GLcontext *ctx, GLuint program, GLint location,
-                        GLint *params);
-   GLint (*GetUniformLocation)(GLcontext *ctx, GLuint program,
-                               const GLcharARB *name);
-   GLboolean (*IsProgram)(GLcontext *ctx, GLuint name);
-   GLboolean (*IsShader)(GLcontext *ctx, GLuint name);
-   void (*LinkProgram)(GLcontext *ctx, GLuint program);
-   void (*ShaderSource)(GLcontext *ctx, GLuint shader, const GLchar *source);
-   void (*Uniform)(GLcontext *ctx, GLint location, GLsizei count,
-                   const GLvoid *values, GLenum type);
-   void (*UniformMatrix)(GLcontext *ctx, GLint cols, GLint rows,
-                         GLint location, GLsizei count,
-                         GLboolean transpose, const GLfloat *values);
-   void (*UseProgram)(GLcontext *ctx, GLuint program);
-   void (*ValidateProgram)(GLcontext *ctx, GLuint program);
-   /* XXX many more to come */
+   struct gl_shader *(*NewShader)(GLcontext *ctx, GLuint name, GLenum type);
+   void (*DeleteShader)(GLcontext *ctx, struct gl_shader *shader);
+   struct gl_shader_program *(*NewShaderProgram)(GLcontext *ctx, GLuint name);
+   void (*DeleteShaderProgram)(GLcontext *ctx,
+                               struct gl_shader_program *shProg);
+   void (*UseProgram)(GLcontext *ctx, struct gl_shader_program *shProg);
    /*@}*/
 
 
@@ -1018,7 +958,6 @@ struct dd_function_table {
    void (*EndCallList)( GLcontext *ctx );
 
 
-#if FEATURE_ARB_sync
    /**
     * \name GL_ARB_sync interfaces
     */
@@ -1032,14 +971,12 @@ struct dd_function_table {
    void (*ServerWaitSync)(GLcontext *, struct gl_sync_object *,
 			  GLbitfield, GLuint64);
    /*@}*/
-#endif
 
    /** GL_NV_conditional_render */
    void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
                                   GLenum mode);
    void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
 
-#if FEATURE_OES_draw_texture
    /**
     * \name GL_OES_draw_texture interface
     */
@@ -1047,9 +984,10 @@ struct dd_function_table {
    void (*DrawTex)(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
                    GLfloat width, GLfloat height);
    /*@}*/
-#endif
 
-#if FEATURE_OES_EGL_image
+   /**
+    * \name GL_OES_EGL_image interface
+    */
    void (*EGLImageTargetTexture2D)(GLcontext *ctx, GLenum target,
 				   struct gl_texture_object *texObj,
 				   struct gl_texture_image *texImage,
@@ -1057,8 +995,24 @@ struct dd_function_table {
    void (*EGLImageTargetRenderbufferStorage)(GLcontext *ctx,
 					     struct gl_renderbuffer *rb,
 					     void *image_handle);
-#endif
 
+   /**
+    * \name GL_EXT_transform_feedback interface
+    */
+   struct gl_transform_feedback_object *
+        (*NewTransformFeedback)(GLcontext *ctx, GLuint name);
+   void (*DeleteTransformFeedback)(GLcontext *ctx,
+                                   struct gl_transform_feedback_object *obj);
+   void (*BeginTransformFeedback)(GLcontext *ctx, GLenum mode,
+                                  struct gl_transform_feedback_object *obj);
+   void (*EndTransformFeedback)(GLcontext *ctx,
+                                struct gl_transform_feedback_object *obj);
+   void (*PauseTransformFeedback)(GLcontext *ctx,
+                                  struct gl_transform_feedback_object *obj);
+   void (*ResumeTransformFeedback)(GLcontext *ctx,
+                                   struct gl_transform_feedback_object *obj);
+   void (*DrawTransformFeedback)(GLcontext *ctx, GLenum mode,
+                                 struct gl_transform_feedback_object *obj);
 };
 
 
@@ -1141,7 +1095,7 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
-#if FEATURE_ARB_vertex_program
+   /* GL_ARB_vertex_program */
    void (GLAPIENTRYP VertexAttrib1fARB)( GLuint index, GLfloat x );
    void (GLAPIENTRYP VertexAttrib1fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib2fARB)( GLuint index, GLfloat x, GLfloat y );
@@ -1150,7 +1104,6 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvARB)( GLuint index, const GLfloat *v );
-#endif
    /*@}*/
 
    void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );

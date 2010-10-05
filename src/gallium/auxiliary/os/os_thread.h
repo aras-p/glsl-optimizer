@@ -40,12 +40,11 @@
 #include "util/u_debug.h" /* for assert */
 
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
 
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
 
-#define PIPE_THREAD_HAVE_CONDVAR
 
 /* pipe_thread
  */
@@ -168,19 +167,59 @@ typedef CRITICAL_SECTION pipe_mutex;
 #define pipe_mutex_unlock(mutex) \
    LeaveCriticalSection(&mutex)
 
-
-/* pipe_condvar (XXX FIX THIS)
+/* TODO: Need a macro to declare "I don't care about WinXP compatibilty" */
+#if 0 && defined (_WIN32_WINNT) && (_WIN32_WINNT >= 0x0600)
+/* CONDITION_VARIABLE is only available on newer versions of Windows
+ * (Server 2008/Vista or later).
+ * http://msdn.microsoft.com/en-us/library/ms682052(VS.85).aspx
+ *
+ * pipe_condvar
  */
-typedef unsigned pipe_condvar;
+typedef CONDITION_VARIABLE pipe_condvar;
+
+#define pipe_static_condvar(cond) \
+   /*static*/ pipe_condvar cond = CONDITION_VARIABLE_INIT
 
 #define pipe_condvar_init(cond) \
-   (void) cond
+   InitializeConditionVariable(&(cond))
+
+#define pipe_condvar_destroy(cond) \
+   (void) cond /* nothing to do */
+
+#define pipe_condvar_wait(cond, mutex) \
+   SleepConditionVariableCS(&(cond), &(mutex), INFINITE)
+
+#define pipe_condvar_signal(cond) \
+   WakeConditionVariable(&(cond))
+
+#define pipe_condvar_broadcast(cond) \
+   WakeAllConditionVariable(&(cond))
+
+#else /* need compatibility with pre-Vista Win32 */
+
+/* pipe_condvar (XXX FIX THIS)
+ * See http://www.cs.wustl.edu/~schmidt/win32-cv-1.html
+ * for potential pitfalls in implementation.
+ */
+typedef DWORD pipe_condvar;
+
+#define pipe_static_condvar(cond) \
+   /*static*/ pipe_condvar cond = 1
+
+#define pipe_condvar_init(cond) \
+   (void) (cond = 1)
 
 #define pipe_condvar_destroy(cond) \
    (void) cond
 
+/* Poor man's pthread_cond_wait():
+   Just release the mutex and sleep for one millisecond.
+   The caller's while() loop does all the work. */
 #define pipe_condvar_wait(cond, mutex) \
-   (void) cond; (void) mutex
+   do { pipe_mutex_unlock(mutex); \
+        Sleep(cond); \
+        pipe_mutex_lock(mutex); \
+   } while (0)
 
 #define pipe_condvar_signal(cond) \
    (void) cond
@@ -188,8 +227,11 @@ typedef unsigned pipe_condvar;
 #define pipe_condvar_broadcast(cond) \
    (void) cond
 
+#endif /* pre-Vista win32 */
 
 #else
+
+#include "os/os_time.h"
 
 /** Dummy definitions */
 
@@ -214,7 +256,6 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 }
 
 typedef unsigned pipe_mutex;
-typedef unsigned pipe_condvar;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -231,17 +272,25 @@ typedef unsigned pipe_condvar;
 #define pipe_mutex_unlock(mutex) \
    (void) mutex
 
+typedef int64_t pipe_condvar;
+
 #define pipe_static_condvar(condvar) \
-   static unsigned condvar = 0
+   static pipe_condvar condvar = 1000
 
 #define pipe_condvar_init(condvar) \
-   (void) condvar
+   (void) (condvar = 1000)
 
 #define pipe_condvar_destroy(condvar) \
    (void) condvar
 
+/* Poor man's pthread_cond_wait():
+   Just release the mutex and sleep for one millisecond.
+   The caller's while() loop does all the work. */
 #define pipe_condvar_wait(condvar, mutex) \
-   (void) condvar
+   do { pipe_mutex_unlock(mutex); \
+        os_time_sleep(condvar); \
+        pipe_mutex_lock(mutex); \
+   } while (0)
 
 #define pipe_condvar_signal(condvar) \
    (void) condvar
@@ -277,27 +326,7 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 }
 
 
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-
-/* XXX FIX THIS */
-typedef unsigned pipe_barrier;
-
-static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
-{
-   /* XXX we could implement barriers with a mutex and condition var */
-}
-
-static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
-{
-}
-
-static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
-{
-   assert(0);
-}
-
-
-#else
+#else /* If the OS doesn't have its own, implement barriers using a mutex and a condvar */
 
 typedef struct {
    unsigned count;
@@ -405,7 +434,7 @@ pipe_semaphore_wait(pipe_semaphore *sema)
  */
 
 typedef struct {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    pthread_key_t key;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    DWORD key;
@@ -420,7 +449,7 @@ typedef struct {
 static INLINE void
 pipe_tsd_init(pipe_tsd *tsd)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
       perror("pthread_key_create(): failed to allocate key for thread specific data");
       exit(-1);
@@ -437,7 +466,7 @@ pipe_tsd_get(pipe_tsd *tsd)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    return pthread_getspecific(tsd->key);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
@@ -454,7 +483,7 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    if (pthread_setspecific(tsd->key, value) != 0) {
       perror("pthread_set_specific() failed");
       exit(-1);

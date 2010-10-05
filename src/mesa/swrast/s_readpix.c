@@ -26,8 +26,6 @@
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/colormac.h"
-#include "main/convolve.h"
-#include "main/context.h"
 #include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"
@@ -192,7 +190,8 @@ fast_read_rgba_pixels( GLcontext *ctx,
    if (!rb)
       return GL_FALSE;
 
-   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+	  rb->_BaseFormat == GL_ALPHA);
 
    /* clipping should have already been done */
    ASSERT(x + width <= (GLint) rb->Width);
@@ -265,10 +264,18 @@ adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
    const GLuint rShift = 8 - fb->Visual.redBits;
    const GLuint gShift = 8 - fb->Visual.greenBits;
    const GLuint bShift = 8 - fb->Visual.blueBits;
-   const GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
+   GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
+   GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
+   GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
    GLuint i;
+
+   if (fb->Visual.redBits == 0)
+      rScale = 0;
+   if (fb->Visual.greenBits == 0)
+      gScale = 0;
+   if (fb->Visual.blueBits == 0)
+      bScale = 0;
+
    for (i = 0; i < n; i++) {
       GLint r, g, b;
       /* convert float back to ubyte */
@@ -318,57 +325,7 @@ read_rgba_pixels( GLcontext *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
-   if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      GLfloat *dest, *src, *tmpImage, *convImage;
-      GLint row;
-
-      tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!tmpImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-         return;
-      }
-      convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!convImage) {
-         free(tmpImage);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-         return;
-      }
-
-      /* read full RGBA, FLOAT image */
-      dest = tmpImage;
-      for (row = 0; row < height; row++, y++) {
-         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
-         _mesa_apply_rgba_transfer_ops(ctx, 
-                                      transferOps & IMAGE_PRE_CONVOLUTION_BITS,
-                                      width, (GLfloat (*)[4]) dest);
-         dest += width * 4;
-      }
-
-      /* do convolution */
-      if (ctx->Pixel.Convolution2DEnabled) {
-         _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      else {
-         ASSERT(ctx->Pixel.Separable2DEnabled);
-         _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      free(tmpImage);
-
-      /* finish transfer ops and pack the resulting image */
-      src = convImage;
-      for (row = 0; row < height; row++) {
-         GLvoid *dest;
-         dest = _mesa_image_address2d(packing, pixels, width, height,
-                                      format, type, row, 0);
-         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) src,
-                                    format, type, dest, packing,
-                                    transferOps & IMAGE_POST_CONVOLUTION_BITS);
-         src += width * 4;
-      }
-      free(convImage);
-   }
-   else {
-      /* no convolution */
+   do {
       const GLint dstStride
          = _mesa_image_row_stride(packing, width, format, type);
       GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
@@ -376,10 +333,6 @@ read_rgba_pixels( GLcontext *ctx,
       GLubyte *dst
          = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
                                              format, type, 0, 0);
-
-      /* make sure we don't apply 1D convolution */
-      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
-                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
 
       for (row = 0; row < height; row++, y++) {
 
@@ -399,7 +352,7 @@ read_rgba_pixels( GLcontext *ctx,
 
          dst += dstStride;
       }
-   }
+   } while (0);
 }
 
 

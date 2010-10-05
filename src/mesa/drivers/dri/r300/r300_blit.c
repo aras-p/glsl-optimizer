@@ -56,6 +56,7 @@ static void create_vertex_program(struct r300_context *r300)
     struct r300_vertex_program_compiler compiler;
     struct rc_instruction *inst;
 
+    memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
 
     inst = rc_insert_new_instruction(&compiler.Base, compiler.Base.Program.Instructions.Prev);
@@ -88,6 +89,12 @@ static void create_vertex_program(struct r300_context *r300)
     compiler.RequiredOutputs = compiler.Base.Program.OutputsWritten = (1 << VERT_RESULT_HPOS) | (1 << VERT_RESULT_TEX0);
     compiler.SetHwInputOutput = vp_ins_outs;
     compiler.code = &r300->blit.vp_code;
+    compiler.Base.is_r500 = r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515;
+    compiler.Base.disable_optimizations = 0;
+    compiler.Base.has_half_swizzles = 0;
+    compiler.Base.max_temp_regs = 32;
+    compiler.Base.max_constants = 256;
+    compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 1024 : 256;
 
     r3xx_compile_vertex_program(&compiler);
 }
@@ -118,8 +125,12 @@ static void create_fragment_program(struct r300_context *r300)
     compiler.OutputColor[0] = FRAG_RESULT_COLOR;
     compiler.OutputDepth = FRAG_RESULT_DEPTH;
     compiler.enable_shadow_ambient = GL_TRUE;
-    compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515);
-    compiler.max_temp_regs = (compiler.is_r500) ? 128 : 32;
+    compiler.Base.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515);
+    compiler.Base.disable_optimizations = 0;
+    compiler.Base.has_half_swizzles = 1;
+    compiler.Base.max_temp_regs = (compiler.Base.is_r500) ? 128 : 32;
+    compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;
+    compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 512 : 64;
     compiler.code = &r300->blit.fp_code;
     compiler.AllocateHwInputs = fp_allocate_hw_inputs;
 
@@ -141,10 +152,11 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                                unsigned height,
                                unsigned pitch)
 {
+    int is_r500 = r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515;
     BATCH_LOCALS(&r300->radeon);
 
-    assert(width <= 2048);
-    assert(height <= 2048);
+    assert(is_r500 ? width  <= 4096 : width  <= 2048);
+    assert(is_r500 ? height <= 4096 : height <= 2048);
     assert(r300TranslateTexFormat(mesa_format) >= 0);
     assert(offset % 32 == 0);
 
@@ -159,14 +171,17 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                      (0 << 28));
     OUT_BATCH_REGVAL(R300_TX_FILTER1_0, 0);
     OUT_BATCH_REGVAL(R300_TX_SIZE_0,
-                     ((width-1) << R300_TX_WIDTHMASK_SHIFT) |
-                     ((height-1) << R300_TX_HEIGHTMASK_SHIFT) |
+                     (((width  - 1) & 0x7ff) << R300_TX_WIDTHMASK_SHIFT) |
+                     (((height - 1) & 0x7ff) << R300_TX_HEIGHTMASK_SHIFT) |
                      (0 << R300_TX_DEPTHMASK_SHIFT) |
                      (0 << R300_TX_MAX_MIP_LEVEL_SHIFT) |
                      R300_TX_SIZE_TXPITCH_EN);
 
     OUT_BATCH_REGVAL(R300_TX_FORMAT_0, r300TranslateTexFormat(mesa_format));
-    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0, pitch - 1);
+    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0,
+                     (pitch - 1) |
+                     (is_r500 && width  > 2048 ? R500_TXWIDTH_BIT11  : 0) |
+                     (is_r500 && height > 2048 ? R500_TXHEIGHT_BIT11 : 0));
     OUT_BATCH_REGSEQ(R300_TX_OFFSET_0, 1);
     OUT_BATCH_RELOC(0, bo, offset, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 

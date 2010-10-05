@@ -74,7 +74,6 @@ svga_texture_view_surface(struct pipe_context *pipe,
 
 void
 svga_texture_copy_handle(struct svga_context *svga,
-                         struct svga_screen *ss,
                          struct svga_winsys_surface *src_handle,
                          unsigned src_x, unsigned src_y, unsigned src_z,
                          unsigned src_level, unsigned src_face,

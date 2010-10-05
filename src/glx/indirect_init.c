@@ -53,13 +53,13 @@ static int NoOp(void)
  * Create and initialize a new GL dispatch table.  The table is initialized
  * with GLX indirect rendering protocol functions.
  */
-__GLapi * __glXNewIndirectAPI( void )
+struct _glapi_table * __glXNewIndirectAPI( void )
 {
-    __GLapi *glAPI;
+    struct _glapi_table *glAPI;
     GLuint entries;
 
     entries = _glapi_get_dispatch_table_size();
-    glAPI = (__GLapi *) Xmalloc(entries * sizeof(void *));
+    glAPI = (struct _glapi_table *) Xmalloc(entries * sizeof(void *));
 
     /* first, set all entries to point to no-op functions */
     {

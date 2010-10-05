@@ -37,9 +37,9 @@
 #include "brw_wm.h"
 #include "brw_util.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
 
 
 /** An invalid texture target */
@@ -88,6 +88,7 @@ static struct prog_src_register src_reg(GLuint file, GLuint idx)
    reg.RelAddr = 0;
    reg.Negate = NEGATE_NONE;
    reg.Abs = 0;
+   reg.HasIndex2 = 0;
    return reg;
 }
 
@@ -335,6 +336,12 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
 
 static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
 {
+   /* This is only called for producing 1/w in pre-gen6 interp.  for
+    * gen6, the interp opcodes don't use this argument.
+    */
+   if (c->func.brw->intel.gen >= 6)
+      return src_undef();
+
    if (src_is_undef(c->pixel_w)) {
       struct prog_dst_register pixel_w = get_temp(c);
       struct prog_src_register deltas = get_delta_xy(c);
@@ -362,7 +369,13 @@ static void emit_interp( struct brw_wm_compile *c,
 {
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
-   struct prog_src_register deltas = get_delta_xy(c);
+   struct prog_src_register deltas;
+
+   if (c->func.brw->intel.gen < 6) {
+      deltas = get_delta_xy(c);
+   } else {
+      deltas = src_undef();
+   }
 
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
@@ -1036,13 +1049,12 @@ static void print_insns( const struct prog_instruction *insn,
    for (i = 0; i < nr; i++, insn++) {
       printf("%3d: ", i);
       if (insn->Opcode < MAX_OPCODE)
-	 _mesa_print_instruction(insn);
+	 _mesa_fprint_instruction_opt(stdout, insn, 0, PROG_PRINT_DEBUG, NULL);
       else if (insn->Opcode < MAX_WM_OPCODE) {
 	 GLuint idx = insn->Opcode - MAX_OPCODE;
 
-	 _mesa_print_alu_instruction(insn,
-				     wm_opcode_strings[idx],
-				     3);
+	 _mesa_fprint_alu_instruction(stdout, insn, wm_opcode_strings[idx],
+				      3, PROG_PRINT_DEBUG, NULL);
       }
       else 
 	 printf("965 Opcode %d\n", insn->Opcode);
@@ -1056,17 +1068,26 @@ static void print_insns( const struct prog_instruction *insn,
  */
 void brw_wm_pass_fp( struct brw_wm_compile *c )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    struct brw_fragment_program *fp = c->fp;
    GLuint insn;
 
    if (INTEL_DEBUG & DEBUG_WM) {
       printf("pre-fp:\n");
-      _mesa_print_program(&fp->program.Base); 
+      _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
       printf("\n");
    }
 
    c->pixel_xy = src_undef();
-   c->delta_xy = src_undef();
+   if (intel->gen >= 6) {
+      /* The interpolation deltas come in as the perspective pixel
+       * location barycentric params.
+       */
+      c->delta_xy = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
+   } else {
+      c->delta_xy = src_undef();
+   }
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
    c->fp->tex_units_used = 0x0;

@@ -143,6 +143,7 @@ vbo_deinit_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 	}
 
 	render->attr_count = 0;
+	context_bctx(ctx, VERTEX);
 }
 
 /* Make some rendering decisions from the GL context. */

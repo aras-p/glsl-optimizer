@@ -678,7 +678,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 struct brw_fp_src src0,
 			 struct brw_fp_src sampler )
 {
-   struct brw_fp_src coord = src_undef();
+   struct brw_fp_src coord;
    struct brw_fp_dst tmp = dst_undef();
 
    assert(unit < BRW_MAX_TEX_UNIT);

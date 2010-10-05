@@ -28,7 +28,7 @@
 #define S_AALINE_H
 
 
-#include "swrast.h"
+#include "main/mtypes.h"
 
 
 extern void

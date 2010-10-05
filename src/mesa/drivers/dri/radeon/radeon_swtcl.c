@@ -40,7 +40,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/simple_list.h"
 
+#include "math/m_xform.h"
+
 #include "swrast_setup/swrast_setup.h"
+
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -407,6 +410,8 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    if (rmesa->radeon.swtcl.RenderIndex != 0 ||   
        !radeon_dma_validate_render( ctx, VB ))
       return GL_TRUE;		
+
+   radeon_prepare_render(&rmesa->radeon);
 
    tnl->Driver.Render.Start( ctx );
 

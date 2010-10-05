@@ -36,6 +36,7 @@
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_setup.h"
+#include "lp_debug.h"
 
 
 /**
@@ -53,6 +54,9 @@ llvmpipe_clear(struct pipe_context *pipe,
 
    if (llvmpipe->no_rast)
       return;
+
+   if (LP_PERF & PERF_NO_DEPTH)
+      buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
 
    lp_setup_clear( llvmpipe->setup, rgba, depth, stencil, buffers );
 }

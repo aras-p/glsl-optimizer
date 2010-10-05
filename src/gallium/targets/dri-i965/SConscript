@@ -8,11 +8,19 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
+env.Append(CPPDEFINES = [
+    'GALLIUM_SOFTPIPE',
+    'GALLIUM_RBUG',
+    'GALLIUM_TRACE'
+])
+
 env.Prepend(LIBS = [
     st_dri,
     i965drm,
+    ws_wrapper,
     i965,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,
@@ -21,6 +29,6 @@ env.Prepend(LIBS = [
 
 env.LoadableModule(
     target = 'i965_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

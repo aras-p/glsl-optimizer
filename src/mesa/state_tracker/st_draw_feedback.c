@@ -45,7 +45,7 @@
 #include "draw/draw_context.h"
 
 
-#if FEATURE_feedback || FEATURE_drawpix
+#if FEATURE_feedback || FEATURE_rastpos
 
 /**
  * Set the (private) draw module's post-transformed vertex format when in
@@ -104,14 +104,15 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct draw_context *draw = st->draw;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   struct pipe_resource *index_buffer_handle = 0;
    struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer ibuffer;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
    struct pipe_transfer *ib_transfer = NULL;
    struct pipe_transfer *cb_transfer;
    GLuint attr, i;
    ubyte *mapped_constants;
+   const void *mapped_indices = NULL;
 
    assert(draw);
 
@@ -204,17 +205,19 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_vertex_buffers(draw, vp->num_inputs, vbuffers);
    draw_set_vertex_elements(draw, vp->num_inputs, velements);
 
+   memset(&ibuffer, 0, sizeof(ibuffer));
    if (ib) {
       struct gl_buffer_object *bufobj = ib->obj;
-      unsigned indexSize;
-      void *map;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
-         indexSize = 4;
+         ibuffer.index_size = 4;
          break;
       case GL_UNSIGNED_SHORT:
-         indexSize = 2;
+         ibuffer.index_size = 2;
+         break;
+      case GL_UNSIGNED_BYTE:
+         ibuffer.index_size = 1;
          break;
       default:
          assert(0);
@@ -224,23 +227,20 @@ st_feedback_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
 
-         index_buffer_handle = stobj->buffer;
+         pipe_resource_reference(&ibuffer.buffer, stobj->buffer);
+         ibuffer.offset = pointer_to_offset(ib->ptr);
 
-         map = pipe_buffer_map(pipe, index_buffer_handle,
-                               PIPE_TRANSFER_READ, &ib_transfer);
-
-         draw_set_mapped_element_buffer(draw, indexSize, 0, map);
+         mapped_indices = pipe_buffer_map(pipe, stobj->buffer,
+                                          PIPE_TRANSFER_READ, &ib_transfer);
       }
       else {
-         draw_set_mapped_element_buffer(draw, indexSize, 0, (void *) ib->ptr);
-	 ib_transfer = NULL;
+         /* skip setting ibuffer.buffer as the draw module does not use it */
+         mapped_indices = ib->ptr;
       }
-   }
-   else {
-      /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
-   }
 
+      draw_set_index_buffer(draw, &ibuffer);
+      draw_set_mapped_index_buffer(draw, mapped_indices);
+   }
 
    /* map constant buffers */
    mapped_constants = pipe_buffer_map(pipe,
@@ -273,11 +273,16 @@ st_feedback_draw_vbo(GLcontext *ctx,
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
-   if (index_buffer_handle) {
-      pipe_buffer_unmap(pipe, index_buffer_handle, ib_transfer);
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+
+   if (ib) {
+      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_index_buffer(draw, NULL);
+
+      if (ib_transfer)
+         pipe_buffer_unmap(pipe, ibuffer.buffer, ib_transfer);
+      pipe_resource_reference(&ibuffer.buffer, NULL);
    }
 }
 
-#endif /* FEATURE_feedback || FEATURE_drawpix */
+#endif /* FEATURE_feedback || FEATURE_rastpos */
 

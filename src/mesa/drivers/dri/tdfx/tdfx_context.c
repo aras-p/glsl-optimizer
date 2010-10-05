@@ -136,8 +136,6 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 
    if ( TDFX_IS_NAPALM( fxMesa ) ) {
       driInitExtensions( ctx, napalm_extensions, GL_FALSE );
-   } else {
-      _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
    }
 }
 
@@ -164,7 +162,8 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
-GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
+GLboolean tdfxCreateContext( gl_api api,
+			     const __GLcontextModes *mesaVis,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {

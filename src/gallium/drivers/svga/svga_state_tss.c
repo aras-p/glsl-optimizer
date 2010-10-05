@@ -56,6 +56,7 @@ static int
 update_tss_binding(struct svga_context *svga, 
                    unsigned dirty )
 {
+   boolean reemit = !!(dirty & SVGA_NEW_COMMAND_BUFFER);
    unsigned i;
    unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
@@ -107,12 +108,18 @@ update_tss_binding(struct svga_context *svga,
                                                 max_lod);
       }
 
-      if (view->dirty) {
+      /*
+       * We need to reemit non-null texture bindings, even when they are not
+       * dirty, to ensure that the resources are paged in.
+       */
+
+      if (view->dirty ||
+          (reemit && view->v)) {
          queue.bind[queue.bind_count].unit = i;
          queue.bind[queue.bind_count].view = view;
          queue.bind_count++;
       } 
-      else if (view->v) {
+      if (!view->dirty && view->v) {
          svga_validate_sampler_view(svga, view->v);
       }
    }
@@ -128,18 +135,21 @@ update_tss_binding(struct svga_context *svga,
          goto fail;
 
       for (i = 0; i < queue.bind_count; i++) {
+         struct svga_winsys_surface *handle;
+
          ts[i].stage = queue.bind[i].unit;
          ts[i].name = SVGA3D_TS_BIND_TEXTURE;
 
          if (queue.bind[i].view->v) {
-            svga->swc->surface_relocation(svga->swc,
-                                          &ts[i].value,
-                                          queue.bind[i].view->v->handle,
-                                          SVGA_RELOC_READ);
+            handle = queue.bind[i].view->v->handle;
          }
          else {
-            ts[i].value = SVGA3D_INVALID_ID;
+            handle = NULL;
          }
+         svga->swc->surface_relocation(svga->swc,
+                                       &ts[i].value,
+                                       handle,
+                                       SVGA_RELOC_READ);
          
          queue.bind[i].view->dirty = FALSE;
       }
@@ -157,7 +167,8 @@ fail:
 struct svga_tracked_state svga_hw_tss_binding = {
    "texture binding emit",
    SVGA_NEW_TEXTURE_BINDING |
-   SVGA_NEW_SAMPLER,
+   SVGA_NEW_SAMPLER |
+   SVGA_NEW_COMMAND_BUFFER,
    update_tss_binding
 };
 

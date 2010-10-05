@@ -28,6 +28,7 @@
 #ifndef TGSI_INFO_H
 #define TGSI_INFO_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
 
 #if defined __cplusplus
@@ -51,6 +52,9 @@ tgsi_get_opcode_info( uint opcode );
 
 const char *
 tgsi_get_opcode_name( uint opcode );
+
+const char *
+tgsi_get_processor_name( uint processor );
 
 
 #if defined __cplusplus

@@ -118,11 +118,13 @@ pool_buffer_destroy(struct pb_buffer *buf)
 
 
 static void *
-pool_buffer_map(struct pb_buffer *buf, unsigned flags)
+pool_buffer_map(struct pb_buffer *buf, unsigned flags, void *flush_ctx)
 {
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
    void *map;
+
+   /* XXX: it will be necessary to remap here to propagate flush_ctx */
 
    pipe_mutex_lock(pool->mutex);
    map = (unsigned char *) pool->map + pool_buf->start;
@@ -285,7 +287,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool->map = pb_map(pool->buffer,
                           PB_USAGE_CPU_READ |
-                          PB_USAGE_CPU_WRITE);
+                          PB_USAGE_CPU_WRITE, NULL);
    if(!pool->map)
       goto failure;
 

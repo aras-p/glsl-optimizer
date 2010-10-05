@@ -177,9 +177,6 @@ _mesa_MatrixMode( GLenum mode )
       ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->TextureMatrixStack));
       ctx->CurrentStack = &ctx->TextureMatrixStack[ctx->Texture.CurrentUnit];
       break;
-   case GL_COLOR:
-      ctx->CurrentStack = &ctx->ColorMatrixStack;
-      break;
    case GL_MATRIX0_NV:
    case GL_MATRIX1_NV:
    case GL_MATRIX2_NV:
@@ -724,8 +721,6 @@ void _mesa_init_matrix( GLcontext * ctx )
                      _NEW_MODELVIEW);
    init_matrix_stack(&ctx->ProjectionMatrixStack, MAX_PROJECTION_STACK_DEPTH,
                      _NEW_PROJECTION);
-   init_matrix_stack(&ctx->ColorMatrixStack, MAX_COLOR_STACK_DEPTH,
-                     _NEW_COLOR_MATRIX);
    for (i = 0; i < Elements(ctx->TextureMatrixStack); i++)
       init_matrix_stack(&ctx->TextureMatrixStack[i], MAX_TEXTURE_STACK_DEPTH,
                         _NEW_TEXTURE_MATRIX);
@@ -753,7 +748,6 @@ void _mesa_free_matrix_data( GLcontext *ctx )
 
    free_matrix_stack(&ctx->ModelviewMatrixStack);
    free_matrix_stack(&ctx->ProjectionMatrixStack);
-   free_matrix_stack(&ctx->ColorMatrixStack);
    for (i = 0; i < Elements(ctx->TextureMatrixStack); i++)
       free_matrix_stack(&ctx->TextureMatrixStack[i]);
    for (i = 0; i < Elements(ctx->ProgramMatrixStack); i++)

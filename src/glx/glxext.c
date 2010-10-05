@@ -41,13 +41,11 @@
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
-#include <X11/extensions/dri2proto.h>
 #ifdef GLX_USE_APPLEGL
 #include "apple_glx.h"
 #include "apple_visual.h"
 #endif
 #include "glxextensions.h"
-#include "glcontextmodes.h"
 
 #ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
@@ -57,7 +55,7 @@
 
 
 #ifdef DEBUG
-void __glXDumpDrawBuffer(__GLXcontext * ctx);
+void __glXDumpDrawBuffer(struct glx_context * ctx);
 #endif
 
 /*
@@ -68,13 +66,8 @@ _X_HIDDEN int __glXDebug = 0;
 
 /* Extension required boiler plate */
 
-static char *__glXExtensionName = GLX_EXTENSION_NAME;
-#ifdef GLX_USE_APPLEGL
-static XExtensionInfo __glXExtensionInfo_data;
-XExtensionInfo *__glXExtensionInfo = &__glXExtensionInfo_data;
-#else
-XExtensionInfo *__glXExtensionInfo = NULL;
-#endif
+static const char __glXExtensionName[] = GLX_EXTENSION_NAME;
+  static struct glx_display *glx_displays;
 
 static /* const */ char *error_list[] = {
    "GLXBadContext",
@@ -92,21 +85,6 @@ static /* const */ char *error_list[] = {
    "GLXBadWindow",
 };
 
-static int
-__glXCloseDisplay(Display * dpy, XExtCodes * codes)
-{
-   GLXContext gc;
-
-   gc = __glXGetCurrentContext();
-   if (dpy == gc->currentDpy) {
-      __glXSetCurrentContextNull();
-      __glXFreeContext(gc);
-   }
-
-   return XextRemoveDisplay(__glXExtensionInfo, dpy);
-}
-
-
 #ifdef GLX_USE_APPLEGL
 static char *__glXErrorString(Display *dpy, int code, XExtCodes *codes, 
                               char *buf, int n);
@@ -115,28 +93,6 @@ static char *__glXErrorString(Display *dpy, int code, XExtCodes *codes,
 static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
                            __GLX_NUMBER_ERRORS, error_list)
-static Bool
-__glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire);
-static Status
-__glXEventToWire(Display *dpy, XEvent *event, xEvent *wire);
-
-static /* const */ XExtensionHooks __glXExtensionHooks = {
-  NULL,                   /* create_gc */
-  NULL,                   /* copy_gc */
-  NULL,                   /* flush_gc */
-  NULL,                   /* free_gc */
-  NULL,                   /* create_font */
-  NULL,                   /* free_font */
-  __glXCloseDisplay,      /* close_display */
-  __glXWireToEvent,       /* wire_to_event */
-  __glXEventToWire,       /* event_to_wire */
-  NULL,                   /* error */
-  __glXErrorString,       /* error_string */
-};
-
-XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
-                           __glXExtensionName, &__glXExtensionHooks,
-                           __GLX_NUMBER_EVENTS, NULL)
 
 /*
  * GLX events are a bit funky.  We don't stuff the X event code into
@@ -150,11 +106,12 @@ XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
 static Bool
 __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
-   XExtDisplayInfo *info = __glXFindDisplay(dpy);
+     struct glx_display *glx_dpy = __glXInitialize(dpy);
 
-   XextCheckExtension(dpy, info, __glXExtensionName, False);
+   if (glx_dpy == NULL)
+      return False;
 
-   switch ((wire->u.u.type & 0x7f) - info->codes->first_event) {
+   switch ((wire->u.u.type & 0x7f) - glx_dpy->codes->first_event) {
    case GLX_PbufferClobber:
    {
       GLXPbufferClobberEvent *aevent = (GLXPbufferClobberEvent *)event;
@@ -173,16 +130,6 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       aevent->count = awire->count;
       return True;
    }
-   /* No easy symbol to test for this, as GLX_BufferSwapComplete is
-    * defined in the local glx.h header, but the
-    * xGLXBufferSwapComplete typedef is only available in new versions
-    * of the external glxproto.h header, which doesn't have any
-    * testable versioning define.
-    *
-    * I'll use the related DRI2 define, in the hope that we won't
-    * receive these events unless we know how to ask for them:
-    */
-#ifdef X_DRI2SwapBuffers
    case GLX_BufferSwapComplete:
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
@@ -194,7 +141,6 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
       return True;
    }
-#endif
    default:
       /* client doesn't support server event */
       break;
@@ -209,9 +155,10 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 static Status
 __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 {
-   XExtDisplayInfo *info = __glXFindDisplay(dpy);
+     struct glx_display *glx_dpy = __glXInitialize(dpy);
 
-   XextCheckExtension(dpy, info, __glXExtensionName, False);
+   if (glx_dpy == NULL)
+      return False;
 
    switch (event->type) {
    case GLX_DAMAGED:
@@ -238,68 +185,61 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 ** __glXScreenConfigs.
 */
 static void
-FreeScreenConfigs(__GLXdisplayPrivate * priv)
+FreeScreenConfigs(struct glx_display * priv)
 {
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
    GLint i, screens;
 
    /* Free screen configuration information */
-   psc = priv->screenConfigs;
    screens = ScreenCount(priv->dpy);
-   for (i = 0; i < screens; i++, psc++) {
+   for (i = 0; i < screens; i++) {
+      psc = priv->screens[i];
       if (psc->configs) {
-         _gl_context_modes_destroy(psc->configs);
+	 glx_config_destroy_list(psc->configs);
          if (psc->effectiveGLXexts)
             Xfree(psc->effectiveGLXexts);
          psc->configs = NULL;   /* NOTE: just for paranoia */
       }
       if (psc->visuals) {
-         _gl_context_modes_destroy(psc->visuals);
-         psc->visuals = NULL;   /* NOTE: just for paranoia */
+	 glx_config_destroy_list(psc->visuals);
+	 psc->visuals = NULL;   /* NOTE: just for paranoia */
       }
       Xfree((char *) psc->serverGLXexts);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-      if (psc->driver_configs) {
-         unsigned int j;
-         for (j = 0; psc->driver_configs[j]; j++)
-            free((__DRIconfig *) psc->driver_configs[j]);
-         free(psc->driver_configs);
-         psc->driver_configs = NULL;
-      }
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
-         __glxHashDestroy(psc->drawHash);
-         XFree(psc->driScreen);
-         psc->driScreen = NULL;
+      } else {
+	 Xfree(psc);
       }
+#else
+      Xfree(psc);
 #endif
    }
-   XFree((char *) priv->screenConfigs);
-   priv->screenConfigs = NULL;
+   XFree((char *) priv->screens);
+   priv->screens = NULL;
 }
 
-/*
-** Release the private memory referred to in a display private
-** structure.  The caller will free the extension structure.
-*/
-static int
-__glXFreeDisplayPrivate(XExtData * extension)
+static void
+glx_display_free(struct glx_display *priv)
 {
-   __GLXdisplayPrivate *priv;
+   struct glx_context *gc;
 
-   priv = (__GLXdisplayPrivate *) extension->private_data;
+   gc = __glXGetCurrentContext();
+   if (priv->dpy == gc->currentDpy) {
+      gc->vtable->destroy(gc);
+      __glXSetCurrentContextNull();
+   }
+
    FreeScreenConfigs(priv);
-   if (priv->serverGLXvendor) {
+   if (priv->serverGLXvendor)
       Xfree((char *) priv->serverGLXvendor);
-      priv->serverGLXvendor = 0x0;      /* to protect against double free's */
-   }
-   if (priv->serverGLXversion) {
+   if (priv->serverGLXversion)
       Xfree((char *) priv->serverGLXversion);
-      priv->serverGLXversion = 0x0;     /* to protect against double free's */
-   }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   __glxHashDestroy(priv->drawHash);
+
    /* Free the direct rendering per display data */
    if (priv->driswDisplay)
       (*priv->driswDisplay->destroyDisplay) (priv->driswDisplay);
@@ -315,10 +255,27 @@ __glXFreeDisplayPrivate(XExtData * extension)
 #endif
 
    Xfree((char *) priv);
-   return 0;
 }
 
-/************************************************************************/
+static int
+__glXCloseDisplay(Display * dpy, XExtCodes * codes)
+{
+   struct glx_display *priv, **prev;
+
+   _XLockMutex(_Xglobal_lock);
+   prev = &glx_displays;
+   for (priv = glx_displays; priv; prev = &priv->next, priv = priv->next) {
+      if (priv->dpy == dpy) {
+	 (*prev) = priv->next;
+	 break;
+      }
+   }
+   _XUnlockMutex(_Xglobal_lock);
+
+   glx_display_free(priv);
+
+   return 1;
+}
 
 /*
 ** Query the version of the GLX extension.  This procedure works even if
@@ -382,12 +339,27 @@ enum {
 };
 
 
+static GLint
+convert_from_x_visual_type(int visualType)
+{
+   static const int glx_visual_types[] = {
+      GLX_STATIC_GRAY, GLX_GRAY_SCALE,
+      GLX_STATIC_COLOR, GLX_PSEUDO_COLOR,
+      GLX_TRUE_COLOR, GLX_DIRECT_COLOR
+   };
+
+   if (visualType < ARRAY_SIZE(glx_visual_types))
+      return glx_visual_types[visualType];
+
+   return GLX_NONE;
+}
+
 /*
  * getVisualConfigs uses the !tagged_only path.
  * getFBConfigs uses the tagged_only path.
  */
 _X_HIDDEN void
-__glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
+__glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
                                     const INT32 * bp, Bool tagged_only,
                                     Bool fbconfig_style_tags)
 {
@@ -397,7 +369,7 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       /* Copy in the first set of properties */
       config->visualID = *bp++;
 
-      config->visualType = _gl_convert_from_x_visual_type(*bp++);
+      config->visualType = convert_from_x_visual_type(*bp++);
 
       config->rgbMode = *bp++;
 
@@ -584,6 +556,10 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
          config->yInverted = *bp++;
          break;
 #endif
+      case GLX_USE_GL:
+         if (fbconfig_style_tags)
+            bp++;
+         break;
       case None:
          i = count;
          break;
@@ -595,30 +571,22 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
          } else {
              /* Ignore the unrecognized tag's value */
              bp++;
-             break;
          }
-              break;
+         break;
       }
    }
 
    config->renderType =
       (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
-
-   config->haveAccumBuffer = ((config->accumRedBits +
-                               config->accumGreenBits +
-                               config->accumBlueBits +
-                               config->accumAlphaBits) > 0);
-   config->haveDepthBuffer = (config->depthBits > 0);
-   config->haveStencilBuffer = (config->stencilBits > 0);
 }
 
-static __GLcontextModes *
+static struct glx_config *
 createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
                             int screen, GLboolean tagged_only)
 {
    INT32 buf[__GLX_TOTAL_CONFIG], *props;
    unsigned prop_size;
-   __GLcontextModes *modes, *m;
+   struct glx_config *modes, *m;
    int i;
 
    if (nprops == 0)
@@ -631,7 +599,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
       return NULL;
 
    /* Allocate memory for our config structure */
-   modes = _gl_context_modes_create(nvisuals, sizeof(__GLcontextModes));
+   modes = glx_config_create_list(nvisuals);
    if (!modes)
       return NULL;
 
@@ -669,15 +637,15 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
 }
 
 static GLboolean
-getVisualConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
+getVisualConfigs(struct glx_screen *psc,
+		  struct glx_display *priv, int screen)
 {
    xGLXGetVisualConfigsReq *req;
-   __GLXscreenConfigs *psc;
    xGLXGetVisualConfigsReply reply;
+   Display *dpy = priv->dpy;
 
    LockDisplay(dpy);
 
-   psc = priv->screenConfigs + screen;
    psc->visuals = NULL;
    GetReq(GLXGetVisualConfigs, req);
    req->reqType = priv->majorOpcode;
@@ -698,15 +666,14 @@ getVisualConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
 }
 
 static GLboolean
-getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
+ getFBConfigs(struct glx_screen *psc, struct glx_display *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
    xGLXVendorPrivateWithReplyReq *vpreq;
    xGLXGetFBConfigsReply reply;
-   __GLXscreenConfigs *psc;
+   Display *dpy = priv->dpy;
 
-   psc = priv->screenConfigs + screen;
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
@@ -745,26 +712,39 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
    return psc->configs != NULL;
 }
 
+_X_HIDDEN Bool
+glx_screen_init(struct glx_screen *psc,
+		 int screen, struct glx_display * priv)
+{
+   /* Initialize per screen dynamic client GLX extensions */
+   psc->ext_list_first_time = GL_TRUE;
+   psc->scr = screen;
+   psc->dpy = priv->dpy;
+   psc->display = priv;
+
+   getVisualConfigs(psc, priv, screen);
+   getFBConfigs(psc, priv, screen);
+
+   return GL_TRUE;
+}
+
 /*
 ** Allocate the memory for the per screen configs for each screen.
 ** If that works then fetch the per screen configs data.
 */
 static Bool
-AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
+AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 {
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
    GLint i, screens;
 
    /*
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   psc = (__GLXscreenConfigs *) Xmalloc(screens * sizeof(__GLXscreenConfigs));
-   if (!psc) {
+   priv->screens = Xmalloc(screens * sizeof *priv->screens);
+   if (!priv->screens)
       return GL_FALSE;
-   }
-   memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
-   priv->screenConfigs = psc;
 
    priv->serverGLXversion =
       __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
@@ -774,33 +754,22 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    }
 
    for (i = 0; i < screens; i++, psc++) {
-      getVisualConfigs(dpy, priv, i);
-      getFBConfigs(dpy, priv, i);
-
+      psc = NULL;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-      psc->scr = i;
-      psc->dpy = dpy;
-      psc->drawHash = __glxHashCreate();
-      if (psc->drawHash == NULL)
-         continue;
-
-      /* Initialize per screen dynamic client GLX extensions */
-      psc->ext_list_first_time = GL_TRUE;
-
       if (priv->dri2Display)
-         psc->driScreen = (*priv->dri2Display->createScreen) (psc, i, priv);
-
-      if (psc->driScreen == NULL && priv->driDisplay)
-         psc->driScreen = (*priv->driDisplay->createScreen) (psc, i, priv);
-
-      if (psc->driScreen == NULL && priv->driswDisplay)
-         psc->driScreen = (*priv->driswDisplay->createScreen) (psc, i, priv);
-
-      if (psc->driScreen == NULL) {
-         __glxHashDestroy(psc->drawHash);
-         psc->drawHash = NULL;
-      }
+	 psc = (*priv->dri2Display->createScreen) (i, priv);
+      if (psc == NULL && priv->driDisplay)
+	 psc = (*priv->driDisplay->createScreen) (i, priv);
+      if (psc == NULL && priv->driswDisplay)
+	 psc = (*priv->driswDisplay->createScreen) (i, priv);
 #endif
+#if defined(GLX_USE_APPLEGL)
+      if (psc == NULL && priv->appleglDisplay)
+	 psc = (*priv->appleglDisplay->createScreen) (i, priv);
+#endif
+      if (psc == NULL)
+	 psc = indirect_create_screen(i, priv);
+      priv->screens[i] = psc;
    }
    SyncHandle();
    return GL_TRUE;
@@ -809,74 +778,64 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 /*
 ** Initialize the client side extension code.
 */
-_X_HIDDEN __GLXdisplayPrivate *
+ _X_HIDDEN struct glx_display *
 __glXInitialize(Display * dpy)
 {
-   XExtDisplayInfo *info = __glXFindDisplay(dpy);
-   XExtData **privList, *private, *found;
-   __GLXdisplayPrivate *dpyPriv;
-   XEDataObject dataObj;
-   int major, minor;
+   struct glx_display *dpyPriv, *d;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    Bool glx_direct, glx_accel;
 #endif
+   int i;
 
-   /* The one and only long long lock */
-   __glXLock();
+   _XLockMutex(_Xglobal_lock);
 
-   if (!XextHasExtension(info)) {
-      /* No GLX extension supported by this server. Oh well. */
-      __glXUnlock();
-      XMissingExtension(dpy, __glXExtensionName);
-      return 0;
+   for (dpyPriv = glx_displays; dpyPriv; dpyPriv = dpyPriv->next) {
+      if (dpyPriv->dpy == dpy) {
+	 _XUnlockMutex(_Xglobal_lock);
+	 return dpyPriv;
+      }
    }
 
-   /* See if a display private already exists.  If so, return it */
-   dataObj.display = dpy;
-   privList = XEHeadOfExtensionList(dataObj);
-   found = XFindOnExtensionList(privList, info->codes->extension);
-   if (found) {
-      __glXUnlock();
-      return (__GLXdisplayPrivate *) found->private_data;
+   /* Drop the lock while we create the display private. */
+   _XUnlockMutex(_Xglobal_lock);
+
+   dpyPriv = Xcalloc(1, sizeof *dpyPriv);
+   if (!dpyPriv)
+      return NULL;
+
+   dpyPriv->codes = XInitExtension(dpy, __glXExtensionName);
+   if (!dpyPriv->codes) {
+      Xfree(dpyPriv);
+      _XUnlockMutex(_Xglobal_lock);
+      return NULL;
    }
 
-   /* See if the versions are compatible */
-   if (!QueryVersion(dpy, info->codes->major_opcode, &major, &minor)) {
-      /* The client and server do not agree on versions.  Punt. */
-      __glXUnlock();
-      return 0;
-   }
-
-   /*
-    ** Allocate memory for all the pieces needed for this buffer.
-    */
-   private = (XExtData *) Xmalloc(sizeof(XExtData));
-   if (!private) {
-      __glXUnlock();
-      return 0;
-   }
-   dpyPriv = (__GLXdisplayPrivate *) Xcalloc(1, sizeof(__GLXdisplayPrivate));
-   if (!dpyPriv) {
-      __glXUnlock();
-      Xfree((char *) private);
-      return 0;
-   }
-
-   /*
-    ** Init the display private and then read in the screen config
-    ** structures from the server.
-    */
-   dpyPriv->majorOpcode = info->codes->major_opcode;
-   dpyPriv->majorVersion = major;
-   dpyPriv->minorVersion = minor;
    dpyPriv->dpy = dpy;
-
+   dpyPriv->majorOpcode = dpyPriv->codes->major_opcode;
    dpyPriv->serverGLXvendor = 0x0;
    dpyPriv->serverGLXversion = 0x0;
+
+   /* See if the versions are compatible */
+   if (!QueryVersion(dpy, dpyPriv->majorOpcode,
+		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)) {
+      Xfree(dpyPriv);
+      _XUnlockMutex(_Xglobal_lock);
+      return NULL;
+   }
+
+   for (i = 0; i < __GLX_NUMBER_EVENTS; i++) {
+      XESetWireToEvent(dpy, dpyPriv->codes->first_event + i, __glXWireToEvent);
+      XESetEventToWire(dpy, dpyPriv->codes->first_event + i, __glXEventToWire);
+   }
+
+   XESetCloseDisplay(dpy, dpyPriv->codes->extension, __glXCloseDisplay);
+   XESetErrorString (dpy, dpyPriv->codes->extension,__glXErrorString);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
    glx_accel = (getenv("LIBGL_ALWAYS_SOFTWARE") == NULL);
+
+   dpyPriv->drawHash = __glxHashCreate();
 
    /*
     ** Initialize the direct rendering per display data and functions.
@@ -890,32 +849,37 @@ __glXInitialize(Display * dpy)
    if (glx_direct)
       dpyPriv->driswDisplay = driswCreateDisplay(dpy);
 #endif
+
 #ifdef GLX_USE_APPLEGL
-   if (apple_init_glx(dpy) || !AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-#else
-   if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
+   if (!applegl_create_display(dpyPriv)) {
+      Xfree(dpyPriv);
+      return NULL;
+   }
 #endif
-      __glXUnlock();
-      Xfree((char *) dpyPriv);
-      Xfree((char *) private);
-      return 0;
+   if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
+      Xfree(dpyPriv);
+      return NULL;
    }
 
-   /*
-    ** Fill in the private structure.  This is the actual structure that
-    ** hangs off of the Display structure.  Our private structure is
-    ** referred to by this structure.  Got that?
-    */
-   private->number = info->codes->extension;
-   private->next = 0;
-   private->free_private = __glXFreeDisplayPrivate;
-   private->private_data = (char *) dpyPriv;
-   XAddToExtensionList(privList, private);
-
-   if (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion >= 1) {
+   if (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion >= 1)
       __glXClientInfo(dpy, dpyPriv->majorOpcode);
+
+   /* Grab the lock again and add the dispay private, unless somebody
+    * beat us to initializing on this display in the meantime. */
+   _XLockMutex(_Xglobal_lock);
+
+   for (d = glx_displays; d; d = d->next) {
+      if (d->dpy == dpy) {
+	 _XUnlockMutex(_Xglobal_lock);
+	 glx_display_free(dpyPriv);
+	 return d;
+      }
    }
-   __glXUnlock();
+
+   dpyPriv->next = glx_displays;
+   glx_displays = dpyPriv;
+
+    _XUnlockMutex(_Xglobal_lock);
 
    return dpyPriv;
 }
@@ -927,8 +891,8 @@ __glXInitialize(Display * dpy)
 _X_HIDDEN CARD8
 __glXSetupForCommand(Display * dpy)
 {
-   GLXContext gc;
-   __GLXdisplayPrivate *priv;
+    struct glx_context *gc;
+    struct glx_display *priv;
 
    /* If this thread has a current context, flush its rendering commands */
    gc = __glXGetCurrentContext();
@@ -967,7 +931,7 @@ __glXSetupForCommand(Display * dpy)
  * \c pc parameter.
  */
 _X_HIDDEN GLubyte *
-__glXFlushRenderBuffer(__GLXcontext * ctx, GLubyte * pc)
+__glXFlushRenderBuffer(struct glx_context * ctx, GLubyte * pc)
 {
    Display *const dpy = ctx->currentDpy;
 #ifdef USE_XCB
@@ -1018,7 +982,7 @@ __glXFlushRenderBuffer(__GLXcontext * ctx, GLubyte * pc)
  * \param dataLen        Size, in bytes, of the command data.
  */
 _X_HIDDEN void
-__glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
+__glXSendLargeChunk(struct glx_context * gc, GLint requestNumber,
                     GLint totalRequests, const GLvoid * data, GLint dataLen)
 {
    Display *dpy = gc->currentDpy;
@@ -1067,7 +1031,7 @@ __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
  * \param dataLen    Size, in bytes, of the command data.
  */
 _X_HIDDEN void
-__glXSendLargeCommand(__GLXcontext * ctx,
+__glXSendLargeCommand(struct glx_context * ctx,
                       const GLvoid * header, GLint headerLen,
                       const GLvoid * data, GLint dataLen)
 {
@@ -1109,7 +1073,7 @@ __glXSendLargeCommand(__GLXcontext * ctx,
 
 #ifdef DEBUG
 _X_HIDDEN void
-__glXDumpDrawBuffer(__GLXcontext * ctx)
+__glXDumpDrawBuffer(struct glx_context * ctx)
 {
    GLubyte *p = ctx->buf;
    GLubyte *end = ctx->pc;

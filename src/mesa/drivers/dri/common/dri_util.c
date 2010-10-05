@@ -32,6 +32,7 @@
 #include "drm_sarea.h"
 #include "utils.h"
 #include "xmlpool.h"
+#include "../glsl/glsl_parser_extras.h"
 
 PUBLIC const char __dri2ConfigOptions[] =
    DRI_CONF_BEGIN
@@ -423,6 +424,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 	return NULL;
     }
 
+    pdp->driContextPriv = NULL;
     pdp->loaderPrivate = data;
     pdp->hHWDrawable = hwDrawable;
     pdp->refcount = 1;
@@ -612,7 +614,8 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
 
     pcp->hHWContext = hwContext;
 
-    if ( !(*psp->DriverAPI.CreateContext)(&config->modes, pcp, shareCtx) ) {
+    if ( !(*psp->DriverAPI.CreateContext)(API_OPENGL,
+					  &config->modes, pcp, shareCtx) ) {
         free(pcp);
         return NULL;
     }
@@ -620,14 +623,64 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     return pcp;
 }
 
+static unsigned int
+dri2GetAPIMask(__DRIscreen *screen)
+{
+    return screen->api_mask;
+}
+
+static __DRIcontext *
+dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
+			   const __DRIconfig *config,
+			   __DRIcontext *shared, void *data)
+{
+    __DRIcontext *context;
+    const __GLcontextModes *modes = (config != NULL) ? &config->modes : NULL;
+    void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+    gl_api mesa_api;
+
+    if (!(screen->api_mask & (1 << api)))
+	return NULL;
+
+    switch (api) {
+    case __DRI_API_OPENGL:
+	    mesa_api = API_OPENGL;
+	    break;
+    case __DRI_API_GLES:
+	    mesa_api = API_OPENGLES;
+	    break;
+    case __DRI_API_GLES2:
+	    mesa_api = API_OPENGLES2;
+	    break;
+    default:
+	    return NULL;
+    }
+
+    context = malloc(sizeof *context);
+    if (!context)
+	return NULL;
+
+    context->driScreenPriv = screen;
+    context->driDrawablePriv = NULL;
+    context->loaderPrivate = data;
+    
+    if (!(*screen->DriverAPI.CreateContext)(mesa_api, modes,
+					    context, shareCtx) ) {
+        free(context);
+        return NULL;
+    }
+
+    return context;
+}
+
 
 static __DRIcontext *
 dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 		      __DRIcontext *shared, void *data)
 {
-    return driCreateNewContext(screen, config, 0, shared, 0, data);
+   return dri2CreateNewContextForAPI(screen, __DRI_API_OPENGL,
+				     config, shared, data);
 }
-
 
 static int
 driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
@@ -658,6 +711,8 @@ static void driDestroyScreen(__DRIscreen *psp)
 	 * stream open to the X-server anymore.
 	 */
 
+       _mesa_destroy_shader_compiler();
+
 	if (psp->DriverAPI.DestroyScreen)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
@@ -665,6 +720,9 @@ static void driDestroyScreen(__DRIscreen *psp)
 	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	   (void)drmCloseOnce(psp->fd);
+	} else {
+	   driDestroyOptionCache(&psp->optionCache);
+	   driDestroyOptionInfo(&psp->optionInfo);
 	}
 
 	free(psp);
@@ -688,6 +746,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)
 	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_USE_INVALIDATE) == 0)
+	    psp->dri2.useInvalidate = (__DRIuseInvalidateExtension *) extensions[i];
     }
 }
 
@@ -766,6 +826,7 @@ driCreateNewScreen(int scrn,
     psp->dri2.enabled = GL_FALSE;
 
     psp->DriverAPI = driDriverAPI;
+    psp->api_mask = (1 << __DRI_API_OPENGL);
 
     *driver_modes = driDriverAPI.InitScreen(psp);
     if (*driver_modes == NULL) {
@@ -787,7 +848,6 @@ dri2CreateNewScreen(int scrn, int fd,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
     drmVersionPtr version;
-    driOptionCache options;
 
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
@@ -812,6 +872,7 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->dri2.enabled = GL_TRUE;
 
     psp->DriverAPI = driDriverAPI;
+    psp->api_mask = (1 << __DRI_API_OPENGL);
     *driver_configs = driDriverAPI.InitScreen2(psp);
     if (*driver_configs == NULL) {
 	free(psp);
@@ -819,9 +880,12 @@ dri2CreateNewScreen(int scrn, int fd,
     }
 
     psp->DriverAPI = driDriverAPI;
+    psp->loaderPrivate = data;
 
-    driParseOptionInfo(&options, __dri2ConfigOptions, __dri2NConfigOptions);
-    driParseConfigFiles(&psp->optionCache, &options, psp->myNum, "dri2");
+    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,
+		       __dri2NConfigOptions);
+    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum,
+			"dri2");
 
     return psp;
 }
@@ -863,6 +927,8 @@ const __DRIdri2Extension driDRI2Extension = {
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
+    dri2GetAPIMask,
+    dri2CreateNewContextForAPI
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
@@ -870,41 +936,6 @@ const __DRI2configQueryExtension dri2ConfigQueryExtension = {
    dri2ConfigQueryb,
    dri2ConfigQueryi,
    dri2ConfigQueryf,
-};
-
-static int
-driFrameTracking(__DRIdrawable *drawable, GLboolean enable)
-{
-    return GLX_BAD_CONTEXT;
-}
-
-static int
-driQueryFrameTracking(__DRIdrawable *dpriv,
-		      int64_t * sbc, int64_t * missedFrames,
-		      float * lastMissedUsage, float * usage)
-{
-   __DRIswapInfo   sInfo;
-   int             status;
-   int64_t         ust;
-   __DRIscreen *psp = dpriv->driScreenPriv;
-
-   status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
-   if ( status == 0 ) {
-      *sbc = sInfo.swap_count;
-      *missedFrames = sInfo.swap_missed_count;
-      *lastMissedUsage = sInfo.swap_missed_usage;
-
-      (*psp->systemTime->getUST)( & ust );
-      *usage = driCalculateSwapUsage( dpriv, sInfo.swap_ust, ust );
-   }
-
-   return status;
-}
-
-const __DRIframeTrackingExtension driFrameTrackingExtension = {
-    { __DRI_FRAME_TRACKING, __DRI_FRAME_TRACKING_VERSION },
-    driFrameTracking,
-    driQueryFrameTracking    
 };
 
 /**

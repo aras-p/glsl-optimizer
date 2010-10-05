@@ -38,6 +38,7 @@
 #include "main/mipmap.h"
 #include "main/texfetch.h"
 #include "main/teximage.h"
+#include "drivers/common/meta.h"
 
 static struct gl_texture_object *
 nouveau_texture_new(GLcontext *ctx, GLuint name, GLenum target)
@@ -182,10 +183,15 @@ teximage_fits(struct gl_texture_object *t, int level)
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
 	struct gl_texture_image *ti = t->Image[0][level];
 
-	return ti && (t->Target == GL_TEXTURE_RECTANGLE ||
-		      (s->bo && s->width == ti->Width &&
-		       s->height == ti->Height &&
-		       s->format == ti->TexFormat));
+	if (!ti || !to_nouveau_teximage(ti)->surface.bo)
+		return GL_FALSE;
+
+	if (level == t->BaseLevel && (s->offset & 0x7f))
+		return GL_FALSE;
+
+	return t->Target == GL_TEXTURE_RECTANGLE ||
+		(s->bo && s->format == ti->TexFormat &&
+		 s->width == ti->Width && s->height == ti->Height);
 }
 
 static GLboolean
@@ -589,6 +595,53 @@ nouveau_texture_unmap(GLcontext *ctx, struct gl_texture_object *t)
 	}
 }
 
+static void
+store_mipmap(GLcontext *ctx, GLenum target, int first, int last,
+	     struct gl_texture_object *t)
+{
+	struct gl_pixelstore_attrib packing = {
+		.BufferObj = ctx->Shared->NullBufferObj,
+		.Alignment = 1
+	};
+	GLenum format = t->Image[0][t->BaseLevel]->TexFormat;
+	unsigned base_format, type, comps;
+	int i;
+
+	base_format = _mesa_get_format_base_format(format);
+	_mesa_format_to_type_and_comps(format, &type, &comps);
+
+	for (i = first; i <= last; i++) {
+		struct gl_texture_image *ti = t->Image[0][i];
+		void *data = ti->Data;
+
+		nouveau_teximage(ctx, 3, target, i, ti->InternalFormat,
+				 ti->Width, ti->Height, ti->Depth,
+				 ti->Border, base_format, type, data,
+				 &packing, t, ti);
+
+		_mesa_free_texmemory(data);
+	}
+}
+
+static void
+nouveau_generate_mipmap(GLcontext *ctx, GLenum target,
+			struct gl_texture_object *t)
+{
+	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, t)) {
+		struct gl_texture_image *base = t->Image[0][t->BaseLevel];
+
+		nouveau_teximage_map(ctx, base);
+		_mesa_generate_mipmap(ctx, target, t);
+		nouveau_teximage_unmap(ctx, base);
+
+		store_mipmap(ctx, target, t->BaseLevel + 1,
+			     get_last_level(t), t);
+
+	} else {
+		_mesa_meta_GenerateMipmap(ctx, target, t);
+	}
+}
+
 void
 nouveau_texture_functions_init(struct dd_function_table *functions)
 {
@@ -607,4 +660,5 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->BindTexture = nouveau_bind_texture;
 	functions->MapTexture = nouveau_texture_map;
 	functions->UnmapTexture = nouveau_texture_unmap;
+	functions->GenerateMipmap = nouveau_generate_mipmap;
 }

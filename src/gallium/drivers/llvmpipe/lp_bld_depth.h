@@ -60,7 +60,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef stencil_refs[2],
                             LLVMValueRef zs_src,
                             LLVMValueRef zs_dst_ptr,
-                            LLVMValueRef facing);
+                            LLVMValueRef facing,
+                            LLVMValueRef counter);
 
 
 #endif /* !LP_BLD_DEPTH_H */

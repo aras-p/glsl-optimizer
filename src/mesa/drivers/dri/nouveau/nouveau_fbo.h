@@ -29,7 +29,12 @@
 
 struct nouveau_framebuffer {
 	struct gl_framebuffer base;
-	struct nouveau_bo *lma_bo;
+	GLboolean need_front;
+
+	struct {
+		struct nouveau_bo *bo;
+		uint32_t clear_value;
+	} hierz;
 };
 #define to_nouveau_framebuffer(x) ((struct nouveau_framebuffer *)(x))
 

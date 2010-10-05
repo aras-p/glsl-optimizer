@@ -1,3 +1,0 @@
-!!ARBfp1.0
-XPD result.color, fragment.color, {2,2,2,0};
-END

@@ -166,7 +166,6 @@ viaInitDriver(__DRIscreen *sPriv)
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
     i = 0;
-    viaScreen->extensions[i++] = &driFrameTrackingExtension.base;
     viaScreen->extensions[i++] = &driReadDrawableExtension;
     if ( viaScreen->irqEnabled ) {
 	viaScreen->extensions[i++] = &driSwapControlExtension.base;

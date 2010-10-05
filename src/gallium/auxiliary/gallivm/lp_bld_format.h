@@ -40,6 +40,7 @@
 
 struct util_format_description;
 struct lp_type;
+struct lp_build_context;
 
 
 /*
@@ -47,9 +48,9 @@ struct lp_type;
  */
 
 LLVMValueRef
-lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
-                         const struct util_format_description *desc,
-                         LLVMValueRef packed);
+lp_build_format_swizzle_aos(const struct util_format_description *desc,
+                            struct lp_build_context *bld,
+                            LLVMValueRef unswizzled);
 
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
@@ -59,7 +60,9 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 LLVMValueRef
 lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
                         const struct util_format_description *format_desc,
-                        LLVMValueRef ptr,
+                        struct lp_type type,
+                        LLVMValueRef base_ptr,
+                        LLVMValueRef offset,
                         LLVMValueRef i,
                         LLVMValueRef j);
 
@@ -70,17 +73,22 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
 void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
-                            struct lp_type type,
-                            const LLVMValueRef *unswizzled,
-                            LLVMValueRef *swizzled);
+                            struct lp_build_context *bld,
+                            const LLVMValueRef unswizzled[4],
+                            LLVMValueRef swizzled_out[4]);
 
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
                          struct lp_type type,
                          LLVMValueRef packed,
-                         LLVMValueRef *rgba);
+                         LLVMValueRef rgba_out[4]);
 
+void
+lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
+                          struct lp_type dst_type,
+                          LLVMValueRef packed,
+                          LLVMValueRef *rgba);
 
 void
 lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
@@ -90,7 +98,20 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                         LLVMValueRef offsets,
                         LLVMValueRef i,
                         LLVMValueRef j,
-                        LLVMValueRef *rgba);
+                        LLVMValueRef rgba_out[4]);
 
+/*
+ * YUV
+ */
+
+
+LLVMValueRef
+lp_build_fetch_subsampled_rgba_aos(LLVMBuilderRef builder,
+                                   const struct util_format_description *format_desc,
+                                   unsigned n,
+                                   LLVMValueRef base_ptr,
+                                   LLVMValueRef offset,
+                                   LLVMValueRef i,
+                                   LLVMValueRef j);
 
 #endif /* !LP_BLD_FORMAT_H */

@@ -27,10 +27,36 @@
 
 #include "i915_reg.h"
 #include "i915_context.h"
+#include "i915_screen.h"
 #include "i915_debug.h"
+#include "i915_debug_private.h"
 #include "i915_batch.h"
 #include "util/u_debug.h"
 
+
+
+static const struct debug_named_value debug_options[] = {
+   {"blit",      DBG_BLIT,      "Print when using the 2d blitter"},
+   {"emit",      DBG_EMIT,      "State emit information"},
+   {"atoms",     DBG_ATOMS,     "Print dirty state atoms"},
+   {"flush",     DBG_FLUSH,     "Flushing information"},
+   {"texture",   DBG_TEXTURE,   "Texture information"},
+   {"constants", DBG_CONSTANTS, "Constant buffers"},
+   DEBUG_NAMED_VALUE_END
+};
+
+unsigned i915_debug = 0;
+
+void i915_debug_init(struct i915_screen *screen)
+{
+   i915_debug = debug_get_flags_option("I915_DEBUG", debug_options, 0);
+}
+
+
+
+/***********************************************************************
+ * Batchbuffer dumping
+ */
 
 static void
 PRINTF(
@@ -896,3 +922,66 @@ i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
 }
 
 
+
+/***********************************************************************
+ * Dirty state atom dumping
+ */
+
+void
+i915_dump_dirty(struct i915_context *i915, const char *func)
+{
+   struct {
+      unsigned dirty;
+      const char *name;
+   } l[] = {
+      {I915_NEW_VIEWPORT,      "viewport"},
+      {I915_NEW_RASTERIZER,    "rasterizer"},
+      {I915_NEW_FS,            "fs"},
+      {I915_NEW_BLEND,         "blend"},
+      {I915_NEW_CLIP,          "clip"},
+      {I915_NEW_SCISSOR,       "scissor"},
+      {I915_NEW_STIPPLE,       "stipple"},
+      {I915_NEW_FRAMEBUFFER,   "framebuffer"},
+      {I915_NEW_ALPHA_TEST,    "alpha_test"},
+      {I915_NEW_DEPTH_STENCIL, "depth_stencil"},
+      {I915_NEW_SAMPLER,       "sampler"},
+      {I915_NEW_SAMPLER_VIEW,  "sampler_view"},
+      {I915_NEW_CONSTANTS,     "constants"},
+      {I915_NEW_VBO,           "vbo"},
+      {I915_NEW_VS,            "vs"},
+      {0, NULL},
+   };
+   int i;
+
+   debug_printf("%s: ", func);
+   for (i = 0; l[i].name; i++)
+      if (i915->dirty & l[i].dirty)
+         debug_printf("%s ", l[i].name);
+   debug_printf("\n");
+}
+
+void
+i915_dump_hardware_dirty(struct i915_context *i915, const char *func)
+{
+   struct {
+      unsigned dirty;
+      const char *name;
+   } l[] = {
+      {I915_HW_STATIC,    "static"},
+      {I915_HW_DYNAMIC,   "dynamic"},
+      {I915_HW_SAMPLER,   "sampler"},
+      {I915_HW_MAP,       "map"},
+      {I915_HW_PROGRAM,   "program"},
+      {I915_HW_CONSTANTS, "constants"},
+      {I915_HW_IMMEDIATE, "immediate"},
+      {I915_HW_INVARIENT, "invarient"},
+      {0, NULL},
+   };
+   int i;
+
+   debug_printf("%s: ", func);
+   for (i = 0; l[i].name; i++)
+      if (i915->hardware_dirty & l[i].dirty)
+         debug_printf("%s ", l[i].name);
+   debug_printf("\n");
+}

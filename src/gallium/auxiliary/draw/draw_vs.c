@@ -48,18 +48,30 @@
 
 DEBUG_GET_ONCE_BOOL_OPTION(gallium_dump_vs, "GALLIUM_DUMP_VS", FALSE)
 
+
+/**
+ * Set a vertex shader constant buffer.
+ * \param slot  which constant buffer in [0, PIPE_MAX_CONSTANT_BUFFERS-1]
+ * \param constants  the mapped buffer
+ * \param size  size of buffer in bytes
+ */
 void
 draw_vs_set_constants(struct draw_context *draw,
                       unsigned slot,
                       const void *constants,
                       unsigned size)
 {
-   if (((uintptr_t)constants) & 0xf) {
+   const int alignment = 16;
+
+   /* check if buffer is 16-byte aligned */
+   if (((uintptr_t)constants) & (alignment - 1)) {
+      /* if not, copy the constants into a new, 16-byte aligned buffer */
       if (size > draw->vs.const_storage_size[slot]) {
          if (draw->vs.aligned_constant_storage[slot]) {
             align_free((void *)draw->vs.aligned_constant_storage[slot]);
          }
-         draw->vs.aligned_constant_storage[slot] = align_malloc(size, 16);
+         draw->vs.aligned_constant_storage[slot] =
+            align_malloc(size, alignment);
       }
       assert(constants);
       memcpy((void *)draw->vs.aligned_constant_storage[slot],
@@ -85,18 +97,27 @@ struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
-   struct draw_vertex_shader *vs;
+   struct draw_vertex_shader *vs = NULL;
 
    if (draw->dump_vs) {
       tgsi_dump(shader->tokens, 0);
    }
 
-   vs = draw_create_vs_sse( draw, shader );
-   if (!vs) {
+   if (!draw->pt.middle.llvm) {
+#if defined(PIPE_ARCH_X86)
+      vs = draw_create_vs_sse( draw, shader );
+#elif defined(PIPE_ARCH_PPC)
       vs = draw_create_vs_ppc( draw, shader );
-      if (!vs) {
-         vs = draw_create_vs_exec( draw, shader );
-      }
+#endif
+   }
+#if HAVE_LLVM
+   else {
+      vs = draw_create_vs_llvm(draw, shader);
+   }
+#endif
+
+   if (!vs) {
+      vs = draw_create_vs_exec( draw, shader );
    }
 
    if (vs)

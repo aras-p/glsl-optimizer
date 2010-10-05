@@ -56,7 +56,6 @@
 #include "xm_api.h"
 #include "xm_st.h"
 
-#include "main/context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -72,10 +71,35 @@
 static struct xm_driver driver;
 static struct st_api *stapi;
 
+/* Default strict invalidate to false.  This means we will not call
+ * XGetGeometry after every swapbuffers, which allows swapbuffers to
+ * remain asynchronous.  For apps running at 100fps with synchronous
+ * swapping, a 10% boost is typical.  For gears, I see closer to 20%
+ * speedup.
+ *
+ * Note that the work of copying data on swapbuffers doesn't disappear
+ * - this change just allows the X server to execute the PutImage
+ * asynchronously without us effectively blocked until its completion.
+ *
+ * This speeds up even llvmpipe's threaded rasterization as the
+ * swapbuffers operation was a large part of the serial component of
+ * an llvmpipe frame.
+ *
+ * The downside of this is correctness - applications which don't call
+ * glViewport on window resizes will get incorrect rendering.  A
+ * better solution would be to have per-frame but asynchronous
+ * invalidation.  Xcb almost looks as if it could provide this, but
+ * the API doesn't seem to quite be there.
+ */
+boolean xmesa_strict_invalidate = FALSE;
+
 void xmesa_set_driver( const struct xm_driver *templ )
 {
    driver = *templ;
    stapi = driver.create_st_api();
+
+   xmesa_strict_invalidate =
+      debug_get_bool_option("XMESA_STRICT_INVALIDATE", FALSE);
 }
 
 
@@ -87,6 +111,17 @@ void xmesa_set_driver( const struct xm_driver *templ )
 static struct xmesa_display Displays[MAX_DISPLAYS];
 static int NumDisplays = 0;
 
+static int
+xmesa_get_param(struct st_manager *smapi,
+                enum st_manager_param param)
+{
+   switch(param) {
+   case ST_MANAGER_BROKEN_INVALIDATE:
+      return !xmesa_strict_invalidate;
+   default:
+      return 0;
+   }
+}
 
 static XMesaDisplay
 xmesa_init_display( Display *display )
@@ -116,8 +151,10 @@ xmesa_init_display( Display *display )
       xmdpy->display = display;
       xmdpy->screen = driver.create_pipe_screen(display);
       xmdpy->smapi = CALLOC_STRUCT(st_manager);
-      if (xmdpy->smapi)
+      if (xmdpy->smapi) {
          xmdpy->smapi->screen = xmdpy->screen;
+         xmdpy->smapi->get_param = xmesa_get_param;
+      }
 
       if (xmdpy->screen && xmdpy->smapi) {
          pipe_mutex_init(xmdpy->mutex);
@@ -255,7 +292,6 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
    Status stat;
 
    pipe_mutex_lock(xmdpy->mutex);
-   XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->ws.drawable, width, height);
    pipe_mutex_unlock(xmdpy->mutex);
 
@@ -342,6 +378,7 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
    const unsigned tex_usage = PIPE_BIND_DEPTH_STENCIL;
    const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
+   const unsigned sample_count = 0;
    enum pipe_format formats[8], fmt;
    int count, i;
 
@@ -365,7 +402,8 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
    fmt = PIPE_FORMAT_NONE;
    for (i = 0; i < count; i++) {
       if (xmdpy->screen->is_format_supported(xmdpy->screen, formats[i],
-                                      target, tex_usage, geom_flags)) {
+                                             target, sample_count,
+                                             tex_usage, geom_flags)) {
          fmt = formats[i];
          break;
       }
@@ -716,15 +754,39 @@ XMesaVisual XMesaCreateVisual( Display *display,
       alpha_bits = v->mesa_visual.alphaBits;
    }
 
-   _mesa_initialize_visual( &v->mesa_visual,
-                            db_flag, stereo_flag,
-                            red_bits, green_bits,
-                            blue_bits, alpha_bits,
-                            depth_size,
-                            stencil_size,
-                            accum_red_size, accum_green_size,
-                            accum_blue_size, accum_alpha_size,
-                            0 );
+   /* initialize visual */
+   {
+      __GLcontextModes *vis = &v->mesa_visual;
+
+      vis->rgbMode          = GL_TRUE;
+      vis->doubleBufferMode = db_flag;
+      vis->stereoMode       = stereo_flag;
+
+      vis->redBits          = red_bits;
+      vis->greenBits        = green_bits;
+      vis->blueBits         = blue_bits;
+      vis->alphaBits        = alpha_bits;
+      vis->rgbBits          = red_bits + green_bits + blue_bits;
+
+      vis->indexBits      = 0;
+      vis->depthBits      = depth_size;
+      vis->stencilBits    = stencil_size;
+
+      vis->accumRedBits   = accum_red_size;
+      vis->accumGreenBits = accum_green_size;
+      vis->accumBlueBits  = accum_blue_size;
+      vis->accumAlphaBits = accum_alpha_size;
+
+      vis->haveAccumBuffer   = accum_red_size > 0;
+      vis->haveDepthBuffer   = depth_size > 0;
+      vis->haveStencilBuffer = stencil_size > 0;
+
+      vis->numAuxBuffers = 0;
+      vis->level = 0;
+      vis->pixmapMode = 0;
+      vis->sampleBuffers = 0;
+      vis->samples = 0;
+   }
 
    v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
    if (db_flag)
@@ -787,6 +849,7 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    XMesaDisplay xmdpy = xmesa_init_display(v->display);
+   struct st_context_attribs attribs;
    XMesaContext c;
 
    if (!xmdpy)
@@ -801,8 +864,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_read_buffer = NULL;
 
+   memset(&attribs, 0, sizeof(attribs));
+   attribs.profile = ST_PROFILE_DEFAULT;
+   attribs.visual = v->stvis;
+
    c->st = stapi->create_context(stapi, xmdpy->smapi,
-         &v->stvis, (share_list) ? share_list->st : NULL);
+         &attribs, (share_list) ? share_list->st : NULL);
    if (c->st == NULL)
       goto fail;
 
@@ -1020,19 +1087,29 @@ XMesaDestroyBuffer(XMesaBuffer b)
 
 
 /**
+ * Notify the binding context to validate the buffer.
+ */
+void
+xmesa_notify_invalid_buffer(XMesaBuffer b)
+{
+   XMesaContext xmctx = XMesaGetCurrentContext();
+
+   if (xmctx && xmctx->xm_buffer == b)
+      xmctx->st->notify_invalid_framebuffer(xmctx->st, b->stfb);
+}
+
+
+/**
  * Query the current drawable size and notify the binding context.
  */
 void
 xmesa_check_buffer_size(XMesaBuffer b)
 {
-   XMesaContext xmctx = XMesaGetCurrentContext();
-
    if (b->type == PBUFFER)
       return;
 
    xmesa_get_window_size(b->xm_visual->display, b, &b->width, &b->height);
-   if (xmctx && xmctx->xm_buffer == b)
-      xmctx->st->notify_invalid_framebuffer(xmctx->st, b->stfb);
+   xmesa_notify_invalid_buffer(b);
 }
 
 
@@ -1144,7 +1221,7 @@ void XMesaFlush( XMesaContext c )
          xmdpy->screen->fence_finish(xmdpy->screen, fence, 0);
          xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
       }
-      XSync( c->xm_visual->display, False );
+      XFlush( c->xm_visual->display );
    }
 }
 
@@ -1174,6 +1251,10 @@ void xmesa_destroy_buffers_on_display(Display *dpy)
       next = b->Next;
       if (b->xm_visual->display == dpy) {
          xmesa_free_buffer(b);
+         /* delete head of list? */
+         if (XMesaBufferList == b) {
+            XMesaBufferList = next;
+         }
       }
    }
 }

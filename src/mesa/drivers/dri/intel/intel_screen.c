@@ -70,7 +70,7 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(fragment_shader, bool, false)
+      DRI_CONF_OPT_BEGIN(fragment_shader, bool, true)
 	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
       DRI_CONF_OPT_END
 
@@ -110,32 +110,25 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
+   intel->need_throttle = GL_TRUE;
+
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
-}
-
-static void
-intelDRI2Invalidate(__DRIdrawable *drawable)
-{
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
-
-   intel->using_dri2_swapbuffers = GL_TRUE;
-   dri2InvalidateDrawable(drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     intelDRI2Flush,
-    intelDRI2Invalidate,
+    dri2InvalidateDrawable,
 };
 
 static __DRIimage *
-intel_create_image_from_name(__DRIcontext *context,
+intel_create_image_from_name(__DRIscreen *screen,
 			     int width, int height, int format,
 			     int name, int pitch, void *loaderPrivate)
 {
+    struct intel_screen *intelScreen = screen->private;
     __DRIimage *image;
-    struct intel_context *intel = context->driverPrivate;
     int cpp;
 
     image = CALLOC(sizeof *image);
@@ -166,7 +159,8 @@ intel_create_image_from_name(__DRIcontext *context,
     image->data = loaderPrivate;
     cpp = _mesa_get_format_bytes(image->format);
 
-    image->region = intel_region_alloc_for_handle(intel, cpp, width, height,
+    image->region = intel_region_alloc_for_handle(intelScreen,
+						  cpp, width, height,
 						  pitch, name, "image");
     if (image->region == NULL) {
        FREE(image);
@@ -213,11 +207,79 @@ intel_destroy_image(__DRIimage *image)
     FREE(image);
 }
 
+static __DRIimage *
+intel_create_image(__DRIscreen *screen,
+		   int width, int height, int format,
+		   unsigned int use,
+		   void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_screen *intelScreen = screen->private;
+   int cpp;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      image->format = MESA_FORMAT_RGB565;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      image->format = MESA_FORMAT_XRGB8888;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      image->format = MESA_FORMAT_ARGB8888;
+      image->internal_format = GL_RGBA;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      free(image);
+      return NULL;
+   }
+
+   image->data = loaderPrivate;
+   cpp = _mesa_get_format_bytes(image->format);
+
+   image->region =
+      intel_region_alloc(intelScreen, I915_TILING_NONE,
+			 cpp, width, height, GL_TRUE);
+   if (image->region == NULL) {
+      FREE(image);
+      return NULL;
+   }
+   
+   return image;
+}
+
+static GLboolean
+intel_query_image(__DRIimage *image, int attrib, int *value)
+{
+   switch (attrib) {
+   case __DRI_IMAGE_ATTRIB_STRIDE:
+      *value = image->region->pitch * image->region->cpp;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HANDLE:
+      *value = image->region->buffer->handle;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_NAME:
+      return intel_region_flink(image->region, (uint32_t *) value);
+   default:
+      return GL_FALSE;
+   }
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
     { __DRI_IMAGE, __DRI_IMAGE_VERSION },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
+    intel_create_image,
+    intel_query_image
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
@@ -357,15 +419,18 @@ extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
-extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i915CreateContext(int api,
+				   const __GLcontextModes * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
-extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean brwCreateContext(int api,
+				  const __GLcontextModes * mesaVis,
 				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+intelCreateContext(gl_api api,
+		   const __GLcontextModes * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
@@ -375,7 +440,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       if (!IS_965(intelScreen->deviceID)) {
-	 return i915CreateContext(mesaVis, driContextPriv,
+	 return i915CreateContext(api, mesaVis, driContextPriv,
 				  sharedContextPrivate);
       }
    } else {
@@ -384,7 +449,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    }
 #else
    if (IS_965(intelScreen->deviceID))
-      return brwCreateContext(mesaVis, driContextPriv, sharedContextPrivate);
+      return brwCreateContext(api, mesaVis,
+			      driContextPriv, sharedContextPrivate);
 #endif
    fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
    return GL_FALSE;
@@ -399,7 +465,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-   /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
@@ -431,6 +496,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    struct intel_screen *intelScreen;
    GLenum fb_format[3];
    GLenum fb_type[3];
+   unsigned int api_mask;
 
    static const GLenum back_buffer_modes[] = {
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -456,6 +522,17 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   api_mask = (1 << __DRI_API_OPENGL);
+#if FEATURE_ES1
+   api_mask |= (1 << __DRI_API_GLES);
+#endif
+#if FEATURE_ES2
+   api_mask |= (1 << __DRI_API_GLES2);
+#endif
+
+   if (IS_9XX(intelScreen->deviceID) || IS_965(intelScreen->deviceID))
+      psp->api_mask = api_mask;
 
    if (!intel_init_bufmgr(intelScreen))
        return GL_FALSE;

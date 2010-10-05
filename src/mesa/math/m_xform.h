@@ -27,10 +27,10 @@
 #define _M_XFORM_H
 
 
+#include "main/compiler.h"
 #include "main/glheader.h"
-#include "main/config.h"
-#include "math/m_vector.h"
 #include "math/m_matrix.h"
+#include "math/m_vector.h"
 
 #ifdef USE_X86_ASM
 #define _XFORMAPI _ASMAPI

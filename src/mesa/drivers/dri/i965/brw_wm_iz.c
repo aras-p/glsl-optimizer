@@ -120,24 +120,38 @@ const struct {
  * \param line_aa  AA_NEVER, AA_ALWAYS or AA_SOMETIMES
  * \param lookup  bitmask of IZ_* flags
  */
-void brw_wm_lookup_iz( GLuint line_aa,
+void brw_wm_lookup_iz( struct intel_context *intel,
+		       GLuint line_aa,
 		       GLuint lookup,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key )
 {
    GLuint reg = 2;
+   GLboolean kill_stats_promoted_workaround = GL_FALSE;
 
    assert (lookup < IZ_BIT_MAX);
-      
+
+   /* Crazy workaround in the windowizer, which we need to track in
+    * our register allocation and render target writes.  See the "If
+    * statistics are enabled..." paragraph of 11.5.3.2: Early Depth
+    * Test Cases [Pre-DevGT] of the 3D Pipeline - Windower B-Spec.
+    */
+   if (intel->stats_wm &&
+       (lookup & IZ_PS_KILL_ALPHATEST_BIT) &&
+       wm_iz_table[lookup].mode == P) {
+      kill_stats_promoted_workaround = GL_TRUE;
+   }
+
    if (lookup & IZ_PS_COMPUTES_DEPTH_BIT)
       key->computes_depth = 1;
 
-   if (wm_iz_table[lookup].sd_present || ps_uses_depth) {
+   if (wm_iz_table[lookup].sd_present || ps_uses_depth ||
+       kill_stats_promoted_workaround) {
       key->source_depth_reg = reg;
       reg += 2;
    }
 
-   if (wm_iz_table[lookup].sd_to_rt)
+   if (wm_iz_table[lookup].sd_to_rt || kill_stats_promoted_workaround)
       key->source_depth_to_render_target = 1;
 
    if (wm_iz_table[lookup].ds_present || line_aa != AA_NEVER) {
@@ -152,6 +166,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
       reg+=2;
    }
 
-   key->nr_depth_regs = (reg+1)/2;
+   key->nr_payload_regs = reg;
 }
 

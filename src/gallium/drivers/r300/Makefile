@@ -14,14 +14,17 @@ C_SOURCES = \
 	r300_hyperz.c \
 	r300_query.c \
 	r300_render.c \
+	r300_render_stencilref.c \
+	r300_render_translate.c \
 	r300_resource.c \
 	r300_screen.c \
 	r300_screen_buffer.c \
 	r300_state.c \
 	r300_state_derived.c \
-	r300_state_invariant.c \
 	r300_vs.c \
+	r300_vs_draw.c \
 	r300_texture.c \
+	r300_texture_desc.c \
 	r300_tgsi_to_rc.c \
 	r300_transfer.c
 
@@ -36,5 +39,6 @@ EXTRA_OBJECTS = \
 
 include ../../Makefile.template
 
+.PHONY: $(COMPILER_ARCHIVE)
 $(COMPILER_ARCHIVE):
 	$(MAKE) -C $(TOP)/src/mesa/drivers/dri/r300/compiler

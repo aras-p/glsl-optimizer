@@ -108,9 +108,46 @@ identity_surface_destroy(struct identity_surface *id_surface)
 }
 
 
+struct pipe_sampler_view *
+identity_sampler_view_create(struct identity_context *id_context,
+                             struct identity_resource *id_resource,
+                             struct pipe_sampler_view *view)
+{
+   struct identity_sampler_view *id_view;
+
+   if (!view)
+      goto error;
+
+   assert(view->texture == id_resource->resource);
+
+   id_view = CALLOC_STRUCT(identity_sampler_view);
+
+   id_view->base = *view;
+   id_view->base.reference.count = 1;
+   id_view->base.texture = NULL;
+   pipe_resource_reference(&id_view->base.texture, id_resource->resource);
+   id_view->base.context = id_context->pipe;
+   id_view->sampler_view = view;
+
+   return &id_view->base;
+error:
+   return NULL;
+}
+
+void
+identity_sampler_view_destroy(struct identity_context *id_context,
+                              struct identity_sampler_view *id_view)
+{
+   pipe_resource_reference(&id_view->base.texture, NULL);
+   id_context->pipe->sampler_view_destroy(id_context->pipe,
+                                          id_view->sampler_view);
+   FREE(id_view);
+}
+
+
 struct pipe_transfer *
 identity_transfer_create(struct identity_context *id_context,
-			 struct identity_resource *id_resource,
+                         struct identity_resource *id_resource,
                          struct pipe_transfer *transfer)
 {
    struct identity_transfer *id_transfer;
@@ -145,7 +182,7 @@ identity_transfer_destroy(struct identity_context *id_context,
 {
    pipe_resource_reference(&id_transfer->base.resource, NULL);
    id_context->pipe->transfer_destroy(id_context->pipe,
-				      id_transfer->transfer);
+                                      id_transfer->transfer);
    FREE(id_transfer);
 }
 

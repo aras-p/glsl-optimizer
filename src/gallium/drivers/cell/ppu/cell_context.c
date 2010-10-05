@@ -73,7 +73,7 @@ cell_destroy_context( struct pipe_context *pipe )
 static struct draw_context *
 cell_draw_create(struct cell_context *cell)
 {
-   struct draw_context *draw = draw_create();
+   struct draw_context *draw = draw_create(&cell->pipe);
 
 #if 0 /* broken */
    if (getenv("GALLIUM_CELL_VS")) {
@@ -88,14 +88,14 @@ cell_draw_create(struct cell_context *cell)
 
 
 static const struct debug_named_value cell_debug_flags[] = {
-   {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
-   {"asm", CELL_DEBUG_ASM},        /**< dump SPU asm code */
-   {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
-   {"fragops", CELL_DEBUG_FRAGMENT_OPS}, /**< SPUs emit fragment ops debug messages*/
-   {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK}, /**< SPUs use reference implementation for fragment ops*/
-   {"cmd", CELL_DEBUG_CMD},       /**< SPUs dump command buffer info */
-   {"cache", CELL_DEBUG_CACHE},   /**< report texture cache stats on exit */
-   {NULL, 0}
+   {"checker", CELL_DEBUG_CHECKER, NULL},/**< modulate tile clear color by SPU ID */
+   {"asm", CELL_DEBUG_ASM, NULL},        /**< dump SPU asm code */
+   {"sync", CELL_DEBUG_SYNC, NULL},      /**< SPUs do synchronous DMA */
+   {"fragops", CELL_DEBUG_FRAGMENT_OPS, NULL}, /**< SPUs emit fragment ops debug messages*/
+   {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK, NULL}, /**< SPUs use reference implementation for fragment ops*/
+   {"cmd", CELL_DEBUG_CMD, NULL},       /**< SPUs dump command buffer info */
+   {"cache", CELL_DEBUG_CACHE, NULL},   /**< report texture cache stats on exit */
+   DEBUG_NAMED_VALUE_END
 };
 
 static unsigned int
