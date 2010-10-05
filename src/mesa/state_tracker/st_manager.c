@@ -486,9 +486,18 @@ st_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
    stfb = st_ws_framebuffer(st->ctx->WinSysDrawBuffer);
    if (!stfb || stfb->iface != stfbi)
       stfb = st_ws_framebuffer(st->ctx->WinSysReadBuffer);
-   assert(stfb && stfb->iface == stfbi);
 
-   p_atomic_set(&stfb->revalidate, TRUE);
+   if (stfb && stfb->iface == stfbi) {
+      p_atomic_set(&stfb->revalidate, TRUE);
+   }
+   else {
+      /* This function is probably getting called when we've detected a
+       * change in a window's size but the currently bound context is
+       * not bound to that window.
+       * If the st_framebuffer_iface structure had a pointer to the
+       * corresponding st_framebuffer we'd be able to handle this.
+       */
+   }
 }
 
 static void
