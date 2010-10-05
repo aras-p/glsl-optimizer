@@ -380,8 +380,9 @@ typedef enum
 typedef enum
 {
    FRAG_RESULT_DEPTH = 0,
-   FRAG_RESULT_COLOR = 1,
-   FRAG_RESULT_DATA0 = 2,
+   FRAG_RESULT_STENCIL = 1,
+   FRAG_RESULT_COLOR = 2,
+   FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
 
