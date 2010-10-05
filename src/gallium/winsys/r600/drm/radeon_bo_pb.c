@@ -100,6 +100,10 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		uint32_t domain;
 		if (radeon_bo_busy(buf->mgr->radeon, buf->bo, &domain))
 			return NULL;
+		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+			return NULL;
+		}
+		goto out;
 	}
 
 	if (buf->bo->data != NULL) {
@@ -115,7 +119,7 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 			return NULL;
 		}
 	}
-
+out:
 	LIST_DELINIT(&buf->maplist);
 	return buf->bo->data;
 }
