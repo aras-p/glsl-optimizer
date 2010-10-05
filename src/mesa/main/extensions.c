@@ -52,12 +52,12 @@ static const struct {
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_draw_elements_base_vertex",  F(ARB_draw_elements_base_vertex) },
    { OFF, "GL_ARB_draw_instanced",             F(ARB_draw_instanced) },
+   { OFF, "GL_ARB_explicit_attrib_location",   F(ARB_explicit_attrib_location) },
    { OFF, "GL_ARB_fragment_coord_conventions", F(ARB_fragment_coord_conventions) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_fragment_program_shadow",    F(ARB_fragment_program_shadow) },
    { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
    { OFF, "GL_ARB_framebuffer_object",         F(ARB_framebuffer_object) },
-   { OFF, "GL_ARB_explicit_attrib_location",   F(ARB_explicit_attrib_location) },
    /* TODO: reenable this when the new GLSL compiler actually supports them */
    /* { OFF, "GL_ARB_geometry_shader4",           F(ARB_geometry_shader4) }, */
    { OFF, "GL_ARB_half_float_pixel",           F(ARB_half_float_pixel) },
@@ -234,6 +234,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    /*ctx->Extensions.ARB_draw_buffers = GL_TRUE;*/
    ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;
+   ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
 #if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
