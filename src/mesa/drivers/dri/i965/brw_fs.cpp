@@ -2548,8 +2548,6 @@ fs_visitor::propagate_constants()
 {
    bool progress = false;
 
-   return false;
-
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
