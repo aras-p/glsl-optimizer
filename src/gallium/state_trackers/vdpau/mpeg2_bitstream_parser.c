@@ -30,12 +30,14 @@
 void
 vlVdpBitstreamToMacroblock (
 		  struct pipe_screen *screen,
-                  VdpBitstreamBuffer const *bitstream_buffers,
-                  unsigned int *num_macroblocks,
-                  struct pipe_mpeg12_macroblock **pipe_macroblocks)
+		  VdpBitstreamBuffer const *bitstream_buffers,
+          unsigned int *num_macroblocks,
+          struct pipe_mpeg12_macroblock **pipe_macroblocks)
 {
 	debug_printf("[VDPAU] BitstreamToMacroblock not implemented yet");
 	assert(0);
+
+	
 
 	return;
 }
