@@ -54,10 +54,7 @@
    float real;
    char *identifier;
 
-   union {
-      struct ast_type_qualifier q;
-      unsigned i;
-   } type_qualifier;
+   struct ast_type_qualifier type_qualifier;
 
    ast_node *node;
    ast_type_specifier *type_specifier;
@@ -760,25 +757,25 @@ parameter_declarator:
 parameter_declaration:
 	parameter_type_qualifier parameter_qualifier parameter_declarator
 	{
-	   $1.i |= $2.i;
+	   $1.flags.i |= $2.flags.i;
 
 	   $$ = $3;
-	   $$->type->qualifier = $1.q;
+	   $$->type->qualifier = $1;
 	}
 	| parameter_qualifier parameter_declarator
 	{
 	   $$ = $2;
-	   $$->type->qualifier = $1.q;
+	   $$->type->qualifier = $1;
 	}
 	| parameter_type_qualifier parameter_qualifier parameter_type_specifier
 	{
 	   void *ctx = state;
-	   $1.i |= $2.i;
+	   $1.flags.i |= $2.flags.i;
 
 	   $$ = new(ctx) ast_parameter_declarator();
 	   $$->set_location(yylloc);
 	   $$->type = new(ctx) ast_fully_specified_type();
-	   $$->type->qualifier = $1.q;
+	   $$->type->qualifier = $1;
 	   $$->type->specifier = $3;
 	}
 	| parameter_qualifier parameter_type_specifier
@@ -787,7 +784,7 @@ parameter_declaration:
 	   $$ = new(ctx) ast_parameter_declarator();
 	   $$->set_location(yylloc);
 	   $$->type = new(ctx) ast_fully_specified_type();
-	   $$->type->qualifier = $1.q;
+	   $$->type->qualifier = $1;
 	   $$->type->specifier = $2;
 	}
 	;
@@ -800,17 +797,18 @@ parameter_qualifier:
 	| IN_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.in = 1;
+	   $$.flags.q.in = 1;
 	}
 	| OUT_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.out = 1;
+	   $$.flags.q.out = 1;
 	}
 	| INOUT_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.in = 1; $$.q.out = 1;
+	   $$.flags.q.in = 1;
+	   $$.flags.q.out = 1;
 	}
 	;
 
@@ -969,7 +967,7 @@ fully_specified_type:
 	   void *ctx = state;
 	   $$ = new(ctx) ast_fully_specified_type();
 	   $$->set_location(yylloc);
-	   $$->qualifier = $1.q;
+	   $$->qualifier = $1;
 	   $$->specifier = $2;
 	}
 	;
@@ -985,7 +983,10 @@ layout_qualifier_id_list:
 	layout_qualifier_id
 	| layout_qualifier_id_list ',' layout_qualifier_id
 	{
-	   $$.i = $1.i | $3.i;
+	   /* FINISHME: Should check for conflicting / duplicate flags here.
+	    */
+	   $$ = $1;
+	   $$.flags.i |= $3.flags.i;
 	}
 	;
 
@@ -999,10 +1000,10 @@ layout_qualifier_id:
 	   if (state->ARB_fragment_coord_conventions_enable) {
 	      if (strcmp($1, "origin_upper_left") == 0) {
 		 got_one = true;
-		 $$.q.origin_upper_left = 1;
+		 $$.flags.q.origin_upper_left = 1;
 	      } else if (strcmp($1, "pixel_center_integer") == 0) {
 		 got_one = true;
-		 $$.q.pixel_center_integer = 1;
+		 $$.flags.q.pixel_center_integer = 1;
 	      }
 	   }
 
@@ -1025,17 +1026,17 @@ interpolation_qualifier:
 	SMOOTH
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.smooth = 1;
+	   $$.flags.q.smooth = 1;
 	}
 	| FLAT
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.flat = 1;
+	   $$.flags.q.flat = 1;
 	}
 	| NOPERSPECTIVE
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.noperspective = 1;
+	   $$.flags.q.noperspective = 1;
 	}
 	;
 
@@ -1043,7 +1044,7 @@ parameter_type_qualifier:
 	CONST_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.constant = 1;
+	   $$.flags.q.constant = 1;
 	}
 	;
 
@@ -1052,27 +1053,30 @@ type_qualifier:
 	| layout_qualifier
 	| layout_qualifier storage_qualifier
 	{
-	   $$.i = $1.i | $2.i;
+	   $$ = $1;
+	   $$.flags.i |= $2.flags.i;
 	}
 	| interpolation_qualifier
 	| interpolation_qualifier storage_qualifier
 	{
-	   $$.i = $1.i | $2.i;
+	   $$ = $1;
+	   $$.flags.i |= $2.flags.i;
 	}
 	| INVARIANT storage_qualifier
 	{
 	   $$ = $2;
-	   $$.q.invariant = 1;
+	   $$.flags.q.invariant = 1;
 	}
 	| INVARIANT interpolation_qualifier storage_qualifier
 	{
-	   $$.i = $2.i | $3.i;
-	   $$.q.invariant = 1;
+	   $$ = $2;
+	   $$.flags.i |= $3.flags.i;
+	   $$.flags.q.invariant = 1;
 	}
 	| INVARIANT
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.invariant = 1;
+	   $$.flags.q.invariant = 1;
 	}
 	;
 
@@ -1080,47 +1084,48 @@ storage_qualifier:
 	CONST_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.constant = 1;
+	   $$.flags.q.constant = 1;
 	}
 	| ATTRIBUTE
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.attribute = 1;
+	   $$.flags.q.attribute = 1;
 	}
 	| VARYING
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.varying = 1;
+	   $$.flags.q.varying = 1;
 	}
 	| CENTROID VARYING
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.centroid = 1; $$.q.varying = 1;
+	   $$.flags.q.centroid = 1;
+	   $$.flags.q.varying = 1;
 	}
 	| IN_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.in = 1;
+	   $$.flags.q.in = 1;
 	}
 	| OUT_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.out = 1;
+	   $$.flags.q.out = 1;
 	}
 	| CENTROID IN_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.centroid = 1; $$.q.in = 1;
+	   $$.flags.q.centroid = 1; $$.flags.q.in = 1;
 	}
 	| CENTROID OUT_TOK
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.centroid = 1; $$.q.out = 1;
+	   $$.flags.q.centroid = 1; $$.flags.q.out = 1;
 	}
 	| UNIFORM
 	{
 	   memset(& $$, 0, sizeof($$));
-	   $$.q.uniform = 1;
+	   $$.flags.q.uniform = 1;
 	}
 	;
 
