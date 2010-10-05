@@ -152,15 +152,18 @@ static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 
 struct r600_block_reloc {
-	struct r600_bo	*bo;
-	unsigned		nreloc;
-	unsigned		bo_pm4_index[R600_BLOCK_MAX_BO];
+	struct r600_bo		*bo;
+	unsigned		flush_flags;
+	unsigned		flush_mask;
+	unsigned		bo_pm4_index;
 };
 
 struct r600_block {
+	struct list_head	list;
 	unsigned		status;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
+	unsigned		pm4_flush_ndwords;
 	unsigned		nbo;
 	unsigned		nreg;
 	u32			*reg;
@@ -218,6 +221,7 @@ struct r600_context {
 	struct r600_range	range[256];
 	unsigned		nblocks;
 	struct r600_block	**blocks;
+	struct list_head	dirty;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
