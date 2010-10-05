@@ -498,7 +498,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	r = r600_bc_init(ctx.bc, shader->family);
 	if (r)
 		return r;
-	ctx.bc->use_mem_constant = shader->use_mem_constant;
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
 	tgsi_parse_init(&ctx.parse, tokens);
@@ -534,10 +533,8 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 						ctx.info.file_count[TGSI_FILE_INPUT];
 	ctx.file_offset[TGSI_FILE_TEMPORARY] = ctx.file_offset[TGSI_FILE_OUTPUT] +
 						ctx.info.file_count[TGSI_FILE_OUTPUT];
-	if (ctx.shader->use_mem_constant)
-		ctx.file_offset[TGSI_FILE_CONSTANT] = 128;
-	else
-		ctx.file_offset[TGSI_FILE_CONSTANT] = 256;
+
+	ctx.file_offset[TGSI_FILE_CONSTANT] = 128;
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = 253;
 	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +

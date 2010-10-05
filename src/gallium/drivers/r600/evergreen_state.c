@@ -971,7 +971,6 @@ static void *evergreen_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
-	shader->shader.use_mem_constant = TRUE;
 	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
 	if (r) {
 		return NULL;

@@ -587,7 +587,6 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
-	radeon->use_mem_constant = TRUE;
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 

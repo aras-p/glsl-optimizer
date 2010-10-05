@@ -465,8 +465,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
 
-	if (bc->use_mem_constant)
-		bc->cf_last->kcache0_mode = 2;
+	bc->cf_last->kcache0_mode = 2;
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {
