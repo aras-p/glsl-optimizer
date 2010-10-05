@@ -211,11 +211,19 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	
 	ret = vlVdpCreateSurfaceTarget(vldecoder,t_vdp_surf);
 
-	vlVdpBitstreamToMacroblock(vpipe->screen, bitstream_buffers,
-                     &num_macroblocks, &pipe_macroblocks);
+	if (vlVdpMPEG2BitstreamToMacroblock(vpipe->screen, bitstream_buffers, bitstream_buffer_count,
+                     &num_macroblocks, &pipe_macroblocks))
+					 {
+						 debug_printf("[VDPAU] Error in frame-header. Skipping.\n");
+						 
+						 ret = VDP_STATUS_OK;
+						 goto skip_frame;
+					 }
 		
 	vpipe->set_decode_target(vpipe,t_surf);
-	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, pipe_macroblocks, NULL);
+	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, (struct pipe_macroblock *)pipe_macroblocks, NULL);
+	
+	skip_frame:
 	return ret;
 }
 

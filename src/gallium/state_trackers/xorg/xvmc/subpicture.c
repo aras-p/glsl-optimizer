@@ -219,7 +219,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    if (!subpicture)
       return XvMCBadSubpicture;
 	  	
-   /* Convert color to */
+   /* Convert color to float */
    util_format_read_4f(PIPE_FORMAT_B8G8R8A8_UNORM,
                     color_f, 1,
                     &color, 4,

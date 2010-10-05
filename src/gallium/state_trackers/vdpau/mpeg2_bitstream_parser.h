@@ -32,10 +32,27 @@
 #include <pipe/p_video_state.h>
 #include "vdpau_private.h"
 
-void
-vlVdpBitstreamToMacroblock(struct pipe_screen *screen,
+enum vdpMPEG2States
+{
+	MPEG2_HEADER_START_CODE,
+	MPEG2_HEADER_DONE
+};
+
+struct vdpMPEG2BitstreamParser
+{
+	enum vdpMPEG2States state;
+	uint32_t cursor;                // current bit cursor
+	uint32_t cur_bitstream;
+	uint32_t cur_bitstream_length;
+	unsigned char *ptr_bitstream;
+};
+
+int
+vlVdpMPEG2BitstreamToMacroblock(struct pipe_screen *screen,
                   VdpBitstreamBuffer const *bitstream_buffers,
+				  uint32_t bitstream_buffer_count,
                   unsigned int *num_macroblocks,
                   struct pipe_mpeg12_macroblock **pipe_macroblocks);
+				  
 
 #endif // MPEG2_BITSTREAM_PARSER_H
