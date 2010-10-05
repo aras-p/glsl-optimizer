@@ -37,20 +37,35 @@ tbd
 <li>New, improved GLSL compiler written by Intel.
     See the <a href="shading.html"> Shading Language</a> page for
     more information.
-<li>GL_EXT_timer_query extension (i965 driver only)
+<li>New, very experimental Gallium driver for R600-R700 Radeons.
+<li>GL_EXT_timer_query extension (i965 driver and softpipe only)
 <li>GL_EXT_framebuffer_multisample extension (intel drivers, MAX_SAMPLES = 1)
 <li>GL_ARB_texture_swizzle extension (alias of GL_EXT_texture_swizzle)
-<li>GL_ARB_draw_elements_base_vertex, GL_ARB_fragment_program_shadow
-    and GL_EXT_draw_buffers2 in Gallium drivers
+<li>GL_ARB_draw_elements_base_vertex, GL_ARB_fragment_program_shadow,
+    GL_ARB_window_pos, GL_EXT_gpu_program_parameters,
+    GL_ATI_texture_env_combine3, GL_MESA_pack_invert, and GL_OES_EGL_image
+    extensions in Gallium drivers
+<li>GL_ARB_depth_clamp and GL_NV_depth_clamp extensions (in nv50 and r600
+    Gallium drivers)
+<li>GL_ARB_half_float_vertex extension (in nvfx, r300, r600, softpipe,
+    and llvmpipe Gallium drivers)
+<li>GL_EXT_draw_buffers2 (in nv50, r600, softpipe, and llvmpipe Gallium
+    drivers)
+<li>GL_EXT_texture_swizzle (in nvfx, r300, r600, softpipe, and llvmpipe
+    Gallium drivers)
+<li>GL_ATI_texture_mirror_once (in nvfx, nv50, r300, r600, softpipe, and
+    llvmpipe Gallium drivers)
+<li>GL_NV_conditional_render (in r300 Gallium driver)
 <li>Initial "signs of life" support for Sandybridge hardware in i965 DRI
     driver.
-
 </ul>
 
 
 <h2>Bug fixes</h2>
 <p>This list is likely incomplete.</p>
 <ul>
+<li>Massive improvements to the Gallium driver for R300-R500 Radeons; this
+    driver is now considered stable for use as a DRI (OpenGL) driver.
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=10908">Bug 10908</a> - GLSL: gl_FogParamaters gl_Fog built-in uniform not functioning</li>
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=13753">Bug 13753</a> - Numerous bugs in GLSL uniform handling</li>
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=16854">Bug 16854</a> - GLSL function call at global scope causes SEGV</li>
