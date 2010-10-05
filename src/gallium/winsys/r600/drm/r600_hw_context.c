@@ -1044,6 +1044,7 @@ void r600_context_flush(struct r600_context *ctx)
 				sizeof(struct drm_radeon_cs));
 #endif
 	/* restart */
+	radeon_bo_fencelist(ctx->radeon, ctx->bo, ctx->creloc);
 	for (int i = 0; i < ctx->creloc; i++) {
 		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
 	}

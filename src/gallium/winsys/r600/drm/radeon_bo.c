@@ -95,6 +95,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		}
 		bo->handle = open_arg.handle;
 		bo->size = open_arg.size;
+		bo->shared = TRUE;
 	} else {
 		struct drm_radeon_gem_create args;
 
@@ -122,6 +123,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	if (ptr) {
 		memcpy(bo->data, ptr, size);
 	}
+	LIST_INITHEAD(&bo->fencedlist);
 	return bo;
 }
 
@@ -130,6 +132,7 @@ static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_gem_close args;
 
+	LIST_DEL(&bo->fencedlist);
 	radeon_bo_fixed_unmap(radeon, bo);
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
@@ -154,6 +157,9 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
 
+	if (LIST_IS_EMPTY(&bo->fencedlist) && !bo->shared)
+		return 0;
+
 	/* Zero out args to make valgrind happy */
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
@@ -169,6 +175,9 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	struct drm_radeon_gem_busy args;
 	int ret;
 
+	if (LIST_IS_EMPTY(&bo->fencedlist) && !bo->shared)
+		return 0;
+
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
 	args.domain = 0;
@@ -176,6 +185,34 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_BUSY,
 			&args, sizeof(args));
 
+	if (ret == 0) {
+		struct radeon_bo *entry, *tent;
+		LIST_FOR_EACH_ENTRY_SAFE(entry, tent, &bo->fencedlist, fencedlist) {
+			LIST_DELINIT(&entry->fencedlist);
+		}
+	}
 	*domain = args.domain;
 	return ret;
+}
+
+int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist,
+			uint32_t num_bo)
+{
+	struct radeon_bo *first;
+	int i;
+
+	first = bolist[0];
+
+	if (!LIST_IS_EMPTY(&first->fencedlist))
+		LIST_DELINIT(&first->fencedlist);
+
+	LIST_INITHEAD(&first->fencedlist);
+
+	for (i = 1; i < num_bo; i++) {
+		if (!LIST_IS_EMPTY(&bolist[i]->fencedlist))
+			LIST_DELINIT(&bolist[i]->fencedlist);
+
+		LIST_ADDTAIL(&bolist[i]->fencedlist, &first->fencedlist);
+	}
+	return 0;
 }

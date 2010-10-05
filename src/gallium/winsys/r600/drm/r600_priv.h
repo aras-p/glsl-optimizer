@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <pipebuffer/pb_bufmgr.h>
+#include "util/u_double_list.h"
 #include "r600.h"
 
 struct radeon {
@@ -63,6 +64,8 @@ struct radeon_bo {
 	unsigned			alignment;
 	unsigned			map_count;
 	void				*data;
+	struct list_head		fencedlist;
+	boolean				shared;
 };
 
 struct r600_bo {
@@ -86,6 +89,8 @@ void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
 void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
+int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
+
 
 /* radeon_bo_pb.c */
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
