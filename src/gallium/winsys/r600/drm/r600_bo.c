@@ -39,9 +39,7 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	desc.usage = usage;
 	ws_bo->size = size;
 
-	if (!radeon->use_mem_constant && (usage & PIPE_BIND_CONSTANT_BUFFER)) {
-		man = radeon->mman;
-	} else if (usage & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+	if (usage & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
 		man = radeon->cman;
 	else
 		man = radeon->kman;
