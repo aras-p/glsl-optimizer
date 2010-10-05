@@ -746,6 +746,9 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
 
    debug_printf("fs variant %p:\n", (void *) key);
 
+   if (key->flatshade) {
+      debug_printf("flatshade = 1\n");
+   }
    for (i = 0; i < key->nr_cbufs; ++i) {
       debug_printf("cbuf_format[%u] = %s\n", i, util_format_name(key->cbuf_format[i]));
    }
@@ -768,6 +771,10 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
 
    if (key->alpha.enabled) {
       debug_printf("alpha.func = %s\n", util_dump_func(key->alpha.func, TRUE));
+   }
+
+   if (key->occlusion_count) {
+      debug_printf("occlusion_count = 1\n");
    }
 
    if (key->blend.logicop_enable) {
