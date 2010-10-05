@@ -47,7 +47,8 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->framebuffer.zsbuf &&
       !sp->depth_stencil->alpha.enabled &&
       !sp->fs->info.uses_kill &&
-      !sp->fs->info.writes_z;
+      !sp->fs->info.writes_z &&
+      !sp->fs->info.writes_stencil;
 
    sp->quad.first = sp->quad.blend;
 
