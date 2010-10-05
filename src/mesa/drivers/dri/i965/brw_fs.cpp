@@ -466,6 +466,7 @@ public:
    void assign_regs_trivial();
    void calculate_live_intervals();
    bool propagate_constants();
+   bool register_coalesce();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
@@ -2719,6 +2720,84 @@ fs_visitor::dead_code_eliminate()
 }
 
 bool
+fs_visitor::register_coalesce()
+{
+   bool progress = false;
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->opcode != BRW_OPCODE_MOV ||
+	  inst->predicated ||
+	  inst->saturate ||
+	  inst->dst.file != GRF || inst->src[0].file != GRF ||
+	  inst->dst.type != inst->src[0].type)
+	 continue;
+
+      /* Found a move of a GRF to a GRF.  Let's see if we can coalesce
+       * them: check for no writes to either one until the exit of the
+       * program.
+       */
+      bool interfered = false;
+      exec_list_iterator scan_iter = iter;
+      scan_iter.next();
+      for (; scan_iter.has_next(); scan_iter.next()) {
+	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
+
+	 if (scan_inst->opcode == BRW_OPCODE_DO ||
+	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	    interfered = true;
+	    iter = scan_iter;
+	    break;
+	 }
+
+	 if (scan_inst->dst.file == GRF) {
+	    if (scan_inst->dst.reg == inst->dst.reg &&
+		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
+		 scan_inst->opcode == FS_OPCODE_TEX)) {
+	       interfered = true;
+	       break;
+	    }
+	    if (scan_inst->dst.reg == inst->src[0].reg &&
+		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
+		 scan_inst->opcode == FS_OPCODE_TEX)) {
+	       interfered = true;
+	       break;
+	    }
+	 }
+      }
+      if (interfered) {
+	 continue;
+      }
+
+      /* Rewrite the later usage to point at the source of the move to
+       * be removed.
+       */
+      for (exec_list_iterator scan_iter = iter; scan_iter.has_next();
+	   scan_iter.next()) {
+	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
+
+	 for (int i = 0; i < 3; i++) {
+	    if (scan_inst->src[i].file == GRF &&
+		scan_inst->src[i].reg == inst->dst.reg &&
+		scan_inst->src[i].reg_offset == inst->dst.reg_offset) {
+	       scan_inst->src[i].reg = inst->src[0].reg;
+	       scan_inst->src[i].reg_offset = inst->src[0].reg_offset;
+	       scan_inst->src[i].abs |= inst->src[0].abs;
+	       scan_inst->src[i].negate ^= inst->src[0].negate;
+	    }
+	 }
+      }
+
+      inst->remove();
+      progress = true;
+   }
+
+   return progress;
+}
+
+bool
 fs_visitor::virtual_grf_interferes(int a, int b)
 {
    int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
@@ -3047,6 +3126,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
+	 progress = v.register_coalesce() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
 
