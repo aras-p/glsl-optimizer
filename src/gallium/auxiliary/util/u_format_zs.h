@@ -192,5 +192,16 @@ util_format_z32_float_s8x24_uscaled_unpack_s_8uscaled(uint8_t *dst_row, unsigned
 void
 util_format_z32_float_s8x24_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
 
+void
+util_format_x24s8_uscaled_unpack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
+
+void
+util_format_x24s8_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
+
+void
+util_format_s8x24_uscaled_unpack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
+
+void
+util_format_s8x24_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
 
 #endif /* U_FORMAT_ZS_H_ */

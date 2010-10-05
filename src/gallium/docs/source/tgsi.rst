@@ -1499,6 +1499,8 @@ well.
 | Z                  | XXX TBD      | (z, z, z, 1)       | (0, z, 0, 1) |
 |                    |              | [#depth-tex-mode]_ |              |
 +--------------------+--------------+--------------------+--------------+
+| S                  | (s, s, s, s) | unknown            | unknown      |
++--------------------+--------------+--------------------+--------------+
 
 .. [#envmap-bumpmap] http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
 .. [#depth-tex-mode] the default is (z, z, z, 1) but may also be (0, 0, 0, z)

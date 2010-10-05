@@ -918,3 +918,35 @@ util_format_z32_float_s8x24_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned d
    }
 }
 
+
+void
+util_format_x24s8_uscaled_unpack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_z24_unorm_s8_uscaled_unpack_s_8uscaled(dst_row, dst_stride,
+						      src_row, src_stride,
+						      width, height);
+}
+
+void
+util_format_x24s8_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_z24_unorm_s8_uscaled_pack_s_8uscaled(dst_row, dst_stride,
+						    src_row, src_stride,
+						    width, height);
+}
+
+void
+util_format_s8x24_uscaled_unpack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_s8_uscaled_z24_unorm_unpack_s_8uscaled(dst_row, dst_stride,
+						      src_row, src_stride,
+						      width, height);
+}
+
+void
+util_format_s8x24_uscaled_pack_s_8uscaled(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_s8_uscaled_z24_unorm_pack_s_8uscaled(dst_row, dst_stride,
+						      src_row, src_stride,
+						      width, height);
+}

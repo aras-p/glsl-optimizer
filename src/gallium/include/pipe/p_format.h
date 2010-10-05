@@ -186,6 +186,9 @@ enum pipe_format {
    PIPE_FORMAT_R8G8B8X8_UNORM          = 134,
    PIPE_FORMAT_B4G4R4X4_UNORM          = 135,
 
+   /* some stencil samplers formats */
+   PIPE_FORMAT_X24S8_USCALED           = 136,
+   PIPE_FORMAT_S8X24_USCALED           = 137,
    PIPE_FORMAT_COUNT
 };
 
