@@ -32,6 +32,7 @@
 #include "r600_priv.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
+#include "util/u_time.h"
 
 static int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 {
@@ -170,13 +171,22 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	return ret;
 }
 
+#define BO_BUSY_BACKOFF 10000
+
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain)
 {
 	struct drm_radeon_gem_busy args;
 	int ret;
+	int64_t now;
 
+	now = os_time_get();
 	if (LIST_IS_EMPTY(&bo->fencedlist) && !bo->shared)
 		return 0;
+
+	if (bo->set_busy && (now - bo->last_busy < BO_BUSY_BACKOFF))
+		return -EBUSY;
+
+	bo->set_busy = FALSE;
 
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
@@ -190,6 +200,9 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 		LIST_FOR_EACH_ENTRY_SAFE(entry, tent, &bo->fencedlist, fencedlist) {
 			LIST_DELINIT(&entry->fencedlist);
 		}
+	} else {
+		bo->set_busy = TRUE;
+		bo->last_busy = now;
 	}
 	*domain = args.domain;
 	return ret;

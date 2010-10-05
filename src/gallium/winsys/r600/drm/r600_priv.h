@@ -66,6 +66,8 @@ struct radeon_bo {
 	void				*data;
 	struct list_head		fencedlist;
 	boolean				shared;
+	int64_t				last_busy;
+	boolean				set_busy;
 };
 
 struct r600_bo {
