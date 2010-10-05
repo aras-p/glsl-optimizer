@@ -139,7 +139,7 @@
 %type <type_qualifier> type_qualifier
 %type <type_qualifier> storage_qualifier
 %type <type_qualifier> interpolation_qualifier
-%type <type_qualifier> opt_layout_qualifier layout_qualifier
+%type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_no_prec
@@ -959,11 +959,6 @@ fully_specified_type:
 	}
 	;
 
-opt_layout_qualifier:
-	{ $$.i = 0; }
-	|  layout_qualifier
-	;
-
 layout_qualifier:
 	LAYOUT_TOK '(' layout_qualifier_id_list ')'
 	{
@@ -1025,13 +1020,29 @@ parameter_type_qualifier:
 
 type_qualifier:
 	storage_qualifier
-	| interpolation_qualifier type_qualifier
+	| layout_qualifier
+	| layout_qualifier storage_qualifier
 	{
 	   $$.i = $1.i | $2.i;
 	}
-	| INVARIANT type_qualifier
+	| interpolation_qualifier
+	| interpolation_qualifier storage_qualifier
+	{
+	   $$.i = $1.i | $2.i;
+	}
+	| INVARIANT storage_qualifier
 	{
 	   $$ = $2;
+	   $$.q.invariant = 1;
+	}
+	| INVARIANT interpolation_qualifier storage_qualifier
+	{
+	   $$.i = $2.i | $3.i;
+	   $$.q.invariant = 1;
+	}
+	| INVARIANT
+	{
+	   $$.i = 0;
 	   $$.q.invariant = 1;
 	}
 	;
@@ -1039,9 +1050,9 @@ type_qualifier:
 storage_qualifier:
 	CONST_TOK		{ $$.i = 0; $$.q.constant = 1; }
 	| ATTRIBUTE 		{ $$.i = 0; $$.q.attribute = 1; }
-	| opt_layout_qualifier VARYING	{ $$.i = $1.i; $$.q.varying = 1; }
+	| VARYING		{ $$.i = 0; $$.q.varying = 1; }
 	| CENTROID VARYING	{ $$.i = 0; $$.q.centroid = 1; $$.q.varying = 1; }
-	| opt_layout_qualifier IN_TOK	{ $$.i = 0; $$.q.in = 1; }
+	| IN_TOK		{ $$.i = 0; $$.q.in = 1; }
 	| OUT_TOK		{ $$.i = 0; $$.q.out = 1; }
 	| CENTROID IN_TOK	{ $$.i = 0; $$.q.centroid = 1; $$.q.in = 1; }
 	| CENTROID OUT_TOK	{ $$.i = 0; $$.q.centroid = 1; $$.q.out = 1; }
