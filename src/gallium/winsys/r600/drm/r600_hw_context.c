@@ -41,6 +41,44 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
+int r600_context_init_fence(struct r600_context *ctx)
+{
+	ctx->fence = 1;
+	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0);
+	if (ctx->fence_bo == NULL) {
+		return -ENOMEM;
+	}
+	ctx->cfence = r600_bo_map(ctx->radeon, ctx->fence_bo, PB_USAGE_UNSYNCHRONIZED, NULL);
+	*ctx->cfence = 0;
+	LIST_INITHEAD(&ctx->fenced_bo);
+	return 0;
+}
+
+static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
+{
+	for (int i = 0; i < ctx->creloc; i++) {
+		if (!LIST_IS_EMPTY(&ctx->bo[i]->fencedlist))
+			LIST_DELINIT(&ctx->bo[i]->fencedlist);
+		LIST_ADDTAIL(&ctx->bo[i]->fencedlist, &ctx->fenced_bo);
+		ctx->bo[i]->fence = ctx->fence;
+		ctx->bo[i]->ctx = ctx;
+	}
+}
+
+static void INLINE r600_context_fence_wraparound(struct r600_context *ctx, unsigned fence)
+{
+	struct radeon_bo *bo, *tmp;
+
+	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
+		if (bo->fence <= *ctx->cfence) {
+			LIST_DELINIT(&bo->fencedlist);
+			bo->fence = 0;
+		} else {
+			bo->fence = fence;
+		}
+	}
+}
+
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg)
 {
 	struct r600_block *block;
@@ -572,6 +610,9 @@ void r600_context_fini(struct r600_context *ctx)
 	}
 	free(ctx->reloc);
 	free(ctx->pm4);
+	if (ctx->fence_bo) {
+		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
+	}
 	memset(ctx, 0, sizeof(struct r600_context));
 }
 
@@ -689,6 +730,13 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->pm4 = calloc(ctx->pm4_ndwords, 4);
 	if (ctx->pm4 == NULL) {
 		r = -ENOMEM;
+		goto out_err;
+	}
+	/* save 16dwords space for fence mecanism */
+	ctx->pm4_ndwords -= 16;
+
+	r = r600_context_init_fence(ctx);
+	if (r) {
 		goto out_err;
 	}
 
@@ -1019,6 +1067,7 @@ void r600_context_flush(struct r600_context *ctx)
 	struct drm_radeon_cs drmib;
 	struct drm_radeon_cs_chunk chunks[2];
 	uint64_t chunk_array[2];
+	unsigned fence;
 	int r;
 
 	if (!ctx->pm4_cdwords)
@@ -1028,6 +1077,18 @@ void r600_context_flush(struct r600_context *ctx)
 	r600_context_queries_suspend(ctx);
 
 	radeon_bo_pbmgr_flush_maps(ctx->radeon->kman);
+
+	/* emit fence */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT | (5 << 8);
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);
+	ctx->pm4[ctx->pm4_cdwords++] = ctx->fence;
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], ctx->fence_bo);
+
 #if 1
 	/* emit cs */
 	drmib.num_chunks = 2;
@@ -1043,8 +1104,18 @@ void r600_context_flush(struct r600_context *ctx)
 	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
 				sizeof(struct drm_radeon_cs));
 #endif
+
+	r600_context_update_fenced_list(ctx);
+
+	fence = ctx->fence + 1;
+	if (fence < ctx->fence) {
+		/* wrap around */
+		fence = 1;
+		r600_context_fence_wraparound(ctx, fence);
+	}
+	ctx->fence = fence;
+
 	/* restart */
-	radeon_bo_fencelist(ctx->radeon, ctx->bo, ctx->creloc);
 	for (int i = 0; i < ctx->creloc; i++) {
 		ctx->bo[i]->reloc = NULL;
 		ctx->bo[i]->last_flush = 0;

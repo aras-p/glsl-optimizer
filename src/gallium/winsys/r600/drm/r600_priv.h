@@ -64,9 +64,9 @@ struct radeon_bo {
 	unsigned			map_count;
 	void				*data;
 	struct list_head		fencedlist;
+	unsigned			fence;
+	struct r600_context		*ctx;
 	boolean				shared;
-	int64_t				last_busy;
-	boolean				set_busy;
 	struct r600_reloc		*reloc;
 	unsigned			reloc_id;
 	unsigned			last_flush;
@@ -103,6 +103,7 @@ struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr
 							 uint32_t handle);
 
 /* r600_hw_context.c */
+int r600_context_init_fence(struct r600_context *ctx);
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);

@@ -128,7 +128,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	return bo;
 }
 
-
 static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_gem_close args;
@@ -158,8 +157,14 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
 
-	if (LIST_IS_EMPTY(&bo->fencedlist) && !bo->shared)
+	if (!bo->fence && !bo->shared)
 		return 0;
+
+	if (bo->fence <= *bo->ctx->cfence) {
+		LIST_DELINIT(&bo->fencedlist);
+		bo->fence = 0;
+		return 0;
+	}
 
 	/* Zero out args to make valgrind happy */
 	memset(&args, 0, sizeof(args));
@@ -171,22 +176,20 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	return ret;
 }
 
-#define BO_BUSY_BACKOFF 10000
-
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain)
 {
 	struct drm_radeon_gem_busy args;
 	int ret;
-	int64_t now;
 
-	now = os_time_get();
-	if (LIST_IS_EMPTY(&bo->fencedlist) && !bo->shared)
-		return 0;
-
-	if (bo->set_busy && (now - bo->last_busy < BO_BUSY_BACKOFF))
-		return -EBUSY;
-
-	bo->set_busy = FALSE;
+	if (!bo->shared) {
+		if (!bo->fence)
+			return 0;
+		if (bo->fence <= *bo->ctx->cfence) {
+			LIST_DELINIT(&bo->fencedlist);
+			bo->fence = 0;
+			return 0;
+		}
+	}
 
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
@@ -195,37 +198,6 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_BUSY,
 			&args, sizeof(args));
 
-	if (ret == 0) {
-		struct radeon_bo *entry, *tent;
-		LIST_FOR_EACH_ENTRY_SAFE(entry, tent, &bo->fencedlist, fencedlist) {
-			LIST_DELINIT(&entry->fencedlist);
-		}
-	} else {
-		bo->set_busy = TRUE;
-		bo->last_busy = now;
-	}
 	*domain = args.domain;
 	return ret;
-}
-
-int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist,
-			uint32_t num_bo)
-{
-	struct radeon_bo *first;
-	int i;
-
-	first = bolist[0];
-
-	if (!LIST_IS_EMPTY(&first->fencedlist))
-		LIST_DELINIT(&first->fencedlist);
-
-	LIST_INITHEAD(&first->fencedlist);
-
-	for (i = 1; i < num_bo; i++) {
-		if (!LIST_IS_EMPTY(&bolist[i]->fencedlist))
-			LIST_DELINIT(&bolist[i]->fencedlist);
-
-		LIST_ADDTAIL(&bolist[i]->fencedlist, &first->fencedlist);
-	}
-	return 0;
 }
