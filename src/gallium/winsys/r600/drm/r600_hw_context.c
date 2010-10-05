@@ -96,7 +96,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 				block->pm4[block->pm4_ndwords++] = 0x00000000;
 				block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
 				block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
-				block->reloc[block->nbo].bo_pm4_index[block->reloc[block->nbo].nreloc++] = block->pm4_ndwords - 1;
+				block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
 			}
 		}
 		for (j = 0; j < n; j++) {

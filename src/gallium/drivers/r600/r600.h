@@ -152,11 +152,10 @@ static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 
 struct r600_block_reloc {
-	struct r600_bo	*bo;
-	unsigned		nreloc;
+	struct r600_bo		*bo;
 	unsigned		flush_flags;
 	unsigned		flush_mask;
-	unsigned		bo_pm4_index[R600_BLOCK_MAX_BO];
+	unsigned		bo_pm4_index;
 };
 
 struct r600_block {

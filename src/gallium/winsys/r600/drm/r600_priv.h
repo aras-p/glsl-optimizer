@@ -149,15 +149,13 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 		if (block->pm4_bo_index[j]) {
 			/* find relocation */
 			id = block->pm4_bo_index[j];
-			for (int k = 0; k < block->reloc[id].nreloc; k++) {
-				r600_context_bo_reloc(ctx,
-					&block->pm4[block->reloc[id].bo_pm4_index[k]],
+			r600_context_bo_reloc(ctx,
+					&block->pm4[block->reloc[id].bo_pm4_index],
 					block->reloc[id].bo);
-				r600_context_bo_flush(ctx,
-							block->reloc[id].flush_flags,
-							block->reloc[id].flush_mask,
-							block->reloc[id].bo);
-			}
+			r600_context_bo_flush(ctx,
+					block->reloc[id].flush_flags,
+					block->reloc[id].flush_mask,
+					block->reloc[id].bo);
 		}
 	}
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
