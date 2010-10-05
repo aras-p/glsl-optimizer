@@ -276,6 +276,14 @@ static inline uint32_t r600_translate_dbformat(enum pipe_format format)
 	}
 }
 
+static inline uint32_t r600_translate_stencilformat(enum pipe_format format)
+{
+	if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
+		return 1;
+	else
+		return 0;
+}
+
 static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 {
 	switch (format) {

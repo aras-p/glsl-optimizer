@@ -795,7 +795,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
 	unsigned level;
-	unsigned pitch, slice, format;
+	unsigned pitch, slice, format, stencil_format;
 
 	if (state->zsbuf == NULL)
 		return;
@@ -811,13 +811,27 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
+	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
 				(state->zsbuf->offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
 				(state->zsbuf->offset  + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
-//	r600_pipe_state_add_reg(rstate, R_028014_DB_HTILE_DATA_BASE, state->zsbuf->offset >> 8, 0xFFFFFFFF, rbuffer->bo);
+
+	if (stencil_format) {
+		uint32_t stencil_offset;
+
+		stencil_offset = ((state->zsbuf->height * rtex->pitch[level]) + 255) & ~255;
+		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
+					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
+					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+	}
+
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
+				S_028044_FORMAT(stencil_format), 0xFFFFFFFF, rbuffer->bo);
+
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
 				S_028040_ARRAY_MODE(rtex->array_mode) | S_028040_FORMAT(format),
 				0xFFFFFFFF, rbuffer->bo);
