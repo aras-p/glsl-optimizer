@@ -154,6 +154,8 @@ static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
 struct r600_block_reloc {
 	struct r600_bo	*bo;
 	unsigned		nreloc;
+	unsigned		flush_flags;
+	unsigned		flush_mask;
 	unsigned		bo_pm4_index[R600_BLOCK_MAX_BO];
 };
 
@@ -161,6 +163,7 @@ struct r600_block {
 	unsigned		status;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
+	unsigned		pm4_flush_ndwords;
 	unsigned		nbo;
 	unsigned		nreg;
 	u32			*reg;
