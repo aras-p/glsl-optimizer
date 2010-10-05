@@ -53,6 +53,7 @@ struct r600_reg {
 	unsigned			offset;
 	unsigned			need_bo;
 	unsigned			flush_flags;
+	unsigned			flush_mask;
 };
 
 struct radeon_bo {
@@ -66,6 +67,9 @@ struct radeon_bo {
 	boolean				shared;
 	int64_t				last_busy;
 	boolean				set_busy;
+	struct r600_reloc		*reloc;
+	unsigned			reloc_id;
+	unsigned			last_flush;
 };
 
 struct r600_bo {
@@ -100,6 +104,8 @@ struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr
 
 /* r600_hw_context.c */
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo);
+void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
+				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
 
@@ -131,6 +137,7 @@ static void inline r600_context_reg(struct r600_context *ctx,
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
 
@@ -142,11 +149,13 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 		if (block->pm4_bo_index[j]) {
 			/* find relocation */
 			id = block->pm4_bo_index[j];
-			for (int k = 0; k < block->reloc[id].nreloc; k++) {
-				r600_context_bo_reloc(ctx,
-					&block->pm4[block->reloc[id].bo_pm4_index[k]],
+			r600_context_bo_reloc(ctx,
+					&block->pm4[block->reloc[id].bo_pm4_index],
 					block->reloc[id].bo);
-			}
+			r600_context_bo_flush(ctx,
+					block->reloc[id].flush_flags,
+					block->reloc[id].flush_mask,
+					block->reloc[id].bo);
 		}
 	}
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
