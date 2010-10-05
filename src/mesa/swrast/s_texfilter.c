@@ -2975,11 +2975,16 @@ choose_depth_texture_level(const struct gl_texture_object *tObj, GLfloat lambda)
 {
    GLint level;
 
-   lambda = CLAMP(lambda, tObj->MinLod, tObj->MaxLod);
-
-   level = (GLint) lambda;
-
-   level = CLAMP(level, tObj->BaseLevel, tObj->_MaxLevel);
+   if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+      /* no mipmapping - use base level */
+      level = tObj->BaseLevel;
+   }
+   else {
+      /* choose mipmap level */
+      lambda = CLAMP(lambda, tObj->MinLod, tObj->MaxLod);
+      level = (GLint) lambda;
+      level = CLAMP(level, tObj->BaseLevel, tObj->_MaxLevel);
+   }
 
    return level;
 }
