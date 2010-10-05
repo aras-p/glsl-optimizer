@@ -33,6 +33,7 @@
 #include <util/u_memory.h>
 #include <util/u_rect.h>
 #include <util/u_video.h>
+#include <util/u_surface.h>
 #include "sp_public.h"
 #include "sp_texture.h"
 
@@ -97,8 +98,8 @@ sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
    if (geom & PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)
       return FALSE;
 
-   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, PIPE_TEXTURE_2D,
-                                                 format, usage, geom);
+   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, format, PIPE_TEXTURE_2D, 1,
+                                                  usage, geom);
 }
 
 static void
@@ -125,29 +126,10 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_surface_fill(struct pipe_video_context *vpipe,
+sp_mpeg12_clear_render_target(struct pipe_video_context *vpipe,
                        struct pipe_surface *dst,
                        unsigned dstx, unsigned dsty,
-                       unsigned width, unsigned height,
-                       unsigned value)
-{
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(dst);
-
-   if (ctx->pipe->surface_fill)
-      ctx->pipe->surface_fill(ctx->pipe, dst, dstx, dsty, width, height, value);
-   else
-      util_surface_fill(ctx->pipe, dst, dstx, dsty, width, height, value);
-}
-
-static void
-sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface *src,
-                       unsigned srcx, unsigned srcy,
+					   const float *rgba,
                        unsigned width, unsigned height)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
@@ -155,10 +137,31 @@ sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
    assert(vpipe);
    assert(dst);
 
-   if (ctx->pipe->surface_copy)
-      ctx->pipe->surface_copy(ctx->pipe, dst, dstx, dsty, src, srcx, srcy, width, height);
+   if (ctx->pipe->clear_render_target)
+      ctx->pipe->clear_render_target(ctx->pipe, dst, rgba, dstx, dsty, width, height);
    else
-      util_surface_copy(ctx->pipe, FALSE, dst, dstx, dsty, src, srcx, srcy, width, height);
+      util_clear_render_target(ctx->pipe, dst, rgba, dstx, dsty, width, height);
+}
+
+static void
+sp_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
+                       struct pipe_resource *dst,
+					   struct pipe_subresource subdst,
+                       unsigned dstx, unsigned dsty, unsigned dstz,
+                       struct pipe_resource *src,
+					   struct pipe_subresource subsrc,
+                       unsigned srcx, unsigned srcy, unsigned srcz,
+                       unsigned width, unsigned height)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(dst);
+
+   if (ctx->pipe->resource_copy_region)
+      ctx->pipe->resource_copy_region(ctx->pipe, dst, subdst, dstx, dsty, dstz, src, subsrc, srcx, srcy, srcz, width, height);
+   else
+      util_resource_copy_region(ctx->pipe, dst, subdst, dstx, dsty, dstz, src, subsrc, srcx, srcy, srcz, width, height);
 }
 
 static struct pipe_transfer*
@@ -339,12 +342,9 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.flatshade = 1;
    rast.flatshade_first = 0;
    rast.light_twoside = 0;
-   rast.front_winding = PIPE_WINDING_CCW;
-   rast.cull_mode = PIPE_WINDING_CW;
-   rast.fill_cw = PIPE_POLYGON_MODE_FILL;
-   rast.fill_ccw = PIPE_POLYGON_MODE_FILL;
-   rast.offset_cw = 0;
-   rast.offset_ccw = 0;
+   rast.cull_face = PIPE_FACE_FRONT;
+   rast.fill_front = PIPE_POLYGON_MODE_FILL;
+   rast.fill_back = PIPE_POLYGON_MODE_FILL;
    rast.scissor = 0;
    rast.poly_smooth = 0;
    rast.poly_stipple_enable = 0;
@@ -359,12 +359,14 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.line_width = 1;
    rast.point_smooth = 0;
    rast.point_quad_rasterization = 0;
-   rast.point_size = 1;
+   rast.point_size_per_vertex = 1;
    rast.offset_units = 1;
    rast.offset_scale = 1;
    rast.gl_rasterization_rules = 1;
+   
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
+
 
    blend.independent_blend_enable = 0;
    blend.rt[0].blend_enable = 0;
@@ -432,8 +434,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.is_format_supported = sp_mpeg12_is_format_supported;
    ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
    ctx->base.render_picture = sp_mpeg12_render_picture;
-   ctx->base.surface_fill = sp_mpeg12_surface_fill;
-   ctx->base.surface_copy = sp_mpeg12_surface_copy;
+   ctx->base.clear_render_target = sp_mpeg12_clear_render_target;
+   ctx->base.resource_copy_region = sp_mpeg12_resource_copy_region;
    ctx->base.get_transfer = sp_mpeg12_get_transfer;
    ctx->base.transfer_destroy = sp_mpeg12_transfer_destroy;
    ctx->base.transfer_map = sp_mpeg12_transfer_map;

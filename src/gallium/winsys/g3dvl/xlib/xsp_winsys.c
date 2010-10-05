@@ -82,7 +82,7 @@ vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
    templat.height0 = height;
    templat.depth0 = 1;
    templat.usage = PIPE_USAGE_DEFAULT;
-   templat.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_BLIT_SOURCE;
+   templat.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET;
    templat.flags = 0;
 
    drawable_tex = vscreen->pscreen->resource_create(vscreen->pscreen, &templat);

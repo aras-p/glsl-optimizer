@@ -1039,6 +1039,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    unsigned vb_start = 0;
    struct vertex_shader_consts *vs_consts;
    struct pipe_transfer *buf_transfer;
+   
    unsigned i;
 
    assert(r);
@@ -1065,6 +1066,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
                                 r->vs_const_buf);
+								
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
@@ -1074,8 +1076,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->i_vs);
       r->pipe->bind_fs_state(r->pipe, r->i_fs);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24);
+	  util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24);
+	  
       vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24;
    }
 
@@ -1089,8 +1091,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24);
+	  util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24;
    }
 
@@ -1104,8 +1106,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24);
+	  util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24;
    }
 
@@ -1119,8 +1121,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24);
+      util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24;
    }
 
@@ -1134,8 +1136,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24);
+      util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24;
    }
 
@@ -1151,8 +1153,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24);
+      util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24;
    }
 
@@ -1168,8 +1170,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24);
+      util_draw_arrays(r->pipe,PIPE_PRIM_TRIANGLES,vb_start,num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24);
+
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24;
    }
 

@@ -39,6 +39,10 @@ struct vl_bitstream_parser
    unsigned cursor;
 };
 
+inline void endian_swap_ushort(unsigned short *x);
+inline void endian_swap_uint(unsigned int *x);
+inline void endian_swap_ulonglong(unsigned long long *x);
+
 bool vl_bitstream_parser_init(struct vl_bitstream_parser *parser,
                               unsigned num_bitstreams,
                               const void **bitstreams,
