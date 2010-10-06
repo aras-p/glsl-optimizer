@@ -274,7 +274,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_sampler_state *sampler);
 
 
-LLVMValueRef
+void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned unit,
                       const LLVMValueRef ddx[4],
@@ -283,7 +283,10 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef explicit_lod, /* optional */
                       LLVMValueRef width,
                       LLVMValueRef height,
-                      LLVMValueRef depth);
+                      LLVMValueRef depth,
+                      unsigned mip_filter,
+                      LLVMValueRef *out_lod_ipart,
+                      LLVMValueRef *out_lod_fpart);
 
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
@@ -294,10 +297,9 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            unsigned unit,
-                           LLVMValueRef lod,
+                           LLVMValueRef lod_ipart,
                            LLVMValueRef *level0_out,
-                           LLVMValueRef *level1_out,
-                           LLVMValueRef *weight_out);
+                           LLVMValueRef *level1_out);
 
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,

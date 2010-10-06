@@ -884,12 +884,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef data_array,
                         LLVMValueRef *colors_out)
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *int_bld = &bld->int_bld;
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
    const int dims = texture_dims(bld->static_state->target);
-   LLVMValueRef lod = NULL, lod_fpart = NULL;
+   LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
    LLVMValueRef ilevel0, ilevel1 = NULL;
    LLVMValueRef width0_vec = NULL, height0_vec = NULL, depth0_vec = NULL;
    LLVMValueRef width1_vec = NULL, height1_vec = NULL, depth1_vec = NULL;
@@ -935,9 +935,13 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, unit, ddx, ddy,
-                                  lod_bias, explicit_lod,
-                                  width, height, depth);
+      lp_build_lod_selector(bld, unit, ddx, ddy,
+                            lod_bias, explicit_lod,
+                            width, height, depth,
+                            mip_filter,
+                            &lod_ipart, &lod_fpart);
+   } else {
+      lod_ipart = LLVMConstInt(LLVMInt32Type(), 0, 0);
    }
 
    /*
@@ -950,22 +954,21 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
           * We should be able to set ilevel0 = const(0) but that causes
           * bad x86 code to be emitted.
           */
-         lod = lp_build_const_elem(bld->coord_bld.type, 0.0);
-         lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
+         assert(lod_ipart);
+         lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       }
       else {
          ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
       }
    }
    else {
-      assert(lod);
+      assert(lod_ipart);
       if (mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
-         lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
+         lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       }
       else {
          assert(mip_filter == PIPE_TEX_MIPFILTER_LINEAR);
-         lp_build_linear_mip_levels(bld, unit, lod, &ilevel0, &ilevel1,
-                                    &lod_fpart);
+         lp_build_linear_mip_levels(bld, unit, lod_ipart, &ilevel0, &ilevel1);
          lod_fpart = lp_build_broadcast_scalar(&bld->coord_bld, lod_fpart);
       }
    }
@@ -1019,9 +1022,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_flow_scope_declare(flow_ctx, &colors_out[2]);
       lp_build_flow_scope_declare(flow_ctx, &colors_out[3]);
 
-      /* minify = lod > 0.0 */
-      minify = LLVMBuildFCmp(bld->builder, LLVMRealUGE,
-                             lod, float_bld->zero, "");
+      /* minify = lod >= 0.0 */
+      minify = LLVMBuildICmp(bld->builder, LLVMIntSGE,
+                             lod_ipart, int_bld->zero, "");
 
       lp_build_if(&if_ctx, flow_ctx, bld->builder, minify);
       {

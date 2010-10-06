@@ -882,13 +882,13 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     LLVMValueRef data_array,
                     LLVMValueRef texel_out[4])
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *int_bld = &bld->int_bld;
    LLVMBuilderRef builder = bld->builder;
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
    const int dims = texture_dims(bld->static_state->target);
-   LLVMValueRef lod = NULL, lod_fpart = NULL;
+   LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
    LLVMValueRef ilevel0, ilevel1 = NULL;
    LLVMValueRef width0_vec = NULL, height0_vec = NULL, depth0_vec = NULL;
    LLVMValueRef width1_vec = NULL, height1_vec = NULL, depth1_vec = NULL;
@@ -936,7 +936,6 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       ddy = face_ddy;
    }
 
-
    /*
     * Compute the level of detail (float).
     */
@@ -945,9 +944,13 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, unit, ddx, ddy,
-                                  lod_bias, explicit_lod,
-                                  width, height, depth);
+      lp_build_lod_selector(bld, unit, ddx, ddy,
+                            lod_bias, explicit_lod,
+                            width, height, depth,
+                            mip_filter,
+                            &lod_ipart, &lod_fpart);
+   } else {
+      lod_ipart = LLVMConstInt(LLVMInt32Type(), 0, 0);
    }
 
    /*
@@ -966,30 +969,29 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
           * We should be able to set ilevel0 = const(0) but that causes
           * bad x86 code to be emitted.
           */
-         lod = lp_build_const_elem(bld->coord_bld.type, 0.0);
-         lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
+         assert(lod_ipart);
+         lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       }
       else {
          ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
       }
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
-      assert(lod);
-      lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
+      assert(lod_ipart);
+      lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       break;
    case PIPE_TEX_MIPFILTER_LINEAR:
       {
          LLVMValueRef f256 = LLVMConstReal(LLVMFloatType(), 256.0);
-         LLVMValueRef i255 = lp_build_const_int32(255);
+         LLVMTypeRef i32_type = LLVMIntType(32);
          LLVMTypeRef i16_type = LLVMIntType(16);
 
-         assert(lod);
+         assert(lod_fpart);
 
-         lp_build_linear_mip_levels(bld, unit, lod, &ilevel0, &ilevel1,
-                                    &lod_fpart);
+         lp_build_linear_mip_levels(bld, unit, lod_ipart, &ilevel0, &ilevel1);
+
          lod_fpart = LLVMBuildFMul(builder, lod_fpart, f256, "");
-         lod_fpart = lp_build_ifloor(&bld->float_bld, lod_fpart);
-         lod_fpart = LLVMBuildAnd(builder, lod_fpart, i255, "");
+         lod_fpart = LLVMBuildFPToSI(builder, lod_fpart, i32_type, "");
          lod_fpart = LLVMBuildTrunc(builder, lod_fpart, i16_type, "");
          lod_fpart = lp_build_broadcast_scalar(&h16, lod_fpart);
 
@@ -1049,9 +1051,9 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       lp_build_flow_scope_declare(flow_ctx, &packed_lo);
       lp_build_flow_scope_declare(flow_ctx, &packed_hi);
 
-      /* minify = lod > 0.0 */
-      minify = LLVMBuildFCmp(builder, LLVMRealUGE,
-                             lod, float_bld->zero, "");
+      /* minify = lod >= 0.0 */
+      minify = LLVMBuildICmp(builder, LLVMIntSGE,
+                             lod_ipart, int_bld->zero, "");
 
       lp_build_if(&if_ctx, flow_ctx, builder, minify);
       {

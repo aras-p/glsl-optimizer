@@ -168,6 +168,73 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 
 /**
+ * Generate code to compute coordinate gradient (rho).
+ * \param ddx  partial derivatives of (s, t, r, q) with respect to X
+ * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
+ * \param width  scalar int texture width
+ * \param height  scalar int texture height
+ * \param depth  scalar int texture depth
+ *
+ * XXX: The resulting rho is scalar, so we ignore all but the first element of
+ * derivatives that are passed by the shader.
+ */
+static LLVMValueRef
+lp_build_rho(struct lp_build_sample_context *bld,
+             const LLVMValueRef ddx[4],
+             const LLVMValueRef ddy[4],
+             LLVMValueRef width,
+             LLVMValueRef height,
+             LLVMValueRef depth)
+{
+   struct lp_build_context *float_bld = &bld->float_bld;
+   const int dims = texture_dims(bld->static_state->target);
+   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   LLVMValueRef dsdx, dsdy;
+   LLVMValueRef dtdx = NULL, dtdy = NULL, drdx = NULL, drdy = NULL;
+   LLVMValueRef rho;
+
+   dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
+   dsdx = lp_build_abs(float_bld, dsdx);
+   dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
+   dsdy = lp_build_abs(float_bld, dsdy);
+   if (dims > 1) {
+      dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
+      dtdx = lp_build_abs(float_bld, dtdx);
+      dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
+      dtdy = lp_build_abs(float_bld, dtdy);
+      if (dims > 2) {
+         drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
+         drdx = lp_build_abs(float_bld, drdx);
+         drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
+         drdy = lp_build_abs(float_bld, drdy);
+      }
+   }
+
+   /* Compute rho = max of all partial derivatives scaled by texture size.
+    * XXX this could be vectorized somewhat
+    */
+   rho = LLVMBuildFMul(bld->builder,
+                      lp_build_max(float_bld, dsdx, dsdy),
+                      lp_build_int_to_float(float_bld, width), "");
+   if (dims > 1) {
+      LLVMValueRef max;
+      max = LLVMBuildFMul(bld->builder,
+                         lp_build_max(float_bld, dtdx, dtdy),
+                         lp_build_int_to_float(float_bld, height), "");
+      rho = lp_build_max(float_bld, rho, max);
+      if (dims > 2) {
+         max = LLVMBuildFMul(bld->builder,
+                            lp_build_max(float_bld, drdx, drdy),
+                            lp_build_int_to_float(float_bld, depth), "");
+         rho = lp_build_max(float_bld, rho, max);
+      }
+   }
+
+   return rho;
+}
+
+
+/**
  * Generate code to compute texture level of detail (lambda).
  * \param ddx  partial derivatives of (s, t, r, q) with respect to X
  * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
@@ -180,7 +247,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
  * XXX: The resulting lod is scalar, so ignore all but the first element of
  * derivatives, lod_bias, etc that are passed by the shader.
  */
-LLVMValueRef
+void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned unit,
                       const LLVMValueRef ddx[4],
@@ -189,9 +256,18 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef explicit_lod, /* optional */
                       LLVMValueRef width,
                       LLVMValueRef height,
-                      LLVMValueRef depth)
+                      LLVMValueRef depth,
+                      unsigned mip_filter,
+                      LLVMValueRef *out_lod_ipart,
+                      LLVMValueRef *out_lod_fpart)
 
 {
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef lod;
+
+   *out_lod_ipart = bld->int_bld.zero;
+   *out_lod_fpart = bld->float_bld.zero;
+
    if (bld->static_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
        * This is hit during mipmap generation.
@@ -199,68 +275,40 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       LLVMValueRef min_lod =
          bld->dynamic_state->min_lod(bld->dynamic_state, bld->builder, unit);
 
-      return min_lod;
+      lod = min_lod;
    }
    else {
-      struct lp_build_context *float_bld = &bld->float_bld;
       LLVMValueRef sampler_lod_bias =
          bld->dynamic_state->lod_bias(bld->dynamic_state, bld->builder, unit);
       LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-      LLVMValueRef lod;
 
       if (explicit_lod) {
          lod = LLVMBuildExtractElement(bld->builder, explicit_lod,
                                        index0, "");
       }
       else {
-         const int dims = texture_dims(bld->static_state->target);
-         LLVMValueRef dsdx, dsdy;
-         LLVMValueRef dtdx = NULL, dtdy = NULL, drdx = NULL, drdy = NULL;
          LLVMValueRef rho;
 
-         dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
-         dsdx = lp_build_abs(float_bld, dsdx);
-         dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
-         dsdy = lp_build_abs(float_bld, dsdy);
-         if (dims > 1) {
-            dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
-            dtdx = lp_build_abs(float_bld, dtdx);
-            dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
-            dtdy = lp_build_abs(float_bld, dtdy);
-            if (dims > 2) {
-               drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
-               drdx = lp_build_abs(float_bld, drdx);
-               drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
-               drdy = lp_build_abs(float_bld, drdy);
-            }
-         }
-
-         /* Compute rho = max of all partial derivatives scaled by texture size.
-          * XXX this could be vectorized somewhat
-          */
-         rho = LLVMBuildFMul(bld->builder,
-                            lp_build_max(float_bld, dsdx, dsdy),
-                            lp_build_int_to_float(float_bld, width), "");
-         if (dims > 1) {
-            LLVMValueRef max;
-            max = LLVMBuildFMul(bld->builder,
-                               lp_build_max(float_bld, dtdx, dtdy),
-                               lp_build_int_to_float(float_bld, height), "");
-            rho = lp_build_max(float_bld, rho, max);
-            if (dims > 2) {
-               max = LLVMBuildFMul(bld->builder,
-                                  lp_build_max(float_bld, drdx, drdy),
-                                  lp_build_int_to_float(float_bld, depth), "");
-               rho = lp_build_max(float_bld, rho, max);
-            }
-         }
+         rho = lp_build_rho(bld, ddx, ddy, width, height, depth);
 
          /* compute lod = log2(rho) */
-#if 0
-         lod = lp_build_log2(float_bld, rho);
-#else
-         lod = lp_build_fast_log2(float_bld, rho);
-#endif
+         if ((mip_filter == PIPE_TEX_MIPFILTER_NONE ||
+              mip_filter == PIPE_TEX_MIPFILTER_NEAREST) &&
+             !lod_bias &&
+             !bld->static_state->lod_bias_non_zero &&
+             !bld->static_state->apply_max_lod &&
+             !bld->static_state->apply_min_lod) {
+            *out_lod_ipart = lp_build_ilog2(float_bld, rho);
+            *out_lod_fpart = bld->float_bld.zero;
+            return;
+         }
+
+         if (0) {
+            lod = lp_build_log2(float_bld, rho);
+         }
+         else {
+            lod = lp_build_fast_log2(float_bld, rho);
+         }
 
          /* add shader lod bias */
          if (lod_bias) {
@@ -288,9 +336,20 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
          lod = lp_build_max(float_bld, lod, min_lod);
       }
-
-      return lod;
    }
+
+   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+      LLVMValueRef ipart = lp_build_ifloor(float_bld, lod);
+      lp_build_name(ipart, "lod_ipart");
+      *out_lod_ipart = ipart;
+      ipart = LLVMBuildSIToFP(bld->builder, ipart, float_bld->vec_type, "");
+      *out_lod_fpart = LLVMBuildFSub(bld->builder, lod, ipart, "lod_fpart");
+   }
+   else {
+      *out_lod_ipart = lp_build_iround(float_bld, lod);
+   }
+
+   return;
 }
 
 
@@ -304,10 +363,9 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                            unsigned unit,
-                           LLVMValueRef lod,
+                           LLVMValueRef lod_ipart,
                            LLVMValueRef *level_out)
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
    struct lp_build_context *int_bld = &bld->int_bld;
    LLVMValueRef last_level, level;
 
@@ -317,7 +375,7 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                                                bld->builder, unit);
 
    /* convert float lod to integer */
-   level = lp_build_iround(float_bld, lod);
+   level = lod_ipart;
 
    /* clamp level to legal range of levels */
    *level_out = lp_build_clamp(int_bld, level, zero, last_level);
@@ -332,12 +390,10 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            unsigned unit,
-                           LLVMValueRef lod,
+                           LLVMValueRef lod_ipart,
                            LLVMValueRef *level0_out,
-                           LLVMValueRef *level1_out,
-                           LLVMValueRef *weight_out)
+                           LLVMValueRef *level1_out)
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
    struct lp_build_context *int_bld = &bld->int_bld;
    LLVMValueRef last_level, level;
 
@@ -345,7 +401,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                                                bld->builder, unit);
 
    /* convert float lod to integer */
-   lp_build_ifloor_fract(float_bld, lod, &level, weight_out);
+   level = lod_ipart;
 
    /* compute level 0 and clamp to legal range of levels */
    *level0_out = lp_build_clamp(int_bld, level,
