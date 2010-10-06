@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <pipe/p_compiler.h>
+#include <pipe/p_video_context.h>
 #include <vl_winsys.h>
 #include <util/u_memory.h>
 #include <util/u_debug.h>
@@ -51,8 +52,15 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGe
       ret = VDP_STATUS_RESOURCES;
       goto no_dev;
    }
+
    dev->display = display;
    dev->screen = screen;
+   dev->vscreen = vl_screen_create(display, screen);
+   if (!dev->vscreen)
+	   {
+      ret = VDP_STATUS_RESOURCES;
+      goto no_vscreen;
+   }
 
    *device = vlAddDataHTAB(dev);
    if (*device == 0) {
@@ -66,6 +74,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGe
    return VDP_STATUS_OK;
 
 no_handle:
+   /* Destroy vscreen */
+no_vscreen:
    FREE(dev);
 no_dev:
    vlDestroyHTAB();

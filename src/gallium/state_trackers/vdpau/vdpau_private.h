@@ -163,8 +163,9 @@ static enum pipe_video_profile ProfileToPipe(VdpDecoderProfile vdpau_profile)
 
 typedef struct
 {
-   void *display;
+   Display *display;
    int screen;
+   struct vl_screen *vscreen;
 } vlVdpDevice;
 
 typedef struct
@@ -207,10 +208,11 @@ typedef struct
 typedef struct
 {
 	vlVdpDevice *device;
-	struct vl_screen *vlscreen;
-    	struct vl_context *vctx;
+    struct vl_context *vctx;
 	enum pipe_video_chroma_format chroma_format;
 	enum pipe_video_profile profile;
+	uint32_t width;
+	uint32_t height;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;

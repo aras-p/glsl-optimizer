@@ -74,7 +74,10 @@ vlVdpDecoderCreate ( 	VdpDevice device,
 	// TODO: Define max_references. Used mainly for H264
 	
 	vldecoder->profile = p_profile;
+	vldecoder->height = height;
+	vldecoder->width = width;
 	vldecoder->device = dev;
+	vldecoder->vctx = NULL;
 		
 	*decoder = vlAddDataHTAB(vldecoder);
 	if (*decoder == 0) {
@@ -127,27 +130,27 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 {
 	struct pipe_resource tmplt;
 	struct pipe_resource *surf_tex;
-	struct pipe_video_context *vpipe;
+	struct pipe_video_context *vctx;
 	
 	debug_printf("[VDPAU] Creating surface\n");
 		
 	if(!(vldecoder && vlsurf))
 		return VDP_STATUS_INVALID_POINTER;
 		
-	vpipe = vldecoder->vctx;
+	vctx = vldecoder->vctx;
 		
 	memset(&tmplt, 0, sizeof(struct pipe_resource));
 	tmplt.target = PIPE_TEXTURE_2D;
 	tmplt.format = vlsurf->format;
 	tmplt.last_level = 0;
-	if (vpipe->is_format_supported(vpipe, tmplt.format,
+	if (vctx->is_format_supported(vctx, tmplt.format,
                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
                                   PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
       tmplt.width0 = vlsurf->width;
       tmplt.height0 = vlsurf->height;
     }
     else {
-      assert(vpipe->is_format_supported(vpipe, tmplt.format,
+      assert(vctx->is_format_supported(vctx, tmplt.format,
                                        PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
                                        PIPE_TEXTURE_GEOM_NON_SQUARE));
       tmplt.width0 = util_next_power_of_two(vlsurf->width);
@@ -158,9 +161,9 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 	tmplt.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
 	tmplt.flags = 0;
 	
-	surf_tex = vpipe->screen->resource_create(vpipe->screen, &tmplt);
+	surf_tex = vctx->screen->resource_create(vctx->screen, &tmplt);
 	
-	vlsurf->psurface = vpipe->screen->get_tex_surface(vpipe->screen, surf_tex, 0, 0, 0,
+	vlsurf->psurface = vctx->screen->get_tex_surface(vctx->screen, surf_tex, 0, 0, 0,
                                          PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
 										 
 	pipe_resource_reference(&surf_tex, NULL);
@@ -193,7 +196,6 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	
 	debug_printf("[VDPAU] Decoding MPEG2\n");
 
-	vpipe = vldecoder->vctx->vpipe;
 	t_vdp_surf = vlsurf;
 	
 	/* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
@@ -218,6 +220,8 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	
 	ret = vlVdpCreateSurfaceTarget(vldecoder,t_vdp_surf);
 
+	vpipe = vldecoder->vctx->vpipe;
+
 	if (vlVdpMPEG2BitstreamToMacroblock(vpipe->screen, bitstream_buffers, bitstream_buffer_count,
                      &num_macroblocks, &pipe_macroblocks))
 					 {
@@ -228,7 +232,7 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 					 }
 		
 	vpipe->set_decode_target(vpipe,t_surf);
-	//vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, (struct pipe_macroblock *)pipe_macroblocks, NULL);
+	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, (struct pipe_macroblock *)pipe_macroblocks, NULL);
 	
 	skip_frame:
 	return ret;
@@ -263,14 +267,15 @@ vlVdpDecoderRender (VdpDecoder decoder,
 	if (vlsurf->device != vldecoder->device)
 		return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 		
-	if (vlsurf->chroma_format != vldecoder->chroma_format)
-		return VDP_STATUS_INVALID_CHROMA_TYPE;
+	/* Test doesn't make sence */
+	/*if (vlsurf->chroma_format != vldecoder->chroma_format)
+		return VDP_STATUS_INVALID_CHROMA_TYPE;*/
 		
 	vscreen = vl_screen_create(vldecoder->device->display, vldecoder->device->screen);
 	if (!vscreen)
 		return VDP_STATUS_RESOURCES;
 	
-	vldecoder->vctx = vl_video_create(vscreen, vldecoder->profile, vlsurf->format, vlsurf->width, vlsurf->height);
+	vldecoder->vctx = vl_video_create(vscreen, vldecoder->profile, vlsurf->format, vldecoder->width, vldecoder->height);
 	if (!vldecoder->vctx)
 		return VDP_STATUS_RESOURCES;
 		

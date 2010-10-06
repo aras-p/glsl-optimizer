@@ -130,6 +130,11 @@ vlVdpVideoMixerSetAttributeValues (
 	vlVdpVideoMixer *vmixer = vlGetDataHTAB(mixer);
 	if (!vmixer)
 		return VDP_STATUS_INVALID_HANDLE;
+		
+	/*
+	 * TODO: Implement the function
+	 * 
+	 * */
 	
 	return VDP_STATUS_OK;
 }
