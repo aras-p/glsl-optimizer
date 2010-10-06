@@ -812,6 +812,10 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
       if (key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
          debug_printf("  .compare_func = %s\n", util_dump_func(key->sampler[i].compare_func, TRUE));
       debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
+      debug_printf("  .min_max_lod_equal = %u\n", key->sampler[i].min_max_lod_equal);
+      debug_printf("  .lod_bias_non_zero = %u\n", key->sampler[i].lod_bias_non_zero);
+      debug_printf("  .apply_min_lod = %u\n", key->sampler[i].apply_min_lod);
+      debug_printf("  .apply_max_lod = %u\n", key->sampler[i].apply_max_lod);
    }
 }
 
