@@ -800,5 +800,7 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
    return (const struct brw_fragment_program *) p;
 }
 
+GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
+
 #endif
 

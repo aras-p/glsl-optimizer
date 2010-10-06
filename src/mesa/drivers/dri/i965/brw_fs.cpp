@@ -140,6 +140,7 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 do_sub_to_add_neg(shader->ir);
 	 do_explog_to_explog2(shader->ir);
 	 do_lower_texture_projection(shader->ir);
+	 brw_do_cubemap_normalize(shader->ir);
 
 	 do {
 	    progress = false;
