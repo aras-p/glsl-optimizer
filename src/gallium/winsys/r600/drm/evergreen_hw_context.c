@@ -640,7 +640,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -695,7 +695,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -719,7 +719,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	block = range->blocks[CTX_BLOCK_ID(ctx, fake_offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	if (state->nregs <= 3) {

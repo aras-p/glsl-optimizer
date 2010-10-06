@@ -125,6 +125,8 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		block->reg = &block->pm4[block->pm4_ndwords];
 		block->pm4_ndwords += n;
 		block->nreg = n;
+		LIST_INITHEAD(&block->list);
+
 		for (j = 0; j < n; j++) {
 			if (reg[i+j].need_bo) {
 				block->nbo++;
@@ -829,7 +831,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -883,7 +885,7 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	block->reg[0] = state->regs[0].value;
@@ -906,7 +908,7 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		LIST_DEL(&block->list);
+		LIST_DELINIT(&block->list);
 		return;
 	}
 	if (state->nregs <= 3) {
@@ -1314,7 +1316,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
 	r600_bo_reference(ctx->radeon, &query->buffer, NULL);
-	LIST_DEL(&query->list);
+	LIST_DELINIT(&query->list);
 	free(query);
 }
 
