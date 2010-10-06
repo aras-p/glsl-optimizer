@@ -71,6 +71,7 @@
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_conv.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_intr.h"
@@ -446,7 +447,7 @@ lp_build_occlusion_count(LLVMBuilderRef builder,
  * \param format_desc  description of the depth/stencil surface
  * \param mask  the alive/dead pixel mask for the quad (vector)
  * \param stencil_refs  the front/back stencil ref values (scalar)
- * \param z_src  the incoming depth/stencil values (a 2x2 quad)
+ * \param z_src  the incoming depth/stencil values (a 2x2 quad, float32)
  * \param zs_dst_ptr  pointer to depth/stencil values in framebuffer
  * \param facing  contains float value indicating front/back facing polygon
  */
@@ -454,7 +455,7 @@ void
 lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             const struct pipe_depth_state *depth,
                             const struct pipe_stencil_state stencil[2],
-                            struct lp_type type,
+                            struct lp_type z_src_type,
                             const struct util_format_description *format_desc,
                             struct lp_build_mask_context *mask,
                             LLVMValueRef stencil_refs[2],
@@ -463,6 +464,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef face,
                             LLVMValueRef counter)
 {
+   struct lp_type type;
    struct lp_build_context bld;
    struct lp_build_context sbld;
    struct lp_type s_type;
@@ -472,6 +474,95 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
    LLVMValueRef orig_mask = mask->value;
    LLVMValueRef front_facing = NULL;
+
+   /* Prototype a simpler path:
+    */
+   if (z_src_type.floating &&
+       format_desc->format == PIPE_FORMAT_X8Z24_UNORM &&
+       depth->enabled) 
+   {
+      LLVMValueRef zscaled;
+      LLVMValueRef const_ffffff_float;
+      LLVMValueRef const_8_int;
+      LLVMTypeRef int32_vec_type;
+
+      /* We know the values in z_dst are all >= 0, so allow
+       * lp_build_compare to use signed compare intrinsics:
+       */
+      type.floating = 0;
+      type.fixed = 0;
+      type.sign = 1;
+      type.norm = 1;
+      type.width = 32;
+      type.length = z_src_type.length;
+
+      int32_vec_type = LLVMVectorType(LLVMInt32Type(), z_src_type.length);
+
+      const_8_int = lp_build_const_int_vec(type, 8);
+      const_ffffff_float = lp_build_const_vec(z_src_type, (float)0xffffff);
+
+      zscaled = LLVMBuildFMul(builder, z_src, const_ffffff_float, "zscaled");
+      z_src = LLVMBuildFPToSI(builder, zscaled, int32_vec_type, "z_src");
+      
+      /* Load current z/stencil value from z/stencil buffer */
+      z_dst = LLVMBuildLoad(builder, zs_dst_ptr, "zsbufval");
+      z_dst = LLVMBuildLShr(builder, z_dst, const_8_int, "z_dst");
+
+      /* compare src Z to dst Z, returning 'pass' mask */
+      z_pass = lp_build_compare(builder,
+                                type,
+                                depth->func, z_src, z_dst);
+
+      lp_build_mask_update(mask, z_pass);
+
+      /* No need to worry about old stencil contents, just blend the
+       * old and new values and shift into the correct position for
+       * storage.
+       */
+      if (depth->writemask) {
+         type.sign = 0;
+         lp_build_context_init(&bld, builder, type);
+
+         z_dst = lp_build_select(&bld, mask->value, z_src, z_dst);
+         z_dst = LLVMBuildShl(builder, z_dst, const_8_int, "z_dst");
+         LLVMBuildStore(builder, z_dst, zs_dst_ptr);
+      }
+
+      if (counter)
+         lp_build_occlusion_count(builder, type, mask->value, counter);
+
+      return;
+   }
+
+   /*
+    * Depths are expected to be between 0 and 1, even if they are stored in
+    * floats. Setting these bits here will ensure that the lp_build_conv() call
+    * below won't try to unnecessarily clamp the incoming values.
+    */
+   if(z_src_type.floating) {
+      z_src_type.sign = FALSE;
+      z_src_type.norm = TRUE;
+   }
+   else {
+      assert(!z_src_type.sign);
+      assert(z_src_type.norm);
+   }
+
+   /* Pick the depth type. */
+   type = lp_depth_type(format_desc, z_src_type.width*z_src_type.length);
+
+   /* FIXME: Cope with a depth test type with a different bit width. */
+   assert(type.width == z_src_type.width);
+   assert(type.length == z_src_type.length);
+
+   /* Convert fragment Z from float to integer */
+   lp_build_conv(builder, z_src_type, type, &z_src, 1, &z_src, 1);
+
+   zs_dst_ptr = LLVMBuildBitCast(builder,
+                                 zs_dst_ptr,
+                                 LLVMPointerType(lp_build_vec_type(type), 0), "");
+
+
 
    /* Sanity checking */
    {

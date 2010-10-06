@@ -119,7 +119,6 @@ generate_depth_stencil(LLVMBuilderRef builder,
                        LLVMValueRef counter)
 {
    const struct util_format_description *format_desc;
-   struct lp_type dst_type;
 
    if (!key->depth.enabled && !key->stencil[0].enabled && !key->stencil[1].enabled)
       return;
@@ -127,37 +126,10 @@ generate_depth_stencil(LLVMBuilderRef builder,
    format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
 
-   /*
-    * Depths are expected to be between 0 and 1, even if they are stored in
-    * floats. Setting these bits here will ensure that the lp_build_conv() call
-    * below won't try to unnecessarily clamp the incoming values.
-    */
-   if(src_type.floating) {
-      src_type.sign = FALSE;
-      src_type.norm = TRUE;
-   }
-   else {
-      assert(!src_type.sign);
-      assert(src_type.norm);
-   }
-
-   /* Pick the depth type. */
-   dst_type = lp_depth_type(format_desc, src_type.width*src_type.length);
-
-   /* FIXME: Cope with a depth test type with a different bit width. */
-   assert(dst_type.width == src_type.width);
-   assert(dst_type.length == src_type.length);
-
-   /* Convert fragment Z from float to integer */
-   lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
-
-   dst_ptr = LLVMBuildBitCast(builder,
-                              dst_ptr,
-                              LLVMPointerType(lp_build_vec_type(dst_type), 0), "");
    lp_build_depth_stencil_test(builder,
                                &key->depth,
                                key->stencil,
-                               dst_type,
+                               src_type,
                                format_desc,
                                mask,
                                stencil_refs,
