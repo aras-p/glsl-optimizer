@@ -63,6 +63,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -274,6 +275,7 @@ lp_build_conv(LLVMBuilderRef builder,
          LLVMTypeRef src_vec_type;
          LLVMTypeRef dst_vec_type;
          LLVMValueRef const_255f;
+         LLVMValueRef a, b, c, d;
 
          int16_type.width *= 2;
          int16_type.length /= 2;
@@ -288,23 +290,46 @@ lp_build_conv(LLVMBuilderRef builder,
          int16_vec_type = lp_build_vec_type(int16_type);
          int32_vec_type = lp_build_vec_type(int32_type);
 
-         const_255f = lp_build_const_vec(src_type, 255.0);
+         const_255f = lp_build_const_vec(src_type, 255.0f);
 
-         src_int0 = LLVMBuildFPToSI(builder,
-                                    LLVMBuildFMul(builder, src[0], const_255f, ""),
-                                    int32_vec_type, "");
+         a = LLVMBuildFMul(builder, src[0], const_255f, "");
+         b = LLVMBuildFMul(builder, src[1], const_255f, "");
+         c = LLVMBuildFMul(builder, src[2], const_255f, "");
+         d = LLVMBuildFMul(builder, src[3], const_255f, "");
 
-         src_int1 = LLVMBuildFPToSI(builder,
-                                    LLVMBuildFMul(builder, src[1], const_255f, ""),
-                                    int32_vec_type, "");
+         /* lp_build_round generates excessively general code without
+          * sse4, so do rounding manually.
+          */
+         if (!util_cpu_caps.has_sse4_1) {
+            LLVMValueRef const_half = lp_build_const_vec(src_type, 0.5f);
 
-         src_int2 = LLVMBuildFPToSI(builder,
-                                    LLVMBuildFMul(builder, src[2], const_255f, ""),
-                                    int32_vec_type, "");
+            a = LLVMBuildFAdd(builder, a, const_half, "");
+            b = LLVMBuildFAdd(builder, b, const_half, "");
+            c = LLVMBuildFAdd(builder, c, const_half, "");
+            d = LLVMBuildFAdd(builder, d, const_half, "");
+            
+            src_int0 = LLVMBuildFPToSI(builder, a, int32_vec_type, "");
+            src_int1 = LLVMBuildFPToSI(builder, b, int32_vec_type, "");
+            src_int2 = LLVMBuildFPToSI(builder, c, int32_vec_type, "");
+            src_int3 = LLVMBuildFPToSI(builder, d, int32_vec_type, "");
+         }
+         else {
+            struct lp_build_context bld;
 
-         src_int3 = LLVMBuildFPToSI(builder,
-                                    LLVMBuildFMul(builder, src[3], const_255f, ""),
-                                    int32_vec_type, "");
+            bld.builder = builder;
+            bld.type = src_type;
+            bld.vec_type = src_vec_type;
+            bld.int_elem_type = lp_build_elem_type(int32_type);
+            bld.int_vec_type = int32_vec_type;
+            bld.undef = lp_build_undef(src_type);
+            bld.zero = lp_build_zero(src_type);
+            bld.one = lp_build_one(src_type);
+            
+            src_int0 = lp_build_iround(&bld, a);
+            src_int1 = lp_build_iround(&bld, b);
+            src_int2 = lp_build_iround(&bld, c);
+            src_int3 = lp_build_iround(&bld, d);
+         }
 
          lo = lp_build_pack2(builder, int32_type, int16_type, src_int0, src_int1);
          hi = lp_build_pack2(builder, int32_type, int16_type, src_int2, src_int3);
