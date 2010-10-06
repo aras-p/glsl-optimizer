@@ -474,8 +474,9 @@ public:
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
 
    void emit_dummy_fs();
-   void emit_fragcoord_interpolation(ir_variable *ir);
-   void emit_general_interpolation(ir_variable *ir);
+   fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
+   fs_reg *emit_frontfacing_interpolation(ir_variable *ir);
+   fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate);
@@ -721,7 +722,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
    }
 }
 
-void
+fs_reg *
 fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
@@ -761,11 +762,10 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    /* gl_FragCoord.w: Already set up in emit_interpolation */
    emit(fs_inst(BRW_OPCODE_MOV, wpos, this->wpos_w));
 
-   hash_table_insert(this->variable_ht, reg, ir);
+   return reg;
 }
 
-
-void
+fs_reg *
 fs_visitor::emit_general_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
@@ -823,7 +823,25 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
       }
    }
 
-   hash_table_insert(this->variable_ht, reg, ir);
+   return reg;
+}
+
+fs_reg *
+fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
+{
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
+   /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
+    * us front face
+    */
+   fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP,
+				*reg,
+				fs_reg(r1_6ud),
+				fs_reg(1u << 31)));
+   inst->conditional_mod = BRW_CONDITIONAL_L;
+   emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
+
+   return reg;
 }
 
 void
@@ -844,24 +862,15 @@ fs_visitor::visit(ir_variable *ir)
 
    if (ir->mode == ir_var_in) {
       if (!strcmp(ir->name, "gl_FragCoord")) {
-	 emit_fragcoord_interpolation(ir);
-	 return;
+	 reg = emit_fragcoord_interpolation(ir);
       } else if (!strcmp(ir->name, "gl_FrontFacing")) {
-	 reg = new(this->mem_ctx) fs_reg(this, ir->type);
-	 struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
-	 /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
-	  * us front face
-	  */
-	 fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP,
-				      *reg,
-				      fs_reg(r1_6ud),
-				      fs_reg(1u << 31)));
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-	 emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
+	 reg = emit_frontfacing_interpolation(ir);
       } else {
-	 emit_general_interpolation(ir);
-	 return;
+	 reg = emit_general_interpolation(ir);
       }
+      assert(reg);
+      hash_table_insert(this->variable_ht, reg, ir);
+      return;
    }
 
    if (ir->mode == ir_var_uniform) {
