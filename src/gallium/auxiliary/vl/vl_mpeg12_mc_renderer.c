@@ -34,6 +34,7 @@
 #include <util/u_memory.h>
 #include <util/u_keymap.h>
 #include <util/u_sampler.h>
+#include <util/u_draw.h>
 #include <tgsi/tgsi_ureg.h>
 
 #define DEFAULT_BUF_ALIGNMENT 1

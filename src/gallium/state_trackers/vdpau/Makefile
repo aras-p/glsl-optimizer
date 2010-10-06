@@ -20,7 +20,9 @@ C_SOURCES = htab.c \
 	    presentation.c \
 	    bitmap.c \
 	    mpeg2_bitstream_parser.c \
-	    output.c
+	    output.c \
+	    preemption.c \
+	    mixer.c
 
 
 include ../../Makefile.template

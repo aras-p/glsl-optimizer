@@ -28,6 +28,7 @@
 #include "vdpau_private.h"
 #include <vdpau/vdpau.h>
 #include <util/u_debug.h>
+#include <util/u_memory.h>
 
 VdpStatus
 vlVdpPresentationQueueTargetDestroy (VdpPresentationQueueTarget  presentation_queue_target)
@@ -41,12 +42,39 @@ vlVdpPresentationQueueCreate (	VdpDevice  device,
 								VdpPresentationQueueTarget  presentation_queue_target, 
 								VdpPresentationQueue  *presentation_queue)
 {
-	debug_printf("[VDPAU] Creating presentation queue\n");
+	debug_printf("[VDPAU] Creating PresentationQueue\n");
+	VdpStatus    ret;
+	vlVdpPresentationQueue *pq = NULL;
 	
 	if (!presentation_queue)
 		return VDP_STATUS_INVALID_POINTER;
-	
-	return VDP_STATUS_NO_IMPLEMENTATION;
+	  
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpPresentationQueueTarget *pqt = vlGetDataHTAB(presentation_queue_target);
+   if (!pqt)
+	   return VDP_STATUS_INVALID_HANDLE;
+	   
+	if (dev != pqt->device)
+		return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
+
+   pq = CALLOC(1, sizeof(vlVdpPresentationQueue));
+   if (!pq)
+      return VDP_STATUS_RESOURCES;
+	  
+	*presentation_queue = vlAddDataHTAB(pq);
+   if (*presentation_queue == 0) {
+      ret = VDP_STATUS_ERROR;
+      goto no_handle;
+   }
+
+
+	return VDP_STATUS_OK;
+    no_handle:
+    FREE(pq);
+	return ret;
 }
 
 VdpStatus

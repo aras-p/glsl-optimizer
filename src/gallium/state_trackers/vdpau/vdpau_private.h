@@ -30,6 +30,7 @@
 
 
 #include <vdpau/vdpau.h>
+#include <vdpau/vdpau_x11.h>
 #include <pipe/p_compiler.h>
 #include <pipe/p_video_context.h>
 #include <vl_winsys.h>
@@ -73,6 +74,7 @@ static VdpChromaType PipeToType(enum pipe_video_chroma_format pipe_type)
    return -1;
 }
 
+
 static enum pipe_format FormatToPipe(VdpYCbCrFormat vdpau_format)
 {
    switch (vdpau_format) {
@@ -88,6 +90,26 @@ static enum pipe_format FormatToPipe(VdpYCbCrFormat vdpau_format)
          return 0;
       case VDP_YCBCR_FORMAT_V8U8Y8A8:
 	     return PIPE_FORMAT_VUYA;
+      default:
+         assert(0);
+   }
+
+   return -1;
+}
+
+static enum pipe_format FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
+{
+   switch (vdpau_format) {
+      case VDP_RGBA_FORMAT_A8:
+         return PIPE_FORMAT_A8_UNORM;
+      case VDP_RGBA_FORMAT_B10G10R10A2:
+         return PIPE_FORMAT_B10G10R10A2_UNORM;
+      case VDP_RGBA_FORMAT_B8G8R8A8:
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
+      case VDP_RGBA_FORMAT_R10G10B10A2:
+         return PIPE_FORMAT_R10G10B10A2_UNORM;
+      case VDP_RGBA_FORMAT_R8G8B8A8:
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
       default:
          assert(0);
    }
@@ -148,6 +170,23 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
+   Drawable drawable;
+} vlVdpPresentationQueueTarget;
+
+typedef struct
+{
+   vlVdpDevice *device;
+   Drawable drawable;
+} vlVdpPresentationQueue;
+
+typedef struct
+{
+	vlVdpDevice *device;
+} vlVdpVideoMixer;
+
+typedef struct
+{
+   vlVdpDevice *device;
    uint32_t width;
    uint32_t height;
    uint32_t pitch;
@@ -156,6 +195,14 @@ typedef struct
    enum pipe_video_chroma_format chroma_format;
    uint8_t *data;
 } vlVdpSurface;
+
+typedef struct
+{
+   vlVdpDevice *device;
+   uint32_t width;
+   uint32_t height;
+   enum pipe_format format;
+} vlVdpOutputSurface;
 
 typedef struct
 {
@@ -174,6 +221,11 @@ vlHandle vlAddDataHTAB(void *data);
 void* vlGetDataHTAB(vlHandle handle);
 boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 
+/* Public functions */
+VdpDeviceCreateX11 vdp_imp_device_create_x11;
+VdpPresentationQueueTargetCreateX11 vlVdpPresentationQueueTargetCreateX11;
+
+/* Internal function pointers */
 VdpGetErrorString vlVdpGetErrorString;
 VdpDeviceDestroy vlVdpDeviceDestroy;
 VdpGetProcAddress vlVdpGetProcAddress;
@@ -213,4 +265,13 @@ VdpPresentationQueueGetTime vlVdpPresentationQueueGetTime;
 VdpPresentationQueueDisplay vlVdpPresentationQueueDisplay;
 VdpPresentationQueueBlockUntilSurfaceIdle vlVdpPresentationQueueBlockUntilSurfaceIdle;
 VdpPresentationQueueQuerySurfaceStatus vlVdpPresentationQueueQuerySurfaceStatus;
+VdpPreemptionCallback vlVdpPreemptionCallback;
+VdpPreemptionCallbackRegister vlVdpPreemptionCallbackRegister;
+VdpVideoMixerSetFeatureEnables vlVdpVideoMixerSetFeatureEnables;
+VdpVideoMixerCreate vlVdpVideoMixerCreate;
+VdpVideoMixerRender vlVdpVideoMixerRender;
+VdpVideoMixerSetAttributeValues vlVdpVideoMixerSetAttributeValues;
+VdpGenerateCSCMatrix vlVdpGenerateCSCMatrix;
+
+
 #endif // VDPAU_PRIVATE_H

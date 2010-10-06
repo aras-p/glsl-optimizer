@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Younes Manton.
+ * Copyright 2010 Younes Manton og Thomas Balling Sørensen.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,21 +25,18 @@
  *
  **************************************************************************/
 
-#include <vdpau/vdpau_x11.h>
 #include <pipe/p_compiler.h>
 #include <vl_winsys.h>
 #include <util/u_memory.h>
 #include <util/u_debug.h>
 #include "vdpau_private.h"
 
-VdpDeviceCreateX11 vdp_imp_device_create_x11;
 
 PUBLIC VdpStatus
 vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGetProcAddress **get_proc_address)
 {
    VdpStatus    ret;
    vlVdpDevice *dev = NULL;
-   struct vl_screen *vlscreen = NULL;
 
    if (!(display && device && get_proc_address))
       return VDP_STATUS_INVALID_POINTER;
@@ -62,9 +59,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGe
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
-
+	
    *get_proc_address = &vlVdpGetProcAddress;
-   
    debug_printf("[VDPAU] Device created succesfully\n");
 
    return VDP_STATUS_OK;
@@ -77,9 +73,46 @@ no_htab:
    return ret;
 }
 
+PUBLIC VdpStatus 
+vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,VdpPresentationQueueTarget *target)
+{
+   VdpStatus    ret;
+   vlVdpPresentationQueueTarget *pqt = NULL;
+   
+   debug_printf("[VDPAU] Creating PresentationQueueTarget\n");
+
+   if (!drawable)
+      return VDP_STATUS_INVALID_HANDLE;
+	  
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pqt = CALLOC(1, sizeof(vlVdpPresentationQueue));
+   if (!pqt)
+      return VDP_STATUS_RESOURCES;
+   
+   pqt->device = dev;
+   pqt->drawable = drawable;
+	  
+	*target = vlAddDataHTAB(pqt);
+   if (*target == 0) {
+      ret = VDP_STATUS_ERROR;
+      goto no_handle;
+   }
+
+
+	return VDP_STATUS_OK;
+    no_handle:
+    FREE(dev);
+	return ret;
+}
+
 VdpStatus 
 vlVdpDeviceDestroy(VdpDevice device)
 {
+   debug_printf("[VDPAU] Destroying destroy\n");
+	
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;

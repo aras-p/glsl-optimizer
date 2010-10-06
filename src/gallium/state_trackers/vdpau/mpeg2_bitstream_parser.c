@@ -73,6 +73,8 @@ vlVdpMPEG2BitstreamToMacroblock (
 	bool b_header_done = false;
 	struct vdpMPEG2BitstreamParser parser;
 	
+	debug_printf("[VDPAU] Starting decoding MPEG2 stream");
+	
 	num_macroblocks[0] = 0;
 	
 	memset(&parser,0,sizeof(parser));

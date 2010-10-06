@@ -98,6 +98,7 @@ VdpStatus
 vlVdpDecoderDestroy  (VdpDecoder decoder
 )
 {
+	debug_printf("[VDPAU] Destroying decoder\n");
 	vlVdpDecoder *vldecoder;
 	
 	vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
@@ -105,8 +106,11 @@ vlVdpDecoderDestroy  (VdpDecoder decoder
       return VDP_STATUS_INVALID_HANDLE;
 	}
 	
-	if (vldecoder->vctx->vscreen)
-		vl_screen_destroy(vldecoder->vctx->vscreen);
+	if (vldecoder->vctx)
+	{
+		if (vldecoder->vctx->vscreen)
+			vl_screen_destroy(vldecoder->vctx->vscreen);
+	}
 	
 	if (vldecoder->vctx)
 		vl_video_destroy(vldecoder->vctx);
@@ -124,6 +128,8 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 	struct pipe_resource tmplt;
 	struct pipe_resource *surf_tex;
 	struct pipe_video_context *vpipe;
+	
+	debug_printf("[VDPAU] Creating surface\n");
 		
 	if(!(vldecoder && vlsurf))
 		return VDP_STATUS_INVALID_POINTER;
@@ -185,6 +191,7 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 	struct pipe_mpeg12_macroblock *pipe_macroblocks;
 	VdpStatus ret;
 	
+	debug_printf("[VDPAU] Decoding MPEG2\n");
 
 	vpipe = vldecoder->vctx->vpipe;
 	t_vdp_surf = vlsurf;
@@ -221,7 +228,7 @@ vlVdpDecoderRenderMpeg2    (vlVdpDecoder *vldecoder,
 					 }
 		
 	vpipe->set_decode_target(vpipe,t_surf);
-	vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, (struct pipe_macroblock *)pipe_macroblocks, NULL);
+	//vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks, (struct pipe_macroblock *)pipe_macroblocks, NULL);
 	
 	skip_frame:
 	return ret;
@@ -282,4 +289,17 @@ vlVdpDecoderRender (VdpDecoder decoder,
 	assert(0);
 
 	return ret;
+}
+
+VdpStatus 
+vlVdpGenerateCSCMatrix(
+	VdpProcamp *procamp, 
+	VdpColorStandard standard,
+	VdpCSCMatrix *csc_matrix)
+{
+	debug_printf("[VDPAU] Generating CSCMatrix\n");
+	if (!(csc_matrix && procamp))
+		return VDP_STATUS_INVALID_POINTER;
+		
+	return VDP_STATUS_OK;
 }

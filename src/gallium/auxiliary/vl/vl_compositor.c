@@ -31,6 +31,7 @@
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include <util/u_keymap.h>
+#include <util/u_draw.h>
 #include <util/u_sampler.h>
 #include <tgsi/tgsi_ureg.h>
 #include "vl_csc.h"
