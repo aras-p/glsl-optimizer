@@ -324,6 +324,7 @@ public:
       this->sampler = 0;
       this->target = 0;
       this->eot = false;
+      this->header_present = false;
       this->shadow_compare = false;
    }
 
@@ -376,6 +377,7 @@ public:
    int sampler;
    int target; /**< MRT target. */
    bool eot;
+   bool header_present;
    bool shadow_compare;
 
    /** @{
@@ -420,7 +422,10 @@ public:
       this->virtual_grf_array_size = 0;
       this->virtual_grf_def = NULL;
       this->virtual_grf_use = NULL;
+
+      this->kill_emitted = false;
    }
+
    ~fs_visitor()
    {
       talloc_free(this->mem_ctx);
@@ -503,6 +508,7 @@ public:
    ir_variable *frag_color, *frag_data, *frag_depth;
    int first_non_payload_grf;
    int urb_setup[FRAG_ATTRIB_MAX];
+   bool kill_emitted;
 
    /** @{ debug annotation info */
    const char *current_annotation;
@@ -1509,6 +1515,7 @@ fs_visitor::visit(ir_discard *ir)
    assert(ir->condition == NULL); /* FINISHME */
 
    emit(fs_inst(FS_OPCODE_DISCARD, temp, temp));
+   kill_emitted = true;
 }
 
 void
@@ -1843,10 +1850,19 @@ void
 fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
+   GLboolean header_present = GL_TRUE;
    int nr = 0;
 
-   /* m0, m1 header */
-   nr += 2;
+   if (intel->gen >= 6 &&
+       !this->kill_emitted &&
+       c->key.nr_color_regions == 1) {
+      header_present = false;
+   }
+
+   if (header_present) {
+      /* m0, m1 header */
+      nr += 2;
+   }
 
    if (c->key.aa_dest_stencil_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
@@ -1911,6 +1927,7 @@ fs_visitor::emit_fb_writes()
 				   reg_undef, reg_undef));
       inst->mlen = nr;
       inst->eot = true;
+      inst->header_present = header_present;
    }
 
    this->current_annotation = NULL;
@@ -1929,18 +1946,22 @@ fs_visitor::generate_fb_write(fs_inst *inst)
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-   if (intel->gen >= 6) {
-      brw_MOV(p,
-	      brw_message_reg(0),
-	      brw_vec8_grf(0, 0));
-      implied_header = brw_null_reg();
-   } else {
-      implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
-   }
+   if (inst->header_present) {
+      if (intel->gen >= 6) {
+	 brw_MOV(p,
+		 brw_message_reg(0),
+		 brw_vec8_grf(0, 0));
+	 implied_header = brw_null_reg();
+      } else {
+	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
+      }
 
-   brw_MOV(p,
-	   brw_message_reg(1),
-	   brw_vec8_grf(1, 0));
+      brw_MOV(p,
+	      brw_message_reg(1),
+	      brw_vec8_grf(1, 0));
+   } else {
+      implied_header = brw_null_reg();
+   }
 
    brw_pop_insn_state(p);
 
