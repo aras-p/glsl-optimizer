@@ -830,16 +830,33 @@ fs_reg *
 fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
-   struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
-   /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
-    * us front face
-    */
-   fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP,
-				*reg,
-				fs_reg(r1_6ud),
-				fs_reg(1u << 31)));
-   inst->conditional_mod = BRW_CONDITIONAL_L;
-   emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
+
+   /* The frontfacing comes in as a bit in the thread payload. */
+   if (intel->gen >= 6) {
+      emit(fs_inst(BRW_OPCODE_ASR,
+		   *reg,
+		   fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
+		   fs_reg(15)));
+      emit(fs_inst(BRW_OPCODE_NOT,
+		   *reg,
+		   *reg));
+      emit(fs_inst(BRW_OPCODE_AND,
+		   *reg,
+		   *reg,
+		   fs_reg(1)));
+   } else {
+      fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+      struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
+      /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
+       * us front face
+       */
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP,
+				   *reg,
+				   fs_reg(r1_6ud),
+				   fs_reg(1u << 31)));
+      inst->conditional_mod = BRW_CONDITIONAL_L;
+      emit(fs_inst(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u)));
+   }
 
    return reg;
 }
@@ -2817,6 +2834,18 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_XOR:
 	 brw_XOR(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_NOT:
+	 brw_NOT(p, dst, src[0]);
+	 break;
+      case BRW_OPCODE_ASR:
+	 brw_ASR(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_SHR:
+	 brw_SHR(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_SHL:
+	 brw_SHL(p, dst, src[0], src[1]);
 	 break;
 
       case BRW_OPCODE_CMP:
