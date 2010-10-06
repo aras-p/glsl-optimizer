@@ -289,29 +289,30 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     print
     
 
-def generate_ssse3():
+def generate_sse2():
     print '''
 #if defined(PIPE_ARCH_SSE)
 
 #include "util/u_sse.h"
 
-static INLINE void swz4( __m128i x, 
-                         __m128i y, 
-                         __m128i z, 
-                         __m128i w, 
-                         __m128i *a, 
-                         __m128i *b, 
-                         __m128i *c, 
-                         __m128i *d)
+static ALWAYS_INLINE void 
+swz4( const __m128i * restrict x, 
+      const __m128i * restrict y, 
+      const __m128i * restrict z, 
+      const __m128i * restrict w, 
+      __m128i * restrict a, 
+      __m128i * restrict b, 
+      __m128i * restrict c, 
+      __m128i * restrict d)
 {
    __m128i i, j, k, l;
    __m128i m, n, o, p;
    __m128i e, f, g, h;
 
-   m = _mm_unpacklo_epi8(x,y);
-   n = _mm_unpackhi_epi8(x,y);
-   o = _mm_unpacklo_epi8(z,w);
-   p = _mm_unpackhi_epi8(z,w);
+   m = _mm_unpacklo_epi8(*x,*y);
+   n = _mm_unpackhi_epi8(*x,*y);
+   o = _mm_unpacklo_epi8(*z,*w);
+   p = _mm_unpackhi_epi8(*z,*w);
 
    i = _mm_unpacklo_epi16(m,n);
    j = _mm_unpackhi_epi16(m,n);
@@ -329,22 +330,23 @@ static INLINE void swz4( __m128i x,
    *d = _mm_unpackhi_epi64(f,h);
 }
 
-static INLINE void unswz4( __m128i a, 
-                           __m128i b, 
-                           __m128i c, 
-                           __m128i d, 
-                           __m128i *x, 
-                           __m128i *y, 
-                           __m128i *z, 
-                           __m128i *w)
+static ALWAYS_INLINE void
+unswz4( const __m128i * restrict a, 
+        const __m128i * restrict b, 
+        const __m128i * restrict c, 
+        const __m128i * restrict d, 
+        __m128i * restrict x, 
+        __m128i * restrict y, 
+        __m128i * restrict z, 
+        __m128i * restrict w)
 {
    __m128i i, j, k, l;
    __m128i m, n, o, p;
 
-   i = _mm_unpacklo_epi8(a,b);
-   j = _mm_unpackhi_epi8(a,b);
-   k = _mm_unpacklo_epi8(c,d);
-   l = _mm_unpackhi_epi8(c,d);
+   i = _mm_unpacklo_epi8(*a,*b);
+   j = _mm_unpackhi_epi8(*a,*b);
+   k = _mm_unpacklo_epi8(*c,*d);
+   l = _mm_unpackhi_epi8(*c,*d);
 
    m = _mm_unpacklo_epi16(i,k);
    n = _mm_unpackhi_epi16(i,k);
@@ -358,9 +360,9 @@ static INLINE void unswz4( __m128i a,
 }
 
 static void
-lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
-                                         const uint8_t *src, unsigned src_stride,
-                                         unsigned x0, unsigned y0)
+lp_tile_b8g8r8a8_unorm_swizzle_4ub_sse2(uint8_t * restrict dst,
+                                        const uint8_t * restrict src, unsigned src_stride,
+                                        unsigned x0, unsigned y0)
 {
    __m128i *dst128 = (__m128i *) dst;
    unsigned x, y;
@@ -372,10 +374,10 @@ lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
       const uint8_t *src_row = src;
 
       for (x = 0; x < TILE_SIZE; x += 4) {
-         swz4(*(__m128i *) (src_row + 0 * src_stride),
-              *(__m128i *) (src_row + 1 * src_stride),
-              *(__m128i *) (src_row + 2 * src_stride),
-              *(__m128i *) (src_row + 3 * src_stride),
+         swz4((const __m128i *) (src_row + 0 * src_stride),
+              (const __m128i *) (src_row + 1 * src_stride),
+              (const __m128i *) (src_row + 2 * src_stride),
+              (const __m128i *) (src_row + 3 * src_stride),
               dst128 + 2,     /* b */
               dst128 + 1,     /* g */
               dst128 + 0,     /* r */
@@ -390,8 +392,8 @@ lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
 }
 
 static void
-lp_tile_b8g8r8a8_unorm_unswizzle_4ub_ssse3(const uint8_t *src,
-                                          uint8_t *dst, unsigned dst_stride,
+lp_tile_b8g8r8a8_unorm_unswizzle_4ub_sse2(const uint8_t * restrict src,
+                                          uint8_t * restrict dst, unsigned dst_stride,
                                           unsigned x0, unsigned y0)
 {
    unsigned int x, y;
@@ -404,10 +406,10 @@ lp_tile_b8g8r8a8_unorm_unswizzle_4ub_ssse3(const uint8_t *src,
       const uint8_t *dst_row = dst;
 
       for (x = 0; x < TILE_SIZE; x += 4) {
-         unswz4( src128[2],     /* b */
-                 src128[1],     /* g */
-                 src128[0],     /* r */
-                 src128[3],     /* a */
+         unswz4( &src128[2],     /* b */
+                 &src128[1],     /* g */
+                 &src128[0],     /* r */
+                 &src128[3],     /* a */
                  (__m128i *) (dst_row + 0 * dst_stride),
                  (__m128i *) (dst_row + 1 * dst_stride),
                  (__m128i *) (dst_row + 2 * dst_stride),
@@ -421,7 +423,7 @@ lp_tile_b8g8r8a8_unorm_unswizzle_4ub_ssse3(const uint8_t *src,
    }
 }
 
-#endif /* PIPE_ARCH_SSSE3 */
+#endif /* PIPE_ARCH_SSE */
 '''
 
 
@@ -446,7 +448,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
             func_name = 'lp_tile_%s_swizzle_%s' % (format.short_name(), dst_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
-                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
                 print '#endif'
@@ -484,7 +486,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
             func_name = 'lp_tile_%s_unswizzle_%s' % (format.short_name(), src_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
-                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
                 print '#endif'
@@ -544,7 +546,7 @@ def main():
     print '};'
     print
 
-    generate_ssse3()
+    generate_sse2()
 
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'
