@@ -1210,7 +1210,7 @@ lp_build_iround(struct lp_build_context *bld,
                 LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+   LLVMTypeRef int_vec_type = bld->int_vec_type;
    LLVMValueRef res;
 
    assert(type.floating);
@@ -1222,20 +1222,24 @@ lp_build_iround(struct lp_build_context *bld,
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(type);
-      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
-      LLVMValueRef sign;
       LLVMValueRef half;
 
-      /* get sign bit */
-      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-      sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-
-      /* sign * 0.5 */
       half = lp_build_const_vec(type, 0.5);
-      half = LLVMBuildBitCast(bld->builder, half, int_vec_type, "");
-      half = LLVMBuildOr(bld->builder, sign, half, "");
-      half = LLVMBuildBitCast(bld->builder, half, vec_type, "");
+
+      if (type.sign) {
+         LLVMTypeRef vec_type = bld->vec_type;
+         LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
+         LLVMValueRef sign;
+
+         /* get sign bit */
+         sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+         sign = LLVMBuildAnd(bld->builder, sign, mask, "");
+
+         /* sign * 0.5 */
+         half = LLVMBuildBitCast(bld->builder, half, int_vec_type, "");
+         half = LLVMBuildOr(bld->builder, sign, half, "");
+         half = LLVMBuildBitCast(bld->builder, half, vec_type, "");
+      }
 
       res = LLVMBuildFAdd(bld->builder, a, half, "");
    }
@@ -1256,7 +1260,7 @@ lp_build_ifloor(struct lp_build_context *bld,
                 LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+   LLVMTypeRef int_vec_type = bld->int_vec_type;
    LLVMValueRef res;
 
    assert(type.floating);
@@ -1267,27 +1271,31 @@ lp_build_ifloor(struct lp_build_context *bld,
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
    }
    else {
-      /* Take the sign bit and add it to 1 constant */
-      LLVMTypeRef vec_type = lp_build_vec_type(type);
-      unsigned mantissa = lp_mantissa(type);
-      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
-      LLVMValueRef sign;
-      LLVMValueRef offset;
+      res = a;
 
-      /* sign = a < 0 ? ~0 : 0 */
-      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-      sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "ifloor.sign");
+      if (type.sign) {
+         /* Take the sign bit and add it to 1 constant */
+         LLVMTypeRef vec_type = bld->vec_type;
+         unsigned mantissa = lp_mantissa(type);
+         LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
+         LLVMValueRef sign;
+         LLVMValueRef offset;
 
-      /* offset = -0.99999(9)f */
-      offset = lp_build_const_vec(type, -(double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
-      offset = LLVMConstBitCast(offset, int_vec_type);
+         /* sign = a < 0 ? ~0 : 0 */
+         sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+         sign = LLVMBuildAnd(bld->builder, sign, mask, "");
+         sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "ifloor.sign");
 
-      /* offset = a < 0 ? offset : 0.0f */
-      offset = LLVMBuildAnd(bld->builder, offset, sign, "");
-      offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "ifloor.offset");
+         /* offset = -0.99999(9)f */
+         offset = lp_build_const_vec(type, -(double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
+         offset = LLVMConstBitCast(offset, int_vec_type);
 
-      res = LLVMBuildFAdd(bld->builder, a, offset, "ifloor.res");
+         /* offset = a < 0 ? offset : 0.0f */
+         offset = LLVMBuildAnd(bld->builder, offset, sign, "");
+         offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "ifloor.offset");
+
+         res = LLVMBuildFAdd(bld->builder, res, offset, "ifloor.res");
+      }
    }
 
    /* round to nearest (toward zero) */
@@ -1307,7 +1315,7 @@ lp_build_iceil(struct lp_build_context *bld,
                LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+   LLVMTypeRef int_vec_type = bld->int_vec_type;
    LLVMValueRef res;
 
    assert(type.floating);
@@ -1318,25 +1326,28 @@ lp_build_iceil(struct lp_build_context *bld,
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      LLVMTypeRef vec_type = bld->vec_type;
       unsigned mantissa = lp_mantissa(type);
-      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
-      LLVMValueRef sign;
       LLVMValueRef offset;
-
-      /* sign = a < 0 ? 0 : ~0 */
-      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-      sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "iceil.sign");
-      sign = LLVMBuildNot(bld->builder, sign, "iceil.not");
 
       /* offset = 0.99999(9)f */
       offset = lp_build_const_vec(type, (double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
-      offset = LLVMConstBitCast(offset, int_vec_type);
 
-      /* offset = a < 0 ? 0.0 : offset */
-      offset = LLVMBuildAnd(bld->builder, offset, sign, "");
-      offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "iceil.offset");
+      if (type.sign) {
+         LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
+         LLVMValueRef sign;
+
+         /* sign = a < 0 ? 0 : ~0 */
+         sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+         sign = LLVMBuildAnd(bld->builder, sign, mask, "");
+         sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "iceil.sign");
+         sign = LLVMBuildNot(bld->builder, sign, "iceil.not");
+
+         /* offset = a < 0 ? 0.0 : offset */
+         offset = LLVMConstBitCast(offset, int_vec_type);
+         offset = LLVMBuildAnd(bld->builder, offset, sign, "");
+         offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "iceil.offset");
+      }
 
       res = LLVMBuildFAdd(bld->builder, a, offset, "iceil.res");
    }
