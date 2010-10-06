@@ -286,7 +286,7 @@ static void emit_all_tex(struct schedule_state * s, struct rc_instruction * befo
 static int merge_presub_sources(
 	struct rc_pair_instruction * dst_full,
 	struct rc_pair_sub_instruction src,
-	rc_pair_source_type type)
+	unsigned int type)
 {
 	unsigned int srcp_src, srcp_regs, is_rgb, is_alpha;
 	struct rc_pair_sub_instruction * dst_sub;
@@ -355,9 +355,9 @@ static int merge_presub_sources(
 		for(arg = 0; arg < info->NumSrcRegs; arg++) {
 			/*If this arg does not read from an rgb source,
 			 * do nothing. */
-			if (rc_source_type_that_arg_reads(
+			if (!(rc_source_type_that_arg_reads(
 				dst_full->RGB.Arg[arg].Source,
-				dst_full->RGB.Arg[arg].Swizzle, 3) != type) {
+				dst_full->RGB.Arg[arg].Swizzle) & type)) {
 				continue;
 			}
 			if (dst_full->RGB.Arg[arg].Source == srcp_src)
