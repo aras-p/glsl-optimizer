@@ -810,12 +810,14 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	 }
 	 attr.reg_offset -= type->vector_elements;
 
-	 for (unsigned int c = 0; c < type->vector_elements; c++) {
-	    emit(fs_inst(BRW_OPCODE_MUL,
-			 attr,
-			 attr,
-			 this->pixel_w));
-	    attr.reg_offset++;
+	 if (intel->gen < 6) {
+	    for (unsigned int c = 0; c < type->vector_elements; c++) {
+	       emit(fs_inst(BRW_OPCODE_MUL,
+			    attr,
+			    attr,
+			    this->pixel_w));
+	       attr.reg_offset++;
+	    }
 	 }
 	 location++;
       }
