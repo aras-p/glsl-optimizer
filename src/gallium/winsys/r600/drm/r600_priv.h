@@ -162,6 +162,7 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
+	LIST_DELINIT(&block->list);
 }
 
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)

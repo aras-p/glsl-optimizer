@@ -967,7 +967,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	struct r600_bo *cb[8];
 	struct r600_bo *db;
 	unsigned ndwords = 9;
-	struct r600_block *dirty_block;
+	struct r600_block *dirty_block, *next_block;
 
 	if (draw->indices) {
 		ndwords = 13;
@@ -1020,10 +1020,9 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 
 	/* enough room to copy packet */
-	LIST_FOR_EACH_ENTRY(dirty_block,&ctx->dirty,list) {
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
-	LIST_INITHEAD(&ctx->dirty);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
@@ -1135,8 +1134,9 @@ void r600_context_flush(struct r600_context *ctx)
 	 */
 	for (int i = 0; i < ctx->nblocks; i++) {
 		if (ctx->blocks[i]->status & R600_BLOCK_STATUS_ENABLED) {
-			if(!(ctx->blocks[i]->status & R600_BLOCK_STATUS_DIRTY))
+			if(!(ctx->blocks[i]->status & R600_BLOCK_STATUS_DIRTY)) {
 				LIST_ADDTAIL(&ctx->blocks[i]->list,&ctx->dirty);
+			}
 			ctx->pm4_dirty_cdwords += ctx->blocks[i]->pm4_ndwords + ctx->blocks[i]->pm4_flush_ndwords;
 			ctx->blocks[i]->status |= R600_BLOCK_STATUS_DIRTY;
 		}

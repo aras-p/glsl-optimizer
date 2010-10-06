@@ -762,7 +762,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	struct r600_bo *cb[12];
 	struct r600_bo *db;
 	unsigned ndwords = 9, flush;
-	struct r600_block *dirty_block;
+	struct r600_block *dirty_block, *next_block;
 
 	if (draw->indices) {
 		ndwords = 13;
@@ -817,10 +817,9 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* enough room to copy packet */
-	LIST_FOR_EACH_ENTRY(dirty_block,&ctx->dirty,list) {
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
-	LIST_INITHEAD(&ctx->dirty);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
