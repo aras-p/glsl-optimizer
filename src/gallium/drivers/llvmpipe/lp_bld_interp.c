@@ -206,7 +206,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             dadq2 = LLVMBuildFAdd(builder, dadq, dadq, "");
 
             /*
-             * a = a0 + x * dadx + y * dady
+             * a = a0 + (x * dadx + y * dady)
              */
 
             if (attrib == 0 && chan == 0) {
@@ -219,11 +219,11 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
                a = a0;
                if (interp != LP_INTERP_CONSTANT &&
                    interp != LP_INTERP_FACING) {
-                  LLVMValueRef tmp;
-                  tmp = LLVMBuildFMul(builder, bld->x, dadx, "");
-                  a = LLVMBuildFAdd(builder, a, tmp, "");
-                  tmp = LLVMBuildFMul(builder, bld->y, dady, "");
-                  a = LLVMBuildFAdd(builder, a, tmp, "");
+                  LLVMValueRef ax, ay, axy;
+                  ax = LLVMBuildFMul(builder, bld->x, dadx, "");
+                  ay = LLVMBuildFMul(builder, bld->y, dady, "");
+                  axy = LLVMBuildFAdd(builder, ax, ay, "");
+                  a = LLVMBuildFAdd(builder, a, axy, "");
                }
             }
 
@@ -349,6 +349,14 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
                   a = lp_build_mul(coeff_bld, a, oow);
                }
 #endif
+
+               if (attrib == 0 && chan == 2) {
+                  /* FIXME: Depth values can exceed 1.0, due to the fact that
+                   * setup interpolation coefficients refer to (0,0) which causes
+                   * precision loss. So we must clamp to 1.0 here to avoid artifacts
+                   */
+                  a = lp_build_min(coeff_bld, a, coeff_bld->one);
+               }
 
                attrib_name(a, attrib, chan, "");
             }
