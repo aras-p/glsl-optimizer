@@ -137,12 +137,17 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 						R_02880C_DB_SHADER_CONTROL,
 						S_02880C_Z_EXPORT_ENABLE(1),
 						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+			r600_pipe_state_add_reg(rstate,
+						R_02880C_DB_SHADER_CONTROL,
+						S_02880C_STENCIL_REF_EXPORT_ENABLE(1),
+						S_02880C_STENCIL_REF_EXPORT_ENABLE(1), NULL);
 	}
 
 	exports_ps = 0;
 	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION || rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
 			num_cout++;
@@ -628,7 +633,14 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
 				output[i].array_base = 61;
 				output[i].swizzle_x = 2;
-				output[i].swizzle_y = output[i].swizzle_z = output[i].swizzle_w = 7;
+				output[i].swizzle_y = 7;
+				output[i].swizzle_z = output[i].swizzle_w = 7;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+			} else if (shader->output[i].name == TGSI_SEMANTIC_STENCIL) {
+				output[i].array_base = 61;
+				output[i].swizzle_x = 7;
+				output[i].swizzle_y = 1;
+				output[i].swizzle_z = output[i].swizzle_w = 7;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
