@@ -1920,6 +1920,7 @@ fs_visitor::emit_fb_writes()
       inst->mlen = nr;
       if (target == c->key.nr_color_regions - 1)
 	 inst->eot = true;
+      inst->header_present = header_present;
    }
 
    if (c->key.nr_color_regions == 0) {
