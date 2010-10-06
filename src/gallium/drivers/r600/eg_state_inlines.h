@@ -25,6 +25,7 @@
 
 #include "util/u_format.h"
 #include "evergreend.h"
+#include "r600_formats.h"
 
 static INLINE uint32_t r600_translate_blend_function(int blend_func)
 {
@@ -523,32 +524,32 @@ static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_030008_FMT_16_FLOAT;
+				result = FMT_16_FLOAT;
 				break;
 			case 2:
-				result = V_030008_FMT_16_16_FLOAT;
+				result = FMT_16_16_FLOAT;
 				break;
 			case 3:
-				result = V_030008_FMT_16_16_16_FLOAT;
+				result = FMT_16_16_16_FLOAT;
 				break;
 			case 4:
-				result = V_030008_FMT_16_16_16_16_FLOAT;
+				result = FMT_16_16_16_16_FLOAT;
 				break;
 			}
 			break;
 		case 32:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_030008_FMT_32_FLOAT;
+				result = FMT_32_FLOAT;
 				break;
 			case 2:
-				result = V_030008_FMT_32_32_FLOAT;
+				result = FMT_32_32_FLOAT;
 				break;
 			case 3:
-				result = V_030008_FMT_32_32_32_FLOAT;
+				result = FMT_32_32_32_FLOAT;
 				break;
 			case 4:
-				result = V_030008_FMT_32_32_32_32_FLOAT;
+				result = FMT_32_32_32_32_FLOAT;
 				break;
 			}
 			break;
@@ -564,48 +565,48 @@ static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
 		case 8:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_030008_FMT_8;
+				result = FMT_8;
 				break;
 			case 2:
-				result = V_030008_FMT_8_8;
+				result = FMT_8_8;
 				break;
 			case 3:
 //				result = V_038008_FMT_8_8_8; /* fails piglit draw-vertices test */
 //				break;
 			case 4:
-				result = V_030008_FMT_8_8_8_8;
+				result = FMT_8_8_8_8;
 				break;
 			}
 			break;
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_030008_FMT_16;
+				result = FMT_16;
 				break;
 			case 2:
-				result = V_030008_FMT_16_16;
+				result = FMT_16_16;
 				break;
 			case 3:
 //				result = V_038008_FMT_16_16_16; /* fails piglit draw-vertices test */
 //				break;
 			case 4:
-				result = V_030008_FMT_16_16_16_16;
+				result = FMT_16_16_16_16;
 				break;
 			}
 			break;
 		case 32:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_030008_FMT_32;
+				result = FMT_32;
 				break;
 			case 2:
-				result = V_030008_FMT_32_32;
+				result = FMT_32_32;
 				break;
 			case 3:
-				result = V_030008_FMT_32_32_32;
+				result = FMT_32_32_32;
 				break;
 			case 4:
-				result = V_030008_FMT_32_32_32_32;
+				result = FMT_32_32_32_32;
 				break;
 			}
 			break;
