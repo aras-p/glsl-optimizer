@@ -211,8 +211,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
                        const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
-   unsigned clear_value = arg.clear_zstencil.value;
-   unsigned clear_mask = arg.clear_zstencil.mask;
+   uint32_t clear_value = arg.clear_zstencil.value;
+   uint32_t clear_mask = arg.clear_zstencil.mask;
    const unsigned height = TILE_SIZE / TILE_VECTOR_HEIGHT;
    const unsigned width = TILE_SIZE * TILE_VECTOR_HEIGHT;
    const unsigned block_size = scene->zsbuf.blocksize;
@@ -220,7 +220,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
    uint8_t *dst;
    unsigned i, j;
 
-   LP_DBG(DEBUG_RAST, "%s 0x%x%x\n", __FUNCTION__, clear_value, clear_mask);
+   LP_DBG(DEBUG_RAST, "%s: value=0x%08x, mask=0x%08x\n",
+           __FUNCTION__, clear_value, clear_mask);
 
    /*
     * Clear the aera of the swizzled depth/depth buffer matching this tile, in
@@ -232,16 +233,31 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    dst = task->depth_tile;
 
+   clear_value &= clear_mask;
+
    switch (block_size) {
    case 1:
+      assert(clear_mask == 0xff);
       memset(dst, (uint8_t) clear_value, height * width);
       break;
    case 2:
-      for (i = 0; i < height; i++) {
-         uint16_t *row = (uint16_t *)dst;
-         for (j = 0; j < width; j++)
-            *row++ = (uint16_t) clear_value;
-         dst += dst_stride;
+      if (clear_mask == 0xffff) {
+         for (i = 0; i < height; i++) {
+            uint16_t *row = (uint16_t *)dst;
+            for (j = 0; j < width; j++)
+               *row++ = (uint16_t) clear_value;
+            dst += dst_stride;
+         }
+      }
+      else {
+         for (i = 0; i < height; i++) {
+            uint16_t *row = (uint16_t *)dst;
+            for (j = 0; j < width; j++) {
+               uint16_t tmp = ~clear_mask & *row;
+               *row++ = clear_value | tmp;
+            }
+            dst += dst_stride;
+         }
       }
       break;
    case 4:
@@ -258,7 +274,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
             uint32_t *row = (uint32_t *)dst;
             for (j = 0; j < width; j++) {
                uint32_t tmp = ~clear_mask & *row;
-               *row++ = (clear_value & clear_mask) | tmp;
+               *row++ = clear_value | tmp;
             }
             dst += dst_stride;
          }

@@ -149,8 +149,8 @@ union lp_rast_cmd_arg {
    const struct lp_rast_state *set_state;
    uint8_t clear_color[4];
    struct {
-      unsigned value;
-      unsigned mask;
+      uint32_t value;
+      uint32_t mask;
    } clear_zstencil;
    struct lp_fence *fence;
    struct llvmpipe_query *query_obj;

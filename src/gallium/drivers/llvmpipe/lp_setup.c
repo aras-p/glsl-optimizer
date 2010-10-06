@@ -377,16 +377,19 @@ lp_setup_try_clear( struct lp_setup_context *setup,
    }
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-      unsigned zmask = (flags & PIPE_CLEAR_DEPTH) ? ~0 : 0;
-      unsigned smask = (flags & PIPE_CLEAR_STENCIL) ? ~0 : 0;
+      uint32_t zmask = (flags & PIPE_CLEAR_DEPTH) ? ~0 : 0;
+      uint32_t smask = (flags & PIPE_CLEAR_STENCIL) ? ~0 : 0;
 
       zsvalue = util_pack_z_stencil(setup->fb.zsbuf->format,
                                     depth,
                                     stencil);
 
-      zsmask = util_pack_uint_z_stencil(setup->fb.zsbuf->format,
+
+      zsmask = util_pack_mask_z_stencil(setup->fb.zsbuf->format,
                                         zmask,
                                         smask);
+
+      zsvalue &= zsmask;
    }
 
    if (setup->state == SETUP_ACTIVE) {
@@ -431,7 +434,7 @@ lp_setup_try_clear( struct lp_setup_context *setup,
       if (flags & PIPE_CLEAR_COLOR) {
          memcpy(setup->clear.color.clear_color,
                 &color_arg,
-                sizeof color_arg);
+                sizeof setup->clear.color.clear_color);
       }
    }
    
