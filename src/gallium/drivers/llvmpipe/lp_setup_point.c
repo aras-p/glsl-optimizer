@@ -105,6 +105,8 @@ texcoord_coef(struct lp_setup_context *setup,
               unsigned sprite_coord_origin,
               boolean perspective)
 {
+   float w0 = info->v0[0][3];
+
    assert(i < 4);
 
    if (i == 0) {
@@ -118,13 +120,6 @@ texcoord_coef(struct lp_setup_context *setup,
       point->inputs.a0[slot][0] = 0.5 - (dadx * x0 + dady * y0);
 
       if (perspective) {
-         /* Divide coefficients by vertex.w here.
-          *
-          * It would be clearer to always multiply by w0 above and
-          * then divide it out for perspective projection here, but
-          * doing it this way involves less algebra.
-          */
-         float w0 = info->v0[0][3];
          point->inputs.dadx[slot][0] *= w0;
          point->inputs.dady[slot][0] *= w0;
          point->inputs.a0[slot][0] *= w0;
@@ -145,7 +140,6 @@ texcoord_coef(struct lp_setup_context *setup,
       point->inputs.a0[slot][1] = 0.5 - (dadx * x0 + dady * y0);
 
       if (perspective) {
-         float w0 = info->v0[0][3];
          point->inputs.dadx[slot][1] *= w0;
          point->inputs.dady[slot][1] *= w0;
          point->inputs.a0[slot][1] *= w0;
@@ -157,7 +151,7 @@ texcoord_coef(struct lp_setup_context *setup,
       point->inputs.dady[slot][2] = 0.0f;
    }
    else {
-      point->inputs.a0[slot][3] = 1.0f;
+      point->inputs.a0[slot][3] = perspective ? w0 : 1.0f;
       point->inputs.dadx[slot][3] = 0.0f;
       point->inputs.dady[slot][3] = 0.0f;
    }
