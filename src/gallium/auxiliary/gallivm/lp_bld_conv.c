@@ -178,6 +178,16 @@ lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
 
    assert(dst_type.floating);
 
+   /* Special-case int8->float, though most cases could be handled
+    * this way:
+    */
+   if (src_width == 8) {
+      scale = 1.0/255.0;
+      res = LLVMBuildSIToFP(builder, src, vec_type, "");
+      res = LLVMBuildFMul(builder, res, lp_build_const_vec(dst_type, scale), "");
+      return res;
+   }
+
    mantissa = lp_mantissa(dst_type);
 
    n = MIN2(mantissa, src_width);
