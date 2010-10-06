@@ -343,9 +343,23 @@ struct ast_type_qualifier {
 	 unsigned origin_upper_left:1;
 	 unsigned pixel_center_integer:1;
 	 /*@}*/
+
+	 /**
+	  * Flag set if GL_ARB_explicit_attrib_location "location" layout
+	  * qualifier is used.
+	  */
+	 unsigned explicit_location:1;
       } q;
       unsigned i;
    } flags;
+
+   /**
+    * Location specified via GL_ARB_explicit_attrib_location layout
+    *
+    * \note
+    * This field is only valid if \c explicit_location is set.
+    */
+   unsigned location;
 };
 
 class ast_struct_specifier : public ast_node {

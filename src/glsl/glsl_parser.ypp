@@ -983,10 +983,19 @@ layout_qualifier_id_list:
 	layout_qualifier_id
 	| layout_qualifier_id_list ',' layout_qualifier_id
 	{
-	   /* FINISHME: Should check for conflicting / duplicate flags here.
-	    */
-	   $$ = $1;
-	   $$.flags.i |= $3.flags.i;
+	   if (($1.flags.i & $3.flags.i) != 0) {
+	      _mesa_glsl_error(& @3, state,
+			       "duplicate layout qualifiers used\n");
+	      YYERROR;
+	   }
+
+	   $$.flags.i = $1.flags.i | $3.flags.i;
+
+	   if ($1.flags.q.explicit_location)
+	      $$.location = $1.location;
+
+	   if ($3.flags.q.explicit_location)
+	      $$.location = $3.location;
 	}
 	;
 
@@ -1017,6 +1026,44 @@ layout_qualifier_id:
 	   } else if (state->ARB_fragment_coord_conventions_warn) {
 	      _mesa_glsl_warning(& @1, state,
 				 "GL_ARB_fragment_coord_conventions layout "
+				 "identifier `%s' used\n", $1);
+	   }
+	}
+	| IDENTIFIER '=' INTCONSTANT
+	{
+	   bool got_one = false;
+
+	   memset(& $$, 0, sizeof($$));
+
+	   if (state->ARB_explicit_attrib_location_enable) {
+	      /* FINISHME: Handle 'index' once GL_ARB_blend_func_exteneded and
+	       * FINISHME: GLSL 1.30 (or later) are supported.
+	       */
+	      if (strcmp("location", $1) == 0) {
+		 got_one = true;
+
+		 $$.flags.q.explicit_location = 1;
+
+		 if ($3 >= 0) {
+		    $$.location = $3;
+		 } else {
+		    _mesa_glsl_error(& @3, state,
+				     "invalid location %d specified\n", $3);
+		    YYERROR;
+		 }
+	      }
+	   }
+
+	   /* If the identifier didn't match any known layout identifiers,
+	    * emit an error.
+	    */
+	   if (!got_one) {
+	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
+			       "`%s'\n", $1);
+	      YYERROR;
+	   } else if (state->ARB_explicit_attrib_location_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "GL_ARB_explicit_attrib_location layout "
 				 "identifier `%s' used\n", $1);
 	   }
 	}
