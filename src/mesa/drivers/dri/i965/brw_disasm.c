@@ -165,8 +165,8 @@ char *accwr[2] = {
 };
 
 char *wectrl[2] = {
-    [0] = "WEnormal",
-    [1] = "WEpredicted"
+    [0] = "WE_normal",
+    [1] = "WE_all"
 };
 
 char *exec_size[8] = {
