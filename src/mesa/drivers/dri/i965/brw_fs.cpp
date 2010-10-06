@@ -2258,8 +2258,7 @@ fs_visitor::calculate_urb_setup()
    /* Figure out where each of the incoming setup attributes lands. */
    if (intel->gen >= 6) {
       for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
-	 if (i == FRAG_ATTRIB_WPOS ||
-	     (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(i))) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(i)) {
 	    urb_setup[i] = urb_next++;
 	 }
       }
