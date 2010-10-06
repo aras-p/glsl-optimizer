@@ -262,7 +262,7 @@ generate_fs(struct llvmpipe_context *lp,
             struct lp_type type,
             LLVMValueRef context_ptr,
             unsigned i,
-            const struct lp_build_interp_soa_context *interp,
+            struct lp_build_interp_soa_context *interp,
             struct lp_build_sampler_soa *sampler,
             LLVMValueRef *pmask,
             LLVMValueRef (*color)[4],
@@ -276,7 +276,7 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMTypeRef vec_type;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
-   LLVMValueRef z = interp->pos[2];
+   LLVMValueRef z;
    LLVMValueRef stencil_refs[2];
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
@@ -307,7 +307,6 @@ generate_fs(struct llvmpipe_context *lp,
 	 lp_build_flow_scope_declare(flow, &color[cbuf][chan]);
       }
    }
-   lp_build_flow_scope_declare(flow, &z);
 
    /* do triangle edge testing */
    if (partial_mask) {
@@ -321,6 +320,13 @@ generate_fs(struct llvmpipe_context *lp,
    /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
 
+   lp_build_interp_soa_update_pos(interp, i);
+
+   /* Try to avoid the 1/w for quads where mask is zero.  TODO: avoid
+    * this for depth-fail quads also.
+    */
+   z = interp->pos[2];
+
    early_depth_stencil_test =
       (key->depth.enabled || key->stencil[0].enabled) &&
       !key->alpha.enabled &&
@@ -331,6 +337,8 @@ generate_fs(struct llvmpipe_context *lp,
       generate_depth_stencil(builder, key,
                              type, &mask,
                              stencil_refs, z, depth_ptr, facing, counter);
+
+   lp_build_interp_soa_update_inputs(interp, i);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
@@ -620,9 +628,6 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
-
-      if(i != 0)
-         lp_build_interp_soa_update(&interp, i);
 
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");
 

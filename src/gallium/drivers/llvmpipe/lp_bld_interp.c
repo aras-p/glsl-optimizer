@@ -272,7 +272,10 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
  * This is called when we move from one quad to the next.
  */
 static void
-attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
+attribs_update(struct lp_build_interp_soa_context *bld,
+               int quad_index,
+               int start,
+               int end)
 {
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef shuffle = lp_build_const_int_vec(coeff_bld->type, quad_index);
@@ -282,7 +285,7 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 
    assert(quad_index < 4);
 
-   for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
+   for(attrib = start; attrib < end; ++attrib) {
       const unsigned mask = bld->mask[attrib];
       const unsigned interp = bld->interp[attrib];
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -442,8 +445,6 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    pos_init(bld, x0, y0);
 
    coeffs_init(bld, a0_ptr, dadx_ptr, dady_ptr);
-
-   attribs_update(bld, 0);
 }
 
 
@@ -451,10 +452,20 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
  * Advance the position and inputs to the given quad within the block.
  */
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
-                           int quad_index)
+lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
+                                  int quad_index)
 {
    assert(quad_index < 4);
 
-   attribs_update(bld, quad_index);
+   attribs_update(bld, quad_index, 1, bld->num_attribs);
 }
+
+void
+lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
+                                  int quad_index)
+{
+   assert(quad_index < 4);
+
+   attribs_update(bld, quad_index, 0, 1);
+}
+
