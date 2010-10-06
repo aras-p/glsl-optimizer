@@ -253,11 +253,9 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       /* mul by size and subtract 0.5 */
       coord = lp_build_mul(coord_bld, coord, length_f);
       coord = lp_build_sub(coord_bld, coord, half);
-      /* convert to int */
-      coord0 = lp_build_ifloor(coord_bld, coord);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
-      /* compute lerp weight */
-      weight = lp_build_fract(coord_bld, coord);
       /* repeat wrap */
       if (is_pot) {
          coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
@@ -284,8 +282,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
       coord = lp_build_sub(coord_bld, coord, half);
 
-      weight = lp_build_fract(coord_bld, coord);
-      coord0 = lp_build_ifloor(coord_bld, coord);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       break;
 
@@ -304,10 +302,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
       }
-      /* compute lerp weight */
-      weight = lp_build_fract(coord_bld, coord);
-      /* coord0 = floor(coord); */
-      coord0 = lp_build_ifloor(coord_bld, coord);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       /* coord0 = max(coord0, 0) */
       coord0 = lp_build_max(int_coord_bld, coord0, int_coord_bld->zero);
@@ -327,10 +323,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
          coord = lp_build_sub(coord_bld, coord, half);
-         /* compute lerp weight */
-         weight = lp_build_fract(coord_bld, coord);
-         /* convert to int */
-         coord0 = lp_build_ifloor(coord_bld, coord);
+         /* convert to int, compute lerp weight */
+         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
       break;
@@ -343,11 +337,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       coord = lp_build_mul(coord_bld, coord, length_f);
       coord = lp_build_sub(coord_bld, coord, half);
 
-      /* compute lerp weight */
-      weight = lp_build_fract(coord_bld, coord);
-
-      /* convert to int coords */
-      coord0 = lp_build_ifloor(coord_bld, coord);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
 
       /* coord0 = max(coord0, 0) */
@@ -369,8 +360,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
       coord = lp_build_sub(coord_bld, coord, half);
 
-      weight = lp_build_fract(coord_bld, coord);
-      coord0 = lp_build_ifloor(coord_bld, coord);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       break;
 
@@ -392,8 +383,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
          coord = lp_build_sub(coord_bld, coord, half);
 
-         weight = lp_build_fract(coord_bld, coord);
-         coord0 = lp_build_ifloor(coord_bld, coord);
+         /* convert to int, compute lerp weight */
+         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
       break;
@@ -416,8 +407,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
          coord = lp_build_sub(coord_bld, coord, half);
 
-         weight = lp_build_fract(coord_bld, coord);
-         coord0 = lp_build_ifloor(coord_bld, coord);
+         /* convert to int, compute lerp weight */
+         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
       break;

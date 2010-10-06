@@ -1359,6 +1359,48 @@ lp_build_iceil(struct lp_build_context *bld,
 }
 
 
+/**
+ * Combined ifloor() & fract().
+ *
+ * Preferred to calling the functions separately, as it will ensure that the
+ * stratergy (floor() vs ifloor()) that results in less redundant work is used.
+ */
+void
+lp_build_ifloor_fract(struct lp_build_context *bld,
+                      LLVMValueRef a,
+                      LLVMValueRef *out_ipart,
+                      LLVMValueRef *out_fpart)
+{
+
+
+   const struct lp_type type = bld->type;
+   LLVMValueRef ipart;
+
+   assert(type.floating);
+   assert(lp_check_value(type, a));
+
+   if (util_cpu_caps.has_sse4_1 &&
+       (type.length == 1 || type.width*type.length == 128)) {
+      /*
+       * floor() is easier.
+       */
+
+      ipart = lp_build_floor(bld, a);
+      *out_fpart = LLVMBuildFSub(bld->builder, a, ipart, "fpart");
+      *out_ipart = LLVMBuildFPToSI(bld->builder, ipart, bld->int_vec_type, "ipart");
+   }
+   else {
+      /*
+       * ifloor() is easier.
+       */
+
+      *out_ipart = lp_build_ifloor(bld, a);
+      ipart = LLVMBuildSIToFP(bld->builder, *out_ipart, bld->vec_type, "ipart");
+      *out_fpart = LLVMBuildFSub(bld->builder, a, ipart, "fpart");
+   }
+}
+
+
 LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
               LLVMValueRef a)

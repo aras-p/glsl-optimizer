@@ -171,6 +171,12 @@ LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
                 LLVMValueRef a);
 
+void
+lp_build_ifloor_fract(struct lp_build_context *bld,
+                      LLVMValueRef a,
+                      LLVMValueRef *out_ipart,
+                      LLVMValueRef *out_fpart);
+
 LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
               LLVMValueRef a);

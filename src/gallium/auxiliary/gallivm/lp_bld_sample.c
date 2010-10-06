@@ -319,7 +319,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                                                bld->builder, unit);
 
    /* convert float lod to integer */
-   level = lp_build_ifloor(float_bld, lod);
+   lp_build_ifloor_fract(float_bld, lod, &level, weight_out);
 
    /* compute level 0 and clamp to legal range of levels */
    *level0_out = lp_build_clamp(int_bld, level,
@@ -330,8 +330,6 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
    *level1_out = lp_build_clamp(int_bld, level,
                                 int_bld->zero,
                                 last_level);
-
-   *weight_out = lp_build_fract(float_bld, lod);
 }
 
 
