@@ -2286,3 +2286,47 @@ lp_build_log2(struct lp_build_context *bld,
    lp_build_log2_approx(bld, x, NULL, NULL, &res);
    return res;
 }
+
+
+/**
+ * Faster (and less accurate) log2.
+ *
+ *    log2(x) = floor(log2(x)) + frac(x)
+ *
+ * See http://www.flipcode.com/archives/Fast_log_Function.shtml
+ */
+LLVMValueRef
+lp_build_fast_log2(struct lp_build_context *bld,
+                   LLVMValueRef x)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef vec_type = bld->vec_type;
+   LLVMTypeRef int_vec_type = bld->int_vec_type;
+
+   unsigned mantissa = lp_mantissa(type);
+   LLVMValueRef mantmask = lp_build_const_int_vec(type, (1ULL << mantissa) - 1);
+   LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
+
+   LLVMValueRef ipart;
+   LLVMValueRef fpart;
+
+   assert(lp_check_value(bld->type, x));
+
+   assert(type.floating);
+
+   x = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
+
+   /* ipart = floor(log2(x)) - 1 */
+   ipart = LLVMBuildLShr(bld->builder, x, lp_build_const_int_vec(type, mantissa), "");
+   ipart = LLVMBuildAnd(bld->builder, ipart, lp_build_const_int_vec(type, 255), "");
+   ipart = LLVMBuildSub(bld->builder, ipart, lp_build_const_int_vec(type, 128), "");
+   ipart = LLVMBuildSIToFP(bld->builder, ipart, vec_type, "");
+
+   /* fpart = 1.0 + frac(x) */
+   fpart = LLVMBuildAnd(bld->builder, x, mantmask, "");
+   fpart = LLVMBuildOr(bld->builder, fpart, one, "");
+   fpart = LLVMBuildBitCast(bld->builder, fpart, vec_type, "");
+
+   /* floor(log2(x)) + frac(x) */
+   return LLVMBuildFAdd(bld->builder, ipart, fpart, "");
+}

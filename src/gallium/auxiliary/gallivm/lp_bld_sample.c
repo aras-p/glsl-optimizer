@@ -243,7 +243,11 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          }
 
          /* compute lod = log2(rho) */
+#if 0
          lod = lp_build_log2(float_bld, rho);
+#else
+         lod = lp_build_fast_log2(float_bld, rho);
+#endif
 
          /* add shader lod bias */
          if (lod_bias) {
