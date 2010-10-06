@@ -2330,3 +2330,38 @@ lp_build_fast_log2(struct lp_build_context *bld,
    /* floor(log2(x)) + frac(x) */
    return LLVMBuildFAdd(bld->builder, ipart, fpart, "");
 }
+
+
+/**
+ * Fast implementation of iround(log2(x)).
+ *
+ * Not an approximation -- it should give accurate results all the time.
+ */
+LLVMValueRef
+lp_build_ilog2(struct lp_build_context *bld,
+               LLVMValueRef x)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef int_vec_type = bld->int_vec_type;
+
+   unsigned mantissa = lp_mantissa(type);
+   LLVMValueRef sqrt2 = lp_build_const_vec(type, 1.4142135623730951);
+
+   LLVMValueRef ipart;
+
+   assert(lp_check_value(bld->type, x));
+
+   assert(type.floating);
+
+   /* x * 2^(0.5)   i.e., add 0.5 to the log2(x) */
+   x = LLVMBuildFMul(bld->builder, x, sqrt2, "");
+
+   x = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
+
+   /* ipart = floor(log2(x) + 0.5)  */
+   ipart = LLVMBuildLShr(bld->builder, x, lp_build_const_int_vec(type, mantissa), "");
+   ipart = LLVMBuildAnd(bld->builder, ipart, lp_build_const_int_vec(type, 255), "");
+   ipart = LLVMBuildSub(bld->builder, ipart, lp_build_const_int_vec(type, 127), "");
+
+   return ipart;
+}

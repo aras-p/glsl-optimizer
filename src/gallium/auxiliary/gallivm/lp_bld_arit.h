@@ -216,6 +216,10 @@ LLVMValueRef
 lp_build_fast_log2(struct lp_build_context *bld,
                    LLVMValueRef a);
 
+LLVMValueRef
+lp_build_ilog2(struct lp_build_context *bld,
+               LLVMValueRef x);
+
 
 void
 lp_build_exp2_approx(struct lp_build_context *bld,
