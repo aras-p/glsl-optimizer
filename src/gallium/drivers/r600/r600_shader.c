@@ -529,6 +529,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
 	}
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == 2) {
+		ctx.file_offset[TGSI_FILE_INPUT] = 1;
+	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
 						ctx.info.file_count[TGSI_FILE_INPUT];
 	ctx.file_offset[TGSI_FILE_TEMPORARY] = ctx.file_offset[TGSI_FILE_OUTPUT] +
