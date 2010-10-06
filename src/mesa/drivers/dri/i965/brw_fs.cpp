@@ -2054,7 +2054,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    int rlen = 4;
    uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 5) {
       switch (inst->opcode) {
       case FS_OPCODE_TEX:
 	 if (inst->shadow_compare) {
