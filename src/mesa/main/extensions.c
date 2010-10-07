@@ -211,6 +211,7 @@ static const struct {
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
    { ON,  "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
+   { OFF, "GL_EXT_texture_format_BGRA8888",    F(EXT_texture_format_BGRA8888) },
 #if FEATURE_OES_EGL_image
    { OFF, "GL_OES_EGL_image",                  F(OES_EGL_image) },
 #endif
@@ -893,6 +894,9 @@ make_extension_string_es2(const GLcontext *ctx, GLubyte *str)
    if (ctx->Extensions.OES_EGL_image)
       len += append_extension(&str, "GL_OES_EGL_image");
 #endif
+
+   if (ctx->Extensions.EXT_texture_format_BGRA8888)
+      len += append_extension(&str, "GL_EXT_texture_format_BGRA8888");
 
    return len;
 }
