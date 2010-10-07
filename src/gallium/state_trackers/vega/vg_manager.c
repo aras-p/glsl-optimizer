@@ -352,7 +352,7 @@ vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
 
    /* only 1.0 is supported */
-   if (attribs->major != 1 || attribs->minor > 0)
+   if (attribs->major > 1 || (attribs->major == 1 && attribs->minor > 0))
       return NULL;
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
