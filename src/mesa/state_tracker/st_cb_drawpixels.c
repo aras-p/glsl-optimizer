@@ -330,7 +330,7 @@ make_texture(struct st_context *st,
 
    baseFormat = base_format(format);
 
-   mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
+   mformat = st_ChooseTextureFormat_renderable(ctx, baseFormat, format, type, GL_FALSE);
    assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat);

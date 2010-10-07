@@ -781,8 +781,8 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
  * Called via ctx->Driver.chooseTextureFormat().
  */
 gl_format
-st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
-                       GLenum format, GLenum type)
+st_ChooseTextureFormat_renderable(GLcontext *ctx, GLint internalFormat,
+				  GLenum format, GLenum type, GLboolean renderable)
 {
    struct pipe_screen *screen = st_context(ctx)->pipe->screen;
    enum pipe_format pFormat;
@@ -794,11 +794,14 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    /* GL textures may wind up being render targets, but we don't know
     * that in advance.  Specify potential render target flags now.
     */
-   if (_mesa_is_depth_format(internalFormat) ||
-       _mesa_is_depthstencil_format(internalFormat))
-      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_DEPTH_STENCIL;
-   else 
-      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   bindings = PIPE_BIND_SAMPLER_VIEW;
+   if (renderable == GL_TRUE) {
+      if (_mesa_is_depth_format(internalFormat) ||
+	  _mesa_is_depth_or_stencil_format(internalFormat))
+	 bindings |= PIPE_BIND_DEPTH_STENCIL;
+      else 
+	 bindings |= PIPE_BIND_RENDER_TARGET;
+   }
 
    pFormat = st_choose_format(screen, internalFormat,
                               PIPE_TEXTURE_2D, 0, bindings);
@@ -817,6 +820,13 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    return st_pipe_format_to_mesa_format(pFormat);
 }
 
+gl_format
+st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
+                       GLenum format, GLenum type)
+{
+   return st_ChooseTextureFormat_renderable(ctx, internalFormat,
+					    format, type, GL_TRUE);
+}
 
 /**
  * Test if a gallium format is equivalent to a GL format/type.
