@@ -626,15 +626,15 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	swizzle[1] = state->swizzle_g;
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
-	format = r600_translate_texformat(texture->format,
+	format = r600_translate_texformat(state->format,
 					  swizzle,
 					  &word4, &yuv_format);
 	if (format == ~0) {
 		format = 0;
 	}
-	desc = util_format_description(texture->format);
+	desc = util_format_description(state->format);
 	if (desc == NULL) {
-		R600_ERR("unknow format %d\n", texture->format);
+		R600_ERR("unknow format %d\n", state->format);
 	}
 	tmp = (struct r600_resource_texture*)texture;
 	rbuffer = &tmp->resource;
