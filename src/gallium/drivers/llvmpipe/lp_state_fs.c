@@ -730,7 +730,7 @@ generate_fragment(struct llvmpipe_context *lp,
    /* Apply optimizations to LLVM IR */
    LLVMRunFunctionPassManager(screen->pass, function);
 
-   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+   if ((gallivm_debug & GALLIVM_DEBUG_IR) || (LP_DEBUG & DEBUG_FS)) {
       /* Print the LLVM IR to stderr */
       lp_debug_dump_value(function);
       debug_printf("\n");
@@ -744,7 +744,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
       variant->jit_function[partial_mask] = (lp_jit_frag_func)pointer_to_func(f);
 
-      if (gallivm_debug & GALLIVM_DEBUG_ASM) {
+      if ((gallivm_debug & GALLIVM_DEBUG_ASM) || (LP_DEBUG & DEBUG_FS)) {
          lp_disassemble(f);
       }
       lp_func_delete_body(function);
