@@ -1141,7 +1141,9 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     LLVMValueRef explicit_lod, /* optional */
                     LLVMValueRef texel_out[4])
 {
+   unsigned dims = texture_dims(static_state->target);
    struct lp_build_sample_context bld;
+   LLVMTypeRef i32t = LLVMInt32Type();
    LLVMValueRef width, width_vec;
    LLVMValueRef height, height_vec;
    LLVMValueRef depth, depth_vec;
@@ -1171,6 +1173,9 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.coord_type = type;
    bld.uint_coord_type = lp_uint_type(type);
    bld.int_coord_type = lp_int_type(type);
+   bld.float_size_type = lp_type_float(32);
+   bld.float_size_type.length = dims > 1 ? 4 : 1;
+   bld.uint_size_type = lp_uint_type(bld.float_size_type);
    bld.texel_type = type;
 
    float_vec_type = lp_type_float_vec(32);
@@ -1181,6 +1186,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
    lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
+   lp_build_context_init(&bld.uint_size_bld, builder, bld.uint_size_type);
+   lp_build_context_init(&bld.float_size_bld, builder, bld.float_size_type);
    lp_build_context_init(&bld.texel_bld, builder, bld.texel_type);
 
    /* Get the dynamic state */
@@ -1195,6 +1202,23 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    s = coords[0];
    t = coords[1];
    r = coords[2];
+
+   /* width, height, depth as single uint vector */
+   if (dims <= 1) {
+      bld.uint_size = width;
+   }
+   else {
+      bld.uint_size = LLVMBuildInsertElement(builder, bld.uint_size_bld.undef,
+                                             width, LLVMConstInt(i32t, 0, 0), "");
+      if (dims >= 2) {
+         bld.uint_size = LLVMBuildInsertElement(builder, bld.uint_size,
+                                                height, LLVMConstInt(i32t, 1, 0), "");
+         if (dims >= 3) {
+            bld.uint_size = LLVMBuildInsertElement(builder, bld.uint_size,
+                                                   depth, LLVMConstInt(i32t, 2, 0), "");
+         }
+      }
+   }
 
    /* width, height, depth as uint vectors */
    width_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);

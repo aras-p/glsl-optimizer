@@ -202,9 +202,20 @@ struct lp_build_sample_context
    struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
 
+   /** Unsigned integer texture size */
+   struct lp_type uint_size_type;
+   struct lp_build_context uint_size_bld;
+
+   /** Unsigned integer texture size */
+   struct lp_type float_size_type;
+   struct lp_build_context float_size_bld;
+
    /** Output texels type and build context */
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
+
+   /** Unsigned vector with texture width, height, depth */
+   LLVMValueRef uint_size;
 };
 
 
@@ -241,7 +252,7 @@ apply_sampler_swizzle(struct lp_build_sample_context *bld,
 }
 
 
-static INLINE int
+static INLINE unsigned
 texture_dims(enum pipe_texture_target tex)
 {
    switch (tex) {

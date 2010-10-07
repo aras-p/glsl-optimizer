@@ -171,9 +171,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
  * Generate code to compute coordinate gradient (rho).
  * \param ddx  partial derivatives of (s, t, r, q) with respect to X
  * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
- * \param width  scalar int texture width
- * \param height  scalar int texture height
- * \param depth  scalar int texture depth
  *
  * XXX: The resulting rho is scalar, so we ignore all but the first element of
  * derivatives that are passed by the shader.
@@ -181,52 +178,75 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 static LLVMValueRef
 lp_build_rho(struct lp_build_sample_context *bld,
              const LLVMValueRef ddx[4],
-             const LLVMValueRef ddy[4],
-             LLVMValueRef width,
-             LLVMValueRef height,
-             LLVMValueRef depth)
+             const LLVMValueRef ddy[4])
 {
+   struct lp_build_context *float_size_bld = &bld->float_size_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
    const int dims = texture_dims(bld->static_state->target);
-   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   LLVMValueRef dsdx, dsdy;
-   LLVMValueRef dtdx = NULL, dtdy = NULL, drdx = NULL, drdy = NULL;
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
+   LLVMValueRef index1 = LLVMConstInt(i32t, 1, 0);
+   LLVMValueRef index2 = LLVMConstInt(i32t, 2, 0);
+   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+   LLVMValueRef rho_x, rho_y;
+   LLVMValueRef rho_vec;
+   LLVMValueRef float_size;
    LLVMValueRef rho;
 
    dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
-   dsdx = lp_build_abs(float_bld, dsdx);
    dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
-   dsdy = lp_build_abs(float_bld, dsdy);
-   if (dims > 1) {
+
+   if (dims <= 1) {
+      rho_x = dsdx;
+      rho_y = dsdy;
+   }
+   else {
+      rho_x = float_size_bld->undef;
+      rho_y = float_size_bld->undef;
+
+      rho_x = LLVMBuildInsertElement(bld->builder, rho_x, dsdx, index0, "");
+      rho_y = LLVMBuildInsertElement(bld->builder, rho_y, dsdy, index0, "");
+
       dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
-      dtdx = lp_build_abs(float_bld, dtdx);
       dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
-      dtdy = lp_build_abs(float_bld, dtdy);
-      if (dims > 2) {
+
+      rho_x = LLVMBuildInsertElement(bld->builder, rho_x, dtdx, index1, "");
+      rho_y = LLVMBuildInsertElement(bld->builder, rho_y, dtdy, index1, "");
+
+      if (dims >= 3) {
          drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
-         drdx = lp_build_abs(float_bld, drdx);
          drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
-         drdy = lp_build_abs(float_bld, drdy);
+
+         rho_x = LLVMBuildInsertElement(bld->builder, rho_x, drdx, index2, "");
+         rho_y = LLVMBuildInsertElement(bld->builder, rho_y, drdy, index2, "");
       }
    }
 
-   /* Compute rho = max of all partial derivatives scaled by texture size.
-    * XXX this could be vectorized somewhat
-    */
-   rho = LLVMBuildFMul(bld->builder,
-                      lp_build_max(float_bld, dsdx, dsdy),
-                      lp_build_int_to_float(float_bld, width), "");
-   if (dims > 1) {
-      LLVMValueRef max;
-      max = LLVMBuildFMul(bld->builder,
-                         lp_build_max(float_bld, dtdx, dtdy),
-                         lp_build_int_to_float(float_bld, height), "");
-      rho = lp_build_max(float_bld, rho, max);
-      if (dims > 2) {
-         max = LLVMBuildFMul(bld->builder,
-                            lp_build_max(float_bld, drdx, drdy),
-                            lp_build_int_to_float(float_bld, depth), "");
-         rho = lp_build_max(float_bld, rho, max);
+   rho_x = lp_build_abs(float_size_bld, rho_x);
+   rho_y = lp_build_abs(float_size_bld, rho_y);
+
+   rho_vec = lp_build_max(float_size_bld, rho_x, rho_y);
+
+   float_size = lp_build_int_to_float(float_size_bld, bld->uint_size);
+
+   rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
+
+   if (dims <= 1) {
+      rho = rho_vec;
+   }
+   else {
+      if (dims >= 2) {
+         LLVMValueRef rho_s, rho_t, rho_r;
+
+         rho_s = LLVMBuildExtractElement(bld->builder, rho_vec, index0, "");
+         rho_t = LLVMBuildExtractElement(bld->builder, rho_vec, index1, "");
+
+         rho = lp_build_max(float_bld, rho_s, rho_t);
+
+         if (dims >= 3) {
+            rho_r = LLVMBuildExtractElement(bld->builder, rho_vec, index0, "");
+            rho = lp_build_max(float_bld, rho, rho_r);
+         }
       }
    }
 
@@ -289,7 +309,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       else {
          LLVMValueRef rho;
 
-         rho = lp_build_rho(bld, ddx, ddy, width, height, depth);
+         rho = lp_build_rho(bld, ddx, ddy);
 
          /* compute lod = log2(rho) */
          if ((mip_filter == PIPE_TEX_MIPFILTER_NONE ||
