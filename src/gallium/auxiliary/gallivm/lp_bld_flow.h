@@ -94,6 +94,9 @@ void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value);
 
+void
+lp_build_mask_check(struct lp_build_mask_context *mask);
+
 LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask);
 

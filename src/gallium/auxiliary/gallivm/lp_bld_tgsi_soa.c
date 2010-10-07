@@ -959,8 +959,13 @@ emit_kil(
       }
    }
 
-   if(mask)
+   if(mask) {
       lp_build_mask_update(bld->mask, mask);
+
+      /* XXX: figure out if we are at the end of the shader and skip this:
+       */
+      lp_build_mask_check(bld->mask);
+   }
 }
 
 
@@ -987,6 +992,10 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    }
 
    lp_build_mask_update(bld->mask, mask);
+
+   /* XXX: figure out if we are at the end of the shader and skip this:
+    */
+   lp_build_mask_check(bld->mask);
 }
 
 static void

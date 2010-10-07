@@ -116,7 +116,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                        LLVMValueRef src,
                        LLVMValueRef dst_ptr,
                        LLVMValueRef facing,
-                       LLVMValueRef counter)
+                       LLVMValueRef counter,
+                       boolean do_branch)
 {
    const struct util_format_description *format_desc;
 
@@ -136,7 +137,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                                src,
                                dst_ptr,
                                facing,
-                               counter);
+                               counter,
+                               do_branch);
 }
 
 
@@ -253,6 +255,9 @@ generate_fs(struct llvmpipe_context *lp,
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
    boolean early_depth_stencil_test;
+   boolean simple_shader = (shader->info.file_count[TGSI_FILE_SAMPLER] == 0 &&
+                            shader->info.num_inputs < 3 &&
+                            shader->info.num_instructions < 8);
    unsigned attrib;
    unsigned chan;
    unsigned cbuf;
@@ -288,15 +293,6 @@ generate_fs(struct llvmpipe_context *lp,
       *pmask = lp_build_const_int_vec(type, ~0);
    }
 
-   /* 'mask' will control execution based on quad's pixel alive/killed state */
-   lp_build_mask_begin(&mask, flow, type, *pmask);
-
-   lp_build_interp_soa_update_pos(interp, i);
-
-   /* Try to avoid the 1/w for quads where mask is zero.  TODO: avoid
-    * this for depth-fail quads also.
-    */
-   z = interp->pos[2];
 
    early_depth_stencil_test =
       (key->depth.enabled || key->stencil[0].enabled) &&
@@ -304,10 +300,22 @@ generate_fs(struct llvmpipe_context *lp,
       !shader->info.uses_kill &&
       !shader->info.writes_z;
 
+   /* 'mask' will control execution based on quad's pixel alive/killed state */
+   lp_build_mask_begin(&mask, flow, type, *pmask);
+
+   if (!early_depth_stencil_test && !simple_shader)
+      lp_build_mask_check(&mask);
+
+   lp_build_interp_soa_update_pos(interp, i);
+   z = interp->pos[2];
+
    if (early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr, facing, counter);
+                             stencil_refs, 
+                             z, depth_ptr,
+                             facing, counter,
+                             !simple_shader);
 
    lp_build_interp_soa_update_inputs(interp, i);
 
@@ -337,7 +345,7 @@ generate_fs(struct llvmpipe_context *lp,
                      alpha_ref_value = lp_jit_context_alpha_ref_value(builder, context_ptr);
                      alpha_ref_value = lp_build_broadcast(builder, vec_type, alpha_ref_value);
                      lp_build_alpha_test(builder, key->alpha.func, type,
-                                         &mask, alpha, alpha_ref_value);
+                                         &mask, alpha, alpha_ref_value, FALSE);
                   }
 
                   LLVMBuildStore(builder, out, color[cbuf][chan]);
@@ -356,7 +364,8 @@ generate_fs(struct llvmpipe_context *lp,
    if (!early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr, facing, counter);
+                             stencil_refs, z, depth_ptr,
+                             facing, counter, FALSE);
 
    lp_build_mask_end(&mask);
 
@@ -386,7 +395,8 @@ generate_blend(const struct pipe_blend_state *blend,
                LLVMValueRef context_ptr,
                LLVMValueRef mask,
                LLVMValueRef *src,
-               LLVMValueRef dst_ptr)
+               LLVMValueRef dst_ptr,
+               boolean do_branch)
 {
    struct lp_build_context bld;
    struct lp_build_flow_context *flow;
@@ -401,9 +411,9 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_context_init(&bld, builder, type);
 
    flow = lp_build_flow_create(builder);
-
-   /* we'll use this mask context to skip blending if all pixels are dead */
    lp_build_mask_begin(&mask_ctx, flow, type, mask);
+   if (do_branch)
+      lp_build_mask_check(&mask_ctx);
 
    vec_type = lp_build_vec_type(type);
 
@@ -670,14 +680,23 @@ generate_fragment(struct llvmpipe_context *lp,
       /*
        * Blending.
        */
-      generate_blend(&key->blend,
-                     rt,
-		     builder,
-		     blend_type,
-		     context_ptr,
-		     blend_mask,
-		     blend_in_color,
-		     color_ptr);
+      {
+         /* Could the 4x4 have been killed?
+          */
+         boolean do_branch = ((key->depth.enabled || key->stencil[0].enabled) &&
+                              !key->alpha.enabled &&
+                              !shader->info.uses_kill);
+
+         generate_blend(&key->blend,
+                        rt,
+                        builder,
+                        blend_type,
+                        context_ptr,
+                        blend_mask,
+                        blend_in_color,
+                        color_ptr,
+                        do_branch);
+      }
    }
 
 #ifdef PIPE_ARCH_X86

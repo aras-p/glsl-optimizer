@@ -450,7 +450,7 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 /**
  * Check if the mask predicate is zero.  If so, jump to the end of the block.
  */
-static void
+void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
    LLVMBuilderRef builder = mask->flow->builder;
@@ -490,8 +490,6 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
    lp_build_flow_scope_begin(flow);
    lp_build_flow_scope_declare(flow, &mask->value);
    lp_build_flow_skip_begin(flow);
-
-   lp_build_mask_check(mask);
 }
 
 
@@ -505,8 +503,6 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
 {
    mask->value = LLVMBuildAnd( mask->flow->builder, mask->value, value, "");
-
-   lp_build_mask_check(mask);
 }
 
 

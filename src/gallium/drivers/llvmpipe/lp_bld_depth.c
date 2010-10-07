@@ -462,7 +462,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef z_src,
                             LLVMValueRef zs_dst_ptr,
                             LLVMValueRef face,
-                            LLVMValueRef counter)
+                            LLVMValueRef counter,
+                            boolean do_branch)
 {
    struct lp_type type;
    struct lp_build_context bld;
@@ -514,6 +515,9 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                                 depth->func, z_src, z_dst);
 
       lp_build_mask_update(mask, z_pass);
+
+      if (do_branch)
+         lp_build_mask_check(mask);
 
       /* No need to worry about old stencil contents, just blend the
        * old and new values and shift into the correct position for
@@ -701,6 +705,11 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
           * buffer values.  Don't need to update Z buffer values.
           */
          lp_build_mask_update(mask, z_pass);
+
+         if (do_branch) {
+            lp_build_mask_check(mask);
+            do_branch = FALSE;
+         }
       }
 
       if (depth->writemask) {
@@ -778,6 +787,9 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
    if (depth->enabled && stencil[0].enabled)
       lp_build_mask_update(mask, z_pass);
+
+   if (do_branch)
+      lp_build_mask_check(mask);
 
    if (counter)
       lp_build_occlusion_count(builder, type, mask->value, counter);
