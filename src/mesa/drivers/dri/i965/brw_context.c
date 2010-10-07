@@ -122,6 +122,9 @@ GLboolean brwCreateContext( int api,
 	 (i == MESA_SHADER_FRAGMENT);
       ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
+
+      if (intel->gen == 6)
+	 ctx->ShaderCompilerOptions[i].EmitNoIfs = GL_TRUE;
    }
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
