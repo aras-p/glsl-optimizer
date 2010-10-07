@@ -114,6 +114,7 @@ PIPE_FORMAT_S8X24_USCALED           , plain, 1, 1, u8  , x24 ,     ,     , _x__,
 PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, x8  ,     ,     , x___, zs
 PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, x8  , un24,     ,     , y___, zs
 PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , x24 ,     , xy__, zs
+PIPE_FORMAT_X32_S8X24_USCALED       , plain, 1, 1, x32,  u8  , x24 ,     , _y__, zs
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY
