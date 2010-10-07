@@ -830,6 +830,7 @@ lp_build_alloca(LLVMBuilderRef builder,
    }
 
    res = LLVMBuildAlloca(first_builder, type, name);
+   LLVMBuildStore(builder, LLVMConstNull(type), res);
 
    LLVMDisposeBuilder(first_builder);
 
