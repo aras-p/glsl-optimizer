@@ -475,7 +475,7 @@ try_setup_line( struct lp_setup_context *setup,
       else {
          /* do intersection test */
          float xintersect = fracf(v2[0][0]) + y2diff * dxdy;
-         draw_end = (xintersect < 1.0 && xintersect > 0.0);
+         draw_end = (xintersect < 1.0 && xintersect >= 0.0);
       }
 
       /* Are we already drawing start/end?
@@ -513,7 +513,7 @@ try_setup_line( struct lp_setup_context *setup,
             x_offset_end = y_offset_end * dxdy;
          }
       }
- 
+
       /* x/y positions in fixed point */
       x[0] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset) - fixed_width/2;
       x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) - fixed_width/2;
