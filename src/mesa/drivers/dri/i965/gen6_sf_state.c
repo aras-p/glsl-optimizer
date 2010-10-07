@@ -125,7 +125,8 @@ upload_sf_state(struct brw_context *brw)
    }
 
    /* _NEW_POINT */
-   if (ctx->Point._Attenuated)
+   if (!(ctx->VertexProgram.PointSizeEnabled ||
+	 ctx->Point._Attenuated))
       dw4 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
    dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 225.875), 3) <<
