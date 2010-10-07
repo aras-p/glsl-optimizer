@@ -78,6 +78,7 @@
  */
 static const struct dri_extension card_extensions[] = {
    { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
+   { "GL_ARB_explicit_attrib_location",   NULL },
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
