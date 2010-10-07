@@ -269,6 +269,30 @@ x24s8_get_tile_rgba(const unsigned *src,
    }
 }
 
+
+/**
+ * Return S component as four uint32_t in [0..255].  Z part ignored.
+ */
+static void
+s8_get_tile_rgba(const unsigned char *src,
+		 unsigned w, unsigned h,
+		 float *p,
+		 unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         pRow[0] =
+         pRow[1] =
+         pRow[2] =
+         pRow[3] = (float)(*src++ & 0xff);
+      }
+      p += dst_stride;
+   }
+}
+
 /*** PIPE_FORMAT_Z32_FLOAT ***/
 
 /**
@@ -311,6 +335,9 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       s8z24_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_S8_USCALED:
+      s8_get_tile_rgba((unsigned char *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_X24S8_USCALED:
       s8x24_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
