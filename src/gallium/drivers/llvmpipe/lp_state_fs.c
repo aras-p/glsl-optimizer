@@ -303,8 +303,7 @@ generate_fs(struct llvmpipe_context *lp,
    /* Declare the color and z variables */
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-	 color[cbuf][chan] = LLVMGetUndef(vec_type);
-	 lp_build_flow_scope_declare(flow, &color[cbuf][chan]);
+	 color[cbuf][chan] = lp_build_alloca(builder, vec_type, "color");
       }
    }
 
@@ -369,7 +368,7 @@ generate_fs(struct llvmpipe_context *lp,
                                          &mask, alpha, alpha_ref_value);
                   }
 
-		  color[cbuf][chan] = out;
+                  LLVMBuildStore(builder, out, color[cbuf][chan]);
                   break;
                }
 
@@ -665,9 +664,18 @@ generate_fragment(struct llvmpipe_context *lp,
        * Convert the fs's output color and mask to fit to the blending type. 
        */
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         LLVMValueRef fs_color_vals[LP_MAX_VECTOR_LENGTH];
+         
+         for (i = 0; i < num_fs; i++) {
+            fs_color_vals[i] =
+               LLVMBuildLoad(builder, fs_out_color[cbuf][chan][i], "fs_color_vals");
+         }
+
 	 lp_build_conv(builder, fs_type, blend_type,
-		       fs_out_color[cbuf][chan], num_fs,
+                       fs_color_vals,
+                       num_fs,
 		       &blend_in_color[chan], 1);
+
 	 lp_build_name(blend_in_color[chan], "color%d.%c", cbuf, "rgba"[chan]);
       }
 
