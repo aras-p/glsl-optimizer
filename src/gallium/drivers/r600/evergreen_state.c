@@ -1546,7 +1546,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
 	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			r600_pipe_state_add_reg(rstate,
 						R_02880C_DB_SHADER_CONTROL,
 						S_02880C_Z_EXPORT_ENABLE(1),
