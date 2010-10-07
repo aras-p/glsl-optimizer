@@ -1627,6 +1627,53 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       qual_string);
    }
 
+   if (qual->flags.q.explicit_location) {
+      const bool global_scope = (state->current_function == NULL);
+      bool fail = false;
+      const char *string = "";
+
+      /* In the vertex shader only shader inputs can be given explicit
+       * locations.
+       *
+       * In the fragment shader only shader outputs can be given explicit
+       * locations.
+       */
+      switch (state->target) {
+      case vertex_shader:
+	 if (!global_scope || (var->mode != ir_var_in)) {
+	    fail = true;
+	    string = "input";
+	 }
+	 break;
+
+      case geometry_shader:
+	 _mesa_glsl_error(loc, state,
+			  "geometry shader variables cannot be given "
+			  "explicit locations\n");
+	 break;
+
+      case fragment_shader:
+	 if (!global_scope || (var->mode != ir_var_in)) {
+	    fail = true;
+	    string = "output";
+	 }
+	 break;
+      }
+
+      if (fail) {
+	 _mesa_glsl_error(loc, state,
+			  "only %s shader %s variables can be given an "
+			  "explicit location\n",
+			  _mesa_glsl_shader_target_name(state->target),
+			  string);
+      } else {
+	 var->explicit_location = true;
+	 var->location = (state->target == vertex_shader)
+	    ? (qual->location + VERT_ATTRIB_GENERIC0)
+	    : (qual->location + FRAG_RESULT_DATA0);
+      }
+   }
+
    if (var->type->is_array() && state->language_version != 110) {
       var->array_lvalue = true;
    }
