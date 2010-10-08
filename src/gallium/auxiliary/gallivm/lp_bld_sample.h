@@ -206,8 +206,8 @@ struct lp_build_sample_context
    struct lp_build_context int_coord_bld;
 
    /** Unsigned integer texture size */
-   struct lp_type uint_size_type;
-   struct lp_build_context uint_size_bld;
+   struct lp_type int_size_type;
+   struct lp_build_context int_size_bld;
 
    /** Unsigned integer texture size */
    struct lp_type float_size_type;
@@ -225,13 +225,8 @@ struct lp_build_sample_context
    LLVMValueRef img_stride_array;
    LLVMValueRef data_array;
 
-   /** Unsigned vector with texture width, height, depth */
-   LLVMValueRef uint_size;
-
-   /* width, height, depth as uint vectors */
-   LLVMValueRef width_vec;
-   LLVMValueRef height_vec;
-   LLVMValueRef depth_vec;
+   /** Integer vector with texture width, height, depth */
+   LLVMValueRef int_size;
 };
 
 

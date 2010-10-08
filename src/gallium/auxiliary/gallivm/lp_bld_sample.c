@@ -235,7 +235,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
 
    rho_vec = lp_build_max(float_size_bld, rho_x, rho_y);
 
-   float_size = lp_build_int_to_float(float_size_bld, bld->uint_size);
+   float_size = lp_build_int_to_float(float_size_bld, bld->int_size);
 
    rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
 
@@ -583,18 +583,22 @@ lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
  * Return max(1, base_size >> level);
  */
 static LLVMValueRef
-lp_build_minify(struct lp_build_sample_context *bld,
+lp_build_minify(struct lp_build_context *bld,
                 LLVMValueRef base_size,
                 LLVMValueRef level)
 {
-   if (level == bld->int_coord_bld.zero) {
+   assert(lp_check_value(bld->type, base_size));
+   assert(lp_check_value(bld->type, level));
+
+   if (level == bld->zero) {
       /* if we're using mipmap level zero, no minification is needed */
       return base_size;
    }
    else {
       LLVMValueRef size =
          LLVMBuildLShr(bld->builder, base_size, level, "minify");
-      size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
+      assert(bld->type.sign);
+      size = lp_build_max(bld, size, bld->one);
       return size;
    }
 }
@@ -634,15 +638,29 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
 {
    const unsigned dims = bld->dims;
    LLVMValueRef ilevel_vec;
+   LLVMValueRef size_vec;
+   LLVMValueRef width, height, depth;
+   LLVMTypeRef i32t = LLVMInt32Type();
 
-   ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
+   ilevel_vec = lp_build_broadcast_scalar(&bld->int_size_bld, ilevel);
 
    /*
     * Compute width, height, depth at mipmap level 'ilevel'
     */
-   *out_width_vec = lp_build_minify(bld, bld->width_vec, ilevel_vec);
+   size_vec = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
+
+   if (dims <= 1) {
+      width = size_vec;
+   }
+   else {
+      width = LLVMBuildExtractElement(bld->builder, size_vec,
+                                      LLVMConstInt(i32t, 0, 0), "");
+   }
+   *out_width_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, width);
    if (dims >= 2) {
-      *out_height_vec = lp_build_minify(bld, bld->height_vec, ilevel_vec);
+      height = LLVMBuildExtractElement(bld->builder, size_vec,
+                                       LLVMConstInt(i32t, 1, 0), "");
+      *out_height_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, height);
       *row_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->row_stride_array,
                                                       ilevel);
@@ -651,7 +669,9 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                                                          bld->img_stride_array,
                                                          ilevel);
          if (dims == 3) {
-            *out_depth_vec = lp_build_minify(bld, bld->depth_vec, ilevel_vec);
+            depth = LLVMBuildExtractElement(bld->builder, size_vec,
+                                            LLVMConstInt(i32t, 2, 0), "");
+            *out_depth_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, depth);
          }
       }
    }
