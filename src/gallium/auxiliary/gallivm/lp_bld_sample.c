@@ -409,27 +409,60 @@ void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            unsigned unit,
                            LLVMValueRef lod_ipart,
+                           LLVMValueRef *lod_fpart_inout,
                            LLVMValueRef *level0_out,
                            LLVMValueRef *level1_out)
 {
+   LLVMBuilderRef builder = bld->builder;
    struct lp_build_context *int_bld = &bld->int_bld;
-   LLVMValueRef last_level, level;
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef last_level;
+   LLVMValueRef clamp_min;
+   LLVMValueRef clamp_max;
+
+   *level0_out = lod_ipart;
+   *level1_out = lp_build_add(int_bld, lod_ipart, int_bld->one);
 
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                bld->builder, unit);
 
-   /* convert float lod to integer */
-   level = lod_ipart;
+   /*
+    * Clamp both lod_ipart and lod_ipart + 1 to [0, last_level], with the
+    * minimum number of comparisons, and zeroing lod_fpart in the extreme
+    * ends in the process.
+    */
 
-   /* compute level 0 and clamp to legal range of levels */
-   *level0_out = lp_build_clamp(int_bld, level,
-                                int_bld->zero,
-                                last_level);
-   /* compute level 1 and clamp to legal range of levels */
-   level = lp_build_add(int_bld, level, int_bld->one);
-   *level1_out = lp_build_clamp(int_bld, level,
-                                int_bld->zero,
-                                last_level);
+   /* lod_ipart < 0 */
+   clamp_min = LLVMBuildICmp(builder, LLVMIntSLT,
+                             lod_ipart, int_bld->zero,
+                             "clamp_lod_to_zero");
+
+   *level0_out = LLVMBuildSelect(builder, clamp_min,
+                                 int_bld->zero, *level0_out, "");
+
+   *level1_out = LLVMBuildSelect(builder, clamp_min,
+                                 int_bld->zero, *level1_out, "");
+
+   *lod_fpart_inout = LLVMBuildSelect(builder, clamp_min,
+                                      float_bld->zero, *lod_fpart_inout, "");
+
+   /* lod_ipart >= last_level */
+   clamp_max = LLVMBuildICmp(builder, LLVMIntSGE,
+                             lod_ipart, last_level,
+                             "clamp_lod_to_last");
+
+   *level0_out = LLVMBuildSelect(builder, clamp_max,
+                                 int_bld->zero, *level0_out, "");
+
+   *level1_out = LLVMBuildSelect(builder, clamp_max,
+                                 int_bld->zero, *level1_out, "");
+
+   *lod_fpart_inout = LLVMBuildSelect(builder, clamp_max,
+                                      float_bld->zero, *lod_fpart_inout, "");
+
+   lp_build_name(*level0_out, "sampler%u_miplevel0", unit);
+   lp_build_name(*level1_out, "sampler%u_miplevel1", unit);
+   lp_build_name(*lod_fpart_inout, "sampler%u_mipweight", unit);
 }
 
 

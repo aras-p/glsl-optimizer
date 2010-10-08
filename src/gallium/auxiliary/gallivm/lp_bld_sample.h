@@ -309,6 +309,7 @@ void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            unsigned unit,
                            LLVMValueRef lod_ipart,
+                           LLVMValueRef *lod_fpart_inout,
                            LLVMValueRef *level0_out,
                            LLVMValueRef *level1_out);
 

@@ -1004,7 +1004,9 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    case PIPE_TEX_MIPFILTER_LINEAR:
       assert(lod_ipart);
       assert(lod_fpart);
-      lp_build_linear_mip_levels(bld, unit, lod_ipart, &ilevel0, &ilevel1);
+      lp_build_linear_mip_levels(bld, unit,
+                                 lod_ipart, &lod_fpart,
+                                 &ilevel0, &ilevel1);
       break;
    }
 
