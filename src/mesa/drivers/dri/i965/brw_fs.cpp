@@ -813,9 +813,9 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 			 fs_reg(interp)));
 	    attr.reg_offset++;
 	 }
-	 attr.reg_offset -= type->vector_elements;
 
 	 if (intel->gen < 6) {
+	    attr.reg_offset -= type->vector_elements;
 	    for (unsigned int c = 0; c < type->vector_elements; c++) {
 	       emit(fs_inst(BRW_OPCODE_MUL,
 			    attr,
