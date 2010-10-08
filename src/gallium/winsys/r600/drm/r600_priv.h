@@ -42,6 +42,7 @@ struct radeon {
 	enum chip_class			chip_class;
 	struct pb_manager *kman; /* kernel bo manager */
 	struct pb_manager *cman; /* cached bo manager */
+	struct r600_tiling_info tiling_info;
 };
 
 struct radeon *r600_new(int fd, unsigned device);

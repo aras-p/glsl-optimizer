@@ -40,6 +40,11 @@ enum chip_class r600_get_family_class(struct radeon *radeon)
 	return radeon->chip_class;
 }
 
+struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
+{
+	return &radeon->tiling_info;
+}
+
 static int r600_get_device(struct radeon *r600)
 {
 	struct drm_radeon_info info;

@@ -443,5 +443,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
 
+	rscreen->tiling_info = r600_get_tiling_info(radeon);
+
 	return &rscreen->screen;
 }
