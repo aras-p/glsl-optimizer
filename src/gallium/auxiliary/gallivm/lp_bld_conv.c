@@ -297,16 +297,16 @@ lp_build_conv(LLVMBuilderRef builder,
          d = LLVMBuildFMul(builder, src[3], const_255f, "");
 
          /* lp_build_round generates excessively general code without
-          * sse4, so do rounding manually.
+          * sse2, so do rounding manually.
           */
-         if (!util_cpu_caps.has_sse4_1) {
+         if (!util_cpu_caps.has_sse2) {
             LLVMValueRef const_half = lp_build_const_vec(src_type, 0.5f);
 
             a = LLVMBuildFAdd(builder, a, const_half, "");
             b = LLVMBuildFAdd(builder, b, const_half, "");
             c = LLVMBuildFAdd(builder, c, const_half, "");
             d = LLVMBuildFAdd(builder, d, const_half, "");
-            
+
             src_int0 = LLVMBuildFPToSI(builder, a, int32_vec_type, "");
             src_int1 = LLVMBuildFPToSI(builder, b, int32_vec_type, "");
             src_int2 = LLVMBuildFPToSI(builder, c, int32_vec_type, "");
@@ -323,7 +323,7 @@ lp_build_conv(LLVMBuilderRef builder,
             bld.undef = lp_build_undef(src_type);
             bld.zero = lp_build_zero(src_type);
             bld.one = lp_build_one(src_type);
-            
+
             src_int0 = lp_build_iround(&bld, a);
             src_int1 = lp_build_iround(&bld, b);
             src_int2 = lp_build_iround(&bld, c);
