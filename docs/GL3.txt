@@ -25,7 +25,7 @@ Non-normalized Integer texture/framebuffer formats    not started
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       not started
-Red and red/green texture formats                     Ian?
+Red and red/green texture formats                     DONE (swrast, i965)
 Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindFragDataLocation, glGetFragDataLocation,
    glBindBufferRange, glBindBufferBase commands
@@ -44,7 +44,7 @@ Instanced drawing (GL_ARB_draw_instanced)             ~50% done
 Buffer copying (GL_ARB_copy_buffer)                   DONE
 Primitive restart (GL_NV_primitive_restart)           not started
 16 vertex texture image units                         not started
-Texture buffer objs (GL_ARB_textur_buffer_object)     not started
+Texture buffer objs (GL_ARB_texture_buffer_object)    not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
 Signed normalized texture formats                     ~50% done
@@ -69,7 +69,7 @@ GL 3.3:
 
 GLSL 3.30                                             not started
 GL_ARB_blend_func_extended                            not started
-GL_ARB_explicit_attrib_location                       not started
+GL_ARB_explicit_attrib_location                       DONE (swrast, i915, i965)
 GL_ARB_occlusion_query2                               not started
 GL_ARB_sampler_objects                                not started
 GL_ARB_texture_rgb10_a2ui                             not started
