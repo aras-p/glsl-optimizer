@@ -514,6 +514,43 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
    return reg;
 }
 
+fs_inst *
+fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
+{
+   switch (opcode) {
+   case FS_OPCODE_RCP:
+   case FS_OPCODE_RSQ:
+   case FS_OPCODE_SQRT:
+   case FS_OPCODE_EXP2:
+   case FS_OPCODE_LOG2:
+   case FS_OPCODE_SIN:
+   case FS_OPCODE_COS:
+      break;
+   default:
+      assert(!"not reached: bad math opcode");
+      return NULL;
+   }
+   fs_inst *inst = emit(fs_inst(opcode, dst, src));
+
+   inst->base_mrf = 2;
+   inst->mlen = 1;
+
+   return inst;
+}
+
+fs_inst *
+fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+{
+   assert(opcode == FS_OPCODE_POW);
+
+   fs_inst *inst = emit(fs_inst(opcode, dst, src0, src1));
+
+   inst->base_mrf = 2;
+   inst->mlen = 2;
+
+   return inst;
+}
+
 void
 fs_visitor::visit(ir_variable *ir)
 {
@@ -668,24 +705,24 @@ fs_visitor::visit(ir_expression *ir)
 
       break;
    case ir_unop_rcp:
-      emit(fs_inst(FS_OPCODE_RCP, this->result, op[0]));
+      emit_math(FS_OPCODE_RCP, this->result, op[0]);
       break;
 
    case ir_unop_exp2:
-      emit(fs_inst(FS_OPCODE_EXP2, this->result, op[0]));
+      emit_math(FS_OPCODE_EXP2, this->result, op[0]);
       break;
    case ir_unop_log2:
-      emit(fs_inst(FS_OPCODE_LOG2, this->result, op[0]));
+      emit_math(FS_OPCODE_LOG2, this->result, op[0]);
       break;
    case ir_unop_exp:
    case ir_unop_log:
       assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_sin:
-      emit(fs_inst(FS_OPCODE_SIN, this->result, op[0]));
+      emit_math(FS_OPCODE_SIN, this->result, op[0]);
       break;
    case ir_unop_cos:
-      emit(fs_inst(FS_OPCODE_COS, this->result, op[0]));
+      emit_math(FS_OPCODE_COS, this->result, op[0]);
       break;
 
    case ir_unop_dFdx:
@@ -768,11 +805,11 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_sqrt:
-      emit(fs_inst(FS_OPCODE_SQRT, this->result, op[0]));
+      emit_math(FS_OPCODE_SQRT, this->result, op[0]);
       break;
 
    case ir_unop_rsq:
-      emit(fs_inst(FS_OPCODE_RSQ, this->result, op[0]));
+      emit_math(FS_OPCODE_RSQ, this->result, op[0]);
       break;
 
    case ir_unop_i2f:
@@ -819,7 +856,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_pow:
-      inst = emit(fs_inst(FS_OPCODE_POW, this->result, op[0], op[1]));
+      emit_math(FS_OPCODE_POW, this->result, op[0], op[1]);
       break;
 
    case ir_unop_bit_not:
@@ -1492,7 +1529,7 @@ fs_visitor::emit_interpolation_setup_gen4()
 		interp_reg(FRAG_ATTRIB_WPOS, 3)));
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
-   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
+   emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
    this->current_annotation = NULL;
 }
 
@@ -1520,7 +1557,7 @@ fs_visitor::emit_interpolation_setup_gen6()
    this->current_annotation = "compute 1/pos.w";
    this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
    this->pixel_w = fs_reg(this, glsl_type::float_type);
-   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos_w));
+   emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
 
    this->delta_x = fs_reg(brw_vec8_grf(2, 0));
    this->delta_y = fs_reg(brw_vec8_grf(3, 0));
@@ -1714,15 +1751,17 @@ fs_visitor::generate_math(fs_inst *inst,
       break;
    }
 
+   assert(inst->mlen >= 1);
+
    if (inst->opcode == FS_OPCODE_POW) {
-      brw_MOV(p, brw_message_reg(3), src[1]);
+      brw_MOV(p, brw_message_reg(inst->base_mrf + 1), src[1]);
    }
 
    brw_math(p, dst,
 	    op,
 	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
 	    BRW_MATH_SATURATE_NONE,
-	    2, src[0],
+	    inst->base_mrf, src[0],
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 }

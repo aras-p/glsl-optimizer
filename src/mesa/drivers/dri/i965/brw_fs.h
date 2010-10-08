@@ -193,6 +193,8 @@ public:
       this->eot = false;
       this->header_present = false;
       this->shadow_compare = false;
+      this->mlen = 0;
+      this->base_mrf = 0;
    }
 
    fs_inst()
@@ -241,6 +243,7 @@ public:
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
    int mlen; /**< SEND message length */
+   int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    int sampler;
    int target; /**< MRT target. */
    bool eot;
@@ -350,6 +353,9 @@ public:
    void emit_interpolation_setup_gen6();
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
+   fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
+   fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
+
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
