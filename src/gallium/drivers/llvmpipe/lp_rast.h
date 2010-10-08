@@ -238,12 +238,13 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_TRIANGLE_8        0x9
 #define LP_RAST_OP_TRIANGLE_3_4      0xa
 #define LP_RAST_OP_TRIANGLE_3_16     0xb
-#define LP_RAST_OP_SHADE_TILE        0xc
-#define LP_RAST_OP_SHADE_TILE_OPAQUE 0xd
-#define LP_RAST_OP_BEGIN_QUERY       0xe
-#define LP_RAST_OP_END_QUERY         0xf
+#define LP_RAST_OP_TRIANGLE_4_16     0xc
+#define LP_RAST_OP_SHADE_TILE        0xd
+#define LP_RAST_OP_SHADE_TILE_OPAQUE 0xe
+#define LP_RAST_OP_BEGIN_QUERY       0xf
+#define LP_RAST_OP_END_QUERY         0x10
 
-#define LP_RAST_OP_MAX               0x10
+#define LP_RAST_OP_MAX               0x11
 #define LP_RAST_OP_MASK              0xff
 
 void

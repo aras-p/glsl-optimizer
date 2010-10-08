@@ -597,6 +597,7 @@ static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
    lp_rast_triangle_8,
    lp_rast_triangle_3_4,
    lp_rast_triangle_3_16,
+   lp_rast_triangle_4_16,
    lp_rast_shade_tile,
    lp_rast_shade_tile_opaque,
    lp_rast_begin_query,

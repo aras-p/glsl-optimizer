@@ -479,15 +479,14 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    {
       int ix0 = bbox->x0 / TILE_SIZE;
       int iy0 = bbox->y0 / TILE_SIZE;
+      int px = bbox->x0 & 63 & ~3;
+      int py = bbox->y0 & 63 & ~3;
+      int mask = px | (py << 8);
 
       assert(iy0 == bbox->y1 / TILE_SIZE &&
 	     ix0 == bbox->x1 / TILE_SIZE);
 
       if (nr_planes == 3) {
-         int px = bbox->x0 & 63 & ~3;
-         int py = bbox->y0 & 63 & ~3;
-	 int mask = px | (py << 8);
-
          if (sz < 4)
          {
             /* Triangle is contained in a single 4x4 stamp:
@@ -506,6 +505,12 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                                          LP_RAST_OP_TRIANGLE_3_16,
                                          lp_rast_arg_triangle(tri, mask) );
          }
+      }
+      else if (nr_planes == 4 && sz < 16) 
+      {
+         return lp_scene_bin_command( scene, ix0, iy0,
+                                      LP_RAST_OP_TRIANGLE_4_16,
+                                      lp_rast_arg_triangle(tri, mask) );
       }
 
 

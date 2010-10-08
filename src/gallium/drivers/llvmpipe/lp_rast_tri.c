@@ -123,6 +123,16 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
 }
 
 void
+lp_rast_triangle_4_16(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg)
+{
+   union lp_rast_cmd_arg arg2;
+   arg2.triangle.tri = arg.triangle.tri;
+   arg2.triangle.plane_mask = (1<<4)-1;
+   lp_rast_triangle_3(task, arg2);
+}
+
+void
 lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
                       const union lp_rast_cmd_arg arg)
 {
@@ -229,145 +239,6 @@ sign_bits4(const __m128i *cstep, int cdiff)
    return _mm_movemask_epi8(result);
 }
 
-
-/* Special case for 3 plane triangle which is contained entirely
- * within a 16x16 block.
- */
-void
-lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
-                      const union lp_rast_cmd_arg arg)
-{
-   const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
-   unsigned mask = arg.triangle.plane_mask;
-   const int x = task->x + (mask & 0xff);
-   const int y = task->y + (mask >> 8);
-   unsigned outmask, inmask, partmask, partial_mask;
-   unsigned j;
-   __m128i cstep4[3][4];
-
-   outmask = 0;                 /* outside one or more trivial reject planes */
-   partmask = 0;                /* outside one or more trivial accept planes */
-
-   for (j = 0; j < 3; j++) {
-      const int dcdx = -plane[j].dcdx * 4;
-      const int dcdy = plane[j].dcdy * 4;
-      __m128i xdcdy = _mm_set1_epi32(dcdy);
-
-      cstep4[j][0] = _mm_setr_epi32(0, dcdx, dcdx*2, dcdx*3);
-      cstep4[j][1] = _mm_add_epi32(cstep4[j][0], xdcdy);
-      cstep4[j][2] = _mm_add_epi32(cstep4[j][1], xdcdy);
-      cstep4[j][3] = _mm_add_epi32(cstep4[j][2], xdcdy);
-
-      {
-	 const int c = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
-	 const int cox = plane[j].eo * 4;
-	 const int cio = plane[j].ei * 4 - 1;
-
-	 outmask |= sign_bits4(cstep4[j], c + cox);
-	 partmask |= sign_bits4(cstep4[j], c + cio);
-      }
-   }
-
-   if (outmask == 0xffff)
-      return;
-
-   /* Mask of sub-blocks which are inside all trivial accept planes:
-    */
-   inmask = ~partmask & 0xffff;
-
-   /* Mask of sub-blocks which are inside all trivial reject planes,
-    * but outside at least one trivial accept plane:
-    */
-   partial_mask = partmask & ~outmask;
-
-   assert((partial_mask & inmask) == 0);
-
-   /* Iterate over partials:
-    */
-   while (partial_mask) {
-      int i = ffs(partial_mask) - 1;
-      int ix = (i & 3) * 4;
-      int iy = (i >> 2) * 4;
-      int px = x + ix;
-      int py = y + iy; 
-      unsigned mask = 0xffff;
-
-      partial_mask &= ~(1 << i);
-
-      for (j = 0; j < 3; j++) {
-         const int cx = (plane[j].c 
-			 - plane[j].dcdx * px
-			 + plane[j].dcdy * py) * 4;
-
-	 mask &= ~sign_bits4(cstep4[j], cx);
-      }
-
-      if (mask)
-	 lp_rast_shade_quads_mask(task, &tri->inputs, px, py, mask);
-   }
-
-   /* Iterate over fulls: 
-    */
-   while (inmask) {
-      int i = ffs(inmask) - 1;
-      int ix = (i & 3) * 4;
-      int iy = (i >> 2) * 4;
-      int px = x + ix;
-      int py = y + iy; 
-
-      inmask &= ~(1 << i);
-
-      block_full_4(task, tri, px, py);
-   }
-}
-
-
-void
-lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
-		     const union lp_rast_cmd_arg arg)
-{
-   const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
-   unsigned mask = arg.triangle.plane_mask;
-   const int x = task->x + (mask & 0xff);
-   const int y = task->y + (mask >> 8);
-   unsigned j;
-
-   /* Iterate over partials:
-    */
-   {
-      unsigned mask = 0xffff;
-
-      for (j = 0; j < 3; j++) {
-	 const int cx = (plane[j].c 
-			 - plane[j].dcdx * x
-			 + plane[j].dcdy * y);
-
-	 const int dcdx = -plane[j].dcdx;
-	 const int dcdy = plane[j].dcdy;
-	 __m128i xdcdy = _mm_set1_epi32(dcdy);
-
-	 __m128i cstep0 = _mm_setr_epi32(cx, cx + dcdx, cx + dcdx*2, cx + dcdx*3);
-	 __m128i cstep1 = _mm_add_epi32(cstep0, xdcdy);
-	 __m128i cstep2 = _mm_add_epi32(cstep1, xdcdy);
-	 __m128i cstep3 = _mm_add_epi32(cstep2, xdcdy);
-
-	 __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
-	 __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
-	 __m128i result = _mm_packs_epi16(cstep01, cstep23);
-
-	 /* Extract the sign bits
-	  */
-	 mask &= ~_mm_movemask_epi8(result);
-      }
-
-      if (mask)
-	 lp_rast_shade_quads_mask(task, &tri->inputs, x, y, mask);
-   }
-}
-
-
 #endif
 
 
@@ -383,10 +254,13 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
 
 #define TAG(x) x##_3
 #define NR_PLANES 3
+#define TRI_4 lp_rast_triangle_3_4
+#define TRI_16 lp_rast_triangle_3_16
 #include "lp_rast_tri_tmp.h"
 
 #define TAG(x) x##_4
 #define NR_PLANES 4
+#define TRI_16 lp_rast_triangle_4_16
 #include "lp_rast_tri_tmp.h"
 
 #define TAG(x) x##_5
