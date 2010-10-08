@@ -364,7 +364,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       {
          LLVMValueRef min, max;
-
+         struct lp_build_context abs_coord_bld = bld->coord_bld;
+         abs_coord_bld.type.sign = FALSE;
          coord = lp_build_abs(coord_bld, coord);
 
          if (bld->static_state->normalized_coords) {
@@ -380,7 +381,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          coord = lp_build_sub(coord_bld, coord, half);
 
          /* convert to int, compute lerp weight */
-         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
+         lp_build_ifloor_fract(&abs_coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
       break;
@@ -465,7 +466,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       }
 
       /* floor */
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* use itrunc instead since we clamp to 0 anyway */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1]. */
       icoord = lp_build_clamp(int_coord_bld, icoord, int_coord_bld->zero,
@@ -499,7 +501,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       assert(bld->static_state->normalized_coords);
       coord = lp_build_mul(coord_bld, coord, length_f);
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1] */
       icoord = lp_build_min(int_coord_bld, icoord, length_minus_one);
@@ -514,7 +517,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1] */
       icoord = lp_build_min(int_coord_bld, icoord, length_minus_one);
@@ -528,7 +532,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length] */
       icoord = lp_build_min(int_coord_bld, icoord, length);
