@@ -1190,6 +1190,7 @@ void brw_math2(struct brw_compile *p,
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
    assert(intel->gen >= 6);
+   (void) intel;
 
    /* Math is the same ISA format as other opcodes, except that CondModifier
     * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
