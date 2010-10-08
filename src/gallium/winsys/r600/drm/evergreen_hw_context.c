@@ -762,7 +762,8 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	struct r600_bo *cb[12];
 	struct r600_bo *db;
 	unsigned ndwords = 9, flush;
-	struct r600_block *dirty_block, *next_block;
+	struct r600_block *dirty_block = NULL;
+	struct r600_block *next_block;
 
 	if (draw->indices) {
 		ndwords = 13;
