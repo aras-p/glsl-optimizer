@@ -96,6 +96,7 @@ static void do_vs_prog( struct brw_context *brw,
 	  sizeof(c.prog_data));
    assert(ctx->Const.VertexProgram.MaxNativeParameters ==
 	  ARRAY_SIZE(c.constant_map));
+   (void) ctx;
 
    aux_size = sizeof(c.prog_data);
    if (c.vp->use_const_buffer)
