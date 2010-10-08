@@ -429,6 +429,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.height = height;
 
    ctx->base.screen = pipe->screen;
+
    ctx->base.destroy = sp_mpeg12_destroy;
    ctx->base.get_param = sp_mpeg12_get_param;
    ctx->base.is_format_supported = sp_mpeg12_is_format_supported;

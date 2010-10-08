@@ -33,7 +33,7 @@ static void* ftab[67] =
    &vlVdpGetErrorString, /* VDP_FUNC_ID_GET_ERROR_STRING */
    &vlVdpGetProcAddress, /* VDP_FUNC_ID_GET_PROC_ADDRESS */
    &vlVdpGetApiVersion, /* VDP_FUNC_ID_GET_API_VERSION */
-   0x555,					/* DUMMY */
+   0x55,					/* DUMMY */
    &vlVdpGetInformationString, /* VDP_FUNC_ID_GET_INFORMATION_STRING */
    &vlVdpDeviceDestroy, /* VDP_FUNC_ID_DEVICE_DESTROY */
    &vlVdpGenerateCSCMatrix, /* VDP_FUNC_ID_GENERATE_CSC_MATRIX */

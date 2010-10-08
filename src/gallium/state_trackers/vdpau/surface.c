@@ -30,7 +30,6 @@
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
 #include <util/u_format.h>
-#include <stdio.h>
 
 VdpStatus
 vlVdpVideoSurfaceCreate(VdpDevice device,
@@ -68,8 +67,10 @@ vlVdpVideoSurfaceCreate(VdpDevice device,
  goto inv_device;
  }
 
- p_surf->chroma_format = FormatToPipe(chroma_type);
+ p_surf->chroma_format = TypeToPipe(chroma_type);
  p_surf->device = dev;
+ p_surf->width = width;
+ p_surf->height = height;
 
  *surface = vlAddDataHTAB(p_surf);
  if (*surface == 0) {

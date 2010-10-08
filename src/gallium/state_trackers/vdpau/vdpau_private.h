@@ -192,7 +192,6 @@ typedef struct
    uint32_t height;
    uint32_t pitch;
    struct pipe_surface *psurface;
-   enum pipe_format format;
    enum pipe_video_chroma_format chroma_format;
    uint8_t *data;
 } vlVdpSurface;

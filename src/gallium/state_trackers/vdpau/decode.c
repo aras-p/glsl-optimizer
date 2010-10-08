@@ -40,10 +40,9 @@ vlVdpDecoderCreate ( 	VdpDevice device,
 						VdpDecoder *decoder 
 )
 {
-	struct vl_screen *vscreen;
-	enum pipe_video_profile p_profile;
-	VdpStatus ret;
-	vlVdpDecoder *vldecoder;
+	enum pipe_video_profile p_profile = PIPE_VIDEO_PROFILE_UNKNOWN;
+	VdpStatus ret = VDP_STATUS_OK;
+	vlVdpDecoder *vldecoder = NULL;
 	
 	debug_printf("[VDPAU] Creating decoder\n");
 	
@@ -137,12 +136,13 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 	if(!(vldecoder && vlsurf))
 		return VDP_STATUS_INVALID_POINTER;
 		
-	vctx = vldecoder->vctx;
+	vctx = vldecoder->vctx->vpipe;
 		
 	memset(&tmplt, 0, sizeof(struct pipe_resource));
 	tmplt.target = PIPE_TEXTURE_2D;
-	tmplt.format = vlsurf->format;
+	tmplt.format = vctx->get_param(vctx,PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
 	tmplt.last_level = 0;
+
 	if (vctx->is_format_supported(vctx, tmplt.format,
                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
                                   PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
@@ -156,6 +156,7 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
       tmplt.width0 = util_next_power_of_two(vlsurf->width);
       tmplt.height0 = util_next_power_of_two(vlsurf->height);
     }
+	
 	tmplt.depth0 = 1;
 	tmplt.usage = PIPE_USAGE_DEFAULT;
 	tmplt.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
@@ -170,7 +171,7 @@ vlVdpCreateSurfaceTarget   (vlVdpDecoder *vldecoder,
 	
 	if (!vlsurf->psurface)
 		return VDP_STATUS_RESOURCES;
-	
+	debug_printf("[VDPAU] Done creating surface\n");
 	
 	return VDP_STATUS_OK;
 }
@@ -275,11 +276,9 @@ vlVdpDecoderRender (VdpDecoder decoder,
 	if (!vscreen)
 		return VDP_STATUS_RESOURCES;
 	
-	vldecoder->vctx = vl_video_create(vscreen, vldecoder->profile, vlsurf->format, vldecoder->width, vldecoder->height);
+	vldecoder->vctx = vl_video_create(vscreen, vldecoder->profile, vlsurf->chroma_format, vldecoder->width, vldecoder->height);
 	if (!vldecoder->vctx)
 		return VDP_STATUS_RESOURCES;
-		
-	vldecoder->vctx->vscreen = vscreen;
 		
     // TODO: Right now only mpeg2 is supported.
 	switch (vldecoder->vctx->vpipe->profile)   {

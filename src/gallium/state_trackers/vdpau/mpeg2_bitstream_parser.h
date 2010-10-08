@@ -44,7 +44,11 @@ struct vdpMPEG2BitstreamParser
 	uint32_t cursor;                // current bit cursor
 	uint32_t cur_bitstream;
 	uint32_t cur_bitstream_length;
-	unsigned char *ptr_bitstream;
+	uint8_t *ptr_bitstream;
+	
+	/* The decoded bitstream goes here: */
+	/* Sequence_header_info */
+	uint32_t horizontal_size_value;
 };
 
 int

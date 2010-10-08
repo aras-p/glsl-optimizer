@@ -30,8 +30,9 @@
 int
 vlVdpMPEG2NextStartCode(struct vdpMPEG2BitstreamParser *parser)
 {
-	uint32_t integer = 0;
-	uint32_t bytes_to_end;
+	uint32_t integer = 0xffffff00;
+	uint8_t * ptr_read = parser->ptr_bitstream;
+	int32_t bytes_to_end;
 	
 	/* Move cursor to the start of a byte */
 	while(parser->cursor % 8)
@@ -47,9 +48,9 @@ vlVdpMPEG2NextStartCode(struct vdpMPEG2BitstreamParser *parser)
 			parser->state = MPEG2_HEADER_DONE;
 			return 1;
 		}
-		
-		integer << 8;
-		integer = integer & (unsigned char)(parser->ptr_bitstream + parser->cursor/8)[0];
+		integer = ( integer | *ptr_read++ ) << 8;
+	
+		debug_printf("[VDPAU][Bitstream parser] Current read uint32_t: %08x .. Bytes to end: %d\n", integer,bytes_to_end);
 	
 		bytes_to_end--;
 		parser->cursor += 8;
@@ -57,7 +58,7 @@ vlVdpMPEG2NextStartCode(struct vdpMPEG2BitstreamParser *parser)
 	}
 	
 	/* start_code found. rewind cursor a byte */
-	parser->cursor -= 8;
+	//parser->cursor -= 8;
 	
 	return 0;
 }
@@ -89,8 +90,8 @@ vlVdpMPEG2BitstreamToMacroblock (
 		{
 		case MPEG2_HEADER_START_CODE:
 			if (vlVdpMPEG2NextStartCode(&parser))
-				continue;
-			
+				exit(1);
+			debug_printf("[VDPAU] START_CODE: %02x\n",(parser.ptr_bitstream + parser.cursor/8)[0]);
 			/* Start_code found */
 			switch ((parser.ptr_bitstream + parser.cursor/8)[0])
 			{
