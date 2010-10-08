@@ -265,7 +265,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef *colors_lo,
                               LLVMValueRef *colors_hi)
 {
-   const int dims = texture_dims(bld->static_state->target);
+   const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->builder;
    struct lp_build_context i32, h16, u8n;
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
@@ -429,7 +429,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef *colors_lo,
                              LLVMValueRef *colors_hi)
 {
-   const int dims = texture_dims(bld->static_state->target);
+   const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->builder;
    struct lp_build_context i32, h16, u8n;
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
@@ -781,27 +781,34 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef s,
                        LLVMValueRef t,
                        LLVMValueRef r,
+                       LLVMValueRef ilevel0,
+                       LLVMValueRef ilevel1,
                        LLVMValueRef lod_fpart,
-                       LLVMValueRef width0_vec,
-                       LLVMValueRef width1_vec,
-                       LLVMValueRef height0_vec,
-                       LLVMValueRef height1_vec,
-                       LLVMValueRef depth0_vec,
-                       LLVMValueRef depth1_vec,
-                       LLVMValueRef row_stride0_vec,
-                       LLVMValueRef row_stride1_vec,
-                       LLVMValueRef img_stride0_vec,
-                       LLVMValueRef img_stride1_vec,
-                       LLVMValueRef data_ptr0,
-                       LLVMValueRef data_ptr1,
                        LLVMValueRef colors_lo_var,
                        LLVMValueRef colors_hi_var)
 {
    LLVMBuilderRef builder = bld->builder;
+   LLVMValueRef width0_vec;
+   LLVMValueRef width1_vec;
+   LLVMValueRef height0_vec;
+   LLVMValueRef height1_vec;
+   LLVMValueRef depth0_vec;
+   LLVMValueRef depth1_vec;
+   LLVMValueRef row_stride0_vec;
+   LLVMValueRef row_stride1_vec;
+   LLVMValueRef img_stride0_vec;
+   LLVMValueRef img_stride1_vec;
+   LLVMValueRef data_ptr0;
+   LLVMValueRef data_ptr1;
    LLVMValueRef colors0_lo, colors0_hi;
    LLVMValueRef colors1_lo, colors1_hi;
 
+
    /* sample the first mipmap level */
+   lp_build_mipmap_level_sizes(bld, ilevel0,
+                               &width0_vec, &height0_vec, &depth0_vec,
+                               &row_stride0_vec, &img_stride0_vec);
+   data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       lp_build_sample_image_nearest(bld,
                                     width0_vec, height0_vec, depth0_vec,
@@ -846,6 +853,10 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_context_init(&h16_bld, builder, lp_type_ufixed(16));
 
          /* sample the second mipmap level */
+         lp_build_mipmap_level_sizes(bld, ilevel1,
+                                     &width1_vec, &height1_vec, &depth1_vec,
+                                     &row_stride1_vec, &img_stride1_vec);
+         data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
             lp_build_sample_image_nearest(bld,
                                           width1_vec, height1_vec, depth1_vec,
@@ -897,15 +908,6 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     const LLVMValueRef *ddy,
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
-                    LLVMValueRef width,
-                    LLVMValueRef height,
-                    LLVMValueRef depth,
-                    LLVMValueRef width_vec,
-                    LLVMValueRef height_vec,
-                    LLVMValueRef depth_vec,
-                    LLVMValueRef row_stride_array,
-                    LLVMValueRef img_stride_array,
-                    LLVMValueRef data_array,
                     LLVMValueRef texel_out[4])
 {
    struct lp_build_context *int_bld = &bld->int_bld;
@@ -913,18 +915,15 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
-   const int dims = texture_dims(bld->static_state->target);
+   const unsigned dims = bld->dims;
    LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
    LLVMValueRef ilevel0, ilevel1 = NULL;
-   LLVMValueRef width0_vec = NULL, height0_vec = NULL, depth0_vec = NULL;
-   LLVMValueRef width1_vec = NULL, height1_vec = NULL, depth1_vec = NULL;
-   LLVMValueRef row_stride0_vec = NULL, row_stride1_vec = NULL;
-   LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
-   LLVMValueRef data_ptr0, data_ptr1 = NULL;
    LLVMValueRef packed, packed_lo, packed_hi;
    LLVMValueRef unswizzled[4];
    LLVMValueRef face_ddx[4], face_ddy[4];
    struct lp_build_context h16_bld;
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMValueRef i32t_zero = LLVMConstInt(i32t, 0, 0);
 
    /* we only support the common/simple wrap modes at this time */
    assert(lp_is_simple_wrap_mode(bld->static_state->wrap_s));
@@ -969,11 +968,10 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
        */
       lp_build_lod_selector(bld, unit, ddx, ddy,
                             lod_bias, explicit_lod,
-                            width, height, depth,
                             mip_filter,
                             &lod_ipart, &lod_fpart);
    } else {
-      lod_ipart = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      lod_ipart = i32t_zero;
    }
 
    /*
@@ -994,7 +992,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
          lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       }
       else {
-         ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+         ilevel0 = i32t_zero;
       }
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
@@ -1010,28 +1008,6 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       break;
    }
 
-   /* compute image size(s) of source mipmap level(s) */
-   lp_build_mipmap_level_sizes(bld, dims, width_vec, height_vec, depth_vec,
-                               ilevel0,
-                               row_stride_array, img_stride_array,
-                               &width0_vec, &height0_vec, &depth0_vec,
-                               &row_stride0_vec, &img_stride0_vec);
-   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      lp_build_mipmap_level_sizes(bld, dims, width_vec, height_vec, depth_vec,
-                                  ilevel1,
-                                  row_stride_array, img_stride_array,
-                                  &width1_vec, &height1_vec, &depth1_vec,
-                                  &row_stride1_vec, &img_stride1_vec);
-   }
-
-   /*
-    * Get pointer(s) to image data for mipmap level(s).
-    */
-   data_ptr0 = lp_build_get_mipmap_level(bld, data_array, ilevel0);
-   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      data_ptr1 = lp_build_get_mipmap_level(bld, data_array, ilevel1);
-   }
-
    /*
     * Get/interpolate texture colors.
     */
@@ -1043,13 +1019,8 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       /* no need to distinquish between minification and magnification */
       lp_build_sample_mipmap(bld,
                              min_filter, mip_filter,
-                             s, t, r, lod_fpart,
-                             width0_vec, width1_vec,
-                             height0_vec, height1_vec,
-                             depth0_vec, depth1_vec,
-                             row_stride0_vec, row_stride1_vec,
-                             img_stride0_vec, img_stride1_vec,
-                             data_ptr0, data_ptr1,
+                             s, t, r,
+                             ilevel0, ilevel1, lod_fpart,
                              packed_lo, packed_hi);
    }
    else {
@@ -1069,14 +1040,10 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       lp_build_if(&if_ctx, flow_ctx, builder, minify);
       {
          /* Use the minification filter */
-         lp_build_sample_mipmap(bld, min_filter, mip_filter,
-                                s, t, r, lod_fpart,
-                                width0_vec, width1_vec,
-                                height0_vec, height1_vec,
-                                depth0_vec, depth1_vec,
-                                row_stride0_vec, row_stride1_vec,
-                                img_stride0_vec, img_stride1_vec,
-                                data_ptr0, data_ptr1,
+         lp_build_sample_mipmap(bld,
+                                min_filter, mip_filter,
+                                s, t, r,
+                                ilevel0, ilevel1, lod_fpart,
                                 packed_lo, packed_hi);
       }
       lp_build_else(&if_ctx);
@@ -1084,13 +1051,8 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
          /* Use the magnification filter */
          lp_build_sample_mipmap(bld, 
                                 mag_filter, PIPE_TEX_MIPFILTER_NONE,
-                                s, t, r, NULL,
-                                width_vec, NULL,
-                                height_vec, NULL,
-                                depth_vec, NULL,
-                                row_stride0_vec, NULL,
-                                img_stride0_vec, NULL,
-                                data_ptr0, NULL,
+                                s, t, r,
+                                i32t_zero, NULL, NULL,
                                 packed_lo, packed_hi);
       }
       lp_build_endif(&if_ctx);

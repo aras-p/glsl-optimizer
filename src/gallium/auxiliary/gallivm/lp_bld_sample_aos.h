@@ -50,15 +50,6 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     const LLVMValueRef *ddy,
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
-                    LLVMValueRef width,
-                    LLVMValueRef height,
-                    LLVMValueRef depth,
-                    LLVMValueRef width_vec,
-                    LLVMValueRef height_vec,
-                    LLVMValueRef depth_vec,
-                    LLVMValueRef row_stride_array,
-                    LLVMValueRef img_stride_array,
-                    LLVMValueRef data_array,
                     LLVMValueRef texel_out[4]);
 
 

@@ -190,7 +190,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *float_size_bld = &bld->float_size_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
-   const int dims = texture_dims(bld->static_state->target);
+   const unsigned dims = bld->dims;
    LLVMTypeRef i32t = LLVMInt32Type();
    LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
    LLVMValueRef index1 = LLVMConstInt(i32t, 1, 0);
@@ -355,9 +355,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
-                      LLVMValueRef width,
-                      LLVMValueRef height,
-                      LLVMValueRef depth,
                       unsigned mip_filter,
                       LLVMValueRef *out_lod_ipart,
                       LLVMValueRef *out_lod_fpart)
@@ -561,12 +558,12 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
  */
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
-                          LLVMValueRef data_array, LLVMValueRef level)
+                          LLVMValueRef level)
 {
    LLVMValueRef indexes[2], data_ptr;
    indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indexes[1] = level;
-   data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
+   data_ptr = LLVMBuildGEP(bld->builder, bld->data_array, indexes, 2, "");
    data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
    return data_ptr;
 }
@@ -574,10 +571,10 @@ lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
 
 LLVMValueRef
 lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
-                                LLVMValueRef data_array, int level)
+                                int level)
 {
    LLVMValueRef lvl = LLVMConstInt(LLVMInt32Type(), level, 0);
-   return lp_build_get_mipmap_level(bld, data_array, lvl);
+   return lp_build_get_mipmap_level(bld, lvl);
 }
 
 
@@ -628,19 +625,14 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
  */
 void
 lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
-                            unsigned dims,
-                            LLVMValueRef width_vec,
-                            LLVMValueRef height_vec,
-                            LLVMValueRef depth_vec,
                             LLVMValueRef ilevel,
-                            LLVMValueRef row_stride_array,
-                            LLVMValueRef img_stride_array,
                             LLVMValueRef *out_width_vec,
                             LLVMValueRef *out_height_vec,
                             LLVMValueRef *out_depth_vec,
                             LLVMValueRef *row_stride_vec,
                             LLVMValueRef *img_stride_vec)
 {
+   const unsigned dims = bld->dims;
    LLVMValueRef ilevel_vec;
 
    ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
@@ -648,18 +640,18 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
    /*
     * Compute width, height, depth at mipmap level 'ilevel'
     */
-   *out_width_vec = lp_build_minify(bld, width_vec, ilevel_vec);
+   *out_width_vec = lp_build_minify(bld, bld->width_vec, ilevel_vec);
    if (dims >= 2) {
-      *out_height_vec = lp_build_minify(bld, height_vec, ilevel_vec);
+      *out_height_vec = lp_build_minify(bld, bld->height_vec, ilevel_vec);
       *row_stride_vec = lp_build_get_level_stride_vec(bld,
-                                                       row_stride_array,
-                                                       ilevel);
+                                                      bld->row_stride_array,
+                                                      ilevel);
       if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
          *img_stride_vec = lp_build_get_level_stride_vec(bld,
-                                                          img_stride_array,
-                                                          ilevel);
+                                                         bld->img_stride_array,
+                                                         ilevel);
          if (dims == 3) {
-            *out_depth_vec = lp_build_minify(bld, depth_vec, ilevel_vec);
+            *out_depth_vec = lp_build_minify(bld, bld->depth_vec, ilevel_vec);
          }
       }
    }

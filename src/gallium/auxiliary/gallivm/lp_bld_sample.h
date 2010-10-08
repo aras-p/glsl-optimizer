@@ -179,6 +179,9 @@ struct lp_build_sample_context
 
    const struct util_format_description *format_desc;
 
+   /* See texture_dims() */
+   unsigned dims;
+
    /** regular scalar float type */
    struct lp_type float_type;
    struct lp_build_context float_bld;
@@ -214,8 +217,21 @@ struct lp_build_sample_context
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
 
+   /* Common dynamic state values */
+   LLVMValueRef width;
+   LLVMValueRef height;
+   LLVMValueRef depth;
+   LLVMValueRef row_stride_array;
+   LLVMValueRef img_stride_array;
+   LLVMValueRef data_array;
+
    /** Unsigned vector with texture width, height, depth */
    LLVMValueRef uint_size;
+
+   /* width, height, depth as uint vectors */
+   LLVMValueRef width_vec;
+   LLVMValueRef height_vec;
+   LLVMValueRef depth_vec;
 };
 
 
@@ -292,9 +308,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
-                      LLVMValueRef width,
-                      LLVMValueRef height,
-                      LLVMValueRef depth,
                       unsigned mip_filter,
                       LLVMValueRef *out_lod_ipart,
                       LLVMValueRef *out_lod_fpart);
@@ -315,22 +328,16 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
 
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
-                          LLVMValueRef data_array, LLVMValueRef level);
+                          LLVMValueRef level);
 
 LLVMValueRef
 lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
-                                LLVMValueRef data_array, int level);
+                                int level);
 
 
 void
 lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
-                            unsigned dims,
-                            LLVMValueRef width_vec,
-                            LLVMValueRef height_vec,
-                            LLVMValueRef depth_vec,
                             LLVMValueRef ilevel,
-                            LLVMValueRef row_stride_array,
-                            LLVMValueRef img_stride_array,
                             LLVMValueRef *out_width_vec,
                             LLVMValueRef *out_height_vec,
                             LLVMValueRef *out_depth_vec,
