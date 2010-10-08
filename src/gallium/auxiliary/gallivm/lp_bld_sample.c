@@ -359,11 +359,9 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      LLVMValueRef ipart = lp_build_ifloor(float_bld, lod);
-      lp_build_name(ipart, "lod_ipart");
-      *out_lod_ipart = ipart;
-      ipart = LLVMBuildSIToFP(bld->builder, ipart, float_bld->vec_type, "");
-      *out_lod_fpart = LLVMBuildFSub(bld->builder, lod, ipart, "lod_fpart");
+      lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, out_lod_fpart);
+      lp_build_name(*out_lod_ipart, "lod_ipart");
+      lp_build_name(*out_lod_fpart, "lod_fpart");
    }
    else {
       *out_lod_ipart = lp_build_iround(float_bld, lod);
