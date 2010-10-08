@@ -288,30 +288,37 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      if (bld->static_state->normalized_coords) {
-         /* clamp to [0,1] */
-         coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, coord_bld->one);
-         /* mul by tex size and subtract 0.5 */
-         coord = lp_build_mul(coord_bld, coord, length_f);
-         coord = lp_build_sub(coord_bld, coord, half);
+      {
+         struct lp_build_context abs_coord_bld = bld->coord_bld;
+         abs_coord_bld.type.sign = FALSE;
+
+         if (bld->static_state->normalized_coords) {
+            /* mul by tex size */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+            /* clamp to length max */
+            coord = lp_build_min(coord_bld, coord, length_f);
+            /* subtract 0.5 */
+            coord = lp_build_sub(coord_bld, coord, half);
+            /* clamp to [0, length - 0.5] */
+            coord = lp_build_max(coord_bld, coord, coord_bld->zero);
+         }
+         /* XXX this is odd normalized ranges from 0 to length-0.5 after denorm
+            but non-normalized ranges from to 0.5 to length-0.5 after clamp.
+            Is this missing the sub 0.5? */
+         else {
+            LLVMValueRef min, max;
+            /* clamp to [0.5, length - 0.5] */
+            min = half;
+            max = lp_build_sub(coord_bld, length_f, min);
+            coord = lp_build_clamp(coord_bld, coord, min, max);
+         }
+         /* convert to int, compute lerp weight */
+         lp_build_ifloor_fract(&abs_coord_bld, coord, &coord0, &weight);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+         /* coord1 = min(coord1, length-1) */
+         coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
+         break;
       }
-      /* XXX this is odd normalized ranges from -0.5 to length-0.5 after denorm
-         but non-normalized ranges from to 0.5 to length-0.5 after clamp */
-      else {
-         LLVMValueRef min, max;
-         /* clamp to [0.5, length - 0.5] */
-         min = half;
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
-      }
-      /* convert to int, compute lerp weight */
-      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
-      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
-      /* coord0 = max(coord0, 0) */
-      coord0 = lp_build_max(int_coord_bld, coord0, int_coord_bld->zero);
-      /* coord1 = min(coord1, length-1) */
-      coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
-      break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
