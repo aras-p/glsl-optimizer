@@ -1486,8 +1486,10 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
        * FINISHME: at least 16, so hardcode 16 for now.
        */
-      if (!assign_attribute_locations(prog, 16))
+      if (!assign_attribute_locations(prog, 16)) {
+	 prog->LinkStatus = false;
 	 goto done;
+      }
 
       if (prog->_NumLinkedShaders == 1)
 	 demote_unread_shader_outputs(prog->_LinkedShaders[0]);
