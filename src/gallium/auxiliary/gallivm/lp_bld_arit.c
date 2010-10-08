@@ -1054,9 +1054,9 @@ lp_build_round_sse41(struct lp_build_context *bld,
 
 
 /**
- * Return the integer part of a float (vector) value.  The returned value is
- * a float (vector).
- * Ex: trunc(-1.5) = 1.0
+ * Return the integer part of a float (vector) value (== round toward zero).
+ * The returned value is a float (vector).
+ * Ex: trunc(-1.5) = -1.0
  */
 LLVMValueRef
 lp_build_trunc(struct lp_build_context *bld,
@@ -1181,9 +1181,9 @@ lp_build_fract(struct lp_build_context *bld,
 
 
 /**
- * Return the integer part of a float (vector) value.  The returned value is
- * an integer (vector).
- * Ex: itrunc(-1.5) = 1
+ * Return the integer part of a float (vector) value (== round toward zero).
+ * The returned value is an integer (vector).
+ * Ex: itrunc(-1.5) = -1
  */
 LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
