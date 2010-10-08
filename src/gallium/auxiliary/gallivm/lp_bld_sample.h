@@ -327,20 +327,14 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                             LLVMValueRef width_vec,
                             LLVMValueRef height_vec,
                             LLVMValueRef depth_vec,
-                            LLVMValueRef ilevel0,
-                            LLVMValueRef ilevel1,
+                            LLVMValueRef ilevel,
                             LLVMValueRef row_stride_array,
                             LLVMValueRef img_stride_array,
-                            LLVMValueRef *width0_vec,
-                            LLVMValueRef *width1_vec,
-                            LLVMValueRef *height0_vec,
-                            LLVMValueRef *height1_vec,
-                            LLVMValueRef *depth0_vec,
-                            LLVMValueRef *depth1_vec,
-                            LLVMValueRef *row_stride0_vec,
-                            LLVMValueRef *row_stride1_vec,
-                            LLVMValueRef *img_stride0_vec,
-                            LLVMValueRef *img_stride1_vec);
+                            LLVMValueRef *out_width_vec,
+                            LLVMValueRef *out_height_vec,
+                            LLVMValueRef *out_depth_vec,
+                            LLVMValueRef *row_stride_vec,
+                            LLVMValueRef *img_stride_vec);
 
 
 void

@@ -513,61 +513,34 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                             LLVMValueRef width_vec,
                             LLVMValueRef height_vec,
                             LLVMValueRef depth_vec,
-                            LLVMValueRef ilevel0,
-                            LLVMValueRef ilevel1,
+                            LLVMValueRef ilevel,
                             LLVMValueRef row_stride_array,
                             LLVMValueRef img_stride_array,
-                            LLVMValueRef *width0_vec,
-                            LLVMValueRef *width1_vec,
-                            LLVMValueRef *height0_vec,
-                            LLVMValueRef *height1_vec,
-                            LLVMValueRef *depth0_vec,
-                            LLVMValueRef *depth1_vec,
-                            LLVMValueRef *row_stride0_vec,
-                            LLVMValueRef *row_stride1_vec,
-                            LLVMValueRef *img_stride0_vec,
-                            LLVMValueRef *img_stride1_vec)
+                            LLVMValueRef *out_width_vec,
+                            LLVMValueRef *out_height_vec,
+                            LLVMValueRef *out_depth_vec,
+                            LLVMValueRef *row_stride_vec,
+                            LLVMValueRef *img_stride_vec)
 {
-   const unsigned mip_filter = bld->static_state->min_mip_filter;
-   LLVMValueRef ilevel0_vec, ilevel1_vec;
+   LLVMValueRef ilevel_vec;
 
-   ilevel0_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel0);
-   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR)
-      ilevel1_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel1);
+   ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
 
    /*
-    * Compute width, height, depth at mipmap level 'ilevel0'
+    * Compute width, height, depth at mipmap level 'ilevel'
     */
-   *width0_vec = lp_build_minify(bld, width_vec, ilevel0_vec);
+   *out_width_vec = lp_build_minify(bld, width_vec, ilevel_vec);
    if (dims >= 2) {
-      *height0_vec = lp_build_minify(bld, height_vec, ilevel0_vec);
-      *row_stride0_vec = lp_build_get_level_stride_vec(bld,
+      *out_height_vec = lp_build_minify(bld, height_vec, ilevel_vec);
+      *row_stride_vec = lp_build_get_level_stride_vec(bld,
                                                        row_stride_array,
-                                                       ilevel0);
+                                                       ilevel);
       if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         *img_stride0_vec = lp_build_get_level_stride_vec(bld,
+         *img_stride_vec = lp_build_get_level_stride_vec(bld,
                                                           img_stride_array,
-                                                          ilevel0);
+                                                          ilevel);
          if (dims == 3) {
-            *depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
-         }
-      }
-   }
-   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      /* compute width, height, depth for second mipmap level at 'ilevel1' */
-      *width1_vec = lp_build_minify(bld, width_vec, ilevel1_vec);
-      if (dims >= 2) {
-         *height1_vec = lp_build_minify(bld, height_vec, ilevel1_vec);
-         *row_stride1_vec = lp_build_get_level_stride_vec(bld,
-                                                          row_stride_array,
-                                                          ilevel1);
-         if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
-            *img_stride1_vec = lp_build_get_level_stride_vec(bld,
-                                                             img_stride_array,
-                                                             ilevel1);
-            if (dims == 3) {
-               *depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
-            }
+            *out_depth_vec = lp_build_minify(bld, depth_vec, ilevel_vec);
          }
       }
    }

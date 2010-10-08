@@ -1002,13 +1002,17 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
 
    /* compute image size(s) of source mipmap level(s) */
    lp_build_mipmap_level_sizes(bld, dims, width_vec, height_vec, depth_vec,
-                               ilevel0, ilevel1,
+                               ilevel0,
                                row_stride_array, img_stride_array,
-                               &width0_vec, &width1_vec,
-                               &height0_vec, &height1_vec,
-                               &depth0_vec, &depth1_vec,
-                               &row_stride0_vec, &row_stride1_vec,
-                               &img_stride0_vec, &img_stride1_vec);
+                               &width0_vec, &height0_vec, &depth0_vec,
+                               &row_stride0_vec, &img_stride0_vec);
+   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+      lp_build_mipmap_level_sizes(bld, dims, width_vec, height_vec, depth_vec,
+                                  ilevel1,
+                                  row_stride_array, img_stride_array,
+                                  &width1_vec, &height1_vec, &depth1_vec,
+                                  &row_stride1_vec, &img_stride1_vec);
+   }
 
    /*
     * Get pointer(s) to image data for mipmap level(s).
