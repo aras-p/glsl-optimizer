@@ -657,6 +657,10 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		bo[1] = rbuffer->bo;
 	}
 	pitch = align(tmp->pitch_in_pixels[0], 8);
+	if (tmp->tiled) {
+		array_mode = tmp->array_mode;
+		tile_type = tmp->tile_type;
+	}
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
@@ -957,6 +961,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
+		S_0280A0_ARRAY_MODE(rtex->array_mode);
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
