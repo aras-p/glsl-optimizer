@@ -208,6 +208,13 @@ public:
       this->opcode = opcode;
    }
 
+   fs_inst(int opcode, fs_reg dst)
+   {
+      init();
+      this->opcode = opcode;
+      this->dst = dst;
+   }
+
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
    {
       init();
@@ -338,7 +345,7 @@ public:
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
-   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_tex(fs_inst *inst, struct brw_reg dst);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
    void generate_discard_not(fs_inst *inst, struct brw_reg temp);
    void generate_discard_and(fs_inst *inst, struct brw_reg temp);
