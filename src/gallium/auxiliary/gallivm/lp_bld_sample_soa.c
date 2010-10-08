@@ -1044,14 +1044,14 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       {
          /* Use the magnification filter */
          lp_build_sample_mipmap(bld, unit,
-                                mag_filter, mip_filter,
-                                s, t, r, lod_fpart,
-                                width0_vec, width1_vec,
-                                height0_vec, height1_vec,
-                                depth0_vec, depth1_vec,
-                                row_stride0_vec, row_stride1_vec,
-                                img_stride0_vec, img_stride1_vec,
-                                data_ptr0, data_ptr1,
+                                mag_filter, PIPE_TEX_MIPFILTER_NONE,
+                                s, t, r, NULL,
+                                width_vec, NULL,
+                                height_vec, NULL,
+                                depth_vec, NULL,
+                                row_stride0_vec, NULL,
+                                img_stride0_vec, NULL,
+                                data_ptr0, NULL,
                                 colors_out);
       }
       lp_build_endif(&if_ctx);
