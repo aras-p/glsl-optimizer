@@ -639,7 +639,6 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
    const unsigned dims = bld->dims;
    LLVMValueRef ilevel_vec;
    LLVMValueRef size_vec;
-   LLVMValueRef width, height, depth;
    LLVMTypeRef i32t = LLVMInt32Type();
 
    ilevel_vec = lp_build_broadcast_scalar(&bld->int_size_bld, ilevel);
@@ -649,18 +648,19 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
     */
    size_vec = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
 
-   if (dims <= 1) {
-      width = size_vec;
-   }
-   else {
-      width = LLVMBuildExtractElement(bld->builder, size_vec,
-                                      LLVMConstInt(i32t, 0, 0), "");
-   }
-   *out_width_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, width);
+   *out_width_vec = lp_build_extract_broadcast(bld->builder,
+                                               bld->int_size_type,
+                                               bld->int_coord_type,
+                                               size_vec,
+                                               LLVMConstInt(i32t, 0, 0));
    if (dims >= 2) {
-      height = LLVMBuildExtractElement(bld->builder, size_vec,
-                                       LLVMConstInt(i32t, 1, 0), "");
-      *out_height_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, height);
+
+      *out_height_vec = lp_build_extract_broadcast(bld->builder,
+                                                   bld->int_size_type,
+                                                   bld->int_coord_type,
+                                                   size_vec,
+                                                   LLVMConstInt(i32t, 1, 0));
+
       *row_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->row_stride_array,
                                                       ilevel);
@@ -669,9 +669,11 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                                                          bld->img_stride_array,
                                                          ilevel);
          if (dims == 3) {
-            depth = LLVMBuildExtractElement(bld->builder, size_vec,
-                                            LLVMConstInt(i32t, 2, 0), "");
-            *out_depth_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, depth);
+            *out_depth_vec = lp_build_extract_broadcast(bld->builder,
+                                                        bld->int_size_type,
+                                                        bld->int_coord_type,
+                                                        size_vec,
+                                                        LLVMConstInt(i32t, 2, 0));
          }
       }
    }
