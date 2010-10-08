@@ -669,6 +669,7 @@ i915_assert_not_dirty( struct intel_context *intel )
    struct i915_context *i915 = i915_context(&intel->ctx);
    GLuint dirty = get_dirty(&i915->state);
    assert(!dirty);
+   (void) dirty;
 }
 
 void
