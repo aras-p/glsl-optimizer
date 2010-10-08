@@ -904,6 +904,10 @@
 #define   S_038000_TILE_MODE(x)                        (((x) & 0xF) << 3)
 #define   G_038000_TILE_MODE(x)                        (((x) >> 3) & 0xF)
 #define   C_038000_TILE_MODE                           0xFFFFFF87
+#define     V_038000_ARRAY_LINEAR_GENERAL              0x00000000
+#define     V_038000_ARRAY_LINEAR_ALIGNED              0x00000001
+#define     V_038000_ARRAY_1D_TILED_THIN1              0x00000002
+#define     V_038000_ARRAY_2D_TILED_THIN1              0x00000004
 #define   S_038000_TILE_TYPE(x)                        (((x) & 0x1) << 7)
 #define   G_038000_TILE_TYPE(x)                        (((x) >> 7) & 0x1)
 #define   C_038000_TILE_TYPE                           0xFFFFFF7F
