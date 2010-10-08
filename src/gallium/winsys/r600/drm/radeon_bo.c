@@ -32,7 +32,6 @@
 #include "r600_priv.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
-#include "util/u_time.h"
 
 static int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 {
