@@ -240,6 +240,8 @@ layout		{
 &&		return AND_OP;
 \|\|		return OR_OP;
 "^^"		return XOR_OP;
+"<<"		return LEFT_OP;
+">>"		return RIGHT_OP;
 
 \*=		return MUL_ASSIGN;
 \/=		return DIV_ASSIGN;
