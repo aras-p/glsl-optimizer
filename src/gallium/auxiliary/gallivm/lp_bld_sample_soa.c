@@ -202,11 +202,7 @@ lp_build_coord_mirror(struct lp_build_sample_context *bld,
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef fract, flr, isOdd;
 
-   /* fract = coord - floor(coord) */
-   fract = lp_build_sub(coord_bld, coord, lp_build_floor(coord_bld, coord));
-
-   /* flr = ifloor(coord); */
-   flr = lp_build_ifloor(coord_bld, coord);
+   lp_build_ifloor_fract(coord_bld, coord, &flr, &fract);
 
    /* isOdd = flr & 1 */
    isOdd = LLVMBuildAnd(bld->builder, flr, int_coord_bld->one, "");
