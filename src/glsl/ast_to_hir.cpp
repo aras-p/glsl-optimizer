@@ -1668,9 +1668,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 			  string);
       } else {
 	 var->explicit_location = true;
-	 var->location = (state->target == vertex_shader)
-	    ? (qual->location + VERT_ATTRIB_GENERIC0)
-	    : (qual->location + FRAG_RESULT_DATA0);
+
+	 /* This bit of silliness is needed because invalid explicit locations
+	  * are supposed to be flagged during linking.  Small negative values
+	  * biased by VERT_ATTRIB_GENERIC0 or FRAG_RESULT_DATA0 could alias
+	  * built-in values (e.g., -16+VERT_ATTRIB_GENERIC0 = VERT_ATTRIB_POS).
+	  * The linker needs to be able to differentiate these cases.  This
+	  * ensures that negative values stay negative.
+	  */
+	 if (qual->location >= 0) {
+	    var->location = (state->target == vertex_shader)
+	       ? (qual->location + VERT_ATTRIB_GENERIC0)
+	       : (qual->location + FRAG_RESULT_DATA0);
+	 } else {
+	    var->location = qual->location;
+	 }
       }
    }
 
