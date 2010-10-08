@@ -93,7 +93,8 @@
 %token ISAMPLER1DARRAY ISAMPLER2DARRAY USAMPLER1D USAMPLER2D USAMPLER3D
 %token USAMPLERCUBE USAMPLER1DARRAY USAMPLER2DARRAY
 %token STRUCT VOID_TOK WHILE
-%token <identifier> IDENTIFIER
+%token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
+%type <identifier> any_identifier
 %token <real> FLOATCONSTANT
 %token <n> INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <identifier> FIELD_SELECTION
@@ -184,6 +185,10 @@
 %type <expression> function_call_generic
 %type <expression> function_call_or_method
 %type <expression> function_call
+%type <expression> method_call_generic
+%type <expression> method_call_header_with_parameters
+%type <expression> method_call_header_no_parameters
+%type <expression> method_call_header
 %type <n> assignment_operator
 %type <n> unary_operator
 %type <expression> function_identifier
@@ -279,8 +284,14 @@ extension_statement_list:
 	| extension_statement_list extension_statement
 	;
 
+any_identifier:
+	IDENTIFIER
+	| TYPE_IDENTIFIER
+	| NEW_IDENTIFIER
+	;
+
 extension_statement:
-	EXTENSION IDENTIFIER COLON IDENTIFIER EOL
+	EXTENSION any_identifier COLON any_identifier EOL
 	{
 	   if (!_mesa_glsl_process_extension($2, & @2, $4, & @4, state)) {
 	      YYERROR;
@@ -309,6 +320,7 @@ external_declaration_list:
 
 variable_identifier:
 	IDENTIFIER
+	| NEW_IDENTIFIER
 	;
 
 primary_expression:
@@ -365,7 +377,7 @@ postfix_expression:
 	{
 	   $$ = $1;
 	}
-	| postfix_expression '.' IDENTIFIER
+	| postfix_expression '.' any_identifier
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_field_selection, $1, NULL, NULL);
@@ -396,7 +408,7 @@ function_call:
 
 function_call_or_method:
 	function_call_generic
-	| postfix_expression '.' function_call_generic
+	| postfix_expression '.' method_call_generic
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_field_selection, $1, $3, NULL);
@@ -443,7 +455,7 @@ function_identifier:
 	   $$ = new(ctx) ast_function_expression($1);
 	   $$->set_location(yylloc);
    	}
-	| IDENTIFIER
+	| variable_identifier
 	{
 	   void *ctx = state;
 	   ast_expression *callee = new(ctx) ast_expression($1);
@@ -451,6 +463,44 @@ function_identifier:
 	   $$->set_location(yylloc);
    	}
 	| FIELD_SELECTION
+	{
+	   void *ctx = state;
+	   ast_expression *callee = new(ctx) ast_expression($1);
+	   $$ = new(ctx) ast_function_expression(callee);
+	   $$->set_location(yylloc);
+   	}
+	;
+
+method_call_generic:
+	method_call_header_with_parameters ')'
+	| method_call_header_no_parameters ')'
+	;
+
+method_call_header_no_parameters:
+	method_call_header VOID_TOK
+	| method_call_header
+	;
+
+method_call_header_with_parameters:
+	method_call_header assignment_expression
+	{
+	   $$ = $1;
+	   $$->set_location(yylloc);
+	   $$->expressions.push_tail(& $2->link);
+	}
+	| method_call_header_with_parameters ',' assignment_expression
+	{
+	   $$ = $1;
+	   $$->set_location(yylloc);
+	   $$->expressions.push_tail(& $3->link);
+	}
+	;
+
+	// Grammar Note: Constructors look like methods, but lexical 
+	// analysis recognized most of them as keywords. They are now
+	// recognized through "type_specifier".
+method_call_header:
+	variable_identifier '('
 	{
 	   void *ctx = state;
 	   ast_expression *callee = new(ctx) ast_expression($1);
@@ -746,7 +796,7 @@ function_header_with_parameters:
 	;
 
 function_header:
-	fully_specified_type IDENTIFIER '('
+	fully_specified_type variable_identifier '('
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_function();
@@ -757,7 +807,7 @@ function_header:
 	;
 
 parameter_declarator:
-	type_specifier IDENTIFIER
+	type_specifier any_identifier
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_parameter_declarator();
@@ -767,7 +817,7 @@ parameter_declarator:
 	   $$->type->specifier = $1;
 	   $$->identifier = $2;
 	}
-	| type_specifier IDENTIFIER '[' constant_expression ']'
+	| type_specifier any_identifier '[' constant_expression ']'
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_parameter_declarator();
@@ -845,7 +895,7 @@ parameter_type_specifier:
 
 init_declarator_list:
 	single_declaration
-	| init_declarator_list ',' IDENTIFIER
+	| init_declarator_list ',' any_identifier
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, NULL);
@@ -854,7 +904,7 @@ init_declarator_list:
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| init_declarator_list ',' IDENTIFIER '[' ']'
+	| init_declarator_list ',' any_identifier '[' ']'
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, NULL, NULL);
@@ -863,7 +913,7 @@ init_declarator_list:
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']'
+	| init_declarator_list ',' any_identifier '[' constant_expression ']'
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, $5, NULL);
@@ -872,7 +922,7 @@ init_declarator_list:
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| init_declarator_list ',' IDENTIFIER '[' ']' '=' initializer
+	| init_declarator_list ',' any_identifier '[' ']' '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, NULL, $7);
@@ -881,7 +931,7 @@ init_declarator_list:
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']' '=' initializer
+	| init_declarator_list ',' any_identifier '[' constant_expression ']' '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, $5, $8);
@@ -890,7 +940,7 @@ init_declarator_list:
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| init_declarator_list ',' IDENTIFIER '=' initializer
+	| init_declarator_list ',' any_identifier '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, $5);
@@ -914,7 +964,7 @@ single_declaration:
 	      $$->set_location(yylloc);
 	   }
 	}
-	| fully_specified_type IDENTIFIER
+	| fully_specified_type any_identifier
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, NULL);
@@ -923,7 +973,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| fully_specified_type IDENTIFIER '[' ']'
+	| fully_specified_type any_identifier '[' ']'
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, NULL, NULL);
@@ -932,7 +982,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| fully_specified_type IDENTIFIER '[' constant_expression ']'
+	| fully_specified_type any_identifier '[' constant_expression ']'
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, $4, NULL);
@@ -941,7 +991,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| fully_specified_type IDENTIFIER '[' ']' '=' initializer
+	| fully_specified_type any_identifier '[' ']' '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, NULL, $6);
@@ -950,7 +1000,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| fully_specified_type IDENTIFIER '[' constant_expression ']' '=' initializer
+	| fully_specified_type any_identifier '[' constant_expression ']' '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, $4, $7);
@@ -959,7 +1009,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->declarations.push_tail(&decl->link);
 	}
-	| fully_specified_type IDENTIFIER '=' initializer
+	| fully_specified_type any_identifier '=' initializer
 	{
 	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, $4);
@@ -1267,7 +1317,7 @@ type_specifier_nonarray:
 	   $$ = new(ctx) ast_type_specifier($1);
 	   $$->set_location(yylloc);
 	}
-	| IDENTIFIER
+	| TYPE_IDENTIFIER
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_type_specifier($1);
