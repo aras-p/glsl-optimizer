@@ -251,19 +251,23 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       coord = lp_build_sub(coord_bld, coord, half);
       /* convert to int, compute lerp weight */
       lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
-      coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
       /* repeat wrap */
       if (is_pot) {
+         coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
          coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
          coord1 = LLVMBuildAnd(bld->builder, coord1, length_minus_one, "");
       }
       else {
          /* Add a bias to the texcoord to handle negative coords */
          LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef mask;
          coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
-         coord1 = LLVMBuildAdd(bld->builder, coord1, bias, "");
          coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
-         coord1 = LLVMBuildURem(bld->builder, coord1, length, "");
+         mask = lp_build_compare(bld->builder, int_coord_bld->type,
+                                 PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
+         coord1 = LLVMBuildAnd(bld->builder,
+                              lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one),
+                              mask, "");
       }
       break;
 
