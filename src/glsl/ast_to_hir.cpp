@@ -748,9 +748,64 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_lshift:
    case ast_rshift:
-      _mesa_glsl_error(& loc, state, "FINISHME: implement bit-shift operators");
-      error_emitted = true;
-      break;
+       if (state->language_version < 130) {
+          _mesa_glsl_error(&loc, state, "operator %s requires GLSL 1.30",
+              operator_string(this->oper));
+          error_emitted = true;
+          break;
+       }
+
+       /* From page 50 (page 56 of the PDF) of the GLSL 1.30 spec:
+        *
+        *     The shift operators (<<) and (>>). For both operators, the operands
+        *     must be signed or unsigned integers or integer vectors. One operand
+        *     can be signed while the other is unsigned. In all cases, the
+        *     resulting type will be the same type as the left operand. If the
+        *     first operand is a scalar, the second operand has to be a scalar as
+        *     well. If the first operand is a vector, the second operand must be
+        *     a scalar or a vector, [...]
+        */
+
+       op[0] = this->subexpressions[0]->hir(instructions, state);
+       op[1] = this->subexpressions[1]->hir(instructions, state);
+
+       if (!op[0]->type->is_integer()) {
+           _mesa_glsl_error(& loc, state,
+               "LHS of operator %s must be an integer or integer vector",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (!op[1]->type->is_integer()) {
+           _mesa_glsl_error(& loc, state,
+               "RHS of operator %s must be an integer or integer vector",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (op[0]->type->is_scalar() && !op[1]->type->is_scalar()) {
+           _mesa_glsl_error(& loc, state,
+               "If the first operand of %s is scalar, the second must be"
+               "scalar as well", operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (op[0]->type->is_vector() &&
+           op[1]->type->is_vector() &&
+           op[0]->type->components() != op[1]->type->components()) {
+
+           _mesa_glsl_error(& loc, state,
+               "Vector operands of %s must have same number of components",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+
+       type = op[0]->type;
+       result = new(ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
+       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+       break;
 
    case ast_less:
    case ast_greater:
