@@ -2492,6 +2492,128 @@ fs_visitor::register_coalesce()
    return progress;
 }
 
+
+bool
+fs_visitor::compute_to_mrf()
+{
+   bool progress = false;
+   int next_ip = 0;
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      int ip = next_ip;
+      next_ip++;
+
+      if (inst->opcode != BRW_OPCODE_MOV ||
+	  inst->predicated ||
+	  inst->dst.file != MRF || inst->src[0].file != GRF ||
+	  inst->dst.type != inst->src[0].type ||
+	  inst->src[0].abs || inst->src[0].negate)
+	 continue;
+
+      /* Can't compute-to-MRF this GRF if someone else was going to
+       * read it later.
+       */
+      if (this->virtual_grf_use[inst->src[0].reg] > ip)
+	 continue;
+
+      /* Found a move of a GRF to a MRF.  Let's see if we can go
+       * rewrite the thing that made this GRF to write into the MRF.
+       */
+      bool found = false;
+      fs_inst *scan_inst;
+      for (scan_inst = (fs_inst *)inst->prev;
+	   scan_inst->prev != NULL;
+	   scan_inst = (fs_inst *)scan_inst->prev) {
+	 /* We don't handle flow control here.  Most computation of
+	  * values that end up in MRFs are shortly before the MRF
+	  * write anyway.
+	  */
+	 if (scan_inst->opcode == BRW_OPCODE_DO ||
+	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	    break;
+	 }
+
+	 /* You can't read from an MRF, so if someone else reads our
+	  * MRF's source GRF that we wanted to rewrite, that stops us.
+	  */
+	 bool interfered = false;
+	 for (int i = 0; i < 3; i++) {
+	    if (scan_inst->src[i].file == GRF &&
+		scan_inst->src[i].reg == inst->src[0].reg &&
+		scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
+	       interfered = true;
+	    }
+	 }
+	 if (interfered)
+	    break;
+
+	 if (scan_inst->dst.file == MRF &&
+	     scan_inst->dst.hw_reg == inst->dst.hw_reg) {
+	    /* Somebody else wrote our MRF here, so we can't can't
+	     * compute-to-MRF before that.
+	     */
+	    break;
+	 }
+
+	 if (scan_inst->mlen > 0) {
+	    /* Found a SEND instruction, which will do some amount of
+	     * implied write that may overwrite our MRF that we were
+	     * hoping to compute-to-MRF somewhere above it.  Nothing
+	     * we have implied-writes more than 2 MRFs from base_mrf,
+	     * though.
+	     */
+	    int implied_write_len = MIN2(scan_inst->mlen, 2);
+	    if (inst->dst.hw_reg >= scan_inst->base_mrf &&
+		inst->dst.hw_reg < scan_inst->base_mrf + implied_write_len) {
+	       break;
+	    }
+	 }
+
+	 if (scan_inst->dst.file == GRF &&
+	     scan_inst->dst.reg == inst->src[0].reg) {
+	    /* Found the last thing to write our reg we want to turn
+	     * into a compute-to-MRF.
+	     */
+
+	    if (scan_inst->opcode == FS_OPCODE_TEX) {
+	       /* texturing writes several continuous regs, so we can't
+		* compute-to-mrf that.
+		*/
+	       break;
+	    }
+
+	    /* If it's predicated, it (probably) didn't populate all
+	     * the channels.
+	     */
+	    if (scan_inst->predicated)
+	       break;
+
+	    /* SEND instructions can't have MRF as a destination. */
+	    if (scan_inst->mlen)
+	       break;
+
+	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+	       /* Found the creator of our MRF's source value. */
+	       found = true;
+	       break;
+	    }
+	 }
+      }
+      if (found) {
+	 scan_inst->dst.file = MRF;
+	 scan_inst->dst.hw_reg = inst->dst.hw_reg;
+	 scan_inst->saturate |= inst->saturate;
+	 inst->remove();
+	 progress = true;
+      }
+   }
+
+   return progress;
+}
+
 bool
 fs_visitor::virtual_grf_interferes(int a, int b)
 {
@@ -2825,6 +2947,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;
+	 progress = v.compute_to_mrf() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
 

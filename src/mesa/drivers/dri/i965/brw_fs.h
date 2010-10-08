@@ -339,6 +339,7 @@ public:
    void calculate_live_intervals();
    bool propagate_constants();
    bool register_coalesce();
+   bool compute_to_mrf();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
