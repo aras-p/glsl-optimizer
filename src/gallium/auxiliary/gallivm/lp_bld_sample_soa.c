@@ -805,54 +805,76 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef data_ptr1,
                        LLVMValueRef *colors_out)
 {
+   LLVMBuilderRef builder = bld->builder;
    LLVMValueRef colors0[4], colors1[4];
-   int chan;
+   unsigned chan;
 
+   /* sample the first mipmap level */
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
-      /* sample the first mipmap level */
       lp_build_sample_image_nearest(bld, unit,
                                     width0_vec, height0_vec, depth0_vec,
                                     row_stride0_vec, img_stride0_vec,
-                                    data_ptr0, s, t, r, colors0);
-
-      if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-         /* sample the second mipmap level */
-         lp_build_sample_image_nearest(bld, unit,
-                                       width1_vec, height1_vec, depth1_vec,
-                                       row_stride1_vec, img_stride1_vec,
-                                       data_ptr1, s, t, r, colors1);
-      }
+                                    data_ptr0, s, t, r,
+                                    colors0);
    }
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
-
-      /* sample the first mipmap level */
       lp_build_sample_image_linear(bld, unit,
                                    width0_vec, height0_vec, depth0_vec,
                                    row_stride0_vec, img_stride0_vec,
-                                   data_ptr0, s, t, r, colors0);
+                                   data_ptr0, s, t, r,
+                                   colors0);
+   }
 
-      if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-         /* sample the second mipmap level */
-         lp_build_sample_image_linear(bld, unit,
-                                      width1_vec, height1_vec, depth1_vec,
-                                      row_stride1_vec, img_stride1_vec,
-                                      data_ptr1, s, t, r, colors1);
-      }
+   /* Store the first level's colors in the output variables */
+   for (chan = 0; chan < 4; chan++) {
+       LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      /* interpolate samples from the two mipmap levels */
-      for (chan = 0; chan < 4; chan++) {
-         colors_out[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
+      struct lp_build_flow_context *flow_ctx;
+      struct lp_build_if_state if_ctx;
+      LLVMValueRef need_lerp;
+
+      flow_ctx = lp_build_flow_create(builder);
+
+      /* need_lerp = lod_fpart > 0 */
+      need_lerp = LLVMBuildFCmp(builder, LLVMRealUGT,
+                                lod_fpart,
+                                bld->float_bld.zero,
+                                "need_lerp");
+
+      lp_build_if(&if_ctx, flow_ctx, builder, need_lerp);
+      {
+         /* sample the second mipmap level */
+         if (img_filter == PIPE_TEX_FILTER_NEAREST) {
+            lp_build_sample_image_nearest(bld, unit,
+                                          width1_vec, height1_vec, depth1_vec,
+                                          row_stride1_vec, img_stride1_vec,
+                                          data_ptr1, s, t, r,
+                                          colors1);
+         }
+         else {
+            lp_build_sample_image_linear(bld, unit,
+                                         width1_vec, height1_vec, depth1_vec,
+                                         row_stride1_vec, img_stride1_vec,
+                                         data_ptr1, s, t, r,
+                                         colors1);
+         }
+
+         /* interpolate samples from the two mipmap levels */
+
+         lod_fpart = lp_build_broadcast_scalar(&bld->texel_bld, lod_fpart);
+
+         for (chan = 0; chan < 4; chan++) {
+            colors0[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
                                           colors0[chan], colors1[chan]);
+            LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
+         }
       }
-   }
-   else {
-      /* use first/only level's colors */
-      for (chan = 0; chan < 4; chan++) {
-         colors_out[chan] = colors0[chan];
-      }
+      lp_build_endif(&if_ctx);
+
+      lp_build_flow_destroy(flow_ctx);
    }
 }
 
@@ -885,6 +907,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef *colors_out)
 {
    struct lp_build_context *int_bld = &bld->int_bld;
+   LLVMBuilderRef builder = bld->builder;
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
@@ -897,6 +920,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
    LLVMValueRef data_ptr0, data_ptr1 = NULL;
    LLVMValueRef face_ddx[4], face_ddy[4];
+   LLVMValueRef texels[4];
+   unsigned chan;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
@@ -945,9 +970,13 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    }
 
    /*
-    * Compute integer mipmap level(s) to fetch texels from.
+    * Compute integer mipmap level(s) to fetch texels from: ilevel0, ilevel1
     */
-   if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
+   switch (mip_filter) {
+   default:
+      assert(0 && "bad mip_filter value in lp_build_sample_soa()");
+      /* fall-through */
+   case PIPE_TEX_MIPFILTER_NONE:
       /* always use mip level 0 */
       if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
          /* XXX this is a work-around for an apparent bug in LLVM 2.7.
@@ -960,17 +989,16 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       else {
          ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
       }
-   }
-   else {
+      break;
+   case PIPE_TEX_MIPFILTER_NEAREST:
       assert(lod_ipart);
-      if (mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
-         lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
-      }
-      else {
-         assert(mip_filter == PIPE_TEX_MIPFILTER_LINEAR);
-         lp_build_linear_mip_levels(bld, unit, lod_ipart, &ilevel0, &ilevel1);
-         lod_fpart = lp_build_broadcast_scalar(&bld->coord_bld, lod_fpart);
-      }
+      lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
+      break;
+   case PIPE_TEX_MIPFILTER_LINEAR:
+      assert(lod_ipart);
+      assert(lod_fpart);
+      lp_build_linear_mip_levels(bld, unit, lod_ipart, &ilevel0, &ilevel1);
+      break;
    }
 
    /* compute image size(s) of source mipmap level(s) */
@@ -998,39 +1026,40 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    /*
     * Get/interpolate texture colors.
     */
+
+   for (chan = 0; chan < 4; ++chan) {
+     texels[chan] = lp_build_alloca(builder, bld->texel_bld.vec_type, "");
+     lp_build_name(texels[chan], "sampler%u_texel_%c_var", unit, "xyzw"[chan]);
+   }
+
    if (min_filter == mag_filter) {
       /* no need to distinquish between minification and magnification */
       lp_build_sample_mipmap(bld, unit,
-                             min_filter, mip_filter, s, t, r, lod_fpart,
+                             min_filter, mip_filter,
+                             s, t, r, lod_fpart,
                              width0_vec, width1_vec,
                              height0_vec, height1_vec,
                              depth0_vec, depth1_vec,
                              row_stride0_vec, row_stride1_vec,
                              img_stride0_vec, img_stride1_vec,
                              data_ptr0, data_ptr1,
-                             colors_out);
+                             texels);
    }
    else {
       /* Emit conditional to choose min image filter or mag image filter
-       * depending on the lod being >0 or <= 0, respectively.
+       * depending on the lod being > 0 or <= 0, respectively.
        */
       struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
 
-      flow_ctx = lp_build_flow_create(bld->builder);
-      lp_build_flow_scope_begin(flow_ctx);
-
-      lp_build_flow_scope_declare(flow_ctx, &colors_out[0]);
-      lp_build_flow_scope_declare(flow_ctx, &colors_out[1]);
-      lp_build_flow_scope_declare(flow_ctx, &colors_out[2]);
-      lp_build_flow_scope_declare(flow_ctx, &colors_out[3]);
+      flow_ctx = lp_build_flow_create(builder);
 
       /* minify = lod >= 0.0 */
-      minify = LLVMBuildICmp(bld->builder, LLVMIntSGE,
+      minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
 
-      lp_build_if(&if_ctx, flow_ctx, bld->builder, minify);
+      lp_build_if(&if_ctx, flow_ctx, builder, minify);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld, unit,
@@ -1042,7 +1071,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                 row_stride0_vec, row_stride1_vec,
                                 img_stride0_vec, img_stride1_vec,
                                 data_ptr0, data_ptr1,
-                                colors_out);
+                                texels);
       }
       lp_build_else(&if_ctx);
       {
@@ -1056,12 +1085,16 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                 row_stride0_vec, NULL,
                                 img_stride0_vec, NULL,
                                 data_ptr0, NULL,
-                                colors_out);
+                                texels);
       }
       lp_build_endif(&if_ctx);
 
-      lp_build_flow_scope_end(flow_ctx);
       lp_build_flow_destroy(flow_ctx);
+   }
+
+   for (chan = 0; chan < 4; ++chan) {
+     colors_out[chan] = LLVMBuildLoad(builder, texels[chan], "");
+     lp_build_name(colors_out[chan], "sampler%u_texel_%c", unit, "xyzw"[chan]);
    }
 }
 
