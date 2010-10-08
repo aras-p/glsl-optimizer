@@ -452,10 +452,10 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                              "clamp_lod_to_last");
 
    *level0_out = LLVMBuildSelect(builder, clamp_max,
-                                 int_bld->zero, *level0_out, "");
+                                 last_level, *level0_out, "");
 
    *level1_out = LLVMBuildSelect(builder, clamp_max,
-                                 int_bld->zero, *level1_out, "");
+                                 last_level, *level1_out, "");
 
    *lod_fpart_inout = LLVMBuildSelect(builder, clamp_max,
                                       float_bld->zero, *lod_fpart_inout, "");
