@@ -228,7 +228,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
-   int area;
    struct u_rect bbox;
    unsigned tri_bytes;
    int i;
@@ -312,20 +311,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->plane[1].dcdx = y[1] - y[2];
    tri->plane[2].dcdx = y[2] - y[0];
 
-   area = (tri->plane[0].dcdy * tri->plane[2].dcdx -
-           tri->plane[2].dcdy * tri->plane[0].dcdx);
-
    LP_COUNT(nr_tris);
-
-   /* Cull non-ccw and zero-sized triangles. 
-    *
-    * XXX: subject to overflow??
-    */
-   if (area <= 0) {
-      lp_scene_putback_data( scene, tri_bytes );
-      LP_COUNT(nr_culled_tris);
-      return TRUE;
-   }
 
    /* Setup parameter interpolants:
     */
@@ -635,21 +621,34 @@ fail:
 
 
 /**
- * Draw triangle if it's CW, cull otherwise.
+ * Try to draw the triangle, restart the scene on failure.
  */
-static void triangle_cw( struct lp_setup_context *setup,
-			 const float (*v0)[4],
-			 const float (*v1)[4],
-			 const float (*v2)[4] )
+static void retry_triangle_ccw( struct lp_setup_context *setup,
+                                const float (*v0)[4],
+                                const float (*v1)[4],
+                                const float (*v2)[4],
+                                boolean front)
 {
-   if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
+   if (!do_triangle_ccw( setup, v0, v1, v2, front ))
    {
       if (!lp_setup_flush_and_restart(setup))
          return;
 
-      if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
+      if (!do_triangle_ccw( setup, v0, v1, v2, front ))
          return;
    }
+}
+
+static INLINE float
+calc_area(const float (*v0)[4],
+          const float (*v1)[4],
+          const float (*v2)[4])
+{
+   float dx01 = v0[0][0] - v1[0][0];
+   float dy01 = v0[0][1] - v1[0][1];
+   float dx20 = v2[0][0] - v0[0][0];
+   float dy20 = v2[0][1] - v0[0][1];
+   return dx01 * dy20 - dx20 * dy01;
 }
 
 
@@ -661,17 +660,23 @@ static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
-   {
-      if (!lp_setup_flush_and_restart(setup))
-         return;
+   float area = calc_area(v0, v1, v2);
 
-      if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
-         return;
-   }
+   if (area < 0.0f) 
+      retry_triangle_ccw(setup, v0, v2, v1, !setup->ccw_is_frontface);
 }
 
 
+static void triangle_ccw( struct lp_setup_context *setup,
+                          const float (*v0)[4],
+                          const float (*v1)[4],
+                          const float (*v2)[4])
+{
+   float area = calc_area(v0, v1, v2);
+
+   if (area > 0.0f) 
+      retry_triangle_ccw(setup, v0, v1, v2, setup->ccw_is_frontface);
+}
 
 /**
  * Draw triangle whether it's CW or CCW.
@@ -681,18 +686,12 @@ static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v1)[4],
 			   const float (*v2)[4] )
 {
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0][0] - v2[0][0];
-   const float ey = v0[0][1] - v2[0][1];
-   const float fx = v1[0][0] - v2[0][0];
-   const float fy = v1[0][1] - v2[0][1];
+   float area = calc_area(v0, v1, v2);
 
-   /* det = cross(e,f).z */
-   const float det = ex * fy - ey * fx;
-   if (det < 0.0f) 
-      triangle_ccw( setup, v0, v1, v2 );
-   else if (det > 0.0f)
-      triangle_cw( setup, v0, v1, v2 );
+   if (area > 0.0f) 
+      retry_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
+   else if (area < 0.0f)
+      retry_triangle_ccw( setup, v0, v2, v1, !setup->ccw_is_frontface );
 }
 
 
