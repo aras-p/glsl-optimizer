@@ -532,12 +532,6 @@ static struct prog_src_register search_or_add_param5(struct brw_wm_compile *c,
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   
-   for (idx = 0; idx < paramList->NumParameters; idx++) {
-      if (paramList->Parameters[idx].Type == PROGRAM_STATE_VAR &&
-	  memcmp(paramList->Parameters[idx].StateIndexes, tokens, sizeof(tokens)) == 0)
-	 return src_reg(PROGRAM_STATE_VAR, idx);
-   }
 
    idx = _mesa_add_state_reference( paramList, tokens );
 
