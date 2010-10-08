@@ -464,7 +464,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
 				word4 | S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_NORM) |
 				S_030010_SRF_MODE_ALL(V_030010_SFR_MODE_NO_ZERO) |
-				S_030010_REQUEST_SIZE(1) |
 				S_030010_BASE_LEVEL(state->first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
 				S_030014_LAST_LEVEL(state->last_level) |

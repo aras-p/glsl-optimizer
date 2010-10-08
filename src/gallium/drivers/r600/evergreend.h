@@ -984,9 +984,6 @@
 #define   S_030010_ENDIAN_SWAP(x)                      (((x) & 0x3) << 12)
 #define   G_030010_ENDIAN_SWAP(x)                      (((x) >> 12) & 0x3)
 #define   C_030010_ENDIAN_SWAP                         0xFFFFCFFF
-#define   S_030010_REQUEST_SIZE(x)                     (((x) & 0x3) << 14)
-#define   G_030010_REQUEST_SIZE(x)                     (((x) >> 14) & 0x3)
-#define   C_030010_REQUEST_SIZE                        0xFFFF3FFF
 #define   S_030010_DST_SEL_X(x)                        (((x) & 0x7) << 16)
 #define   G_030010_DST_SEL_X(x)                        (((x) >> 16) & 0x7)
 #define   C_030010_DST_SEL_X                           0xFFF8FFFF
