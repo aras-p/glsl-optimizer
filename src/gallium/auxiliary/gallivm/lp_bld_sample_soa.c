@@ -291,6 +291,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          coord = lp_build_mul(coord_bld, coord, length_f);
          coord = lp_build_sub(coord_bld, coord, half);
       }
+      /* XXX this is odd normalized ranges from -0.5 to length-0.5 after denorm
+         but non-normalized ranges from to 0.5 to length-0.5 after clamp */
       else {
          LLVMValueRef min, max;
          /* clamp to [0.5, length - 0.5] */
@@ -309,16 +311,15 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
-         LLVMValueRef min, max;
+         LLVMValueRef min;
          if (bld->static_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
-         /* clamp to [-0.5, length + 0.5] */
-         min = lp_build_const_vec(coord_bld->type, -0.5F);
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
+         /* was: clamp to [-0.5, length + 0.5], then sub 0.5 */
          coord = lp_build_sub(coord_bld, coord, half);
+         min = lp_build_const_vec(coord_bld->type, -1.0F);
+         coord = lp_build_clamp(coord_bld, coord, min, length_f);
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
@@ -388,8 +389,6 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
-         LLVMValueRef min, max;
-
          coord = lp_build_abs(coord_bld, coord);
 
          if (bld->static_state->normalized_coords) {
@@ -397,12 +396,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
 
-         /* clamp to [-0.5, length + 0.5] */
-         min = lp_build_negate(coord_bld, half);
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
-
+         /* was: clamp to [-0.5, length + 0.5] then sub 0.5 */
+         /* skip -0.5 clamp (always positive), do sub first */
          coord = lp_build_sub(coord_bld, coord, half);
+         coord = lp_build_min(coord_bld, coord, length_f);
 
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
