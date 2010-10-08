@@ -39,10 +39,18 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_const.h"
 #include "lp_bld_debug.h"
+#include "lp_bld_printf.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_sample.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_type.h"
+
+
+/*
+ * Bri-linear factor. Use zero or any other number less than one to force
+ * tri-linear filtering.
+ */
+#define BRILINEAR_FACTOR 2
 
 
 /**
@@ -254,6 +262,79 @@ lp_build_rho(struct lp_build_sample_context *bld,
 }
 
 
+/*
+ * Bri-linear lod computation
+ *
+ * Use a piece-wise linear approximation of log2 such that:
+ * - round to nearest, for values in the neighborhood of -1, 0, 1, 2, etc.
+ * - linear approximation for values in the neighborhood of 0.5, 1.5., etc,
+ *   with the steepness specified in 'factor'
+ * - exact result for 0.5, 1.5, etc.
+ *
+ *
+ *   1.0 -              /----*
+ *                     /
+ *                    /
+ *                   /
+ *   0.5 -          *
+ *                 /
+ *                /
+ *               /
+ *   0.0 - *----/
+ *
+ *         |                 |
+ *        2^0               2^1
+ *
+ * This is a technique also commonly used in hardware:
+ * - http://ixbtlabs.com/articles2/gffx/nv40-rx800-3.html
+ *
+ * TODO: For correctness, this should only be applied when texture is known to
+ * have regular mipmaps, i.e., mipmaps derived from the base level.
+ *
+ * TODO: This could be done in fixed point, where applicable.
+ */
+static void
+lp_build_brilinear_lod(struct lp_build_sample_context *bld,
+                       LLVMValueRef lod,
+                       double factor,
+                       LLVMValueRef *out_lod_ipart,
+                       LLVMValueRef *out_lod_fpart)
+{
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef lod_fpart;
+   float pre_offset = (factor - 0.5)/factor - 0.5;
+   float post_offset = 1 - factor;
+
+   if (0) {
+      lp_build_printf(bld->builder, "lod = %f\n", lod);
+   }
+
+   lod = lp_build_add(float_bld, lod,
+                      lp_build_const_vec(float_bld->type, pre_offset));
+
+   lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, &lod_fpart);
+
+   lod_fpart = lp_build_mul(float_bld, lod_fpart,
+                            lp_build_const_vec(float_bld->type, factor));
+
+   lod_fpart = lp_build_add(float_bld, lod_fpart,
+                            lp_build_const_vec(float_bld->type, post_offset));
+
+   /*
+    * It's not necessary to clamp lod_fpart since:
+    * - the above expression will never produce numbers greater than one.
+    * - the mip filtering branch is only taken if lod_fpart is positive
+    */
+
+   *out_lod_fpart = lod_fpart;
+
+   if (0) {
+      lp_build_printf(bld->builder, "lod_ipart = %i\n", *out_lod_ipart);
+      lp_build_printf(bld->builder, "lod_fpart = %f\n\n", *out_lod_fpart);
+   }
+}
+
+
 /**
  * Generate code to compute texture level of detail (lambda).
  * \param ddx  partial derivatives of (s, t, r, q) with respect to X
@@ -359,7 +440,14 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, out_lod_fpart);
+      if (BRILINEAR_FACTOR > 1.0) {
+         lp_build_brilinear_lod(bld, lod, BRILINEAR_FACTOR,
+                                out_lod_ipart, out_lod_fpart);
+      }
+      else {
+         lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, out_lod_fpart);
+      }
+
       lp_build_name(*out_lod_ipart, "lod_ipart");
       lp_build_name(*out_lod_fpart, "lod_fpart");
    }
