@@ -1053,6 +1053,54 @@ lp_build_round_sse41(struct lp_build_context *bld,
 }
 
 
+static INLINE LLVMValueRef
+lp_build_iround_nearest_sse2(struct lp_build_context *bld,
+                             LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMTypeRef ret_type = lp_build_int_vec_type(type);
+   const char *intrinsic;
+   LLVMValueRef res;
+
+   assert(type.floating);
+   /* using the double precision conversions is a bit more complicated */
+   assert(type.width == 32);
+
+   assert(lp_check_value(type, a));
+   assert(util_cpu_caps.has_sse2);
+
+   /* This is relying on MXCSR rounding mode, which should always be nearest. */
+   if (type.length == 1) {
+      LLVMTypeRef vec_type;
+      LLVMValueRef undef;
+      LLVMValueRef arg;
+      LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
+
+      vec_type = LLVMVectorType(bld->elem_type, 4);
+
+      intrinsic = "llvm.x86.sse.cvtss2si";
+
+      undef = LLVMGetUndef(vec_type);
+
+      arg = LLVMBuildInsertElement(bld->builder, undef, a, index0, "");
+
+      res = lp_build_intrinsic_unary(bld->builder, intrinsic,
+                                     ret_type, arg);
+   }
+   else {
+      assert(type.width*type.length == 128);
+
+      intrinsic = "llvm.x86.sse2.cvtps2dq";
+
+      res = lp_build_intrinsic_unary(bld->builder, intrinsic,
+                                     ret_type, a);
+   }
+
+   return res;
+}
+
+
 /**
  * Return the integer part of a float (vector) value (== round toward zero).
  * The returned value is a float (vector).
@@ -1217,7 +1265,11 @@ lp_build_iround(struct lp_build_context *bld,
 
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 &&
+   if (util_cpu_caps.has_sse2 &&
+       ((type.width == 32) && (type.length == 1 || type.length == 4))) {
+      return lp_build_iround_nearest_sse2(bld, a);
+   }
+   else if (util_cpu_caps.has_sse4_1 &&
        (type.length == 1 || type.width*type.length == 128)) {
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
    }
