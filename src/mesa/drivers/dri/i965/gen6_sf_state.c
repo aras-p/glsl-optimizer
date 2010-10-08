@@ -52,7 +52,7 @@ get_attr_override(struct brw_context *brw, int fs_attr)
     * for this output attribute.  attr is currently a VERT_RESULT_* but should
     * be FRAG_ATTRIB_*.
     */
-   for (i = 0; i < vs_attr; i++) {
+   for (i = 1; i < vs_attr; i++) {
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
@@ -75,6 +75,7 @@ upload_sf_state(struct brw_context *brw)
    int attr = 0;
 
    dw1 =
+      GEN6_SF_SWIZZLE_ENABLE |
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
       1 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
