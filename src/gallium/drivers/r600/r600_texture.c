@@ -99,8 +99,6 @@ static void r600_setup_miptree(struct r600_resource_texture *rtex, enum chip_cla
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch[i] = pitch;
-		rtex->width[i] = w;
-		rtex->height[i] = h;
 		offset += size;
 	}
 	rtex->size = offset;
@@ -217,8 +215,6 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	rtex->pitch_override = whandle->stride;
 	rtex->bpt = util_format_get_blocksize(templ->format);
 	rtex->pitch[0] = whandle->stride;
-	rtex->width[0] = templ->width0;
-	rtex->height[0] = templ->height0;
 	rtex->offset[0] = 0;
 	rtex->size = align(rtex->pitch[0] * templ->height0, 64);
 
