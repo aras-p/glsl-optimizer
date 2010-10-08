@@ -56,7 +56,7 @@
 #include "draw/draw_vbuf.h"
 
 
-static void set_scene_state( struct lp_setup_context *, enum setup_state,
+static boolean set_scene_state( struct lp_setup_context *, enum setup_state,
                              const char *reason);
 static boolean try_update_scene_state( struct lp_setup_context *setup );
 
@@ -167,7 +167,7 @@ lp_setup_rasterize_scene( struct lp_setup_context *setup )
 
 
 
-static void
+static boolean
 begin_binning( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = setup->scene;
@@ -181,6 +181,8 @@ begin_binning( struct lp_setup_context *setup )
    /* Always create a fence:
     */
    scene->fence = lp_fence_create(MAX2(1, setup->num_threads));
+   if (!scene->fence)
+      return FALSE;
 
    /* Initialize the bin flags and x/y coords:
     */
@@ -192,7 +194,8 @@ begin_binning( struct lp_setup_context *setup )
    }
 
    ok = try_update_scene_state(setup);
-   assert(ok);
+   if (!ok)
+      return FALSE;
 
    if (setup->fb.zsbuf &&
        ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
@@ -208,7 +211,8 @@ begin_binning( struct lp_setup_context *setup )
          ok = lp_scene_bin_everywhere( scene, 
                                        LP_RAST_OP_CLEAR_COLOR, 
                                        setup->clear.color );
-         assert(ok);
+         if (!ok)
+            return FALSE;
       }
    }
 
@@ -216,12 +220,14 @@ begin_binning( struct lp_setup_context *setup )
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) {
          if (!need_zsload)
             scene->has_depthstencil_clear = TRUE;
+
          ok = lp_scene_bin_everywhere( scene,
                                        LP_RAST_OP_CLEAR_ZSTENCIL,
                                        lp_rast_arg_clearzs(
                                           setup->clear.zsvalue,
                                           setup->clear.zsmask));
-         assert(ok);
+         if (!ok)
+            return FALSE;
       }
    }
 
@@ -229,15 +235,16 @@ begin_binning( struct lp_setup_context *setup )
       ok = lp_scene_bin_everywhere( scene,
                                     LP_RAST_OP_BEGIN_QUERY,
                                     lp_rast_arg_query(setup->active_query) );
-      assert(ok);
+      if (!ok)
+         return FALSE;
    }
-      
 
    setup->clear.flags = 0;
    setup->clear.zsmask = 0;
    setup->clear.zsvalue = 0;
 
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);
+   return TRUE;
 }
 
 
@@ -246,12 +253,12 @@ begin_binning( struct lp_setup_context *setup )
  *
  * TODO: fast path for fullscreen clears and no triangles.
  */
-static void
+static boolean
 execute_clears( struct lp_setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   begin_binning( setup );
+   return begin_binning( setup );
 }
 
 const char *states[] = {
@@ -262,7 +269,7 @@ const char *states[] = {
 };
 
 
-static void
+static boolean
 set_scene_state( struct lp_setup_context *setup,
                  enum setup_state new_state,
                  const char *reason)
@@ -270,7 +277,7 @@ set_scene_state( struct lp_setup_context *setup,
    unsigned old_state = setup->state;
 
    if (old_state == new_state)
-      return;
+      return TRUE;
    
    if (LP_DEBUG & DEBUG_SCENE) {
       debug_printf("%s old %s new %s%s%s\n",
@@ -294,12 +301,14 @@ set_scene_state( struct lp_setup_context *setup,
       break;
 
    case SETUP_ACTIVE:
-      begin_binning( setup );
+      if (!begin_binning( setup ))
+         goto fail;
       break;
 
    case SETUP_FLUSHED:
       if (old_state == SETUP_CLEARED)
-         execute_clears( setup );
+         if (!execute_clears( setup ))
+            goto fail;
 
       lp_setup_rasterize_scene( setup );
       assert(setup->scene == NULL);
@@ -307,9 +316,21 @@ set_scene_state( struct lp_setup_context *setup,
 
    default:
       assert(0 && "invalid setup state mode");
+      goto fail;
    }
 
    setup->state = new_state;
+   return TRUE;
+
+fail:
+   if (setup->scene) {
+      lp_scene_end_rasterization(setup->scene);
+      setup->scene = NULL;
+   }
+
+   setup->state = SETUP_FLUSHED;
+   lp_setup_reset( setup );
+   return FALSE;
 }
 
 
@@ -878,7 +899,7 @@ try_update_scene_state( struct lp_setup_context *setup )
    return TRUE;
 }
 
-void
+boolean
 lp_setup_update_state( struct lp_setup_context *setup,
                        boolean update_scene )
 {
@@ -902,20 +923,38 @@ lp_setup_update_state( struct lp_setup_context *setup,
       assert(lp->dirty == 0);
    }
 
-   if (update_scene)
-      set_scene_state( setup, SETUP_ACTIVE, __FUNCTION__ );
+   if (update_scene) {
+      if (!set_scene_state( setup, SETUP_ACTIVE, __FUNCTION__ ))
+         return FALSE;
+   }
 
    /* Only call into update_scene_state() if we already have a
     * scene:
     */
    if (update_scene && setup->scene) {
       assert(setup->state == SETUP_ACTIVE);
-      if (!try_update_scene_state(setup)) {
-         lp_setup_flush_and_restart(setup);
-         if (!try_update_scene_state(setup))
-            assert(0);
-      }
+
+      if (try_update_scene_state(setup))
+         return TRUE;
+
+      /* Update failed, try to restart the scene.
+       *
+       * Cannot call lp_setup_flush_and_restart() directly here
+       * because of potential recursion.
+       */
+      if (!set_scene_state(setup, SETUP_FLUSHED, __FUNCTION__))
+         return FALSE;
+
+      if (!set_scene_state(setup, SETUP_ACTIVE, __FUNCTION__))
+         return FALSE;
+
+      if (!setup->scene)
+         return FALSE;
+
+      return try_update_scene_state(setup);
    }
+
+   return TRUE;
 }
 
 
@@ -1019,12 +1058,12 @@ lp_setup_begin_query(struct lp_setup_context *setup,
                                    LP_RAST_OP_BEGIN_QUERY,
                                    lp_rast_arg_query(pq))) {
 
-         lp_setup_flush_and_restart(setup);
+         if (!lp_setup_flush_and_restart(setup))
+            return;
 
          if (!lp_scene_bin_everywhere(setup->scene,
                                       LP_RAST_OP_BEGIN_QUERY,
                                       lp_rast_arg_query(pq))) {
-            assert(0);
             return;
          }
       }
@@ -1068,14 +1107,20 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 }
 
 
-void
+boolean
 lp_setup_flush_and_restart(struct lp_setup_context *setup)
 {
    if (0) debug_printf("%s\n", __FUNCTION__);
 
    assert(setup->state == SETUP_ACTIVE);
-   set_scene_state(setup, SETUP_FLUSHED, __FUNCTION__);
-   lp_setup_update_state(setup, TRUE);
+
+   if (!set_scene_state(setup, SETUP_FLUSHED, __FUNCTION__))
+      return FALSE;
+   
+   if (!lp_setup_update_state(setup, TRUE))
+      return FALSE;
+
+   return TRUE;
 }
 
 

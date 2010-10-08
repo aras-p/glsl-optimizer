@@ -160,12 +160,12 @@ void lp_setup_choose_point( struct lp_setup_context *setup );
 
 void lp_setup_init_vbuf(struct lp_setup_context *setup);
 
-void lp_setup_update_state( struct lp_setup_context *setup,
+boolean lp_setup_update_state( struct lp_setup_context *setup,
                             boolean update_scene);
 
 void lp_setup_destroy( struct lp_setup_context *setup );
 
-void lp_setup_flush_and_restart(struct lp_setup_context *setup);
+boolean lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 void
 lp_setup_print_triangle(struct lp_setup_context *setup,
@@ -190,7 +190,5 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
                        int nr_planes );
-
-void lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 #endif

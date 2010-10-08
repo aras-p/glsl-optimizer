@@ -712,10 +712,11 @@ static void lp_setup_line( struct lp_setup_context *setup,
 {
    if (!try_setup_line( setup, v0, v1 ))
    {
-      lp_setup_flush_and_restart(setup);
+      if (!lp_setup_flush_and_restart(setup))
+         return;
 
       if (!try_setup_line( setup, v0, v1 ))
-         assert(0);
+         return;
    }
 }
 

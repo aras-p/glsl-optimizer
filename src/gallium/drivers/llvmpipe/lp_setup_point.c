@@ -414,10 +414,11 @@ lp_setup_point(struct lp_setup_context *setup,
 {
    if (!try_setup_point( setup, v0 ))
    {
-      lp_setup_flush_and_restart(setup);
+      if (!lp_setup_flush_and_restart(setup))
+         return;
 
       if (!try_setup_point( setup, v0 ))
-         assert(0);
+         return;
    }
 }
 

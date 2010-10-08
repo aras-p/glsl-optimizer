@@ -644,27 +644,30 @@ static void triangle_cw( struct lp_setup_context *setup,
 {
    if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
    {
-      lp_setup_flush_and_restart(setup);
+      if (!lp_setup_flush_and_restart(setup))
+         return;
 
       if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
-         assert(0);
+         return;
    }
 }
 
 
 /**
- * Draw triangle if it's CCW, cull otherwise.
+ * Draw triangle if it's CW, cull otherwise.
  */
-static void triangle_ccw( struct lp_setup_context *setup,
+static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
    if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
    {
-      lp_setup_flush_and_restart(setup);
+      if (!lp_setup_flush_and_restart(setup))
+         return;
+
       if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
-         assert(0);
+         return;
    }
 }
 
