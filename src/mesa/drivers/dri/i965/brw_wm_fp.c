@@ -555,19 +555,6 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    values[2] = s2;
    values[3] = s3;
 
-   /* Have to search, otherwise multiple compilations will each grow
-    * the parameter list.
-    */
-   for (idx = 0; idx < paramList->NumParameters; idx++) {
-      if (paramList->Parameters[idx].Type == PROGRAM_CONSTANT &&
-	  memcmp(paramList->ParameterValues[idx], values, sizeof(values)) == 0)
-
-	 /* XXX: this mimics the mesa bug which puts all constants and
-	  * parameters into the "PROGRAM_STATE_VAR" category:
-	  */
-	 return src_reg(PROGRAM_STATE_VAR, idx);
-   }
-   
    idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
    assert(swizzle == SWIZZLE_NOOP); /* Need to handle swizzle in reg setup */
    return src_reg(PROGRAM_STATE_VAR, idx);
