@@ -358,8 +358,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 187
-#define YY_END_OF_BUFFER 188
+#define YY_NUM_RULES 189
+#define YY_END_OF_BUFFER 190
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -369,84 +369,84 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[716] =
     {   0,
-        0,    0,   15,   15,    0,    0,  188,  186,    1,   20,
-      186,  186,  186,  186,  186,  186,  186,  186,  100,   98,
-      186,  186,  186,  185,  186,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  186,    1,  186,   95,  187,
-       15,   19,  187,   18,   16,   17,   13,   12,    1,   84,
-       91,   85,   94,   88,   79,   90,   80,   97,  102,   89,
-      103,  100,    0,    0,  105,    0,   98,    0,   81,   83,
-       82,    0,  185,   87,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,   29,  185,  185,  185,
+        0,    0,   15,   15,    0,    0,  190,  188,    1,   20,
+      188,  188,  188,  188,  188,  188,  188,  188,  102,  100,
+      188,  188,  188,  187,  188,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  188,    1,  188,   97,  189,
+       15,   19,  189,   18,   16,   17,   13,   12,    1,   84,
+       93,   85,   96,   90,   79,   92,   80,   99,  104,   91,
+      105,  102,    0,    0,  107,    0,  100,   88,   81,   83,
+       82,   89,  187,   87,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,   29,  187,  187,  187,
 
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-       33,  185,  185,   60,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,   96,   86,    1,    0,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+       33,  187,  187,   60,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,   98,   86,    1,    0,
         0,    2,    0,    0,    0,    0,   15,   14,   18,   17,
-        0,  102,  101,    0,  103,    0,  104,   99,   92,   93,
-      185,  108,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,   32,  185,  185,  185,  185,  185,  185,
+        0,  104,  103,    0,  105,    0,  106,  101,   94,   95,
+      187,  110,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,   32,  187,  187,  187,  187,  187,  187,
 
-      185,  185,  185,  185,   25,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,   61,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,    0,    0,    0,    0,   14,
-        0,  102,    0,  101,    0,  103,  104,  185,  185,   23,
-      185,  185,  148,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,   31,  111,  185,  185,  185,  185,   67,  185,
-      185,  116,  130,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  127,  151,   48,   49,   50,  185,
+      187,  187,  187,  187,   25,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,   61,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,    0,    0,    0,    0,   14,
+        0,  104,    0,  103,    0,  105,  106,  187,  187,   23,
+      187,  187,  150,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,   31,  113,  187,  187,  187,  187,   67,  187,
+      187,  118,  132,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  129,  153,   48,   49,   50,  187,
 
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  114,
-      106,  185,  185,   26,  185,  185,  185,  185,  185,  185,
-       45,   46,   47,   77,  185,  185,    0,    0,    0,    0,
-        0,  101,  185,  185,   27,   36,   37,   38,  185,  109,
-      185,   22,  185,  185,  185,  185,  138,  139,  140,  185,
-      107,  185,  131,   24,  141,  142,  143,  153,  135,  136,
-      137,  185,  185,  185,   62,  133,  185,  185,   39,   40,
-       41,  185,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  128,  185,  185,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  116,
+      108,  187,  187,   26,  187,  187,  187,  187,  187,  187,
+       45,   46,   47,   77,  187,  187,    0,    0,    0,    0,
+        0,  103,  187,  187,   27,   36,   37,   38,  187,  111,
+      187,   22,  187,  187,  187,  187,  140,  141,  142,  187,
+      109,  187,  133,   24,  143,  144,  145,  155,  137,  138,
+      139,  187,  187,  187,   62,  135,  187,  187,   39,   40,
+       41,  187,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  130,  187,  187,
 
-      185,  185,  185,  185,  185,  185,  185,  185,  110,  185,
-      150,   42,   43,   44,  185,  185,   30,    0,    0,    0,
-        0,  157,  185,  185,  155,  185,  185,  185,  129,  124,
-      160,  185,  185,  185,  185,  185,  185,  119,  185,  185,
+      187,  187,  187,  187,  187,  187,  187,  187,  112,  187,
+      152,   42,   43,   44,  187,  187,   30,    0,    0,    0,
+        0,  159,  187,  187,  157,  187,  187,  187,  131,  126,
+      162,  187,  187,  187,  187,  187,  187,  121,  187,  187,
        78,   51,   52,   53,   54,   55,   56,   57,   58,   59,
-      185,  185,  185,  185,  134,  115,  185,  185,  122,   35,
-      185,  185,  147,   68,  123,   76,  158,  117,  185,  185,
-      185,  185,  185,  185,  185,    0,    0,    0,    0,  185,
-      185,  185,  118,   34,  185,  185,  185,  185,  185,  185,
-      161,  162,  163,  185,  185,  185,  185,  152,  185,  185,
+      187,  187,  187,  187,  136,  117,  187,  187,  124,   35,
+      187,  187,  149,   68,  125,   76,  160,  119,  187,  187,
+      187,  187,  187,  187,  187,    0,    0,    0,    0,  187,
+      187,  187,  120,   34,  187,  187,  187,  187,  187,  187,
+      163,  164,  165,  187,  187,  187,  187,  154,  187,  187,
 
-      185,  185,  185,  185,  185,  185,  112,  185,  185,  185,
-      185,  185,   63,  185,   64,  185,    0,    0,    0,    0,
-        0,  185,   65,   28,  125,  165,  166,  167,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  120,
-      185,  185,  185,  185,  185,  185,  185,  185,  185,  113,
-      169,  170,  171,  185,  185,  132,  121,    0,    0,    6,
-        0,    0,    0,   11,    3,   21,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  164,  126,   66,  149,  185,
-      156,  154,  184,   70,   71,   72,  185,  185,  185,  185,
-      185,  185,    0,    0,    0,    0,    0,    0,  185,  185,
+      187,  187,  187,  187,  187,  187,  114,  187,  187,  187,
+      187,  187,   63,  187,   64,  187,    0,    0,    0,    0,
+        0,  187,   65,   28,  127,  167,  168,  169,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  122,
+      187,  187,  187,  187,  187,  187,  187,  187,  187,  115,
+      171,  172,  173,  187,  187,  134,  123,    0,    0,    6,
+        0,    0,    0,   11,    3,   21,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  166,  128,   66,  151,  187,
+      158,  156,  186,   70,   71,   72,  187,  187,  187,  187,
+      187,  187,    0,    0,    0,    0,    0,    0,  187,  187,
 
-      185,  168,  185,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  185,  185,  185,  185,  185,  172,    4,    0,
-        5,    0,    0,    0,    0,    0,  185,  185,  185,  185,
-      185,  185,  185,  181,  185,  185,  185,  185,  185,  185,
-       73,  185,  185,  185,    0,    0,    0,  185,  185,  182,
-      173,  185,  174,  185,  185,  185,  185,  185,  185,  185,
-      185,  185,  183,    0,    0,  175,  176,  179,  180,   69,
-      185,  144,  185,  145,  159,  177,  178,    0,    0,  185,
-      185,  185,    0,    0,    0,   74,  185,   75,    0,    0,
-        0,  185,    0,    0,    0,  185,    0,    0,    7,    0,
+      187,  170,  187,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  187,  187,  187,  187,  187,  174,    4,    0,
+        5,    0,    0,    0,    0,    0,  187,  187,  187,  187,
+      187,  187,  187,  183,  187,  187,  187,  187,  187,  187,
+       73,  187,  187,  187,    0,    0,    0,  187,  187,  184,
+      175,  187,  176,  187,  187,  187,  187,  187,  187,  187,
+      187,  187,  185,    0,    0,  177,  178,  181,  182,   69,
+      187,  146,  187,  147,  161,  179,  180,    0,    0,  187,
+      187,  187,    0,    0,    0,   74,  187,   75,    0,    0,
+        0,  187,    0,    0,    0,  187,    0,    0,    7,    0,
 
-        0,  185,    0,    8,    0,    0,  146,    0,    0,    0,
+        0,  187,    0,    8,    0,    0,  148,    0,    0,    0,
         0,    9,    0,   10,    0
     } ;
 
@@ -1830,97 +1830,91 @@ return XOR_OP;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 244 "glsl_lexer.lpp"
-return MUL_ASSIGN;
+#line 243 "glsl_lexer.lpp"
+return LEFT_OP;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 245 "glsl_lexer.lpp"
-return DIV_ASSIGN;
+#line 244 "glsl_lexer.lpp"
+return RIGHT_OP;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
 #line 246 "glsl_lexer.lpp"
-return ADD_ASSIGN;
+return MUL_ASSIGN;
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
 #line 247 "glsl_lexer.lpp"
-return MOD_ASSIGN;
+return DIV_ASSIGN;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
 #line 248 "glsl_lexer.lpp"
-return LEFT_ASSIGN;
+return ADD_ASSIGN;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
 #line 249 "glsl_lexer.lpp"
-return RIGHT_ASSIGN;
+return MOD_ASSIGN;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
 #line 250 "glsl_lexer.lpp"
-return AND_ASSIGN;
+return LEFT_ASSIGN;
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
 #line 251 "glsl_lexer.lpp"
-return XOR_ASSIGN;
+return RIGHT_ASSIGN;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
 #line 252 "glsl_lexer.lpp"
-return OR_ASSIGN;
+return AND_ASSIGN;
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
 #line 253 "glsl_lexer.lpp"
-return SUB_ASSIGN;
+return XOR_ASSIGN;
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
+#line 254 "glsl_lexer.lpp"
+return OR_ASSIGN;
+	YY_BREAK
+case 99:
+YY_RULE_SETUP
 #line 255 "glsl_lexer.lpp"
+return SUB_ASSIGN;
+	YY_BREAK
+case 100:
+YY_RULE_SETUP
+#line 257 "glsl_lexer.lpp"
 {
 			    yylval->n = strtol(yytext, NULL, 10);
 			    return INTCONSTANT;
 			}
 	YY_BREAK
-case 99:
+case 101:
 YY_RULE_SETUP
-#line 259 "glsl_lexer.lpp"
+#line 261 "glsl_lexer.lpp"
 {
 			    yylval->n = strtol(yytext + 2, NULL, 16);
 			    return INTCONSTANT;
 			}
 	YY_BREAK
-case 100:
+case 102:
 YY_RULE_SETUP
-#line 263 "glsl_lexer.lpp"
+#line 265 "glsl_lexer.lpp"
 {
 			    yylval->n = strtol(yytext, NULL, 8);
 			    return INTCONSTANT;
 			}
 	YY_BREAK
-case 101:
-YY_RULE_SETUP
-#line 268 "glsl_lexer.lpp"
-{
-			    yylval->real = strtod(yytext, NULL);
-			    return FLOATCONSTANT;
-			}
-	YY_BREAK
-case 102:
-YY_RULE_SETUP
-#line 272 "glsl_lexer.lpp"
-{
-			    yylval->real = strtod(yytext, NULL);
-			    return FLOATCONSTANT;
-			}
-	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 276 "glsl_lexer.lpp"
+#line 270 "glsl_lexer.lpp"
 {
 			    yylval->real = strtod(yytext, NULL);
 			    return FLOATCONSTANT;
@@ -1928,7 +1922,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 280 "glsl_lexer.lpp"
+#line 274 "glsl_lexer.lpp"
 {
 			    yylval->real = strtod(yytext, NULL);
 			    return FLOATCONSTANT;
@@ -1936,7 +1930,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 284 "glsl_lexer.lpp"
+#line 278 "glsl_lexer.lpp"
 {
 			    yylval->real = strtod(yytext, NULL);
 			    return FLOATCONSTANT;
@@ -1944,411 +1938,427 @@ YY_RULE_SETUP
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 289 "glsl_lexer.lpp"
+#line 282 "glsl_lexer.lpp"
+{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+	YY_BREAK
+case 107:
+YY_RULE_SETUP
+#line 286 "glsl_lexer.lpp"
+{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+	YY_BREAK
+case 108:
+YY_RULE_SETUP
+#line 291 "glsl_lexer.lpp"
 {
 			    yylval->n = 1;
 			    return BOOLCONSTANT;
 			}
 	YY_BREAK
-case 107:
+case 109:
 YY_RULE_SETUP
-#line 293 "glsl_lexer.lpp"
+#line 295 "glsl_lexer.lpp"
 {
 			    yylval->n = 0;
 			    return BOOLCONSTANT;
 			}
 	YY_BREAK
 /* Reserved words in GLSL 1.10. */
-case 108:
-YY_RULE_SETUP
-#line 300 "glsl_lexer.lpp"
-RESERVED_WORD(999, ASM);
-	YY_BREAK
-case 109:
-YY_RULE_SETUP
-#line 301 "glsl_lexer.lpp"
-RESERVED_WORD(999, CLASS);
-	YY_BREAK
 case 110:
 YY_RULE_SETUP
 #line 302 "glsl_lexer.lpp"
-RESERVED_WORD(999, UNION);
+RESERVED_WORD(999, ASM);
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
 #line 303 "glsl_lexer.lpp"
-RESERVED_WORD(999, ENUM);
+RESERVED_WORD(999, CLASS);
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
 #line 304 "glsl_lexer.lpp"
-RESERVED_WORD(999, TYPEDEF);
+RESERVED_WORD(999, UNION);
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
 #line 305 "glsl_lexer.lpp"
-RESERVED_WORD(999, TEMPLATE);
+RESERVED_WORD(999, ENUM);
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
 #line 306 "glsl_lexer.lpp"
-RESERVED_WORD(999, THIS);
+RESERVED_WORD(999, TYPEDEF);
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
 #line 307 "glsl_lexer.lpp"
-RESERVED_WORD(999, PACKED_TOK);
+RESERVED_WORD(999, TEMPLATE);
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
 #line 308 "glsl_lexer.lpp"
-RESERVED_WORD(999, GOTO);
+RESERVED_WORD(999, THIS);
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
 #line 309 "glsl_lexer.lpp"
-RESERVED_WORD(130, SWITCH);
+RESERVED_WORD(999, PACKED_TOK);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
 #line 310 "glsl_lexer.lpp"
-RESERVED_WORD(130, DEFAULT);
+RESERVED_WORD(999, GOTO);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
 #line 311 "glsl_lexer.lpp"
-RESERVED_WORD(999, INLINE_TOK);
+RESERVED_WORD(130, SWITCH);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
 #line 312 "glsl_lexer.lpp"
-RESERVED_WORD(999, NOINLINE);
+RESERVED_WORD(130, DEFAULT);
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
 #line 313 "glsl_lexer.lpp"
-RESERVED_WORD(999, VOLATILE);
+RESERVED_WORD(999, INLINE_TOK);
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
 #line 314 "glsl_lexer.lpp"
-RESERVED_WORD(999, PUBLIC_TOK);
+RESERVED_WORD(999, NOINLINE);
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
 #line 315 "glsl_lexer.lpp"
-RESERVED_WORD(999, STATIC);
+RESERVED_WORD(999, VOLATILE);
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
 #line 316 "glsl_lexer.lpp"
-RESERVED_WORD(999, EXTERN);
+RESERVED_WORD(999, PUBLIC_TOK);
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
 #line 317 "glsl_lexer.lpp"
-RESERVED_WORD(999, EXTERNAL);
+RESERVED_WORD(999, STATIC);
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
 #line 318 "glsl_lexer.lpp"
-RESERVED_WORD(999, INTERFACE);
+RESERVED_WORD(999, EXTERN);
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
 #line 319 "glsl_lexer.lpp"
-RESERVED_WORD(999, LONG_TOK);
+RESERVED_WORD(999, EXTERNAL);
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
 #line 320 "glsl_lexer.lpp"
-RESERVED_WORD(999, SHORT_TOK);
+RESERVED_WORD(999, INTERFACE);
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
 #line 321 "glsl_lexer.lpp"
-RESERVED_WORD(999, DOUBLE_TOK);
+RESERVED_WORD(999, LONG_TOK);
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
 #line 322 "glsl_lexer.lpp"
-RESERVED_WORD(999, HALF);
+RESERVED_WORD(999, SHORT_TOK);
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
 #line 323 "glsl_lexer.lpp"
-RESERVED_WORD(999, FIXED_TOK);
+RESERVED_WORD(999, DOUBLE_TOK);
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
 #line 324 "glsl_lexer.lpp"
-RESERVED_WORD(999, UNSIGNED);
+RESERVED_WORD(999, HALF);
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
 #line 325 "glsl_lexer.lpp"
-RESERVED_WORD(999, INPUT_TOK);
+RESERVED_WORD(999, FIXED_TOK);
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
 #line 326 "glsl_lexer.lpp"
-RESERVED_WORD(999, OUTPUT);
+RESERVED_WORD(999, UNSIGNED);
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
 #line 327 "glsl_lexer.lpp"
-RESERVED_WORD(999, HVEC2);
+RESERVED_WORD(999, INPUT_TOK);
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
 #line 328 "glsl_lexer.lpp"
-RESERVED_WORD(999, HVEC3);
+RESERVED_WORD(999, OUTPUT);
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
 #line 329 "glsl_lexer.lpp"
-RESERVED_WORD(999, HVEC4);
+RESERVED_WORD(999, HVEC2);
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
 #line 330 "glsl_lexer.lpp"
-RESERVED_WORD(999, DVEC2);
+RESERVED_WORD(999, HVEC3);
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
 #line 331 "glsl_lexer.lpp"
-RESERVED_WORD(999, DVEC3);
+RESERVED_WORD(999, HVEC4);
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
 #line 332 "glsl_lexer.lpp"
-RESERVED_WORD(999, DVEC4);
+RESERVED_WORD(999, DVEC2);
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
 #line 333 "glsl_lexer.lpp"
-RESERVED_WORD(999, FVEC2);
+RESERVED_WORD(999, DVEC3);
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
 #line 334 "glsl_lexer.lpp"
-RESERVED_WORD(999, FVEC3);
+RESERVED_WORD(999, DVEC4);
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
 #line 335 "glsl_lexer.lpp"
-RESERVED_WORD(999, FVEC4);
+RESERVED_WORD(999, FVEC2);
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
 #line 336 "glsl_lexer.lpp"
-return SAMPLER2DRECT;
+RESERVED_WORD(999, FVEC3);
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
 #line 337 "glsl_lexer.lpp"
-RESERVED_WORD(999, SAMPLER3DRECT);
+RESERVED_WORD(999, FVEC4);
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
 #line 338 "glsl_lexer.lpp"
-return SAMPLER2DRECTSHADOW;
+return SAMPLER2DRECT;
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
 #line 339 "glsl_lexer.lpp"
-RESERVED_WORD(999, SIZEOF);
+RESERVED_WORD(999, SAMPLER3DRECT);
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
 #line 340 "glsl_lexer.lpp"
-RESERVED_WORD(999, CAST);
+return SAMPLER2DRECTSHADOW;
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
 #line 341 "glsl_lexer.lpp"
-RESERVED_WORD(999, NAMESPACE);
+RESERVED_WORD(999, SIZEOF);
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
 #line 342 "glsl_lexer.lpp"
-RESERVED_WORD(999, USING);
+RESERVED_WORD(999, CAST);
 	YY_BREAK
-/* Additional reserved words in GLSL 1.20. */
 case 151:
 YY_RULE_SETUP
-#line 345 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER_ES(120, LOWP);
+#line 343 "glsl_lexer.lpp"
+RESERVED_WORD(999, NAMESPACE);
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 346 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER_ES(120, MEDIUMP);
+#line 344 "glsl_lexer.lpp"
+RESERVED_WORD(999, USING);
 	YY_BREAK
+/* Additional reserved words in GLSL 1.20. */
 case 153:
 YY_RULE_SETUP
 #line 347 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER_ES(120, HIGHP);
+TOKEN_OR_IDENTIFIER_ES(120, LOWP);
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
 #line 348 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER_ES(120, PRECISION);
+TOKEN_OR_IDENTIFIER_ES(120, MEDIUMP);
 	YY_BREAK
-/* Additional reserved words in GLSL 1.30. */
 case 155:
 YY_RULE_SETUP
-#line 351 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, COMMON);
+#line 349 "glsl_lexer.lpp"
+TOKEN_OR_IDENTIFIER_ES(120, HIGHP);
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 352 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, PARTITION);
+#line 350 "glsl_lexer.lpp"
+TOKEN_OR_IDENTIFIER_ES(120, PRECISION);
 	YY_BREAK
+/* Additional reserved words in GLSL 1.30. */
 case 157:
 YY_RULE_SETUP
 #line 353 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, ACTIVE);
+TOKEN_OR_IDENTIFIER(130, COMMON);
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
 #line 354 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER_ES(130, SUPERP);
+TOKEN_OR_IDENTIFIER(130, PARTITION);
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
 #line 355 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, SAMPLERBUFFER);
+TOKEN_OR_IDENTIFIER(130, ACTIVE);
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
 #line 356 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, FILTER);
+TOKEN_OR_IDENTIFIER_ES(130, SUPERP);
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
 #line 357 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE1D);
+TOKEN_OR_IDENTIFIER(130, SAMPLERBUFFER);
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
 #line 358 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE2D);
+TOKEN_OR_IDENTIFIER(130, FILTER);
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
 #line 359 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE3D);
+TOKEN_OR_IDENTIFIER(130, IMAGE1D);
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
 #line 360 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGECUBE);
+TOKEN_OR_IDENTIFIER(130, IMAGE2D);
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
 #line 361 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGE1D);
+TOKEN_OR_IDENTIFIER(130, IMAGE3D);
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
 #line 362 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGE2D);
+TOKEN_OR_IDENTIFIER(130, IMAGECUBE);
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
 #line 363 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGE3D);
+TOKEN_OR_IDENTIFIER(130, IIMAGE1D);
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
 #line 364 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGECUBE);
+TOKEN_OR_IDENTIFIER(130, IIMAGE2D);
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
 #line 365 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGE1D);
+TOKEN_OR_IDENTIFIER(130, IIMAGE3D);
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
 #line 366 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGE2D);
+TOKEN_OR_IDENTIFIER(130, IIMAGECUBE);
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
 #line 367 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGE3D);
+TOKEN_OR_IDENTIFIER(130, UIMAGE1D);
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
 #line 368 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGECUBE);
+TOKEN_OR_IDENTIFIER(130, UIMAGE2D);
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
 #line 369 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE1DARRAY);
+TOKEN_OR_IDENTIFIER(130, UIMAGE3D);
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
 #line 370 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE2DARRAY);
+TOKEN_OR_IDENTIFIER(130, UIMAGECUBE);
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
 #line 371 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGE1DARRAY);
+TOKEN_OR_IDENTIFIER(130, IMAGE1DARRAY);
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
 #line 372 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGE2DARRAY);
+TOKEN_OR_IDENTIFIER(130, IMAGE2DARRAY);
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
 #line 373 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGE1DARRAY);
+TOKEN_OR_IDENTIFIER(130, IIMAGE1DARRAY);
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
 #line 374 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGE2DARRAY);
+TOKEN_OR_IDENTIFIER(130, IIMAGE2DARRAY);
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
 #line 375 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE1DSHADOW);
+TOKEN_OR_IDENTIFIER(130, UIMAGE1DARRAY);
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
 #line 376 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGE2DSHADOW);
+TOKEN_OR_IDENTIFIER(130, UIMAGE2DARRAY);
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
 #line 377 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IMAGEBUFFER);
+TOKEN_OR_IDENTIFIER(130, IMAGE1DSHADOW);
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
 #line 378 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, IIMAGEBUFFER);
+TOKEN_OR_IDENTIFIER(130, IMAGE2DSHADOW);
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
 #line 379 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, UIMAGEBUFFER);
+TOKEN_OR_IDENTIFIER(130, IMAGEBUFFER);
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
 #line 380 "glsl_lexer.lpp"
-TOKEN_OR_IDENTIFIER(130, ROW_MAJOR);
+TOKEN_OR_IDENTIFIER(130, IIMAGEBUFFER);
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
+#line 381 "glsl_lexer.lpp"
+TOKEN_OR_IDENTIFIER(130, UIMAGEBUFFER);
+	YY_BREAK
+case 186:
+YY_RULE_SETUP
 #line 382 "glsl_lexer.lpp"
+TOKEN_OR_IDENTIFIER(130, ROW_MAJOR);
+	YY_BREAK
+case 187:
+YY_RULE_SETUP
+#line 384 "glsl_lexer.lpp"
 {
 			    struct _mesa_glsl_parse_state *state = yyextra;
 			    void *ctx = state;	
@@ -2356,17 +2366,17 @@ YY_RULE_SETUP
 			    return IDENTIFIER;
 			}
 	YY_BREAK
-case 186:
-YY_RULE_SETUP
-#line 389 "glsl_lexer.lpp"
-{ return yytext[0]; }
-	YY_BREAK
-case 187:
+case 188:
 YY_RULE_SETUP
 #line 391 "glsl_lexer.lpp"
+{ return yytext[0]; }
+	YY_BREAK
+case 189:
+YY_RULE_SETUP
+#line 393 "glsl_lexer.lpp"
 ECHO;
 	YY_BREAK
-#line 2370 "glsl_lexer.cpp"
+#line 2380 "glsl_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(PP):
 case YY_STATE_EOF(PRAGMA):
@@ -3509,7 +3519,7 @@ void _mesa_glsl_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 391 "glsl_lexer.lpp"
+#line 393 "glsl_lexer.lpp"
 
 
 
