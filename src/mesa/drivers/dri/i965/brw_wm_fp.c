@@ -549,6 +549,7 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    GLfloat values[4];
    GLuint idx;
    GLuint swizzle;
+   struct prog_src_register reg;
 
    values[0] = s0;
    values[1] = s1;
@@ -556,8 +557,10 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    values[3] = s3;
 
    idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
-   assert(swizzle == SWIZZLE_NOOP); /* Need to handle swizzle in reg setup */
-   return src_reg(PROGRAM_STATE_VAR, idx);
+   reg = src_reg(PROGRAM_STATE_VAR, idx);
+   reg.Swizzle = swizzle;
+
+   return reg;
 }
 
 
