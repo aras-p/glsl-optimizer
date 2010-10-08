@@ -703,6 +703,7 @@ i830_assert_not_dirty( struct intel_context *intel )
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    assert(!get_dirty(&i830->state));
+   (void) i830;
 }
 
 static void
