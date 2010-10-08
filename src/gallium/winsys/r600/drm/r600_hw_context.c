@@ -67,7 +67,8 @@ static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
 
 static void INLINE r600_context_fence_wraparound(struct r600_context *ctx, unsigned fence)
 {
-	struct radeon_bo *bo, *tmp;
+	struct radeon_bo *bo = NULL;
+	struct radeon_bo *tmp;
 
 	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
 		if (bo->fence <= *ctx->cfence) {
