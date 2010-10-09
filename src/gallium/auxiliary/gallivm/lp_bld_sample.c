@@ -294,31 +294,30 @@ lp_build_rho(struct lp_build_sample_context *bld,
  * TODO: This could be done in fixed point, where applicable.
  */
 static void
-lp_build_brilinear_lod(struct lp_build_sample_context *bld,
+lp_build_brilinear_lod(struct lp_build_context *bld,
                        LLVMValueRef lod,
                        double factor,
                        LLVMValueRef *out_lod_ipart,
                        LLVMValueRef *out_lod_fpart)
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
    LLVMValueRef lod_fpart;
-   float pre_offset = (factor - 0.5)/factor - 0.5;
-   float post_offset = 1 - factor;
+   double pre_offset = (factor - 0.5)/factor - 0.5;
+   double post_offset = 1 - factor;
 
    if (0) {
       lp_build_printf(bld->builder, "lod = %f\n", lod);
    }
 
-   lod = lp_build_add(float_bld, lod,
-                      lp_build_const_vec(float_bld->type, pre_offset));
+   lod = lp_build_add(bld, lod,
+                      lp_build_const_vec(bld->type, pre_offset));
 
-   lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, &lod_fpart);
+   lp_build_ifloor_fract(bld, lod, out_lod_ipart, &lod_fpart);
 
-   lod_fpart = lp_build_mul(float_bld, lod_fpart,
-                            lp_build_const_vec(float_bld->type, factor));
+   lod_fpart = lp_build_mul(bld, lod_fpart,
+                            lp_build_const_vec(bld->type, factor));
 
-   lod_fpart = lp_build_add(float_bld, lod_fpart,
-                            lp_build_const_vec(float_bld->type, post_offset));
+   lod_fpart = lp_build_add(bld, lod_fpart,
+                            lp_build_const_vec(bld->type, post_offset));
 
    /*
     * It's not necessary to clamp lod_fpart since:
@@ -332,6 +331,61 @@ lp_build_brilinear_lod(struct lp_build_sample_context *bld,
       lp_build_printf(bld->builder, "lod_ipart = %i\n", *out_lod_ipart);
       lp_build_printf(bld->builder, "lod_fpart = %f\n\n", *out_lod_fpart);
    }
+}
+
+
+/*
+ * Combined log2 and brilinear lod computation.
+ *
+ * It's in all identical to calling lp_build_fast_log2() and
+ * lp_build_brilinear_lod() above, but by combining we can compute the interger
+ * and fractional part independently.
+ */
+static void
+lp_build_brilinear_rho(struct lp_build_context *bld,
+                       LLVMValueRef rho,
+                       double factor,
+                       LLVMValueRef *out_lod_ipart,
+                       LLVMValueRef *out_lod_fpart)
+{
+   LLVMValueRef lod_ipart;
+   LLVMValueRef lod_fpart;
+
+   const double pre_factor = (2*factor - 0.5)/(M_SQRT2*factor);
+   const double post_offset = 1 - 2*factor;
+
+   assert(bld->type.floating);
+
+   assert(lp_check_value(bld->type, rho));
+
+   /*
+    * The pre factor will make the intersections with the exact powers of two
+    * happen precisely where we want then to be, which means that the integer
+    * part will not need any post adjustments.
+    */
+   rho = lp_build_mul(bld, rho,
+                      lp_build_const_vec(bld->type, pre_factor));
+
+   /* ipart = ifloor(log2(rho)) */
+   lod_ipart = lp_build_extract_exponent(bld, rho, 0);
+
+   /* fpart = rho / 2**ipart */
+   lod_fpart = lp_build_extract_mantissa(bld, rho);
+
+   lod_fpart = lp_build_mul(bld, lod_fpart,
+                            lp_build_const_vec(bld->type, factor));
+
+   lod_fpart = lp_build_add(bld, lod_fpart,
+                            lp_build_const_vec(bld->type, post_offset));
+
+   /*
+    * Like lp_build_brilinear_lod, it's not necessary to clamp lod_fpart since:
+    * - the above expression will never produce numbers greater than one.
+    * - the mip filtering branch is only taken if lod_fpart is positive
+    */
+
+   *out_lod_ipart = lod_ipart;
+   *out_lod_fpart = lod_fpart;
 }
 
 
@@ -389,16 +443,32 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
          rho = lp_build_rho(bld, ddx, ddy);
 
-         /* compute lod = log2(rho) */
-         if ((mip_filter == PIPE_TEX_MIPFILTER_NONE ||
-              mip_filter == PIPE_TEX_MIPFILTER_NEAREST) &&
-             !lod_bias &&
+         /*
+          * Compute lod = log2(rho)
+          */
+
+         if (!lod_bias &&
              !bld->static_state->lod_bias_non_zero &&
              !bld->static_state->apply_max_lod &&
              !bld->static_state->apply_min_lod) {
-            *out_lod_ipart = lp_build_ilog2(float_bld, rho);
-            *out_lod_fpart = bld->float_bld.zero;
-            return;
+            /*
+             * Special case when there are no post-log2 adjustments, which
+             * saves instructions but keeping the integer and fractional lod
+             * computations separate from the start.
+             */
+
+            if (mip_filter == PIPE_TEX_MIPFILTER_NONE ||
+                mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
+               *out_lod_ipart = lp_build_ilog2(float_bld, rho);
+               *out_lod_fpart = bld->float_bld.zero;
+               return;
+            }
+            if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
+                BRILINEAR_FACTOR > 1.0) {
+               lp_build_brilinear_rho(float_bld, rho, BRILINEAR_FACTOR,
+                                      out_lod_ipart, out_lod_fpart);
+               return;
+            }
          }
 
          if (0) {
@@ -438,19 +508,20 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       if (BRILINEAR_FACTOR > 1.0) {
-         lp_build_brilinear_lod(bld, lod, BRILINEAR_FACTOR,
+         lp_build_brilinear_lod(float_bld, lod, BRILINEAR_FACTOR,
                                 out_lod_ipart, out_lod_fpart);
       }
       else {
          lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, out_lod_fpart);
       }
 
-      lp_build_name(*out_lod_ipart, "lod_ipart");
       lp_build_name(*out_lod_fpart, "lod_fpart");
    }
    else {
       *out_lod_ipart = lp_build_iround(float_bld, lod);
    }
+
+   lp_build_name(*out_lod_ipart, "lod_ipart");
 
    return;
 }
