@@ -927,21 +927,15 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
    {
       struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
+      LLVMValueRef face_s_var;
+      LLVMValueRef face_t_var;
+      LLVMValueRef face_var;
 
       flow_ctx = lp_build_flow_create(bld->builder);
-      lp_build_flow_scope_begin(flow_ctx);
 
-      *face_s = bld->coord_bld.undef;
-      *face_t = bld->coord_bld.undef;
-      *face = bld->int_bld.undef;
-
-      lp_build_name(*face_s, "face_s");
-      lp_build_name(*face_t, "face_t");
-      lp_build_name(*face, "face");
-
-      lp_build_flow_scope_declare(flow_ctx, face_s);
-      lp_build_flow_scope_declare(flow_ctx, face_t);
-      lp_build_flow_scope_declare(flow_ctx, face);
+      face_s_var = lp_build_alloca(bld->builder, bld->coord_bld.vec_type, "face_s_var");
+      face_t_var = lp_build_alloca(bld->builder, bld->coord_bld.vec_type, "face_t_var");
+      face_var = lp_build_alloca(bld->builder, bld->int_bld.vec_type, "face_var");
 
       lp_build_if(&if_ctx, flow_ctx, bld->builder, arx_ge_ary_arz);
       {
@@ -953,57 +947,53 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          *face = lp_build_cube_face(bld, rx,
                                     PIPE_TEX_FACE_POS_X,
                                     PIPE_TEX_FACE_NEG_X);
+         LLVMBuildStore(bld->builder, *face_s, face_s_var);
+         LLVMBuildStore(bld->builder, *face_t, face_t_var);
+         LLVMBuildStore(bld->builder, *face, face_var);
       }
       lp_build_else(&if_ctx);
       {
-         struct lp_build_flow_context *flow_ctx2;
          struct lp_build_if_state if_ctx2;
-
-         LLVMValueRef face_s2 = bld->coord_bld.undef;
-         LLVMValueRef face_t2 = bld->coord_bld.undef;
-         LLVMValueRef face2 = bld->int_bld.undef;
-
-         flow_ctx2 = lp_build_flow_create(bld->builder);
-         lp_build_flow_scope_begin(flow_ctx2);
-         lp_build_flow_scope_declare(flow_ctx2, &face_s2);
-         lp_build_flow_scope_declare(flow_ctx2, &face_t2);
-         lp_build_flow_scope_declare(flow_ctx2, &face2);
 
          ary_ge_arx_arz = LLVMBuildAnd(bld->builder, ary_ge_arx, ary_ge_arz, "");
 
-         lp_build_if(&if_ctx2, flow_ctx2, bld->builder, ary_ge_arx_arz);
+         lp_build_if(&if_ctx2, flow_ctx, bld->builder, ary_ge_arx_arz);
          {
             /* +/- Y face */
             LLVMValueRef sign = lp_build_sgn(float_bld, ry);
             LLVMValueRef ima = lp_build_cube_ima(coord_bld, t);
-            face_s2 = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
-            face_t2 = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
-            face2 = lp_build_cube_face(bld, ry,
+            *face_s = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
+            *face_t = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
+            *face = lp_build_cube_face(bld, ry,
                                        PIPE_TEX_FACE_POS_Y,
                                        PIPE_TEX_FACE_NEG_Y);
+            LLVMBuildStore(bld->builder, *face_s, face_s_var);
+            LLVMBuildStore(bld->builder, *face_t, face_t_var);
+            LLVMBuildStore(bld->builder, *face, face_var);
          }
          lp_build_else(&if_ctx2);
          {
             /* +/- Z face */
             LLVMValueRef sign = lp_build_sgn(float_bld, rz);
             LLVMValueRef ima = lp_build_cube_ima(coord_bld, r);
-            face_s2 = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
-            face_t2 = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
-            face2 = lp_build_cube_face(bld, rz,
+            *face_s = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
+            *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
+            *face = lp_build_cube_face(bld, rz,
                                        PIPE_TEX_FACE_POS_Z,
                                        PIPE_TEX_FACE_NEG_Z);
+            LLVMBuildStore(bld->builder, *face_s, face_s_var);
+            LLVMBuildStore(bld->builder, *face_t, face_t_var);
+            LLVMBuildStore(bld->builder, *face, face_var);
          }
          lp_build_endif(&if_ctx2);
-         lp_build_flow_scope_end(flow_ctx2);
-         lp_build_flow_destroy(flow_ctx2);
-         *face_s = face_s2;
-         *face_t = face_t2;
-         *face = face2;
       }
 
       lp_build_endif(&if_ctx);
-      lp_build_flow_scope_end(flow_ctx);
       lp_build_flow_destroy(flow_ctx);
+
+      *face_s = LLVMBuildLoad(bld->builder, face_s_var, "face_s");
+      *face_t = LLVMBuildLoad(bld->builder, face_t_var, "face_t");
+      *face   = LLVMBuildLoad(bld->builder, face_var, "face");
    }
 }
 
