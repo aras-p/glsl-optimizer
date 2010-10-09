@@ -237,7 +237,6 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef z;
    LLVMValueRef zs_value = NULL;
    LLVMValueRef stencil_refs[2];
-   struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
    boolean simple_shader = (shader->info.file_count[TGSI_FILE_SAMPLER] == 0 &&
                             shader->info.num_inputs < 3 &&
@@ -286,8 +285,6 @@ generate_fs(struct llvmpipe_context *lp,
 
    consts_ptr = lp_jit_context_constants(builder, context_ptr);
 
-   flow = lp_build_flow_create(builder);
-
    memset(outputs, 0, sizeof outputs);
 
    /* Declare the color and z variables */
@@ -307,7 +304,7 @@ generate_fs(struct llvmpipe_context *lp,
    }
 
    /* 'mask' will control execution based on quad's pixel alive/killed state */
-   lp_build_mask_begin(&mask, flow, type, *pmask);
+   lp_build_mask_begin(&mask, builder, type, *pmask);
 
    if (!(depth_mode & EARLY_DEPTH_TEST) && !simple_shader)
       lp_build_mask_check(&mask);
@@ -424,8 +421,6 @@ generate_fs(struct llvmpipe_context *lp,
                                lp_build_mask_value(&mask), counter);
 
    *pmask = lp_build_mask_end(&mask);
-
-   lp_build_flow_destroy(flow);
 }
 
 
@@ -450,7 +445,6 @@ generate_blend(const struct pipe_blend_state *blend,
                boolean do_branch)
 {
    struct lp_build_context bld;
-   struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask_ctx;
    LLVMTypeRef vec_type;
    LLVMValueRef const_ptr;
@@ -461,8 +455,7 @@ generate_blend(const struct pipe_blend_state *blend,
 
    lp_build_context_init(&bld, builder, type);
 
-   flow = lp_build_flow_create(builder);
-   lp_build_mask_begin(&mask_ctx, flow, type, mask);
+   lp_build_mask_begin(&mask_ctx, builder, type, mask);
    if (do_branch)
       lp_build_mask_check(&mask_ctx);
 
@@ -497,7 +490,6 @@ generate_blend(const struct pipe_blend_state *blend,
    }
 
    lp_build_mask_end(&mask_ctx);
-   lp_build_flow_destroy(flow);
 }
 
 

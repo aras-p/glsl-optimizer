@@ -41,29 +41,33 @@
 struct lp_type;
 
 
-struct lp_build_flow_context;
+/**
+ * Early exit. Useful to skip to the end of a function or block when
+ * the execution mask becomes zero or when there is an error condition.
+ */
+struct lp_build_skip_context
+{
+   LLVMBuilderRef builder;
 
-
-struct lp_build_flow_context *
-lp_build_flow_create(LLVMBuilderRef builder);
+   /** Block to skip to */
+   LLVMBasicBlockRef block;
+};
 
 void
-lp_build_flow_destroy(struct lp_build_flow_context *flow);
+lp_build_flow_skip_begin(struct lp_build_skip_context *ctx,
+                         LLVMBuilderRef builder);
 
 void
-lp_build_flow_skip_begin(struct lp_build_flow_context *flow);
-
-void
-lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
+lp_build_flow_skip_cond_break(struct lp_build_skip_context *ctx,
                               LLVMValueRef cond);
 
 void
-lp_build_flow_skip_end(struct lp_build_flow_context *flow);
+lp_build_flow_skip_end(struct lp_build_skip_context *ctx);
 
 
 struct lp_build_mask_context
 {
-   struct lp_build_flow_context *flow;
+   struct lp_build_skip_context skip;
 
    LLVMTypeRef reg_type;
 
@@ -73,7 +77,7 @@ struct lp_build_mask_context
 
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    struct lp_build_flow_context *flow,
+                    LLVMBuilderRef builder,
                     struct lp_type type,
                     LLVMValueRef value);
 

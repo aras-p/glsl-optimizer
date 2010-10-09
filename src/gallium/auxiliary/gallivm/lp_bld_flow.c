@@ -38,146 +38,6 @@
 #include "lp_bld_flow.h"
 
 
-#define LP_BUILD_FLOW_MAX_VARIABLES 64
-#define LP_BUILD_FLOW_MAX_DEPTH 32
-
-/**
- * Enumeration of all possible flow constructs.
- */
-enum lp_build_flow_construct_kind {
-   LP_BUILD_FLOW_SKIP,
-   LP_BUILD_FLOW_IF
-};
-
-
-/**
- * Early exit. Useful to skip to the end of a function or block when
- * the execution mask becomes zero or when there is an error condition.
- */
-struct lp_build_flow_skip
-{
-   /** Block to skip to */
-   LLVMBasicBlockRef block;
-};
-
-
-/**
- * Union of all possible flow constructs' data
- */
-union lp_build_flow_construct_data
-{
-   struct lp_build_flow_skip skip;
-};
-
-
-/**
- * Element of the flow construct stack.
- */
-struct lp_build_flow_construct
-{
-   enum lp_build_flow_construct_kind kind;
-   union lp_build_flow_construct_data data;
-};
-
-
-/**
- * All necessary data to generate LLVM control flow constructs.
- *
- * Besides keeping track of the control flow construct themselves we also
- * need to keep track of variables in order to generate SSA Phi values.
- */
-struct lp_build_flow_context
-{
-   LLVMBuilderRef builder;
-
-   /**
-    * Control flow stack.
-    */
-   struct lp_build_flow_construct constructs[LP_BUILD_FLOW_MAX_DEPTH];
-   unsigned num_constructs;
-};
-
-
-struct lp_build_flow_context *
-lp_build_flow_create(LLVMBuilderRef builder)
-{
-   struct lp_build_flow_context *flow;
-
-   flow = CALLOC_STRUCT(lp_build_flow_context);
-   if(!flow)
-      return NULL;
-
-   flow->builder = builder;
-
-   return flow;
-}
-
-
-void
-lp_build_flow_destroy(struct lp_build_flow_context *flow)
-{
-   assert(flow->num_constructs == 0);
-   FREE(flow);
-}
-
-
-/**
- * Begin/push a new flow control construct, such as a loop, skip block
- * or variable scope.
- */
-static union lp_build_flow_construct_data *
-lp_build_flow_push(struct lp_build_flow_context *flow,
-                   enum lp_build_flow_construct_kind kind)
-{
-   assert(flow->num_constructs < LP_BUILD_FLOW_MAX_DEPTH);
-   if(flow->num_constructs >= LP_BUILD_FLOW_MAX_DEPTH)
-      return NULL;
-
-   flow->constructs[flow->num_constructs].kind = kind;
-   return &flow->constructs[flow->num_constructs++].data;
-}
-
-
-/**
- * Return the current/top flow control construct on the stack.
- * \param kind  the expected type of the top-most construct
- */
-static union lp_build_flow_construct_data *
-lp_build_flow_peek(struct lp_build_flow_context *flow,
-                   enum lp_build_flow_construct_kind kind)
-{
-   assert(flow->num_constructs);
-   if(!flow->num_constructs)
-      return NULL;
-
-   assert(flow->constructs[flow->num_constructs - 1].kind == kind);
-   if(flow->constructs[flow->num_constructs - 1].kind != kind)
-      return NULL;
-
-   return &flow->constructs[flow->num_constructs - 1].data;
-}
-
-
-/**
- * End/pop the current/top flow control construct on the stack.
- * \param kind  the expected type of the top-most construct
- */
-static union lp_build_flow_construct_data *
-lp_build_flow_pop(struct lp_build_flow_context *flow,
-                  enum lp_build_flow_construct_kind kind)
-{
-   assert(flow->num_constructs);
-   if(!flow->num_constructs)
-      return NULL;
-
-   assert(flow->constructs[flow->num_constructs - 1].kind == kind);
-   if(flow->constructs[flow->num_constructs - 1].kind != kind)
-      return NULL;
-
-   return &flow->constructs[--flow->num_constructs].data;
-}
-
-
 /**
  * Note: this function has no dependencies on the flow code and could
  * be used elsewhere.
@@ -208,34 +68,18 @@ lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
 }
 
 
-static LLVMBasicBlockRef
-lp_build_flow_insert_block(struct lp_build_flow_context *flow)
-{
-   return lp_build_insert_new_block(flow->builder, "");
-}
-
-
 /**
  * Begin a "skip" block.  Inside this block we can test a condition and
  * skip to the end of the block if the condition is false.
  */
 void
-lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
+lp_build_flow_skip_begin(struct lp_build_skip_context *skip,
+                         LLVMBuilderRef builder)
 {
-   struct lp_build_flow_skip *skip;
-   LLVMBuilderRef builder;
-
-   skip = &lp_build_flow_push(flow, LP_BUILD_FLOW_SKIP)->skip;
-   if(!skip)
-      return;
+   skip->builder = builder;
 
    /* create new basic block */
-   skip->block = lp_build_flow_insert_block(flow);
-
-   builder = LLVMCreateBuilder();
-   LLVMPositionBuilderAtEnd(builder, skip->block);
-
-   LLVMDisposeBuilder(builder);
+   skip->block = lp_build_insert_new_block(skip->builder, "skip");
 }
 
 
@@ -244,37 +88,26 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
  * skip block if the condition is true.
  */
 void
-lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
+lp_build_flow_skip_cond_break(struct lp_build_skip_context *skip,
                               LLVMValueRef cond)
 {
-   struct lp_build_flow_skip *skip;
    LLVMBasicBlockRef new_block;
 
-   skip = &lp_build_flow_peek(flow, LP_BUILD_FLOW_SKIP)->skip;
-   if(!skip)
-      return;
-
-   new_block = lp_build_flow_insert_block(flow);
+   new_block = lp_build_insert_new_block(skip->builder, "");
 
    /* if cond is true, goto skip->block, else goto new_block */
-   LLVMBuildCondBr(flow->builder, cond, skip->block, new_block);
+   LLVMBuildCondBr(skip->builder, cond, skip->block, new_block);
 
-   LLVMPositionBuilderAtEnd(flow->builder, new_block);
+   LLVMPositionBuilderAtEnd(skip->builder, new_block);
 }
 
 
 void
-lp_build_flow_skip_end(struct lp_build_flow_context *flow)
+lp_build_flow_skip_end(struct lp_build_skip_context *skip)
 {
-   struct lp_build_flow_skip *skip;
-
-   skip = &lp_build_flow_pop(flow, LP_BUILD_FLOW_SKIP)->skip;
-   if(!skip)
-      return;
-
    /* goto block */
-   LLVMBuildBr(flow->builder, skip->block);
-   LLVMPositionBuilderAtEnd(flow->builder, skip->block);
+   LLVMBuildBr(skip->builder, skip->block);
+   LLVMPositionBuilderAtEnd(skip->builder, skip->block);
 }
 
 
@@ -284,7 +117,7 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
-   LLVMBuilderRef builder = mask->flow->builder;
+   LLVMBuilderRef builder = mask->skip.builder;
    LLVMValueRef value;
    LLVMValueRef cond;
 
@@ -298,7 +131,7 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
                         "");
 
    /* if cond, goto end of block */
-   lp_build_flow_skip_cond_break(mask->flow, cond);
+   lp_build_flow_skip_cond_break(&mask->skip, cond);
 }
 
 
@@ -311,28 +144,27 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
  */
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    struct lp_build_flow_context *flow,
+                    LLVMBuilderRef builder,
                     struct lp_type type,
                     LLVMValueRef value)
 {
    memset(mask, 0, sizeof *mask);
 
-   mask->flow = flow;
    mask->reg_type = LLVMIntType(type.width * type.length);
-   mask->var = lp_build_alloca(flow->builder,
+   mask->var = lp_build_alloca(builder,
                                lp_build_int_vec_type(type),
                                "execution_mask");
 
-   LLVMBuildStore(flow->builder, value, mask->var);
+   LLVMBuildStore(builder, value, mask->var);
 
-   lp_build_flow_skip_begin(flow);
+   lp_build_flow_skip_begin(&mask->skip, builder);
 }
 
 
 LLVMValueRef
 lp_build_mask_value(struct lp_build_mask_context *mask)
 {
-   return LLVMBuildLoad(mask->flow->builder, mask->var, "");
+   return LLVMBuildLoad(mask->skip.builder, mask->var, "");
 }
 
 
@@ -345,10 +177,10 @@ void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
 {
-   value = LLVMBuildAnd(mask->flow->builder,
+   value = LLVMBuildAnd(mask->skip.builder,
                         lp_build_mask_value(mask),
                         value, "");
-   LLVMBuildStore(mask->flow->builder, value, mask->var);
+   LLVMBuildStore(mask->skip.builder, value, mask->var);
 }
 
 
@@ -358,7 +190,7 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
 LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask)
 {
-   lp_build_flow_skip_end(mask->flow);
+   lp_build_flow_skip_end(&mask->skip);
    return lp_build_mask_value(mask);
 }
 
