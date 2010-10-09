@@ -130,16 +130,22 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
 
 
 
+/**
+ * if/else/endif.
+ */
 struct lp_build_if_state
 {
    LLVMBuilderRef builder;
-   struct lp_build_flow_context *flow;
+   LLVMValueRef condition;
+   LLVMBasicBlockRef entry_block;
+   LLVMBasicBlockRef true_block;
+   LLVMBasicBlockRef false_block;
+   LLVMBasicBlockRef merge_block;
 };
 
 
 void
 lp_build_if(struct lp_build_if_state *ctx,
-            struct lp_build_flow_context *flow,
             LLVMBuilderRef builder,
             LLVMValueRef condition);
 

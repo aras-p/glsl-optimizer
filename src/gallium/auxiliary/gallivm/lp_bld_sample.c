@@ -925,19 +925,16 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
    rz_pos = LLVMBuildFCmp(bld->builder, LLVMRealUGE, rz, float_bld->zero, "");
 
    {
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef face_s_var;
       LLVMValueRef face_t_var;
       LLVMValueRef face_var;
 
-      flow_ctx = lp_build_flow_create(bld->builder);
-
       face_s_var = lp_build_alloca(bld->builder, bld->coord_bld.vec_type, "face_s_var");
       face_t_var = lp_build_alloca(bld->builder, bld->coord_bld.vec_type, "face_t_var");
       face_var = lp_build_alloca(bld->builder, bld->int_bld.vec_type, "face_var");
 
-      lp_build_if(&if_ctx, flow_ctx, bld->builder, arx_ge_ary_arz);
+      lp_build_if(&if_ctx, bld->builder, arx_ge_ary_arz);
       {
          /* +/- X face */
          LLVMValueRef sign = lp_build_sgn(float_bld, rx);
@@ -957,7 +954,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
 
          ary_ge_arx_arz = LLVMBuildAnd(bld->builder, ary_ge_arx, ary_ge_arz, "");
 
-         lp_build_if(&if_ctx2, flow_ctx, bld->builder, ary_ge_arx_arz);
+         lp_build_if(&if_ctx2, bld->builder, ary_ge_arx_arz);
          {
             /* +/- Y face */
             LLVMValueRef sign = lp_build_sgn(float_bld, ry);
@@ -989,7 +986,6 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       }
 
       lp_build_endif(&if_ctx);
-      lp_build_flow_destroy(flow_ctx);
 
       *face_s = LLVMBuildLoad(bld->builder, face_s_var, "face_s");
       *face_t = LLVMBuildLoad(bld->builder, face_t_var, "face_t");

@@ -881,11 +881,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef need_lerp;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       /* need_lerp = lod_fpart > 0 */
       need_lerp = LLVMBuildFCmp(builder, LLVMRealUGT,
@@ -893,7 +890,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                 bld->float_bld.zero,
                                 "need_lerp");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, need_lerp);
+      lp_build_if(&if_ctx, builder, need_lerp);
       {
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
@@ -926,8 +923,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          }
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 }
 
@@ -1063,17 +1058,14 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Emit conditional to choose min image filter or mag image filter
        * depending on the lod being > 0 or <= 0, respectively.
        */
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, minify);
+      lp_build_if(&if_ctx, builder, minify);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld, unit,
@@ -1092,8 +1084,6 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                 texels);
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 
    for (chan = 0; chan < 4; ++chan) {

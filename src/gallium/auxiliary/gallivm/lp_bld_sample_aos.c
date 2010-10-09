@@ -833,11 +833,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       LLVMValueRef h16_scale = LLVMConstReal(LLVMFloatType(), 256.0);
       LLVMTypeRef i32_type = LLVMIntType(32);
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef need_lerp;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       lod_fpart = LLVMBuildFMul(builder, lod_fpart, h16_scale, "");
       lod_fpart = LLVMBuildFPToSI(builder, lod_fpart, i32_type, "lod_fpart.fixed16");
@@ -847,7 +844,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                 lod_fpart, LLVMConstNull(i32_type),
                                 "need_lerp");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, need_lerp);
+      lp_build_if(&if_ctx, builder, need_lerp);
       {
          struct lp_build_context h16_bld;
 
@@ -887,8 +884,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          LLVMBuildStore(builder, colors0_hi, colors_hi_var);
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 }
 
@@ -1028,17 +1023,14 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       /* Emit conditional to choose min image filter or mag image filter
        * depending on the lod being > 0 or <= 0, respectively.
        */
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, minify);
+      lp_build_if(&if_ctx, builder, minify);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld,
@@ -1057,8 +1049,6 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                                 packed_lo, packed_hi);
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 
    /*

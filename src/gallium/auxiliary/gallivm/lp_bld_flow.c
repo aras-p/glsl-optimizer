@@ -62,22 +62,11 @@ struct lp_build_flow_skip
 
 
 /**
- * if/else/endif.
- */
-struct lp_build_flow_if
-{
-   LLVMValueRef condition;
-   LLVMBasicBlockRef entry_block, true_block, false_block, merge_block;
-};
-
-
-/**
  * Union of all possible flow constructs' data
  */
 union lp_build_flow_construct_data
 {
    struct lp_build_flow_skip skip;
-   struct lp_build_flow_if ifthen;
 };
 
 
@@ -468,24 +457,16 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
 
   Is built with:
 
-     LLVMValueRef x = LLVMGetUndef();  // or something else
+     // x needs an alloca variable
+     x = lp_build_alloca(builder, type, "x");
 
-     flow = lp_build_flow_create(builder);
 
-        lp_build_flow_scope_begin(flow);
+     lp_build_if(ctx, builder, cond);
+        LLVMBuildStore(LLVMBuildAdd(1, 2), x);
+     lp_build_else(ctx);
+        LLVMBuildStore(LLVMBuildAdd(2, 3). x);
+     lp_build_endif(ctx);
 
-           // x needs a phi node
-           lp_build_flow_scope_declare(flow, &x);
-
-           lp_build_if(ctx, flow, builder, cond);
-              x = LLVMAdd(1, 2);
-           lp_build_else(ctx);
-              x = LLVMAdd(2, 3);
-           lp_build_endif(ctx);
-
-        lp_build_flow_scope_end(flow);
-
-     lp_build_flow_destroy(flow);
  */
 
 
@@ -494,22 +475,14 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
  * Begin an if/else/endif construct.
  */
 void
-lp_build_if(struct lp_build_if_state *ctx,
-            struct lp_build_flow_context *flow,
+lp_build_if(struct lp_build_if_state *ifthen,
             LLVMBuilderRef builder,
             LLVMValueRef condition)
 {
    LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
-   struct lp_build_flow_if *ifthen;
 
-   memset(ctx, 0, sizeof(*ctx));
-   ctx->builder = builder;
-   ctx->flow = flow;
-
-   /* push/create new scope */
-   ifthen = &lp_build_flow_push(flow, LP_BUILD_FLOW_IF)->ifthen;
-   assert(ifthen);
-
+   memset(ifthen, 0, sizeof *ifthen);
+   ifthen->builder = builder;
    ifthen->condition = condition;
    ifthen->entry_block = block;
 
@@ -529,19 +502,13 @@ lp_build_if(struct lp_build_if_state *ctx,
  * Begin else-part of a conditional
  */
 void
-lp_build_else(struct lp_build_if_state *ctx)
+lp_build_else(struct lp_build_if_state *ifthen)
 {
-   struct lp_build_flow_context *flow = ctx->flow;
-   struct lp_build_flow_if *ifthen;
-
-   ifthen = &lp_build_flow_peek(flow, LP_BUILD_FLOW_IF)->ifthen;
-   assert(ifthen);
-
    /* create/insert false_block before the merge block */
    ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
 
    /* successive code goes into the else block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->false_block);
 }
 
 
@@ -549,39 +516,33 @@ lp_build_else(struct lp_build_if_state *ctx)
  * End a conditional.
  */
 void
-lp_build_endif(struct lp_build_if_state *ctx)
+lp_build_endif(struct lp_build_if_state *ifthen)
 {
-   struct lp_build_flow_context *flow = ctx->flow;
-   struct lp_build_flow_if *ifthen;
-
-   ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
-   assert(ifthen);
-
    /* Insert branch to the merge block from current block */
-   LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   LLVMBuildBr(ifthen->builder, ifthen->merge_block);
 
    /***
     *** Now patch in the various branch instructions.
     ***/
 
    /* Insert the conditional branch instruction at the end of entry_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->entry_block);
+   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->entry_block);
    if (ifthen->false_block) {
       /* we have an else clause */
-      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+      LLVMBuildCondBr(ifthen->builder, ifthen->condition,
                       ifthen->true_block, ifthen->false_block);
    }
    else {
       /* no else clause */
-      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+      LLVMBuildCondBr(ifthen->builder, ifthen->condition,
                       ifthen->true_block, ifthen->merge_block);
    }
 
    /* Insert branch from end of true_block to merge_block */
    if (ifthen->false_block) {
       /* Append an unconditional Br(anch) instruction on the true_block */
-      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
-      LLVMBuildBr(ctx->builder, ifthen->merge_block);
+      LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->true_block);
+      LLVMBuildBr(ifthen->builder, ifthen->merge_block);
    }
    else {
       /* No else clause.
@@ -591,7 +552,7 @@ lp_build_endif(struct lp_build_if_state *ctx)
    }
 
    /* Resume building code at end of the ifthen->merge_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->merge_block);
 }
 
 
