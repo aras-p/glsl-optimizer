@@ -410,7 +410,7 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
  * \param maskvalue is the depth test mask.
  * \param counter is a pointer of the uint32 counter.
  */
-static void
+void
 lp_build_occlusion_count(LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef maskvalue,
@@ -462,7 +462,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef z_src,
                             LLVMValueRef zs_dst_ptr,
                             LLVMValueRef face,
-                            LLVMValueRef counter,
+                            LLVMValueRef *zs_value,
                             boolean do_branch)
 {
    struct lp_type type;
@@ -524,16 +524,13 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
        * storage.
        */
       if (depth->writemask) {
-         type.sign = 0;
+         type.sign = 1;
          lp_build_context_init(&bld, builder, type);
 
          z_dst = lp_build_select(&bld, mask->value, z_src, z_dst);
          z_dst = LLVMBuildShl(builder, z_dst, const_8_int, "z_dst");
-         LLVMBuildStore(builder, z_dst, zs_dst_ptr);
+         *zs_value = z_dst;
       }
-
-      if (counter)
-         lp_build_occlusion_count(builder, type, mask->value, counter);
 
       return;
    }
@@ -779,7 +776,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       else
          zs_dst = stencil_vals;
 
-      LLVMBuildStore(builder, zs_dst, zs_dst_ptr);
+      *zs_value = zs_dst;
    }
 
    if (s_pass_mask)
@@ -791,6 +788,29 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    if (do_branch)
       lp_build_mask_check(mask);
 
-   if (counter)
-      lp_build_occlusion_count(builder, type, mask->value, counter);
+}
+
+
+
+void
+lp_build_deferred_depth_write(LLVMBuilderRef builder,
+                              struct lp_type z_src_type,
+                              const struct util_format_description *format_desc,
+                              struct lp_build_mask_context *mask,
+                              LLVMValueRef zs_dst_ptr,
+                              LLVMValueRef zs_value)
+{
+   struct lp_type type;
+   struct lp_build_context bld;
+   LLVMValueRef z_dst;
+
+   /* XXX: pointlessly redo type logic:
+    */
+   type = lp_depth_type(format_desc, z_src_type.width*z_src_type.length);
+   lp_build_context_init(&bld, builder, type);
+
+   z_dst = LLVMBuildLoad(builder, zs_dst_ptr, "zsbufval");
+   z_dst = lp_build_select(&bld, mask->value, zs_value, z_dst);
+
+   LLVMBuildStore(builder, z_dst, zs_dst_ptr);
 }

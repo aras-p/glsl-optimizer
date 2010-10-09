@@ -104,43 +104,6 @@
 static unsigned fs_no = 0;
 
 
-/**
- * Generate the depth /stencil test code.
- */
-static void
-generate_depth_stencil(LLVMBuilderRef builder,
-                       const struct lp_fragment_shader_variant_key *key,
-                       struct lp_type src_type,
-                       struct lp_build_mask_context *mask,
-                       LLVMValueRef stencil_refs[2],
-                       LLVMValueRef src,
-                       LLVMValueRef dst_ptr,
-                       LLVMValueRef facing,
-                       LLVMValueRef counter,
-                       boolean do_branch)
-{
-   const struct util_format_description *format_desc;
-
-   if (!key->depth.enabled && !key->stencil[0].enabled && !key->stencil[1].enabled)
-      return;
-
-   format_desc = util_format_description(key->zsbuf_format);
-   assert(format_desc);
-
-   lp_build_depth_stencil_test(builder,
-                               &key->depth,
-                               key->stencil,
-                               src_type,
-                               format_desc,
-                               mask,
-                               stencil_refs,
-                               src,
-                               dst_ptr,
-                               facing,
-                               counter,
-                               do_branch);
-}
-
 
 /**
  * Expand the relevent bits of mask_input to a 4-dword mask for the 
@@ -222,6 +185,26 @@ generate_quad_mask(LLVMBuilderRef builder,
 }
 
 
+#define EARLY_DEPTH_TEST  0x1
+#define LATE_DEPTH_TEST   0x2
+#define EARLY_DEPTH_WRITE 0x4
+#define LATE_DEPTH_WRITE  0x8
+
+static int
+find_output_by_semantic( const struct tgsi_shader_info *info,
+			 unsigned semantic,
+			 unsigned index )
+{
+   int i;
+
+   for (i = 0; i < info->num_outputs; i++)
+      if (info->output_semantic_name[i] == semantic &&
+	  info->output_semantic_index[i] == index)
+	 return i;
+
+   return -1;
+}
+
 
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
@@ -246,21 +229,53 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef mask_input,
             LLVMValueRef counter)
 {
+   const struct util_format_description *zs_format_desc = NULL;
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef vec_type;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z;
+   LLVMValueRef zs_value = NULL;
    LLVMValueRef stencil_refs[2];
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
-   boolean early_depth_stencil_test;
    boolean simple_shader = (shader->info.file_count[TGSI_FILE_SAMPLER] == 0 &&
                             shader->info.num_inputs < 3 &&
                             shader->info.num_instructions < 8);
    unsigned attrib;
    unsigned chan;
    unsigned cbuf;
+   unsigned depth_mode;
+
+   if (key->depth.enabled ||
+       key->stencil[0].enabled ||
+       key->stencil[1].enabled) {
+
+      zs_format_desc = util_format_description(key->zsbuf_format);
+      assert(zs_format_desc);
+
+      if (!shader->info.writes_z) {
+         if (key->alpha.enabled || shader->info.uses_kill)
+            /* With alpha test and kill, can do the depth test early
+             * and hopefully eliminate some quads.  But need to do a
+             * special deferred depth write once the final mask value
+             * is known.
+             */
+            depth_mode = EARLY_DEPTH_TEST | LATE_DEPTH_WRITE;
+         else
+            depth_mode = EARLY_DEPTH_TEST | EARLY_DEPTH_WRITE;
+      }
+      else {
+         depth_mode = LATE_DEPTH_TEST | LATE_DEPTH_WRITE;
+      }
+
+      if (!(key->depth.enabled && key->depth.writemask) &&
+          !(key->stencil[0].enabled && key->stencil[0].writemask))
+         depth_mode &= ~(LATE_DEPTH_WRITE | EARLY_DEPTH_WRITE);
+   }
+   else {
+      depth_mode = 0;
+   }
 
    assert(i < 4);
 
@@ -293,79 +308,121 @@ generate_fs(struct llvmpipe_context *lp,
       *pmask = lp_build_const_int_vec(type, ~0);
    }
 
-
-   early_depth_stencil_test =
-      (key->depth.enabled || key->stencil[0].enabled) &&
-      !key->alpha.enabled &&
-      !shader->info.uses_kill &&
-      !shader->info.writes_z;
-
    /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
 
-   if (!early_depth_stencil_test && !simple_shader)
+   if (!(depth_mode & EARLY_DEPTH_TEST) && !simple_shader)
       lp_build_mask_check(&mask);
 
    lp_build_interp_soa_update_pos(interp, i);
    z = interp->pos[2];
 
-   if (early_depth_stencil_test)
-      generate_depth_stencil(builder, key,
-                             type, &mask,
-                             stencil_refs, 
-                             z, depth_ptr,
-                             facing, counter,
-                             !simple_shader);
+   if (depth_mode & EARLY_DEPTH_TEST) {
+      lp_build_depth_stencil_test(builder,
+                                  &key->depth,
+                                  key->stencil,
+                                  type,
+                                  zs_format_desc,
+                                  &mask,
+                                  stencil_refs,
+                                  z,
+                                  depth_ptr, facing,
+                                  &zs_value,
+                                  !simple_shader);
+
+      if (depth_mode & EARLY_DEPTH_WRITE)
+         LLVMBuildStore(builder, zs_value, depth_ptr);
+   }
 
    lp_build_interp_soa_update_inputs(interp, i);
-
+   
+   /* Build the actual shader */
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
                      outputs, sampler, &shader->info);
 
-   /* loop over fragment shader outputs/results */
-   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-         if(outputs[attrib][chan]) {
+
+   /* Alpha test */
+   if (key->alpha.enabled) {
+      int color0 = find_output_by_semantic(&shader->info,
+                                           TGSI_SEMANTIC_COLOR,
+                                           0);
+
+      if (color0 != -1) {
+         LLVMValueRef alpha = LLVMBuildLoad(builder, outputs[color0][3], "alpha");
+         LLVMValueRef alpha_ref_value;
+
+         alpha_ref_value = lp_jit_context_alpha_ref_value(builder, context_ptr);
+         alpha_ref_value = lp_build_broadcast(builder, vec_type, alpha_ref_value);
+
+         lp_build_alpha_test(builder, key->alpha.func, type,
+                             &mask, alpha, alpha_ref_value,
+                             (depth_mode & LATE_DEPTH_TEST) != 0);
+      }
+   }
+
+   /* Late Z test */
+   if (depth_mode & LATE_DEPTH_TEST) { 
+      int pos0 = find_output_by_semantic(&shader->info,
+                                         TGSI_SEMANTIC_POSITION,
+                                         0);
+         
+      if (pos0 != -1) {
+         z = LLVMBuildLoad(builder, outputs[pos0][2], "z");
+         lp_build_name(z, "output%u.%u.%c", i, pos0, "xyzw"[chan]);
+      }
+
+      lp_build_depth_stencil_test(builder,
+                                  &key->depth,
+                                  key->stencil,
+                                  type,
+                                  zs_format_desc,
+                                  &mask,
+                                  stencil_refs,
+                                  z,
+                                  depth_ptr, facing,
+                                  &zs_value,
+                                  !simple_shader);
+      /* Late Z write */
+      if (depth_mode & LATE_DEPTH_WRITE)
+         LLVMBuildStore(builder, zs_value, depth_ptr);
+   }
+   else if ((depth_mode & EARLY_DEPTH_TEST) &&
+            (depth_mode & LATE_DEPTH_WRITE))
+   {
+      /* Need to apply a reduced mask to the depth write.  Reload the
+       * depth value, update from zs_value with the new mask value and
+       * write that out.
+       */
+      lp_build_deferred_depth_write(builder,
+                                    type,
+                                    zs_format_desc,
+                                    &mask,
+                                    depth_ptr,
+                                    zs_value);
+   }
+
+
+   /* Color write  */
+   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib)
+   {
+      if (shader->info.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR)
+      {
+         unsigned cbuf = shader->info.output_semantic_index[attrib];
+         for(chan = 0; chan < NUM_CHANNELS; ++chan)
+         {
+            /* XXX: just initialize outputs to point at colors[] and
+             * skip this.
+             */
             LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
-            lp_build_name(out, "output%u.%u.%c", i, attrib, "xyzw"[chan]);
-
-            switch (shader->info.output_semantic_name[attrib]) {
-            case TGSI_SEMANTIC_COLOR:
-               {
-                  unsigned cbuf = shader->info.output_semantic_index[attrib];
-
-                  lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
-
-                  /* Alpha test */
-		  /* XXX: should only test the final assignment to alpha */
-                  if (cbuf == 0 && chan == 3 && key->alpha.enabled) {
-                     LLVMValueRef alpha = out;
-                     LLVMValueRef alpha_ref_value;
-                     alpha_ref_value = lp_jit_context_alpha_ref_value(builder, context_ptr);
-                     alpha_ref_value = lp_build_broadcast(builder, vec_type, alpha_ref_value);
-                     lp_build_alpha_test(builder, key->alpha.func, type,
-                                         &mask, alpha, alpha_ref_value, FALSE);
-                  }
-
-                  LLVMBuildStore(builder, out, color[cbuf][chan]);
-                  break;
-               }
-
-            case TGSI_SEMANTIC_POSITION:
-               if(chan == 2)
-                  z = out;
-               break;
-            }
+            lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
+            LLVMBuildStore(builder, out, color[cbuf][chan]);
          }
       }
    }
 
-   if (!early_depth_stencil_test)
-      generate_depth_stencil(builder, key,
-                             type, &mask,
-                             stencil_refs, z, depth_ptr,
-                             facing, counter, FALSE);
+   if (counter)
+      lp_build_occlusion_count(builder, type, mask.value, counter);
 
    lp_build_mask_end(&mask);
 
