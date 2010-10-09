@@ -100,6 +100,21 @@ ir_expression::constant_expression_value()
    }
 
    switch (this->operation) {
+   case ir_unop_bit_not:
+       switch (op[0]->type->base_type) {
+       case GLSL_TYPE_INT:
+           for (unsigned c = 0; c < components; c++)
+               data.i[c] = ~ op[0]->value.i[c];
+           break;
+       case GLSL_TYPE_UINT:
+           for (unsigned c = 0; c < components; c++)
+               data.u[c] = ~ op[0]->value.u[c];
+           break;
+       default:
+           assert(0);
+       }
+       break;
+
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
       for (unsigned c = 0; c < op[0]->type->components(); c++)
