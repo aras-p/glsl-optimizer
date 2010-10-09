@@ -479,6 +479,9 @@ nv10_emit_projection(GLcontext *ctx, int emit)
 	_math_matrix_ctr(&m);
 	get_viewport_scale(ctx, m.m);
 
+	if (nv10_use_viewport_zclear(ctx))
+		m.m[MAT_SZ] /= 8;
+
 	if (nctx->fallback == HWTNL)
 		_math_matrix_mul_matrix(&m, &m, &ctx->_ModelProjectMatrix);
 

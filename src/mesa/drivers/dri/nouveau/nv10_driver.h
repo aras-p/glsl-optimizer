@@ -37,6 +37,12 @@ enum {
 /* nv10_context.c */
 extern const struct nouveau_driver nv10_driver;
 
+GLboolean
+nv10_use_viewport_zclear(GLcontext *ctx);
+
+float
+nv10_transform_depth(GLcontext *ctx, float z);
+
 /* nv10_render.c */
 void
 nv10_render_init(GLcontext *ctx);

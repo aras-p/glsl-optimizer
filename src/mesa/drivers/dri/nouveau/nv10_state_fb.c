@@ -172,12 +172,15 @@ nv10_emit_viewport(GLcontext *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct gl_viewport_attrib *vp = &ctx->Viewport;
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
 
 	get_viewport_translate(ctx, a);
 	a[0] -= 2048;
 	a[1] -= 2048;
+	if (nv10_use_viewport_zclear(ctx))
+		a[2] = nv10_transform_depth(ctx, (vp->Far + vp->Near) / 2);
 
 	BEGIN_RING(chan, celsius, NV10TCL_VIEWPORT_TRANSLATE_X, 4);
 	OUT_RINGp(chan, a, 4);
@@ -204,5 +207,10 @@ nv10_emit_zclear(GLcontext *ctx, int emit)
 		OUT_RING(chan, nctx->hierz.clear_blocked ? 0 : 1);
 		OUT_RING(chan, nfb->hierz.clear_value |
 			 (nctx->hierz.clear_seq & 0xff));
+	} else {
+		BEGIN_RING(chan, celsius, NV10TCL_DEPTH_RANGE_NEAR, 2);
+		OUT_RINGf(chan, nv10_transform_depth(ctx, 0));
+		OUT_RINGf(chan, nv10_transform_depth(ctx, 1));
+		context_dirty(ctx, VIEWPORT);
 	}
 }
