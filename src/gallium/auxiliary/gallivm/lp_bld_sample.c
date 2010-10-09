@@ -630,37 +630,21 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
 void
 lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                             LLVMValueRef ilevel,
-                            LLVMValueRef *out_width_vec,
-                            LLVMValueRef *out_height_vec,
-                            LLVMValueRef *out_depth_vec,
+                            LLVMValueRef *out_size,
                             LLVMValueRef *row_stride_vec,
                             LLVMValueRef *img_stride_vec)
 {
    const unsigned dims = bld->dims;
    LLVMValueRef ilevel_vec;
-   LLVMValueRef size_vec;
-   LLVMTypeRef i32t = LLVMInt32Type();
 
    ilevel_vec = lp_build_broadcast_scalar(&bld->int_size_bld, ilevel);
 
    /*
     * Compute width, height, depth at mipmap level 'ilevel'
     */
-   size_vec = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
+   *out_size = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
 
-   *out_width_vec = lp_build_extract_broadcast(bld->builder,
-                                               bld->int_size_type,
-                                               bld->int_coord_type,
-                                               size_vec,
-                                               LLVMConstInt(i32t, 0, 0));
    if (dims >= 2) {
-
-      *out_height_vec = lp_build_extract_broadcast(bld->builder,
-                                                   bld->int_size_type,
-                                                   bld->int_coord_type,
-                                                   size_vec,
-                                                   LLVMConstInt(i32t, 1, 0));
-
       *row_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->row_stride_array,
                                                       ilevel);
@@ -668,17 +652,89 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
          *img_stride_vec = lp_build_get_level_stride_vec(bld,
                                                          bld->img_stride_array,
                                                          ilevel);
-         if (dims == 3) {
-            *out_depth_vec = lp_build_extract_broadcast(bld->builder,
-                                                        bld->int_size_type,
-                                                        bld->int_coord_type,
-                                                        size_vec,
-                                                        LLVMConstInt(i32t, 2, 0));
-         }
       }
    }
 }
 
+
+/**
+ * Extract and broadcast texture size.
+ *
+ * @param size_type   type of the texture size vector (either
+ *                    bld->int_size_type or bld->float_size_type)
+ * @param coord_type  type of the texture size vector (either
+ *                    bld->int_coord_type or bld->coord_type)
+ * @param int_size    vector with the integer texture size (width, height,
+ *                    depth)
+ */
+void
+lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
+                             struct lp_type size_type,
+                             struct lp_type coord_type,
+                             LLVMValueRef size,
+                             LLVMValueRef *out_width,
+                             LLVMValueRef *out_height,
+                             LLVMValueRef *out_depth)
+{
+   const unsigned dims = bld->dims;
+   LLVMTypeRef i32t = LLVMInt32Type();
+
+   *out_width = lp_build_extract_broadcast(bld->builder,
+                                           size_type,
+                                           coord_type,
+                                           size,
+                                           LLVMConstInt(i32t, 0, 0));
+   if (dims >= 2) {
+      *out_height = lp_build_extract_broadcast(bld->builder,
+                                               size_type,
+                                               coord_type,
+                                               size,
+                                               LLVMConstInt(i32t, 1, 0));
+      if (dims == 3) {
+         *out_depth = lp_build_extract_broadcast(bld->builder,
+                                                 size_type,
+                                                 coord_type,
+                                                 size,
+                                                 LLVMConstInt(i32t, 2, 0));
+      }
+   }
+}
+
+
+/**
+ * Unnormalize coords.
+ *
+ * @param int_size  vector with the integer texture size (width, height, depth)
+ */
+void
+lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
+                             LLVMValueRef flt_size,
+                             LLVMValueRef *s,
+                             LLVMValueRef *t,
+                             LLVMValueRef *r)
+{
+   const unsigned dims = bld->dims;
+   LLVMValueRef width;
+   LLVMValueRef height;
+   LLVMValueRef depth;
+
+   lp_build_extract_image_sizes(bld,
+                                bld->float_size_type,
+                                bld->coord_type,
+                                flt_size,
+                                &width,
+                                &height,
+                                &depth);
+
+   /* s = s * width, t = t * height */
+   *s = lp_build_mul(&bld->coord_bld, *s, width);
+   if (dims >= 2) {
+      *t = lp_build_mul(&bld->coord_bld, *t, height);
+      if (dims >= 3) {
+         *r = lp_build_mul(&bld->coord_bld, *r, depth);
+      }
+   }
+}
 
 
 /** Helper used by lp_build_cube_lookup() */

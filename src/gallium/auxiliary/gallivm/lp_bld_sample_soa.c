@@ -805,6 +805,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef *colors_out)
 {
    LLVMBuilderRef builder = bld->builder;
+   LLVMValueRef size0;
+   LLVMValueRef size1;
    LLVMValueRef width0_vec;
    LLVMValueRef width1_vec;
    LLVMValueRef height0_vec;
@@ -822,8 +824,13 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
    /* sample the first mipmap level */
    lp_build_mipmap_level_sizes(bld, ilevel0,
-                               &width0_vec, &height0_vec, &depth0_vec,
+                               &size0,
                                &row_stride0_vec, &img_stride0_vec);
+   lp_build_extract_image_sizes(bld,
+                                bld->int_size_type,
+                                bld->int_coord_type,
+                                size0,
+                                &width0_vec, &height0_vec, &depth0_vec);
    data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       lp_build_sample_image_nearest(bld, unit,
@@ -863,8 +870,13 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       {
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
-                                     &width1_vec, &height1_vec, &depth1_vec,
+                                     &size1,
                                      &row_stride1_vec, &img_stride1_vec);
+         lp_build_extract_image_sizes(bld,
+                                      bld->int_size_type,
+                                      bld->int_coord_type,
+                                      size1,
+                                      &width1_vec, &height1_vec, &depth1_vec);
          data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
             lp_build_sample_image_nearest(bld, unit,
