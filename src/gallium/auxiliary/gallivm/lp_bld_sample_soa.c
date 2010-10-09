@@ -230,6 +230,7 @@ static void
 lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
                             LLVMValueRef coord,
                             LLVMValueRef length,
+                            LLVMValueRef length_f,
                             boolean is_pot,
                             unsigned wrap_mode,
                             LLVMValueRef *x0_out,
@@ -240,7 +241,6 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
-   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
    LLVMValueRef coord0, coord1, weight;
 
@@ -442,13 +442,13 @@ static LLVMValueRef
 lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
                              LLVMValueRef coord,
                              LLVMValueRef length,
+                             LLVMValueRef length_f,
                              boolean is_pot,
                              unsigned wrap_mode)
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
    LLVMValueRef icoord;
    
@@ -563,9 +563,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 static void
 lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               unsigned unit,
-                              LLVMValueRef width_vec,
-                              LLVMValueRef height_vec,
-                              LLVMValueRef depth_vec,
+                              LLVMValueRef size,
                               LLVMValueRef row_stride_vec,
                               LLVMValueRef img_stride_vec,
                               LLVMValueRef data_ptr,
@@ -575,24 +573,45 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
+   LLVMValueRef width_vec;
+   LLVMValueRef height_vec;
+   LLVMValueRef depth_vec;
+   LLVMValueRef flt_size;
+   LLVMValueRef flt_width_vec;
+   LLVMValueRef flt_height_vec;
+   LLVMValueRef flt_depth_vec;
    LLVMValueRef x, y, z;
+
+   lp_build_extract_image_sizes(bld,
+                                bld->int_size_type,
+                                bld->int_coord_type,
+                                size,
+                                &width_vec, &height_vec, &depth_vec);
+
+   flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
+
+   lp_build_extract_image_sizes(bld,
+                                bld->float_size_type,
+                                bld->coord_type,
+                                flt_size,
+                                &flt_width_vec, &flt_height_vec, &flt_depth_vec);
 
    /*
     * Compute integer texcoords.
     */
-   x = lp_build_sample_wrap_nearest(bld, s, width_vec,
+   x = lp_build_sample_wrap_nearest(bld, s, width_vec, flt_width_vec,
                                     bld->static_state->pot_width,
                                     bld->static_state->wrap_s);
    lp_build_name(x, "tex.x.wrapped");
 
    if (dims >= 2) {
-      y = lp_build_sample_wrap_nearest(bld, t, height_vec,
+      y = lp_build_sample_wrap_nearest(bld, t, height_vec, flt_height_vec,
                                        bld->static_state->pot_height,
                                        bld->static_state->wrap_t);
       lp_build_name(y, "tex.y.wrapped");
 
       if (dims == 3) {
-         z = lp_build_sample_wrap_nearest(bld, r, depth_vec,
+         z = lp_build_sample_wrap_nearest(bld, r, depth_vec, flt_depth_vec,
                                           bld->static_state->pot_depth,
                                           bld->static_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
@@ -626,9 +645,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              unsigned unit,
-                             LLVMValueRef width_vec,
-                             LLVMValueRef height_vec,
-                             LLVMValueRef depth_vec,
+                             LLVMValueRef size,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
                              LLVMValueRef data_ptr,
@@ -638,15 +655,36 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
+   LLVMValueRef width_vec;
+   LLVMValueRef height_vec;
+   LLVMValueRef depth_vec;
+   LLVMValueRef flt_size;
+   LLVMValueRef flt_width_vec;
+   LLVMValueRef flt_height_vec;
+   LLVMValueRef flt_depth_vec;
    LLVMValueRef x0, y0, z0, x1, y1, z1;
    LLVMValueRef s_fpart, t_fpart, r_fpart;
    LLVMValueRef neighbors[2][2][4];
    int chan;
 
+   lp_build_extract_image_sizes(bld,
+                                bld->int_size_type,
+                                bld->int_coord_type,
+                                size,
+                                &width_vec, &height_vec, &depth_vec);
+
+   flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
+
+   lp_build_extract_image_sizes(bld,
+                                bld->float_size_type,
+                                bld->coord_type,
+                                flt_size,
+                                &flt_width_vec, &flt_height_vec, &flt_depth_vec);
+
    /*
     * Compute integer texcoords.
     */
-   lp_build_sample_wrap_linear(bld, s, width_vec,
+   lp_build_sample_wrap_linear(bld, s, width_vec, flt_width_vec,
                                bld->static_state->pot_width,
                                bld->static_state->wrap_s,
                                &x0, &x1, &s_fpart);
@@ -654,7 +692,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    lp_build_name(x1, "tex.x1.wrapped");
 
    if (dims >= 2) {
-      lp_build_sample_wrap_linear(bld, t, height_vec,
+      lp_build_sample_wrap_linear(bld, t, height_vec, flt_height_vec,
                                   bld->static_state->pot_height,
                                   bld->static_state->wrap_t,
                                   &y0, &y1, &t_fpart);
@@ -662,7 +700,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       lp_build_name(y1, "tex.y1.wrapped");
 
       if (dims == 3) {
-         lp_build_sample_wrap_linear(bld, r, depth_vec,
+         lp_build_sample_wrap_linear(bld, r, depth_vec, flt_depth_vec,
                                      bld->static_state->pot_depth,
                                      bld->static_state->wrap_r,
                                      &z0, &z1, &r_fpart);
@@ -807,12 +845,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->builder;
    LLVMValueRef size0;
    LLVMValueRef size1;
-   LLVMValueRef width0_vec;
-   LLVMValueRef width1_vec;
-   LLVMValueRef height0_vec;
-   LLVMValueRef height1_vec;
-   LLVMValueRef depth0_vec;
-   LLVMValueRef depth1_vec;
    LLVMValueRef row_stride0_vec;
    LLVMValueRef row_stride1_vec;
    LLVMValueRef img_stride0_vec;
@@ -826,15 +858,10 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    lp_build_mipmap_level_sizes(bld, ilevel0,
                                &size0,
                                &row_stride0_vec, &img_stride0_vec);
-   lp_build_extract_image_sizes(bld,
-                                bld->int_size_type,
-                                bld->int_coord_type,
-                                size0,
-                                &width0_vec, &height0_vec, &depth0_vec);
    data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       lp_build_sample_image_nearest(bld, unit,
-                                    width0_vec, height0_vec, depth0_vec,
+                                    size0,
                                     row_stride0_vec, img_stride0_vec,
                                     data_ptr0, s, t, r,
                                     colors0);
@@ -842,7 +869,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
       lp_build_sample_image_linear(bld, unit,
-                                   width0_vec, height0_vec, depth0_vec,
+                                   size0,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, s, t, r,
                                    colors0);
@@ -872,22 +899,17 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
                                      &row_stride1_vec, &img_stride1_vec);
-         lp_build_extract_image_sizes(bld,
-                                      bld->int_size_type,
-                                      bld->int_coord_type,
-                                      size1,
-                                      &width1_vec, &height1_vec, &depth1_vec);
          data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
             lp_build_sample_image_nearest(bld, unit,
-                                          width1_vec, height1_vec, depth1_vec,
+                                          size1,
                                           row_stride1_vec, img_stride1_vec,
                                           data_ptr1, s, t, r,
                                           colors1);
          }
          else {
             lp_build_sample_image_linear(bld, unit,
-                                         width1_vec, height1_vec, depth1_vec,
+                                         size1,
                                          row_stride1_vec, img_stride1_vec,
                                          data_ptr1, s, t, r,
                                          colors1);
