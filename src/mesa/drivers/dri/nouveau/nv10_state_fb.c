@@ -64,8 +64,8 @@ setup_lma_buffer(GLcontext *ctx)
 
 	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
 		nouveau_bo_ref(NULL, &nfb->hierz.bo);
-		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
-			       &nfb->hierz.bo);
+		nouveau_bo_new_tile(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
+				    0, NOUVEAU_BO_TILE_ZETA, &nfb->hierz.bo);
 	}
 
 	nouveau_bo_markl(bctx, celsius, NV17TCL_LMA_DEPTH_BUFFER_OFFSET,
