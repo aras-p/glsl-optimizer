@@ -290,8 +290,6 @@ generate_fs(struct llvmpipe_context *lp,
 
    memset(outputs, 0, sizeof outputs);
 
-   lp_build_flow_scope_begin(flow);
-
    /* Declare the color and z variables */
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -426,8 +424,6 @@ generate_fs(struct llvmpipe_context *lp,
                                lp_build_mask_value(&mask), counter);
 
    *pmask = lp_build_mask_end(&mask);
-
-   lp_build_flow_scope_end(flow);
 
    lp_build_flow_destroy(flow);
 }

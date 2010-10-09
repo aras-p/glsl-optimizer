@@ -51,16 +51,6 @@ void
 lp_build_flow_destroy(struct lp_build_flow_context *flow);
 
 void
-lp_build_flow_scope_begin(struct lp_build_flow_context *flow);
-
-void
-lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
-                            LLVMValueRef *variable);
-
-void
-lp_build_flow_scope_end(struct lp_build_flow_context *flow);
-
-void
 lp_build_flow_skip_begin(struct lp_build_flow_context *flow);
 
 void

@@ -45,19 +45,8 @@
  * Enumeration of all possible flow constructs.
  */
 enum lp_build_flow_construct_kind {
-   LP_BUILD_FLOW_SCOPE,
    LP_BUILD_FLOW_SKIP,
    LP_BUILD_FLOW_IF
-};
-
-
-/**
- * Variable declaration scope.
- */
-struct lp_build_flow_scope
-{
-   /** Number of variables declared in this scope */
-   unsigned num_variables;
 };
 
 
@@ -69,11 +58,6 @@ struct lp_build_flow_skip
 {
    /** Block to skip to */
    LLVMBasicBlockRef block;
-
-   /** Number of variables declared at the beginning */
-   unsigned num_variables;
-
-   LLVMValueRef *phi;  /**< array [num_variables] */
 };
 
 
@@ -82,10 +66,6 @@ struct lp_build_flow_skip
  */
 struct lp_build_flow_if
 {
-   unsigned num_variables;
-
-   LLVMValueRef *phi;  /**< array [num_variables] */
-
    LLVMValueRef condition;
    LLVMBasicBlockRef entry_block, true_block, false_block, merge_block;
 };
@@ -96,7 +76,6 @@ struct lp_build_flow_if
  */
 union lp_build_flow_construct_data
 {
-   struct lp_build_flow_scope scope;
    struct lp_build_flow_skip skip;
    struct lp_build_flow_if ifthen;
 };
@@ -127,12 +106,6 @@ struct lp_build_flow_context
     */
    struct lp_build_flow_construct constructs[LP_BUILD_FLOW_MAX_DEPTH];
    unsigned num_constructs;
-
-   /**
-    * Variable stack
-    */
-   LLVMValueRef *variables[LP_BUILD_FLOW_MAX_VARIABLES];
-   unsigned num_variables;
 };
 
 
@@ -155,7 +128,6 @@ void
 lp_build_flow_destroy(struct lp_build_flow_context *flow)
 {
    assert(flow->num_constructs == 0);
-   assert(flow->num_variables == 0);
    FREE(flow);
 }
 
@@ -218,93 +190,6 @@ lp_build_flow_pop(struct lp_build_flow_context *flow,
 
 
 /**
- * Begin a variable scope.
- *
- *
- */
-void
-lp_build_flow_scope_begin(struct lp_build_flow_context *flow)
-{
-   struct lp_build_flow_scope *scope;
-
-   scope = &lp_build_flow_push(flow, LP_BUILD_FLOW_SCOPE)->scope;
-   if(!scope)
-      return;
-
-   scope->num_variables = 0;
-}
-
-
-/**
- * Declare a variable.
- *
- * A variable is a named entity which can have different LLVMValueRef's at
- * different points of the program. This is relevant for control flow because
- * when there are multiple branches to a same location we need to replace
- * the variable's value with a Phi function as explained in
- * http://en.wikipedia.org/wiki/Static_single_assignment_form .
- *
- * We keep track of variables by keeping around a pointer to where they're
- * current.
- *
- * There are a few cautions to observe:
- *
- * - Variable's value must not be NULL. If there is no initial value then
- *   LLVMGetUndef() should be used.
- *
- * - Variable's value must be kept up-to-date. If the variable is going to be
- *   modified by a function then a pointer should be passed so that its value
- *   is accurate. Failure to do this will cause some of the variables'
- *   transient values to be lost, leading to wrong results.
- *
- * - A program should be written from top to bottom, by always appending
- *   instructions to the bottom with a single LLVMBuilderRef. Inserting and/or
- *   modifying existing statements will most likely lead to wrong results.
- *
- */
-void
-lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
-                            LLVMValueRef *variable)
-{
-   struct lp_build_flow_scope *scope;
-
-   scope = &lp_build_flow_peek(flow, LP_BUILD_FLOW_SCOPE)->scope;
-   if(!scope)
-      return;
-
-   assert(*variable);
-   if(!*variable)
-      return;
-
-   assert(flow->num_variables < LP_BUILD_FLOW_MAX_VARIABLES);
-   if(flow->num_variables >= LP_BUILD_FLOW_MAX_VARIABLES)
-      return;
-
-   flow->variables[flow->num_variables++] = variable;
-   ++scope->num_variables;
-}
-
-
-void
-lp_build_flow_scope_end(struct lp_build_flow_context *flow)
-{
-   struct lp_build_flow_scope *scope;
-
-   scope = &lp_build_flow_pop(flow, LP_BUILD_FLOW_SCOPE)->scope;
-   if(!scope)
-      return;
-
-   assert(flow->num_variables >= scope->num_variables);
-   if(flow->num_variables < scope->num_variables) {
-      flow->num_variables = 0;
-      return;
-   }
-
-   flow->num_variables -= scope->num_variables;
-}
-
-
-/**
  * Note: this function has no dependencies on the flow code and could
  * be used elsewhere.
  */
@@ -350,7 +235,6 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_skip *skip;
    LLVMBuilderRef builder;
-   unsigned i;
 
    skip = &lp_build_flow_push(flow, LP_BUILD_FLOW_SKIP)->skip;
    if(!skip)
@@ -359,25 +243,8 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
    /* create new basic block */
    skip->block = lp_build_flow_insert_block(flow);
 
-   skip->num_variables = flow->num_variables;
-   if(!skip->num_variables) {
-      skip->phi = NULL;
-      return;
-   }
-
-   /* Allocate a Phi node for each variable in this skip scope */
-   skip->phi = MALLOC(skip->num_variables * sizeof *skip->phi);
-   if(!skip->phi) {
-      skip->num_variables = 0;
-      return;
-   }
-
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, skip->block);
-
-   /* create a Phi node for each variable */
-   for(i = 0; i < skip->num_variables; ++i)
-      skip->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
    LLVMDisposeBuilder(builder);
 }
@@ -392,24 +259,13 @@ lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
                               LLVMValueRef cond)
 {
    struct lp_build_flow_skip *skip;
-   LLVMBasicBlockRef current_block;
    LLVMBasicBlockRef new_block;
-   unsigned i;
 
    skip = &lp_build_flow_peek(flow, LP_BUILD_FLOW_SKIP)->skip;
    if(!skip)
       return;
 
-   current_block = LLVMGetInsertBlock(flow->builder);
-
    new_block = lp_build_flow_insert_block(flow);
-
-   /* for each variable, update the Phi node with a (variable, block) pair */
-   for(i = 0; i < skip->num_variables; ++i) {
-      assert(*flow->variables[i]);
-      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
-      LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
-   }
 
    /* if cond is true, goto skip->block, else goto new_block */
    LLVMBuildCondBr(flow->builder, cond, skip->block, new_block);
@@ -422,28 +278,14 @@ void
 lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_skip *skip;
-   LLVMBasicBlockRef current_block;
-   unsigned i;
 
    skip = &lp_build_flow_pop(flow, LP_BUILD_FLOW_SKIP)->skip;
    if(!skip)
       return;
 
-   current_block = LLVMGetInsertBlock(flow->builder);
-
-   /* add (variable, block) tuples to the phi nodes */
-   for(i = 0; i < skip->num_variables; ++i) {
-      assert(*flow->variables[i]);
-      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
-      LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
-      *flow->variables[i] = skip->phi[i];
-   }
-
    /* goto block */
    LLVMBuildBr(flow->builder, skip->block);
    LLVMPositionBuilderAtEnd(flow->builder, skip->block);
-
-   FREE(skip->phi);
 }
 
 
@@ -659,7 +501,6 @@ lp_build_if(struct lp_build_if_state *ctx,
 {
    LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
    struct lp_build_flow_if *ifthen;
-   unsigned i;
 
    memset(ctx, 0, sizeof(*ctx));
    ctx->builder = builder;
@@ -669,30 +510,12 @@ lp_build_if(struct lp_build_if_state *ctx,
    ifthen = &lp_build_flow_push(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
 
-   ifthen->num_variables = flow->num_variables;
    ifthen->condition = condition;
    ifthen->entry_block = block;
-
-   /* create a Phi node for each variable in this flow scope */
-   ifthen->phi = MALLOC(ifthen->num_variables * sizeof(*ifthen->phi));
-   if (!ifthen->phi) {
-      ifthen->num_variables = 0;
-      return;
-   }
 
    /* create endif/merge basic block for the phi functions */
    ifthen->merge_block = lp_build_insert_new_block(builder, "endif-block");
    LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
-
-   /* create a phi node for each variable */
-   for (i = 0; i < flow->num_variables; i++) {
-      ifthen->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
-
-      /* add add the initial value of the var from the entry block */
-      if (!LLVMIsUndef(*flow->variables[i]))
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i],
-                         &ifthen->entry_block, 1);
-   }
 
    /* create/insert true_block before merge_block */
    ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
@@ -710,17 +533,9 @@ lp_build_else(struct lp_build_if_state *ctx)
 {
    struct lp_build_flow_context *flow = ctx->flow;
    struct lp_build_flow_if *ifthen;
-   unsigned i;
 
    ifthen = &lp_build_flow_peek(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
-
-   /* for each variable, update the Phi node with a (variable, block) pair */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
-   for (i = 0; i < flow->num_variables; i++) {
-      assert(*flow->variables[i]);
-      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
-   }
 
    /* create/insert false_block before the merge block */
    ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
@@ -738,38 +553,12 @@ lp_build_endif(struct lp_build_if_state *ctx)
 {
    struct lp_build_flow_context *flow = ctx->flow;
    struct lp_build_flow_if *ifthen;
-   LLVMBasicBlockRef curBlock = LLVMGetInsertBlock(ctx->builder);
-   unsigned i;
 
    ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
 
    /* Insert branch to the merge block from current block */
    LLVMBuildBr(ctx->builder, ifthen->merge_block);
-
-   if (ifthen->false_block) {
-      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
-      /* for each variable, update the Phi node with a (variable, block) pair */
-      for (i = 0; i < flow->num_variables; i++) {
-         assert(*flow->variables[i]);
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &curBlock, 1);
-         /* replace the variable ref with the phi function */
-         *flow->variables[i] = ifthen->phi[i];
-      }
-   }
-   else {
-      /* no else clause */
-      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
-      for (i = 0; i < flow->num_variables; i++) {
-         assert(*flow->variables[i]);
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
-
-         /* replace the variable ref with the phi function */
-         *flow->variables[i] = ifthen->phi[i];
-      }
-   }
-
-   FREE(ifthen->phi);
 
    /***
     *** Now patch in the various branch instructions.
