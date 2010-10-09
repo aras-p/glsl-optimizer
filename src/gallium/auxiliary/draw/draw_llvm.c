@@ -130,12 +130,13 @@ init_globals(struct draw_llvm *llvm)
 
    /* struct draw_jit_context */
    {
-      LLVMTypeRef elem_types[3];
+      LLVMTypeRef elem_types[4];
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* vs_constants */
-      elem_types[1] = LLVMPointerType(LLVMFloatType(), 0); /* vs_constants */
-      elem_types[2] = LLVMArrayType(texture_type,
+      elem_types[1] = LLVMPointerType(LLVMFloatType(), 0); /* gs_constants */
+      elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(LLVMFloatType(), 4), 12), 0); /* planes */
+      elem_types[3] = LLVMArrayType(texture_type,
                                     PIPE_MAX_VERTEX_SAMPLERS); /* textures */
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
@@ -144,6 +145,8 @@ init_globals(struct draw_llvm *llvm)
                              llvm->target, context_type, 0);
       LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, gs_constants,
                              llvm->target, context_type, 1);
+      LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, planes,
+                             llvm->target, context_type, 2);
       LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, textures,
                              llvm->target, context_type,
                              DRAW_JIT_CTX_TEXTURES);
@@ -817,6 +820,23 @@ generate_viewport(struct draw_llvm *llvm,
    
 }
 
+/* Equivalent of _mm_set1_ps(a)
+ */
+static LLVMValueRef vec4f_from_scalar(LLVMBuilderRef bld,
+				      LLVMValueRef a,
+				      const char *name)
+{
+   LLVMValueRef res = LLVMGetUndef(LLVMVectorType(LLVMFloatType(), 4));
+   int i;
+
+   for(i = 0; i < 4; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildInsertElement(bld, res, a, index, i == 3 ? name : "");
+   }
+
+   return res;
+}
+
 /*
  * Returns clipmask as 4xi32 bitmask for the 4 vertices
  */
@@ -827,17 +847,16 @@ generate_clipmask(LLVMBuilderRef builder,
                   boolean clip_z,
                   boolean clip_user,
                   boolean enable_d3dclipping,
-                  struct draw_llvm *llvm)
+                  unsigned nr,
+                  LLVMValueRef context_ptr)
 {
    LLVMValueRef mask; /* stores the <4xi32> clipmasks */     
    LLVMValueRef test, temp; 
    LLVMValueRef zero, shift;
    LLVMValueRef pos_x, pos_y, pos_z, pos_w;
-   LLVMValueRef planes, sum;
+   LLVMValueRef plane1, planes, plane_ptr, sum;
 
-   unsigned nr;
    unsigned i;
-   float (*plane)[4];
 
    struct lp_type f32_type = lp_type_float_vec(32); 
 
@@ -903,22 +922,38 @@ generate_clipmask(LLVMBuilderRef builder,
    }   
 
    if (clip_user){
+      LLVMValueRef planes_ptr = draw_jit_context_planes(builder, context_ptr);
+      LLVMValueRef indices[3];
+
       /* userclip planes */
-      nr = llvm->draw->nr_planes;
-      plane = llvm->draw->plane;
       for (i = 6; i < nr; i++) {
-         planes = lp_build_const_vec(f32_type, plane[i][0]);
+         indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+         indices[1] = LLVMConstInt(LLVMInt32Type(), i, 0);
+
+         indices[2] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+         plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
+         plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_x");
+         planes = vec4f_from_scalar(builder, plane1, "plane4_x");
          sum = LLVMBuildMul(builder, planes, pos_x, "");
 
-         planes = lp_build_const_vec(f32_type, plane[i][1]);
+         indices[2] = LLVMConstInt(LLVMInt32Type(), 1, 0);
+         plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
+         plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_y"); 
+         planes = vec4f_from_scalar(builder, plane1, "plane4_y");
          test = LLVMBuildMul(builder, planes, pos_y, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
-
-         planes = lp_build_const_vec(f32_type, plane[i][2]);
+         
+         indices[2] = LLVMConstInt(LLVMInt32Type(), 2, 0);
+         plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
+         plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_z"); 
+         planes = vec4f_from_scalar(builder, plane1, "plane4_z");
          test = LLVMBuildMul(builder, planes, pos_z, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
-         planes = lp_build_const_vec(f32_type, plane[i][3]);
+         indices[2] = LLVMConstInt(LLVMInt32Type(), 3, 0);
+         plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
+         plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_w"); 
+         planes = vec4f_from_scalar(builder, plane1, "plane4_w");
          test = LLVMBuildMul(builder, planes, pos_w, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
@@ -1098,7 +1133,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
                                       variant->key.enable_d3dclipping,
-                                      llvm);
+                                      variant->key.nr_planes,
+                                      context_ptr);
          /* return clipping boolean value for function */
          clipmask_bool(builder, clipmask, ret_ptr);
       }
@@ -1308,7 +1344,8 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
                                       variant->key.enable_d3dclipping,
-                                      llvm);
+                                      variant->key.nr_planes,
+                                      context_ptr);
          /* return clipping boolean value for function */
          clipmask_bool(builder, clipmask, ret_ptr);
       }
@@ -1392,6 +1429,7 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->bypass_viewport = llvm->draw->identity_viewport;
    key->enable_d3dclipping = (boolean)!llvm->draw->rasterizer->gl_rasterization_rules;
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
+   key->nr_planes = llvm->draw->nr_planes;
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the

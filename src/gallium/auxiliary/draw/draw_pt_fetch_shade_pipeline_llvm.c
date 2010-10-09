@@ -175,6 +175,9 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       draw->pt.user.vs_constants[0];
    fpme->llvm->jit_context.gs_constants =
       draw->pt.user.gs_constants[0];
+   fpme->llvm->jit_context.planes =
+      (float (*) [12][4]) draw->pt.user.planes[0];
+    
 }
 
 
