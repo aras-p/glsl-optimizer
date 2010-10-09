@@ -422,16 +422,14 @@ generate_fs(struct llvmpipe_context *lp,
    }
 
    if (counter)
-      lp_build_occlusion_count(builder, type, mask.value, counter);
+      lp_build_occlusion_count(builder, type,
+                               lp_build_mask_value(&mask), counter);
 
-   lp_build_mask_end(&mask);
+   *pmask = lp_build_mask_end(&mask);
 
    lp_build_flow_scope_end(flow);
 
    lp_build_flow_destroy(flow);
-
-   *pmask = mask.value;
-
 }
 
 

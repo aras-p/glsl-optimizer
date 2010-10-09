@@ -77,7 +77,7 @@ struct lp_build_mask_context
 
    LLVMTypeRef reg_type;
 
-   LLVMValueRef value;
+   LLVMValueRef var;
 };
 
 
@@ -86,6 +86,9 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
                     struct lp_build_flow_context *flow,
                     struct lp_type type,
                     LLVMValueRef value);
+
+LLVMValueRef
+lp_build_mask_value(struct lp_build_mask_context *mask);
 
 /**
  * Bitwise AND the mask with the given value, if a previous mask was set.

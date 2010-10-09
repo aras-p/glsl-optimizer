@@ -454,12 +454,15 @@ void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
    LLVMBuilderRef builder = mask->flow->builder;
+   LLVMValueRef value;
    LLVMValueRef cond;
+
+   value = lp_build_mask_value(mask);
 
    /* cond = (mask == 0) */
    cond = LLVMBuildICmp(builder,
                         LLVMIntEQ,
-                        LLVMBuildBitCast(builder, mask->value, mask->reg_type, ""),
+                        LLVMBuildBitCast(builder, value, mask->reg_type, ""),
                         LLVMConstNull(mask->reg_type),
                         "");
 
@@ -485,11 +488,20 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
 
    mask->flow = flow;
    mask->reg_type = LLVMIntType(type.width * type.length);
-   mask->value = value;
+   mask->var = lp_build_alloca(flow->builder,
+                               lp_build_int_vec_type(type),
+                               "execution_mask");
 
-   lp_build_flow_scope_begin(flow);
-   lp_build_flow_scope_declare(flow, &mask->value);
+   LLVMBuildStore(flow->builder, value, mask->var);
+
    lp_build_flow_skip_begin(flow);
+}
+
+
+LLVMValueRef
+lp_build_mask_value(struct lp_build_mask_context *mask)
+{
+   return LLVMBuildLoad(mask->flow->builder, mask->var, "");
 }
 
 
@@ -502,7 +514,10 @@ void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
 {
-   mask->value = LLVMBuildAnd( mask->flow->builder, mask->value, value, "");
+   value = LLVMBuildAnd(mask->flow->builder,
+                        lp_build_mask_value(mask),
+                        value, "");
+   LLVMBuildStore(mask->flow->builder, value, mask->var);
 }
 
 
@@ -513,8 +528,7 @@ LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask)
 {
    lp_build_flow_skip_end(mask->flow);
-   lp_build_flow_scope_end(mask->flow);
-   return mask->value;
+   return lp_build_mask_value(mask);
 }
 
 

@@ -473,7 +473,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    LLVMValueRef stencil_vals = NULL;
    LLVMValueRef z_bitmask = NULL, stencil_shift = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
-   LLVMValueRef orig_mask = mask->value;
+   LLVMValueRef orig_mask = lp_build_mask_value(mask);
    LLVMValueRef front_facing = NULL;
 
    /* Prototype a simpler path:
@@ -527,7 +527,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
          type.sign = 1;
          lp_build_context_init(&bld, builder, type);
 
-         z_dst = lp_build_select(&bld, mask->value, z_src, z_dst);
+         z_dst = lp_build_select(&bld, lp_build_mask_value(mask), z_src, z_dst);
          z_dst = LLVMBuildShl(builder, z_dst, const_8_int, "z_dst");
          *zs_value = z_dst;
       }
@@ -710,7 +710,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       }
 
       if (depth->writemask) {
-         LLVMValueRef zselectmask = mask->value;
+         LLVMValueRef zselectmask = lp_build_mask_value(mask);
 
          /* mask off bits that failed Z test */
          zselectmask = LLVMBuildAnd(builder, zselectmask, z_pass, "");
@@ -810,7 +810,7 @@ lp_build_deferred_depth_write(LLVMBuilderRef builder,
    lp_build_context_init(&bld, builder, type);
 
    z_dst = LLVMBuildLoad(builder, zs_dst_ptr, "zsbufval");
-   z_dst = lp_build_select(&bld, mask->value, zs_value, z_dst);
+   z_dst = lp_build_select(&bld, lp_build_mask_value(mask), zs_value, z_dst);
 
    LLVMBuildStore(builder, z_dst, zs_dst_ptr);
 }
