@@ -191,35 +191,35 @@ nv20_render_bind_vertices(GLcontext *ctx)
 
 #define BATCH_BEGIN(prim)					\
 	BEGIN_RING(chan, kelvin, NV20TCL_VERTEX_BEGIN_END, 1);	\
-	OUT_RING(chan, prim);
+	OUT_RING(chan, prim)
 #define BATCH_END()						\
 	BEGIN_RING(chan, kelvin, NV20TCL_VERTEX_BEGIN_END, 1);	\
-	OUT_RING(chan, 0);
+	OUT_RING(chan, 0)
 
 #define MAX_PACKET 0x400
 
 #define MAX_OUT_L 0x100
 #define BATCH_PACKET_L(n)						\
-	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_VERTEX_BATCH, n);
+	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_VERTEX_BATCH, n)
 #define BATCH_OUT_L(i, n)			\
-	OUT_RING(chan, ((n) - 1) << 24 | (i));
+	OUT_RING(chan, ((n) - 1) << 24 | (i))
 
 #define MAX_OUT_I16 0x2
 #define BATCH_PACKET_I16(n)					\
-	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_ELEMENT_U16, n);
+	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_ELEMENT_U16, n)
 #define BATCH_OUT_I16(i0, i1)			\
-	OUT_RING(chan, (i1) << 16 | (i0));
+	OUT_RING(chan, (i1) << 16 | (i0))
 
 #define MAX_OUT_I32 0x1
 #define BATCH_PACKET_I32(n)					\
-	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_ELEMENT_U32, n);
+	BEGIN_RING_NI(chan, kelvin, NV20TCL_VB_ELEMENT_U32, n)
 #define BATCH_OUT_I32(i)			\
-	OUT_RING(chan, i);
+	OUT_RING(chan, i)
 
 #define IMM_PACKET(m, n)			\
-	BEGIN_RING(chan, kelvin, m, n);
+	BEGIN_RING(chan, kelvin, m, n)
 #define IMM_OUT(x)				\
-	OUT_RINGf(chan, x);
+	OUT_RINGf(chan, x)
 
 #define TAG(x) nv20_##x
 #include "nouveau_render_t.c"

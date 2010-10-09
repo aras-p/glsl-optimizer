@@ -305,7 +305,7 @@ nv10_hwctx_init(GLcontext *ctx)
 	OUT_RING(chan, 1);
 
 	BEGIN_RING(chan, celsius, NV10TCL_DEPTH_RANGE_NEAR, 2);
-	OUT_RING(chan, 0.0);
+	OUT_RINGf(chan, 0.0);
 	OUT_RINGf(chan, 16777216.0);
 
 	FIRE_RING(chan);
