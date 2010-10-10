@@ -36,11 +36,12 @@
 #include "util/u_string.h"
 
 
-#define GALLIVM_DEBUG_TGSI      0x1
-#define GALLIVM_DEBUG_IR        0x2
-#define GALLIVM_DEBUG_ASM       0x4
-#define GALLIVM_DEBUG_NO_OPT    0x8
-#define GALLIVM_DEBUG_PERF      0x10
+#define GALLIVM_DEBUG_TGSI          (1 << 0)
+#define GALLIVM_DEBUG_IR            (1 << 1)
+#define GALLIVM_DEBUG_ASM           (1 << 2)
+#define GALLIVM_DEBUG_NO_OPT        (1 << 3)
+#define GALLIVM_DEBUG_PERF          (1 << 4)
+#define GALLIVM_DEBUG_NO_BRILINEAR  (1 << 5)
 
 
 #ifdef DEBUG

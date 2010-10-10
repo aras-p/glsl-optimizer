@@ -47,8 +47,7 @@
 
 
 /*
- * Bri-linear factor. Use zero or any other number less than one to force
- * tri-linear filtering.
+ * Bri-linear factor. Should be greater than one.
  */
 #define BRILINEAR_FACTOR 2
 
@@ -464,7 +463,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                return;
             }
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
-                BRILINEAR_FACTOR > 1.0) {
+                !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
                lp_build_brilinear_rho(float_bld, rho, BRILINEAR_FACTOR,
                                       out_lod_ipart, out_lod_fpart);
                return;
@@ -507,7 +506,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      if (BRILINEAR_FACTOR > 1.0) {
+      if (!(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
          lp_build_brilinear_lod(float_bld, lod, BRILINEAR_FACTOR,
                                 out_lod_ipart, out_lod_fpart);
       }
