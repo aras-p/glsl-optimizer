@@ -2706,10 +2706,7 @@ fs_visitor::dead_code_eliminate()
    bool dead[num_vars];
 
    for (int i = 0; i < num_vars; i++) {
-      /* This would be ">=", but FS_OPCODE_DISCARD has a src == dst where
-       * it writes dst then reads it as src.
-       */
-      dead[i] = this->virtual_grf_def[i] > this->virtual_grf_use[i];
+      dead[i] = this->virtual_grf_def[i] >= this->virtual_grf_use[i];
 
       if (dead[i]) {
 	 /* Mark off its interval so it won't interfere with anything. */
@@ -2824,7 +2821,7 @@ fs_visitor::virtual_grf_interferes(int a, int b)
 	      this->virtual_grf_def[b] < this->virtual_grf_use[a]);
    }
 
-   return start <= end;
+   return start < end;
 }
 
 static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
