@@ -320,7 +320,6 @@ lp_build_if(struct lp_build_if_state *ifthen,
 
    /* create endif/merge basic block for the phi functions */
    ifthen->merge_block = lp_build_insert_new_block(builder, "endif-block");
-   LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
 
    /* create/insert true_block before merge_block */
    ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
@@ -336,6 +335,9 @@ lp_build_if(struct lp_build_if_state *ifthen,
 void
 lp_build_else(struct lp_build_if_state *ifthen)
 {
+   /* Append an unconditional Br(anch) instruction on the true_block */
+   LLVMBuildBr(ifthen->builder, ifthen->merge_block);
+
    /* create/insert false_block before the merge block */
    ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
 
@@ -353,9 +355,9 @@ lp_build_endif(struct lp_build_if_state *ifthen)
    /* Insert branch to the merge block from current block */
    LLVMBuildBr(ifthen->builder, ifthen->merge_block);
 
-   /***
-    *** Now patch in the various branch instructions.
-    ***/
+   /*
+    * Now patch in the various branch instructions.
+    */
 
    /* Insert the conditional branch instruction at the end of entry_block */
    LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->entry_block);
@@ -368,19 +370,6 @@ lp_build_endif(struct lp_build_if_state *ifthen)
       /* no else clause */
       LLVMBuildCondBr(ifthen->builder, ifthen->condition,
                       ifthen->true_block, ifthen->merge_block);
-   }
-
-   /* Insert branch from end of true_block to merge_block */
-   if (ifthen->false_block) {
-      /* Append an unconditional Br(anch) instruction on the true_block */
-      LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->true_block);
-      LLVMBuildBr(ifthen->builder, ifthen->merge_block);
-   }
-   else {
-      /* No else clause.
-       * Note that we've already inserted the branch at the end of
-       * true_block.  See the very first LLVMBuildBr() call in this function.
-       */
    }
 
    /* Resume building code at end of the ifthen->merge_block */
