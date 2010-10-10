@@ -197,10 +197,6 @@ struct lp_build_sample_context
    struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
-   /** Unsigned integer coordinates */
-   struct lp_type uint_coord_type;
-   struct lp_build_context uint_coord_bld;
-
    /** Signed integer coordinates */
    struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;

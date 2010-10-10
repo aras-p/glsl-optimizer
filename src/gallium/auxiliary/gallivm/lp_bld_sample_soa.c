@@ -131,7 +131,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    }
 
    /* convert x,y,z coords to linear offset from start of texture, in bytes */
-   lp_build_sample_offset(&bld->uint_coord_bld,
+   lp_build_sample_offset(&bld->int_coord_bld,
                           bld->format_desc,
                           x, y, z, y_stride, z_stride,
                           &offset, &i, &j);
@@ -145,7 +145,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
        * coords which are out of bounds to become zero.  Zero's guaranteed
        * to be inside the texture image.
        */
-      offset = lp_build_andnot(&bld->uint_coord_bld, offset, use_border);
+      offset = lp_build_andnot(&bld->int_coord_bld, offset, use_border);
    }
 
    lp_build_fetch_rgba_soa(bld->builder,
@@ -239,9 +239,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
-   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef coord0, coord1, weight;
 
    switch(wrap_mode) {
@@ -253,20 +252,20 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
       /* repeat wrap */
       if (is_pot) {
-         coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
          coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
          coord1 = LLVMBuildAnd(bld->builder, coord1, length_minus_one, "");
       }
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
          LLVMValueRef mask;
          coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
          coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
          mask = lp_build_compare(bld->builder, int_coord_bld->type,
                                  PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
          coord1 = LLVMBuildAnd(bld->builder,
-                              lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one),
+                              lp_build_add(int_coord_bld, coord0, int_coord_bld->one),
                               mask, "");
       }
       break;
@@ -448,8 +447,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef icoord;
    
    switch(wrap_mode) {
@@ -460,7 +458,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          icoord = LLVMBuildAnd(bld->builder, icoord, length_minus_one, "");
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
          icoord = LLVMBuildAdd(bld->builder, icoord, bias, "");
          icoord = LLVMBuildURem(bld->builder, icoord, length, "");
       }
@@ -1199,7 +1197,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.float_type = lp_type_float(32);
    bld.int_type = lp_type_int(32);
    bld.coord_type = type;
-   bld.uint_coord_type = lp_uint_type(type);
    bld.int_coord_type = lp_int_type(type);
    bld.float_size_type = lp_type_float(32);
    bld.float_size_type.length = dims > 1 ? 4 : 1;
@@ -1212,7 +1209,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    lp_build_context_init(&bld.float_vec_bld, builder, float_vec_type);
    lp_build_context_init(&bld.int_bld, builder, bld.int_type);
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
-   lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
    lp_build_context_init(&bld.int_size_bld, builder, bld.int_size_type);
    lp_build_context_init(&bld.float_size_bld, builder, bld.float_size_type);

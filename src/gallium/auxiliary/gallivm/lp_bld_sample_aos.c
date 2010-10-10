@@ -81,11 +81,10 @@ lp_build_sample_wrap_nearest_int(struct lp_build_sample_context *bld,
                                  LLVMValueRef *out_offset,
                                  LLVMValueRef *out_i)
 {
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef length_minus_one;
 
-   length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
 
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
@@ -93,7 +92,7 @@ lp_build_sample_wrap_nearest_int(struct lp_build_sample_context *bld,
          coord = LLVMBuildAnd(bld->builder, coord, length_minus_one, "");
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
          coord = LLVMBuildAdd(bld->builder, coord, bias, "");
          coord = LLVMBuildURem(bld->builder, coord, length, "");
       }
@@ -114,7 +113,7 @@ lp_build_sample_wrap_nearest_int(struct lp_build_sample_context *bld,
       assert(0);
    }
 
-   lp_build_sample_partial_offset(uint_coord_bld, block_length, coord, stride,
+   lp_build_sample_partial_offset(int_coord_bld, block_length, coord, stride,
                                   out_offset, out_i);
 }
 
@@ -147,7 +146,6 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
                                 LLVMValueRef *i0,
                                 LLVMValueRef *i1)
 {
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef length_minus_one;
    LLVMValueRef lmask, umask, mask;
@@ -189,8 +187,8 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
     * multiplication.
     */
 
-   *i0 = uint_coord_bld->zero;
-   *i1 = uint_coord_bld->zero;
+   *i0 = int_coord_bld->zero;
+   *i1 = int_coord_bld->zero;
 
    length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
 
@@ -201,7 +199,7 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
       }
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
          coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
          coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
       }
@@ -209,9 +207,9 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
       mask = lp_build_compare(bld->builder, int_coord_bld->type,
                               PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
 
-      *offset0 = lp_build_mul(uint_coord_bld, coord0, stride);
+      *offset0 = lp_build_mul(int_coord_bld, coord0, stride);
       *offset1 = LLVMBuildAnd(bld->builder,
-                              lp_build_add(uint_coord_bld, *offset0, stride),
+                              lp_build_add(int_coord_bld, *offset0, stride),
                               mask, "");
       break;
 
@@ -226,8 +224,8 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
 
       mask = LLVMBuildAnd(bld->builder, lmask, umask, "");
 
-      *offset0 = lp_build_mul(uint_coord_bld, coord0, stride);
-      *offset1 = lp_build_add(uint_coord_bld,
+      *offset0 = lp_build_mul(int_coord_bld, coord0, stride);
+      *offset1 = lp_build_add(int_coord_bld,
                               *offset0,
                               LLVMBuildAnd(bld->builder, stride, mask, ""));
       break;
@@ -240,8 +238,8 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
    default:
       assert(0);
-      *offset0 = uint_coord_bld->zero;
-      *offset1 = uint_coord_bld->zero;
+      *offset0 = int_coord_bld->zero;
+      *offset1 = int_coord_bld->zero;
       break;
    }
 }
@@ -327,7 +325,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
       r_ipart = LLVMBuildAShr(builder, r, i32_c8, "");
 
    /* get pixel, row, image strides */
-   x_stride = lp_build_const_vec(bld->uint_coord_bld.type,
+   x_stride = lp_build_const_vec(bld->int_coord_bld.type,
                                  bld->format_desc->block.bits/8);
 
    /* Do texcoord wrapping, compute texel offset */
@@ -346,7 +344,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                                        bld->static_state->pot_height,
                                        bld->static_state->wrap_t,
                                        &y_offset, &y_subcoord);
-      offset = lp_build_add(&bld->uint_coord_bld, offset, y_offset);
+      offset = lp_build_add(&bld->int_coord_bld, offset, y_offset);
       if (dims >= 3) {
          LLVMValueRef z_offset;
          lp_build_sample_wrap_nearest_int(bld,
@@ -355,13 +353,13 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                                           bld->static_state->pot_height,
                                           bld->static_state->wrap_r,
                                           &z_offset, &z_subcoord);
-         offset = lp_build_add(&bld->uint_coord_bld, offset, z_offset);
+         offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
       else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
          LLVMValueRef z_offset;
          /* The r coord is the cube face in [0,5] */
-         z_offset = lp_build_mul(&bld->uint_coord_bld, r, img_stride_vec);
-         offset = lp_build_add(&bld->uint_coord_bld, offset, z_offset);
+         z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
+         offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
    }
 
@@ -522,7 +520,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       r_fpart = LLVMBuildAnd(builder, r, i32_c255, "");
 
    /* get pixel, row and image strides */
-   x_stride = lp_build_const_vec(bld->uint_coord_bld.type,
+   x_stride = lp_build_const_vec(bld->int_coord_bld.type,
                                  bld->format_desc->block.bits/8);
    y_stride = row_stride_vec;
    z_stride = img_stride_vec;
@@ -553,9 +551,9 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
       for (z = 0; z < 2; z++) {
          for (x = 0; x < 2; x++) {
-            offset[z][0][x] = lp_build_add(&bld->uint_coord_bld,
+            offset[z][0][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[z][0][x], y_offset0);
-            offset[z][1][x] = lp_build_add(&bld->uint_coord_bld,
+            offset[z][1][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[z][1][x], y_offset1);
          }
       }
@@ -571,20 +569,20 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                       &z_subcoord[0], &z_subcoord[1]);
       for (y = 0; y < 2; y++) {
          for (x = 0; x < 2; x++) {
-            offset[0][y][x] = lp_build_add(&bld->uint_coord_bld,
+            offset[0][y][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[0][y][x], z_offset0);
-            offset[1][y][x] = lp_build_add(&bld->uint_coord_bld,
+            offset[1][y][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[1][y][x], z_offset1);
          }
       }
    }
    else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef z_offset;
-      z_offset = lp_build_mul(&bld->uint_coord_bld, r, img_stride_vec);
+      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
       for (y = 0; y < 2; y++) {
          for (x = 0; x < 2; x++) {
             /* The r coord is the cube face in [0,5] */
-            offset[0][y][x] = lp_build_add(&bld->uint_coord_bld,
+            offset[0][y][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[0][y][x], z_offset);
          }
       }
