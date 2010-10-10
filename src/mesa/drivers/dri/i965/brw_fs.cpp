@@ -73,7 +73,8 @@ enum fs_opcodes {
    FS_OPCODE_TEX,
    FS_OPCODE_TXB,
    FS_OPCODE_TXL,
-   FS_OPCODE_DISCARD,
+   FS_OPCODE_DISCARD_NOT,
+   FS_OPCODE_DISCARD_AND,
 };
 
 static int using_new_fs = -1;
@@ -475,7 +476,8 @@ public:
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
-   void generate_discard(fs_inst *inst, struct brw_reg temp);
+   void generate_discard_not(fs_inst *inst, struct brw_reg temp);
+   void generate_discard_and(fs_inst *inst, struct brw_reg temp);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
 
@@ -1548,7 +1550,8 @@ fs_visitor::visit(ir_discard *ir)
 
    assert(ir->condition == NULL); /* FINISHME */
 
-   emit(fs_inst(FS_OPCODE_DISCARD, temp, temp));
+   emit(fs_inst(FS_OPCODE_DISCARD_NOT, temp, reg_null));
+   emit(fs_inst(FS_OPCODE_DISCARD_AND, reg_null, temp));
    kill_emitted = true;
 }
 
@@ -2217,15 +2220,23 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 }
 
 void
-fs_visitor::generate_discard(fs_inst *inst, struct brw_reg temp)
+fs_visitor::generate_discard_not(fs_inst *inst, struct brw_reg mask)
+{
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
+   brw_pop_insn_state(p);
+}
+
+void
+fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
 {
    struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-   temp = brw_uw1_reg(temp.file, temp.nr, 0);
+   mask = brw_uw1_reg(mask.file, mask.nr, 0);
 
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, temp, brw_mask_reg(1)); /* IMASK */
-   brw_AND(p, g0, temp, g0);
+   brw_AND(p, g0, mask, g0);
    brw_pop_insn_state(p);
 }
 
@@ -3011,8 +3022,11 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
 	 break;
-      case FS_OPCODE_DISCARD:
-	 generate_discard(inst, dst /* src0 == dst */);
+      case FS_OPCODE_DISCARD_NOT:
+	 generate_discard_not(inst, dst);
+	 break;
+      case FS_OPCODE_DISCARD_AND:
+	 generate_discard_and(inst, src[0]);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
