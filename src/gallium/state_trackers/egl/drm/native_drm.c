@@ -185,6 +185,29 @@ drm_display_init_screen(struct native_display *ndpy)
    return TRUE;
 }
 
+static struct pipe_resource *
+drm_display_import_buffer(struct native_display *ndpy,
+                          const struct pipe_resource *templ,
+                          void *buf)
+{
+   return ndpy->screen->resource_from_handle(ndpy->screen,
+         templ, (struct winsys_handle *) buf);
+}
+
+static boolean
+drm_display_export_buffer(struct native_display *ndpy,
+                          struct pipe_resource *res,
+                          void *buf)
+{
+   return ndpy->screen->resource_get_handle(ndpy->screen,
+         res, (struct winsys_handle *) buf);
+}
+
+static struct native_display_buffer drm_display_buffer = {
+   drm_display_import_buffer,
+   drm_display_export_buffer
+};
+
 static struct native_display *
 drm_create_display(int fd, struct native_event_handler *event_handler,
                    void *user_data)
@@ -208,6 +231,7 @@ drm_create_display(int fd, struct native_event_handler *event_handler,
    drmdpy->base.get_param = drm_display_get_param;
    drmdpy->base.get_configs = drm_display_get_configs;
 
+   drmdpy->base.buffer = &drm_display_buffer;
    drm_display_init_modeset(&drmdpy->base);
 
    return &drmdpy->base;

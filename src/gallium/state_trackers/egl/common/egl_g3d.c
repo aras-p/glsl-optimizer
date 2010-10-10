@@ -553,7 +553,8 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
 
    if (dpy->Platform == _EGL_PLATFORM_DRM) {
       dpy->Extensions.MESA_drm_display = EGL_TRUE;
-      dpy->Extensions.MESA_drm_image = EGL_TRUE;
+      if (gdpy->native->buffer)
+         dpy->Extensions.MESA_drm_image = EGL_TRUE;
    }
 
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {

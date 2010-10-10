@@ -38,7 +38,7 @@
 #include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
 
-/* move this to native display? */
+/* for struct winsys_handle */
 #include "state_tracker/drm_driver.h"
 
 /**
@@ -137,13 +137,11 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
                              _EGLImage *img, const EGLint *attribs)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct pipe_screen *screen = gdpy->native->screen;
    struct pipe_resource templ;
    struct winsys_handle wsh;
    _EGLImageAttribs attrs;
    EGLint format;
 
-   /* winsys_handle is in theory platform-specific */
    if (dpy->Platform != _EGL_PLATFORM_DRM)
       return NULL;
 
@@ -181,7 +179,7 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
    wsh.stride =
       attrs.DRMBufferStrideMESA * util_format_get_blocksize(templ.format);
 
-   return screen->resource_from_handle(screen, &templ, &wsh);
+   return gdpy->native->buffer->import_buffer(gdpy->native, &templ, &wsh);
 }
 
 #endif /* EGL_MESA_drm_image */
@@ -303,10 +301,8 @@ egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_image *gimg = egl_g3d_image(img);
-   struct pipe_screen *screen = gdpy->native->screen;
    struct winsys_handle wsh;
 
-   /* winsys_handle is in theory platform-specific */
    if (dpy->Platform != _EGL_PLATFORM_DRM)
       return EGL_FALSE;
 
@@ -314,9 +310,9 @@ egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
    if (name) {
       memset(&handle, 0, sizeof(handle));
       wsh.type = DRM_API_HANDLE_TYPE_SHARED;
-      if (!screen->resource_get_handle(screen, gimg->texture, &wsh)) {
+      if (!gdpy->native->buffer->export_buffer(gdpy->native,
+                                               gimg->texture, &wsh))
          return EGL_FALSE;
-      }
 
       *name = wsh.handle;
    }
@@ -325,7 +321,8 @@ egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
    if (handle || stride) {
       memset(&wsh, 0, sizeof(wsh));
       wsh.type = DRM_API_HANDLE_TYPE_KMS;
-      if (!screen->resource_get_handle(screen, gimg->texture, &wsh))
+      if (!gdpy->native->buffer->export_buffer(gdpy->native,
+                                               gimg->texture, &wsh))
          return EGL_FALSE;
 
       if (handle)
