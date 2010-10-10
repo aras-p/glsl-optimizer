@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -53,15 +53,8 @@
  *  ... ... ... ... ... ... ... ... ...
  *
  *
- * Stencil test:
- * Two-sided stencil test is supported but probably not as efficient as
- * it could be.  Currently, we use if/then/else constructs to do the
- * operations for front vs. back-facing polygons.  We could probably do
- * both the front and back arithmetic then use a Select() instruction to
- * choose the result depending on polyon orientation.  We'd have to
- * measure performance both ways and see which is better.
- *
  * @author Jose Fonseca <jfonseca@vmware.com>
+ * @author Brian Paul <jfonseca@vmware.com>
  */
 
 #include "pipe/p_state.h"
