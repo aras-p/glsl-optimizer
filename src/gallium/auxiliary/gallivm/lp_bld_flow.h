@@ -108,6 +108,7 @@ lp_build_mask_end(struct lp_build_mask_context *mask);
 struct lp_build_loop_state
 {
   LLVMBasicBlockRef block;
+  LLVMValueRef counter_var;
   LLVMValueRef counter;
 };
 
@@ -128,7 +129,7 @@ void
 lp_build_loop_end_cond(LLVMBuilderRef builder,
                        LLVMValueRef end,
                        LLVMValueRef step,
-                       int cond, /* LLVM condition */
+                       LLVMIntPredicate cond,
                        struct lp_build_loop_state *state);
 
 

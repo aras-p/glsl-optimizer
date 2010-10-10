@@ -201,19 +201,47 @@ lp_build_loop_begin(LLVMBuilderRef builder,
                     LLVMValueRef start,
                     struct lp_build_loop_state *state)
 {
-   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
-   LLVMValueRef function = LLVMGetBasicBlockParent(block);
+   state->block = lp_build_insert_new_block(builder, "loop_begin");
 
-   state->block = LLVMAppendBasicBlock(function, "loop");
+   state->counter_var = lp_build_alloca(builder, LLVMTypeOf(start), "loop_counter");
+
+   LLVMBuildStore(builder, start, state->counter_var);
 
    LLVMBuildBr(builder, state->block);
 
    LLVMPositionBuilderAtEnd(builder, state->block);
 
-   state->counter = LLVMBuildPhi(builder, LLVMTypeOf(start), "");
+   state->counter = LLVMBuildLoad(builder, state->counter_var, "");
+}
 
-   LLVMAddIncoming(state->counter, &start, &block, 1);
 
+void
+lp_build_loop_end_cond(LLVMBuilderRef builder,
+                       LLVMValueRef end,
+                       LLVMValueRef step,
+                       LLVMIntPredicate llvm_cond,
+                       struct lp_build_loop_state *state)
+{
+   LLVMValueRef next;
+   LLVMValueRef cond;
+   LLVMBasicBlockRef after_block;
+
+   if (!step)
+      step = LLVMConstInt(LLVMTypeOf(end), 1, 0);
+
+   next = LLVMBuildAdd(builder, state->counter, step, "");
+
+   LLVMBuildStore(builder, next, state->counter_var);
+
+   cond = LLVMBuildICmp(builder, llvm_cond, next, end, "");
+
+   after_block = lp_build_insert_new_block(builder, "loop_end");
+
+   LLVMBuildCondBr(builder, cond, after_block, state->block);
+
+   LLVMPositionBuilderAtEnd(builder, after_block);
+
+   state->counter = LLVMBuildLoad(builder, state->counter_var, "");
 }
 
 
@@ -223,55 +251,7 @@ lp_build_loop_end(LLVMBuilderRef builder,
                   LLVMValueRef step,
                   struct lp_build_loop_state *state)
 {
-   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
-   LLVMValueRef function = LLVMGetBasicBlockParent(block);
-   LLVMValueRef next;
-   LLVMValueRef cond;
-   LLVMBasicBlockRef after_block;
-
-   if (!step)
-      step = LLVMConstInt(LLVMTypeOf(end), 1, 0);
-
-   next = LLVMBuildAdd(builder, state->counter, step, "");
-
-   cond = LLVMBuildICmp(builder, LLVMIntNE, next, end, "");
-
-   after_block = LLVMAppendBasicBlock(function, "");
-
-   LLVMBuildCondBr(builder, cond, after_block, state->block);
-
-   LLVMAddIncoming(state->counter, &next, &block, 1);
-
-   LLVMPositionBuilderAtEnd(builder, after_block);
-}
-
-void
-lp_build_loop_end_cond(LLVMBuilderRef builder,
-                       LLVMValueRef end,
-                       LLVMValueRef step,
-                       int llvm_cond,
-                       struct lp_build_loop_state *state)
-{
-   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
-   LLVMValueRef function = LLVMGetBasicBlockParent(block);
-   LLVMValueRef next;
-   LLVMValueRef cond;
-   LLVMBasicBlockRef after_block;
-
-   if (!step)
-      step = LLVMConstInt(LLVMTypeOf(end), 1, 0);
-
-   next = LLVMBuildAdd(builder, state->counter, step, "");
-
-   cond = LLVMBuildICmp(builder, llvm_cond, next, end, "");
-
-   after_block = LLVMAppendBasicBlock(function, "");
-
-   LLVMBuildCondBr(builder, cond, after_block, state->block);
-
-   LLVMAddIncoming(state->counter, &next, &block, 1);
-
-   LLVMPositionBuilderAtEnd(builder, after_block);
+   lp_build_loop_end_cond(builder, end, step, LLVMIntNE, state);
 }
 
 
