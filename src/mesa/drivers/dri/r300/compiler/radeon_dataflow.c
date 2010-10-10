@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Nicolai Haehnle.
+ * Copyright 2010 Tom Stellard <tstellar@gmail.com>
  *
  * All Rights Reserved.
  *
@@ -27,6 +28,8 @@
 
 #include "radeon_dataflow.h"
 
+#include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
 #include "radeon_program.h"
 
 struct read_write_mask_data {
@@ -401,4 +404,253 @@ void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, v
 		remap_normal_instruction(inst, cb, userdata);
 	else
 		remap_pair_instruction(inst, cb, userdata);
+}
+
+/**
+ * @return RC_OPCODE_NOOP if inst is not a flow control instruction.
+ * @return The opcode of inst if it is a flow control instruction.
+ */
+static rc_opcode get_flow_control_inst(struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * info;
+	if (inst->Type == RC_INSTRUCTION_NORMAL) {
+		info = rc_get_opcode_info(inst->U.I.Opcode);
+	} else {
+		info = rc_get_opcode_info(inst->U.P.RGB.Opcode);
+		/*A flow control instruction shouldn't have an alpha
+		 * instruction.*/
+		assert(!info->IsFlowControl ||
+				inst->U.P.Alpha.Opcode == RC_OPCODE_NOP);
+	}
+
+	if (info->IsFlowControl)
+		return info->Opcode;
+	else
+		return RC_OPCODE_NOP;
+
+}
+
+struct get_readers_callback_data {
+	struct radeon_compiler * C;
+	struct rc_reader_data * ReaderData;
+	rc_read_src_fn ReadCB;
+	rc_read_write_mask_fn WriteCB;
+	unsigned int AliveWriteMask;
+};
+
+static void add_reader(
+	struct memory_pool * pool,
+	struct rc_reader_data * data,
+	struct rc_instruction * inst,
+	unsigned int mask,
+	struct rc_src_register * src)
+{
+	struct rc_reader * new;
+	memory_pool_array_reserve(pool, struct rc_reader, data->Readers,
+				data->ReaderCount, data->ReadersReserved, 1);
+	new = &data->Readers[data->ReaderCount++];
+	new->Inst = inst;
+	new->WriteMask = mask;
+	new->Src = src;
+}
+
+/**
+ * This function is used by rc_get_readers_normal() to determine whether inst
+ * is a reader of userdata->ReaderData->Writer
+ */
+static void get_readers_normal_read_callback(
+	void * userdata,
+	struct rc_instruction * inst,
+	struct rc_src_register * src)
+{
+	struct get_readers_callback_data * d = userdata;
+	unsigned int read_mask;
+
+	if (src->RelAddr)
+		d->ReaderData->Abort = 1;
+
+	unsigned int shared_mask = rc_src_reads_dst_mask(src->File, src->Index,
+				src->Swizzle,
+				d->ReaderData->Writer->U.I.DstReg.File,
+				d->ReaderData->Writer->U.I.DstReg.Index,
+				d->AliveWriteMask);
+
+	if (shared_mask == RC_MASK_NONE)
+		return;
+
+	/* If we make it this far, it means that this source reads from the
+	 * same register written to by d->ReaderData->Writer. */
+
+	if (d->ReaderData->AbortOnRead) {
+		d->ReaderData->Abort = 1;
+		return;
+	}
+
+	read_mask = rc_swizzle_to_writemask(src->Swizzle);
+	/* XXX The behavior in this case should be configurable. */
+	if ((read_mask & d->AliveWriteMask) != read_mask) {
+		d->ReaderData->Abort = 1;
+		return;
+	}
+
+	d->ReadCB(d->ReaderData, inst, src);
+	if (d->ReaderData->Abort)
+		return;
+
+	add_reader(&d->C->Pool, d->ReaderData, inst, shared_mask, src);
+}
+
+/**
+ * This function is used by rc_get_readers_normal() to determine when
+ * userdata->ReaderData->Writer is dead (i. e. All compontents of its
+ * destination register have been overwritten by other instructions).
+ */
+static void get_readers_write_callback(
+	void *userdata,
+	struct rc_instruction * inst,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int mask)
+{
+	struct get_readers_callback_data * d = userdata;
+
+	if (index == d->ReaderData->Writer->U.I.DstReg.Index
+		&& file == d->ReaderData->Writer->U.I.DstReg.File) {
+			unsigned int shared_mask = mask
+				& d->ReaderData->Writer->U.I.DstReg.WriteMask;
+		if (d->ReaderData->InElse) {
+			if (shared_mask & d->AliveWriteMask) {
+				/* We set AbortOnRead here because the
+				 * destination register of d->ReaderData->Writer
+				 * is written to in both the IF and the
+				 * ELSE block of this IF/ELSE statement.
+				 * This means that readers of this
+				 * destination register that follow this IF/ELSE
+				 * statement use the value of different
+				 * instructions depending on the control flow
+				 * decisions made by the program. */
+				d->ReaderData->AbortOnRead = 1;
+			}
+		} else {
+			d->AliveWriteMask &= ~shared_mask;
+		}
+	}
+
+	d->WriteCB(d->ReaderData, inst, file, index, mask);
+}
+
+/**
+ * This function will create a list of readers via the rc_reader_data struct.
+ * This function will abort (set the flag data->Abort) and return if it
+ * encounters an instruction that reads from @param writer and also a different
+ * instruction.  Here are some examples:
+ *
+ * writer = instruction 0;
+ * 0 MOV TEMP[0].xy, TEMP[1].xy
+ * 1 MOV TEMP[0].zw, TEMP[2].xy
+ * 2 MOV TEMP[3], TEMP[0]
+ * The Abort flag will be set on instruction 2, because it reads values written
+ * by instructions 0 and 1.
+ *
+ * writer = instruction 1;
+ * 0 IF TEMP[0].x
+ * 1 MOV TEMP[1], TEMP[2]
+ * 2 ELSE
+ * 3 MOV TEMP[1], TEMP[2]
+ * 4 ENDIF
+ * 5 MOV TEMP[3], TEMP[1]
+ * The Abort flag will be set on instruction 5, because it could read from the
+ * value written by either instruction 1 or 3, depending on the jump decision
+ * made at instruction 0.
+ *
+ * writer = instruction 0;
+ * 0 MOV TEMP[0], TEMP[1]
+ * 2 BGNLOOP
+ * 3 ADD TEMP[0], TEMP[0], none.1
+ * 4 ENDLOOP
+ * The Abort flag will be set on instruction 3, because in the first iteration
+ * of the loop it reads the value written by instruction 0 and in all other
+ * iterations it reads the value written by instruction 3.
+ *
+ * @param read_cb This function will be called for for every instruction that
+ * has been determined to be a reader of writer.
+ * @param write_cb This function will be called for every instruction after
+ * writer.
+ */
+void  rc_get_readers_normal(
+	struct radeon_compiler * c,
+	struct rc_instruction * writer,
+	struct rc_reader_data * data,
+	rc_read_src_fn read_cb,
+	rc_read_write_mask_fn write_cb)
+{
+	struct rc_instruction * tmp;
+	struct get_readers_callback_data d;
+	unsigned int branch_depth = 0;
+
+	data->Writer = writer;
+	data->Abort = 0;
+	data->AbortOnRead = 0;
+	data->InElse = 0;
+	data->ReaderCount = 0;
+	data->ReadersReserved = 0;
+	data->Readers = NULL;
+
+	d.C = c;
+	d.AliveWriteMask = writer->U.I.DstReg.WriteMask;
+	d.ReaderData = data;
+	d.ReadCB = read_cb;
+	d.WriteCB = write_cb;
+
+	if (!writer->U.I.DstReg.WriteMask)
+		return;
+
+	for(tmp = writer->Next; tmp != &c->Program.Instructions;
+							tmp = tmp->Next){
+		rc_opcode opcode = get_flow_control_inst(tmp);
+		switch(opcode) {
+		case RC_OPCODE_BGNLOOP:
+			/* XXX We can do better when we see a BGNLOOP if we
+			 * add a flag called AbortOnWrite to struct
+			 * rc_reader_data and leave it set until the next
+			 * ENDLOOP. */
+		case RC_OPCODE_ENDLOOP:
+			/* XXX We can do better when we see an ENDLOOP by
+			 * searching backwards from writer and looking for
+			 * readers of writer's destination index.  If we find a
+			 * reader before we get to the BGNLOOP, we must abort
+			 * unless there is another writer between that reader
+			 * and the BGNLOOP. */
+			data->Abort = 1;
+			return;
+		case RC_OPCODE_IF:
+			branch_depth++;
+			break;
+		case RC_OPCODE_ELSE:
+			if (branch_depth == 0)
+				data->InElse = 1;
+			break;
+		case RC_OPCODE_ENDIF:
+			if (branch_depth == 0) {
+				data->AbortOnRead = 1;
+				data->InElse = 0;
+			}
+			else {
+				branch_depth--;
+			}
+			break;
+		default:
+			break;
+		}
+
+		if (!data->InElse)
+			rc_for_all_reads_src(tmp, get_readers_normal_read_callback, &d);
+		rc_for_all_writes_mask(tmp, get_readers_write_callback, &d);
+
+		if (data->Abort)
+			return;
+
+		if (!d.AliveWriteMask)
+			return;
+	}
 }
