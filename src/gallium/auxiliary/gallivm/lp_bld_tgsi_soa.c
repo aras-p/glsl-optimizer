@@ -917,6 +917,43 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   texel);
 }
 
+static boolean
+near_end_of_shader(struct lp_build_tgsi_soa_context *bld,
+		   int pc)
+{
+   int i;
+
+   for (i = 0; i < 5; i++) {
+      unsigned opcode;
+
+      if (pc + i >= bld->info->num_instructions)
+	 return TRUE;
+
+      opcode = bld->instructions[pc + i].Instruction.Opcode;
+
+      if (opcode == TGSI_OPCODE_END)
+	 return TRUE;
+
+      if (opcode == TGSI_OPCODE_TEX ||
+	  opcode == TGSI_OPCODE_TXP ||
+	  opcode == TGSI_OPCODE_TXD ||
+	  opcode == TGSI_OPCODE_TXB ||
+	  opcode == TGSI_OPCODE_TXL ||
+	  opcode == TGSI_OPCODE_TXF ||
+	  opcode == TGSI_OPCODE_TXQ ||
+	  opcode == TGSI_OPCODE_CAL ||
+	  opcode == TGSI_OPCODE_CALLNZ ||
+	  opcode == TGSI_OPCODE_IF ||
+	  opcode == TGSI_OPCODE_IFC ||
+	  opcode == TGSI_OPCODE_BGNLOOP ||
+	  opcode == TGSI_OPCODE_SWITCH)
+	 return FALSE;
+   }
+
+   return TRUE;
+}
+
+
 
 /**
  * Kill fragment if any of the src register values are negative.
@@ -924,7 +961,8 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 static void
 emit_kil(
    struct lp_build_tgsi_soa_context *bld,
-   const struct tgsi_full_instruction *inst )
+   const struct tgsi_full_instruction *inst,
+   int pc)
 {
    const struct tgsi_full_src_register *reg = &inst->Src[0];
    LLVMValueRef terms[NUM_CHANNELS];
@@ -966,9 +1004,8 @@ emit_kil(
    if(mask) {
       lp_build_mask_update(bld->mask, mask);
 
-      /* XXX: figure out if we are at the end of the shader and skip this:
-       */
-      lp_build_mask_check(bld->mask);
+      if (!near_end_of_shader(bld, pc))
+	 lp_build_mask_check(bld->mask);
    }
 }
 
@@ -981,7 +1018,8 @@ emit_kil(
  */
 static void
 emit_kilp(struct lp_build_tgsi_soa_context *bld,
-          const struct tgsi_full_instruction *inst)
+          const struct tgsi_full_instruction *inst,
+	  int pc)
 {
    LLVMValueRef mask;
 
@@ -997,9 +1035,8 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
 
    lp_build_mask_update(bld->mask, mask);
 
-   /* XXX: figure out if we are at the end of the shader and skip this:
-    */
-   lp_build_mask_check(bld->mask);
+   if (!near_end_of_shader(bld, pc))
+      lp_build_mask_check(bld->mask);
 }
 
 static void
@@ -1548,12 +1585,12 @@ emit_instruction(
 
    case TGSI_OPCODE_KILP:
       /* predicated kill */
-      emit_kilp( bld, inst );
+      emit_kilp( bld, inst, (*pc)-1 );
       break;
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
-      emit_kil( bld, inst );
+      emit_kil( bld, inst, (*pc)-1 );
       break;
 
    case TGSI_OPCODE_PK2H:
