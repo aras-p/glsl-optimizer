@@ -333,7 +333,6 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
    return visit_continue;
 }
 
-extern "C" {
 bool
 brw_do_vector_splitting(exec_list *instructions)
 {
@@ -390,5 +389,4 @@ brw_do_vector_splitting(exec_list *instructions)
    talloc_free(mem_ctx);
 
    return true;
-}
 }
