@@ -728,6 +728,60 @@ ir_expression::constant_expression_value()
        }
        break;
 
+   case ir_binop_bit_and:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] & op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] & op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
+      break;
+
+   case ir_binop_bit_or:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] | op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] | op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
+      break;
+
+   case ir_binop_bit_xor:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] ^ op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] ^ op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
+      break;
+
    default:
       /* FINISHME: Should handle all expression types. */
       return NULL;
