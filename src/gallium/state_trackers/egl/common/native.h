@@ -38,6 +38,7 @@
 extern "C" {
 #endif
 
+#include "native_buffer.h"
 #include "native_modeset.h"
 
 /**
@@ -190,6 +191,7 @@ struct native_display {
                                                    EGLNativePixmapType pix,
                                                    const struct native_config *nconf);
 
+   const struct native_display_buffer *buffer;
    const struct native_display_modeset *modeset;
 };
 
