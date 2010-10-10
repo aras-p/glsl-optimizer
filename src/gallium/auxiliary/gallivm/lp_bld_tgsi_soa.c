@@ -887,21 +887,25 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
+      LLVMTypeRef i32t = LLVMInt32Type();
+      LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
       for (i = 0; i < num_coords; i++) {
-         ddx[i] = emit_fetch( bld, inst, 1, i );
-         ddy[i] = emit_fetch( bld, inst, 2, i );
+         LLVMValueRef src1 = emit_fetch( bld, inst, 1, i );
+         LLVMValueRef src2 = emit_fetch( bld, inst, 2, i );
+         ddx[i] = LLVMBuildExtractElement(bld->base.builder, src1, index0, "");
+         ddy[i] = LLVMBuildExtractElement(bld->base.builder, src2, index0, "");
       }
       unit = inst->Src[3].Register.Index;
    }  else {
       for (i = 0; i < num_coords; i++) {
-         ddx[i] = lp_build_ddx( &bld->base, coords[i] );
-         ddy[i] = lp_build_ddy( &bld->base, coords[i] );
+         ddx[i] = lp_build_scalar_ddx( &bld->base, coords[i] );
+         ddy[i] = lp_build_scalar_ddy( &bld->base, coords[i] );
       }
       unit = inst->Src[1].Register.Index;
    }
    for (i = num_coords; i < 3; i++) {
-      ddx[i] = bld->base.undef;
-      ddy[i] = bld->base.undef;
+      ddx[i] = LLVMGetUndef(bld->base.elem_type);
+      ddy[i] = LLVMGetUndef(bld->base.elem_type);
    }
 
    bld->sampler->emit_fetch_texel(bld->sampler,

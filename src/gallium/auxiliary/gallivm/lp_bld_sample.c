@@ -200,8 +200,8 @@ lp_build_rho(struct lp_build_sample_context *bld,
    LLVMValueRef float_size;
    LLVMValueRef rho;
 
-   dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
-   dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
+   dsdx = ddx[0];
+   dsdy = ddy[0];
 
    if (dims <= 1) {
       rho_x = dsdx;
@@ -214,15 +214,15 @@ lp_build_rho(struct lp_build_sample_context *bld,
       rho_x = LLVMBuildInsertElement(bld->builder, rho_x, dsdx, index0, "");
       rho_y = LLVMBuildInsertElement(bld->builder, rho_y, dsdy, index0, "");
 
-      dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
-      dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
+      dtdx = ddx[1];
+      dtdy = ddy[1];
 
       rho_x = LLVMBuildInsertElement(bld->builder, rho_x, dtdx, index1, "");
       rho_y = LLVMBuildInsertElement(bld->builder, rho_y, dtdy, index1, "");
 
       if (dims >= 3) {
-         drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
-         drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
+         drdx = ddx[2];
+         drdy = ddy[2];
 
          rho_x = LLVMBuildInsertElement(bld->builder, rho_x, drdx, index2, "");
          rho_y = LLVMBuildInsertElement(bld->builder, rho_y, drdy, index2, "");
