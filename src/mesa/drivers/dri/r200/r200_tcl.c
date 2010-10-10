@@ -265,6 +265,8 @@ void r200TclPrimitive( GLcontext *ctx,
    GLuint newprim = hw_prim | R200_VF_TCL_OUTPUT_VTX_ENABLE;
 
    radeon_prepare_render(&rmesa->radeon);
+   if (rmesa->radeon.NewGLState)
+      r200ValidateState( ctx );
 
    if (newprim != rmesa->tcl.hw_primitive ||
        !discrete_prim[hw_prim&0xf]) {

@@ -521,6 +521,7 @@ void radeon_prepare_render(radeonContextPtr radeon)
     __DRIcontext *driContext = radeon->dri.context;
     __DRIdrawable *drawable;
     __DRIscreen *screen;
+    struct radeon_framebuffer *draw;
 
     screen = driContext->driScreenPriv;
     if (!screen->dri2.loader)
@@ -531,9 +532,10 @@ void radeon_prepare_render(radeonContextPtr radeon)
 	if (drawable->lastStamp != drawable->dri2.stamp)
 	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
 
-	/* Intel driver does the equivalent of this, no clue if it is needed:
-	 * radeon_draw_buffer(radeon->glCtx, &(drawable->driverPrivate)->base);
-	 */
+	/* Intel driver does the equivalent of this, no clue if it is needed:*/
+	draw = drawable->driverPrivate;
+	radeon_draw_buffer(radeon->glCtx, &draw->base);
+
 	driContext->dri2.draw_stamp = drawable->dri2.stamp;
     }
 
