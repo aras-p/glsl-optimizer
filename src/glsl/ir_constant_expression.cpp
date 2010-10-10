@@ -680,6 +680,54 @@ ir_expression::constant_expression_value()
       data.b[0] = !op[0]->has_value(op[1]);
       break;
 
+   case ir_binop_lshift:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          if (op[0]->type->base_type == GLSL_TYPE_INT &&
+              op[1]->type->base_type == GLSL_TYPE_INT) {
+              data.i[c] = op[0]->value.i[c0] << op[1]->value.i[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_INT &&
+                     op[1]->type->base_type == GLSL_TYPE_UINT) {
+              data.i[c] = op[0]->value.i[c0] << op[1]->value.u[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                     op[1]->type->base_type == GLSL_TYPE_INT) {
+              data.u[c] = op[0]->value.u[c0] << op[1]->value.i[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                     op[1]->type->base_type == GLSL_TYPE_UINT) {
+              data.u[c] = op[0]->value.u[c0] << op[1]->value.u[c1];
+          }
+      }
+      break;
+
+   case ir_binop_rshift:
+       for (unsigned c = 0, c0 = 0, c1 = 0;
+            c < components;
+            c0 += c0_inc, c1 += c1_inc, c++) {
+
+           if (op[0]->type->base_type == GLSL_TYPE_INT &&
+               op[1]->type->base_type == GLSL_TYPE_INT) {
+               data.i[c] = op[0]->value.i[c0] >> op[1]->value.i[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_INT &&
+                      op[1]->type->base_type == GLSL_TYPE_UINT) {
+               data.i[c] = op[0]->value.i[c0] >> op[1]->value.u[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                      op[1]->type->base_type == GLSL_TYPE_INT) {
+               data.u[c] = op[0]->value.u[c0] >> op[1]->value.i[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                      op[1]->type->base_type == GLSL_TYPE_UINT) {
+               data.u[c] = op[0]->value.u[c0] >> op[1]->value.u[c1];
+           }
+       }
+       break;
+
    default:
       /* FINISHME: Should handle all expression types. */
       return NULL;
