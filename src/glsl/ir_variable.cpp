@@ -52,6 +52,7 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
    }
 
    var->location = slot;
+   var->explicit_location = (slot >= 0);
 
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.

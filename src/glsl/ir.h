@@ -289,6 +289,15 @@ public:
    /*@}*/
 
    /**
+    * Was the location explicitly set in the shader?
+    *
+    * If the location is explicitly set in the shader, it \b cannot be changed
+    * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
+    * no effect).
+    */
+   unsigned explicit_location:1;
+
+   /**
     * Storage location of the base of this variable
     *
     * The precise meaning of this field depends on the nature of the variable.

@@ -191,7 +191,7 @@ invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
 
       /* Only assign locations for generic attributes / varyings / etc.
        */
-      if (var->location >= generic_base)
+      if ((var->location >= generic_base) && !var->explicit_location)
 	  var->location = -1;
    }
 }
@@ -363,6 +363,19 @@ cross_validate_globals(struct gl_shader_program *prog,
 				      existing->type->name);
 		  return false;
 	       }
+	    }
+
+	    if (var->explicit_location) {
+	       if (existing->explicit_location
+		   && (var->location != existing->location)) {
+		     linker_error_printf(prog, "explicit locations for %s "
+					 "`%s' have differing values\n",
+					 mode_string(var), var->name);
+		     return false;
+	       }
+
+	       existing->location = var->location;
+	       existing->explicit_location = true;
 	    }
 
 	    /* FINISHME: Handle non-constant initializers.
@@ -1186,6 +1199,24 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
       if ((var == NULL) || (var->mode != ir_var_in))
 	 continue;
 
+      if (var->explicit_location) {
+	 const unsigned slots = count_attribute_slots(var->type);
+	 const unsigned use_mask = (1 << slots) - 1;
+	 const int attr = var->location - VERT_ATTRIB_GENERIC0;
+
+	 if ((var->location >= (int)(max_attribute_index + VERT_ATTRIB_GENERIC0))
+	     || (var->location < 0)) {
+	    linker_error_printf(prog,
+				"invalid explicit location %d specified for "
+				"`%s'\n",
+				(var->location < 0) ? var->location : attr,
+				var->name);
+	    return false;
+	 } else if (var->location >= VERT_ATTRIB_GENERIC0) {
+	    used_locations |= (use_mask << attr);
+	 }
+      }
+
       /* The location was explicitly assigned, nothing to do here.
        */
       if (var->location != -1)
@@ -1486,8 +1517,10 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
        * FINISHME: at least 16, so hardcode 16 for now.
        */
-      if (!assign_attribute_locations(prog, 16))
+      if (!assign_attribute_locations(prog, 16)) {
+	 prog->LinkStatus = false;
 	 goto done;
+      }
 
       if (prog->_NumLinkedShaders == 1)
 	 demote_unread_shader_outputs(prog->_LinkedShaders[0]);

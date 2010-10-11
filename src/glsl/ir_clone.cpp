@@ -51,6 +51,9 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
+   var->explicit_location = this->explicit_location;
+   if (this->explicit_location)
+      var->location = this->location;
 
    if (this->constant_value)
       var->constant_value = this->constant_value->clone(mem_ctx, ht);

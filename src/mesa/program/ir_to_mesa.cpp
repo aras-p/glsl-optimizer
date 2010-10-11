@@ -1184,6 +1184,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 static const struct {
    const char *name;
    const char *field;
@@ -1596,6 +1597,8 @@ ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
 }
 
 
+=======
+>>>>>>> upstream/master
 =======
 >>>>>>> upstream/master
 void
@@ -2490,6 +2493,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
    unsigned int i;
    unsigned int next_sampler = 0, num_uniforms = 0;
    struct uniform_sort *sorted_uniforms;
+<<<<<<< HEAD
 
    sorted_uniforms = talloc_array(NULL, struct uniform_sort,
 				  shader_program->Uniforms->NumUniforms);
@@ -2666,6 +2670,184 @@ set_uniform_initializers(GLcontext *ctx,
       }
    }
 
+=======
+
+   sorted_uniforms = talloc_array(NULL, struct uniform_sort,
+				  shader_program->Uniforms->NumUniforms);
+
+   for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
+      struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
+      int parameter_index = -1;
+
+      switch (shader->Type) {
+      case GL_VERTEX_SHADER:
+	 parameter_index = uniform->VertPos;
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 parameter_index = uniform->FragPos;
+	 break;
+      case GL_GEOMETRY_SHADER:
+	 parameter_index = uniform->GeomPos;
+	 break;
+      }
+
+      /* Only add uniforms used in our target. */
+      if (parameter_index != -1) {
+	 sorted_uniforms[num_uniforms].pos = parameter_index;
+	 sorted_uniforms[num_uniforms].u = uniform;
+	 num_uniforms++;
+      }
+   }
+
+   qsort(sorted_uniforms, num_uniforms, sizeof(struct uniform_sort),
+	 sort_uniforms);
+
+   for (i = 0; i < num_uniforms; i++) {
+      struct gl_uniform *uniform = sorted_uniforms[i].u;
+      int parameter_index = sorted_uniforms[i].pos;
+      const glsl_type *type = uniform->Type;
+      unsigned int size;
+
+      if (type->is_vector() ||
+	  type->is_scalar()) {
+	 size = type->vector_elements;
+      } else {
+	 size = type_size(type) * 4;
+      }
+
+      gl_register_file file;
+      if (type->is_sampler() ||
+	  (type->is_array() && type->fields.array->is_sampler())) {
+	 file = PROGRAM_SAMPLER;
+      } else {
+	 file = PROGRAM_UNIFORM;
+      }
+
+      GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
+						 uniform->Name);
+
+      if (index < 0) {
+	 index = _mesa_add_parameter(prog->Parameters, file,
+				     uniform->Name, size, type->gl_type,
+				     NULL, NULL, 0x0);
+
+	 /* Sampler uniform values are stored in prog->SamplerUnits,
+	  * and the entry in that array is selected by this index we
+	  * store in ParameterValues[].
+	  */
+	 if (file == PROGRAM_SAMPLER) {
+	    for (unsigned int j = 0; j < size / 4; j++)
+	       prog->Parameters->ParameterValues[index + j][0] = next_sampler++;
+	 }
+
+	 /* The location chosen in the Parameters list here (returned
+	  * from _mesa_add_uniform) has to match what the linker chose.
+	  */
+	 if (index != parameter_index) {
+	    fail_link(shader_program, "Allocation of uniform `%s' to target "
+		      "failed (%d vs %d)\n",
+		      uniform->Name, index, parameter_index);
+	 }
+      }
+   }
+
+   talloc_free(sorted_uniforms);
+}
+
+static void
+set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
+			struct gl_shader_program *shader_program,
+			const char *name, const glsl_type *type,
+			ir_constant *val)
+{
+   if (type->is_record()) {
+      ir_constant *field_constant;
+
+      field_constant = (ir_constant *)val->components.get_head();
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 const char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+					    type->fields.structure[i].name);
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
+				 field_type, field_constant);
+	 field_constant = (ir_constant *)field_constant->next;
+      }
+      return;
+   }
+
+   int loc = _mesa_get_uniform_location(ctx, shader_program, name);
+
+   if (loc == -1) {
+      fail_link(shader_program,
+		"Couldn't find uniform for initializer %s\n", name);
+      return;
+   }
+
+   for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
+      ir_constant *element;
+      const glsl_type *element_type;
+      if (type->is_array()) {
+	 element = val->array_elements[i];
+	 element_type = type->fields.array;
+      } else {
+	 element = val;
+	 element_type = type;
+      }
+
+      void *values;
+
+      if (element_type->base_type == GLSL_TYPE_BOOL) {
+	 int *conv = talloc_array(mem_ctx, int, element_type->components());
+	 for (unsigned int j = 0; j < element_type->components(); j++) {
+	    conv[j] = element->value.b[j];
+	 }
+	 values = (void *)conv;
+	 element_type = glsl_type::get_instance(GLSL_TYPE_INT,
+						element_type->vector_elements,
+						1);
+      } else {
+	 values = &element->value;
+      }
+
+      if (element_type->is_matrix()) {
+	 _mesa_uniform_matrix(ctx, shader_program,
+			      element_type->matrix_columns,
+			      element_type->vector_elements,
+			      loc, 1, GL_FALSE, (GLfloat *)values);
+	 loc += element_type->matrix_columns;
+      } else {
+	 _mesa_uniform(ctx, shader_program, loc, element_type->matrix_columns,
+		       values, element_type->gl_type);
+	 loc += type_size(element_type);
+      }
+   }
+}
+
+static void
+set_uniform_initializers(GLcontext *ctx,
+			 struct gl_shader_program *shader_program)
+{
+   void *mem_ctx = NULL;
+
+   for (unsigned int i = 0; i < shader_program->_NumLinkedShaders; i++) {
+      struct gl_shader *shader = shader_program->_LinkedShaders[i];
+      foreach_iter(exec_list_iterator, iter, *shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 ir_variable *var = ir->as_variable();
+
+	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
+	    continue;
+
+	 if (!mem_ctx)
+	    mem_ctx = talloc_new(NULL);
+
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
+				 var->type, var->constant_value);
+      }
+   }
+
+>>>>>>> upstream/master
    talloc_free(mem_ctx);
 }
 

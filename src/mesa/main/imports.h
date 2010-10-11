@@ -586,12 +586,6 @@ _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 
 #endif
 
 
-
-#if defined(_MSC_VER) && !defined(snprintf)
-#define snprintf _snprintf
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

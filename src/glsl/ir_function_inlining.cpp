@@ -205,6 +205,13 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 parameters[i] = sig_param->clone(ctx, ht);
 	 rename_inlined_variable (parameters[i], parent);
 	 parameters[i]->mode = ir_var_auto;
+
+	 /* Remove the read-only decoration becuase we're going to write
+	  * directly to this variable.  If the cloned variable is left
+	  * read-only and the inlined function is inside a loop, the loop
+	  * analysis code will get confused.
+	  */
+	 parameters[i]->read_only = false;
 	 next_ir->insert_before(parameters[i]);
       }
 
