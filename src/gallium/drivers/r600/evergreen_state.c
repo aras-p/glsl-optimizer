@@ -899,6 +899,51 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028254_PA_SC_VPORT_SCISSOR_0_BR, br,
 				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028034_PA_SC_SCREEN_SCISSOR_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028210_PA_SC_CLIPRECT_0_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028214_PA_SC_CLIPRECT_0_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028218_PA_SC_CLIPRECT_1_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_02821C_PA_SC_CLIPRECT_1_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028220_PA_SC_CLIPRECT_2_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028224_PA_SC_CLIPRECT_2_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028228_PA_SC_CLIPRECT_3_TL, tl,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_02822C_PA_SC_CLIPRECT_3_BR, br,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_02820C_PA_SC_CLIPRECT_RULE, 0x0000FFFF,
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
+				0xFFFFFFFF, NULL);
 
 	r600_pipe_state_add_reg(rstate, R_028238_CB_TARGET_MASK,
 				0x00000000, target_mask, NULL);
