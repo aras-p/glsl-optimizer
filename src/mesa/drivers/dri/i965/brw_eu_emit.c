@@ -1147,6 +1147,17 @@ void brw_math( struct brw_compile *p,
    if (intel->gen >= 6) {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
+      assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+      assert(src.file == BRW_GENERAL_REGISTER_FILE);
+
+      assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
+      assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
+
+      if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
+	  function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+	 assert(src.type == BRW_REGISTER_TYPE_F);
+      }
+
       /* Math is the same ISA format as other opcodes, except that CondModifier
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
@@ -1191,6 +1202,21 @@ void brw_math2(struct brw_compile *p,
 
    assert(intel->gen >= 6);
    (void) intel;
+
+
+   assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src0.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+
+   assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
+   assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
+   assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
+
+   if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
+       function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+      assert(src0.type == BRW_REGISTER_TYPE_F);
+      assert(src1.type == BRW_REGISTER_TYPE_F);
+   }
 
    /* Math is the same ISA format as other opcodes, except that CondModifier
     * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
