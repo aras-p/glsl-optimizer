@@ -139,6 +139,7 @@ static const struct {
    { OFF, "GL_EXT_provoking_vertex",           F(EXT_provoking_vertex) },
    { ON,  "GL_EXT_rescale_normal",             F(EXT_rescale_normal) },
    { OFF, "GL_EXT_secondary_color",            F(EXT_secondary_color) },
+   { OFF, "GL_EXT_separate_shader_objects",    F(EXT_separate_shader_objects) },
    { ON,  "GL_EXT_separate_specular_color",    F(EXT_separate_specular_color) },
    { OFF, "GL_EXT_shadow_funcs",               F(EXT_shadow_funcs) },
    { OFF, "GL_EXT_shared_texture_palette",     F(EXT_shared_texture_palette) },
