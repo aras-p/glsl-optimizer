@@ -89,19 +89,21 @@ struct lp_rast_shader_inputs {
    const struct lp_rast_state *state;
 };
 
-
+/* Note: the order of these values is important as they are loaded by
+ * sse code in rasterization:
+ */
 struct lp_rast_plane {
-   /* one-pixel sized trivial accept offsets for each plane */
-   int ei;
-
-   /* one-pixel sized trivial reject offsets for each plane */
-   int eo;
-
    /* edge function values at minx,miny ?? */
    int c;
 
    int dcdx;
    int dcdy;
+
+   /* one-pixel sized trivial reject offsets for each plane */
+   int eo;
+
+   /* one-pixel sized trivial accept offsets for each plane */
+   int ei;
 };
 
 /**
