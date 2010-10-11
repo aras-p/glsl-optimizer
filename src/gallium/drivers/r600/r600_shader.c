@@ -2926,7 +2926,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_NRM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DIV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
-	{TGSI_OPCODE_TXL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXL,	0, SQ_TEX_INST_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */
@@ -3084,7 +3084,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_NRM,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DIV,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DP2,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
-	{TGSI_OPCODE_TXL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXL,	0, SQ_TEX_INST_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */
