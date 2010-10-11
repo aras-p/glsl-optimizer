@@ -34,6 +34,10 @@
 #include "pipe/p_state.h"
 #include "state_tracker/sw_winsys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "native_modeset.h"
 
 /**
@@ -236,5 +240,9 @@ native_get_drm_platform(void);
 
 const struct native_platform *
 native_get_fbdev_platform(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NATIVE_H_ */
