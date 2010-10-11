@@ -162,9 +162,6 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen)
 {
-   if(screen->engine)
-      LLVMDisposeExecutionEngine(screen->engine);
-
    if(screen->pass)
       LLVMDisposePassManager(screen->pass);
 }
