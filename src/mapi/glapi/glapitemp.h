@@ -5763,37 +5763,52 @@ KEYWORD1 GLenum KEYWORD2 NAME(ObjectUnpurgeableAPPLE)(GLenum objectType, GLuint 
    RETURN_DISPATCH(ObjectUnpurgeableAPPLE, (objectType, name, option), (F, "glObjectUnpurgeableAPPLE(0x%x, %d, 0x%x);\n", objectType, name, option));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_826)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+KEYWORD1 void KEYWORD2 NAME(ActiveProgramEXT)(GLuint program)
+{
+   DISPATCH(ActiveProgramEXT, (program), (F, "glActiveProgramEXT(%d);\n", program));
+}
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_826)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
+KEYWORD1 GLuint KEYWORD2 NAME(CreateShaderProgramEXT)(GLenum type, const GLchar * string)
+{
+   RETURN_DISPATCH(CreateShaderProgramEXT, (type, string), (F, "glCreateShaderProgramEXT(0x%x, %p);\n", type, (const void *) string));
+}
+
+KEYWORD1 void KEYWORD2 NAME(UseShaderProgramEXT)(GLenum type, GLuint program)
+{
+   DISPATCH(UseShaderProgramEXT, (type, program), (F, "glUseShaderProgramEXT(0x%x, %d);\n", type, program));
+}
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_829)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_829)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
 {
    DISPATCH(StencilFuncSeparateATI, (frontfunc, backfunc, ref, mask), (F, "glStencilFuncSeparateATI(0x%x, 0x%x, %d, %d);\n", frontfunc, backfunc, ref, mask));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_827)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_830)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_827)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_830)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_828)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_831)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_828)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_831)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_829)(GLuint id, GLenum pname, GLint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_832)(GLuint id, GLenum pname, GLint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_829)(GLuint id, GLenum pname, GLint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_832)(GLuint id, GLenum pname, GLint64EXT * params)
 {
    DISPATCH(GetQueryObjecti64vEXT, (id, pname, params), (F, "glGetQueryObjecti64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_830)(GLuint id, GLenum pname, GLuint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_833)(GLuint id, GLenum pname, GLuint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_830)(GLuint id, GLenum pname, GLuint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_833)(GLuint id, GLenum pname, GLuint64EXT * params)
 {
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
@@ -6787,11 +6802,14 @@ _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetObjectParameterivAPPLE),
    TABLE_ENTRY(ObjectPurgeableAPPLE),
    TABLE_ENTRY(ObjectUnpurgeableAPPLE),
-   TABLE_ENTRY(_dispatch_stub_826),
-   TABLE_ENTRY(_dispatch_stub_827),
-   TABLE_ENTRY(_dispatch_stub_828),
+   TABLE_ENTRY(ActiveProgramEXT),
+   TABLE_ENTRY(CreateShaderProgramEXT),
+   TABLE_ENTRY(UseShaderProgramEXT),
    TABLE_ENTRY(_dispatch_stub_829),
    TABLE_ENTRY(_dispatch_stub_830),
+   TABLE_ENTRY(_dispatch_stub_831),
+   TABLE_ENTRY(_dispatch_stub_832),
+   TABLE_ENTRY(_dispatch_stub_833),
    TABLE_ENTRY(EGLImageTargetRenderbufferStorageOES),
    TABLE_ENTRY(EGLImageTargetTexture2DOES),
    /* A whole bunch of no-op functions.  These might be called

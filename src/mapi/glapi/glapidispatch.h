@@ -2539,6 +2539,15 @@
 #define CALL_ObjectUnpurgeableAPPLE(disp, parameters) (*((disp)->ObjectUnpurgeableAPPLE)) parameters
 #define GET_ObjectUnpurgeableAPPLE(disp) ((disp)->ObjectUnpurgeableAPPLE)
 #define SET_ObjectUnpurgeableAPPLE(disp, fn) ((disp)->ObjectUnpurgeableAPPLE = fn)
+#define CALL_ActiveProgramEXT(disp, parameters) (*((disp)->ActiveProgramEXT)) parameters
+#define GET_ActiveProgramEXT(disp) ((disp)->ActiveProgramEXT)
+#define SET_ActiveProgramEXT(disp, fn) ((disp)->ActiveProgramEXT = fn)
+#define CALL_CreateShaderProgramEXT(disp, parameters) (*((disp)->CreateShaderProgramEXT)) parameters
+#define GET_CreateShaderProgramEXT(disp) ((disp)->CreateShaderProgramEXT)
+#define SET_CreateShaderProgramEXT(disp, fn) ((disp)->CreateShaderProgramEXT = fn)
+#define CALL_UseShaderProgramEXT(disp, parameters) (*((disp)->UseShaderProgramEXT)) parameters
+#define GET_UseShaderProgramEXT(disp) ((disp)->UseShaderProgramEXT)
+#define SET_UseShaderProgramEXT(disp, fn) ((disp)->UseShaderProgramEXT = fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) (*((disp)->StencilFuncSeparateATI)) parameters
 #define GET_StencilFuncSeparateATI(disp) ((disp)->StencilFuncSeparateATI)
 #define SET_StencilFuncSeparateATI(disp, fn) ((disp)->StencilFuncSeparateATI = fn)
@@ -2563,7 +2572,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 425
+#define driDispatchRemapTable_size 428
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2984,13 +2993,16 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define GetObjectParameterivAPPLE_remap_index 415
 #define ObjectPurgeableAPPLE_remap_index 416
 #define ObjectUnpurgeableAPPLE_remap_index 417
-#define StencilFuncSeparateATI_remap_index 418
-#define ProgramEnvParameters4fvEXT_remap_index 419
-#define ProgramLocalParameters4fvEXT_remap_index 420
-#define GetQueryObjecti64vEXT_remap_index 421
-#define GetQueryObjectui64vEXT_remap_index 422
-#define EGLImageTargetRenderbufferStorageOES_remap_index 423
-#define EGLImageTargetTexture2DOES_remap_index 424
+#define ActiveProgramEXT_remap_index 418
+#define CreateShaderProgramEXT_remap_index 419
+#define UseShaderProgramEXT_remap_index 420
+#define StencilFuncSeparateATI_remap_index 421
+#define ProgramEnvParameters4fvEXT_remap_index 422
+#define ProgramLocalParameters4fvEXT_remap_index 423
+#define GetQueryObjecti64vEXT_remap_index 424
+#define GetQueryObjectui64vEXT_remap_index 425
+#define EGLImageTargetRenderbufferStorageOES_remap_index 426
+#define EGLImageTargetTexture2DOES_remap_index 427
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4246,6 +4258,15 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_ObjectUnpurgeableAPPLE(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum, GLuint, GLenum)), driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index], parameters)
 #define GET_ObjectUnpurgeableAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index])
 #define SET_ObjectUnpurgeableAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index], fn)
+#define CALL_ActiveProgramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[ActiveProgramEXT_remap_index], parameters)
+#define GET_ActiveProgramEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ActiveProgramEXT_remap_index])
+#define SET_ActiveProgramEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ActiveProgramEXT_remap_index], fn)
+#define CALL_CreateShaderProgramEXT(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLenum, const GLchar *)), driDispatchRemapTable[CreateShaderProgramEXT_remap_index], parameters)
+#define GET_CreateShaderProgramEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CreateShaderProgramEXT_remap_index])
+#define SET_CreateShaderProgramEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CreateShaderProgramEXT_remap_index], fn)
+#define CALL_UseShaderProgramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[UseShaderProgramEXT_remap_index], parameters)
+#define GET_UseShaderProgramEXT(disp) GET_by_offset(disp, driDispatchRemapTable[UseShaderProgramEXT_remap_index])
+#define SET_UseShaderProgramEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UseShaderProgramEXT_remap_index], fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparateATI_remap_index], parameters)
 #define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index])
 #define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index], fn)
