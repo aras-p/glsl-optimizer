@@ -166,4 +166,13 @@ extern void GLAPIENTRY
 _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
                            GLint value);
 
+extern void GLAPIENTRY
+_mesa_UseShaderProgramEXT(GLenum type, GLuint program);
+
+extern void GLAPIENTRY
+_mesa_ActiveProgramEXT(GLuint program);
+
+extern GLuint GLAPIENTRY
+_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string);
+
 #endif /* SHADERAPI_H */

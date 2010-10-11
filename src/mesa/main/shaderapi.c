@@ -1618,6 +1618,103 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
 
 #endif
 
+void GLAPIENTRY
+_mesa_UseShaderProgramEXT(GLenum type, GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+
+   if (!validate_shader_target(ctx, type)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
+      return;
+   }
+
+   if (ctx->TransformFeedback.CurrentObject->Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glUseShaderProgramEXT(transform feedback is active)");
+      return;
+   }
+
+   if (program) {
+      shProg = _mesa_lookup_shader_program_err(ctx, program,
+					       "glUseShaderProgramEXT");
+      if (shProg == NULL)
+	 return;
+
+      if (!shProg->LinkStatus) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
+		     "glUseShaderProgramEXT(program not linked)");
+	 return;
+      }
+   }
+
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+	       "glUseShaderProgramEXT(NOT YET IMPLEMENTED)");
+   return;
+}
+
+void GLAPIENTRY
+_mesa_ActiveProgramEXT(GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+					    "glActiveProgramEXT");
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glActiveProgramEXT(program not linked)");
+      return;
+   }
+
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+	       "glActiveProgramEXT(NOT YET IMPLEMENTED)");
+   return;
+}
+
+GLuint GLAPIENTRY
+_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint shader = create_shader(ctx, type);
+   GLuint program = 0;
+
+   if (shader) {
+      shader_source(ctx, shader, _mesa_strdup(string));
+      compile_shader(ctx, shader);
+
+      program = create_shader_program(ctx);
+      if (program) {
+	 struct gl_shader_program *shProg;
+	 struct gl_shader *sh;
+	 GLint compiled = GL_FALSE;
+
+	 shProg = _mesa_lookup_shader_program(ctx, program);
+	 sh = _mesa_lookup_shader(ctx, shader);
+
+	 get_shaderiv(ctx, shader, GL_COMPILE_STATUS, &compiled);
+	 if (compiled) {
+	    attach_shader(ctx, program, shader);
+	    link_program(ctx, program);
+	    detach_shader(ctx, program, shader);
+
+#if 0
+	    /* Possibly... */
+	    if (active-user-defined-varyings-in-linked-program) {
+	       append-error-to-info-log;
+	       shProg->LinkStatus = GL_FALSE;
+	    }
+#endif
+	 }
+
+	 shProg->InfoLog = talloc_strdup_append(shProg->InfoLog, sh->InfoLog);
+      }
+
+      delete_shader(ctx, shader);
+   }
+
+   return program;
+}
 
 /**
  * Plug in shader-related functions into API dispatch table.
@@ -1668,6 +1765,10 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
 #if FEATURE_ARB_geometry_shader4
    SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
 #endif
+
+   SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
+   SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
+   SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);
 #endif /* FEATURE_GL */
 }
 
