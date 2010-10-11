@@ -530,6 +530,18 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
       assert(!"not reached: bad math opcode");
       return NULL;
    }
+
+   /* Can't do hstride == 0 args to gen6 math, so expand it out.  We
+    * might be able to do better by doing execsize = 1 math and then
+    * expanding that result out, but we would need to be careful with
+    * masking.
+    */
+   if (intel->gen >= 6 && src.file == UNIFORM) {
+      fs_reg expanded = fs_reg(this, glsl_type::float_type);
+      emit(fs_inst(BRW_OPCODE_MOV, expanded, src));
+      src = expanded;
+   }
+
    fs_inst *inst = emit(fs_inst(opcode, dst, src));
 
    if (intel->gen < 6) {
@@ -549,6 +561,19 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    assert(opcode == FS_OPCODE_POW);
 
    if (intel->gen >= 6) {
+      /* Can't do hstride == 0 args to gen6 math, so expand it out. */
+      if (src0.file == UNIFORM) {
+	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
+	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src0));
+	 src0 = expanded;
+      }
+
+      if (src1.file == UNIFORM) {
+	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
+	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src1));
+	 src1 = expanded;
+      }
+
       inst = emit(fs_inst(opcode, dst, src0, src1));
    } else {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1), src1));
