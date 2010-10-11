@@ -87,6 +87,7 @@ API_XML = \
 	EXT_framebuffer_object.xml \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
+	EXT_separate_shader_objects.xml \
 	EXT_texture_array.xml \
 	EXT_texture_integer.xml \
 	EXT_transform_feedback.xml \
