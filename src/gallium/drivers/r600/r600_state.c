@@ -688,7 +688,7 @@ static void r600_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i + PIPE_MAX_ATTRIBS);
+			r600_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i + PIPE_MAX_ATTRIBS);
 		}
 	}
 }
