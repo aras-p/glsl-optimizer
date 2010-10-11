@@ -1579,18 +1579,27 @@ fs_visitor::emit_interpolation_setup_gen6()
 
    /* If the pixel centers end up used, the setup is the same as for gen4. */
    this->current_annotation = "compute pixel centers";
-   this->pixel_x = fs_reg(this, glsl_type::uint_type);
-   this->pixel_y = fs_reg(this, glsl_type::uint_type);
-   this->pixel_x.type = BRW_REGISTER_TYPE_UW;
-   this->pixel_y.type = BRW_REGISTER_TYPE_UW;
+   fs_reg int_pixel_x = fs_reg(this, glsl_type::uint_type);
+   fs_reg int_pixel_y = fs_reg(this, glsl_type::uint_type);
+   int_pixel_x.type = BRW_REGISTER_TYPE_UW;
+   int_pixel_y.type = BRW_REGISTER_TYPE_UW;
    emit(fs_inst(BRW_OPCODE_ADD,
-		this->pixel_x,
+		int_pixel_x,
 		fs_reg(stride(suboffset(g1_uw, 4), 2, 4, 0)),
 		fs_reg(brw_imm_v(0x10101010))));
    emit(fs_inst(BRW_OPCODE_ADD,
-		this->pixel_y,
+		int_pixel_y,
 		fs_reg(stride(suboffset(g1_uw, 5), 2, 4, 0)),
 		fs_reg(brw_imm_v(0x11001100))));
+
+   /* As of gen6, we can no longer mix float and int sources.  We have
+    * to turn the integer pixel centers into floats for their actual
+    * use.
+    */
+   this->pixel_x = fs_reg(this, glsl_type::float_type);
+   this->pixel_y = fs_reg(this, glsl_type::float_type);
+   emit(fs_inst(BRW_OPCODE_MOV, this->pixel_x, int_pixel_x));
+   emit(fs_inst(BRW_OPCODE_MOV, this->pixel_y, int_pixel_y));
 
    this->current_annotation = "compute 1/pos.w";
    this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
