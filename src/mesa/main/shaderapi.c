@@ -966,7 +966,7 @@ _mesa_use_program(struct gl_context *ctx, GLuint program)
  * \return GL_TRUE if valid, GL_FALSE if invalid
  */
 static GLboolean
-validate_samplers(struct gl_context *ctx, const struct gl_program *prog, char *errMsg)
+validate_samplers(const struct gl_program *prog, char *errMsg)
 {
    static const char *targetName[] = {
       "TEXTURE_2D_ARRAY",
@@ -1018,8 +1018,7 @@ validate_samplers(struct gl_context *ctx, const struct gl_program *prog, char *e
  * \return GL_TRUE if valid, GL_FALSE if invalid (and set errMsg)
  */
 static GLboolean
-validate_shader_program(struct gl_context *ctx,
-                        const struct gl_shader_program *shProg,
+validate_shader_program(const struct gl_shader_program *shProg,
                         char *errMsg)
 {
    const struct gl_vertex_program *vp = shProg->VertexProgram;
@@ -1049,10 +1048,10 @@ validate_shader_program(struct gl_context *ctx,
     * Check: any two active samplers in the current program object are of
     * different types, but refer to the same texture image unit,
     */
-   if (vp && !validate_samplers(ctx, &vp->Base, errMsg)) {
+   if (vp && !validate_samplers(&vp->Base, errMsg)) {
       return GL_FALSE;
    }
-   if (fp && !validate_samplers(ctx, &fp->Base, errMsg)) {
+   if (fp && !validate_samplers(&fp->Base, errMsg)) {
       return GL_FALSE;
    }
 
@@ -1074,7 +1073,7 @@ validate_program(struct gl_context *ctx, GLuint program)
       return;
    }
 
-   shProg->Validated = validate_shader_program(ctx, shProg, errMsg);
+   shProg->Validated = validate_shader_program(shProg, errMsg);
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
@@ -1521,6 +1520,10 @@ _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
                                GLint* range, GLint* precision)
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) shadertype;
+   (void) precisiontype;
+   (void) range;
+   (void) precision;
    _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
 }
 
@@ -1538,6 +1541,11 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
                    const void* binary, GLint length)
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) n;
+   (void) shaders;
+   (void) binaryformat;
+   (void) binary;
+   (void) length;
    _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
 }
 
