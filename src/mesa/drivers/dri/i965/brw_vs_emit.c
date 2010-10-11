@@ -593,11 +593,15 @@ static void emit_math1( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
 
-   if (need_tmp) 
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
+
+   if (need_tmp)
       tmp = get_tmp(c);
 
    brw_math(p, 
@@ -626,9 +630,13 @@ static void emit_math2( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
+
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
 
    if (need_tmp) 
       tmp = get_tmp(c);
