@@ -2616,6 +2616,22 @@ fs_visitor::compute_to_mrf()
 	    if (scan_inst->mlen)
 	       break;
 
+	    if (intel->gen >= 6) {
+	       /* gen6 math instructions must have the destination be
+		* GRF, so no compute-to-MRF for them.
+		*/
+	       if (scan_inst->opcode == FS_OPCODE_RCP ||
+		   scan_inst->opcode == FS_OPCODE_RSQ ||
+		   scan_inst->opcode == FS_OPCODE_SQRT ||
+		   scan_inst->opcode == FS_OPCODE_EXP2 ||
+		   scan_inst->opcode == FS_OPCODE_LOG2 ||
+		   scan_inst->opcode == FS_OPCODE_SIN ||
+		   scan_inst->opcode == FS_OPCODE_COS ||
+		   scan_inst->opcode == FS_OPCODE_POW) {
+		  break;
+	       }
+	    }
+
 	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
 	       /* Found the creator of our MRF's source value. */
 	       found = true;
