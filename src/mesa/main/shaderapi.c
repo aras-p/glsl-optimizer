@@ -47,7 +47,7 @@
 #include "program/prog_parameter.h"
 #include "program/prog_uniform.h"
 #include "talloc.h"
-
+#include <stdbool.h>
 
 /** Define this to enable shader substitution (see below) */
 #define SHADER_SUBST 0
@@ -199,6 +199,35 @@ _mesa_copy_string(GLchar *dst, GLsizei maxLength,
       *length = len;
 }
 
+
+
+/**
+ * Confirm that the a shader type is valid and supported by the implementation
+ *
+ * \param ctx   Current GL context
+ * \param type  Shader target
+ *
+ */
+static bool
+validate_shader_target(const struct gl_context *ctx, GLenum type)
+{
+   switch (type) {
+#if FEATURE_ARB_fragment_shader
+   case GL_FRAGMENT_SHADER:
+      return ctx->Extensions.ARB_fragment_shader;
+#endif
+#if FEATURE_ARB_vertex_shader
+   case GL_VERTEX_SHADER:
+      return ctx->Extensions.ARB_vertex_shader;
+#endif
+#if FEATURE_ARB_geometry_shader4
+   case GL_GEOMETRY_SHADER_ARB:
+      return ctx->Extensions.ARB_geometry_shader4;
+#endif
+   default:
+      return false;
+   }
+}
 
 
 /**
@@ -376,19 +405,13 @@ create_shader(struct gl_context *ctx, GLenum type)
    struct gl_shader *sh;
    GLuint name;
 
-   name = _mesa_HashFindFreeKeyBlock(ctx->Shared->ShaderObjects, 1);
-
-   switch (type) {
-   case GL_FRAGMENT_SHADER:
-   case GL_VERTEX_SHADER:
-   case GL_GEOMETRY_SHADER_ARB:
-      sh = ctx->Driver.NewShader(ctx, name, type);
-      break;
-   default:
+   if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "CreateShader(type)");
       return 0;
    }
 
+   name = _mesa_HashFindFreeKeyBlock(ctx->Shared->ShaderObjects, 1);
+   sh = ctx->Driver.NewShader(ctx, name, type);
    _mesa_HashInsert(ctx->Shared->ShaderObjects, name, sh);
 
    return name;
