@@ -532,8 +532,10 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
    }
    fs_inst *inst = emit(fs_inst(opcode, dst, src));
 
-   inst->base_mrf = 2;
-   inst->mlen = 1;
+   if (intel->gen < 6) {
+      inst->base_mrf = 2;
+      inst->mlen = 1;
+   }
 
    return inst;
 }
@@ -541,13 +543,20 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
 fs_inst *
 fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 {
+   int base_mrf = 2;
+   fs_inst *inst;
+
    assert(opcode == FS_OPCODE_POW);
 
-   fs_inst *inst = emit(fs_inst(opcode, dst, src0, src1));
+   if (intel->gen >= 6) {
+      inst = emit(fs_inst(opcode, dst, src0, src1));
+   } else {
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1), src1));
+      inst = emit(fs_inst(opcode, dst, src0, reg_null));
 
-   inst->base_mrf = 2;
-   inst->mlen = 2;
-
+      inst->base_mrf = base_mrf;
+      inst->mlen = 2;
+   }
    return inst;
 }
 
@@ -1757,19 +1766,31 @@ fs_visitor::generate_math(fs_inst *inst,
       break;
    }
 
-   assert(inst->mlen >= 1);
+   if (intel->gen >= 6) {
+      assert(inst->mlen == 0);
 
-   if (inst->opcode == FS_OPCODE_POW) {
-      brw_MOV(p, brw_message_reg(inst->base_mrf + 1), src[1]);
+      if (inst->opcode == FS_OPCODE_POW) {
+	 brw_math2(p, dst, op, src[0], src[1]);
+      } else {
+	 brw_math(p, dst,
+		  op,
+		  inst->saturate ? BRW_MATH_SATURATE_SATURATE :
+		  BRW_MATH_SATURATE_NONE,
+		  0, src[0],
+		  BRW_MATH_DATA_VECTOR,
+		  BRW_MATH_PRECISION_FULL);
+      }
+   } else {
+      assert(inst->mlen >= 1);
+
+      brw_math(p, dst,
+	       op,
+	       inst->saturate ? BRW_MATH_SATURATE_SATURATE :
+	       BRW_MATH_SATURATE_NONE,
+	       inst->base_mrf, src[0],
+	       BRW_MATH_DATA_VECTOR,
+	       BRW_MATH_PRECISION_FULL);
    }
-
-   brw_math(p, dst,
-	    op,
-	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
-	    BRW_MATH_SATURATE_NONE,
-	    inst->base_mrf, src[0],
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
 }
 
 void
