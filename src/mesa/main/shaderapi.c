@@ -998,7 +998,7 @@ validate_samplers(struct gl_context *ctx, const struct gl_program *prog, char *e
       assert(sampler < MAX_TEXTURE_IMAGE_UNITS);
       unit = prog->SamplerUnits[sampler];
       target = prog->SamplerTargets[sampler];
-      if (targetUsed[unit] != -1 && targetUsed[unit] != target) {
+      if (targetUsed[unit] != -1 && targetUsed[unit] != (int) target) {
          _mesa_snprintf(errMsg, 100,
 		  "Texture unit %d is accessed both as %s and %s",
 		  unit, targetName[targetUsed[unit]], targetName[target]);
@@ -1563,7 +1563,7 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
       if (value < 1 ||
-          value > ctx->Const.GeometryProgram.MaxGeometryOutputVertices) {
+          (unsigned) value > ctx->Const.GeometryProgram.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d",
                      value);
