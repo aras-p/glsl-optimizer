@@ -480,8 +480,14 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
 					struct pipe_sampler_view **views)
 {
-	/* TODO */
-	assert(1);
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
+
+	for (int i = 0; i < count; i++) {
+		if (resource[i]) {
+			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i + PIPE_MAX_ATTRIBS);
+		}
+	}
 }
 
 static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
@@ -523,7 +529,6 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
-	/* TODO implement */
 	for (int i = 0; i < count; i++) {
 		evergreen_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
 	}

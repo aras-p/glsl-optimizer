@@ -1866,8 +1866,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
-	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
-	tex.sampler_id = tex.resource_id;
+	tex.sampler_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+	tex.resource_id = tex.sampler_id;
+	if (ctx->shader->processor_type == TGSI_PROCESSOR_VERTEX)
+		tex.resource_id += PIPE_MAX_ATTRIBS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
 	tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
