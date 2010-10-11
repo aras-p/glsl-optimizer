@@ -89,8 +89,6 @@ brw_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
-   struct intel_context *intel = intel_context(ctx);
-
    struct brw_shader *shader =
       (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (shader != NULL) {
@@ -132,9 +130,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 						GL_TRUE, /* temp */
 						GL_TRUE /* uniform */
 						) || progress;
-	 if (intel->gen == 6) {
-	    progress = do_if_to_cond_assign(shader->ir) || progress;
-	 }
       } while (progress);
 
       validate_ir_tree(shader->ir);
