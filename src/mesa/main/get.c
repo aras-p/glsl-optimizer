@@ -1579,7 +1579,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    case GL_CURRENT_PROGRAM:
       v->value_int =
-	 ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0;
+	 ctx->Shader.ActiveProgram ? ctx->Shader.ActiveProgram->Name : 0;
       break;
    case GL_READ_FRAMEBUFFER_BINDING_EXT:
       v->value_int = ctx->ReadBuffer->Name;

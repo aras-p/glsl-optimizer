@@ -117,6 +117,7 @@ void
 _mesa_free_shader_state(struct gl_context *ctx)
 {
    _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, NULL);
+   _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
 }
 
 
@@ -607,8 +608,8 @@ static GLuint
 get_handle(struct gl_context *ctx, GLenum pname)
 {
    if (pname == GL_PROGRAM_OBJECT_ARB) {
-      if (ctx->Shader.CurrentProgram)
-         return ctx->Shader.CurrentProgram->Name;
+      if (ctx->Shader.ActiveProgram)
+         return ctx->Shader.ActiveProgram->Name;
       else
          return 0;
    }
@@ -908,6 +909,24 @@ print_shader_info(const struct gl_shader_program *shProg)
 
 
 /**
+ * Use the named shader program for subsequent glUniform calls
+ */
+static void
+active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
+	       const char *caller)
+{
+   if ((shProg != NULL) && !shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "%s(program %u not linked)", caller, shProg->Name);
+      return;
+   }
+
+   if (ctx->Shader.ActiveProgram != shProg) {
+      _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, shProg);
+   }
+}
+
+/**
  * Use the named shader program for subsequent rendering.
  */
 void
@@ -939,6 +958,8 @@ _mesa_use_program(struct gl_context *ctx, GLuint program)
                      "glUseProgram(program %u not linked)", program);
          return;
       }
+
+      active_program(ctx, shProg, "glUseProgram");
 
       /* debug code */
       if (ctx->Shader.Flags & GLSL_USE_PROG) {
@@ -1657,18 +1678,11 @@ void GLAPIENTRY
 _mesa_ActiveProgramEXT(GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_shader_program *shProg;
+   struct gl_shader_program *shProg = (program != 0)
+      ? _mesa_lookup_shader_program_err(ctx, program, "glActiveProgramEXT")
+      : NULL;
 
-   shProg = _mesa_lookup_shader_program_err(ctx, program,
-					    "glActiveProgramEXT");
-   if (!shProg->LinkStatus) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glActiveProgramEXT(program not linked)");
-      return;
-   }
-
-   _mesa_error(ctx, GL_INVALID_OPERATION,
-	       "glActiveProgramEXT(NOT YET IMPLEMENTED)");
+   active_program(ctx, shProg, "glActiveProgramEXT");
    return;
 }
 

@@ -2141,7 +2141,18 @@ struct gl_shader_program
  */
 struct gl_shader_state
 {
-   struct gl_shader_program *CurrentProgram; /**< The user-bound program */
+   /**
+    * Program used for rendering.
+    */
+   struct gl_shader_program *CurrentProgram;
+
+   /**
+    * Program used by glUniform calls.
+    *
+    * Explicitly set by \c glUseProgram and \c glActiveProgramEXT.
+    */
+   struct gl_shader_program *ActiveProgram;
+
    void *MemPool;
 
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
