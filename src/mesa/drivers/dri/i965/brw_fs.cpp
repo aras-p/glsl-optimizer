@@ -91,8 +91,13 @@ GLboolean
 brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
    struct intel_context *intel = intel_context(ctx);
-   if (using_new_fs == -1)
-      using_new_fs = getenv("INTEL_NEW_FS") != NULL;
+
+   if (using_new_fs == -1) {
+      if (intel->gen >= 6)
+	 using_new_fs = 1;
+      else
+	 using_new_fs = getenv("INTEL_NEW_FS") != NULL;
+   }
 
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       struct brw_shader *shader = (struct brw_shader *)prog->_LinkedShaders[i];
