@@ -91,22 +91,53 @@ static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
-static void r600_setup_miptree(struct r600_resource_texture *rtex, enum chip_class chipc)
+static unsigned r600_texture_get_stride(struct pipe_screen *screen,
+					struct r600_resource_texture *rtex,
+					unsigned level)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
-	unsigned long w, h, pitch, size, layer_size, i, offset;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+	enum chip_class chipc = r600_get_family_class(radeon);
+	unsigned width, stride;
+	
+	width = u_minify(ptex->width0, level);
+
+	stride = util_format_get_stride(ptex->format, align(width, 64));
+	if (chipc == EVERGREEN)
+		stride = align(stride, 512);
+	else
+		stride = align(stride, 256);
+	return stride;
+}
+
+static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
+					  struct r600_resource_texture *rtex,
+					  unsigned level)
+{
+	struct pipe_resource *ptex = &rtex->resource.base.b;
+	unsigned height;
+
+	height = u_minify(ptex->height0, level);
+	height = util_next_power_of_two(height);
+	return util_format_get_nblocksy(ptex->format, height);
+}
+
+static void r600_setup_miptree(struct pipe_screen *screen,
+			       struct r600_resource_texture *rtex)
+{
+	struct pipe_resource *ptex = &rtex->resource.base.b;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+	enum chip_class chipc = r600_get_family_class(radeon);
+	unsigned long pitch, size, layer_size, i, offset;
+	unsigned nblocksy;
 
 	rtex->bpt = util_format_get_blocksize(ptex->format);
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
-		w = u_minify(ptex->width0, i);
-		h = u_minify(ptex->height0, i);
-		h = util_next_power_of_two(h);
-		pitch = util_format_get_stride(ptex->format, align(w, 64));
-		if (chipc == EVERGREEN)
-			pitch = align(pitch, 512);
-		else
-			pitch = align(pitch, 256);
-		layer_size = pitch * h;
+		pitch = r600_texture_get_stride(screen, rtex, i);
+		nblocksy = r600_texture_get_nblocksy(screen, rtex, i);
+
+		layer_size = pitch * nblocksy;
+
 		if (ptex->target == PIPE_TEXTURE_CUBE) {
 			if (chipc >= R700)
 				size = layer_size * 8;
@@ -139,7 +170,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	resource->base.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
-	r600_setup_miptree(rtex, r600_get_family_class(radeon));
+	r600_setup_miptree(screen, rtex);
 
 	/* FIXME alignment 4096 enought ? too much ? */
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
