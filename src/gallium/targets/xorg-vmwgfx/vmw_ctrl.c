@@ -32,6 +32,7 @@
  *      allows X clients to communicate with the driver.
  */
 
+#include <xorg-server.h>
 #include "dixstruct.h"
 #include "extnsionst.h"
 #include <X11/X.h>
