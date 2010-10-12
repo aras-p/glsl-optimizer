@@ -92,6 +92,14 @@ struct r600_pipe_shader {
 	struct r600_vertex_element	vertex_elements;
 };
 
+/* needed for blitter save */
+struct r600_textures_info {
+	struct r600_pipe_sampler_view   **views;
+	unsigned                        n_views;
+	void				**samplers;
+	unsigned                        n_samplers;
+};
+
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -130,6 +138,8 @@ struct r600_pipe_context {
 	struct u_upload_mgr		*upload_vb;
 	struct u_upload_mgr		*upload_ib;
 	unsigned			any_user_vbs;
+	struct r600_textures_info       ps_samplers;
+
 };
 
 struct r600_drawl {

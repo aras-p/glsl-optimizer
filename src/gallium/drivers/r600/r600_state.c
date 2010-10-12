@@ -38,6 +38,7 @@
 #include <util/u_inlines.h>
 #include <util/u_upload_mgr.h>
 #include <util/u_index_modify.h>
+#include <util/u_framebuffer.h>
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -703,6 +704,9 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
 
+	rctx->ps_samplers.views = resource;
+	rctx->ps_samplers.n_views = count;
+
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
 			r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
@@ -725,6 +729,9 @@ static void r600_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void 
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
+
+	rctx->ps_samplers.samplers = states;
+	rctx->ps_samplers.n_samplers = count;
 
 	for (int i = 0; i < count; i++) {
 		r600_context_pipe_state_set_ps_sampler(&rctx->ctx, rstates[i], i);
@@ -1025,14 +1032,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
-	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
-		pipe_surface_reference(&rctx->framebuffer.cbufs[i], NULL);
-	}
-	for (int i = 0; i < state->nr_cbufs; i++) {
-		pipe_surface_reference(&rctx->framebuffer.cbufs[i], state->cbufs[i]);
-	}
-	pipe_surface_reference(&rctx->framebuffer.zsbuf, state->zsbuf);
-	rctx->framebuffer = *state;
+
+	util_copy_framebuffer_state(&rctx->framebuffer, state);
+	
 	rctx->pframebuffer = &rctx->framebuffer;
 
 	/* build states */
