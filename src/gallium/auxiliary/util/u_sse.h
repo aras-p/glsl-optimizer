@@ -71,6 +71,12 @@ _mm_castps_si128(__m128 a)
 
 #endif /* defined(_MSC_VER) && _MSC_VER < 1500 */
 
+union m128i {
+   __m128i m;
+   ubyte ub[16];
+   ushort us[8];
+   uint ui[4];
+};
 
 static INLINE void u_print_epi8(const char *name, __m128i r)
 {
@@ -149,6 +155,12 @@ static INLINE void u_print_ps(const char *name, __m128 r)
 }
 
 
+#define U_DUMP_EPI32(a) u_print_epi32(#a, a)
+#define U_DUMP_EPI16(a) u_print_epi16(#a, a)
+#define U_DUMP_EPI8(a)  u_print_epi8(#a, a)
+#define U_DUMP_PS(a)    u_print_ps(#a, a)
+
+
 
 #if defined(PIPE_ARCH_SSSE3)
 
@@ -174,6 +186,68 @@ _mm_shuffle_epi8(__m128i a, __m128i mask)
 }
 
 #endif /* !PIPE_ARCH_SSSE3 */
+
+
+
+
+/* Provide an SSE2 implementation of _mm_mullo_epi32() in terms of
+ * _mm_mul_epu32().
+ *
+ * I suspect this works fine for us because one of our operands is
+ * always positive, but not sure that this can be used for general
+ * signed integer multiplication.
+ *
+ * This seems close enough to the speed of SSE4 and the real
+ * _mm_mullo_epi32() intrinsic as to not justify adding an sse4
+ * dependency at this point.
+ */
+static INLINE __m128i mm_mullo_epi32(const __m128i a, const __m128i b)
+{
+   __m128i a4   = _mm_srli_epi64(a, 32);  /* shift by one dword */
+   __m128i b4   = _mm_srli_epi64(b, 32);  /* shift by one dword */
+   __m128i ba   = _mm_mul_epu32(b, a);   /* multply dwords 0, 2 */
+   __m128i b4a4 = _mm_mul_epu32(b4, a4); /* multiply dwords 1, 3 */
+
+   /* Interleave the results, either with shuffles or (slightly
+    * faster) direct bit operations:
+    */
+#if 0
+   __m128i ba8             = _mm_shuffle_epi32(ba, 8);
+   __m128i b4a48           = _mm_shuffle_epi32(b4a4, 8);
+   __m128i result          = _mm_unpacklo_epi32(ba8, b4a48);
+#else
+   __m128i mask            = _mm_setr_epi32(~0,0,~0,0);
+   __m128i ba_mask         = _mm_and_si128(ba, mask);
+   __m128i b4a4_mask_shift = _mm_slli_epi64(b4a4, 32);
+   __m128i result          = _mm_or_si128(ba_mask, b4a4_mask_shift);
+#endif
+
+   return result;
+}
+
+
+static INLINE void
+transpose4_epi32(const __m128i * restrict a,
+                 const __m128i * restrict b,
+                 const __m128i * restrict c,
+                 const __m128i * restrict d,
+                 __m128i * restrict o,
+                 __m128i * restrict p,
+                 __m128i * restrict q,
+                 __m128i * restrict r)
+{
+  __m128i t0 = _mm_unpacklo_epi32(*a, *b);
+  __m128i t1 = _mm_unpacklo_epi32(*c, *d);
+  __m128i t2 = _mm_unpackhi_epi32(*a, *b);
+  __m128i t3 = _mm_unpackhi_epi32(*c, *d);
+
+  *o = _mm_unpacklo_epi64(t0, t1);
+  *p = _mm_unpackhi_epi64(t0, t1);
+  *q = _mm_unpacklo_epi64(t2, t3);
+  *r = _mm_unpackhi_epi64(t2, t3);
+}
+
+#define SCALAR_EPI32(m, i) _mm_shuffle_epi32((m), _MM_SHUFFLE(i,i,i,i))
 
 
 #endif /* PIPE_ARCH_SSE */
