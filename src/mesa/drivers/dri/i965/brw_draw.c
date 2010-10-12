@@ -441,7 +441,7 @@ void brw_draw_prims( GLcontext *ctx,
       /* Decide if we want to rebase.  If so we end up recursing once
        * only into this function.
        */
-      if (min_index != 0) {
+      if (min_index != 0 && !vbo_any_varyings_in_vbos(arrays)) {
 	 vbo_rebase_prims(ctx, arrays,
 			  prim, nr_prims,
 			  ib, min_index, max_index,

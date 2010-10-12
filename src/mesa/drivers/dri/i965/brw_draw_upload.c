@@ -383,7 +383,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  */
 	 assert(input->offset < input->bo->size);
       } else {
-	 input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
+	 input->count = input->glarray->StrideB ? max_index + 1 : 1;
 	 if (input->bo != NULL) {
 	    /* Already-uploaded vertex data is present from a previous
 	     * prepare_vertices, but we had to re-validate state due to
@@ -414,15 +414,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 }
 
 	 upload[nr_uploads++] = input;
-	 
-	 /* We rebase drawing to start at element zero only when
-	  * varyings are not in vbos, which means we can end up
-	  * uploading non-varying arrays (stride != 0) when min_index
-	  * is zero.  This doesn't matter as the amount to upload is
-	  * the same for these arrays whether the draw call is rebased
-	  * or not - we just have to upload the one element.
-	  */
-	 assert(min_index == 0 || input->glarray->StrideB == 0);
       }
    }
 
