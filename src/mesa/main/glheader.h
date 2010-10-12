@@ -52,7 +52,6 @@
 #define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "GL/internal/glcore.h"
 
 
 /**
@@ -140,6 +139,41 @@ typedef void *GLeglImageOES;
  */
 #define MESA_GEOMETRY_PROGRAM 0x8c26
 
+/* Several fields of __GLcontextModes can take these as values.  Since
+ * GLX header files may not be available everywhere they need to be used,
+ * redefine them here.
+ */
+#define GLX_NONE                           0x8000
+#define GLX_SLOW_CONFIG                    0x8001
+#define GLX_TRUE_COLOR                     0x8002
+#define GLX_DIRECT_COLOR                   0x8003
+#define GLX_PSEUDO_COLOR                   0x8004
+#define GLX_STATIC_COLOR                   0x8005
+#define GLX_GRAY_SCALE                     0x8006
+#define GLX_STATIC_GRAY                    0x8007
+#define GLX_TRANSPARENT_RGB                0x8008
+#define GLX_TRANSPARENT_INDEX              0x8009
+#define GLX_NON_CONFORMANT_CONFIG          0x800D
+#define GLX_SWAP_EXCHANGE_OML              0x8061
+#define GLX_SWAP_COPY_OML                  0x8062
+#define GLX_SWAP_UNDEFINED_OML             0x8063
 
+#define GLX_DONT_CARE                      0xFFFFFFFF
+
+#define GLX_RGBA_BIT                       0x00000001
+#define GLX_COLOR_INDEX_BIT                0x00000002
+#define GLX_WINDOW_BIT                     0x00000001
+#define GLX_PIXMAP_BIT                     0x00000002
+#define GLX_PBUFFER_BIT                    0x00000004
+
+#define GLX_BIND_TO_TEXTURE_RGB_EXT        0x20D0
+#define GLX_BIND_TO_TEXTURE_RGBA_EXT       0x20D1
+#define GLX_BIND_TO_MIPMAP_TEXTURE_EXT     0x20D2
+#define GLX_BIND_TO_TEXTURE_TARGETS_EXT    0x20D3
+#define GLX_Y_INVERTED_EXT                 0x20D4
+
+#define GLX_TEXTURE_1D_BIT_EXT             0x00000001
+#define GLX_TEXTURE_2D_BIT_EXT             0x00000002
+#define GLX_TEXTURE_RECTANGLE_BIT_EXT      0x00000004
 
 #endif /* GLHEADER_H */

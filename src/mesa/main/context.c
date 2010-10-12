@@ -163,7 +163,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(__GLcontext *ctx)
+_mesa_notifySwapBuffers(GLcontext *ctx)
 {
    if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
       _mesa_debug(ctx, "SwapBuffers\n");

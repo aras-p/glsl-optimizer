@@ -157,7 +157,7 @@ extern void
 _mesa_init_get_hash(GLcontext *ctx);
 
 extern void
-_mesa_notifySwapBuffers(__GLcontext *gc);
+_mesa_notifySwapBuffers(GLcontext *gc);
 
 
 extern struct _glapi_table *

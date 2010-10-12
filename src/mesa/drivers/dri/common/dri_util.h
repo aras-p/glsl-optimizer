@@ -54,7 +54,6 @@
 #include "xmlconfig.h"
 #include "main/glheader.h"
 #include "main/mtypes.h"
-#include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 
 #define GLX_BAD_CONTEXT                    5
