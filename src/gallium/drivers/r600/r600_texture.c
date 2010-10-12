@@ -53,6 +53,25 @@ static void r600_copy_from_tiled_texture(struct pipe_context *ctx, struct r600_t
 				transfer->box.width, transfer->box.height);
 }
 
+
+/* Copy from a detiled texture to a tiled one. */
+static void r600_copy_into_tiled_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+{
+	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
+	struct pipe_resource *texture = transfer->resource;
+	struct pipe_subresource subsrc;
+
+	subsrc.face = 0;
+	subsrc.level = 0;
+	ctx->resource_copy_region(ctx, texture, transfer->sr,
+				  transfer->box.x, transfer->box.y, transfer->box.z,
+				  rtransfer->linear_texture, subsrc,
+				  0, 0, 0,
+				  transfer->box.width, transfer->box.height);
+
+	ctx->flush(ctx, 0, NULL);
+}
+
 static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned zslice,
 					unsigned face)
@@ -339,12 +358,12 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 	if (rtransfer->linear_texture) {
+		if (transfer->usage & PIPE_TRANSFER_WRITE) {
+			r600_copy_into_tiled_texture(ctx, rtransfer);
+		}
 		pipe_resource_reference(&rtransfer->linear_texture, NULL);
 	}
 	if (rtex->flushed_depth_texture) {
-		if (transfer->usage & PIPE_TRANSFER_WRITE) {
-			// TODO
-		}
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 	}
 	pipe_resource_reference(&transfer->resource, NULL);
