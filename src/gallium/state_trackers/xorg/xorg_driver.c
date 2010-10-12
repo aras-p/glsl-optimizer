@@ -791,7 +791,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ms->SWCursor)
 	xf86_cursors_init(pScreen, 64, 64,
 			  HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64 |
-			  HARDWARE_CURSOR_ARGB);
+			  HARDWARE_CURSOR_ARGB |
+			  ((cust && cust->unhidden_hw_cursor_update) ?
+			   HARDWARE_CURSOR_UPDATE_UNHIDDEN : 0));
 
     /* Must force it before EnterVT, so we are in control of VT and
      * later memory should be bound when allocating, e.g rotate_mem */
