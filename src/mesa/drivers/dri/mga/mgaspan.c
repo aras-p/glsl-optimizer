@@ -204,7 +204,7 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-mgaSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+mgaSetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {
       mgaInitPointers_565(&drb->Base);

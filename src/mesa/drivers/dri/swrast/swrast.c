@@ -225,7 +225,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
  */
 
 static GLuint
-choose_pixel_format(const GLvisual *v)
+choose_pixel_format(const struct gl_config *v)
 {
     int depth = v->rgbBits;
 
@@ -307,7 +307,7 @@ swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 
 static struct swrast_renderbuffer *
-swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
+swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
 {
     struct swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
     GLuint pixel_format;
@@ -370,7 +370,7 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 static GLboolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, GLboolean isPixmap)
+		  const struct gl_config * visual, GLboolean isPixmap)
 {
     struct dri_drawable *drawable = NULL;
     GLframebuffer *fb;
@@ -570,7 +570,7 @@ swrast_init_driver_functions(struct dd_function_table *driver)
 
 static GLboolean
 dri_create_context(gl_api api,
-		   const __GLcontextModes * visual,
+		   const struct gl_config * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
     struct dri_context *ctx = NULL;

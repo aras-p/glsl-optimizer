@@ -271,7 +271,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific rendering context.
  */
 GLboolean r200CreateContext( gl_api api,
-			     const __GLcontextModes *glVisual,
+			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
 			     void *sharedContextPrivate)
 {

@@ -159,7 +159,7 @@ void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 
 GLboolean
 sisCreateContext( gl_api api,
-		  const __GLcontextModes *glVisual,
+		  const struct gl_config *glVisual,
 		  __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {

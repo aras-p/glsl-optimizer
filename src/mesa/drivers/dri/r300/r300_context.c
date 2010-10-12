@@ -477,7 +477,7 @@ static void r300InitIoctlFuncs(struct dd_function_table *functions)
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(gl_api api,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {

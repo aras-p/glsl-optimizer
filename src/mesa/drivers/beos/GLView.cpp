@@ -105,7 +105,7 @@ public:
 	MesaDriver();
 	~MesaDriver();
 	
-	void 		Init(BGLView * bglview, GLcontext * c, GLvisual * v, GLframebuffer * b);
+	void 		Init(BGLView * bglview, GLcontext * c, struct gl_config * v, GLframebuffer * b);
 
 	void 		LockGL();
 	void 		UnlockGL();
@@ -121,7 +121,7 @@ private:
 	MesaDriver &operator=(const MesaDriver &rhs);  // assignment oper. illegal
 
 	GLcontext * 	m_glcontext;
-	GLvisual * 		m_glvisual;
+	struct gl_config * 		m_glvisual;
 	GLframebuffer *	m_glframebuffer;
 
 	BGLView *		m_bglview;
@@ -297,7 +297,7 @@ BGLView::BGLView(BRect rect, char *name,
    MesaDriver * md = new MesaDriver();
 
    // examine option flags and create gl_context struct
-   GLvisual * visual = _mesa_create_visual( dblFlag,
+   struct gl_config * visual = _mesa_create_visual( dblFlag,
                                             stereoFlag,
                                             red, green, blue, alpha,
                                             depth,
@@ -668,7 +668,7 @@ MesaDriver::~MesaDriver()
 }
 
 
-void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLframebuffer * framebuffer)
+void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, struct gl_config * visual, GLframebuffer * framebuffer)
 {
 	m_bglview 		= bglview;
 	m_glcontext 	= ctx;

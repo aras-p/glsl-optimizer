@@ -385,7 +385,7 @@ nv20_context_destroy(GLcontext *ctx)
 }
 
 static GLcontext *
-nv20_context_create(struct nouveau_screen *screen, const GLvisual *visual,
+nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
 		    GLcontext *share_ctx)
 {
 	struct nouveau_context *nctx;

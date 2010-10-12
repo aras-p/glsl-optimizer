@@ -176,7 +176,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-viaSetSpanFunctions(struct via_renderbuffer *vrb, const GLvisual *vis)
+viaSetSpanFunctions(struct via_renderbuffer *vrb, const struct gl_config *vis)
 {
    if (vrb->Base.Format == MESA_FORMAT_RGB565) {
       viaInitPointers_565(&vrb->Base);

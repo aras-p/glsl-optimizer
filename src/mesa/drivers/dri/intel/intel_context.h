@@ -383,7 +383,7 @@ extern int INTEL_DEBUG;
 
 extern GLboolean intelInitContext(struct intel_context *intel,
 				  int api,
-                                  const __GLcontextModes * mesaVis,
+                                  const struct gl_config * mesaVis,
                                   __DRIcontext * driContextPriv,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);

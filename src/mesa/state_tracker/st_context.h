@@ -260,7 +260,7 @@ st_get_msaa(void);
 
 extern struct st_context *
 st_create_context(gl_api api, struct pipe_context *pipe,
-                  const __GLcontextModes *visual,
+                  const struct gl_config *visual,
                   struct st_context *share);
 
 extern void

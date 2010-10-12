@@ -125,7 +125,6 @@ struct gl_texture_image;
 struct gl_texture_object;
 struct st_context;
 typedef struct __GLcontextRec GLcontext;
-typedef struct __GLcontextModesRec GLvisual;
 typedef struct gl_framebuffer GLframebuffer;
 /*@}*/
 
@@ -549,19 +548,7 @@ struct gl_shine_tab
    GLuint refcount;
 };
 
-/**
- * Mode and limit information for a context.  This information is
- * kept around in the context so that values can be used during
- * command execution, and for returning information about the
- * context to the application.
- * 
- * Instances of this structure are shared by the driver and the loader.  To
- * maintain binary compatability, new fields \b must be added only to the
- * end of the structure.
- * 
- * \sa _gl_context_modes_create
- */
-typedef struct __GLcontextModesRec {
+struct gl_config {
    GLboolean rgbMode;
    GLboolean floatMode;
    GLboolean colorIndexMode;
@@ -614,7 +601,7 @@ typedef struct __GLcontextModesRec {
    GLint bindToMipmapTexture;
    GLint bindToTextureTargets;
    GLint yInverted;
-} __GLcontextModes;
+};
 
 /**
  * Light source state.
@@ -2453,7 +2440,7 @@ struct gl_framebuffer
     * The framebuffer's visual. Immutable if this is a window system buffer.
     * Computed from attachments if user-made FBO.
     */
-   GLvisual Visual;
+   struct gl_config Visual;
 
    GLboolean Initialized;
 
@@ -3074,7 +3061,7 @@ struct __GLcontextRec
    struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
    /*@}*/
 
-   GLvisual Visual;
+   struct gl_config Visual;
    GLframebuffer *DrawBuffer;	/**< buffer for writing */
    GLframebuffer *ReadBuffer;	/**< buffer for reading */
    GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */

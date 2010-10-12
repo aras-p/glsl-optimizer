@@ -40,6 +40,6 @@ extern void sisSpanRenderFinish( GLcontext *ctx );
 extern void sisDDInitSpanFuncs( GLcontext *ctx );
 
 extern void
-sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis);
+sisSetSpanFunctions(struct sis_renderbuffer *srb, const struct gl_config *vis);
 
 #endif

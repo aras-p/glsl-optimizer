@@ -163,7 +163,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
 
 struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
-                                     const __GLcontextModes *visual,
+                                     const struct gl_config *visual,
                                      struct st_context *share)
 {
    GLcontext *ctx;

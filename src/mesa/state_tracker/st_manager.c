@@ -296,11 +296,11 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
 }
 
 /**
- * Intialize a __GLcontextModes from a visual.
+ * Intialize a struct gl_config from a visual.
  */
 static void
 st_visual_to_context_mode(const struct st_visual *visual,
-                          __GLcontextModes *mode)
+                          struct gl_config *mode)
 {
    memset(mode, 0, sizeof(*mode));
 
@@ -420,7 +420,7 @@ static struct st_framebuffer *
 st_framebuffer_create(struct st_framebuffer_iface *stfbi)
 {
    struct st_framebuffer *stfb;
-   __GLcontextModes mode;
+   struct gl_config mode;
    gl_buffer_index idx;
 
    stfb = CALLOC_STRUCT(st_framebuffer);
@@ -625,7 +625,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
    struct st_context *st;
    struct pipe_context *pipe;
-   __GLcontextModes mode;
+   struct gl_config mode;
    gl_api api;
 
    if (!(stapi->profile_mask & (1 << attribs->profile)))

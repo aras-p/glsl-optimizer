@@ -94,7 +94,7 @@ extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
 i915CreateContext(int api,
-		  const __GLcontextModes * mesaVis,
+		  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {

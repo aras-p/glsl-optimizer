@@ -29,14 +29,14 @@
 #include "mtypes.h"
 
 extern struct gl_framebuffer *
-_mesa_create_framebuffer(const GLvisual *visual);
+_mesa_create_framebuffer(const struct gl_config *visual);
 
 extern struct gl_framebuffer *
 _mesa_new_framebuffer(GLcontext *ctx, GLuint name);
 
 extern void
 _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
-				     const GLvisual *visual);
+				     const struct gl_config *visual);
 
 extern void
 _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name);

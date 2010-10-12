@@ -155,7 +155,7 @@ tdfxInitDriver( __DRIscreen *sPriv )
 static GLboolean
 tdfxCreateBuffer( __DRIscreen *driScrnPriv,
                   __DRIdrawable *driDrawPriv,
-                  const __GLcontextModes *mesaVis,
+                  const struct gl_config *mesaVis,
                   GLboolean isPixmap )
 {
    tdfxScreenPrivate *screen = (tdfxScreenPrivate *) driScrnPriv->private;
@@ -394,7 +394,7 @@ tdfxFillInModes(__DRIscreen *psp,
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 tdfxInitScreen(__DRIscreen *psp)

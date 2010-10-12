@@ -80,11 +80,11 @@ enum pixel_format {
 
 
 /**
- * Visual inforation, derived from GLvisual.
+ * Visual inforation, derived from struct gl_config.
  * Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
-   GLvisual mesa_visual;	/* Device independent visual parameters */
+   struct gl_config mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
    int screen, visualID;
 #ifdef XFree86Server
@@ -495,7 +495,7 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const struct gl_config *visual,
                        GLboolean backBuffer);
 
 extern void

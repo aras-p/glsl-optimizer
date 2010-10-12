@@ -62,7 +62,7 @@
 struct osmesa_context
 {
    GLcontext mesa;		/*< Base class - this must be first */
-   GLvisual *gl_visual;		/*< Describes the buffers */
+   struct gl_config *gl_visual;		/*< Describes the buffers */
    struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
    GLframebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
    GLenum format;		/*< User-specified context format */

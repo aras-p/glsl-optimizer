@@ -457,7 +457,7 @@ FreeBuffer(struct via_context *vmesa)
 
 GLboolean
 viaCreateContext(gl_api api,
-		 const __GLcontextModes *visual,
+		 const struct gl_config *visual,
                  __DRIcontext *driContextPriv,
                  void *sharedContextPrivate)
 {

@@ -756,7 +756,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
    /* initialize visual */
    {
-      __GLcontextModes *vis = &v->mesa_visual;
+      struct gl_config *vis = &v->mesa_visual;
 
       vis->rgbMode          = GL_TRUE;
       vis->doubleBufferMode = db_flag;

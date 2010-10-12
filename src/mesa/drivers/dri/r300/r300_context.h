@@ -544,7 +544,7 @@ struct r300_context {
 
 extern void r300DestroyContext(__DRIcontext * driContextPriv);
 extern GLboolean r300CreateContext(gl_api api,
-				   const __GLcontextModes * glVisual,
+				   const struct gl_config * glVisual,
 				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 

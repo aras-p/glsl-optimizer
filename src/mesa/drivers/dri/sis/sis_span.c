@@ -174,7 +174,7 @@ sisDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis)
+sisSetSpanFunctions(struct sis_renderbuffer *srb, const struct gl_config *vis)
 {
    if (srb->Base.Format == MESA_FORMAT_RGB565) {
       sisInitPointers_RGB565( &srb->Base );

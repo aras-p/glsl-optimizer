@@ -83,7 +83,7 @@ compute_depth_max(struct gl_framebuffer *fb)
  * \sa _mesa_new_framebuffer
  */
 struct gl_framebuffer *
-_mesa_create_framebuffer(const GLvisual *visual)
+_mesa_create_framebuffer(const struct gl_config *visual)
 {
    struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
    assert(visual);
@@ -122,7 +122,7 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
  */
 void
 _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
-				     const GLvisual *visual)
+				     const struct gl_config *visual)
 {
    assert(fb);
    assert(visual);

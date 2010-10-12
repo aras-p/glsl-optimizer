@@ -429,7 +429,7 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+r128SetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {
       r128InitPointers_RGB565(&drb->Base);

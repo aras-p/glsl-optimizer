@@ -95,12 +95,12 @@ struct nouveau_context {
 
 GLboolean
 nouveau_context_create(gl_api api,
-		       const __GLcontextModes *visual, __DRIcontext *dri_ctx,
+		       const struct gl_config *visual, __DRIcontext *dri_ctx,
 		       void *share_ctx);
 
 GLboolean
 nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
-		     const GLvisual *visual, GLcontext *share_ctx);
+		     const struct gl_config *visual, GLcontext *share_ctx);
 
 void
 nouveau_context_deinit(GLcontext *ctx);

@@ -380,7 +380,7 @@ static void r600InitGLExtensions(GLcontext *ctx)
 /* Create the device specific rendering context.
  */
 GLboolean r600CreateContext(gl_api api,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {

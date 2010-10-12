@@ -200,7 +200,7 @@ viaDestroyScreen(__DRIscreen *sPriv)
 static GLboolean
 viaCreateBuffer(__DRIscreen *driScrnPriv,
                 __DRIdrawable *driDrawPriv,
-                const __GLcontextModes *mesaVis,
+                const struct gl_config *mesaVis,
                 GLboolean isPixmap)
 {
 #if 0
@@ -369,7 +369,7 @@ viaFillInModes( __DRIscreen *psp,
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 viaInitScreen(__DRIscreen *psp)

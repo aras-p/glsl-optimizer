@@ -33,7 +33,7 @@
 extern void mgaDDInitSpanFuncs( GLcontext *ctx );
 
 extern void
-mgaSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+mgaSetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);
 
 
 #endif

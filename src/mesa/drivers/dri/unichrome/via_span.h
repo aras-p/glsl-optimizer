@@ -30,6 +30,6 @@ extern void viaSpanRenderStart( GLcontext *ctx );
 extern void viaSpanRenderFinish( GLcontext *ctx );
 
 extern void
-viaSetSpanFunctions(struct via_renderbuffer *vrb, const GLvisual *vis);
+viaSetSpanFunctions(struct via_renderbuffer *vrb, const struct gl_config *vis);
 
 #endif

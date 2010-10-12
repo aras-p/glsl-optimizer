@@ -167,7 +167,7 @@ nv04_context_destroy(GLcontext *ctx)
 }
 
 static GLcontext *
-nv04_context_create(struct nouveau_screen *screen, const GLvisual *visual,
+nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
 		    GLcontext *share_ctx)
 {
 	struct nv04_context *nctx;

@@ -157,7 +157,7 @@ tdfxEndQuery(GLcontext *ctx, struct gl_query_object *q)
     (vis->blueBits == b) &&                        \
     (vis->alphaBits == a))
 
-void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
+void tdfxDDInitDriverFuncs( const struct gl_config *visual,
                             struct dd_function_table *functions )
 {
    if ( MESA_VERBOSE & VERBOSE_DRIVER ) {

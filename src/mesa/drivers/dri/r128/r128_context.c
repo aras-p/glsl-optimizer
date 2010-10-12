@@ -99,7 +99,7 @@ static const struct dri_debug_control debug_control[] =
 /* Create the device specific context.
  */
 GLboolean r128CreateContext( gl_api api,
-			     const __GLcontextModes *glVisual,
+			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {

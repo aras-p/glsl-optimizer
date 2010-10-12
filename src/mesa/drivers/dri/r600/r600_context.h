@@ -193,7 +193,7 @@ struct r600_context {
 #define GET_EVERGREEN_CHIP(context) ((EVERGREEN_CHIP_CONTEXT*)(context->pChip))
 
 extern GLboolean r600CreateContext(gl_api api,
-				   const __GLcontextModes * glVisual,
+				   const struct gl_config * glVisual,
 				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 

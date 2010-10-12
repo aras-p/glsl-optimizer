@@ -88,7 +88,7 @@ dri_get_current(__DRIscreen * driScreenPriv);
 
 boolean
 dri_create_context(gl_api api,
-		   const __GLcontextModes * visual,
+		   const struct gl_config * visual,
 		   __DRIcontext * driContextPriv,
 		   void *sharedContextPrivate);
 

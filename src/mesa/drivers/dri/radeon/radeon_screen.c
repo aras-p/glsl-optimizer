@@ -258,7 +258,7 @@ radeonFillInModes( __DRIscreen *psp,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes *m;
+    struct gl_config *m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     int i;
@@ -1583,7 +1583,7 @@ radeonInitDriver( __DRIscreen *sPriv )
 static GLboolean
 radeonCreateBuffer( __DRIscreen *driScrnPriv,
                     __DRIdrawable *driDrawPriv,
-                    const __GLcontextModes *mesaVis,
+                    const struct gl_config *mesaVis,
                     GLboolean isPixmap )
 {
     radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
@@ -1700,7 +1700,7 @@ radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
  *
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 radeonInitScreen(__DRIscreen *psp)
@@ -1750,7 +1750,7 @@ radeonInitScreen(__DRIscreen *psp)
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const
 __DRIconfig **radeonInitScreen2(__DRIscreen *psp)

@@ -30,7 +30,7 @@
  * There are three large Mesa data types/classes which are meant to be
  * used by device drivers:
  * - GLcontext: this contains the Mesa rendering state
- * - GLvisual:  this describes the color buffer (RGB vs. ci), whether or not
+ * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether or not
  *   there's a depth buffer, stencil buffer, etc.
  * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
  *   accum buffer and alpha buffers.
@@ -38,7 +38,7 @@
  * These types should be encapsulated by corresponding device driver
  * data types.  See xmesa.h and xmesaP.h for an example.
  *
- * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
+ * In OOP terms, GLcontext, struct gl_config, and GLframebuffer are base classes
  * which the device driver must derive from.
  *
  * The following functions create and destroy these data types.
@@ -59,7 +59,7 @@ struct _glapi_table;
 /** \name Visual-related functions */
 /*@{*/
  
-extern GLvisual *
+extern struct gl_config *
 _mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -75,7 +75,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint numSamples );
 
 extern GLboolean
-_mesa_initialize_visual( GLvisual *v,
+_mesa_initialize_visual( struct gl_config *v,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
@@ -91,7 +91,7 @@ _mesa_initialize_visual( GLvisual *v,
                          GLint numSamples );
 
 extern void
-_mesa_destroy_visual( GLvisual *vis );
+_mesa_destroy_visual( struct gl_config *vis );
 
 /*@}*/
 
@@ -100,21 +100,21 @@ _mesa_destroy_visual( GLvisual *vis );
 /*@{*/
 
 extern GLcontext *
-_mesa_create_context( const GLvisual *visual,
+_mesa_create_context( const struct gl_config *visual,
                       GLcontext *share_list,
                       const struct dd_function_table *driverFunctions,
                       void *driverContext );
 
 extern GLboolean
 _mesa_initialize_context( GLcontext *ctx,
-                          const GLvisual *visual,
+                          const struct gl_config *visual,
                           GLcontext *share_list,
                           const struct dd_function_table *driverFunctions,
                           void *driverContext );
 
 extern GLcontext *
 _mesa_create_context_for_api(gl_api api,
-			     const GLvisual *visual,
+			     const struct gl_config *visual,
 			     GLcontext *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext);
@@ -122,7 +122,7 @@ _mesa_create_context_for_api(gl_api api,
 extern GLboolean
 _mesa_initialize_context_for_api(GLcontext *ctx,
 				 gl_api api,
-				 const GLvisual *visual,
+				 const struct gl_config *visual,
 				 GLcontext *share_list,
 				 const struct dd_function_table *driverFunctions,
 				 void *driverContext);

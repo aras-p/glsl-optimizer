@@ -109,7 +109,7 @@ void i810InitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-i810SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+i810SetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       /* always 565 RGB */

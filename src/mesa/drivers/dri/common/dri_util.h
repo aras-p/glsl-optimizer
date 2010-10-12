@@ -148,7 +148,7 @@ struct __DriverAPIRec {
      * Context creation callback
      */	    	    
     GLboolean (*CreateContext)(gl_api api,
-			       const __GLcontextModes *glVis,
+			       const struct gl_config *glVis,
 			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
@@ -162,7 +162,7 @@ struct __DriverAPIRec {
      */
     GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
                               __DRIdrawable *driDrawPriv,
-                              const __GLcontextModes *glVis,
+                              const struct gl_config *glVis,
                               GLboolean pixmapBuffer);
     
     /**

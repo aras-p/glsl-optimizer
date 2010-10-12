@@ -59,7 +59,7 @@ struct __DriverAPIRec {
     void (*DestroyScreen)(__DRIscreen *driScrnPriv);
 
     GLboolean (*CreateContext)(gl_api glapi,
-                               const __GLcontextModes *glVis,
+                               const struct gl_config *glVis,
                                __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
@@ -67,7 +67,7 @@ struct __DriverAPIRec {
 
     GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
                               __DRIdrawable *driDrawPriv,
-                              const __GLcontextModes *glVis,
+                              const struct gl_config *glVis,
                               GLboolean pixmapBuffer);
 
     void (*DestroyBuffer)(__DRIdrawable *driDrawPriv);

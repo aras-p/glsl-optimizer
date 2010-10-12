@@ -55,7 +55,7 @@ i810FillInModes( __DRIscreen *psp,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     unsigned i;
@@ -272,7 +272,7 @@ i810DestroyScreen(__DRIscreen *sPriv)
 static GLboolean
 i810CreateBuffer( __DRIscreen *driScrnPriv,
                   __DRIdrawable *driDrawPriv,
-                  const __GLcontextModes *mesaVis,
+                  const struct gl_config *mesaVis,
                   GLboolean isPixmap )
 {
    i810ScreenPrivate *screen = (i810ScreenPrivate *) driScrnPriv->private;

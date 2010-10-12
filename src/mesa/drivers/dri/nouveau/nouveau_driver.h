@@ -52,7 +52,7 @@
 
 struct nouveau_driver {
 	GLcontext *(*context_create)(struct nouveau_screen *screen,
-				     const GLvisual *visual,
+				     const struct gl_config *visual,
 				     GLcontext *share_ctx);
 	void (*context_destroy)(GLcontext *ctx);
 

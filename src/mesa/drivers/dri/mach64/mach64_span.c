@@ -154,7 +154,7 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+mach64SetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {
       mach64InitPointers_RGB565(&drb->Base);

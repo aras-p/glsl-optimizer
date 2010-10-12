@@ -323,7 +323,7 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const struct gl_config *visual,
                        GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);

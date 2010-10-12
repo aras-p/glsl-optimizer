@@ -139,7 +139,7 @@ typedef void *GLeglImageOES;
  */
 #define MESA_GEOMETRY_PROGRAM 0x8c26
 
-/* Several fields of __GLcontextModes can take these as values.  Since
+/* Several fields of struct gl_config can take these as values.  Since
  * GLX header files may not be available everywhere they need to be used,
  * redefine them here.
  */

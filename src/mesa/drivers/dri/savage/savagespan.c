@@ -251,7 +251,7 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
+savageSetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis,
                        GLboolean float_depth)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {

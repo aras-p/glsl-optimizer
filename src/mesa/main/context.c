@@ -180,7 +180,7 @@ _mesa_notifySwapBuffers(GLcontext *ctx)
 /*@{*/
 
 /**
- * Allocates a GLvisual structure and initializes it via
+ * Allocates a struct gl_config structure and initializes it via
  * _mesa_initialize_visual().
  * 
  * \param dbFlag double buffering
@@ -198,12 +198,12 @@ _mesa_notifySwapBuffers(GLcontext *ctx)
  * \param alphaBits same as above.
  * \param numSamples not really used.
  * 
- * \return pointer to new GLvisual or NULL if requested parameters can't be
+ * \return pointer to new struct gl_config or NULL if requested parameters can't be
  * met.
  *
  * \note Need to add params for level and numAuxBuffers (at least)
  */
-GLvisual *
+struct gl_config *
 _mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -218,7 +218,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint accumAlphaBits,
                      GLint numSamples )
 {
-   GLvisual *vis = (GLvisual *) calloc(1, sizeof(GLvisual));
+   struct gl_config *vis = (struct gl_config *) calloc(1, sizeof(struct gl_config));
    if (vis) {
       if (!_mesa_initialize_visual(vis, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
@@ -235,15 +235,15 @@ _mesa_create_visual( GLboolean dbFlag,
 
 /**
  * Makes some sanity checks and fills in the fields of the
- * GLvisual object with the given parameters.  If the caller needs
- * to set additional fields, he should just probably init the whole GLvisual
+ * struct gl_config object with the given parameters.  If the caller needs
+ * to set additional fields, he should just probably init the whole struct gl_config
  * object himself.
  * \return GL_TRUE on success, or GL_FALSE on failure.
  *
  * \sa _mesa_create_visual() above for the parameter description.
  */
 GLboolean
-_mesa_initialize_visual( GLvisual *vis,
+_mesa_initialize_visual( struct gl_config *vis,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
@@ -311,7 +311,7 @@ _mesa_initialize_visual( GLvisual *vis,
  * Frees the visual structure.
  */
 void
-_mesa_destroy_visual( GLvisual *vis )
+_mesa_destroy_visual( struct gl_config *vis )
 {
    free(vis);
 }
@@ -856,7 +856,7 @@ _mesa_alloc_dispatch_table(int size)
 GLboolean
 _mesa_initialize_context_for_api(GLcontext *ctx,
 				 gl_api api,
-				 const GLvisual *visual,
+				 const struct gl_config *visual,
 				 GLcontext *share_list,
 				 const struct dd_function_table *driverFunctions,
 				 void *driverContext)
@@ -994,7 +994,7 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 
 GLboolean
 _mesa_initialize_context(GLcontext *ctx,
-                         const GLvisual *visual,
+                         const struct gl_config *visual,
                          GLcontext *share_list,
                          const struct dd_function_table *driverFunctions,
                          void *driverContext)
@@ -1014,7 +1014,7 @@ _mesa_initialize_context(GLcontext *ctx,
  * the rendering context.
  *
  * \param api the GL API type to create the context for
- * \param visual a GLvisual pointer (we copy the struct contents)
+ * \param visual a struct gl_config pointer (we copy the struct contents)
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
  *        driver has plugged in all its special functions.
@@ -1024,7 +1024,7 @@ _mesa_initialize_context(GLcontext *ctx,
  */
 GLcontext *
 _mesa_create_context_for_api(gl_api api,
-			     const GLvisual *visual,
+			     const struct gl_config *visual,
 			     GLcontext *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext)
@@ -1049,7 +1049,7 @@ _mesa_create_context_for_api(gl_api api,
 }
 
 GLcontext *
-_mesa_create_context(const GLvisual *visual,
+_mesa_create_context(const struct gl_config *visual,
 		     GLcontext *share_list,
 		     const struct dd_function_table *driverFunctions,
 		     void *driverContext)
@@ -1293,8 +1293,8 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 static GLboolean 
 check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
 {
-   const GLvisual *ctxvis = &ctx->Visual;
-   const GLvisual *bufvis = &buffer->Visual;
+   const struct gl_config *ctxvis = &ctx->Visual;
+   const struct gl_config *bufvis = &buffer->Visual;
 
    if (ctxvis == bufvis)
       return GL_TRUE;

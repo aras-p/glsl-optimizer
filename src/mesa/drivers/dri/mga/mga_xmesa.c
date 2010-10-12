@@ -110,7 +110,7 @@ mgaFillInModes( __DRIscreen *psp,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
@@ -421,7 +421,7 @@ static const struct dri_debug_control debug_control[] =
 
 static GLboolean
 mgaCreateContext( gl_api api,
-		  const __GLcontextModes *mesaVis,
+		  const struct gl_config *mesaVis,
                   __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {
@@ -695,7 +695,7 @@ mgaDestroyContext(__DRIcontext *driContextPriv)
 static GLboolean
 mgaCreateBuffer( __DRIscreen *driScrnPriv,
                  __DRIdrawable *driDrawPriv,
-                 const __GLcontextModes *mesaVis,
+                 const struct gl_config *mesaVis,
                  GLboolean isPixmap )
 {
    mgaScreenPrivate *screen = (mgaScreenPrivate *) driScrnPriv->private;
@@ -925,7 +925,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **mgaInitScreen(__DRIscreen *psp)
 {

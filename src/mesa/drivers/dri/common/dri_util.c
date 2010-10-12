@@ -634,7 +634,7 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
 			   __DRIcontext *shared, void *data)
 {
     __DRIcontext *context;
-    const __GLcontextModes *modes = (config != NULL) ? &config->modes : NULL;
+    const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
     void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
     gl_api mesa_api;
 
@@ -754,7 +754,7 @@ setupLoaderExtensions(__DRIscreen *psp,
  * This is the bootstrap function for the driver.  libGL supplies all of the
  * requisite information about the system, and the driver initializes itself.
  * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
+ * with the \c struct gl_config that the driver can support for windows or
  * pbuffers.
  *
  * For legacy DRI.

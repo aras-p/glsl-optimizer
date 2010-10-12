@@ -298,7 +298,7 @@ fail:
 static boolean
 drisw_create_buffer(__DRIscreen * sPriv,
                     __DRIdrawable * dPriv,
-                    const __GLcontextModes * visual, boolean isPixmap)
+                    const struct gl_config * visual, boolean isPixmap)
 {
    struct dri_drawable *drawable = NULL;
 

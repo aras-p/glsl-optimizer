@@ -274,7 +274,7 @@ struct mach64_context {
 
 
 extern GLboolean mach64CreateContext( gl_api api,
-				      const __GLcontextModes *glVisual,
+				      const struct gl_config *glVisual,
 				      __DRIcontext *driContextPriv,
                                       void *sharedContextPrivate );
 

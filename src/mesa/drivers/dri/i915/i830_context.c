@@ -48,7 +48,7 @@ i830InitDriverFunctions(struct dd_function_table *functions)
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
-i830CreateContext(const __GLcontextModes * mesaVis,
+i830CreateContext(const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {

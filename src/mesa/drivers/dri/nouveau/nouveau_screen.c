@@ -153,7 +153,7 @@ nouveau_destroy_screen(__DRIscreen *dri_screen)
 static GLboolean
 nouveau_create_buffer(__DRIscreen *dri_screen,
 		      __DRIdrawable *drawable,
-		      const __GLcontextModes *visual,
+		      const struct gl_config *visual,
 		      GLboolean is_pixmap)
 {
 	struct gl_renderbuffer *rb;

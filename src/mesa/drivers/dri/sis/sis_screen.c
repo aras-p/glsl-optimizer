@@ -193,7 +193,7 @@ sisDestroyScreen( __DRIscreen *sPriv )
 static GLboolean
 sisCreateBuffer( __DRIscreen *driScrnPriv,
                  __DRIdrawable *driDrawPriv,
-                 const __GLcontextModes *mesaVis,
+                 const struct gl_config *mesaVis,
                  GLboolean isPixmap )
 {
    /*sisScreenPtr screen = (sisScreenPtr) driScrnPriv->private;*/
@@ -280,7 +280,7 @@ sisSwapBuffers(__DRIdrawable *dPriv)
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 sisInitScreen(__DRIscreen *psp)

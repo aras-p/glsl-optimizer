@@ -371,14 +371,14 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 }
 
 /**
- * Creates a set of \c __GLcontextModes that a driver will expose.
+ * Creates a set of \c struct gl_config that a driver will expose.
  * 
- * A set of \c __GLcontextModes will be created based on the supplied
+ * A set of \c struct gl_config will be created based on the supplied
  * parameters.  The number of modes processed will be 2 *
  * \c num_depth_stencil_bits * \c num_db_modes.
  * 
  * For the most part, data is just copied from \c depth_bits, \c stencil_bits,
- * \c db_modes, and \c visType into each \c __GLcontextModes element.
+ * \c db_modes, and \c visType into each \c struct gl_config element.
  * However, the meanings of \c fb_format and \c fb_type require further
  * explanation.  The \c fb_format specifies which color components are in
  * each pixel and what the default order is.  For example, \c GL_RGB specifies
@@ -391,7 +391,7 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * 
  * One sublte issue is the combination of \c GL_RGB  or \c GL_BGR and either
  * of the \c GL_UNSIGNED_INT_8_8_8_8 modes.  The resulting mask values in the
- * \c __GLcontextModes structure is \b identical to the \c GL_RGBA or
+ * \c struct gl_config structure is \b identical to the \c GL_RGBA or
  * \c GL_BGRA case, except the \c alphaMask is zero.  This means that, as
  * far as this routine is concerned, \c GL_RGB with \c GL_UNSIGNED_INT_8_8_8_8
  * still uses 32-bits.
@@ -399,7 +399,7 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * If in doubt, look at the tables used in the function.
  * 
  * \param ptr_to_modes  Pointer to a pointer to a linked list of
- *                      \c __GLcontextModes.  Upon completion, a pointer to
+ *                      \c struct gl_config.  Upon completion, a pointer to
  *                      the next element to be process will be stored here.
  *                      If the function fails and returns \c GL_FALSE, this
  *                      value will be unmodified, but some elements in the
@@ -505,7 +505,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    const uint32_t * masks;
    int index;
    __DRIconfig **configs, **c;
-   __GLcontextModes *modes;
+   struct gl_config *modes;
    unsigned i, j, k, h;
    unsigned num_modes;
    unsigned num_accum_bits = (enable_accum) ? 2 : 1;
@@ -685,7 +685,7 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
 }
 
 #define __ATTRIB(attrib, field) \
-    { attrib, offsetof(__GLcontextModes, field) }
+    { attrib, offsetof(struct gl_config, field) }
 
 static const struct { unsigned int attrib, offset; } attribMap[] = {
     __ATTRIB(__DRI_ATTRIB_BUFFER_SIZE,			rgbBits),

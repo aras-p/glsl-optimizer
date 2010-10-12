@@ -30,7 +30,7 @@ static WMesaFramebuffer FirstFramebuffer = NULL;
  * given HDC (Window handle).
  */
 WMesaFramebuffer
-wmesa_new_framebuffer(HDC hdc, GLvisual *visual)
+wmesa_new_framebuffer(HDC hdc, struct gl_config *visual)
 {
     WMesaFramebuffer pwfb
         = (WMesaFramebuffer) malloc(sizeof(struct wmesa_framebuffer));
@@ -1404,7 +1404,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
     struct dd_function_table functions;
     GLint red_bits, green_bits, blue_bits, alpha_bits;
     GLcontext *ctx;
-    GLvisual *visual;
+    struct gl_config *visual;
 
     (void) Pal;
     
@@ -1586,7 +1586,7 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
     /* Lazy creation of framebuffers */
     if (c && !pwfb && hdc) {
         struct gl_renderbuffer *rb;
-        GLvisual *visual = &c->gl_ctx.Visual;
+        struct gl_config *visual = &c->gl_ctx.Visual;
         GLuint width, height;
 
         get_window_size(hdc, &width, &height);

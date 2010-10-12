@@ -31,7 +31,7 @@
 extern void savageDDInitSpanFuncs( GLcontext *ctx );
 
 extern void
-savageSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis,
+savageSetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis,
                        GLboolean float_depth);
 
 

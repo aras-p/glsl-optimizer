@@ -1348,7 +1348,7 @@ void tdfxDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-tdfxSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+tdfxSetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {

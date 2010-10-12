@@ -73,10 +73,10 @@
 
 
 /**
- * Derived from Mesa's GLvisual class.
+ * Derived from Mesa's struct gl_config class.
  */
 struct GLFBDevVisualRec {
-   GLvisual glvisual;              /* base class */
+   struct gl_config glvisual;              /* base class */
    struct fb_fix_screeninfo fix;
    struct fb_var_screeninfo var;
    int pixelFormat;

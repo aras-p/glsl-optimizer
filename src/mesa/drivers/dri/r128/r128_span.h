@@ -40,6 +40,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void r128DDInitSpanFuncs( GLcontext *ctx );
 
 extern void
-r128SetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+r128SetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);
 
 #endif

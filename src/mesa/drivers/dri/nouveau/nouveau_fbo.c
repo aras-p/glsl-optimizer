@@ -180,7 +180,7 @@ nouveau_framebuffer_new(GLcontext *ctx, GLuint name)
 }
 
 struct gl_framebuffer *
-nouveau_framebuffer_dri_new(const GLvisual *visual)
+nouveau_framebuffer_dri_new(const struct gl_config *visual)
 {
 	struct nouveau_framebuffer *nfb;
 

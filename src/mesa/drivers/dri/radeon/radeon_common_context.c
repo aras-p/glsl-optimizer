@@ -180,7 +180,7 @@ static void radeonInitDriverFuncs(struct dd_function_table *functions)
  */
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {

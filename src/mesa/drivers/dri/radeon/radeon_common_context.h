@@ -611,7 +611,7 @@ static INLINE uint32_t radeonPackFloat24(float f)
 
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate);
 

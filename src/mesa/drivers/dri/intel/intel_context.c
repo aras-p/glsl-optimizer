@@ -616,7 +616,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 GLboolean
 intelInitContext(struct intel_context *intel,
 		 int api,
-                 const __GLcontextModes * mesaVis,
+                 const struct gl_config * mesaVis,
                  __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
                  struct dd_function_table *functions)
@@ -626,7 +626,7 @@ intelInitContext(struct intel_context *intel,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
-   __GLcontextModes visual;
+   struct gl_config visual;
 
    /* we can't do anything without a connection to the device */
    if (intelScreen->bufmgr == NULL)

@@ -99,7 +99,7 @@ extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 					   GLsizei *width, GLsizei *height );
 
 struct __DRIconfigRec {
-    __GLcontextModes modes;
+    struct gl_config modes;
 };
 
 extern __DRIconfig **

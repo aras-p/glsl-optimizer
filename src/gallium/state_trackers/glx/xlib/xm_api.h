@@ -280,7 +280,7 @@ XMesaCopyContext(XMesaContext src, XMesaContext dst, unsigned long mask);
  * Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
-   GLvisual mesa_visual;	/* Device independent visual parameters */
+   struct gl_config mesa_visual;/* Device independent visual parameters */
    int screen, visualID, visualType;
    Display *display;	/* The X11 display */
    XVisualInfo * visinfo;	/* X's visual info (pointer to private copy) */

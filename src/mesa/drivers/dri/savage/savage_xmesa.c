@@ -287,7 +287,7 @@ savageDestroyScreen(__DRIscreen *sPriv)
 
 static GLboolean
 savageCreateContext( gl_api api,
-		     const __GLcontextModes *mesaVis,
+		     const struct gl_config *mesaVis,
 		     __DRIcontext *driContextPriv,
 		     void *sharedContextPrivate )
 {
@@ -586,7 +586,7 @@ savageDestroyContext(__DRIcontext *driContextPriv)
 static GLboolean
 savageCreateBuffer( __DRIscreen *driScrnPriv,
 		    __DRIdrawable *driDrawPriv,
-		    const __GLcontextModes *mesaVis,
+		    const struct gl_config *mesaVis,
 		    GLboolean isPixmap)
 {
    savageScreenPrivate *screen = (savageScreenPrivate *) driScrnPriv->private;
@@ -892,7 +892,7 @@ savageFillInModes( __DRIscreen *psp,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
@@ -968,7 +968,7 @@ savageFillInModes( __DRIscreen *psp,
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 savageInitScreen(__DRIscreen *psp)
