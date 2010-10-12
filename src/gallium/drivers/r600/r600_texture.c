@@ -244,7 +244,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.format = texture->format;
 	resource.width0 = texture->width0;
 	resource.height0 = texture->height0;
-	resource.depth0 = 0;
+	resource.depth0 = 1;
 	resource.last_level = 0;
 	resource.nr_samples = 0;
 	resource.usage = PIPE_USAGE_DYNAMIC;
@@ -297,7 +297,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		resource.format = texture->format;
 		resource.width0 = box->width;
 		resource.height0 = box->height;
-		resource.depth0 = 0;
+		resource.depth0 = 1;
 		resource.last_level = 0;
 		resource.nr_samples = 0;
 		resource.usage = PIPE_USAGE_DYNAMIC;
