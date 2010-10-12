@@ -104,9 +104,9 @@ static void
 get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 {
 	if (!a->fields) {
-		auto void f(GLcontext *, unsigned int, int, unsigned int);
+		auto void f(struct gl_context *, unsigned int, int, unsigned int);
 
-		void f(GLcontext *ctx, unsigned int start, int delta,
+		void f(struct gl_context *ctx, unsigned int start, int delta,
 		       unsigned int n) {
 			struct nouveau_channel *chan = context_chan(ctx);
 			RENDER_LOCALS(ctx);
@@ -117,9 +117,9 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 		*dispatch = f;
 
 	} else if (a->type == GL_UNSIGNED_INT) {
-		auto void f(GLcontext *, unsigned int, int, unsigned int);
+		auto void f(struct gl_context *, unsigned int, int, unsigned int);
 
-		void f(GLcontext *ctx, unsigned int start, int delta,
+		void f(struct gl_context *ctx, unsigned int start, int delta,
 		       unsigned int n) {
 			struct nouveau_channel *chan = context_chan(ctx);
 			RENDER_LOCALS(ctx);
@@ -130,9 +130,9 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 		*dispatch = f;
 
 	} else {
-		auto void f(GLcontext *, unsigned int, int, unsigned int);
+		auto void f(struct gl_context *, unsigned int, int, unsigned int);
 
-		void f(GLcontext *ctx, unsigned int start, int delta,
+		void f(struct gl_context *ctx, unsigned int start, int delta,
 		       unsigned int n) {
 			struct nouveau_channel *chan = context_chan(ctx);
 			RENDER_LOCALS(ctx);
@@ -208,7 +208,7 @@ get_array_extract(struct nouveau_array_state *a,
  * always be located right at the beginning of <bo>.
  */
 static inline void *
-get_scratch_vbo(GLcontext *ctx, unsigned size, struct nouveau_bo **bo,
+get_scratch_vbo(struct gl_context *ctx, unsigned size, struct nouveau_bo **bo,
 		unsigned *offset)
 {
 	struct nouveau_scratch_state *scratch = &to_render_state(ctx)->scratch;
@@ -253,7 +253,7 @@ get_scratch_vbo(GLcontext *ctx, unsigned size, struct nouveau_bo **bo,
  * Returns how many vertices you can draw using <n> pushbuf dwords.
  */
 static inline unsigned
-get_max_vertices(GLcontext *ctx, const struct _mesa_index_buffer *ib,
+get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		 int n)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -290,7 +290,7 @@ get_max_vertices(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 #include "nouveau_swtnl_t.c"
 
 static void
-TAG(emit_material)(GLcontext *ctx, struct nouveau_array_state *a,
+TAG(emit_material)(struct gl_context *ctx, struct nouveau_array_state *a,
 		   const void *v)
 {
 	const int attr = a->attr - VERT_ATTRIB_GENERIC0;
@@ -314,7 +314,7 @@ TAG(emit_material)(GLcontext *ctx, struct nouveau_array_state *a,
 }
 
 static void
-TAG(render_prims)(GLcontext *ctx, const struct gl_client_array **arrays,
+TAG(render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
 		  const struct _mesa_prim *prims, GLuint nr_prims,
 		  const struct _mesa_index_buffer *ib,
 		  GLboolean index_bounds_valid,
@@ -334,7 +334,7 @@ TAG(render_prims)(GLcontext *ctx, const struct gl_client_array **arrays,
 }
 
 void
-TAG(render_init)(GLcontext *ctx)
+TAG(render_init)(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_scratch_state *scratch = &render->scratch;
@@ -355,7 +355,7 @@ TAG(render_init)(GLcontext *ctx)
 }
 
 void
-TAG(render_destroy)(GLcontext *ctx)
+TAG(render_destroy)(struct gl_context *ctx)
 {
 	TAG(swtnl_destroy)(ctx);
 }

@@ -854,7 +854,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (!xmdpy)
       return NULL;
 
-   /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
+   /* Note: the XMesaContext contains a Mesa struct gl_context struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
    if (!c)
       return NULL;

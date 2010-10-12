@@ -38,32 +38,32 @@
 
 #if FEATURE_beginend
 
-extern void _mesa_init_exec_vtxfmt( GLcontext *ctx );
+extern void _mesa_init_exec_vtxfmt( struct gl_context *ctx );
 
-extern void _mesa_install_exec_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt );
-extern void _mesa_install_save_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt );
+extern void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt );
+extern void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt );
 
-extern void _mesa_restore_exec_vtxfmt( GLcontext *ctx );
+extern void _mesa_restore_exec_vtxfmt( struct gl_context *ctx );
 
 #else /* FEATURE_beginend */
 
 static INLINE void
-_mesa_init_exec_vtxfmt( GLcontext *ctx )
+_mesa_init_exec_vtxfmt( struct gl_context *ctx )
 {
 }
 
 static INLINE void
-_mesa_install_exec_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
+_mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
 }
 
 static INLINE void
-_mesa_install_save_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
+_mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
 }
 
 static INLINE void
-_mesa_restore_exec_vtxfmt( GLcontext *ctx )
+_mesa_restore_exec_vtxfmt( struct gl_context *ctx )
 {
 }
 

@@ -127,7 +127,7 @@ logbase2( int n )
  * XXX this could be static
  */
 GLint
-_mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
+_mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
 {
    switch (internalFormat) {
       case GL_ALPHA:
@@ -558,7 +558,7 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
  * zero.
  */
 struct gl_texture_image *
-_mesa_new_texture_image( GLcontext *ctx )
+_mesa_new_texture_image( struct gl_context *ctx )
 {
    (void) ctx;
    return CALLOC_STRUCT(gl_texture_image);
@@ -574,7 +574,7 @@ _mesa_new_texture_image( GLcontext *ctx )
  * Free the texture image data if it's not marked as client data.
  */
 void
-_mesa_free_texture_image_data(GLcontext *ctx,
+_mesa_free_texture_image_data(struct gl_context *ctx,
                               struct gl_texture_image *texImage)
 {
    (void) ctx;
@@ -596,7 +596,7 @@ _mesa_free_texture_image_data(GLcontext *ctx,
  * Free the texture image structure and the associated image data.
  */
 void
-_mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
+_mesa_delete_texture_image( struct gl_context *ctx, struct gl_texture_image *texImage )
 {
    /* Free texImage->Data and/or any other driver-specific texture
     * image storage.
@@ -646,7 +646,7 @@ _mesa_is_proxy_texture(GLenum target)
  * \sa gl_texture_unit.
  */
 struct gl_texture_object *
-_mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target)
 {
    switch (target) {
@@ -703,7 +703,7 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
  * Return pointer to texture object for given target on current texture unit.
  */
 struct gl_texture_object *
-_mesa_get_current_tex_object(GLcontext *ctx, GLenum target)
+_mesa_get_current_tex_object(struct gl_context *ctx, GLenum target)
 {
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    return _mesa_select_tex_object(ctx, texUnit, target);
@@ -723,7 +723,7 @@ _mesa_get_current_tex_object(GLcontext *ctx, GLenum target)
  * \return pointer to the texture image structure, or NULL on failure.
  */
 struct gl_texture_image *
-_mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
+_mesa_select_tex_image(struct gl_context *ctx, const struct gl_texture_object *texObj,
 		       GLenum target, GLint level)
 {
    const GLuint face = _mesa_tex_target_to_face(target);
@@ -742,7 +742,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
  * out of memory.
  */
 struct gl_texture_image *
-_mesa_get_tex_image(GLcontext *ctx, struct gl_texture_object *texObj,
+_mesa_get_tex_image(struct gl_context *ctx, struct gl_texture_object *texObj,
                     GLenum target, GLint level)
 {
    struct gl_texture_image *texImage;
@@ -772,7 +772,7 @@ _mesa_get_tex_image(GLcontext *ctx, struct gl_texture_object *texObj,
  *         level, or out of memory.
  */
 struct gl_texture_image *
-_mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
+_mesa_get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
 {
    struct gl_texture_image *texImage;
    GLuint texIndex;
@@ -847,7 +847,7 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
  * \sa gl_constants.
  */
 GLint
-_mesa_max_texture_levels(GLcontext *ctx, GLenum target)
+_mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -993,7 +993,7 @@ clear_teximage_fields(struct gl_texture_image *img)
  * Note: width, height and depth include the border.
  */
 void
-_mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
+_mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
                            struct gl_texture_image *img,
                            GLsizei width, GLsizei height, GLsizei depth,
                            GLint border, GLenum internalFormat)
@@ -1084,7 +1084,7 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
  * fields are cleared so that its parent object will test incomplete.
  */
 void
-_mesa_clear_texture_image(GLcontext *ctx, struct gl_texture_image *texImage)
+_mesa_clear_texture_image(struct gl_context *ctx, struct gl_texture_image *texImage)
 {
    ctx->Driver.FreeTexImageData(ctx, texImage);
    clear_teximage_fields(texImage);
@@ -1116,7 +1116,7 @@ _mesa_clear_texture_image(GLcontext *ctx, struct gl_texture_image *texImage)
  * \return GL_TRUE if the image is acceptable, GL_FALSE if not acceptable.
  */
 GLboolean
-_mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
+_mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
                           GLint internalFormat, GLenum format, GLenum type,
                           GLint width, GLint height, GLint depth, GLint border)
 {
@@ -1228,7 +1228,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
  * Helper function to determine whether a target supports compressed textures
  */
 static GLboolean
-target_can_be_compressed(GLcontext *ctx, GLenum target)
+target_can_be_compressed(struct gl_context *ctx, GLenum target)
 {
    return (((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D))
            || ((ctx->Extensions.ARB_texture_cube_map &&
@@ -1259,11 +1259,11 @@ target_can_be_compressed(GLcontext *ctx, GLenum target)
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  *
  * Verifies each of the parameters against the constants specified in
- * __GLcontextRec::Const and the supported extensions, and according to the
+ * __struct gl_contextRec::Const and the supported extensions, and according to the
  * OpenGL specification.
  */
 static GLboolean
-texture_error_check( GLcontext *ctx, GLenum target,
+texture_error_check( struct gl_context *ctx, GLenum target,
                      GLint level, GLint internalFormat,
                      GLenum format, GLenum type,
                      GLuint dimensions,
@@ -1506,11 +1506,11 @@ texture_error_check( GLcontext *ctx, GLenum target,
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  *
  * Verifies each of the parameters against the constants specified in
- * __GLcontextRec::Const and the supported extensions, and according to the
+ * __struct gl_contextRec::Const and the supported extensions, and according to the
  * OpenGL specification.
  */
 static GLboolean
-subtexture_error_check( GLcontext *ctx, GLuint dimensions,
+subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
                         GLenum target, GLint level,
                         GLint xoffset, GLint yoffset, GLint zoffset,
                         GLint width, GLint height, GLint depth,
@@ -1603,7 +1603,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
  * \return GL_TRUE if error recorded, GL_FALSE otherwise
  */
 static GLboolean
-subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
+subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
 			 GLenum target, GLint level,
 			 GLint xoffset, GLint yoffset, GLint zoffset,
 			 GLint width, GLint height, GLint depth,
@@ -1701,11 +1701,11 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  * 
  * Verifies each of the parameters against the constants specified in
- * __GLcontextRec::Const and the supported extensions, and according to the
+ * __struct gl_contextRec::Const and the supported extensions, and according to the
  * OpenGL specification.
  */
 static GLboolean
-copytexture_error_check( GLcontext *ctx, GLuint dimensions,
+copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                          GLenum target, GLint level, GLint internalFormat,
                          GLint width, GLint height, GLint border )
 {
@@ -1880,7 +1880,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  */
 static GLboolean
-copytexsubimage_error_check1( GLcontext *ctx, GLuint dimensions,
+copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
                               GLenum target, GLint level)
 {
    /* Check that the source buffer is complete */
@@ -1954,7 +1954,7 @@ copytexsubimage_error_check1( GLcontext *ctx, GLuint dimensions,
  * \param height image height given by the user.
  */
 static GLboolean
-copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
+copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
 			      GLenum target, GLint level,
 			      GLint xoffset, GLint yoffset, GLint zoffset,
 			      GLsizei width, GLsizei height,
@@ -2081,7 +2081,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
 /** Callback info for walking over FBO hash table */
 struct cb_info
 {
-   GLcontext *ctx;
+   struct gl_context *ctx;
    struct gl_texture_object *texObj;
    GLuint level, face;
 };
@@ -2095,7 +2095,7 @@ check_rtt_cb(GLuint key, void *data, void *userData)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
    const struct cb_info *info = (struct cb_info *) userData;
-   GLcontext *ctx = info->ctx;
+   struct gl_context *ctx = info->ctx;
    const struct gl_texture_object *texObj = info->texObj;
    const GLuint level = info->level, face = info->face;
 
@@ -2127,7 +2127,7 @@ check_rtt_cb(GLuint key, void *data, void *userData)
  * Any FBOs rendering into the texture must be re-validated.
  */
 static void
-update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
+update_fbo_texture(struct gl_context *ctx, struct gl_texture_object *texObj,
                    GLuint face, GLuint level)
 {
    /* Only check this texture if it's been marked as RenderToTexture */
@@ -2148,7 +2148,7 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
  * mipmap levels now.
  */
 static INLINE void
-check_gen_mipmap(GLcontext *ctx, GLenum target,
+check_gen_mipmap(struct gl_context *ctx, GLenum target,
                  struct gl_texture_object *texObj, GLint level)
 {
    ASSERT(target != GL_TEXTURE_CUBE_MAP);
@@ -2214,7 +2214,7 @@ override_internal_format(GLenum internalFormat, GLint width, GLint height)
  * comes up during automatic mipmap generation.
  */
 void
-_mesa_choose_texture_format(GLcontext *ctx,
+_mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
                             struct gl_texture_image *texImage,
                             GLenum target, GLint level,
@@ -3158,7 +3158,7 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
-compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
+compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                GLenum target, GLint level,
                                GLenum internalFormat, GLsizei width,
                                GLsizei height, GLsizei depth, GLint border,
@@ -3265,7 +3265,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
-compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
+compressed_subtexture_error_check(struct gl_context *ctx, GLint dimensions,
                                   GLenum target, GLint level,
                                   GLint xoffset, GLint yoffset, GLint zoffset,
                                   GLsizei width, GLsizei height, GLsizei depth,
@@ -3349,7 +3349,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
  * \return GL_TRUE if error found, GL_FALSE otherwise.
  */
 static GLboolean
-compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
+compressed_subtexture_error_check2(struct gl_context *ctx, GLuint dims,
                                    GLsizei width, GLsizei height,
                                    GLsizei depth, GLenum format,
                                    struct gl_texture_image *texImage)

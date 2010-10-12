@@ -217,7 +217,7 @@ get_glsl_version()
  * extensions for a context.
  */
 void
-intelInitExtensions(GLcontext *ctx)
+intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 

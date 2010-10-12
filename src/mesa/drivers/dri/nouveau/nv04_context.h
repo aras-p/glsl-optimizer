@@ -40,7 +40,7 @@ struct nv04_context {
 #define nv04_mtex_engine(obj) ((obj)->grclass == NV04_MULTITEX_TRIANGLE)
 
 struct nouveau_grobj *
-nv04_context_engine(GLcontext *ctx);
+nv04_context_engine(struct gl_context *ctx);
 
 extern const struct nouveau_driver nv04_driver;
 

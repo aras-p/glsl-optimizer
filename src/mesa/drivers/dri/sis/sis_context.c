@@ -147,7 +147,7 @@ WaitingFor3dIdle(sisContextPtr smesa, int wLen)
    }
 }
 
-void sisReAllocateBuffers(GLcontext *ctx, struct gl_framebuffer *drawbuffer,
+void sisReAllocateBuffers(struct gl_context *ctx, struct gl_framebuffer *drawbuffer,
                           GLuint width, GLuint height)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -163,7 +163,7 @@ sisCreateContext( gl_api api,
 		  __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    sisContextPtr smesa;
    sisScreenPtr sisScreen;

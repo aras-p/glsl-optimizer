@@ -39,78 +39,78 @@ extern const struct nouveau_driver nv20_driver;
 
 /* nv20_render.c */
 void
-nv20_render_init(GLcontext *ctx);
+nv20_render_init(struct gl_context *ctx);
 
 void
-nv20_render_destroy(GLcontext *ctx);
+nv20_render_destroy(struct gl_context *ctx);
 
 /* nv20_state_fb.c */
 void
-nv20_emit_framebuffer(GLcontext *ctx, int emit);
+nv20_emit_framebuffer(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_viewport(GLcontext *ctx, int emit);
+nv20_emit_viewport(struct gl_context *ctx, int emit);
 
 /* nv20_state_polygon.c */
 void
-nv20_emit_point_mode(GLcontext *ctx, int emit);
+nv20_emit_point_mode(struct gl_context *ctx, int emit);
 
 /* nv20_state_raster.c */
 void
-nv20_emit_logic_opcode(GLcontext *ctx, int emit);
+nv20_emit_logic_opcode(struct gl_context *ctx, int emit);
 
 /* nv20_state_frag.c */
 void
-nv20_emit_tex_env(GLcontext *ctx, int emit);
+nv20_emit_tex_env(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_frag(GLcontext *ctx, int emit);
+nv20_emit_frag(struct gl_context *ctx, int emit);
 
 /* nv20_state_tex.c */
 void
-nv20_emit_tex_gen(GLcontext *ctx, int emit);
+nv20_emit_tex_gen(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_tex_mat(GLcontext *ctx, int emit);
+nv20_emit_tex_mat(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_tex_obj(GLcontext *ctx, int emit);
+nv20_emit_tex_obj(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_tex_shader(GLcontext *ctx, int emit);
+nv20_emit_tex_shader(struct gl_context *ctx, int emit);
 
 /* nv20_state_tnl.c */
 void
-nv20_emit_clip_plane(GLcontext *ctx, int emit);
+nv20_emit_clip_plane(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_color_material(GLcontext *ctx, int emit);
+nv20_emit_color_material(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_fog(GLcontext *ctx, int emit);
+nv20_emit_fog(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_light_model(GLcontext *ctx, int emit);
+nv20_emit_light_model(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_light_source(GLcontext *ctx, int emit);
+nv20_emit_light_source(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_material_ambient(GLcontext *ctx, int emit);
+nv20_emit_material_ambient(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_material_diffuse(GLcontext *ctx, int emit);
+nv20_emit_material_diffuse(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_material_specular(GLcontext *ctx, int emit);
+nv20_emit_material_specular(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_material_shininess(GLcontext *ctx, int emit);
+nv20_emit_material_shininess(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_modelview(GLcontext *ctx, int emit);
+nv20_emit_modelview(struct gl_context *ctx, int emit);
 
 void
-nv20_emit_projection(GLcontext *ctx, int emit);
+nv20_emit_projection(struct gl_context *ctx, int emit);
 
 #endif

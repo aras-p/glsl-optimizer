@@ -27,10 +27,10 @@
 
 #include "via_context.h"
 
-extern void viaInitState(GLcontext *ctx);
-extern void viaInitStateFuncs(GLcontext *ctx);
-extern void viaCalcViewport(GLcontext *ctx);
-extern void viaValidateState(GLcontext *ctx);
+extern void viaInitState(struct gl_context *ctx);
+extern void viaInitStateFuncs(struct gl_context *ctx);
+extern void viaCalcViewport(struct gl_context *ctx);
+extern void viaValidateState(struct gl_context *ctx);
 extern void viaEmitState(struct via_context *vmesa);
 
 extern void viaFallback(struct via_context *vmesa, GLuint bit, GLboolean mode);

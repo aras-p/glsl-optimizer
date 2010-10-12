@@ -235,7 +235,7 @@ struct tnl_pipeline_stage
 
    /* Allocate private data
     */
-   GLboolean (*create)( GLcontext *ctx, struct tnl_pipeline_stage * );
+   GLboolean (*create)( struct gl_context *ctx, struct tnl_pipeline_stage * );
 
    /* Free private data.
     */
@@ -244,7 +244,7 @@ struct tnl_pipeline_stage
    /* Called on any statechange or input array size change or
     * input array change to/from zero stride.
     */
-   void (*validate)( GLcontext *ctx, struct tnl_pipeline_stage * );
+   void (*validate)( struct gl_context *ctx, struct tnl_pipeline_stage * );
 
    /* Called from _tnl_run_pipeline().  The stage.changed_inputs value
     * encodes all inputs to thee struct which have changed.  If
@@ -254,7 +254,7 @@ struct tnl_pipeline_stage
     * Return value: GL_TRUE - keep going
     *               GL_FALSE - finished pipeline
     */
-   GLboolean (*run)( GLcontext *ctx, struct tnl_pipeline_stage * );
+   GLboolean (*run)( struct gl_context *ctx, struct tnl_pipeline_stage * );
 };
 
 
@@ -284,7 +284,7 @@ typedef void (*tnl_insert_func)( const struct tnl_clipspace_attr *a,
 				 GLubyte *v, 
 				 const GLfloat *in );
 
-typedef void (*tnl_emit_func)( GLcontext *ctx, 
+typedef void (*tnl_emit_func)( struct gl_context *ctx, 
 			       GLuint count, 
 			       GLubyte *dest );
 
@@ -311,19 +311,19 @@ struct tnl_clipspace_attr
 
 
 
-typedef void (*tnl_points_func)( GLcontext *ctx, GLuint first, GLuint last );
-typedef void (*tnl_line_func)( GLcontext *ctx, GLuint v1, GLuint v2 );
-typedef void (*tnl_triangle_func)( GLcontext *ctx,
+typedef void (*tnl_points_func)( struct gl_context *ctx, GLuint first, GLuint last );
+typedef void (*tnl_line_func)( struct gl_context *ctx, GLuint v1, GLuint v2 );
+typedef void (*tnl_triangle_func)( struct gl_context *ctx,
 				   GLuint v1, GLuint v2, GLuint v3 );
-typedef void (*tnl_quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
+typedef void (*tnl_quad_func)( struct gl_context *ctx, GLuint v1, GLuint v2,
 			       GLuint v3, GLuint v4 );
-typedef void (*tnl_render_func)( GLcontext *ctx, GLuint start, GLuint count,
+typedef void (*tnl_render_func)( struct gl_context *ctx, GLuint start, GLuint count,
 				 GLuint flags );
-typedef void (*tnl_interp_func)( GLcontext *ctx,
+typedef void (*tnl_interp_func)( struct gl_context *ctx,
 				 GLfloat t, GLuint dst, GLuint out, GLuint in,
 				 GLboolean force_boundary );
-typedef void (*tnl_copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
-typedef void (*tnl_setup_func)( GLcontext *ctx,
+typedef void (*tnl_copy_pv_func)( struct gl_context *ctx, GLuint dst, GLuint src );
+typedef void (*tnl_setup_func)( struct gl_context *ctx,
 				GLuint start, GLuint end,
 				GLuint new_inputs);
 
@@ -377,7 +377,7 @@ struct tnl_clipspace
 
    struct tnl_clipspace_fastpath *fastpath;
    
-   void (*codegen_emit)( GLcontext *ctx );
+   void (*codegen_emit)( struct gl_context *ctx );
 };
 
 
@@ -387,13 +387,13 @@ struct tnl_device_driver
     *** TNL Pipeline
     ***/
 
-   void (*RunPipeline)(GLcontext *ctx);
+   void (*RunPipeline)(struct gl_context *ctx);
    /* Replaces PipelineStart/PipelineFinish -- intended to allow
     * drivers to wrap _tnl_run_pipeline() with code to validate state
     * and grab/release hardware locks.  
     */
 
-   void (*NotifyMaterialChange)(GLcontext *ctx);
+   void (*NotifyMaterialChange)(struct gl_context *ctx);
    /* Alert tnl-aware drivers of changes to material.
     */
 
@@ -402,14 +402,14 @@ struct tnl_device_driver
     ***/
    struct
    {
-      void (*Start)(GLcontext *ctx);
-      void (*Finish)(GLcontext *ctx);
+      void (*Start)(struct gl_context *ctx);
+      void (*Finish)(struct gl_context *ctx);
       /* Called before and after all rendering operations, including DrawPixels,
        * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
        * These are a suitable place for grabbing/releasing hardware locks.
        */
 
-      void (*PrimitiveNotify)(GLcontext *ctx, GLenum mode);
+      void (*PrimitiveNotify)(struct gl_context *ctx, GLenum mode);
       /* Called between RenderStart() and RenderFinish() to indicate the
        * type of primitive we're about to draw.  Mode will be one of the
        * modes accepted by glBegin().
@@ -427,12 +427,12 @@ struct tnl_device_driver
        * vertex attributes should be copied.
        */
 
-      void (*ClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
+      void (*ClippedPolygon)( struct gl_context *ctx, const GLuint *elts, GLuint n );
       /* Render a polygon with <n> vertices whose indexes are in the <elts>
        * array.
        */
 
-      void (*ClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
+      void (*ClippedLine)( struct gl_context *ctx, GLuint v0, GLuint v1 );
       /* Render a line between the two vertices given by indexes v0 and v1. */
 
       tnl_points_func           Points; /* must now respect vb->elts */
@@ -452,7 +452,7 @@ struct tnl_device_driver
        * vertices.
        */
 
-      void (*ResetLineStipple)( GLcontext *ctx );
+      void (*ResetLineStipple)( struct gl_context *ctx );
       /* Reset the hardware's line stipple counter.
        */
 
@@ -467,7 +467,7 @@ struct tnl_device_driver
        */
       
 
-      GLboolean (*Multipass)( GLcontext *ctx, GLuint passno );
+      GLboolean (*Multipass)( struct gl_context *ctx, GLuint passno );
       /* Driver may request additional render passes by returning GL_TRUE
        * when this function is called.  This function will be called
        * after the first pass, and passes will be made until the function
@@ -539,7 +539,7 @@ typedef struct
 
 
 extern void
-tnl_clip_prepare(GLcontext *ctx);
+tnl_clip_prepare(struct gl_context *ctx);
 
 
 #endif

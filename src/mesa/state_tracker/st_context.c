@@ -69,7 +69,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE)
 /**
  * Called via ctx->Driver.UpdateState()
  */
-void st_invalidate_state(GLcontext * ctx, GLuint new_state)
+void st_invalidate_state(struct gl_context * ctx, GLuint new_state)
 {
    struct st_context *st = st_context(ctx);
 
@@ -97,7 +97,7 @@ st_get_msaa(void)
 
 
 static struct st_context *
-st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
+st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
 {
    uint i;
    struct st_context *st = ST_CALLOC_STRUCT( st_context );
@@ -166,8 +166,8 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
                                      const struct gl_config *visual,
                                      struct st_context *share)
 {
-   GLcontext *ctx;
-   GLcontext *shareCtx = share ? share->ctx : NULL;
+   struct gl_context *ctx;
+   struct gl_context *shareCtx = share ? share->ctx : NULL;
    struct dd_function_table funcs;
 
    memset(&funcs, 0, sizeof(funcs));
@@ -221,7 +221,7 @@ void st_destroy_context( struct st_context *st )
 {
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    GLuint i;
 
    /* need to unbind and destroy CSO objects before anything else */

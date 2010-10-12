@@ -188,7 +188,7 @@ struct r600_context {
 #define EVERGREEN_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
-#define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
+#define GL_CONTEXT(context)     ((struct gl_context *)(context->radeon.glCtx))
 
 #define GET_EVERGREEN_CHIP(context) ((EVERGREEN_CHIP_CONTEXT*)(context->pChip))
 
@@ -232,10 +232,10 @@ extern void r700WaitForIdleClean(context_t *context);
 
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
-extern void r700InitDraw(GLcontext *ctx);
+extern void r700InitDraw(struct gl_context *ctx);
 
 extern void evergreenInitAtoms(context_t *context);
-extern void evergreenInitDraw(GLcontext *ctx);
+extern void evergreenInitDraw(struct gl_context *ctx);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1

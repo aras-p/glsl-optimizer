@@ -48,7 +48,7 @@
  * Alpha blending
  */
 
-static void mach64UpdateAlphaMode( GLcontext *ctx )
+static void mach64UpdateAlphaMode( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint a = mmesa->setup.alpha_tst_cntl;
@@ -185,7 +185,7 @@ static void mach64UpdateAlphaMode( GLcontext *ctx )
    }
 }
 
-static void mach64DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
+static void mach64DDAlphaFunc( struct gl_context *ctx, GLenum func, GLfloat ref )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -193,7 +193,7 @@ static void mach64DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    mmesa->new_state |= MACH64_NEW_ALPHA;
 }
 
-static void mach64DDBlendEquationSeparate( GLcontext *ctx, 
+static void mach64DDBlendEquationSeparate( struct gl_context *ctx, 
 					   GLenum modeRGB, GLenum modeA )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -214,7 +214,7 @@ static void mach64DDBlendEquationSeparate( GLcontext *ctx,
    mmesa->new_state |= MACH64_NEW_ALPHA;
 }
 
-static void mach64DDBlendFuncSeparate( GLcontext *ctx,
+static void mach64DDBlendFuncSeparate( struct gl_context *ctx,
 				       GLenum sfactorRGB, GLenum dfactorRGB,
 				       GLenum sfactorA, GLenum dfactorA )
 {
@@ -229,7 +229,7 @@ static void mach64DDBlendFuncSeparate( GLcontext *ctx,
  * Depth testing
  */
 
-static void mach64UpdateZMode( GLcontext *ctx )
+static void mach64UpdateZMode( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint z = mmesa->setup.z_cntl;
@@ -285,7 +285,7 @@ static void mach64UpdateZMode( GLcontext *ctx )
    }
 }
 
-static void mach64DDDepthFunc( GLcontext *ctx, GLenum func )
+static void mach64DDDepthFunc( struct gl_context *ctx, GLenum func )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -293,7 +293,7 @@ static void mach64DDDepthFunc( GLcontext *ctx, GLenum func )
    mmesa->new_state |= MACH64_NEW_DEPTH;
 }
 
-static void mach64DDDepthMask( GLcontext *ctx, GLboolean flag )
+static void mach64DDDepthMask( struct gl_context *ctx, GLboolean flag )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -301,7 +301,7 @@ static void mach64DDDepthMask( GLcontext *ctx, GLboolean flag )
    mmesa->new_state |= MACH64_NEW_DEPTH;
 }
 
-static void mach64DDClearDepth( GLcontext *ctx, GLclampd d )
+static void mach64DDClearDepth( struct gl_context *ctx, GLclampd d )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -315,7 +315,7 @@ static void mach64DDClearDepth( GLcontext *ctx, GLclampd d )
  * Fog
  */
 
-static void mach64UpdateFogAttrib( GLcontext *ctx )
+static void mach64UpdateFogAttrib( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -366,7 +366,7 @@ static void mach64UpdateFogAttrib( GLcontext *ctx )
 
 }
 
-static void mach64DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
+static void mach64DDFogfv( struct gl_context *ctx, GLenum pname, const GLfloat *param )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -379,7 +379,7 @@ static void mach64DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
  * Clipping
  */
 
-static void mach64UpdateClipping( GLcontext *ctx )
+static void mach64UpdateClipping( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    mach64ScreenPtr mach64Screen = mmesa->mach64Screen;
@@ -452,7 +452,7 @@ static void mach64UpdateClipping( GLcontext *ctx )
    }
 }
 
-static void mach64DDScissor( GLcontext *ctx,
+static void mach64DDScissor( struct gl_context *ctx,
 			     GLint x, GLint y, GLsizei w, GLsizei h )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -466,7 +466,7 @@ static void mach64DDScissor( GLcontext *ctx,
  * Culling
  */
 
-static void mach64UpdateCull( GLcontext *ctx )
+static void mach64UpdateCull( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLfloat backface_sign = 1;
@@ -495,7 +495,7 @@ static void mach64UpdateCull( GLcontext *ctx )
 
 }
 
-static void mach64DDCullFace( GLcontext *ctx, GLenum mode )
+static void mach64DDCullFace( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -503,7 +503,7 @@ static void mach64DDCullFace( GLcontext *ctx, GLenum mode )
    mmesa->new_state |= MACH64_NEW_CULL;
 }
 
-static void mach64DDFrontFace( GLcontext *ctx, GLenum mode )
+static void mach64DDFrontFace( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -516,7 +516,7 @@ static void mach64DDFrontFace( GLcontext *ctx, GLenum mode )
  * Masks
  */
 
-static void mach64UpdateMasks( GLcontext *ctx )
+static void mach64UpdateMasks( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint mask = 0xffffffff;
@@ -536,7 +536,7 @@ static void mach64UpdateMasks( GLcontext *ctx )
    }
 }
 
-static void mach64DDColorMask( GLcontext *ctx,
+static void mach64DDColorMask( struct gl_context *ctx,
 			       GLboolean r, GLboolean g,
 			       GLboolean b, GLboolean a )
 {
@@ -555,7 +555,7 @@ static void mach64DDColorMask( GLcontext *ctx,
  * sense to break them out of the core texture state update routines.
  */
 
-static void mach64UpdateSpecularLighting( GLcontext *ctx )
+static void mach64UpdateSpecularLighting( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint a = mmesa->setup.alpha_tst_cntl;
@@ -578,7 +578,7 @@ static void mach64UpdateSpecularLighting( GLcontext *ctx )
    }
 }
 
-static void mach64DDLightModelfv( GLcontext *ctx, GLenum pname,
+static void mach64DDLightModelfv( struct gl_context *ctx, GLenum pname,
 				  const GLfloat *param )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -589,7 +589,7 @@ static void mach64DDLightModelfv( GLcontext *ctx, GLenum pname,
    }
 }
 
-static void mach64DDShadeModel( GLcontext *ctx, GLenum mode )
+static void mach64DDShadeModel( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint s = mmesa->setup.setup_cntl;
@@ -621,7 +621,7 @@ static void mach64DDShadeModel( GLcontext *ctx, GLenum mode )
  */
 
 
-void mach64CalcViewport( GLcontext *ctx )
+void mach64CalcViewport( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -639,14 +639,14 @@ void mach64CalcViewport( GLcontext *ctx )
    mmesa->SetupNewInputs = ~0;
 }
 
-static void mach64Viewport( GLcontext *ctx,
+static void mach64Viewport( struct gl_context *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
    mach64CalcViewport( ctx );
 }
 
-static void mach64DepthRange( GLcontext *ctx,
+static void mach64DepthRange( struct gl_context *ctx,
 			    GLclampd nearval, GLclampd farval )
 {
    mach64CalcViewport( ctx );
@@ -657,7 +657,7 @@ static void mach64DepthRange( GLcontext *ctx,
  * Miscellaneous
  */
 
-static void mach64DDClearColor( GLcontext *ctx,
+static void mach64DDClearColor( struct gl_context *ctx,
 				const GLfloat color[4] )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -672,7 +672,7 @@ static void mach64DDClearColor( GLcontext *ctx,
 					c[0], c[1], c[2], c[3] );
 }
 
-static void mach64DDLogicOpCode( GLcontext *ctx, GLenum opcode )
+static void mach64DDLogicOpCode( struct gl_context *ctx, GLenum opcode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    
@@ -683,7 +683,7 @@ static void mach64DDLogicOpCode( GLcontext *ctx, GLenum opcode )
    }
 }
 
-void mach64SetCliprects( GLcontext *ctx, GLenum mode )
+void mach64SetCliprects( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    __DRIdrawable *dPriv = mmesa->driDrawable;
@@ -717,7 +717,7 @@ void mach64SetCliprects( GLcontext *ctx, GLenum mode )
    mmesa->dirty |= MACH64_UPLOAD_CLIPRECTS;
 }
 
-static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
+static void mach64DDDrawBuffer( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -755,7 +755,7 @@ static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
    mmesa->dirty |= MACH64_UPLOAD_DST_OFF_PITCH;
 }
 
-static void mach64DDReadBuffer( GLcontext *ctx, GLenum mode )
+static void mach64DDReadBuffer( struct gl_context *ctx, GLenum mode )
 {
    /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 }
@@ -764,7 +764,7 @@ static void mach64DDReadBuffer( GLcontext *ctx, GLenum mode )
  * State enable/disable
  */
 
-static void mach64DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
+static void mach64DDEnable( struct gl_context *ctx, GLenum cap, GLboolean state )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -867,7 +867,7 @@ static void mach64DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
  * Render mode
  */
 
-static void mach64DDRenderMode( GLcontext *ctx, GLenum mode )
+static void mach64DDRenderMode( struct gl_context *ctx, GLenum mode )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    FALLBACK( mmesa, MACH64_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
@@ -971,7 +971,7 @@ static void mach64DDPrintState( const char *msg, GLuint flags )
 }
 
 /* Update the hardware state */
-void mach64DDUpdateHWState( GLcontext *ctx )
+void mach64DDUpdateHWState( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    int new_state = mmesa->new_state;
@@ -1018,7 +1018,7 @@ void mach64DDUpdateHWState( GLcontext *ctx )
 }
 
 
-static void mach64DDInvalidateState( GLcontext *ctx, GLuint new_state )
+static void mach64DDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -1152,7 +1152,7 @@ void mach64DDInitState( mach64ContextPtr mmesa )
 
 /* Initialize the driver's state functions.
   */
-void mach64DDInitStateFuncs( GLcontext *ctx )
+void mach64DDInitStateFuncs( struct gl_context *ctx )
 {
    ctx->Driver.UpdateState		= mach64DDInvalidateState;
 

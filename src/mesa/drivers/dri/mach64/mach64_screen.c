@@ -379,7 +379,7 @@ mach64SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mach64ContextPtr mmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       mmesa = (mach64ContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = mmesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {

@@ -30,6 +30,6 @@
 
 #include "main/mtypes.h"
 
-extern void mgaDDInitPixelFuncs( GLcontext *ctx );
+extern void mgaDDInitPixelFuncs( struct gl_context *ctx );
 
 #endif

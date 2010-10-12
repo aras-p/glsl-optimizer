@@ -51,7 +51,7 @@ extern void GLAPIENTRY
 _mesa_PointParameterfv( GLenum pname, const GLfloat *params );
 
 extern void 
-_mesa_init_point( GLcontext * ctx );
+_mesa_init_point( struct gl_context * ctx );
 
 
 #endif

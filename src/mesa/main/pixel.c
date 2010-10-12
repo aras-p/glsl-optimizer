@@ -69,7 +69,7 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
  * Return pointer to a pixelmap by name.
  */
 static struct gl_pixelmap *
-get_pixelmap(GLcontext *ctx, GLenum map)
+get_pixelmap(struct gl_context *ctx, GLenum map)
 {
    switch (map) {
    case GL_PIXEL_MAP_I_TO_I:
@@ -102,7 +102,7 @@ get_pixelmap(GLcontext *ctx, GLenum map)
  * Helper routine used by the other _mesa_PixelMap() functions.
  */
 static void
-store_pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize,
+store_pixelmap(struct gl_context *ctx, GLenum map, GLsizei mapsize,
                const GLfloat *values)
 {
    GLint i;
@@ -143,7 +143,7 @@ store_pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize,
  * Convenience wrapper for _mesa_validate_pbo_access() for gl[Get]PixelMap().
  */
 static GLboolean
-validate_pbo_access(GLcontext *ctx, struct gl_pixelstore_attrib *pack,
+validate_pbo_access(struct gl_context *ctx, struct gl_pixelstore_attrib *pack,
                     GLsizei mapsize, GLenum format, GLenum type,
                     const GLvoid *ptr)
 {
@@ -590,7 +590,7 @@ _mesa_PixelTransferi( GLenum pname, GLint param )
  * pixel transfer operations are enabled.
  */
 static void
-update_image_transfer_state(GLcontext *ctx)
+update_image_transfer_state(struct gl_context *ctx)
 {
    GLuint mask = 0;
 
@@ -613,7 +613,7 @@ update_image_transfer_state(GLcontext *ctx)
 /**
  * Update mesa pixel transfer derived state.
  */
-void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
+void _mesa_update_pixel( struct gl_context *ctx, GLuint new_state )
 {
    if (new_state & _MESA_NEW_TRANSFER_STATE)
       update_image_transfer_state(ctx);
@@ -655,7 +655,7 @@ init_pixelmap(struct gl_pixelmap *map)
  * Initialize the context's PIXEL attribute group.
  */
 void
-_mesa_init_pixel( GLcontext *ctx )
+_mesa_init_pixel( struct gl_context *ctx )
 {
    /* Pixel group */
    ctx->Pixel.RedBias = 0.0;

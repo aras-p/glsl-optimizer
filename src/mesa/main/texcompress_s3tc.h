@@ -76,7 +76,7 @@ _mesa_fetch_texel_2d_f_srgba_dxt5(const struct gl_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_init_texture_s3tc(GLcontext *ctx);
+_mesa_init_texture_s3tc(struct gl_context *ctx);
 
 #else /* FEATURE_texture_s3tc */
 
@@ -97,7 +97,7 @@ _mesa_init_texture_s3tc(GLcontext *ctx);
 #define _mesa_fetch_texel_2d_f_srgba_dxt5 NULL
 
 static INLINE void
-_mesa_init_texture_s3tc(GLcontext *ctx)
+_mesa_init_texture_s3tc(struct gl_context *ctx)
 {
 }
 

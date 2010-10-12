@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_render.h"
 #include "r300_vertprog.h"
 
-static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
+static void r300BlendColor(struct gl_context * ctx, const GLfloat cf[4])
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
@@ -204,7 +204,7 @@ static void r300SetBlendCntl(r300ContextPtr r300, int func, int eqn,
 	}
 }
 
-static void r300SetBlendState(GLcontext * ctx)
+static void r300SetBlendState(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int func = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
@@ -302,13 +302,13 @@ static void r300SetBlendState(GLcontext * ctx)
 			  R300_ALPHA_BLEND_ENABLE), funcA, eqnA);
 }
 
-static void r300BlendEquationSeparate(GLcontext * ctx,
+static void r300BlendEquationSeparate(struct gl_context * ctx,
 				      GLenum modeRGB, GLenum modeA)
 {
 	r300SetBlendState(ctx);
 }
 
-static void r300BlendFuncSeparate(GLcontext * ctx,
+static void r300BlendFuncSeparate(struct gl_context * ctx,
 				  GLenum sfactorRGB, GLenum dfactorRGB,
 				  GLenum sfactorA, GLenum dfactorA)
 {
@@ -331,7 +331,7 @@ static GLuint translate_logicop(GLenum logicop)
  * Used internally to update the r300->hw hardware state to match the
  * current OpenGL state.
  */
-static void r300SetLogicOpState(GLcontext *ctx)
+static void r300SetLogicOpState(struct gl_context *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	R300_STATECHANGE(r300, rop);
@@ -347,13 +347,13 @@ static void r300SetLogicOpState(GLcontext *ctx)
  * Called by Mesa when an application program changes the LogicOp state
  * via glLogicOp.
  */
-static void r300LogicOpcode(GLcontext *ctx, GLenum logicop)
+static void r300LogicOpcode(struct gl_context *ctx, GLenum logicop)
 {
 	if (RGBA_LOGICOP_ENABLED(ctx))
 		r300SetLogicOpState(ctx);
 }
 
-static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
+static void r300ClipPlane( struct gl_context *ctx, GLenum plane, const GLfloat *eq )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLint p;
@@ -373,7 +373,7 @@ static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
 }
 
-static void r300SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
+static void r300SetClipPlaneState(struct gl_context * ctx, GLenum cap, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLuint p;
@@ -395,7 +395,7 @@ static void r300SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
 /**
  * Update our tracked culling state based on Mesa's state.
  */
-static void r300UpdateCulling(GLcontext * ctx)
+static void r300UpdateCulling(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	uint32_t val = 0;
@@ -435,7 +435,7 @@ static void r300UpdateCulling(GLcontext * ctx)
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
-static void r300SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
+static void r300SetPolygonOffsetState(struct gl_context * ctx, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -447,14 +447,14 @@ static void r300SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
 	}
 }
 
-static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
+static GLboolean current_fragment_program_writes_depth(struct gl_context* ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	return ctx->FragmentProgram._Current && r300->selected_fp->code.writes_depth;
 }
 
-static void r300SetEarlyZState(GLcontext * ctx)
+static void r300SetEarlyZState(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLuint topZ = R300_ZTOP_ENABLE;
@@ -499,7 +499,7 @@ static void r300SetEarlyZState(GLcontext * ctx)
 	}
 }
 
-static void r300SetAlphaState(GLcontext * ctx)
+static void r300SetAlphaState(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLubyte refByte;
@@ -549,7 +549,7 @@ static void r300SetAlphaState(GLcontext * ctx)
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 }
 
-static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
+static void r300AlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref)
 {
 	(void)func;
 	(void)ref;
@@ -579,7 +579,7 @@ static int translate_func(int func)
 	return 0;
 }
 
-static void r300SetDepthState(GLcontext * ctx)
+static void r300SetDepthState(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -598,7 +598,7 @@ static void r300SetDepthState(GLcontext * ctx)
 	}
 }
 
-static void r300CatchStencilFallback(GLcontext *ctx)
+static void r300CatchStencilFallback(struct gl_context *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
@@ -616,7 +616,7 @@ static void r300CatchStencilFallback(GLcontext *ctx)
 	}
 }
 
-static void r300SetStencilState(GLcontext * ctx, GLboolean state)
+static void r300SetStencilState(struct gl_context * ctx, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLboolean hw_stencil = GL_FALSE;
@@ -641,7 +641,7 @@ static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 	}
 }
 
-static void r300UpdatePolygonMode(GLcontext * ctx)
+static void r300UpdatePolygonMode(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	uint32_t hw_mode = R300_GA_POLY_MODE_DISABLE;
@@ -704,7 +704,7 @@ static void r300UpdatePolygonMode(GLcontext * ctx)
  *
  * \note Mesa already filters redundant calls to this function.
  */
-static void r300CullFace(GLcontext * ctx, GLenum mode)
+static void r300CullFace(struct gl_context * ctx, GLenum mode)
 {
 	(void)mode;
 
@@ -716,7 +716,7 @@ static void r300CullFace(GLcontext * ctx, GLenum mode)
  *
  * \note Mesa already filters redundant calls to this function.
  */
-static void r300FrontFace(GLcontext * ctx, GLenum mode)
+static void r300FrontFace(struct gl_context * ctx, GLenum mode)
 {
 	(void)mode;
 
@@ -729,7 +729,7 @@ static void r300FrontFace(GLcontext * ctx, GLenum mode)
  *
  * \note Mesa already filters redundant calls to this function.
  */
-static void r300DepthFunc(GLcontext * ctx, GLenum func)
+static void r300DepthFunc(struct gl_context * ctx, GLenum func)
 {
 	(void)func;
 	r300SetDepthState(ctx);
@@ -740,7 +740,7 @@ static void r300DepthFunc(GLcontext * ctx, GLenum func)
  *
  * \note Mesa already filters redundant calls to this function.
  */
-static void r300DepthMask(GLcontext * ctx, GLboolean mask)
+static void r300DepthMask(struct gl_context * ctx, GLboolean mask)
 {
 	(void)mask;
 	r300SetDepthState(ctx);
@@ -749,7 +749,7 @@ static void r300DepthMask(GLcontext * ctx, GLboolean mask)
 /**
  * Handle glColorMask()
  */
-static void r300ColorMask(GLcontext * ctx,
+static void r300ColorMask(struct gl_context * ctx,
 			  GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -767,7 +767,7 @@ static void r300ColorMask(GLcontext * ctx,
 /* =============================================================
  * Point state
  */
-static void r300PointSize(GLcontext * ctx, GLfloat size)
+static void r300PointSize(struct gl_context * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -784,7 +784,7 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	    ((int)(size * 6) << R300_POINTSIZE_Y_SHIFT);
 }
 
-static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * param)
+static void r300PointParameter(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -814,7 +814,7 @@ static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 /* =============================================================
  * Line state
  */
-static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
+static void r300LineWidth(struct gl_context * ctx, GLfloat widthf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -826,7 +826,7 @@ static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
 	    R300_LINE_CNT_HO | R300_LINE_CNT_VE | (int)(widthf * 6.0);
 }
 
-static void r300PolygonMode(GLcontext * ctx, GLenum face, GLenum mode)
+static void r300PolygonMode(struct gl_context * ctx, GLenum face, GLenum mode)
 {
 	(void)face;
 	(void)mode;
@@ -864,7 +864,7 @@ static int translate_stencil_op(int op)
 	return 0;
 }
 
-static void r300ShadeModel(GLcontext * ctx, GLenum mode)
+static void r300ShadeModel(struct gl_context * ctx, GLenum mode)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
@@ -885,7 +885,7 @@ static void r300ShadeModel(GLcontext * ctx, GLenum mode)
 	rmesa->hw.shade2.cmd[3] = 0x00000000;
 }
 
-static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
+static void r300StencilFuncSeparate(struct gl_context * ctx, GLenum face,
 				    GLenum func, GLint ref, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -932,7 +932,7 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	}
 }
 
-static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
+static void r300StencilMaskSeparate(struct gl_context * ctx, GLenum face, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
@@ -956,7 +956,7 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 	}
 }
 
-static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
+static void r300StencilOpSeparate(struct gl_context * ctx, GLenum face,
 				  GLenum fail, GLenum zfail, GLenum zpass)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -992,7 +992,7 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
  * Window position and viewport transformation
  */
 
-static void r300UpdateWindow(GLcontext * ctx)
+static void r300UpdateWindow(struct gl_context * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	__DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
@@ -1028,7 +1028,7 @@ static void r300UpdateWindow(GLcontext * ctx)
 	rmesa->hw.vpt.cmd[R300_VPT_ZOFFSET] = r300PackFloat32(tz);
 }
 
-static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
+static void r300Viewport(struct gl_context * ctx, GLint x, GLint y,
 			 GLsizei width, GLsizei height)
 {
 	/* Don't pipeline viewport changes, conflict with window offset
@@ -1040,12 +1040,12 @@ static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 	radeon_viewport(ctx, x, y, width, height);
 }
 
-static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+static void r300DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
 {
 	r300UpdateWindow(ctx);
 }
 
-void r300UpdateViewportOffset(GLcontext * ctx)
+void r300UpdateViewportOffset(struct gl_context * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	__DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
@@ -1074,7 +1074,7 @@ void r300UpdateViewportOffset(GLcontext * ctx)
  * Update R300's own internal state parameters.
  * For now just STATE_R300_WINDOW_DIMENSION
  */
-static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
+static void r300UpdateStateParameters(struct gl_context * ctx, GLuint new_state)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_program_parameter_list *paramList;
@@ -1096,7 +1096,7 @@ static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 /* =============================================================
  * Polygon state
  */
-static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
+static void r300PolygonOffset(struct gl_context * ctx, GLfloat factor, GLfloat units)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLfloat constant = units;
@@ -1193,7 +1193,7 @@ static unsigned long gen_fixed_filter(unsigned long f)
 	return f;
 }
 
-static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
+static void r300SetupFragmentShaderTextures(struct gl_context *ctx, int *tmu_mappings)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
@@ -1235,7 +1235,7 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
                    R300_US_TEX_INST_0, code->tex.length);
 }
 
-static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
+static void r500SetupFragmentShaderTextures(struct gl_context *ctx, int *tmu_mappings)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
@@ -1280,7 +1280,7 @@ static GLuint translate_lod_bias(GLfloat bias)
 }
 
 
-static void r300SetupTextures(GLcontext * ctx)
+static void r300SetupTextures(struct gl_context * ctx)
 {
 	int i, mtu;
 	struct radeon_tex_obj *t;
@@ -1427,7 +1427,7 @@ union r300_outputs_written {
 	((hw_tcl_on) ? (ow).vp_outputs & (1 << (vp_result)) : \
 	RENDERINPUTS_TEST( (ow.index_bitset), (tnl_attrib) ))
 
-static void r300SetupRSUnit(GLcontext * ctx)
+static void r300SetupRSUnit(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	union r300_outputs_written OutputsWritten;
@@ -1521,7 +1521,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
 }
 
-static void r500SetupRSUnit(GLcontext * ctx)
+static void r500SetupRSUnit(struct gl_context * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	union r300_outputs_written OutputsWritten;
@@ -1681,7 +1681,7 @@ void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
  *
  * \note Mesa already filters redundant calls to this function.
  */
-static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
+static void r300Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	if (RADEON_DEBUG & RADEON_STATE)
@@ -1756,7 +1756,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
  */
 static void r300ResetHwState(r300ContextPtr r300)
 {
-	GLcontext *ctx = r300->radeon.glCtx;
+	struct gl_context *ctx = r300->radeon.glCtx;
 	int has_tcl;
 
 	has_tcl = r300->options.hw_tcl_enabled;
@@ -1965,7 +1965,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 void r300UpdateShaders(r300ContextPtr rmesa)
 {
-	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct gl_context *ctx = rmesa->radeon.glCtx;
 
 	/* should only happenen once, just after context is created */
 	/* TODO: shouldn't we fallback to sw here? */
@@ -1994,7 +1994,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	rmesa->radeon.NewGLState = 0;
 }
 
-static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index, GLfloat * buffer)
+static const GLfloat *get_fragmentprogram_constant(struct gl_context *ctx, GLuint index, GLfloat * buffer)
 {
 	static const GLfloat dummy[4] = { 0, 0, 0, 0 };
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -2052,7 +2052,7 @@ static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index,
 }
 
 
-static void r300SetupPixelShader(GLcontext *ctx)
+static void r300SetupPixelShader(struct gl_context *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_fragment_program *fp = rmesa->selected_fp;
@@ -2109,7 +2109,7 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
 } while(0)
 
-static void r500SetupPixelShader(GLcontext *ctx)
+static void r500SetupPixelShader(struct gl_context *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_fragment_program *fp = rmesa->selected_fp;
@@ -2158,7 +2158,7 @@ static void r500SetupPixelShader(GLcontext *ctx)
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->code.constants.Count * 4);
 }
 
-void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
+void r300SetupVAP(struct gl_context *ctx, GLuint InputsRead, GLuint OutputsWritten)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
@@ -2218,7 +2218,7 @@ void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
 
 void r300UpdateShaderStates(r300ContextPtr rmesa)
 {
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	ctx = rmesa->radeon.glCtx;
 
 	/* should only happenen once, just after context is created */
@@ -2241,7 +2241,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 #define EASY_US_OUT_FMT(comps, c0, c1, c2, c3) \
 	(R500_OUT_FMT_##comps | R500_C0_SEL_##c0 | R500_C1_SEL_##c1 | \
 	 R500_C2_SEL_##c2 | R500_C3_SEL_##c3)
-static void r300SetupUsOutputFormat(GLcontext *ctx)
+static void r300SetupUsOutputFormat(struct gl_context *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	uint32_t hw_format;
@@ -2304,7 +2304,7 @@ static void r300SetupUsOutputFormat(GLcontext *ctx)
 /**
  * Called by Mesa after an internal state update.
  */
-static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
+static void r300InvalidateState(struct gl_context * ctx, GLuint new_state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -2347,7 +2347,7 @@ void r300InitState(r300ContextPtr r300)
 	r300ResetHwState(r300);
 }
 
-static void r300RenderMode(GLcontext * ctx, GLenum mode)
+static void r300RenderMode(struct gl_context * ctx, GLenum mode)
 {
 	r300SwitchFallback(ctx, R300_FALLBACK_RENDER_MODE, ctx->RenderMode != GL_RENDER);
 }

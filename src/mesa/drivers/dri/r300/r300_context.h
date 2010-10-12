@@ -463,9 +463,9 @@ struct r300_swtcl_info {
 };
 
 struct r300_vtable {
-	void (* SetupRSUnit)(GLcontext *ctx);
-	void (* SetupFragmentShaderTextures)(GLcontext *ctx, int *tmu_mappings);
-	void (* SetupPixelShader)(GLcontext *ctx);
+	void (* SetupRSUnit)(struct gl_context *ctx);
+	void (* SetupFragmentShaderTextures)(struct gl_context *ctx, int *tmu_mappings);
+	void (* SetupPixelShader)(struct gl_context *ctx);
 };
 
 struct r300_vertex_buffer {
@@ -552,7 +552,7 @@ extern void r300InitShaderFuncs(struct dd_function_table *functions);
 
 extern void r300InitShaderFunctions(r300ContextPtr r300);
 
-extern void r300InitDraw(GLcontext *ctx);
+extern void r300InitDraw(struct gl_context *ctx);
 
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24

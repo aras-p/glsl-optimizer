@@ -54,7 +54,7 @@
  */
 #if 000
 /* XXX don't use this, it doesn't dither correctly */
-static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
+static void draw_points_ANY_pixmap( struct gl_context *ctx, const SWvertex *vert )
 {
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
@@ -89,7 +89,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
  * our internal point functions, otherwise fall back to the standard
  * swrast functions.
  */
-void xmesa_choose_point( GLcontext *ctx )
+void xmesa_choose_point( struct gl_context *ctx )
 {
 #if 0
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -546,7 +546,7 @@ void xmesa_choose_point( GLcontext *ctx )
  * for the XSetLineAttributes() function call.
  */
 static void
-xor_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
+xor_line(struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1)
 {
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
@@ -578,7 +578,7 @@ xor_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
  * swrast fallback.
  */
 static swrast_line_func
-get_line_func(GLcontext *ctx)
+get_line_func(struct gl_context *ctx)
 {
 #if CHAN_BITS == 8
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -682,7 +682,7 @@ get_line_func(GLcontext *ctx)
  * standard swrast functions.
  */
 void
-xmesa_choose_line(GLcontext *ctx)
+xmesa_choose_line(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 

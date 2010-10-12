@@ -34,13 +34,13 @@
 #include "mach64_context.h"
 
 extern void mach64DDInitState( mach64ContextPtr mmesa );
-extern void mach64DDInitStateFuncs( GLcontext *ctx );
+extern void mach64DDInitStateFuncs( struct gl_context *ctx );
 
-extern void mach64SetCliprects( GLcontext *ctx, GLenum mode );
-extern void mach64CalcViewport( GLcontext *ctx );
+extern void mach64SetCliprects( struct gl_context *ctx, GLenum mode );
+extern void mach64CalcViewport( struct gl_context *ctx );
 
-extern void mach64DDUpdateState( GLcontext *ctx );
-extern void mach64DDUpdateHWState( GLcontext *ctx );
+extern void mach64DDUpdateState( struct gl_context *ctx );
+extern void mach64DDUpdateHWState( struct gl_context *ctx );
 
 extern void mach64EmitHwStateLocked( mach64ContextPtr mmesa );
 

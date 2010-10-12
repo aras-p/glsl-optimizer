@@ -36,7 +36,7 @@
  *    DO_ATTRIBS   - if defined, compute texcoords, varying, etc.
  */
 
-/*void triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
+/*void triangle( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLfloat *p0 = v0->attrib[FRAG_ATTRIB_WPOS];

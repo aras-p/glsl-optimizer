@@ -165,27 +165,27 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 }
 
 
-void _mesa_init_exec_vtxfmt( GLcontext *ctx )
+void _mesa_init_exec_vtxfmt( struct gl_context *ctx )
 {
    install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
    ctx->TnlModule.SwapCount = 0;
 }
 
 
-void _mesa_install_exec_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
+void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
    ctx->TnlModule.Current = vfmt;
    _mesa_restore_exec_vtxfmt( ctx );
 }
 
 
-void _mesa_install_save_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
+void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
    install_vtxfmt( ctx->Save, vfmt );
 }
 
 
-void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
+void _mesa_restore_exec_vtxfmt( struct gl_context *ctx )
 {
    struct gl_tnl_module *tnl = &(ctx->TnlModule);
    GLuint i;

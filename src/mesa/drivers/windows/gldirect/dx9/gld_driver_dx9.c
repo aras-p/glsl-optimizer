@@ -69,7 +69,7 @@ const float _fPersp_33 = 1.6f;
 //---------------------------------------------------------------------------
 
 void _gld_mesa_warning(
-	__GLcontext *gc,
+	__struct gl_context *gc,
 	char *str)
 {
 	// Intercept Mesa's internal warning mechanism
@@ -79,7 +79,7 @@ void _gld_mesa_warning(
 //---------------------------------------------------------------------------
 
 void _gld_mesa_fatal(
-	__GLcontext *gc,
+	__struct gl_context *gc,
 	char *str)
 {
 	// Intercept Mesa's internal fatal-message mechanism
@@ -199,7 +199,7 @@ D3DBLEND _gldConvertBlendFunc(
 //---------------------------------------------------------------------------
 
 void gld_Noop_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 #ifdef _DEBUG
 	gldLogMessage(GLDLOG_ERROR, "gld_Noop called!\n");
@@ -209,7 +209,7 @@ void gld_Noop_DX9(
 //---------------------------------------------------------------------------
 
 void gld_Error_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 #ifdef _DEBUG
 	// Quite useless.
@@ -222,7 +222,7 @@ void gld_Error_DX9(
 //---------------------------------------------------------------------------
 
 static GLboolean gld_set_draw_buffer_DX9(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum mode)
 {
    (void) ctx;
@@ -237,7 +237,7 @@ static GLboolean gld_set_draw_buffer_DX9(
 //---------------------------------------------------------------------------
 
 static void gld_set_read_buffer_DX9(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	struct gl_framebuffer *buffer,
 	GLenum mode)
 {
@@ -251,7 +251,7 @@ static void gld_set_read_buffer_DX9(
 //---------------------------------------------------------------------------
 
 void gld_Clear_DX9(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLbitfield mask,
 	GLboolean all,
 	GLint x,
@@ -340,7 +340,7 @@ void gld_Clear_DX9(
 
 // Mesa 5: Parameter change
 static void gld_buffer_size_DX9(
-//	GLcontext *ctx,
+//	struct gl_context *ctx,
 	struct gl_framebuffer *fb,
 	GLuint *width,
 	GLuint *height)
@@ -354,14 +354,14 @@ static void gld_buffer_size_DX9(
 //---------------------------------------------------------------------------
 
 static void gld_Finish_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 }
 
 //---------------------------------------------------------------------------
 
 static void gld_Flush_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context		*gld	= GLD_GET_CONTEXT(ctx);
 
@@ -377,7 +377,7 @@ static void gld_Flush_DX9(
 //---------------------------------------------------------------------------
 
 void gld_NEW_STENCIL(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -402,7 +402,7 @@ void gld_NEW_STENCIL(
 //---------------------------------------------------------------------------
 
 void gld_NEW_COLOR(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -434,7 +434,7 @@ void gld_NEW_COLOR(
 //---------------------------------------------------------------------------
 
 void gld_NEW_DEPTH(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -447,7 +447,7 @@ void gld_NEW_DEPTH(
 //---------------------------------------------------------------------------
 
 void gld_NEW_POLYGON(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -513,7 +513,7 @@ void gld_NEW_POLYGON(
 //---------------------------------------------------------------------------
 
 void gld_NEW_FOG(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -568,7 +568,7 @@ void gld_NEW_FOG(
 //---------------------------------------------------------------------------
 
 void gld_NEW_LIGHT(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context		*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9	*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -588,7 +588,7 @@ void gld_NEW_LIGHT(
 //---------------------------------------------------------------------------
 
 void gld_NEW_MODELVIEW(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -620,7 +620,7 @@ void gld_NEW_MODELVIEW(
 //---------------------------------------------------------------------------
 
 void gld_NEW_PROJECTION(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -699,7 +699,7 @@ void gldOrthoHook_DX9(
 //---------------------------------------------------------------------------
 
 void gld_NEW_VIEWPORT(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -741,7 +741,7 @@ void gld_NEW_VIEWPORT(
 //---------------------------------------------------------------------------
 
 void gld_NEW_SCISSOR(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9		*gld	= GLD_GET_DX9_DRIVER(gldCtx);
@@ -768,7 +768,7 @@ void gld_NEW_SCISSOR(
 //---------------------------------------------------------------------------
 
 __inline BOOL _gldAnyEvalEnabled(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	struct gl_eval_attrib *eval = &ctx->Eval;
 
@@ -800,7 +800,7 @@ __inline BOOL _gldAnyEvalEnabled(
 //---------------------------------------------------------------------------
 
 BOOL _gldChooseInternalPipeline(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLD_driver_dx9 *gld)
 {
 //	return TRUE;	// DEBUGGING: ALWAYS USE MESA
@@ -864,7 +864,7 @@ BOOL _gldChooseInternalPipeline(
 //---------------------------------------------------------------------------
 
 void gld_update_state_DX9(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint new_state)
 {
 	GLD_context		*gldCtx	= GLD_GET_CONTEXT(ctx);
@@ -1001,7 +1001,7 @@ void gld_update_state_DX9(
 //---------------------------------------------------------------------------
 
 void gld_Viewport_DX9(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint x,
 	GLint y,
 	GLsizei w,
@@ -1063,11 +1063,11 @@ void gld_Viewport_DX9(
 
 //---------------------------------------------------------------------------
 
-extern BOOL dglWglResizeBuffers(GLcontext *ctx, BOOL bDefaultDriver);
+extern BOOL dglWglResizeBuffers(struct gl_context *ctx, BOOL bDefaultDriver);
 
 // Mesa 5: Parameter change
 void gldResizeBuffers_DX9(
-//	GLcontext *ctx)
+//	struct gl_context *ctx)
 	struct gl_framebuffer *fb)
 {
 	GET_CURRENT_CONTEXT(ctx);
@@ -1079,7 +1079,7 @@ void gldResizeBuffers_DX9(
 // This is only for debugging.
 // To use, plug into ctx->Driver.Enable pointer below.
 void gld_Enable(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum e,
 	GLboolean b)
 {
@@ -1092,10 +1092,10 @@ void gld_Enable(
 // Driver pointer setup
 //---------------------------------------------------------------------------
 
-extern const GLubyte* _gldGetStringGeneric(GLcontext*, GLenum);
+extern const GLubyte* _gldGetStringGeneric(struct gl_context*, GLenum);
 
 void gldSetupDriverPointers_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLD_context		*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx9	*gld	= GLD_GET_DX9_DRIVER(gldCtx);

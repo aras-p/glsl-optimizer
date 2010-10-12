@@ -34,7 +34,7 @@
  * \param iy  - integer fragment window Y coordiante
  */
 static void
-NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
+NAME(plot)(struct gl_context *ctx, struct LineInfo *line, int ix, int iy)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLfloat fx = (GLfloat) ix;
@@ -103,7 +103,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
  * Line setup
  */
 static void
-NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
+NAME(line)(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLfloat tStart, tEnd;   /* segment start, end along line length */

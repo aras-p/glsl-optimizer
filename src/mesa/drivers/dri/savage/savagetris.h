@@ -38,10 +38,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/mtypes.h"
 
-extern void savageInitTriFuncs( GLcontext *ctx );
+extern void savageInitTriFuncs( struct gl_context *ctx );
 
 
-extern void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void savageFallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( ctx, bit, mode ) savageFallback( ctx, bit, mode )
 
 

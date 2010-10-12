@@ -399,7 +399,7 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type )
  * otherwise.
  */
 GLboolean
-_mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
+_mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum type )
 {
    switch (format) {
       case GL_COLOR_INDEX:
@@ -869,7 +869,7 @@ _mesa_is_integer_format(GLenum format)
  * \return GL_TRUE if compressed, GL_FALSE if uncompressed
  */
 GLboolean
-_mesa_is_compressed_format(GLcontext *ctx, GLenum format)
+_mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
 {
    switch (format) {
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -1541,7 +1541,7 @@ _mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
  * Apply pixel mapping to an array of floating point RGBA pixels.
  */
 void
-_mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+_mesa_map_rgba( const struct gl_context *ctx, GLuint n, GLfloat rgba[][4] )
 {
    const GLfloat rscale = (GLfloat) (ctx->PixelMaps.RtoR.Size - 1);
    const GLfloat gscale = (GLfloat) (ctx->PixelMaps.GtoG.Size - 1);
@@ -1829,7 +1829,7 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
  * Map color indexes to float rgba values.
  */
 void
-_mesa_map_ci_to_rgba( const GLcontext *ctx, GLuint n,
+_mesa_map_ci_to_rgba( const struct gl_context *ctx, GLuint n,
                       const GLuint index[], GLfloat rgba[][4] )
 {
    GLuint rmask = ctx->PixelMaps.ItoR.Size - 1;
@@ -1854,7 +1854,7 @@ _mesa_map_ci_to_rgba( const GLcontext *ctx, GLuint n,
  * Map ubyte color indexes to ubyte/RGBA values.
  */
 void
-_mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
+_mesa_map_ci8_to_rgba8(const struct gl_context *ctx, GLuint n, const GLubyte index[],
                        GLubyte rgba[][4])
 {
    GLuint rmask = ctx->PixelMaps.ItoR.Size - 1;
@@ -1876,7 +1876,7 @@ _mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
 
 
 void
-_mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
+_mesa_scale_and_bias_depth(const struct gl_context *ctx, GLuint n,
                            GLfloat depthValues[])
 {
    const GLfloat scale = ctx->Pixel.DepthScale;
@@ -1890,7 +1890,7 @@ _mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
+_mesa_scale_and_bias_depth_uint(const struct gl_context *ctx, GLuint n,
                                 GLuint depthValues[])
 {
    const GLdouble max = (double) 0xffffffff;
@@ -1909,7 +1909,7 @@ _mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
  * as indicated by the transferOps bitmask
  */
 void
-_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
+_mesa_apply_rgba_transfer_ops(struct gl_context *ctx, GLbitfield transferOps,
                               GLuint n, GLfloat rgba[][4])
 {
    /* scale & bias */
@@ -1942,7 +1942,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
  * Apply color index shift and offset to an array of pixels.
  */
 static void
-shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
+shift_and_offset_ci( const struct gl_context *ctx, GLuint n, GLuint indexes[] )
 {
    GLint shift = ctx->Pixel.IndexShift;
    GLint offset = ctx->Pixel.IndexOffset;
@@ -1972,7 +1972,7 @@ shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
  * of color indexes;
  */
 void
-_mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
+_mesa_apply_ci_transfer_ops(const struct gl_context *ctx, GLbitfield transferOps,
                             GLuint n, GLuint indexes[])
 {
    if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
@@ -1994,7 +1994,7 @@ _mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
  * of stencil values.
  */
 void
-_mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
+_mesa_apply_stencil_transfer_ops(const struct gl_context *ctx, GLuint n,
                                  GLstencil stencil[])
 {
    if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
@@ -2035,7 +2035,7 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
  * transfer ops are enabled.
  */
 void
-_mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+_mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                            GLenum dstFormat, GLenum dstType,
                            GLvoid *dstAddr,
                            const struct gl_pixelstore_attrib *dstPacking,
@@ -3912,7 +3912,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_color_span_chan( GLcontext *ctx,
+_mesa_unpack_color_span_chan( struct gl_context *ctx,
                               GLuint n, GLenum dstFormat, GLchan dest[],
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
@@ -4262,7 +4262,7 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
  * instead of GLchan.
  */
 void
-_mesa_unpack_color_span_float( GLcontext *ctx,
+_mesa_unpack_color_span_float( struct gl_context *ctx,
                                GLuint n, GLenum dstFormat, GLfloat dest[],
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
@@ -4498,7 +4498,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
  * directly return GLbyte data, no transfer ops apply.
  */
 void
-_mesa_unpack_dudv_span_byte( GLcontext *ctx,
+_mesa_unpack_dudv_span_byte( struct gl_context *ctx,
                              GLuint n, GLenum dstFormat, GLbyte dest[],
                              GLenum srcFormat, GLenum srcType,
                              const GLvoid *source,
@@ -4565,7 +4565,7 @@ _mesa_unpack_dudv_span_byte( GLcontext *ctx,
  *        transferOps - the pixel transfer operations to apply
  */
 void
-_mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_index_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking,
@@ -4643,7 +4643,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_pack_index_span( const GLcontext *ctx, GLuint n,
+_mesa_pack_index_span( const struct gl_context *ctx, GLuint n,
                        GLenum dstType, GLvoid *dest, const GLuint *source,
                        const struct gl_pixelstore_attrib *dstPacking,
                        GLbitfield transferOps )
@@ -4773,7 +4773,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
  *        transferOps - apply offset/bias/lookup ops?
  */
 void
-_mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_stencil_span( const struct gl_context *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *srcPacking,
@@ -4868,7 +4868,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
+_mesa_pack_stencil_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, const GLstencil *source,
                          const struct gl_pixelstore_attrib *dstPacking )
 {
@@ -5043,7 +5043,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
  *                  (ignored for GLfloat).
  */
 void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, GLuint depthMax,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
@@ -5242,7 +5242,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
  * Pack an array of depth values.  The values are floats in [0,1].
  */
 void
-_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
+_mesa_pack_depth_span( const struct gl_context *ctx, GLuint n, GLvoid *dest,
                        GLenum dstType, const GLfloat *depthSpan,
                        const struct gl_pixelstore_attrib *dstPacking )
 {
@@ -5358,7 +5358,7 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
  * Pack depth and stencil values as GL_DEPTH_STENCIL/GL_UNSIGNED_INT_24_8.
  */
 void
-_mesa_pack_depth_stencil_span(const GLcontext *ctx, GLuint n, GLuint *dest,
+_mesa_pack_depth_stencil_span(const struct gl_context *ctx, GLuint n, GLuint *dest,
                               const GLfloat *depthVals,
                               const GLstencil *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
@@ -5673,7 +5673,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
  *          GL_FALSE if image was completely clipped away (draw nothing)
  */
 GLboolean
-_mesa_clip_drawpixels(const GLcontext *ctx,
+_mesa_clip_drawpixels(const struct gl_context *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *unpack)
@@ -5744,7 +5744,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
  *          GL_FALSE if image was completely clipped away (draw nothing)
  */
 GLboolean
-_mesa_clip_readpixels(const GLcontext *ctx,
+_mesa_clip_readpixels(const struct gl_context *ctx,
                       GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack)
@@ -5794,7 +5794,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
  * \return GL_FALSE if region is totally clipped, GL_TRUE otherwise.
  */
 GLboolean
-_mesa_clip_copytexsubimage(const GLcontext *ctx,
+_mesa_clip_copytexsubimage(const struct gl_context *ctx,
                            GLint *destX, GLint *destY,
                            GLint *srcX, GLint *srcY,
                            GLsizei *width, GLsizei *height)
@@ -5937,7 +5937,7 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
  * \return GL_TRUE if anything is left to draw, GL_FALSE if totally clipped
  */
 GLboolean
-_mesa_clip_blit(GLcontext *ctx,
+_mesa_clip_blit(struct gl_context *ctx,
                 GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
                 GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1)
 {

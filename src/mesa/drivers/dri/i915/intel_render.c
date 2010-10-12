@@ -216,7 +216,7 @@ choose_render(struct intel_context *intel, struct vertex_buffer *VB)
 
 
 static GLboolean
-intel_run_render(GLcontext * ctx, struct tnl_pipeline_stage *stage)
+intel_run_render(struct gl_context * ctx, struct tnl_pipeline_stage *stage)
 {
    struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);

@@ -46,7 +46,7 @@ st_ws_framebuffer(struct gl_framebuffer *fb)
    return (struct st_framebuffer *) ((fb && !fb->Name) ? fb : NULL);
 }
 
-static void st_viewport(GLcontext * ctx, GLint x, GLint y,
+static void st_viewport(struct gl_context * ctx, GLint x, GLint y,
                         GLsizei width, GLsizei height)
 {
    struct st_context *st = ctx->st;

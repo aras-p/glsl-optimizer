@@ -37,7 +37,7 @@ typedef struct mga_texture_object_s *mgaTextureObjectPtr;
  * state is properly setup.  Texture residence is checked later
  * when we grab the lock.
  */
-void mgaUpdateTextureState( GLcontext *ctx );
+void mgaUpdateTextureState( struct gl_context *ctx );
 
 int mgaUploadTexImages( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
@@ -45,6 +45,6 @@ void mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
 void mgaInitTextureFuncs( struct dd_function_table *functions );
 
-GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit );
+GLboolean mgaUpdateTextureEnvCombine( struct gl_context *ctx, int unit );
 
 #endif

@@ -195,13 +195,13 @@ static int cmdscl( int offset, int stride, int count )
 }
 
 #define CHECK( NM, FLAG, ADD )				\
-static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
+static int check_##NM( struct gl_context *ctx, struct radeon_state_atom *atom )	\
 {							\
    return FLAG ? atom->cmd_size + (ADD) : 0;			\
 }
 
 #define TCL_CHECK( NM, FLAG, ADD )				\
-static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
+static int check_##NM( struct gl_context *ctx, struct radeon_state_atom *atom )	\
 {							\
    r100ContextPtr rmesa = R100_CONTEXT(ctx);	\
    return (!rmesa->radeon.TclFallback && (FLAG)) ? atom->cmd_size + (ADD) : 0;	\
@@ -294,7 +294,7 @@ CHECK( txr2, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_RECT_BIT), 0 )
     OUT_BATCH_TABLE((data), h.scalars.count);				\
   } while(0)
 
-static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void scl_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -306,7 +306,7 @@ static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 }
 
 
-static void vec_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void vec_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -318,7 +318,7 @@ static void vec_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 }
 
 
-static void lit_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void lit_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -330,7 +330,7 @@ static void lit_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void ctx_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -395,7 +395,7 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static int check_always_ctx( GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_always_ctx( struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    struct radeon_renderbuffer *rrb, *drb;
@@ -417,7 +417,7 @@ static int check_always_ctx( GLcontext *ctx, struct radeon_state_atom *atom)
    return dwords;
 }
 
-static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -512,7 +512,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void cube_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -540,7 +540,7 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+static void cube_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -576,7 +576,7 @@ static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void tex_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -611,7 +611,7 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+static void tex_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
@@ -666,7 +666,7 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
  */
 void radeonInitState( r100ContextPtr rmesa )
 {
-   GLcontext *ctx = rmesa->radeon.glCtx;
+   struct gl_context *ctx = rmesa->radeon.glCtx;
    GLuint i;
 
    rmesa->radeon.state.color.clear = 0x00000000;

@@ -32,7 +32,7 @@
 #include "nv10_driver.h"
 
 void
-nv10_emit_clip_plane(GLcontext *ctx, int emit)
+nv10_emit_clip_plane(struct gl_context *ctx, int emit)
 {
 }
 
@@ -54,7 +54,7 @@ get_material_bitmask(unsigned m)
 }
 
 void
-nv10_emit_color_material(GLcontext *ctx, int emit)
+nv10_emit_color_material(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -93,7 +93,7 @@ get_fog_source(unsigned source)
 }
 
 void
-nv10_get_fog_coeff(GLcontext *ctx, float k[3])
+nv10_get_fog_coeff(struct gl_context *ctx, float k[3])
 {
 	struct gl_fog_attrib *f = &ctx->Fog;
 
@@ -121,7 +121,7 @@ nv10_get_fog_coeff(GLcontext *ctx, float k[3])
 }
 
 void
-nv10_emit_fog(GLcontext *ctx, int emit)
+nv10_emit_fog(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -161,7 +161,7 @@ get_light_mode(struct gl_light *l)
 }
 
 void
-nv10_emit_light_enable(GLcontext *ctx, int emit)
+nv10_emit_light_enable(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -187,7 +187,7 @@ nv10_emit_light_enable(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_light_model(GLcontext *ctx, int emit)
+nv10_emit_light_model(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -273,7 +273,7 @@ nv10_get_spot_coeff(struct gl_light *l, float k[7])
 }
 
 void
-nv10_emit_light_source(GLcontext *ctx, int emit)
+nv10_emit_light_source(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_LIGHT_SOURCE0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -313,7 +313,7 @@ nv10_emit_light_source(GLcontext *ctx, int emit)
 	 ctx->Light.ColorMaterialBitmask & (1 << MAT_ATTRIB_FRONT_##attr))
 
 void
-nv10_emit_material_ambient(GLcontext *ctx, int emit)
+nv10_emit_material_ambient(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -355,7 +355,7 @@ nv10_emit_material_ambient(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_material_diffuse(GLcontext *ctx, int emit)
+nv10_emit_material_diffuse(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -377,7 +377,7 @@ nv10_emit_material_diffuse(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_material_specular(GLcontext *ctx, int emit)
+nv10_emit_material_specular(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -419,7 +419,7 @@ nv10_get_shininess_coeff(float s, float k[6])
 }
 
 void
-nv10_emit_material_shininess(GLcontext *ctx, int emit)
+nv10_emit_material_shininess(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -435,7 +435,7 @@ nv10_emit_material_shininess(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_modelview(GLcontext *ctx, int emit)
+nv10_emit_modelview(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -464,12 +464,12 @@ nv10_emit_modelview(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_point_parameter(GLcontext *ctx, int emit)
+nv10_emit_point_parameter(struct gl_context *ctx, int emit)
 {
 }
 
 void
-nv10_emit_projection(GLcontext *ctx, int emit)
+nv10_emit_projection(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);

@@ -160,7 +160,7 @@
  * If we fail, we'll have to use software rendering.
  */
 static GLboolean
-SetupTexEnvNapalm(GLcontext *ctx, GLboolean useIteratedRGBA,
+SetupTexEnvNapalm(struct gl_context *ctx, GLboolean useIteratedRGBA,
                   const struct gl_texture_unit *texUnit, GLenum baseFormat,
                   struct tdfx_texcombine_ext *env)
 {
@@ -838,7 +838,7 @@ SetupTexEnvNapalm(GLcontext *ctx, GLboolean useIteratedRGBA,
  * If failure, we'll use software rendering.
  */
 static GLboolean
-SetupSingleTexEnvVoodoo3(GLcontext *ctx, int unit,
+SetupSingleTexEnvVoodoo3(struct gl_context *ctx, int unit,
                          GLenum envMode, GLenum baseFormat)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -1047,7 +1047,7 @@ SetupSingleTexEnvVoodoo3(GLcontext *ctx, int unit,
  * If failure, we'll use software rendering.
  */
 static GLboolean
-SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
+SetupDoubleTexEnvVoodoo3(struct gl_context *ctx, int tmu0,
                          GLenum envMode0, GLenum baseFormat0,
                          GLenum envMode1, GLenum baseFormat1)
 {
@@ -1362,7 +1362,7 @@ setupSingleTMU(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
 {
    struct tdfxSharedState *shared = (struct tdfxSharedState *) fxMesa->glCtx->Shared->DriverData;
    tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
-   const GLcontext *ctx = fxMesa->glCtx;
+   const struct gl_context *ctx = fxMesa->glCtx;
 
    /* Make sure we're not loaded incorrectly */
    if (ti->isInTM && !shared->umaTexMemory) {
@@ -1571,7 +1571,7 @@ selectSingleTMUSrc(tdfxContextPtr fxMesa, GLint tmu, FxBool LODblend)
 #if 0
 static void print_state(tdfxContextPtr fxMesa)
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    struct gl_texture_object *tObj0 = ctx->Texture.Unit[0]._Current;
    struct gl_texture_object *tObj1 = ctx->Texture.Unit[1]._Current;
    GLenum base0 = tObj0->Image[0][tObj0->BaseLevel] ? tObj0->Image[0][tObj0->BaseLevel]->Format : 99;
@@ -1599,7 +1599,7 @@ static void print_state(tdfxContextPtr fxMesa)
  * Input:  ctx - the context
  *         unit - the OpenGL texture unit to use.
  */
-static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
+static void setupTextureSingleTMU(struct gl_context * ctx, GLuint unit)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    tdfxTexInfo *ti;
@@ -1715,7 +1715,7 @@ setupDoubleTMU(tdfxContextPtr fxMesa,
 
     const struct gl_shared_state *mesaShared = fxMesa->glCtx->Shared;
     const struct tdfxSharedState *shared = (struct tdfxSharedState *) mesaShared->DriverData;
-    const GLcontext *ctx = fxMesa->glCtx;
+    const struct gl_context *ctx = fxMesa->glCtx;
     tdfxTexInfo *ti0 = TDFX_TEXTURE_DATA(tObj0);
     tdfxTexInfo *ti1 = TDFX_TEXTURE_DATA(tObj1);
     GLuint tstate = 0;
@@ -1914,7 +1914,7 @@ setupDoubleTMU(tdfxContextPtr fxMesa,
 #undef T1_IN_TMU1
 }
 
-static void setupTextureDoubleTMU(GLcontext * ctx)
+static void setupTextureDoubleTMU(struct gl_context * ctx)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct gl_texture_object *tObj0 = ctx->Texture.Unit[1]._Current;
@@ -2019,7 +2019,7 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
 
 
 void
-tdfxUpdateTextureState( GLcontext *ctx )
+tdfxUpdateTextureState( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -2108,7 +2108,7 @@ tdfxUpdateTextureState( GLcontext *ctx )
  * This is very common in Quake3.
  */
 void
-tdfxUpdateTextureBinding( GLcontext *ctx )
+tdfxUpdateTextureBinding( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct gl_texture_object *tObj0 = ctx->Texture.Unit[0]._Current;

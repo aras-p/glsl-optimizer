@@ -33,7 +33,7 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
 
 
 extern void
-_mesa_init_multisample(GLcontext *ctx);
+_mesa_init_multisample(struct gl_context *ctx);
 
 
 #endif

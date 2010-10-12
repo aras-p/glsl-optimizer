@@ -41,7 +41,7 @@
  * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
  */
 static INLINE struct gl_texture_unit *
-_mesa_get_current_tex_unit(GLcontext *ctx)
+_mesa_get_current_tex_unit(struct gl_context *ctx)
 {
    ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));
    return &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
@@ -49,10 +49,10 @@ _mesa_get_current_tex_unit(GLcontext *ctx)
 
 
 extern void
-_mesa_copy_texture_state( const GLcontext *src, GLcontext *dst );
+_mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst );
 
 extern void
-_mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
+_mesa_print_texunit_state( struct gl_context *ctx, GLuint unit );
 
 
 
@@ -76,16 +76,16 @@ _mesa_ClientActiveTextureARB( GLenum target );
 /*@{*/
 
 extern void 
-_mesa_update_texture( GLcontext *ctx, GLuint new_state );
+_mesa_update_texture( struct gl_context *ctx, GLuint new_state );
 
 extern GLboolean
-_mesa_init_texture( GLcontext *ctx );
+_mesa_init_texture( struct gl_context *ctx );
 
 extern void 
-_mesa_free_texture_data( GLcontext *ctx );
+_mesa_free_texture_data( struct gl_context *ctx );
 
 extern void
-_mesa_update_default_objects_texture(GLcontext *ctx);
+_mesa_update_default_objects_texture(struct gl_context *ctx);
 
 /*@}*/
 

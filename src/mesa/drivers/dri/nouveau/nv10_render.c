@@ -32,7 +32,7 @@
 #define NUM_VERTEX_ATTRS 8
 
 static void
-nv10_emit_material(GLcontext *ctx, struct nouveau_array_state *a,
+nv10_emit_material(struct gl_context *ctx, struct nouveau_array_state *a,
 		   const void *v);
 
 /* Vertex attribute format. */
@@ -106,7 +106,7 @@ get_hw_format(int type)
 }
 
 static void
-nv10_render_set_format(GLcontext *ctx)
+nv10_render_set_format(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -136,7 +136,7 @@ nv10_render_set_format(GLcontext *ctx)
 }
 
 static void
-nv10_render_bind_vertices(GLcontext *ctx)
+nv10_render_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_bo_context *bctx = context_bctx(ctx, VERTEX);

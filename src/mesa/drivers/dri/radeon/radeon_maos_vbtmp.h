@@ -34,7 +34,7 @@
 #define TCL_DEBUG 0
 #endif
 
-static void TAG(emit)( GLcontext *ctx,
+static void TAG(emit)( struct gl_context *ctx,
 		       GLuint start, GLuint end,
 		       void *dest )
 {

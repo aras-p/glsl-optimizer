@@ -54,7 +54,7 @@
 
 
 extern void
-_mesa_compute_version(GLcontext *ctx);
+_mesa_compute_version(struct gl_context *ctx);
 
 
 #endif /* VERSION_H */

@@ -34,7 +34,7 @@ static void
 upload_clip_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    uint32_t depth_clamp = 0;
    uint32_t provoking;
 

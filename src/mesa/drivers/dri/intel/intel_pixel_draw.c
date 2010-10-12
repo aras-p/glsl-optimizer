@@ -39,7 +39,7 @@
 #include "intel_pixel.h"
 
 void
-intelDrawPixels(GLcontext * ctx,
+intelDrawPixels(struct gl_context * ctx,
                 GLint x, GLint y,
                 GLsizei width, GLsizei height,
                 GLenum format,

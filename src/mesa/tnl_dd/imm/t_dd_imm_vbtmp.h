@@ -41,7 +41,7 @@
 
 /* COPY_VERTEX_FROM_CURRENT in t_dd_imm_vapi.c
  */
-static void TAG(emit_vfmt)( GLcontext *ctx, VERTEX *v )
+static void TAG(emit_vfmt)( struct gl_context *ctx, VERTEX *v )
 {
    LOCALVARS
       ;
@@ -132,7 +132,7 @@ static void TAG(emit_vfmt)( GLcontext *ctx, VERTEX *v )
 
 
 
-static void TAG(interp)( GLcontext *ctx,
+static void TAG(interp)( struct gl_context *ctx,
 			 GLfloat t,
 			 TNL_VERTEX *dst,
 			 TNL_VERTEX *in,
@@ -240,7 +240,7 @@ static void TAG(interp)( GLcontext *ctx,
 }
 
 
-static __inline void TAG(copy_pv)( GLcontext *ctx,
+static __inline void TAG(copy_pv)( struct gl_context *ctx,
 				   TNL_VERTEX *dst, 
 				   TNL_VERTEX *src )
 {

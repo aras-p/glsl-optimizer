@@ -86,7 +86,7 @@
 /**********************************************************************/
 /*                          Fast Render pipeline stage                */
 /**********************************************************************/
-static GLboolean via_run_fastrender(GLcontext *ctx,
+static GLboolean via_run_fastrender(struct gl_context *ctx,
                                     struct tnl_pipeline_stage *stage)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);

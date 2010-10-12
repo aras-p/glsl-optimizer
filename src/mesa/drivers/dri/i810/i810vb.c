@@ -51,10 +51,10 @@
 #define I810_MAX_SETUP      0x80
 
 static struct {
-   void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
+   void                (*emit)( struct gl_context *, GLuint, GLuint, void *, GLuint );
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean           (*check_tex_sizes)( struct gl_context *ctx );
    GLuint               vertex_size;
    GLuint               vertex_format;
 } setup_tab[I810_MAX_SETUP];
@@ -335,7 +335,7 @@ static void i810PrintSetupFlags(const char *msg, GLuint flags )
 
 
 
-void i810CheckTexSizes( GLcontext *ctx )
+void i810CheckTexSizes( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    i810ContextPtr imesa = I810_CONTEXT( ctx );
@@ -357,7 +357,7 @@ void i810CheckTexSizes( GLcontext *ctx )
    }
 }
 
-void i810BuildVertices( GLcontext *ctx,
+void i810BuildVertices( struct gl_context *ctx,
 			GLuint start,
 			GLuint count,
 			GLuint newinputs )
@@ -405,7 +405,7 @@ void i810BuildVertices( GLcontext *ctx,
    }
 }
 
-void i810ChooseVertexState( GLcontext *ctx )
+void i810ChooseVertexState( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    i810ContextPtr imesa = I810_CONTEXT( ctx );
@@ -446,7 +446,7 @@ void i810ChooseVertexState( GLcontext *ctx )
 
 
 
-void *i810_emit_contiguous_verts( GLcontext *ctx,
+void *i810_emit_contiguous_verts( struct gl_context *ctx,
 				  GLuint start,
 				  GLuint count,
 				  void *dest )
@@ -459,7 +459,7 @@ void *i810_emit_contiguous_verts( GLcontext *ctx,
 
 
 
-void i810InitVB( GLcontext *ctx )
+void i810InitVB( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
@@ -476,7 +476,7 @@ void i810InitVB( GLcontext *ctx )
 }
 
 
-void i810FreeVB( GLcontext *ctx )
+void i810FreeVB( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    if (imesa->verts) {

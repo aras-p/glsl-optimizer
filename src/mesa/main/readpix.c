@@ -40,7 +40,7 @@
  * \return GL_TRUE if error detected, GL_FALSE if no errors
  */
 GLboolean
-_mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
+_mesa_error_check_format_type(struct gl_context *ctx, GLenum format, GLenum type,
                               GLboolean drawing)
 {
    const char *readDraw = drawing ? "Draw" : "Read";

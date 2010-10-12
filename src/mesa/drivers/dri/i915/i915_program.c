@@ -457,7 +457,7 @@ i915_program_error(struct i915_fragment_program *p, const char *fmt, ...)
 void
 i915_init_program(struct i915_context *i915, struct i915_fragment_program *p)
 {
-   GLcontext *ctx = &i915->intel.ctx;
+   struct gl_context *ctx = &i915->intel.ctx;
 
    p->translated = 0;
    p->params_uptodate = 0;

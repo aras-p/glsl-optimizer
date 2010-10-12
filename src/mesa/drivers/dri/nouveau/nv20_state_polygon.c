@@ -31,7 +31,7 @@
 #include "nv20_driver.h"
 
 void
-nv20_emit_point_mode(GLcontext *ctx, int emit)
+nv20_emit_point_mode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);

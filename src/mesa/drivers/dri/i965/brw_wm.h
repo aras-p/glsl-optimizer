@@ -467,10 +467,10 @@ void emit_xpd(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
 
-GLboolean brw_compile_shader(GLcontext *ctx,
+GLboolean brw_compile_shader(struct gl_context *ctx,
 			     struct gl_shader *shader);
-GLboolean brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
-struct gl_shader *brw_new_shader(GLcontext *ctx, GLuint name, GLuint type);
-struct gl_shader_program *brw_new_shader_program(GLcontext *ctx, GLuint name);
+GLboolean brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
+struct gl_shader *brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type);
+struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint name);
 
 #endif

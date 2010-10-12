@@ -67,6 +67,6 @@ _mesa_init_accum_dispatch(struct _glapi_table *disp)
 #endif /* FEATURE_accum */
 
 extern void
-_mesa_init_accum( GLcontext *ctx );
+_mesa_init_accum( struct gl_context *ctx );
 
 #endif /* ACCUM_H */

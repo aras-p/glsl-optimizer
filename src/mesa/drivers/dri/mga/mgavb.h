@@ -39,27 +39,27 @@
 			      _NEW_FOG)
 
 
-extern void mgaChooseVertexState( GLcontext *ctx );
-extern void mgaCheckTexSizes( GLcontext *ctx );
-extern void mgaBuildVertices( GLcontext *ctx, 
+extern void mgaChooseVertexState( struct gl_context *ctx );
+extern void mgaCheckTexSizes( struct gl_context *ctx );
+extern void mgaBuildVertices( struct gl_context *ctx, 
 			      GLuint start, 
 			      GLuint count,
 			      GLuint newinputs );
 
 extern void mgaPrintSetupFlags(char *msg, GLuint flags );
 
-extern void mgaInitVB( GLcontext *ctx );
-extern void mgaFreeVB( GLcontext *ctx );
+extern void mgaInitVB( struct gl_context *ctx );
+extern void mgaFreeVB( struct gl_context *ctx );
 
-extern void *mga_emit_contiguous_verts( GLcontext *ctx,
+extern void *mga_emit_contiguous_verts( struct gl_context *ctx,
 					GLuint start,
 					GLuint count,
 					void *dest );
 
-extern void mga_translate_vertex(GLcontext *ctx, 
+extern void mga_translate_vertex(struct gl_context *ctx, 
 				 const mgaVertex *src, 
 				 SWvertex *dst);
 
-extern void mga_print_vertex( GLcontext *ctx, const mgaVertex *v );
+extern void mga_print_vertex( struct gl_context *ctx, const mgaVertex *v );
 
 #endif

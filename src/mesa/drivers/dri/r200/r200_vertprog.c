@@ -100,7 +100,7 @@ static struct{
 };
 #undef OPN
 
-static GLboolean r200VertexProgUpdateParams(GLcontext *ctx, struct r200_vertex_program *vp)
+static GLboolean r200VertexProgUpdateParams(struct gl_context *ctx, struct r200_vertex_program *vp)
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    GLfloat *fcmd = (GLfloat *)&rmesa->hw.vpp[0].cmd[VPP_CMD_0 + 1];
@@ -396,7 +396,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
  *
  * \return  GL_TRUE for success, GL_FALSE for failure.
  */
-static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_vertex_program *vp)
+static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r200_vertex_program *vp)
 {
    struct gl_vertex_program *mesa_vp = &vp->mesa_program;
    struct prog_instruction *vpi;
@@ -1098,7 +1098,7 @@ else {
    return GL_TRUE;
 }
 
-void r200SetupVertexProg( GLcontext *ctx ) {
+void r200SetupVertexProg( struct gl_context *ctx ) {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct r200_vertex_program *vp = (struct r200_vertex_program *)ctx->VertexProgram.Current;
    GLboolean fallback;
@@ -1179,7 +1179,7 @@ void r200SetupVertexProg( GLcontext *ctx ) {
 
 
 static void
-r200BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
+r200BindProgram(struct gl_context *ctx, GLenum target, struct gl_program *prog)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -1194,7 +1194,7 @@ r200BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 }
 
 static struct gl_program *
-r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
+r200NewProgram(struct gl_context *ctx, GLenum target, GLuint id)
 {
    struct r200_vertex_program *vp;
 
@@ -1213,13 +1213,13 @@ r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 
 
 static void
-r200DeleteProgram(GLcontext *ctx, struct gl_program *prog)
+r200DeleteProgram(struct gl_context *ctx, struct gl_program *prog)
 {
    _mesa_delete_program(ctx, prog);
 }
 
 static GLboolean
-r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
+r200ProgramStringNotify(struct gl_context *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -1244,7 +1244,7 @@ r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 }
 
 static GLboolean
-r200IsProgramNative(GLcontext *ctx, GLenum target, struct gl_program *prog)
+r200IsProgramNative(struct gl_context *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
 

@@ -210,7 +210,7 @@ intelEmitCopyBlit(struct intel_context *intel,
  * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear
  */
 void
-intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
+intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;

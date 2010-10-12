@@ -48,7 +48,7 @@
 
 static void upload_blend_constant_color(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_blend_constant_color bcc;
 
    memset(&bcc, 0, sizeof(bcc));      
@@ -76,7 +76,7 @@ const struct brw_tracked_state brw_blend_constant_color = {
 static void upload_drawing_rect(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
@@ -335,7 +335,7 @@ const struct brw_tracked_state brw_depthbuffer = {
 
 static void upload_polygon_stipple(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple bps;
    GLuint i;
 
@@ -378,7 +378,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));
@@ -449,7 +449,7 @@ const struct brw_tracked_state brw_aa_line_parameters = {
 
 static void upload_line_stipple(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_line_stipple bls;
    GLfloat tmp;
    GLint tmpi;

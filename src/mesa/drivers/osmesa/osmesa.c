@@ -57,11 +57,11 @@
 
 
 /**
- * OSMesa rendering context, derived from core Mesa GLcontext.
+ * OSMesa rendering context, derived from core Mesa struct gl_context.
  */
 struct osmesa_context
 {
-   GLcontext mesa;		/*< Base class - this must be first */
+   struct gl_context mesa;		/*< Base class - this must be first */
    struct gl_config *gl_visual;		/*< Describes the buffers */
    struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
    struct gl_framebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
@@ -75,7 +75,7 @@ struct osmesa_context
 
 
 static INLINE OSMesaContext
-OSMESA_CONTEXT(GLcontext *ctx)
+OSMESA_CONTEXT(struct gl_context *ctx)
 {
    /* Just cast, since we're using structure containment */
    return (OSMesaContext) ctx;
@@ -88,7 +88,7 @@ OSMESA_CONTEXT(GLcontext *ctx)
 
 
 static const GLubyte *
-get_string( GLcontext *ctx, GLenum name )
+get_string( struct gl_context *ctx, GLenum name )
 {
    (void) ctx;
    switch (name) {
@@ -107,7 +107,7 @@ get_string( GLcontext *ctx, GLenum name )
 
 
 static void
-osmesa_update_state( GLcontext *ctx, GLuint new_state )
+osmesa_update_state( struct gl_context *ctx, GLuint new_state )
 {
    /* easy - just propogate */
    _swrast_InvalidateState( ctx, new_state );
@@ -557,7 +557,7 @@ do {							\
  * function.  Otherwise, return NULL.
  */
 static swrast_line_func
-osmesa_choose_line_function( GLcontext *ctx )
+osmesa_choose_line_function( struct gl_context *ctx )
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -668,7 +668,7 @@ osmesa_choose_line_function( GLcontext *ctx )
  * Return pointer to an optimized triangle function if possible.
  */
 static swrast_tri_func
-osmesa_choose_triangle_function( GLcontext *ctx )
+osmesa_choose_triangle_function( struct gl_context *ctx )
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -708,7 +708,7 @@ osmesa_choose_triangle_function( GLcontext *ctx )
  * standard swrast functions.
  */
 static void
-osmesa_choose_triangle( GLcontext *ctx )
+osmesa_choose_triangle( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -718,7 +718,7 @@ osmesa_choose_triangle( GLcontext *ctx )
 }
 
 static void
-osmesa_choose_line( GLcontext *ctx )
+osmesa_choose_line( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -806,7 +806,7 @@ osmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  * Just set up all the gl_renderbuffer methods.
  */
 static GLboolean
-osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                             GLenum internalFormat, GLuint width, GLuint height)
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
@@ -994,7 +994,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Allocate a new renderbuffer to describe the user-provided color buffer.
  */
 static struct gl_renderbuffer *
-new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
+new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
 {
    const GLuint name = 0;
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
@@ -1157,7 +1157,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       if (!_mesa_initialize_context(&osmesa->mesa,
                                     osmesa->gl_visual,
                                     sharelist ? &sharelist->mesa
-                                              : (GLcontext *) NULL,
+                                              : (struct gl_context *) NULL,
                                     &functions, (void *) osmesa)) {
          _mesa_destroy_visual( osmesa->gl_visual );
          free(osmesa);
@@ -1202,7 +1202,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 
       /* Initialize the software rasterizer and helper modules. */
       {
-	 GLcontext *ctx = &osmesa->mesa;
+	 struct gl_context *ctx = &osmesa->mesa;
          SWcontext *swrast;
          TNLcontext *tnl;
 
@@ -1367,7 +1367,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
 GLAPI OSMesaContext GLAPIENTRY
 OSMesaGetCurrentContext( void )
 {
-   GLcontext *ctx = _mesa_get_current_context();
+   struct gl_context *ctx = _mesa_get_current_context();
    if (ctx)
       return (OSMesaContext) ctx;
    else

@@ -54,7 +54,7 @@ extern void r200EmitVbufPrim( r200ContextPtr rmesa,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void r200FlushElts(GLcontext *ctx);
+extern void r200FlushElts(struct gl_context *ctx);
 
 extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 					   GLuint primitive,

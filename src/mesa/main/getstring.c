@@ -35,7 +35,7 @@
  * Return the string for a glGetString(GL_SHADING_LANGUAGE_VERSION) query.
  */
 static const GLubyte *
-shading_language_version(GLcontext *ctx)
+shading_language_version(struct gl_context *ctx)
 {
    switch (ctx->API) {
    case API_OPENGL:
@@ -233,7 +233,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
  * Returns the current GL error code, or GL_NO_ERROR.
  * \return current error code
  *
- * Returns __GLcontextRec::ErrorValue.
+ * Returns __struct gl_contextRec::ErrorValue.
  */
 GLenum GLAPIENTRY
 _mesa_GetError( void )

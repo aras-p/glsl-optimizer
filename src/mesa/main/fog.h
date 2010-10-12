@@ -54,7 +54,7 @@ _mesa_Fogfv(GLenum pname, const GLfloat *params );
 extern void GLAPIENTRY
 _mesa_Fogiv(GLenum pname, const GLint *params );
 
-extern void _mesa_init_fog( GLcontext * ctx );
+extern void _mesa_init_fog( struct gl_context * ctx );
 
 #else
 

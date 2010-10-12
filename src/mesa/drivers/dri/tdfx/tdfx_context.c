@@ -124,7 +124,7 @@ static const struct dri_extension napalm_extensions[] =
 /*
  * Enable/Disable the extensions for this context.
  */
-static void tdfxDDInitExtensions( GLcontext *ctx )
+static void tdfxDDInitExtensions( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -168,7 +168,7 @@ GLboolean tdfxCreateContext( gl_api api,
                              void *sharedContextPrivate )
 {
    tdfxContextPtr fxMesa;
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
@@ -635,7 +635,7 @@ tdfxMakeCurrent( __DRIcontext *driContextPriv,
 
    if ( driContextPriv ) {
       tdfxContextPtr newFx = (tdfxContextPtr) driContextPriv->driverPrivate;
-      GLcontext *newCtx = newFx->glCtx;
+      struct gl_context *newCtx = newFx->glCtx;
       GET_CURRENT_CONTEXT(curCtx);
 
       if ((newFx->driDrawable != driDrawPriv)

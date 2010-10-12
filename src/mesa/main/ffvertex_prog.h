@@ -33,7 +33,7 @@
 #include "main/mtypes.h"
 
 struct gl_vertex_program *
-_mesa_get_fixed_func_vertex_program(GLcontext *ctx);
+_mesa_get_fixed_func_vertex_program(struct gl_context *ctx);
 
 
 

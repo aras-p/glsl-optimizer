@@ -33,7 +33,7 @@
 
 #include "drirenderbuffer.h"
 
-extern void mach64DDInitSpanFuncs( GLcontext *ctx );
+extern void mach64DDInitSpanFuncs( struct gl_context *ctx );
 
 extern void
 mach64SetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);

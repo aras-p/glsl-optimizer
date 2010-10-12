@@ -516,7 +516,7 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
                     struct pipe_resource *tex, boolean mipmap)
 {
    struct st_context *st = (struct st_context *) stctxi;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;

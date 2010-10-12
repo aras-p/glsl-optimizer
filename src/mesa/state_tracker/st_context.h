@@ -68,7 +68,7 @@ struct st_context
 {
    struct st_context_iface iface;
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
 
    struct pipe_context *pipe;
 
@@ -195,7 +195,7 @@ struct st_context
 
 /* Need this so that we can implement Mesa callbacks in this module.
  */
-static INLINE struct st_context *st_context(GLcontext *ctx)
+static INLINE struct st_context *st_context(struct gl_context *ctx)
 {
    return ctx->st;
 }
@@ -219,7 +219,7 @@ struct st_framebuffer
 
 extern void st_init_driver_functions(struct dd_function_table *functions);
 
-void st_invalidate_state(GLcontext * ctx, GLuint new_state);
+void st_invalidate_state(struct gl_context * ctx, GLuint new_state);
 
 
 

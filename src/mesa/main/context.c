@@ -163,7 +163,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(GLcontext *ctx)
+_mesa_notifySwapBuffers(struct gl_context *ctx)
 {
    if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
       _mesa_debug(ctx, "SwapBuffers\n");
@@ -377,7 +377,7 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
  * \sa _math_init().
  */
 static void
-one_time_init( GLcontext *ctx )
+one_time_init( struct gl_context *ctx )
 {
    static GLboolean alreadyCalled = GL_FALSE;
    (void) ctx;
@@ -444,7 +444,7 @@ one_time_init( GLcontext *ctx )
  * Initialize fields of gl_current_attrib (aka ctx->Current.*)
  */
 static void
-_mesa_init_current(GLcontext *ctx)
+_mesa_init_current(struct gl_context *ctx)
 {
    GLuint i;
 
@@ -526,7 +526,7 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
  * some of these values (such as number of texture units).
  */
 static void 
-_mesa_init_constants(GLcontext *ctx)
+_mesa_init_constants(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -632,7 +632,7 @@ _mesa_init_constants(GLcontext *ctx)
  * Only called the first time a context is bound.
  */
 static void
-check_context_limits(GLcontext *ctx)
+check_context_limits(struct gl_context *ctx)
 {
    /* check that we don't exceed the size of various bitfields */
    assert(VERT_RESULT_MAX <=
@@ -707,7 +707,7 @@ check_context_limits(GLcontext *ctx)
  * functions for the more complex data structures.
  */
 static GLboolean
-init_attrib_groups(GLcontext *ctx)
+init_attrib_groups(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -775,7 +775,7 @@ init_attrib_groups(GLcontext *ctx)
  * state.
  */
 static GLboolean
-update_default_objects(GLcontext *ctx)
+update_default_objects(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -827,7 +827,7 @@ _mesa_alloc_dispatch_table(int size)
 
 
 /**
- * Initialize a GLcontext struct (rendering context).
+ * Initialize a struct gl_context struct (rendering context).
  *
  * This includes allocating all the other structs and arrays which hang off of
  * the context by pointers.
@@ -854,10 +854,10 @@ _mesa_alloc_dispatch_table(int size)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context_for_api(GLcontext *ctx,
+_mesa_initialize_context_for_api(struct gl_context *ctx,
 				 gl_api api,
 				 const struct gl_config *visual,
-				 GLcontext *share_list,
+				 struct gl_context *share_list,
 				 const struct dd_function_table *driverFunctions,
 				 void *driverContext)
 {
@@ -993,9 +993,9 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 }
 
 GLboolean
-_mesa_initialize_context(GLcontext *ctx,
+_mesa_initialize_context(struct gl_context *ctx,
                          const struct gl_config *visual,
-                         GLcontext *share_list,
+                         struct gl_context *share_list,
                          const struct dd_function_table *driverFunctions,
                          void *driverContext)
 {
@@ -1008,7 +1008,7 @@ _mesa_initialize_context(GLcontext *ctx,
 }
 
 /**
- * Allocate and initialize a GLcontext structure.
+ * Allocate and initialize a struct gl_context structure.
  * Note that the driver needs to pass in its dd_function_table here since
  * we need to at least call driverFunctions->NewTextureObject to initialize
  * the rendering context.
@@ -1020,21 +1020,21 @@ _mesa_initialize_context(GLcontext *ctx,
  *        driver has plugged in all its special functions.
  * \param driverContext points to the device driver's private context state
  * 
- * \return pointer to a new __GLcontextRec or NULL if error.
+ * \return pointer to a new __struct gl_contextRec or NULL if error.
  */
-GLcontext *
+struct gl_context *
 _mesa_create_context_for_api(gl_api api,
 			     const struct gl_config *visual,
-			     GLcontext *share_list,
+			     struct gl_context *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext)
 {
-   GLcontext *ctx;
+   struct gl_context *ctx;
 
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
-   ctx = (GLcontext *) calloc(1, sizeof(GLcontext));
+   ctx = (struct gl_context *) calloc(1, sizeof(struct gl_context));
    if (!ctx)
       return NULL;
 
@@ -1048,9 +1048,9 @@ _mesa_create_context_for_api(gl_api api,
    }
 }
 
-GLcontext *
+struct gl_context *
 _mesa_create_context(const struct gl_config *visual,
-		     GLcontext *share_list,
+		     struct gl_context *share_list,
 		     const struct dd_function_table *driverFunctions,
 		     void *driverContext)
 {
@@ -1063,12 +1063,12 @@ _mesa_create_context(const struct gl_config *visual,
 /**
  * Free the data associated with the given context.
  * 
- * But doesn't free the GLcontext struct itself.
+ * But doesn't free the struct gl_context struct itself.
  *
  * \sa _mesa_initialize_context() and init_attrib_groups().
  */
 void
-_mesa_free_context_data( GLcontext *ctx )
+_mesa_free_context_data( struct gl_context *ctx )
 {
    if (!_mesa_get_current_context()){
       /* No current context, but we may need one in order to delete
@@ -1142,14 +1142,14 @@ _mesa_free_context_data( GLcontext *ctx )
 
 
 /**
- * Destroy a GLcontext structure.
+ * Destroy a struct gl_context structure.
  *
  * \param ctx GL context.
  * 
- * Calls _mesa_free_context_data() and frees the GLcontext structure itself.
+ * Calls _mesa_free_context_data() and frees the struct gl_context structure itself.
  */
 void
-_mesa_destroy_context( GLcontext *ctx )
+_mesa_destroy_context( struct gl_context *ctx )
 {
    if (ctx) {
       _mesa_free_context_data(ctx);
@@ -1172,7 +1172,7 @@ _mesa_destroy_context( GLcontext *ctx )
  * structures.
  */
 void
-_mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
+_mesa_copy_context( const struct gl_context *src, struct gl_context *dst, GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
       /* OK to memcpy */
@@ -1291,7 +1291,7 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
 static GLboolean 
-check_compatible(const GLcontext *ctx, const struct gl_framebuffer *buffer)
+check_compatible(const struct gl_context *ctx, const struct gl_framebuffer *buffer)
 {
    const struct gl_config *ctxvis = &ctx->Visual;
    const struct gl_config *bufvis = &buffer->Visual;
@@ -1340,7 +1340,7 @@ check_compatible(const GLcontext *ctx, const struct gl_framebuffer *buffer)
  * Really, the device driver should totally take care of this.
  */
 static void
-initialize_framebuffer_size(GLcontext *ctx, struct gl_framebuffer *fb)
+initialize_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    GLuint width, height;
    if (ctx->Driver.GetBufferSize) {
@@ -1357,7 +1357,7 @@ initialize_framebuffer_size(GLcontext *ctx, struct gl_framebuffer *fb)
  * Initialize the size if the given width and height are non-zero.
  */
 void
-_mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
+_mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
 {
    if (!ctx->ViewportInitialized && width > 0 && height > 0) {
       /* Note: set flag here, before calling _mesa_set_viewport(), to prevent
@@ -1385,7 +1385,7 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
  * \param readBuffer  the reading framebuffer
  */
 GLboolean
-_mesa_make_current( GLcontext *newCtx, struct gl_framebuffer *drawBuffer,
+_mesa_make_current( struct gl_context *newCtx, struct gl_framebuffer *drawBuffer,
                     struct gl_framebuffer *readBuffer )
 {
    if (MESA_VERBOSE & VERBOSE_API)
@@ -1524,7 +1524,7 @@ _mesa_make_current( GLcontext *newCtx, struct gl_framebuffer *drawBuffer,
  * be deleted if nobody else is sharing them.
  */
 GLboolean
-_mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
+_mesa_share_state(struct gl_context *ctx, struct gl_context *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
       struct gl_shared_state *oldSharedState = ctx->Shared;
@@ -1555,10 +1555,10 @@ _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
  * context.  If you need speed, see the #GET_CURRENT_CONTEXT macro in
  * context.h.
  */
-GLcontext *
+struct gl_context *
 _mesa_get_current_context( void )
 {
-   return (GLcontext *) _glapi_get_context();
+   return (struct gl_context *) _glapi_get_context();
 }
 
 
@@ -1572,10 +1572,10 @@ _mesa_get_current_context( void )
  *
  * \return pointer to dispatch_table.
  *
- * Simply returns __GLcontextRec::CurrentDispatch.
+ * Simply returns __struct gl_contextRec::CurrentDispatch.
  */
 struct _glapi_table *
-_mesa_get_dispatch(GLcontext *ctx)
+_mesa_get_dispatch(struct gl_context *ctx)
 {
    return ctx->CurrentDispatch;
 }
@@ -1601,7 +1601,7 @@ _mesa_get_dispatch(GLcontext *ctx)
  * This is called via _mesa_error().
  */
 void
-_mesa_record_error(GLcontext *ctx, GLenum error)
+_mesa_record_error(struct gl_context *ctx, GLenum error)
 {
    if (!ctx)
       return;
@@ -1621,7 +1621,7 @@ _mesa_record_error(GLcontext *ctx, GLenum error)
  * Flush commands and wait for completion.
  */
 void
-_mesa_finish(GLcontext *ctx)
+_mesa_finish(struct gl_context *ctx)
 {
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Finish) {
@@ -1634,7 +1634,7 @@ _mesa_finish(GLcontext *ctx)
  * Flush commands.
  */
 void
-_mesa_flush(GLcontext *ctx)
+_mesa_flush(struct gl_context *ctx)
 {
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
@@ -1680,7 +1680,7 @@ _mesa_Flush(void)
  * Otherwise we default to MUL/MAD.
  */
 void
-_mesa_set_mvp_with_dp4( GLcontext *ctx,
+_mesa_set_mvp_with_dp4( struct gl_context *ctx,
                         GLboolean flag )
 {
    ctx->mvp_with_dp4 = flag;
@@ -1696,7 +1696,7 @@ _mesa_set_mvp_with_dp4( GLcontext *ctx,
  * \return GL_TRUE if OK to render, GL_FALSE if not
  */
 GLboolean
-_mesa_valid_to_render(GLcontext *ctx, const char *where)
+_mesa_valid_to_render(struct gl_context *ctx, const char *where)
 {
    bool vert_from_glsl_shader = false;
    bool geom_from_glsl_shader = false;

@@ -79,7 +79,7 @@ typedef void (*i810_point_func)( i810ContextPtr, i810Vertex * );
 
 struct i810_context_t {
    GLint refcount;   
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
 
    /* Texture object bookkeeping
     */

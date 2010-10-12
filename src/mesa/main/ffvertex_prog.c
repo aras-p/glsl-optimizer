@@ -109,7 +109,7 @@ static GLuint translate_texgen( GLboolean enabled, GLenum mode )
 
 
 
-static GLboolean check_active_shininess( GLcontext *ctx,
+static GLboolean check_active_shininess( struct gl_context *ctx,
                                          const struct state_key *key,
                                          GLuint side )
 {
@@ -129,7 +129,7 @@ static GLboolean check_active_shininess( GLcontext *ctx,
 }
 
 
-static void make_state_key( GLcontext *ctx, struct state_key *key )
+static void make_state_key( struct gl_context *ctx, struct state_key *key )
 {
    const struct gl_fragment_program *fp;
    GLuint i;
@@ -1638,7 +1638,7 @@ create_new_program( const struct state_key *key,
  * XXX move this into core mesa (main/)
  */
 struct gl_vertex_program *
-_mesa_get_fixed_func_vertex_program(GLcontext *ctx)
+_mesa_get_fixed_func_vertex_program(struct gl_context *ctx)
 {
    struct gl_vertex_program *prog;
    struct state_key key;

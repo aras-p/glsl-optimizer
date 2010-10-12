@@ -30,11 +30,11 @@
 
 #include "main/mtypes.h"
 
-extern void mgaDDInitTriFuncs( GLcontext *ctx );
-extern void mgaChooseRenderState( GLcontext *ctx );
-extern void mgaRasterPrimitive( GLcontext *ctx, GLenum prim, GLuint hwprim );
+extern void mgaDDInitTriFuncs( struct gl_context *ctx );
+extern void mgaChooseRenderState( struct gl_context *ctx );
+extern void mgaRasterPrimitive( struct gl_context *ctx, GLenum prim, GLuint hwprim );
 
-extern void mgaFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void mgaFallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( ctx, bit, mode ) mgaFallback( ctx, bit, mode )
 
 #define _MGA_NEW_RENDERSTATE (_DD_NEW_POINT_SMOOTH |		\

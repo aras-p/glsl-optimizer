@@ -106,11 +106,11 @@ struct intel_sync_object {
 };
 
 /**
- * intel_context is derived from Mesa's context class: GLcontext.
+ * intel_context is derived from Mesa's context class: struct gl_context.
  */
 struct intel_context
 {
-   GLcontext ctx;  /**< base class, must be first field */
+   struct gl_context ctx;  /**< base class, must be first field */
 
    struct
    {
@@ -256,7 +256,7 @@ struct intel_context
 
    __DRIcontext *driContext;
    struct intel_screen *intelScreen;
-   void (*saved_viewport)(GLcontext * ctx,
+   void (*saved_viewport)(struct gl_context * ctx,
 			  GLint x, GLint y, GLsizei width, GLsizei height);
 
    /**
@@ -388,8 +388,8 @@ extern GLboolean intelInitContext(struct intel_context *intel,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);
 
-extern void intelFinish(GLcontext * ctx);
-extern void intel_flush(GLcontext * ctx);
+extern void intelFinish(struct gl_context * ctx);
+extern void intel_flush(struct gl_context * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 
@@ -476,7 +476,7 @@ void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
  * These are better-typed than the macros used previously:
  */
 static INLINE struct intel_context *
-intel_context(GLcontext * ctx)
+intel_context(struct gl_context * ctx)
 {
    return (struct intel_context *) ctx;
 }

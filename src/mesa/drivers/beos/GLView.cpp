@@ -105,7 +105,7 @@ public:
 	MesaDriver();
 	~MesaDriver();
 	
-	void 		Init(BGLView * bglview, GLcontext * c, struct gl_config * v, struct gl_framebuffer * b);
+	void 		Init(BGLView * bglview, struct gl_context * c, struct gl_config * v, struct gl_framebuffer * b);
 
 	void 		LockGL();
 	void 		UnlockGL();
@@ -120,7 +120,7 @@ private:
 	MesaDriver(const MesaDriver &rhs);  // copy constructor illegal
 	MesaDriver &operator=(const MesaDriver &rhs);  // assignment oper. illegal
 
-	GLcontext * 	m_glcontext;
+	struct gl_context * 	m_glcontext;
 	struct gl_config * 		m_glvisual;
 	struct gl_framebuffer *	m_glframebuffer;
 
@@ -134,119 +134,119 @@ private:
 	GLuint			m_height;
 	
    // Mesa Device Driver callback functions
-   static void 		UpdateState(GLcontext *ctx, GLuint new_state);
-   static void 		ClearIndex(GLcontext *ctx, GLuint index);
-   static void 		ClearColor(GLcontext *ctx, const GLfloat color[4]);
-   static void 		Clear(GLcontext *ctx, GLbitfield mask,
+   static void 		UpdateState(struct gl_context *ctx, GLuint new_state);
+   static void 		ClearIndex(struct gl_context *ctx, GLuint index);
+   static void 		ClearColor(struct gl_context *ctx, const GLfloat color[4]);
+   static void 		Clear(struct gl_context *ctx, GLbitfield mask,
                                 GLboolean all, GLint x, GLint y,
                                 GLint width, GLint height);
-   static void 		ClearFront(GLcontext *ctx, GLboolean all, GLint x, GLint y,
+   static void 		ClearFront(struct gl_context *ctx, GLboolean all, GLint x, GLint y,
                           GLint width, GLint height);
-   static void 		ClearBack(GLcontext *ctx, GLboolean all, GLint x, GLint y,
+   static void 		ClearBack(struct gl_context *ctx, GLboolean all, GLint x, GLint y,
                          GLint width, GLint height);
-   static void 		Index(GLcontext *ctx, GLuint index);
-   static void 		Color(GLcontext *ctx, GLubyte r, GLubyte g,
+   static void 		Index(struct gl_context *ctx, GLuint index);
+   static void 		Color(struct gl_context *ctx, GLubyte r, GLubyte g,
                      GLubyte b, GLubyte a);
-   static void 		SetBuffer(GLcontext *ctx, struct gl_framebuffer *colorBuffer,
+   static void 		SetBuffer(struct gl_context *ctx, struct gl_framebuffer *colorBuffer,
                              GLenum mode);
    static void 		GetBufferSize(struct gl_framebuffer * framebuffer, GLuint *width,
                              GLuint *height);
-   static void		Error(GLcontext *ctx);
-   static const GLubyte *	GetString(GLcontext *ctx, GLenum name);
-   static void          Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+   static void		Error(struct gl_context *ctx);
+   static const GLubyte *	GetString(struct gl_context *ctx, GLenum name);
+   static void          Viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
    // Front-buffer functions
-   static void 		WriteRGBASpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBASpanFront(const struct gl_context *ctx, GLuint n,
                                   GLint x, GLint y,
                                   CONST GLubyte rgba[][4],
                                   const GLubyte mask[]);
-   static void 		WriteRGBSpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBSpanFront(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  CONST GLubyte rgba[][3],
                                  const GLubyte mask[]);
-   static void 		WriteMonoRGBASpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoRGBASpanFront(const struct gl_context *ctx, GLuint n,
                                       GLint x, GLint y,
                                       const GLchan color[4],
                                       const GLubyte mask[]);
-   static void 		WriteRGBAPixelsFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBAPixelsFront(const struct gl_context *ctx, GLuint n,
                                     const GLint x[], const GLint y[],
                                     CONST GLubyte rgba[][4],
                                     const GLubyte mask[]);
-   static void 		WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoRGBAPixelsFront(const struct gl_context *ctx, GLuint n,
                                         const GLint x[], const GLint y[],
                                         const GLchan color[4],
                                         const GLubyte mask[]);
-   static void 		WriteCI32SpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteCI32SpanFront(const struct gl_context *ctx, GLuint n,
                                   GLint x, GLint y,
                                   const GLuint index[], const GLubyte mask[]);
-   static void 		WriteCI8SpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteCI8SpanFront(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  const GLubyte index[], const GLubyte mask[]);
-   static void 		WriteMonoCISpanFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoCISpanFront(const struct gl_context *ctx, GLuint n,
                                     GLint x, GLint y,
                                     GLuint colorIndex, const GLubyte mask[]);
-   static void 		WriteCI32PixelsFront(const GLcontext *ctx,
+   static void 		WriteCI32PixelsFront(const struct gl_context *ctx,
                                     GLuint n, const GLint x[], const GLint y[],
                                     const GLuint index[], const GLubyte mask[]);
-   static void 		WriteMonoCIPixelsFront(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoCIPixelsFront(const struct gl_context *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
                                       GLuint colorIndex, const GLubyte mask[]);
-   static void 		ReadCI32SpanFront(const GLcontext *ctx,
+   static void 		ReadCI32SpanFront(const struct gl_context *ctx,
                                  GLuint n, GLint x, GLint y, GLuint index[]);
-   static void 		ReadRGBASpanFront(const GLcontext *ctx, GLuint n,
+   static void 		ReadRGBASpanFront(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  GLubyte rgba[][4]);
-   static void 		ReadCI32PixelsFront(const GLcontext *ctx,
+   static void 		ReadCI32PixelsFront(const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLuint indx[], const GLubyte mask[]);
-   static void 		ReadRGBAPixelsFront(const GLcontext *ctx,
+   static void 		ReadRGBAPixelsFront(const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLubyte rgba[][4], const GLubyte mask[]);
 
    // Back buffer functions
-   static void 		WriteRGBASpanBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBASpanBack(const struct gl_context *ctx, GLuint n,
                                   GLint x, GLint y,
                                   CONST GLubyte rgba[][4],
                                   const GLubyte mask[]);
-   static void 		WriteRGBSpanBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBSpanBack(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  CONST GLubyte rgba[][3],
                                  const GLubyte mask[]);
-   static void 		WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoRGBASpanBack(const struct gl_context *ctx, GLuint n,
                                      GLint x, GLint y,
                                      const GLchan color[4],
                                      const GLubyte mask[]);
-   static void 		WriteRGBAPixelsBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteRGBAPixelsBack(const struct gl_context *ctx, GLuint n,
                                    const GLint x[], const GLint y[],
                                    CONST GLubyte rgba[][4],
                                    const GLubyte mask[]);
-   static void 		WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoRGBAPixelsBack(const struct gl_context *ctx, GLuint n,
                                        const GLint x[], const GLint y[],
                                        const GLchan color[4],
                                        const GLubyte mask[]);
-   static void 		WriteCI32SpanBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteCI32SpanBack(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  const GLuint index[], const GLubyte mask[]);
-   static void 		WriteCI8SpanBack(const GLcontext *ctx, GLuint n, GLint x, GLint y,
+   static void 		WriteCI8SpanBack(const struct gl_context *ctx, GLuint n, GLint x, GLint y,
                                 const GLubyte index[], const GLubyte mask[]);
-   static void 		WriteMonoCISpanBack(const GLcontext *ctx, GLuint n,
+   static void 		WriteMonoCISpanBack(const struct gl_context *ctx, GLuint n,
                                    GLint x, GLint y, GLuint colorIndex,
                                    const GLubyte mask[]);
-   static void 		WriteCI32PixelsBack(const GLcontext *ctx,
+   static void 		WriteCI32PixelsBack(const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    const GLuint index[], const GLubyte mask[]);
-   static void 		WriteMonoCIPixelsBack(const GLcontext *ctx,
+   static void 		WriteMonoCIPixelsBack(const struct gl_context *ctx,
                                      GLuint n, const GLint x[], const GLint y[],
                                      GLuint colorIndex, const GLubyte mask[]);
-   static void 		ReadCI32SpanBack(const GLcontext *ctx,
+   static void 		ReadCI32SpanBack(const struct gl_context *ctx,
                                 GLuint n, GLint x, GLint y, GLuint index[]);
-   static void 		ReadRGBASpanBack(const GLcontext *ctx, GLuint n,
+   static void 		ReadRGBASpanBack(const struct gl_context *ctx, GLuint n,
                                 GLint x, GLint y,
                                 GLubyte rgba[][4]);
-   static void 		ReadCI32PixelsBack(const GLcontext *ctx,
+   static void 		ReadCI32PixelsBack(const struct gl_context *ctx,
                                   GLuint n, const GLint x[], const GLint y[],
                                   GLuint indx[], const GLubyte mask[]);
-   static void 		ReadRGBAPixelsBack(const GLcontext *ctx,
+   static void 		ReadRGBAPixelsBack(const struct gl_context *ctx,
                                   GLuint n, const GLint x[], const GLint y[],
                                   GLubyte rgba[][4], const GLubyte mask[]);
 
@@ -319,7 +319,7 @@ BGLView::BGLView(BRect rect, char *name,
         functions.Viewport      = md->Viewport;
 
 	// create core context
-	GLcontext *ctx = _mesa_create_context(visual, NULL, &functions, md);
+	struct gl_context *ctx = _mesa_create_context(visual, NULL, &functions, md);
 	if (! ctx) {
          _mesa_destroy_visual(visual);
          delete md;
@@ -668,7 +668,7 @@ MesaDriver::~MesaDriver()
 }
 
 
-void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, struct gl_config * visual, struct gl_framebuffer * framebuffer)
+void MesaDriver::Init(BGLView * bglview, struct gl_context * ctx, struct gl_config * visual, struct gl_framebuffer * framebuffer)
 {
 	m_bglview 		= bglview;
 	m_glcontext 	= ctx;
@@ -815,14 +815,14 @@ void MesaDriver::Draw(BRect updateRect) const
 }
 
 
-void MesaDriver::Error(GLcontext *ctx)
+void MesaDriver::Error(struct gl_context *ctx)
 {
 	MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
 	if (md && md->m_bglview)
 		md->m_bglview->ErrorCallback((unsigned long) ctx->ErrorValue);
 }
 
-void MesaDriver::UpdateState( GLcontext *ctx, GLuint new_state )
+void MesaDriver::UpdateState( struct gl_context *ctx, GLuint new_state )
 {
 	struct swrast_device_driver *	swdd = _swrast_GetDeviceDriverReference( ctx );
 
@@ -868,14 +868,14 @@ void MesaDriver::UpdateState( GLcontext *ctx, GLuint new_state )
 }
 
 
-void MesaDriver::ClearIndex(GLcontext *ctx, GLuint index)
+void MesaDriver::ClearIndex(struct gl_context *ctx, GLuint index)
 {
    MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
    md->m_clear_index = index;
 }
 
 
-void MesaDriver::ClearColor(GLcontext *ctx, const GLfloat color[4])
+void MesaDriver::ClearColor(struct gl_context *ctx, const GLfloat color[4])
 {
    MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
    CLAMPED_FLOAT_TO_CHAN(md->m_clear_color[BE_RCOMP], color[0]);
@@ -886,7 +886,7 @@ void MesaDriver::ClearColor(GLcontext *ctx, const GLfloat color[4])
 }
 
 
-void MesaDriver::Clear(GLcontext *ctx, GLbitfield mask,
+void MesaDriver::Clear(struct gl_context *ctx, GLbitfield mask,
                                GLboolean all, GLint x, GLint y,
                                GLint width, GLint height)
 {
@@ -903,7 +903,7 @@ void MesaDriver::Clear(GLcontext *ctx, GLbitfield mask,
 }
 
 
-void MesaDriver::ClearFront(GLcontext *ctx,
+void MesaDriver::ClearFront(struct gl_context *ctx,
                          GLboolean all, GLint x, GLint y,
                          GLint width, GLint height)
 {
@@ -947,7 +947,7 @@ void MesaDriver::ClearFront(GLcontext *ctx,
 }
 
 
-void MesaDriver::ClearBack(GLcontext *ctx,
+void MesaDriver::ClearBack(struct gl_context *ctx,
                         GLboolean all, GLint x, GLint y,
                         GLint width, GLint height)
 {
@@ -984,7 +984,7 @@ void MesaDriver::ClearBack(GLcontext *ctx,
 }
 
 
-void MesaDriver::SetBuffer(GLcontext *ctx, struct gl_framebuffer *buffer,
+void MesaDriver::SetBuffer(struct gl_context *ctx, struct gl_framebuffer *buffer,
                             GLenum mode)
 {
    /* TODO */
@@ -1028,14 +1028,14 @@ void MesaDriver::GetBufferSize(struct gl_framebuffer * framebuffer, GLuint *widt
 }
 
 
-void MesaDriver::Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+void MesaDriver::Viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    /* poll for window size change and realloc software Z/stencil/etc if needed */
    _mesa_ResizeBuffersMESA();
 }
 
 
-const GLubyte *MesaDriver::GetString(GLcontext *ctx, GLenum name)
+const GLubyte *MesaDriver::GetString(struct gl_context *ctx, GLenum name)
 {
    switch (name) {
       case GL_RENDERER:
@@ -1057,7 +1057,7 @@ inline void Plot(BGLView *bglview, int x, int y)
 }
 
 
-void MesaDriver::WriteRGBASpanFront(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteRGBASpanFront(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  CONST GLubyte rgba[][4],
                                  const GLubyte mask[])
@@ -1082,7 +1082,7 @@ void MesaDriver::WriteRGBASpanFront(const GLcontext *ctx, GLuint n,
    }
 }
 
-void MesaDriver::WriteRGBSpanFront(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteRGBSpanFront(const struct gl_context *ctx, GLuint n,
                                 GLint x, GLint y,
                                 CONST GLubyte rgba[][3],
                                 const GLubyte mask[])
@@ -1107,7 +1107,7 @@ void MesaDriver::WriteRGBSpanFront(const GLcontext *ctx, GLuint n,
    }
 }
 
-void MesaDriver::WriteMonoRGBASpanFront(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoRGBASpanFront(const struct gl_context *ctx, GLuint n,
                                      GLint x, GLint y,
                                      const GLchan color[4],
                                      const GLubyte mask[])
@@ -1131,7 +1131,7 @@ void MesaDriver::WriteMonoRGBASpanFront(const GLcontext *ctx, GLuint n,
    }
 }
 
-void MesaDriver::WriteRGBAPixelsFront(const GLcontext *ctx,
+void MesaDriver::WriteRGBAPixelsFront(const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    CONST GLubyte rgba[][4],
                                    const GLubyte mask[] )
@@ -1156,7 +1156,7 @@ void MesaDriver::WriteRGBAPixelsFront(const GLcontext *ctx,
 }
 
 
-void MesaDriver::WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoRGBAPixelsFront(const struct gl_context *ctx, GLuint n,
                                        const GLint x[], const GLint y[],
                                        const GLchan color[4],
                                        const GLubyte mask[])
@@ -1181,21 +1181,21 @@ void MesaDriver::WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::WriteCI32SpanFront( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+void MesaDriver::WriteCI32SpanFront( const struct gl_context *ctx, GLuint n, GLint x, GLint y,
                              const GLuint index[], const GLubyte mask[] )
 {
  	printf("WriteCI32SpanFront() not implemented yet!\n");
    // TODO
 }
 
-void MesaDriver::WriteCI8SpanFront( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+void MesaDriver::WriteCI8SpanFront( const struct gl_context *ctx, GLuint n, GLint x, GLint y,
                             const GLubyte index[], const GLubyte mask[] )
 {
  	printf("WriteCI8SpanFront() not implemented yet!\n");
    // TODO
 }
 
-void MesaDriver::WriteMonoCISpanFront( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoCISpanFront( const struct gl_context *ctx, GLuint n,
                                     GLint x, GLint y,
                                     GLuint colorIndex, const GLubyte mask[] )
 {
@@ -1204,7 +1204,7 @@ void MesaDriver::WriteMonoCISpanFront( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::WriteCI32PixelsFront( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteCI32PixelsFront( const struct gl_context *ctx, GLuint n,
                                     const GLint x[], const GLint y[],
                                     const GLuint index[], const GLubyte mask[] )
 {
@@ -1212,7 +1212,7 @@ void MesaDriver::WriteCI32PixelsFront( const GLcontext *ctx, GLuint n,
    // TODO
 }
 
-void MesaDriver::WriteMonoCIPixelsFront( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoCIPixelsFront( const struct gl_context *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
                                       GLuint colorIndex, const GLubyte mask[] )
 {
@@ -1221,7 +1221,7 @@ void MesaDriver::WriteMonoCIPixelsFront( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::ReadCI32SpanFront( const GLcontext *ctx,
+void MesaDriver::ReadCI32SpanFront( const struct gl_context *ctx,
                                  GLuint n, GLint x, GLint y, GLuint index[] )
 {
  	printf("ReadCI32SpanFront() not implemented yet!\n");
@@ -1229,7 +1229,7 @@ void MesaDriver::ReadCI32SpanFront( const GLcontext *ctx,
 }
 
 
-void MesaDriver::ReadRGBASpanFront( const GLcontext *ctx, GLuint n,
+void MesaDriver::ReadRGBASpanFront( const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y, GLubyte rgba[][4] )
 {
  	printf("ReadRGBASpanFront() not implemented yet!\n");
@@ -1237,7 +1237,7 @@ void MesaDriver::ReadRGBASpanFront( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::ReadCI32PixelsFront( const GLcontext *ctx,
+void MesaDriver::ReadCI32PixelsFront( const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLuint indx[], const GLubyte mask[] )
 {
@@ -1246,7 +1246,7 @@ void MesaDriver::ReadCI32PixelsFront( const GLcontext *ctx,
 }
 
 
-void MesaDriver::ReadRGBAPixelsFront( const GLcontext *ctx,
+void MesaDriver::ReadRGBAPixelsFront( const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLubyte rgba[][4], const GLubyte mask[] )
 {
@@ -1257,7 +1257,7 @@ void MesaDriver::ReadRGBAPixelsFront( const GLcontext *ctx,
 
 
 
-void MesaDriver::WriteRGBASpanBack(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteRGBASpanBack(const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  CONST GLubyte rgba[][4],
                                  const GLubyte mask[])
@@ -1287,7 +1287,7 @@ void MesaDriver::WriteRGBASpanBack(const GLcontext *ctx, GLuint n,
  }
 
 
-void MesaDriver::WriteRGBSpanBack(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteRGBSpanBack(const struct gl_context *ctx, GLuint n,
                                 GLint x, GLint y,
                                 CONST GLubyte rgb[][3],
                                 const GLubyte mask[])
@@ -1319,7 +1319,7 @@ void MesaDriver::WriteRGBSpanBack(const GLcontext *ctx, GLuint n,
 
 
 
-void MesaDriver::WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoRGBASpanBack(const struct gl_context *ctx, GLuint n,
                                     GLint x, GLint y,
                                     const GLchan color[4], const GLubyte mask[])
 {
@@ -1347,7 +1347,7 @@ void MesaDriver::WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::WriteRGBAPixelsBack(const GLcontext *ctx,
+void MesaDriver::WriteRGBAPixelsBack(const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    CONST GLubyte rgba[][4],
                                    const GLubyte mask[] )
@@ -1394,7 +1394,7 @@ void MesaDriver::WriteRGBAPixelsBack(const GLcontext *ctx,
 }
 
 
-void MesaDriver::WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoRGBAPixelsBack(const struct gl_context *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
                                       const GLchan color[4],
                                       const GLubyte mask[])
@@ -1437,7 +1437,7 @@ void MesaDriver::WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::WriteCI32SpanBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteCI32SpanBack( const struct gl_context *ctx, GLuint n,
                                  GLint x, GLint y,
                                  const GLuint index[], const GLubyte mask[] )
 {
@@ -1445,7 +1445,7 @@ void MesaDriver::WriteCI32SpanBack( const GLcontext *ctx, GLuint n,
    // TODO
 }
 
-void MesaDriver::WriteCI8SpanBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteCI8SpanBack( const struct gl_context *ctx, GLuint n,
                                 GLint x, GLint y,
                                 const GLubyte index[], const GLubyte mask[] )
 {
@@ -1453,7 +1453,7 @@ void MesaDriver::WriteCI8SpanBack( const GLcontext *ctx, GLuint n,
   // TODO
 }
 
-void MesaDriver::WriteMonoCISpanBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoCISpanBack( const struct gl_context *ctx, GLuint n,
                                    GLint x, GLint y,
                                    GLuint colorIndex, const GLubyte mask[] )
 {
@@ -1462,7 +1462,7 @@ void MesaDriver::WriteMonoCISpanBack( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::WriteCI32PixelsBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteCI32PixelsBack( const struct gl_context *ctx, GLuint n,
                                    const GLint x[], const GLint y[],
                                    const GLuint index[], const GLubyte mask[] )
 {
@@ -1470,7 +1470,7 @@ void MesaDriver::WriteCI32PixelsBack( const GLcontext *ctx, GLuint n,
    // TODO
 }
 
-void MesaDriver::WriteMonoCIPixelsBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::WriteMonoCIPixelsBack( const struct gl_context *ctx, GLuint n,
                                      const GLint x[], const GLint y[],
                                      GLuint colorIndex, const GLubyte mask[] )
 {
@@ -1479,7 +1479,7 @@ void MesaDriver::WriteMonoCIPixelsBack( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::ReadCI32SpanBack( const GLcontext *ctx,
+void MesaDriver::ReadCI32SpanBack( const struct gl_context *ctx,
                                 GLuint n, GLint x, GLint y, GLuint index[] )
 {
  	printf("ReadCI32SpanBack() not implemented yet!\n");
@@ -1487,7 +1487,7 @@ void MesaDriver::ReadCI32SpanBack( const GLcontext *ctx,
 }
 
 
-void MesaDriver::ReadRGBASpanBack( const GLcontext *ctx, GLuint n,
+void MesaDriver::ReadRGBASpanBack( const struct gl_context *ctx, GLuint n,
                                 GLint x, GLint y, GLubyte rgba[][4] )
 {
    MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
@@ -1507,7 +1507,7 @@ void MesaDriver::ReadRGBASpanBack( const GLcontext *ctx, GLuint n,
 }
 
 
-void MesaDriver::ReadCI32PixelsBack( const GLcontext *ctx,
+void MesaDriver::ReadCI32PixelsBack( const struct gl_context *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLuint indx[], const GLubyte mask[] )
 {
@@ -1516,7 +1516,7 @@ void MesaDriver::ReadCI32PixelsBack( const GLcontext *ctx,
 }
 
 
-void MesaDriver::ReadRGBAPixelsBack( const GLcontext *ctx,
+void MesaDriver::ReadRGBAPixelsBack( const struct gl_context *ctx,
                                   GLuint n, const GLint x[], const GLint y[],
                                   GLubyte rgba[][4], const GLubyte mask[] )
 {

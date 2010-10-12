@@ -408,7 +408,7 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 
 }
 
-static inline void load_shaders(GLcontext * ctx)
+static inline void load_shaders(struct gl_context * ctx)
 {
 
     radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
@@ -1566,7 +1566,7 @@ static GLboolean validate_buffers(context_t *rmesa,
     return GL_TRUE;
 }
 
-unsigned r600_blit(GLcontext *ctx,
+unsigned r600_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,
                    gl_format src_mesaformat,

@@ -69,7 +69,7 @@ static void
 nouveau_channel_flush_notify(struct nouveau_channel *chan)
 {
 	struct nouveau_context *nctx = chan->user_private;
-	GLcontext *ctx = &nctx->base;
+	struct gl_context *ctx = &nctx->base;
 
 	if (nctx->fallback < SWRAST)
 		nouveau_bo_state_emit(ctx);
@@ -83,7 +83,7 @@ nouveau_context_create(gl_api api,
 	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;
 	struct nouveau_screen *screen = dri_screen->private;
 	struct nouveau_context *nctx;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 
 	ctx = screen->driver->context_create(screen, visual, share_ctx);
 	if (!ctx)
@@ -97,8 +97,8 @@ nouveau_context_create(gl_api api,
 }
 
 GLboolean
-nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
-		     const struct gl_config *visual, GLcontext *share_ctx)
+nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
+		     const struct gl_config *visual, struct gl_context *share_ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct dd_function_table functions;
@@ -144,7 +144,7 @@ nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
 }
 
 void
-nouveau_context_deinit(GLcontext *ctx)
+nouveau_context_deinit(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -171,7 +171,7 @@ void
 nouveau_context_destroy(__DRIcontext *dri_ctx)
 {
 	struct nouveau_context *nctx = dri_ctx->driverPrivate;
-	GLcontext *ctx = &nctx->base;
+	struct gl_context *ctx = &nctx->base;
 
 	context_drv(ctx)->context_destroy(ctx);
 }
@@ -179,7 +179,7 @@ nouveau_context_destroy(__DRIcontext *dri_ctx)
 void
 nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 {
-	GLcontext *ctx = dri_ctx->driverPrivate;
+	struct gl_context *ctx = dri_ctx->driverPrivate;
 	__DRIscreen *screen = dri_ctx->driScreenPriv;
 	struct gl_framebuffer *fb = draw->driverPrivate;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
@@ -253,7 +253,7 @@ static void
 update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 		   int *stamp)
 {
-	GLcontext *ctx = dri_ctx->driverPrivate;
+	struct gl_context *ctx = dri_ctx->driverPrivate;
 	struct gl_framebuffer *fb = draw->driverPrivate;
 
 	*stamp = *draw->pStamp;
@@ -273,7 +273,7 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 {
 	if (dri_ctx) {
 		struct nouveau_context *nctx = dri_ctx->driverPrivate;
-		GLcontext *ctx = &nctx->base;
+		struct gl_context *ctx = &nctx->base;
 
 		/* Ask the X server for new renderbuffers. */
 		if (dri_draw->driverPrivate != ctx->WinSysDrawBuffer)
@@ -307,7 +307,7 @@ nouveau_context_unbind(__DRIcontext *dri_ctx)
 }
 
 void
-nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode)
+nouveau_fallback(struct gl_context *ctx, enum nouveau_fallback mode)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -339,7 +339,7 @@ validate_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 }
 
 void
-nouveau_validate_framebuffer(GLcontext *ctx)
+nouveau_validate_framebuffer(struct gl_context *ctx)
 {
 	__DRIcontext *dri_ctx = to_nouveau_context(ctx)->dri_context;
 	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;

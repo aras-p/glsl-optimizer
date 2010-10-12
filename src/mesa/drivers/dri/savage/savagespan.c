@@ -187,7 +187,7 @@
  * the frame buffer.
  */
 static void
-savageCopyPixels( GLcontext *ctx,
+savageCopyPixels( struct gl_context *ctx,
 		  GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 		  GLint destx, GLint desty,
 		  GLenum type )
@@ -198,7 +198,7 @@ savageCopyPixels( GLcontext *ctx,
     _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }
 static void
-savageDrawPixels( GLcontext *ctx,
+savageDrawPixels( struct gl_context *ctx,
 		  GLint x, GLint y,
 		  GLsizei width, GLsizei height,
 		  GLenum format, GLenum type,
@@ -211,7 +211,7 @@ savageDrawPixels( GLcontext *ctx,
     _swrast_DrawPixels(ctx, x, y, width, height, format, type, packing, pixels);
 }
 static void
-savageReadPixels( GLcontext *ctx,
+savageReadPixels( struct gl_context *ctx,
 		  GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type,
 		  const struct gl_pixelstore_attrib *packing,
@@ -226,7 +226,7 @@ savageReadPixels( GLcontext *ctx,
 /*
  * Make sure the hardware is idle when span-rendering.
  */
-static void savageSpanRenderStart( GLcontext *ctx )
+static void savageSpanRenderStart( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    FLUSH_BATCH(imesa);
@@ -234,7 +234,7 @@ static void savageSpanRenderStart( GLcontext *ctx )
 }
 
 
-void savageDDInitSpanFuncs( GLcontext *ctx )
+void savageDDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = savageSpanRenderStart;

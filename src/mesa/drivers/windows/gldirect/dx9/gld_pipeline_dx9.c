@@ -65,7 +65,7 @@ static const struct tnl_pipeline_stage *gld_pipeline[] = {
 //---------------------------------------------------------------------------
 
 void gldInstallPipeline_DX9(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	// Remove any existing pipeline	stages,
 	// then install GLDirect pipeline stages.

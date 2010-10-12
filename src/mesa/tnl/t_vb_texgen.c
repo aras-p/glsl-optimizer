@@ -54,7 +54,7 @@
 
 struct texgen_stage_data;
 
-typedef void (*texgen_func)( GLcontext *ctx,
+typedef void (*texgen_func)( struct gl_context *ctx,
 			     struct texgen_stage_data *store,
 			     GLuint unit);
 
@@ -248,7 +248,7 @@ static build_f_func build_f_tab[5] = {
 
 /* Special case texgen functions.
  */
-static void texgen_reflection_map_nv( GLcontext *ctx,
+static void texgen_reflection_map_nv( struct gl_context *ctx,
 				      struct texgen_stage_data *store,
 				      GLuint unit )
 {
@@ -270,7 +270,7 @@ static void texgen_reflection_map_nv( GLcontext *ctx,
 
 
 
-static void texgen_normal_map_nv( GLcontext *ctx,
+static void texgen_normal_map_nv( struct gl_context *ctx,
 				  struct texgen_stage_data *store,
 				  GLuint unit )
 {
@@ -298,7 +298,7 @@ static void texgen_normal_map_nv( GLcontext *ctx,
 }
 
 
-static void texgen_sphere_map( GLcontext *ctx,
+static void texgen_sphere_map( struct gl_context *ctx,
 			       struct texgen_stage_data *store,
 			       GLuint unit )
 {
@@ -331,7 +331,7 @@ static void texgen_sphere_map( GLcontext *ctx,
 
 
 
-static void texgen( GLcontext *ctx,
+static void texgen( struct gl_context *ctx,
 		    struct texgen_stage_data *store,
 		    GLuint unit )
 {
@@ -480,7 +480,7 @@ static void texgen( GLcontext *ctx,
 
 
 
-static GLboolean run_texgen_stage( GLcontext *ctx,
+static GLboolean run_texgen_stage( struct gl_context *ctx,
 				   struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -505,7 +505,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 }
 
 
-static void validate_texgen_stage( GLcontext *ctx,
+static void validate_texgen_stage( struct gl_context *ctx,
 				   struct tnl_pipeline_stage *stage )
 {
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
@@ -555,7 +555,7 @@ static void validate_texgen_stage( GLcontext *ctx,
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_texgen_data( GLcontext *ctx,
+static GLboolean alloc_texgen_data( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

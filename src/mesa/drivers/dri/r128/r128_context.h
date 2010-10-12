@@ -113,7 +113,7 @@ typedef void (*r128_point_func)( r128ContextPtr,
 
 
 struct r128_context {
-   GLcontext *glCtx;			/* Mesa context */
+   struct gl_context *glCtx;			/* Mesa context */
 
    /* Driver and hardware state management
     */

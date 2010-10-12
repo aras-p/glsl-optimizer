@@ -92,8 +92,8 @@ static const GLuint hw_prim_agp_shade[OP_3D_TRIANGLE_DRAW+1] = {
    MASK_PsShadingFlatC
 };
 
-static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim );
-static void sisRenderPrimitive( GLcontext *ctx, GLenum prim );
+static void sisRasterPrimitive( struct gl_context *ctx, GLuint hwprim );
+static void sisRenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -556,7 +556,7 @@ sis_fallback_tri( sisContextPtr smesa,
 		  sisVertex *v1,
 		  sisVertex *v2 )
 {
-   GLcontext *ctx = smesa->glCtx;
+   struct gl_context *ctx = smesa->glCtx;
    SWvertex v[3];
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
@@ -573,7 +573,7 @@ sis_fallback_line( sisContextPtr smesa,
 		   sisVertex *v0,
 		   sisVertex *v1 )
 {
-   GLcontext *ctx = smesa->glCtx;
+   struct gl_context *ctx = smesa->glCtx;
    SWvertex v[2];
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
@@ -588,7 +588,7 @@ static void
 sis_fallback_point( sisContextPtr smesa,
 		    sisVertex *v0 )
 {
-   GLcontext *ctx = smesa->glCtx;
+   struct gl_context *ctx = smesa->glCtx;
    SWvertex v[1];
    _swsetup_Translate( ctx, v0, &v[0] );
    sisSpanRenderStart( ctx );
@@ -643,7 +643,7 @@ sis_fallback_point( sisContextPtr smesa,
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 #define _SIS_NEW_RENDER_STATE (ANY_RASTER_FLAGS | ANY_FALLBACK_FLAGS)
 
-static void sisChooseRenderState(GLcontext *ctx)
+static void sisChooseRenderState(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT( ctx );
@@ -701,7 +701,7 @@ static void sisChooseRenderState(GLcontext *ctx)
 /**********************************************************************/
 /*                Multipass rendering for front buffering             */
 /**********************************************************************/
-static GLboolean multipass_cliprect( GLcontext *ctx, GLuint pass )
+static GLboolean multipass_cliprect( struct gl_context *ctx, GLuint pass )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
 
@@ -743,7 +743,7 @@ static GLboolean multipass_cliprect( GLcontext *ctx, GLuint pass )
 /*                 Validate state at pipeline start                   */
 /**********************************************************************/
 
-static void sisRunPipeline( GLcontext *ctx )
+static void sisRunPipeline( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
 
@@ -776,7 +776,7 @@ static void sisRunPipeline( GLcontext *ctx )
  * and lines, points and bitmaps.
  */
 
-static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim )
+static void sisRasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    if (smesa->hw_primitive != hwprim) {
@@ -810,7 +810,7 @@ static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim )
    }
 }
 
-static void sisRenderPrimitive( GLcontext *ctx, GLenum prim )
+static void sisRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -836,7 +836,7 @@ do {									\
    smesa->vertex_attr_count++;						\
 } while (0)
 				
-static void sisRenderStart( GLcontext *ctx )
+static void sisRenderStart( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -927,7 +927,7 @@ static void sisRenderStart( GLcontext *ctx )
    }
 }
 
-static void sisRenderFinish( GLcontext *ctx )
+static void sisRenderFinish( struct gl_context *ctx )
 {
 }
 
@@ -1039,7 +1039,7 @@ static const char *getFallbackString(GLuint bit)
    return fallbackStrings[i];
 }
 
-void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void sisFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -1090,7 +1090,7 @@ void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void sisInitTriFuncs( GLcontext *ctx )
+void sisInitTriFuncs( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);

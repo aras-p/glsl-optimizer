@@ -52,7 +52,7 @@ static int using_new_fs = -1;
 static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
 
 struct gl_shader *
-brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
+brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
 {
    struct brw_shader *shader;
 
@@ -67,7 +67,7 @@ brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
 }
 
 struct gl_shader_program *
-brw_new_shader_program(GLcontext *ctx, GLuint name)
+brw_new_shader_program(struct gl_context *ctx, GLuint name)
 {
    struct brw_shader_program *prog;
    prog = talloc_zero(NULL, struct brw_shader_program);
@@ -79,7 +79,7 @@ brw_new_shader_program(GLcontext *ctx, GLuint name)
 }
 
 GLboolean
-brw_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+brw_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    if (!_mesa_ir_compile_shader(ctx, shader))
       return GL_FALSE;
@@ -88,7 +88,7 @@ brw_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 }
 
 GLboolean
-brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -2958,7 +2958,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct brw_shader *shader = NULL;
    struct gl_shader_program *prog = ctx->Shader.CurrentProgram;
 

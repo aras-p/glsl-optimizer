@@ -87,7 +87,7 @@ typedef struct {
 	void				*glPriv;
 
 	// Mesa vars:
-	GLcontext			*glCtx;			// The core Mesa context
+	struct gl_context			*glCtx;			// The core Mesa context
 	struct gl_config			*glVis;			// Describes the color buffer
 	struct gl_framebuffer		*glBuffer;		// Ancillary buffers
 
@@ -135,7 +135,7 @@ typedef struct {
 	//
 	// Mesa context vars:
 	//
-	GLcontext			*glCtx;			// The core Mesa context
+	struct gl_context			*glCtx;			// The core Mesa context
 	struct gl_config			*glVis;			// Describes the color buffer
 	struct gl_framebuffer		*glBuffer;		// Ancillary buffers
 

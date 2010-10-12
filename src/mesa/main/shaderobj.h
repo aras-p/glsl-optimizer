@@ -39,50 +39,50 @@ extern "C" {
  */
 
 extern void
-_mesa_init_shader_state(GLcontext * ctx);
+_mesa_init_shader_state(struct gl_context * ctx);
 
 extern void
-_mesa_free_shader_state(GLcontext *ctx);
+_mesa_free_shader_state(struct gl_context *ctx);
 
 
 extern void
-_mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh);
 
 extern struct gl_shader *
-_mesa_lookup_shader(GLcontext *ctx, GLuint name);
+_mesa_lookup_shader(struct gl_context *ctx, GLuint name);
 
 extern struct gl_shader *
-_mesa_lookup_shader_err(GLcontext *ctx, GLuint name, const char *caller);
+_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller);
 
 
 
 extern void
-_mesa_reference_shader_program(GLcontext *ctx,
+_mesa_reference_shader_program(struct gl_context *ctx,
                                struct gl_shader_program **ptr,
                                struct gl_shader_program *shProg);
 extern void
-_mesa_init_shader(GLcontext *ctx, struct gl_shader *shader);
+_mesa_init_shader(struct gl_context *ctx, struct gl_shader *shader);
 
 extern struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 extern void
-_mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog);
+_mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog);
 
 extern struct gl_shader_program *
-_mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
+_mesa_lookup_shader_program(struct gl_context *ctx, GLuint name);
 
 extern struct gl_shader_program *
-_mesa_lookup_shader_program_err(GLcontext *ctx, GLuint name,
+_mesa_lookup_shader_program_err(struct gl_context *ctx, GLuint name,
                                 const char *caller);
 
 extern void
-_mesa_clear_shader_program_data(GLcontext *ctx,
+_mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg);
 
 extern void
-_mesa_free_shader_program_data(GLcontext *ctx,
+_mesa_free_shader_program_data(struct gl_context *ctx,
                                struct gl_shader_program *shProg);
 
 
@@ -91,10 +91,10 @@ extern void
 _mesa_init_shader_object_functions(struct dd_function_table *driver);
 
 extern void
-_mesa_init_shader_state(GLcontext *ctx);
+_mesa_init_shader_state(struct gl_context *ctx);
 
 extern void
-_mesa_free_shader_state(GLcontext *ctx);
+_mesa_free_shader_state(struct gl_context *ctx);
 
 static INLINE GLuint
 _mesa_shader_type_to_index(GLenum v)

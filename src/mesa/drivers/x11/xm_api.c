@@ -1200,7 +1200,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
  * Convert an RGBA color to a pixel value.
  */
 unsigned long
-xmesa_color_to_pixel(GLcontext *ctx,
+xmesa_color_to_pixel(struct gl_context *ctx,
                      GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                      GLuint pixelFormat)
 {
@@ -1481,7 +1481,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
-   GLcontext *mesaCtx;
+   struct gl_context *mesaCtx;
    struct dd_function_table functions;
    TNLcontext *tnl;
 
@@ -1490,7 +1490,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       firstTime = GL_FALSE;
    }
 
-   /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
+   /* Note: the XMesaContext contains a Mesa struct gl_context struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
    if (!c)
       return NULL;
@@ -1501,7 +1501,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_init_driver_functions(&functions);
    xmesa_init_driver_functions(v, &functions);
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
-                      share_list ? &(share_list->mesa) : (GLcontext *) NULL,
+                      share_list ? &(share_list->mesa) : (struct gl_context *) NULL,
                       &functions, (void *) c)) {
       free(c);
       return NULL;
@@ -1574,7 +1574,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
-   GLcontext *mesaCtx = &c->mesa;
+   struct gl_context *mesaCtx = &c->mesa;
 
 #ifdef FX
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
@@ -1804,7 +1804,7 @@ xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
    xmesa_get_window_size(drawBuffer->display, drawBuffer, &width, &height);
    if (drawBuffer->mesa_buffer.Width != width ||
        drawBuffer->mesa_buffer.Height != height) {
-      GLcontext *ctx = xmctx ? &xmctx->mesa : NULL;
+      struct gl_context *ctx = xmctx ? &xmctx->mesa : NULL;
       _mesa_resize_framebuffer(ctx, &(drawBuffer->mesa_buffer), width, height);
    }
    drawBuffer->mesa_buffer.Initialized = GL_TRUE; /* XXX TEMPORARY? */
@@ -2252,7 +2252,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
                                 GLfloat red, GLfloat green,
                                 GLfloat blue, GLfloat alpha )
 {
-   GLcontext *ctx = &xmesa->mesa;
+   struct gl_context *ctx = &xmesa->mesa;
    GLint r = (GLint) (red   * 255.0F);
    GLint g = (GLint) (green * 255.0F);
    GLint b = (GLint) (blue  * 255.0F);

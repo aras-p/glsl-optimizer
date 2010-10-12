@@ -55,7 +55,7 @@
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
    const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
@@ -179,7 +179,7 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void prepare_constant_buffer(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    const GLuint sz = brw->curbe.total_size;

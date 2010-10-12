@@ -43,7 +43,7 @@
  * \return GL_TRUE if valid, GL_FALSE otherwise
  */
 static GLboolean
-valid_fragment_program(GLcontext *ctx)
+valid_fragment_program(struct gl_context *ctx)
 {
    return !(ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled);
 }

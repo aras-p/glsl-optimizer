@@ -54,7 +54,7 @@
  * program attributes.
  */
 struct parse_state {
-   GLcontext *ctx;
+   struct gl_context *ctx;
    const GLubyte *start;
    const GLubyte *pos;
    const GLubyte *curLine;
@@ -1282,7 +1282,7 @@ Parse_Program(struct parse_state *parseState,
  * indicates the position of the error in 'str'.
  */
 void
-_mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
+_mesa_parse_nv_vertex_program(struct gl_context *ctx, GLenum dstTarget,
                               const GLubyte *str, GLsizei len,
                               struct gl_vertex_program *program)
 {

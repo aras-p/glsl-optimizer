@@ -13,7 +13,7 @@
 #define HAVE_HW_STENCIL_PIXELS 0
 #endif
 
-static void TAG(WriteStencilSpan)( GLcontext *ctx,
+static void TAG(WriteStencilSpan)( struct gl_context *ctx,
                                    struct gl_renderbuffer *rb,
 				   GLuint n, GLint x, GLint y,
 				   const void *values, const GLubyte mask[] )
@@ -64,7 +64,7 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 #if HAVE_HW_STENCIL_SPANS
 /* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
 static void
-TAG(WriteMonoStencilSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+TAG(WriteMonoStencilSpan)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                            GLuint n, GLint x, GLint y,
                            const void *value, const GLubyte mask[] )
 {
@@ -76,7 +76,7 @@ TAG(WriteMonoStencilSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
    TAG(WriteStencilSpan)(ctx, rb, n, x, y, stens, mask);
 }
 #else /* HAVE_HW_STENCIL_SPANS */
-static void TAG(WriteMonoStencilSpan)( GLcontext *ctx,
+static void TAG(WriteMonoStencilSpan)( struct gl_context *ctx,
                                        struct gl_renderbuffer *rb,
                                        GLuint n, GLint x, GLint y,
                                        const void *value,
@@ -118,7 +118,7 @@ static void TAG(WriteMonoStencilSpan)( GLcontext *ctx,
 #endif /* !HAVE_HW_STENCIL_SPANS */
 
 
-static void TAG(WriteStencilPixels)( GLcontext *ctx,
+static void TAG(WriteStencilPixels)( struct gl_context *ctx,
                                      struct gl_renderbuffer *rb,
 				     GLuint n,
 				     const GLint x[], const GLint y[],
@@ -157,7 +157,7 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 
 /* Read stencil spans and pixels
  */
-static void TAG(ReadStencilSpan)( GLcontext *ctx,
+static void TAG(ReadStencilSpan)( struct gl_context *ctx,
                                   struct gl_renderbuffer *rb,
 				  GLuint n, GLint x, GLint y,
 				  void *values)
@@ -190,7 +190,7 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
    HW_READ_UNLOCK();
 }
 
-static void TAG(ReadStencilPixels)( GLcontext *ctx,
+static void TAG(ReadStencilPixels)( struct gl_context *ctx,
                                     struct gl_renderbuffer *rb,
                                     GLuint n, const GLint x[], const GLint y[],
 				    void *values )

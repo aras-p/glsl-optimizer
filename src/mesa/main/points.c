@@ -245,11 +245,11 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
  *
  * \param ctx GL context.
  *
- * Initializes __GLcontextRec::Point and point related constants in
- * __GLcontextRec::Const.
+ * Initializes __struct gl_contextRec::Point and point related constants in
+ * __struct gl_contextRec::Const.
  */
 void
-_mesa_init_point(GLcontext *ctx)
+_mesa_init_point(struct gl_context *ctx)
 {
    GLuint i;
 

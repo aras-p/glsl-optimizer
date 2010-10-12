@@ -47,7 +47,7 @@
 } while(0)
 
 static struct gl_framebuffer *
-radeon_new_framebuffer(GLcontext *ctx, GLuint name)
+radeon_new_framebuffer(struct gl_context *ctx, GLuint name)
 {
   return _mesa_new_framebuffer(ctx, name);
 }
@@ -70,7 +70,7 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 static void *
-radeon_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb,
+radeon_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb,
 		   GLint x, GLint y)
 {
   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
@@ -85,7 +85,7 @@ radeon_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb,
  * storage for a user-created renderbuffer.
  */
 static GLboolean
-radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)
 {
@@ -206,7 +206,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
  * Not used for user-created renderbuffers!
  */
 static GLboolean
-radeon_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+radeon_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
    ASSERT(rb->Name == 0);
@@ -223,7 +223,7 @@ radeon_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-radeon_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
+radeon_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 		     GLuint width, GLuint height)
 {
      struct radeon_framebuffer *radeon_fb = (struct radeon_framebuffer*)fb;
@@ -255,7 +255,7 @@ radeon_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
-radeon_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+radeon_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
 			 GLenum internalFormat, GLuint width, GLuint height)
 {
    _mesa_problem(ctx, "radeon_op_alloc_storage should never be called.");
@@ -352,7 +352,7 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
 }
 
 static struct gl_renderbuffer *
-radeon_new_renderbuffer(GLcontext * ctx, GLuint name)
+radeon_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
   struct radeon_renderbuffer *rrb;
 
@@ -376,7 +376,7 @@ radeon_new_renderbuffer(GLcontext * ctx, GLuint name)
 }
 
 static void
-radeon_bind_framebuffer(GLcontext * ctx, GLenum target,
+radeon_bind_framebuffer(struct gl_context * ctx, GLenum target,
                        struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
@@ -393,7 +393,7 @@ radeon_bind_framebuffer(GLcontext * ctx, GLenum target,
 }
 
 static void
-radeon_framebuffer_renderbuffer(GLcontext * ctx,
+radeon_framebuffer_renderbuffer(struct gl_context * ctx,
                                struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
@@ -410,7 +410,7 @@ radeon_framebuffer_renderbuffer(GLcontext * ctx,
 }
 
 static GLboolean
-radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb, 
+radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb, 
 		     struct gl_texture_image *texImage)
 {
 	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
@@ -459,7 +459,7 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 
 
 static struct radeon_renderbuffer *
-radeon_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
+radeon_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
   const GLuint name = ~0;   /* not significant, but distinct for debugging */
   struct radeon_renderbuffer *rrb;
@@ -488,7 +488,7 @@ radeon_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
   
 }
 static void
-radeon_render_texture(GLcontext * ctx,
+radeon_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
@@ -568,13 +568,13 @@ radeon_render_texture(GLcontext * ctx,
 }
 
 static void
-radeon_finish_render_texture(GLcontext * ctx,
+radeon_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
 
 }
 static void
-radeon_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	gl_format mesa_format;

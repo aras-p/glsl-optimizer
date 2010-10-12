@@ -191,7 +191,7 @@ draw_quad(struct st_context *st,
  * ctx->DrawBuffer->_X/Ymin/max fields.
  */
 static void
-clear_with_quad(GLcontext *ctx,
+clear_with_quad(struct gl_context *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = st_context(ctx);
@@ -316,7 +316,7 @@ clear_with_quad(GLcontext *ctx,
  * Determine if we need to clear the depth buffer by drawing a quad.
  */
 static INLINE GLboolean
-check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+check_clear_color_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -340,7 +340,7 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
  * drawing a quad.
  */
 static INLINE GLboolean
-check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+check_clear_depth_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    const GLuint stencilMax = 0xff;
    GLboolean maskStencil
@@ -368,7 +368,7 @@ check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
  * Determine if we need to clear the depth buffer by drawing a quad.
  */
 static INLINE GLboolean
-check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb,
+check_clear_depth_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb,
                             boolean ds_separate)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
@@ -392,7 +392,7 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Determine if we need to clear the stencil buffer by drawing a quad.
  */
 static INLINE GLboolean
-check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb,
+check_clear_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb,
                               boolean ds_separate)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
@@ -447,7 +447,7 @@ st_flush_clear(struct st_context *st)
  * Called via ctx->Driver.Clear()
  */
 static void
-st_Clear(GLcontext *ctx, GLbitfield mask)
+st_Clear(struct gl_context *ctx, GLbitfield mask)
 {
    static const GLbitfield BUFFER_BITS_DS
       = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);

@@ -58,7 +58,7 @@
  * PBO bitmaps.  I think they are probably pretty rare though - I
  * wonder if Xgl uses them?
  */
-static const GLubyte *map_pbo( GLcontext *ctx,
+static const GLubyte *map_pbo( struct gl_context *ctx,
 			       GLsizei width, GLsizei height,
 			       const struct gl_pixelstore_attrib *unpack,
 			       const GLubyte *bitmap )
@@ -167,7 +167,7 @@ y_flip(struct gl_framebuffer *fb, int y, int height)
  * Render a bitmap.
  */
 static GLboolean
-do_blit_bitmap( GLcontext *ctx, 
+do_blit_bitmap( struct gl_context *ctx, 
 		GLint dstx, GLint dsty,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
@@ -320,7 +320,7 @@ out:
  *    - Chop bitmap up into 32x32 squares and render w/polygon stipple.
  */
 void
-intelBitmap(GLcontext * ctx,
+intelBitmap(struct gl_context * ctx,
 	    GLint x, GLint y,
 	    GLsizei width, GLsizei height,
 	    const struct gl_pixelstore_attrib *unpack,

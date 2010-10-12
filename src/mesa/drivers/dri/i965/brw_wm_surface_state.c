@@ -209,7 +209,7 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
 }
 
 static void
-brw_update_texture_surface( GLcontext *ctx, GLuint unit )
+brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -315,7 +315,7 @@ brw_create_constant_surface(struct brw_context *brw,
 static void
 prepare_wm_constants(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
@@ -407,7 +407,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    drm_intel_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
@@ -572,7 +572,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 static void
 prepare_wm_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    int i;
    int nr_surfaces = 0;
 
@@ -619,7 +619,7 @@ prepare_wm_surfaces(struct brw_context *brw)
 static void
 upload_wm_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
    /* _NEW_BUFFERS | _NEW_COLOR */

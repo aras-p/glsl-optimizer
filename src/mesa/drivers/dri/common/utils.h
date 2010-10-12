@@ -78,10 +78,10 @@ extern unsigned driParseDebugString( const char * debug,
 extern unsigned driGetRendererString( char * buffer,
     const char * hardware_name, const char * driver_date, GLuint agp_mode );
 
-extern void driInitExtensions( GLcontext * ctx, 
+extern void driInitExtensions( struct gl_context * ctx, 
     const struct dri_extension * card_extensions, GLboolean enable_imaging );
 
-extern void driInitSingleExtension( GLcontext * ctx,
+extern void driInitSingleExtension( struct gl_context * ctx,
     const struct dri_extension * ext );
 
 extern GLboolean driCheckDriDdxDrmVersions2(const char * driver_name,

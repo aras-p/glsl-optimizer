@@ -50,7 +50,7 @@
  * Then set ptr to point to sh, incrementing its refcount.
  */
 void
-_mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
    assert(ptr);
@@ -88,7 +88,7 @@ _mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
 }
 
 void
-_mesa_init_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_init_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    shader->RefCount = 1;
 }
@@ -98,7 +98,7 @@ _mesa_init_shader(GLcontext *ctx, struct gl_shader *shader)
  * Called via ctx->Driver.NewShader()
  */
 struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
@@ -118,7 +118,7 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
  * Called via ctx->Driver.DeleteShader().
  */
 static void
-_mesa_delete_shader(GLcontext *ctx, struct gl_shader *sh)
+_mesa_delete_shader(struct gl_context *ctx, struct gl_shader *sh)
 {
    if (sh->Source)
       free((void *) sh->Source);
@@ -131,7 +131,7 @@ _mesa_delete_shader(GLcontext *ctx, struct gl_shader *sh)
  * Lookup a GLSL shader object.
  */
 struct gl_shader *
-_mesa_lookup_shader(GLcontext *ctx, GLuint name)
+_mesa_lookup_shader(struct gl_context *ctx, GLuint name)
 {
    if (name) {
       struct gl_shader *sh = (struct gl_shader *)
@@ -153,7 +153,7 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
  * As above, but record an error if shader is not found.
  */
 struct gl_shader *
-_mesa_lookup_shader_err(GLcontext *ctx, GLuint name, const char *caller)
+_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller)
 {
    if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s", caller);
@@ -188,7 +188,7 @@ _mesa_lookup_shader_err(GLcontext *ctx, GLuint name, const char *caller)
  * Then set ptr to point to shProg, incrementing its refcount.
  */
 void
-_mesa_reference_shader_program(GLcontext *ctx,
+_mesa_reference_shader_program(struct gl_context *ctx,
                                struct gl_shader_program **ptr,
                                struct gl_shader_program *shProg)
 {
@@ -230,7 +230,7 @@ _mesa_reference_shader_program(GLcontext *ctx,
 }
 
 void
-_mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    prog->Type = GL_SHADER_PROGRAM_MESA;
    prog->RefCount = 1;
@@ -247,7 +247,7 @@ _mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog)
  * Called via ctx->Driver.NewShaderProgram()
  */
 static struct gl_shader_program *
-_mesa_new_shader_program(GLcontext *ctx, GLuint name)
+_mesa_new_shader_program(struct gl_context *ctx, GLuint name)
 {
    struct gl_shader_program *shProg;
    shProg = talloc_zero(NULL, struct gl_shader_program);
@@ -263,7 +263,7 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
  * Clear (free) the shader program state that gets produced by linking.
  */
 void
-_mesa_clear_shader_program_data(GLcontext *ctx,
+_mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
    _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
@@ -287,7 +287,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
  * object itself.
  */
 void
-_mesa_free_shader_program_data(GLcontext *ctx,
+_mesa_free_shader_program_data(struct gl_context *ctx,
                                struct gl_shader_program *shProg)
 {
    GLuint i;
@@ -338,7 +338,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
  * Called via ctx->Driver.DeleteShaderProgram().
  */
 static void
-_mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
+_mesa_delete_shader_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
 
@@ -350,7 +350,7 @@ _mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
  * Lookup a GLSL program object.
  */
 struct gl_shader_program *
-_mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
+_mesa_lookup_shader_program(struct gl_context *ctx, GLuint name)
 {
    struct gl_shader_program *shProg;
    if (name) {
@@ -373,7 +373,7 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
  * As above, but record an error if program is not found.
  */
 struct gl_shader_program *
-_mesa_lookup_shader_program_err(GLcontext *ctx, GLuint name,
+_mesa_lookup_shader_program_err(struct gl_context *ctx, GLuint name,
                                 const char *caller)
 {
    if (!name) {

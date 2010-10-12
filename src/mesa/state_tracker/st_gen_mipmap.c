@@ -155,7 +155,7 @@ compress_image(enum pipe_format format,
  * Software fallback for generate mipmap levels.
  */
 static void
-fallback_generate_mipmap(GLcontext *ctx, GLenum target,
+fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
@@ -276,7 +276,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
  * levels should be generated.
  */
 static GLuint
-compute_num_levels(GLcontext *ctx,
+compute_num_levels(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
                    GLenum target)
 {
@@ -311,7 +311,7 @@ compute_num_levels(GLcontext *ctx,
  * Called via ctx->Driver.GenerateMipmap().
  */
 void
-st_generate_mipmap(GLcontext *ctx, GLenum target,
+st_generate_mipmap(struct gl_context *ctx, GLenum target,
                    struct gl_texture_object *texObj)
 {
    struct st_context *st = st_context(ctx);

@@ -198,7 +198,7 @@ static const struct dri_extension all_mesa_extensions[] = {
  * we need to add entry-points (via \c driInitSingleExtension) for those
  * new functions here.
  */
-void driInitExtensions( GLcontext * ctx,
+void driInitExtensions( struct gl_context * ctx,
 			const struct dri_extension * extensions_to_enable,
 			GLboolean enable_imaging )
 {
@@ -239,7 +239,7 @@ void driInitExtensions( GLcontext * ctx,
  * 
  * \sa driInitExtensions, _mesa_enable_extension, _mesa_map_function_array
  */
-void driInitSingleExtension( GLcontext * ctx,
+void driInitSingleExtension( struct gl_context * ctx,
 			     const struct dri_extension * ext )
 {
     if ( ext->functions != NULL ) {

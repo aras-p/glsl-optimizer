@@ -32,7 +32,7 @@
 #include "r300_context.h"
 #include "r300_fragprog_common.h"
 
-static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont *cache)
+static void freeFragProgCache(struct gl_context *ctx, struct r300_fragment_program_cont *cache)
 {
 	struct r300_fragment_program *tmp, *fp = cache->progs;
 
@@ -44,7 +44,7 @@ static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont 
 	}
 }
 
-static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *cache)
+static void freeVertProgCache(struct gl_context *ctx, struct r300_vertex_program_cont *cache)
 {
 	struct r300_vertex_program *tmp, *vp = cache->progs;
 
@@ -57,7 +57,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *c
 	}
 }
 
-static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
+static struct gl_program *r300NewProgram(struct gl_context * ctx, GLenum target,
 					 GLuint id)
 {
 	struct r300_vertex_program_cont *vp;
@@ -81,7 +81,7 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 	return NULL;
 }
 
-static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+static void r300DeleteProgram(struct gl_context * ctx, struct gl_program *prog)
 {
 	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
 	struct r300_fragment_program_cont *fp = (struct r300_fragment_program_cont *)prog;
@@ -99,7 +99,7 @@ static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 }
 
 static GLboolean
-r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+r300ProgramStringNotify(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
 	struct r300_fragment_program_cont *fp = (struct r300_fragment_program_cont *)prog;
@@ -123,7 +123,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 }
 
 static GLboolean
-r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+r300IsProgramNative(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 	if (target == GL_FRAGMENT_PROGRAM_ARB) {
 		struct r300_fragment_program *fp = r300SelectAndTranslateFragmentShader(ctx);

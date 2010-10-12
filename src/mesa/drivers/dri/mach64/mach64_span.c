@@ -128,21 +128,21 @@
 #include "depthtmp.h"
 
 
-static void mach64SpanRenderStart( GLcontext *ctx )
+static void mach64SpanRenderStart( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    LOCK_HARDWARE( mmesa );
    FINISH_DMA_LOCKED( mmesa );
 }
 
-static void mach64SpanRenderFinish( GLcontext *ctx )
+static void mach64SpanRenderFinish( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    _swrast_flush( ctx );
    UNLOCK_HARDWARE( mmesa );
 }
 
-void mach64DDInitSpanFuncs( GLcontext *ctx )
+void mach64DDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart	= mach64SpanRenderStart;

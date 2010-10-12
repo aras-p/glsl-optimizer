@@ -113,7 +113,7 @@ void st_finish( struct st_context *st )
 /**
  * Called via ctx->Driver.Flush()
  */
-static void st_glFlush(GLcontext *ctx)
+static void st_glFlush(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
 
@@ -133,7 +133,7 @@ static void st_glFlush(GLcontext *ctx)
 /**
  * Called via ctx->Driver.Finish()
  */
-static void st_glFinish(GLcontext *ctx)
+static void st_glFinish(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
 

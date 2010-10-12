@@ -33,7 +33,7 @@
 
 #include <inttypes.h>
 
-static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
+static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
@@ -79,7 +79,7 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 	radeon_bo_unmap(query->bo);
 }
 
-static struct gl_query_object * radeonNewQueryObject(GLcontext *ctx, GLuint id)
+static struct gl_query_object * radeonNewQueryObject(struct gl_context *ctx, GLuint id)
 {
 	struct radeon_query_object *query;
 
@@ -95,7 +95,7 @@ static struct gl_query_object * radeonNewQueryObject(GLcontext *ctx, GLuint id)
 	return &query->Base;
 }
 
-static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
+static void radeonDeleteQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
 
@@ -108,7 +108,7 @@ static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 	free(query);
 }
 
-static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)
+static void radeonWaitQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
@@ -125,7 +125,7 @@ static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)
 }
 
 
-static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
+static void radeonBeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
@@ -148,7 +148,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeon->hw.is_dirty = GL_TRUE;
 }
 
-void radeonEmitQueryEnd(GLcontext *ctx)
+void radeonEmitQueryEnd(struct gl_context *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;
@@ -168,7 +168,7 @@ void radeonEmitQueryEnd(GLcontext *ctx)
 	radeon->vtbl.emit_query_finish(radeon);
 }
 
-static void radeonEndQuery(GLcontext *ctx, struct gl_query_object *q)
+static void radeonEndQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 
@@ -181,7 +181,7 @@ static void radeonEndQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeon->query.current = NULL;
 }
 
-static void radeonCheckQuery(GLcontext *ctx, struct gl_query_object *q)
+static void radeonCheckQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
 	radeon_print(RADEON_STATE, RADEON_TRACE, "%s: query id %d\n", __FUNCTION__, q->Id);
 
@@ -219,7 +219,7 @@ void radeonInitQueryObjFunctions(struct dd_function_table *functions)
 	functions->WaitQuery = radeonWaitQuery;
 }
 
-int radeon_check_query_active(GLcontext *ctx, struct radeon_state_atom *atom)
+int radeon_check_query_active(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;
@@ -229,7 +229,7 @@ int radeon_check_query_active(GLcontext *ctx, struct radeon_state_atom *atom)
 	return atom->cmd_size;
 }
 
-void radeon_emit_queryobj(GLcontext *ctx, struct radeon_state_atom *atom)
+void radeon_emit_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	BATCH_LOCALS(radeon);

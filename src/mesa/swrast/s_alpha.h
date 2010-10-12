@@ -33,7 +33,7 @@
 
 
 extern GLint
-_swrast_alpha_test( const GLcontext *ctx, SWspan *span );
+_swrast_alpha_test( const struct gl_context *ctx, SWspan *span );
 
 
 #endif

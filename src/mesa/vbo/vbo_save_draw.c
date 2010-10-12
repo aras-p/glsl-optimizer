@@ -46,7 +46,7 @@
  * last vertex to the saved state
  */
 static void
-_playback_copy_to_current(GLcontext *ctx,
+_playback_copy_to_current(struct gl_context *ctx,
                           const struct vbo_save_vertex_list *node)
 {
    struct vbo_context *vbo = vbo_context(ctx);
@@ -124,7 +124,7 @@ _playback_copy_to_current(GLcontext *ctx,
  * Treat the vertex storage as a VBO, define vertex arrays pointing
  * into it:
  */
-static void vbo_bind_vertex_list(GLcontext *ctx,
+static void vbo_bind_vertex_list(struct gl_context *ctx,
                                  const struct vbo_save_vertex_list *node)
 {
    struct vbo_context *vbo = vbo_context(ctx);
@@ -209,7 +209,7 @@ static void vbo_bind_vertex_list(GLcontext *ctx,
 
 
 static void
-vbo_save_loopback_vertex_list(GLcontext *ctx,
+vbo_save_loopback_vertex_list(struct gl_context *ctx,
                               const struct vbo_save_vertex_list *list)
 {
    const char *buffer = ctx->Driver.MapBuffer(ctx, 
@@ -236,7 +236,7 @@ vbo_save_loopback_vertex_list(GLcontext *ctx,
  * a drawing command.
  */
 void
-vbo_save_playback_vertex_list(GLcontext *ctx, void *data)
+vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 {
    const struct vbo_save_vertex_list *node =
       (const struct vbo_save_vertex_list *) data;

@@ -41,10 +41,10 @@ enum _mesa_glsl_parser_targets {
    ir_shader
 };
 
-struct __GLcontextRec;
+struct gl_context;
 
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct __GLcontextRec *ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *ctx, GLenum target,
 			  void *mem_ctx);
 
    /* Callers of this talloc-based new need not call delete. It's

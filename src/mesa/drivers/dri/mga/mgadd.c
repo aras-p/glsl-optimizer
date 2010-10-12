@@ -43,7 +43,7 @@
  ***************************************/
 
 
-static const GLubyte *mgaGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *mgaGetString( struct gl_context *ctx, GLenum name )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    static char buffer[128];

@@ -41,7 +41,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
-static void brwBindProgram( GLcontext *ctx,
+static void brwBindProgram( struct gl_context *ctx,
 			    GLenum target, 
 			    struct gl_program *prog )
 {
@@ -57,7 +57,7 @@ static void brwBindProgram( GLcontext *ctx,
    }
 }
 
-static struct gl_program *brwNewProgram( GLcontext *ctx,
+static struct gl_program *brwNewProgram( struct gl_context *ctx,
 				      GLenum target, 
 				      GLuint id )
 {
@@ -93,14 +93,14 @@ static struct gl_program *brwNewProgram( GLcontext *ctx,
    }
 }
 
-static void brwDeleteProgram( GLcontext *ctx,
+static void brwDeleteProgram( struct gl_context *ctx,
 			      struct gl_program *prog )
 {
    _mesa_delete_program( ctx, prog );
 }
 
 
-static GLboolean brwIsProgramNative( GLcontext *ctx,
+static GLboolean brwIsProgramNative( struct gl_context *ctx,
 				     GLenum target, 
 				     struct gl_program *prog )
 {
@@ -108,7 +108,7 @@ static GLboolean brwIsProgramNative( GLcontext *ctx,
 }
 
 static void
-shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
+shader_error(struct gl_context *ctx, struct gl_program *prog, const char *msg)
 {
    struct gl_shader_program *shader;
 
@@ -120,7 +120,7 @@ shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
    }
 }
 
-static GLboolean brwProgramStringNotify( GLcontext *ctx,
+static GLboolean brwProgramStringNotify( struct gl_context *ctx,
                                          GLenum target,
                                          struct gl_program *prog )
 {

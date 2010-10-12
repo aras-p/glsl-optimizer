@@ -46,7 +46,7 @@ static GLint TransferTexturePitch (GLint dwPitch);
 
 /* Handle texenv stuff, called from validate_texture (renderstart) */
 static void
-sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
+sis_set_texture_env0( struct gl_context *ctx, struct gl_texture_object *texObj,
    int unit )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -182,7 +182,7 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
 
 /* Handle texenv stuff, called from validate_texture (renderstart) */
 static void
-sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
+sis_set_texture_env1( struct gl_context *ctx, struct gl_texture_object *texObj,
    int unit)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -318,7 +318,7 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
 
 /* Returns 0 if a software fallback is necessary */
 static GLboolean
-sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
+sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
    int hw_unit )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -583,7 +583,7 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
 
 /* Disable a texture unit, called from validate_texture */
 static void
-sis_reset_texture_env (GLcontext *ctx, int hw_unit)
+sis_reset_texture_env (struct gl_context *ctx, int hw_unit)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -620,7 +620,7 @@ sis_reset_texture_env (GLcontext *ctx, int hw_unit)
    }
 }
 
-static void updateTextureUnit( GLcontext *ctx, int unit )
+static void updateTextureUnit( struct gl_context *ctx, int unit )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -656,7 +656,7 @@ static void updateTextureUnit( GLcontext *ctx, int unit )
 }
 
 
-void sisUpdateTextureState( GLcontext *ctx )
+void sisUpdateTextureState( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
    int i;

@@ -40,7 +40,7 @@
  * Clear the color buffer when glColorMask is in effect.
  */
 static void
-clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb,
+clear_rgba_buffer_with_masking(struct gl_context *ctx, struct gl_renderbuffer *rb,
                                GLuint buf)
 {
    const GLint x = ctx->DrawBuffer->_Xmin;
@@ -106,7 +106,7 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Clear an rgba color buffer without channel masking.
  */
 static void
-clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint buf)
+clear_rgba_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint buf)
 {
    const GLint x = ctx->DrawBuffer->_Xmin;
    const GLint y = ctx->DrawBuffer->_Ymin;
@@ -159,7 +159,7 @@ clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint buf)
  * clear its own color buffers for some reason (such as with masking).
  */
 static void
-clear_color_buffers(GLcontext *ctx)
+clear_color_buffers(struct gl_context *ctx)
 {
    GLuint buf;
 
@@ -186,7 +186,7 @@ clear_color_buffers(GLcontext *ctx)
  * \param all  if GL_TRUE, clear whole buffer, else clear specified region.
  */
 void
-_swrast_Clear(GLcontext *ctx, GLbitfield buffers)
+_swrast_Clear(struct gl_context *ctx, GLbitfield buffers)
 {
 #ifdef DEBUG_FOO
    {

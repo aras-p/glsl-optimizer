@@ -716,7 +716,7 @@ st_translate_geometry_program(struct st_context *st,
  * Debug- print current shader text
  */
 void
-st_print_shaders(GLcontext *ctx)
+st_print_shaders(struct gl_context *ctx)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    if (shProg) {

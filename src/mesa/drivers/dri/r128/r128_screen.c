@@ -359,7 +359,7 @@ r128SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       r128ContextPtr rmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       rmesa = (r128ContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = rmesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {

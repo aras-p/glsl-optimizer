@@ -208,7 +208,7 @@ static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 	r700Start3D((context_t *)radeon);
 }
 
-static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
+static void r600_fallback(struct gl_context *ctx, GLuint bit, GLboolean mode)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	if (mode)
@@ -249,7 +249,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.is_format_renderable = r600IsFormatRenderable;
 }
 
-static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
+static void r600InitConstValues(struct gl_context *ctx, radeonScreenPtr screen)
 {
     context_t         *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700    = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -335,7 +335,7 @@ static void r600ParseOptions(context_t *r600, radeonScreenPtr screen)
 
 }
 
-static void r600InitGLExtensions(GLcontext *ctx)
+static void r600InitGLExtensions(struct gl_context *ctx)
 {
 	context_t *r600 = R700_CONTEXT(ctx);
 #ifdef R600_ENABLE_GLSL_TEST
@@ -388,7 +388,7 @@ GLboolean r600CreateContext(gl_api api,
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	context_t *r600;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 
 	assert(glVisual);
 	assert(driContextPriv);

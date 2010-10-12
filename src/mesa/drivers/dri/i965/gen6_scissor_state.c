@@ -33,7 +33,7 @@
 static void
 prepare_scissor_state(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    struct gen6_scissor_rect scissor;
 

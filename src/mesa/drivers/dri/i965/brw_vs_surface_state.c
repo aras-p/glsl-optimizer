@@ -45,7 +45,7 @@
 static void
 prepare_vs_constants(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
@@ -101,7 +101,7 @@ const struct brw_tracked_state brw_vs_constants = {
  * Sets brw->vs.surf_bo[surf] and brw->vp->const_buffer.
  */
 static void
-brw_update_vs_constant_surface( GLcontext *ctx,
+brw_update_vs_constant_surface( struct gl_context *ctx,
                                 GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -151,7 +151,7 @@ prepare_vs_surfaces(struct brw_context *brw)
  */
 static void upload_vs_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    uint32_t *bind;
    int i;
 

@@ -42,7 +42,7 @@
 #include "vbo/vbo.h"
 
 GLboolean
-_tnl_CreateContext( GLcontext *ctx )
+_tnl_CreateContext( struct gl_context *ctx )
 {
    TNLcontext *tnl;
 
@@ -90,7 +90,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
 
 void
-_tnl_DestroyContext( GLcontext *ctx )
+_tnl_DestroyContext( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
@@ -102,7 +102,7 @@ _tnl_DestroyContext( GLcontext *ctx )
 
 
 void
-_tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
+_tnl_InvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
@@ -173,7 +173,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 
 
 void
-_tnl_wakeup( GLcontext *ctx )
+_tnl_wakeup( struct gl_context *ctx )
 {
    /* Assume we haven't been getting state updates either:
     */
@@ -196,14 +196,14 @@ _tnl_wakeup( GLcontext *ctx )
  * we should "Divide-by-W".  Software renders will want that.
  */
 void
-_tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
+_tnl_need_projected_coords( struct gl_context *ctx, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->NeedNdcCoords = mode;
 }
 
 void
-_tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value )
+_tnl_allow_vertex_fog( struct gl_context *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowVertexFog = value;
@@ -213,7 +213,7 @@ _tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 }
 
 void
-_tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value )
+_tnl_allow_pixel_fog( struct gl_context *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowPixelFog = value;

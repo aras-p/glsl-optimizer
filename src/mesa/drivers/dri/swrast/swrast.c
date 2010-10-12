@@ -273,7 +273,7 @@ bytes_per_line(unsigned pitch_bits, unsigned mul)
 }
 
 static GLboolean
-swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			   GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -290,7 +290,7 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 
 static GLboolean
-swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			  GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -499,7 +499,7 @@ get_window_size( struct gl_framebuffer *fb, GLsizei *w, GLsizei *h )
 }
 
 static void
-swrast_check_and_update_window_size( GLcontext *ctx, struct gl_framebuffer *fb )
+swrast_check_and_update_window_size( struct gl_context *ctx, struct gl_framebuffer *fb )
 {
     GLsizei width, height;
 
@@ -510,7 +510,7 @@ swrast_check_and_update_window_size( GLcontext *ctx, struct gl_framebuffer *fb )
 }
 
 static const GLubyte *
-get_string(GLcontext *ctx, GLenum pname)
+get_string(struct gl_context *ctx, GLenum pname)
 {
     (void) ctx;
     switch (pname) {
@@ -524,7 +524,7 @@ get_string(GLcontext *ctx, GLenum pname)
 }
 
 static void
-update_state( GLcontext *ctx, GLuint new_state )
+update_state( struct gl_context *ctx, GLuint new_state )
 {
     /* not much to do here - pass it on */
     _swrast_InvalidateState( ctx, new_state );
@@ -534,7 +534,7 @@ update_state( GLcontext *ctx, GLuint new_state )
 }
 
 static void
-viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     struct gl_framebuffer *draw = ctx->WinSysDrawBuffer;
     struct gl_framebuffer *read = ctx->WinSysReadBuffer;
@@ -543,7 +543,7 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     swrast_check_and_update_window_size(ctx, read);
 }
 
-static gl_format swrastChooseTextureFormat(GLcontext * ctx,
+static gl_format swrastChooseTextureFormat(struct gl_context * ctx,
 					   GLint internalFormat,
 					   GLenum format,
 					   GLenum type)
@@ -575,8 +575,8 @@ dri_create_context(gl_api api,
 {
     struct dri_context *ctx = NULL;
     struct dri_context *share = (struct dri_context *)sharedContextPrivate;
-    GLcontext *mesaCtx = NULL;
-    GLcontext *sharedCtx = NULL;
+    struct gl_context *mesaCtx = NULL;
+    struct gl_context *sharedCtx = NULL;
     struct dd_function_table functions;
 
     TRACE;
@@ -646,7 +646,7 @@ dri_destroy_context(__DRIcontext * cPriv)
 
     if (cPriv) {
 	struct dri_context *ctx = dri_context(cPriv);
-	GLcontext *mesaCtx;
+	struct gl_context *mesaCtx;
 
 	mesaCtx = &ctx->Base;
 
@@ -664,7 +664,7 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
-    GLcontext *mesaCtx;
+    struct gl_context *mesaCtx;
     struct gl_framebuffer *mesaDraw;
     struct gl_framebuffer *mesaRead;
     TRACE;

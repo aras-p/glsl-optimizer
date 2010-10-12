@@ -201,7 +201,7 @@ static void viaFillBuffer(struct via_context *vmesa,
 
 
 
-static void viaClear(GLcontext *ctx, GLbitfield mask)
+static void viaClear(struct gl_context *ctx, GLbitfield mask)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    __DRIdrawable *dPriv = vmesa->driDrawable;
@@ -951,25 +951,25 @@ void viaFlushDma(struct via_context *vmesa)
    }
 }
 
-static void viaFlush(GLcontext *ctx)
+static void viaFlush(struct gl_context *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     VIA_FLUSH_DMA(vmesa);
 }
 
-static void viaFinish(GLcontext *ctx)
+static void viaFinish(struct gl_context *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     VIA_FLUSH_DMA(vmesa);
     viaWaitIdle(vmesa, GL_FALSE);
 }
 
-static void viaClearStencil(GLcontext *ctx,  int s)
+static void viaClearStencil(struct gl_context *ctx,  int s)
 {
     return;
 }
 
-void viaInitIoctlFuncs(GLcontext *ctx)
+void viaInitIoctlFuncs(struct gl_context *ctx)
 {
     ctx->Driver.Flush = viaFlush;
     ctx->Driver.Clear = viaClear;

@@ -40,7 +40,7 @@
 #include "r700_vertprog.h"
 
 
-static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *cache)
+static void freeVertProgCache(struct gl_context *ctx, struct r700_vertex_program_cont *cache)
 {
 	struct r700_vertex_program *tmp, *vp = cache->progs;
 
@@ -64,7 +64,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *c
 	}
 }
 
-static struct gl_program *r700NewProgram(GLcontext * ctx, 
+static struct gl_program *r700NewProgram(struct gl_context * ctx, 
                                          GLenum target,
 					                     GLuint id)
 {
@@ -109,7 +109,7 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 	return pProgram;
 }
 
-static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+static void r700DeleteProgram(struct gl_context * ctx, struct gl_program *prog)
 {
     struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
     struct r700_fragment_program * fp;
@@ -147,7 +147,7 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 }
 
 static GLboolean
-r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+r700ProgramStringNotify(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
 	struct r700_fragment_program * fp = (struct r700_fragment_program*)prog;
@@ -178,7 +178,7 @@ r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	return GL_TRUE;
 }
 
-static GLboolean r700IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+static GLboolean r700IsProgramNative(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 
 	return GL_TRUE;

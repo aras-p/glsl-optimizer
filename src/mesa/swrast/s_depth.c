@@ -40,7 +40,7 @@
  * Return:  number of fragments which pass the test.
  */
 static GLuint
-depth_test_span16( GLcontext *ctx, GLuint n,
+depth_test_span16( struct gl_context *ctx, GLuint n,
                    GLushort zbuffer[], const GLuint z[], GLubyte mask[] )
 {
    GLuint passed = 0;
@@ -269,7 +269,7 @@ depth_test_span16( GLcontext *ctx, GLuint n,
 
 
 static GLuint
-depth_test_span32( GLcontext *ctx, GLuint n,
+depth_test_span32( struct gl_context *ctx, GLuint n,
                    GLuint zbuffer[], const GLuint z[], GLubyte mask[] )
 {
    GLuint passed = 0;
@@ -506,7 +506,7 @@ depth_test_span32( GLcontext *ctx, GLuint n,
  * [0,1] range.
  */
 void
-_swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
+_swrast_depth_clamp_span( struct gl_context *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLuint count = span->end;
@@ -552,7 +552,7 @@ _swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
  * Apply depth test to span of fragments.
  */
 static GLuint
-depth_test_span( GLcontext *ctx, SWspan *span)
+depth_test_span( struct gl_context *ctx, SWspan *span)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
@@ -610,7 +610,7 @@ depth_test_span( GLcontext *ctx, SWspan *span)
  * Do depth testing for an array of fragments at assorted locations.
  */
 static void
-direct_depth_test_pixels16(GLcontext *ctx, GLushort *zStart, GLuint stride,
+direct_depth_test_pixels16(struct gl_context *ctx, GLushort *zStart, GLuint stride,
                            GLuint n, const GLint x[], const GLint y[],
                            const GLuint z[], GLubyte mask[] )
 {
@@ -856,7 +856,7 @@ direct_depth_test_pixels16(GLcontext *ctx, GLushort *zStart, GLuint stride,
  * Do depth testing for an array of fragments with direct access to zbuffer.
  */
 static void
-direct_depth_test_pixels32(GLcontext *ctx, GLuint *zStart, GLuint stride,
+direct_depth_test_pixels32(struct gl_context *ctx, GLuint *zStart, GLuint stride,
                            GLuint n, const GLint x[], const GLint y[],
                            const GLuint z[], GLubyte mask[] )
 {
@@ -1100,7 +1100,7 @@ direct_depth_test_pixels32(GLcontext *ctx, GLuint *zStart, GLuint stride,
 
 
 static GLuint
-depth_test_pixels( GLcontext *ctx, SWspan *span )
+depth_test_pixels( struct gl_context *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
@@ -1150,7 +1150,7 @@ depth_test_pixels( GLcontext *ctx, SWspan *span )
  * \return approx number of pixels that passed (only zero is reliable)
  */
 GLuint
-_swrast_depth_test_span( GLcontext *ctx, SWspan *span)
+_swrast_depth_test_span( struct gl_context *ctx, SWspan *span)
 {
    if (span->arrayMask & SPAN_XY)
       return depth_test_pixels(ctx, span);
@@ -1167,7 +1167,7 @@ _swrast_depth_test_span( GLcontext *ctx, SWspan *span)
  * \return GL_TRUE if any fragments pass, GL_FALSE if no fragments pass
  */
 GLboolean
-_swrast_depth_bounds_test( GLcontext *ctx, SWspan *span )
+_swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
@@ -1252,7 +1252,7 @@ _swrast_depth_bounds_test( GLcontext *ctx, SWspan *span )
  * _swrast_ReadPixels.
  */
 void
-_swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *rb,
                                GLint n, GLint x, GLint y, GLfloat depth[] )
 {
    const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
@@ -1318,7 +1318,7 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
  * As above, but return 32-bit GLuint values.
  */
 void
-_swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_depth_span_uint( struct gl_context *ctx, struct gl_renderbuffer *rb,
                               GLint n, GLint x, GLint y, GLuint depth[] )
 {
    GLuint depthBits;
@@ -1400,7 +1400,7 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
  * Clear the given z/depth renderbuffer.
  */
 void
-_swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
+_swrast_clear_depth_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb )
 {
    GLuint clearValue;
    GLint x, y, width, height;

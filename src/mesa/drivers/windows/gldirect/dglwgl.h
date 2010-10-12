@@ -118,7 +118,7 @@ BOOL	APIENTRY DGL_UseFontOutlinesA(HDC a, DWORD b, DWORD c, DWORD d, FLOAT e, FL
 BOOL	APIENTRY DGL_UseFontOutlinesW(HDC a, DWORD b, DWORD c, DWORD d, FLOAT e, FLOAT f, int g, LPGLYPHMETRICSFLOAT h);
 #endif //_USE_GLD3_WGL
 
-BOOL	dglWglResizeBuffers(GLcontext *ctx, BOOL bDefaultDriver);
+BOOL	dglWglResizeBuffers(struct gl_context *ctx, BOOL bDefaultDriver);
 
 #ifdef  __cplusplus
 }

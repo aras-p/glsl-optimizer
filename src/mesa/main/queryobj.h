@@ -34,7 +34,7 @@
 #if FEATURE_queryobj
 
 static INLINE struct gl_query_object *
-_mesa_lookup_query_object(GLcontext *ctx, GLuint id)
+_mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 {
    return (struct gl_query_object *)
       _mesa_HashLookup(ctx->Query.QueryObjects, id);
@@ -68,7 +68,7 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp);
 #else /* FEATURE_queryobj */
 
 static INLINE struct gl_query_object *
-_mesa_lookup_query_object(GLcontext *ctx, GLuint id)
+_mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 {
    return NULL;
 }
@@ -86,10 +86,10 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
 #endif /* FEATURE_queryobj */
 
 extern void
-_mesa_init_queryobj(GLcontext *ctx);
+_mesa_init_queryobj(struct gl_context *ctx);
 
 extern void
-_mesa_free_queryobj_data(GLcontext *ctx);
+_mesa_free_queryobj_data(struct gl_context *ctx);
 
 
 #endif /* QUERYOBJ_H */

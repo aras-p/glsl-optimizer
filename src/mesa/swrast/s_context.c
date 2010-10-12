@@ -50,7 +50,7 @@
  * stenciling, logic-op, fog, etc?).
  */
 static void
-_swrast_update_rasterflags( GLcontext *ctx )
+_swrast_update_rasterflags( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLbitfield rasterMask = 0;
@@ -129,7 +129,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
  * factors in.
  */
 static void
-_swrast_update_polygon( GLcontext *ctx )
+_swrast_update_polygon( struct gl_context *ctx )
 {
    GLfloat backface_sign;
 
@@ -165,7 +165,7 @@ _swrast_update_polygon( GLcontext *ctx )
  * fog blend factors (from the fog coords) per-fragment.
  */
 static void
-_swrast_update_fog_hint( GLcontext *ctx )
+_swrast_update_fog_hint( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
@@ -180,7 +180,7 @@ _swrast_update_fog_hint( GLcontext *ctx )
  * Update the swrast->_TextureCombinePrimary flag.
  */
 static void
-_swrast_update_texture_env( GLcontext *ctx )
+_swrast_update_texture_env( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
@@ -211,7 +211,7 @@ _swrast_update_texture_env( GLcontext *ctx )
  * lots of fragments.
  */
 static void
-_swrast_update_deferred_texture(GLcontext *ctx)
+_swrast_update_deferred_texture(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (ctx->Color.AlphaEnabled) {
@@ -243,7 +243,7 @@ _swrast_update_deferred_texture(GLcontext *ctx)
  * Update swrast->_FogColor and swrast->_FogEnable values.
  */
 static void
-_swrast_update_fog_state( GLcontext *ctx )
+_swrast_update_fog_state( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
@@ -268,7 +268,7 @@ _swrast_update_fog_state( GLcontext *ctx )
  * program parameters with current state values.
  */
 static void
-_swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
+_swrast_update_fragment_program(struct gl_context *ctx, GLbitfield newState)
 {
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
    if (fp) {
@@ -282,7 +282,7 @@ _swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
  * add per vertex instead of per-fragment.
  */
 static void
-_swrast_update_specular_vertex_add(GLcontext *ctx)
+_swrast_update_specular_vertex_add(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLboolean separateSpecular = ctx->Fog.ColorSumEnabled ||
@@ -346,7 +346,7 @@ _swrast_update_specular_vertex_add(GLcontext *ctx)
  * after a state change.
  */
 static void
-_swrast_validate_triangle( GLcontext *ctx,
+_swrast_validate_triangle( struct gl_context *ctx,
 			   const SWvertex *v0,
                            const SWvertex *v1,
                            const SWvertex *v2 )
@@ -371,7 +371,7 @@ _swrast_validate_triangle( GLcontext *ctx,
  * line routine.  Then call it.
  */
 static void
-_swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+_swrast_validate_line( struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -392,7 +392,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
  * point routine.  Then call it.
  */
 static void
-_swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
+_swrast_validate_point( struct gl_context *ctx, const SWvertex *v0 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -413,7 +413,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
  * function, then call it.
  */
 static void _ASMAPI
-_swrast_validate_blend_func(GLcontext *ctx, GLuint n, const GLubyte mask[],
+_swrast_validate_blend_func(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                             GLvoid *src, const GLvoid *dst,
                             GLenum chanType )
 {
@@ -431,7 +431,7 @@ _swrast_validate_blend_func(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * for subsequent rendering.
  */
 static void
-_swrast_validate_texture_images(GLcontext *ctx)
+_swrast_validate_texture_images(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint u;
@@ -470,7 +470,7 @@ _swrast_validate_texture_images(GLcontext *ctx)
  * from software to hardware rendering.
  */
 void
-_swrast_eject_texture_images(GLcontext *ctx)
+_swrast_eject_texture_images(struct gl_context *ctx)
 {
    GLuint u;
 
@@ -504,14 +504,14 @@ _swrast_eject_texture_images(GLcontext *ctx)
 
 
 static void
-_swrast_sleep( GLcontext *ctx, GLbitfield new_state )
+_swrast_sleep( struct gl_context *ctx, GLbitfield new_state )
 {
    (void) ctx; (void) new_state;
 }
 
 
 static void
-_swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
+_swrast_invalidate_state( struct gl_context *ctx, GLbitfield new_state )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
@@ -546,7 +546,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
 
 
 void
-_swrast_update_texture_samplers(GLcontext *ctx)
+_swrast_update_texture_samplers(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint u;
@@ -569,7 +569,7 @@ _swrast_update_texture_samplers(GLcontext *ctx)
  * swrast->_ActiveAtttribMask.
  */
 static void
-_swrast_update_active_attribs(GLcontext *ctx)
+_swrast_update_active_attribs(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint attribsMask;
@@ -626,7 +626,7 @@ _swrast_update_active_attribs(GLcontext *ctx)
 
 
 void
-_swrast_validate_derived( GLcontext *ctx )
+_swrast_validate_derived( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -681,7 +681,7 @@ _swrast_validate_derived( GLcontext *ctx )
 /* Public entrypoints:  See also s_accum.c, s_bitmap.c, etc.
  */
 void
-_swrast_Quad( GLcontext *ctx,
+_swrast_Quad( struct gl_context *ctx,
 	      const SWvertex *v0, const SWvertex *v1,
               const SWvertex *v2, const SWvertex *v3 )
 {
@@ -697,7 +697,7 @@ _swrast_Quad( GLcontext *ctx,
 }
 
 void
-_swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
+_swrast_Triangle( struct gl_context *ctx, const SWvertex *v0,
                   const SWvertex *v1, const SWvertex *v2 )
 {
    if (SWRAST_DEBUG) {
@@ -710,7 +710,7 @@ _swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
 }
 
 void
-_swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+_swrast_Line( struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_Line\n");
@@ -721,7 +721,7 @@ _swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 }
 
 void
-_swrast_Point( GLcontext *ctx, const SWvertex *v0 )
+_swrast_Point( struct gl_context *ctx, const SWvertex *v0 )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_Point\n");
@@ -731,7 +731,7 @@ _swrast_Point( GLcontext *ctx, const SWvertex *v0 )
 }
 
 void
-_swrast_InvalidateState( GLcontext *ctx, GLbitfield new_state )
+_swrast_InvalidateState( struct gl_context *ctx, GLbitfield new_state )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_InvalidateState\n");
@@ -740,7 +740,7 @@ _swrast_InvalidateState( GLcontext *ctx, GLbitfield new_state )
 }
 
 void
-_swrast_ResetLineStipple( GLcontext *ctx )
+_swrast_ResetLineStipple( struct gl_context *ctx )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_ResetLineStipple\n");
@@ -749,13 +749,13 @@ _swrast_ResetLineStipple( GLcontext *ctx )
 }
 
 void
-_swrast_SetFacing(GLcontext *ctx, GLuint facing)
+_swrast_SetFacing(struct gl_context *ctx, GLuint facing)
 {
    SWRAST_CONTEXT(ctx)->PointLineFacing = facing;
 }
 
 void
-_swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value )
+_swrast_allow_vertex_fog( struct gl_context *ctx, GLboolean value )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_allow_vertex_fog %d\n", value);
@@ -765,7 +765,7 @@ _swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 }
 
 void
-_swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value )
+_swrast_allow_pixel_fog( struct gl_context *ctx, GLboolean value )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_allow_pixel_fog %d\n", value);
@@ -776,7 +776,7 @@ _swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value )
 
 
 GLboolean
-_swrast_CreateContext( GLcontext *ctx )
+_swrast_CreateContext( struct gl_context *ctx )
 {
    GLuint i;
    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
@@ -848,7 +848,7 @@ _swrast_CreateContext( GLcontext *ctx )
 }
 
 void
-_swrast_DestroyContext( GLcontext *ctx )
+_swrast_DestroyContext( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -867,14 +867,14 @@ _swrast_DestroyContext( GLcontext *ctx )
 
 
 struct swrast_device_driver *
-_swrast_GetDeviceDriverReference( GLcontext *ctx )
+_swrast_GetDeviceDriverReference( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    return &swrast->Driver;
 }
 
 void
-_swrast_flush( GLcontext *ctx )
+_swrast_flush( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    /* flush any pending fragments from rendering points */
@@ -885,7 +885,7 @@ _swrast_flush( GLcontext *ctx )
 }
 
 void
-_swrast_render_primitive( GLcontext *ctx, GLenum prim )
+_swrast_render_primitive( struct gl_context *ctx, GLenum prim )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Primitive == GL_POINTS && prim != GL_POINTS) {
@@ -896,7 +896,7 @@ _swrast_render_primitive( GLcontext *ctx, GLenum prim )
 
 
 void
-_swrast_render_start( GLcontext *ctx )
+_swrast_render_start( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderStart)
@@ -905,7 +905,7 @@ _swrast_render_start( GLcontext *ctx )
 }
  
 void
-_swrast_render_finish( GLcontext *ctx )
+_swrast_render_finish( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderFinish)
@@ -918,7 +918,7 @@ _swrast_render_finish( GLcontext *ctx )
 #define SWRAST_DEBUG_VERTICES 0
 
 void
-_swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
+_swrast_print_vertex( struct gl_context *ctx, const SWvertex *v )
 {
    GLuint i;
 

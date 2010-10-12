@@ -28,15 +28,15 @@
 #ifndef BRW_FALLBACK_H
 #define BRW_FALLBACK_H
 
-#include "main/mtypes.h"		/* for GLcontext... */
+#include "main/mtypes.h"		/* for struct gl_context... */
 
 struct brw_context;
 struct vbo_prim;
 
-void brw_fallback( GLcontext *ctx );
-void brw_unfallback( GLcontext *ctx );
+void brw_fallback( struct gl_context *ctx );
+void brw_unfallback( struct gl_context *ctx );
 
-void brw_loopback_vertex_list( GLcontext *ctx,
+void brw_loopback_vertex_list( struct gl_context *ctx,
 			       const GLfloat *buffer,
 			       const GLubyte *attrsz,
 			       const struct vbo_prim *prim,

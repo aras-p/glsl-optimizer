@@ -47,47 +47,47 @@
 
 
 extern void
-tdfxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj);
+tdfxTexValidate(struct gl_context * ctx, struct gl_texture_object *tObj);
 
 
 #if 000 /* DEAD? */
 extern void
-fxDDTexUseGlobalPalette(GLcontext * ctx, GLboolean state);
+fxDDTexUseGlobalPalette(struct gl_context * ctx, GLboolean state);
 #endif
 
 extern GLboolean
-tdfxTestProxyTexImage(GLcontext *ctx, GLenum target,
+tdfxTestProxyTexImage(struct gl_context *ctx, GLenum target,
                         GLint level, GLint internalFormat,
                         GLenum format, GLenum type,
                         GLint width, GLint height,
                         GLint depth, GLint border);
 
 extern GLvoid *
-tdfxDDGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+tdfxDDGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
                   const struct gl_texture_object *texObj,
                   GLenum * formatOut, GLenum * typeOut,
                   GLboolean * freeImageOut);
 
 extern void
-tdfxDDGetCompressedTexImage( GLcontext *ctx, GLenum target,
+tdfxDDGetCompressedTexImage( struct gl_context *ctx, GLenum target,
                              GLint lod, void *image,
                              const struct gl_texture_object *texObj,
                              struct gl_texture_image *texImage );
 
 extern GLint
-tdfxSpecificCompressedTexFormat(GLcontext *ctx,
+tdfxSpecificCompressedTexFormat(struct gl_context *ctx,
                                   GLint internalFormat,
                                   GLint numDimensions);
 
 extern GLint
-tdfxBaseCompressedTexFormat(GLcontext *ctx,
+tdfxBaseCompressedTexFormat(struct gl_context *ctx,
                               GLint internalFormat);
 
 extern GLboolean
-tdfxDDIsCompressedFormat(GLcontext *ctx, GLint internalFormat);
+tdfxDDIsCompressedFormat(struct gl_context *ctx, GLint internalFormat);
 
 extern GLsizei
-tdfxDDCompressedImageSize(GLcontext *ctx,
+tdfxDDCompressedImageSize(struct gl_context *ctx,
                           GLenum intFormat,
                           GLuint numDimensions,
                           GLuint width,

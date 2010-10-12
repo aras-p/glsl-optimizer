@@ -35,7 +35,7 @@
 #if FEATURE_accum
 
 extern void
-st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb);
+st_clear_accum_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb);
 
 extern void st_init_accum_functions(struct dd_function_table *functions);
 
@@ -44,7 +44,7 @@ extern void st_init_accum_functions(struct dd_function_table *functions);
 #include "main/compiler.h"
 
 static INLINE void
-st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+st_clear_accum_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    ASSERT_NO_FEATURE();
 }

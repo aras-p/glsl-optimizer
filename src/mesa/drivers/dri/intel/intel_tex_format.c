@@ -15,7 +15,7 @@
  * immediately after sampling...
  */
 gl_format
-intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
+intelChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
                          GLenum format, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);

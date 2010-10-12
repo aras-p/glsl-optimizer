@@ -35,7 +35,7 @@
 #define LOCALVARS
 #endif
 
-void TAG(translate_vertex)(GLcontext *ctx,
+void TAG(translate_vertex)(struct gl_context *ctx,
 			   const VERTEX *src,
 			   SWvertex *dst)
 {
@@ -108,7 +108,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
 
 
 
-void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
+void TAG(print_vertex)( struct gl_context *ctx, const VERTEX *v )
 {
    LOCALVARS
    GLuint format = GET_VERTEX_FORMAT();
@@ -199,7 +199,7 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 #define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
-INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
+INTERP_QUALIFIER void TAG(interp_extras)( struct gl_context *ctx,
 					  GLfloat t,
 					  GLuint dst, GLuint out, GLuint in,
 					  GLboolean force_boundary )
@@ -230,7 +230,7 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    INTERP_VERTEX(ctx, t, dst, out, in, force_boundary);
 }
 
-INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx, 
+INTERP_QUALIFIER void TAG(copy_pv_extras)( struct gl_context *ctx, 
 					   GLuint dst, GLuint src )
 {
    LOCALVARS

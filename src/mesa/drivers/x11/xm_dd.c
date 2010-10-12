@@ -91,7 +91,7 @@ const int xmesa_kernel1[16] = {
 
 
 static void
-finish_or_flush( GLcontext *ctx )
+finish_or_flush( struct gl_context *ctx )
 {
 #ifdef XFree86Server
       /* NOT_NEEDED */
@@ -107,7 +107,7 @@ finish_or_flush( GLcontext *ctx )
 
 
 static void
-clear_color( GLcontext *ctx, const GLfloat color[4] )
+clear_color( struct gl_context *ctx, const GLfloat color[4] )
 {
    if (ctx->DrawBuffer->Name == 0) {
       const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -134,7 +134,7 @@ clear_color( GLcontext *ctx, const GLfloat color[4] )
 
 /* Implements glColorMask() */
 static void
-color_mask(GLcontext *ctx,
+color_mask(struct gl_context *ctx,
            GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -173,7 +173,7 @@ color_mask(GLcontext *ctx,
  * Clear the front or back color buffer, if it's implemented with a pixmap.
  */
 static void
-clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_pixmap(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
              GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -193,7 +193,7 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_8bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_8bit_ximage( struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                    GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -206,7 +206,7 @@ clear_8bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_HPCR_ximage( struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                    GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -227,7 +227,7 @@ clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_16bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_16bit_ximage( struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                     GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -249,7 +249,7 @@ clear_16bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 /* Optimized code provided by Nozomi Ytow <noz@xfree86.org> */
 static void
-clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_24bit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                    GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -282,7 +282,7 @@ clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_32bit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                    GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -326,7 +326,7 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+clear_nbit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                   GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -345,7 +345,7 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_buffers(GLcontext *ctx, GLbitfield buffers)
+clear_buffers(struct gl_context *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
@@ -396,7 +396,7 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
  * Check if we can do an optimized glDrawPixels into an 8R8G8B visual.
  */
 static GLboolean
-can_do_DrawPixels_8R8G8B(GLcontext *ctx, GLenum format, GLenum type)
+can_do_DrawPixels_8R8G8B(struct gl_context *ctx, GLenum format, GLenum type)
 {
    if (format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
@@ -432,7 +432,7 @@ can_do_DrawPixels_8R8G8B(GLcontext *ctx, GLenum format, GLenum type)
  * The image format must be GL_BGRA to match the PF_8R8G8B pixel format.
  */
 static void
-xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
+xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
                          GLint x, GLint y, GLsizei width, GLsizei height,
                          GLenum format, GLenum type,
                          const struct gl_pixelstore_attrib *unpack,
@@ -529,7 +529,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
  * Check if we can do an optimized glDrawPixels into an 5R6G5B visual.
  */
 static GLboolean
-can_do_DrawPixels_5R6G5B(GLcontext *ctx, GLenum format, GLenum type)
+can_do_DrawPixels_5R6G5B(struct gl_context *ctx, GLenum format, GLenum type)
 {
    if (format == GL_RGB &&
        type == GL_UNSIGNED_SHORT_5_6_5 &&
@@ -567,7 +567,7 @@ can_do_DrawPixels_5R6G5B(GLcontext *ctx, GLenum format, GLenum type)
  * match the PF_5R6G5B pixel format.
  */
 static void
-xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
+xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
                          GLint x, GLint y, GLsizei width, GLsizei height,
                          GLenum format, GLenum type,
                          const struct gl_pixelstore_attrib *unpack,
@@ -662,7 +662,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
  * Determine if we can do an optimized glCopyPixels.
  */
 static GLboolean
-can_do_CopyPixels(GLcontext *ctx, GLenum type)
+can_do_CopyPixels(struct gl_context *ctx, GLenum type)
 {
    if (type == GL_COLOR &&
        ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
@@ -701,7 +701,7 @@ can_do_CopyPixels(GLcontext *ctx, GLenum type)
  * We do support copying from one window to another, ala glXMakeCurrentRead.
  */
 static void
-xmesa_CopyPixels( GLcontext *ctx,
+xmesa_CopyPixels( struct gl_context *ctx,
                   GLint srcx, GLint srcy, GLsizei width, GLsizei height,
                   GLint destx, GLint desty, GLenum type )
 {
@@ -740,7 +740,7 @@ xmesa_CopyPixels( GLcontext *ctx,
  * return a meaningful GL_RENDERER string.
  */
 static const GLubyte *
-get_string( GLcontext *ctx, GLenum name )
+get_string( struct gl_context *ctx, GLenum name )
 {
    (void) ctx;
    switch (name) {
@@ -767,7 +767,7 @@ get_string( GLcontext *ctx, GLenum name )
  * dither enable/disable.
  */
 static void
-enable( GLcontext *ctx, GLenum pname, GLboolean state )
+enable( struct gl_context *ctx, GLenum pname, GLboolean state )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
@@ -785,7 +785,7 @@ enable( GLcontext *ctx, GLenum pname, GLboolean state )
 
 
 static void
-clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
+clear_color_HPCR_ximage( struct gl_context *ctx, const GLfloat color[4] )
 {
    int i;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -819,7 +819,7 @@ clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
 
 
 static void
-clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
+clear_color_HPCR_pixmap( struct gl_context *ctx, const GLfloat color[4] )
 {
    int i;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -863,7 +863,7 @@ clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
  * flags.
  */
 void
-xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
+xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
@@ -954,7 +954,7 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
  * texels.
  */
 static GLboolean
-test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
+test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
                     GLint internalFormat, GLenum format, GLenum type,
                     GLint width, GLint height, GLint depth, GLint border)
 {
@@ -988,7 +988,7 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
 static gl_format
-choose_tex_format( GLcontext *ctx, GLint internalFormat,
+choose_tex_format( struct gl_context *ctx, GLint internalFormat,
                    GLenum format, GLenum type )
 {
    switch (internalFormat) {
@@ -1014,7 +1014,7 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
  * That problem led to the GLX_MESA_resize_buffers extension.
  */
 static void
-xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+xmesa_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    XMesaContext xmctx = XMESA_CONTEXT(ctx);
    XMesaBuffer xmdrawbuf = XMESA_BUFFER(ctx->WinSysDrawBuffer);
@@ -1044,7 +1044,7 @@ struct xmesa_query_object
 
 
 static struct gl_query_object *
-xmesa_new_query_object(GLcontext *ctx, GLuint id)
+xmesa_new_query_object(struct gl_context *ctx, GLuint id)
 {
    struct xmesa_query_object *q = CALLOC_STRUCT(xmesa_query_object);
    if (q) {
@@ -1056,7 +1056,7 @@ xmesa_new_query_object(GLcontext *ctx, GLuint id)
 
 
 static void
-xmesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
+xmesa_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
@@ -1083,7 +1083,7 @@ time_diff(const struct timeval *t0, const struct timeval *t1)
 
 
 static void
-xmesa_end_query(GLcontext *ctx, struct gl_query_object *q)
+xmesa_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
@@ -1175,7 +1175,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
  * functions.
  * Called during context creation only.
  */
-void xmesa_register_swrast_functions( GLcontext *ctx )
+void xmesa_register_swrast_functions( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT( ctx );
 

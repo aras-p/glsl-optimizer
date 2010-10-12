@@ -284,7 +284,7 @@ struct gl_meta_state
  * To be called once during context creation.
  */
 void
-_mesa_meta_init(GLcontext *ctx)
+_mesa_meta_init(struct gl_context *ctx)
 {
    ASSERT(!ctx->Meta);
 
@@ -297,7 +297,7 @@ _mesa_meta_init(GLcontext *ctx)
  * To be called once during context destruction.
  */
 void
-_mesa_meta_free(GLcontext *ctx)
+_mesa_meta_free(struct gl_context *ctx)
 {
    /* Note: Any textures, VBOs, etc, that we allocate should get
     * freed by the normal context destruction code.  But this would be
@@ -316,7 +316,7 @@ _mesa_meta_free(GLcontext *ctx)
  *               to save and reset to their defaults
  */
 static void
-_mesa_meta_begin(GLcontext *ctx, GLbitfield state)
+_mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 {
    struct save_state *save = &ctx->Meta->Save;
 
@@ -557,7 +557,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
  * Leave meta state.  This is like a light-weight version of glPopAttrib().
  */
 static void
-_mesa_meta_end(GLcontext *ctx)
+_mesa_meta_end(struct gl_context *ctx)
 {
    struct save_state *save = &ctx->Meta->Save;
    const GLbitfield state = save->SavedState;
@@ -824,7 +824,7 @@ invert_z(GLfloat normZ)
  * Choose tex target, compute max tex size, etc.
  */
 static void
-init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
+init_temp_texture(struct gl_context *ctx, struct temp_texture *tex)
 {
    /* prefer texture rectangle */
    if (ctx->Extensions.NV_texture_rectangle) {
@@ -850,7 +850,7 @@ init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
  * This does some one-time init if needed.
  */
 static struct temp_texture *
-get_temp_texture(GLcontext *ctx)
+get_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->TempTex;
 
@@ -868,7 +868,7 @@ get_temp_texture(GLcontext *ctx)
  * allocation/deallocation.
  */
 static struct temp_texture *
-get_bitmap_temp_texture(GLcontext *ctx)
+get_bitmap_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Bitmap.Tex;
 
@@ -984,7 +984,7 @@ setup_copypix_texture(struct temp_texture *tex,
  * Setup/load texture for glDrawPixels.
  */
 static void
-setup_drawpix_texture(GLcontext *ctx,
+setup_drawpix_texture(struct gl_context *ctx,
 		      struct temp_texture *tex,
                       GLboolean newTex,
                       GLenum texIntFormat,
@@ -1035,7 +1035,7 @@ setup_drawpix_texture(GLcontext *ctx,
  * One-time init for drawing depth pixels.
  */
 static void
-init_blit_depth_pixels(GLcontext *ctx)
+init_blit_depth_pixels(struct gl_context *ctx)
 {
    static const char *program =
       "!!ARBfp1.0\n"
@@ -1072,7 +1072,7 @@ init_blit_depth_pixels(GLcontext *ctx)
  *         normal path.
  */
 static GLbitfield
-blitframebuffer_texture(GLcontext *ctx,
+blitframebuffer_texture(struct gl_context *ctx,
                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                         GLbitfield mask, GLenum filter)
@@ -1201,7 +1201,7 @@ blitframebuffer_texture(GLcontext *ctx,
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_BlitFramebuffer(GLcontext *ctx,
+_mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter)
@@ -1362,7 +1362,7 @@ _mesa_meta_BlitFramebuffer(GLcontext *ctx,
  * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
  */
 void
-_mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
+_mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
    struct vertex {
@@ -1480,7 +1480,7 @@ _mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_CopyPixels(GLcontext *ctx, GLint srcX, GLint srcY,
+_mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
                       GLsizei width, GLsizei height,
                       GLint dstX, GLint dstY, GLenum type)
 {
@@ -1594,7 +1594,7 @@ _mesa_meta_CopyPixels(GLcontext *ctx, GLint srcX, GLint srcY,
  * into tiles which fit into the max texture size.
  */
 static void
-tiled_draw_pixels(GLcontext *ctx,
+tiled_draw_pixels(struct gl_context *ctx,
                   GLint tileSize,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   GLenum format, GLenum type,
@@ -1630,7 +1630,7 @@ tiled_draw_pixels(GLcontext *ctx,
  * One-time init for drawing stencil pixels.
  */
 static void
-init_draw_stencil_pixels(GLcontext *ctx)
+init_draw_stencil_pixels(struct gl_context *ctx)
 {
    /* This program is run eight times, once for each stencil bit.
     * The stencil values to draw are found in an 8-bit alpha texture.
@@ -1694,7 +1694,7 @@ init_draw_stencil_pixels(GLcontext *ctx)
  * One-time init for drawing depth pixels.
  */
 static void
-init_draw_depth_pixels(GLcontext *ctx)
+init_draw_depth_pixels(struct gl_context *ctx)
 {
    static const char *program =
       "!!ARBfp1.0\n"
@@ -1729,7 +1729,7 @@ init_draw_depth_pixels(GLcontext *ctx)
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_DrawPixels(GLcontext *ctx,
+_mesa_meta_DrawPixels(struct gl_context *ctx,
                       GLint x, GLint y, GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const struct gl_pixelstore_attrib *unpack,
@@ -1962,7 +1962,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
  * improve performance a lot.
  */
 void
-_mesa_meta_Bitmap(GLcontext *ctx,
+_mesa_meta_Bitmap(struct gl_context *ctx,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap1)
@@ -2111,7 +2111,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
  * \return GL_TRUE if a fallback is needed, GL_FALSE otherwise
  */
 GLboolean
-_mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
+_mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
                                           struct gl_texture_object *texObj)
 {
    const GLuint fboSave = ctx->DrawBuffer->Name;
@@ -2177,7 +2177,7 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
  * Note: texture borders and 3D texture support not yet complete.
  */
 void
-_mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
+_mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           struct gl_texture_object *texObj)
 {
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
@@ -2494,7 +2494,7 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
  * ReadPixels() and passed to Tex[Sub]Image().
  */
 static GLenum
-get_temp_image_type(GLcontext *ctx, GLenum baseFormat)
+get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
 {
    switch (baseFormat) {
    case GL_RGBA:
@@ -2525,7 +2525,7 @@ get_temp_image_type(GLcontext *ctx, GLenum baseFormat)
  * Have to be careful with locking and meta state for pixel transfer.
  */
 static void
-copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
+copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
                GLenum internalFormat, GLint x, GLint y,
                GLsizei width, GLsizei height, GLint border)
 {
@@ -2603,7 +2603,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexImage1D(struct gl_context *ctx, GLenum target, GLint level,
                           GLenum internalFormat, GLint x, GLint y,
                           GLsizei width, GLint border)
 {
@@ -2613,7 +2613,7 @@ _mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
                           GLenum internalFormat, GLint x, GLint y,
                           GLsizei width, GLsizei height, GLint border)
 {
@@ -2628,7 +2628,7 @@ _mesa_meta_CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
  * Have to be careful with locking and meta state for pixel transfer.
  */
 static void
-copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
+copy_tex_sub_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
                    GLint xoffset, GLint yoffset, GLint zoffset,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
@@ -2699,7 +2699,7 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset,
                              GLint x, GLint y, GLsizei width)
 {
@@ -2709,7 +2709,7 @@ _mesa_meta_CopyTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset, GLint yoffset,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height)
@@ -2720,7 +2720,7 @@ _mesa_meta_CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset, GLint yoffset, GLint zoffset,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height)
@@ -2731,7 +2731,7 @@ _mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
 
 
 void
-_mesa_meta_CopyColorTable(GLcontext *ctx,
+_mesa_meta_CopyColorTable(struct gl_context *ctx,
                           GLenum target, GLenum internalformat,
                           GLint x, GLint y, GLsizei width)
 {
@@ -2759,7 +2759,7 @@ _mesa_meta_CopyColorTable(GLcontext *ctx,
 
 
 void
-_mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+_mesa_meta_CopyColorSubTable(struct gl_context *ctx,GLenum target, GLsizei start,
                              GLint x, GLint y, GLsizei width)
 {
    GLfloat *buf;

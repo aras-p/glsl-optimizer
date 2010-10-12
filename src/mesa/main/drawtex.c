@@ -30,7 +30,7 @@
 
 
 static void
-draw_texture(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
+draw_texture(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
              GLfloat width, GLfloat height)
 {
    if (!ctx->Extensions.OES_draw_texture) {

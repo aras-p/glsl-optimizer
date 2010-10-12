@@ -57,7 +57,7 @@
 extern GLuint _mesa_evaluator_components( GLenum target );
 
 
-extern void gl_free_control_points( GLcontext *ctx,
+extern void gl_free_control_points( struct gl_context *ctx,
                                     GLenum target, GLfloat *data );
 
 
@@ -103,8 +103,8 @@ _mesa_init_eval_dispatch(struct _glapi_table *disp)
 
 #endif /* FEATURE_evaluators */
 
-extern void _mesa_init_eval( GLcontext *ctx );
-extern void _mesa_free_eval_data( GLcontext *ctx );
+extern void _mesa_init_eval( struct gl_context *ctx );
+extern void _mesa_free_eval_data( struct gl_context *ctx );
 
 
 #endif /* EVAL_H */

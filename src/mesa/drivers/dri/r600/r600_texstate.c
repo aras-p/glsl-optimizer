@@ -52,9 +52,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "evergreen_tex.h"
 
-void r600UpdateTextureState(GLcontext * ctx);
+void r600UpdateTextureState(struct gl_context * ctx);
 
-void r600UpdateTextureState(GLcontext * ctx)
+void r600UpdateTextureState(struct gl_context * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -707,7 +707,7 @@ void r600SetDepthTexMode(struct gl_texture_object *tObj)
  * \param rmesa Context pointer
  * \param t the r300 texture object
  */
-static GLboolean setup_hardware_state(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean setup_hardware_state(struct gl_context * ctx, struct gl_texture_object *texObj, int unit)
 {
 	context_t *rmesa = R700_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
@@ -803,7 +803,7 @@ static GLboolean setup_hardware_state(GLcontext * ctx, struct gl_texture_object 
  *
  * Mostly this means populating the texture object's mipmap tree.
  */
-static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean r600_validate_texture(struct gl_context * ctx, struct gl_texture_object *texObj, int unit)
 {
 	radeonTexObj *t = radeon_tex_obj(texObj);
 
@@ -822,7 +822,7 @@ static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object
 /**
  * Ensure all enabled and complete textures are uploaded along with any buffers being used.
  */
-GLboolean r600ValidateBuffers(GLcontext * ctx)
+GLboolean r600ValidateBuffers(struct gl_context * ctx)
 {
 	context_t *rmesa = R700_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;

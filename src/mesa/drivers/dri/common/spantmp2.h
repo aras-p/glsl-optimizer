@@ -460,7 +460,7 @@
 #include "x86/common_x86_asm.h"
 #endif
 
-static void TAG(WriteRGBASpan)( GLcontext *ctx,
+static void TAG(WriteRGBASpan)( struct gl_context *ctx,
                                 struct gl_renderbuffer *rb,
 				GLuint n, GLint x, GLint y,
 				const void *values, const GLubyte mask[] )
@@ -503,7 +503,7 @@ static void TAG(WriteRGBASpan)( GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBSpan)( GLcontext *ctx,
+static void TAG(WriteRGBSpan)( struct gl_context *ctx,
                                struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y,
 			       const void *values, const GLubyte mask[] )
@@ -542,7 +542,7 @@ static void TAG(WriteRGBSpan)( GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBAPixels)( GLcontext *ctx,
+static void TAG(WriteRGBAPixels)( struct gl_context *ctx,
                                   struct gl_renderbuffer *rb,
                                   GLuint n, const GLint x[], const GLint y[],
                                   const void *values, const GLubyte mask[] )
@@ -588,7 +588,7 @@ static void TAG(WriteRGBAPixels)( GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBASpan)( GLcontext *ctx,	
+static void TAG(WriteMonoRGBASpan)( struct gl_context *ctx,	
                                     struct gl_renderbuffer *rb,
 				    GLuint n, GLint x, GLint y, 
 				    const void *value, const GLubyte mask[] )
@@ -627,7 +627,7 @@ static void TAG(WriteMonoRGBASpan)( GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBAPixels)( GLcontext *ctx,
+static void TAG(WriteMonoRGBAPixels)( struct gl_context *ctx,
                                       struct gl_renderbuffer *rb,
 				      GLuint n,
 				      const GLint x[], const GLint y[],
@@ -669,7 +669,7 @@ static void TAG(WriteMonoRGBAPixels)( GLcontext *ctx,
 }
 
 
-static void TAG(ReadRGBASpan)( GLcontext *ctx,
+static void TAG(ReadRGBASpan)( struct gl_context *ctx,
                                struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y, void *values)
 {
@@ -702,7 +702,7 @@ static void TAG(ReadRGBASpan)( GLcontext *ctx,
 	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)) || \
     ((SPANTMP_PIXEL_FMT == GL_RGB) && \
 	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)))
-static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
+static void TAG2(ReadRGBASpan,_MMX)( struct gl_context *ctx,
                                      struct gl_renderbuffer *rb,
                                      GLuint n, GLint x, GLint y, void *values)
 {
@@ -752,7 +752,7 @@ static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
    defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
-static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
+static void TAG2(ReadRGBASpan,_SSE2)( struct gl_context *ctx,
                                       struct gl_renderbuffer *rb,
                                       GLuint n, GLint x, GLint y,
                                       void *values)
@@ -787,7 +787,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
    defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
-static void TAG2(ReadRGBASpan,_SSE)( GLcontext *ctx,
+static void TAG2(ReadRGBASpan,_SSE)( struct gl_context *ctx,
                                      struct gl_renderbuffer *rb,
                                      GLuint n, GLint x, GLint y,
                                      void *values)
@@ -829,7 +829,7 @@ static void TAG2(ReadRGBASpan,_SSE)( GLcontext *ctx,
 #endif
 
 
-static void TAG(ReadRGBAPixels)( GLcontext *ctx,
+static void TAG(ReadRGBAPixels)( struct gl_context *ctx,
                                  struct gl_renderbuffer *rb,
 				 GLuint n, const GLint x[], const GLint y[],
 				 void *values )

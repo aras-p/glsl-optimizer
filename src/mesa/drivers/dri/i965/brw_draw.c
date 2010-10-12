@@ -80,7 +80,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
 static GLuint brw_set_prim(struct brw_context *brw,
 			   const struct _mesa_prim *prim)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLenum mode = prim->mode;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
@@ -201,7 +201,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
    /* XXX FIXME */
@@ -300,7 +300,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
-static GLboolean brw_try_draw_prims( GLcontext *ctx,
+static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 				     const struct gl_client_array *arrays[],
 				     const struct _mesa_prim *prim,
 				     GLuint nr_prims,
@@ -423,7 +423,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return retval;
 }
 
-void brw_draw_prims( GLcontext *ctx,
+void brw_draw_prims( struct gl_context *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
@@ -467,7 +467,7 @@ void brw_draw_prims( GLcontext *ctx,
 
 void brw_draw_init( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
 
    /* Register our drawing function: 

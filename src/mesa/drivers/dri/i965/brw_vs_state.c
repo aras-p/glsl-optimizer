@@ -51,7 +51,7 @@ struct brw_vs_unit_key {
 static void
 vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
 

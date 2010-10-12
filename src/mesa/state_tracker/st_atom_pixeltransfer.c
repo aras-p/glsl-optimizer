@@ -69,7 +69,7 @@ struct state_key
 };
 
 static void
-make_state_key(GLcontext *ctx,  struct state_key *key)
+make_state_key(struct gl_context *ctx,  struct state_key *key)
 {
    memset(key, 0, sizeof(*key));
 
@@ -85,7 +85,7 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
 
 
 static struct pipe_resource *
-create_color_map_texture(GLcontext *ctx)
+create_color_map_texture(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -108,7 +108,7 @@ create_color_map_texture(GLcontext *ctx)
  * Update the pixelmap texture with the contents of the R/G/B/A pixel maps.
  */
 static void
-load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
+load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -157,7 +157,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
  * Returns a fragment program which implements the current pixel transfer ops.
  */
 static struct gl_fragment_program *
-get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
+get_pixel_transfer_program(struct gl_context *ctx, const struct state_key *key)
 {
    struct st_context *st = st_context(ctx);
    struct prog_instruction inst[MAX_INST];
@@ -320,7 +320,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 static void
 update_pixel_transfer(struct st_context *st)
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct state_key key;
    struct gl_fragment_program *fp;
 

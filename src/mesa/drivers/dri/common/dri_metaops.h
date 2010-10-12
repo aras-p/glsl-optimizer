@@ -31,7 +31,7 @@
 
 
 struct dri_metaops {
-    GLcontext *ctx;
+    struct gl_context *ctx;
     GLboolean internal_viewport_call;
     struct gl_fragment_program *bitmap_fp;
     struct gl_vertex_program *passthrough_vp;
@@ -75,7 +75,7 @@ void meta_set_default_texrect(struct dri_metaops *meta);
 
 void meta_restore_texcoords(struct dri_metaops *meta);
 
-void meta_init_metaops(GLcontext *ctx, struct dri_metaops *meta);
+void meta_init_metaops(struct gl_context *ctx, struct dri_metaops *meta);
 void meta_destroy_metaops(struct dri_metaops *meta);
 
 #endif

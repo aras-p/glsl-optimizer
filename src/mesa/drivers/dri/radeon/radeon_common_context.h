@@ -159,8 +159,8 @@ struct radeon_state_atom {
         GLuint *cmd;		/* one or more cmd's */
 	GLuint *lastcmd;		/* one or more cmd's */
 	GLboolean dirty;	/* dirty-mark in emit_state_list */
-        int (*check) (GLcontext *, struct radeon_state_atom *atom); /* is this state active? */
-        void (*emit) (GLcontext *, struct radeon_state_atom *atom);
+        int (*check) (struct gl_context *, struct radeon_state_atom *atom); /* is this state active? */
+        void (*emit) (struct gl_context *, struct radeon_state_atom *atom);
 };
 
 struct radeon_hw_state {
@@ -316,7 +316,7 @@ struct radeon_dma {
          * flush must be called before non-active vertex allocations can be
          * performed.
          */
-        void (*flush) (GLcontext *);
+        void (*flush) (struct gl_context *);
 };
 
 /* radeon_swtcl.c
@@ -432,7 +432,7 @@ struct radeon_cmdbuf {
 };
 
 struct radeon_context {
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
 
    /* Texture object bookkeeping
@@ -518,17 +518,17 @@ struct radeon_context {
 
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);
-	   void (*update_viewport_offset)(GLcontext *ctx);
+	   void (*update_viewport_offset)(struct gl_context *ctx);
 	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
-	   void (*swtcl_flush)(GLcontext *ctx, uint32_t offset);
+	   void (*swtcl_flush)(struct gl_context *ctx, uint32_t offset);
 	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
-	   void (*fallback)(GLcontext *ctx, GLuint bit, GLboolean mode);
-	   void (*free_context)(GLcontext *ctx);
+	   void (*fallback)(struct gl_context *ctx, GLuint bit, GLboolean mode);
+	   void (*free_context)(struct gl_context *ctx);
 	   void (*emit_query_finish)(radeonContextPtr radeon);
-	   void (*update_scissor)(GLcontext *ctx);
+	   void (*update_scissor)(struct gl_context *ctx);
 	   unsigned (*check_blit)(gl_format mesa_format);
-	   unsigned (*blit)(GLcontext *ctx,
+	   unsigned (*blit)(struct gl_context *ctx,
                         struct radeon_bo *src_bo,
                         intptr_t src_offset,
                         gl_format src_mesaformat,

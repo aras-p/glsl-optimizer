@@ -781,7 +781,7 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
  * Called via ctx->Driver.chooseTextureFormat().
  */
 gl_format
-st_ChooseTextureFormat_renderable(GLcontext *ctx, GLint internalFormat,
+st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
 				  GLenum format, GLenum type, GLboolean renderable)
 {
    struct pipe_screen *screen = st_context(ctx)->pipe->screen;
@@ -821,7 +821,7 @@ st_ChooseTextureFormat_renderable(GLcontext *ctx, GLint internalFormat,
 }
 
 gl_format
-st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
+st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
 {
    return st_ChooseTextureFormat_renderable(ctx, internalFormat,

@@ -72,7 +72,7 @@ brw_queryobj_get_results(struct brw_query_object *query)
 }
 
 static struct gl_query_object *
-brw_new_query_object(GLcontext *ctx, GLuint id)
+brw_new_query_object(struct gl_context *ctx, GLuint id)
 {
    struct brw_query_object *query;
 
@@ -87,7 +87,7 @@ brw_new_query_object(GLcontext *ctx, GLuint id)
 }
 
 static void
-brw_delete_query(GLcontext *ctx, struct gl_query_object *q)
+brw_delete_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
@@ -96,7 +96,7 @@ brw_delete_query(GLcontext *ctx, struct gl_query_object *q)
 }
 
 static void
-brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
+brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
@@ -146,7 +146,7 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
  * Begin the ARB_occlusion_query query on a query object.
  */
 static void
-brw_end_query(GLcontext *ctx, struct gl_query_object *q)
+brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
@@ -197,7 +197,7 @@ brw_end_query(GLcontext *ctx, struct gl_query_object *q)
    }
 }
 
-static void brw_wait_query(GLcontext *ctx, struct gl_query_object *q)
+static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
@@ -205,7 +205,7 @@ static void brw_wait_query(GLcontext *ctx, struct gl_query_object *q)
    query->Base.Ready = GL_TRUE;
 }
 
-static void brw_check_query(GLcontext *ctx, struct gl_query_object *q)
+static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 

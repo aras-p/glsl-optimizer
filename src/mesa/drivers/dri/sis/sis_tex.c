@@ -152,7 +152,7 @@ sisFreeTexImage( sisContextPtr smesa, sisTexObjPtr t, int level )
 }
 
 static void 
-sisTexEnv( GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *param )
+sisTexEnv( struct gl_context *ctx, GLenum target, GLenum pname, const GLfloat *param )
 {
   sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -160,7 +160,7 @@ sisTexEnv( GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *param )
 }
 
 static void
-sisTexParameter( GLcontext *ctx, GLenum target,
+sisTexParameter( struct gl_context *ctx, GLenum target,
                  struct gl_texture_object *texObj, GLenum pname,
                  const GLfloat *params )
 {
@@ -170,7 +170,7 @@ sisTexParameter( GLcontext *ctx, GLenum target,
 }
 
 static void
-sisBindTexture( GLcontext *ctx, GLenum target,
+sisBindTexture( struct gl_context *ctx, GLenum target,
                 struct gl_texture_object *texObj )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -194,7 +194,7 @@ sisBindTexture( GLcontext *ctx, GLenum target,
 }
 
 static void
-sisDeleteTexture( GLcontext * ctx, struct gl_texture_object *texObj )
+sisDeleteTexture( struct gl_context * ctx, struct gl_texture_object *texObj )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    sisTexObjPtr t;
@@ -220,14 +220,14 @@ sisDeleteTexture( GLcontext * ctx, struct gl_texture_object *texObj )
    _mesa_delete_texture_object(ctx, texObj);
 }
 
-static GLboolean sisIsTextureResident( GLcontext * ctx,
+static GLboolean sisIsTextureResident( struct gl_context * ctx,
 			 		 struct gl_texture_object *texObj )
 {
   return (texObj->DriverData != NULL);
 }
 
 static gl_format
-sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+sisChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
 			  GLenum format, GLenum type )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -352,7 +352,7 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    }
 }
 
-static void sisTexImage1D( GLcontext *ctx, GLenum target, GLint level,
+static void sisTexImage1D( struct gl_context *ctx, GLenum target, GLint level,
 			     GLint internalFormat,
 			     GLint width, GLint border,
 			     GLenum format, GLenum type, const GLvoid *pixels,
@@ -389,7 +389,7 @@ static void sisTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-static void sisTexSubImage1D( GLcontext *ctx,
+static void sisTexSubImage1D( struct gl_context *ctx,
 				GLenum target,
 				GLint level,
 				GLint xoffset,
@@ -439,7 +439,7 @@ static void sisTexSubImage1D( GLcontext *ctx,
    smesa->TexStates[ctx->Texture.CurrentUnit] |= NEW_TEXTURING;
 }
 
-static void sisTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void sisTexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			     GLint internalFormat,
 			     GLint width, GLint height, GLint border,
 			     GLenum format, GLenum type, const GLvoid *pixels,
@@ -475,7 +475,7 @@ static void sisTexImage2D( GLcontext *ctx, GLenum target, GLint level,
    smesa->TexStates[ctx->Texture.CurrentUnit] |= NEW_TEXTURING;
 }
 
-static void sisTexSubImage2D( GLcontext *ctx,
+static void sisTexSubImage2D( struct gl_context *ctx,
 				GLenum target,
 				GLint level,
 				GLint xoffset, GLint yoffset,
@@ -544,7 +544,7 @@ static void sisTexSubImage2D( GLcontext *ctx,
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-sisNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+sisNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);

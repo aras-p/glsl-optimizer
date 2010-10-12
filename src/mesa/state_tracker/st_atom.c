@@ -109,7 +109,7 @@ static void xor_states( struct st_state_flags *result,
  */
 static void check_program_state( struct st_context *st )
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    if (ctx->VertexProgram._Current != &st->vp->Base)
       st->dirty.st |= ST_NEW_VERTEX_PROGRAM;

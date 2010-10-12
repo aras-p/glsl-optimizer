@@ -63,7 +63,7 @@
 
 
 static void
-NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
+NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan span;

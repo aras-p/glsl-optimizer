@@ -46,7 +46,7 @@
  * May be used to implement the position_invariant option.
  */
 static void
-_mesa_insert_mvp_dp4_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+_mesa_insert_mvp_dp4_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
 {
    struct prog_instruction *newInst;
    const GLuint origLen = vprog->Base.NumInstructions;
@@ -114,7 +114,7 @@ _mesa_insert_mvp_dp4_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 
 
 static void
-_mesa_insert_mvp_mad_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+_mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
 {
    struct prog_instruction *newInst;
    const GLuint origLen = vprog->Base.NumInstructions;
@@ -216,7 +216,7 @@ _mesa_insert_mvp_mad_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 
 
 void
-_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+_mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
 {
    if (ctx->mvp_with_dp4) 
       _mesa_insert_mvp_dp4_code( ctx, vprog );
@@ -238,7 +238,7 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
  * to vertex programs too.
  */
 void
-_mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+_mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
 {
    static const gl_state_index fogPStateOpt[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
@@ -585,7 +585,7 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
  * This is for debug/test purposes.
  */
 void
-_mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog)
+_mesa_nop_fragment_program(struct gl_context *ctx, struct gl_fragment_program *prog)
 {
    struct prog_instruction *inst;
    GLuint inputAttr;
@@ -626,7 +626,7 @@ _mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog)
  * transforms vertex position and emits color.
  */
 void
-_mesa_nop_vertex_program(GLcontext *ctx, struct gl_vertex_program *prog)
+_mesa_nop_vertex_program(struct gl_context *ctx, struct gl_vertex_program *prog)
 {
    struct prog_instruction *inst;
    GLuint inputAttr;

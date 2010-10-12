@@ -63,7 +63,7 @@
 #define RENDER_TAB_QUALIFIER static
 #endif
 
-static void TAG(render_points)( GLcontext *ctx,
+static void TAG(render_points)( struct gl_context *ctx,
 				GLuint start,
 				GLuint count,
 				GLuint flags )
@@ -77,7 +77,7 @@ static void TAG(render_points)( GLcontext *ctx,
    POSTFIX;
 }
 
-static void TAG(render_lines)( GLcontext *ctx,
+static void TAG(render_lines)( struct gl_context *ctx,
 			       GLuint start,
 			       GLuint count,
 			       GLuint flags )
@@ -96,7 +96,7 @@ static void TAG(render_lines)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_strip)( GLcontext *ctx,
+static void TAG(render_line_strip)( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -118,7 +118,7 @@ static void TAG(render_line_strip)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_loop)( GLcontext *ctx,
+static void TAG(render_line_loop)( struct gl_context *ctx,
 				   GLuint start,
 				   GLuint count,
 				   GLuint flags )
@@ -150,7 +150,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 }
 
 
-static void TAG(render_triangles)( GLcontext *ctx,
+static void TAG(render_triangles)( struct gl_context *ctx,
 				   GLuint start,
 				   GLuint count,
 				   GLuint flags )
@@ -177,7 +177,7 @@ static void TAG(render_triangles)( GLcontext *ctx,
 
 
 
-static void TAG(render_tri_strip)( GLcontext *ctx,
+static void TAG(render_tri_strip)( struct gl_context *ctx,
 				   GLuint start,
 				   GLuint count,
 				   GLuint flags )
@@ -213,7 +213,7 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
 }
 
 
-static void TAG(render_tri_fan)( GLcontext *ctx,
+static void TAG(render_tri_fan)( struct gl_context *ctx,
 				 GLuint start,
 				 GLuint count,
 				 GLuint flags )
@@ -252,7 +252,7 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 }
 
 
-static void TAG(render_poly)( GLcontext *ctx,
+static void TAG(render_poly)( struct gl_context *ctx,
 			      GLuint start,
 			      GLuint count,
 			      GLuint flags )
@@ -321,7 +321,7 @@ static void TAG(render_poly)( GLcontext *ctx,
    POSTFIX;
 }
 
-static void TAG(render_quads)( GLcontext *ctx,
+static void TAG(render_quads)( struct gl_context *ctx,
 			       GLuint start,
 			       GLuint count,
 			       GLuint flags )
@@ -346,7 +346,7 @@ static void TAG(render_quads)( GLcontext *ctx,
    POSTFIX;
 }
 
-static void TAG(render_quad_strip)( GLcontext *ctx,
+static void TAG(render_quad_strip)( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -384,7 +384,7 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
    POSTFIX;
 }
 
-static void TAG(render_noop)( GLcontext *ctx,
+static void TAG(render_noop)( struct gl_context *ctx,
 			      GLuint start,
 			      GLuint count,
 			      GLuint flags )
@@ -392,7 +392,7 @@ static void TAG(render_noop)( GLcontext *ctx,
    (void)(ctx && start && count && flags);
 }
 
-RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
+RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(struct gl_context *,
 							   GLuint,
 							   GLuint,
 							   GLuint) =

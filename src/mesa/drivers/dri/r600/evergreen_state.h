@@ -31,15 +31,15 @@
 
 #include "r600_context.h"
 
-extern void evergreenUpdateStateParameters(GLcontext * ctx, GLuint new_state);
-extern void evergreenUpdateShaders(GLcontext * ctx);
-extern void evergreenUpdateShaderStates(GLcontext * ctx);
+extern void evergreenUpdateStateParameters(struct gl_context * ctx, GLuint new_state);
+extern void evergreenUpdateShaders(struct gl_context * ctx);
+extern void evergreenUpdateShaderStates(struct gl_context * ctx);
 
-extern void evergreeUpdateShaders(GLcontext * ctx);
+extern void evergreeUpdateShaders(struct gl_context * ctx);
 
-extern void evergreenUpdateViewportOffset(GLcontext * ctx);
+extern void evergreenUpdateViewportOffset(struct gl_context * ctx);
 
-extern void evergreenInitState(GLcontext * ctx);
+extern void evergreenInitState(struct gl_context * ctx);
 extern void evergreenInitStateFuncs (radeonContextPtr radeon, struct dd_function_table *functions);
 
 extern void evergreenSetScissor(context_t *context);

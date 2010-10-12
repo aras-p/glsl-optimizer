@@ -323,7 +323,7 @@ compute_coveragef(const struct LineInfo *info,
 }
 
 
-typedef void (*plot_func)(GLcontext *ctx, struct LineInfo *line,
+typedef void (*plot_func)(struct gl_context *ctx, struct LineInfo *line,
                           int ix, int iy);
                          
 
@@ -332,7 +332,7 @@ typedef void (*plot_func)(GLcontext *ctx, struct LineInfo *line,
  * Draw an AA line segment (called many times per line when stippling)
  */
 static void
-segment(GLcontext *ctx,
+segment(struct gl_context *ctx,
         struct LineInfo *line,
         plot_func plot,
         GLfloat t0, GLfloat t1)
@@ -472,7 +472,7 @@ segment(GLcontext *ctx,
 
 
 void
-_swrast_choose_aa_line_function(GLcontext *ctx)
+_swrast_choose_aa_line_function(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 

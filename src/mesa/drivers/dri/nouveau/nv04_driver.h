@@ -39,55 +39,55 @@ enum {
 
 /* nv04_render.c */
 void
-nv04_render_init(GLcontext *ctx);
+nv04_render_init(struct gl_context *ctx);
 
 void
-nv04_render_destroy(GLcontext *ctx);
+nv04_render_destroy(struct gl_context *ctx);
 
 /* nv04_surface.c */
 GLboolean
-nv04_surface_init(GLcontext *ctx);
+nv04_surface_init(struct gl_context *ctx);
 
 void
-nv04_surface_takedown(GLcontext *ctx);
+nv04_surface_takedown(struct gl_context *ctx);
 
 void
-nv04_surface_copy(GLcontext *ctx,
+nv04_surface_copy(struct gl_context *ctx,
 		  struct nouveau_surface *dst, struct nouveau_surface *src,
 		  int dx, int dy, int sx, int sy, int w, int h);
 
 void
-nv04_surface_fill(GLcontext *ctx,
+nv04_surface_fill(struct gl_context *ctx,
 		  struct nouveau_surface *dst,
 		  unsigned mask, unsigned value,
 		  int dx, int dy, int w, int h);
 
 /* nv04_state_fb.c */
 void
-nv04_emit_framebuffer(GLcontext *ctx, int emit);
+nv04_emit_framebuffer(struct gl_context *ctx, int emit);
 
 void
-nv04_emit_scissor(GLcontext *ctx, int emit);
+nv04_emit_scissor(struct gl_context *ctx, int emit);
 
 /* nv04_state_raster.c */
 void
-nv04_defer_control(GLcontext *ctx, int emit);
+nv04_defer_control(struct gl_context *ctx, int emit);
 
 void
-nv04_emit_control(GLcontext *ctx, int emit);
+nv04_emit_control(struct gl_context *ctx, int emit);
 
 void
-nv04_defer_blend(GLcontext *ctx, int emit);
+nv04_defer_blend(struct gl_context *ctx, int emit);
 
 void
-nv04_emit_blend(GLcontext *ctx, int emit);
+nv04_emit_blend(struct gl_context *ctx, int emit);
 
 /* nv04_state_frag.c */
 void
-nv04_emit_tex_env(GLcontext *ctx, int emit);
+nv04_emit_tex_env(struct gl_context *ctx, int emit);
 
 /* nv04_state_tex.c */
 void
-nv04_emit_tex_obj(GLcontext *ctx, int emit);
+nv04_emit_tex_obj(struct gl_context *ctx, int emit);
 
 #endif

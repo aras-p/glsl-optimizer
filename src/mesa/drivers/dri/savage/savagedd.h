@@ -28,5 +28,5 @@
 
 #include "main/context.h"
 
-void savageDDInitDriverFuncs( GLcontext *ctx );
+void savageDDInitDriverFuncs( struct gl_context *ctx );
 #endif

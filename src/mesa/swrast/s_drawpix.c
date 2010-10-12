@@ -44,7 +44,7 @@
  * Return:  GL_TRUE if success, GL_FALSE if slow path must be used instead
  */
 static GLboolean
-fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
+fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
                       GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const struct gl_pixelstore_attrib *userUnpack,
@@ -310,7 +310,7 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
  * Draw stencil image.
  */
 static void
-draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum type,
                      const struct gl_pixelstore_attrib *unpack,
@@ -354,7 +354,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
  * Draw depth image.
  */
 static void
-draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum type,
                    const struct gl_pixelstore_attrib *unpack,
@@ -460,7 +460,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
  * Draw RGBA image.
  */
 static void
-draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height,
                   GLenum format, GLenum type,
                   const struct gl_pixelstore_attrib *unpack,
@@ -557,7 +557,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
  * color buffer(s).
  */
 static void
-draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                           GLsizei width, GLsizei height, GLenum type,
                           const struct gl_pixelstore_attrib *unpack,
                           const GLvoid *pixels)
@@ -687,7 +687,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
  * By time we get here, all error checking will have been done.
  */
 void
-_swrast_DrawPixels( GLcontext *ctx,
+_swrast_DrawPixels( struct gl_context *ctx,
 		    GLint x, GLint y,
 		    GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,

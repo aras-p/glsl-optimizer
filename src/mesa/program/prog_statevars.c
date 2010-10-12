@@ -46,7 +46,7 @@
  * The program parser will produce the state[] values.
  */
 static void
-_mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
+_mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
                   GLfloat *value)
 {
    switch (state[0]) {
@@ -1049,7 +1049,7 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
  * This would be called at glBegin time when using a fragment program.
  */
 void
-_mesa_load_state_parameters(GLcontext *ctx,
+_mesa_load_state_parameters(struct gl_context *ctx,
                             struct gl_program_parameter_list *paramList)
 {
    GLuint i;
@@ -1103,7 +1103,7 @@ load_transpose_matrix(GLfloat registers[][4], GLuint pos,
  * glBegin/glEnd, not per-vertex.
  */
 void
-_mesa_load_tracked_matrices(GLcontext *ctx)
+_mesa_load_tracked_matrices(struct gl_context *ctx)
 {
    GLuint i;
 

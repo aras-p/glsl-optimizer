@@ -47,7 +47,7 @@ static drmBufPtr i810_get_buffer_ioctl( i810ContextPtr imesa )
 
 #define DEPTH_SCALE ((1<<16)-1)
 
-static void i810Clear( GLcontext *ctx, GLbitfield mask )
+static void i810Clear( struct gl_context *ctx, GLbitfield mask )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    __DRIdrawable *dPriv = imesa->driDrawable;
@@ -499,13 +499,13 @@ int i810_check_copy(int fd)
    return(drmCommandNone(fd, DRM_I810_DOCOPY));
 }
 
-static void i810Flush( GLcontext *ctx )
+static void i810Flush( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    I810_FIREVERTICES( imesa );
 }
 
-static void i810Finish( GLcontext *ctx  ) 
+static void i810Finish( struct gl_context *ctx  ) 
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    i810DmaFinish( imesa );

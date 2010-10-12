@@ -47,7 +47,7 @@
 
 
 GLboolean
-_swsetup_CreateContext( GLcontext *ctx )
+_swsetup_CreateContext( struct gl_context *ctx )
 {
    SScontext *swsetup = (SScontext *)CALLOC(sizeof(SScontext));
 
@@ -67,7 +67,7 @@ _swsetup_CreateContext( GLcontext *ctx )
 }
 
 void
-_swsetup_DestroyContext( GLcontext *ctx )
+_swsetup_DestroyContext( struct gl_context *ctx )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
 
@@ -80,7 +80,7 @@ _swsetup_DestroyContext( GLcontext *ctx )
 }
 
 static void
-_swsetup_RenderPrimitive( GLcontext *ctx, GLenum mode )
+_swsetup_RenderPrimitive( struct gl_context *ctx, GLenum mode )
 {
    SWSETUP_CONTEXT(ctx)->render_prim = mode;
    _swrast_render_primitive( ctx, mode );
@@ -108,7 +108,7 @@ do {						\
  * _tnl_install_attrs().
  */
 static void
-setup_vertex_format(GLcontext *ctx)
+setup_vertex_format(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
@@ -184,7 +184,7 @@ setup_vertex_format(GLcontext *ctx)
  * Called via tnl->Driver.Render.Start.
  */
 static void
-_swsetup_RenderStart( GLcontext *ctx )
+_swsetup_RenderStart( struct gl_context *ctx )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -217,13 +217,13 @@ _swsetup_RenderStart( GLcontext *ctx )
  * It's called when we finish rendering a vertex buffer.
  */
 static void
-_swsetup_RenderFinish( GLcontext *ctx )
+_swsetup_RenderFinish( struct gl_context *ctx )
 {
    _swrast_render_finish( ctx );
 }
 
 void
-_swsetup_InvalidateState( GLcontext *ctx, GLuint new_state )
+_swsetup_InvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    swsetup->NewState |= new_state;
@@ -232,7 +232,7 @@ _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state )
 
 
 void
-_swsetup_Wakeup( GLcontext *ctx )
+_swsetup_Wakeup( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
@@ -267,7 +267,7 @@ _swsetup_Wakeup( GLcontext *ctx )
  * Populate a swrast SWvertex from an attrib-style vertex.
  */
 void 
-_swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
+_swsetup_Translate( struct gl_context *ctx, const void *vertex, SWvertex *dest )
 {
    const GLfloat *m = ctx->Viewport._WindowMap.m;
    GLfloat tmp[4];

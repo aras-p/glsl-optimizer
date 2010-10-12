@@ -277,7 +277,7 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
  * \param table  the hash table to delete
  * \param callback  the callback function
  * \param userData  arbitrary pointer to pass along to the callback
- *                  (this is typically a GLcontext pointer)
+ *                  (this is typically a struct gl_context pointer)
  */
 void
 _mesa_HashDeleteAll(struct _mesa_HashTable *table,
@@ -313,7 +313,7 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
  * \param table  the hash table to walk
  * \param callback  the callback function
  * \param userData  arbitrary pointer to pass along to the callback
- *                  (this is typically a GLcontext pointer)
+ *                  (this is typically a struct gl_context pointer)
  */
 void
 _mesa_HashWalk(const struct _mesa_HashTable *table,

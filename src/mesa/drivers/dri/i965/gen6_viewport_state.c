@@ -65,7 +65,7 @@ const struct brw_tracked_state gen6_clip_vp = {
 static void
 prepare_sf_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;

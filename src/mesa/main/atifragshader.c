@@ -62,7 +62,7 @@ _mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp)
  * Allocate and initialize a new ATI fragment shader object.
  */
 struct ati_fragment_shader *
-_mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id)
+_mesa_new_ati_fragment_shader(struct gl_context *ctx, GLuint id)
 {
    struct ati_fragment_shader *s = CALLOC_STRUCT(ati_fragment_shader);
    (void) ctx;
@@ -78,7 +78,7 @@ _mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id)
  * Delete the given ati fragment shader
  */
 void
-_mesa_delete_ati_fragment_shader(GLcontext *ctx, struct ati_fragment_shader *s)
+_mesa_delete_ati_fragment_shader(struct gl_context *ctx, struct ati_fragment_shader *s)
 {
    GLuint i;
    for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {

@@ -291,7 +291,7 @@ savageCreateContext( gl_api api,
 		     __DRIcontext *driContextPriv,
 		     void *sharedContextPrivate )
 {
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    savageContextPtr imesa;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct dd_function_table functions;

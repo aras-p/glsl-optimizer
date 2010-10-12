@@ -41,7 +41,7 @@
 static void
 update_viewport( struct st_context *st )
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    GLfloat yScale, yBias;
 
    /* _NEW_BUFFERS

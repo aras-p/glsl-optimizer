@@ -224,7 +224,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
  * Only the Intel drivers use this so far.
  */
 void
-_mesa_init_driver_state(GLcontext *ctx)
+_mesa_init_driver_state(struct gl_context *ctx)
 {
    ctx->Driver.AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 

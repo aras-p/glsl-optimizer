@@ -161,7 +161,7 @@ struct mach64_texture_object {
 typedef struct mach64_texture_object mach64TexObj, *mach64TexObjPtr;
 
 struct mach64_context {
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
 
    /* Driver and hardware state management
     */

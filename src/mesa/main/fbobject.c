@@ -95,7 +95,7 @@ delete_dummy_framebuffer(struct gl_framebuffer *fb)
 
 
 void
-_mesa_init_fbobjects(GLcontext *ctx)
+_mesa_init_fbobjects(struct gl_context *ctx)
 {
    _glthread_INIT_MUTEX(DummyFramebuffer.Mutex);
    _glthread_INIT_MUTEX(DummyRenderbuffer.Mutex);
@@ -115,7 +115,7 @@ _mesa_get_incomplete_framebuffer(void)
  * Helper routine for getting a gl_renderbuffer.
  */
 struct gl_renderbuffer *
-_mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id)
+_mesa_lookup_renderbuffer(struct gl_context *ctx, GLuint id)
 {
    struct gl_renderbuffer *rb;
 
@@ -132,7 +132,7 @@ _mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id)
  * Helper routine for getting a gl_framebuffer.
  */
 struct gl_framebuffer *
-_mesa_lookup_framebuffer(GLcontext *ctx, GLuint id)
+_mesa_lookup_framebuffer(struct gl_context *ctx, GLuint id)
 {
    struct gl_framebuffer *fb;
 
@@ -166,7 +166,7 @@ invalidate_framebuffer(struct gl_framebuffer *fb)
  * the depth buffer attachment point.
  */
 struct gl_renderbuffer_attachment *
-_mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                      GLenum attachment)
 {
    GLuint i;
@@ -216,7 +216,7 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
  * window-system framebuffer (not user-created framebuffer objects).
  */
 static struct gl_renderbuffer_attachment *
-_mesa_get_fb0_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                          GLenum attachment)
 {
    assert(fb->Name == 0);
@@ -255,7 +255,7 @@ _mesa_get_fb0_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
  * point.  Update reference counts, etc.
  */
 void
-_mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
+_mesa_remove_attachment(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
@@ -281,7 +281,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
  * The previous binding, if any, will be removed first.
  */
 void
-_mesa_set_texture_attachment(GLcontext *ctx,
+_mesa_set_texture_attachment(struct gl_context *ctx,
                              struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
@@ -322,7 +322,7 @@ _mesa_set_texture_attachment(GLcontext *ctx,
  * The previous binding, if any, will be removed first.
  */
 void
-_mesa_set_renderbuffer_attachment(GLcontext *ctx,
+_mesa_set_renderbuffer_attachment(struct gl_context *ctx,
                                   struct gl_renderbuffer_attachment *att,
                                   struct gl_renderbuffer *rb)
 {
@@ -340,7 +340,7 @@ _mesa_set_renderbuffer_attachment(GLcontext *ctx,
  * Attach a renderbuffer object to a framebuffer object.
  */
 void
-_mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
    struct gl_renderbuffer_attachment *att;
@@ -406,7 +406,7 @@ fbo_incomplete(const char *msg, int index)
  *               if GL_STENCIL, this is a stencil component attachment point.
  */
 static void
-test_attachment_completeness(const GLcontext *ctx, GLenum format,
+test_attachment_completeness(const struct gl_context *ctx, GLenum format,
                              struct gl_renderbuffer_attachment *att)
 {
    assert(format == GL_COLOR || format == GL_DEPTH || format == GL_STENCIL);
@@ -563,7 +563,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
  * framebuffer is complete.
  */
 void
-_mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
+_mesa_test_framebuffer_completeness(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    GLuint numImages;
    GLenum intFormat = GL_NONE; /* color buffers' internal format */
@@ -833,7 +833,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
  * The spec calls for unbinding.
  */
 static void
-detach_renderbuffer(GLcontext *ctx,
+detach_renderbuffer(struct gl_context *ctx,
                     struct gl_framebuffer *fb,
                     struct gl_renderbuffer *rb)
 {
@@ -934,7 +934,7 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
  * we'll also return GL_RED and GL_RG.
  */
 GLenum
-_mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
+_mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
    case GL_ALPHA:
@@ -1287,7 +1287,7 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
  * attachments.
  */
 static void
-check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
+check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
@@ -1312,7 +1312,7 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
  * notify the device driver that the texture image may have changed.
  */
 static void
-check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
+check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    if (fb->Name == 0)
       return; /* can't render to texture with winsys framebuffers */
@@ -1606,7 +1606,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
  * Common code called by glFramebufferTexture1D/2D/3DEXT().
  */
 static void
-framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target, 
+framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target, 
                     GLenum attachment, GLenum textarget, GLuint texture,
                     GLint level, GLint zoffset)
 {

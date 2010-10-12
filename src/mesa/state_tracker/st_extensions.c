@@ -204,7 +204,7 @@ void st_init_limits(struct st_context *st)
 void st_init_extensions(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    /*
     * Extensions that are supported by all Gallium drivers:

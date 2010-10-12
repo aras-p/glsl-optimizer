@@ -268,7 +268,7 @@ compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
 
 
 static void
-rgba_aa_tri(GLcontext *ctx,
+rgba_aa_tri(struct gl_context *ctx,
 	    const SWvertex *v0,
 	    const SWvertex *v1,
 	    const SWvertex *v2)
@@ -279,7 +279,7 @@ rgba_aa_tri(GLcontext *ctx,
 
 
 static void
-general_aa_tri(GLcontext *ctx,
+general_aa_tri(struct gl_context *ctx,
                const SWvertex *v0,
                const SWvertex *v1,
                const SWvertex *v2)
@@ -296,7 +296,7 @@ general_aa_tri(GLcontext *ctx,
  * appropriate antialiased triangle rasterizer function.
  */
 void
-_swrast_set_aa_triangle_function(GLcontext *ctx)
+_swrast_set_aa_triangle_function(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 

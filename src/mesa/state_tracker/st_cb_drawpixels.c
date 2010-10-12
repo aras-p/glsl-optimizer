@@ -96,7 +96,7 @@ is_passthrough_program(const struct gl_fragment_program *prog)
  * \return pointer to Gallium driver fragment shader
  */
 static void *
-combined_drawpix_fragment_program(GLcontext *ctx)
+combined_drawpix_fragment_program(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp;
@@ -170,7 +170,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
 static void *
 make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean write_stencil)
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct gl_program *p;
    GLuint ic = 0;
 
@@ -333,7 +333,7 @@ make_texture(struct st_context *st,
 	     const struct gl_pixelstore_attrib *unpack,
 	     const GLvoid *pixels)
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
    gl_format mformat;
    struct pipe_resource *pt;
@@ -418,7 +418,7 @@ make_texture(struct st_context *st,
  * \param invertTex  if true, flip texcoords vertically
  */
 static void
-draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
+draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1, const GLfloat *color,
           GLboolean invertTex, GLfloat maxXcoord, GLfloat maxYcoord)
 {
@@ -508,7 +508,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 
 
 static void
-draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
+draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
                    GLfloat zoomX, GLfloat zoomY,
                    struct pipe_sampler_view **sv,
@@ -650,7 +650,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
 
 static void
-draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height, GLenum format, GLenum type,
                     const struct gl_pixelstore_attrib *unpack,
                     const GLvoid *pixels)
@@ -799,7 +799,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
  * Called via ctx->Driver.DrawPixels()
  */
 static void
-st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+st_DrawPixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
@@ -893,7 +893,7 @@ stencil_fallback:
 
 
 static void
-copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
@@ -1000,7 +1000,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
 
 static void
-st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
+st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
               GLsizei width, GLsizei height,
               GLint dstx, GLint dsty, GLenum type)
 {

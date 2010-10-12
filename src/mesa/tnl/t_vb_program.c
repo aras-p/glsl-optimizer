@@ -74,7 +74,7 @@ struct vp_stage_data {
 
 
 static void
-userclip( GLcontext *ctx,
+userclip( struct gl_context *ctx,
           GLvector4f *clip,
           GLubyte *clipmask,
           GLubyte *clipormask,
@@ -120,7 +120,7 @@ userclip( GLcontext *ctx,
 
 
 static GLboolean
-do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
+do_ndc_cliptest(struct gl_context *ctx, struct vp_stage_data *store)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -187,7 +187,7 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
  * moved into main/ someday.
  */
 static void
-vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+vp_fetch_texel(struct gl_context *ctx, const GLfloat texcoord[4], GLfloat lambda,
                GLuint unit, GLfloat color[4])
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -204,7 +204,7 @@ vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
  * string has been parsed.
  */
 GLboolean
-_tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
+_tnl_program_string(struct gl_context *ctx, GLenum target, struct gl_program *program)
 {
    /* No-op.
     * If we had derived anything from the program that was private to this
@@ -218,7 +218,7 @@ _tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
  * Initialize virtual machine state prior to executing vertex program.
  */
 static void
-init_machine(GLcontext *ctx, struct gl_program_machine *machine)
+init_machine(struct gl_context *ctx, struct gl_program_machine *machine)
 {
    /* Input registers get initialized from the current vertex attribs */
    memcpy(machine->VertAttribs, ctx->Current.Attrib,
@@ -261,7 +261,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
  * Map the texture images which the vertex program will access (if any).
  */
 static void
-map_textures(GLcontext *ctx, const struct gl_vertex_program *vp)
+map_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
@@ -283,7 +283,7 @@ map_textures(GLcontext *ctx, const struct gl_vertex_program *vp)
  * Unmap the texture images which were used by the vertex program (if any).
  */
 static void
-unmap_textures(GLcontext *ctx, const struct gl_vertex_program *vp)
+unmap_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
@@ -305,7 +305,7 @@ unmap_textures(GLcontext *ctx, const struct gl_vertex_program *vp)
  * This function executes vertex programs
  */
 static GLboolean
-run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
+run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
@@ -493,7 +493,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
  * allocate data until the first time the stage is run.
  */
 static GLboolean
-init_vp(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+init_vp(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &(tnl->vb);
@@ -546,7 +546,7 @@ dtr(struct tnl_pipeline_stage *stage)
 
 
 static void
-validate_vp_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+validate_vp_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    if (ctx->VertexProgram._Current) {
       _swrast_update_texture_samplers(ctx);

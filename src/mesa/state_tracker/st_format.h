@@ -60,11 +60,11 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
 
 
 gl_format
-st_ChooseTextureFormat_renderable(GLcontext *ctx, GLint internalFormat,
+st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
 				  GLenum format, GLenum type, GLboolean renderable);
 
 extern gl_format
-st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
+st_ChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
                        GLenum format, GLenum type);
 
 

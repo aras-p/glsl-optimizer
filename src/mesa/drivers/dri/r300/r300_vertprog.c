@@ -49,7 +49,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Write parameter array for the given vertex program into dst.
  * Return the total number of components written.
  */
-static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_program *vp, float *dst)
+static int r300VertexProgUpdateParams(struct gl_context * ctx, struct r300_vertex_program *vp, float *dst)
 {
 	int i;
 
@@ -227,7 +227,7 @@ static void initialize_NV_registers(struct radeon_compiler * compiler)
 	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
 }
 
-static struct r300_vertex_program *build_program(GLcontext *ctx,
+static struct r300_vertex_program *build_program(struct gl_context *ctx,
 						 struct r300_vertex_program_key *wanted_key,
 						 const struct gl_vertex_program *mesa_vp)
 {
@@ -307,7 +307,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	return vp;
 }
 
-struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
+struct r300_vertex_program * r300SelectAndTranslateVertexShader(struct gl_context *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_program_key wanted_key = { 0 };
@@ -386,7 +386,7 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 
 void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
-	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct gl_context *ctx = rmesa->radeon.glCtx;
 	struct r300_vertex_program *prog = rmesa->selected_vp;
 	int inst_count = 0;
 	int param_count = 0;

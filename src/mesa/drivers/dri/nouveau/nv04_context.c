@@ -46,7 +46,7 @@ texunit_needs_combiners(struct gl_texture_unit *u)
 }
 
 struct nouveau_grobj *
-nv04_context_engine(GLcontext *ctx)
+nv04_context_engine(struct gl_context *ctx)
 {
 	struct nv04_context *nctx = to_nv04_context(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
@@ -90,7 +90,7 @@ static void
 nv04_channel_flush_notify(struct nouveau_channel *chan)
 {
 	struct nouveau_context *nctx = chan->user_private;
-	GLcontext *ctx = &nctx->base;
+	struct gl_context *ctx = &nctx->base;
 
 	if (nctx->fallback < SWRAST) {
 		nouveau_bo_state_emit(ctx);
@@ -106,7 +106,7 @@ nv04_channel_flush_notify(struct nouveau_channel *chan)
 }
 
 static void
-nv04_hwctx_init(GLcontext *ctx)
+nv04_hwctx_init(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
@@ -136,7 +136,7 @@ nv04_hwctx_init(GLcontext *ctx)
 }
 
 static void
-init_dummy_texture(GLcontext *ctx)
+init_dummy_texture(struct gl_context *ctx)
 {
 	struct nouveau_surface *s = &to_nv04_context(ctx)->dummy_texture;
 
@@ -150,7 +150,7 @@ init_dummy_texture(GLcontext *ctx)
 }
 
 static void
-nv04_context_destroy(GLcontext *ctx)
+nv04_context_destroy(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -166,13 +166,13 @@ nv04_context_destroy(GLcontext *ctx)
 	FREE(ctx);
 }
 
-static GLcontext *
+static struct gl_context *
 nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
-		    GLcontext *share_ctx)
+		    struct gl_context *share_ctx)
 {
 	struct nv04_context *nctx;
 	struct nouveau_hw_state *hw;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	int ret;
 
 	nctx = CALLOC_STRUCT(nv04_context);

@@ -27,7 +27,7 @@
 
 extern "C" {
 #include <talloc.h>
-#include "main/core.h" /* for struct __GLcontextRec */
+#include "main/core.h" /* for struct gl_context */
 }
 
 #include "ast.h"
@@ -36,7 +36,7 @@ extern "C" {
 #include "ir_optimization.h"
 #include "loop_analysis.h"
 
-_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
+_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
 					       GLenum target, void *mem_ctx)
 {
    switch (target) {

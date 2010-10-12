@@ -32,7 +32,7 @@
 #define VERT_RESTORE_SPEC( idx )
 #endif
 
-static void TAG(unfilled_tri)( GLcontext *ctx,
+static void TAG(unfilled_tri)( struct gl_context *ctx,
 			       GLenum mode,
 			       GLuint e0, GLuint e1, GLuint e2 )
 {
@@ -95,7 +95,7 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
 }
 
 
-static void TAG(unfilled_quad)( GLcontext *ctx,
+static void TAG(unfilled_quad)( struct gl_context *ctx,
 				GLenum mode,
 				GLuint e0, GLuint e1,
 				GLuint e2, GLuint e3 )

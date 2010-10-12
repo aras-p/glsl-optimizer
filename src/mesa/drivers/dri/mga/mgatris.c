@@ -40,7 +40,7 @@
 #include "mgavb.h"
 
 
-static void mgaRenderPrimitive( GLcontext *ctx, GLenum prim );
+static void mgaRenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 /***********************************************************************
  *                 Functions to draw basic primitives                  *
@@ -285,7 +285,7 @@ mga_fallback_tri( mgaContextPtr mmesa,
 		   mgaVertex *v1, 
 		   mgaVertex *v2 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[3];
    mga_translate_vertex( ctx, v0, &v[0] );
    mga_translate_vertex( ctx, v1, &v[1] );
@@ -299,7 +299,7 @@ mga_fallback_line( mgaContextPtr mmesa,
 		    mgaVertex *v0,
 		    mgaVertex *v1 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[2];
    mga_translate_vertex( ctx, v0, &v[0] );
    mga_translate_vertex( ctx, v1, &v[1] );
@@ -311,7 +311,7 @@ static void
 mga_fallback_point( mgaContextPtr mmesa, 
 		     mgaVertex *v0 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[1];
    mga_translate_vertex( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
@@ -630,7 +630,7 @@ static void init_rast_tab( void )
 
 
 
-static void mgaRenderClippedPoly( GLcontext *ctx, const GLuint *elts, GLuint n )
+static void mgaRenderClippedPoly( struct gl_context *ctx, const GLuint *elts, GLuint n )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -652,13 +652,13 @@ static void mgaRenderClippedPoly( GLcontext *ctx, const GLuint *elts, GLuint n )
       tnl->Driver.Render.PrimitiveNotify( ctx, prim );
 }
 
-static void mgaRenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+static void mgaRenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
 }
 
-static void mgaFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
+static void mgaFastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts, 
 				       GLuint n )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
@@ -687,7 +687,7 @@ static void mgaFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 #define ANY_RASTER_FLAGS (DD_FLATSHADE|DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET| \
                           DD_TRI_UNFILLED)
 
-void mgaChooseRenderState(GLcontext *ctx)
+void mgaChooseRenderState(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -773,7 +773,7 @@ static GLenum reduced_prim[GL_POLYGON+1] = {
 /* Always called between RenderStart and RenderFinish --> We already
  * hold the lock.
  */
-void mgaRasterPrimitive( GLcontext *ctx, GLenum prim, GLuint hwprim )
+void mgaRasterPrimitive( struct gl_context *ctx, GLenum prim, GLuint hwprim )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -806,7 +806,7 @@ void mgaRasterPrimitive( GLcontext *ctx, GLenum prim, GLuint hwprim )
  * which renders strips as strips, the equivalent calculations are
  * performed in mgarender.c.
  */
-static void mgaRenderPrimitive( GLcontext *ctx, GLenum prim )
+static void mgaRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint rprim = reduced_prim[prim];
@@ -821,7 +821,7 @@ static void mgaRenderPrimitive( GLcontext *ctx, GLenum prim )
    }
 }
 
-static void mgaRenderFinish( GLcontext *ctx )
+static void mgaRenderFinish( struct gl_context *ctx )
 {
    if (MGA_CONTEXT(ctx)->RenderIndex & MGA_FALLBACK_BIT)
       _swrast_flush( ctx );
@@ -856,7 +856,7 @@ static const char *getFallbackString(GLuint bit)
 }
 
 
-void mgaFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void mgaFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -893,7 +893,7 @@ void mgaFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 }
 
 
-void mgaDDInitTriFuncs( GLcontext *ctx )
+void mgaDDInitTriFuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);

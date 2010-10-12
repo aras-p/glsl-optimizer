@@ -61,12 +61,12 @@ struct _mesa_index_buffer {
 
 
 
-GLboolean _vbo_CreateContext( GLcontext *ctx );
-void _vbo_DestroyContext( GLcontext *ctx );
-void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state );
+GLboolean _vbo_CreateContext( struct gl_context *ctx );
+void _vbo_DestroyContext( struct gl_context *ctx );
+void _vbo_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 
-typedef void (*vbo_draw_func)( GLcontext *ctx,
+typedef void (*vbo_draw_func)( struct gl_context *ctx,
 			       const struct gl_client_array **arrays,
 			       const struct _mesa_prim *prims,
 			       GLuint nr_prims,
@@ -92,7 +92,7 @@ struct split_limits {
 };
 
 
-void vbo_split_prims( GLcontext *ctx,
+void vbo_split_prims( struct gl_context *ctx,
 		      const struct gl_client_array *arrays[],
 		      const struct _mesa_prim *prim,
 		      GLuint nr_prims,
@@ -108,7 +108,7 @@ void vbo_split_prims( GLcontext *ctx,
 GLboolean vbo_all_varyings_in_vbos( const struct gl_client_array *arrays[] );
 GLboolean vbo_any_varyings_in_vbos( const struct gl_client_array *arrays[] );
 
-void vbo_rebase_prims( GLcontext *ctx,
+void vbo_rebase_prims( struct gl_context *ctx,
 		       const struct gl_client_array *arrays[],
 		       const struct _mesa_prim *prim,
 		       GLuint nr_prims,
@@ -117,14 +117,14 @@ void vbo_rebase_prims( GLcontext *ctx,
 		       GLuint max_index,
 		       vbo_draw_func draw );
 void
-vbo_get_minmax_index(GLcontext *ctx, const struct _mesa_prim *prim,
+vbo_get_minmax_index(struct gl_context *ctx, const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
 		     GLuint *min_index, GLuint *max_index);
 
-void vbo_use_buffer_objects(GLcontext *ctx);
+void vbo_use_buffer_objects(struct gl_context *ctx);
 
 
-void vbo_set_draw_func(GLcontext *ctx, vbo_draw_func func);
+void vbo_set_draw_func(struct gl_context *ctx, vbo_draw_func func);
 
 
 void GLAPIENTRY

@@ -384,7 +384,7 @@ get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
  * Called by glGetActiveUniform().
  */
 static void
-_mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
+_mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
@@ -527,7 +527,7 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
  * to the shader program and return the program parameter position.
  */
 static void
-lookup_uniform_parameter(GLcontext *ctx, GLuint program, GLint location,
+lookup_uniform_parameter(struct gl_context *ctx, GLuint program, GLint location,
                          struct gl_program **progOut, GLint *paramPosOut)
 {
    struct gl_shader_program *shProg
@@ -620,7 +620,7 @@ split_location_offset(GLint *location, GLint *offset)
  * Called via glGetUniformfv().
  */
 static void
-_mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
+_mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
                     GLfloat *params)
 {
    struct gl_program *prog;
@@ -653,7 +653,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
  * \sa _mesa_get_uniformfv, only difference is a cast.
  */
 static void
-_mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
+_mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
                     GLint *params)
 {
    struct gl_program *prog;
@@ -688,7 +688,7 @@ _mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
  * offset (used for arrays, structs).
  */
 GLint
-_mesa_get_uniform_location(GLcontext *ctx, struct gl_shader_program *shProg,
+_mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
 			   const GLchar *name)
 {
    GLint offset = 0, location = -1;
@@ -837,7 +837,7 @@ compatible_types(GLenum userType, GLenum targetType)
  * \param values  the new values, of datatype 'type'
  */
 static void
-set_program_uniform(GLcontext *ctx, struct gl_program *program,
+set_program_uniform(struct gl_context *ctx, struct gl_program *program,
                     GLint index, GLint offset,
                     GLenum type, GLsizei count, GLint elems,
                     const void *values)
@@ -980,7 +980,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
  * Called via glUniform*() functions.
  */
 void
-_mesa_uniform(GLcontext *ctx, struct gl_shader_program *shProg,
+_mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 	      GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
@@ -1084,7 +1084,7 @@ _mesa_uniform(GLcontext *ctx, struct gl_shader_program *shProg,
  * Set a matrix-valued program parameter.
  */
 static void
-set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
+set_program_uniform_matrix(struct gl_context *ctx, struct gl_program *program,
                            GLuint index, GLuint offset,
                            GLuint count, GLuint rows, GLuint cols,
                            GLboolean transpose, const GLfloat *values)
@@ -1152,7 +1152,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
  * Note: cols=2, rows=4  ==>  array[2] of vec4
  */
 void
-_mesa_uniform_matrix(GLcontext *ctx, struct gl_shader_program *shProg,
+_mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     GLint cols, GLint rows,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)

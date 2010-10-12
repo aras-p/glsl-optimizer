@@ -48,7 +48,7 @@ extern void tdfxTMClose( tdfxContextPtr fxMesa );
 extern void tdfxTMDownloadTexture(tdfxContextPtr fxMesa,
                                   struct gl_texture_object *tObj);
 
-extern void tdfxTMReloadMipMapLevel( GLcontext *ctx,
+extern void tdfxTMReloadMipMapLevel( struct gl_context *ctx,
 				     struct gl_texture_object *tObj,
 				     GLint level );
 

@@ -3,10 +3,10 @@
 
 #include "drirenderbuffer.h"
 
-extern void i810InitSpanFuncs( GLcontext *ctx );
+extern void i810InitSpanFuncs( struct gl_context *ctx );
 
-extern void i810SpanRenderFinish( GLcontext *ctx );
-extern void i810SpanRenderStart( GLcontext *ctx );
+extern void i810SpanRenderFinish( struct gl_context *ctx );
+extern void i810SpanRenderStart( struct gl_context *ctx );
 
 extern void
 i810SetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);

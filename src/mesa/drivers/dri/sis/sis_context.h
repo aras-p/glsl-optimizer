@@ -256,7 +256,7 @@ struct sis_renderbuffer {
 struct sis_context
 {
   /* This must be first in this structure */
-  GLcontext *glCtx;
+  struct gl_context *glCtx;
 
   /* Vertex state */
   GLuint vertex_size;
@@ -444,7 +444,7 @@ extern GLboolean sisCreateContext( gl_api api,
                                    void *sharedContextPrivate );
 extern void sisDestroyContext( __DRIcontext * );
 
-void sisReAllocateBuffers(GLcontext *ctx, struct gl_framebuffer *drawbuffer,
+void sisReAllocateBuffers(struct gl_context *ctx, struct gl_framebuffer *drawbuffer,
                           GLuint width, GLuint height);
 
 extern GLboolean sisMakeCurrent( __DRIcontext *driContextPriv,

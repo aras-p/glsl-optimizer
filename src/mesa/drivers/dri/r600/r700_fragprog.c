@@ -44,7 +44,7 @@
 
 #include "r700_debug.h"
 
-void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+void insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
 {
     static const gl_state_index winstate[STATE_LENGTH]
          = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
@@ -95,7 +95,7 @@ void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 //TODO : Validate FP input with VP output.
 void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 						  struct gl_fragment_program *mesa_fp,
-                          GLcontext *ctx) 
+                          struct gl_context *ctx) 
 {
 	unsigned int unBit;
     unsigned int i;
@@ -353,7 +353,7 @@ GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
 
 GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 							     struct gl_fragment_program   *mesa_fp,
-                                 GLcontext *ctx) 
+                                 struct gl_context *ctx) 
 {
     context_t *context = R700_CONTEXT(ctx);      
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -466,7 +466,7 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	return GL_TRUE;
 }
 
-void r700SelectFragmentShader(GLcontext *ctx)
+void r700SelectFragmentShader(struct gl_context *ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
@@ -480,7 +480,7 @@ void r700SelectFragmentShader(GLcontext *ctx)
 	    r700TranslateFragmentShader(fp, &(fp->mesa_program), ctx); 
 }
 
-void * r700GetActiveFpShaderBo(GLcontext * ctx)
+void * r700GetActiveFpShaderBo(struct gl_context * ctx)
 {
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
@@ -488,7 +488,7 @@ void * r700GetActiveFpShaderBo(GLcontext * ctx)
     return fp->shaderbo;
 }
 
-void * r700GetActiveFpShaderConstBo(GLcontext * ctx)
+void * r700GetActiveFpShaderConstBo(struct gl_context * ctx)
 {
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
@@ -496,7 +496,7 @@ void * r700GetActiveFpShaderConstBo(GLcontext * ctx)
     return fp->constbo0;
 }
 
-GLboolean r700SetupFragmentProgram(GLcontext * ctx)
+GLboolean r700SetupFragmentProgram(struct gl_context * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);

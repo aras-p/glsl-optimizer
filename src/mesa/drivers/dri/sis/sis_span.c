@@ -143,7 +143,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-void sisSpanRenderStart( GLcontext *ctx )
+void sisSpanRenderStart( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -152,7 +152,7 @@ void sisSpanRenderStart( GLcontext *ctx )
    WaitEngIdle( smesa );
 }
 
-void sisSpanRenderFinish( GLcontext *ctx )
+void sisSpanRenderFinish( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -161,7 +161,7 @@ void sisSpanRenderFinish( GLcontext *ctx )
 }
 
 void
-sisDDInitSpanFuncs( GLcontext *ctx )
+sisDDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart   = sisSpanRenderStart;

@@ -52,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FALLBACK( radeon, bit, mode ) fprintf(stderr, "%s:%s\n", __LINE__, __FILE__);
 
 /* TCL fallbacks */
-extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
+extern void radeonTclFallback(struct gl_context * ctx, GLuint bit, GLboolean mode);
 
 #define TCL_FALLBACK( ctx, bit, mode )	;
 

@@ -149,21 +149,21 @@
 
 /* Move locking out to get reasonable span performance.
  */
-void viaSpanRenderStart( GLcontext *ctx )
+void viaSpanRenderStart( struct gl_context *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);     
    viaWaitIdle(vmesa, GL_FALSE);
    LOCK_HARDWARE(vmesa);
 }
 
-void viaSpanRenderFinish( GLcontext *ctx )
+void viaSpanRenderFinish( struct gl_context *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    _swrast_flush( ctx );
    UNLOCK_HARDWARE( vmesa );
 }
 
-void viaInitSpanFuncs(GLcontext *ctx)
+void viaInitSpanFuncs(struct gl_context *ctx)
 {
     struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
     swdd->SpanRenderStart = viaSpanRenderStart;

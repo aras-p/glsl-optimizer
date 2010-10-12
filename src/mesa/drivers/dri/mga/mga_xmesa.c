@@ -427,7 +427,7 @@ mgaCreateContext( gl_api api,
 {
    int i;
    unsigned   maxlevels;
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    mgaContextPtr mmesa;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
@@ -820,7 +820,7 @@ mgaSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mgaContextPtr mmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = mmesa->glCtx;
 

@@ -375,7 +375,7 @@ public:
    struct brw_context *brw;
    const struct gl_fragment_program *fp;
    struct intel_context *intel;
-   GLcontext *ctx;
+   struct gl_context *ctx;
    struct brw_wm_compile *c;
    struct brw_compile *p;
    struct brw_shader *shader;

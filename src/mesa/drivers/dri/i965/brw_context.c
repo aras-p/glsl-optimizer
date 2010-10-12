@@ -64,7 +64,7 @@ GLboolean brwCreateContext( int api,
    struct dd_function_table functions;
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    unsigned i;
 
    if (!brw) {

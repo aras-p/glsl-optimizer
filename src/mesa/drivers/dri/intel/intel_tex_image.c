@@ -300,7 +300,7 @@ try_pbo_zcopy(struct intel_context *intel,
 
 
 static void
-intelTexImage(GLcontext * ctx,
+intelTexImage(struct gl_context * ctx,
               GLint dims,
               GLenum target, GLint level,
               GLint internalFormat,
@@ -539,7 +539,7 @@ intelTexImage(GLcontext * ctx,
 
 
 static void
-intelTexImage3D(GLcontext * ctx,
+intelTexImage3D(struct gl_context * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
                 GLint width, GLint height, GLint depth,
@@ -556,7 +556,7 @@ intelTexImage3D(GLcontext * ctx,
 
 
 static void
-intelTexImage2D(GLcontext * ctx,
+intelTexImage2D(struct gl_context * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
                 GLint width, GLint height, GLint border,
@@ -572,7 +572,7 @@ intelTexImage2D(GLcontext * ctx,
 
 
 static void
-intelTexImage1D(GLcontext * ctx,
+intelTexImage1D(struct gl_context * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
                 GLint width, GLint border,
@@ -588,7 +588,7 @@ intelTexImage1D(GLcontext * ctx,
 
 
 static void
-intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+intelCompressedTexImage2D( struct gl_context *ctx, GLenum target, GLint level,
                            GLint internalFormat,
                            GLint width, GLint height, GLint border,
                            GLsizei imageSize, const GLvoid *data,
@@ -606,7 +606,7 @@ intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
  * then unmap it.
  */
 static void
-intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
+intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
 		    GLenum format, GLenum type, GLvoid * pixels,
 		    struct gl_texture_object *texObj,
 		    struct gl_texture_image *texImage, GLboolean compressed)
@@ -666,7 +666,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
 
 static void
-intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+intelGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
                  GLenum format, GLenum type, GLvoid * pixels,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
@@ -677,7 +677,7 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
 
 
 static void
-intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+intelGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint level,
 			   GLvoid *pixels,
 			   struct gl_texture_object *texObj,
 			   struct gl_texture_image *texImage)
@@ -693,7 +693,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct gl_framebuffer *fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
    struct intel_texture_image *intelImage;
    struct intel_mipmap_tree *mt;
@@ -774,7 +774,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 
 #if FEATURE_OES_EGL_image
 static void
-intel_image_target_texture_2d(GLcontext *ctx, GLenum target,
+intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      struct gl_texture_object *texObj,
 			      struct gl_texture_image *texImage,
 			      GLeglImageOES image_handle)

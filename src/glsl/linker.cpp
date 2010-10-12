@@ -719,7 +719,7 @@ get_main_function_signature(gl_shader *sh)
  * shader is returned.
  */
 static struct gl_shader *
-link_intrastage_shaders(GLcontext *ctx,
+link_intrastage_shaders(struct gl_context *ctx,
 			struct gl_shader_program *prog,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
@@ -1386,7 +1386,7 @@ assign_varying_locations(struct gl_shader_program *prog,
 
 
 void
-link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
+link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    prog->LinkStatus = false;
    prog->Validated = false;

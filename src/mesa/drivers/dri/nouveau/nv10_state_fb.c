@@ -51,7 +51,7 @@ get_rt_format(gl_format format)
 }
 
 static void
-setup_lma_buffer(GLcontext *ctx)
+setup_lma_buffer(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -86,7 +86,7 @@ setup_lma_buffer(GLcontext *ctx)
 }
 
 void
-nv10_emit_framebuffer(GLcontext *ctx, int emit)
+nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -149,12 +149,12 @@ nv10_emit_framebuffer(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_render_mode(GLcontext *ctx, int emit)
+nv10_emit_render_mode(struct gl_context *ctx, int emit)
 {
 }
 
 void
-nv10_emit_scissor(GLcontext *ctx, int emit)
+nv10_emit_scissor(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -168,7 +168,7 @@ nv10_emit_scissor(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_viewport(GLcontext *ctx, int emit)
+nv10_emit_viewport(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -194,7 +194,7 @@ nv10_emit_viewport(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_zclear(GLcontext *ctx, int emit)
+nv10_emit_zclear(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);

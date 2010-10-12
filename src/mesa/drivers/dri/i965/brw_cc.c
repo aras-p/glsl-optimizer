@@ -39,7 +39,7 @@
 void
 brw_update_cc_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_viewport ccv;
 
    memset(&ccv, 0, sizeof(ccv));
@@ -91,7 +91,7 @@ static void prepare_cc_unit(struct brw_context *brw)
 static void upload_cc_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_unit_state cc;
    void *map;
 

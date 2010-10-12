@@ -183,7 +183,7 @@ public:
 
    function_entry *current_function;
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
    struct gl_shader_compiler_options *options;
@@ -2162,7 +2162,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 }
 
 static void
-set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
+set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
 			struct gl_shader_program *shader_program,
 			const char *name, const glsl_type *type,
 			ir_constant *val)
@@ -2232,7 +2232,7 @@ set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
 }
 
 static void
-set_uniform_initializers(GLcontext *ctx,
+set_uniform_initializers(struct gl_context *ctx,
 			 struct gl_shader_program *shader_program)
 {
    void *mem_ctx = NULL;
@@ -2262,7 +2262,7 @@ set_uniform_initializers(GLcontext *ctx,
  * Convert a shader's GLSL IR into a Mesa gl_program.
  */
 struct gl_program *
-get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
+get_mesa_program(struct gl_context *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
 {
    ir_to_mesa_visitor v;
@@ -2446,7 +2446,7 @@ extern "C" {
  * XXX can we remove the ctx->Driver.CompileShader() hook?
  */
 GLboolean
-_mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    assert(shader->CompileStatus);
    (void) ctx;
@@ -2462,7 +2462,7 @@ _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
  * code lowering and other optimizations.
  */
 GLboolean
-_mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    assert(prog->LinkStatus);
 
@@ -2544,7 +2544,7 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
  * Compile a GLSL shader.  Called via glCompileShader().
  */
 void
-_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
@@ -2632,7 +2632,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
  * Link a GLSL shader program.  Called via glLinkProgram().
  */
 void
-_mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    unsigned int i;
 

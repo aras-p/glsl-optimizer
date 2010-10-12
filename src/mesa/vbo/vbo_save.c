@@ -36,7 +36,7 @@
 #if FEATURE_dlist
 
 
-static void vbo_save_callback_init( GLcontext *ctx )
+static void vbo_save_callback_init( struct gl_context *ctx )
 {
    ctx->Driver.NewList = vbo_save_NewList;
    ctx->Driver.EndList = vbo_save_EndList;
@@ -48,7 +48,7 @@ static void vbo_save_callback_init( GLcontext *ctx )
 
 
 
-void vbo_save_init( GLcontext *ctx )
+void vbo_save_init( struct gl_context *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_save_context *save = &vbo->save;
@@ -79,7 +79,7 @@ void vbo_save_init( GLcontext *ctx )
 }
 
 
-void vbo_save_destroy( GLcontext *ctx )
+void vbo_save_destroy( struct gl_context *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_save_context *save = &vbo->save;
@@ -108,7 +108,7 @@ void vbo_save_destroy( GLcontext *ctx )
 
 /* Note that this can occur during the playback of a display list:
  */
-void vbo_save_fallback( GLcontext *ctx, GLboolean fallback )
+void vbo_save_fallback( struct gl_context *ctx, GLboolean fallback )
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 

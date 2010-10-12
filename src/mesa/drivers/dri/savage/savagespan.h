@@ -28,7 +28,7 @@
 #include "drirenderbuffer.h"
 
 
-extern void savageDDInitSpanFuncs( GLcontext *ctx );
+extern void savageDDInitSpanFuncs( struct gl_context *ctx );
 
 extern void
 savageSetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis,

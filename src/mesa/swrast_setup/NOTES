@@ -28,15 +28,15 @@ STATE
 
 To create and destroy the module:
 
-	GLboolean _swsetup_CreateContext( GLcontext *ctx );
-	void _swsetup_DestroyContext( GLcontext *ctx );
+	GLboolean _swsetup_CreateContext( struct gl_context *ctx );
+	void _swsetup_DestroyContext( struct gl_context *ctx );
 
 The module is not active by default, and must be installed by calling
 _swrast_Wakeup().  This function installs internal swrast_setup
 functions into all the tnl->Driver.Render driver hooks, thus taking
 over the task of rasterization entirely:
 
-        void _swrast_Wakeup( GLcontext *ctx );
+        void _swrast_Wakeup( struct gl_context *ctx );
 
    
 This module tracks state changes internally and maintains derived
@@ -44,7 +44,7 @@ values based on the current state.  For this to work, the driver
 ensure the following funciton is called whenever the state changes and
 the swsetup module is 'awake':
 
-	void _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
+	void _swsetup_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 There is no explicit call to put the swsetup module to sleep.  Simply
 install other function pointers into all the tnl->Driver.Render.*
@@ -54,8 +54,8 @@ DRIVER INTERFACE
 
 The module offers a minimal driver interface:
 
-	 void (*Start)( GLcontext *ctx );
-	 void (*Finish)( GLcontext *ctx );
+	 void (*Start)( struct gl_context *ctx );
+	 void (*Finish)( struct gl_context *ctx );
 	 
 These are called before and after the completion of all swrast drawing
 activity.  As swrast doesn't call callbacks during triangle, line or

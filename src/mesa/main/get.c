@@ -36,17 +36,17 @@
 
 /* This is a table driven implemetation of the glGet*v() functions.
  * The basic idea is that most getters just look up an int somewhere
- * in GLcontext and then convert it to a bool or float according to
+ * in struct gl_context and then convert it to a bool or float according to
  * which of glGetIntegerv() glGetBooleanv() etc is being called.
  * Instead of generating code to do this, we can just record the enum
- * value and the offset into GLcontext in an array of structs.  Then
+ * value and the offset into struct gl_context in an array of structs.  Then
  * in glGet*(), we lookup the struct for the enum in question, and use
  * the offset to get the int we need.
  *
  * Sometimes we need to look up a float, a boolean, a bit in a
  * bitfield, a matrix or other types instead, so we need to track the
- * type of the value in GLcontext.  And sometimes the value isn't in
- * GLcontext but in the drawbuffer, the array object, current texture
+ * type of the value in struct gl_context.  And sometimes the value isn't in
+ * struct gl_context but in the drawbuffer, the array object, current texture
  * unit, or maybe it's a computed value.  So we need to also track
  * where or how to find the value.  Finally, we sometimes need to
  * check that one of a number of extensions are enabled, the GL
@@ -165,7 +165,7 @@ union value {
 #define BUFFER_FIELD(field, type) \
    LOC_BUFFER, type, offsetof(struct gl_framebuffer, field)
 #define CONTEXT_FIELD(field, type) \
-   LOC_CONTEXT, type, offsetof(GLcontext, field)
+   LOC_CONTEXT, type, offsetof(struct gl_context, field)
 #define ARRAY_FIELD(field, type) \
    LOC_ARRAY, type, offsetof(struct gl_array_object, field)
 #define CONST(value) \
@@ -371,7 +371,7 @@ static const struct value_desc values[] = {
    { GL_MAX_ELEMENTS_VERTICES, CONTEXT_INT(Const.MaxArrayLockSize), NO_EXTRA },
    { GL_MAX_ELEMENTS_INDICES, CONTEXT_INT(Const.MaxArrayLockSize), NO_EXTRA },
    { GL_MAX_TEXTURE_SIZE, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.MaxTextureLevels), NO_EXTRA },
+     offsetof(struct gl_context, Const.MaxTextureLevels), NO_EXTRA },
    { GL_MAX_VIEWPORT_DIMS, CONTEXT_INT2(Const.MaxViewportWidth), NO_EXTRA },
    { GL_PACK_ALIGNMENT, CONTEXT_INT(Pack.Alignment), NO_EXTRA },
    { GL_ALIASED_POINT_SIZE_RANGE, CONTEXT_FLOAT2(Const.MinPointSize), NO_EXTRA },
@@ -410,7 +410,7 @@ static const struct value_desc values[] = {
    { GL_TEXTURE_BINDING_CUBE_MAP_ARB, LOC_CUSTOM, TYPE_INT,
      TEXTURE_CUBE_INDEX, extra_ARB_texture_cube_map },
    { GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.MaxCubeTextureLevels),
+     offsetof(struct gl_context, Const.MaxCubeTextureLevels),
      extra_ARB_texture_cube_map }, /* XXX: OES_texture_cube_map */
 
    /* XXX: OES_blend_subtract */
@@ -522,7 +522,7 @@ static const struct value_desc values[] = {
    { GL_MAX_TEXTURE_STACK_DEPTH, CONST(MAX_TEXTURE_STACK_DEPTH), NO_EXTRA },
    { GL_MODELVIEW_MATRIX, CONTEXT_MATRIX(ModelviewMatrixStack.Top), NO_EXTRA },
    { GL_MODELVIEW_STACK_DEPTH, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, ModelviewMatrixStack.Depth), NO_EXTRA },
+     offsetof(struct gl_context, ModelviewMatrixStack.Depth), NO_EXTRA },
    { GL_NORMALIZE, CONTEXT_BOOL(Transform.Normalize), NO_EXTRA },
    { GL_PACK_SKIP_IMAGES_EXT, CONTEXT_INT(Pack.SkipImages), NO_EXTRA },
    { GL_PERSPECTIVE_CORRECTION_HINT, CONTEXT_ENUM(Hint.PerspectiveCorrection), NO_EXTRA },
@@ -535,7 +535,7 @@ static const struct value_desc values[] = {
    { GL_POINT_FADE_THRESHOLD_SIZE_EXT, CONTEXT_FLOAT(Point.Threshold), NO_EXTRA },
    { GL_PROJECTION_MATRIX, CONTEXT_MATRIX(ProjectionMatrixStack.Top), NO_EXTRA },
    { GL_PROJECTION_STACK_DEPTH, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, ProjectionMatrixStack.Depth), NO_EXTRA },
+     offsetof(struct gl_context, ProjectionMatrixStack.Depth), NO_EXTRA },
    { GL_RESCALE_NORMAL, CONTEXT_BOOL(Transform.RescaleNormals), NO_EXTRA },
    { GL_SHADE_MODEL, CONTEXT_ENUM(Light.ShadeModel), NO_EXTRA },
    { GL_TEXTURE_2D, LOC_CUSTOM, TYPE_BOOLEAN, 0, NO_EXTRA },
@@ -672,7 +672,7 @@ static const struct value_desc values[] = {
    /* OES_texture_3D */
    { GL_TEXTURE_BINDING_3D, LOC_CUSTOM, TYPE_INT, TEXTURE_3D_INDEX, NO_EXTRA },
    { GL_MAX_3D_TEXTURE_SIZE, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.Max3DTextureLevels), NO_EXTRA },
+     offsetof(struct gl_context, Const.Max3DTextureLevels), NO_EXTRA },
 
    /* GL_ARB_fragment_program/OES_standard_derivatives */
    { GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
@@ -683,11 +683,11 @@ static const struct value_desc values[] = {
    /* Enums unique to OpenGL ES 2.0 */
    { 0, 0, TYPE_API_MASK, API_OPENGLES2_BIT, NO_EXTRA },
    { GL_MAX_FRAGMENT_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.FragmentProgram.MaxUniformComponents), NO_EXTRA },
+     offsetof(struct gl_context, Const.FragmentProgram.MaxUniformComponents), NO_EXTRA },
    { GL_MAX_VARYING_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.MaxVarying), NO_EXTRA },
+     offsetof(struct gl_context, Const.MaxVarying), NO_EXTRA },
    { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(GLcontext, Const.VertexProgram.MaxUniformComponents), NO_EXTRA },
+     offsetof(struct gl_context, Const.VertexProgram.MaxUniformComponents), NO_EXTRA },
    { GL_SHADER_COMPILER, CONST(1), NO_EXTRA },
    /* OES_get_program_binary */
    { GL_NUM_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
@@ -1256,7 +1256,7 @@ print_table_stats(void)
  *
  * \param the current context, for determining the API in question
  */
-void _mesa_init_get_hash(GLcontext *ctx)
+void _mesa_init_get_hash(struct gl_context *ctx)
 {
    int i, hash, index, mask;
    int api_mask = 0, api_bit;
@@ -1305,7 +1305,7 @@ void _mesa_init_get_hash(GLcontext *ctx)
  * \param v pointer to the tmp declared in the calling glGet*v() function
  */
 static void
-find_custom_value(GLcontext *ctx, const struct value_desc *d, union value *v)
+find_custom_value(struct gl_context *ctx, const struct value_desc *d, union value *v)
 {
    struct gl_buffer_object *buffer_obj;
    struct gl_client_array *array;
@@ -1583,7 +1583,7 @@ find_custom_value(GLcontext *ctx, const struct value_desc *d, union value *v)
  *     otherwise GL_TRUE.
  */
 static GLboolean
-check_extra(GLcontext *ctx, const char *func, const struct value_desc *d)
+check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d)
 {
    const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    int total, enabled;

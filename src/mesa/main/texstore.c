@@ -307,7 +307,7 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
  * \return resulting image with format = textureBaseFormat and type = GLfloat.
  */
 static GLfloat *
-make_temp_float_image(GLcontext *ctx, GLuint dims,
+make_temp_float_image(struct gl_context *ctx, GLuint dims,
                       GLenum logicalBaseFormat,
                       GLenum textureBaseFormat,
                       GLint srcWidth, GLint srcHeight, GLint srcDepth,
@@ -440,7 +440,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
  * \return resulting image with format = textureBaseFormat and type = GLchan.
  */
 GLchan *
-_mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
+_mesa_make_temp_chan_image(struct gl_context *ctx, GLuint dims,
                            GLenum logicalBaseFormat,
                            GLenum textureBaseFormat,
                            GLint srcWidth, GLint srcHeight, GLint srcDepth,
@@ -725,7 +725,7 @@ byteswap_mapping( GLboolean swapBytes,
  * Transfer a GLubyte texture image with component swizzling.
  */
 static void
-_mesa_swizzle_ubyte_image(GLcontext *ctx, 
+_mesa_swizzle_ubyte_image(struct gl_context *ctx, 
 			  GLuint dimensions,
 			  GLenum srcFormat,
 			  GLenum srcType,
@@ -812,7 +812,7 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
  * 1D, 2D and 3D images supported.
  */
 static void
-memcpy_texture(GLcontext *ctx,
+memcpy_texture(struct gl_context *ctx,
 	       GLuint dimensions,
                gl_format dstFormat,
                GLvoid *dstAddr,
@@ -3939,7 +3939,7 @@ _mesa_texstore(TEXSTORE_PARAMS)
  * The caller _must_ call _mesa_unmap_teximage_pbo() too!
  */
 const GLvoid *
-_mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
+_mesa_validate_pbo_teximage(struct gl_context *ctx, GLuint dimensions,
 			    GLsizei width, GLsizei height, GLsizei depth,
 			    GLenum format, GLenum type, const GLvoid *pixels,
 			    const struct gl_pixelstore_attrib *unpack,
@@ -3976,7 +3976,7 @@ _mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
  * The caller _must_ call _mesa_unmap_teximage_pbo() too!
  */
 const GLvoid *
-_mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
+_mesa_validate_pbo_compressed_teximage(struct gl_context *ctx,
                                  GLsizei imageSize, const GLvoid *pixels,
                                  const struct gl_pixelstore_attrib *packing,
                                  const char *funcName)
@@ -4010,7 +4010,7 @@ _mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
  * functions.  It unmaps the PBO buffer if it was mapped earlier.
  */
 void
-_mesa_unmap_teximage_pbo(GLcontext *ctx,
+_mesa_unmap_teximage_pbo(struct gl_context *ctx,
                          const struct gl_pixelstore_attrib *unpack)
 {
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
@@ -4047,7 +4047,7 @@ texture_row_stride(const struct gl_texture_image *texImage)
  * \sa _mesa_store_teximage2d()
  */
 void
-_mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
@@ -4101,7 +4101,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
  * than VRAM.  Device driver's can easily plug in their own replacement.
  */
 void
-_mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint height, GLint border,
                        GLenum format, GLenum type, const void *pixels,
@@ -4154,7 +4154,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
  * \sa _mesa_store_teximage2d()
  */
 void
-_mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint height, GLint depth, GLint border,
                        GLenum format, GLenum type, const void *pixels,
@@ -4207,7 +4207,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
  * and Driver.CopyTexSubImage1D().
  */
 void
-_mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_texsubimage1d(struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLint width,
                           GLenum format, GLenum type, const void *pixels,
                           const struct gl_pixelstore_attrib *packing,
@@ -4245,7 +4245,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
  * and Driver.CopyTexSubImage2D().
  */
 void
-_mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLint yoffset,
                           GLint width, GLint height,
                           GLenum format, GLenum type, const void *pixels,
@@ -4283,7 +4283,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
  * and Driver.CopyTexSubImage3D().
  */
 void
-_mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_texsubimage3d(struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLint yoffset, GLint zoffset,
                           GLint width, GLint height, GLint depth,
                           GLenum format, GLenum type, const void *pixels,
@@ -4321,7 +4321,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CompressedTexImage1D()
  */
 void
-_mesa_store_compressed_teximage1d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint border,
                                   GLsizei imageSize, const GLvoid *data,
@@ -4344,7 +4344,7 @@ _mesa_store_compressed_teximage1d(GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CompressedTexImage2D()
  */
 void
-_mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint height, GLint border,
                                   GLsizei imageSize, const GLvoid *data,
@@ -4388,7 +4388,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CompressedTexImage3D()
  */
 void
-_mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint height, GLint depth,
                                   GLint border,
@@ -4413,7 +4413,7 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CompressedTexSubImage1D()
  */
 void
-_mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
+_mesa_store_compressed_texsubimage1d(struct gl_context *ctx, GLenum target,
                                      GLint level,
                                      GLint xoffset, GLsizei width,
                                      GLenum format,
@@ -4436,7 +4436,7 @@ _mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
  * Fallback for Driver.CompressedTexSubImage2D()
  */
 void
-_mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
+_mesa_store_compressed_texsubimage2d(struct gl_context *ctx, GLenum target,
                                      GLint level,
                                      GLint xoffset, GLint yoffset,
                                      GLsizei width, GLsizei height,
@@ -4497,7 +4497,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
  * Fallback for Driver.CompressedTexSubImage3D()
  */
 void
-_mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
+_mesa_store_compressed_texsubimage3d(struct gl_context *ctx, GLenum target,
                                 GLint level,
                                 GLint xoffset, GLint yoffset, GLint zoffset,
                                 GLsizei width, GLsizei height, GLsizei depth,

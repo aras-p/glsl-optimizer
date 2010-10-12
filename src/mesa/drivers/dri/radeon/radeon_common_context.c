@@ -105,7 +105,7 @@ static const char* get_chip_family_name(int chip_family)
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
+static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	static char buffer[128];
@@ -186,8 +186,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 {
 	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-	GLcontext* ctx;
-	GLcontext* shareCtx;
+	struct gl_context* ctx;
+	struct gl_context* shareCtx;
 	int fthrottle_mode;
 
 	/* Fill in additional standard functions. */

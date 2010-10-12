@@ -31,7 +31,7 @@
 #include "main/bufferobj.h"
 
 static struct gl_buffer_object *
-nouveau_bufferobj_new(GLcontext *ctx, GLuint buffer, GLenum target)
+nouveau_bufferobj_new(struct gl_context *ctx, GLuint buffer, GLenum target)
 {
 	struct nouveau_bufferobj *nbo;
 
@@ -45,7 +45,7 @@ nouveau_bufferobj_new(GLcontext *ctx, GLuint buffer, GLenum target)
 }
 
 static void
-nouveau_bufferobj_del(GLcontext *ctx, struct gl_buffer_object *obj)
+nouveau_bufferobj_del(struct gl_context *ctx, struct gl_buffer_object *obj)
 {
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 
@@ -54,7 +54,7 @@ nouveau_bufferobj_del(GLcontext *ctx, struct gl_buffer_object *obj)
 }
 
 static GLboolean
-nouveau_bufferobj_data(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
 		       const GLvoid *data, GLenum usage,
 		       struct gl_buffer_object *obj)
 {
@@ -80,7 +80,7 @@ nouveau_bufferobj_data(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 }
 
 static void
-nouveau_bufferobj_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
+nouveau_bufferobj_subdata(struct gl_context *ctx, GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj)
 {
@@ -92,7 +92,7 @@ nouveau_bufferobj_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
 }
 
 static void
-nouveau_bufferobj_get_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
+nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLenum target, GLintptrARB offset,
 			   GLsizeiptrARB size, GLvoid *data,
 			   struct gl_buffer_object *obj)
 {
@@ -104,7 +104,7 @@ nouveau_bufferobj_get_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
 }
 
 static void *
-nouveau_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
+nouveau_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
 		   struct gl_buffer_object *obj)
 {
 	return ctx->Driver.MapBufferRange(ctx, target, 0, obj->Size, access,
@@ -112,7 +112,7 @@ nouveau_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
 }
 
 static void *
-nouveau_bufferobj_map_range(GLcontext *ctx, GLenum target, GLintptr offset,
+nouveau_bufferobj_map_range(struct gl_context *ctx, GLenum target, GLintptr offset,
 			    GLsizeiptr length, GLenum access,
 			    struct gl_buffer_object *obj)
 {
@@ -142,7 +142,7 @@ nouveau_bufferobj_map_range(GLcontext *ctx, GLenum target, GLintptr offset,
 }
 
 static GLboolean
-nouveau_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
+nouveau_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_object *obj)
 {
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 

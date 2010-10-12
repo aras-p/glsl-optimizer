@@ -35,12 +35,12 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 
 
 extern void
-_mesa_set_scissor(GLcontext *ctx, 
+_mesa_set_scissor(struct gl_context *ctx, 
                   GLint x, GLint y, GLsizei width, GLsizei height);
 
 
 extern void 
-_mesa_init_scissor(GLcontext *ctx);
+_mesa_init_scissor(struct gl_context *ctx);
 
 
 #endif

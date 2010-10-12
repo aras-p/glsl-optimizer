@@ -262,7 +262,7 @@ sisSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
          sisContextPtr smesa = (sisContextPtr) dPriv->driContextPriv->driverPrivate;
-         GLcontext *ctx = smesa->glCtx;
+         struct gl_context *ctx = smesa->glCtx;
 
       if (ctx->Visual.doubleBufferMode) {
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */

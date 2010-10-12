@@ -28,89 +28,89 @@
 
 
 extern void
-_mesa_meta_init(GLcontext *ctx);
+_mesa_meta_init(struct gl_context *ctx);
 
 extern void
-_mesa_meta_free(GLcontext *ctx);
+_mesa_meta_free(struct gl_context *ctx);
 
 extern void
-_mesa_meta_BlitFramebuffer(GLcontext *ctx,
+_mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
 
 extern void
-_mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers);
+_mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers);
 
 extern void
-_mesa_meta_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
+_mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                       GLsizei width, GLsizei height,
                       GLint dstx, GLint dsty, GLenum type);
 
 extern void
-_mesa_meta_DrawPixels(GLcontext *ctx,
+_mesa_meta_DrawPixels(struct gl_context *ctx,
                       GLint x, GLint y, GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const struct gl_pixelstore_attrib *unpack,
                       const GLvoid *pixels);
 
 extern void
-_mesa_meta_Bitmap(GLcontext *ctx,
+_mesa_meta_Bitmap(struct gl_context *ctx,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap);
 
 extern GLboolean
-_mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
+_mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
                                           struct gl_texture_object *texObj);
 
 extern void
-_mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
+_mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           struct gl_texture_object *texObj);
 
 extern void
-_mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexImage1D(struct gl_context *ctx, GLenum target, GLint level,
                           GLenum internalFormat, GLint x, GLint y,
                           GLsizei width, GLint border);
 
 extern void
-_mesa_meta_CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
                           GLenum internalFormat, GLint x, GLint y,
                           GLsizei width, GLsizei height, GLint border);
 
 extern void
-_mesa_meta_CopyTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset,
                              GLint x, GLint y, GLsizei width);
 
 extern void
-_mesa_meta_CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset, GLint yoffset,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height);
 
 extern void
-_mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
                              GLint xoffset, GLint yoffset, GLint zoffset,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height);
 
 extern void
-_mesa_meta_CopyColorTable(GLcontext *ctx,
+_mesa_meta_CopyColorTable(struct gl_context *ctx,
                           GLenum target, GLenum internalformat,
                           GLint x, GLint y, GLsizei width);
 
 extern void
-_mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+_mesa_meta_CopyColorSubTable(struct gl_context *ctx,GLenum target, GLsizei start,
                              GLint x, GLint y, GLsizei width);
 
 extern void
-_mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
+_mesa_meta_CopyConvolutionFilter1D(struct gl_context *ctx, GLenum target,
                                    GLenum internalFormat,
                                    GLint x, GLint y, GLsizei width);
 
 extern void
-_mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
+_mesa_meta_CopyConvolutionFilter2D(struct gl_context *ctx, GLenum target,
                                    GLenum internalFormat, GLint x, GLint y,
                                    GLsizei width, GLsizei height);
 

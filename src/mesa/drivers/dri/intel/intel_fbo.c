@@ -50,7 +50,7 @@
  * Create a new framebuffer object.
  */
 static struct gl_framebuffer *
-intel_new_framebuffer(GLcontext * ctx, GLuint name)
+intel_new_framebuffer(struct gl_context * ctx, GLuint name)
 {
    /* Only drawable state in intel_framebuffer at this time, just use Mesa's
     * class
@@ -81,7 +81,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
  * Return a pointer to a specific pixel in a renderbuffer.
  */
 static void *
-intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
                   GLint x, GLint y)
 {
    /* By returning NULL we force all software rendering to go through
@@ -96,7 +96,7 @@ intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
  * storage for a user-created renderbuffer.
  */
 static GLboolean
-intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)
 {
@@ -216,7 +216,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 #if FEATURE_OES_EGL_image
 static void
-intel_image_target_renderbuffer_storage(GLcontext *ctx,
+intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 					struct gl_renderbuffer *rb,
 					void *image_handle)
 {
@@ -252,7 +252,7 @@ intel_image_target_renderbuffer_storage(GLcontext *ctx,
  * Not used for user-created renderbuffers!
  */
 static GLboolean
-intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
    ASSERT(rb->Name == 0);
@@ -265,7 +265,7 @@ intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
+intel_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 		     GLuint width, GLuint height)
 {
    int i;
@@ -293,7 +293,7 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
-intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
 {
    _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
@@ -396,7 +396,7 @@ intel_create_renderbuffer(gl_format format)
  * Typically called via glBindRenderbufferEXT().
  */
 static struct gl_renderbuffer *
-intel_new_renderbuffer(GLcontext * ctx, GLuint name)
+intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
    /*struct intel_context *intel = intel_context(ctx); */
    struct intel_renderbuffer *irb;
@@ -424,7 +424,7 @@ intel_new_renderbuffer(GLcontext * ctx, GLuint name)
  * Called via glBindFramebufferEXT().
  */
 static void
-intel_bind_framebuffer(GLcontext * ctx, GLenum target,
+intel_bind_framebuffer(struct gl_context * ctx, GLenum target,
                        struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
@@ -440,7 +440,7 @@ intel_bind_framebuffer(GLcontext * ctx, GLenum target,
  * Called via glFramebufferRenderbufferEXT().
  */
 static void
-intel_framebuffer_renderbuffer(GLcontext * ctx,
+intel_framebuffer_renderbuffer(struct gl_context * ctx,
                                struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
@@ -454,7 +454,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 
 
 static GLboolean
-intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
+intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
@@ -535,7 +535,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
  * This will have the region info needed for hardware rendering.
  */
 static struct intel_renderbuffer *
-intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
+intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
    const GLuint name = ~0;   /* not significant, but distinct for debugging */
    struct intel_renderbuffer *irb;
@@ -566,7 +566,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
  * before intel_finish_render_texture() is ever called.
  */
 static void
-intel_render_texture(GLcontext * ctx,
+intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
@@ -642,7 +642,7 @@ intel_render_texture(GLcontext * ctx,
  * Called by Mesa when rendering to a texture is done.
  */
 static void
-intel_finish_render_texture(GLcontext * ctx,
+intel_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -669,7 +669,7 @@ intel_finish_render_texture(GLcontext * ctx,
  * Do additional "completeness" testing of a framebuffer object.
  */
 static void
-intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    const struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);

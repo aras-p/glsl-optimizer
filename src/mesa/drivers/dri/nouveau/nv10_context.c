@@ -41,7 +41,7 @@ static const struct dri_extension nv10_extensions[] = {
 };
 
 static GLboolean
-use_fast_zclear(GLcontext *ctx, GLbitfield buffers)
+use_fast_zclear(struct gl_context *ctx, GLbitfield buffers)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -62,7 +62,7 @@ use_fast_zclear(GLcontext *ctx, GLbitfield buffers)
 }
 
 GLboolean
-nv10_use_viewport_zclear(GLcontext *ctx)
+nv10_use_viewport_zclear(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -74,7 +74,7 @@ nv10_use_viewport_zclear(GLcontext *ctx)
 }
 
 float
-nv10_transform_depth(GLcontext *ctx, float z)
+nv10_transform_depth(struct gl_context *ctx, float z)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -85,7 +85,7 @@ nv10_transform_depth(GLcontext *ctx, float z)
 }
 
 static void
-nv10_zclear(GLcontext *ctx, GLbitfield *buffers)
+nv10_zclear(struct gl_context *ctx, GLbitfield *buffers)
 {
 	/*
 	 * Pre-nv17 cards don't have native support for fast Z clears,
@@ -145,7 +145,7 @@ nv10_zclear(GLcontext *ctx, GLbitfield *buffers)
 }
 
 static void
-nv17_zclear(GLcontext *ctx, GLbitfield *buffers)
+nv17_zclear(struct gl_context *ctx, GLbitfield *buffers)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -175,7 +175,7 @@ nv17_zclear(GLcontext *ctx, GLbitfield *buffers)
 }
 
 static void
-nv10_clear(GLcontext *ctx, GLbitfield buffers)
+nv10_clear(struct gl_context *ctx, GLbitfield buffers)
 {
 	nouveau_validate_framebuffer(ctx);
 
@@ -190,7 +190,7 @@ nv10_clear(GLcontext *ctx, GLbitfield buffers)
 }
 
 static void
-nv10_hwctx_init(GLcontext *ctx)
+nv10_hwctx_init(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -402,7 +402,7 @@ nv10_hwctx_init(GLcontext *ctx)
 }
 
 static void
-nv10_context_destroy(GLcontext *ctx)
+nv10_context_destroy(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -415,12 +415,12 @@ nv10_context_destroy(GLcontext *ctx)
 	FREE(ctx);
 }
 
-static GLcontext *
+static struct gl_context *
 nv10_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
-		    GLcontext *share_ctx)
+		    struct gl_context *share_ctx)
 {
 	struct nouveau_context *nctx;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	unsigned celsius_class;
 	int ret;
 

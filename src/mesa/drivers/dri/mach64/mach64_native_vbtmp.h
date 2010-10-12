@@ -52,7 +52,7 @@
 #define LOCALVARS
 #endif
 
-static void TAG(emit)( GLcontext *ctx,
+static void TAG(emit)( struct gl_context *ctx,
 		       GLuint start, GLuint end,
 		       void *dest,
 		       GLuint stride )
@@ -312,7 +312,7 @@ static void TAG(emit)( GLcontext *ctx,
 
 #if DO_XYZW && DO_RGBA
 
-static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
+static GLboolean TAG(check_tex_sizes)( struct gl_context *ctx )
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -344,7 +344,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 }
 
 
-static void TAG(interp)( GLcontext *ctx,
+static void TAG(interp)( struct gl_context *ctx,
 			 GLfloat t,
 			 GLuint edst, GLuint eout, GLuint ein,
 			 GLboolean force_boundary )
@@ -511,7 +511,7 @@ static void TAG(interp)( GLcontext *ctx,
 #endif /* DO_RGBA && DO_XYZW */
 
 
-static void TAG(copy_pv)( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void TAG(copy_pv)( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
 #if DO_SPEC || DO_FOG || DO_RGBA
    LOCALVARS   

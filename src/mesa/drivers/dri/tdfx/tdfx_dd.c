@@ -54,7 +54,7 @@ const GLboolean true4[4] = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
  * checks for this rather than doing a glGet(GL_MAX_TEXTURE_SIZE).
  * Why?
  */
-static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *tdfxDDGetString( struct gl_context *ctx, GLenum name )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
 
@@ -103,7 +103,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 
 
 static void
-tdfxBeginQuery(GLcontext *ctx, struct gl_query_object *q)
+tdfxBeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -119,7 +119,7 @@ tdfxBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-tdfxEndQuery(GLcontext *ctx, struct gl_query_object *q)
+tdfxEndQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FxI32 total_pixels;
@@ -187,7 +187,7 @@ void tdfxDDInitDriverFuncs( const struct gl_config *visual,
  */
 
 void
-FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
+FX_grColorMaskv(struct gl_context *ctx, const GLboolean rgba[4])
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    LOCK_HARDWARE(fxMesa);
@@ -207,7 +207,7 @@ FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
 }
 
 void
-FX_grColorMaskv_NoLock(GLcontext *ctx, const GLboolean rgba[4])
+FX_grColorMaskv_NoLock(struct gl_context *ctx, const GLboolean rgba[4])
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (ctx->Visual.redBits == 8) {

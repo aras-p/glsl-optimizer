@@ -75,7 +75,7 @@ static int getTypeSize(GLenum type)
 	}
 }
 
-static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void r300FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLvoid *src_ptr;
@@ -143,7 +143,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 }
 
 
-static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void r300SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -219,7 +219,7 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
  * Convert attribute data type to float
  * If the attribute uses named buffer object replace the bo with newly allocated bo
  */
-static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_array *input, struct vertex_attribute *attr)
+static void r300ConvertAttrib(struct gl_context *ctx, int count, const struct gl_client_array *input, struct vertex_attribute *attr)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	const GLvoid *src_ptr;
@@ -290,7 +290,7 @@ static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_
 	}
 }
 
-static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *input, int count, struct vertex_attribute *attr)
+static void r300AlignDataToDword(struct gl_context *ctx, const struct gl_client_array *input, int count, struct vertex_attribute *attr)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	const int dst_stride = (input->StrideB + 3) & ~3;
@@ -328,7 +328,7 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 	attr->stride = dst_stride;
 }
 
-static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const struct gl_client_array *input)
+static void r300TranslateAttrib(struct gl_context *ctx, GLuint attr, int count, const struct gl_client_array *input)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
@@ -467,7 +467,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	++vbuf->num_attribs;
 }
 
-static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
+static void r300SetVertexFormat(struct gl_context *ctx, const struct gl_client_array *arrays[], int count)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
@@ -497,7 +497,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 		return;
 }
 
-static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *input[], int count)
+static void r300AllocDmaRegions(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
@@ -578,7 +578,7 @@ static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *in
 
 }
 
-static void r300FreeData(GLcontext *ctx)
+static void r300FreeData(struct gl_context *ctx)
 {
 	/* Need to zero tcl.aos[n].bo and tcl.elt_dma_bo
 	 * to prevent double unref in radeonReleaseArrays
@@ -604,7 +604,7 @@ static void r300FreeData(GLcontext *ctx)
 	}
 }
 
-static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx,
+static GLuint r300PredictTryDrawPrimsSize(struct gl_context *ctx,
 		GLuint nr_prims, const struct _mesa_prim *prim)
 {
 	struct r300_context *r300 = R300_CONTEXT(ctx);
@@ -641,7 +641,7 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx,
 	return dwords;
 }
 
-static GLboolean r300TryDrawPrims(GLcontext *ctx,
+static GLboolean r300TryDrawPrims(struct gl_context *ctx,
 					 const struct gl_client_array *arrays[],
 					 const struct _mesa_prim *prim,
 					 GLuint nr_prims,
@@ -707,7 +707,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	return GL_TRUE;
 }
 
-static void r300DrawPrims(GLcontext *ctx,
+static void r300DrawPrims(struct gl_context *ctx,
 			 const struct gl_client_array *arrays[],
 			 const struct _mesa_prim *prim,
 			 GLuint nr_prims,
@@ -741,7 +741,7 @@ static void r300DrawPrims(GLcontext *ctx,
 		_tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 }
 
-void r300InitDraw(GLcontext *ctx)
+void r300InitDraw(struct gl_context *ctx)
 {
 	struct vbo_context *vbo = vbo_context(ctx);
 

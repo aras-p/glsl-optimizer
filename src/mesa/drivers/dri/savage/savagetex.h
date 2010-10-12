@@ -75,7 +75,7 @@ typedef struct {
 #define __HWParseTexEnvCombine(imesa, flag0, TexCtrl, TexBlendCtrl)
 
 
-void savageUpdateTextureState( GLcontext *ctx );
+void savageUpdateTextureState( struct gl_context *ctx );
 void savageDDInitTextureFuncs( struct dd_function_table *functions );
 
 void savageDestroyTexObj( savageContextPtr imesa, savageTexObjPtr t );

@@ -57,7 +57,7 @@ struct nouveau_hw_state {
 };
 
 struct nouveau_context {
-	GLcontext base;
+	struct gl_context base;
 	__DRIcontext *dri_context;
 	struct nouveau_screen *screen;
 
@@ -99,11 +99,11 @@ nouveau_context_create(gl_api api,
 		       void *share_ctx);
 
 GLboolean
-nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
-		     const struct gl_config *visual, GLcontext *share_ctx);
+nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
+		     const struct gl_config *visual, struct gl_context *share_ctx);
 
 void
-nouveau_context_deinit(GLcontext *ctx);
+nouveau_context_deinit(struct gl_context *ctx);
 
 void
 nouveau_context_destroy(__DRIcontext *dri_ctx);
@@ -119,10 +119,10 @@ GLboolean
 nouveau_context_unbind(__DRIcontext *dri_ctx);
 
 void
-nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode);
+nouveau_fallback(struct gl_context *ctx, enum nouveau_fallback mode);
 
 void
-nouveau_validate_framebuffer(GLcontext *ctx);
+nouveau_validate_framebuffer(struct gl_context *ctx);
 
 #endif
 

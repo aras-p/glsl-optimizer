@@ -33,45 +33,45 @@
 #include "tnl/tnl.h"
 
 static void
-nouveau_alpha_func(GLcontext *ctx, GLenum func, GLfloat ref)
+nouveau_alpha_func(struct gl_context *ctx, GLenum func, GLfloat ref)
 {
 	context_dirty(ctx, ALPHA_FUNC);
 }
 
 static void
-nouveau_blend_color(GLcontext *ctx, const GLfloat color[4])
+nouveau_blend_color(struct gl_context *ctx, const GLfloat color[4])
 {
 	context_dirty(ctx, BLEND_COLOR);
 }
 
 static void
-nouveau_blend_equation_separate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
+nouveau_blend_equation_separate(struct gl_context *ctx, GLenum modeRGB, GLenum modeA)
 {
 	context_dirty(ctx, BLEND_EQUATION);
 }
 
 static void
-nouveau_blend_func_separate(GLcontext *ctx, GLenum sfactorRGB,
+nouveau_blend_func_separate(struct gl_context *ctx, GLenum sfactorRGB,
 			    GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA)
 {
 	context_dirty(ctx, BLEND_FUNC);
 }
 
 static void
-nouveau_clip_plane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
+nouveau_clip_plane(struct gl_context *ctx, GLenum plane, const GLfloat *equation)
 {
 	context_dirty_i(ctx, CLIP_PLANE, plane - GL_CLIP_PLANE0);
 }
 
 static void
-nouveau_color_mask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+nouveau_color_mask(struct gl_context *ctx, GLboolean rmask, GLboolean gmask,
 		   GLboolean bmask, GLboolean amask)
 {
 	context_dirty(ctx, COLOR_MASK);
 }
 
 static void
-nouveau_color_material(GLcontext *ctx, GLenum face, GLenum mode)
+nouveau_color_material(struct gl_context *ctx, GLenum face, GLenum mode)
 {
 	context_dirty(ctx, COLOR_MATERIAL);
 	context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
@@ -83,44 +83,44 @@ nouveau_color_material(GLcontext *ctx, GLenum face, GLenum mode)
 }
 
 static void
-nouveau_cull_face(GLcontext *ctx, GLenum mode)
+nouveau_cull_face(struct gl_context *ctx, GLenum mode)
 {
 	context_dirty(ctx, CULL_FACE);
 }
 
 static void
-nouveau_front_face(GLcontext *ctx, GLenum mode)
+nouveau_front_face(struct gl_context *ctx, GLenum mode)
 {
 	context_dirty(ctx, FRONT_FACE);
 }
 
 static void
-nouveau_depth_func(GLcontext *ctx, GLenum func)
+nouveau_depth_func(struct gl_context *ctx, GLenum func)
 {
 	context_dirty(ctx, DEPTH);
 }
 
 static void
-nouveau_depth_mask(GLcontext *ctx, GLboolean flag)
+nouveau_depth_mask(struct gl_context *ctx, GLboolean flag)
 {
 	context_dirty(ctx, DEPTH);
 }
 
 static void
-nouveau_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+nouveau_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval)
 {
 	context_dirty(ctx, VIEWPORT);
 }
 
 static void
-nouveau_draw_buffers(GLcontext *ctx, GLsizei n, const GLenum *buffers)
+nouveau_draw_buffers(struct gl_context *ctx, GLsizei n, const GLenum *buffers)
 {
 	nouveau_validate_framebuffer(ctx);
 	context_dirty(ctx, FRAMEBUFFER);
 }
 
 static void
-nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
+nouveau_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
 	int i;
 
@@ -242,13 +242,13 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 }
 
 static void
-nouveau_fog(GLcontext *ctx, GLenum pname, const GLfloat *params)
+nouveau_fog(struct gl_context *ctx, GLenum pname, const GLfloat *params)
 {
 	context_dirty(ctx, FOG);
 }
 
 static void
-nouveau_light(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params)
+nouveau_light(struct gl_context *ctx, GLenum light, GLenum pname, const GLfloat *params)
 {
 	switch (pname) {
 	case GL_AMBIENT:
@@ -276,100 +276,100 @@ nouveau_light(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params)
 }
 
 static void
-nouveau_light_model(GLcontext *ctx, GLenum pname, const GLfloat *params)
+nouveau_light_model(struct gl_context *ctx, GLenum pname, const GLfloat *params)
 {
 	context_dirty(ctx, LIGHT_MODEL);
 	context_dirty(ctx, MODELVIEW);
 }
 
 static void
-nouveau_line_stipple(GLcontext *ctx, GLint factor, GLushort pattern )
+nouveau_line_stipple(struct gl_context *ctx, GLint factor, GLushort pattern )
 {
 	context_dirty(ctx, LINE_STIPPLE);
 }
 
 static void
-nouveau_line_width(GLcontext *ctx, GLfloat width)
+nouveau_line_width(struct gl_context *ctx, GLfloat width)
 {
 	context_dirty(ctx, LINE_MODE);
 }
 
 static void
-nouveau_logic_opcode(GLcontext *ctx, GLenum opcode)
+nouveau_logic_opcode(struct gl_context *ctx, GLenum opcode)
 {
 	context_dirty(ctx, LOGIC_OPCODE);
 }
 
 static void
-nouveau_point_parameter(GLcontext *ctx, GLenum pname, const GLfloat *params)
+nouveau_point_parameter(struct gl_context *ctx, GLenum pname, const GLfloat *params)
 {
 	context_dirty(ctx, POINT_PARAMETER);
 }
 
 static void
-nouveau_point_size(GLcontext *ctx, GLfloat size)
+nouveau_point_size(struct gl_context *ctx, GLfloat size)
 {
 	context_dirty(ctx, POINT_MODE);
 }
 
 static void
-nouveau_polygon_mode(GLcontext *ctx, GLenum face, GLenum mode)
+nouveau_polygon_mode(struct gl_context *ctx, GLenum face, GLenum mode)
 {
 	context_dirty(ctx, POLYGON_MODE);
 }
 
 static void
-nouveau_polygon_offset(GLcontext *ctx, GLfloat factor, GLfloat units)
+nouveau_polygon_offset(struct gl_context *ctx, GLfloat factor, GLfloat units)
 {
 	context_dirty(ctx, POLYGON_OFFSET);
 }
 
 static void
-nouveau_polygon_stipple(GLcontext *ctx, const GLubyte *mask)
+nouveau_polygon_stipple(struct gl_context *ctx, const GLubyte *mask)
 {
 	context_dirty(ctx, POLYGON_STIPPLE);
 }
 
 static void
-nouveau_render_mode(GLcontext *ctx, GLenum mode)
+nouveau_render_mode(struct gl_context *ctx, GLenum mode)
 {
 	context_dirty(ctx, RENDER_MODE);
 }
 
 static void
-nouveau_scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+nouveau_scissor(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
 	context_dirty(ctx, SCISSOR);
 }
 
 static void
-nouveau_shade_model(GLcontext *ctx, GLenum mode)
+nouveau_shade_model(struct gl_context *ctx, GLenum mode)
 {
 	context_dirty(ctx, SHADE_MODEL);
 }
 
 static void
-nouveau_stencil_func_separate(GLcontext *ctx, GLenum face, GLenum func,
+nouveau_stencil_func_separate(struct gl_context *ctx, GLenum face, GLenum func,
 			      GLint ref, GLuint mask)
 {
 	context_dirty(ctx, STENCIL_FUNC);
 }
 
 static void
-nouveau_stencil_mask_separate(GLcontext *ctx, GLenum face, GLuint mask)
+nouveau_stencil_mask_separate(struct gl_context *ctx, GLenum face, GLuint mask)
 {
 	context_dirty(ctx, STENCIL_MASK);
 }
 
 static void
-nouveau_stencil_op_separate(GLcontext *ctx, GLenum face, GLenum fail,
+nouveau_stencil_op_separate(struct gl_context *ctx, GLenum face, GLenum fail,
 			    GLenum zfail, GLenum zpass)
 {
 	context_dirty(ctx, STENCIL_OP);
 }
 
 static void
-nouveau_tex_gen(GLcontext *ctx, GLenum coord, GLenum pname,
+nouveau_tex_gen(struct gl_context *ctx, GLenum coord, GLenum pname,
 		const GLfloat *params)
 {
 	switch (pname) {
@@ -384,7 +384,7 @@ nouveau_tex_gen(GLcontext *ctx, GLenum coord, GLenum pname,
 }
 
 static void
-nouveau_tex_env(GLcontext *ctx, GLenum target, GLenum pname,
+nouveau_tex_env(struct gl_context *ctx, GLenum target, GLenum pname,
 		const GLfloat *param)
 {
 	switch (target) {
@@ -398,7 +398,7 @@ nouveau_tex_env(GLcontext *ctx, GLenum target, GLenum pname,
 }
 
 static void
-nouveau_tex_parameter(GLcontext *ctx, GLenum target,
+nouveau_tex_parameter(struct gl_context *ctx, GLenum target,
 		      struct gl_texture_object *t, GLenum pname,
 		      const GLfloat *params)
 {
@@ -424,18 +424,18 @@ nouveau_tex_parameter(GLcontext *ctx, GLenum target,
 }
 
 static void
-nouveau_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+nouveau_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
 	context_dirty(ctx, VIEWPORT);
 }
 
 void
-nouveau_emit_nothing(GLcontext *ctx, int emit)
+nouveau_emit_nothing(struct gl_context *ctx, int emit)
 {
 }
 
 int
-nouveau_next_dirty_state(GLcontext *ctx)
+nouveau_next_dirty_state(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	int i = BITSET_FFS(nctx->dirty) - 1;
@@ -447,7 +447,7 @@ nouveau_next_dirty_state(GLcontext *ctx)
 }
 
 void
-nouveau_state_emit(GLcontext *ctx)
+nouveau_state_emit(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	const struct nouveau_driver *drv = context_drv(ctx);
@@ -462,7 +462,7 @@ nouveau_state_emit(GLcontext *ctx)
 }
 
 static void
-nouveau_update_state(GLcontext *ctx, GLbitfield new_state)
+nouveau_update_state(struct gl_context *ctx, GLbitfield new_state)
 {
 	int i;
 
@@ -496,7 +496,7 @@ nouveau_update_state(GLcontext *ctx, GLbitfield new_state)
 }
 
 void
-nouveau_state_init(GLcontext *ctx)
+nouveau_state_init(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
