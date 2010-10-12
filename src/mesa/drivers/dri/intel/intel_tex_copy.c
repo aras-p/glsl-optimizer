@@ -72,6 +72,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       if (irb && irb->region && irb->region->cpp == 4)
          return irb->region;
       return NULL;
+   case 4:
    case GL_RGBA:
    case GL_RGBA8:
       irb = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
@@ -82,6 +83,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       if (irb->Base._BaseFormat == GL_RGB)
 	 return NULL;
       return irb->region;
+   case 3:
    case GL_RGB:
    case GL_RGB8:
       return intel_readbuf_region(intel);
