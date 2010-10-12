@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -33,8 +33,8 @@
  * Blending in SoA is much faster than AoS, especially when separate rgb/alpha
  * factors/functions are used, since no channel masking/shuffling is necessary
  * and we can achieve the full throughput of the SIMD operations. Furthermore
- * the fragment shader output is also in SoA, so it fits nicely with the rest of
- * the fragment pipeline.
+ * the fragment shader output is also in SoA, so it fits nicely with the rest
+ * of the fragment pipeline.
  *
  * The drawback is that to be displayed the color buffer needs to be in AoS
  * layout, so we need to tile/untile the color buffer before/after rendering.
@@ -77,7 +77,7 @@
 
 
 /**
- * We may the same values several times, so we keep them here to avoid
+ * We may use the same values several times, so we keep them here to avoid
  * recomputing them. Also reusing the values allows us to do simplifications
  * that LLVM optimization passes wouldn't normally be able to do.
  */
@@ -98,16 +98,22 @@ struct lp_build_blend_soa_context
    /**
     * We store all factors in a table in order to eliminate redundant
     * multiplications later.
+    * Indexes are: factor[src,dst][color,term][r,g,b,a]
     */
    LLVMValueRef factor[2][2][4];
 
    /**
     * Table with all terms.
+    * Indexes are: term[src,dst][r,g,b,a]
     */
    LLVMValueRef term[2][4];
 };
 
 
+/**
+ * Build a single SOA blend factor for a color channel.
+ * \param i  the color channel in [0,3]
+ */
 static LLVMValueRef
 lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
                           unsigned factor, unsigned i)
@@ -189,8 +195,16 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 }
 
 
+static boolean
+lp_build_blend_factor_complementary(unsigned src_factor, unsigned dst_factor)
+{
+   return dst_factor == (src_factor ^ 0x10);
+}
+
+
 /**
  * Generate blend code in SOA mode.
+ * \param rt  render target index (to index the blend / colormask state)
  * \param src  src/fragment color
  * \param dst  dst/framebuffer color
  * \param con  constant blend color
@@ -200,6 +214,7 @@ void
 lp_build_blend_soa(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
+                   unsigned rt,
                    LLVMValueRef src[4],
                    LLVMValueRef dst[4],
                    LLVMValueRef con[4],
@@ -207,6 +222,8 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 {
    struct lp_build_blend_soa_context bld;
    unsigned i, j, k;
+
+   assert(rt < PIPE_MAX_COLOR_BUFS);
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
@@ -218,7 +235,8 @@ lp_build_blend_soa(LLVMBuilderRef builder,
    }
 
    for (i = 0; i < 4; ++i) {
-      if (blend->rt[0].colormask & (1 << i)) {
+      /* only compute blending for the color channels enabled for writing */
+      if (blend->rt[rt].colormask & (1 << i)) {
          if (blend->logicop_enable) {
             if(!type.floating) {
                res[i] = lp_build_logicop(builder, blend->logicop_func, src[i], dst[i]);
@@ -226,14 +244,47 @@ lp_build_blend_soa(LLVMBuilderRef builder,
             else
                res[i] = dst[i];
          }
-         else if (blend->rt[0].blend_enable) {
-            unsigned src_factor = i < 3 ? blend->rt[0].rgb_src_factor : blend->rt[0].alpha_src_factor;
-            unsigned dst_factor = i < 3 ? blend->rt[0].rgb_dst_factor : blend->rt[0].alpha_dst_factor;
-            unsigned func = i < 3 ? blend->rt[0].rgb_func : blend->rt[0].alpha_func;
+         else if (blend->rt[rt].blend_enable) {
+            unsigned src_factor = i < 3 ? blend->rt[rt].rgb_src_factor : blend->rt[rt].alpha_src_factor;
+            unsigned dst_factor = i < 3 ? blend->rt[rt].rgb_dst_factor : blend->rt[rt].alpha_dst_factor;
+            unsigned func = i < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
             boolean func_commutative = lp_build_blend_func_commutative(func);
 
-            /* It makes no sense to blend unless values are normalized */
-            assert(type.norm);
+	    if (func == PIPE_BLEND_ADD &&
+		lp_build_blend_factor_complementary(src_factor, dst_factor) && 0) {
+               /*
+                * Special case linear interpolation, (i.e., complementary factors).
+                */
+
+	       LLVMValueRef weight;
+	       if (src_factor < dst_factor) {
+		  weight = lp_build_blend_soa_factor(&bld, src_factor, i);
+		  res[i] = lp_build_lerp(&bld.base, weight, dst[i], src[i]);
+	       } else {
+		  weight = lp_build_blend_soa_factor(&bld, dst_factor, i);
+		  res[i] = lp_build_lerp(&bld.base, weight, src[i], dst[i]);
+	       }
+	       continue;
+	    }
+
+	    if ((func == PIPE_BLEND_ADD ||
+                 func == PIPE_BLEND_SUBTRACT ||
+                 func == PIPE_BLEND_REVERSE_SUBTRACT) &&
+		src_factor == dst_factor &&
+                type.floating) {
+               /*
+                * Special common factor.
+                *
+                * XXX: Only for floating points for now, since saturation will
+                * cause different results.
+                */
+
+	       LLVMValueRef factor;
+               factor = lp_build_blend_soa_factor(&bld, src_factor, i);
+               res[i] = lp_build_blend_func(&bld.base, func, src[i], dst[i]);
+               res[i] = lp_build_mul(&bld.base, res[i], factor);
+	       continue;
+	    }
 
             /*
              * Compute src/dst factors.
@@ -269,9 +320,9 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                   /* XXX special case these combos to work around an apparent
                    * bug in LLVM.
                    * This hack disables the check for multiplication by zero
-                   * in lp_bld_mul().  When we optimize away the multiplication,
-                   * something goes wrong during code generation and we segfault
-                   * at runtime.
+                   * in lp_bld_mul().  When we optimize away the
+                   * multiplication, something goes wrong during code
+                   * generation and we segfault at runtime.
                    */
                   LLVMValueRef zeroSave = bld.base.zero;
                   bld.base.zero = NULL;
@@ -287,7 +338,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 
             /* See if this function has been previously applied */
             for(j = 0; j < i; ++j) {
-               unsigned prev_func = j < 3 ? blend->rt[0].rgb_func : blend->rt[0].alpha_func;
+               unsigned prev_func = j < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
                unsigned func_reverse = lp_build_blend_func_reverse(func, prev_func);
 
                if((!func_reverse &&

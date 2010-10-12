@@ -38,13 +38,23 @@
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_state.h"
+#include "lp_debug.h"
 
 
 static void *
 llvmpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
-   return mem_dup(blend, sizeof(*blend));
+   struct pipe_blend_state *state = mem_dup(blend, sizeof *blend);
+   int i;
+
+   if (LP_PERF & PERF_NO_BLEND) {
+      state->independent_blend_enable = 0;
+      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+	 state->rt[i].blend_enable = 0;
+   }
+
+   return state;
 }
 
 
@@ -100,7 +110,22 @@ static void *
 llvmpipe_create_depth_stencil_state(struct pipe_context *pipe,
 				    const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   return mem_dup(depth_stencil, sizeof(*depth_stencil));
+   struct pipe_depth_stencil_alpha_state *state;
+
+   state = mem_dup(depth_stencil, sizeof *depth_stencil);
+
+   if (LP_PERF & PERF_NO_DEPTH) {
+      state->depth.enabled = 0;
+      state->depth.writemask = 0;
+      state->stencil[0].enabled = 0;
+      state->stencil[1].enabled = 0;
+   }
+
+   if (LP_PERF & PERF_NO_ALPHATEST) {
+      state->alpha.enabled = 0;
+   }
+
+   return state;
 }
 
 
@@ -148,6 +173,11 @@ llvmpipe_set_stencil_ref(struct pipe_context *pipe,
    llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
+static void
+llvmpipe_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+}
 
 void
 llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe)
@@ -163,4 +193,5 @@ llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe)
    llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
 
    llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
+   llvmpipe->pipe.set_sample_mask = llvmpipe_set_sample_mask;
 }

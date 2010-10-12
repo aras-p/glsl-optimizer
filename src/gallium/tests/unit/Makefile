@@ -22,7 +22,9 @@ SOURCES = \
 	pipe_barrier_test.c \
 	u_cache_test.c \
 	u_half_test.c \
-	u_format_test.c
+	u_format_test.c \
+	u_format_compatible_test.c \
+	translate_test.c
 
 
 OBJECTS = $(SOURCES:.c=.o)

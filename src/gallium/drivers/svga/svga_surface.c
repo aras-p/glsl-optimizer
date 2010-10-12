@@ -37,13 +37,11 @@
 #include "svga_context.h"
 #include "svga_resource_texture.h"
 #include "svga_surface.h"
-#include "svga_winsys.h"
 #include "svga_debug.h"
 
 
 void
 svga_texture_copy_handle(struct svga_context *svga,
-                         struct svga_screen *ss,
                          struct svga_winsys_surface *src_handle,
                          unsigned src_x, unsigned src_y, unsigned src_z,
                          unsigned src_level, unsigned src_face,
@@ -56,7 +54,7 @@ svga_texture_copy_handle(struct svga_context *svga,
    enum pipe_error ret;
    SVGA3dCopyBox box, *boxes;
 
-   assert(svga || ss);
+   assert(svga);
 
    src.handle = src_handle;
    src.real_level = src_level;
@@ -84,39 +82,20 @@ svga_texture_copy_handle(struct svga_context *svga,
             dst_handle, dst_level, dst_x, dst_y, dst_z);
 */
 
-   if (svga) {
+   ret = SVGA3D_BeginSurfaceCopy(svga->swc,
+                                 &src.base,
+                                 &dst.base,
+                                 &boxes, 1);
+   if(ret != PIPE_OK) {
+      svga_context_flush(svga, NULL);
       ret = SVGA3D_BeginSurfaceCopy(svga->swc,
                                     &src.base,
                                     &dst.base,
                                     &boxes, 1);
-      if(ret != PIPE_OK) {
-         svga_context_flush(svga, NULL);
-         ret = SVGA3D_BeginSurfaceCopy(svga->swc,
-                                       &src.base,
-                                       &dst.base,
-                                       &boxes, 1);
-         assert(ret == PIPE_OK);
-      }
-      *boxes = box;
-      SVGA_FIFOCommitAll(svga->swc);
-   } else {
-      pipe_mutex_lock(ss->swc_mutex);
-      ret = SVGA3D_BeginSurfaceCopy(ss->swc,
-                                    &src.base,
-                                    &dst.base,
-                                    &boxes, 1);
-      if(ret != PIPE_OK) {
-         ss->swc->flush(ss->swc, NULL);
-         ret = SVGA3D_BeginSurfaceCopy(ss->swc,
-                                       &src.base,
-                                       &dst.base,
-                                       &boxes, 1);
-         assert(ret == PIPE_OK);
-      }
-      *boxes = box;
-      SVGA_FIFOCommitAll(ss->swc);
-      pipe_mutex_unlock(ss->swc_mutex);
+      assert(ret == PIPE_OK);
    }
+   *boxes = box;
+   SVGA_FIFOCommitAll(svga->swc);
 }
 
 
@@ -183,7 +162,6 @@ svga_texture_view_surface(struct pipe_context *pipe,
                               1);
 
             svga_texture_copy_handle(svga_context(pipe),
-                                     ss,
                                      tex->handle, 
                                      0, 0, z_offset, 
                                      i + start_mip, 
@@ -346,7 +324,7 @@ svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
 
    if (s->handle != tex->handle) {
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface propagate: tex %p, level %u, from %p\n", tex, surf->level, surf);
-      svga_texture_copy_handle(svga_context(pipe), ss,
+      svga_texture_copy_handle(svga_context(pipe),
                                s->handle, 0, 0, 0, s->real_level, s->real_face,
                                tex->handle, 0, 0, surf->zslice, surf->level, surf->face,
                                u_minify(tex->b.b.width0, surf->level),

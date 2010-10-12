@@ -34,28 +34,17 @@
 #ifndef _VGPLATFORM_H
 #define _VGPLATFORM_H
 
+#include <KHR/khrplatform.h>
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
-#  define VG_API_CALL __attribute__((visibility("default")))
-#  define VGU_API_CALL __attribute__((visibility("default")))
 #endif
 
 #ifndef VG_API_CALL 
 #if defined(OPENVG_STATIC_LIBRARY)
 #	define VG_API_CALL
 #else
-#	if defined(_WIN32) || defined(__VC32__)				/* Win32 */
-#		if defined (OPENVG_DLL_EXPORTS)
-#			define VG_API_CALL __declspec(dllexport)
-#		else
-#			define VG_API_CALL __declspec(dllimport)
-#		endif
-#	else 
-#		define VG_API_CALL extern
-#	endif /* defined(_WIN32) ||... */
+#	define VG_API_CALL KHRONOS_APICALL
 #endif /* defined OPENVG_STATIC_LIBRARY */
 #endif /* ifndef VG_API_CALL */
 
@@ -63,15 +52,7 @@ extern "C" {
 #if defined(OPENVG_STATIC_LIBRARY)
 #	define VGU_API_CALL
 #else
-#	if defined(_WIN32) || defined(__VC32__)				/* Win32 */
-#		if defined (OPENVG_DLL_EXPORTS)
-#			define VGU_API_CALL __declspec(dllexport)
-#		else
-#			define VGU_API_CALL __declspec(dllimport)
-#		endif
-#	else 
-#		define VGU_API_CALL extern
-#	endif /* defined(_WIN32) ||... */
+#	define VGU_API_CALL KHRONOS_APICALL
 #endif /* defined OPENVG_STATIC_LIBRARY */
 #endif /* ifndef VGU_API_CALL */
 

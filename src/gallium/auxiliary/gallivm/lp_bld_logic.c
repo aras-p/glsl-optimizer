@@ -34,11 +34,13 @@
 
 
 #include "util/u_cpu_detect.h"
+#include "util/u_memory.h"
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_logic.h"
 
 
@@ -82,15 +84,31 @@ lp_build_compare(LLVMBuilderRef builder,
 
    assert(func >= PIPE_FUNC_NEVER);
    assert(func <= PIPE_FUNC_ALWAYS);
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(func == PIPE_FUNC_NEVER)
       return zeros;
    if(func == PIPE_FUNC_ALWAYS)
       return ones;
 
-   /* TODO: optimize the constant case */
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   /*
+    * There are no unsigned integer comparison instructions in SSE.
+    */
 
-   /* XXX: It is not clear if we should use the ordered or unordered operators */
+   if (!type.floating && !type.sign &&
+       type.width * type.length == 128 &&
+       util_cpu_caps.has_sse2 &&
+       (func == PIPE_FUNC_LESS ||
+        func == PIPE_FUNC_LEQUAL ||
+        func == PIPE_FUNC_GREATER ||
+        func == PIPE_FUNC_GEQUAL) &&
+       (gallivm_debug & GALLIVM_DEBUG_PERF)) {
+         debug_printf("%s: inefficient <%u x i%u> unsigned comparison\n",
+                      __FUNCTION__, type.length, type.width);
+   }
+#endif
 
 #if HAVE_LLVM < 0x0207
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
@@ -187,12 +205,10 @@ lp_build_compare(LLVMBuilderRef builder,
             return lp_build_undef(type);
          }
 
-         /* There are no signed byte and unsigned word/dword comparison
-          * instructions. So flip the sign bit so that the results match.
+         /* There are no unsigned comparison instructions. So flip the sign bit
+          * so that the results match.
           */
-         if(table[func].gt &&
-            ((type.width == 8 && type.sign) ||
-             (type.width != 8 && !type.sign))) {
+         if (table[func].gt && !type.sign) {
             LLVMValueRef msb = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
             a = LLVMBuildXor(builder, a, msb, "");
             b = LLVMBuildXor(builder, b, msb, "");
@@ -222,6 +238,8 @@ lp_build_compare(LLVMBuilderRef builder,
    } /* if (type.width * type.length == 128) */
 #endif
 #endif /* HAVE_LLVM < 0x0207 */
+
+   /* XXX: It is not clear if we should use the ordered or unordered operators */
 
    if(type.floating) {
       LLVMRealPredicate op;
@@ -324,8 +342,10 @@ lp_build_compare(LLVMBuilderRef builder,
 
          res = LLVMGetUndef(int_vec_type);
 
-         debug_printf("%s: warning: using slow element-wise int"
-                      " vector comparison\n", __FUNCTION__);
+         if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+            debug_printf("%s: using slow element-wise int"
+                         " vector comparison\n", __FUNCTION__);
+         }
 
          for(i = 0; i < type.length; ++i) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
@@ -364,9 +384,55 @@ lp_build_cmp(struct lp_build_context *bld,
 
 
 /**
+ * Return (mask & a) | (~mask & b);
+ */
+LLVMValueRef
+lp_build_select_bitwise(struct lp_build_context *bld,
+                        LLVMValueRef mask,
+                        LLVMValueRef a,
+                        LLVMValueRef b)
+{
+   struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
+   if (a == b) {
+      return a;
+   }
+
+   if(type.floating) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+   }
+
+   a = LLVMBuildAnd(bld->builder, a, mask, "");
+
+   /* This often gets translated to PANDN, but sometimes the NOT is
+    * pre-computed and stored in another constant. The best strategy depends
+    * on available registers, so it is not a big deal -- hopefully LLVM does
+    * the right decision attending the rest of the program.
+    */
+   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+
+   res = LLVMBuildOr(bld->builder, a, b, "");
+
+   if(type.floating) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+
+   return res;
+}
+
+
+/**
  * Return mask ? a : b;
  *
- * mask is a bitwise mask, composed of 0 or ~0 for each element.
+ * mask is a bitwise mask, composed of 0 or ~0 for each element. Any other value
+ * will yield unpredictable results.
  */
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
@@ -377,6 +443,9 @@ lp_build_select(struct lp_build_context *bld,
    struct lp_type type = bld->type;
    LLVMValueRef res;
 
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
    if(a == b)
       return a;
 
@@ -384,49 +453,78 @@ lp_build_select(struct lp_build_context *bld,
       mask = LLVMBuildTrunc(bld->builder, mask, LLVMInt1Type(), "");
       res = LLVMBuildSelect(bld->builder, mask, a, b, "");
    }
+   else if (util_cpu_caps.has_sse4_1 &&
+            type.width * type.length == 128 &&
+            !LLVMIsConstant(a) &&
+            !LLVMIsConstant(b) &&
+            !LLVMIsConstant(mask)) {
+      const char *intrinsic;
+      LLVMTypeRef arg_type;
+      LLVMValueRef args[3];
+
+      if (type.width == 64) {
+         intrinsic = "llvm.x86.sse41.blendvpd";
+         arg_type = LLVMVectorType(LLVMDoubleType(), 2);
+      } else if (type.width == 32) {
+         intrinsic = "llvm.x86.sse41.blendvps";
+         arg_type = LLVMVectorType(LLVMFloatType(), 4);
+      } else {
+         intrinsic = "llvm.x86.sse41.pblendvb";
+         arg_type = LLVMVectorType(LLVMInt8Type(), 16);
+      }
+
+      if (arg_type != bld->int_vec_type) {
+         mask = LLVMBuildBitCast(bld->builder, mask, arg_type, "");
+      }
+
+      if (arg_type != bld->vec_type) {
+         a = LLVMBuildBitCast(bld->builder, a, arg_type, "");
+         b = LLVMBuildBitCast(bld->builder, b, arg_type, "");
+      }
+
+      args[0] = b;
+      args[1] = a;
+      args[2] = mask;
+
+      res = lp_build_intrinsic(bld->builder, intrinsic,
+                               arg_type, args, Elements(args));
+
+      if (arg_type != bld->vec_type) {
+         res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+      }
+   }
    else {
-      if(type.floating) {
-         LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-         a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-         b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
-      }
-
-      a = LLVMBuildAnd(bld->builder, a, mask, "");
-
-      /* This often gets translated to PANDN, but sometimes the NOT is
-       * pre-computed and stored in another constant. The best strategy depends
-       * on available registers, so it is not a big deal -- hopefully LLVM does
-       * the right decision attending the rest of the program.
-       */
-      b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
-
-      res = LLVMBuildOr(bld->builder, a, b, "");
-
-      if(type.floating) {
-         LLVMTypeRef vec_type = lp_build_vec_type(type);
-         res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
-      }
+      res = lp_build_select_bitwise(bld, mask, a, b);
    }
 
    return res;
 }
 
 
+/**
+ * Return mask ? a : b;
+ *
+ * mask is a TGSI_WRITEMASK_xxx.
+ */
 LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
+                    unsigned mask,
                     LLVMValueRef a,
-                    LLVMValueRef b,
-                    const boolean cond[4])
+                    LLVMValueRef b)
 {
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
 
+   assert((mask & ~0xf) == 0);
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
    if(a == b)
       return a;
-   if(cond[0] && cond[1] && cond[2] && cond[3])
+   if((mask & 0xf) == 0xf)
       return a;
-   if(!cond[0] && !cond[1] && !cond[2] && !cond[3])
+   if((mask & 0xf) == 0x0)
       return b;
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
@@ -449,7 +547,9 @@ lp_build_select_aos(struct lp_build_context *bld,
 
       for(j = 0; j < n; j += 4)
          for(i = 0; i < 4; ++i)
-            shuffles[j + i] = LLVMConstInt(elem_type, (cond[i] ? 0 : n) + j + i, 0);
+            shuffles[j + i] = LLVMConstInt(elem_type,
+                                           (mask & (1 << i) ? 0 : n) + j + i,
+                                           0);
 
       return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
    }
@@ -458,26 +558,17 @@ lp_build_select_aos(struct lp_build_context *bld,
       /* XXX: Unfortunately select of vectors do not work */
       /* Use a select */
       LLVMTypeRef elem_type = LLVMInt1Type();
-      LLVMValueRef cond[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef cond_vec[LP_MAX_VECTOR_LENGTH];
 
       for(j = 0; j < n; j += 4)
          for(i = 0; i < 4; ++i)
-            cond[j + i] = LLVMConstInt(elem_type, cond[i] ? 1 : 0, 0);
+            cond_vec[j + i] = LLVMConstInt(elem_type,
+                                           mask & (1 << i) ? 1 : 0, 0);
 
-      return LLVMBuildSelect(bld->builder, LLVMConstVector(cond, n), a, b, "");
+      return LLVMBuildSelect(bld->builder, LLVMConstVector(cond_vec, n), a, b, "");
 #else
-      LLVMValueRef mask = lp_build_const_mask_aos(type, cond);
-      return lp_build_select(bld, mask, a, b);
+      LLVMValueRef mask_vec = lp_build_const_mask_aos(type, mask);
+      return lp_build_select(bld, mask_vec, a, b);
 #endif
    }
-}
-
-
-/** Return (a & ~b) */
-LLVMValueRef
-lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
-{
-   b = LLVMBuildNot(bld->builder, b, "");
-   b = LLVMBuildAnd(bld->builder, a, b, "");
-   return b;
 }

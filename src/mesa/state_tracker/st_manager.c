@@ -42,22 +42,16 @@
 #include "main/texstate.h"
 #include "main/texfetch.h"
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 #include "main/renderbuffer.h"
+#include "main/version.h"
 #include "st_texture.h"
 
 #include "st_context.h"
 #include "st_format.h"
 #include "st_cb_fbo.h"
+#include "st_cb_flush.h"
 #include "st_manager.h"
-
-/* these functions are defined in st_context.c */
-struct st_context *
-st_create_context(struct pipe_context *pipe,
-                  const __GLcontextModes *visual,
-                  struct st_context *share);
-void st_destroy_context(struct st_context *st);
-void st_flush(struct st_context *st, uint pipeFlushFlags,
-              struct pipe_fence_handle **fence);
 
 /**
  * Cast wrapper to convert a GLframebuffer to an st_framebuffer.
@@ -255,6 +249,9 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
    int samples;
    boolean sw;
 
+   if (!stfb->iface)
+      return FALSE;
+
    /* do not distinguish depth/stencil buffers */
    if (idx == BUFFER_STENCIL)
       idx = BUFFER_DEPTH;
@@ -430,6 +427,15 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    if (!stfb)
       return NULL;
 
+   /* for FBO-only context */
+   if (!stfbi) {
+      GLframebuffer *base = _mesa_get_incomplete_framebuffer();
+
+      stfb->Base = *base;
+
+      return stfb;
+   }
+
    st_visual_to_context_mode(stfbi->visual, &mode);
    _mesa_initialize_window_framebuffer(&stfb->Base, &mode);
 
@@ -480,9 +486,18 @@ st_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
    stfb = st_ws_framebuffer(st->ctx->WinSysDrawBuffer);
    if (!stfb || stfb->iface != stfbi)
       stfb = st_ws_framebuffer(st->ctx->WinSysReadBuffer);
-   assert(stfb && stfb->iface == stfbi);
 
-   p_atomic_set(&stfb->revalidate, TRUE);
+   if (stfb && stfb->iface == stfbi) {
+      p_atomic_set(&stfb->revalidate, TRUE);
+   }
+   else {
+      /* This function is probably getting called when we've detected a
+       * change in a window's size but the currently bound context is
+       * not bound to that window.
+       * If the st_framebuffer_iface structure had a pointer to the
+       * corresponding st_framebuffer we'd be able to handle this.
+       */
+   }
 }
 
 static void
@@ -508,6 +523,7 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    struct st_texture_object *stObj;
    struct st_texture_image *stImage;
    GLenum internalFormat;
+   GLuint width, height, depth;
 
    switch (target) {
    case ST_TEXTURE_1D:
@@ -527,12 +543,6 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
       break;
    }
 
-   if (util_format_get_component_bits(internal_format,
-            UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
-      internalFormat = GL_RGBA;
-   else
-      internalFormat = GL_RGB;
-
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
 
@@ -546,17 +556,53 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
+      /*
+       * XXX When internal_format and tex->format differ, st_finalize_texture
+       * needs to allocate a new texture with internal_format and copy the
+       * texture here into the new one.  It will result in surface_copy being
+       * called on surfaces whose formats differ.
+       *
+       * To avoid that, internal_format is (wrongly) ignored here.  A sane fix
+       * is to use a sampler view.
+       */
+      if (!st_sampler_compat_formats(tex->format, internal_format))
+	 internal_format = tex->format;
+     
+      if (util_format_get_component_bits(internal_format,
+               UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
+         internalFormat = GL_RGBA;
+      else
+         internalFormat = GL_RGB;
       _mesa_init_teximage_fields(ctx, target, texImage,
             tex->width0, tex->height0, 1, 0, internalFormat);
       texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
             GL_RGBA, GL_UNSIGNED_BYTE);
       _mesa_set_fetch_functions(texImage, 2);
+
+      width = tex->width0;
+      height = tex->height0;
+      depth = tex->depth0;
+
+      /* grow the image size until we hit level = 0 */
+      while (level > 0) {
+         if (width != 1)
+            width <<= 1;
+         if (height != 1)
+            height <<= 1;
+         if (depth != 1)
+            depth <<= 1;
+         level--;
+      }
    }
    else {
       _mesa_clear_texture_image(ctx, texImage);
+      width = height = depth = 0;
    }
 
    pipe_resource_reference(&stImage->pt, tex);
+   stObj->width0 = width;
+   stObj->height0 = height;
+   stObj->depth0 = depth;
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
    _mesa_unlock_texture(ctx, texObj);
@@ -573,34 +619,65 @@ st_context_destroy(struct st_context_iface *stctxi)
 
 static struct st_context_iface *
 st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
-                      const struct st_visual *visual,
+                      const struct st_context_attribs *attribs,
                       struct st_context_iface *shared_stctxi)
 {
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
    struct st_context *st;
    struct pipe_context *pipe;
    __GLcontextModes mode;
+   gl_api api;
+
+   if (!(stapi->profile_mask & (1 << attribs->profile)))
+      return NULL;
+
+   switch (attribs->profile) {
+   case ST_PROFILE_DEFAULT:
+      api = API_OPENGL;
+      break;
+   case ST_PROFILE_OPENGL_ES1:
+      api = API_OPENGLES;
+      break;
+   case ST_PROFILE_OPENGL_ES2:
+      api = API_OPENGLES2;
+      break;
+   case ST_PROFILE_OPENGL_CORE:
+   default:
+      return NULL;
+      break;
+   }
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
    if (!pipe)
       return NULL;
 
-   st_visual_to_context_mode(visual, &mode);
-   st = st_create_context(pipe, &mode, shared_ctx);
+   st_visual_to_context_mode(&attribs->visual, &mode);
+   st = st_create_context(api, pipe, &mode, shared_ctx);
    if (!st) {
       pipe->destroy(pipe);
       return NULL;
    }
 
-   st->iface.destroy = st_context_destroy;
+   /* need to perform version check */
+   if (attribs->major > 1 || attribs->minor > 0) {
+      _mesa_compute_version(st->ctx);
 
+      if (st->ctx->VersionMajor < attribs->major ||
+          st->ctx->VersionMajor < attribs->minor) {
+         st_destroy_context(st);
+         return NULL;
+      }
+   }
+
+   st->invalidate_on_gl_viewport =
+      smapi->get_param(smapi, ST_MANAGER_BROKEN_INVALIDATE);
+
+   st->iface.destroy = st_context_destroy;
    st->iface.notify_invalid_framebuffer =
       st_context_notify_invalid_framebuffer;
    st->iface.flush = st_context_flush;
-
    st->iface.teximage = st_context_teximage;
    st->iface.copy = NULL;
-
    st->iface.st_context_private = (void *) smapi;
 
    return &st->iface;
@@ -646,10 +723,14 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
             st_framebuffer_validate(stread, st);
 
          /* modify the draw/read buffers of the context */
-         st_visual_to_default_buffer(stdraw->iface->visual,
-               &st->ctx->Color.DrawBuffer[0], NULL);
-         st_visual_to_default_buffer(stread->iface->visual,
-               &st->ctx->Pixel.ReadBuffer, NULL);
+         if (stdraw->iface) {
+            st_visual_to_default_buffer(stdraw->iface->visual,
+                  &st->ctx->Color.DrawBuffer[0], NULL);
+         }
+         if (stread->iface) {
+            st_visual_to_default_buffer(stread->iface->visual,
+                  &st->ctx->Pixel.ReadBuffer, NULL);
+         }
 
          ret = _mesa_make_current(st->ctx, &stdraw->Base, &stread->Base);
       }
@@ -674,13 +755,6 @@ st_api_get_current(struct st_api *stapi)
    struct st_context *st = (ctx) ? ctx->st : NULL;
 
    return (st) ? &st->iface : NULL;
-}
-
-static boolean
-st_api_is_visual_supported(struct st_api *stapi,
-                           const struct st_visual *visual)
-{
-   return TRUE;
 }
 
 static st_proc_t
@@ -708,6 +782,8 @@ st_manager_flush_frontbuffer(struct st_context *st)
    if (!strb)
       return;
 
+   /* never a dummy fb */
+   assert(stfb->iface);
    stfb->iface->flush_front(stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
 }
 
@@ -727,9 +803,7 @@ st_manager_get_egl_image_surface(struct st_context *st,
       return NULL;
 
    memset(&stimg, 0, sizeof(stimg));
-   stimg.stctxi = &st->iface;
-   stimg.egl_image = eglimg;
-   if (!smapi->get_egl_image(smapi, &stimg))
+   if (!smapi->get_egl_image(smapi, eglimg, &stimg))
       return NULL;
 
    ps = smapi->screen->get_tex_surface(smapi->screen,
@@ -790,22 +864,27 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
    return TRUE;
 }
 
-struct st_api st_gl_api = {
+static const struct st_api st_gl_api = {
+   ST_API_OPENGL,
+#if FEATURE_GL
+   ST_PROFILE_DEFAULT_MASK |
+#endif
+#if FEATURE_ES1
+   ST_PROFILE_OPENGL_ES1_MASK |
+#endif
+#if FEATURE_ES2
+   ST_PROFILE_OPENGL_ES2_MASK |
+#endif
+   0,
    st_api_destroy,
    st_api_get_proc_address,
-   st_api_is_visual_supported,
    st_api_create_context,
    st_api_make_current,
    st_api_get_current,
 };
 
-/**
- * Return the st_api for this state tracker. This might either be GL, GLES1,
- * GLES2 that mostly depends on the build and link options. But these
- * functions remain the same either way.
- */
 struct st_api *
 st_gl_api_create(void)
 {
-   return &st_gl_api;
+   return (struct st_api *) &st_gl_api;
 }

@@ -9,10 +9,12 @@ EGL_SOURCES = egl_dri2.c
 EGL_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/egl/main \
-	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mapi \
 	-DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\" \
-	$(EGL_DRI2_CFLAGS)
+	$(XCB_DRI2_CFLAGS) \
+	$(LIBUDEV_CFLAGS) \
+	$(LIBDRM_CFLAGS)
 
-EGL_LIBS = $(EGL_DRI2_LIBS)
+EGL_LIBS = $(XCB_DRI2_LIBS) $(LIBUDEV_LIBS) $(LIBDRM_LIBS)
 
 include ../Makefile.template

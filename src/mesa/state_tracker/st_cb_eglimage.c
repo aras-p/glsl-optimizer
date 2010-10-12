@@ -33,6 +33,7 @@
 #include "util/u_format.h"
 #include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
+#include "st_context.h"
 #include "st_texture.h"
 #include "st_format.h"
 #include "st_manager.h"
@@ -79,7 +80,7 @@ st_egl_image_target_renderbuffer_storage(GLcontext *ctx,
    struct pipe_surface *ps;
    unsigned usage;
 
-   usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_BLIT_SOURCE | PIPE_BIND_BLIT_DESTINATION;
+   usage = PIPE_BIND_RENDER_TARGET;
    ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
    if (ps) {
       strb->Base.Width = ps->width;
@@ -127,7 +128,12 @@ st_bind_surface(GLcontext *ctx, GLenum target,
    _mesa_set_fetch_functions(texImage, 2);
 
    /* FIXME create a non-default sampler view from the pipe_surface? */
-   pipe_resource_reference(&stImage->pt, ps->texture);
+   pipe_resource_reference(&stObj->pt, ps->texture);
+   pipe_resource_reference(&stImage->pt, stObj->pt);
+
+   stObj->width0 = ps->width;
+   stObj->height0 = ps->height;
+   stObj->depth0 = 1;
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
 }
@@ -142,7 +148,7 @@ st_egl_image_target_texture_2d(GLcontext *ctx, GLenum target,
    struct pipe_surface *ps;
    unsigned usage;
 
-   usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_BLIT_DESTINATION | PIPE_BIND_BLIT_SOURCE;
+   usage = PIPE_BIND_SAMPLER_VIEW;
    ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
    if (ps) {
       st_bind_surface(ctx, target, texObj, texImage, ps);

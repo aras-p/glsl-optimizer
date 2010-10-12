@@ -93,6 +93,13 @@ struct radeon_renderbuffer
 	GLuint pf_pending;  /**< sequence number of pending flip */
 	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 	__DRIdrawable *dPriv;
+
+	/* r6xx+ tiling */
+	GLuint tile_config;
+	GLint group_bytes;
+	GLint num_channels;
+	GLint num_banks;
+	GLint r7xx_bank_op;
 };
 
 struct radeon_framebuffer
@@ -236,6 +243,8 @@ struct radeon_tex_obj {
 	GLuint SQ_TEX_RESOURCE4;
 	GLuint SQ_TEX_RESOURCE5;
 	GLuint SQ_TEX_RESOURCE6;
+
+    GLuint SQ_TEX_RESOURCE7;
 
 	GLuint SQ_TEX_SAMPLER0;
 	GLuint SQ_TEX_SAMPLER1;
@@ -614,5 +623,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 			    __DRIdrawable * driDrawPriv,
 			    __DRIdrawable * driReadPriv);
 extern void radeonDestroyContext(__DRIcontext * driContextPriv);
+void radeon_prepare_render(radeonContextPtr radeon);
 
 #endif

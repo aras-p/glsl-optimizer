@@ -559,7 +559,5 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
    functions->DeleteTexture		= mach64DDDeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;
 
-   functions->UpdateTexturePalette	= NULL;
-
    driInitTextureFormats();
 }

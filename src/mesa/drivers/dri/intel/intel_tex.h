@@ -31,8 +31,6 @@
 #include "main/mtypes.h"
 #include "main/formats.h"
 #include "intel_context.h"
-#include "texmem.h"
-
 
 void intelInitTextureFuncs(struct dd_function_table *functions);
 

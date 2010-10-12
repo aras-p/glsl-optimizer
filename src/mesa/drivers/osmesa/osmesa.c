@@ -1004,7 +1004,20 @@ new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
       rb->AllocStorage = osmesa_renderbuffer_storage;
 
       rb->InternalFormat = GL_RGBA;
-      rb->Format = MESA_FORMAT_RGBA8888;
+      switch (type) {
+      case GL_UNSIGNED_BYTE:
+         rb->Format = MESA_FORMAT_RGBA8888;
+         break;
+      case GL_UNSIGNED_SHORT:
+         rb->Format = MESA_FORMAT_RGBA_16;
+         break;
+      case GL_FLOAT:
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32;
+         break;
+      default:
+         assert(0 && "Unexpected type in new_osmesa_renderbuffer()");
+         rb->Format = MESA_FORMAT_RGBA8888;
+      }
       rb->_BaseFormat = GL_RGBA;
       rb->DataType = type;
    }
@@ -1048,7 +1061,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    struct dd_function_table functions;
    GLint rind, gind, bind, aind;
    GLint redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
-   GLenum type = CHAN_TYPE;
 
    rind = gind = bind = aind = 0;
    if (format==OSMESA_RGBA) {
@@ -1167,11 +1179,9 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          return NULL;
       }
 
-      /* create front color buffer in user-provided memory (no back buffer) */
-      osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, format, type);
-      _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
-      assert(osmesa->rb->RefCount == 2);
-                        
+      /* Create depth/stencil/accum buffers.  We'll create the color
+       * buffer later in OSMesaMakeCurrent().
+       */
       _mesa_add_soft_renderbuffers(osmesa->gl_buffer,
                                    GL_FALSE, /* color */
                                    osmesa->gl_visual->haveDepthBuffer,
@@ -1308,11 +1318,24 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     */
    _glapi_check_multithread();
 
+
+   /* Create a front/left color buffer which wraps the user-provided buffer.
+    * There is no back color buffer.
+    * If the user tries to use a 8, 16 or 32-bit/channel buffer that
+    * doesn't match what Mesa was compiled for (CHAN_BITS) the
+    * _mesa_add_renderbuffer() function will create a "wrapper" renderbuffer
+    * that converts rendering from CHAN_BITS to the user-requested channel
+    * size.
+    */
+   osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
+   _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
+   _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+   assert(osmesa->rb->RefCount == 2);
+
    /* Set renderbuffer fields.  Set width/height = 0 to force 
     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
     */
    osmesa->rb->Data = buffer;
-   osmesa->rb->DataType = type;
    osmesa->rb->Width = osmesa->rb->Height = 0;
 
    /* Set the framebuffer's size.  This causes the

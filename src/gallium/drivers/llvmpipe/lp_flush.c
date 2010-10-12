@@ -31,6 +31,8 @@
 
 
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
+#include "util/u_string.h"
 #include "draw/draw_context.h"
 #include "lp_flush.h"
 #include "lp_context.h"
@@ -39,59 +41,54 @@
 
 /**
  * \param flags  bitmask of PIPE_FLUSH_x flags
- * \param fence  if non-null, returns pointer to a fench which can be waited on
+ * \param fence  if non-null, returns pointer to a fence which can be waited on
  */
 void
 llvmpipe_flush( struct pipe_context *pipe,
-		unsigned flags,
-                struct pipe_fence_handle **fence )
+                unsigned flags,
+                struct pipe_fence_handle **fence,
+                const char *reason)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    draw_flush(llvmpipe->draw);
 
-   if (fence) {
-      if ((flags & (PIPE_FLUSH_SWAPBUFFERS |
-                    PIPE_FLUSH_RENDER_CACHE))) {
-         /* if we're going to flush the setup/rasterization modules, emit
-          * a fence.
-          * XXX this (and the code below) may need fine tuning...
-          */
-         *fence = lp_setup_fence( llvmpipe->setup );
-      }
-      else {
-         *fence = NULL;
-      }
-   }
-
    /* ask the setup module to flush */
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE |
-                PIPE_FLUSH_TEXTURE_CACHE)) {
-      lp_setup_flush(llvmpipe->setup, flags);
-   }
+   lp_setup_flush(llvmpipe->setup, flags, fence, reason);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
-#if 0
-   if (flags & PIPE_FLUSH_FRAME) {
-      static unsigned frame_no = 1;
-      char filename[256];
-      unsigned i;
+   if (0) {
+      if (flags & PIPE_FLUSH_FRAME) {
+         static unsigned frame_no = 1;
+         char filename[256];
+         unsigned i;
 
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
-	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
-         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[0]);
+         for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
+            util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
+            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[0]);
+         }
+
+         if (0) {
+            util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
+            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
+         }
+
+         ++frame_no;
       }
-
-      if (0) {
-         util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
-         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
-      }
-
-      ++frame_no;
    }
-#endif
 }
 
+void
+llvmpipe_finish( struct pipe_context *pipe,
+                 const char *reason )
+{
+   struct pipe_fence_handle *fence = NULL;
+   llvmpipe_flush(pipe, 0, &fence, reason);
+   if (fence) {
+      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+   }
+}
 
 /**
  * Flush context if necessary.
@@ -109,7 +106,8 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
-                        boolean do_not_block)
+                        boolean do_not_block,
+                        const char *reason)
 {
    unsigned referenced;
 
@@ -118,41 +116,20 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
 
-      if (resource->target != PIPE_BUFFER) {
-         /*
-          * TODO: The semantics of these flush flags are too obtuse. They should
-          * disappear and the pipe driver should just ensure that all visible
-          * side-effects happen when they need to happen.
-          */
-         if (referenced & PIPE_REFERENCED_FOR_WRITE)
-            flush_flags |= PIPE_FLUSH_RENDER_CACHE;
-
-         if (referenced & PIPE_REFERENCED_FOR_READ)
-            flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
-      }
-
       if (cpu_access) {
          /*
           * Flush and wait.
           */
-
-         struct pipe_fence_handle *fence = NULL;
-
          if (do_not_block)
             return FALSE;
 
-         pipe->flush(pipe, flush_flags, &fence);
-
-         if (fence) {
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
-            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-         }
+         llvmpipe_finish(pipe, reason);
       } else {
          /*
           * Just flush.
           */
 
-         pipe->flush(pipe, flush_flags, NULL);
+         llvmpipe_flush(pipe, flush_flags, NULL, reason);
       }
    }
 

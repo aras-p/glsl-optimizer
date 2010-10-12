@@ -28,6 +28,7 @@
 
 #include "i915_reg.h"
 #include "i915_debug.h"
+#include "i915_debug_private.h"
 #include "util/u_debug.h"
 
 

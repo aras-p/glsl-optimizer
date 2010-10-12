@@ -32,13 +32,13 @@ cards.</p>
 the Gallium driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --with-state-trackers=egl,es,vega --enable-gallium-{swrast,intel}
+  $ ./configure --enable-gles-overlay --with-state-trackers=egl,vega --enable-gallium-intel
 </pre>
 
-<p>The main library will be enabled by default.  The <code>egl</code> state
+<p>The main library and OpenGL is enabled by default.  The first option enables
+<a href="opengles.html">OpenGL ES 1.x and 2.x</a>.  The <code>egl</code> state
 tracker is needed by a number of EGL drivers.  EGL drivers will be covered
-later.  The <a href="opengles.html">es state tracker</a> provides OpenGL ES 1.x
-and 2.x and the <a href="openvg.html">vega state tracker</a> provides OpenVG
+later.  The <a href="openvg.html">vega state tracker</a> provides OpenVG
 1.x.</p>
 </li>
 
@@ -46,8 +46,8 @@ and 2.x and the <a href="openvg.html">vega state tracker</a> provides OpenVG
 </ol>
 
 <p>In the given example, it will build and install <code>libEGL</code>,
-<code>libGLESv1_CM</code>, <code>libGLESv2</code>, <code>libOpenVG</code>, and
-one or more EGL drivers.</p>
+<code>libGL</code>, <code>libGLESv1_CM</code>, <code>libGLESv2</code>,
+<code>libOpenVG</code>, and one or more EGL drivers.</p>
 
 <h3>Configure Options</h3>
 
@@ -69,56 +69,53 @@ drivers will be installed to <code>${libdir}/egl</code>.</p>
 
 </li>
 
-<li><code>--with-egl-displays</code>
+<li><code>--with-egl-platforms</code>
 
-<p>List the window system(s) to support.  It is by default <code>x11</code>,
-which supports the X Window System.  Its argument is a comma separated string
-like, for example, <code>--with-egl-displays=x11,kms</code>.  Because an EGL
-driver decides which window system to support, this example will enable two
-(sets of) EGL drivers.  One supports the X window system and the other supports
-bare KMS (kernel modesetting).</p>
+<p>List the platforms (window systems) to support.  Its argument is a comma
+seprated string such as <code>--with-egl-platforms=x11,drm</code>.  It decides
+the platforms a driver may support.  The first listed platform is also used by
+the main library to decide the native platform: the platform the EGL native
+types such as <code>EGLNativeDisplayType</code> or
+<code>EGLNativeWindowType</code> defined for.</p>
+
+<p>The available platforms are <code>x11</code>, <code>drm</code>,
+<code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> platform can
+only be built with SCons.</p>
 
 </li>
 
 <li><code>--with-state-trackers</code>
 
 <p>The argument is a comma separated string.  It is usually used to specify the
-rendering APIs, like OpenGL ES or OpenVG, to build.  But it should be noted
-that a number of EGL drivers depend on the <code>egl</code> state tracker.
-They will <em>not</em> be built without the <code>egl</code> state tracker.</p>
+rendering APIs, such as OpenVG, to build.  But it is also used to specify
+<code>egl</code> state tracker that <code>egl_gallium</code> depends on.</p>
 
 </li>
 
-<li><code>--enable-gallium-swrast</code>
+<li><code>--enable-gles-overlay</code>
 
-<p>This option is not specific to EGL.  But if there is no driver for your
-hardware, or you are experiencing problems with the hardware driver, you can
-enable the swrast DRM driver.  It is a dummy driver and EGL will fallback to
-software rendering automatically.</p>
+<p>OpenGL and OpenGL ES are not controlled by
+<code>--with-state-trackers</code>.  OpenGL is always built.  To build OpenGL
+ES, this option must be explicitly given.</p>
 
 </li>
+
+<li><code>--enable-gles1</code> and <code>--enable-gles2</code>
+
+<p>Unlike <code>--enable-gles-overlay</code>, which builds one library for each
+rendering API, these options enable OpenGL ES support in OpenGL.  The result is
+one big library that supports multiple APIs.</p>
+
+</li>
+
 </ul>
-
-<h3>OpenGL</h3>
-
-<p>The OpenGL state tracker is not built in the above example.  It should be
-noted that the classic <code>libGL</code> is not a state tracker and cannot be
-used with EGL (unless the EGL driver in use is <code>egl_glx</code>).  To build
-the OpenGL state tracker, one may append <code>glx</code> to
-<code>--with-state-trackers</code> and manually build
-<code>src/gallium/targets/libgl-xlib/</code>.</p>
 
 <h2>Use EGL</h2>
 
-<p>The demos for OpenGL ES and OpenVG can be found in <code>progs/es1/</code>,
-<code>progs/es2/</code> and <code>progs/openvg/</code>.  You can use them to
-test your build.  For example,</p>
+<h3>Demos</h3>
 
-<pre>
-  $ cd progs/es1/xegl
-  $ make
-  $ ./torus
-</pre>
+<p>There are demos for the client APIs supported by EGL.  They can be found in
+mesa/demos repository.</p>
 
 <h3>Environment Variables</h3>
 
@@ -142,16 +139,18 @@ binaries.</p>
 specified EGL driver to be loaded.  It comes in handy when one wants to test a
 specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
+<p><code>egl_gallium</code> dynamically loads hardware drivers and client API
+modules found in <code>EGL_DRIVERS_PATH</code>.  Thus, specifying this variable
+alone is not sufficient for <code>egl_gallium</code> for uninstalled build.</p>
+
 </li>
 
-<li><code>EGL_DISPLAY</code>
+<li><code>EGL_PLATFORM</code>
 
-<p>When <code>EGL_DRIVER</code> is not set, the main library loads <em>all</em>
-EGL drivers that support a certain window system.  <code>EGL_DISPLAY</code> can
-be used to specify the window system and the valid values are, for example,
-<code>x11</code> or <code>kms</code>.  When the variable is not set, the main
-library defaults the value to the first window system listed in
-<code>--with-egl-displays</code> at configuration time.
+<p>This variable specifies the native platform.  The valid values are the same
+as those for <code>--with-egl-platforms</code>.  When the variable is not set,
+the main library uses the first platform listed in
+<code>--with-egl-platforms</code> as the native platform</p>
 
 </li>
 
@@ -173,31 +172,15 @@ variable to true forces the use of software rendering.</p>
 
 <h2>EGL Drivers</h2>
 
-<p>There are two categories of EGL drivers: Gallium and classic.</p>
-
-<p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  The
-support for optional EGL functions and EGL extensions is usually more complete
-than the classic ones.  These drivers depend on the <code>egl</code> state
-tracker to build.  The available drivers are</p>
-
 <ul>
-<li><code>egl_&lt;dpy&gt;_i915</code></li>
-<li><code>egl_&lt;dpy&gt;_i965</code></li>
-<li><code>egl_&lt;dpy&gt;_radeon</code></li>
-<li><code>egl_&lt;dpy&gt;_nouveau</code></li>
-<li><code>egl_&lt;dpy&gt;_swrast</code></li>
-<li><code>egl_&lt;dpy&gt;_vmwgfx</code></li>
-</ul>
+<li><code>egl_gallium</code>
 
-<p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-displays</code> at
-configuration time.  There will be one EGL driver for each combination of the
-displays listed and the hardware drivers enabled.</p>
+<p>This driver is based on Gallium3D.  It supports all rendering APIs and
+hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
+The supported platforms are X11, KMS, FBDEV, and GDI.</p>
 
-<p>Classic EGL drivers, on the other hand, supports only OpenGL as its
-rendering API.  They can be found under <code>src/egl/drivers/</code>.  There
-are 3 of them</p>
+</li>
 
-<ul>
 <li><code>egl_glx</code>
 
 <p>This driver provides a wrapper to GLX.  It uses exclusively GLX to implement
@@ -223,9 +206,6 @@ are phasing out, it might eventually be replaced by <code>egl_dri2</code>.</p>
 
 </li>
 </ul>
-
-<p>To use the classic drivers, one must manually set <code>EGL_DRIVER</code> at
-runtime.</p>
 
 <h2>Developers</h2>
 
@@ -315,8 +295,12 @@ should as well lock the display before using it.
 
 <ul>
 <li>Pass the conformance tests</li>
-<li>Better automatic driver selection: <code>EGL_DISPLAY</code> loads all
-drivers and might eat too much memory.</li>
+<li>Reference counting in main library?</li>
+<li>Mixed use of OpenGL, OpenGL ES 1.1, and OpenGL ES 2.0 is supported.  But
+which one of <code>libGL.so</code>, <code>libGLESv1_CM.so</code>, and
+<code>libGLESv2.so</code> should an application link to?  Bad things may happen
+when, say, an application is linked to <code>libGLESv2.so</code> and
+<code>libcairo</code>, which is linked to <code>libGL.so</code> instead.</li>
 
 </ul>
 

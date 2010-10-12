@@ -39,10 +39,12 @@ int r500_transform_IF(
 	struct rc_instruction * inst,
 	void* data)
 {
+	struct rc_instruction * inst_mov;
+
 	if (inst->U.I.Opcode != RC_OPCODE_IF)
 		return 0;
 
-	struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
+	inst_mov = rc_insert_new_instruction(c, inst->Prev);
 	inst_mov->U.I.Opcode = RC_OPCODE_MOV;
 	inst_mov->U.I.DstReg.WriteMask = 0;
 	inst_mov->U.I.WriteALUResult = RC_ALURESULT_W;
@@ -247,15 +249,15 @@ static char *to_texop(int val)
   return NULL;
 }
 
-void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
+void r500FragmentProgramDump(struct radeon_compiler *c, void *user)
 {
-  struct r500_fragment_program_code *code = &c->code.r500;
-  fprintf(stderr, "R500 Fragment Program:\n--------\n");
-
-  int n;
+  struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
+  struct r500_fragment_program_code *code = &compiler->code->code.r500;
+  int n, i;
   uint32_t inst;
   uint32_t inst0;
   char *str = NULL;
+  fprintf(stderr, "R500 Fragment Program:\n--------\n");
 
   for (n = 0; n < code->inst_end+1; n++) {
     inst0 = inst = code->inst[n].inst0;
@@ -275,8 +277,8 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
 	    to_mask((inst >> 15) & 0xf));
 
     switch(inst0 & 0x3) {
-    case 0:
-    case 1:
+    case R500_INST_TYPE_ALU:
+    case R500_INST_TYPE_OUT:
       fprintf(stderr,"\t1:RGB_ADDR   0x%08x:", code->inst[n].inst1);
       inst = code->inst[n].inst1;
 
@@ -319,9 +321,87 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
 	      (inst >> 23) & 0x3,
 	      (inst >> 25) & 0x3, toswiz((inst >> 27) & 0x7), (inst >> 30) & 0x3);
       break;
-    case 2:
+    case R500_INST_TYPE_FC:
+      fprintf(stderr, "\t2:FC_INST    0x%08x:", code->inst[n].inst2);
+      inst = code->inst[n].inst2;
+      /* JUMP_FUNC JUMP_ANY*/
+      fprintf(stderr, "0x%02x %1x ", inst >> 8 & 0xff,
+          (inst & R500_FC_JUMP_ANY) >> 5);
+      
+      /* OP */
+      switch(inst & 0x7){
+      case R500_FC_OP_JUMP:
+      	fprintf(stderr, "JUMP");
+        break;
+      case R500_FC_OP_LOOP:
+        fprintf(stderr, "LOOP");
+        break;
+      case R500_FC_OP_ENDLOOP:
+        fprintf(stderr, "ENDLOOP");
+        break;
+      case R500_FC_OP_REP:
+        fprintf(stderr, "REP");
+        break;
+      case R500_FC_OP_ENDREP:
+        fprintf(stderr, "ENDREP");
+        break;
+      case R500_FC_OP_BREAKLOOP:
+        fprintf(stderr, "BREAKLOOP");
+        break;
+      case R500_FC_OP_BREAKREP:
+        fprintf(stderr, "BREAKREP");
+	break;
+      case R500_FC_OP_CONTINUE:
+        fprintf(stderr, "CONTINUE");
+        break;
+      }
+      fprintf(stderr," "); 
+      /* A_OP */
+      switch(inst & (0x3 << 6)){
+      case R500_FC_A_OP_NONE:
+        fprintf(stderr, "NONE");
+        break;
+      case R500_FC_A_OP_POP:
+	fprintf(stderr, "POP");
+        break;
+      case R500_FC_A_OP_PUSH:
+        fprintf(stderr, "PUSH");
+        break;
+      }
+      /* B_OP0 B_OP1 */
+      for(i=0; i<2; i++){
+        fprintf(stderr, " ");
+        switch(inst & (0x3 << (24 + (i * 2)))){
+        /* R500_FC_B_OP0_NONE 
+	 * R500_FC_B_OP1_NONE */
+	case 0:
+          fprintf(stderr, "NONE");
+          break;
+        case R500_FC_B_OP0_DECR:
+        case R500_FC_B_OP1_DECR:
+          fprintf(stderr, "DECR");
+          break;
+        case R500_FC_B_OP0_INCR:
+        case R500_FC_B_OP1_INCR:
+          fprintf(stderr, "INCR");
+          break;
+        }
+      }
+      /*POP_CNT B_ELSE */
+      fprintf(stderr, " %d %1x", (inst >> 16) & 0x1f, (inst & R500_FC_B_ELSE) >> 4);
+      inst = code->inst[n].inst3;
+      /* JUMP_ADDR */
+      fprintf(stderr, " %d", inst >> 16);
+      
+      if(code->inst[n].inst2 & R500_FC_IGNORE_UNCOVERED){
+        fprintf(stderr, " IGN_UNC");
+      }
+      inst = code->inst[n].inst3;
+      fprintf(stderr, "\n\t3:FC_ADDR    0x%08x:", inst);
+      fprintf(stderr, "BOOL: 0x%02x, INT: 0x%02x, JUMP_ADDR: %d, JMP_GLBL: %1x\n",
+      inst & 0x1f, (inst >> 8) & 0x1f, (inst >> 16) & 0x1ff, inst >> 31); 
       break;
-    case 3:
+    case R500_INST_TYPE_TEX:
       inst = code->inst[n].inst1;
       fprintf(stderr,"\t1:TEX_INST:  0x%08x: id: %d op:%s, %s, %s %s\n", inst, (inst >> 16) & 0xf,
 	      to_texop((inst >> 22) & 0x7), (inst & (1<<25)) ? "ACQ" : "",

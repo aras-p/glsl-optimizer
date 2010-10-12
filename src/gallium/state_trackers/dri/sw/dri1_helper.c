@@ -1,1 +1,0 @@
-../common/dri1_helper.c

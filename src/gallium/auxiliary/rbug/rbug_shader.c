@@ -305,7 +305,7 @@ struct rbug_proto_shader_list * rbug_demarshal_shader_list(struct rbug_proto_hea
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_LIST)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_LIST)
 		return NULL;
 
 	pos = 0;
@@ -332,7 +332,7 @@ struct rbug_proto_shader_info * rbug_demarshal_shader_info(struct rbug_proto_hea
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_INFO)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_INFO)
 		return NULL;
 
 	pos = 0;
@@ -360,7 +360,7 @@ struct rbug_proto_shader_disable * rbug_demarshal_shader_disable(struct rbug_pro
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_DISABLE)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_DISABLE)
 		return NULL;
 
 	pos = 0;
@@ -389,7 +389,7 @@ struct rbug_proto_shader_replace * rbug_demarshal_shader_replace(struct rbug_pro
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_REPLACE)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_REPLACE)
 		return NULL;
 
 	pos = 0;
@@ -418,7 +418,7 @@ struct rbug_proto_shader_list_reply * rbug_demarshal_shader_list_reply(struct rb
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_LIST_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_LIST_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -446,7 +446,7 @@ struct rbug_proto_shader_info_reply * rbug_demarshal_shader_info_reply(struct rb
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_SHADER_INFO_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_SHADER_INFO_REPLY)
 		return NULL;
 
 	pos = 0;

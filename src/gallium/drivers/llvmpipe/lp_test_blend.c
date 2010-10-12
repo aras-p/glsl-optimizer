@@ -37,6 +37,7 @@
  */
 
 
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_debug.h"
 #include "lp_bld_blend.h"
@@ -51,6 +52,19 @@ enum vector_mode
 
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+
+/** cast wrapper */
+static blend_test_ptr_t
+voidptr_to_blend_test_ptr_t(void *p)
+{
+   union {
+      void *v;
+      blend_test_ptr_t f;
+   } u;
+   u.v = p;
+   return u.f;
+}
+
 
 
 void
@@ -163,6 +177,7 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef res_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
+   const unsigned rt = 0;
 
    vec_type = lp_build_vec_type(type);
 
@@ -188,7 +203,7 @@ add_blend_test(LLVMModuleRef module,
       dst = LLVMBuildLoad(builder, dst_ptr, "dst");
       con = LLVMBuildLoad(builder, const_ptr, "const");
 
-      res = lp_build_blend_aos(builder, blend, type, src, dst, con, 3);
+      res = lp_build_blend_aos(builder, blend, type, rt, src, dst, con, 3);
 
       lp_build_name(res, "res");
 
@@ -212,7 +227,7 @@ add_blend_test(LLVMModuleRef module,
          lp_build_name(dst[i], "dst.%c", "rgba"[i]);
       }
 
-      lp_build_blend_soa(builder, blend, type, src, dst, con, res);
+      lp_build_blend_soa(builder, blend, type, rt, src, dst, con, res);
 
       for(i = 0; i < 4; ++i) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
@@ -226,19 +241,6 @@ add_blend_test(LLVMModuleRef module,
    LLVMDisposeBuilder(builder);
    return func;
 }
-
-
-/** Add and limit result to ceiling of 1.0 */
-#define ADD_SAT(R, A, B) \
-do { \
-   R = (A) + (B);  if (R > 1.0f) R = 1.0f; \
-} while (0)
-
-/** Subtract and limit result to floor of 0.0 */
-#define SUB_SAT(R, A, B) \
-do { \
-   R = (A) - (B);  if (R < 0.0f) R = 0.0f; \
-} while (0)
 
 
 static void
@@ -408,19 +410,19 @@ compute_blend_ref(const struct pipe_blend_state *blend,
     */
    switch (blend->rt[0].rgb_func) {
    case PIPE_BLEND_ADD:
-      ADD_SAT(res[0], src_term[0], dst_term[0]); /* R */
-      ADD_SAT(res[1], src_term[1], dst_term[1]); /* G */
-      ADD_SAT(res[2], src_term[2], dst_term[2]); /* B */
+      res[0] = src_term[0] + dst_term[0]; /* R */
+      res[1] = src_term[1] + dst_term[1]; /* G */
+      res[2] = src_term[2] + dst_term[2]; /* B */
       break;
    case PIPE_BLEND_SUBTRACT:
-      SUB_SAT(res[0], src_term[0], dst_term[0]); /* R */
-      SUB_SAT(res[1], src_term[1], dst_term[1]); /* G */
-      SUB_SAT(res[2], src_term[2], dst_term[2]); /* B */
+      res[0] = src_term[0] - dst_term[0]; /* R */
+      res[1] = src_term[1] - dst_term[1]; /* G */
+      res[2] = src_term[2] - dst_term[2]; /* B */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      SUB_SAT(res[0], dst_term[0], src_term[0]); /* R */
-      SUB_SAT(res[1], dst_term[1], src_term[1]); /* G */
-      SUB_SAT(res[2], dst_term[2], src_term[2]); /* B */
+      res[0] = dst_term[0] - src_term[0]; /* R */
+      res[1] = dst_term[1] - src_term[1]; /* G */
+      res[2] = dst_term[2] - src_term[2]; /* B */
       break;
    case PIPE_BLEND_MIN:
       res[0] = MIN2(src_term[0], dst_term[0]); /* R */
@@ -441,13 +443,13 @@ compute_blend_ref(const struct pipe_blend_state *blend,
     */
    switch (blend->rt[0].alpha_func) {
    case PIPE_BLEND_ADD:
-      ADD_SAT(res[3], src_term[3], dst_term[3]); /* A */
+      res[3] = src_term[3] + dst_term[3]; /* A */
       break;
    case PIPE_BLEND_SUBTRACT:
-      SUB_SAT(res[3], src_term[3], dst_term[3]); /* A */
+      res[3] = src_term[3] - dst_term[3]; /* A */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      SUB_SAT(res[3], dst_term[3], src_term[3]); /* A */
+      res[3] = dst_term[3] - src_term[3]; /* A */
       break;
    case PIPE_BLEND_MIN:
       res[3] = MIN2(src_term[3], dst_term[3]); /* A */
@@ -471,8 +473,7 @@ test_one(unsigned verbose,
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef func = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMExecutionEngineRef engine = lp_build_engine;
    LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    blend_test_ptr_t blend_test_ptr;
@@ -481,6 +482,7 @@ test_one(unsigned verbose,
    int64_t cycles[LP_TEST_NUM_SAMPLES];
    double cycles_avg = 0.0;
    unsigned i, j;
+   void *code;
 
    if(verbose >= 1)
       dump_blend_type(stdout, blend, mode, type);
@@ -494,15 +496,6 @@ test_one(unsigned verbose,
       abort();
    }
    LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      if(verbose < 1)
-         dump_blend_type(stderr, blend, mode, type);
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
-      abort();
-   }
 
 #if 0
    pass = LLVMCreatePassManager();
@@ -522,10 +515,11 @@ test_one(unsigned verbose,
    if(verbose >= 2)
       LLVMDumpModule(module);
 
-   blend_test_ptr = (blend_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+   code = LLVMGetPointerToGlobal(engine, func);
+   blend_test_ptr = voidptr_to_blend_test_ptr_t(code);
 
    if(verbose >= 2)
-      lp_disassemble(blend_test_ptr);
+      lp_disassemble(code);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
@@ -669,6 +663,8 @@ test_one(unsigned verbose,
                fprintf(stderr, "  Ref%c: ", channel);
                dump_vec(stderr, type, ref + j*stride);
                fprintf(stderr, "\n");
+
+               fprintf(stderr, "\n");
             }
          }
       }
@@ -719,7 +715,6 @@ test_one(unsigned verbose,
 
    LLVMFreeMachineCodeForFunction(engine, func);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 
@@ -767,7 +762,7 @@ blend_funcs[] = {
 
 const struct lp_type blend_types[] = {
    /* float, fixed,  sign,  norm, width, len */
-   {   TRUE, FALSE, FALSE,  TRUE,    32,   4 }, /* f32 x 4 */
+   {   TRUE, FALSE,  TRUE, FALSE,    32,   4 }, /* f32 x 4 */
    {  FALSE, FALSE, FALSE,  TRUE,     8,  16 }, /* u8n x 16 */
 };
 
@@ -789,7 +784,7 @@ test_all(unsigned verbose, FILE *fp)
    struct pipe_blend_state blend;
    enum vector_mode mode;
    const struct lp_type *type;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(rgb_func = blend_funcs; rgb_func < &blend_funcs[num_funcs]; ++rgb_func) {
       for(alpha_func = blend_funcs; alpha_func < &blend_funcs[num_funcs]; ++alpha_func) {
@@ -843,7 +838,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    enum vector_mode mode;
    const struct lp_type *type;
    unsigned long i;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(i = 0; i < n; ++i) {
       rgb_func = &blend_funcs[rand() % num_funcs];
@@ -878,4 +873,12 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    }
 
    return success;
+}
+
+
+boolean
+test_single(unsigned verbose, FILE *fp)
+{
+   printf("no test_single()");
+   return TRUE;
 }

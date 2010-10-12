@@ -28,6 +28,7 @@
 
 #include "vg_context.h"
 #include "image.h"
+#include "api.h"
 #include "renderer.h"
 #include "shaders_cache.h"
 #include "st_inlines.h"
@@ -41,6 +42,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
+#include "util/u_string.h"
 
 
 #include "asm_filters.h"
@@ -270,7 +272,7 @@ static struct vg_shader * setup_convolution(struct vg_context *ctx, void *user_d
    VGint num_consts = (VGint)(long)(user_data);
    struct vg_shader *shader;
 
-   snprintf(buffer, 1023, convolution_asm, num_consts, num_consts / 2 + 1);
+   util_snprintf(buffer, 1023, convolution_asm, num_consts, num_consts / 2 + 1);
 
    shader = shader_create_from_text(ctx->pipe, buffer, 200,
                                     PIPE_SHADER_FRAGMENT);
@@ -298,16 +300,16 @@ static struct vg_shader * setup_lookup_single(struct vg_context *ctx, void *user
 
    switch(channel) {
    case VG_RED:
-      snprintf(buffer, 1023, lookup_single_asm, "xxxx");
+      util_snprintf(buffer, 1023, lookup_single_asm, "xxxx");
       break;
    case VG_GREEN:
-      snprintf(buffer, 1023, lookup_single_asm, "yyyy");
+      util_snprintf(buffer, 1023, lookup_single_asm, "yyyy");
       break;
    case VG_BLUE:
-      snprintf(buffer, 1023, lookup_single_asm, "zzzz");
+      util_snprintf(buffer, 1023, lookup_single_asm, "zzzz");
       break;
    case VG_ALPHA:
-      snprintf(buffer, 1023, lookup_single_asm, "wwww");
+      util_snprintf(buffer, 1023, lookup_single_asm, "wwww");
       break;
    default:
       debug_assert(!"Unknown color channel");
@@ -361,8 +363,8 @@ static void execute_filter(struct vg_context *ctx,
    pipe_surface_reference(&dst_surf, NULL);
 }
 
-void vgColorMatrix(VGImage dst, VGImage src,
-                   const VGfloat * matrix)
+void vegaColorMatrix(VGImage dst, VGImage src,
+                     const VGfloat * matrix)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *d, *s;
@@ -403,13 +405,13 @@ static VGfloat texture_offset(VGfloat width, VGint kernelSize, VGint current, VG
    return diff / width;
 }
 
-void vgConvolve(VGImage dst, VGImage src,
-                VGint kernelWidth, VGint kernelHeight,
-                VGint shiftX, VGint shiftY,
-                const VGshort * kernel,
-                VGfloat scale,
-                VGfloat bias,
-                VGTilingMode tilingMode)
+void vegaConvolve(VGImage dst, VGImage src,
+                  VGint kernelWidth, VGint kernelHeight,
+                  VGint shiftX, VGint shiftY,
+                  const VGshort * kernel,
+                  VGfloat scale,
+                  VGfloat bias,
+                  VGTilingMode tilingMode)
 {
    struct vg_context *ctx = vg_current_context();
    VGfloat *buffer;
@@ -508,15 +510,15 @@ void vgConvolve(VGImage dst, VGImage src,
    free(buffer);
 }
 
-void vgSeparableConvolve(VGImage dst, VGImage src,
-                         VGint kernelWidth,
-                         VGint kernelHeight,
-                         VGint shiftX, VGint shiftY,
-                         const VGshort * kernelX,
-                         const VGshort * kernelY,
-                         VGfloat scale,
-                         VGfloat bias,
-                         VGTilingMode tilingMode)
+void vegaSeparableConvolve(VGImage dst, VGImage src,
+                           VGint kernelWidth,
+                           VGint kernelHeight,
+                           VGint shiftX, VGint shiftY,
+                           const VGshort * kernelX,
+                           const VGshort * kernelY,
+                           VGfloat scale,
+                           VGfloat bias,
+                           VGTilingMode tilingMode)
 {
    struct vg_context *ctx = vg_current_context();
    VGshort *kernel;
@@ -600,10 +602,10 @@ static void compute_gaussian_kernel(VGfloat *kernel,
    }
 }
 
-void vgGaussianBlur(VGImage dst, VGImage src,
-                    VGfloat stdDeviationX,
-                    VGfloat stdDeviationY,
-                    VGTilingMode tilingMode)
+void vegaGaussianBlur(VGImage dst, VGImage src,
+                      VGfloat stdDeviationX,
+                      VGfloat stdDeviationY,
+                      VGTilingMode tilingMode)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *d, *s;
@@ -699,13 +701,13 @@ void vgGaussianBlur(VGImage dst, VGImage src,
    free(kernel);
 }
 
-void vgLookup(VGImage dst, VGImage src,
-              const VGubyte * redLUT,
-              const VGubyte * greenLUT,
-              const VGubyte * blueLUT,
-              const VGubyte * alphaLUT,
-              VGboolean outputLinear,
-              VGboolean outputPremultiplied)
+void vegaLookup(VGImage dst, VGImage src,
+                const VGubyte * redLUT,
+                const VGubyte * greenLUT,
+                const VGubyte * blueLUT,
+                const VGubyte * alphaLUT,
+                VGboolean outputLinear,
+                VGboolean outputPremultiplied)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *d, *s;
@@ -758,11 +760,11 @@ void vgLookup(VGImage dst, VGImage src,
    pipe_sampler_view_reference(&lut_texture_view, NULL);
 }
 
-void vgLookupSingle(VGImage dst, VGImage src,
-                    const VGuint * lookupTable,
-                    VGImageChannel sourceChannel,
-                    VGboolean outputLinear,
-                    VGboolean outputPremultiplied)
+void vegaLookupSingle(VGImage dst, VGImage src,
+                      const VGuint * lookupTable,
+                      VGImageChannel sourceChannel,
+                      VGboolean outputLinear,
+                      VGboolean outputPremultiplied)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *d, *s;

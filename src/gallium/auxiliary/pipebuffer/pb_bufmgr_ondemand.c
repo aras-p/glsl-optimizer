@@ -103,13 +103,13 @@ pb_ondemand_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 pb_ondemand_buffer_map(struct pb_buffer *_buf, 
-                       unsigned flags)
+                       unsigned flags, void *flush_ctx)
 {
    struct pb_ondemand_buffer *buf = pb_ondemand_buffer(_buf);
 
    if(buf->buffer) {
       assert(!buf->data);
-      return pb_map(buf->buffer, flags);
+      return pb_map(buf->buffer, flags, flush_ctx);
    }
    else {
       assert(buf->data);
@@ -150,7 +150,7 @@ pb_ondemand_buffer_instantiate(struct pb_ondemand_buffer *buf)
       if(!buf->buffer)
          return PIPE_ERROR_OUT_OF_MEMORY;
       
-      map = pb_map(buf->buffer, PB_USAGE_CPU_READ);
+      map = pb_map(buf->buffer, PB_USAGE_CPU_READ, NULL);
       if(!map) {
          pb_reference(&buf->buffer, NULL);
          return PIPE_ERROR;

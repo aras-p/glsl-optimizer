@@ -34,7 +34,6 @@
 #include <string.h>
 #include "GL/glx.h"
 #include "glapi/glapi.h"
-#include "pipe/p_compiler.h"
 
 
 struct name_address_pair {

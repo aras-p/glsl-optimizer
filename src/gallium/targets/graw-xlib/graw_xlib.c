@@ -1,4 +1,6 @@
 #include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "target-helpers/wrap_screen.h"
@@ -18,7 +20,7 @@
 #include "sw/sw_public.h"
 #include "sw/sw.c"
 
-#include "graw.h"
+#include "state_tracker/graw.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
@@ -27,20 +29,17 @@
 
 static struct {
    Display *display;
+   void (*draw)(void);
 } graw;
 
 
-struct pipe_screen *
-graw_init( void )
+static struct pipe_screen *
+graw_create_screen( void )
 {
    const char *default_driver;
    const char *driver;
    struct pipe_screen *screen = NULL;
    struct sw_winsys *winsys = NULL;
-
-   graw.display = XOpenDisplay(NULL);
-   if (graw.display == NULL)
-      return NULL;
 
    /* Create the underlying winsys, which performs presents to Xlib
     * drawables:
@@ -78,14 +77,16 @@ graw_init( void )
  
 
 
-void *
-graw_create_window( int x,
-                    int y,
-                    unsigned width,
-                    unsigned height,
-                    enum pipe_format format )
+struct pipe_screen *
+graw_create_window_and_screen( int x,
+                               int y,
+                               unsigned width,
+                               unsigned height,
+                               enum pipe_format format,
+                               void **handle)
 {
-   struct xlib_drawable *handle = NULL;
+   struct pipe_screen *screen = NULL;
+   struct xlib_drawable *xlib_handle = NULL;
    XSetWindowAttributes attr;
    Window root;
    Window win = 0;
@@ -94,6 +95,9 @@ graw_create_window( int x,
    int n;
    int scrnum;
 
+   graw.display = XOpenDisplay(NULL);
+   if (graw.display == NULL)
+      return NULL;
 
    scrnum = DefaultScreen( graw.display );
    root = RootWindow( graw.display, scrnum );
@@ -105,8 +109,8 @@ graw_create_window( int x,
    if (graw.display == NULL)
       goto fail;
 
-   handle = CALLOC_STRUCT(xlib_drawable);
-   if (handle == NULL)
+   xlib_handle = CALLOC_STRUCT(xlib_drawable);
+   if (xlib_handle == NULL)
       goto fail;
 
 
@@ -148,7 +152,6 @@ graw_create_window( int x,
                               None, (char **)NULL, 0, &sizehints);
    }
 
-   XFree(visinfo);
    XMapWindow(graw.display, win);
    while (1) {
       XEvent e;
@@ -158,14 +161,27 @@ graw_create_window( int x,
       }
    }
    
-   handle->visual = visinfo->visual;
-   handle->drawable = (Drawable)win;
-   handle->depth = visinfo->depth;
-   return (void *)handle;
+   xlib_handle->visual = visinfo->visual;
+   xlib_handle->drawable = (Drawable)win;
+   xlib_handle->depth = visinfo->depth;
+   *handle = (void *)xlib_handle;
+
+   screen = graw_create_screen();
+   if (screen == NULL)
+      goto fail;
+
+   XFree(visinfo);
+   return screen;
 
 fail:
-   FREE(handle);
-   XFree(visinfo);
+   if (screen)
+      screen->destroy(screen);
+
+   if (xlib_handle)
+      FREE(xlib_handle);
+
+   if (visinfo)
+      XFree(visinfo);
 
    if (win)
       XDestroyWindow(graw.display, win);
@@ -174,8 +190,19 @@ fail:
 }
 
 
-void
-graw_destroy_window( void *xlib_drawable )
+void 
+graw_set_display_func( void (*draw)( void ) )
 {
+   graw.draw = draw;
+}
+
+void
+graw_main_loop( void )
+{
+   int i;
+   for (i = 0; i < 10; i++) {
+      graw.draw();
+      sleep(1);
+   }
 }
 

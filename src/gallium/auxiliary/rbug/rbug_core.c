@@ -233,7 +233,7 @@ struct rbug_proto_noop * rbug_demarshal_noop(struct rbug_proto_header *header)
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_NOOP)
+	if (header->opcode != (int32_t)RBUG_OP_NOOP)
 		return NULL;
 
 	pos = 0;
@@ -259,7 +259,7 @@ struct rbug_proto_ping * rbug_demarshal_ping(struct rbug_proto_header *header)
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_PING)
+	if (header->opcode != (int32_t)RBUG_OP_PING)
 		return NULL;
 
 	pos = 0;
@@ -285,7 +285,7 @@ struct rbug_proto_error * rbug_demarshal_error(struct rbug_proto_header *header)
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_ERROR)
+	if (header->opcode != (int32_t)RBUG_OP_ERROR)
 		return NULL;
 
 	pos = 0;
@@ -312,7 +312,7 @@ struct rbug_proto_ping_reply * rbug_demarshal_ping_reply(struct rbug_proto_heade
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_PING_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_PING_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -339,7 +339,7 @@ struct rbug_proto_error_reply * rbug_demarshal_error_reply(struct rbug_proto_hea
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_ERROR_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_ERROR_REPLY)
 		return NULL;
 
 	pos = 0;

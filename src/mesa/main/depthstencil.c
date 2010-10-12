@@ -62,8 +62,8 @@ nop_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
 static void
 delete_wrapper(struct gl_renderbuffer *rb)
 {
-   ASSERT(rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24);
+   ASSERT(rb->Format == MESA_FORMAT_S8 ||
+          rb->Format == MESA_FORMAT_X8_Z24);
    _mesa_reference_renderbuffer(&rb->Wrapped, NULL);
    free(rb);
 }
@@ -83,7 +83,9 @@ alloc_wrapper_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    (void) internalFormat;
 
    ASSERT(dsrb->Format == MESA_FORMAT_Z24_S8 ||
-          dsrb->Format == MESA_FORMAT_S8_Z24);
+          dsrb->Format == MESA_FORMAT_Z24_X8 ||
+          dsrb->Format == MESA_FORMAT_S8_Z24 ||
+          dsrb->Format == MESA_FORMAT_X8_Z24);
 
    retVal = dsrb->AllocStorage(ctx, dsrb, dsrb->InternalFormat, width, height);
    if (retVal) {
@@ -352,16 +354,21 @@ _mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
    struct gl_renderbuffer *z24rb;
 
    ASSERT(dsrb->Format == MESA_FORMAT_Z24_S8 ||
-          dsrb->Format == MESA_FORMAT_S8_Z24);
+          dsrb->Format == MESA_FORMAT_Z24_X8 ||
+          dsrb->Format == MESA_FORMAT_S8_Z24 ||
+          dsrb->Format == MESA_FORMAT_X8_Z24);
    ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT);
 
-   z24rb = _mesa_new_renderbuffer(ctx, 0);
+   z24rb = ctx->Driver.NewRenderbuffer(ctx, 0);
    if (!z24rb)
       return NULL;
 
+   /* NOTE: need to do manual refcounting here */
    z24rb->Wrapped = dsrb;
+   dsrb->RefCount++;
+
    z24rb->Name = dsrb->Name;
-   z24rb->RefCount = 1;
+   z24rb->RefCount = 0;
    z24rb->Width = dsrb->Width;
    z24rb->Height = dsrb->Height;
    z24rb->InternalFormat = GL_DEPTH_COMPONENT24;
@@ -638,13 +645,16 @@ _mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx, struct gl_renderbuffer *dsrb)
           dsrb->Format == MESA_FORMAT_S8_Z24);
    ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT);
 
-   s8rb = _mesa_new_renderbuffer(ctx, 0);
+   s8rb = ctx->Driver.NewRenderbuffer(ctx, 0);
    if (!s8rb)
       return NULL;
 
+   /* NOTE: need to do manual refcounting here */
    s8rb->Wrapped = dsrb;
+   dsrb->RefCount++;
+
    s8rb->Name = dsrb->Name;
-   s8rb->RefCount = 1;
+   s8rb->RefCount = 0;
    s8rb->Width = dsrb->Width;
    s8rb->Height = dsrb->Height;
    s8rb->InternalFormat = GL_STENCIL_INDEX8_EXT;

@@ -381,7 +381,7 @@ void shaders_cache_destroy(struct shaders_cache *sc)
    }
 
    cso_hash_delete(sc->hash);
-   free(sc);
+   FREE(sc);
 }
 
 void * shaders_cache_fill(struct shaders_cache *sc,
@@ -410,7 +410,7 @@ struct vg_shader * shader_create_from_text(struct pipe_context *pipe,
                                            const char *txt, int num_tokens,
                                            int type)
 {
-   struct vg_shader *shader = (struct vg_shader *)malloc(
+   struct vg_shader *shader = (struct vg_shader *)MALLOC(
       sizeof(struct vg_shader));
    struct tgsi_token *tokens = tokens_from_assembly(txt, num_tokens);
    struct pipe_shader_state state;
@@ -435,6 +435,6 @@ void vg_shader_destroy(struct vg_context *ctx, struct vg_shader *shader)
       cso_delete_fragment_shader(ctx->cso_context, shader->driver);
    else
       cso_delete_vertex_shader(ctx->cso_context, shader->driver);
-   free(shader->tokens);
-   free(shader);
+   FREE(shader->tokens);
+   FREE(shader);
 }

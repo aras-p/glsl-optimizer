@@ -335,13 +335,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
          ctx->Polygon.CullFlag = state;
          break;
-      case GL_CULL_VERTEX_EXT:
-         CHECK_EXTENSION(EXT_cull_vertex, cap);
-         if (ctx->Transform.CullVertexFlag == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
-         ctx->Transform.CullVertexFlag = state;
-         break;
       case GL_DEPTH_TEST:
          if (ctx->Depth.Test == state)
             return;
@@ -362,13 +355,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.Enabled = state;
-         break;
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram, cap);
-         if (ctx->Pixel.HistogramEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.HistogramEnabled = state;
          break;
       case GL_LIGHT0:
       case GL_LIGHT1:
@@ -534,12 +520,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_EVAL);
          ctx->Eval.Map2Vertex4 = state;
          break;
-      case GL_MINMAX:
-         if (ctx->Pixel.MinMaxEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.MinMaxEnabled = state;
-         break;
       case GL_NORMALIZE:
          if (ctx->Transform.Normalize == state)
             return;
@@ -682,6 +662,25 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          }
          break;
 
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 /* disable S, T, and R at the same time */
+	 {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled =
+		  texUnit->TexGenEnabled & ~STR_BITS;
+               if (state)
+                  newenabled |= STR_BITS;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
+         break;
+#endif
+
       /*
        * CLIENT STATE!!!
        */
@@ -697,57 +696,13 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          client_state( ctx, cap, state );
          return;
 
-      /* GL_SGI_color_table */
-      case GL_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] = state;
-         break;
-      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] = state;
-         break;
-      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] = state;
-         break;
+      /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_texture_color_table, cap);
          if (ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled = state;
-         break;
-
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution1DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution1DEnabled = state;
-         break;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution2DEnabled = state;
-         break;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Separable2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Separable2DEnabled = state;
          break;
 
       /* GL_ARB_texture_cube_map */
@@ -1301,6 +1256,15 @@ _mesa_IsEnabled( GLenum cap )
             }
          }
          return GL_FALSE;
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 {
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+		    return (texUnit->TexGenEnabled & STR_BITS) == STR_BITS ? GL_TRUE : GL_FALSE;
+            }
+         }
+#endif
 
       /*
        * CLIENT STATE!!!
@@ -1328,40 +1292,10 @@ _mesa_IsEnabled( GLenum cap )
          return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
 #endif
 
-      /* GL_EXT_histogram */
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.HistogramEnabled;
-      case GL_MINMAX:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.MinMaxEnabled;
-
-      /* GL_SGI_color_table */
-      case GL_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION];
-      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION];
-      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX];
-
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_texture_color_table);
          return ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
-
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution1DEnabled;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution2DEnabled;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Separable2DEnabled;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:

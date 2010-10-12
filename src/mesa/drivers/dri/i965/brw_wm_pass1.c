@@ -158,6 +158,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       case OPCODE_FLR:
       case OPCODE_FRC:
       case OPCODE_MOV:
+      case OPCODE_SSG:
       case OPCODE_SWZ:
       case OPCODE_TRUNC:
 	 read0 = writemask;
@@ -252,6 +253,11 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 read0 = WRITEMASK_X; /* interpolant */
 	 read1 = WRITEMASK_XY; /* deltas */
 	 read2 = WRITEMASK_W; /* pixel w */
+	 break;
+
+      case OPCODE_DP2:
+	 read0 = WRITEMASK_XY;
+	 read1 = WRITEMASK_XY;
 	 break;
 
       case OPCODE_DP3:	

@@ -106,6 +106,9 @@ util_dynarray_trim(struct util_dynarray *buf)
 #define util_dynarray_pop_ptr(buf, type) (type*)((char*)(buf)->data + ((buf)->size -= sizeof(type)))
 #define util_dynarray_pop(buf, type) *util_dynarray_pop_ptr(buf, type)
 #define util_dynarray_contains(buf, type) ((buf)->size >= sizeof(type))
+#define util_dynarray_element(buf, type, idx) ((type*)(buf)->data + (idx))
+#define util_dynarray_begin(buf) ((buf)->data)
+#define util_dynarray_end(buf) ((void*)util_dynarray_element((buf), char, (buf)->size))
 
 #endif /* U_DYNARRAY_H */
 

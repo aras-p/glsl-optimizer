@@ -3,10 +3,10 @@
 
 #include "draw_llvm.h"
 
-#include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_struct.h"
 #include "gallivm/lp_bld_format.h"
 #include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
@@ -466,6 +466,7 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
    const struct util_format_description *format_desc;
    LLVMValueRef zero;
    int i;
+   struct lp_type type = lp_float32_vec4_type();
 
    /*
     * The above can only cope with straight arrays: no bitfields,
@@ -493,5 +494,5 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
 
    format_desc = util_format_description(from_format);
    zero = LLVMConstNull(LLVMInt32Type());
-   return lp_build_fetch_rgba_aos(builder, format_desc, vbuffer, zero, zero);
+   return lp_build_fetch_rgba_aos(builder, format_desc, type, vbuffer, zero, zero, zero);
 }

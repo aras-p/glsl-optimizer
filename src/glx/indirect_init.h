@@ -36,6 +36,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "glxclient.h"
 
-extern __GLapi *__glXNewIndirectAPI(void);
+extern struct _glapi_table *__glXNewIndirectAPI(void);
 
 #endif /* _INDIRECT_INIT_H_ */

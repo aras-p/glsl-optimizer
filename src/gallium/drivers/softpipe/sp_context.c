@@ -36,6 +36,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "tgsi/tgsi_exec.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -113,6 +114,11 @@ softpipe_destroy( struct pipe_context *pipe )
       pipe_sampler_view_reference(&softpipe->vertex_sampler_views[i], NULL);
    }
 
+   for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
+      sp_destroy_tex_tile_cache(softpipe->geometry_tex_cache[i]);
+      pipe_sampler_view_reference(&softpipe->geometry_sampler_views[i], NULL);
+   }
+
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       uint j;
 
@@ -122,6 +128,8 @@ softpipe_destroy( struct pipe_context *pipe )
          }
       }
    }
+
+   tgsi_exec_machine_destroy(softpipe->fs_machine);
 
    FREE( softpipe );
 }
@@ -171,7 +179,12 @@ softpipe_is_resource_referenced( struct pipe_context *pipe,
           softpipe->vertex_tex_cache[i]->texture == texture)
          return PIPE_REFERENCED_FOR_READ;
    }
-   
+   for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
+      if (softpipe->geometry_tex_cache[i] &&
+          softpipe->geometry_tex_cache[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ;
+   }
+
    return PIPE_UNREFERENCED;
 }
 
@@ -215,67 +228,25 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.priv = priv;
 
    /* state setters */
-   softpipe->pipe.create_blend_state = softpipe_create_blend_state;
-   softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
-   softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+   softpipe_init_blend_funcs(&softpipe->pipe);
+   softpipe_init_clip_funcs(&softpipe->pipe);
+   softpipe_init_query_funcs( softpipe );
+   softpipe_init_rasterizer_funcs(&softpipe->pipe);
+   softpipe_init_sampler_funcs(&softpipe->pipe);
+   softpipe_init_shader_funcs(&softpipe->pipe);
+   softpipe_init_streamout_funcs(&softpipe->pipe);
+   softpipe_init_texture_funcs( &softpipe->pipe );
+   softpipe_init_vertex_funcs(&softpipe->pipe);
 
-   softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_fragment_sampler_states  = softpipe_bind_sampler_states;
-   softpipe->pipe.bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
-   softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
-
-   softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
-   softpipe->pipe.bind_depth_stencil_alpha_state   = softpipe_bind_depth_stencil_state;
-   softpipe->pipe.delete_depth_stencil_alpha_state = softpipe_delete_depth_stencil_state;
-
-   softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
-   softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
-   softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
-
-   softpipe->pipe.create_fs_state = softpipe_create_fs_state;
-   softpipe->pipe.bind_fs_state   = softpipe_bind_fs_state;
-   softpipe->pipe.delete_fs_state = softpipe_delete_fs_state;
-
-   softpipe->pipe.create_vs_state = softpipe_create_vs_state;
-   softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
-   softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
-
-   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
-   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
-   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
-
-   softpipe->pipe.create_vertex_elements_state = softpipe_create_vertex_elements_state;
-   softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
-   softpipe->pipe.delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
-
-   softpipe->pipe.set_blend_color = softpipe_set_blend_color;
-   softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
-   softpipe->pipe.set_clip_state = softpipe_set_clip_state;
-   softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
-   softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
-   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_fragment_sampler_views = softpipe_set_sampler_views;
-   softpipe->pipe.set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
-   softpipe->pipe.create_sampler_view = softpipe_create_sampler_view;
-   softpipe->pipe.sampler_view_destroy = softpipe_sampler_view_destroy;
-   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
-   softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
-
-   softpipe->pipe.draw_arrays = softpipe_draw_arrays;
-   softpipe->pipe.draw_elements = softpipe_draw_elements;
-   softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
-   softpipe->pipe.draw_arrays_instanced = softpipe_draw_arrays_instanced;
-   softpipe->pipe.draw_elements_instanced = softpipe_draw_elements_instanced;
+   softpipe->pipe.draw_vbo = softpipe_draw_vbo;
+   softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
 
    softpipe->pipe.is_resource_referenced = softpipe_is_resource_referenced;
-
-   softpipe_init_query_funcs( softpipe );
-   softpipe_init_texture_funcs( &softpipe->pipe );
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 
@@ -292,6 +263,11 @@ softpipe_create_context( struct pipe_screen *screen,
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    }
+   for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
+      softpipe->geometry_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
+   }
+
+   softpipe->fs_machine = tgsi_exec_machine_create();
 
    /* setup quad rendering stages */
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
@@ -308,9 +284,16 @@ softpipe_create_context( struct pipe_screen *screen,
       goto fail;
 
    draw_texture_samplers(softpipe->draw,
+                         PIPE_SHADER_VERTEX,
                          PIPE_MAX_VERTEX_SAMPLERS,
                          (struct tgsi_sampler **)
                             softpipe->tgsi.vert_samplers_list);
+
+   draw_texture_samplers(softpipe->draw,
+                         PIPE_SHADER_GEOMETRY,
+                         PIPE_MAX_GEOMETRY_SAMPLERS,
+                         (struct tgsi_sampler **)
+                            softpipe->tgsi.geom_samplers_list);
 
    if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;

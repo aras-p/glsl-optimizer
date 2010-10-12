@@ -41,8 +41,11 @@ enum lp_interp {
    LP_INTERP_FACING
 };
 
-/* Describes how to generate all the fragment shader inputs from the
- * the vertices passed into our triangle/line/point functions.
+
+/**
+ * Describes how to compute the interpolation coefficients (a0, dadx, dady)
+ * from the vertices passed into our triangle/line/point functions by the
+ * draw module.
  *
  * Vertices are treated as an array of float[4] values, indexed by
  * src_index.
@@ -50,15 +53,20 @@ enum lp_interp {
 struct lp_shader_input {
    enum lp_interp interp;       /* how to interpolate values */
    unsigned src_index;          /* where to find values in incoming vertices */
+   unsigned usage_mask;         /* bitmask of TGSI_WRITEMASK_x flags */
 };
 
 struct pipe_resource;
+struct pipe_query;
 struct pipe_surface;
 struct pipe_blend_color;
 struct pipe_screen;
 struct pipe_framebuffer_state;
-struct lp_fragment_shader;
+struct lp_fragment_shader_variant;
 struct lp_jit_context;
+struct llvmpipe_query;
+struct pipe_fence_handle;
+
 
 struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,
@@ -71,13 +79,13 @@ lp_setup_clear(struct lp_setup_context *setup,
                unsigned clear_stencil,
                unsigned flags);
 
-struct pipe_fence_handle *
-lp_setup_fence( struct lp_setup_context *setup );
 
 
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags );
+                unsigned flags,
+                struct pipe_fence_handle **fence,
+                const char *reason);
 
 
 void
@@ -91,16 +99,25 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              boolean scissor,
                              boolean gl_rasterization_rules );
 
+void 
+lp_setup_set_line_state( struct lp_setup_context *setup,
+                         float line_width);
+
+void 
+lp_setup_set_point_state( struct lp_setup_context *setup,
+                          float point_size,                          
+                          boolean point_size_per_vertex,
+                          uint sprite_coord_enable,
+                          uint sprite_coord_origin);
+
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         const struct lp_shader_input *interp,
                         unsigned nr );
 
 void
-lp_setup_set_fs_functions( struct lp_setup_context *setup,
-                           lp_jit_frag_func jit_function0,
-                           lp_jit_frag_func jit_function1,
-                           boolean opaque );
+lp_setup_set_fs_variant( struct lp_setup_context *setup,
+                         struct lp_fragment_shader_variant *variant );
 
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,
@@ -128,6 +145,11 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
                                     struct pipe_sampler_view **views);
 
+void
+lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
+                                    unsigned num,
+                                    const struct pipe_sampler_state **samplers);
+
 unsigned
 lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
                                 const struct pipe_resource *texture );
@@ -140,5 +162,12 @@ void
 lp_setup_set_vertex_info( struct lp_setup_context *setup, 
                           struct vertex_info *info );
 
+void
+lp_setup_begin_query(struct lp_setup_context *setup,
+                     struct llvmpipe_query *pq);
+
+void
+lp_setup_end_query(struct lp_setup_context *setup,
+                   struct llvmpipe_query *pq);
 
 #endif

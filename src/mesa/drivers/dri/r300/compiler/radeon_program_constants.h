@@ -79,7 +79,13 @@ typedef enum {
 	/**
 	 * Indicates a special register, see RC_SPECIAL_xxx.
 	 */
-	RC_FILE_SPECIAL
+	RC_FILE_SPECIAL,
+
+	/**
+	 * Indicates this register should use the result of the presubtract
+	 * operation.
+	 */
+	RC_FILE_PRESUB
 } rc_register_file;
 
 enum {
@@ -115,6 +121,7 @@ typedef enum {
 
 #define RC_SWIZZLE_XYZW RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_W)
 #define RC_SWIZZLE_XYZ0 RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO)
+#define RC_SWIZZLE_XYZZ RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z)
 #define RC_SWIZZLE_XXXX RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_X)
 #define RC_SWIZZLE_YYYY RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_Y)
 #define RC_SWIZZLE_ZZZZ RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_Z)
@@ -146,4 +153,32 @@ typedef enum {
 	RC_ALURESULT_W
 } rc_write_aluresult;
 
+typedef enum {
+	RC_PRESUB_NONE = 0,
+
+	/** 1 - 2 * src0 */
+	RC_PRESUB_BIAS,
+
+	/** src1 - src0 */
+	RC_PRESUB_SUB,
+
+	/** src1 + src0 */
+	RC_PRESUB_ADD,
+
+	/** 1 - src0 */
+	RC_PRESUB_INV
+} rc_presubtract_op;
+
+static inline int rc_presubtract_src_reg_count(rc_presubtract_op op){
+	switch(op){
+	case RC_PRESUB_BIAS:
+	case RC_PRESUB_INV:
+		return 1;
+	case RC_PRESUB_ADD:
+	case RC_PRESUB_SUB:
+		return 2;
+	default:
+		return 0;
+	}
+}
 #endif /* RADEON_PROGRAM_CONSTANTS_H */

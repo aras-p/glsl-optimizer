@@ -34,8 +34,8 @@
 #include "brw_vs.h"
 #include "brw_util.h"
 #include "brw_state.h"
-#include "shader/prog_print.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_parameter.h"
 
 
 
@@ -48,6 +48,7 @@ static void do_vs_prog( struct brw_context *brw,
    const GLuint *program;
    struct brw_vs_compile c;
    int aux_size;
+   int i;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
@@ -63,10 +64,21 @@ static void do_vs_prog( struct brw_context *brw,
       c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
    }
 
-   if (0)
-      _mesa_print_program(&c.vp->program.Base);
+   /* Put dummy slots into the VUE for the SF to put the replaced
+    * point sprite coords in.  We shouldn't need these dummy slots,
+    * which take up precious URB space, but it would mean that the SF
+    * doesn't get nice aligned pairs of input coords into output
+    * coords, which would be a pain to handle.
+    */
+   for (i = 0; i < 8; i++) {
+      if (c.key.point_coord_replace & (1 << i))
+	 c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
+   }
 
-
+   if (0) {
+      _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
+   }
 
    /* Emit GEN4 code.
     */
@@ -89,7 +101,7 @@ static void do_vs_prog( struct brw_context *brw,
    if (c.vp->use_const_buffer)
       aux_size += c.vp->program.Base.Parameters->NumParameters;
 
-   dri_bo_unreference(brw->vs.prog_bo);
+   drm_intel_bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_VS_PROG,
 						   &c.key, sizeof(c.key),
 						   NULL, 0,
@@ -106,6 +118,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
+   int i;
 
    memset(&key, 0, sizeof(key));
 
@@ -117,9 +130,17 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
 
+   /* _NEW_POINT */
+   if (ctx->Point.PointSprite) {
+      for (i = 0; i < 8; i++) {
+	 if (ctx->Point.CoordReplace[i])
+	    key.point_coord_replace |= (1 << i);
+      }
+   }
+
    /* Make an early check for the key.
     */
-   dri_bo_unreference(brw->vs.prog_bo);
+   drm_intel_bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,
@@ -135,7 +156,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
+      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT,
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

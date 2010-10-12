@@ -85,7 +85,7 @@ struct svga_winsys_context
    /**
     * Emit a relocation for a host surface.
     * 
-    * @param flags PIPE_BUFFER_USAGE_GPU_READ/WRITE
+    * @param flags bitmask of SVGA_RELOC_* flags
     * 
     * NOTE: Order of this call does matter. It should be the same order
     * as relocations appear in the command buffer.
@@ -99,7 +99,7 @@ struct svga_winsys_context
    /**
     * Emit a relocation for a guest memory region.
     * 
-    * @param flags PIPE_BUFFER_USAGE_GPU_READ/WRITE
+    * @param flags bitmask of SVGA_RELOC_* flags
     * 
     * NOTE: Order of this call does matter. It should be the same order
     * as relocations appear in the command buffer.
@@ -230,7 +230,7 @@ struct svga_winsys_screen
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
-    * XXX usage seems to be a bitmask of SVGA_BUFFER_USAGE_* flags.
+    * @param usage bitmask of SVGA_BUFFER_USAGE_* flags.
     *
     * alignment indicates the client's alignment requirements, eg for
     * SSE instructions.
@@ -243,15 +243,12 @@ struct svga_winsys_screen
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
-    * flags is a bitmask of:
-    * - PB_USAGE_CPU_READ/WRITE
-    * - PB_USAGE_DONTBLOCK
-    * - PB_USAGE_UNSYNCHRONIZED
+    * flags is a bitmaks of PIPE_TRANSFER_*
     */
    void *
    (*buffer_map)( struct svga_winsys_screen *sws, 
 	          struct svga_winsys_buffer *buf,
-		  unsigned usage );
+		  unsigned flags );
    
    void 
    (*buffer_unmap)( struct svga_winsys_screen *sws, 
@@ -291,11 +288,11 @@ struct svga_winsys_screen
 };
 
 
-struct pipe_screen *
-svga_screen_create(struct svga_winsys_screen *sws);
-
 struct svga_winsys_screen *
 svga_winsys_screen(struct pipe_screen *screen);
+
+struct svga_winsys_context *
+svga_winsys_context(struct pipe_context *context);
 
 struct pipe_resource *
 svga_screen_buffer_wrap_surface(struct pipe_screen *screen,

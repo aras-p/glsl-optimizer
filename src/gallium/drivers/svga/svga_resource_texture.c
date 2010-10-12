@@ -163,12 +163,12 @@ svga_translate_format_render(enum pipe_format format)
 
 
 static INLINE void
-svga_transfer_dma_band(struct svga_transfer *st,
+svga_transfer_dma_band(struct svga_context *svga,
+                       struct svga_transfer *st,
                        SVGA3dTransferType transfer,
                        unsigned y, unsigned h, unsigned srcy)
 {
    struct svga_texture *texture = svga_texture(st->base.resource); 
-   struct svga_screen *screen = svga_screen(texture->b.b.screen);
    SVGA3dCopyBox box;
    enum pipe_error ret;
    
@@ -195,20 +195,19 @@ svga_transfer_dma_band(struct svga_transfer *st,
    box.srcy = srcy;
    box.srcz = 0;
 
-   pipe_mutex_lock(screen->swc_mutex);
-   ret = SVGA3D_SurfaceDMA(screen->swc, st, transfer, &box, 1);
+   ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
    if(ret != PIPE_OK) {
-      screen->swc->flush(screen->swc, NULL);
-      ret = SVGA3D_SurfaceDMA(screen->swc, st, transfer, &box, 1);
+      svga->swc->flush(svga->swc, NULL);
+      ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
       assert(ret == PIPE_OK);
    }
-   pipe_mutex_unlock(screen->swc_mutex);
 }
 
 
 static INLINE void
-svga_transfer_dma(struct svga_transfer *st,
-                 SVGA3dTransferType transfer)
+svga_transfer_dma(struct svga_context *svga,
+                  struct svga_transfer *st,
+                  SVGA3dTransferType transfer)
 {
    struct svga_texture *texture = svga_texture(st->base.resource); 
    struct svga_screen *screen = svga_screen(texture->b.b.screen);
@@ -223,10 +222,10 @@ svga_transfer_dma(struct svga_transfer *st,
    if(!st->swbuf) {
       /* Do the DMA transfer in a single go */
       
-      svga_transfer_dma_band(st, transfer, st->base.box.y, st->base.box.height, 0);
+      svga_transfer_dma_band(svga, st, transfer, st->base.box.y, st->base.box.height, 0);
 
       if(transfer == SVGA3D_READ_HOST_VRAM) {
-         svga_screen_flush(screen, &fence);
+         svga_context_flush(svga, &fence);
          sws->fence_finish(sws, fence, 0);
          sws->fence_reference(sws, &fence, NULL);
       }
@@ -256,7 +255,7 @@ svga_transfer_dma(struct svga_transfer *st,
             /* Wait for the previous DMAs to complete */
             /* TODO: keep one DMA (at half the size) in the background */
             if(y) {
-               svga_screen_flush(screen, &fence);
+               svga_context_flush(svga, &fence);
                sws->fence_finish(sws, fence, 0);
                sws->fence_reference(sws, &fence, NULL);
             }
@@ -269,10 +268,10 @@ svga_transfer_dma(struct svga_transfer *st,
             }
          }
          
-         svga_transfer_dma_band(st, transfer, y, h, srcy);
+         svga_transfer_dma_band(svga, st, transfer, y, h, srcy);
          
          if(transfer == SVGA3D_READ_HOST_VRAM) {
-            svga_screen_flush(screen, &fence);
+            svga_context_flush(svga, &fence);
             sws->fence_finish(sws, fence, 0);
 
             hw = sws->buffer_map(sws, st->hwbuf, PIPE_TRANSFER_READ);
@@ -342,6 +341,7 @@ svga_texture_get_transfer(struct pipe_context *pipe,
 			  unsigned usage,
 			  const struct pipe_box *box)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st;
@@ -365,12 +365,12 @@ svga_texture_get_transfer(struct pipe_context *pipe,
 
    st->hw_nblocksy = nblocksy;
    
-   st->hwbuf = svga_winsys_buffer_create(ss, 
+   st->hwbuf = svga_winsys_buffer_create(svga,
                                          1, 
                                          0,
                                          st->hw_nblocksy*st->base.stride);
    while(!st->hwbuf && (st->hw_nblocksy /= 2)) {
-      st->hwbuf = svga_winsys_buffer_create(ss, 
+      st->hwbuf = svga_winsys_buffer_create(svga,
                                             1, 
                                             0,
                                             st->hw_nblocksy*st->base.stride);
@@ -393,7 +393,7 @@ svga_texture_get_transfer(struct pipe_context *pipe,
    }
    
    if (usage & PIPE_TRANSFER_READ)
-      svga_transfer_dma(st, SVGA3D_READ_HOST_VRAM);
+      svga_transfer_dma(svga, st, SVGA3D_READ_HOST_VRAM);
 
    return &st->base;
 
@@ -445,13 +445,14 @@ static void
 svga_texture_transfer_destroy(struct pipe_context *pipe,
 			      struct pipe_transfer *transfer)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_texture *tex = svga_texture(transfer->resource);
    struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 
    if (st->base.usage & PIPE_TRANSFER_WRITE) {
-      svga_transfer_dma(st, SVGA3D_WRITE_HOST_VRAM);
+      svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM);
       ss->texture_timestamp++;
       tex->view_age[transfer->sr.level] = ++(tex->age);
       tex->defined[transfer->sr.face][transfer->sr.level] = TRUE;
@@ -582,7 +583,8 @@ svga_texture_from_handle(struct pipe_screen *screen,
    assert(screen);
 
    /* Only supports one type */
-   if (template->target != PIPE_TEXTURE_2D ||
+   if ((template->target != PIPE_TEXTURE_2D &&
+       template->target != PIPE_TEXTURE_RECT) ||
        template->last_level != 0 ||
        template->depth0 != 1) {
       return NULL;

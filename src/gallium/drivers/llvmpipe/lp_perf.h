@@ -44,10 +44,16 @@ struct lp_counters
    unsigned nr_empty_64;
    unsigned nr_fully_covered_64;
    unsigned nr_partially_covered_64;
+   unsigned nr_pure_shade_opaque_64;
+   unsigned nr_pure_shade_64;
+   unsigned nr_shade_64;
+   unsigned nr_shade_opaque_64;
    unsigned nr_empty_16;
    unsigned nr_fully_covered_16;
    unsigned nr_partially_covered_16;
    unsigned nr_empty_4;
+   unsigned nr_fully_covered_4;
+   unsigned nr_partially_covered_4;
    unsigned nr_non_empty_4;
    unsigned nr_llvm_compiles;
    int64_t llvm_compile_time;  /**< total, in microseconds */
@@ -65,9 +71,11 @@ extern struct lp_counters lp_count;
 #ifdef DEBUG
 #define LP_COUNT(counter) lp_count.counter++
 #define LP_COUNT_ADD(counter, incr)  lp_count.counter += (incr)
+#define LP_COUNT_GET(counter) (lp_count.counter)
 #else
 #define LP_COUNT(counter)
-#define LP_COUNT_ADD(counter, incr) (void) incr
+#define LP_COUNT_ADD(counter, incr) (void)(incr)
+#define LP_COUNT_GET(counter) 0
 #endif
 
 

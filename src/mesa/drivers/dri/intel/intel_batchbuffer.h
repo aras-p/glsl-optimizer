@@ -15,7 +15,7 @@ struct intel_batchbuffer
 {
    struct intel_context *intel;
 
-   dri_bo *buf;
+   drm_intel_bo *buf;
 
    GLubyte *buffer;
 
@@ -23,6 +23,7 @@ struct intel_batchbuffer
    GLubyte *ptr;
 
    GLuint size;
+   uint32_t state_batch_offset;
 
 #ifdef DEBUG
    /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
@@ -62,7 +63,7 @@ void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
 
 GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                                       dri_bo *buffer,
+                                       drm_intel_bo *buffer,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
@@ -92,7 +93,8 @@ static INLINE uint32_t float_as_int(float f)
 static INLINE GLint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
-   return (batch->size - batch->reserved_space) - (batch->ptr - batch->map);
+   return (batch->state_batch_offset - batch->reserved_space) -
+      (batch->ptr - batch->map);
 }
 
 

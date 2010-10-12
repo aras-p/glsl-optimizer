@@ -169,7 +169,7 @@ svga_validate_sampler_view(struct svga_context *svga, struct svga_sampler_view *
    for (i = v->min_lod; i <= v->max_lod; i++) {
       for (k = 0; k < numFaces; k++) {
          if (v->age < tex->view_age[i])
-            svga_texture_copy_handle(svga, NULL,
+            svga_texture_copy_handle(svga,
                                      tex->handle, 0, 0, 0, i, k,
                                      v->handle, 0, 0, 0, i - v->min_lod, k,
                                      u_minify(tex->b.b.width0, i),

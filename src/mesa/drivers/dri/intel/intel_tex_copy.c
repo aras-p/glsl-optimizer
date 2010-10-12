@@ -74,6 +74,14 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       return NULL;
    case GL_RGBA:
    case GL_RGBA8:
+      irb = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
+      /* We're required to set alpha to 1.0 in this case, but we can't
+       * do that with the blitter, so fall back.  We could use the 3D
+       * engine or do two passes with the blitter, but it doesn't seem
+       * worth it for this case. */
+      if (irb->Base._BaseFormat == GL_RGB)
+	 return NULL;
+      return irb->region;
    case GL_RGB:
    case GL_RGB8:
       return intel_readbuf_region(intel);
@@ -94,7 +102,7 @@ do_copy_texsubimage(struct intel_context *intel,
    GLcontext *ctx = &intel->ctx;
    const struct intel_region *src = get_teximage_source(intel, internalFormat);
 
-   if (!intelImage->mt || !src) {
+   if (!intelImage->mt || !src || !src->buffer) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, src, internalFormat);
@@ -108,7 +116,7 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   /* intelFlush(ctx); */
+   /* intel_flush(ctx); */
    intel_prepare_render(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
@@ -124,7 +132,7 @@ do_copy_texsubimage(struct intel_context *intel,
 				     0,
 				     &image_x, &image_y);
 
-      /* Can't blit to tiled buffers with non-tile-aligned offset. */
+      /* The blitter can't handle Y-tiled buffers. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
 	 return GL_FALSE;
       }

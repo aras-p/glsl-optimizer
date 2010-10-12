@@ -29,56 +29,6 @@
 
 #include "util/u_format.h"
 
-#define _MIXED(pf, t0, t1, t2, t3, cr, cg, cb, ca, f)		\
-[PIPE_FORMAT_##pf] = (						\
-	NV50TIC_0_0_MAPR_##cr | NV50TIC_0_0_TYPER_##t0 |	\
-	NV50TIC_0_0_MAPG_##cg | NV50TIC_0_0_TYPEG_##t1 |	\
-	NV50TIC_0_0_MAPB_##cb | NV50TIC_0_0_TYPEB_##t2 |	\
-	NV50TIC_0_0_MAPA_##ca | NV50TIC_0_0_TYPEA_##t3 |	\
-	NV50TIC_0_0_FMT_##f)
-
-#define _(pf, t, cr, cg, cb, ca, f) _MIXED(pf, t, t, t, t, cr, cg, cb, ca, f)
-
-static const uint32_t nv50_texture_formats[PIPE_FORMAT_COUNT] =
-{
-	_(B8G8R8A8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(B8G8R8A8_SRGB,  UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(B8G8R8X8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(B8G8R8X8_SRGB,  UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(B5G5R5A1_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
-	_(B4G4R4A4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
-
-	_(B5G6R5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
-
-	_(L8_UNORM, UNORM, C0, C0, C0, ONE, 8),
-	_(L8_SRGB,  UNORM, C0, C0, C0, ONE, 8),
-	_(A8_UNORM, UNORM, ZERO, ZERO, ZERO, C0, 8),
-	_(I8_UNORM, UNORM, C0, C0, C0, C0, 8),
-
-	_(L8A8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
-	_(L8A8_SRGB,  UNORM, C0, C0, C0, C1, 8_8),
-
-	_(DXT1_RGB, UNORM, C0, C1, C2, ONE, DXT1),
-	_(DXT1_RGBA, UNORM, C0, C1, C2, C3, DXT1),
-	_(DXT3_RGBA, UNORM, C0, C1, C2, C3, DXT3),
-	_(DXT5_RGBA, UNORM, C0, C1, C2, C3, DXT5),
-
-	_MIXED(S8_USCALED_Z24_UNORM, UINT, UNORM, UINT, UINT, C1, C1, C1, ONE, 24_8),
-	_MIXED(Z24_UNORM_S8_USCALED, UNORM, UINT, UINT, UINT, C0, C0, C0, ONE, 8_24),
-
-	_(R16G16B16A16_SNORM, UNORM, C0, C1, C2, C3, 16_16_16_16),
-	_(R16G16B16A16_UNORM, SNORM, C0, C1, C2, C3, 16_16_16_16),
-	_(R32G32B32A32_FLOAT, FLOAT, C0, C1, C2, C3, 32_32_32_32),
-
-	_(R16G16_SNORM, SNORM, C0, C1, ZERO, ONE, 16_16),
-	_(R16G16_UNORM, UNORM, C0, C1, ZERO, ONE, 16_16),
-
-	_MIXED(Z32_FLOAT, FLOAT, UINT, UINT, UINT, C0, C0, C0, ONE, 32_DEPTH)
-};
-
-#undef _
-#undef _MIXED
-
 static INLINE uint32_t
 nv50_tic_swizzle(uint32_t tc, unsigned swz)
 {
@@ -106,7 +56,7 @@ nv50_tex_construct(struct nv50_sampler_view *view)
 	struct nv50_miptree *mt = nv50_miptree(view->pipe.texture);
 	uint32_t swz[4], *tic = view->tic;
 
-	tic[0] = nv50_texture_formats[view->pipe.format];
+	tic[0] = nv50_format_table[view->pipe.format].tic;
 
 	swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r);
 	swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g);
@@ -132,6 +82,9 @@ nv50_tex_construct(struct nv50_sampler_view *view)
 		break;
 	case PIPE_TEXTURE_2D:
 		tic[2] |= NV50TIC_0_2_TARGET_2D;
+		break;
+	case PIPE_TEXTURE_RECT:
+		tic[2] |= NV50TIC_0_2_TARGET_RECT;
 		break;
 	case PIPE_TEXTURE_3D:
 		tic[2] |= NV50TIC_0_2_TARGET_3D;

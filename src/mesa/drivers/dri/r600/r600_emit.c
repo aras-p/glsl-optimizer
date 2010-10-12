@@ -49,6 +49,71 @@ void r600EmitCacheFlush(context_t *rmesa)
 {
 }
 
+GLboolean r600AllocShaderConsts(GLcontext * ctx,
+                                void ** constbo,			 
+                                int sizeinBYTE,
+                                char * szShaderUsage)
+{
+	radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
+	struct radeon_bo * pbo;
+
+    if(sizeinBYTE < 64) /* SQ_ALU_CONST_BUFFER_SIZE need 64 bytes at least to be non 0 */
+    {
+        sizeinBYTE = 64;
+    }    
+
+shader_again_alloc:
+	pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
+			0,
+			sizeinBYTE,
+			256,
+			RADEON_GEM_DOMAIN_GTT,
+			0);
+
+	radeon_print(RADEON_SHADER, RADEON_NORMAL, "%s %p size %d: %s\n", __func__, pbo, sizeinBYTE, szShaderUsage);
+
+	if (!pbo) {
+		radeon_print(RADEON_MEMORY | RADEON_CS, RADEON_IMPORTANT, "No memory for buffer object. Flushing command buffer.\n");
+		rcommonFlushCmdBuf(radeonctx, __FUNCTION__);
+		goto shader_again_alloc;
+	}
+
+	radeon_cs_space_add_persistent_bo(radeonctx->cmdbuf.cs,
+			pbo,
+			RADEON_GEM_DOMAIN_GTT, 0);
+
+	if (radeon_cs_space_check_with_bo(radeonctx->cmdbuf.cs,
+				pbo,
+				RADEON_GEM_DOMAIN_GTT, 0)) {
+		radeon_error("failure to revalidate BOs - badness\n");
+		return GL_FALSE;
+	}
+
+	*constbo = (void*)pbo;
+
+	return GL_TRUE;
+}
+GLboolean r600EmitShaderConsts(GLcontext * ctx,
+                               void * constbo,
+                               int    bo_offset,
+                               GLvoid * data,
+                               int sizeinBYTE)
+{	
+	struct radeon_bo * pbo = (struct radeon_bo *)constbo;
+	uint8_t *out;
+
+	radeon_bo_map(pbo, 1);
+
+	out = (uint8_t*)(pbo->ptr);
+    out = (uint8_t*)ADD_POINTERS(pbo->ptr, bo_offset);
+
+	memcpy(out, data, sizeinBYTE);
+
+	radeon_bo_unmap(pbo);
+
+	return GL_TRUE;
+}
+
 GLboolean r600EmitShader(GLcontext * ctx,
                          void ** shaderbo,
 			 GLvoid * data,

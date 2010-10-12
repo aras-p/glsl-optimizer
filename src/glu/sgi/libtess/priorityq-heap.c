@@ -39,8 +39,12 @@
 
 #define INIT_SIZE	32
 
+#ifndef TRUE
 #define TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 #ifdef FOR_TRITE_TEST_PROGRAM
 #define LEQ(x,y)	(*pq->leq)(x,y)
@@ -159,7 +163,7 @@ void pqInit( PriorityQ *pq )
 PQhandle pqInsert( PriorityQ *pq, PQkey keyNew )
 {
   long curr;
-  PQhandle free;
+  PQhandle free_handle;
 
   curr = ++ pq->size;
   if( (curr*2) > pq->max ) {
@@ -186,21 +190,21 @@ PQhandle pqInsert( PriorityQ *pq, PQkey keyNew )
   }
 
   if( pq->freeList == 0 ) {
-    free = curr;
+    free_handle = curr;
   } else {
-    free = pq->freeList;
-    pq->freeList = pq->handles[free].node;
+    free_handle = pq->freeList;
+    pq->freeList = pq->handles[free_handle].node;
   }
 
-  pq->nodes[curr].handle = free;
-  pq->handles[free].node = curr;
-  pq->handles[free].key = keyNew;
+  pq->nodes[curr].handle = free_handle;
+  pq->handles[free_handle].node = curr;
+  pq->handles[free_handle].key = keyNew;
 
   if( pq->initialized ) {
     FloatUp( pq, curr );
   }
-  assert(free != LONG_MAX);
-  return free;
+  assert(free_handle != LONG_MAX);
+  return free_handle;
 }
 
 /* really __gl_pqHeapExtractMin */

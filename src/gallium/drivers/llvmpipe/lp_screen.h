@@ -37,6 +37,7 @@
 #include "gallivm/lp_bld.h"
 #include <llvm-c/ExecutionEngine.h>
 
+#include "os/os_thread.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 
@@ -60,10 +61,12 @@ struct llvmpipe_screen
 
    unsigned num_threads;
 
-   /* Increments whenever textures are modified.  Contexts can track
-    * this.
+   /* Increments whenever textures are modified.  Contexts can track this.
     */
-   unsigned timestamp;          
+   unsigned timestamp;
+
+   struct lp_rasterizer *rast;
+   pipe_mutex rast_mutex;
 };
 
 

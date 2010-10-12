@@ -66,9 +66,6 @@ Unordered access view: view supporting random read/write access (usually from co
 clear
 	+ Gallium supports clearing both render targets and depth/stencil with a single call
 
-draw_range_elements
-	+ Gallium supports indexed draw with explicit range
-
 fence_signalled
 fence_finish
 	+ D3D10/D3D11 don't appear to support explicit fencing; queries can often substitute though, and flushing is supported
@@ -79,7 +76,7 @@ set_clip_state
 set_polygon_stipple
 	+ Gallium supports polygon stipple
 
-surface_fill
+clearRT/clearDS
 	+ Gallium supports subrectangle fills of surfaces, D3D10 only supports full clears of views
 
 * DirectX 10/11 DDI functions and Gallium equivalents
@@ -114,11 +111,10 @@ CheckDeferredContextHandleSizes (D3D11 only)
 CheckFormatSupport -> screen->is_format_supported
 	! Gallium passes usages to this function, D3D11 returns them
 	- Gallium does not differentiate between blendable and non-blendable render targets
-	- Gallium lacks multisampled-texture and multisampled-render-target usages
+	! Gallium includes sample count directly, D3D11 uses additional query 
 
 CheckMultisampleQualityLevels
-	* could merge this with is_format_supported
-	- Gallium lacks multisampling support
+	! is merged with is_format_supported
 
 CommandListExecute (D3D11 only)
 	- Gallium does not support command lists
@@ -139,7 +135,6 @@ ClearUnorderedAccessViewUint (D3D11 only)
 
 CreateBlendState (extended in D3D10.1) -> create_blend_state
 	# D3D10 does not support per-RT blend modes (but per-RT blending), only D3D10.1 does
-	- Gallium lacks alpha-to-coverage
 	+ Gallium supports logic ops
 	+ Gallium supports dithering
 	+ Gallium supports using the broadcast alpha component of the blend constant color
@@ -179,7 +174,7 @@ CreateElementLayout -> create_vertex_elements_state
 	! D3D11 has an extra flag (InputSlotClass) that is the same as instance_divisor == 0
 
 CreateGeometryShader -> create_gs_state
-CreateGeometryShaderWithStreamOutput -> create_gs_state
+CreateGeometryShaderWithStreamOutput -> create_gs_state + create_stream_output_state
 CreatePixelShader -> create_fs_state
 CreateVertexShader -> create_vs_state
 	> bytecode is different (see D3d10tokenizedprogramformat.hpp)
@@ -198,7 +193,6 @@ CreateQuery -> create_query
 CreateRasterizerState
 	- Gallium lacks clamping of polygon offset depth biases
 	- Gallium lacks support to disable depth clipping
-	- Gallium lacks multisampling
 	+ Gallium, like OpenGL, supports PIPE_POLYGON_MODE_POINT
 	+ Gallium, like OpenGL, supports per-face polygon fill modes
 	+ Gallium, like OpenGL, supports culling everything
@@ -223,12 +217,10 @@ CreateResource -> texture_create or buffer_create
 	# Note that hardware often has the implicit rule, so the D3D11 interface seems to make little sense
 	# Also, the D3D11 API does not allow the user to specify mipmap sizes, so this really seems a dubious decision on Microsoft's part
 	- D3D11 supports specifying initial data to write in the resource
-	- Gallium lacks support for stream output buffer usage
 	- Gallium does not support unordered access buffers
 	! D3D11 specifies mapping flags (i.e. read/write/discard);:it's unclear what they are used for here
 	- D3D11 supports odd things in the D3D10_DDI_RESOURCE_MISC_FLAG enum (D3D10_DDI_RESOURCE_MISC_DISCARD_ON_PRESENT, D3D11_DDI_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, D3D11_DDI_RESOURCE_MISC_BUFFER_STRUCTURED)
 	- Gallium does not support indirect draw call parameter buffers
-	- Gallium lacks multisampling
 	- Gallium lacks array textures
 	! D3D11 supports specifying hardware modes and other stuff here for scanout resources
 	+ Gallium allows specifying minimum buffer alignment
@@ -276,32 +268,27 @@ Dispatch (D3D11 only)
 DispatchIndirect (D3D11 only)
 	- Gallium does not support compute shaders
 
-Draw -> draw_arrays
+Draw -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
 
-DrawAuto
-	- Gallium lacks stream out and DrawAuto
+DrawAuto -> draw_auto
 
-DrawIndexed -> draw_elements
+DrawIndexed -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
-	* may want to add a separate set_index_buffer
-	- Gallium lacks base vertex for indexed draw calls
-	+ D3D11 lacks draw_range_elements functionality, which is required for OpenGL
+	+ D3D11 lacks explicit range, which is required for OpenGL
 
-DrawIndexedInstanced -> draw_elements_instanced
+DrawIndexedInstanced -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
-	* may want to add a separate set_index_buffer
-	- Gallium lacks base vertex for indexed draw calls
 
-DrawIndexedInstancedIndirect (D3D11 only) -> call draw_elements_instanced multiple times in software
-	# this allows to use an hardware buffer to specify the parameters for multiple draw_elements_instanced calls
+DrawIndexedInstancedIndirect (D3D11 only)
+	# this allows to use an hardware buffer to specify the parameters for multiple draw_vbo calls
 	- Gallium does not support draw call parameter buffers and indirect draw
 
-DrawInstanced -> draw_arrays_instanced
+DrawInstanced -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
 
-DrawInstancedIndirect (D3D11 only) -> call draw_arrays_instanced multiple times in software
-	# this allows to use an hardware buffer to specify the parameters for multiple draw_arrays_instanced calls
+DrawInstancedIndirect (D3D11 only)
+	# this allows to use an hardware buffer to specify the parameters for multiple draw_vbo calls
 	- Gallium does not support draw call parameter buffers and indirect draws
 
 DsSetConstantBuffers (D3D11 only)
@@ -338,10 +325,9 @@ HsSetShaderResources (D3D11 only)
 HsSetShaderWithIfaces (D3D11 only)
 	- Gallium does not support hull shaders
 
-IaSetIndexBuffer
-	! Gallium passes this to the draw_elements or draw_elements_instanced calls
+IaSetIndexBuffer -> set_index_buffer
 	+ Gallium supports 8-bit indices
-	! the D3D11 interface allows index-size-unaligned byte offsets into index buffers; it's not clear whether they actually work
+	# the D3D11 interface allows index-size-unaligned byte offsets into the index buffer; most drivers will abort with an assertion
 
 IaSetInputLayout -> bind_vertex_elements_state
 
@@ -400,7 +386,7 @@ ResourceCopy
 ResourceCopyRegion
 ResourceConvert (D3D10.1+ only)
 ResourceConvertRegion (D3D10.1+ only)
-	-> surface_copy
+	-> resource_copy_region
 	- Gallium does not support hardware buffer copies
 	- Gallium does not support copying 3D texture subregions in a single call
 
@@ -410,8 +396,7 @@ ResourceIsStagingBusy -> is_texture_referenced, is_buffer_referenced
 ResourceReadAfterWriteHazard
 	! Gallium specifies hides this, except for the render and texture caches
 
-ResourceResolveSubresource
-	- Gallium does not support multisample sample resolution
+ResourceResolveSubresource -> resource_resolve
 
 ResourceMap
 ResourceUnmap
@@ -433,9 +418,8 @@ StagingResourceUnmap
 ResourceUpdateSubresourceUP -> transfer functionality, transfer_inline_write in gallium-resources
 DefaultConstantBufferUpdateSubresourceUP -> transfer functionality, transfer_inline_write in gallium-resources
 
-SetBlendState -> bind_blend_state and set_blend_color
-	! D3D11 fuses bind_blend_state and set_blend_color in a single function
-	- Gallium lacks the sample mask
+SetBlendState -> bind_blend_state, set_blend_color and set_sample_mask
+	! D3D11 fuses bind_blend_state, set_blend_color and set_sample_mask in a single function
 
 SetDepthStencilState -> bind_depth_stencil_alpha_state and set_stencil_ref
 	! D3D11 fuses bind_depth_stencil_alpha_state and set_stencil_ref in a single function
@@ -474,8 +458,7 @@ SetViewports
 ShaderResourceViewReadAfterWriteHazard -> flush(PIPE_FLUSH_RENDER_CACHE)
 	- Gallium does not support specifying this per-render-target/view
 
-SoSetTargets
-	- Gallium does not support stream out
+SoSetTargets -> set_stream_output_buffers
 
 VsSetConstantBuffers -> for(i = StartBuffer; i < NumBuffers; ++i) set_constant_buffer(PIPE_SHADER_VERTEX, i, phBuffers[i])
 	* may want to split into fragment/vertex-specific versions

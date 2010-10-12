@@ -32,6 +32,9 @@
 #ifndef __MACH64_IOCTL_H__
 #define __MACH64_IOCTL_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "mach64_dri.h"
 #include "mach64_reg.h"
 #include "mach64_lock.h"

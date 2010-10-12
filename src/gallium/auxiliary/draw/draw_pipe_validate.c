@@ -122,12 +122,14 @@ draw_need_pipeline(const struct draw_context *draw,
          return TRUE;
 
       /* unfilled polygons */
-      if (rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-          rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL)
+      if (rasterizer->fill_front != PIPE_POLYGON_MODE_FILL ||
+          rasterizer->fill_back != PIPE_POLYGON_MODE_FILL)
          return TRUE;
       
       /* polygon offset */
-      if (rasterizer->offset_cw || rasterizer->offset_ccw)
+      if (rasterizer->offset_point ||
+          rasterizer->offset_line ||
+          rasterizer->offset_tri)
          return TRUE;
 
       /* two-side lighting */
@@ -170,7 +172,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    wide_lines = (rast->line_width > draw->pipeline.wide_line_threshold
                  && !rast->line_smooth);
 
-   /* drawing large points? */
+   /* drawing large/sprite points (but not AA points)? */
    if (rast->sprite_coord_enable && draw->pipeline.point_sprite)
       wide_points = TRUE;
    else if (rast->point_smooth && draw->pipeline.aapoint)
@@ -205,7 +207,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       precalc_flat = TRUE;
    }
 
-   if (wide_points || rast->sprite_coord_enable) {
+   if (wide_points) {
       draw->pipeline.wide_point->next = next;
       next = draw->pipeline.wide_point;
    }
@@ -222,8 +224,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.pstipple;
    }
 
-   if (rast->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       rast->fill_ccw != PIPE_POLYGON_MODE_FILL) {
+   if (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
+       rast->fill_back != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;
       next = draw->pipeline.unfilled;
       precalc_flat = TRUE;		/* only needed for triangles really */
@@ -235,8 +237,9 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.flatshade;
    }
 	 
-   if (rast->offset_cw ||
-       rast->offset_ccw) {
+   if (rast->offset_point ||
+       rast->offset_line ||
+       rast->offset_tri) {
       draw->pipeline.offset->next = next;
       next = draw->pipeline.offset;
       need_det = TRUE;
@@ -255,14 +258,14 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
     * to less work emitting vertices, smaller vertex buffers, etc.
     * It's difficult to say whether this will be true in general.
     */
-   if (need_det || rast->cull_mode) {
+   if (need_det || rast->cull_face != PIPE_FACE_NONE) {
       draw->pipeline.cull->next = next;
       next = draw->pipeline.cull;
    }
 
    /* Clip stage
     */
-   if (!draw->bypass_clipping)
+   if (draw->clip_xy || draw->clip_z || draw->clip_user)
    {
       draw->pipeline.clip->next = next;
       next = draw->pipeline.clip;

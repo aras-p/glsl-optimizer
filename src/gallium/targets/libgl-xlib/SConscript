@@ -17,6 +17,7 @@ if env['dri']:
 env = env.Clone()
 
 env.Append(CPPPATH = [
+    '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
     '#src/gallium/state_trackers/glx/xlib',
@@ -28,11 +29,13 @@ env.Prepend(LIBS = [
     st_xlib,
     ws_xlib,
     trace,
+    rbug,
     identity,
     glapi,
     mesa,
     glsl,
     gallium,
+    'talloc'
 ])
 
 sources = [
@@ -44,6 +47,10 @@ env.Tool('x11')
 if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
+
+if True:
+    env.Append(CPPDEFINES = 'GALLIUM_GALAHAD')
+    env.Prepend(LIBS = [galahad])
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')

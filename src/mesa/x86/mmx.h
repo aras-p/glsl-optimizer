@@ -26,6 +26,9 @@
 #ifndef ASM_MMX_H
 #define ASM_MMX_H
 
+#include "main/compiler.h"
+#include "main/mtypes.h"
+
 extern void _ASMAPI
 _mesa_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
                               GLvoid *rgba, const GLvoid *dest,

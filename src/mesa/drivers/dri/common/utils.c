@@ -140,6 +140,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+#define need_GL_ARB_copy_buffer
 #define need_GL_ARB_draw_buffers
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
@@ -164,6 +165,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #include "main/remap_helper.h"
 
 static const struct dri_extension all_mesa_extensions[] = {
+   { "GL_ARB_copy_buffer",           GL_ARB_copy_buffer_functions },
    { "GL_ARB_draw_buffers",          GL_ARB_draw_buffers_functions },
    { "GL_ARB_multisample",           GL_ARB_multisample_functions },
    { "GL_ARB_texture_compression",   GL_ARB_texture_compression_functions },

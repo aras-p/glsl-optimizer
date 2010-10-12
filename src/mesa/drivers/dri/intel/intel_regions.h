@@ -30,8 +30,9 @@
 
 /** @file intel_regions.h
  *
- * Structure definitions and prototypes for intel_region handling, which is
- * the basic structure for rectangular collections of pixels stored in a dri_bo.
+ * Structure definitions and prototypes for intel_region handling,
+ * which is the basic structure for rectangular collections of pixels
+ * stored in a drm_intel_bo.
  */
 
 #include <xf86drm.h>
@@ -75,17 +76,20 @@ struct intel_region
 /* Allocate a refcounted region.  Pointers to regions should only be
  * copied by calling intel_reference_region().
  */
-struct intel_region *intel_region_alloc(struct intel_context *intel,
+struct intel_region *intel_region_alloc(struct intel_screen *screen,
                                         uint32_t tiling,
 					GLuint cpp, GLuint width,
                                         GLuint height,
 					GLboolean expect_accelerated_upload);
 
 struct intel_region *
-intel_region_alloc_for_handle(struct intel_context *intel,
+intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint cpp,
 			      GLuint width, GLuint height, GLuint pitch,
 			      unsigned int handle, const char *name);
+
+GLboolean
+intel_region_flink(struct intel_region *region, uint32_t *name);
 
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);
@@ -134,9 +138,9 @@ void intel_region_release_pbo(struct intel_context *intel,
 void intel_region_cow(struct intel_context *intel,
                       struct intel_region *region);
 
-dri_bo *intel_region_buffer(struct intel_context *intel,
-			    struct intel_region *region,
-			    GLuint flag);
+drm_intel_bo *intel_region_buffer(struct intel_context *intel,
+				  struct intel_region *region,
+				  GLuint flag);
 
 void _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,

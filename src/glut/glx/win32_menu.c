@@ -19,8 +19,6 @@
 #include "glutint.h"
 
 void (GLUTCALLBACK *__glutMenuStatusFunc) (int, int, int);
-GLUTmenu *__glutMappedMenu;
-GLUTwindow *__glutMenuWindow;
 GLUTmenuItem *__glutItemSelected;
 unsigned __glutMenuButton;
 

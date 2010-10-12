@@ -215,8 +215,7 @@ _mesa_validate_blend_equation( GLcontext *ctx,
          break;
       case GL_MIN:
       case GL_MAX:
-         if (!ctx->Extensions.EXT_blend_minmax &&
-             !ctx->Extensions.ARB_imaging) {
+         if (!ctx->Extensions.EXT_blend_minmax) {
             return GL_FALSE;
          }
          break;
@@ -229,8 +228,7 @@ _mesa_validate_blend_equation( GLcontext *ctx,
          break;
       case GL_FUNC_SUBTRACT:
       case GL_FUNC_REVERSE_SUBTRACT:
-         if (!ctx->Extensions.EXT_blend_subtract &&
-             !ctx->Extensions.ARB_imaging) {
+         if (!ctx->Extensions.EXT_blend_subtract) {
             return GL_FALSE;
          }
          break;

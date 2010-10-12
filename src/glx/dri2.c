@@ -33,7 +33,6 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-#define NEED_REPLIES
 #include <stdio.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
@@ -89,7 +88,6 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-   XExtDisplayInfo *glx_info = __glXFindDisplay(dpy);
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -100,8 +98,13 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
+
+      /* Ignore swap events if we're not looking for them */
+      aevent->type = dri2GetSwapEventType(dpy, awire->drawable);
+      if(!aevent->type)
+         return False;
+
       aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
-      aevent->type = glx_info->codes->first_event + GLX_BufferSwapComplete;
       aevent->send_event = (awire->type & 0x80) != 0;
       aevent->display = dpy;
       aevent->drawable = awire->drawable;
@@ -167,6 +170,14 @@ DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code)
     if (err->majorCode == codes->major_opcode &&
 	err->errorCode == BadDrawable &&
 	err->minorCode == X_DRI2CopyRegion)
+	return True;
+
+    /* If the X drawable was destroyed before the GLX drawable, the
+     * DRI2 drawble will be gone by the time we call
+     * DRI2DestroyDrawable.  So just ignore BadDrawable here. */
+    if (err->majorCode == codes->major_opcode &&
+	err->errorCode == BadDrawable &&
+	err->minorCode == X_DRI2DestroyDrawable)
 	return True;
 
     return False;

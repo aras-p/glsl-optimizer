@@ -1,0 +1,12 @@
+prefix=@INSTALL_DIR@
+exec_prefix=${prefix}
+libdir=@INSTALL_LIB_DIR@
+includedir=@INSTALL_INC_DIR@
+
+Name: glesv2
+Description: Mesa OpenGL ES 2.0 library
+Requires.private: @GLESv2_PC_REQ_PRIV@
+Version: @VERSION@
+Libs: -L${libdir} -l@GLESv2_LIB@
+Libs.private: @GLESv2_PC_LIB_PRIV@
+Cflags: -I${includedir} @GLESv2_PC_CFLAGS@

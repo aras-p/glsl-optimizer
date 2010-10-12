@@ -153,6 +153,9 @@ radeonCopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
         _mesa_select_tex_image(ctx, texObj, target, level);
     int srcx, srcy, dstx, dsty;
 
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+    radeon_prepare_render(radeon);
+
     if (border)
         goto fail;
 
@@ -201,6 +204,9 @@ radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
     struct gl_texture_object *texObj = _mesa_select_tex_object(ctx, texUnit, target);
     struct gl_texture_image *texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+    radeon_prepare_render(radeon);
 
     if (!do_copy_texsubimage(ctx, target, level,
                              radeon_tex_obj(texObj), (radeon_texture_image *)texImage,

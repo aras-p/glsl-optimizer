@@ -33,9 +33,9 @@
 #define COLORMAC_H
 
 
-#include "imports.h"
 #include "config.h"
 #include "macros.h"
+#include "mtypes.h"
 
 
 /** \def BYTE_TO_CHAN

@@ -501,6 +501,27 @@
 #define BRW_MASK_ENABLE   0
 #define BRW_MASK_DISABLE  1
 
+/** @{
+ *
+ * Gen6 has replaced "mask enable/disable" with WECtrl, which is
+ * effectively the same but much simpler to think about.  Now, there
+ * are two contributors ANDed together to whether channels are
+ * executed: The predication on the instruction, and the channel write
+ * enable.
+ */
+/**
+ * This is the default value.  It means that a channel's write enable is set
+ * if the per-channel IP is pointing at this instruction.
+ */
+#define BRW_WE_NORMAL		0
+/**
+ * This is used like BRW_MASK_DISABLE, and causes all channels to have
+ * their write enable set.  Note that predication still contributes to
+ * whether the channel actually gets written.
+ */
+#define BRW_WE_ALL		1
+/** @} */
+
 #define BRW_OPCODE_MOV        1
 #define BRW_OPCODE_SEL        2
 #define BRW_OPCODE_NOT        4
@@ -600,6 +621,8 @@
 #define BRW_ARF_NOTIFICATION_COUNT    0x90
 #define BRW_ARF_IP                    0xA0
 
+#define BRW_MRF_COMPR4			(1 << 7)
+
 #define BRW_AMASK   0
 #define BRW_IMASK   1
 #define BRW_LMASK   2
@@ -646,13 +669,14 @@
 #define BRW_POLYGON_FACING_BACK       1
 
 #define BRW_MESSAGE_TARGET_NULL               0
-#define BRW_MESSAGE_TARGET_MATH               1
+#define BRW_MESSAGE_TARGET_MATH               1 /* reserved on GEN6 */
 #define BRW_MESSAGE_TARGET_SAMPLER            2
 #define BRW_MESSAGE_TARGET_GATEWAY            3
-#define BRW_MESSAGE_TARGET_DATAPORT_READ      4
-#define BRW_MESSAGE_TARGET_DATAPORT_WRITE     5
+#define BRW_MESSAGE_TARGET_DATAPORT_READ      4 /* sampler cache on GEN6 */
+#define BRW_MESSAGE_TARGET_DATAPORT_WRITE     5 /* render cache on Gen6 */
 #define BRW_MESSAGE_TARGET_URB                6
 #define BRW_MESSAGE_TARGET_THREAD_SPAWNER     7
+#define BRW_MESSAGE_TARGET_CONST_CACHE	      9 /* GEN6 */
 
 #define BRW_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define BRW_SAMPLER_RETURN_FORMAT_UINT32      2
@@ -679,6 +703,9 @@
 #define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5       1
 #define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_GEN5        2
 #define BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5    3
+#define BRW_SAMPLER_MESSAGE_SAMPLE_DERIVS_GEN5     4
+#define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE_GEN5 5
+#define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE_GEN5 6
 
 /* for GEN5 only */
 #define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
@@ -698,10 +725,24 @@
 #define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS   2
 #define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS  3
 
+/* This one stays the same across generations. */
 #define BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ          0
+/* GEN4 */
 #define BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
-#define BRW_DATAPORT_READ_MESSAGE_DWORD_BLOCK_READ          2
+#define BRW_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
 #define BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
+/* G45, GEN5 */
+#define G45_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ	    1
+#define G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
+#define G45_DATAPORT_READ_MESSAGE_AVC_LOOP_FILTER_READ	    3
+#define G45_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
+#define G45_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
+/* GEN6 */
+#define GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ	    1
+#define GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
+#define GEN6_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
+#define GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ  5
+#define GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
 
 #define BRW_DATAPORT_READ_TARGET_DATA_CACHE      0
 #define BRW_DATAPORT_READ_TARGET_RENDER_CACHE    1
@@ -720,6 +761,16 @@
 #define BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE              4
 #define BRW_DATAPORT_WRITE_MESSAGE_STREAMED_VERTEX_BUFFER_WRITE     5
 #define BRW_DATAPORT_WRITE_MESSAGE_FLUSH_RENDER_CACHE               7
+
+/* GEN6 */
+#define BRW_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE_GEN6		7
+#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE_GEN6		8
+#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE_GEN6		9
+#define BRW_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE_GEN6		10
+#define BRW_DATAPORT_WRITE_MESSAGE_DWORLD_SCATTERED_WRITE_GEN6		11
+#define BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE_GEN6		12
+#define BRW_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE_GEN6		13
+#define BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE_GEN6	14
 
 #define BRW_MATH_FUNCTION_INV                              1
 #define BRW_MATH_FUNCTION_LOG                              2
@@ -783,7 +834,7 @@
 #define CMD_BINDING_TABLE_PTRS        0x7801
 # define GEN6_BINDING_TABLE_MODIFY_VS	(1 << 8)
 # define GEN6_BINDING_TABLE_MODIFY_GS	(1 << 9)
-# define GEN6_BINDING_TABLE_MODIFY_PS	(1 << 10)
+# define GEN6_BINDING_TABLE_MODIFY_PS	(1 << 12)
 
 #define CMD_3D_SAMPLER_STATE_POINTERS			0x7802 /* SNB+ */
 # define PS_SAMPLER_STATE_CHANGE				(1 << 12)
@@ -896,6 +947,7 @@
 /* DW3 */
 # define GEN6_CLIP_MIN_POINT_WIDTH_SHIFT		17
 # define GEN6_CLIP_MAX_POINT_WIDTH_SHIFT		6
+# define GEN6_CLIP_FORCE_ZERO_RTAINDEX			(1 << 5)
 
 #define CMD_3D_SF_STATE				0x7813 /* GEN6+ */
 /* DW1 */
@@ -998,7 +1050,7 @@
 # define GEN6_WM_LINE_AA_WIDTH_2_0			(2 << 14)
 # define GEN6_WM_LINE_AA_WIDTH_4_0			(3 << 14)
 # define GEN6_WM_POLYGON_STIPPLE_ENABLE			(1 << 13)
-# define GEN6_WM_LINE_STIPPLE_ENABLE			(1 << 12)
+# define GEN6_WM_LINE_STIPPLE_ENABLE			(1 << 11)
 # define GEN6_WM_OMASK_TO_RENDER_TARGET			(1 << 9)
 # define GEN6_WM_USES_SOURCE_W				(1 << 8)
 # define GEN6_WM_DUAL_SOURCE_BLEND_ENABLE		(1 << 7)

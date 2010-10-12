@@ -34,7 +34,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 
-#include "shader/program.h"
+#include "program/program.h"
 #include "intel_batchbuffer.h"
 
 #include "brw_defines.h"
@@ -104,18 +104,13 @@ static void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
 {
 	struct brw_compile *p = &c->func;
 	brw_MOV(p, get_element_ud(c->reg.R0, 1), brw_imm_ud(num_prim));
-	brw_ff_sync(p, 
-				c->reg.R0,
-				0,
-				c->reg.R0,
-				1,	
-				1,		/* used */
-				1,  	/* msg length */
-				1,		/* response length */
-				0,		/* eot */
-				1,		/* write compelete */
-				0,		/* urb offset */
-				BRW_URB_SWIZZLE_NONE);
+	brw_ff_sync(p,
+		    c->reg.R0,
+		    0,
+		    c->reg.R0,
+		    1, /* allocate */
+		    1, /* response length */
+		    0 /* eot */);
 }
 
 

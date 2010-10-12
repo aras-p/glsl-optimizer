@@ -55,6 +55,8 @@
 #define FO_NEW_CLEAR_COLOR     0x20000
 #define FO_NEW_VERTEX_BUFFER   0x40000
 #define FO_NEW_VERTEX_ELEMENT  0x80000
+#define FO_NEW_SAMPLE_MASK     0x100000
+#define FO_NEW_INDEX_BUFFER    0x200000
 
 
 
@@ -90,11 +92,13 @@ struct failover_context {
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
+   unsigned sample_mask;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
 
    uint num_vertex_buffers;
 

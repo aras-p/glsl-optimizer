@@ -36,10 +36,12 @@
 #include "util/u_format.h"
 #include "util/u_sampler.h"
 
+#include "vg_api.h"
 #include "vg_manager.h"
 #include "vg_context.h"
 #include "image.h"
 #include "mask.h"
+#include "api.h"
 
 static struct pipe_resource *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -122,28 +124,22 @@ setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
 
    /* if we had an old surface copy it over */
    if (old_sampler_view) {
-      struct pipe_surface *surface = pipe->screen->get_tex_surface(
-         pipe->screen,
-         stfb->alpha_mask_view->texture,
-         0, 0, 0,
-         PIPE_BIND_RENDER_TARGET |
-         PIPE_BIND_BLIT_DESTINATION);
-      struct pipe_surface *old_surface = pipe->screen->get_tex_surface(
-         pipe->screen,
-         old_sampler_view->texture,
-         0, 0, 0,
-         PIPE_BIND_BLIT_SOURCE);
-      pipe->surface_copy(pipe,
-                         surface,
-                         0, 0,
-                         old_surface,
-                         0, 0,
-                         MIN2(old_surface->width, surface->width),
-                         MIN2(old_surface->height, surface->height));
-      if (surface)
-         pipe_surface_reference(&surface, NULL);
-      if (old_surface)
-         pipe_surface_reference(&old_surface, NULL);
+      struct pipe_subresource subsurf, subold_surf;
+      subsurf.face = 0;
+      subsurf.level = 0;
+      subold_surf.face = 0;
+      subold_surf.level = 0;
+      pipe->resource_copy_region(pipe,
+                                 stfb->alpha_mask_view->texture,
+                                 subsurf,
+                                 0, 0, 0,
+                                 old_sampler_view->texture,
+                                 subold_surf,
+                                 0, 0, 0,
+                                 MIN2(old_sampler_view->texture->width0,
+                                      stfb->alpha_mask_view->texture->width0),
+                                 MIN2(old_sampler_view->texture->height0,
+                                      stfb->alpha_mask_view->texture->height0));
    }
 
    /* Free the old texture
@@ -170,9 +166,7 @@ vg_context_update_depth_stencil_rb(struct vg_context * ctx,
 
    /* Probably need dedicated flags for surface usage too:
     */
-   surface_usage = (PIPE_BIND_RENDER_TARGET |
-                    PIPE_BIND_BLIT_SOURCE |
-                    PIPE_BIND_BLIT_DESTINATION);
+   surface_usage = PIPE_BIND_DEPTH_STENCIL; /* XXX: was: RENDER_TARGET */
 
    dsrb->texture = create_texture(pipe, dsrb->format, width, height);
    if (!dsrb->texture)
@@ -214,9 +208,7 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
 
    strb->texture = pt;
    strb->surface = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
-         PIPE_BIND_RENDER_TARGET |
-         PIPE_BIND_BLIT_SOURCE |
-         PIPE_BIND_BLIT_DESTINATION);
+                                           PIPE_BIND_RENDER_TARGET);
    if (!strb->surface) {
       pipe_resource_reference(&strb->texture, NULL);
       return TRUE;
@@ -349,12 +341,19 @@ vg_context_destroy(struct st_context_iface *stctxi)
 
 static struct st_context_iface *
 vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
-                      const struct st_visual *visual,
+                      const struct st_context_attribs *attribs,
                       struct st_context_iface *shared_stctxi)
 {
    struct vg_context *shared_ctx = (struct vg_context *) shared_stctxi;
    struct vg_context *ctx;
    struct pipe_context *pipe;
+
+   if (!(stapi->profile_mask & (1 << attribs->profile)))
+      return NULL;
+
+   /* only 1.0 is supported */
+   if (attribs->major > 1 || (attribs->major == 1 && attribs->minor > 0))
+      return NULL;
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
    if (!pipe)
@@ -396,7 +395,7 @@ destroy_renderbuffer(struct st_renderbuffer *strb)
 {
    pipe_surface_reference(&strb->surface, NULL);
    pipe_resource_reference(&strb->texture, NULL);
-   free(strb);
+   FREE(strb);
 }
 
 /**
@@ -456,11 +455,10 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
       /* free the existing fb */
       if (!stdrawi ||
           stfb->strb_att != strb_att ||
-          stfb->strb->format != stdrawi->visual->color_format ||
-          stfb->dsrb->format != stdrawi->visual->depth_stencil_format) {
+          stfb->strb->format != stdrawi->visual->color_format) {
          destroy_renderbuffer(stfb->strb);
          destroy_renderbuffer(stfb->dsrb);
-         free(stfb);
+         FREE(stfb);
 
          ctx->draw_buffer = NULL;
       }
@@ -480,14 +478,14 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
 
       stfb->strb = create_renderbuffer(stdrawi->visual->color_format);
       if (!stfb->strb) {
-         free(stfb);
+         FREE(stfb);
          return FALSE;
       }
 
-      stfb->dsrb = create_renderbuffer(stdrawi->visual->depth_stencil_format);
+      stfb->dsrb = create_renderbuffer(ctx->ds_format);
       if (!stfb->dsrb) {
-         free(stfb->strb);
-         free(stfb);
+         FREE(stfb->strb);
+         FREE(stfb);
          return FALSE;
       }
 
@@ -525,38 +523,29 @@ vg_api_get_current(struct st_api *stapi)
    return (ctx) ? &ctx->iface : NULL;
 }
 
-static boolean
-vg_api_is_visual_supported(struct st_api *stapi,
-                           const struct st_visual *visual)
-{
-   /* the impl requires a depth/stencil buffer */
-   return util_format_is_depth_and_stencil(visual->depth_stencil_format);
-}
-
 static st_proc_t
 vg_api_get_proc_address(struct st_api *stapi, const char *procname)
 {
-   /* TODO */
-   return (st_proc_t) NULL;
+   return api_get_proc_address(procname);
 }
 
 static void
 vg_api_destroy(struct st_api *stapi)
 {
-   free(stapi);
 }
 
-struct st_api st_vg_api = {
+static const struct st_api vg_api = {
+   ST_API_OPENVG,
+   ST_PROFILE_DEFAULT_MASK,
    vg_api_destroy,
    vg_api_get_proc_address,
-   vg_api_is_visual_supported,
    vg_api_create_context,
    vg_api_make_current,
    vg_api_get_current,
 };
 
-struct st_api *
-st_api_create_OpenVG(void)
+const struct st_api *
+vg_api_get(void)
 {
-   return &st_vg_api;
+   return &vg_api;
 }

@@ -708,7 +708,6 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_TRUE;
-			radeon->front_buffer_dirty = GL_TRUE;
 		} else {
 			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_FALSE;
@@ -1132,17 +1131,13 @@ flush_front:
 		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)
 			&& (screen->dri2.loader->flushFrontBuffer != NULL)) {
 			__DRIdrawable * drawable = radeon_get_drawable(radeon);
-			(*screen->dri2.loader->flushFrontBuffer)(drawable, drawable->loaderPrivate);
 
-			/* Only clear the dirty bit if front-buffer rendering is no longer
-			 * enabled.  This is done so that the dirty bit can only be set in
-			 * glDrawBuffer.  Otherwise the dirty bit would have to be set at
-			 * each of N places that do rendering.  This has worse performances,
-			 * but it is much easier to get correct.
+			/* We set the dirty bit in radeon_prepare_render() if we're
+			 * front buffer rendering once we get there.
 			 */
-			if (!radeon->is_front_buffer_rendering) {
-				radeon->front_buffer_dirty = GL_FALSE;
-			}
+			radeon->front_buffer_dirty = GL_FALSE;
+
+			(*screen->dri2.loader->flushFrontBuffer)(drawable, drawable->loaderPrivate);
 		}
 	}
 }

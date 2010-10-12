@@ -82,7 +82,7 @@ get_depth_stencil_values( struct depth_data *data,
          data->bzzzz[j] = tile->data.depth32[y][x] & 0xffffff;
          data->stencilVals[j] = tile->data.depth32[y][x] >> 24;
       }
-   break;
+      break;
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
@@ -90,6 +90,14 @@ get_depth_stencil_values( struct depth_data *data,
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
          data->bzzzz[j] = tile->data.depth32[y][x] >> 8;
          data->stencilVals[j] = tile->data.depth32[y][x] & 0xff;
+      }
+      break;
+   case PIPE_FORMAT_S8_USCALED:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         data->bzzzz[j] = 0;
+         data->stencilVals[j] = tile->data.stencil8[y][x];
       }
       break;
    default:
@@ -227,6 +235,14 @@ write_depth_stencil_values( struct depth_data *data,
          tile->data.depth32[y][x] = data->bzzzz[j] << 8;
       }
       break;
+   case PIPE_FORMAT_S8_USCALED:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         tile->data.stencil8[y][x] = data->stencilVals[j];
+      }
+      break;
+
    default:
       assert(0);
    }
@@ -661,20 +677,6 @@ static unsigned mask_count[16] =
 
 
 
-/** helper to get number of Z buffer bits */
-static unsigned
-get_depth_bits(struct quad_stage *qs)
-{
-   struct pipe_surface *zsurf = qs->softpipe->framebuffer.zsbuf;
-   if (zsurf)
-      return util_format_get_component_bits(zsurf->format,
-                                            UTIL_FORMAT_COLORSPACE_ZS, 0);
-   else
-      return 0;
-}
-
-
-
 /**
  * General depth/stencil test function.  Used when there's no fast-path.
  */
@@ -693,9 +695,9 @@ depth_test_quads_fallback(struct quad_stage *qs,
       nr = alpha_test_quads(qs, quads, nr);
    }
 
-   if (get_depth_bits(qs) > 0 &&
-       (qs->softpipe->depth_stencil->depth.enabled ||
-        qs->softpipe->depth_stencil->stencil[0].enabled)) {
+   if (qs->softpipe->framebuffer.zsbuf &&
+         (qs->softpipe->depth_stencil->depth.enabled ||
+          qs->softpipe->depth_stencil->stencil[0].enabled)) {
 
       data.ps = qs->softpipe->framebuffer.zsbuf;
       data.format = data.ps->format;
@@ -794,8 +796,7 @@ choose_depth_test(struct quad_stage *qs,
 
    boolean alpha = qs->softpipe->depth_stencil->alpha.enabled;
 
-   boolean depth = (get_depth_bits(qs) > 0 &&
-                    qs->softpipe->depth_stencil->depth.enabled);
+   boolean depth = qs->softpipe->depth_stencil->depth.enabled;
 
    unsigned depthfunc = qs->softpipe->depth_stencil->depth.func;
 
@@ -804,6 +805,9 @@ choose_depth_test(struct quad_stage *qs,
    boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
 
    boolean occlusion = qs->softpipe->active_query_count;
+
+   if(!qs->softpipe->framebuffer.zsbuf)
+      depth = depthwrite = stencil = FALSE;
 
    /* default */
    qs->run = depth_test_quads_fallback;

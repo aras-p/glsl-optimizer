@@ -108,10 +108,13 @@ mm_buffer_destroy(struct pb_buffer *buf)
 
 static void *
 mm_buffer_map(struct pb_buffer *buf,
-              unsigned flags)
+              unsigned flags,
+              void *flush_ctx)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
+
+   /* XXX: it will be necessary to remap here to propagate flush_ctx */
 
    return (unsigned char *) mm->map + mm_buf->block->ofs;
 }
@@ -269,7 +272,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
 
    mm->map = pb_map(mm->buffer, 
 		    PB_USAGE_CPU_READ |
-		    PB_USAGE_CPU_WRITE);
+		    PB_USAGE_CPU_WRITE, NULL);
    if(!mm->map)
       goto failure;
 

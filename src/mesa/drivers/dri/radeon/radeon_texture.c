@@ -32,13 +32,13 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/convolve.h"
 #include "main/enums.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
+#include "drivers/common/meta.h"
 
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
@@ -294,9 +294,13 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 		radeon_firevertices(rmesa);
 	}
 
-	radeon_teximage_map(baseimage, GL_FALSE);
-	radeon_generate_mipmap(ctx, target, texObj);
-	radeon_teximage_unmap(baseimage);
+	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
+		radeon_teximage_map(baseimage, GL_FALSE);
+		radeon_generate_mipmap(ctx, target, texObj);
+		radeon_teximage_unmap(baseimage);
+	} else {
+		_mesa_meta_GenerateMipmap(ctx, target, texObj);
+	}
 }
 
 
@@ -546,7 +550,7 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_SRGB8_ALPHA8:
 	case GL_COMPRESSED_SRGB:
 	case GL_COMPRESSED_SRGB_ALPHA:
-		return MESA_FORMAT_SRGBA8;
+		return MESA_FORMAT_SARGB8;
 
 	case GL_SLUMINANCE:
 	case GL_SLUMINANCE8:
@@ -768,8 +772,6 @@ static void radeon_teximage(
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
-	GLint postConvWidth = width;
-	GLint postConvHeight = height;
 	GLuint face = _mesa_tex_target_to_face(target);
 
 	radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
@@ -789,23 +791,6 @@ static void radeon_teximage(
 
 
 	t->validated = GL_FALSE;
-
-	if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-	       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-						  &postConvHeight);
-	}
-
-	if (!_mesa_is_format_compressed(texImage->TexFormat)) {
-		GLuint texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-		/* Minimum pitch of 32 bytes */
-		if (postConvWidth * texelBytes < 32) {
-			postConvWidth = 32 / texelBytes;
-			texImage->RowStride = postConvWidth;
-		}
-		if (!image->mt) {
-			assert(texImage->RowStride == postConvWidth);
-		}
-	}
 
 	/* Mesa core only clears texImage->Data but not image->mt */
 	radeonFreeTexImageData(ctx, texImage);

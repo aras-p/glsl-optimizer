@@ -32,7 +32,7 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "intel_batchbuffer.h"
 
@@ -76,10 +76,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
 
    if (c->nr_attrs & 1) {
       for (j = 0; j < 3; j++) {
-	 GLuint delta = c->nr_attrs*16 + 32;
-
-         if (intel->gen == 5)
-             delta = c->nr_attrs * 16 + 32 * 3;
+	 GLuint delta = c->offset[c->idx_to_attr[c->nr_attrs - 1]] + ATTR_SIZE;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
       }
@@ -177,7 +174,7 @@ void brw_clip_tri_init_vertices( struct brw_clip_compile *c )
 void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *is_poly;
+   struct brw_instruction *is_poly, *is_trifan;
    struct brw_reg tmp0 = c->reg.loopcount; /* handy temporary */
 
    brw_AND(p, tmp0, get_element_ud(c->reg.R0, 2), brw_imm_ud(PRIM_MASK)); 
@@ -195,8 +192,22 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
    is_poly = brw_ELSE(p, is_poly);
    {
       if (c->key.pv_first) {
-         brw_clip_copy_colors(c, 1, 0);
-         brw_clip_copy_colors(c, 2, 0);
+	 brw_CMP(p,
+		 vec1(brw_null_reg()),
+		 BRW_CONDITIONAL_EQ,
+		 tmp0,
+		 brw_imm_ud(_3DPRIM_TRIFAN));
+	 is_trifan = brw_IF(p, BRW_EXECUTE_1);
+	 {
+	    brw_clip_copy_colors(c, 0, 1);
+	    brw_clip_copy_colors(c, 2, 1);
+	 }
+	 is_trifan = brw_ELSE(p, is_trifan);
+	 {
+	    brw_clip_copy_colors(c, 1, 0);
+	    brw_clip_copy_colors(c, 2, 0);
+	 }
+	 brw_ENDIF(p, is_trifan);
       }
       else {
          brw_clip_copy_colors(c, 0, 2);

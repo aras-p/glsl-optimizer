@@ -27,7 +27,7 @@
 
 #ifndef _R700_OGLPROG_H_
 #define _R700_OGLPROG_H_
-#include "r600_context.h"
+#include "main/dd.h"
 
 extern void r700InitShaderFuncs(struct dd_function_table *functions);
 

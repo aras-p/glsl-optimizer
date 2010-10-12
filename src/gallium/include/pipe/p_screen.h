@@ -54,7 +54,6 @@ struct winsys_handle;
 /** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
-struct pipe_texture;
 struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;
@@ -79,13 +78,19 @@ struct pipe_screen {
     * Query an integer-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   int (*get_param)( struct pipe_screen *, int param );
+   int (*get_param)( struct pipe_screen *, enum pipe_cap param );
 
    /**
     * Query a float-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   float (*get_paramf)( struct pipe_screen *, int param );
+   float (*get_paramf)( struct pipe_screen *, enum pipe_cap param );
+
+   /**
+    * Query a per-shader-stage integer-valued capability/parameter/limit
+    * \param param  one of PIPE_CAP_x
+    */
+   int (*get_shader_param)( struct pipe_screen *, unsigned shader, enum pipe_shader_cap param );
 
    struct pipe_context * (*context_create)( struct pipe_screen *,
                                             void *priv );
@@ -104,7 +109,8 @@ struct pipe_screen {
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format,
                                    enum pipe_texture_target target,
-                                   unsigned bindings, 
+                                   unsigned sample_count,
+                                   unsigned bindings,
                                    unsigned geom_flags );
 
    /**

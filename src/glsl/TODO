@@ -1,0 +1,38 @@
+- Detect code paths in non-void functions that don't reach a return statement
+
+- Improve handling of constants and their initializers.  Constant initializers
+  should never generate any code.  This is trival for scalar constants.  It is
+  also trivial for arrays, matrices, and vectors that are accessed with
+  constant index values.  For others it is more complicated.  Perhaps these
+  cases should be silently converted to uniforms?
+
+- Implement support for ir_binop_dot in ir_algebraic.cpp.  Perform
+  transformations such as "dot(v, vec3(0.0, 1.0, 0.0))" -> v.y.
+
+1.30 features:
+
+- Implement AST-to-HIR conversion of bit-shift operators.
+
+- Implement AST-to-HIR conversion of bit-wise {&,|,^,!} operators.
+
+- Implement AST-to-HIR conversion of switch-statements
+  - switch
+  - case
+  - Update break to correcly handle mixed nexting of switch-statements
+    and loops.
+
+- Handle currently unsupported constant expression types
+  - ir_unop_bit_not
+  - ir_binop_mod
+  - ir_binop_lshift
+  - ir_binop_rshift
+  - ir_binop_bit_and
+  - ir_binop_bit_xor
+  - ir_binop_bit_or
+
+- Implement support for 1.30 style shadow compares which only return a float
+  instead of a vec4.
+
+- Implement support for gl_ClipDistance.  This is non-trivial because
+  gl_ClipDistance is exposed as a float[8], but all hardware actually
+  implements it as vec4[2].

@@ -27,7 +27,8 @@
 #define S_DEPTH_H
 
 
-#include "s_context.h"
+#include "main/mtypes.h"
+#include "s_span.h"
 
 
 extern GLuint

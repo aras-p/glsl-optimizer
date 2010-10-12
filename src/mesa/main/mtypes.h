@@ -36,11 +36,18 @@
 
 #include "main/glheader.h"
 #include "main/config.h"
-#include "main/compiler.h"
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "main/simple_list.h"	/* struct simple_node */
+
+/* Shader stages. Note that these will become 5 with tessellation.
+ * These MUST have the same values as PIPE_SHADER_*
+ */
+#define MESA_SHADER_VERTEX   0
+#define MESA_SHADER_FRAGMENT 1
+#define MESA_SHADER_GEOMETRY 2
+#define MESA_SHADER_TYPES    3
 
 
 /**
@@ -238,6 +245,78 @@ typedef enum
 } gl_vert_result;
 
 
+/*********************************************/
+
+/**
+ * Indexes for geometry program attributes.
+ */
+typedef enum
+{
+   GEOM_ATTRIB_POSITION = 0,
+   GEOM_ATTRIB_COLOR0 = 1,
+   GEOM_ATTRIB_COLOR1 = 2,
+   GEOM_ATTRIB_SECONDARY_COLOR0 = 3,
+   GEOM_ATTRIB_SECONDARY_COLOR1 = 4,
+   GEOM_ATTRIB_FOG_FRAG_COORD = 5,
+   GEOM_ATTRIB_POINT_SIZE = 6,
+   GEOM_ATTRIB_CLIP_VERTEX = 7,
+   GEOM_ATTRIB_PRIMITIVE_ID = 8,
+   GEOM_ATTRIB_TEX_COORD = 9,
+
+   GEOM_ATTRIB_VAR0 = 16,
+   GEOM_ATTRIB_MAX = (GEOM_ATTRIB_VAR0 + MAX_VARYING)
+} gl_geom_attrib;
+
+/**
+ * Bitflags for geometry attributes.
+ * These are used in bitfields in many places.
+ */
+/*@{*/
+#define GEOM_BIT_COLOR0      (1 << GEOM_ATTRIB_COLOR0)
+#define GEOM_BIT_COLOR1      (1 << GEOM_ATTRIB_COLOR1)
+#define GEOM_BIT_SCOLOR0     (1 << GEOM_ATTRIB_SECONDARY_COLOR0)
+#define GEOM_BIT_SCOLOR1     (1 << GEOM_ATTRIB_SECONDARY_COLOR1)
+#define GEOM_BIT_TEX_COORD   (1 << GEOM_ATTRIB_TEX_COORD)
+#define GEOM_BIT_FOG_COORD   (1 << GEOM_ATTRIB_FOG_FRAG_COORD)
+#define GEOM_BIT_POSITION    (1 << GEOM_ATTRIB_POSITION)
+#define GEOM_BIT_POINT_SIDE  (1 << GEOM_ATTRIB_POINT_SIZE)
+#define GEOM_BIT_CLIP_VERTEX (1 << GEOM_ATTRIB_CLIP_VERTEX)
+#define GEOM_BIT_PRIM_ID     (1 << GEOM_ATTRIB_PRIMITIVE_ID)
+#define GEOM_BIT_VAR0        (1 << GEOM_ATTRIB_VAR0)
+
+#define GEOM_BIT_VAR(g)  (1 << (GEOM_BIT_VAR0 + (g)))
+/*@}*/
+
+
+/**
+ * Indexes for geometry program result attributes
+ */
+/*@{*/
+typedef enum {
+   GEOM_RESULT_POS  = 0,
+   GEOM_RESULT_COL0  = 1,
+   GEOM_RESULT_COL1  = 2,
+   GEOM_RESULT_SCOL0 = 3,
+   GEOM_RESULT_SCOL1 = 4,
+   GEOM_RESULT_FOGC = 5,
+   GEOM_RESULT_TEX0 = 6,
+   GEOM_RESULT_TEX1 = 7,
+   GEOM_RESULT_TEX2 = 8,
+   GEOM_RESULT_TEX3 = 9,
+   GEOM_RESULT_TEX4 = 10,
+   GEOM_RESULT_TEX5 = 11,
+   GEOM_RESULT_TEX6 = 12,
+   GEOM_RESULT_TEX7 = 13,
+   GEOM_RESULT_PSIZ = 14,
+   GEOM_RESULT_CLPV = 15,
+   GEOM_RESULT_PRID = 16,
+   GEOM_RESULT_LAYR = 17,
+   GEOM_RESULT_VAR0 = 18,  /**< shader varying, should really be 16 */
+   /* ### we need to -2 because var0 is 18 instead 16 like in the others */
+   GEOM_RESULT_MAX  =  (GEOM_RESULT_VAR0 + MAX_VARYING - 2)
+} gl_geom_result;
+/*@}*/
+
 /**
  * Indexes for fragment program input attributes.
  */
@@ -373,16 +452,6 @@ typedef enum
                             BUFFER_BIT_COLOR5 | \
                             BUFFER_BIT_COLOR6 | \
                             BUFFER_BIT_COLOR7)
-
-
-/** The pixel transfer path has three color tables: */
-typedef enum
-{
-   COLORTABLE_PRECONVOLUTION,
-   COLORTABLE_POSTCONVOLUTION,
-   COLORTABLE_POSTCOLORMATRIX,
-   COLORTABLE_MAX
-} gl_colortable_index;
 
 
 /**
@@ -731,48 +800,6 @@ struct gl_hint_attrib
    GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
 };
 
-
-/**
- * Histogram attributes.
- */
-struct gl_histogram_attrib
-{
-   GLuint Width;                            /**< number of table entries */
-   GLint Format;                            /**< GL_ALPHA, GL_RGB, etc */
-   GLuint Count[HISTOGRAM_TABLE_SIZE][4];   /**< the histogram */
-   GLboolean Sink;                          /**< terminate image transfer? */
-   GLubyte RedSize;                         /**< Bits per counter */
-   GLubyte GreenSize;
-   GLubyte BlueSize;
-   GLubyte AlphaSize;
-   GLubyte LuminanceSize;
-};
-
-
-/**
- * Color Min/max state.
- */
-struct gl_minmax_attrib
-{
-   GLenum Format;
-   GLboolean Sink;
-   GLfloat Min[4], Max[4];   /**< RGBA */
-};
-
-
-/**
- * Image convolution state.
- */
-struct gl_convolution_attrib
-{
-   GLenum Format;
-   GLenum InternalFormat;
-   GLuint Width;
-   GLuint Height;
-   GLfloat Filter[MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_HEIGHT * 4];
-};
-
-
 /**
  * Light state flags.
  */
@@ -913,32 +940,6 @@ struct gl_pixel_attrib
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
 
-   /* There are multiple color table stages: */
-   GLboolean ColorTableEnabled[COLORTABLE_MAX];
-   GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
-   GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
-
-   /* Convolution (GL_EXT_convolution) */
-   GLboolean Convolution1DEnabled;
-   GLboolean Convolution2DEnabled;
-   GLboolean Separable2DEnabled;
-   GLfloat ConvolutionBorderColor[3][4];  /**< RGBA */
-   GLenum ConvolutionBorderMode[3];
-   GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
-   GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
-   GLfloat PostConvolutionScale[4];  /**< RGBA */
-   GLfloat PostConvolutionBias[4];   /**< RGBA */
-
-   /* Color matrix (GL_SGI_color_matrix) */
-   /* Note: the color matrix is not part of this attrib group */
-   GLfloat PostColorMatrixScale[4];  /**< RGBA */
-   GLfloat PostColorMatrixBias[4];   /**< RGBA */
-
-   /* Histogram & minmax (GL_EXT_histogram) */
-   /* Note: histogram and minmax data are not part of this attrib group */
-   GLboolean HistogramEnabled;
-   GLboolean MinMaxEnabled;
-
    /*--- End Pixel Transfer State ---*/
 
    /** glPixelZoom */
@@ -1076,6 +1077,7 @@ typedef enum
 #define T_BIT 2
 #define R_BIT 4
 #define Q_BIT 8
+#define STR_BITS (S_BIT | T_BIT | R_BIT)
 /*@}*/
 
 
@@ -1403,7 +1405,6 @@ struct gl_transform_attrib
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
    GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
 
-   GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
    GLfloat CullEyePos[4];
    GLfloat CullObjPos[4];
 };
@@ -1553,10 +1554,9 @@ struct gl_array_attrib
 
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
-#if FEATURE_ARB_vertex_buffer_object
+   /* GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
-#endif
 };
 
 
@@ -1728,6 +1728,11 @@ struct gl_program
    /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
    gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
+   /** Bitmask of which register files are read/written with indirect
+    * addressing.  Mask of (1 << PROGRAM_x) bits.
+    */
+   GLbitfield IndirectRegisterFiles;
+
    /** Logical counts */
    /*@{*/
    GLuint NumInstructions;
@@ -1759,6 +1764,18 @@ struct gl_vertex_program
    struct gl_program Base;   /**< base class */
    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
+};
+
+
+/** Geometry program object */
+struct gl_geometry_program
+{
+   struct gl_program Base;   /**< base class */
+
+   GLint VerticesOut;
+   GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
+                           GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
+   GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
 };
 
 
@@ -1818,6 +1835,26 @@ struct gl_vertex_program_state
    GLboolean _Overriden;
 };
 
+
+/**
+ * Context state for geometry programs.
+ */
+struct gl_geometry_program_state
+{
+   GLboolean Enabled;               /**< GL_ARB_GEOMETRY_SHADER4 */
+   GLboolean _Enabled;              /**< Enabled and valid program? */
+   struct gl_geometry_program *Current;  /**< user-bound geometry program */
+
+   /** Currently enabled and valid program (including internal programs
+    * and compiled shader programs).
+    */
+   struct gl_geometry_program *_Current;
+
+   GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
+
+   /** Cache of fixed-function programs */
+   struct gl_program_cache *Cache;
+};
 
 /**
  * Context state for fragment programs.
@@ -1919,6 +1956,9 @@ struct gl_query_state
    struct gl_query_object *PrimitivesGenerated;
    struct gl_query_object *PrimitivesWritten;
 
+   /** GL_ARB_timer_query */
+   struct gl_query_object *TimeElapsed;
+
    GLenum CondRenderMode;
 };
 
@@ -1953,7 +1993,7 @@ struct gl_sl_pragmas
  */
 struct gl_shader
 {
-   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER (first field!) */
+   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB (first field!) */
    GLuint Name;  /**< AKA the handle */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
@@ -1965,6 +2005,15 @@ struct gl_shader
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
    struct gl_sl_pragmas Pragmas;
+
+   unsigned Version;       /**< GLSL version used for linking */
+
+   struct exec_list *ir;
+   struct glsl_symbol_table *symbols;
+
+   /** Shaders containing built-in functions that are used for linking. */
+   struct gl_shader *builtins_to_link[16];
+   unsigned num_builtins_to_link;
 };
 
 
@@ -1992,15 +2041,34 @@ struct gl_shader_program
       GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
    } TransformFeedback;
 
+   /** Geometry shader state - copied into gl_geometry_program at link time */
+   struct {
+      GLint VerticesOut;
+      GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
+                              GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
+      GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
+   } Geom;
+
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
+   struct gl_geometry_program *GeometryProgram; /**< Linked geometry prog */
    struct gl_uniform_list *Uniforms;
    struct gl_program_parameter_list *Varying;
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
+
+   unsigned Version;       /**< GLSL version used for linking */
+
+   /**
+    * Per-stage shaders resulting from the first stage of linking.
+    */
+   /*@{*/
+   GLuint _NumLinkedShaders;
+   struct gl_shader *_LinkedShaders[2];
+   /*@}*/
 };   
 
 
@@ -2020,15 +2088,63 @@ struct gl_shader_program
 struct gl_shader_state
 {
    struct gl_shader_program *CurrentProgram; /**< The user-bound program */
-   /** Driver-selectable options: */
-   GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
-   GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
-   GLboolean EmitCondCodes;             /**< Use condition codes? */
-   GLboolean EmitComments;              /**< Annotated instructions */
-   GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
    void *MemPool;
+
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
+};
+
+/**
+ * Compiler options for a single GLSL shaders type
+ */
+struct gl_shader_compiler_options
+{
+   /** Driver-selectable options: */
+   GLboolean EmitCondCodes;             /**< Use condition codes? */
+   GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
+   /**
+    * Attempts to flatten all ir_if (OPCODE_IF) for GPUs that can't
+    * support control flow.
+    */
+   GLboolean EmitNoIfs;
+   GLboolean EmitNoLoops;
+   GLboolean EmitNoFunctions;
+   GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
+   GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
+   GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
+
+   /**
+    * \name Forms of indirect addressing the driver cannot do.
+    */
+   /*@{*/
+   GLboolean EmitNoIndirectInput;   /**< No indirect addressing of inputs */
+   GLboolean EmitNoIndirectOutput;  /**< No indirect addressing of outputs */
+   GLboolean EmitNoIndirectTemp;    /**< No indirect addressing of temps */
+   GLboolean EmitNoIndirectUniform; /**< No indirect addressing of constants */
+   /*@}*/
+
+   GLuint MaxUnrollIterations;
+
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
+};
+
+/**
+ * Transform feedback object state
+ */
+struct gl_transform_feedback_object
+{
+   GLuint Name;  /**< AKA the object ID */
+   GLint RefCount;
+   GLboolean Active;  /**< Is transform feedback enabled? */
+   GLboolean Paused;  /**< Is transform feedback paused? */
+
+   /** The feedback buffers */
+   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+
+   /** Start of feedback data in dest buffer */
+   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
+   /** Max data to put into dest buffer (in bytes) */
+   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
 };
 
 
@@ -2037,20 +2153,21 @@ struct gl_shader_state
  */
 struct gl_transform_feedback
 {
-   GLboolean Active;  /**< Is transform feedback enabled? */
    GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
-   /** Start of feedback data in dest buffer */
-   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
-   /** Max data to put into dest buffer (in bytes) */
-   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+
    GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
 
    /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
    struct gl_buffer_object *CurrentBuffer;
 
-   /** The feedback buffers */
-   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
-   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+   /** The table of all transform feedback objects */
+   struct _mesa_HashTable *Objects;
+
+   /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
+   struct gl_transform_feedback_object *CurrentObject;
+
+   /** The default xform-fb object (Name==0) */
+   struct gl_transform_feedback_object *DefaultObject;
 };
 
 
@@ -2086,40 +2203,30 @@ struct gl_shared_state
    struct gl_buffer_object *NullBufferObj;
 
    /**
-    * \name Vertex/fragment programs
+    * \name Vertex/geometry/fragment programs
     */
    /*@{*/
    struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
-#if FEATURE_ARB_vertex_program
    struct gl_vertex_program *DefaultVertexProgram;
-#endif
-#if FEATURE_ARB_fragment_program
    struct gl_fragment_program *DefaultFragmentProgram;
-#endif
+   struct gl_geometry_program *DefaultGeometryProgram;
    /*@}*/
 
-#if FEATURE_ATI_fragment_shader
+   /* GL_ATI_fragment_shader */
    struct _mesa_HashTable *ATIShaders;
    struct ati_fragment_shader *DefaultFragmentShader;
-#endif
 
-#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    struct _mesa_HashTable *BufferObjects;
-#endif
 
-#if FEATURE_ARB_shader_objects
    /** Table of both gl_shader and gl_shader_program objects */
    struct _mesa_HashTable *ShaderObjects;
-#endif
 
-#if FEATURE_EXT_framebuffer_object
+   /* GL_EXT_framebuffer_object */
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
-#endif
 
-#if FEATURE_ARB_sync
+   /* GL_ARB_sync */
    struct simple_node SyncObjects;
-#endif
 
    void *DriverData;  /**< Device driver shared state */
 };
@@ -2328,32 +2435,39 @@ struct gl_framebuffer
 
 
 /**
- * Limits for vertex and fragment programs.
+ * Limits for vertex and fragment programs/shaders.
  */
 struct gl_program_constants
 {
    /* logical limits */
    GLuint MaxInstructions;
-   GLuint MaxAluInstructions; /* fragment programs only, for now */
-   GLuint MaxTexInstructions; /* fragment programs only, for now */
-   GLuint MaxTexIndirections; /* fragment programs only, for now */
+   GLuint MaxAluInstructions;
+   GLuint MaxTexInstructions;
+   GLuint MaxTexIndirections;
    GLuint MaxAttribs;
    GLuint MaxTemps;
-   GLuint MaxAddressRegs; /* vertex program only, for now */
+   GLuint MaxAddressRegs;
    GLuint MaxParameters;
    GLuint MaxLocalParams;
    GLuint MaxEnvParams;
    /* native/hardware limits */
    GLuint MaxNativeInstructions;
-   GLuint MaxNativeAluInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexIndirections; /* fragment programs only, for now */
+   GLuint MaxNativeAluInstructions;
+   GLuint MaxNativeTexInstructions;
+   GLuint MaxNativeTexIndirections;
    GLuint MaxNativeAttribs;
    GLuint MaxNativeTemps;
-   GLuint MaxNativeAddressRegs; /* vertex program only, for now */
+   GLuint MaxNativeAddressRegs;
    GLuint MaxNativeParameters;
    /* For shaders */
    GLuint MaxUniformComponents;
+   /* GL_ARB_geometry_shader4 */
+   GLuint MaxGeometryTextureImageUnits;
+   GLuint MaxGeometryVaryingComponents;
+   GLuint MaxVertexVaryingComponents;
+   GLuint MaxGeometryUniformComponents;
+   GLuint MaxGeometryOutputVertices;
+   GLuint MaxGeometryTotalOutputComponents;
 };
 
 
@@ -2388,8 +2502,6 @@ struct gl_constants
    GLfloat LineWidthGranularity;
 
    GLuint MaxColorTableSize;
-   GLuint MaxConvolutionWidth;
-   GLuint MaxConvolutionHeight;
 
    GLuint MaxClipPlanes;
    GLuint MaxLights;
@@ -2400,6 +2512,7 @@ struct gl_constants
 
    struct gl_program_constants VertexProgram;   /**< GL_ARB_vertex_program */
    struct gl_program_constants FragmentProgram; /**< GL_ARB_fragment_program */
+   struct gl_program_constants GeometryProgram;  /**< GL_ARB_geometry_shader4 */
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
 
@@ -2414,7 +2527,10 @@ struct gl_constants
 
    GLuint MaxVarying;  /**< Number of float[4] varying parameters */
 
-   GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
+   GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
+
+   /** Which texture units support GL_ATI_envmap_bumpmap as targets */
+   GLbitfield SupportedBumpUnits;
 
    /**
     * Maximum amount of time, measured in nanseconds, that the server can wait.
@@ -2444,9 +2560,11 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
-   GLboolean ARB_depth_texture;
+   GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
+   GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_draw_instanced;
@@ -2455,35 +2573,47 @@ struct gl_extensions
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
    GLboolean ARB_framebuffer_object;
+   GLboolean ARB_explicit_attrib_location;
+   GLboolean ARB_geometry_shader4;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
-   GLboolean ARB_imaging;
+   GLboolean ARB_instanced_arrays;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
+   GLboolean ARB_occlusion_query2;
    GLboolean ARB_point_sprite;
+   GLboolean ARB_sampler_objects;
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
-   GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
-   GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
+   GLboolean ARB_shadow_ambient;
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
+   GLboolean ARB_texture_buffer_object;
    GLboolean ARB_texture_compression;
+   GLboolean ARB_texture_compression_rgtc;
    GLboolean ARB_texture_cube_map;
    GLboolean ARB_texture_env_combine;
    GLboolean ARB_texture_env_crossbar;
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_float;
    GLboolean ARB_texture_mirrored_repeat;
+   GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_texture_rg;
+   GLboolean ARB_texture_rgb10_a2ui;
+   GLboolean ARB_timer_query;
+   GLboolean ARB_transform_feedback2;
    GLboolean ARB_transpose_matrix;
+   GLboolean ARB_uniform_buffer_object;
    GLboolean ARB_vertex_array_object;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
+   GLboolean ARB_vertex_type_2_10_10_10_rev;
    GLboolean ARB_window_pos;
    GLboolean EXT_abgr;
    GLboolean EXT_bgra;
@@ -2494,8 +2624,6 @@ struct gl_extensions
    GLboolean EXT_blend_minmax;
    GLboolean EXT_blend_subtract;
    GLboolean EXT_clip_volume_hint;
-   GLboolean EXT_cull_vertex;
-   GLboolean EXT_convolution;
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
@@ -2505,11 +2633,12 @@ struct gl_extensions
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_object;
+   GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
-   GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
+   GLboolean EXT_packed_float;
    GLboolean EXT_packed_pixels;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
@@ -2532,8 +2661,10 @@ struct gl_extensions
    GLboolean EXT_texture_env_combine;
    GLboolean EXT_texture_env_dot3;
    GLboolean EXT_texture_filter_anisotropic;
+   GLboolean EXT_texture_integer;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
+   GLboolean EXT_texture_shared_exponent;
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_transform_feedback;
@@ -2554,7 +2685,6 @@ struct gl_extensions
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
-   GLboolean MESA_packed_depth_stencil;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean MESA_texture_array;
@@ -2565,26 +2695,22 @@ struct gl_extensions
    GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
+   GLboolean NV_primitive_restart;
    GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
    GLboolean OES_read_format;
-   GLboolean SGI_color_matrix;
-   GLboolean SGI_color_table;
    GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
-#if FEATURE_OES_EGL_image
    GLboolean OES_EGL_image;
-#endif
-#if FEATURE_OES_draw_texture
    GLboolean OES_draw_texture;
-#endif /* FEATURE_OES_draw_texture */
+   GLboolean EXT_texture_format_BGRA8888;
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */
@@ -2613,32 +2739,13 @@ struct gl_matrix_stack
 #define IMAGE_SCALE_BIAS_BIT                      0x1
 #define IMAGE_SHIFT_OFFSET_BIT                    0x2
 #define IMAGE_MAP_COLOR_BIT                       0x4
-#define IMAGE_COLOR_TABLE_BIT                     0x8
-#define IMAGE_CONVOLUTION_BIT                     0x10
-#define IMAGE_POST_CONVOLUTION_SCALE_BIAS         0x20
-#define IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT    0x40
-#define IMAGE_COLOR_MATRIX_BIT                    0x80
-#define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
-#define IMAGE_HISTOGRAM_BIT                       0x200
-#define IMAGE_MIN_MAX_BIT                         0x400
 #define IMAGE_CLAMP_BIT                           0x800
 
 
-/** Pixel Transfer ops up to convolution */
-#define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
-                                    IMAGE_SHIFT_OFFSET_BIT |   \
-                                    IMAGE_MAP_COLOR_BIT |      \
-                                    IMAGE_COLOR_TABLE_BIT)
-
-/** Pixel transfer ops after convolution */
-#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
-                                     IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
-                                     IMAGE_COLOR_MATRIX_BIT |                 \
-                                     IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |\
-                                     IMAGE_HISTOGRAM_BIT |                    \
-                                     IMAGE_MIN_MAX_BIT)
-/*@}*/
-
+/** Pixel Transfer ops */
+#define IMAGE_BITS (IMAGE_SCALE_BIAS_BIT |			\
+		    IMAGE_SHIFT_OFFSET_BIT |			\
+		    IMAGE_MAP_COLOR_BIT)
 
 /**
  * \name Bits to indicate what state has changed.  
@@ -2649,7 +2756,6 @@ struct gl_matrix_stack
 #define _NEW_MODELVIEW		0x1        /**< __GLcontextRec::ModelView */
 #define _NEW_PROJECTION		0x2        /**< __GLcontextRec::Projection */
 #define _NEW_TEXTURE_MATRIX	0x4        /**< __GLcontextRec::TextureMatrix */
-#define _NEW_COLOR_MATRIX	0x8        /**< __GLcontextRec::ColorMatrix */
 #define _NEW_ACCUM		0x10       /**< __GLcontextRec::Accum */
 #define _NEW_COLOR		0x20       /**< __GLcontextRec::Color */
 #define _NEW_DEPTH		0x40       /**< __GLcontextRec::Depth */
@@ -2772,8 +2878,7 @@ struct gl_matrix_stack
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
                                            _NEW_TEXTURE)
 
-#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL |		\
-                                           _NEW_COLOR_MATRIX)
+#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL)
 /*@}*/
 
 
@@ -2869,6 +2974,14 @@ struct gl_dlist_state
    } Current;
 };
 
+/**
+ * Enum for the OpenGL APIs we know about and may support.
+ */
+typedef enum {
+   API_OPENGL,
+   API_OPENGLES,
+   API_OPENGLES2
+} gl_api;
 
 /**
  * Mesa rendering context.
@@ -2887,6 +3000,7 @@ struct __GLcontextRec
 
    /** \name API function pointer tables */
    /*@{*/
+   gl_api API;
    struct _glapi_table *Save;	/**< Display list save functions */
    struct _glapi_table *Exec;	/**< Execute functions */
    struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
@@ -2912,7 +3026,6 @@ struct __GLcontextRec
    /*@{*/
    struct gl_matrix_stack ModelviewMatrixStack;
    struct gl_matrix_stack ProjectionMatrixStack;
-   struct gl_matrix_stack ColorMatrixStack;
    struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_UNITS];
    struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
    struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
@@ -2985,25 +3098,19 @@ struct __GLcontextRec
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
    struct gl_pixelmaps          PixelMaps;
-   struct gl_histogram_attrib	Histogram;
-   struct gl_minmax_attrib	MinMax;
-   struct gl_convolution_attrib Convolution1D;
-   struct gl_convolution_attrib Convolution2D;
-   struct gl_convolution_attrib Separable2D;
 
    struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */
    struct gl_selection  Select;    /**< Selection */
 
-   struct gl_color_table ColorTable[COLORTABLE_MAX];
-   struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
-
    struct gl_program_state Program;  /**< general program state */
    struct gl_vertex_program_state VertexProgram;
    struct gl_fragment_program_state FragmentProgram;
+   struct gl_geometry_program_state GeometryProgram;
    struct gl_ati_fragment_shader_state ATIFragmentShader;
 
    struct gl_shader_state Shader; /**< GLSL shader object state */
+   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
 
@@ -3015,9 +3122,8 @@ struct __GLcontextRec
 
    struct gl_meta_state *Meta;  /**< for "meta" operations */
 
-#if FEATURE_EXT_framebuffer_object
+   /* GL_EXT_framebuffer_object */
    struct gl_renderbuffer *CurrentRenderbuffer;
-#endif
 
    GLenum ErrorValue;        /**< Last error code */
 

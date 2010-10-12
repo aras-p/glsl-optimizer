@@ -30,18 +30,20 @@
 #define U_BLIT_H
 
 
+#include "pipe/p_compiler.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
    
-struct pipe_context;
-struct pipe_surface;
-struct pipe_resource;
 struct cso_context;
-
-
-struct blit_state;
+struct pipe_context;
+struct pipe_resource;
+struct pipe_sampler_view;
+struct pipe_subresource;
+struct pipe_surface;
 
 
 extern struct blit_state *
@@ -52,10 +54,11 @@ util_destroy_blit(struct blit_state *ctx);
 
 extern void
 util_blit_pixels(struct blit_state *ctx,
-                 struct pipe_surface *src,
-                 struct pipe_sampler_view *src_sampler_view,
+                 struct pipe_resource *src_tex,
+                 struct pipe_subresource srcsub,
                  int srcX0, int srcY0,
                  int srcX1, int srcY1,
+                 int srcZ0,
                  struct pipe_surface *dst,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
@@ -63,10 +66,11 @@ util_blit_pixels(struct blit_state *ctx,
 
 void
 util_blit_pixels_writemask(struct blit_state *ctx,
-                           struct pipe_surface *src,
-                           struct pipe_sampler_view *src_sampler_view,
+                           struct pipe_resource *src_tex,
+                           struct pipe_subresource srcsub,
                            int srcX0, int srcY0,
                            int srcX1, int srcY1,
+                           int srcZ0,
                            struct pipe_surface *dst,
                            int dstX0, int dstY0,
                            int dstX1, int dstY1,

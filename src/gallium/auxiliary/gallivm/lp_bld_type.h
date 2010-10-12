@@ -128,6 +128,18 @@ struct lp_build_context
     */
    struct lp_type type;
 
+   /** Same as lp_build_elem_type(type) */
+   LLVMTypeRef elem_type;
+
+   /** Same as lp_build_vec_type(type) */
+   LLVMTypeRef vec_type;
+
+   /** Same as lp_build_int_elem_type(type) */
+   LLVMTypeRef int_elem_type;
+
+   /** Same as lp_build_int_vec_type(type) */
+   LLVMTypeRef int_vec_type;
+
    /** Same as lp_build_undef(type) */
    LLVMValueRef undef;
 
@@ -304,6 +316,54 @@ LLVMTypeRef
 lp_build_int32_vec4_type(void);
 
 
+static INLINE struct lp_type
+lp_float32_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = TRUE;
+   type.sign = TRUE;
+   type.norm = FALSE;
+   type.width = 32;
+   type.length = 4;
+
+   return type;
+}
+
+
+static INLINE struct lp_type
+lp_int32_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = FALSE;
+   type.sign = TRUE;
+   type.norm = FALSE;
+   type.width = 32;
+   type.length = 4;
+
+   return type;
+}
+
+
+static INLINE struct lp_type
+lp_unorm8_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = FALSE;
+   type.sign = FALSE;
+   type.norm = TRUE;
+   type.width = 8;
+   type.length = 4;
+
+   return type;
+}
+
+
 struct lp_type
 lp_uint_type(struct lp_type type);
 
@@ -314,6 +374,18 @@ lp_int_type(struct lp_type type);
 
 struct lp_type
 lp_wider_type(struct lp_type type);
+
+
+unsigned
+lp_sizeof_llvm_type(LLVMTypeRef t);
+
+
+const char *
+lp_typekind_name(LLVMTypeKind t);
+
+
+void
+lp_dump_llvmtype(LLVMTypeRef t);
 
 
 void

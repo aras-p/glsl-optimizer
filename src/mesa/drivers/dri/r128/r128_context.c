@@ -81,7 +81,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -99,7 +98,8 @@ static const struct dri_debug_control debug_control[] =
 
 /* Create the device specific context.
  */
-GLboolean r128CreateContext( const __GLcontextModes *glVisual,
+GLboolean r128CreateContext( gl_api api,
+			     const __GLcontextModes *glVisual,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {

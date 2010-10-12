@@ -27,6 +27,7 @@
 #include "VG/openvg.h"
 
 #include "vg_context.h"
+#include "api.h"
 
 #include "util/u_memory.h"
 
@@ -39,7 +40,7 @@ struct vg_font {
    VGint num_glyphs;
 };
 
-VGFont vgCreateFont(VGint glyphCapacityHint)
+VGFont vegaCreateFont(VGint glyphCapacityHint)
 {
    struct vg_font *font = 0;
    struct vg_context *ctx = vg_current_context();
@@ -55,7 +56,7 @@ VGFont vgCreateFont(VGint glyphCapacityHint)
    return (VGFont)font;
 }
 
-void vgDestroyFont(VGFont f)
+void vegaDestroyFont(VGFont f)
 {
    struct vg_font *font = (struct vg_font *)f;
    struct vg_context *ctx = vg_current_context();
@@ -69,12 +70,12 @@ void vgDestroyFont(VGFont f)
    /*free(font);*/
 }
 
-void vgSetGlyphToPath(VGFont font,
-                      VGuint glyphIndex,
-                      VGPath path,
-                      VGboolean isHinted,
-                      VGfloat glyphOrigin [2],
-                      VGfloat escapement[2])
+void vegaSetGlyphToPath(VGFont font,
+                        VGuint glyphIndex,
+                        VGPath path,
+                        VGboolean isHinted,
+                        VGfloat glyphOrigin [2],
+                        VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_object *pathObj;
@@ -106,11 +107,11 @@ void vgSetGlyphToPath(VGFont font,
    ++f->num_glyphs;
 }
 
-void vgSetGlyphToImage(VGFont font,
-                       VGuint glyphIndex,
-                       VGImage image,
-                       VGfloat glyphOrigin [2],
-                       VGfloat escapement[2])
+void vegaSetGlyphToImage(VGFont font,
+                         VGuint glyphIndex,
+                         VGImage image,
+                         VGfloat glyphOrigin [2],
+                         VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_object *img_obj;
@@ -153,8 +154,8 @@ static INLINE VGboolean font_contains_glyph(struct vg_font *font,
    return VG_FALSE;
 }
 
-void vgClearGlyph(VGFont font,
-                  VGuint glyphIndex)
+void vegaClearGlyph(VGFont font,
+                    VGuint glyphIndex)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_font *f;
@@ -184,10 +185,10 @@ void vgClearGlyph(VGFont font,
    }
 }
 
-void vgDrawGlyph(VGFont font,
-                 VGuint glyphIndex,
-                 VGbitfield paintModes,
-                 VGboolean allowAutoHinting)
+void vegaDrawGlyph(VGFont font,
+                   VGuint glyphIndex,
+                   VGbitfield paintModes,
+                   VGboolean allowAutoHinting)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_font *f;
@@ -211,13 +212,13 @@ void vgDrawGlyph(VGFont font,
    }
 }
 
-void vgDrawGlyphs(VGFont font,
-                  VGint glyphCount,
-                  VGuint *glyphIndices,
-                  VGfloat *adjustments_x,
-                  VGfloat *adjustments_y,
-                  VGbitfield paintModes,
-                  VGboolean allowAutoHinting)
+void vegaDrawGlyphs(VGFont font,
+                    VGint glyphCount,
+                    VGuint *glyphIndices,
+                    VGfloat *adjustments_x,
+                    VGfloat *adjustments_y,
+                    VGbitfield paintModes,
+                    VGboolean allowAutoHinting)
 {
    struct vg_context *ctx = vg_current_context();
    VGint i;

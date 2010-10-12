@@ -958,6 +958,7 @@ _vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
    vbo_MultiTexCoord4f(target, s, t, r, q);
 }
 
+
 void GLAPIENTRY
 _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 {
@@ -966,7 +967,66 @@ _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 
 
 void GLAPIENTRY
+_vbo_Materialf(GLenum face, GLenum pname, GLfloat param)
+{
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0F;
+   vbo_Materialfv(face, pname, p);
+}
+
+
+void GLAPIENTRY
 _vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    vbo_VertexAttrib4fARB(index, x, y, z, w);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib1f(GLuint indx, GLfloat x)
+{
+   vbo_VertexAttrib1fARB(indx, x);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib1fv(GLuint indx, const GLfloat* values)
+{
+   vbo_VertexAttrib1fvARB(indx, values);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
+{
+   vbo_VertexAttrib2fARB(indx, x, y);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib2fv(GLuint indx, const GLfloat* values)
+{
+   vbo_VertexAttrib2fvARB(indx, values);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+{
+   vbo_VertexAttrib3fARB(indx, x, y, z);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib3fv(GLuint indx, const GLfloat* values)
+{
+   vbo_VertexAttrib3fvARB(indx, values);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib4fv(GLuint indx, const GLfloat* values)
+{
+   vbo_VertexAttrib4fvARB(indx, values);
 }

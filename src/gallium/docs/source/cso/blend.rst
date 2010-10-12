@@ -14,21 +14,74 @@ in other modern and legacy drawing APIs.
 
 XXX blurb about dual-source blends
 
+Logical Operations
+------------------
+
+Logical operations, also known as logicops, lops, or rops, are supported.
+Only two-operand logicops are available. When logicops are enabled, all other
+blend state is ignored, including per-render-target state, so logicops are
+performed on all render targets.
+
+.. warning::
+   The blend_enable flag is ignored for all render targets when logical
+   operations are enabled.
+
+For a source component `s` and destination component `d`, the logical
+operations are defined as taking the bits of each channel of each component,
+and performing one of the following operations per-channel:
+
+* ``CLEAR``: 0
+* ``NOR``: :math:`\lnot(s \lor d)`
+* ``AND_INVERTED``: :math:`\lnot s \land d`
+* ``COPY_INVERTED``: :math:`\lnot s`
+* ``AND_REVERSE``: :math:`s \land \lnot d`
+* ``INVERT``: :math:`\lnot d`
+* ``XOR``: :math:`s \oplus d`
+* ``NAND``: :math:`\lnot(s \land d)`
+* ``AND``: :math:`s \land d`
+* ``EQUIV``: :math:`\lnot(s \oplus d)`
+* ``NOOP``: :math:`d`
+* ``OR_INVERTED``: :math:`\lnot s \lor d`
+* ``COPY``: :math:`s`
+* ``OR_REVERSE``: :math:`s \lor \lnot d`
+* ``OR``: :math:`s \lor d`
+* ``SET``: 1
+
+.. note::
+   The logical operation names and definitions match those of the OpenGL API,
+   and are similar to the ROP2 and ROP3 definitions of GDI. This is
+   intentional, to ease transitions to Gallium.
+
 Members
 -------
+
+These members affect all render targets.
+
+dither
+%%%%%%
+
+Whether dithering is enabled.
+
+.. note::
+   Dithering is completely implementation-dependent. It may be ignored by
+   drivers for any reason, and some render targets may always or never be
+   dithered depending on their format or usage flags.
+
+logicop_enable
+%%%%%%%%%%%%%%
+
+Whether the blender should perform a logicop instead of blending.
+
+logicop_func
+%%%%%%%%%%%%
+
+The logicop to use. One of ``PIPE_LOGICOP``.
 
 independent_blend_enable
    If enabled, blend state is different for each render target, and
    for each render target set in the respective member of the rt array.
    If disabled, blend state is the same for all render targets, and only
    the first member of the rt array contains valid data.
-logicop_enable
-   Enables logic ops. Cannot be enabled at the same time as blending, and
-   is always the same for all render targets.
-logicop_func
-   The logic operation to use if logic ops are enabled. One of PIPE_LOGICOP.
-dither
-   Whether dithering is enabled. Note: Dithering is implementation-dependent.
 rt
    Contains the per-rendertarget blend state.
 

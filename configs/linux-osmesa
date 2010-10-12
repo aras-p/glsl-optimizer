@@ -17,9 +17,8 @@ CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
 # Directories
-SRC_DIRS = glsl mesa glu
+SRC_DIRS = mapi/glapi glsl mesa glu
 DRIVER_DIRS = osmesa
-PROGRAM_DIRS = osdemos
 
 
 # Dependencies

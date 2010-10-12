@@ -13,7 +13,6 @@
 
 
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 
 /**
@@ -51,26 +50,17 @@ _eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id)
 EGLConfig
 _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 {
-   _EGLConfig **configs;
-
    /* sanity check */
    assert(GET_CONFIG_ATTRIB(conf, EGL_CONFIG_ID) > 0);
 
-   configs = dpy->Configs;
-   if (dpy->NumConfigs >= dpy->MaxConfigs) {
-      EGLint new_size = dpy->MaxConfigs + 16;
-      assert(dpy->NumConfigs < new_size);
-
-      configs = realloc(dpy->Configs, new_size * sizeof(dpy->Configs[0]));
-      if (!configs)
+   if (!dpy->Configs) {
+      dpy->Configs = _eglCreateArray("Config", 16);
+      if (!dpy->Configs)
          return (EGLConfig) NULL;
-
-      dpy->Configs = configs;
-      dpy->MaxConfigs = new_size;
    }
 
    conf->Display = dpy;
-   dpy->Configs[dpy->NumConfigs++] = conf;
+   _eglAppendArray(dpy->Configs, (void *) conf);
 
    return (EGLConfig) conf;
 }
@@ -79,17 +69,13 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
-   EGLint num_configs = (dpy) ? dpy->NumConfigs : 0;
-   EGLint i;
+   _EGLConfig *conf;
 
-   for (i = 0; i < num_configs; i++) {
-      _EGLConfig *conf = dpy->Configs[i];
-      if (conf == (_EGLConfig *) config) {
-         assert(conf->Display == dpy);
-         break;
-      }
-   }
-   return (i < num_configs);
+   conf = (_EGLConfig *) _eglFindArray(dpy->Configs, (void *) config);
+   if (conf)
+      assert(conf->Display == dpy);
+
+   return (conf != NULL);
 }
 
 
@@ -224,7 +210,12 @@ static const struct {
                                     0 },
    { EGL_NONE,                      ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_IGNORE,
-                                    0 }
+                                    0 },
+
+   { EGL_Y_INVERTED_NOK,            ATTRIB_TYPE_BOOLEAN,
+                                    ATTRIB_CRITERION_EXACT,
+                                    EGL_DONT_CARE },
+
 };
 
 
@@ -323,8 +314,10 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
                    EGL_VG_ALPHA_FORMAT_PRE_BIT |
                    EGL_MULTISAMPLE_RESOLVE_BOX_BIT |
                    EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+#ifdef EGL_MESA_screen_surface
             if (conf->Display->Extensions.MESA_screen_surface)
                mask |= EGL_SCREEN_BIT_MESA;
+#endif
             break;
          case EGL_RENDERABLE_TYPE:
          case EGL_CONFORMANT:
@@ -467,11 +460,14 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
       }
 
       if (!matched) {
-#ifdef DEBUG
+#ifndef DEBUG
+         /* only print the common errors when DEBUG is not defined */
+         if (attr != EGL_RENDERABLE_TYPE)
+            break;
+#endif
          _eglLog(_EGL_DEBUG,
                "the value (0x%x) of attribute 0x%04x did not meet the criteria (0x%x)",
                val, attr, cmp);
-#endif
          break;
       }
    }
@@ -479,6 +475,28 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
    return matched;
 }
 
+static INLINE EGLBoolean
+_eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
+{
+   if (_eglIndexConfig(conf, attr) < 0)
+      return EGL_FALSE;
+
+   /* there are some holes in the range */
+   switch (attr) {
+   case 0x3030 /* a gap before EGL_SAMPLES */:
+   case EGL_NONE:
+#ifdef EGL_VERSION_1_4
+   case EGL_MATCH_NATIVE_PIXMAP:
+#endif
+      return EGL_FALSE;
+   case EGL_Y_INVERTED_NOK:
+      return conf->Display->Extensions.NOK_texture_from_pixmap;
+   default:
+      break;
+   }
+
+   return EGL_TRUE;
+}
 
 /**
  * Initialize a criteria config from the given attribute list.
@@ -501,15 +519,13 @@ _eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list)
 
    /* parse the list */
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i += 2) {
-      EGLint idx;
-
       attr = attrib_list[i];
       val = attrib_list[i + 1];
 
-      idx = _eglIndexConfig(conf, attr);
-      if (idx < 0)
-         return EGL_FALSE;
-      conf->Storage[idx] = val;
+      if (!_eglIsConfigAttribValid(conf, attr))
+	 return EGL_FALSE;
+	      
+      SET_CONFIG_ATTRIB(conf, attr, val);
 
       /* rememeber some attributes for post-processing */
       switch (attr) {
@@ -752,18 +768,10 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!_eglParseConfigAttribList(&criteria, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   /* allocate array of config pointers */
-   configList = (_EGLConfig **)
-      malloc(disp->NumConfigs * sizeof(_EGLConfig *));
+   configList = (_EGLConfig **) _eglFilterArray(disp->Configs, &count,
+         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
    if (!configList)
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
-
-   /* perform selection of configs */
-   count = 0;
-   for (i = 0; i < disp->NumConfigs; i++) {
-      if (_eglMatchConfig(disp->Configs[i], &criteria))
-         configList[count++] = disp->Configs[i];
-   }
 
    /* perform sorting of configs */
    if (configs && count) {
@@ -777,28 +785,6 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    free(configList);
 
    *num_configs = count;
-
-   return EGL_TRUE;
-}
-
-
-static INLINE EGLBoolean
-_eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
-{
-   if (_eglIndexConfig(conf, attr) < 0)
-      return EGL_FALSE;
-
-   /* there are some holes in the range */
-   switch (attr) {
-   case 0x3030 /* a gap before EGL_SAMPLES */:
-   case EGL_NONE:
-#ifdef EGL_VERSION_1_4
-   case EGL_MATCH_NATIVE_PIXMAP:
-#endif
-      return EGL_FALSE;
-   default:
-      break;
-   }
 
    return EGL_TRUE;
 }
@@ -821,6 +807,15 @@ _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
+static EGLBoolean
+_eglFlattenConfig(void *elem, void *buffer)
+{
+   _EGLConfig *conf = (_EGLConfig *) elem;
+   EGLConfig *handle = (EGLConfig *) buffer;
+   *handle = _eglGetConfigHandle(conf);
+   return EGL_TRUE;
+}
+
 /**
  * Fallback for eglGetConfigs.
  */
@@ -831,16 +826,8 @@ _eglGetConfigs(_EGLDriver *drv, _EGLDisplay *disp, EGLConfig *configs,
    if (!num_config)
       return _eglError(EGL_BAD_PARAMETER, "eglGetConfigs");
 
-   if (configs) {
-      EGLint i;
-      *num_config = MIN2(disp->NumConfigs, config_size);
-      for (i = 0; i < *num_config; i++)
-         configs[i] = _eglGetConfigHandle(disp->Configs[i]);
-   }
-   else {
-      /* just return total number of supported configs */
-      *num_config = disp->NumConfigs;
-   }
+   *num_config = _eglFlattenArray(disp->Configs, (void *) configs,
+         sizeof(configs[0]), config_size, _eglFlattenConfig);
 
    return EGL_TRUE;
 }

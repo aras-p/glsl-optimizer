@@ -362,7 +362,7 @@ void _math_test_all_normal_transform_functions( char *description )
 	 char buf[100];
 	 sprintf( buf, "_mesa_normal_tab[0][%s] failed test (%s)",
 		  norm_strings[mtype], description );
-	 _mesa_problem( NULL, buf );
+	 _mesa_problem( NULL, "%s", buf );
       }
 
 #ifdef RUN_DEBUG_BENCHMARK

@@ -480,7 +480,7 @@ struct rbug_proto_context_list * rbug_demarshal_context_list(struct rbug_proto_h
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_LIST)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_LIST)
 		return NULL;
 
 	pos = 0;
@@ -506,7 +506,7 @@ struct rbug_proto_context_info * rbug_demarshal_context_info(struct rbug_proto_h
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_INFO)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_INFO)
 		return NULL;
 
 	pos = 0;
@@ -533,7 +533,7 @@ struct rbug_proto_context_draw_block * rbug_demarshal_context_draw_block(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_BLOCK)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_DRAW_BLOCK)
 		return NULL;
 
 	pos = 0;
@@ -561,7 +561,7 @@ struct rbug_proto_context_draw_step * rbug_demarshal_context_draw_step(struct rb
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_STEP)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_DRAW_STEP)
 		return NULL;
 
 	pos = 0;
@@ -589,7 +589,7 @@ struct rbug_proto_context_draw_unblock * rbug_demarshal_context_draw_unblock(str
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_UNBLOCK)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_DRAW_UNBLOCK)
 		return NULL;
 
 	pos = 0;
@@ -617,7 +617,7 @@ struct rbug_proto_context_draw_rule * rbug_demarshal_context_draw_rule(struct rb
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_RULE)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_DRAW_RULE)
 		return NULL;
 
 	pos = 0;
@@ -649,7 +649,7 @@ struct rbug_proto_context_flush * rbug_demarshal_context_flush(struct rbug_proto
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_FLUSH)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_FLUSH)
 		return NULL;
 
 	pos = 0;
@@ -677,7 +677,7 @@ struct rbug_proto_context_list_reply * rbug_demarshal_context_list_reply(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_LIST_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_LIST_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -705,7 +705,7 @@ struct rbug_proto_context_info_reply * rbug_demarshal_context_info_reply(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_INFO_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_INFO_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -739,7 +739,7 @@ struct rbug_proto_context_draw_blocked * rbug_demarshal_context_draw_blocked(str
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_BLOCKED)
+	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_DRAW_BLOCKED)
 		return NULL;
 
 	pos = 0;

@@ -141,7 +141,7 @@ static void twoside_first_tri( struct draw_stage *stage,
     * if the triangle is back-facing (negative).
     * sign = -1 for CCW, +1 for CW
     */
-   twoside->sign = (stage->draw->rasterizer->front_winding == PIPE_WINDING_CCW) ? -1.0f : 1.0f;
+   twoside->sign = stage->draw->rasterizer->front_ccw ? -1.0f : 1.0f;
 
    stage->tri = twoside_tri;
    stage->tri( stage, header );
@@ -177,9 +177,6 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    if (twoside == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &twoside->stage, 3 ))
-      goto fail;
-
    twoside->stage.draw = draw;
    twoside->stage.name = "twoside";
    twoside->stage.next = NULL;
@@ -189,6 +186,9 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.flush = twoside_flush;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
    twoside->stage.destroy = twoside_destroy;
+
+   if (!draw_alloc_temp_verts( &twoside->stage, 3 ))
+      goto fail;
 
    return &twoside->stage;
 

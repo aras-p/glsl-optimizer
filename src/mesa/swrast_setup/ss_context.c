@@ -115,7 +115,7 @@ setup_vertex_format(GLcontext *ctx)
    GLboolean intColors = !ctx->FragmentProgram._Current
                       && !ctx->ATIFragmentShader._Enabled
                       && ctx->RenderMode == GL_RENDER
-                      && CHAN_TYPE == GL_UNSIGNED_BYTE;
+                      && CHAN_TYPE != GL_FLOAT;
 
    if (intColors != swsetup->intColors ||
        !RENDERINPUTS_EQUAL(tnl->render_inputs_bitset,

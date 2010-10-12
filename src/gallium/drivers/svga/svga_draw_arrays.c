@@ -277,12 +277,13 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
       ret = svga_hwtnl_simple_draw_range_elements( hwtnl,
                                                    gen_buf,
                                                    gen_size,
+                                                   start,
                                                    0,
                                                    count - 1,
                                                    gen_prim,
                                                    0,
-                                                   gen_nr,
-                                                   start );
+                                                   gen_nr );
+
       if (ret)
          goto done;
 

@@ -25,15 +25,13 @@
  * 
  **************************************************************************/
 
-#include "main/mtypes.h"
-#include "main/context.h"
-
 #include "pipe/p_format.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
 #include "util/u_format.h"
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -225,8 +223,8 @@ stw_pixelformat_init( void )
       for(j = 0; j < Elements(stw_pf_color); ++j) {
          const struct stw_pf_color_info *color = &stw_pf_color[j];
          
-         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
-                                         PIPE_BIND_RENDER_TARGET |
+         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D,
+                                         0, PIPE_BIND_RENDER_TARGET |
                                          PIPE_BIND_DISPLAY_TARGET, 0))
             continue;
          
@@ -237,7 +235,7 @@ stw_pixelformat_init( void )
                const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
                
                if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
-                                               PIPE_BIND_DEPTH_STENCIL, 0))
+                                               0, PIPE_BIND_DEPTH_STENCIL, 0))
                   continue;
 
                stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );

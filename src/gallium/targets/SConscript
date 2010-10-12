@@ -1,19 +1,18 @@
+import os
 Import('*')
-	
-if 'xlib' in env['winsys']:
-	SConscript([
-		'libgl-xlib/SConscript',
-	])
 
-if 'gdi' in env['winsys']:
-	SConscript([
-		'libgl-gdi/SConscript',
-	])
+# Compatibility with old build scripts:
+#
+if 'mesa' in env['statetrackers']:
+    if 'xlib' in env['winsys'] and 'libgl-xlib' not in env['targets']:
+        env['targets'].append('libgl-xlib')
+    if 'gdi' in env['winsys'] and 'libgl-gdi' not in env['targets']:
+        env['targets'].append('libgl-gdi')
 
-if 'graw-xlib' in env['winsys']:
-	SConscript([
-		'graw-xlib/SConscript',
-	])
+if not 'graw-xlib' in env['targets'] and not 'graw-null' in env['targets'] and not env['msvc']:
+        # XXX: disable until MSVC can link correctly
+        SConscript('graw-null/SConscript')
+
 
 if env['dri']:
 	SConscript([
@@ -25,3 +24,18 @@ if 'xorg' in env['statetrackers']:
 		SConscript([
 			'xorg-vmwgfx/SConscript',
 		])
+
+if 'egl' in env['statetrackers']:
+	SConscript([
+		'egl-gdi/SConscript',
+	])
+
+# Ideally all non-target directories would produce convenience
+# libraries, and the actual shared libraries and other installables
+# would be finally assembled in the targets subtree:
+#
+for target in env['targets']:
+    SConscript(os.path.join(target, 'SConscript'))
+
+
+

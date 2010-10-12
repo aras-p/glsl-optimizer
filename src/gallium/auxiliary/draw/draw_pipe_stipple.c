@@ -235,8 +235,8 @@ stipple_destroy( struct draw_stage *stage )
 struct draw_stage *draw_stipple_stage( struct draw_context *draw )
 {
    struct stipple_stage *stipple = CALLOC_STRUCT(stipple_stage);
-
-   draw_alloc_temp_verts( &stipple->stage, 2 );
+   if (stipple == NULL)
+      goto fail;
 
    stipple->stage.draw = draw;
    stipple->stage.name = "stipple";
@@ -248,5 +248,14 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
    stipple->stage.flush = stipple_flush;
    stipple->stage.destroy = stipple_destroy;
 
+   if (!draw_alloc_temp_verts( &stipple->stage, 2 ))
+      goto fail;
+
    return &stipple->stage;
+
+fail:
+   if (stipple)
+      stipple->stage.destroy( &stipple->stage );
+
+   return NULL;
 }

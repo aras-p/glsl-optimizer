@@ -273,7 +273,8 @@ struct mach64_context {
 #define MACH64_CONTEXT(ctx)		((mach64ContextPtr)(ctx->DriverCtx))
 
 
-extern GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
+extern GLboolean mach64CreateContext( gl_api api,
+				      const __GLcontextModes *glVisual,
 				      __DRIcontext *driContextPriv,
                                       void *sharedContextPrivate );
 

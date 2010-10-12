@@ -27,8 +27,9 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/shaderobj.h"
+#include "program/prog_cache.h"
 #include "vbo/vbo.h"
-#include "shader/shader_api.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
 #include "st_debug.h"
@@ -38,24 +39,20 @@
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
 #include "st_cb_condrender.h"
-#if FEATURE_drawpix
 #include "st_cb_drawpixels.h"
 #include "st_cb_rasterpos.h"
-#endif
-#if FEATURE_OES_draw_texture
 #include "st_cb_drawtex.h"
-#endif
 #include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
-#if FEATURE_feedback
 #include "st_cb_feedback.h"
-#endif
 #include "st_cb_program.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_texture.h"
+#include "st_cb_xformfb.h"
 #include "st_cb_flush.h"
 #include "st_cb_strings.h"
+#include "st_cb_viewport.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_extensions.h"
@@ -63,9 +60,10 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
-#include "util/u_rect.h"
-#include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
+
+
+DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE)
 
 
 /**
@@ -98,19 +96,6 @@ st_get_msaa(void)
 }
 
 
-/** Default method for pipe_context::surface_copy() */
-static void
-st_surface_copy(struct pipe_context *pipe,
-                struct pipe_surface *dst,
-                unsigned dst_x, unsigned dst_y,
-                struct pipe_surface *src,
-                unsigned src_x, unsigned src_y, 
-                unsigned w, unsigned h)
-{
-   util_surface_copy(pipe, FALSE, dst, dst_x, dst_y, src, src_x, src_y, w, h);
-}
-
-
 static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
@@ -128,18 +113,6 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    /* state tracker needs the VBO module */
    _vbo_CreateContext(ctx);
 
-#if FEATURE_feedback || FEATURE_drawpix
-   st->draw = draw_create(pipe); /* for selection/feedback */
-
-   /* Disable draw options that might convert points/lines to tris, etc.
-    * as that would foul-up feedback/selection mode.
-    */
-   draw_wide_line_threshold(st->draw, 1000.0f);
-   draw_wide_point_threshold(st->draw, 1000.0f);
-   draw_enable_line_stipple(st->draw, FALSE);
-   draw_enable_point_sprites(st->draw, FALSE);
-#endif
-
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
 
@@ -151,6 +124,11 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_draw( st );
    st_init_generate_mipmap(st);
    st_init_blit(st);
+
+   if(pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
+      st->internal_target = PIPE_TEXTURE_2D;
+   else
+      st->internal_target = PIPE_TEXTURE_RECT;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
@@ -180,15 +158,11 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_limits(st);
    st_init_extensions(st);
 
-   /* plug in helper driver functions if needed */
-   if (!pipe->surface_copy)
-      pipe->surface_copy = st_surface_copy;
-
    return st;
 }
 
 
-struct st_context *st_create_context(struct pipe_context *pipe,
+struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
                                      const __GLcontextModes *visual,
                                      struct st_context *share)
 {
@@ -199,12 +173,12 @@ struct st_context *st_create_context(struct pipe_context *pipe,
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 
-   ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
+   ctx = _mesa_create_context_for_api(api, visual, shareCtx, &funcs, NULL);
 
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
     */
-   if (debug_get_bool_option("MESA_MVP_DP4", FALSE))
+   if (debug_get_option_mesa_mvp_dp4())
       _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
    return st_create_context_priv(ctx, pipe);
@@ -215,23 +189,14 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
-#if FEATURE_feedback || FEATURE_drawpix
-   draw_destroy(st->draw);
-#endif
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
-#if FEATURE_EXT_framebuffer_blit
    st_destroy_blit(st);
-#endif
    st_destroy_clear(st);
-#if FEATURE_drawpix
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
-#endif
-#if FEATURE_OES_draw_texture
    st_destroy_drawtex(st);
-#endif
 
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
       pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
@@ -289,41 +254,32 @@ void st_destroy_context( struct st_context *st )
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {
-   _mesa_init_glsl_driver_functions(functions);
+   _mesa_init_shader_object_functions(functions);
 
-#if FEATURE_accum
    st_init_accum_functions(functions);
-#endif
-#if FEATURE_EXT_framebuffer_blit
    st_init_blit_functions(functions);
-#endif
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
-#if FEATURE_drawpix
    st_init_bitmap_functions(functions);
    st_init_drawpixels_functions(functions);
    st_init_rasterpos_functions(functions);
-#endif
 
-#if FEATURE_OES_draw_texture
    st_init_drawtex_functions(functions);
-#endif
 
    st_init_eglimage_functions(functions);
 
    st_init_fbo_functions(functions);
-#if FEATURE_feedback
    st_init_feedback_functions(functions);
-#endif
    st_init_program_functions(functions);
-#if FEATURE_queryobj
    st_init_query_functions(functions);
-#endif
    st_init_cond_render_functions(functions);
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
    st_init_string_functions(functions);
+   st_init_viewport_functions(functions);
+
+   st_init_xformfb_functions(functions);
 
    functions->UpdateState = st_invalidate_state;
 }

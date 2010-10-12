@@ -213,6 +213,16 @@ struct util_format_description
                        unsigned width, unsigned height);
 
    /**
+    * Fetch a single pixel (i, j) from a block.
+    *
+    * XXX: Only defined for a very few select formats.
+    */
+   void
+   (*fetch_rgba_8unorm)(uint8_t *dst,
+                        const uint8_t *src,
+                        unsigned i, unsigned j);
+
+   /**
     * Unpack pixel blocks to R32G32B32A32_FLOAT.
     * Note: strides are in bytes.
     *
@@ -332,10 +342,58 @@ util_format_name(enum pipe_format format)
 
    assert(desc);
    if (!desc) {
-      return "???";
+      return "PIPE_FORMAT_???";
    }
 
    return desc->name;
+}
+
+static INLINE const char *
+util_format_short_name(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return "???";
+   }
+
+   return desc->short_name;
+}
+
+/**
+ * Whether this format is plain, see UTIL_FORMAT_LAYOUT_PLAIN for more info.
+ */
+static INLINE boolean
+util_format_is_plain(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   if (!format) {
+      return FALSE;
+   }
+
+   return desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ? TRUE : FALSE;
+}
+
+static INLINE boolean 
+util_format_is_compressed(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return FALSE;
+   }
+
+   switch (desc->layout) {
+   case UTIL_FORMAT_LAYOUT_S3TC:
+   case UTIL_FORMAT_LAYOUT_RGTC:
+      /* XXX add other formats in the future */
+      return TRUE;
+   default:
+      return FALSE;
+   }
 }
 
 static INLINE boolean 
@@ -381,6 +439,48 @@ util_format_is_depth_and_stencil(enum pipe_format format)
    return (desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE &&
            desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
 }
+
+
+/**
+ * Give the RGBA colormask of the channels that can be represented in this
+ * format.
+ *
+ * That is, the channels whose values are preserved.
+ */
+static INLINE unsigned
+util_format_colormask(const struct util_format_description *desc)
+{
+   unsigned colormask;
+   unsigned chan;
+
+   switch (desc->colorspace) {
+   case UTIL_FORMAT_COLORSPACE_RGB:
+   case UTIL_FORMAT_COLORSPACE_SRGB:
+   case UTIL_FORMAT_COLORSPACE_YUV:
+      colormask = 0;
+      for (chan = 0; chan < 4; ++chan) {
+         if (desc->swizzle[chan] < 4) {
+            colormask |= (1 << chan);
+         }
+      }
+      return colormask;
+   case UTIL_FORMAT_COLORSPACE_ZS:
+      return 0;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * Whether the src format can be blitted to destation format with a simple
+ * memcpy.
+ */
+boolean
+util_is_format_compatible(const struct util_format_description *src_desc,
+                          const struct util_format_description *dst_desc);
+
 
 /**
  * Whether this format is a rgab8 variant.
@@ -573,6 +673,44 @@ util_format_has_alpha(enum pipe_format format)
 }
 
 /**
+ * Return the matching SRGB format, or PIPE_FORMAT_NONE if none.
+ */
+static INLINE enum pipe_format
+util_format_srgb(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_L8_UNORM:
+      return PIPE_FORMAT_L8_SRGB;
+   case PIPE_FORMAT_L8A8_UNORM:
+      return PIPE_FORMAT_L8A8_SRGB;
+   case PIPE_FORMAT_R8G8B8_UNORM:
+      return PIPE_FORMAT_R8G8B8_SRGB;
+   case PIPE_FORMAT_A8B8G8R8_UNORM:
+      return PIPE_FORMAT_A8B8G8R8_SRGB;
+   case PIPE_FORMAT_X8B8G8R8_UNORM:
+      return PIPE_FORMAT_X8B8G8R8_SRGB;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return PIPE_FORMAT_B8G8R8A8_SRGB;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return PIPE_FORMAT_B8G8R8X8_SRGB;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return PIPE_FORMAT_A8R8G8B8_SRGB;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      return PIPE_FORMAT_X8R8G8B8_SRGB;
+   case PIPE_FORMAT_DXT1_RGB:
+      return PIPE_FORMAT_DXT1_SRGB;
+   case PIPE_FORMAT_DXT1_RGBA:
+      return PIPE_FORMAT_DXT1_SRGBA;
+   case PIPE_FORMAT_DXT3_RGBA:
+      return PIPE_FORMAT_DXT3_SRGBA;
+   case PIPE_FORMAT_DXT5_RGBA:
+      return PIPE_FORMAT_DXT5_SRGBA;
+   default:
+      return PIPE_FORMAT_NONE;
+   }
+}
+
+/**
  * Return the number of components stored.
  * Formats with block size != 1x1 will always have 1 component (the block).
  */
@@ -614,6 +752,9 @@ util_format_write_4ub(enum pipe_format format,
 /*
  * Generic format conversion;
  */
+
+boolean
+util_format_fits_8unorm(const struct util_format_description *format_desc);
 
 void
 util_format_translate(enum pipe_format dst_format,

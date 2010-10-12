@@ -70,7 +70,8 @@ malloc_buffer_destroy(struct pb_buffer *buf)
 
 static void *
 malloc_buffer_map(struct pb_buffer *buf, 
-                  unsigned flags)
+                  unsigned flags,
+		  void *flush_ctx)
 {
    return malloc_buffer(buf)->data;
 }

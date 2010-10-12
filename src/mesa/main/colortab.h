@@ -31,13 +31,6 @@
 
 #if FEATURE_colortable
 
-#define _MESA_INIT_COLORTABLE_FUNCTIONS(driver, impl)                \
-   do {                                                              \
-      (driver)->CopyColorTable       = impl ## CopyColorTable;       \
-      (driver)->CopyColorSubTable    = impl ## CopyColorSubTable;    \
-      (driver)->UpdateTexturePalette = impl ## UpdateTexturePalette; \
-   } while (0)
-
 extern void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalformat,
                   GLsizei width, GLenum format, GLenum type,
@@ -53,7 +46,7 @@ _mesa_init_colortable_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_colortable */
 
-#define _MESA_INIT_COLORTABLE_FUNCTIONS(driver, impl) do { } while (0)
+#include "main/compiler.h"
 
 static INLINE void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalformat,
@@ -84,12 +77,5 @@ _mesa_init_colortable( struct gl_color_table *table );
 
 extern void
 _mesa_free_colortable_data( struct gl_color_table *table );
-
-extern void 
-_mesa_init_colortables( GLcontext *ctx );
-
-extern void 
-_mesa_free_colortables_data( GLcontext *ctx );
-
 
 #endif /* COLORTAB_H */

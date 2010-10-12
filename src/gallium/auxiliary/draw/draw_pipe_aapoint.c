@@ -701,9 +701,9 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
 
    aapoint->pos_slot = draw_current_shader_position_output(draw);
 
-   draw->extra_shader_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_shader_outputs.semantic_index = aapoint->fs->generic_attrib;
-   draw->extra_shader_outputs.slot = aapoint->tex_slot;
+   /* allocate the extra post-transformed vertex attribute */
+   (void) draw_alloc_extra_vertex_attrib(draw, TGSI_SEMANTIC_GENERIC,
+                                         aapoint->fs->generic_attrib);
 
    /* find psize slot in post-transform vertex */
    aapoint->psize_slot = -1;
@@ -754,7 +754,7 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
 
    draw->suspend_flushing = FALSE;
 
-   draw->extra_shader_outputs.slot = 0;
+   draw_remove_extra_vertex_attribs(draw);
 }
 
 
@@ -780,9 +780,6 @@ draw_aapoint_stage(struct draw_context *draw)
    if (aapoint == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &aapoint->stage, 4 ))
-      goto fail;
-
    aapoint->stage.draw = draw;
    aapoint->stage.name = "aapoint";
    aapoint->stage.next = NULL;
@@ -793,11 +790,14 @@ draw_aapoint_stage(struct draw_context *draw)
    aapoint->stage.reset_stipple_counter = aapoint_reset_stipple_counter;
    aapoint->stage.destroy = aapoint_destroy;
 
+   if (!draw_alloc_temp_verts( &aapoint->stage, 4 ))
+      goto fail;
+
    return aapoint;
 
  fail:
    if (aapoint)
-      aapoint_destroy(&aapoint->stage);
+      aapoint->stage.destroy(&aapoint->stage);
 
    return NULL;
 

@@ -26,8 +26,6 @@
 #include <stdio.h>
 
 #include "main/context.h"
-#include "main/context.h"
-#include "main/matrix.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/simple_list.h"
@@ -288,7 +286,8 @@ savageDestroyScreen(__DRIscreen *sPriv)
 }
 
 static GLboolean
-savageCreateContext( const __GLcontextModes *mesaVis,
+savageCreateContext( gl_api api,
+		     const __GLcontextModes *mesaVis,
 		     __DRIcontext *driContextPriv,
 		     void *sharedContextPrivate )
 {

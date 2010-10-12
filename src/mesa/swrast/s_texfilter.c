@@ -135,8 +135,11 @@ lerp_rgba_3d(GLfloat result[4], GLfloat a, GLfloat b, GLfloat c,
 
 
 /**
- * If A is a signed integer, A % B doesn't give the right value for A < 0
- * (in terms of texture repeat).  Just casting to unsigned fixes that.
+ * Used for GL_REPEAT wrap mode.  Using A % B doesn't produce the
+ * right results for A<0.  Casting to A to be unsigned only works if B
+ * is a power of two.  Adding a bias to A (which is a multiple of B)
+ * avoids the problems with A < 0 (for reasonable A) without using a
+ * conditional.
  */
 #define REMAINDER(A, B) (((A) + (B) * 1024) % (B))
 
@@ -2972,11 +2975,16 @@ choose_depth_texture_level(const struct gl_texture_object *tObj, GLfloat lambda)
 {
    GLint level;
 
-   lambda = CLAMP(lambda, tObj->MinLod, tObj->MaxLod);
-
-   level = (GLint) lambda;
-
-   level = CLAMP(level, tObj->BaseLevel, tObj->_MaxLevel);
+   if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+      /* no mipmapping - use base level */
+      level = tObj->BaseLevel;
+   }
+   else {
+      /* choose mipmap level */
+      lambda = CLAMP(lambda, tObj->MinLod, tObj->MaxLod);
+      level = (GLint) lambda;
+      level = CLAMP(level, tObj->BaseLevel, tObj->_MaxLevel);
+   }
 
    return level;
 }
@@ -3047,6 +3055,9 @@ sample_depth_texture( GLcontext *ctx,
             break;
          case GL_ALPHA:
             ASSIGN_4V(texel[i], 0.0F, 0.0F, 0.0F, result);
+            break;
+         case GL_RED:
+            ASSIGN_4V(texel[i], result, 0.0F, 0.0F, 1.0F);
             break;
          default:
             _mesa_problem(ctx, "Bad depth texture mode");

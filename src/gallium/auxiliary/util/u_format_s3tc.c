@@ -120,7 +120,7 @@ util_format_s3tc_init(void)
    library = util_dl_open(DXTN_LIBNAME);
    if (!library) {
       debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
-         "compression/decompression unavailable");
+         "compression/decompression unavailable\n");
       return;
    }
 
@@ -142,7 +142,7 @@ util_format_s3tc_init(void)
        !util_format_dxtn_pack) {
       debug_printf("couldn't reference all symbols in " DXTN_LIBNAME
                    ", software DXTn compression/decompression "
-                   "unavailable");
+                   "unavailable\n");
       util_dl_close(library);
       return;
    }

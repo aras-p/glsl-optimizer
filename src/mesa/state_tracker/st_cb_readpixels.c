@@ -46,10 +46,9 @@
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_texture.h"
-#include "st_inlines.h"
 
 /**
  * Special case for reading stencil buffer.
@@ -69,16 +68,20 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    ubyte *stmap;
    GLint j;
 
+   if (strb->Base.Wrapped) {
+      strb = st_renderbuffer(strb->Base.Wrapped);
+   }
+
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       y = ctx->DrawBuffer->Height - y - height;
    }
 
    /* Create a read transfer from the renderbuffer's texture */
 
-   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
-				       0, 0, 0,
-				       PIPE_TRANSFER_READ, x, y,
-				       width, height);
+   pt = pipe_get_transfer(pipe, strb->texture,
+                          0, 0, 0,  /* face, level, zslice */
+                          PIPE_TRANSFER_READ,
+                          x, y, width, height);
 
    /* map the stencil buffer */
    stmap = pipe_transfer_map(pipe, pt);
@@ -231,10 +234,10 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          y = strb->texture->height0 - y - height;
       }
 
-      trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
-					     0, 0, 0,
-					     PIPE_TRANSFER_READ, x, y,
-					     width, height);
+      trans = pipe_get_transfer(pipe, strb->texture,
+                                0, 0, 0,  /* face, level, zslice */
+                                PIPE_TRANSFER_READ,
+                                x, y, width, height);
       if (!trans) {
          return GL_FALSE;
       }
@@ -335,9 +338,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    assert(ctx->ReadBuffer->Width > 0);
 
-   /* XXX convolution not done yet */
-   assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
-
    st_validate_state(st);
 
    /* Do all needed clipping here, so that we can forget about it later */
@@ -346,11 +346,11 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   st_flush_bitmap_cache(st);
+
    dest = _mesa_map_pbo_dest(ctx, &clippedPacking, dest);
    if (!dest)
       return;
-
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    if (format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_STENCIL) {
@@ -360,6 +360,9 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else if (format == GL_DEPTH_COMPONENT) {
       strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+      if (strb->Base.Wrapped) {
+         strb = st_renderbuffer(strb->Base.Wrapped);
+      }
    }
    else {
       /* Read color buffer */
@@ -395,10 +398,10 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    /* Create a read transfer from the renderbuffer's texture */
-   trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
-					  0, 0, 0,
-					  PIPE_TRANSFER_READ, x, y,
-					  width, height);
+   trans = pipe_get_transfer(pipe, strb->texture,
+                             0, 0, 0,  /* face, level, zslice */
+                             PIPE_TRANSFER_READ,
+                             x, y, width, height);
 
    /* determine bottom-to-top vs. top-to-bottom order */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {

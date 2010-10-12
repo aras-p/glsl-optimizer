@@ -37,10 +37,9 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_shader_tokens.h"
 
 #include "util/u_simple_shaders.h"
 
@@ -66,7 +65,19 @@ translate_fp(struct st_context *st,
    }
 }
 
+/*
+ * Translate geometry program if needed.
+ */
+static void
+translate_gp(struct st_context *st,
+             struct st_geometry_program *stgp)
+{
+   if (!stgp->tgsi.tokens) {
+      assert(stgp->Base.Base.NumInstructions > 1);
 
+      st_translate_geometry_program(st, stgp);
+   }
+}
 
 /**
  * Find a translated vertex program that corresponds to stvp and
@@ -221,4 +232,34 @@ const struct st_tracked_state st_update_vp = {
       ST_NEW_VERTEX_PROGRAM | ST_NEW_EDGEFLAGS_DATA	/* st */
    },
    update_vp					/* update */
+};
+
+static void
+update_gp( struct st_context *st )
+{
+
+   struct st_geometry_program *stgp;
+
+   if (!st->ctx->GeometryProgram._Current) {
+      cso_set_geometry_shader_handle(st->cso_context, NULL);
+      return;
+   }
+
+   stgp = st_geometry_program(st->ctx->GeometryProgram._Current);
+   assert(stgp->Base.Base.Target == MESA_GEOMETRY_PROGRAM);
+
+   translate_gp(st, stgp);
+
+   st_reference_geomprog(st, &st->gp, stgp);
+
+   cso_set_geometry_shader_handle(st->cso_context, stgp->driver_shader);
+}
+
+const struct st_tracked_state st_update_gp = {
+   "st_update_gp",					/* name */
+   {							/* dirty */
+      0,						/* mesa */
+      ST_NEW_GEOMETRY_PROGRAM                           /* st */
+   },
+   update_gp  					/* update */
 };

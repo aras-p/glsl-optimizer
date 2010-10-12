@@ -6,7 +6,7 @@ CONFIG_NAME = linux-cell
 
 
 # Omiting other gallium drivers:
-GALLIUM_DRIVERS_DIRS = cell softpipe trace identity
+GALLIUM_DRIVERS_DIRS = cell softpipe trace rbug identity
 
 
 # Compiler and flags
@@ -37,7 +37,8 @@ CXXFLAGS = $(COMMON_C_CPP_FLAGS)
 
 
 # Omitting glw here:
-SRC_DIRS = glsl mesa gallium gallium/winsys gallium/targets glu glut/glx glew
+SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
+	gallium gallium/winsys gallium/targets glu glut/glx
 
 # Build no traditional Mesa drivers:
 DRIVER_DIRS =

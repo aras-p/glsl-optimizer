@@ -31,19 +31,10 @@
 
 #if FEATURE_drawpix
 
-#define _MESA_INIT_DRAWPIX_FUNCTIONS(driver, impl) \
-   do {                                            \
-      (driver)->DrawPixels = impl ## DrawPixels;   \
-      (driver)->CopyPixels = impl ## CopyPixels;   \
-      (driver)->Bitmap     = impl ## Bitmap;       \
-   } while (0)
-
 extern void
 _mesa_init_drawpix_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_drawpix */
-
-#define _MESA_INIT_DRAWPIX_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void
 _mesa_init_drawpix_dispatch(struct _glapi_table *disp)

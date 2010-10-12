@@ -71,7 +71,7 @@ lerp(float a, float v0, float v1)
 
 
 /**
- * Do 2D/biliner interpolation of float values.
+ * Do 2D/bilinear interpolation of float values.
  * v00, v10, v01 and v11 are typically four texture samples in a square/box.
  * a and b are the horizontal and vertical interpolants.
  * It's important that this function is inlined when compiled with
@@ -105,14 +105,14 @@ lerp_3d(float a, float b, float c,
 
 /**
  * Compute coord % size for repeat wrap modes.
- * Note that if coord is a signed integer, coord % size doesn't give
- * the right value for coord < 0 (in terms of texture repeat).  Just
- * casting to unsigned fixes that.
+ * Note that if coord is negative, coord % size doesn't give the right
+ * value.  To avoid that problem we add a large multiple of the size
+ * (rather than using a conditional).
  */
 static INLINE int
 repeat(int coord, unsigned size)
 {
-   return (int) ((unsigned) coord % size);
+   return (coord + size * 1024) % size;
 }
 
 
@@ -656,7 +656,8 @@ get_texel_2d(const struct sp_sampler_varient *samp,
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level)) {
-      return samp->sampler->border_color;
+      return sp_tex_tile_cache_border_color(samp->cache,
+                                            samp->sampler->border_color);
    }
    else {
       return get_texel_2d_no_border( samp, addr, x, y );
@@ -750,7 +751,8 @@ get_texel_3d(const struct sp_sampler_varient *samp,
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level) ||
        z < 0 || z >= (int) u_minify(texture->depth0, level)) {
-      return samp->sampler->border_color;
+      return sp_tex_tile_cache_border_color(samp->cache,
+                                            samp->sampler->border_color);
    }
    else {
       return get_texel_3d_no_border( samp, addr, x, y, z );
@@ -1785,6 +1787,7 @@ get_lambda_func(const union sp_sampler_key key)
    case PIPE_TEXTURE_1D:
       return compute_lambda_1d;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       return compute_lambda_2d;
    case PIPE_TEXTURE_3D:
@@ -1809,6 +1812,7 @@ get_img_filter(const union sp_sampler_key key,
          return img_filter_1d_linear;
       break;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       /* Try for fast path:
        */
       if (key.bits.is_pot &&

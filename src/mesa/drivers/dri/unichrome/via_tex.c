@@ -31,8 +31,6 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/formats.h"
-#include "main/colortab.h"
-#include "main/convolve.h"
 #include "main/context.h"
 #include "main/mipmap.h"
 #include "main/mm.h"
@@ -676,11 +674,6 @@ static void viaTexImage(GLcontext *ctx,
       via_release_pending_textures(vmesa);
    }
 
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-                                         &postConvHeight);
-   }
-
    /* choose the texture format */
    texImage->TexFormat = viaChooseTexFormat(ctx, internalFormat, 
 					    format, type);
@@ -958,7 +951,6 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
    functions->TextureMemCpy = memcpy;
 #endif
 
-   functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = viaIsTextureResident;
 }
 

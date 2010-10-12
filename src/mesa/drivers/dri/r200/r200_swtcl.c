@@ -612,6 +612,8 @@ static void r200RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
+   radeon_prepare_render(&rmesa->radeon);
+
    if (rmesa->radeon.swtcl.hw_primitive != hwprim) {
       /* need to disable perspective-correct texturing for point sprites */
       if ((hwprim & 0xf) == R200_VF_PRIM_POINT_SPRITES && ctx->Point.PointSprite) {

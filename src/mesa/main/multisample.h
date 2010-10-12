@@ -26,6 +26,7 @@
 #ifndef MULTISAMPLE_H
 #define MULTISAMPLE_H
 
+#include "mtypes.h"
 
 extern void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);

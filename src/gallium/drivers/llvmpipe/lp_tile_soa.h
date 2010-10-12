@@ -79,14 +79,14 @@ void
 lp_tile_swizzle_4ub(enum pipe_format format,
                  uint8_t *dst,
                  const void *src, unsigned src_stride,
-                 unsigned x, unsigned y, unsigned w, unsigned h);
+                 unsigned x, unsigned y);
 
 
 void
 lp_tile_unswizzle_4ub(enum pipe_format format,
                   const uint8_t *src,
                   void *dst, unsigned dst_stride,
-                  unsigned x, unsigned y, unsigned w, unsigned h);
+                  unsigned x, unsigned y);
 
 
 

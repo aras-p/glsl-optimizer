@@ -32,6 +32,7 @@
 
 #include "os/os_thread.h"
 #include "pipe/p_state.h"
+#include "util/u_inlines.h"
 
 
 struct pipe_screen;
@@ -40,10 +41,12 @@ struct pipe_screen;
 struct lp_fence
 {
    struct pipe_reference reference;
+   unsigned id;
 
    pipe_mutex mutex;
    pipe_condvar signalled;
 
+   boolean issued;
    unsigned rank;
    unsigned count;
 };
@@ -56,9 +59,37 @@ lp_fence_create(unsigned rank);
 void
 lp_fence_signal(struct lp_fence *fence);
 
+boolean
+lp_fence_signalled(struct lp_fence *fence);
+
+void
+lp_fence_wait(struct lp_fence *fence);
 
 void
 llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen);
+
+
+void
+lp_fence_destroy(struct lp_fence *fence);
+
+static INLINE void
+lp_fence_reference(struct lp_fence **ptr,
+                   struct lp_fence *f)
+{
+   struct lp_fence *old = *ptr;
+
+   if (pipe_reference(&old->reference, &f->reference)) {
+      lp_fence_destroy(old);
+   }
+   
+   *ptr = f;
+}
+
+static INLINE boolean
+lp_fence_issued(const struct lp_fence *fence)
+{
+   return fence->issued;
+}
 
 
 #endif /* LP_FENCE_H */

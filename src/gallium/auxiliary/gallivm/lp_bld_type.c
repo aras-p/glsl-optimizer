@@ -195,6 +195,7 @@ lp_uint_type(struct lp_type type)
 {
    struct lp_type res_type;
 
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
    memset(&res_type, 0, sizeof res_type);
    res_type.width = type.width;
    res_type.length = type.length;
@@ -211,6 +212,7 @@ lp_int_type(struct lp_type type)
 {
    struct lp_type res_type;
 
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
    memset(&res_type, 0, sizeof res_type);
    res_type.width = type.width;
    res_type.length = type.length;
@@ -238,6 +240,131 @@ lp_wider_type(struct lp_type type)
 }
 
 
+/**
+ * Return the size of the LLVMType in bits.
+ * XXX this function doesn't necessarily handle all LLVM types.
+ */
+unsigned
+lp_sizeof_llvm_type(LLVMTypeRef t)
+{
+   LLVMTypeKind k = LLVMGetTypeKind(t);
+
+   switch (k) {
+   case LLVMIntegerTypeKind:
+      return LLVMGetIntTypeWidth(t);
+   case LLVMFloatTypeKind:
+      return 8 * sizeof(float);
+   case LLVMDoubleTypeKind:
+      return 8 * sizeof(double);
+   case LLVMVectorTypeKind:
+      {
+         LLVMTypeRef elem = LLVMGetElementType(t);
+         unsigned len = LLVMGetVectorSize(t);
+         return len * lp_sizeof_llvm_type(elem);
+      }
+      break;
+   case LLVMArrayTypeKind:
+      {
+         LLVMTypeRef elem = LLVMGetElementType(t);
+         unsigned len = LLVMGetArrayLength(t);
+         return len * lp_sizeof_llvm_type(elem);
+      }
+      break;
+   default:
+      assert(0 && "Unexpected type in lp_get_llvm_type_size()");
+      return 0;
+   }
+}
+
+
+/**
+ * Return string name for a LLVMTypeKind.  Useful for debugging.
+ */
+const char *
+lp_typekind_name(LLVMTypeKind t)
+{
+   switch (t) {
+   case LLVMVoidTypeKind:
+      return "LLVMVoidTypeKind";
+   case LLVMFloatTypeKind:
+      return "LLVMFloatTypeKind";
+   case LLVMDoubleTypeKind:
+      return "LLVMDoubleTypeKind";
+   case LLVMX86_FP80TypeKind:
+      return "LLVMX86_FP80TypeKind";
+   case LLVMFP128TypeKind:
+      return "LLVMFP128TypeKind";
+   case LLVMPPC_FP128TypeKind:
+      return "LLVMPPC_FP128TypeKind";
+   case LLVMLabelTypeKind:
+      return "LLVMLabelTypeKind";
+   case LLVMIntegerTypeKind:
+      return "LLVMIntegerTypeKind";
+   case LLVMFunctionTypeKind:
+      return "LLVMFunctionTypeKind";
+   case LLVMStructTypeKind:
+      return "LLVMStructTypeKind";
+   case LLVMArrayTypeKind:
+      return "LLVMArrayTypeKind";
+   case LLVMPointerTypeKind:
+      return "LLVMPointerTypeKind";
+   case LLVMOpaqueTypeKind:
+      return "LLVMOpaqueTypeKind";
+   case LLVMVectorTypeKind:
+      return "LLVMVectorTypeKind";
+   case LLVMMetadataTypeKind:
+      return "LLVMMetadataTypeKind";
+   /* Only in LLVM 2.7 and later???
+   case LLVMUnionTypeKind:
+      return "LLVMUnionTypeKind";
+   */
+   default:
+      return "unknown LLVMTypeKind";
+   }
+}
+
+
+/**
+ * Print an LLVMTypeRef.  Like LLVMDumpValue().  For debugging.
+ */
+void
+lp_dump_llvmtype(LLVMTypeRef t)
+{
+   LLVMTypeKind k = LLVMGetTypeKind(t);
+
+   if (k == LLVMVectorTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      LLVMTypeKind ke = LLVMGetTypeKind(te);
+      unsigned len = LLVMGetVectorSize(t);
+      if (ke == LLVMIntegerTypeKind) {
+         unsigned b = LLVMGetIntTypeWidth(te);
+         debug_printf("Vector [%u] of %u-bit Integer\n", len, b);
+      }
+      else {
+         debug_printf("Vector [%u] of %s\n", len, lp_typekind_name(ke));
+      }
+   }
+   else if (k == LLVMArrayTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      LLVMTypeKind ke = LLVMGetTypeKind(te);
+      unsigned len = LLVMGetArrayLength(t);
+      debug_printf("Array [%u] of %s\n", len, lp_typekind_name(ke));
+   }
+   else if (k == LLVMIntegerTypeKind) {
+      unsigned b = LLVMGetIntTypeWidth(t);
+      debug_printf("%u-bit Integer\n", b);
+   }
+   else if (k == LLVMPointerTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      debug_printf("Pointer to ");
+      lp_dump_llvmtype(te);
+   }
+   else {
+      debug_printf("%s\n", lp_typekind_name(k));
+   }
+}
+
+
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
@@ -245,7 +372,23 @@ lp_build_context_init(struct lp_build_context *bld,
 {
    bld->builder = builder;
    bld->type = type;
-   bld->undef = lp_build_undef(type);
-   bld->zero = lp_build_zero(type);
+
+   bld->int_elem_type = lp_build_int_elem_type(type);
+   if (type.floating)
+      bld->elem_type = lp_build_elem_type(type);
+   else
+      bld->elem_type = bld->int_elem_type;
+
+   if (type.length == 1) {
+      bld->int_vec_type = bld->int_elem_type;
+      bld->vec_type = bld->elem_type;
+   }
+   else {
+      bld->int_vec_type = LLVMVectorType(bld->int_elem_type, type.length);
+      bld->vec_type = LLVMVectorType(bld->elem_type, type.length);
+   }
+
+   bld->undef = LLVMGetUndef(bld->vec_type);
+   bld->zero = LLVMConstNull(bld->vec_type);
    bld->one = lp_build_one(type);
 }

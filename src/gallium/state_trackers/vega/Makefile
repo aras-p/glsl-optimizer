@@ -3,16 +3,14 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-VG_LIB = OpenVG
-VG_LIB_NAME = lib$(VG_LIB).so
+LIBNAME = vega
 
-VG_MAJOR = 1
-VG_MINOR = 0
-VG_TINY = 0
+LIBRARY_INCLUDES = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mapi
 
-### Lists of source files, included by Makefiles
-
-VG_SOURCES = \
+C_SOURCES = \
+           api.c           \
            api_context.c   \
            api_filters.c   \
            api_images.c    \
@@ -40,55 +38,4 @@ VG_SOURCES = \
            shader.c \
            shaders_cache.c
 
-VG_OBJECTS = $(VG_SOURCES:.c=.o)
-
-VG_LIBS = $(GALLIUM_AUXILIARIES)
-VG_LIB_DEPS = $(EXTRA_LIB_PATH) -lm
-
-### Include directories
-
-INCLUDE_DIRS = \
-	-I$(TOP)/include \
-	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/auxiliary
-
-
-.c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
-
-default: depend $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
-
-# Make the OpenVG library
-$(TOP)/$(LIB_DIR)/$(VG_LIB_NAME): $(VG_OBJECTS) $(VG_LIBS)
-	$(MKLIB) -o $(VG_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(VG_MAJOR) \
-		-minor $(VG_MINOR) \
-		-patch $(VG_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(VG_OBJECTS) $(VG_LIBS) $(VG_LIB_DEPS)
-
-######################################################################
-# Generic stuff
-
-depend: $(VG_SOURCES)
-	@ echo "running $(MKDEP)"
-	@ rm -f depend  # workaround oops on gutsy?!?
-	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(VG_SOURCES) \
-		> /dev/null 2>/dev/null
-
-install: default
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/VG
-	$(INSTALL) -m 644 $(TOP)/include/VG/*.h $(DESTDIR)$(INSTALL_DIR)/include/VG
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/libOpenVG* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-
-# Emacs tags
-tags:
-	etags `find . -name \*.[ch]` $(TOP)/include/VG/*.h
-
-clean:
-	rm -f $(VG_OBJECTS)
-	rm -f depend depend.bak
-
-sinclude depend
+include ../../Makefile.template

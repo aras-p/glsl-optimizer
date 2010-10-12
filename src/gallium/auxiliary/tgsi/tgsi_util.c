@@ -163,3 +163,150 @@ tgsi_util_set_full_src_register_sign_mode(
       assert( 0 );
    }
 }
+
+/**
+ * Determine which channels of the specificed src register are effectively
+ * used by this instruction.
+ */
+unsigned
+tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
+                              unsigned src_idx)
+{
+   const struct tgsi_full_src_register *src = &inst->Src[src_idx];
+   unsigned write_mask = inst->Dst[0].Register.WriteMask;
+   unsigned read_mask;
+   unsigned usage_mask;
+   unsigned chan;
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_ARL:
+   case TGSI_OPCODE_ARR:
+   case TGSI_OPCODE_RCP:
+   case TGSI_OPCODE_MUL:
+   case TGSI_OPCODE_DIV:
+   case TGSI_OPCODE_ADD:
+   case TGSI_OPCODE_MIN:
+   case TGSI_OPCODE_MAX:
+   case TGSI_OPCODE_SLT:
+   case TGSI_OPCODE_SGE:
+   case TGSI_OPCODE_MAD:
+   case TGSI_OPCODE_SUB:
+   case TGSI_OPCODE_LRP:
+   case TGSI_OPCODE_CND:
+   case TGSI_OPCODE_FRC:
+   case TGSI_OPCODE_CEIL:
+   case TGSI_OPCODE_CLAMP:
+   case TGSI_OPCODE_FLR:
+   case TGSI_OPCODE_ROUND:
+   case TGSI_OPCODE_POW:
+   case TGSI_OPCODE_ABS:
+   case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_SIN:
+   case TGSI_OPCODE_DDX:
+   case TGSI_OPCODE_DDY:
+   case TGSI_OPCODE_SEQ:
+   case TGSI_OPCODE_SGT:
+   case TGSI_OPCODE_SLE:
+   case TGSI_OPCODE_SNE:
+   case TGSI_OPCODE_SSG:
+   case TGSI_OPCODE_CMP:
+   case TGSI_OPCODE_TRUNC:
+   case TGSI_OPCODE_NOT:
+   case TGSI_OPCODE_AND:
+   case TGSI_OPCODE_OR:
+   case TGSI_OPCODE_XOR:
+   case TGSI_OPCODE_SAD:
+      /* Channel-wise operations */
+      read_mask = write_mask;
+      break;
+
+   case TGSI_OPCODE_EX2:
+   case TGSI_OPCODE_LG2:
+   case TGSI_OPCODE_RCC:
+      read_mask = TGSI_WRITEMASK_X;
+      break;
+
+   case TGSI_OPCODE_SCS:
+      read_mask = write_mask & TGSI_WRITEMASK_XY ? TGSI_WRITEMASK_X : 0;
+      break;
+
+   case TGSI_OPCODE_EXP:
+   case TGSI_OPCODE_LOG:
+      read_mask = write_mask & TGSI_WRITEMASK_XYZ ? TGSI_WRITEMASK_X : 0;
+      break;
+
+   case TGSI_OPCODE_DP2A:
+      read_mask = src_idx == 2 ? TGSI_WRITEMASK_X : TGSI_WRITEMASK_XY;
+      break;
+
+   case TGSI_OPCODE_DP2:
+      read_mask = TGSI_WRITEMASK_XY;
+      break;
+
+   case TGSI_OPCODE_DP3:
+      read_mask = TGSI_WRITEMASK_XYZ;
+      break;
+
+   case TGSI_OPCODE_DP4:
+      read_mask = TGSI_WRITEMASK_XYZW;
+      break;
+
+   case TGSI_OPCODE_DPH:
+      read_mask = src_idx == 0 ? TGSI_WRITEMASK_XYZ : TGSI_WRITEMASK_XYZW;
+      break;
+
+   case TGSI_OPCODE_TEX:
+   case TGSI_OPCODE_TXD:
+   case TGSI_OPCODE_TXB:
+   case TGSI_OPCODE_TXL:
+   case TGSI_OPCODE_TXP:
+      if (src_idx == 0) {
+         /* Note that the SHADOW variants use the Z component too */
+         switch (inst->Texture.Texture) {
+         case TGSI_TEXTURE_1D:
+            read_mask = TGSI_WRITEMASK_X;
+            break;
+         case TGSI_TEXTURE_SHADOW1D:
+            read_mask = TGSI_WRITEMASK_XZ;
+            break;
+         case TGSI_TEXTURE_2D:
+         case TGSI_TEXTURE_RECT:
+            read_mask = TGSI_WRITEMASK_XY;
+            break;
+         case TGSI_TEXTURE_SHADOW2D:
+         case TGSI_TEXTURE_SHADOWRECT:
+         case TGSI_TEXTURE_3D:
+         case TGSI_TEXTURE_CUBE:
+            read_mask = TGSI_WRITEMASK_XYZ;
+            break;
+
+         default:
+            assert(0);
+            read_mask = 0;
+         }
+
+         if (inst->Instruction.Opcode != TGSI_OPCODE_TEX) {
+            read_mask |= TGSI_WRITEMASK_W;
+         }
+      } else {
+         /* A safe approximation */
+         read_mask = TGSI_WRITEMASK_XYZW;
+      }
+      break;
+
+   default:
+      /* Assume all channels are read */
+      read_mask = TGSI_WRITEMASK_XYZW;
+      break;
+   }
+
+   usage_mask = 0;
+   for (chan = 0; chan < 4; ++chan) {
+      if (read_mask & (1 << chan)) {
+         usage_mask |= 1 << tgsi_util_get_full_src_register_swizzle(src, chan);
+      }
+   }
+
+   return usage_mask;
+}

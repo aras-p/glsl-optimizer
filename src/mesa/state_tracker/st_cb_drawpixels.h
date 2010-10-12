@@ -30,10 +30,30 @@
 #define ST_CB_DRAWPIXELS_H
 
 
+#include "main/compiler.h"
+
+struct dd_function_table;
+struct st_context;
+
+#if FEATURE_drawpix
+
 extern void st_init_drawpixels_functions(struct dd_function_table *functions);
 
 extern void
 st_destroy_drawpix(struct st_context *st);
 
+#else
+
+static INLINE void
+st_init_drawpixels_functions(struct dd_function_table *functions)
+{
+}
+
+static INLINE void
+st_destroy_drawpix(struct st_context *st)
+{
+}
+
+#endif /* FEATURE_drawpix */
 
 #endif /* ST_CB_DRAWPIXELS_H */

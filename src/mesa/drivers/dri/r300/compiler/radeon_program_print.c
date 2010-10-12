@@ -38,6 +38,24 @@ static const char * textarget_to_string(rc_texture_target target)
 	}
 }
 
+static const char * presubtract_op_to_string(rc_presubtract_op op)
+{
+	switch(op) {
+	case RC_PRESUB_NONE:
+		return "NONE";
+	case RC_PRESUB_BIAS:
+		return "(1 - 2 * src0)";
+	case RC_PRESUB_SUB:
+		return "(src1 - src0)";
+	case RC_PRESUB_ADD:
+		return "(src1 + src0)";
+	case RC_PRESUB_INV:
+		return "(1 - src0)";
+	default:
+		return "BAD_PRESUBTRACT_OP";
+	}
+}
+
 static void rc_print_comparefunc(FILE * f, const char * lhs, rc_compare_func func, const char * rhs)
 {
 	if (func == RC_COMPARE_FUNC_NEVER) {
@@ -125,7 +143,43 @@ static void rc_print_swizzle(FILE * f, unsigned int swizzle, unsigned int negate
 	}
 }
 
-static void rc_print_src_register(FILE * f, struct rc_src_register src)
+static void rc_print_presub_instruction(FILE * f,
+					struct rc_presub_instruction inst)
+{
+	fprintf(f,"(");
+	switch(inst.Opcode){
+	case RC_PRESUB_BIAS:
+		fprintf(f, "1 - 2 * ");
+		rc_print_register(f, inst.SrcReg[0].File,
+				inst.SrcReg[0].Index,inst.SrcReg[0].RelAddr);
+		break;
+	case RC_PRESUB_SUB:
+		rc_print_register(f, inst.SrcReg[1].File,
+				inst.SrcReg[1].Index,inst.SrcReg[1].RelAddr);
+		fprintf(f, " - ");
+		rc_print_register(f, inst.SrcReg[0].File,
+				inst.SrcReg[0].Index,inst.SrcReg[0].RelAddr);
+		break;
+	case RC_PRESUB_ADD:
+		rc_print_register(f, inst.SrcReg[1].File,
+				inst.SrcReg[1].Index,inst.SrcReg[1].RelAddr);
+		fprintf(f, " + ");
+		rc_print_register(f, inst.SrcReg[0].File,
+				inst.SrcReg[0].Index,inst.SrcReg[0].RelAddr);
+		break;
+	case RC_PRESUB_INV:
+		fprintf(f, "1 - ");
+		rc_print_register(f, inst.SrcReg[0].File,
+				inst.SrcReg[0].Index,inst.SrcReg[0].RelAddr);
+		break;
+	default:
+		break;
+	}
+	fprintf(f, ")");
+}
+
+static void rc_print_src_register(FILE * f, struct rc_instruction * inst,
+						struct rc_src_register src)
 {
 	int trivial_negate = (src.Negate == RC_MASK_NONE || src.Negate == RC_MASK_XYZW);
 
@@ -134,7 +188,10 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 	if (src.Abs)
 		fprintf(f, "|");
 
-	rc_print_register(f, src.File, src.Index, src.RelAddr);
+	if(src.File == RC_FILE_PRESUB)
+		rc_print_presub_instruction(f, inst->U.I.PreSub);
+	else
+		rc_print_register(f, src.File, src.Index, src.RelAddr);
 
 	if (src.Abs && !trivial_negate)
 		fprintf(f, "|");
@@ -148,10 +205,35 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 		fprintf(f, "|");
 }
 
-static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
+static unsigned update_branch_depth(rc_opcode opcode, unsigned *branch_depth)
+{
+	switch (opcode) {
+	case RC_OPCODE_IF:
+	case RC_OPCODE_BGNLOOP:
+		return (*branch_depth)++ * 2;
+
+	case RC_OPCODE_ENDIF:
+	case RC_OPCODE_ENDLOOP:
+		assert(*branch_depth > 0);
+		return --(*branch_depth) * 2;
+
+	case RC_OPCODE_ELSE:
+		assert(*branch_depth > 0);
+		return (*branch_depth - 1) * 2;
+
+	default:
+		return *branch_depth * 2;
+	}
+}
+
+static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst, unsigned *branch_depth)
 {
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int reg;
+	unsigned spaces = update_branch_depth(inst->U.I.Opcode, branch_depth);
+
+	for (unsigned i = 0; i < spaces; i++)
+		fprintf(f, " ");
 
 	fprintf(f, "%s", opcode->Name);
 
@@ -173,7 +255,7 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
 		if (reg > 0)
 			fprintf(f, ",");
 		fprintf(f, " ");
-		rc_print_src_register(f, inst->U.I.SrcReg[reg]);
+		rc_print_src_register(f, inst, inst->U.I.SrcReg[reg]);
 	}
 
 	if (opcode->HasTexture) {
@@ -196,10 +278,15 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
 	fprintf(f, "\n");
 }
 
-static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst)
+static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst, unsigned *branch_depth)
 {
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 	int printedsrc = 0;
+	unsigned spaces = update_branch_depth(inst->RGB.Opcode != RC_OPCODE_NOP ?
+					      inst->RGB.Opcode : inst->Alpha.Opcode, branch_depth);
+
+	for (unsigned i = 0; i < spaces; i++)
+		fprintf(f, " ");
 
 	for(unsigned int src = 0; src < 3; ++src) {
 		if (inst->RGB.Src[src].Used) {
@@ -217,10 +304,23 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 			printedsrc = 1;
 		}
 	}
+	if(inst->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		fprintf(f, ", srcp.xyz = %s",
+			presubtract_op_to_string(
+					inst->RGB.Src[RC_PAIR_PRESUB_SRC].Index));
+	}
+	if(inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
+		fprintf(f, ", srcp.w = %s",
+			presubtract_op_to_string(
+					inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Index));
+	}
 	fprintf(f, "\n");
 
 	if (inst->RGB.Opcode != RC_OPCODE_NOP) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->RGB.Opcode);
+
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
 
 		fprintf(f, "     %s%s", opcode->Name, inst->RGB.Saturate ? "_SAT" : "");
 		if (inst->RGB.WriteMask)
@@ -239,7 +339,12 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 			const char* abs = inst->RGB.Arg[arg].Abs ? "|" : "";
 			const char* neg = inst->RGB.Arg[arg].Negate ? "-" : "";
-			fprintf(f, ", %s%ssrc%i.%c%c%c%s", neg, abs, inst->RGB.Arg[arg].Source,
+			fprintf(f, ", %s%ssrc", neg, abs);
+			if(inst->RGB.Arg[arg].Source == RC_PAIR_PRESUB_SRC)
+				fprintf(f,"p");
+			else
+				fprintf(f,"%d", inst->RGB.Arg[arg].Source);
+			fprintf(f,".%c%c%c%s",
 				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 0)),
 				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 1)),
 				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 2)),
@@ -250,6 +355,9 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 
 	if (inst->Alpha.Opcode != RC_OPCODE_NOP) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Alpha.Opcode);
+
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
 
 		fprintf(f, "     %s%s", opcode->Name, inst->Alpha.Saturate ? "_SAT" : "");
 		if (inst->Alpha.WriteMask)
@@ -264,13 +372,21 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 			const char* abs = inst->Alpha.Arg[arg].Abs ? "|" : "";
 			const char* neg = inst->Alpha.Arg[arg].Negate ? "-" : "";
-			fprintf(f, ", %s%ssrc%i.%c%s", neg, abs, inst->Alpha.Arg[arg].Source,
+			fprintf(f, ", %s%ssrc", neg, abs);
+			if(inst->Alpha.Arg[arg].Source == RC_PAIR_PRESUB_SRC)
+				fprintf(f,"p");
+			else
+				fprintf(f,"%d", inst->Alpha.Arg[arg].Source);
+			fprintf(f,".%c%s",
 				rc_swizzle_char(inst->Alpha.Arg[arg].Swizzle), abs);
 		}
 		fprintf(f, "\n");
 	}
 
 	if (inst->WriteALUResult) {
+		for (unsigned i = 0; i < spaces; i++)
+			fprintf(f, " ");
+
 		fprintf(f, "      [aluresult = (");
 		rc_print_comparefunc(f, "result", inst->ALUResultCompare, "0");
 		fprintf(f, ")]\n");
@@ -283,6 +399,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 void rc_print_program(const struct rc_program *prog)
 {
 	unsigned int linenum = 0;
+	unsigned branch_depth = 0;
 	struct rc_instruction *inst;
 
 	fprintf(stderr, "# Radeon Compiler Program\n");
@@ -291,9 +408,9 @@ void rc_print_program(const struct rc_program *prog)
 		fprintf(stderr, "%3d: ", linenum);
 
 		if (inst->Type == RC_INSTRUCTION_PAIR)
-			rc_print_pair_instruction(stderr, inst);
+			rc_print_pair_instruction(stderr, inst, &branch_depth);
 		else
-			rc_print_normal_instruction(stderr, inst);
+			rc_print_normal_instruction(stderr, inst, &branch_depth);
 
 		linenum++;
 	}

@@ -43,14 +43,13 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_draw.h"
-#include "brw_state.h"
 #include "brw_vs.h"
 #include "brw_wm.h"
 
 static void
-dri_bo_release(dri_bo **bo)
+dri_bo_release(drm_intel_bo **bo)
 {
-   dri_bo_unreference(*bo);
+   drm_intel_bo_unreference(*bo);
    *bo = NULL;
 }
 
@@ -83,6 +82,7 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->vs.prog_bo);
    dri_bo_release(&brw->vs.state_bo);
    dri_bo_release(&brw->vs.bind_bo);
+   dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->gs.prog_bo);
    dri_bo_release(&brw->gs.state_bo);
    dri_bo_release(&brw->clip.prog_bo);
@@ -99,12 +99,17 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->wm.sampler_bo);
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
+   dri_bo_release(&brw->wm.const_bo);
+   dri_bo_release(&brw->wm.push_const_bo);
    dri_bo_release(&brw->cc.prog_bo);
    dri_bo_release(&brw->cc.state_bo);
    dri_bo_release(&brw->cc.vp_bo);
    dri_bo_release(&brw->cc.blend_state_bo);
    dri_bo_release(&brw->cc.depth_stencil_state_bo);
    dri_bo_release(&brw->cc.color_calc_state_bo);
+
+   free(brw->curbe.last_buf);
+   free(brw->curbe.next_buf);
 }
 
 
@@ -172,7 +177,7 @@ static void brw_new_batch( struct intel_context *intel )
     * a new buffer next time.
     */
    if (brw->vb.upload.bo != NULL) {
-      dri_bo_unreference(brw->vb.upload.bo);
+      drm_intel_bo_unreference(brw->vb.upload.bo);
       brw->vb.upload.bo = NULL;
       brw->vb.upload.offset = 0;
    }

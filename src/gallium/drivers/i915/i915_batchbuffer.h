@@ -30,6 +30,8 @@
 
 #include "i915_winsys.h"
 
+struct i915_context;
+
 static INLINE boolean
 i915_winsys_batchbuffer_check(struct i915_winsys_batchbuffer *batch,
                               size_t dwords,
@@ -75,13 +77,6 @@ i915_winsys_batchbuffer_reloc(struct i915_winsys_batchbuffer *batch,
                               size_t offset)
 {
    return batch->iws->batchbuffer_reloc(batch, buffer, usage, offset);
-}
-
-static INLINE void
-i915_winsys_batchbuffer_flush(struct i915_winsys_batchbuffer *batch,
-                              struct pipe_fence_handle **fence)
-{
-   batch->iws->batchbuffer_flush(batch, fence);
 }
 
 #endif

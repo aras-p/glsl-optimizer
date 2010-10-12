@@ -642,7 +642,7 @@ void xorg_shaders_destroy(struct xorg_shaders *sc)
    cache_destroy(sc->r->cso, sc->fs_hash,
                  PIPE_SHADER_FRAGMENT);
 
-   free(sc);
+   FREE(sc);
 }
 
 static INLINE void *

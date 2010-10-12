@@ -30,19 +30,21 @@
 #include "util/u_format.h"
 #include "vmw_screen.h"
 
-#include "trace/tr_drm.h"
-
-#include "vmw_screen.h"
 #include "vmw_surface.h"
-#include "vmw_fence.h"
-#include "vmw_context.h"
+#include "svga_drm_public.h"
 
-#include <state_tracker/dri1_api.h>
-#include <state_tracker/drm_api.h>
+#include "state_tracker/drm_driver.h"
+
 #include "vmwgfx_drm.h"
 #include <xf86drm.h>
 
 #include <stdio.h>
+
+struct dri1_api_version {
+   int major;
+   int minor;
+   int patch_level;
+};
 
 static struct svga_winsys_surface *
 vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
@@ -54,11 +56,6 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   unsigned stride,
 			   struct winsys_handle *whandle);
 
-static struct dri1_api dri1_api_hooks;
-static struct dri1_api_version ddx_required = { 0, 1, 0 };
-static struct dri1_api_version ddx_compat = { 0, 0, 0 };
-static struct dri1_api_version dri_required = { 4, 0, 0 };
-static struct dri1_api_version dri_compat = { 4, 0, 0 };
 static struct dri1_api_version drm_required = { 1, 0, 0 };
 static struct dri1_api_version drm_compat = { 1, 0, 0 };
 static struct dri1_api_version drm_scanout = { 0, 9, 0 };
@@ -84,71 +81,34 @@ vmw_dri1_check_version(const struct dri1_api_version *cur,
    return FALSE;
 }
 
-/* This is actually the entrypoint to the entire driver, called by the
- * libGL (or EGL, or ...) code via the drm_api_hooks table at the
- * bottom of the file.
+/* This is actually the entrypoint to the entire driver,
+ * called by the target bootstrap code.
  */
-static struct pipe_screen *
-vmw_drm_create_screen(struct drm_api *drm_api,
-                      int fd,
-                      struct drm_create_screen_arg *arg)
+struct svga_winsys_screen *
+svga_drm_winsys_screen_create(int fd)
 {
    struct vmw_winsys_screen *vws;
-   struct pipe_screen *screen;
-   struct dri1_create_screen_arg *dri1;
    boolean use_old_scanout_flag = FALSE;
 
-   if (!arg || arg->mode == DRM_CREATE_NORMAL) {
-      struct dri1_api_version drm_ver;
-      drmVersionPtr ver;
+   struct dri1_api_version drm_ver;
+   drmVersionPtr ver;
 
-      ver = drmGetVersion(fd);
-      if (ver == NULL)
-	 return NULL;
+   ver = drmGetVersion(fd);
+   if (ver == NULL)
+      return NULL;
 
-      drm_ver.major = ver->version_major;
-      drm_ver.minor = ver->version_minor;
-      drm_ver.patch_level = 0; /* ??? */
+   drm_ver.major = ver->version_major;
+   drm_ver.minor = ver->version_minor;
+   drm_ver.patch_level = 0; /* ??? */
 
-      drmFreeVersion(ver);
-      if (!vmw_dri1_check_version(&drm_ver, &drm_required,
-				  &drm_compat, "vmwgfx drm driver"))
-	 return NULL;
+   drmFreeVersion(ver);
+   if (!vmw_dri1_check_version(&drm_ver, &drm_required,
+			       &drm_compat, "vmwgfx drm driver"))
+      return NULL;
 
-      if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
-				  &drm_compat, "use old scanout field (not a error)"))
-         use_old_scanout_flag = TRUE;
-   }
-
-   if (arg != NULL) {
-      switch (arg->mode) {
-      case DRM_CREATE_NORMAL:
-	 break;
-      case DRM_CREATE_DRI1:
-	 dri1 = (struct dri1_create_screen_arg *)arg;
-	 if (!vmw_dri1_check_version(&dri1->ddx_version, &ddx_required,
-				     &ddx_compat, "ddx - driver api"))
-	    return NULL;
-	 if (!vmw_dri1_check_version(&dri1->dri_version, &dri_required,
-				     &dri_compat, "dri info"))
-	    return NULL;
-	 if (!vmw_dri1_check_version(&dri1->drm_version, &drm_required,
-				     &drm_compat, "vmwgfx drm driver"))
-	    return NULL;
-	 if (!vmw_dri1_check_version(&dri1->drm_version, &drm_scanout,
-				     &drm_compat, "use old scanout field (not a error)"))
-	    use_old_scanout_flag = TRUE;
-	 dri1->api = &dri1_api_hooks;
-#if 0
-	 break;
-#else
-	 assert(!"No dri 1 support for now\n");
-	 return NULL;
-#endif
-      default:
-	 return NULL;
-      }
-   }
+   if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
+			       &drm_compat, "use old scanout field (not a error)"))
+      use_old_scanout_flag = TRUE;
 
    vws = vmw_winsys_create( fd, use_old_scanout_flag );
    if (!vws)
@@ -158,16 +118,7 @@ vmw_drm_create_screen(struct drm_api *drm_api,
    vws->base.surface_from_handle = vmw_drm_surface_from_handle;
    vws->base.surface_get_handle = vmw_drm_surface_get_handle;
 
-   screen = svga_screen_create( &vws->base );
-   if (!screen)
-      goto out_no_screen;
-
-   return screen;
-
-   /* Failure cases:
-    */
-out_no_screen:
-   vmw_winsys_destroy( vws );
+   return &vws->base;
 
 out_no_vws:
    return NULL;
@@ -203,72 +154,6 @@ vmw_dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    dst->y1 = xy1;
    dst->y2 = xy2;
    return TRUE;
-}
-
-/**
- * No fancy get-surface-from-sarea stuff here.
- * Just use the present blit.
- */
-
-static void
-vmw_dri1_present_locked(struct pipe_context *locked_pipe,
-			struct pipe_surface *surf,
-			const struct drm_clip_rect *rect,
-			unsigned int num_clip,
-			int x_draw, int y_draw,
-			const struct drm_clip_rect *bbox,
-			struct pipe_fence_handle **p_fence)
-{
-#if 0
-   struct svga_winsys_surface *srf =
-      svga_screen_texture_get_winsys_surface(surf->texture);
-   struct vmw_svga_winsys_surface *vsrf = vmw_svga_winsys_surface(srf);
-   struct vmw_winsys_screen *vws =
-      vmw_winsys_screen(svga_winsys_screen(locked_pipe->screen));
-   struct drm_clip_rect clip;
-   int i;
-   struct
-   {
-      SVGA3dCmdHeader header;
-      SVGA3dCmdPresent body;
-      SVGA3dCopyRect rect;
-   } cmd;
-   boolean visible = FALSE;
-   uint32_t fence_seq = 0;
-
-   VMW_FUNC;
-   cmd.header.id = SVGA_3D_CMD_PRESENT;
-   cmd.header.size = sizeof cmd.body + sizeof cmd.rect;
-   cmd.body.sid = vsrf->sid;
-
-   for (i = 0; i < num_clip; ++i) {
-      if (!vmw_dri1_intersect_src_bbox(&clip, x_draw, y_draw, rect++, bbox))
-	 continue;
-
-      cmd.rect.x = clip.x1;
-      cmd.rect.y = clip.y1;
-      cmd.rect.w = clip.x2 - clip.x1;
-      cmd.rect.h = clip.y2 - clip.y1;
-      cmd.rect.srcx = (int)clip.x1 - x_draw;
-      cmd.rect.srcy = (int)clip.y1 - y_draw;
-
-      vmw_printf("%s: Clip %d x %d y %d w %d h %d srcx %d srcy %d\n",
-		   __FUNCTION__,
-		   i,
-		   cmd.rect.x,
-		   cmd.rect.y,
-		   cmd.rect.w, cmd.rect.h, cmd.rect.srcx, cmd.rect.srcy);
-
-      vmw_ioctl_command(vws, &cmd, sizeof cmd.header + cmd.header.size,
-                        &fence_seq);
-      visible = TRUE;
-   }
-
-   *p_fence = (visible) ? vmw_pipe_fence(fence_seq) : NULL;
-   vmw_svga_winsys_surface_reference(&vsrf, NULL);
-#else
-   assert(!"No dri 1 support for now\n");
-#endif
 }
 
 static struct svga_winsys_surface *
@@ -317,7 +202,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 		    whandle->handle, i);
 	    goto out_mip;
 	}
-    }
+   }
 
     vsrf = CALLOC_STRUCT(vmw_svga_winsys_surface);
     if (!vsrf)
@@ -353,22 +238,4 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
     whandle->stride = stride;
 
     return TRUE;
-}
-
-
-static struct dri1_api dri1_api_hooks = {
-   .front_srf_locked = NULL,
-   .present_locked = vmw_dri1_present_locked
-};
-
-static struct drm_api vmw_drm_api_hooks = {
-   .name = "vmwgfx",
-   .driver_name = "vmwgfx",
-   .create_screen = vmw_drm_create_screen,
-   .destroy = NULL,
-};
-
-struct drm_api* drm_api_create()
-{
-   return trace_drm_create(&vmw_drm_api_hooks);
 }

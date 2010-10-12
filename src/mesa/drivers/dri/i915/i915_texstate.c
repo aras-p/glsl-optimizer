@@ -146,7 +146,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /*We need to refcount these. */
 
    if (i915->state.tex_buffer[unit] != NULL) {
-       dri_bo_unreference(i915->state.tex_buffer[unit]);
+       drm_intel_bo_unreference(i915->state.tex_buffer[unit]);
        i915->state.tex_buffer[unit] = NULL;
    }
 
@@ -158,7 +158,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   dri_bo_reference(intelObj->mt->region->buffer);
+   drm_intel_bo_reference(intelObj->mt->region->buffer);
    i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
    i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
 
@@ -281,6 +281,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       GLenum ws = tObj->WrapS;
       GLenum wt = tObj->WrapT;
       GLenum wr = tObj->WrapR;
+      float minlod;
 
       /* We program 1D textures as 2D textures, so the 2D texcoord could
        * result in sampling border values if we don't set the T wrap to
@@ -321,8 +322,9 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
           (translate_wrap_mode(wt) << SS3_TCY_ADDR_MODE_SHIFT) |
           (translate_wrap_mode(wr) << SS3_TCZ_ADDR_MODE_SHIFT));
 
+      minlod = MIN2(tObj->MinLod, tObj->_MaxLevel - tObj->BaseLevel);
       state[I915_TEXREG_SS3] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
-      state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(tObj->MinLod, 0.0, 11.0), 4) <<
+      state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(minlod, 0.0, 11.0), 4) <<
 				 SS3_MIN_LOD_SHIFT);
 
    }
@@ -395,7 +397,7 @@ i915UpdateTextureState(struct intel_context *intel)
                I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), GL_FALSE);
 
 	    if (i915->state.tex_buffer[i] != NULL) {
-	       dri_bo_unreference(i915->state.tex_buffer[i]);
+	       drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	       i915->state.tex_buffer[i] = NULL;
 	    }
 

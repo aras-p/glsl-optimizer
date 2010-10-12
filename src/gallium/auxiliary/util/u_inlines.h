@@ -33,6 +33,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_screen.h"
 #include "util/u_debug.h"
+#include "util/u_debug_describe.h"
+#include "util/u_debug_refcnt.h"
 #include "util/u_atomic.h"
 #include "util/u_box.h"
 #include "util/u_math.h"
@@ -67,7 +69,9 @@ pipe_is_referenced(struct pipe_reference *reference)
  * \return TRUE if the object's refcount hits zero and should be destroyed.
  */
 static INLINE boolean
-pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
+pipe_reference_described(struct pipe_reference *ptr, 
+                         struct pipe_reference *reference, 
+                         debug_reference_descriptor get_desc)
 {
    boolean destroy = FALSE;
 
@@ -76,6 +80,7 @@ pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
       if (reference) {
          assert(pipe_is_referenced(reference));
          p_atomic_inc(&reference->count);
+         debug_reference(reference, get_desc, 1);
       }
 
       if (ptr) {
@@ -83,41 +88,49 @@ pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
          if (p_atomic_dec_zero(&ptr->count)) {
             destroy = TRUE;
          }
+         debug_reference(ptr, get_desc, -1);
       }
    }
 
    return destroy;
 }
 
+static INLINE boolean
+pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
+{
+   return pipe_reference_described(ptr, reference, 
+                                   (debug_reference_descriptor)debug_describe_reference);
+}
 
 static INLINE void
 pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    struct pipe_surface *old_surf = *ptr;
 
-   if (pipe_reference(&(*ptr)->reference, &surf->reference))
+   if (pipe_reference_described(&(*ptr)->reference, &surf->reference, 
+                                (debug_reference_descriptor)debug_describe_surface))
       old_surf->texture->screen->tex_surface_destroy(old_surf);
    *ptr = surf;
 }
-
 
 static INLINE void
 pipe_resource_reference(struct pipe_resource **ptr, struct pipe_resource *tex)
 {
    struct pipe_resource *old_tex = *ptr;
 
-   if (pipe_reference(&(*ptr)->reference, &tex->reference))
+   if (pipe_reference_described(&(*ptr)->reference, &tex->reference, 
+                                (debug_reference_descriptor)debug_describe_resource))
       old_tex->screen->resource_destroy(old_tex->screen, old_tex);
    *ptr = tex;
 }
-
 
 static INLINE void
 pipe_sampler_view_reference(struct pipe_sampler_view **ptr, struct pipe_sampler_view *view)
 {
    struct pipe_sampler_view *old_view = *ptr;
 
-   if (pipe_reference(&(*ptr)->reference, &view->reference))
+   if (pipe_reference_described(&(*ptr)->reference, &view->reference,
+                                (debug_reference_descriptor)debug_describe_sampler_view))
       old_view->context->sampler_view_destroy(old_view->context, old_view);
    *ptr = view;
 }
@@ -368,6 +381,23 @@ pipe_transfer_destroy( struct pipe_context *context,
    context->transfer_destroy(context, transfer);
 }
 
+
+static INLINE boolean util_get_offset( 
+   const struct pipe_rasterizer_state *templ,
+   unsigned fill_mode)
+{
+   switch(fill_mode) {
+   case PIPE_POLYGON_MODE_POINT:
+      return templ->offset_point;
+   case PIPE_POLYGON_MODE_LINE:
+      return templ->offset_line;
+   case PIPE_POLYGON_MODE_FILL:
+      return templ->offset_tri;
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
 
 #ifdef __cplusplus
 }

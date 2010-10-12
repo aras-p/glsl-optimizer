@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 #include "draw/draw_context.h"
 #include "sp_flush.h"
 #include "sp_context.h"
@@ -55,6 +56,9 @@ softpipe_flush( struct pipe_context *pipe,
       }
       for (i = 0; i < softpipe->num_vertex_sampler_views; i++) {
          sp_flush_tex_tile_cache(softpipe->vertex_tex_cache[i]);
+      }
+      for (i = 0; i < softpipe->num_geometry_sampler_views; i++) {
+         sp_flush_tex_tile_cache(softpipe->geometry_tex_cache[i]);
       }
    }
 

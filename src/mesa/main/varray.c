@@ -31,6 +31,7 @@
 #include "enable.h"
 #include "enums.h"
 #include "hash.h"
+#include "macros.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
@@ -710,6 +711,266 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 #endif
 
 
+/**
+ * New in GL3:
+ * Set an integer-valued vertex attribute array.
+ * Note that these arrays DO NOT alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ */
+void GLAPIENTRY
+_mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
+                           GLboolean normalized,
+                           GLsizei stride, const GLvoid *ptr)
+{
+   /* NOTE: until we have integer-valued vertex attributes, just
+    * route this through the regular glVertexAttribPointer() function.
+    */
+   _mesa_VertexAttribPointerARB(index, size, type, normalized, stride, ptr);
+}
+
+
+
+void GLAPIENTRY
+_mesa_EnableVertexAttribArrayARB(GLuint index)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glEnableVertexAttribArrayARB(index)");
+      return;
+   }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   FLUSH_VERTICES(ctx, _NEW_ARRAY);
+   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
+   ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
+   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+}
+
+
+void GLAPIENTRY
+_mesa_DisableVertexAttribArrayARB(GLuint index)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glEnableVertexAttribArrayARB(index)");
+      return;
+   }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   FLUSH_VERTICES(ctx, _NEW_ARRAY);
+   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
+   ctx->Array.ArrayObj->_Enabled &= ~_NEW_ARRAY_ATTRIB(index);
+   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+}
+
+
+/**
+ * Return info for a vertex attribute array (no alias with legacy
+ * vertex attributes (pos, normal, color, etc)).  This function does
+ * not handle the 4-element GL_CURRENT_VERTEX_ATTRIB_ARB query.
+ */
+static GLuint
+get_vertex_array_attrib(GLcontext *ctx, GLuint index, GLenum pname,
+                  const char *caller)
+{
+   const struct gl_client_array *array;
+
+   if (index >= MAX_VERTEX_GENERIC_ATTRIBS) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)", caller, index);
+      return 0;
+   }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+
+   switch (pname) {
+   case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
+      return array->Enabled;
+   case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
+      return array->Size;
+   case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
+      return array->Stride;
+   case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
+      return array->Type;
+   case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
+      return array->Normalized;
+   case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
+      return array->BufferObj->Name;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=0x%x)", caller, pname);
+      return 0;
+   }
+}
+
+
+void GLAPIENTRY
+_mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+      if (index == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetVertexAttribfv(index==0)");
+      }
+      else {
+         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+         FLUSH_CURRENT(ctx, 0);
+         COPY_4V(params, v);
+      }
+   }
+   else {
+      params[0] = (GLfloat) get_vertex_array_attrib(ctx, index, pname,
+                                                    "glGetVertexAttribfv");
+   }
+}
+
+
+void GLAPIENTRY
+_mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+      if (index == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetVertexAttribdv(index==0)");
+      }
+      else {
+         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = (GLdouble) v[0];
+         params[1] = (GLdouble) v[1];
+         params[2] = (GLdouble) v[2];
+         params[3] = (GLdouble) v[3];
+      }
+   }
+   else {
+      params[0] = (GLdouble) get_vertex_array_attrib(ctx, index, pname,
+                                                     "glGetVertexAttribdv");
+   }
+}
+
+
+void GLAPIENTRY
+_mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+      if (index == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetVertexAttribiv(index==0)");
+      }
+      else {
+         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+         FLUSH_CURRENT(ctx, 0);
+         /* XXX should floats in[0,1] be scaled to full int range? */
+         params[0] = (GLint) v[0];
+         params[1] = (GLint) v[1];
+         params[2] = (GLint) v[2];
+         params[3] = (GLint) v[3];
+      }
+   }
+   else {
+      params[0] = (GLint) get_vertex_array_attrib(ctx, index, pname,
+                                                  "glGetVertexAttribiv");
+   }
+}
+
+
+/** GL 3.0 */
+void GLAPIENTRY
+_mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+      if (index == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetVertexAttribIiv(index==0)");
+      }
+      else {
+         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+         FLUSH_CURRENT(ctx, 0);
+         /* XXX we don't have true integer-valued vertex attribs yet */
+         params[0] = (GLint) v[0];
+         params[1] = (GLint) v[1];
+         params[2] = (GLint) v[2];
+         params[3] = (GLint) v[3];
+      }
+   }
+   else {
+      params[0] = (GLint) get_vertex_array_attrib(ctx, index, pname,
+                                                  "glGetVertexAttribIiv");
+   }
+}
+
+
+/** GL 3.0 */
+void GLAPIENTRY
+_mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+      if (index == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetVertexAttribIuiv(index==0)");
+      }
+      else {
+         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+         FLUSH_CURRENT(ctx, 0);
+         /* XXX we don't have true integer-valued vertex attribs yet */
+         params[0] = (GLuint) v[0];
+         params[1] = (GLuint) v[1];
+         params[2] = (GLuint) v[2];
+         params[3] = (GLuint) v[3];
+      }
+   }
+   else {
+      params[0] = get_vertex_array_attrib(ctx, index, pname,
+                                          "glGetVertexAttribIuiv");
+   }
+}
+
+
+void GLAPIENTRY
+_mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribPointerARB(index)");
+      return;
+   }
+
+   if (pname != GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribPointerARB(pname)");
+      return;
+   }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
+}
+
+
 void GLAPIENTRY
 _mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
                        GLsizei count, const GLvoid *ptr)
@@ -995,8 +1256,8 @@ _mesa_UnlockArraysEXT( void )
 /* GL_EXT_multi_draw_arrays */
 /* Somebody forgot to spec the first and count parameters as const! <sigh> */
 void GLAPIENTRY
-_mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount )
+_mesa_MultiDrawArraysEXT( GLenum mode, const GLint *first,
+                          const GLsizei *count, GLsizei primcount )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -1107,10 +1368,10 @@ print_array(const char *name, GLint index, const struct gl_client_array *array)
       printf("  %s[%d]: ", name, index);
    else
       printf("  %s: ", name);
-   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
+   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu), MaxElem=%u\n",
 	  array->Ptr, array->Type, array->Size,
 	  array->_ElementSize, array->StrideB,
-	  array->BufferObj->Name, array->BufferObj->Size,
+	  array->BufferObj->Name, (unsigned long) array->BufferObj->Size,
 	  array->_MaxElement);
 }
 

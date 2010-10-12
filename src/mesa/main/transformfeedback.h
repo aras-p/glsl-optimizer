@@ -25,14 +25,8 @@
 #ifndef TRANSFORM_FEEDBACK_H
 #define TRANSFORM_FEEDBACK_H
 
-#include "glheader.h"
+#include "main/mtypes.h"
 
-
-extern GLboolean
-_mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode);
-
-extern GLboolean
-_mesa_validate_transform_feedback_buffers(GLcontext *ctx);
 
 extern void
 _mesa_init_transform_feedback(GLcontext *ctx);
@@ -40,6 +34,23 @@ _mesa_init_transform_feedback(GLcontext *ctx);
 extern void
 _mesa_free_transform_feedback(GLcontext *ctx);
 
+#if FEATURE_EXT_transform_feedback
+
+extern GLboolean
+_mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode);
+
+extern GLboolean
+_mesa_validate_transform_feedback_buffers(GLcontext *ctx);
+
+
+extern void
+_mesa_init_transform_feedback_functions(struct dd_function_table *driver);
+
+extern void
+_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp);
+
+
+/*** GL_EXT_transform_feedback ***/
 
 extern void GLAPIENTRY
 _mesa_BeginTransformFeedback(GLenum mode);
@@ -67,5 +78,55 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
                                   GLsizei bufSize, GLsizei *length,
                                   GLsizei *size, GLenum *type, GLchar *name);
 
+
+
+/*** GL_ARB_transform_feedback2 ***/
+
+extern void GLAPIENTRY
+_mesa_GenTransformFeedbacks(GLsizei n, GLuint *names);
+
+extern GLboolean GLAPIENTRY
+_mesa_IsTransformFeedback(GLuint name);
+
+extern void GLAPIENTRY
+_mesa_BindTransformFeedback(GLenum target, GLuint name);
+
+extern void GLAPIENTRY
+_mesa_DeleteTransformFeedbacks(GLsizei n, const GLuint *names);
+
+extern void GLAPIENTRY
+_mesa_PauseTransformFeedback(void);
+
+extern void GLAPIENTRY
+_mesa_ResumeTransformFeedback(void);
+
+extern void GLAPIENTRY
+_mesa_DrawTransformFeedback(GLenum mode, GLuint name);
+
+#else /* FEATURE_EXT_transform_feedback */
+
+static INLINE GLboolean
+_mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode)
+{
+   return GL_TRUE;
+}
+
+static INLINE GLboolean
+_mesa_validate_transform_feedback_buffers(GLcontext *ctx)
+{
+   return GL_TRUE;
+}
+
+static INLINE void
+_mesa_init_transform_feedback_functions(struct dd_function_table *driver)
+{
+}
+
+static INLINE void
+_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_EXT_transform_feedback */
 
 #endif /* TRANSFORM_FEEDBACK_H */

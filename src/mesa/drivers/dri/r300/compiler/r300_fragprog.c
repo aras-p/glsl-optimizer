@@ -31,10 +31,29 @@
 
 #include "../r300_reg.h"
 
-/* just some random things... */
-void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
+static void presub_string(char out[10], unsigned int inst)
 {
-	struct r300_fragment_program_code *code = &c->code.r300;
+	switch(inst & 0x600000){
+	case R300_ALU_SRCP_1_MINUS_2_SRC0:
+		sprintf(out, "bias");
+		break;
+	case R300_ALU_SRCP_SRC1_MINUS_SRC0:
+		sprintf(out, "sub");
+		break;
+	case R300_ALU_SRCP_SRC1_PLUS_SRC0:
+		sprintf(out, "add");
+		break;
+	case R300_ALU_SRCP_1_MINUS_SRC0:
+		sprintf(out, "inv ");
+		break;
+	}
+}
+
+/* just some random things... */
+void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
+{
+	struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
+	struct r300_fragment_program_code *code = &compiler->code->code.r300;
 	int n, i, j;
 	static int pc = 0;
 
@@ -97,8 +116,8 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 
 		for (i = alu_offset;
 		     i <= alu_offset + alu_end; ++i) {
-			char srcc[3][10], dstc[20];
-			char srca[3][10], dsta[20];
+			char srcc[4][10], dstc[20];
+			char srca[4][10], dsta[20];
 			char argc[3][20];
 			char arga[3][20];
 			char flags[5], tmp[10];
@@ -141,6 +160,9 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 					flags);
 				strcat(dstc, tmp);
 			}
+			/* Presub */
+			presub_string(srcc[3], code->alu.inst[i].rgb_inst);
+			presub_string(srca[3], code->alu.inst[i].alpha_inst);
 
 			dsta[0] = 0;
 			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_REG) {
@@ -159,11 +181,12 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			}
 
 			fprintf(stderr,
-				"%3i: xyz: %3s %3s %3s -> %-20s (%08x)\n"
-				"       w: %3s %3s %3s -> %-20s (%08x)\n", i,
-				srcc[0], srcc[1], srcc[2], dstc,
+				"%3i: xyz: %3s %3s %3s %5s-> %-20s (%08x)\n"
+				"       w: %3s %3s %3s %5s-> %-20s (%08x)\n", i,
+				srcc[0], srcc[1], srcc[2], srcc[3], dstc,
 				code->alu.inst[i].rgb_addr, srca[0], srca[1],
-				srca[2], dsta, code->alu.inst[i].alpha_addr);
+				srca[2], srca[3], dsta,
+				code->alu.inst[i].alpha_addr);
 
 			for (j = 0; j < 3; ++j) {
 				int regc = code->alu.inst[i].rgb_inst >> (j * 7);
@@ -193,6 +216,24 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 					}
 				} else if (d < 15) {
 					sprintf(buf, "%s.www", srca[d - 12]);
+				} else if (d < 20 ) {
+					switch(d) {
+					case R300_ALU_ARGC_SRCP_XYZ:
+						sprintf(buf, "srcp.xyz");
+						break;
+					case R300_ALU_ARGC_SRCP_XXX:
+						sprintf(buf, "srcp.xxx");
+						break;
+					case R300_ALU_ARGC_SRCP_YYY:
+						sprintf(buf, "srcp.yyy");
+						break;
+					case R300_ALU_ARGC_SRCP_ZZZ:
+						sprintf(buf, "srcp.zzz");
+						break;
+					case R300_ALU_ARGC_SRCP_WWW:
+						sprintf(buf, "srcp.www");
+						break;
+					}
 				} else if (d == 20) {
 					sprintf(buf, "0.0");
 				} else if (d == 21) {
@@ -230,6 +271,21 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 						'x' + (char)(d % 3));
 				} else if (d < 12) {
 					sprintf(buf, "%s.w", srca[d - 9]);
+				} else if (d < 16) {
+					switch(d) {
+					case R300_ALU_ARGA_SRCP_X:
+						sprintf(buf, "srcp.x");
+						break;
+					case R300_ALU_ARGA_SRCP_Y:
+						sprintf(buf, "srcp.y");
+						break;
+					case R300_ALU_ARGA_SRCP_Z:
+						sprintf(buf, "srcp.z");
+						break;
+					case R300_ALU_ARGA_SRCP_W:
+						sprintf(buf, "srcp.w");
+						break;
+					}
 				} else if (d == 16) {
 					sprintf(buf, "0.0");
 				} else if (d == 17) {
@@ -246,11 +302,14 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 					buf, (rega & 64) ? "|" : "");
 			}
 
-			fprintf(stderr, "     xyz: %8s %8s %8s    op: %08x\n"
+			fprintf(stderr, "     xyz: %8s %8s %8s    op: %08x %s\n"
 				"       w: %8s %8s %8s    op: %08x\n",
 				argc[0], argc[1], argc[2],
-				code->alu.inst[i].rgb_inst, arga[0], arga[1],
-				arga[2], code->alu.inst[i].alpha_inst);
+				code->alu.inst[i].rgb_inst,
+				code->alu.inst[i].rgb_inst & R300_ALU_INSERT_NOP ?
+				"NOP" : "",
+				arga[0], arga[1],arga[2],
+				code->alu.inst[i].alpha_inst);
 		}
 	}
 }

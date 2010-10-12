@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,16 +24,25 @@
 #ifndef R300_WINSYS_H
 #define R300_WINSYS_H
 
-/* The public interface header for the r300 pipe driver.
- * Any winsys hosting this pipe needs to implement r300_winsys and then
- * call r300_create_screen to start things. */
+/* The public winsys interface header for the r300 pipe driver.
+ * Any winsys hosting this pipe needs to implement r300_winsys_screen and then
+ * call r300_screen_create to start things. */
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
 #include "r300_defines.h"
 
+struct winsys_handle;
+struct r300_winsys_screen;
+
 struct r300_winsys_buffer;
+
+struct r300_winsys_cs {
+    uint32_t *ptr;      /* Pointer to the beginning of the CS. */
+    unsigned cdw;       /* Number of used dwords. */
+    unsigned ndw;       /* Size of the CS in dwords. */
+};
 
 enum r300_value_id {
     R300_VID_PCI_ID,
@@ -40,6 +50,8 @@ enum r300_value_id {
     R300_VID_Z_PIPES,
     R300_VID_SQUARE_TILING_SUPPORT,
     R300_VID_DRM_2_3_0,
+    R300_VID_DRM_2_6_0,
+    R300_CAN_HYPERZ,
 };
 
 enum r300_reference_domain { /* bitfield */
@@ -48,135 +60,251 @@ enum r300_reference_domain { /* bitfield */
 };
 
 struct r300_winsys_screen {
-    void (*destroy)(struct r300_winsys_screen *ws);
-    
     /**
+     * Destroy this winsys.
+     *
+     * \param ws        The winsys this function is called from.
+     */
+    void (*destroy)(struct r300_winsys_screen *ws);
+
+    /**
+     * Query a system value from a winsys.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param vid       One of the R300_VID_* enums.
+     */
+    uint32_t (*get_value)(struct r300_winsys_screen *ws,
+                          enum r300_value_id vid);
+
+    /**************************************************************************
      * Buffer management. Buffer attributes are mostly fixed over its lifetime.
      *
      * Remember that gallium gets to choose the interface it needs, and the
      * window systems must then implement that interface (rather than the
      * other way around...).
+     *************************************************************************/
+
+    /**
+     * Create a buffer object.
      *
-     * usage is a bitmask of R300_WINSYS_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
-     * usage argument is only an optimization hint, not a guarantee, therefore
-     * proper behavior must be observed in all circumstances.
-     *
-     * alignment indicates the client's alignment requirements, eg for
-     * SSE instructions.
+     * \param ws        The winsys this function is called from.
+     * \param size      The size to allocate.
+     * \param alignment An alignment of the buffer in memory.
+     * \param bind      A bitmask of the PIPE_BIND_* flags.
+     * \param usage     A bitmask of the PIPE_USAGE_* flags.
+     * \param domain    A bitmask of the R300_DOMAIN_* flags.
+     * \return          The created buffer object.
      */
     struct r300_winsys_buffer *(*buffer_create)(struct r300_winsys_screen *ws,
-						unsigned alignment,
-						unsigned usage,
-						unsigned size);
-    
+                                                unsigned size,
+                                                unsigned alignment,
+                                                unsigned bind,
+                                                unsigned usage,
+                                                enum r300_buffer_domain domain);
+
     /**
-     * Map the entire data store of a buffer object into the client's address.
-     * flags is bitmask of R300_WINSYS_BUFFER_USAGE_CPU_READ/WRITE flags.
+     * Reference a buffer object (assign with reference counting).
+     *
+     * \param ws        The winsys this function is called from.
+     * \param pdst      A destination pointer to set the source buffer to.
+     * \param src       A source buffer object.
      */
-    void *(*buffer_map)( struct r300_winsys_screen *ws,
-			 struct r300_winsys_buffer *buf,
-			 unsigned usage);
+    void (*buffer_reference)(struct r300_winsys_screen *ws,
+                             struct r300_winsys_buffer **pdst,
+                             struct r300_winsys_buffer *src);
 
-    void (*buffer_unmap)( struct r300_winsys_screen *ws,
-			  struct r300_winsys_buffer *buf );
+    /**
+     * Map the entire data store of a buffer object into the client's address
+     * space.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to map.
+     * \param cs        A command stream to flush if the buffer is referenced by it.
+     * \param usage     A bitmask of the PIPE_TRANSFER_* flags.
+     * \return          The pointer at the beginning of the buffer.
+     */
+    void *(*buffer_map)(struct r300_winsys_screen *ws,
+                        struct r300_winsys_buffer *buf,
+                        struct r300_winsys_cs *cs,
+                        enum pipe_transfer_usage usage);
 
-    void (*buffer_destroy)( struct r300_winsys_buffer *buf );
+    /**
+     * Unmap a buffer object from the client's address space.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to unmap.
+     */
+    void (*buffer_unmap)(struct r300_winsys_screen *ws,
+                         struct r300_winsys_buffer *buf);
 
+    /**
+     * Wait for a buffer object until it is not used by a GPU. This is
+     * equivalent to a fence placed after the last command using the buffer,
+     * and synchronizing to the fence.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to wait for.
+     */
+    void (*buffer_wait)(struct r300_winsys_screen *ws,
+                        struct r300_winsys_buffer *buf);
 
-    void (*buffer_reference)(struct r300_winsys_screen *rws,
-			     struct r300_winsys_buffer **pdst,
-			     struct r300_winsys_buffer *src);
+    /**
+     * Return tiling flags describing a memory layout of a buffer object.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to get the flags from.
+     * \param macrotile A pointer to the return value of the microtile flag.
+     * \param microtile A pointer to the return value of the macrotile flag.
+     *
+     * \note microtile and macrotile are not bitmasks!
+     */
+    void (*buffer_get_tiling)(struct r300_winsys_screen *ws,
+                              struct r300_winsys_buffer *buf,
+                              enum r300_buffer_tiling *microtile,
+                              enum r300_buffer_tiling *macrotile);
 
-    boolean (*buffer_references)(struct r300_winsys_buffer *a,
-				 struct r300_winsys_buffer *b);
+    /**
+     * Set tiling flags describing a memory layout of a buffer object.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to set the flags for.
+     * \param macrotile A macrotile flag.
+     * \param microtile A microtile flag.
+     * \param stride    A stride of the buffer in bytes, for texturing.
+     *
+     * \note microtile and macrotile are not bitmasks!
+     */
+    void (*buffer_set_tiling)(struct r300_winsys_screen *ws,
+                              struct r300_winsys_buffer *buf,
+                              enum r300_buffer_tiling microtile,
+                              enum r300_buffer_tiling macrotile,
+                              unsigned stride);
 
-    void (*buffer_flush_range)(struct r300_winsys_screen *rws,
-			       struct r300_winsys_buffer *buf,
-			       unsigned offset,
-			       unsigned length);
+    /**
+     * Get a winsys buffer from a winsys handle. The internal structure
+     * of the handle is platform-specific and only a winsys should access it.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param whandle   A winsys handle pointer as was received from a state
+     *                  tracker.
+     * \param stride    The returned buffer stride in bytes.
+     * \param size      The returned buffer size.
+     */
+    struct r300_winsys_buffer *(*buffer_from_handle)(struct r300_winsys_screen *ws,
+                                                     struct winsys_handle *whandle,
+                                                     unsigned *stride,
+                                                     unsigned *size);
 
-    /* Add a pipe_resource to the list of buffer objects to validate. */
-    boolean (*add_buffer)(struct r300_winsys_screen *winsys,
+    /**
+     * Get a winsys handle from a winsys buffer. The internal structure
+     * of the handle is platform-specific and only a winsys should access it.
+     *
+     * \param ws        The winsys this function is called from.
+     * \param buf       A winsys buffer object to get the handle from.
+     * \param whandle   A winsys handle pointer.
+     * \param stride    A stride of the buffer in bytes, for texturing.
+     * \return          TRUE on success.
+     */
+    boolean (*buffer_get_handle)(struct r300_winsys_screen *ws,
+                                 struct r300_winsys_buffer *buf,
+                                 unsigned stride,
+                                 struct winsys_handle *whandle);
+
+    /**************************************************************************
+     * Command submission.
+     *
+     * Each pipe context should create its own command stream and submit
+     * commands independently of other contexts.
+     *************************************************************************/
+
+    /**
+     * Create a command stream.
+     *
+     * \param ws        The winsys this function is called from.
+     */
+    struct r300_winsys_cs *(*cs_create)(struct r300_winsys_screen *ws);
+
+    /**
+     * Destroy a command stream.
+     *
+     * \param cs        A command stream to destroy.
+     */
+    void (*cs_destroy)(struct r300_winsys_cs *cs);
+
+    /**
+     * Add a buffer object to the list of buffers to validate.
+     *
+     * \param cs        A command stream to add buffer for validation against.
+     * \param buf       A winsys buffer to validate.
+     * \param rd        A read domain containing a bitmask
+     *                  of the R300_DOMAIN_* flags.
+     * \param wd        A write domain containing a bitmask
+     *                  of the R300_DOMAIN_* flags.
+     */
+    void (*cs_add_buffer)(struct r300_winsys_cs *cs,
                           struct r300_winsys_buffer *buf,
-                          uint32_t rd,
-                          uint32_t wd);
+                          enum r300_buffer_domain rd,
+                          enum r300_buffer_domain wd);
 
+    /**
+     * Revalidate all currently set up winsys buffers.
+     * Returns TRUE if a flush is required.
+     *
+     * \param cs        A command stream to validate.
+     */
+    boolean (*cs_validate)(struct r300_winsys_cs *cs);
 
-    /* Revalidate all currently setup pipe_buffers.
-     * Returns TRUE if a flush is required. */
-    boolean (*validate)(struct r300_winsys_screen* winsys);
-
-    /* Check to see if there's room for commands. */
-    boolean (*check_cs)(struct r300_winsys_screen* winsys, int size);
-
-    /* Start a command emit. */
-    void (*begin_cs)(struct r300_winsys_screen* winsys,
-                     int size,
-                     const char* file,
-                     const char* function,
-                     int line);
-
-    /* Write a dword to the command buffer. */
-    void (*write_cs_dword)(struct r300_winsys_screen* winsys, uint32_t dword);
-
-    /* Write a table of dwords to the command buffer. */
-    void (*write_cs_table)(struct r300_winsys_screen* winsys,
-                           const void *dwords, unsigned count);
-
-    /* Write a relocated dword to the command buffer. */
-    void (*write_cs_reloc)(struct r300_winsys_screen *winsys,
+    /**
+     * Write a relocated dword to a command buffer.
+     *
+     * \param cs        A command stream the relocation is written to.
+     * \param buf       A winsys buffer to write the relocation for.
+     * \param rd        A read domain containing a bitmask of the R300_DOMAIN_* flags.
+     * \param wd        A write domain containing a bitmask of the R300_DOMAIN_* flags.
+     */
+    void (*cs_write_reloc)(struct r300_winsys_cs *cs,
                            struct r300_winsys_buffer *buf,
-                           uint32_t rd,
-                           uint32_t wd,
-                           uint32_t flags);
+                           enum r300_buffer_domain rd,
+                           enum r300_buffer_domain wd);
 
-    /* Finish a command emit. */
-    void (*end_cs)(struct r300_winsys_screen* winsys,
-                   const char* file,
-                   const char* function,
-                   int line);
+    /**
+     * Flush a command stream.
+     *
+     * \param cs        A command stream to flush.
+     */
+    void (*cs_flush)(struct r300_winsys_cs *cs);
 
-    /* Flush the CS. */
-    void (*flush_cs)(struct r300_winsys_screen* winsys);
+    /**
+     * Set a flush callback which is called from winsys when flush is
+     * required.
+     *
+     * \param cs        A command stream to set the callback for.
+     * \param flush     A flush callback function associated with the command stream.
+     * \param user      A user pointer that will be passed to the flush callback.
+     */
+    void (*cs_set_flush)(struct r300_winsys_cs *cs,
+                         void (*flush)(void *),
+                         void *user);
 
-    /* winsys flush - callback from winsys when flush required */
-    void (*set_flush_cb)(struct r300_winsys_screen *winsys,
-			 void (*flush_cb)(void *), void *data);
+    /**
+     * Reset the list of buffer objects to validate, usually called
+     * prior to adding buffer objects for validation.
+     *
+     * \param cs        A command stream to reset buffers for.
+     */
+    void (*cs_reset_buffers)(struct r300_winsys_cs *cs);
 
-    void (*reset_bos)(struct r300_winsys_screen *winsys);
-
-    void (*buffer_get_tiling)(struct r300_winsys_screen *winsys,
-                              struct r300_winsys_buffer *buffer,
-                              enum r300_buffer_tiling *microtiled,
-                              enum r300_buffer_tiling *macrotiled);
-
-    void (*buffer_set_tiling)(struct r300_winsys_screen *winsys,
-                              struct r300_winsys_buffer *buffer,
-                              uint32_t pitch,
-                              enum r300_buffer_tiling microtiled,
-                              enum r300_buffer_tiling macrotiled);
-
-    uint32_t (*get_value)(struct r300_winsys_screen *winsys,
-			  enum r300_value_id vid);
-
-    struct r300_winsys_buffer *(*buffer_from_handle)(struct r300_winsys_screen *winsys,
-						     struct pipe_screen *screen,
-						     struct winsys_handle *whandle,
-						     unsigned *stride);
-    boolean (*buffer_get_handle)(struct r300_winsys_screen *winsys,
-				 struct r300_winsys_buffer *buffer,
-				 unsigned stride,
-				 struct winsys_handle *whandle);
-
-    boolean (*is_buffer_referenced)(struct r300_winsys_screen *winsys,
-                                    struct r300_winsys_buffer *buffer,
-                                    enum r300_reference_domain domain);
+    /**
+     * Return TRUE if a buffer is referenced by a command stream or by hardware
+     * (i.e. is busy), based on the domain parameter.
+     *
+     * \param cs        A command stream.
+     * \param buf       A winsys buffer.
+     * \param domain    A bitmask of the R300_REF_* enums.
+     */
+    boolean (*cs_is_buffer_referenced)(struct r300_winsys_cs *cs,
+                                       struct r300_winsys_buffer *buf,
+                                       enum r300_reference_domain domain);
 };
-
-struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen);
-
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws);
 
 #endif /* R300_WINSYS_H */

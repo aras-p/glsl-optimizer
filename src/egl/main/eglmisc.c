@@ -45,7 +45,7 @@ static EGLint
 _eglAppendExtension(char **str, const char *ext)
 {
    char *s = *str;
-   EGLint len = strlen(ext);
+   size_t len = strlen(ext);
 
    if (s) {
       memcpy(s, ext, len);
@@ -58,7 +58,7 @@ _eglAppendExtension(char **str, const char *ext)
       len++;
    }
 
-   return len;
+   return (EGLint) len;
 }
 
 
@@ -84,6 +84,8 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
 
    _EGL_CHECK_EXTENSION(MESA_screen_surface);
    _EGL_CHECK_EXTENSION(MESA_copy_context);
+   _EGL_CHECK_EXTENSION(MESA_drm_display);
+   _EGL_CHECK_EXTENSION(MESA_drm_image);
 
    _EGL_CHECK_EXTENSION(KHR_image_base);
    _EGL_CHECK_EXTENSION(KHR_image_pixmap);
@@ -96,6 +98,15 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(KHR_gl_texture_3D_image);
    _EGL_CHECK_EXTENSION(KHR_gl_renderbuffer_image);
 
+   _EGL_CHECK_EXTENSION(KHR_reusable_sync);
+   _EGL_CHECK_EXTENSION(KHR_fence_sync);
+
+   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles1);
+   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles2);
+   _EGL_CHECK_EXTENSION(KHR_surfaceless_opengl);
+
+   _EGL_CHECK_EXTENSION(NOK_swap_region);
+   _EGL_CHECK_EXTENSION(NOK_texture_from_pixmap);
 #undef _EGL_CHECK_EXTENSION
 }
 

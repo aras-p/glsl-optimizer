@@ -33,6 +33,10 @@
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
+
+DEBUG_GET_ONCE_BOOL_OPTION(print_sanity, "TGSI_PRINT_SANITY", FALSE)
+
+
 typedef struct {
    uint file : 28;
    /* max 2 dimensions */
@@ -54,6 +58,8 @@ struct sanity_check_ctx
    uint errors;
    uint warnings;
    uint implied_array_size;
+
+   boolean print;
 };
 
 static INLINE unsigned
@@ -90,9 +96,18 @@ static void
 scan_register_dst(scan_register *reg,
                   struct tgsi_full_dst_register *dst)
 {
-   fill_scan_register1d(reg,
-                        dst->Register.File,
-                        dst->Register.Index);
+   if (dst->Register.Dimension) {
+      /*FIXME: right now we don't support indirect
+       * multidimensional addressing */
+      fill_scan_register2d(reg,
+                           dst->Register.File,
+                           dst->Register.Index,
+                           dst->Dimension.Index);
+   } else {
+      fill_scan_register1d(reg,
+                           dst->Register.File,
+                           dst->Register.Index);
+   }
 }
 
 static void
@@ -102,7 +117,6 @@ scan_register_src(scan_register *reg,
    if (src->Register.Dimension) {
       /*FIXME: right now we don't support indirect
        * multidimensional addressing */
-      debug_assert(!src->Dimension.Indirect);
       fill_scan_register2d(reg,
                            src->Register.File,
                            src->Register.Index,
@@ -140,6 +154,9 @@ report_error(
 {
    va_list args;
 
+   if (!ctx->print)
+      return;
+
    debug_printf( "Error  : " );
    va_start( args, format );
    _debug_vprintf( format, args );
@@ -155,6 +172,9 @@ report_warning(
    ... )
 {
    va_list args;
+
+   if (!ctx->print)
+      return;
 
    debug_printf( "Warning: " );
    va_start( args, format );
@@ -235,8 +255,10 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "SAMP",
    "ADDR",
    "IMM",
-   "LOOP",
-   "PRED"
+   "PRED",
+   "SV",
+   "IMMX",
+   "TEMPX"
 };
 
 static boolean
@@ -529,6 +551,7 @@ tgsi_sanity_check(
    ctx.errors = 0;
    ctx.warnings = 0;
    ctx.implied_array_size = 0;
+   ctx.print = debug_get_option_print_sanity();
 
    if (!tgsi_iterate_shader( tokens, &ctx.iter ))
       return FALSE;

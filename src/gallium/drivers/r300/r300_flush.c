@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,11 +25,11 @@
 #include "draw/draw_private.h"
 
 #include "util/u_simple_list.h"
+#include "util/u_upload_mgr.h"
 
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_emit.h"
-#include "r300_flush.h"
 
 static void r300_flush(struct pipe_context* pipe,
                        unsigned flags,
@@ -37,26 +38,27 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct r300_query *query;
     struct r300_atom *atom;
+    struct r300_fence **rfence = (struct r300_fence**)fence;
 
-    CS_LOCALS(r300);
-    (void) cs_count;
-    /* We probably need to flush Draw, but we may have been called from
-     * within Draw. This feels kludgy, but it might be the best thing.
-     *
-     * Of course, the best thing is to kill Draw with fire. :3 */
-    if (r300->draw && !r300->draw->flushing) {
-        draw_flush(r300->draw);
-    }
+    u_upload_flush(r300->upload_vb);
+    u_upload_flush(r300->upload_ib);
 
-    r300_emit_query_end(r300);
+    if (r300->draw && !r300->draw_vbo_locked)
+	r300_draw_flush_vbuf(r300);
 
     if (r300->dirty_hw) {
-        FLUSH_CS;
+        r300_emit_hyperz_end(r300);
+        r300_emit_query_end(r300);
+        if (r500_index_bias_supported(r300))
+            r500_emit_index_bias(r300, 0);
+
+        r300->flush_counter++;
+        r300->rws->cs_flush(r300->cs);
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */
         foreach(atom, &r300->atom_list) {
-            if (atom->state) {
+            if (atom->state || atom->allow_null_state) {
                 atom->dirty = TRUE;
             }
         }
@@ -71,6 +73,13 @@ static void r300_flush(struct pipe_context* pipe,
     /* reset flushed query */
     foreach(query, &r300->query_list) {
         query->flushed = TRUE;
+    }
+
+    /* Create a new fence. */
+    if (rfence) {
+        *rfence = CALLOC_STRUCT(r300_fence);
+        pipe_reference_init(&(*rfence)->reference, 1);
+        (*rfence)->ctx = r300;
     }
 }
 

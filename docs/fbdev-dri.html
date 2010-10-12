@@ -9,6 +9,9 @@
 <center><h1>Mesa fbdev/DRI Drivers</h1></center>
 <br>
 
+<h1><center>NOTE: this information is obsolete and will be removed at
+a future date</center></h1>
+
 <h1>1. Introduction</h1>
 
 <p>
@@ -22,7 +25,7 @@ Contributors to this project include Jon Smirl, Keith Whitwell and Dave Airlie.
 
 <p>
 Applications in the fbdev/DRI environment use
-the <a href="http://www.nabble.com/file/p15480666/MiniGXL.html"> MiniGLX</a> interface to choose pixel
+the MiniGLX interface to choose pixel
 formats, create rendering contexts, etc.  It's a subset of the GLX and
 Xlib interfaces allowing some degree of application portability between
 the X and X-less environments.
@@ -315,8 +318,7 @@ It means that the sample_server process is not running.
 <h1>5.0 Programming Information</h1>
 
 <p>
-OpenGL/Mesa is interfaced to fbdev via the <a href="http://www.nabble.com/file/p15480666/MiniGLX.html">MiniGLX</a>
-interface.
+OpenGL/Mesa is interfaced to fbdev via the MiniGLX interface.
 MiniGLX is a subset of Xlib and GLX API functions which provides just
 enough functionality to setup OpenGL rendering and respond to simple
 input events.
@@ -332,7 +334,7 @@ This allows some degree of flexibility for software development and testing.
 However, the MiniGLX API is not binary-compatible with full Xlib/GLX.
 Some of the structures are different and some macros/functions work
 differently.
-See the <code>GL/miniglx.h</code> header file for details.
+See the GL/miniglx.h header file for details.
 </p>
 
 

@@ -3,12 +3,16 @@ include $(TOP)/configs/current
 
 LIBNAME = swrastg_dri.so
 
-DRIVER_DEFINES = -D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE
+DRIVER_DEFINES = \
+	-D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/sw/libdrisw.a \
 	$(TOP)/src/gallium/winsys/sw/dri/libswdri.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/rbug/librbug.a
 
 SWRAST_COMMON_GALLIUM_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/utils.c \

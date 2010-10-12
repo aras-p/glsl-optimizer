@@ -63,6 +63,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -83,6 +84,9 @@
  *
  * Although the result values can be scaled to an arbitrary bit width specified
  * by dst_width, the actual result type will have the same width.
+ *
+ * Ex: src = { float, float, float, float }
+ * return { i32, i32, i32, i32 } where each value is in [0, 2^dst_width-1].
  */
 LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
@@ -114,8 +118,8 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
    scale = (double)mask/ubound;
    bias = (double)((unsigned long long)1 << (mantissa - n));
 
-   res = LLVMBuildMul(builder, src, lp_build_const_vec(src_type, scale), "");
-   res = LLVMBuildAdd(builder, res, lp_build_const_vec(src_type, bias), "");
+   res = LLVMBuildFMul(builder, src, lp_build_const_vec(src_type, scale), "");
+   res = LLVMBuildFAdd(builder, res, lp_build_const_vec(src_type, bias), "");
    res = LLVMBuildBitCast(builder, res, int_vec_type, "");
 
    if(dst_width > n) {
@@ -152,6 +156,8 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
 
 /**
  * Inverse of lp_build_clamped_float_to_unsigned_norm above.
+ * Ex: src = { i32, i32, i32, i32 } with values in range [0, 2^src_width-1]
+ * return {float, float, float, float} with values in range [0, 1].
  */
 LLVMValueRef
 lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
@@ -169,6 +175,8 @@ lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
    unsigned long long mask;
    double scale;
    double bias;
+
+   assert(dst_type.floating);
 
    mantissa = lp_mantissa(dst_type);
 
@@ -194,8 +202,8 @@ lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
 
    res = LLVMBuildBitCast(builder, res, vec_type, "");
 
-   res = LLVMBuildSub(builder, res, bias_, "");
-   res = LLVMBuildMul(builder, res, lp_build_const_vec(dst_type, scale), "");
+   res = LLVMBuildFSub(builder, res, bias_, "");
+   res = LLVMBuildFMul(builder, res, lp_build_const_vec(dst_type, scale), "");
 
    return res;
 }
@@ -219,19 +227,115 @@ lp_build_conv(LLVMBuilderRef builder,
    unsigned num_tmps;
    unsigned i;
 
-   /* Register width must remain constant */
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
-
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
    assert(src_type.length <= LP_MAX_VECTOR_LENGTH);
    assert(dst_type.length <= LP_MAX_VECTOR_LENGTH);
+   assert(num_srcs <= LP_MAX_VECTOR_LENGTH);
+   assert(num_dsts <= LP_MAX_VECTOR_LENGTH);
 
    tmp_type = src_type;
-   for(i = 0; i < num_srcs; ++i)
+   for(i = 0; i < num_srcs; ++i) {
+      assert(lp_check_value(src_type, src[i]));
       tmp[i] = src[i];
+   }
    num_tmps = num_srcs;
+
+
+   /* Special case 4x4f --> 1x16ub 
+    */
+   if (src_type.floating == 1 &&
+       src_type.fixed    == 0 &&
+       src_type.sign     == 1 &&
+       src_type.norm     == 0 &&
+       src_type.width    == 32 &&
+       src_type.length   == 4 &&
+
+       dst_type.floating == 0 &&
+       dst_type.fixed    == 0 &&
+       dst_type.sign     == 0 &&
+       dst_type.norm     == 1 &&
+       dst_type.width    == 8 &&
+       dst_type.length   == 16)
+   {
+      int i;
+
+      for (i = 0; i < num_dsts; i++, src += 4) {
+         struct lp_type int16_type = dst_type;
+         struct lp_type int32_type = dst_type;
+         LLVMValueRef lo, hi;
+         LLVMValueRef src_int0;
+         LLVMValueRef src_int1;
+         LLVMValueRef src_int2;
+         LLVMValueRef src_int3;
+         LLVMTypeRef int16_vec_type;
+         LLVMTypeRef int32_vec_type;
+         LLVMTypeRef src_vec_type;
+         LLVMTypeRef dst_vec_type;
+         LLVMValueRef const_255f;
+         LLVMValueRef a, b, c, d;
+
+         int16_type.width *= 2;
+         int16_type.length /= 2;
+         int16_type.sign = 1;
+
+         int32_type.width *= 4;
+         int32_type.length /= 4;
+         int32_type.sign = 1;
+
+         src_vec_type   = lp_build_vec_type(src_type);
+         dst_vec_type   = lp_build_vec_type(dst_type);
+         int16_vec_type = lp_build_vec_type(int16_type);
+         int32_vec_type = lp_build_vec_type(int32_type);
+
+         const_255f = lp_build_const_vec(src_type, 255.0f);
+
+         a = LLVMBuildFMul(builder, src[0], const_255f, "");
+         b = LLVMBuildFMul(builder, src[1], const_255f, "");
+         c = LLVMBuildFMul(builder, src[2], const_255f, "");
+         d = LLVMBuildFMul(builder, src[3], const_255f, "");
+
+         /* lp_build_round generates excessively general code without
+          * sse4, so do rounding manually.
+          */
+         if (!util_cpu_caps.has_sse4_1) {
+            LLVMValueRef const_half = lp_build_const_vec(src_type, 0.5f);
+
+            a = LLVMBuildFAdd(builder, a, const_half, "");
+            b = LLVMBuildFAdd(builder, b, const_half, "");
+            c = LLVMBuildFAdd(builder, c, const_half, "");
+            d = LLVMBuildFAdd(builder, d, const_half, "");
+            
+            src_int0 = LLVMBuildFPToSI(builder, a, int32_vec_type, "");
+            src_int1 = LLVMBuildFPToSI(builder, b, int32_vec_type, "");
+            src_int2 = LLVMBuildFPToSI(builder, c, int32_vec_type, "");
+            src_int3 = LLVMBuildFPToSI(builder, d, int32_vec_type, "");
+         }
+         else {
+            struct lp_build_context bld;
+
+            bld.builder = builder;
+            bld.type = src_type;
+            bld.vec_type = src_vec_type;
+            bld.int_elem_type = lp_build_elem_type(int32_type);
+            bld.int_vec_type = int32_vec_type;
+            bld.undef = lp_build_undef(src_type);
+            bld.zero = lp_build_zero(src_type);
+            bld.one = lp_build_one(src_type);
+            
+            src_int0 = lp_build_iround(&bld, a);
+            src_int1 = lp_build_iround(&bld, b);
+            src_int2 = lp_build_iround(&bld, c);
+            src_int3 = lp_build_iround(&bld, d);
+         }
+
+         lo = lp_build_pack2(builder, int32_type, int16_type, src_int0, src_int1);
+         hi = lp_build_pack2(builder, int32_type, int16_type, src_int2, src_int3);
+         dst[i] = lp_build_pack2(builder, int16_type, dst_type, lo, hi);
+      }
+      return; 
+   }
 
    /*
     * Clamp if necessary
@@ -290,7 +394,7 @@ lp_build_conv(LLVMBuilderRef builder,
          if (dst_scale != 1.0) {
             LLVMValueRef scale = lp_build_const_vec(tmp_type, dst_scale);
             for(i = 0; i < num_tmps; ++i)
-               tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
+               tmp[i] = LLVMBuildFMul(builder, tmp[i], scale, "");
          }
 
          /* Use an equally sized integer for intermediate computations */
@@ -326,29 +430,24 @@ lp_build_conv(LLVMBuilderRef builder,
 
    /*
     * Truncate or expand bit width
+    *
+    * No data conversion should happen here, although the sign bits are
+    * crucial to avoid bad clamping.
     */
 
-   assert(!tmp_type.floating || tmp_type.width == dst_type.width);
+   {
+      struct lp_type new_type;
 
-   if(tmp_type.width > dst_type.width) {
-      assert(num_dsts == 1);
-      tmp[0] = lp_build_pack(builder, tmp_type, dst_type, TRUE, tmp, num_tmps);
-      tmp_type.width = dst_type.width;
-      tmp_type.length = dst_type.length;
-      num_tmps = 1;
-   }
+      new_type = tmp_type;
+      new_type.sign   = dst_type.sign;
+      new_type.width  = dst_type.width;
+      new_type.length = dst_type.length;
 
-   if(tmp_type.width < dst_type.width) {
-      assert(num_tmps == 1);
-      lp_build_unpack(builder, tmp_type, dst_type, tmp[0], tmp, num_dsts);
-      tmp_type.width = dst_type.width;
-      tmp_type.length = dst_type.length;
+      lp_build_resize(builder, tmp_type, new_type, tmp, num_srcs, tmp, num_dsts);
+
+      tmp_type = new_type;
       num_tmps = num_dsts;
    }
-
-   assert(tmp_type.width == dst_type.width);
-   assert(tmp_type.length == dst_type.length);
-   assert(num_tmps == num_dsts);
 
    /*
     * Scale to the widest range
@@ -390,7 +489,7 @@ lp_build_conv(LLVMBuilderRef builder,
           if (src_scale != 1.0) {
              LLVMValueRef scale = lp_build_const_vec(tmp_type, 1.0/src_scale);
              for(i = 0; i < num_tmps; ++i)
-                tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
+                tmp[i] = LLVMBuildFMul(builder, tmp[i], scale, "");
           }
       }
     }
@@ -406,8 +505,10 @@ lp_build_conv(LLVMBuilderRef builder,
        }
     }
 
-   for(i = 0; i < num_dsts; ++i)
+   for(i = 0; i < num_dsts; ++i) {
       dst[i] = tmp[i];
+      assert(lp_check_value(dst_type, dst[i]));
+   }
 }
 
 

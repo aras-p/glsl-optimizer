@@ -42,9 +42,6 @@
 /**
  * A feature can be anything.  But most of them share certain characteristics.
  *
- * When a feature defines driver entries, they can be initialized by
- *   _MESA_INIT_<FEATURE>_FUNCTIONS
- *
  * When a feature defines vtxfmt entries, they can be initialized and
  * installed by
  *   _MESA_INIT_<FEATURE>_VTXFMT
@@ -103,7 +100,6 @@
 #define FEATURE_drawpix                   FEATURE_GL
 #define FEATURE_evaluators                FEATURE_GL
 #define FEATURE_feedback                  FEATURE_GL
-#define FEATURE_histogram                 FEATURE_GL
 #define FEATURE_pixel_transfer            FEATURE_GL
 #define FEATURE_queryobj                  FEATURE_GL
 #define FEATURE_rastpos                   FEATURE_GL
@@ -124,6 +120,7 @@
 #define FEATURE_ARB_shader_objects        (FEATURE_ARB_vertex_shader || FEATURE_ARB_fragment_shader)
 #define FEATURE_ARB_shading_language_100  FEATURE_ARB_shader_objects
 #define FEATURE_ARB_shading_language_120  FEATURE_ARB_shader_objects
+#define FEATURE_ARB_geometry_shader4      FEATURE_ARB_shader_objects
 
 #define FEATURE_ARB_framebuffer_object    (FEATURE_GL && FEATURE_EXT_framebuffer_object)
 #define FEATURE_ARB_map_buffer_range      FEATURE_GL

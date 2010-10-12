@@ -106,6 +106,13 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_xRGB8888
 #include "spantmp2.h"
 
+/* a8 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_ALPHA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_BYTE
+#define TAG(x) intel_##x##_A8
+#define TAG2(x,y) intel_##x##y##_A8
+#include "spantmp2.h"
+
 #define LOCAL_DEPTH_VARS						\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = rb->Name ? 1 : -1;				\
@@ -244,12 +251,14 @@ intelSpanRenderStart(GLcontext * ctx)
    struct intel_context *intel = intel_context(ctx);
    GLuint i;
 
-   intelFlush(&intel->ctx);
+   intel_flush(&intel->ctx);
    intel_prepare_render(intel);
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_finalize_mipmap_tree(intel, i);
          intel_tex_map_images(intel, intel_texture_object(texObj));
       }
    }
@@ -341,6 +350,9 @@ intel_set_span_functions(struct intel_context *intel,
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
 
    switch (irb->Base.Format) {
+   case MESA_FORMAT_A8:
+      intel_InitPointers_A8(rb);
+      break;
    case MESA_FORMAT_RGB565:
       intel_InitPointers_RGB565(rb);
       break;
@@ -354,6 +366,7 @@ intel_set_span_functions(struct intel_context *intel,
       intel_InitPointers_xRGB8888(rb);
       break;
    case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_SARGB8:
       intel_InitPointers_ARGB8888(rb);
       break;
    case MESA_FORMAT_Z16:

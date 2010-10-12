@@ -32,11 +32,6 @@
 
 #if FEATURE_feedback
 
-#define _MESA_INIT_FEEDBACK_FUNCTIONS(driver, impl) \
-   do {                                             \
-      (driver)->RenderMode = impl ## RenderMode;    \
-   } while (0)
-
 extern void
 _mesa_feedback_vertex( GLcontext *ctx,
                        const GLfloat win[4],
@@ -63,7 +58,7 @@ _mesa_init_feedback_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_feedback */
 
-#define _MESA_INIT_FEEDBACK_FUNCTIONS(driver, impl) do { } while (0)
+#include "main/compiler.h"
 
 static INLINE void
 _mesa_feedback_vertex( GLcontext *ctx,

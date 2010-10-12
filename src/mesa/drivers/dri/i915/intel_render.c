@@ -37,6 +37,8 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 
+#include "math/m_xform.h"
+
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"
@@ -264,7 +266,6 @@ static const struct tnl_pipeline_stage _intel_render_stage = {
 
 const struct tnl_pipeline_stage *intel_pipeline[] = {
    &_tnl_vertex_transform_stage,
-   &_tnl_vertex_cull_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
    &_tnl_fog_coordinate_stage,

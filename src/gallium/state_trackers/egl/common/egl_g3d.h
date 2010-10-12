@@ -30,29 +30,31 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
+#include "os/os_thread.h"
 #include "egldriver.h"
 #include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglsurface.h"
 #include "eglconfig.h"
 #include "eglimage.h"
+#include "eglsync.h"
 #include "eglscreen.h"
 #include "eglmode.h"
 
 #include "native.h"
 #include "egl_g3d_st.h"
+#include "egl_g3d_loader.h"
 
 struct egl_g3d_driver {
    _EGLDriver base;
-   struct st_api *stapis[ST_API_COUNT];
-   EGLint api_mask;
-
-   EGLint probe_key;
+   const struct egl_g3d_loader *loader;
+   const struct native_platform *platforms[_EGL_NUM_PLATFORMS];
 };
 
 struct egl_g3d_display {
    struct native_display *native;
 
+   const struct egl_g3d_loader *loader;
    struct st_manager *smapi;
    struct pipe_context *pipe;
 };
@@ -75,6 +77,9 @@ struct egl_g3d_surface {
    struct native_surface *native;
    struct pipe_resource *render_texture;
 
+   EGLenum client_buffer_type;
+   EGLClientBuffer client_buffer;
+
    unsigned int sequence_number;
 };
 
@@ -92,15 +97,37 @@ struct egl_g3d_image {
    unsigned zslice;
 };
 
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
+_EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
+
+#ifdef EGL_KHR_reusable_sync
+
+struct egl_g3d_sync {
+   _EGLSync base;
+
+   int refs;
+
+   /* the mutex protects only the condvar, not the struct */
+   pipe_mutex mutex;
+   pipe_condvar condvar;
+
+   /* for fence sync */
+   struct pipe_fence_handle *fence;
+};
+_EGL_DRIVER_TYPECAST(egl_g3d_sync, _EGLSync, obj)
+
+#endif /* EGL_KHR_reusable_sync */
+
+#ifdef EGL_MESA_screen_surface
+
 struct egl_g3d_screen {
    _EGLScreen base;
    const struct native_connector *native;
    const struct native_mode **native_modes;
 };
-
-/* standard typecasts */
-_EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
 _EGL_DRIVER_TYPECAST(egl_g3d_screen, _EGLScreen, obj)
-_EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
+
+#endif /* EGL_MESA_screen_surface */
 
 #endif /* _EGL_G3D_H_ */

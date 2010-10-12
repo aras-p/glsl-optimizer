@@ -20,9 +20,8 @@ OSMESA_LIB_NAME = libOSMesa16.so
 
 
 # Directories
-SRC_DIRS = glsl mesa glu
+SRC_DIRS = mapi/glapi glsl mesa glu
 DRIVER_DIRS = osmesa
-PROGRAM_DIRS = 
 
 
 # Dependencies

@@ -37,7 +37,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_arit.h"
@@ -75,6 +75,37 @@
  */
 
 
+/**
+ * Do one perspective divide per quad.
+ *
+ * For perspective interpolation, the final attribute value is given
+ *
+ *  a' = a/w = a * oow
+ *
+ * where
+ *
+ *  a = a0 + dadx*x + dady*y
+ *  w = w0 + dwdx*x + dwdy*y
+ *  oow = 1/w = 1/(w0 + dwdx*x + dwdy*y)
+ *
+ * Instead of computing the division per pixel, with this macro we compute the
+ * division on the upper left pixel of each quad, and use a linear
+ * approximation in the remaining pixels, given by:
+ *
+ *  da'dx = (dadx - dwdx*a)*oow
+ *  da'dy = (dady - dwdy*a)*oow
+ *
+ * Ironically, this actually makes things slower -- probably because the
+ * divide hardware unit is rarely used, whereas the multiply unit is typically
+ * already saturated.
+ */
+#define PERSPECTIVE_DIVIDE_PER_QUAD 0
+
+
+static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
+static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
+
+
 static void
 attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix)
 {
@@ -95,104 +126,141 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef dadx_ptr,
             LLVMValueRef dady_ptr)
 {
-   LLVMBuilderRef builder = bld->base.builder;
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
+   LLVMBuilderRef builder = coeff_bld->builder;
+   LLVMValueRef zero = LLVMConstNull(coeff_bld->elem_type);
+   LLVMValueRef one = LLVMConstReal(coeff_bld->elem_type, 1.0);
+   LLVMValueRef i0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   LLVMValueRef i1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+   LLVMValueRef i2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+   LLVMValueRef i3 = LLVMConstInt(LLVMInt32Type(), 3, 0);
    unsigned attrib;
    unsigned chan;
 
-   for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
+   /* TODO: Use more vector operations */
+
+   for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
       const unsigned mask = bld->mask[attrib];
       const unsigned interp = bld->interp[attrib];
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-         if(mask & (1 << chan)) {
+      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+         if (mask & (1 << chan)) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
-            LLVMValueRef a0 = NULL;
-            LLVMValueRef dadx = NULL;
-            LLVMValueRef dady = NULL;
+            LLVMValueRef a0 = zero;
+            LLVMValueRef dadx = zero;
+            LLVMValueRef dady = zero;
+            LLVMValueRef dadxy = zero;
+            LLVMValueRef dadq;
+            LLVMValueRef dadq2;
+            LLVMValueRef a;
 
-            switch( interp ) {
-            case TGSI_INTERPOLATE_PERSPECTIVE:
+            switch (interp) {
+            case LP_INTERP_PERSPECTIVE:
                /* fall-through */
 
-            case TGSI_INTERPOLATE_LINEAR:
-               dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
-               dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
-               dadx = lp_build_broadcast_scalar(&bld->base, dadx);
-               dady = lp_build_broadcast_scalar(&bld->base, dady);
-               attrib_name(dadx, attrib, chan, ".dadx");
-               attrib_name(dady, attrib, chan, ".dady");
+            case LP_INTERP_LINEAR:
+               if (attrib == 0 && chan == 0) {
+                  dadxy = dadx = one;
+               }
+               else if (attrib == 0 && chan == 1) {
+                  dadxy = dady = one;
+               }
+               else {
+                  dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
+                  dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
+                  dadxy = LLVMBuildFAdd(builder, dadx, dady, "");
+                  attrib_name(dadx, attrib, chan, ".dadx");
+                  attrib_name(dady, attrib, chan, ".dady");
+                  attrib_name(dadxy, attrib, chan, ".dadxy");
+               }
                /* fall-through */
 
-            case TGSI_INTERPOLATE_CONSTANT:
+            case LP_INTERP_CONSTANT:
+            case LP_INTERP_FACING:
                a0 = LLVMBuildLoad(builder, LLVMBuildGEP(builder, a0_ptr, &index, 1, ""), "");
-               a0 = lp_build_broadcast_scalar(&bld->base, a0);
                attrib_name(a0, attrib, chan, ".a0");
                break;
+
+            case LP_INTERP_POSITION:
+               /* Nothing to do as the position coeffs are already setup in slot 0 */
+               continue;
 
             default:
                assert(0);
                break;
             }
 
-            bld->a0  [attrib][chan] = a0;
-            bld->dadx[attrib][chan] = dadx;
-            bld->dady[attrib][chan] = dady;
-         }
-      }
-   }
-}
-
-
-/**
- * Emit LLVM code to compute the fragment shader input attribute values.
- * For example, for a color input, we'll compute red, green, blue and alpha
- * values for the four pixels in a quad.
- * Recall that we're operating on 4-element vectors so each arithmetic
- * operation is operating on the four pixels in a quad.
- */
-static void
-attribs_init(struct lp_build_interp_soa_context *bld)
-{
-   LLVMValueRef x = bld->pos[0];
-   LLVMValueRef y = bld->pos[1];
-   LLVMValueRef oow = NULL;
-   unsigned attrib;
-   unsigned chan;
-
-   for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      const unsigned mask = bld->mask[attrib];
-      const unsigned interp = bld->interp[attrib];
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-         if(mask & (1 << chan)) {
-            LLVMValueRef a0   = bld->a0  [attrib][chan];
-            LLVMValueRef dadx = bld->dadx[attrib][chan];
-            LLVMValueRef dady = bld->dady[attrib][chan];
-            LLVMValueRef res;
-
-            res = a0;
-
-            if (interp != TGSI_INTERPOLATE_CONSTANT) {
-               /* res = res + x * dadx */
-               res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, x, dadx));
-               /* res = res + y * dady */
-               res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, y, dady));
-            }
-
-            /* Keep the value of the attribute before perspective divide
-             * for faster updates.
+            /*
+             * dadq = {0, dadx, dady, dadx + dady}
              */
-            bld->attribs_pre[attrib][chan] = res;
 
-            if (interp == TGSI_INTERPOLATE_PERSPECTIVE) {
-               LLVMValueRef w = bld->pos[3];
-               assert(attrib != 0);
-               if(!oow)
-                  oow = lp_build_rcp(&bld->base, w);
-               res = lp_build_mul(&bld->base, res, oow);
+            dadq = coeff_bld->undef;
+            dadq = LLVMBuildInsertElement(builder, dadq, zero,  i0, "");
+            dadq = LLVMBuildInsertElement(builder, dadq, dadx,  i1, "");
+            dadq = LLVMBuildInsertElement(builder, dadq, dady,  i2, "");
+            dadq = LLVMBuildInsertElement(builder, dadq, dadxy, i3, "");
+
+            /*
+             * dadq2 = 2 * dq
+             */
+
+            dadq2 = LLVMBuildFAdd(builder, dadq, dadq, "");
+
+            /*
+             * a = a0 + x * dadx + y * dady
+             */
+
+            if (attrib == 0 && chan == 0) {
+               a = bld->x;
+            }
+            else if (attrib == 0 && chan == 1) {
+               a = bld->y;
+            }
+            else {
+               a = a0;
+               if (interp != LP_INTERP_CONSTANT &&
+                   interp != LP_INTERP_FACING) {
+                  LLVMValueRef tmp;
+                  tmp = LLVMBuildFMul(builder, bld->x, dadx, "");
+                  a = LLVMBuildFAdd(builder, a, tmp, "");
+                  tmp = LLVMBuildFMul(builder, bld->y, dady, "");
+                  a = LLVMBuildFAdd(builder, a, tmp, "");
+               }
             }
 
-            attrib_name(res, attrib, chan, "");
+            /*
+             * a = {a, a, a, a}
+             */
 
-            bld->attribs[attrib][chan] = res;
+            a = lp_build_broadcast(builder, coeff_bld->vec_type, a);
+
+            /*
+             * Compute the attrib values on the upper-left corner of each quad.
+             */
+
+            a = LLVMBuildFAdd(builder, a, dadq2, "");
+
+#if PERSPECTIVE_DIVIDE_PER_QUAD
+            /*
+             * a *= 1 / w
+             */
+
+            if (interp == LP_INTERP_PERSPECTIVE) {
+               LLVMValueRef w = bld->a[0][3];
+               assert(attrib != 0);
+               assert(bld->mask[0] & TGSI_WRITEMASK_W);
+               if (!bld->oow) {
+                  bld->oow = lp_build_rcp(coeff_bld, w);
+                  lp_build_name(bld->oow, "oow");
+               }
+               a = lp_build_mul(coeff_bld, a, bld->oow);
+            }
+#endif
+
+            attrib_name(a, attrib, chan, ".a");
+            attrib_name(dadq, attrib, chan, ".dadq");
+
+            bld->a   [attrib][chan] = a;
+            bld->dadq[attrib][chan] = dadq;
          }
       }
    }
@@ -206,6 +274,8 @@ attribs_init(struct lp_build_interp_soa_context *bld)
 static void
 attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 {
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
+   LLVMValueRef shuffle = lp_build_const_int_vec(coeff_bld->type, quad_index);
    LLVMValueRef oow = NULL;
    unsigned attrib;
    unsigned chan;
@@ -215,42 +285,74 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
    for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
       const unsigned mask = bld->mask[attrib];
       const unsigned interp = bld->interp[attrib];
-
-      if (interp != TGSI_INTERPOLATE_CONSTANT) {
-         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-            if(mask & (1 << chan)) {
-               LLVMValueRef dadx = bld->dadx[attrib][chan];
-               LLVMValueRef dady = bld->dady[attrib][chan];
-               LLVMValueRef res;
-
-               res = bld->attribs_pre[attrib][chan];
-
-               if (quad_index == 1 || quad_index == 3) {
-                  /* top-right or bottom-right quad */
-                  /* build res = res + dadx + dadx */
-                  res = lp_build_add(&bld->base, res, dadx);
-                  res = lp_build_add(&bld->base, res, dadx);
-               }
-
-               if (quad_index == 2 || quad_index == 3) {
-                  /* bottom-left or bottom-right quad */
-                  /* build res = res + dady + dady */
-                  res = lp_build_add(&bld->base, res, dady);
-                  res = lp_build_add(&bld->base, res, dady);
-               }
-
-               if (interp == TGSI_INTERPOLATE_PERSPECTIVE) {
-                  LLVMValueRef w = bld->pos[3];
-                  assert(attrib != 0);
-                  if(!oow)
-                     oow = lp_build_rcp(&bld->base, w);
-                  res = lp_build_mul(&bld->base, res, oow);
-               }
-
-               attrib_name(res, attrib, chan, "");
-
-               bld->attribs[attrib][chan] = res;
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         if(mask & (1 << chan)) {
+            LLVMValueRef a;
+            if (interp == LP_INTERP_CONSTANT ||
+                interp == LP_INTERP_FACING) {
+               a = bld->a[attrib][chan];
             }
+            else if (interp == LP_INTERP_POSITION) {
+               assert(attrib > 0);
+               a = bld->attribs[0][chan];
+            }
+            else {
+               LLVMValueRef dadq;
+
+               a = bld->a[attrib][chan];
+
+               /*
+                * Broadcast the attribute value for this quad into all elements
+                */
+
+               a = LLVMBuildShuffleVector(coeff_bld->builder,
+                                          a, coeff_bld->undef, shuffle, "");
+
+               /*
+                * Get the derivatives.
+                */
+
+               dadq = bld->dadq[attrib][chan];
+
+#if PERSPECTIVE_DIVIDE_PER_QUAD
+               if (interp == LP_INTERP_PERSPECTIVE) {
+                  LLVMValueRef dwdq = bld->dadq[0][3];
+
+                  if (oow == NULL) {
+                     assert(bld->oow);
+                     oow = LLVMBuildShuffleVector(coeff_bld->builder,
+                                                  bld->oow, coeff_bld->undef,
+                                                  shuffle, "");
+                  }
+
+                  dadq = lp_build_sub(coeff_bld,
+                                      dadq,
+                                      lp_build_mul(coeff_bld, a, dwdq));
+                  dadq = lp_build_mul(coeff_bld, dadq, oow);
+               }
+#endif
+
+               /*
+                * Add the derivatives
+                */
+
+               a = lp_build_add(coeff_bld, a, dadq);
+
+#if !PERSPECTIVE_DIVIDE_PER_QUAD
+               if (interp == LP_INTERP_PERSPECTIVE) {
+                  if (oow == NULL) {
+                     LLVMValueRef w = bld->attribs[0][3];
+                     assert(attrib != 0);
+                     assert(bld->mask[0] & TGSI_WRITEMASK_W);
+                     oow = lp_build_rcp(coeff_bld, w);
+                  }
+                  a = lp_build_mul(coeff_bld, a, oow);
+               }
+#endif
+
+               attrib_name(a, attrib, chan, "");
+            }
+            bld->attribs[attrib][chan] = a;
          }
       }
    }
@@ -260,53 +362,17 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 /**
  * Generate the position vectors.
  *
- * Parameter x0, y0 are the integer values with the quad upper left coordinates.
+ * Parameter x0, y0 are the integer values with upper left coordinates.
  */
 static void
 pos_init(struct lp_build_interp_soa_context *bld,
          LLVMValueRef x0,
          LLVMValueRef y0)
 {
-   lp_build_name(x0, "pos.x");
-   lp_build_name(y0, "pos.y");
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
 
-   bld->attribs[0][0] = x0;
-   bld->attribs[0][1] = y0;
-}
-
-
-/**
- * Update quad position values when moving to the next quad.
- */
-static void
-pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
-{
-   LLVMValueRef x = bld->attribs[0][0];
-   LLVMValueRef y = bld->attribs[0][1];
-   const int xstep = 2, ystep = 2;
-
-   if (quad_index == 1 || quad_index == 3) {
-      /* top-right or bottom-right quad in block */
-      /* build x += xstep */
-      x = lp_build_add(&bld->base, x,
-                       lp_build_const_vec(bld->base.type, xstep));
-   }
-
-   if (quad_index == 2) {
-      /* bottom-left quad in block */
-      /* build y += ystep */
-      y = lp_build_add(&bld->base, y,
-                       lp_build_const_vec(bld->base.type, ystep));
-      /* build x -= xstep */
-      x = lp_build_sub(&bld->base, x,
-                       lp_build_const_vec(bld->base.type, xstep));
-   }
-
-   lp_build_name(x, "pos.x");
-   lp_build_name(y, "pos.y");
-
-   bld->attribs[0][0] = x;
-   bld->attribs[0][1] = y;
+   bld->x = LLVMBuildSIToFP(coeff_bld->builder, x0, coeff_bld->elem_type, "");
+   bld->y = LLVMBuildSIToFP(coeff_bld->builder, y0, coeff_bld->elem_type, "");
 }
 
 
@@ -315,8 +381,8 @@ pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
  */
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
-                         const struct tgsi_token *tokens,
-                         boolean flatshade,
+                         unsigned num_inputs,
+                         const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
@@ -325,12 +391,22 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef x0,
                          LLVMValueRef y0)
 {
-   struct tgsi_parse_context parse;
-   struct tgsi_full_declaration *decl;
+   struct lp_type coeff_type;
+   unsigned attrib;
+   unsigned chan;
 
    memset(bld, 0, sizeof *bld);
 
-   lp_build_context_init(&bld->base, builder, type);
+   memset(&coeff_type, 0, sizeof coeff_type);
+   coeff_type.floating = TRUE;
+   coeff_type.sign = TRUE;
+   coeff_type.width = 32;
+   coeff_type.length = QUAD_SIZE;
+
+   /* XXX: we don't support interpolating into any other types */
+   assert(memcmp(&coeff_type, &type, sizeof coeff_type) == 0);
+
+   lp_build_context_init(&bld->coeff_bld, builder, coeff_type);
 
    /* For convenience */
    bld->pos = bld->attribs[0];
@@ -338,58 +414,28 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
    /* Position */
    bld->num_attribs = 1;
-   bld->mask[0] = TGSI_WRITEMASK_ZW;
-   bld->interp[0] = TGSI_INTERPOLATE_LINEAR;
+   bld->mask[0] = TGSI_WRITEMASK_XYZW;
+   bld->interp[0] = LP_INTERP_LINEAR;
 
    /* Inputs */
-   tgsi_parse_init( &parse, tokens );
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      tgsi_parse_token( &parse );
+   for (attrib = 0; attrib < num_inputs; ++attrib) {
+      bld->mask[1 + attrib] = inputs[attrib].usage_mask;
+      bld->interp[1 + attrib] = inputs[attrib].interp;
+   }
+   bld->num_attribs = 1 + num_inputs;
 
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         decl = &parse.FullToken.FullDeclaration;
-         if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-            unsigned first, last, mask;
-            unsigned attrib;
-
-            first = decl->Range.First;
-            last = decl->Range.Last;
-            mask = decl->Declaration.UsageMask;
-
-            for( attrib = first; attrib <= last; ++attrib ) {
-               bld->mask[1 + attrib] = mask;
-
-               /* XXX: have mesa set INTERP_CONSTANT in the fragment
-                * shader.
-                */
-               if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
-                   flatshade)
-                  bld->interp[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
-               else
-                  bld->interp[1 + attrib] = decl->Declaration.Interpolate;
-            }
-
-            bld->num_attribs = MAX2(bld->num_attribs, 1 + last + 1);
-         }
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-      case TGSI_TOKEN_TYPE_PROPERTY:
-         break;
-
-      default:
-         assert( 0 );
+   /* Ensure all masked out input channels have a valid value */
+   for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
+      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+         bld->attribs[attrib][chan] = bld->coeff_bld.undef;
       }
    }
-   tgsi_parse_free( &parse );
-
-   coeffs_init(bld, a0_ptr, dadx_ptr, dady_ptr);
 
    pos_init(bld, x0, y0);
 
-   attribs_init(bld);
+   coeffs_init(bld, a0_ptr, dadx_ptr, dady_ptr);
+
+   attribs_update(bld, 0);
 }
 
 
@@ -401,8 +447,6 @@ lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
                            int quad_index)
 {
    assert(quad_index < 4);
-
-   pos_update(bld, quad_index);
 
    attribs_update(bld, quad_index);
 }

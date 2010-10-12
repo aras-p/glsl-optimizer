@@ -1,5 +1,0 @@
-!!ARBvp1.0
-SGE result.color, {0.5}.x, vertex.color;
-MOV  result.position, vertex.position;
-END
-

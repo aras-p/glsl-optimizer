@@ -294,8 +294,6 @@ static void i915_bind_sampler_states(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    unsigned i;
 
-   assert(num <= PIPE_MAX_SAMPLERS);
-
    /* Check for no-op */
    if (num == i915->num_samplers &&
        !memcmp(i915->sampler, sampler, num * sizeof(void *)))
@@ -529,9 +527,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    draw_flush(i915->draw);
 
-   assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
-
    /* Make a copy of shader constants.
     * During fragment program translation we may add additional
     * constants to the array.
@@ -686,17 +681,23 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
    else
       cso->sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
 
-   switch (rasterizer->cull_mode) {
-   case PIPE_WINDING_NONE:
+   switch (rasterizer->cull_face) {
+   case PIPE_FACE_NONE:
       cso->LIS4 |= S4_CULLMODE_NONE;
       break;
-   case PIPE_WINDING_CW:
-      cso->LIS4 |= S4_CULLMODE_CW;
+   case PIPE_FACE_FRONT:
+      if (rasterizer->front_ccw)
+         cso->LIS4 |= S4_CULLMODE_CCW;
+      else 
+         cso->LIS4 |= S4_CULLMODE_CW;
       break;
-   case PIPE_WINDING_CCW:
-      cso->LIS4 |= S4_CULLMODE_CCW;
+   case PIPE_FACE_BACK:
+      if (rasterizer->front_ccw)
+         cso->LIS4 |= S4_CULLMODE_CW;
+      else 
+         cso->LIS4 |= S4_CULLMODE_CCW;
       break;
-   case PIPE_WINDING_BOTH:
+   case PIPE_FACE_FRONT_AND_BACK:
       cso->LIS4 |= S4_CULLMODE_BOTH;
       break;
    }
@@ -806,6 +807,26 @@ i915_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
    FREE( velems );
 }
 
+static void i915_set_index_buffer(struct pipe_context *pipe,
+                                  const struct pipe_index_buffer *ib)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   if (ib)
+      memcpy(&i915->index_buffer, ib, sizeof(i915->index_buffer));
+   else
+      memset(&i915->index_buffer, 0, sizeof(i915->index_buffer));
+
+   /* pass-through to draw module */
+   draw_set_index_buffer(i915->draw, ib);
+}
+
+static void
+i915_set_sample_mask(struct pipe_context *pipe,
+                     unsigned sample_mask)
+{
+}
+
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
@@ -837,6 +858,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_blend_color = i915_set_blend_color;
    i915->base.set_stencil_ref = i915_set_stencil_ref;
    i915->base.set_clip_state = i915_set_clip_state;
+   i915->base.set_sample_mask = i915_set_sample_mask;
    i915->base.set_constant_buffer = i915_set_constant_buffer;
    i915->base.set_framebuffer_state = i915_set_framebuffer_state;
 
@@ -847,4 +869,5 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.sampler_view_destroy = i915_sampler_view_destroy;
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
+   i915->base.set_index_buffer = i915_set_index_buffer;
 }

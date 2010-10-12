@@ -69,13 +69,13 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    key->depth_clamp = ctx->Transform.DepthClamp;
 }
 
-static dri_bo *
+static drm_intel_bo *
 clip_unit_create_from_key(struct brw_context *brw,
 			  struct brw_clip_unit_key *key)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_clip_unit_state clip;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&clip, 0, sizeof(clip));
 
@@ -146,12 +146,9 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION,
-		     0,
-		     clip.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_clip_unit_state, thread0),
-		     brw->clip.prog_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_clip_unit_state, thread0),
+			   brw->clip.prog_bo, clip.thread0.grf_reg_count << 1,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    return bo;
 }
@@ -162,7 +159,7 @@ static void upload_clip_unit( struct brw_context *brw )
 
    clip_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->clip.state_bo);
+   drm_intel_bo_unreference(brw->clip.state_bo);
    brw->clip.state_bo = brw_search_cache(&brw->cache, BRW_CLIP_UNIT,
 					 &key, sizeof(key),
 					 &brw->clip.prog_bo, 1,

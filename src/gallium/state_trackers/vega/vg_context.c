@@ -33,6 +33,7 @@
 #include "asm_util.h"
 #include "st_inlines.h"
 #include "vg_manager.h"
+#include "api.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -64,9 +65,36 @@ static void init_clear(struct vg_context *st)
    st->clear.fs =
       util_make_fragment_passthrough_shader(pipe);
 }
+
+/**
+ * A depth/stencil rb will be needed regardless of what the visual says.
+ */
+static boolean
+choose_depth_stencil_format(struct vg_context *ctx)
+{
+   struct pipe_screen *screen = ctx->pipe->screen;
+   enum pipe_format formats[] = {
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+      PIPE_FORMAT_NONE
+   };
+   enum pipe_format *fmt;
+
+   for (fmt = formats; *fmt != PIPE_FORMAT_NONE; fmt++) {
+      if (screen->is_format_supported(screen, *fmt,
+               PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+         break;
+   }
+
+   ctx->ds_format = *fmt;
+
+   return (ctx->ds_format != PIPE_FORMAT_NONE);
+}
+
 void vg_set_current_context(struct vg_context *ctx)
 {
    _vg_context = ctx;
+   api_make_dispatch_current((ctx) ? ctx->dispatch : NULL);
 }
 
 struct vg_context * vg_create_context(struct pipe_context *pipe,
@@ -79,6 +107,12 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx = CALLOC_STRUCT(vg_context);
 
    ctx->pipe = pipe;
+   if (!choose_depth_stencil_format(ctx)) {
+      FREE(ctx);
+      return NULL;
+   }
+
+   ctx->dispatch = api_create_dispatch();
 
    vg_init_state(&ctx->state.vg);
    ctx->state.dirty = ALL_DIRTY;
@@ -185,7 +219,9 @@ void vg_destroy_context(struct vg_context *ctx)
    cso_hash_delete(ctx->owned_objects[VG_OBJECT_FONT]);
    cso_hash_delete(ctx->owned_objects[VG_OBJECT_PATH]);
 
-   free(ctx);
+   api_destroy_dispatch(ctx->dispatch);
+
+   FREE(ctx);
 }
 
 void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_object_type type)
@@ -451,8 +487,7 @@ void vg_prepare_blend_surface(struct vg_context *ctx)
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
                                                 stfb->blend_texture_view->texture,
                                                 0, 0, 0,
-                                                PIPE_BIND_BLIT_DESTINATION |
-						PIPE_BIND_RENDER_TARGET);
+                                                PIPE_BIND_RENDER_TARGET);
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
                         view,
@@ -488,8 +523,7 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
                                                 stfb->blend_texture_view->texture,
                                                 0, 0, 0,
-                                                PIPE_BIND_BLIT_DESTINATION |
-						PIPE_BIND_RENDER_TARGET);
+                                                PIPE_BIND_RENDER_TARGET);
 
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,

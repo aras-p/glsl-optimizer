@@ -2,6 +2,10 @@ Import('*')
 
 env = env.Clone()
 
+if msvc:
+	print 'warning: not building i965g'
+	Return();
+
 i965 = env.ConvenienceLibrary(
 	target = 'i965',
 	source = [
@@ -50,7 +54,7 @@ i965 = env.ConvenienceLibrary(
 		'brw_sf_state.c',
 		'brw_state_batch.c',
 		'brw_state_cache.c',
-#		'brw_state_debug.c',
+		'brw_state_debug.c',
 		'brw_state_upload.c',
 		'brw_swtnl.c',
 		'brw_urb.c',

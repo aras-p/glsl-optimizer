@@ -1,0 +1,33 @@
+Import('*')
+
+env = env.Clone()
+
+try:
+    env.ParseConfig('pkg-config --cflags libdrm_radeon')
+except OSError:
+    print 'warning: not building r600'
+    Return()
+
+env.Append(CPPPATH = [
+    '#/include', 
+    '#/src/mesa',
+])
+
+r600 = env.ConvenienceLibrary(
+    target = 'r600',
+    source = [
+        'r600_asm.c',
+        'r600_buffer.c',
+        'r600_helper.c',
+        'r600_pipe.c',
+        'r600_query.c',
+        'r600_resource.c',
+        'r600_shader.c',
+        'r600_state.c',
+        'r600_texture.c',
+        'r700_asm.c',
+        'evergreen_state.c',
+        'eg_asm.c',
+    ])
+
+Export('r600')

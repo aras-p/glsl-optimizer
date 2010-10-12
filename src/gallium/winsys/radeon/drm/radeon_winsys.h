@@ -40,8 +40,6 @@ struct radeon_libdrm_winsys {
 
     struct pb_manager *cman;
 
-    struct pb_manager *mman;
-
     /* PCI ID */
     uint32_t pci_id;
 
@@ -67,6 +65,15 @@ struct radeon_libdrm_winsys {
      */
     boolean drm_2_3_0;
 
+    /* DRM 2.6.0
+     *   - Hyper-Z
+     *   - GB_Z_PEQ_CONFIG allowed on rv350->r4xx, we should initialize it
+     */
+    boolean drm_2_6_0;
+
+    /* hyperz user */
+    boolean hyperz;
+
     /* DRM FD */
     int fd;
 
@@ -75,19 +82,32 @@ struct radeon_libdrm_winsys {
 
     /* Radeon CS manager. */
     struct radeon_cs_manager *csm;
+};
 
-    /* Current CS. */
+struct radeon_libdrm_cs {
+    struct r300_winsys_cs base;
+
+    /* The winsys. */
+    struct radeon_libdrm_winsys *ws;
+
+    /* The libdrm command stream. */
     struct radeon_cs *cs;
 
-    /* Flush CB */
-    void (*flush_cb)(void *);
+    /* Flush CS. */
+    void (*flush_cs)(void *);
     void *flush_data;
 };
 
-static INLINE struct radeon_libdrm_winsys *
-radeon_winsys_screen(struct r300_winsys_screen *base)
+static INLINE struct radeon_libdrm_cs *
+radeon_libdrm_cs(struct r300_winsys_cs *base)
 {
-  return (struct radeon_libdrm_winsys *)base;
+    return (struct radeon_libdrm_cs*)base;
+}
+
+static INLINE struct radeon_libdrm_winsys *
+radeon_libdrm_winsys(struct r300_winsys_screen *base)
+{
+    return (struct radeon_libdrm_winsys*)base;
 }
 
 #endif

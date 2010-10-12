@@ -32,7 +32,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_state.h"
-
+#include "main/formats.h"
 
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
@@ -68,6 +68,7 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
    case OPCODE_RCP:
    case OPCODE_RSQ:
    case OPCODE_SIN:
+   case OPCODE_DP2:
    case OPCODE_DP3:
    case OPCODE_DP4:
    case OPCODE_DPH:
@@ -177,17 +178,19 @@ static void do_wm_prog( struct brw_context *brw,
    /* temporary sanity check assertion */
    ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
 
-   /*
-    * Shader which use GLSL features such as flow control are handled
-    * differently from "simple" shaders.
-    */
-   if (fp->isGLSL) {
-      c->dispatch_width = 8;
-      brw_wm_glsl_emit(brw, c);
-   }
-   else {
-      c->dispatch_width = 16;
-      brw_wm_non_glsl_emit(brw, c);
+   if (!brw_wm_fs_emit(brw, c)) {
+      /*
+       * Shader which use GLSL features such as flow control are handled
+       * differently from "simple" shaders.
+       */
+      if (fp->isGLSL) {
+	 c->dispatch_width = 8;
+	 brw_wm_glsl_emit(brw, c);
+      }
+      else {
+	 c->dispatch_width = 16;
+	 brw_wm_non_glsl_emit(brw, c);
+      }
    }
 
    if (INTEL_DEBUG & DEBUG_WM)
@@ -197,7 +200,7 @@ static void do_wm_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c->func, &program_size);
 
-   dri_bo_unreference(brw->wm.prog_bo);
+   drm_intel_bo_unreference(brw->wm.prog_bo);
    brw->wm.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_WM_PROG,
 						   &c->key, sizeof(c->key),
 						   NULL, 0,
@@ -212,6 +215,7 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
@@ -275,12 +279,52 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	 }
       }
    }
-	 
-   brw_wm_lookup_iz(line_aa,
-		    lookup,
-		    uses_depth,
-		    key);
 
+   if (intel->gen >= 6) {
+      /* R0-1: masks, pixel X/Y coordinates. */
+      key->nr_payload_regs = 2;
+      /* R2: only for 32-pixel dispatch.*/
+      /* R3-4: perspective pixel location barycentric */
+      key->nr_payload_regs += 2;
+      /* R5-6: perspective pixel location bary for dispatch width != 8 */
+      if (!fp->isGLSL) { /* dispatch_width != 8 */
+	 key->nr_payload_regs += 2;
+      }
+      /* R7-10: perspective centroid barycentric */
+      /* R11-14: perspective sample barycentric */
+      /* R15-18: linear pixel location barycentric */
+      /* R19-22: linear centroid barycentric */
+      /* R23-26: linear sample barycentric */
+
+      /* R27: interpolated depth if uses source depth */
+      if (uses_depth) {
+	 key->source_depth_reg = key->nr_payload_regs;
+	 key->nr_payload_regs++;
+	 if (!fp->isGLSL) { /* dispatch_width != 8 */
+	    /* R28: interpolated depth if not 8-wide. */
+	    key->nr_payload_regs++;
+	 }
+      }
+      /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W.
+       */
+      if (uses_depth) {
+	 key->source_w_reg = key->nr_payload_regs;
+	 key->nr_payload_regs++;
+	 if (!fp->isGLSL) { /* dispatch_width != 8 */
+	    /* R30: interpolated W if not 8-wide. */
+	    key->nr_payload_regs++;
+	 }
+      }
+      /* R31: MSAA position offsets. */
+      /* R32-: bary for 32-pixel. */
+      /* R58-59: interp W for 32-pixel. */
+   } else {
+      brw_wm_lookup_iz(intel,
+	      	       line_aa,
+		       lookup,
+		       uses_depth,
+		       key);
+   }
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
    key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
@@ -298,13 +342,44 @@ static void brw_wm_populate_key( struct brw_context *brw,
       if (unit->_ReallyEnabled) {
          const struct gl_texture_object *t = unit->_Current;
          const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 int swizzles[SWIZZLE_NIL + 1] = {
+	    SWIZZLE_X,
+	    SWIZZLE_Y,
+	    SWIZZLE_Z,
+	    SWIZZLE_W,
+	    SWIZZLE_ZERO,
+	    SWIZZLE_ONE,
+	    SWIZZLE_NIL
+	 };
+
+	 key->tex_swizzles[i] = SWIZZLE_NOOP;
+
+	 /* GL_DEPTH_TEXTURE_MODE is normally handled through
+	  * brw_wm_surface_state, but it applies to shadow compares as
+	  * well and our shadow compares always return the result in
+	  * all 4 channels.
+	  */
+	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    if (t->DepthMode == GL_ALPHA) {
+	       swizzles[0] = SWIZZLE_ZERO;
+	       swizzles[1] = SWIZZLE_ZERO;
+	       swizzles[2] = SWIZZLE_ZERO;
+	    } else if (t->DepthMode == GL_LUMINANCE) {
+	       swizzles[3] = SWIZZLE_ONE;
+	    }
+	 }
+
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1 << i;
 	    if (img->TexFormat == MESA_FORMAT_YCBCR)
 		key->yuvtex_swap_mask |= 1 << i;
 	 }
 
-         key->tex_swizzles[i] = t->_Swizzle;
+	 key->tex_swizzles[i] =
+	    MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
+			  swizzles[GET_SWZ(t->_Swizzle, 1)],
+			  swizzles[GET_SWZ(t->_Swizzle, 2)],
+			  swizzles[GET_SWZ(t->_Swizzle, 3)]);
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;
@@ -359,7 +434,7 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 
    /* Make an early check for the key.
     */
-   dri_bo_unreference(brw->wm.prog_bo);
+   drm_intel_bo_unreference(brw->wm.prog_bo);
    brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,

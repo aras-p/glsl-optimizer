@@ -29,7 +29,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
-#include "main/macros.h"
 
 /* The clip VP defines the guardband region where expensive clipping is skipped
  * and fragments are allowed to be generated and clipped out cheaply by the SF.
@@ -51,8 +50,7 @@ prepare_clip_vp(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->clip.vp_bo);
    brw->clip.vp_bo = brw_cache_data(&brw->cache, BRW_CLIP_VP,
-				    &vp, sizeof(vp),
-				    NULL, 0);
+				    &vp, sizeof(vp));
 }
 
 const struct brw_tracked_state gen6_clip_vp = {
@@ -95,8 +93,7 @@ prepare_sf_vp(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP,
-				  &sfv, sizeof(sfv),
-				  NULL, 0);
+				  &sfv, sizeof(sfv));
 }
 
 const struct brw_tracked_state gen6_sf_vp = {
@@ -108,39 +105,11 @@ const struct brw_tracked_state gen6_sf_vp = {
    .prepare = prepare_sf_vp,
 };
 
-static void
-prepare_cc_vp(struct brw_context *brw)
-{
-   GLcontext *ctx = &brw->intel.ctx;
-   struct brw_cc_viewport ccv;
-
-   /* _NEW_TRANSOFORM */
-   if (ctx->Transform.DepthClamp) {
-      /* _NEW_VIEWPORT */
-      ccv.min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
-      ccv.max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
-   } else {
-      ccv.min_depth = 0.0;
-      ccv.max_depth = 1.0;
-   }
-
-   drm_intel_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
-				  NULL, 0);
-}
-
-const struct brw_tracked_state gen6_cc_vp = {
-   .dirty = {
-      .mesa = _NEW_VIEWPORT | _NEW_TRANSFORM,
-      .brw = 0,
-      .cache = 0,
-   },
-   .prepare = prepare_cc_vp,
-};
-
 static void prepare_viewport_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->sf.state_bo);
+   brw_add_validated_bo(brw, brw->clip.vp_bo);
+   brw_add_validated_bo(brw, brw->sf.vp_bo);
+   brw_add_validated_bo(brw, brw->cc.vp_bo);
 }
 
 static void upload_viewport_state_pointers(struct brw_context *brw)

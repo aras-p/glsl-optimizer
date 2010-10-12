@@ -118,6 +118,7 @@ os_str_stream_create(size_t size)
    stream->base.close = &os_str_stream_close;
    stream->base.write = &os_str_stream_write;
    stream->base.flush = &os_str_stream_flush;
+   stream->base.vprintf = &os_default_stream_vprintf;
 
    stream->str = os_malloc(size);
    if(!stream->str)

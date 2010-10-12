@@ -33,9 +33,6 @@
 #include "state_tracker/st_api.h"
 #include "egltypedefs.h"
 
-struct st_api *
-egl_g3d_create_st_api(enum st_api_type api);
-
 struct st_manager *
 egl_g3d_create_st_manager(_EGLDisplay *dpy);
 
@@ -47,34 +44,5 @@ egl_g3d_create_st_framebuffer(_EGLSurface *surf);
 
 void
 egl_g3d_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi);
-
-/**
- * Return the EGL_<api>_BIT of the st api.
- */
-static INLINE int
-egl_g3d_st_api_bit(enum st_api_type api)
-{
-   int bit;
-
-   switch (api) {
-   case ST_API_OPENGL:
-      bit = EGL_OPENGL_BIT;
-      break;
-   case ST_API_OPENGL_ES1:
-      bit = EGL_OPENGL_ES_BIT;
-      break;
-   case ST_API_OPENGL_ES2:
-      bit = EGL_OPENGL_ES2_BIT;
-      break;
-   case ST_API_OPENVG:
-      bit = EGL_OPENVG_BIT;
-      break;
-   default:
-      bit = 0;
-      break;
-   }
-
-   return bit;
-}
 
 #endif /* _EGL_G3D_ST_H_ */

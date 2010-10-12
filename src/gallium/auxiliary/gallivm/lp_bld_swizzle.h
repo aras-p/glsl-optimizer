@@ -55,12 +55,20 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar);
 
 
+LLVMValueRef
+lp_build_extract_broadcast(LLVMBuilderRef builder,
+                           struct lp_type src_type,
+                           struct lp_type dst_type,
+                           LLVMValueRef vector,
+                           LLVMValueRef index);
+
+
 /**
  * Broadcast one channel of a vector composed of arrays of XYZW structures into
  * all four channel.
  */
 LLVMValueRef
-lp_build_broadcast_aos(struct lp_build_context *bld,
+lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
                        LLVMValueRef a,
                        unsigned channel);
 
@@ -68,24 +76,31 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 /**
  * Swizzle a vector consisting of an array of XYZW structs.
  *
- * @param swizzle is the in [0,4[ range.
+ * @param swizzles is the in [0,4[ range.
  */
 LLVMValueRef
-lp_build_swizzle1_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      const unsigned char swizzle[4]);
+lp_build_swizzle_aos(struct lp_build_context *bld,
+                     LLVMValueRef a,
+                     const unsigned char swizzles[4]);
 
 
-/**
- * Swizzle two vector consisting of an array of XYZW structs.
- *
- * @param swizzle is the in [0,8[ range. Values in [4,8[ range refer to b.
- */
 LLVMValueRef
-lp_build_swizzle2_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      LLVMValueRef b,
-                      const unsigned char swizzle[4]);
+lp_build_swizzle_soa_channel(struct lp_build_context *bld,
+                             const LLVMValueRef *unswizzled,
+                             unsigned swizzle);
+
+
+void
+lp_build_swizzle_soa(struct lp_build_context *bld,
+                     const LLVMValueRef *unswizzled,
+                     const unsigned char swizzles[4],
+                     LLVMValueRef *swizzled);
+
+
+void
+lp_build_swizzle_soa_inplace(struct lp_build_context *bld,
+                             LLVMValueRef *values,
+                             const unsigned char swizzles[4]);
 
 
 #endif /* !LP_BLD_SWIZZLE_H */

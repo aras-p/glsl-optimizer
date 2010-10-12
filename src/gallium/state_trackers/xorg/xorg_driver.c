@@ -51,6 +51,7 @@
 
 #include <pciaccess.h>
 
+#include "state_tracker/drm_driver.h"
 #include "pipe/p_context.h"
 #include "xorg_tracker.h"
 #include "xorg_winsys.h"
@@ -79,12 +80,18 @@ typedef enum
     OPTION_SW_CURSOR,
     OPTION_2D_ACCEL,
     OPTION_DEBUG_FALLBACK,
+    OPTION_THROTTLE_SWAP,
+    OPTION_THROTTLE_DIRTY,
+    OPTION_3D_ACCEL
 } drv_option_enums;
 
 static const OptionInfoRec drv_options[] = {
     {OPTION_SW_CURSOR, "SWcursor", OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_2D_ACCEL, "2DAccel", OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_DEBUG_FALLBACK, "DebugFallback", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_THROTTLE_SWAP, "SwapThrottling", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_THROTTLE_DIRTY, "DirtyThrottling", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_3D_ACCEL, "3DAccel", OPTV_BOOLEAN, {0}, FALSE},
     {-1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
@@ -141,8 +148,6 @@ xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
 
 static Bool drv_init_front_buffer_functions(ScrnInfoPtr pScrn);
 static Bool drv_close_screen(int scrnIndex, ScreenPtr pScreen);
-static Bool drv_save_hw_state(ScrnInfoPtr pScrn);
-static Bool drv_restore_hw_state(ScrnInfoPtr pScrn);
 
 
 /*
@@ -185,6 +190,7 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
     modesettingPtr ms = modesettingPTR(pScrn);
+    CustomizerPtr cust = ms->cust;
     ScreenPtr pScreen = pScrn->pScreen;
     int old_width, old_height;
     PixmapPtr rootPixmap;
@@ -192,6 +198,16 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;
+
+    if (cust && cust->winsys_check_fb_size &&
+	!cust->winsys_check_fb_size(cust, width*pScrn->bitsPerPixel / 8,
+				    height)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "Requested framebuffer size %dx%dx%d will not fit "
+		   "in display memory.\n",
+		   width, height, pScrn->bitsPerPixel);
+	return FALSE;
+    }
 
     old_width = pScrn->virtualX;
     old_height = pScrn->virtualY;
@@ -265,35 +281,15 @@ drv_init_drm(ScrnInfoPtr pScrn)
 	    );
 
 
-	ms->api = drm_api_create();
-	ms->fd = drmOpen(ms->api ? ms->api->driver_name : NULL, BusID);
+	ms->fd = drmOpen(driver_descriptor.driver_name, BusID);
+	ms->isMaster = TRUE;
 	xfree(BusID);
 
 	if (ms->fd >= 0)
 	    return TRUE;
 
-	if (ms->api && ms->api->destroy)
-	    ms->api->destroy(ms->api);
-
-	ms->api = NULL;
-
 	return FALSE;
     }
-
-    return TRUE;
-}
-
-static Bool
-drv_close_drm(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-
-    if (ms->api && ms->api->destroy)
-	ms->api->destroy(ms->api);
-    ms->api = NULL;
-
-    drmClose(ms->fd);
-    ms->fd = -1;
 
     return TRUE;
 }
@@ -312,17 +308,11 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     if (ms->screen || ms->kms)
 	return TRUE;
 
-    if (ms->api) {
-	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
+    if (!ms->no3D)
+	ms->screen = driver_descriptor.create_screen(ms->fd);
 
-	if (ms->screen)
-	    return TRUE;
-
-	if (ms->api->destroy)
-	    ms->api->destroy(ms->api);
-
-	ms->api = NULL;
-    }
+    if (ms->screen)
+	return TRUE;
 
 #ifdef HAVE_LIBKMS
     if (!kms_create(ms->fd, &ms->kms))
@@ -332,31 +322,20 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     return FALSE;
 }
 
-static Bool
-drv_close_resource_management(ScrnInfoPtr pScrn)
+static void
+drv_cleanup_fences(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
     int i;
 
-    if (ms->screen) {
-	assert(ms->ctx == NULL);
+    assert(ms->screen);
 
-	for (i = 0; i < XORG_NR_FENCES; i++) {
-	    if (ms->fence[i]) {
-		ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
-		ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
-	    }
+    for (i = 0; i < XORG_NR_FENCES; i++) {
+	if (ms->fence[i]) {
+	    ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
+	    ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
 	}
-	ms->screen->destroy(ms->screen);
     }
-    ms->screen = NULL;
-
-#ifdef HAVE_LIBKMS
-    if (ms->kms)
-	kms_destroy(&ms->kms);
-#endif
-
-    return TRUE;
 }
 
 static Bool
@@ -367,8 +346,8 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     rgb defaultWeight = { 0, 0, 0 };
     EntityInfoPtr pEnt;
     EntPtr msEnt = NULL;
-    int max_width, max_height;
     CustomizerPtr cust;
+    Bool use3D;
 
     if (pScrn->numEntities != 1)
 	return FALSE;
@@ -388,7 +367,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
 
     ms = modesettingPTR(pScrn);
-    ms->SaveGeneration = -1;
     ms->pEnt = pEnt;
     ms->cust = cust;
 
@@ -421,9 +399,21 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     }
 
     ms->fd = -1;
-    ms->api = NULL;
     if (!drv_init_drm(pScrn))
 	return FALSE;
+
+    use3D = cust ? !cust->no_3d : TRUE;
+    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				    &use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
+
+    if (!drv_init_resource_management(pScrn)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
+					       "Gallium3D or libKMS.");
+	return FALSE;
+    }
 
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
@@ -463,26 +453,51 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
     xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 
-    max_width = 2048;  /* A very low default */
-    max_height = 2048; /* see screen_init */
-    xf86CrtcSetSizeRange(pScrn, 320, 200, max_width, max_height);
+    /* get max width and height */
+    {
+	drmModeResPtr res;
+	int max_width, max_height;
+
+	res = drmModeGetResources(ms->fd);
+	max_width = res->max_width;
+	max_height = res->max_height;
+
+	if (ms->screen) {
+	    int max;
+
+	    max = ms->screen->get_param(ms->screen,
+					PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+	    max = 1 << (max - 1);
+	    max_width = max < max_width ? max : max_width;
+	    max_height = max < max_height ? max : max_height;
+	}
+
+	xf86CrtcSetSizeRange(pScrn, res->min_width,
+			     res->min_height, max_width, max_height);
+	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		   "Min width %d, Max Width %d.\n",
+		   res->min_width, max_width);
+	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		   "Min height %d, Max Height %d.\n",
+		   res->min_height, max_height);
+	drmModeFreeResources(res);
+    }
+
 
     if (xf86ReturnOptValBool(ms->Options, OPTION_SW_CURSOR, FALSE)) {
 	ms->SWCursor = TRUE;
     }
 
-    drv_save_hw_state(pScrn);
-
     xorg_crtc_init(pScrn);
     xorg_output_init(pScrn);
 
+    if (cust && cust->winsys_pre_init && !cust->winsys_pre_init(cust, ms->fd))
+	return FALSE;
+
     if (!xf86InitialConfiguration(pScrn, TRUE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes.\n");
-	drv_restore_hw_state(pScrn);
 	return FALSE;
     }
-
-    drv_restore_hw_state(pScrn);
 
     /*
      * If the driver can do gamma correction, it should call xf86SetGamma() here.
@@ -521,22 +536,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     return TRUE;
 }
 
-static Bool
-drv_save_hw_state(ScrnInfoPtr pScrn)
-{
-    /*xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);*/
-
-    return TRUE;
-}
-
-static Bool
-drv_restore_hw_state(ScrnInfoPtr pScrn)
-{
-    /*xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);*/
-
-    return TRUE;
-}
-
 static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
                               pointer pReadmask)
 {
@@ -550,23 +549,29 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
     if (ms->ctx) {
        int j;
 
-       ms->ctx->flush(ms->ctx, PIPE_FLUSH_RENDER_CACHE, &ms->fence[XORG_NR_FENCES-1]);
+       ms->ctx->flush(ms->ctx, PIPE_FLUSH_RENDER_CACHE,
+		      ms->dirtyThrottling ?
+		      &ms->fence[XORG_NR_FENCES-1] :
+		      NULL);
        
-       if (ms->fence[0])
-          ms->ctx->screen->fence_finish(ms->ctx->screen, ms->fence[0], 0);
+       if (ms->dirtyThrottling) {
+	   if (ms->fence[0])
+	       ms->ctx->screen->fence_finish(ms->ctx->screen,
+					     ms->fence[0], 0);
   
-       /* The amount of rendering generated by a block handler can be
-        * quite small.  Let us get a fair way ahead of hardware before
-        * throttling.
-        */
-       for (j = 0; j < XORG_NR_FENCES - 1; j++)
-          ms->screen->fence_reference(ms->screen,
-                                      &ms->fence[j],
-                                      ms->fence[j+1]);
+	   /* The amount of rendering generated by a block handler can be
+	    * quite small.  Let us get a fair way ahead of hardware before
+	    * throttling.
+	    */
+	   for (j = 0; j < XORG_NR_FENCES - 1; j++)
+	       ms->screen->fence_reference(ms->screen,
+					   &ms->fence[j],
+					   ms->fence[j+1]);
 
-       ms->screen->fence_reference(ms->screen,
-                                   &ms->fence[XORG_NR_FENCES-1],
-                                   NULL);
+	   ms->screen->fence_reference(ms->screen,
+				       &ms->fence[XORG_NR_FENCES-1],
+				       NULL);
+       }
     }
         
 
@@ -643,47 +648,44 @@ drv_create_screen_resources(ScreenPtr pScreen)
 }
 
 static Bool
+drv_set_master(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (!ms->isMaster && drmSetMaster(ms->fd) != 0) {
+	if (errno == EINVAL) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		       "drmSetMaster failed: 2.6.29 or newer kernel required for "
+		       "multi-server DRI\n");
+	} else {
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		       "drmSetMaster failed: %s\n", strerror(errno));
+	}
+	return FALSE;
+    }
+
+    ms->isMaster = TRUE;
+    return TRUE;
+}
+
+
+static Bool
 drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned max_width, max_height;
     VisualPtr visual;
     CustomizerPtr cust = ms->cust;
+    MessageType from_st;
+    MessageType from_dt;
 
-    if (!drv_init_drm(pScrn)) {
-	FatalError("Could not init DRM");
+    if (!drv_set_master(pScrn))
 	return FALSE;
-    }
-
-    if (!drv_init_resource_management(pScrn)) {
-	FatalError("Could not init resource management (!pipe_screen && !libkms)");
-	return FALSE;
-    }
 
     if (!drv_init_front_buffer_functions(pScrn)) {
 	FatalError("Could not init front buffer manager");
 	return FALSE;
     }
-
-    /* get max width and height */
-    {
-	drmModeResPtr res;
-	res = drmModeGetResources(ms->fd);
-	max_width = res->max_width;
-	max_height = res->max_height;
-	drmModeFreeResources(res);
-    }
-
-    if (ms->screen) {
-	int max;
-	max = ms->screen->get_param(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-	max = 1 << (max - 1);
-	max_width = max < max_width ? max : max_width;
-	max_height = max < max_height ? max : max_height;
-    }
-
-    xf86CrtcSetSizeRange(pScrn, 1, 1, max_width, max_height);
 
     pScrn->pScreen = pScreen;
 
@@ -736,6 +738,19 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ms->accelerate_2d = xf86ReturnOptValBool(ms->Options, OPTION_2D_ACCEL, FALSE);
     ms->debug_fallback = xf86ReturnOptValBool(ms->Options, OPTION_DEBUG_FALLBACK, ms->accelerate_2d);
 
+    if (cust && cust->winsys_screen_init)
+	cust->winsys_screen_init(cust);
+
+    ms->swapThrottling = cust ?  cust->swap_throttling : TRUE;
+    from_st = xf86GetOptValBool(ms->Options, OPTION_THROTTLE_SWAP,
+				&ms->swapThrottling) ?
+	X_CONFIG : X_DEFAULT;
+
+    ms->dirtyThrottling = cust ?  cust->dirty_throttling : TRUE;
+    from_dt = xf86GetOptValBool(ms->Options, OPTION_THROTTLE_DIRTY,
+				&ms->dirtyThrottling) ?
+	X_CONFIG : X_DEFAULT;
+
     if (ms->screen) {
 	ms->exa = xorg_exa_init(pScrn, ms->accelerate_2d);
 
@@ -755,11 +770,16 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Fallback debugging is %s\n",
 	       ms->debug_fallback ? "enabled" : "disabled");
 #ifdef DRI2
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is %s\n",
+    xf86DrvMsg(pScrn->scrnIndex, ms->from_3D, "3D Acceleration is %s\n",
 	       ms->screen ? "enabled" : "disabled");
 #else
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is disabled\n");
 #endif
+    xf86DrvMsg(pScrn->scrnIndex, from_st, "Swap Throttling is %s.\n",
+	       ms->swapThrottling ? "enabled" : "disabled");
+    xf86DrvMsg(pScrn->scrnIndex, from_dt, "Dirty Throttling is %s.\n",
+	       ms->dirtyThrottling ? "enabled" : "disabled");
+
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
 
     miInitializeBackingStore(pScreen);
@@ -791,9 +811,6 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
-
-    if (cust && cust->winsys_screen_init)
-	cust->winsys_screen_init(cust, ms->fd);
 
     return drv_enter_vt(scrnIndex, 1);
 }
@@ -848,12 +865,15 @@ drv_leave_vt(int scrnIndex, int flags)
     drmModeRmFB(ms->fd, ms->fb_id);
     ms->fb_id = -1;
 
-    drv_restore_hw_state(pScrn);
+    /* idle hardware */
+    if (!ms->kms)
+	drv_cleanup_fences(pScrn);
 
     if (drmDropMaster(ms->fd))
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "drmDropMaster failed: %s\n", strerror(errno));
 
+    ms->isMaster = FALSE;
     pScrn->vtSema = FALSE;
 }
 
@@ -867,25 +887,8 @@ drv_enter_vt(int scrnIndex, int flags)
     modesettingPtr ms = modesettingPTR(pScrn);
     CustomizerPtr cust = ms->cust;
 
-    if (drmSetMaster(ms->fd)) {
-	if (errno == EINVAL) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: 2.6.29 or newer kernel required for "
-		       "multi-server DRI\n");
-	} else {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: %s\n", strerror(errno));
-	}
-    }
-
-    /*
-     * Only save state once per server generation since that's what most
-     * drivers do.  Could change this to save state at each VT enter.
-     */
-    if (ms->SaveGeneration != serverGeneration) {
-	ms->SaveGeneration = serverGeneration;
-	drv_save_hw_state(pScrn);
-    }
+    if (!drv_set_master(pScrn))
+	return FALSE;
 
     if (!ms->create_front_buffer(pScrn))
 	return FALSE;
@@ -916,10 +919,6 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     modesettingPtr ms = modesettingPTR(pScrn);
     CustomizerPtr cust = ms->cust;
-
-    if (pScrn->vtSema) {
-	drv_leave_vt(scrnIndex, 0);
-    }
 
     if (ms->cursor) {
        FreeCursor(ms->cursor, None);
@@ -952,12 +951,14 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 	xorg_exa_close(pScrn);
     ms->exa = NULL;
 
-    drv_close_resource_management(pScrn);
-
-    drv_close_drm(pScrn);
+    /* calls drop master make sure we don't talk to 3D HW after that */
+    if (pScrn->vtSema) {
+	drv_leave_vt(scrnIndex, 0);
+    }
 
     pScrn->vtSema = FALSE;
     pScreen->CloseScreen = ms->CloseScreen;
+
     return (*pScreen->CloseScreen) (scrnIndex, pScreen);
 }
 

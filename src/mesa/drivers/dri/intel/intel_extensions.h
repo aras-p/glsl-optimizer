@@ -33,7 +33,7 @@ extern void
 intelInitExtensions(GLcontext *ctx);
 
 extern void
-intelFlushDrawable(__DRIdrawable *drawable);
+intelInitExtensionsES2(GLcontext *ctx);
 
 
 #endif

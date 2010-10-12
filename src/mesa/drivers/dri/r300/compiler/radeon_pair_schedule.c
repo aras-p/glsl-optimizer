@@ -141,12 +141,28 @@ static void add_inst_to_list(struct schedule_instruction ** list, struct schedul
 	*list = inst;
 }
 
+static void add_inst_to_list_end(struct schedule_instruction ** list,
+					struct schedule_instruction * inst)
+{
+	if(!*list){
+		*list = inst;
+	}else{
+		struct schedule_instruction * temp = *list;
+		while(temp->NextReady){
+			temp = temp->NextReady;
+		}
+		temp->NextReady = inst;
+	}
+}
+
 static void instruction_ready(struct schedule_state * s, struct schedule_instruction * sinst)
 {
 	DBG("%i is now ready\n", sinst->Instruction->IP);
 
+	/* Adding Ready TEX instructions to the end of the "Ready List" helps
+	 * us emit TEX instructions in blocks without losing our place. */
 	if (sinst->Instruction->Type == RC_INSTRUCTION_NORMAL)
-		add_inst_to_list(&s->ReadyTEX, sinst);
+		add_inst_to_list_end(&s->ReadyTEX, sinst);
 	else if (sinst->Instruction->U.P.Alpha.Opcode == RC_OPCODE_NOP)
 		add_inst_to_list(&s->ReadyRGB, sinst);
 	else if (sinst->Instruction->U.P.RGB.Opcode == RC_OPCODE_NOP)
@@ -163,11 +179,14 @@ static void decrease_dependencies(struct schedule_state * s, struct schedule_ins
 		instruction_ready(s, sinst);
 }
 
-static void commit_instruction(struct schedule_state * s, struct schedule_instruction * sinst)
-{
-	DBG("%i: commit\n", sinst->Instruction->IP);
-
-	for(unsigned int i = 0; i < sinst->NumReadValues; ++i) {
+/**
+ * This function decreases the dependencies of the next instruction that
+ * wants to write to each of sinst's read values.
+ */
+static void commit_update_reads(struct schedule_state * s,
+					struct schedule_instruction * sinst){
+	unsigned int i;
+	for(i = 0; i < sinst->NumReadValues; ++i) {
 		struct reg_value * v = sinst->ReadValues[i];
 		assert(v->NumReaders > 0);
 		v->NumReaders--;
@@ -176,8 +195,12 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 				decrease_dependencies(s, v->Next->Writer);
 		}
 	}
+}
 
-	for(unsigned int i = 0; i < sinst->NumWriteValues; ++i) {
+static void commit_update_writes(struct schedule_state * s,
+					struct schedule_instruction * sinst){
+	unsigned int i;
+	for(i = 0; i < sinst->NumWriteValues; ++i) {
 		struct reg_value * v = sinst->WriteValues[i];
 		if (v->NumReaders) {
 			for(struct reg_value_reader * r = v->Readers; r; r = r->Next) {
@@ -196,6 +219,15 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 	}
 }
 
+static void commit_alu_instruction(struct schedule_state * s, struct schedule_instruction * sinst)
+{
+	DBG("%i: commit\n", sinst->Instruction->IP);
+
+	commit_update_reads(s, sinst);
+
+	commit_update_writes(s, sinst);
+}
+
 /**
  * Emit all ready texture instructions in a single block.
  *
@@ -205,24 +237,41 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 static void emit_all_tex(struct schedule_state * s, struct rc_instruction * before)
 {
 	struct schedule_instruction *readytex;
+	struct rc_instruction * inst_begin;
 
 	assert(s->ReadyTEX);
 
-	/* Don't let the ready list change under us! */
-	readytex = s->ReadyTEX;
-	s->ReadyTEX = 0;
-
 	/* Node marker for R300 */
-	struct rc_instruction * inst_begin = rc_insert_new_instruction(s->C, before->Prev);
+	inst_begin = rc_insert_new_instruction(s->C, before->Prev);
 	inst_begin->U.I.Opcode = RC_OPCODE_BEGIN_TEX;
 
 	/* Link texture instructions back in */
+	readytex = s->ReadyTEX;
 	while(readytex) {
-		struct schedule_instruction * tex = readytex;
-		readytex = readytex->NextReady;
+		rc_insert_instruction(before->Prev, readytex->Instruction);
+		DBG("%i: commit TEX reads\n", readytex->Instruction->IP);
 
-		rc_insert_instruction(before->Prev, tex->Instruction);
-		commit_instruction(s, tex);
+		/* All of the TEX instructions in the same TEX block have
+		 * their source registers read from before any of the
+		 * instructions in that block write to their destination
+		 * registers.  This means that when we commit a TEX
+		 * instruction, any other TEX instruction that wants to write
+		 * to one of the committed instruction's source register can be
+		 * marked as ready and should be emitted in the same TEX
+		 * block. This prevents the following sequence from being
+		 * emitted in two different TEX blocks:
+		 * 0: TEX temp[0].xyz, temp[1].xy__, 2D[0];
+		 * 1: TEX temp[1].xyz, temp[2].xy__, 2D[0];
+		 */
+		commit_update_reads(s, readytex);
+		readytex = readytex->NextReady;
+	}
+	readytex = s->ReadyTEX;
+	s->ReadyTEX = 0;
+	while(readytex){
+		DBG("%i: commit TEX writes\n", readytex->Instruction->IP);
+		commit_update_writes(s, readytex);
+		readytex = readytex->NextReady;
 	}
 }
 
@@ -231,11 +280,145 @@ static int destructive_merge_instructions(
 		struct rc_pair_instruction * rgb,
 		struct rc_pair_instruction * alpha)
 {
+	const struct rc_opcode_info * opcode;
+	const struct rc_opcode_info * rgb_info;
+
 	assert(rgb->Alpha.Opcode == RC_OPCODE_NOP);
 	assert(alpha->RGB.Opcode == RC_OPCODE_NOP);
 
+	/* Presubtract registers need to be merged first so that registers
+	 * needed by the presubtract operation can be placed in src0 and/or
+	 * src1. */
+
+	/* Merge the rgb presubtract registers. */
+	rgb_info = rc_get_opcode_info(rgb->RGB.Opcode);
+	if (alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		unsigned int srcp_src;
+		unsigned int srcp_regs;
+		if (rgb->RGB.Src[RC_PAIR_PRESUB_SRC].Used)
+			return 0;
+		srcp_regs = rc_presubtract_src_reg_count(
+				alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Index);
+		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
+			unsigned int arg;
+			int free_source;
+			unsigned int one_way = 0;
+			struct rc_pair_instruction_source srcp =
+						alpha->RGB.Src[srcp_src];
+			struct rc_pair_instruction_source temp;
+			/* 2nd arg of 1 means this is an rgb source.
+			 * 3rd arg of 0 means this is not an alpha source. */
+			free_source = rc_pair_alloc_source(rgb, 1, 0,
+							srcp.File, srcp.Index);
+			/* If free_source < 0 then there are no free source
+			 * slots. */
+			if (free_source < 0)
+				return 0;
+
+			temp = rgb->RGB.Src[srcp_src];
+			rgb->RGB.Src[srcp_src] = rgb->RGB.Src[free_source];
+			/* srcp needs src0 and src1 to be the same */
+			if (free_source < srcp_src) {
+				if (!temp.Used)
+					continue;
+				free_source = rc_pair_alloc_source(rgb, 1, 0,
+							srcp.File, srcp.Index);
+				one_way = 1;
+			} else {
+				rgb->RGB.Src[free_source] = temp;
+			}
+			/* If free_source == srcp_src, then the presubtract
+			 * source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
+			/* Shuffle the sources, so we can put the
+			 * presubtract source in the correct place. */
+			for (arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
+				/*If this arg does not read from an rgb source,
+				 * do nothing. */
+				if (rc_source_type_that_arg_reads(
+					rgb->RGB.Arg[arg].Source,
+					rgb->RGB.Arg[arg].Swizzle, 3)
+							!= RC_PAIR_SOURCE_RGB) {
+					continue;
+				}
+				if (rgb->RGB.Arg[arg].Source == srcp_src)
+					rgb->RGB.Arg[arg].Source = free_source;
+				/* We need to do this just in case register
+				 * is one of the sources already, but in the
+				 * wrong spot. */
+				else if(rgb->RGB.Arg[arg].Source == free_source
+								&& !one_way) {
+					rgb->RGB.Arg[arg].Source = srcp_src;
+				}
+			}
+		}
+	}
+
+	/* Merge the alpha presubtract registers */
+	if (alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
+		unsigned int srcp_src;
+		unsigned int srcp_regs;
+		if(rgb->Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
+			return 0;
+
+		srcp_regs = rc_presubtract_src_reg_count(
+			alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
+		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
+			unsigned int arg;
+			int free_source;
+			unsigned int one_way = 0;
+			struct rc_pair_instruction_source srcp =
+						alpha->Alpha.Src[srcp_src];
+			struct rc_pair_instruction_source temp;
+			/* 2nd arg of 0 means this is not an rgb source.
+			 * 3rd arg of 1 means this is an alpha source. */
+			free_source = rc_pair_alloc_source(rgb, 0, 1,
+							srcp.File, srcp.Index);
+			/* If free_source < 0 then there are no free source
+			 * slots. */
+			if (free_source < 0)
+				return 0;
+
+			temp = rgb->Alpha.Src[srcp_src];
+			rgb->Alpha.Src[srcp_src] = rgb->Alpha.Src[free_source];
+			/* srcp needs src0 and src1 to be the same. */
+			if (free_source < srcp_src) {
+				if (!temp.Used)
+					continue;
+				free_source = rc_pair_alloc_source(rgb, 0, 1,
+							temp.File, temp.Index);
+				one_way = 1;
+			} else {
+				rgb->Alpha.Src[free_source] = temp;
+			}
+			/* If free_source == srcp_src, then the presubtract
+			 * source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
+			/* Shuffle the sources, so we can put the
+			 * presubtract source in the correct place. */
+			for(arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
+				/*If this arg does not read from an alpha
+				 * source, do nothing. */
+				if (rc_source_type_that_arg_reads(
+					rgb->RGB.Arg[arg].Source,
+					rgb->RGB.Arg[arg].Swizzle, 3)
+						!= RC_PAIR_SOURCE_ALPHA) {
+					continue;
+				}
+				if (rgb->RGB.Arg[arg].Source == srcp_src)
+					rgb->RGB.Arg[arg].Source = free_source;
+				else if (rgb->RGB.Arg[arg].Source == free_source
+								&& !one_way) {
+					rgb->RGB.Arg[arg].Source = srcp_src;
+				}
+			}
+		}
+	}
+
 	/* Copy alpha args into rgb */
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(alpha->Alpha.Opcode);
+	opcode = rc_get_opcode_info(alpha->Alpha.Opcode);
 
 	for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 		unsigned int srcrgb = 0;
@@ -243,6 +426,7 @@ static int destructive_merge_instructions(
 		unsigned int oldsrc = alpha->Alpha.Arg[arg].Source;
 		rc_register_file file = 0;
 		unsigned int index = 0;
+		int source;
 
 		if (alpha->Alpha.Arg[arg].Swizzle < 3) {
 			srcrgb = 1;
@@ -254,7 +438,7 @@ static int destructive_merge_instructions(
 			index = alpha->Alpha.Src[oldsrc].Index;
 		}
 
-		int source = rc_pair_alloc_source(rgb, srcrgb, srcalpha, file, index);
+		source = rc_pair_alloc_source(rgb, srcrgb, srcalpha, file, index);
 		if (source < 0)
 			return 0;
 
@@ -294,6 +478,12 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 {
 	struct rc_pair_instruction backup;
 
+	/*Instructions can't write output registers and ALU result at the
+	 * same time. */
+	if ((rgb->WriteALUResult && alpha->Alpha.OutputWriteMask)
+		|| (rgb->RGB.OutputWriteMask && alpha->WriteALUResult)) {
+		return 0;
+	}
 	memcpy(&backup, rgb, sizeof(struct rc_pair_instruction));
 
 	if (destructive_merge_instructions(rgb, alpha))
@@ -303,7 +493,52 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 	return 0;
 }
 
+static void presub_nop(struct rc_instruction * emitted) {
+	int prev_rgb_index, prev_alpha_index, i, num_src;
 
+	/* We don't need a nop if the previous instruction is a TEX. */
+	if (emitted->Prev->Type != RC_INSTRUCTION_PAIR) {
+		return;
+	}
+	if (emitted->Prev->U.P.RGB.WriteMask)
+		prev_rgb_index = emitted->Prev->U.P.RGB.DestIndex;
+	else
+		prev_rgb_index = -1;
+	if (emitted->Prev->U.P.Alpha.WriteMask)
+		prev_alpha_index = emitted->Prev->U.P.Alpha.DestIndex;
+	else
+		prev_alpha_index = 1;
+
+	/* Check the previous rgb instruction */
+	if (emitted->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		num_src = rc_presubtract_src_reg_count(
+				emitted->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index);
+		for (i = 0; i < num_src; i++) {
+			unsigned int index = emitted->U.P.RGB.Src[i].Index;
+			if (emitted->U.P.RGB.Src[i].File == RC_FILE_TEMPORARY
+			    && (index  == prev_rgb_index
+				|| index == prev_alpha_index)) {
+				emitted->Prev->U.P.Nop = 1;
+				return;
+			}
+		}
+	}
+
+	/* Check the previous alpha instruction. */
+	if (!emitted->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
+		return;
+
+	num_src = rc_presubtract_src_reg_count(
+				emitted->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
+	for (i = 0; i < num_src; i++) {
+		unsigned int index = emitted->U.P.Alpha.Src[i].Index;
+		if(emitted->U.P.Alpha.Src[i].File == RC_FILE_TEMPORARY
+		   && (index == prev_rgb_index || index == prev_alpha_index)) {
+			emitted->Prev->U.P.Nop = 1;
+			return;
+		}
+	}
+}
 /**
  * Find a good ALU instruction or pair of ALU instruction and emit it.
  *
@@ -328,7 +563,7 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 		}
 
 		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_instruction(s, sinst);
+		commit_alu_instruction(s, sinst);
 	} else {
 		struct schedule_instruction **prgb;
 		struct schedule_instruction **palpha;
@@ -346,8 +581,8 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 				*prgb = (*prgb)->NextReady;
 				*palpha = (*palpha)->NextReady;
 				rc_insert_instruction(before->Prev, psirgb->Instruction);
-				commit_instruction(s, psirgb);
-				commit_instruction(s, psialpha);
+				commit_alu_instruction(s, psirgb);
+				commit_alu_instruction(s, psialpha);
 				goto success;
 			}
 		}
@@ -357,9 +592,13 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 		s->ReadyRGB = s->ReadyRGB->NextReady;
 
 		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_instruction(s, sinst);
+		commit_alu_instruction(s, sinst);
 	success: ;
 	}
+	/* If the instruction we just emitted uses a presubtract value, and
+	 * the presubtract sources were written by the previous intstruction,
+	 * the previous instruction needs a nop. */
+	presub_nop(before->Prev);
 }
 
 static void scan_read(void * data, struct rc_instruction * inst,
@@ -367,6 +606,7 @@ static void scan_read(void * data, struct rc_instruction * inst,
 {
 	struct schedule_state * s = data;
 	struct reg_value * v = get_reg_value(s, file, index, chan);
+	struct reg_value_reader * reader;
 
 	if (!v)
 		return;
@@ -380,7 +620,7 @@ static void scan_read(void * data, struct rc_instruction * inst,
 
 	DBG("%i: read %i[%i] chan %i\n", s->Current->Instruction->IP, file, index, chan);
 
-	struct reg_value_reader * reader = memory_pool_malloc(&s->C->Pool, sizeof(*reader));
+	reader = memory_pool_malloc(&s->C->Pool, sizeof(*reader));
 	reader->Reader = s->Current;
 	reader->Next = v->Readers;
 	v->Readers = reader;
@@ -400,13 +640,14 @@ static void scan_write(void * data, struct rc_instruction * inst,
 {
 	struct schedule_state * s = data;
 	struct reg_value ** pv = get_reg_valuep(s, file, index, chan);
+	struct reg_value * newv;
 
 	if (!pv)
 		return;
 
 	DBG("%i: write %i[%i] chan %i\n", s->Current->Instruction->IP, file, index, chan);
 
-	struct reg_value * newv = memory_pool_malloc(&s->C->Pool, sizeof(*newv));
+	newv = memory_pool_malloc(&s->C->Pool, sizeof(*newv));
 	memset(newv, 0, sizeof(*newv));
 
 	newv->Writer = s->Current;
@@ -429,12 +670,13 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 		struct rc_instruction * begin, struct rc_instruction * end)
 {
 	struct schedule_state s;
+	unsigned int ip;
 
 	memset(&s, 0, sizeof(s));
 	s.C = &c->Base;
 
 	/* Scan instructions for data dependencies */
-	unsigned int ip = 0;
+	ip = 0;
 	for(struct rc_instruction * inst = begin; inst != end; inst = inst->Next) {
 		s.Current = memory_pool_malloc(&c->Base.Pool, sizeof(*s.Current));
 		memset(s.Current, 0, sizeof(struct schedule_instruction));
@@ -448,8 +690,8 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 		 * counter-intuitive, to account for the case where an
 		 * instruction writes to the same register as it reads
 		 * from. */
-		rc_for_all_writes(inst, &scan_write, &s);
-		rc_for_all_reads(inst, &scan_read, &s);
+		rc_for_all_writes_chan(inst, &scan_write, &s);
+		rc_for_all_reads_chan(inst, &scan_read, &s);
 
 		DBG("%i: Has %i dependencies\n", inst->IP, s.Current->NumDependencies);
 
@@ -481,16 +723,19 @@ static int is_controlflow(struct rc_instruction * inst)
 	return 0;
 }
 
-void rc_pair_schedule(struct r300_fragment_program_compiler *c)
+void rc_pair_schedule(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	struct rc_instruction * inst = c->Base.Program.Instructions.Next;
 	while(inst != &c->Base.Program.Instructions) {
+		struct rc_instruction * first;
+
 		if (is_controlflow(inst)) {
 			inst = inst->Next;
 			continue;
 		}
 
-		struct rc_instruction * first = inst;
+		first = inst;
 
 		while(inst != &c->Base.Program.Instructions && !is_controlflow(inst))
 			inst = inst->Next;

@@ -5,6 +5,9 @@
 #include "egltypedefs.h"
 
 
+#ifdef EGL_MESA_screen_surface
+
+
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to
@@ -84,6 +87,9 @@ _eglDestroyScreenModes(_EGLScreen *scrn);
 
 PUBLIC void
 _eglDestroyScreen(_EGLScreen *scrn);
+
+
+#endif /* EGL_MESA_screen_surface */
 
 
 #endif /* EGLSCREEN_INCLUDED */

@@ -59,15 +59,15 @@ extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
     void * dest, GLboolean reply_is_always_array );
 
 extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
-    __GLXcontext * gc, unsigned max_dim, GLint width, GLint height,
+    struct glx_context * gc, unsigned max_dim, GLint width, GLint height,
     GLint depth, GLenum format, GLenum type, void * dest,
     GLboolean dimensions_in_reply );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
-    __GLXcontext * gc, GLint sop, GLint cmdlen );
+    struct glx_context * gc, GLint sop, GLint cmdlen );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
-    __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen );
+    struct glx_context * gc, GLint code, GLint vop, GLint cmdlen );
 
 extern HIDDEN void __indirect_glNewList(GLuint list, GLenum mode);
 extern HIDDEN void __indirect_glEndList(void);
@@ -600,7 +600,7 @@ extern HIDDEN void __indirect_glSecondaryColor3uivEXT(const GLuint * v);
 extern HIDDEN void __indirect_glSecondaryColor3usEXT(GLushort red, GLushort green, GLushort blue);
 extern HIDDEN void __indirect_glSecondaryColor3usvEXT(const GLushort * v);
 extern HIDDEN void __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
-extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
+extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount);
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 extern HIDDEN void __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid * pointer);
 extern HIDDEN void __indirect_glFogCoorddEXT(GLdouble coord);

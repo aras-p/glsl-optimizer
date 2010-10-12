@@ -32,10 +32,9 @@
 #define LP_STATE_H
 
 #include "pipe/p_state.h"
-#include "tgsi/tgsi_scan.h"
 #include "lp_jit.h"
+#include "lp_state_fs.h"
 #include "gallivm/lp_bld.h"
-#include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
 
 
 #define LP_NEW_VIEWPORT      0x1
@@ -54,55 +53,16 @@
 #define LP_NEW_VS            0x2000
 #define LP_NEW_QUERY         0x4000
 #define LP_NEW_BLEND_COLOR   0x8000
+#define LP_NEW_GS            0x10000
+#define LP_NEW_SO            0x20000
+#define LP_NEW_SO_BUFFERS    0x40000
+
 
 
 struct vertex_info;
 struct pipe_context;
 struct llvmpipe_context;
 
-struct lp_fragment_shader;
-
-
-struct lp_fragment_shader_variant_key
-{
-   struct pipe_depth_state depth;
-   struct pipe_stencil_state stencil[2];
-   struct pipe_alpha_state alpha;
-   struct pipe_blend_state blend;
-   enum pipe_format zsbuf_format;
-   unsigned nr_cbufs:8;
-   unsigned flatshade:1;
-   unsigned scissor:1;
-
-   struct {
-      ubyte colormask;
-   } cbuf_blend[PIPE_MAX_COLOR_BUFS];
-   
-   struct lp_sampler_static_state sampler[PIPE_MAX_SAMPLERS];
-};
-
-
-struct lp_fragment_shader_variant
-{
-   struct lp_fragment_shader_variant_key key;
-
-   LLVMValueRef function[2];
-
-   lp_jit_frag_func jit_function[2];
-
-   struct lp_fragment_shader_variant *next;
-};
-
-
-/** Subclass of pipe_shader_state */
-struct lp_fragment_shader
-{
-   struct pipe_shader_state base;
-
-   struct tgsi_shader_info info;
-
-   struct lp_fragment_shader_variant *variants;
-};
 
 
 /** Subclass of pipe_shader_state */
@@ -112,12 +72,21 @@ struct lp_vertex_shader
    struct draw_vertex_shader *draw_data;
 };
 
+/** Subclass of pipe_shader_state */
+struct lp_geometry_shader {
+   struct pipe_shader_state shader;
+   struct draw_geometry_shader *draw_data;
+};
 
 /** Vertex element state */
 struct lp_velems_state
 {
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+};
+
+struct lp_so_state {
+   struct pipe_stream_output_state base;
 };
 
 
@@ -153,7 +122,20 @@ void
 llvmpipe_init_vs_funcs(struct llvmpipe_context *llvmpipe);
 
 void
+llvmpipe_init_gs_funcs(struct llvmpipe_context *llvmpipe);
+
+void
 llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *ctx,
+                                 unsigned num,
+                                 struct pipe_sampler_view **views);
+void
+llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx);
 
 
 #endif

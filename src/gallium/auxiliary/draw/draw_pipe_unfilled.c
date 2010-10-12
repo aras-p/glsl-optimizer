@@ -105,6 +105,23 @@ static void lines( struct draw_stage *stage,
 }
 
 
+/** For debugging */
+static void
+print_header_flags(unsigned flags)
+{
+   debug_printf("header->flags = ");
+   if (flags & DRAW_PIPE_RESET_STIPPLE)
+      debug_printf("RESET_STIPPLE ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_0)
+      debug_printf("EDGE_FLAG_0 ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_1)
+      debug_printf("EDGE_FLAG_1 ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_2)
+      debug_printf("EDGE_FLAG_2 ");
+   debug_printf("\n");
+}
+
+
 /* Unfilled tri:  
  *
  * Note edgeflags in the vertex struct is not sufficient as we will
@@ -117,8 +134,12 @@ static void unfilled_tri( struct draw_stage *stage,
 			  struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
-   unsigned mode = unfilled->mode[header->det >= 0.0];
+   unsigned cw = header->det >= 0.0;
+   unsigned mode = unfilled->mode[cw];
   
+   if (0)
+      print_header_flags(header->flags);
+
    switch (mode) {
    case PIPE_POLYGON_MODE_FILL:
       stage->next->tri( stage->next, header );
@@ -139,9 +160,10 @@ static void unfilled_first_tri( struct draw_stage *stage,
 				struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
+   const struct pipe_rasterizer_state *rast = stage->draw->rasterizer;
 
-   unfilled->mode[0] = stage->draw->rasterizer->fill_ccw; /* front */
-   unfilled->mode[1] = stage->draw->rasterizer->fill_cw;  /* back */
+   unfilled->mode[0] = rast->front_ccw ? rast->fill_front : rast->fill_back;
+   unfilled->mode[1] = rast->front_ccw ? rast->fill_back : rast->fill_front;
 
    stage->tri = unfilled_tri;
    stage->tri( stage, header );
@@ -180,9 +202,6 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    if (unfilled == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
-      goto fail;
-
    unfilled->stage.draw = draw;
    unfilled->stage.name = "unfilled";
    unfilled->stage.next = NULL;
@@ -193,6 +212,9 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.flush = unfilled_flush;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
    unfilled->stage.destroy = unfilled_destroy;
+
+   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
+      goto fail;
 
    return &unfilled->stage;
 

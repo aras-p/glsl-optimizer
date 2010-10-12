@@ -194,6 +194,7 @@ void svga_context_flush( struct svga_context *svga,
                          struct pipe_fence_handle **pfence )
 {
    struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
+   struct pipe_fence_handle *fence = NULL;
 
    svga->curr.nr_fbs = 0;
 
@@ -202,21 +203,31 @@ void svga_context_flush( struct svga_context *svga,
    u_upload_flush(svga->upload_vb);
    u_upload_flush(svga->upload_ib);
 
-   /* Flush screen, to ensure that texture dma uploads are processed
+   /* Ensure that texture dma uploads are processed
     * before submitting commands.
     */
-   svga_screen_flush(svgascreen, NULL);
-   
    svga_context_flush_buffers(svga);
 
    /* Flush pending commands to hardware:
     */
-   svga->swc->flush(svga->swc, pfence);
+   svga->swc->flush(svga->swc, &fence);
+
+   svga_screen_cache_flush(svgascreen, fence);
+
+   /* To force the reemission of rendertargets and texture bindings at
+    * the beginning of every command buffer.
+    */
+   svga->dirty |= SVGA_NEW_COMMAND_BUFFER;
 
    if (SVGA_DEBUG & DEBUG_SYNC) {
-      if (pfence && *pfence)
-         svga->pipe.screen->fence_finish( svga->pipe.screen, *pfence, 0);
+      if (fence)
+         svga->pipe.screen->fence_finish( svga->pipe.screen, fence, 0);
    }
+
+   if(pfence)
+      *pfence = fence;
+   else
+      svgascreen->sws->fence_reference(svgascreen->sws, &fence, NULL);
 }
 
 
@@ -233,3 +244,8 @@ void svga_hwtnl_flush_retry( struct svga_context *svga )
    assert(ret == 0);
 }
 
+struct svga_winsys_context *
+svga_winsys_context( struct pipe_context *pipe )
+{
+   return svga_context( pipe )->swc;
+}

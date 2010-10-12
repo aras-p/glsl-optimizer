@@ -16,12 +16,6 @@ struct _egl_global
    /* the list of all displays */
    _EGLDisplay *DisplayList;
 
-   EGLScreenMESA FreeScreenHandle;
-
-   /* these never change after preloading */
-   EGLint NumDrivers;
-   _EGLDriver *Drivers[10];
-
    EGLint NumAtExitCalls;
    void (*AtExitCalls[10])(void);
 };

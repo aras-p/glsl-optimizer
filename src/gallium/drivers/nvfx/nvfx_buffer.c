@@ -6,115 +6,39 @@
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_winsys.h"
 #include "nvfx_resource.h"
+#include "nvfx_screen.h"
 
-
-/* Currently using separate implementations for buffers and textures,
- * even though gallium has a unified abstraction of these objects.
- * Eventually these should be combined, and mechanisms like transfers
- * be adapted to work for both buffer and texture uploads.
- */
-static void nvfx_buffer_destroy(struct pipe_screen *pscreen,
+void nvfx_buffer_destroy(struct pipe_screen *pscreen,
 				struct pipe_resource *presource)
 {
-	struct nvfx_resource *buffer = nvfx_resource(presource);
+	struct nvfx_buffer *buffer = nvfx_buffer(presource);
 
-	nouveau_screen_bo_release(pscreen, buffer->bo);
+	if(!(buffer->base.base.flags & NVFX_RESOURCE_FLAG_USER))
+		align_free(buffer->data);
+	nouveau_screen_bo_release(pscreen, buffer->base.bo);
 	FREE(buffer);
 }
-
-
-
-
-/* Utility functions for transfer create/destroy are hooked in and
- * just record the arguments to those functions.
- */
-static void *
-nvfx_buffer_transfer_map( struct pipe_context *pipe,
-			  struct pipe_transfer *transfer )
-{
-	struct nvfx_resource *buffer = nvfx_resource(transfer->resource);
-	uint8_t *map;
-
-	map = nouveau_screen_bo_map_range( pipe->screen,
-					   buffer->bo,
-					   transfer->box.x,
-					   transfer->box.width,
-					   nouveau_screen_transfer_flags(transfer->usage) );
-	if (map == NULL)
-		return NULL;
-	
-	return map + transfer->box.x;
-}
-
-
-
-static void nvfx_buffer_transfer_flush_region( struct pipe_context *pipe,
-					       struct pipe_transfer *transfer,
-					       const struct pipe_box *box)
-{
-	struct nvfx_resource *buffer = nvfx_resource(transfer->resource);
-
-	nouveau_screen_bo_map_flush_range(pipe->screen,
-					  buffer->bo,
-					  transfer->box.x + box->x,
-					  box->width);
-}
-
-static void nvfx_buffer_transfer_unmap( struct pipe_context *pipe,
-					struct pipe_transfer *transfer )
-{
-	struct nvfx_resource *buffer = nvfx_resource(transfer->resource);
-
-	nouveau_screen_bo_unmap(pipe->screen, buffer->bo);
-}
-
-
-
-
-struct u_resource_vtbl nvfx_buffer_vtbl = 
-{
-	u_default_resource_get_handle,      /* get_handle */
-	nvfx_buffer_destroy,		     /* resource_destroy */
-	NULL,			    /* is_resource_referenced */
-	u_default_get_transfer,	     /* get_transfer */
-	u_default_transfer_destroy,	     /* transfer_destroy */
-	nvfx_buffer_transfer_map,	     /* transfer_map */
-	nvfx_buffer_transfer_flush_region,  /* transfer_flush_region */
-	nvfx_buffer_transfer_unmap,	     /* transfer_unmap */
-	u_default_transfer_inline_write   /* transfer_inline_write */
-};
-
-
 
 struct pipe_resource *
 nvfx_buffer_create(struct pipe_screen *pscreen,
 		   const struct pipe_resource *template)
 {
-	struct nvfx_resource *buffer;
+	struct nvfx_screen* screen = nvfx_screen(pscreen);
+	struct nvfx_buffer* buffer;
 
-	buffer = CALLOC_STRUCT(nvfx_resource);
+	buffer = CALLOC_STRUCT(nvfx_buffer);
 	if (!buffer)
 		return NULL;
 
-	buffer->base = *template;
-	buffer->vtbl = &nvfx_buffer_vtbl;
-	pipe_reference_init(&buffer->base.reference, 1);
-	buffer->base.screen = pscreen;
+	buffer->base.base = *template;
+	buffer->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+	pipe_reference_init(&buffer->base.base.reference, 1);
+	buffer->base.base.screen = pscreen;
+	buffer->size = util_format_get_stride(template->format, template->width0);
+	buffer->bytes_to_draw_until_static = buffer->size * screen->static_reuse_threshold;
+	buffer->data = align_malloc(buffer->size, 16);
 
-	buffer->bo = nouveau_screen_bo_new(pscreen,
-					   16,
-					   buffer->base.usage,
-					   buffer->base.bind,
-					   buffer->base.width0);
-
-	if (buffer->bo == NULL)
-		goto fail;
-
-	return &buffer->base;
-
-fail:
-	FREE(buffer);
-	return NULL;
+	return &buffer->base.base;
 }
 
 
@@ -124,30 +48,49 @@ nvfx_user_buffer_create(struct pipe_screen *pscreen,
 			unsigned bytes,
 			unsigned usage)
 {
-	struct nvfx_resource *buffer;
+	struct nvfx_screen* screen = nvfx_screen(pscreen);
+	struct nvfx_buffer* buffer;
 
-	buffer = CALLOC_STRUCT(nvfx_resource);
+	buffer = CALLOC_STRUCT(nvfx_buffer);
 	if (!buffer)
 		return NULL;
 
-	pipe_reference_init(&buffer->base.reference, 1);
-	buffer->vtbl = &nvfx_buffer_vtbl;
-	buffer->base.screen = pscreen;
-	buffer->base.format = PIPE_FORMAT_R8_UNORM;
-	buffer->base.usage = PIPE_USAGE_IMMUTABLE;
-	buffer->base.bind = usage;
-	buffer->base.width0 = bytes;
-	buffer->base.height0 = 1;
-	buffer->base.depth0 = 1;
+	pipe_reference_init(&buffer->base.base.reference, 1);
+	buffer->base.base.flags = NVFX_RESOURCE_FLAG_LINEAR | NVFX_RESOURCE_FLAG_USER;
+	buffer->base.base.screen = pscreen;
+	buffer->base.base.format = PIPE_FORMAT_R8_UNORM;
+	buffer->base.base.usage = PIPE_USAGE_IMMUTABLE;
+	buffer->base.base.bind = usage;
+	buffer->base.base.width0 = bytes;
+	buffer->base.base.height0 = 1;
+	buffer->base.base.depth0 = 1;
+	buffer->data = ptr;
+	buffer->size = bytes;
+	buffer->bytes_to_draw_until_static = bytes * screen->static_reuse_threshold;
+	buffer->dirty_end = bytes;
 
-	buffer->bo = nouveau_screen_bo_user(pscreen, ptr, bytes);
-	if (!buffer->bo)
-		goto fail;
-	
-	return &buffer->base;
-
-fail:
-	FREE(buffer);
-	return NULL;
+	return &buffer->base.base;
 }
 
+void nvfx_buffer_upload(struct nvfx_buffer* buffer)
+{
+	unsigned dirty = buffer->dirty_end - buffer->dirty_begin;
+	if(!buffer->base.bo)
+	{
+		buffer->base.bo = nouveau_screen_bo_new(buffer->base.base.screen,
+					   16,
+					   buffer->base.base.usage,
+					   buffer->base.base.bind,
+					   buffer->base.base.width0);
+	}
+
+	if(dirty)
+	{
+		// TODO: may want to use a temporary in some cases
+		nouveau_bo_map(buffer->base.bo, NOUVEAU_BO_WR
+				| (buffer->dirty_unsynchronized ? NOUVEAU_BO_NOSYNC : 0));
+		memcpy((uint8_t*)buffer->base.bo->map + buffer->dirty_begin, buffer->data + buffer->dirty_begin, dirty);
+		nouveau_bo_unmap(buffer->base.bo);
+		buffer->dirty_begin = buffer->dirty_end = 0;
+	}
+}

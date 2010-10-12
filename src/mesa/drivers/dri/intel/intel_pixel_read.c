@@ -170,11 +170,19 @@ intelReadPixels(GLcontext * ctx,
                 GLenum format, GLenum type,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
+   struct intel_context *intel = intel_context(ctx);
+   GLboolean dirty;
+
    if (INTEL_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   intelFlush(ctx);
-   intel_prepare_render(intel_context(ctx));
+   intel_flush(ctx);
+
+   /* glReadPixels() wont dirty the front buffer, so reset the dirty
+    * flag after calling intel_prepare_render(). */
+   dirty = intel->front_buffer_dirty;
+   intel_prepare_render(intel);
+   intel->front_buffer_dirty = dirty;
 
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
@@ -193,4 +201,7 @@ intelReadPixels(GLcontext * ctx,
       _mesa_update_state(ctx);
 
    _swrast_ReadPixels(ctx, x, y, width, height, format, type, pack, pixels);
+
+   /* There's an intel_prepare_render() call in intelSpanRenderStart(). */
+   intel->front_buffer_dirty = dirty;
 }

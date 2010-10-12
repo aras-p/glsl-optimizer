@@ -32,18 +32,15 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "hash.h"
-#include "arrayobj.h"
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "bufferobj.h"
 #include "shared.h"
-#include "shader/program.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
 #include "dlist.h"
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
-#endif
-#if FEATURE_ARB_sync
+#include "shaderobj.h"
 #include "syncobj.h"
-#endif
 
 /**
  * Allocate and initialize a shared context state structure.
@@ -123,9 +120,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->RenderBuffers = _mesa_NewHashTable();
 #endif
 
-#if FEATURE_ARB_sync
    make_empty_list(& shared->SyncObjects);
-#endif
 
    return shared;
 }
@@ -228,12 +223,12 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    GLcontext *ctx = (GLcontext *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
    if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
-      _mesa_free_shader(ctx, sh);
+      ctx->Driver.DeleteShader(ctx, sh);
    }
    else {
       struct gl_shader_program *shProg = (struct gl_shader_program *) data;
       ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
-      _mesa_free_shader_program(ctx, shProg);
+      ctx->Driver.DeleteShaderProgram(ctx, shProg);
    }
 }
 
@@ -289,6 +284,10 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 {
    GLuint i;
 
+   /* Free the dummy/fallback texture object */
+   if (shared->FallbackTex)
+      ctx->Driver.DeleteTexture(ctx, shared->FallbackTex);
+
    /*
     * Free display lists
     */
@@ -334,7 +333,6 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 #endif
 
-#if FEATURE_ARB_sync
    {
       struct simple_node *node;
       struct simple_node *temp;
@@ -343,7 +341,6 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 	 _mesa_unref_sync_object(ctx, (struct gl_sync_object *) node);
       }
    }
-#endif
 
    /*
     * Free texture objects (after FBOs since some textures might have

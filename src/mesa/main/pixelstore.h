@@ -33,6 +33,7 @@
 
 
 #include "glheader.h"
+#include "mtypes.h"
 
 
 extern void GLAPIENTRY

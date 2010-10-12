@@ -34,7 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-
+#include "util/u_transfer.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -42,7 +42,7 @@
 #include "cell_context.h"
 #include "cell_screen.h"
 #include "cell_state.h"
-#include "cell_resource.h"
+#include "cell_texture.h"
 
 #include "state_tracker/sw_winsys.h"
 
@@ -155,9 +155,9 @@ fail:
 
 
 static void
-cell_resource_destroy(struct pipe_resource *pt)
+cell_resource_destroy(struct pipe_screen *scrn, struct pipe_resource *pt)
 {
-   struct cell_screen *screen = cell_screen(pt->screen);
+   struct cell_screen *screen = cell_screen(scrn);
    struct sw_winsys *winsys = screen->winsys;
    struct cell_resource *ct = cell_resource(pt);
 
@@ -365,10 +365,10 @@ cell_get_transfer(struct pipe_context *ctx,
 {
    struct cell_resource *ct = cell_resource(resource);
    struct cell_transfer *ctrans;
-   enum pipe_format *format = resource->format;
+   enum pipe_format format = resource->format;
 
    assert(resource);
-   assert(level <= resource->last_level);
+   assert(sr.level <= resource->last_level);
 
    /* make sure the requested region is in the image bounds */
    assert(box->x + box->width <= u_minify(resource->width0, sr.level));
@@ -612,6 +612,24 @@ cell_user_buffer_create(struct pipe_screen *screen,
 }
 
 
+static struct pipe_resource *
+cell_resource_from_handle(struct pipe_screen *screen,
+                          const struct pipe_resource *templat,
+                          struct winsys_handle *handle)
+{
+   /* XXX todo */
+   return NULL;
+}
+
+
+static boolean 
+cell_resource_get_handle(struct pipe_screen *scree,
+                         struct pipe_resource *tex,
+                         struct winsys_handle *handle)
+{
+   /* XXX todo */
+   return FALSE;
+}
 
 
 void
@@ -630,7 +648,7 @@ cell_init_screen_texture_funcs(struct pipe_screen *screen)
 }
 
 void
-cell_init_transfer_funcs(struct cell_context *cell)
+cell_init_texture_transfer_funcs(struct cell_context *cell)
 {
    cell->pipe.get_transfer = cell_get_transfer;
    cell->pipe.transfer_destroy = cell_transfer_destroy;

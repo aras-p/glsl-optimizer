@@ -1,5 +1,10 @@
 Import('*')
 
+
+SConscript([
+	'sw/wrapper/SConscript',
+])
+
 if 'xlib' in env['winsys']:
 	SConscript([
 		'sw/xlib/SConscript',
@@ -33,4 +38,9 @@ if env['dri']:
 	if 'radeon' in env['winsys']:
 		SConscript([
 			'radeon/drm/SConscript',
+		])
+
+	if 'r600' in env['winsys']:
+		SConscript([
+			'r600/drm/SConscript',
 		])

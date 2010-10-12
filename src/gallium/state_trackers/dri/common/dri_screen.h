@@ -39,7 +39,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
-#include "state_tracker/drm_api.h"
 
 struct dri_context;
 struct dri_drawable;
@@ -49,6 +48,9 @@ struct dri_screen
    /* st_api */
    struct st_manager base;
    struct st_api *st_api;
+
+   /* on old libGL's invalidate doesn't get called as it should */
+   boolean broken_invalidate;
 
    /* dri */
    __DRIscreen *sPriv;
@@ -62,23 +64,14 @@ struct dri_screen
    int fd;
    drmLock *drmLock;
 
-   /* hooks filled in by dri1, dri2 & drisw */
-   __DRIimage * (*lookup_egl_image)(struct dri_context *ctx, void *handle);
-   void (*allocate_textures)(struct dri_drawable *drawable,
-                             const enum st_attachment_type *statts,
-                             unsigned count);
-   void (*update_drawable_info)(struct dri_drawable *drawable);
-   void (*flush_frontbuffer)(struct dri_drawable *drawable,
-                             enum st_attachment_type statt);
-
    /* gallium */
-   struct drm_api *api;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
+   enum pipe_texture_target target;
 
-   /* used only by DRI1 */
-   struct pipe_context *dri1_pipe;
+   /* hooks filled in by dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_screen *ctx, void *handle);
 };
 
 /** cast wrapper */
@@ -130,6 +123,9 @@ dri_init_screen_helper(struct dri_screen *screen,
 
 void
 dri_destroy_screen_helper(struct dri_screen * screen);
+
+void
+dri_destroy_screen(__DRIscreen * sPriv);
 
 #endif
 

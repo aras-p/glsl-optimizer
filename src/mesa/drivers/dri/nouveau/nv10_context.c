@@ -33,13 +33,38 @@
 #include "nv10_driver.h"
 
 static const struct dri_extension nv10_extensions[] = {
+	{ "GL_ARB_texture_env_crossbar", NULL },
 	{ "GL_EXT_texture_rectangle",	NULL },
+	{ "GL_ARB_texture_env_combine", NULL },
+	{ "GL_ARB_texture_env_dot3",    NULL },
 	{ NULL,				NULL }
 };
+
+static GLboolean
+use_fast_zclear(GLcontext *ctx, GLbitfield buffers)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+	if (buffers & BUFFER_BIT_STENCIL) {
+		/*
+		 * The stencil test is bypassed when fast Z clears are
+		 * enabled.
+		 */
+		nctx->hierz.clear_blocked = GL_TRUE;
+		context_dirty(ctx, ZCLEAR);
+		return GL_FALSE;
+	}
+
+	return !nctx->hierz.clear_blocked &&
+		fb->_Xmax == fb->Width && fb->_Xmin == 0 &&
+		fb->_Ymax == fb->Height && fb->_Ymin == 0;
+}
 
 static void
 nv10_clear(GLcontext *ctx, GLbitfield buffers)
 {
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(
@@ -47,16 +72,28 @@ nv10_clear(GLcontext *ctx, GLbitfield buffers)
 
 	nouveau_validate_framebuffer(ctx);
 
-	/* Clear the LMA depth buffer, if present. */
-	if ((buffers & BUFFER_BIT_DEPTH) && ctx->Depth.Mask &&
-	    nfb->lma_bo) {
+	if ((buffers & BUFFER_BIT_DEPTH) &&
+	    ctx->Depth.Mask && nfb->hierz.bo) {
 		struct nouveau_surface *s = &to_nouveau_renderbuffer(
 			nfb->base._DepthBuffer->Wrapped)->surface;
 
+		/* Clear the hierarchical depth buffer */
 		BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_FILL_VALUE, 1);
 		OUT_RING(chan, pack_zs_f(s->format, ctx->Depth.Clear, 0));
 		BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_BUFFER_CLEAR, 1);
 		OUT_RING(chan, 1);
+
+		/* Mark the depth buffer as cleared */
+		if (use_fast_zclear(ctx, buffers)) {
+			if (nctx->hierz.clear_seq)
+				buffers &= ~BUFFER_BIT_DEPTH;
+
+			nfb->hierz.clear_value =
+				pack_zs_f(s->format, ctx->Depth.Clear, 0);
+			nctx->hierz.clear_seq++;
+
+			context_dirty(ctx, ZCLEAR);
+		}
 	}
 
 	nouveau_clear(ctx, buffers);
@@ -420,7 +457,8 @@ const struct nouveau_driver nv10_driver = {
 		nv10_emit_tex_obj,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
-		nv10_emit_viewport
+		nv10_emit_viewport,
+		nv10_emit_zclear
 	},
-	.num_emit = NUM_NOUVEAU_STATE,
+	.num_emit = NUM_NV10_STATE,
 };

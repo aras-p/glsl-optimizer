@@ -177,7 +177,7 @@
 /**
  * Per-program constants (power of two)
  *
- * \c MAX_PROGRAM_LOCAL_PARAMS and \c MAX_UNIFORMS are just the assmebly shader
+ * \c MAX_PROGRAM_LOCAL_PARAMS and \c MAX_UNIFORMS are just the assembly shader
  * and GLSL shader names for the same thing.  They should \b always have the
  * same value.  Each refers to the number of vec4 values supplied as
  * per-program parameters.
@@ -250,7 +250,7 @@
 
 /** For GL_ARB_draw_buffers */
 /*@{*/
-#define MAX_DRAW_BUFFERS 4
+#define MAX_DRAW_BUFFERS 8
 /*@}*/
 
 
@@ -265,6 +265,15 @@
 /** For GL_EXT_transform_feedback */
 #define MAX_FEEDBACK_ATTRIBS 32
 
+/** For GL_ARB_geometry_shader4 */
+/*@{*/
+#define MAX_GEOMETRY_TEXTURE_IMAGE_UNITS             8
+#define MAX_GEOMETRY_VARYING_COMPONENTS              32
+#define MAX_VERTEX_VARYING_COMPONENTS                32
+#define MAX_GEOMETRY_UNIFORM_COMPONENTS              512
+#define MAX_GEOMETRY_OUTPUT_VERTICES                 256
+#define MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS         1024
+/*@}*/
 
 
 /**

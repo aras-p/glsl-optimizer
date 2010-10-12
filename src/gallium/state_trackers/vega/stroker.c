@@ -35,7 +35,7 @@
 #include "path_utils.h"
 #include "polygon.h"
 
-#include "math.h"
+#include "util/u_math.h"
 
 #ifndef M_2PI
 #define M_2PI 6.28318530717958647692528676655900576
@@ -870,7 +870,7 @@ static VGboolean vg_stroke_outline(struct stroke_iterator *it,
                                 VGboolean cap_first,
                                 VGfloat *start_tangent)
 {
-   const int MAX_OFFSET = 16;
+#define MAX_OFFSET 16
    struct bezier offset_curves[MAX_OFFSET];
    VGPathCommand first_element;
    VGfloat start[2], prev[2];
@@ -1017,6 +1017,7 @@ static VGboolean vg_stroke_outline(struct stroke_iterator *it,
 #endif
       return VG_FALSE;
    }
+#undef MAX_OFFSET
 }
 
 static void stroker_process_subpath(struct stroker *stroker)

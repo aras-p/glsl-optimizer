@@ -65,7 +65,7 @@ static INLINE void array_destroy(struct array *array)
 {
    if (array)
       free(array->data);
-   free(array);
+   FREE(array);
 }
 
 static INLINE void array_resize(struct array *array, int num)

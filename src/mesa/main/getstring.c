@@ -32,6 +32,46 @@
 
 
 /**
+ * Return the string for a glGetString(GL_SHADING_LANGUAGE_VERSION) query.
+ */
+static const GLubyte *
+shading_language_version(GLcontext *ctx)
+{
+   switch (ctx->API) {
+   case API_OPENGL:
+      if (!ctx->Extensions.ARB_shader_objects) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetString");
+         return (const GLubyte *) 0;
+      }
+
+      switch (ctx->Const.GLSLVersion) {
+      case 110:
+         return (const GLubyte *) "1.10";
+      case 120:
+         return (const GLubyte *) "1.20";
+      case 130:
+         return (const GLubyte *) "1.30";
+      default:
+         _mesa_problem(ctx,
+                       "Invalid GLSL version in shading_language_version()");
+         return (const GLubyte *) 0;
+      }
+      break;
+
+   case API_OPENGLES2:
+      return (const GLubyte *) "OpenGL ES GLSL ES 1.0.16";
+
+   case API_OPENGLES:
+      /* fall-through */
+
+   default:
+      _mesa_problem(ctx, "Unexpected API value in shading_language_version()");
+      return (const GLubyte *) 0;
+   }
+}
+
+
+/**
  * Query string-valued state.  The return value should _not_ be freed by
  * the caller.
  *
@@ -71,16 +111,10 @@ _mesa_GetString( GLenum name )
       case GL_VERSION:
          return (const GLubyte *) ctx->VersionString;
       case GL_EXTENSIONS:
-         if (!ctx->Extensions.String)
-            ctx->Extensions.String = _mesa_make_extension_string(ctx);
          return (const GLubyte *) ctx->Extensions.String;
-#if FEATURE_ARB_shading_language_100
-      case GL_SHADING_LANGUAGE_VERSION_ARB:
-         if (ctx->Extensions.ARB_shading_language_120)
-            return (const GLubyte *) "1.20";
-         else if (ctx->Extensions.ARB_shading_language_100)
-            return (const GLubyte *) "1.10";
-         goto error;
+#if FEATURE_ARB_shading_language_100 || FEATURE_ES2
+      case GL_SHADING_LANGUAGE_VERSION:
+	 return shading_language_version(ctx);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
@@ -92,9 +126,6 @@ _mesa_GetString( GLenum name )
             return (const GLubyte *) ctx->Program.ErrorString;
          }
          /* FALL-THROUGH */
-#endif
-#if FEATURE_ARB_shading_language_100
-      error:
 #endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
@@ -154,10 +185,6 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
-
-   if (ctx->Driver.GetPointerv
-       && (*ctx->Driver.GetPointerv)(ctx, pname, params))
-      return;
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:

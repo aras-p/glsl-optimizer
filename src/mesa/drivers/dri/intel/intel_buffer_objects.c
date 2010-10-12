@@ -43,13 +43,13 @@ static GLboolean
 intel_bufferobj_unmap(GLcontext * ctx,
                       GLenum target, struct gl_buffer_object *obj);
 
-/** Allocates a new dri_bo to store the data for the buffer object. */
+/** Allocates a new drm_intel_bo to store the data for the buffer object. */
 static void
 intel_bufferobj_alloc_buffer(struct intel_context *intel,
 			     struct intel_buffer_object *intel_obj)
 {
-   intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
-				    intel_obj->Base.Size, 64);
+   intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
+					  intel_obj->Base.Size, 64);
 }
 
 /**
@@ -80,7 +80,7 @@ intel_bufferobj_release_region(struct intel_context *intel,
    intel_obj->region->pbo = NULL;
    intel_obj->region = NULL;
 
-   dri_bo_unreference(intel_obj->buffer);
+   drm_intel_bo_unreference(intel_obj->buffer);
    intel_obj->buffer = NULL;
 }
 
@@ -120,7 +120,7 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
       intel_bufferobj_release_region(intel, intel_obj);
    }
    else if (intel_obj->buffer) {
-      dri_bo_unreference(intel_obj->buffer);
+      drm_intel_bo_unreference(intel_obj->buffer);
    }
 
    free(intel_obj);
@@ -154,7 +154,7 @@ intel_bufferobj_data(GLcontext * ctx,
       intel_bufferobj_release_region(intel, intel_obj);
 
    if (intel_obj->buffer != NULL) {
-      dri_bo_unreference(intel_obj->buffer);
+      drm_intel_bo_unreference(intel_obj->buffer);
       intel_obj->buffer = NULL;
    }
    free(intel_obj->sys_buffer);
@@ -179,7 +179,7 @@ intel_bufferobj_data(GLcontext * ctx,
          return GL_FALSE;
 
       if (data != NULL)
-	 dri_bo_subdata(intel_obj->buffer, 0, size, data);
+	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
    }
 
    return GL_TRUE;
@@ -201,6 +201,9 @@ intel_bufferobj_subdata(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+
+   if (size == 0)
+      return;
 
    assert(intel_obj);
 
@@ -226,7 +229,7 @@ intel_bufferobj_subdata(GLcontext * ctx,
 
 	 drm_intel_bo_unreference(temp_bo);
       } else {
-	 dri_bo_subdata(intel_obj->buffer, offset, size, data);
+	 drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
       }
    }
 }
@@ -248,7 +251,7 @@ intel_bufferobj_get_subdata(GLcontext * ctx,
    if (intel_obj->sys_buffer)
       memcpy(data, (char *)intel_obj->sys_buffer + offset, size);
    else
-      dri_bo_get_subdata(intel_obj->buffer, offset, size, data);
+      drm_intel_bo_get_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -277,7 +280,7 @@ intel_bufferobj_map(GLcontext * ctx,
 
    /* Flush any existing batchbuffer that might reference this data. */
    if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
-      intelFlush(ctx);
+      intel_flush(ctx);
 
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
@@ -349,7 +352,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
     */
    if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
        drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
-      intelFlush(ctx);
+      intel_flush(ctx);
 
    if (intel_obj->buffer == NULL) {
       obj->Pointer = NULL;
@@ -363,8 +366,8 @@ intel_bufferobj_map_range(GLcontext * ctx,
        (access & GL_MAP_INVALIDATE_BUFFER_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
       drm_intel_bo_unreference(intel_obj->buffer);
-      intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
-				       intel_obj->Base.Size, 64);
+      intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
+					     intel_obj->Base.Size, 64);
    }
 
    /* If the user is mapping a range of an active buffer object but
@@ -424,6 +427,9 @@ intel_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
     * there's no work to do.
     */
    if (intel_obj->range_map_buffer == NULL)
+      return;
+
+   if (length == 0)
       return;
 
    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
@@ -497,7 +503,7 @@ intel_bufferobj_unmap(GLcontext * ctx,
    return GL_TRUE;
 }
 
-dri_bo *
+drm_intel_bo *
 intel_bufferobj_buffer(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj, GLuint flag)
 {

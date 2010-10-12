@@ -168,6 +168,9 @@ static INLINE float logf( float f )
 #undef logf
 #define logf(x) ((float)log((double)(x)))
 #endif /* logf */
+
+#define isfinite(x) _finite((double)(x))
+#define isnan(x) _isnan((double)(x))
 #endif
 
 static INLINE double log2( double x )
@@ -335,6 +338,15 @@ util_iround(float f)
 }
 
 
+/**
+ * Approximate floating point comparison
+ */
+static INLINE boolean
+util_is_approx(float a, float b, float tol)
+{
+   return fabs(b - a) <= tol;
+}
+
 
 /**
  * Test if x is NaN or +/- infinity.
@@ -345,16 +357,6 @@ util_is_inf_or_nan(float x)
    union fi tmp;
    tmp.f = x;
    return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
-}
-
-
-/**
- * Test whether x is a power of two.
- */
-static INLINE boolean
-util_is_pot(unsigned x)
-{
-   return (x & (x - 1)) == 0;
 }
 
 
@@ -554,11 +556,28 @@ util_bswap16(uint16_t n)
 #define MIN3( A, B, C ) MIN2( MIN2( A, B ), C )
 #define MAX3( A, B, C ) MAX2( MAX2( A, B ), C )
 
+#define MIN4( A, B, C, D ) MIN2( MIN2( A, B ), MIN2(C, D) )
+#define MAX4( A, B, C, D ) MAX2( MAX2( A, B ), MAX2(C, D) )
 
+
+/**
+ * Align a value, only works pot alignemnts.
+ */
 static INLINE int
 align(int value, int alignment)
 {
    return (value + alignment - 1) & ~(alignment - 1);
+}
+
+/**
+ * Works like align but on npot alignments.
+ */
+static INLINE size_t
+util_align_npot(size_t value, size_t alignment)
+{
+   if (value % alignment)
+      return value + (alignment - (value % alignment));
+   return value;
 }
 
 static INLINE unsigned

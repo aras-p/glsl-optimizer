@@ -38,10 +38,13 @@ extern LLVMModuleRef lp_build_module;
 extern LLVMExecutionEngineRef lp_build_engine;
 extern LLVMModuleProviderRef lp_build_provider;
 extern LLVMTargetDataRef lp_build_target;
+extern LLVMPassManagerRef lp_build_pass;
 
 
 void
 lp_build_init(void);
 
+extern void
+lp_func_delete_body(LLVMValueRef func);
 
 #endif /* !LP_BLD_INIT_H */

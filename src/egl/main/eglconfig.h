@@ -8,16 +8,24 @@
 
 #define _EGL_CONFIG_FIRST_ATTRIB EGL_BUFFER_SIZE
 #define _EGL_CONFIG_LAST_ATTRIB EGL_CONFORMANT
-#define _EGL_CONFIG_NUM_ATTRIBS \
+#define _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS \
    (_EGL_CONFIG_LAST_ATTRIB - _EGL_CONFIG_FIRST_ATTRIB + 1)
 
-#define _EGL_CONFIG_STORAGE_SIZE _EGL_CONFIG_NUM_ATTRIBS
+/* Attributes outside the contiguous block:
+ *
+ *   EGL_Y_INVERTED_NOK
+ */
+#define _EGL_CONFIG_FIRST_EXTRA_ATTRIB _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS
+#define _EGL_CONFIG_NUM_EXTRA_ATTRIBS 1
+
+#define _EGL_CONFIG_NUM_ATTRIBS \
+   _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS + _EGL_CONFIG_NUM_EXTRA_ATTRIBS
 
 
 struct _egl_config
 {
    _EGLDisplay *Display;
-   EGLint Storage[_EGL_CONFIG_STORAGE_SIZE];
+   EGLint Storage[_EGL_CONFIG_NUM_ATTRIBS];
 };
 
 
@@ -37,10 +45,15 @@ _eglIndexConfig(const _EGLConfig *conf, EGLint key)
 {
    (void) conf;
    if (key >= _EGL_CONFIG_FIRST_ATTRIB &&
-       key < _EGL_CONFIG_FIRST_ATTRIB + _EGL_CONFIG_NUM_ATTRIBS)
+       key < _EGL_CONFIG_FIRST_ATTRIB + _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS)
       return key - _EGL_CONFIG_FIRST_ATTRIB;
-   else
+   
+   switch (key) {
+   case EGL_Y_INVERTED_NOK:
+      return _EGL_CONFIG_FIRST_EXTRA_ATTRIB;
+   default:
       return -1;
+   }
 }
 
 
@@ -104,7 +117,7 @@ static INLINE _EGLConfig *
 _eglLookupConfig(EGLConfig config, _EGLDisplay *dpy)
 {
    _EGLConfig *conf = (_EGLConfig *) config;
-   if (!_eglCheckConfigHandle(config, dpy))
+   if (!dpy || !_eglCheckConfigHandle(config, dpy))
       conf = NULL;
    return conf;
 }

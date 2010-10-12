@@ -39,4 +39,12 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 EGLBoolean
 egl_g3d_destroy_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
 
+_EGLImage *
+egl_g3d_create_drm_image(_EGLDriver *drv, _EGLDisplay *dpy,
+                         const EGLint *attribs);
+
+EGLBoolean
+egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
+			 EGLint *name, EGLint *handle, EGLint *stride);
+
 #endif /* _EGL_G3D_IMAGE_H_ */

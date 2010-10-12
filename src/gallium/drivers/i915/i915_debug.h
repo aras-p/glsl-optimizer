@@ -26,89 +26,56 @@
  **************************************************************************/
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+ *           Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
 #ifndef I915_DEBUG_H
 #define I915_DEBUG_H
 
-#include <stdarg.h>
+#include "util/u_debug.h"
 
+struct i915_screen;
 struct i915_context;
-
-struct debug_stream 
-{
-   unsigned offset;		/* current gtt offset */
-   char *ptr;		/* pointer to gtt offset zero */
-   char *end;		/* pointer to gtt offset zero */
-   unsigned print_addresses;
-};
-
-
-/* Internal functions
- */
-void i915_disassemble_program(struct debug_stream *stream, 
-			      const unsigned *program, unsigned sz);
-
-void i915_print_ureg(const char *msg, unsigned ureg);
-
-
-#define DEBUG_BATCH	 0x1
-#define DEBUG_BLIT       0x2
-#define DEBUG_BUFFER     0x4
-#define DEBUG_CONSTANTS  0x8
-#define DEBUG_CONTEXT    0x10
-#define DEBUG_DRAW	 0x20
-#define DEBUG_DYNAMIC	 0x40
-#define DEBUG_FLUSH      0x80
-#define DEBUG_MAP	 0x100
-#define DEBUG_PROGRAM	 0x200
-#define DEBUG_REGIONS    0x400
-#define DEBUG_SAMPLER	 0x800
-#define DEBUG_STATIC	 0x1000
-#define DEBUG_SURFACE    0x2000
-#define DEBUG_WINSYS     0x4000
-
-#include "pipe/p_compiler.h"
-
-#if defined(DEBUG) && defined(FILE_DEBUG_FLAG)
-
-#include "util/u_simple_screen.h"
-
-static INLINE void
-I915_DBG(
-   struct i915_context  *i915,
-   const char           *fmt,
-                        ... )
-{
-   if ((i915)->debug & FILE_DEBUG_FLAG) {
-      va_list  args;
-
-      va_start( args, fmt );
-      debug_vprintf( fmt, args );
-      va_end( args );
-   }
-}
-
-#else
-
-static INLINE void
-I915_DBG(
-   struct i915_context  *i915,
-   const char           *fmt,
-                        ... )
-{
-   (void) i915;
-   (void) fmt;
-}
-
-#endif
-
-
 struct i915_winsys_batchbuffer;
 
-void i915_dump_batchbuffer( struct i915_winsys_batchbuffer *i915 );
+#define DBG_BLIT      0x1
+#define DBG_EMIT      0x2
+#define DBG_ATOMS     0x4
+#define DBG_FLUSH     0x8
+#define DBG_TEXTURE   0x10
+#define DBG_CONSTANTS 0x20
 
-void i915_debug_init( struct i915_context *i915 );
+extern unsigned i915_debug;
 
+#ifdef DEBUG
+static INLINE boolean
+I915_DBG_ON(unsigned flags)
+{
+   return i915_debug & flags;
+}
+
+static INLINE void
+I915_DBG(unsigned flags, const char *fmt, ...)
+{
+   if (I915_DBG_ON(flags)) {
+      va_list  args;
+
+      va_start(args, fmt);
+      debug_vprintf(fmt, args);
+      va_end(args);
+   }
+}
+#else
+#define I915_DBG_ON(flags) (0)
+static INLINE void I915_DBG(unsigned flags, const char *fmt, ...) {}
+#endif
+
+void i915_debug_init(struct i915_screen *i915);
+
+void i915_dump_batchbuffer(struct i915_winsys_batchbuffer *i915);
+
+void i915_dump_dirty(struct i915_context *i915, const char *func);
+
+void i915_dump_hardware_dirty(struct i915_context *i915, const char *func);
 
 #endif

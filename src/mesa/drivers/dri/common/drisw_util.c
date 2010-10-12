@@ -112,7 +112,8 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     pcp->driDrawablePriv = NULL;
     pcp->driReadablePriv = NULL;
 
-    if (!driDriverAPI.CreateContext(&config->modes, pcp, shareCtx)) {
+    if (!driDriverAPI.CreateContext(API_OPENGL,
+			    &config->modes, pcp, shareCtx)) {
 	FREE(pcp);
 	return NULL;
     }

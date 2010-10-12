@@ -28,60 +28,11 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "state_tracker/drm_api.h"
-#include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
 
-/* Copied from targets/libgl-xlib */
+#include "target-helpers/inline_debug_helper.h"
+#include "target-helpers/inline_sw_helper.h"
 
-#ifdef GALLIUM_SOFTPIPE
-#include "softpipe/sp_public.h"
-#endif
-
-#ifdef GALLIUM_LLVMPIPE
-#include "llvmpipe/lp_public.h"
-#endif
-
-#ifdef GALLIUM_CELL
-#include "cell/ppu/cell_public.h"
-#endif
-
-static struct pipe_screen *
-swrast_create_screen(struct sw_winsys *winsys)
-{
-   const char *default_driver;
-   const char *driver;
-   struct pipe_screen *screen = NULL;
-
-#if defined(GALLIUM_CELL)
-   default_driver = "cell";
-#elif defined(GALLIUM_LLVMPIPE)
-   default_driver = "llvmpipe";
-#elif defined(GALLIUM_SOFTPIPE)
-   default_driver = "softpipe";
-#else
-   default_driver = "";
-#endif
-
-   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
-
-#if defined(GALLIUM_CELL)
-   if (screen == NULL && strcmp(driver, "cell") == 0)
-      screen = cell_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_LLVMPIPE)
-   if (screen == NULL && strcmp(driver, "llvmpipe") == 0)
-      screen = llvmpipe_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_SOFTPIPE)
-   if (screen == NULL)
-      screen = softpipe_create_screen( winsys );
-#endif
-
-   return screen;
-}
 
 struct pipe_screen *
 drisw_create_screen(struct drisw_loader_funcs *lf)
@@ -93,9 +44,11 @@ drisw_create_screen(struct drisw_loader_funcs *lf)
    if (winsys == NULL)
       return NULL;
 
-   screen = swrast_create_screen(winsys);
+   screen = sw_screen_create(winsys);
    if (!screen)
       goto fail;
+
+   screen = debug_screen_wrap(screen);
 
    return screen;
 

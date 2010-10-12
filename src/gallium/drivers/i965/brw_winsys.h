@@ -147,6 +147,7 @@ static INLINE void make_reloc(struct brw_winsys_reloc *reloc,
 
 struct brw_winsys_screen {
 
+   unsigned pci_id;
 
    /**
     * Buffer functions.
@@ -259,12 +260,6 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
 
    *ptr = buf;
 }
-
-
-/**
- * Create brw pipe_screen.
- */
-struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws, unsigned pci_id);
 
 
 

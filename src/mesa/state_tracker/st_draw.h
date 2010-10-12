@@ -34,8 +34,13 @@
 #ifndef ST_DRAW_H
 #define ST_DRAW_H
 
-struct _mesa_prim;
+#include "main/compiler.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+
 struct _mesa_index_buffer;
+struct _mesa_prim;
+struct st_context;
 
 void st_init_draw( struct st_context *st );
 

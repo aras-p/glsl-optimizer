@@ -39,7 +39,7 @@
 struct radeon_compiler;
 
 struct rc_src_register {
-	unsigned int File:3;
+	unsigned int File:4;
 
 	/** Negative values may be used for relative addressing. */
 	signed int Index:(RC_REGISTER_INDEX_BITS+1);
@@ -62,6 +62,11 @@ struct rc_dst_register {
 	unsigned int RelAddr:1;
 
 	unsigned int WriteMask:4;
+};
+
+struct rc_presub_instruction {
+	rc_presubtract_op Opcode;
+	struct rc_src_register SrcReg[2];
 };
 
 /**
@@ -108,6 +113,10 @@ struct rc_sub_instruction {
 	/** True if tex instruction should do shadow comparison */
 	unsigned int TexShadow:1;
 	/*@}*/
+
+	/** This holds information about the presubtract operation used by
+	 * this instruction. */
+	struct rc_presub_instruction PreSub;
 };
 
 typedef enum {
@@ -149,11 +158,6 @@ struct rc_program {
 
 	struct rc_constant_list Constants;
 };
-
-enum {
-	OPCODE_REPL_ALPHA = MAX_RC_OPCODE /**< used in paired instructions */
-};
-
 
 static inline rc_swizzle get_swz(unsigned int swz, rc_swizzle idx)
 {
@@ -197,7 +201,7 @@ static inline void reset_srcreg(struct rc_src_register* reg)
 
 
 /**
- * A transformation that can be passed to \ref radeonLocalTransform.
+ * A transformation that can be passed to \ref rc_local_transform.
  *
  * The function will be called once for each instruction.
  * It has to either emit the appropriate transformed code for the instruction
@@ -214,10 +218,9 @@ struct radeon_program_transformation {
 	void *userData;
 };
 
-void radeonLocalTransform(
+void rc_local_transform(
 	struct radeon_compiler *c,
-	int num_transformations,
-	struct radeon_program_transformation* transformations);
+	void *user);
 
 unsigned int rc_find_free_temporary(struct radeon_compiler * c);
 

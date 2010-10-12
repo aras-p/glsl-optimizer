@@ -29,7 +29,8 @@
 #define SPU_EXEC_H
 
 #include "pipe/p_compiler.h"
-#include "tgsi/tgsi_exec.h"
+
+#include "spu_tgsi_exec.h"
 
 #if defined __cplusplus
 extern "C" {

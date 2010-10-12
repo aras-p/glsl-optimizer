@@ -37,7 +37,6 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/imports.h"
 
 #include "m_matrix.h"
 
@@ -804,8 +803,8 @@ _math_matrix_rotate( GLmatrix *mat,
    GLfloat m[16];
    GLboolean optimized;
 
-   s = (GLfloat) _mesa_sin( angle * DEG2RAD );
-   c = (GLfloat) _mesa_cos( angle * DEG2RAD );
+   s = (GLfloat) sin( angle * DEG2RAD );
+   c = (GLfloat) cos( angle * DEG2RAD );
 
    memcpy(m, Identity, sizeof(GLfloat)*16);
    optimized = GL_FALSE;

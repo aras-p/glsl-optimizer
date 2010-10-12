@@ -41,7 +41,7 @@ struct gl_buffer_object;
 struct intel_buffer_object
 {
    struct gl_buffer_object Base;
-   dri_bo *buffer;     /* the low-level buffer manager's buffer handle */
+   drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
    /** System memory buffer data, if not using a BO to store the data. */
    void *sys_buffer;
 
@@ -60,9 +60,9 @@ struct intel_buffer_object
 
 /* Get the bm buffer associated with a GL bufferobject:
  */
-dri_bo *intel_bufferobj_buffer(struct intel_context *intel,
-			       struct intel_buffer_object
-			       *obj, GLuint flag);
+drm_intel_bo *intel_bufferobj_buffer(struct intel_context *intel,
+				     struct intel_buffer_object *obj,
+				     GLuint flag);
 
 /* Hook the bufferobject implementation into mesa: 
  */

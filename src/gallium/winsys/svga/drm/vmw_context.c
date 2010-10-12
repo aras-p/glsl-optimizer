@@ -103,6 +103,9 @@ struct vmw_svga_winsys_context
     * referred.
     */
    boolean preemptive_flush;
+
+   boolean throttle_set;
+   uint32_t throttle_us;
 };
 
 
@@ -135,6 +138,7 @@ vmw_swc_flush(struct svga_winsys_context *swc,
    struct pipe_fence_handle *fence = NULL;
    unsigned i;
    enum pipe_error ret;
+   uint32_t throttle_us;
 
    ret = pb_validate_validate(vswc->validate);
    assert(ret == PIPE_OK);
@@ -153,8 +157,13 @@ vmw_swc_flush(struct svga_winsys_context *swc,
          *reloc->where = ptr;
       }
 
+      throttle_us = vswc->throttle_set ?
+	 vswc->throttle_us : vswc->vws->default_throttle_us;
+
       if (vswc->command.used)
          vmw_ioctl_command(vswc->vws,
+			   vswc->base.cid,
+			   throttle_us,
                            vswc->command.buffer,
                            vswc->command.used,
                            &vswc->last_fence);
@@ -395,3 +404,13 @@ vmw_svga_winsys_context_create(struct svga_winsys_screen *sws)
 }
 
 
+void
+vmw_svga_context_set_throttling(struct pipe_context *pipe,
+				uint32_t throttle_us)
+{
+   struct svga_winsys_context *swc = svga_winsys_context(pipe);
+   struct vmw_svga_winsys_context *vswc = vmw_svga_winsys_context(swc);
+
+   vswc->throttle_us = throttle_us;
+   vswc->throttle_set = TRUE;
+}

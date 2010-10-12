@@ -26,6 +26,7 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
+#include "mtypes.h"
 
 extern struct gl_framebuffer *
 _mesa_create_framebuffer(const GLvisual *visual);
@@ -90,5 +91,8 @@ _mesa_get_color_read_type(GLcontext *ctx);
 
 extern GLenum
 _mesa_get_color_read_format(GLcontext *ctx);
+
+extern void
+_mesa_print_framebuffer(const struct gl_framebuffer *fb);
 
 #endif /* FRAMEBUFFER_H */

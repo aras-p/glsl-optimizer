@@ -50,6 +50,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
+#include "state_tracker/drm_driver.h"
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
 
@@ -90,11 +91,11 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     xf86OutputPtr output = NULL;
-    drmModeConnectorPtr drm_connector;
     struct crtc_private *crtcp = crtc->driver_private;
     drmModeCrtcPtr drm_crtc = crtcp->drm_crtc;
     drmModeModeInfo drm_mode;
     int i, ret;
+    unsigned int connector_id;
 
     for (i = 0; i < config->num_output; output = NULL, i++) {
 	output = config->output[i];
@@ -106,7 +107,7 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     if (!output)
 	return FALSE;
 
-    drm_connector = output->driver_private;
+    connector_id = xorg_output_get_id(output);
 
     drm_mode.clock = mode->Clock;
     drm_mode.hdisplay = mode->HDisplay;
@@ -127,7 +128,7 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     drm_mode.name[DRM_DISPLAY_MODE_LEN - 1] = '\0';
 
     ret = drmModeSetCrtc(ms->fd, drm_crtc->crtc_id, ms->fb_id, x, y,
-			 &drm_connector->connector_id, 1, &drm_mode);
+			 &connector_id, 1, &drm_mode);
 
     if (ret)
 	return FALSE;
@@ -147,6 +148,7 @@ crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
     /* XXX: hockup */
 }
 
+#if 0 /* Implement and enable to enable rotation and reflection. */
 static void *
 crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
@@ -168,6 +170,8 @@ crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 {
     /* ScrnInfoPtr pScrn = crtc->scrn; */
 }
+
+#endif
 
 /*
  * Cursor functions
@@ -363,9 +367,9 @@ static const xf86CrtcFuncsRec crtc_funcs = {
     .hide_cursor = crtc_hide_cursor,
     .load_cursor_argb = crtc_load_cursor_argb,
 
-    .shadow_create = crtc_shadow_create,
-    .shadow_allocate = crtc_shadow_allocate,
-    .shadow_destroy = crtc_shadow_destroy,
+    .shadow_create = NULL,
+    .shadow_allocate = NULL,
+    .shadow_destroy = NULL,
 
     .gamma_set = crtc_gamma_set,
     .destroy = crtc_destroy,

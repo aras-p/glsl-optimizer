@@ -4,14 +4,13 @@ include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-fbdev
 
-CFLAGS = -O3 -ffast-math -ansi -pedantic -fPIC -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -DUSE_GLFBDEV_DRIVER
+CFLAGS += -DUSE_GLFBDEV_DRIVER
 
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing
 
-SRC_DIRS = gallium mesa glu glut/fbdev glew
+SRC_DIRS += glut/fbdev
 DRIVER_DIRS = fbdev osmesa
-PROGRAM_DIRS = fbdev demos redbook samples
 
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lm -lpthread
 OSMESA_LIB_DEPS = -lm -lpthread

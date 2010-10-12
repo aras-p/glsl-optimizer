@@ -31,30 +31,22 @@
   */
 
 #include "draw/draw_context.h"
+#include "draw/draw_gs.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_math.h"
 #include "util/u_prim.h"
+#include "util/u_format.h"
+#include "util/u_draw.h"
 
 
 DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
 DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE)
-#ifdef HAVE_LLVM
-DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
-#endif
-
-static unsigned trim( unsigned count, unsigned first, unsigned incr )
-{
-   if (count < first)
-      return 0;
-   return count - (count - first) % incr; 
-}
-
-
 
 /* Overall we split things into:
- *     - frontend -- prepare fetch_elts, draw_elts - eg vcache
+ *     - frontend -- prepare fetch_elts, draw_elts - eg vsplit
  *     - middle   -- fetch, shade, cliptest, viewport
  *     - pipeline -- the prim pipeline: clipping, wide lines, etc 
  *     - backend  -- the vbuf_render provided by the driver.
@@ -74,29 +66,35 @@ draw_pt_arrays(struct draw_context *draw,
    {
       unsigned first, incr;
       draw_pt_split_prim(prim, &first, &incr);
-      count = trim(count, first, incr); 
+      count = draw_pt_trim_count(count, first, incr);
       if (count < first)
          return TRUE;
    }
 
    if (!draw->force_passthrough) {
+      unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+                              draw->gs.geometry_shader->output_primitive :
+                              prim);
+
       if (!draw->render) {
          opt |= PT_PIPELINE;
       }
-      
+
       if (draw_need_pipeline(draw,
                              draw->rasterizer,
-                             prim)) {
+                             gs_out_prim)) {
          opt |= PT_PIPELINE;
       }
 
-      if (!draw->bypass_clipping && !draw->pt.test_fse) {
+      if ((draw->clip_xy ||
+           draw->clip_z ||
+           draw->clip_user) && !draw->pt.test_fse) {
          opt |= PT_CLIPTEST;
       }
-      
+
       opt |= PT_SHADE;
    }
-      
+
    if (draw->pt.middle.llvm) {
       middle = draw->pt.middle.llvm;
    } else {
@@ -108,22 +106,11 @@ draw_pt_arrays(struct draw_context *draw,
          middle = draw->pt.middle.general;
    }
 
-
-   /* Pick the right frontend
-    */
-   if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
-      frontend = draw->pt.front.vcache;
-   } else {
-      frontend = draw->pt.front.varray;
-   }
+   frontend = draw->pt.front.vsplit;
 
    frontend->prepare( frontend, prim, middle, opt );
 
-   frontend->run(frontend, 
-                 draw_pt_elt_func(draw),
-                 draw_pt_elt_ptr(draw, start),
-                 draw->pt.user.eltBias,
-                 count);
+   frontend->run(frontend, start, count);
 
    frontend->finish( frontend );
 
@@ -136,12 +123,8 @@ boolean draw_pt_init( struct draw_context *draw )
    draw->pt.test_fse = debug_get_option_draw_fse();
    draw->pt.no_fse = debug_get_option_draw_no_fse();
 
-   draw->pt.front.vcache = draw_pt_vcache( draw );
-   if (!draw->pt.front.vcache)
-      return FALSE;
-
-   draw->pt.front.varray = draw_pt_varray(draw);
-   if (!draw->pt.front.varray)
+   draw->pt.front.vsplit = draw_pt_vsplit(draw);
+   if (!draw->pt.front.vsplit)
       return FALSE;
 
    draw->pt.middle.fetch_emit = draw_pt_fetch_emit( draw );
@@ -157,7 +140,7 @@ boolean draw_pt_init( struct draw_context *draw )
       return FALSE;
 
 #if HAVE_LLVM
-   if (debug_get_option_draw_use_llvm())
+   if (draw->llvm)
       draw->pt.middle.llvm = draw_pt_fetch_pipeline_or_emit_llvm( draw );
 #endif
 
@@ -187,14 +170,9 @@ void draw_pt_destroy( struct draw_context *draw )
       draw->pt.middle.fetch_shade_emit = NULL;
    }
 
-   if (draw->pt.front.vcache) {
-      draw->pt.front.vcache->destroy( draw->pt.front.vcache );
-      draw->pt.front.vcache = NULL;
-   }
-
-   if (draw->pt.front.varray) {
-      draw->pt.front.varray->destroy( draw->pt.front.varray );
-      draw->pt.front.varray = NULL;
+   if (draw->pt.front.vsplit) {
+      draw->pt.front.vsplit->destroy( draw->pt.front.vsplit );
+      draw->pt.front.vsplit = NULL;
    }
 }
 
@@ -214,24 +192,29 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       uint ii = 0;
       uint j;
 
-      if (draw->pt.user.elts) {
+      if (draw->pt.user.eltSize) {
+         const char *elts;
+
          /* indexed arrays */
+         elts = (const char *) draw->pt.user.elts;
+         elts += draw->pt.index_buffer.offset;
+
          switch (draw->pt.user.eltSize) {
          case 1:
             {
-               const ubyte *elem = (const ubyte *) draw->pt.user.elts;
+               const ubyte *elem = (const ubyte *) elts;
                ii = elem[start + i];
             }
             break;
          case 2:
             {
-               const ushort *elem = (const ushort *) draw->pt.user.elts;
+               const ushort *elem = (const ushort *) elts;
                ii = elem[start + i];
             }
             break;
          case 4:
             {
-               const uint *elem = (const uint *) draw->pt.user.elts;
+               const uint *elem = (const uint *) elts;
                ii = elem[start + i];
             }
             break;
@@ -252,6 +235,12 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
          uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
          ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
+
+         if (draw->pt.vertex_element[j].instance_divisor) {
+            ii = draw->instance_id / draw->pt.vertex_element[j].instance_divisor;
+         }
+
+         ptr += draw->pt.vertex_buffer[buf].buffer_offset;
          ptr += draw->pt.vertex_buffer[buf].stride * ii;
          ptr += draw->pt.vertex_element[j].src_offset;
 
@@ -260,31 +249,38 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
          case PIPE_FORMAT_R32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f  @ %p\n", v[0], (void *) v);
+               debug_printf("R %f  @ %p\n", v[0], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f  @ %p\n", v[0], v[1], (void *) v);
+               debug_printf("RG %f %f  @ %p\n", v[0], v[1], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32B32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f %f  @ %p\n", v[0], v[1], v[2], (void *) v);
+               debug_printf("RGB %f %f %f  @ %p\n", v[0], v[1], v[2], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32B32A32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f %f %f  @ %p\n", v[0], v[1], v[2], v[3],
+               debug_printf("RGBA %f %f %f %f  @ %p\n", v[0], v[1], v[2], v[3],
                             (void *) v);
             }
             break;
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
+            {
+               ubyte *u = (ubyte *) ptr;
+               debug_printf("BGRA %d %d %d %d  @ %p\n", u[0], u[1], u[2], u[3],
+                            (void *) u);
+            }
+            break;
          default:
-            debug_printf("other format (fix me)\n");
-            ;
+            debug_printf("other format %s (fix me)\n",
+                     util_format_name(draw->pt.vertex_element[j].src_format));
          }
       }
    }
@@ -292,11 +288,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 
 
 /**
- * Draw vertex arrays
- * This is the main entrypoint into the drawing module.
- * \param prim  one of PIPE_PRIM_x
- * \param start  index of first vertex to draw
- * \param count  number of vertices to draw
+ * Non-instanced drawing.
+ * \sa draw_arrays_instanced
  */
 void
 draw_arrays(struct draw_context *draw, unsigned prim,
@@ -305,6 +298,11 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    draw_arrays_instanced(draw, prim, start, count, 0, 1);
 }
 
+
+/**
+ * Instanced drawing.
+ * \sa draw_vbo
+ */
 void
 draw_arrays_instanced(struct draw_context *draw,
                       unsigned mode,
@@ -313,8 +311,50 @@ draw_arrays_instanced(struct draw_context *draw,
                       unsigned startInstance,
                       unsigned instanceCount)
 {
-   unsigned reduced_prim = u_reduced_prim(mode);
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.start_instance = startInstance;
+   info.instance_count = instanceCount;
+
+   info.indexed = (draw->pt.user.elts != NULL);
+   if (!info.indexed) {
+      info.min_index = start;
+      info.max_index = start + count - 1;
+   }
+
+   draw_vbo(draw, &info);
+}
+
+
+/**
+ * Draw vertex arrays.
+ * This is the main entrypoint into the drawing module.  If drawing an indexed
+ * primitive, the draw_set_index_buffer() and draw_set_mapped_index_buffer()
+ * functions should have already been called to specify the element/index
+ * buffer information.
+ */
+void
+draw_vbo(struct draw_context *draw,
+         const struct pipe_draw_info *info)
+{
+   unsigned reduced_prim = u_reduced_prim(info->mode);
    unsigned instance;
+
+   assert(info->instance_count > 0);
+   if (info->indexed)
+      assert(draw->pt.user.elts);
+
+   draw->pt.user.eltSize =
+      (info->indexed) ? draw->pt.index_buffer.index_size : 0;
+
+   draw->pt.user.eltBias = info->index_bias;
+   draw->pt.user.min_index = info->min_index;
+   draw->pt.user.max_index = info->max_index;
 
    if (reduced_prim != draw->reduced_prim) {
       draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
@@ -322,31 +362,39 @@ draw_arrays_instanced(struct draw_context *draw,
    }
 
    if (0)
-      draw_print_arrays(draw, mode, start, MIN2(count, 20));
+      debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",
+                   info->mode, info->start, info->count);
 
-#if 0
-   {
-      int i;
-      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
-                   mode, start, count);
+   if (0)
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
+
+   if (0) {
+      unsigned int i;
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
-         debug_printf("  format=%s\n",
+         debug_printf("  %u: src_offset=%u  inst_div=%u   vbuf=%u  format=%s\n",
+                      i,
+                      draw->pt.vertex_element[i].src_offset,
+                      draw->pt.vertex_element[i].instance_divisor,
+                      draw->pt.vertex_element[i].vertex_buffer_index,
                       util_format_name(draw->pt.vertex_element[i].src_format));
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  stride=%u offset=%u ptr=%p\n",
+         debug_printf("  %u: stride=%u maxindex=%u offset=%u ptr=%p\n",
+                      i,
                       draw->pt.vertex_buffer[i].stride,
+                      draw->pt.vertex_buffer[i].max_index,
                       draw->pt.vertex_buffer[i].buffer_offset,
                       draw->pt.user.vbuffer[i]);
       }
    }
-#endif
 
-   for (instance = 0; instance < instanceCount; instance++) {
-      draw->instance_id = instance + startInstance;
-      draw_pt_arrays(draw, mode, start, count);
+   if (0)
+      draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
+
+   for (instance = 0; instance < info->instance_count; instance++) {
+      draw->instance_id = instance + info->start_instance;
+      draw_pt_arrays(draw, info->mode, info->start, info->count);
    }
 }

@@ -36,6 +36,7 @@
 
 #include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_scan.h"
 
 
@@ -84,31 +85,46 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          {
             const struct tgsi_full_instruction *fullinst
                = &parse.FullToken.FullInstruction;
+            uint i;
 
             assert(fullinst->Instruction.Opcode < TGSI_OPCODE_LAST);
             info->opcode_count[fullinst->Instruction.Opcode]++;
 
-            /* special case: scan fragment shaders for use of the fog
-             * input/attribute.  The X component is fog, the Y component
-             * is the front/back-face flag.
-             */
-            if (procType == TGSI_PROCESSOR_FRAGMENT) {
-               uint i;
-               for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
-                  const struct tgsi_full_src_register *src =
-                     &fullinst->Src[i];
-                  if (src->Register.File == TGSI_FILE_INPUT ||
-                      src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-                     const int ind = src->Register.Index;
-                     if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        info->uses_fogcoord = TRUE;
+            for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
+               const struct tgsi_full_src_register *src =
+                  &fullinst->Src[i];
+               int ind = src->Register.Index;
+
+               /* Mark which inputs are effectively used */
+               if (src->Register.File == TGSI_FILE_INPUT) {
+                  unsigned usage_mask;
+                  usage_mask = tgsi_util_get_inst_usage_mask(fullinst, i);
+                  if (src->Register.Indirect) {
+                     for (ind = 0; ind < info->num_inputs; ++ind) {
+                        info->input_usage_mask[ind] |= usage_mask;
                      }
-                     else if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FACE) {
-                        info->uses_frontfacing = TRUE;
-                     }
+                  } else {
+                     assert(ind >= 0);
+                     assert(ind < PIPE_MAX_SHADER_INPUTS);
+                     info->input_usage_mask[ind] |= usage_mask;
                   }
                }
+
+               /* check for indirect register reads */
+               if (src->Register.Indirect) {
+                  info->indirect_files |= (1 << src->Register.File);
+               }
             }
+
+            /* check for indirect register writes */
+            for (i = 0; i < fullinst->Instruction.NumDstRegs; i++) {
+               const struct tgsi_full_dst_register *dst = &fullinst->Dst[i];
+               if (dst->Register.Indirect) {
+                  info->indirect_files |= (1 << dst->Register.File);
+               }
+            }
+
+            info->num_instructions++;
          }
          break;
 

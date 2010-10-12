@@ -60,6 +60,9 @@
 
 /* DWORD 0 */
 
+/* guess that this is the same as nv40 */
+#define NV30_VP_INST_INDEX_INPUT                                        (1 << 27)
+
 #define NV30_VP_INST_ADDR_REG_SELECT_1        (1 << 24)
 #define NV30_VP_INST_SRC2_ABS           (1 << 23) /* guess */
 #define NV30_VP_INST_SRC1_ABS           (1 << 22) /* guess */
@@ -68,7 +71,7 @@
 #define NV30_VP_INST_DEST_TEMP_ID_SHIFT        16
 #define NV30_VP_INST_DEST_TEMP_ID_MASK        (0x0F << 16)
 #define NV30_VP_INST_COND_UPDATE_ENABLE        (1<<15)
-#define NV30_VP_INST_VEC_DEST_TEMP_MASK      (0xF << 16)
+#define NV30_VP_INST_VEC_DEST_TEMP_MASK      (0x1F << 16)
 #define NV30_VP_INST_COND_TEST_ENABLE        (1<<14)
 #define NV30_VP_INST_COND_SHIFT          11
 #define NV30_VP_INST_COND_MASK          (0x07 << 11)
@@ -111,7 +114,7 @@
 #define NV30_VP_INST_SRC2H_SHIFT        0    /*NV20*/
 #define NV30_VP_INST_SRC2H_MASK          (0x7FF << 0)  /* NV30_VP_SRC2_HIGH_MASK >> 4*/
 #define NV30_VP_INST_IADDR_SHIFT        2
-#define NV30_VP_INST_IADDR_MASK          (0xF <<  28)   /* NV30_VP_SRC2_LOW_MASK << 28 */
+#define NV30_VP_INST_IADDR_MASK          (0x1FF <<  2)   /* NV30_VP_SRC2_LOW_MASK << 28 */
 
 /* DWORD 3 */
 #define NV30_VP_INST_SRC2L_SHIFT        28    /*NV20*/
@@ -125,7 +128,7 @@
 #define NV30_VP_INST_VDEST_WRITEMASK_SHIFT      12    /*NV20*/
 #define NV30_VP_INST_VDEST_WRITEMASK_MASK      (0x0F << 12)  /*NV20*/
 #define NV30_VP_INST_DEST_SHIFT        2
-#define NV30_VP_INST_DEST_MASK        (0x0F <<  2)
+#define NV30_VP_INST_DEST_MASK        (0x1F <<  2)
 #  define NV30_VP_INST_DEST_POS  0
 #  define NV30_VP_INST_DEST_BFC0  1
 #  define NV30_VP_INST_DEST_BFC1  2
@@ -133,7 +136,11 @@
 #  define NV30_VP_INST_DEST_COL1  4
 #  define NV30_VP_INST_DEST_FOGC  5
 #  define NV30_VP_INST_DEST_PSZ   6
-#  define NV30_VP_INST_DEST_TC(n)  (8+n)
+#  define NV30_VP_INST_DEST_TC(n)  (8+(n))
+#  define NV30_VP_INST_DEST_CLP(n) (17 + (n))
+
+/* guess that this is the same as nv40 */
+#define NV30_VP_INST_INDEX_CONST                                        (1 << 1)
 
 /* Useful to split the source selection regs into their pieces */
 #define NV30_VP_SRC0_HIGH_SHIFT                                                6

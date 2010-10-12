@@ -40,6 +40,14 @@
 
 struct vmw_dma_buffer;
 
+struct vmw_rect
+{
+    int32_t x;
+    int32_t y;
+    uint32_t w;
+    uint32_t h;
+};
+
 struct vmw_customizer
 {
     CustomizerRec base;
@@ -51,6 +59,7 @@ struct vmw_customizer
 
     /* vmw_video.c */
     void *video_priv;
+    uint64_t max_fb_size;
 };
 
 static INLINE struct vmw_customizer *
@@ -58,6 +67,12 @@ vmw_customizer(CustomizerPtr cust)
 {
     return cust ? (struct vmw_customizer *) cust : NULL;
 }
+
+/***********************************************************************
+ * vmw_ctrl.c
+ */
+
+void vmw_ctrl_ext_init(struct vmw_customizer *vmw);
 
 
 /***********************************************************************
@@ -98,6 +113,8 @@ int vmw_ioctl_num_streams(struct vmw_customizer *vmw,
 int vmw_ioctl_unref_stream(struct vmw_customizer *vmw, uint32_t stream_id);
 
 int vmw_ioctl_claim_stream(struct vmw_customizer *vmw, uint32_t *out);
+
+int vmw_ioctl_update_layout(struct vmw_customizer *vmw, uint32_t num, struct vmw_rect *rects);
 
 
 #endif

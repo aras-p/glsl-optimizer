@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __R600_CMDBUF_H__
 
 #include "r600_context.h"
-#include "r600_emit.h"
 
 #define RADEON_CP_PACKET3_NOP                       0xC0001000
 #define RADEON_CP_PACKET3_NEXT_CHAR                 0xC0001900
@@ -106,6 +105,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R600_IT_ME_INITIALIZE                     0x00004400
 #define R600_IT_COND_WRITE                        0x00004500
 #define R600_IT_EVENT_WRITE                       0x00004600
+#       define R600_EVENT_TYPE(x)                 ((x) << 0)
+#       define R600_EVENT_INDEX(x)                ((x) << 8)
 #define R600_IT_EVENT_WRITE_EOP                   0x00004700
 #define R600_IT_ONE_REG_WRITE                     0x00005700
 #define R600_IT_SET_CONFIG_REG                    0x00006800
@@ -190,6 +191,46 @@ do {								\
  * expects count dwords afterwards for register contents. */
 #define R600_OUT_BATCH_REGSEQ(reg, count)	\
 	R600_OUT_BATCH_REGS((reg), (count))
+
+/* evergreen */ 
+#define EVERGREEN_OUT_BATCH_REGS(reg, num)					\
+do {								\
+	if ((reg) >= R600_SET_CONFIG_REG_OFFSET && (reg) < R600_SET_CONFIG_REG_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CONFIG_REG_OFFSET) >> 2);	\
+	} else if ((reg) >= R600_SET_CONTEXT_REG_OFFSET && (reg) < R600_SET_CONTEXT_REG_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONTEXT_REG, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CONTEXT_REG_OFFSET) >> 2);	\
+	} else if ((reg) >= EG_SET_RESOURCE_OFFSET && (reg) < EG_SET_RESOURCE_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, (num)));	\
+		R600_OUT_BATCH(((reg) - EG_SET_RESOURCE_OFFSET) >> 2);	\
+    } else if ((reg) >= EG_SET_LOOP_CONST_OFFSET && (reg) < EG_SET_LOOP_CONST_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_LOOP_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - EG_SET_LOOP_CONST_OFFSET) >> 2);	\
+	} else if ((reg) >= R600_SET_SAMPLER_OFFSET && (reg) < R600_SET_SAMPLER_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_SAMPLER_OFFSET) >> 2);	\
+	} else if ((reg) >= R600_SET_CTL_CONST_OFFSET && (reg) < R600_SET_CTL_CONST_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CTL_CONST_OFFSET) >> 2);	\
+	} else if ((reg) >= EG_SET_BOOL_CONST_OFFSET && (reg) < EG_SET_BOOL_CONST_END) { \
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_BOOL_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - EG_SET_BOOL_CONST_OFFSET) >> 2);	\
+	} else {							\
+		R600_OUT_BATCH(CP_PACKET0((reg), (num))); \
+	}								\
+} while (0)
+
+/** Single register write to command buffer; requires 3 dwords for most things. */
+#define EVERGREEN_OUT_BATCH_REGVAL(reg, val)		\
+	EVERGREEN_OUT_BATCH_REGS((reg), 1);		\
+	R600_OUT_BATCH((val))
+
+/** Continuous register range write to command buffer; requires 1 dword,
+ * expects count dwords afterwards for register contents. */
+#define EVERGREEN_OUT_BATCH_REGSEQ(reg, count)	\
+	    EVERGREEN_OUT_BATCH_REGS((reg), (count))
+
 
 extern void r600InitCmdBuf(context_t *r600);
 

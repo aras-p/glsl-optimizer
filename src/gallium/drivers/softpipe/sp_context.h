@@ -50,6 +50,7 @@ struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
 struct sp_velems_state;
+struct sp_so_state;
 
 
 struct softpipe_context {
@@ -59,12 +60,14 @@ struct softpipe_context {
    struct pipe_blend_state *blend;
    struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_state *geometry_samplers[PIPE_MAX_GEOMETRY_SAMPLERS];
    struct pipe_depth_stencil_alpha_state *depth_stencil;
    struct pipe_rasterizer_state *rasterizer;
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
    struct sp_geometry_shader *gs;
    struct sp_velems_state *velems;
+   struct sp_so_state *so;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -76,13 +79,24 @@ struct softpipe_context {
    struct pipe_scissor_state scissor;
    struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *geometry_sampler_views[PIPE_MAX_GEOMETRY_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
+   struct {
+      struct softpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
+      int offset[PIPE_MAX_SO_BUFFERS];
+      int so_count[PIPE_MAX_SO_BUFFERS];
+      int num_buffers;
+   } so_target;
+   struct pipe_query_data_so_statistics so_stats;
 
    unsigned num_samplers;
    unsigned num_sampler_views;
    unsigned num_vertex_samplers;
    unsigned num_vertex_sampler_views;
+   unsigned num_geometry_samplers;
+   unsigned num_geometry_sampler_views;
    unsigned num_vertex_buffers;
 
    unsigned dirty; /**< Mask of SP_NEW_x flags */
@@ -98,6 +112,7 @@ struct softpipe_context {
 
    /** Mapped constant buffers */
    const void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
+   unsigned const_buffer_size[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
    struct vertex_info vertex_info;
@@ -108,6 +123,9 @@ struct softpipe_context {
 
    /** The reduced version of the primitive supplied by the state tracker */
    unsigned reduced_api_prim;
+
+   /** Derived information about which winding orders to cull */
+   unsigned cull_mode;
 
    /**
     * The reduced primitive after unfilled triangles, wide-line decomposition,
@@ -136,9 +154,12 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
+      struct sp_sampler_varient *geom_samplers_list[PIPE_MAX_GEOMETRY_SAMPLERS];
       struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_VERTEX_SAMPLERS];
       struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
+
+   struct tgsi_exec_machine *fs_machine;
 
    /** The primitive drawing context */
    struct draw_context *draw;
@@ -155,6 +176,7 @@ struct softpipe_context {
    unsigned tex_timestamp;
    struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
    struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
+   struct softpipe_tex_tile_cache *geometry_tex_cache[PIPE_MAX_GEOMETRY_SAMPLERS];
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;

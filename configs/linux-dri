@@ -45,21 +45,20 @@ EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
 LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
 LIBDRM_LIB = $(shell pkg-config --libs libdrm)
-DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
+DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl -ltalloc $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl $(LIBDRM_LIB)
 
 
 # Directories
 SRC_DIRS := glx egl $(SRC_DIRS)
-PROGRAM_DIRS := egl/eglut egl/opengl $(PROGRAM_DIRS)
 
 # EGL directories
 EGL_DRIVERS_DIRS = glx
 
 DRIVER_DIRS = dri
 GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel drm/i965
-GALLIUM_TARGET_DIRS = egl-swrast
+GALLIUM_TARGET_DIRS = 
 GALLIUM_STATE_TRACKERS_DIRS = egl
 
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon \

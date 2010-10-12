@@ -70,13 +70,14 @@ class TextureTest(TestCase):
         face = self.face
         level = self.level
         zslice = self.zslice
-        
+
         bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
-        if not dev.is_format_supported(format, target, bind, geom_flags):
+        sample_count = 0
+        if not dev.is_format_supported(format, target, sample_count, bind, geom_flags):
             raise TestSkip
 
-        if not dev.is_format_supported(format, target, bind, geom_flags):
+        if not dev.is_format_supported(format, target, sample_count, bind, geom_flags):
             raise TestSkip
 
         #  textures

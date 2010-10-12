@@ -30,7 +30,6 @@
 #include "main/imports.h"
 
 #include "s_depth.h"
-#include "s_context.h"
 #include "s_span.h"
 
 

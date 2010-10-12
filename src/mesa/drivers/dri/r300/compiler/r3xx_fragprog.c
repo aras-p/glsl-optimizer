@@ -26,8 +26,11 @@
 
 #include "radeon_dataflow.h"
 #include "radeon_emulate_branches.h"
+#include "radeon_emulate_loops.h"
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
+#include "radeon_rename_regs.h"
+#include "radeon_remove_constants.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -44,8 +47,9 @@ static void dataflow_outputs_mark_use(void * userdata, void * data,
 	callback(data, c->OutputDepth, RC_MASK_W);
 }
 
-static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
+static void rc_rewrite_depth_out(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	struct rc_instruction *rci;
 
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
@@ -86,110 +90,69 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	}
 }
 
-static void debug_program_log(struct r300_fragment_program_compiler* c, const char * where)
-{
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: %s\n", where);
-		rc_print_program(&c->Base.Program);
-	}
-}
-
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	rewrite_depth_out(c);
+	int is_r500 = c->Base.is_r500;
+	int kill_consts = c->Base.remove_unused_constants;
+	int opt = !c->Base.disable_optimizations;
 
-	debug_program_log(c, "before compilation");
-
-	/* XXX Ideally this should be done only for r3xx, but since
-	 * we don't have branching support for r5xx, we use the emulation
-	 * on all chipsets. */
-	rc_emulate_branches(&c->Base);
-
-	debug_program_log(c, "after emulate branches");
-
-	if (c->is_r500) {
-		struct radeon_program_transformation transformations[] = {
-			{ &r500_transform_IF, 0 },
-			{ &radeonTransformALU, 0 },
-			{ &radeonTransformDeriv, 0 },
-			{ &radeonTransformTrigScale, 0 }
-		};
-		radeonLocalTransform(&c->Base, 4, transformations);
-
-		debug_program_log(c, "after native rewrite part 1");
-
-		c->Base.SwizzleCaps = &r500_swizzle_caps;
-	} else {
-		struct radeon_program_transformation transformations[] = {
-			{ &radeonTransformALU, 0 },
-			{ &radeonTransformTrigSimple, 0 }
-		};
-		radeonLocalTransform(&c->Base, 2, transformations);
-
-		debug_program_log(c, "after native rewrite part 1");
-
-		c->Base.SwizzleCaps = &r300_swizzle_caps;
-	}
-
-	/* Run the common transformations too.
-	 * Remember, lowering comes last! */
-	struct radeon_program_transformation common_transformations[] = {
+	/* Lists of instruction transformations. */
+	struct radeon_program_transformation rewrite_tex[] = {
 		{ &radeonTransformTEX, c },
+		{ 0, 0 }
 	};
-	radeonLocalTransform(&c->Base, 1, common_transformations);
 
-	common_transformations[0].function = &radeonTransformALU;
-	radeonLocalTransform(&c->Base, 1, common_transformations);
+	struct radeon_program_transformation native_rewrite_r500[] = {
+		{ &r500_transform_IF, 0 },
+		{ &radeonTransformALU, 0 },
+		{ &radeonTransformDeriv, 0 },
+		{ &radeonTransformTrigScale, 0 },
+		{ 0, 0 }
+	};
 
-	if (c->Base.Error)
-		return;
+	struct radeon_program_transformation native_rewrite_r300[] = {
+		{ &radeonTransformALU, 0 },
+		{ &r300_transform_trig_simple, 0 },
+		{ 0, 0 }
+	};
 
-	debug_program_log(c, "after native rewrite part 2");
+	/* List of compiler passes. */
+	struct radeon_compiler_pass fs_list[] = {
+		/* NAME				DUMP PREDICATE	FUNCTION			PARAM */
+		{"rewrite depth out",		1, 1,		rc_rewrite_depth_out,		NULL},
+		/* This transformation needs to be done before any of the IF
+		 * instructions are modified. */
+		{"transform KILP",		1, 1,		rc_transform_KILP,		NULL},
+		{"unroll loops",		1, is_r500,	rc_unroll_loops,		NULL},
+		{"transform loops",		1, !is_r500,	rc_transform_loops,		NULL},
+		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
+		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
+		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},
+		{"native rewrite",		1, !is_r500,	rc_local_transform,		native_rewrite_r300},
+		{"deadcode",			1, opt,		rc_dataflow_deadcode,		dataflow_outputs_mark_use},
+		{"emulate loops",		1, !is_r500,	rc_emulate_loops,		NULL},
+		{"dataflow optimize",		1, opt,		rc_optimize,			NULL},
+		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
+		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
+		/* This pass makes it easier for the scheduler to group TEX
+		 * instructions and reduces the chances of creating too
+		 * many texture indirections.*/
+		{"register rename",		1, !is_r500,	rc_rename_regs,			NULL},
+		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
+		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
+		{"register allocation",		1, opt,		rc_pair_regalloc,		NULL},
+		{"dumb register allocation",	1, !opt,	rc_pair_regalloc_inputs_only,	NULL},
+		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
+		{"machine code generation",	0, is_r500,	r500BuildFragmentProgramHwCode,	NULL},
+		{"machine code generation",	0, !is_r500,	r300BuildFragmentProgramHwCode,	NULL},
+		{"dump machine code",		0, is_r500  && c->Base.Debug, r500FragmentProgramDump, NULL},
+		{"dump machine code",		0, !is_r500 && c->Base.Debug, r300FragmentProgramDump, NULL},
+		{NULL, 0, 0, NULL, NULL}
+	};
 
-	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
-	if (c->Base.Error)
-		return;
+	c->Base.SwizzleCaps = c->Base.is_r500 ? &r500_swizzle_caps : &r300_swizzle_caps;
 
-	debug_program_log(c, "after deadcode");
-
-	rc_dataflow_swizzles(&c->Base);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after dataflow passes");
-
-	rc_pair_translate(c);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after pair translate");
-
-	rc_pair_schedule(c);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after pair scheduling");
-
-	rc_pair_regalloc(c, c->max_temp_regs);
-
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after register allocation");
-
-	if (c->is_r500) {
-		r500BuildFragmentProgramHwCode(c);
-	} else {
-		r300BuildFragmentProgramHwCode(c);
-	}
+	rc_run_compiler(&c->Base, fs_list, "Fragment Program");
 
 	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
-
-	if (c->Base.Debug) {
-		if (c->is_r500) {
-			r500FragmentProgramDump(c->code);
-		} else {
-			r300FragmentProgramDump(c->code);
-		}
-	}
 }

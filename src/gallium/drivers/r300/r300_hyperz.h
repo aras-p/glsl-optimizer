@@ -27,4 +27,9 @@ struct r300_context;
 
 void r300_update_hyperz_state(struct r300_context* r300);
 
+void r300_hiz_alloc_block(struct r300_context *r300, struct r300_surface *surf);
+void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf, int compress);
+
+boolean r300_hyperz_init_mm(struct r300_context *r300);
+void r300_hyperz_destroy_mm(struct r300_context *r300);
 #endif

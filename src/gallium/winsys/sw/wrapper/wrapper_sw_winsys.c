@@ -52,6 +52,7 @@ struct wrapper_sw_winsys
    struct sw_winsys base;
    struct pipe_screen *screen;
    struct pipe_context *pipe;
+   enum pipe_texture_target target;
 };
 
 struct wrapper_sw_displaytarget
@@ -145,6 +146,7 @@ wsw_dt_create(struct sw_winsys *ws,
     * XXX Why don't we just get the template.
     */
    memset(&templ, 0, sizeof(templ));
+   templ.target = wsw->target;
    templ.width0 = width;
    templ.height0 = height;
    templ.format = format;
@@ -173,6 +175,18 @@ wsw_dt_from_handle(struct sw_winsys *ws,
       return NULL;
 
    return wsw_dt_wrap_texture(wsw, tex, stride);
+}
+
+static boolean
+wsw_dt_get_handle(struct sw_winsys *ws,
+                  struct sw_displaytarget *dt,
+                  struct winsys_handle *whandle)
+{
+   struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
+   struct wrapper_sw_displaytarget *wdt = wrapper_sw_displaytarget(dt);
+   struct pipe_resource *tex = wdt->tex;
+
+   return wsw->screen->resource_get_handle(wsw->screen, tex, whandle);
 }
 
 static void *
@@ -267,6 +281,7 @@ wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
 
    wsw->base.displaytarget_create = wsw_dt_create;
    wsw->base.displaytarget_from_handle = wsw_dt_from_handle;
+   wsw->base.displaytarget_get_handle = wsw_dt_get_handle;
    wsw->base.displaytarget_map = wsw_dt_map;
    wsw->base.displaytarget_unmap = wsw_dt_unmap;
    wsw->base.displaytarget_destroy = wsw_dt_destroy;
@@ -276,6 +291,11 @@ wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
    wsw->pipe = screen->context_create(screen, NULL);
    if (!wsw->pipe)
       goto err_free;
+
+   if(screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES))
+      wsw->target = PIPE_TEXTURE_2D;
+   else
+      wsw->target = PIPE_TEXTURE_RECT;
 
    return &wsw->base;
 

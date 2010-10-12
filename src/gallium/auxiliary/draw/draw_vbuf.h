@@ -98,14 +98,14 @@ struct vbuf_render {
    boolean (*set_primitive)( struct vbuf_render *, unsigned prim );
 
    /**
-    * DrawElements, note indices are ushort.  The driver must complete
-    * this call, if necessary splitting the index list itself.
+    * Draw indexed primitives.  Note that indices are ushort.  The driver
+    * must complete this call, if necessary splitting the index list itself.
     */
-   void (*draw)( struct vbuf_render *,
-		 const ushort *indices,
-		 uint nr_indices );
+   void (*draw_elements)( struct vbuf_render *,
+                          const ushort *indices,
+                          uint nr_indices );
 
-   /* Draw Arrays path too.
+   /* Draw non-indexed primitives.
     */
    void (*draw_arrays)( struct vbuf_render *,
 			unsigned start,
@@ -117,6 +117,14 @@ struct vbuf_render {
    void (*release_vertices)( struct vbuf_render * );
 
    void (*destroy)( struct vbuf_render * );
+
+
+   /**
+    * Called after writing data to the stream out buffers
+    */
+   void (*set_stream_output_info)( struct vbuf_render *vbufr,
+                                   unsigned primitive_count,
+                                   unsigned vertices_count );
 };
 
 

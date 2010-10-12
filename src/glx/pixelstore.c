@@ -46,7 +46,7 @@
  * \sa __indirect_glPixelStorei,  __indirect_glPixelStoref
  */
 static void
-send_PixelStore(__GLXcontext * gc, unsigned sop, GLenum pname,
+send_PixelStore(struct glx_context * gc, unsigned sop, GLenum pname,
                 const void *param)
 {
    Display *const dpy = gc->currentDpy;
@@ -67,7 +67,7 @@ send_PixelStore(__GLXcontext * gc, unsigned sop, GLenum pname,
 void
 __indirect_glPixelStoref(GLenum pname, GLfloat param)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = gc->client_state_private;
    Display *dpy = gc->currentDpy;
    GLuint a;
@@ -217,7 +217,7 @@ __indirect_glPixelStoref(GLenum pname, GLfloat param)
 void
 __indirect_glPixelStorei(GLenum pname, GLint param)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = gc->client_state_private;
    Display *dpy = gc->currentDpy;
 

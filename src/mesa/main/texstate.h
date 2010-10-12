@@ -32,6 +32,7 @@
 #define TEXSTATE_H
 
 
+#include "compiler.h"
 #include "mtypes.h"
 
 

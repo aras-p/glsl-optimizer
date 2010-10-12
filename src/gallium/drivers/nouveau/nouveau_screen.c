@@ -5,6 +5,8 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_format_s3tc.h"
+#include "util/u_string.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -14,7 +16,7 @@
 #include "nouveau_screen.h"
 
 /* XXX this should go away */
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "util/u_simple_screen.h"
 
 static const char *
@@ -23,7 +25,7 @@ nouveau_screen_get_name(struct pipe_screen *pscreen)
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
+	util_snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
 	return buffer;
 }
 
@@ -51,8 +53,6 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 
 	if (bind & (PIPE_BIND_RENDER_TARGET |
 			PIPE_BIND_DEPTH_STENCIL |
-			PIPE_BIND_BLIT_SOURCE |
-			PIPE_BIND_BLIT_DESTINATION |
 			PIPE_BIND_SCANOUT |
 			PIPE_BIND_DISPLAY_TARGET |
 			PIPE_BIND_SAMPLER_VIEW))
@@ -182,7 +182,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	ret = nouveau_bo_handle_ref(dev, whandle->handle, &bo);
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
-			     __func__, whandle->handle, ret);
+			     __FUNCTION__, whandle->handle, ret);
 		return NULL;
 	}
 
@@ -248,6 +248,8 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	pscreen->fence_signalled = nouveau_screen_fence_signalled;
 	pscreen->fence_finish = nouveau_screen_fence_finish;
 
+	util_format_s3tc_init();
+
 	return 0;
 }
 
@@ -256,6 +258,7 @@ nouveau_screen_fini(struct nouveau_screen *screen)
 {
 	struct pipe_winsys *ws = screen->base.winsys;
 	nouveau_channel_free(&screen->channel);
-	ws->destroy(ws);
+	if (ws)
+		ws->destroy(ws);
 }
 

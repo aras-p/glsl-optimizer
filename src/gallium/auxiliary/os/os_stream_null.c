@@ -56,12 +56,18 @@ os_null_stream_flush(struct os_stream *stream)
    (void)stream;
 }
 
+static int
+os_null_stream_vprintf (struct os_stream* stream, const char *format, va_list ap)
+{
+   return 0;
+}
 
 static struct os_stream
 os_null_stream = {
    &os_null_stream_close,
    &os_null_stream_write,
-   &os_null_stream_flush
+   &os_null_stream_flush,
+   &os_null_stream_vprintf
 };
 
 

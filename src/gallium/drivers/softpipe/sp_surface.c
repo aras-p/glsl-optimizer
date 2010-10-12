@@ -25,26 +25,14 @@
  * 
  **************************************************************************/
 
-#include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "sp_context.h"
 #include "sp_surface.h"
-
-
-static void
-sp_surface_copy(struct pipe_context *pipe,
-                struct pipe_surface *dest, unsigned destx, unsigned desty,
-                struct pipe_surface *src, unsigned srcx, unsigned srcy,
-                unsigned width, unsigned height)
-{
-   util_surface_copy(pipe, FALSE,
-                     dest, destx, desty,
-                     src, srcx, srcy,
-                     width, height);
-}
 
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-   sp->pipe.surface_copy = sp_surface_copy;
-   sp->pipe.surface_fill = util_surface_fill;
+   sp->pipe.resource_copy_region = util_resource_copy_region;
+   sp->pipe.clear_render_target = util_clear_render_target;
+   sp->pipe.clear_depth_stencil = util_clear_depth_stencil;
 }

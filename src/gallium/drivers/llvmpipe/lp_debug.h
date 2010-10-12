@@ -39,17 +39,31 @@ st_print_current(void);
 #define DEBUG_PIPE      0x1
 #define DEBUG_TGSI      0x2
 #define DEBUG_TEX       0x4
-#define DEBUG_ASM       0x8
 #define DEBUG_SETUP     0x10
 #define DEBUG_RAST      0x20
 #define DEBUG_QUERY     0x40
 #define DEBUG_SCREEN    0x80
-#define DEBUG_JIT       0x100
 #define DEBUG_SHOW_TILES    0x200
 #define DEBUG_SHOW_SUBTILES 0x400
 #define DEBUG_COUNTERS      0x800
-#define DEBUG_NO_LLVM_OPT  0x1000
+#define DEBUG_SCENE         0x1000
+#define DEBUG_FENCE         0x2000
+#define DEBUG_MEM           0x4000
+#define DEBUG_FS            0x8000
 
+/* Performance flags.  These are active even on release builds.
+ */
+#define PERF_TEX_MEM        0x1  	/* minimize texture cache footprint */
+#define PERF_NO_MIP_LINEAR  0x2  	/* MIP_FILTER_LINEAR ==> _NEAREST */
+#define PERF_NO_MIPMAPS     0x4  	/* MIP_FILTER_NONE always */
+#define PERF_NO_LINEAR      0x8  	/* FILTER_NEAREST always */
+#define PERF_NO_TEX         0x10  	/* sample white always */
+#define PERF_NO_BLEND       0x20  	/* disable blending */
+#define PERF_NO_DEPTH       0x40  	/* disable depth buffering entirely */
+#define PERF_NO_ALPHATEST   0x80  	/* disable alpha testing */
+
+
+extern int LP_PERF;
 
 #ifdef DEBUG
 extern int LP_DEBUG;

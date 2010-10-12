@@ -47,8 +47,7 @@ DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
                 $(LIBDRM_LIB) $(shell pkg-config --libs xcb) $(shell pkg-config --libs x11-xcb) $(shell pkg-config --libs xcb-glx)
 
-SRC_DIRS = glx gallium mesa glu glut/glx glew glw
-PROGRAM_DIRS = xdemos
+SRC_DIRS = glx gallium mesa glu glut/glx glw
 
 DRIVER_DIRS = dri
 DRI_DIRS = i810 i915 mach64 mga r128 r200 r300 radeon \

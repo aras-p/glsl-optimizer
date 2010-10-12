@@ -34,11 +34,9 @@
 #include "api_loopback.h"
 #include "api_exec.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "shader/arbprogram.h"
+#include "arbprogram.h"
 #endif
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
-#endif
+#include "atifragshader.h"
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -93,20 +91,58 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "viewport.h"
-#if FEATURE_NV_vertex_program
-#include "shader/nvprogram.h"
-#endif
-#if FEATURE_NV_fragment_program
-#include "shader/nvprogram.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "nvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
-#include "shaders.h"
+#include "shaderapi.h"
+#include "uniforms.h"
 #endif
-#if FEATURE_ARB_sync
 #include "syncobj.h"
-#endif
 #include "main/dispatch.h"
 
+
+#if FEATURE_GL
+
+
+#ifdef _GLAPI_USE_REMAP_TABLE
+
+#define need_MESA_remap_table
+#include "main/remap.h"
+#include "main/remap_helper.h"
+
+/* This is shared across all APIs but We define this here since
+ * desktop GL has the biggest remap table. */
+int driDispatchRemapTable[driDispatchRemapTable_size];
+
+/**
+ * Map the functions which are already static.
+ *
+ * When a extension function are incorporated into the ABI, the
+ * extension suffix is usually stripped.  Mapping such functions
+ * makes sure the alternative names are available.
+ *
+ * Note that functions mapped by _mesa_init_remap_table() are
+ * excluded.
+ */
+void
+_mesa_map_static_functions(void)
+{
+   /* Remap static functions which have alternative names and are in the ABI.
+    * This is to be on the safe side.  glapi should have defined those names.
+    */
+   _mesa_map_function_array(MESA_alt_functions);
+}
+
+void
+_mesa_init_remap_table(void)
+{
+   _mesa_do_init_remap_table(_mesa_function_pool,
+			     driDispatchRemapTable_size,
+			     MESA_remap_table_functions);
+}
+
+#endif /* _GLAPI_USE_REMAP_TABLE */
 
 
 /**
@@ -119,9 +155,15 @@
  * \param ctx  GL context to which \c exec belongs.
  * \param exec dispatch table.
  */
-void
-_mesa_init_exec_table(struct _glapi_table *exec)
+struct _glapi_table *
+_mesa_create_exec_table(void)
 {
+   struct _glapi_table *exec;
+
+   exec = _mesa_alloc_dispatch_table(sizeof *exec);
+   if (exec == NULL)
+      return NULL;
+
 #if _HAVE_FULL_GL
    _mesa_loopback_init_api_table( exec );
 #endif
@@ -179,8 +221,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_ClearIndex(exec, _mesa_ClearIndex);
    SET_ClipPlane(exec, _mesa_ClipPlane);
    SET_ColorMaterial(exec, _mesa_ColorMaterial);
-   SET_CullParameterfvEXT(exec, _mesa_CullParameterfvEXT);
-   SET_CullParameterdvEXT(exec, _mesa_CullParameterdvEXT);
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
    SET_DepthRange(exec, _mesa_DepthRange);
@@ -298,32 +338,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
    SET_StencilMaskSeparate(exec, _mesa_StencilMaskSeparate);
    SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
-#if FEATURE_ARB_shader_objects
-   SET_AttachShader(exec, _mesa_AttachShader);
-   SET_CreateProgram(exec, _mesa_CreateProgram);
-   SET_CreateShader(exec, _mesa_CreateShader);
-   SET_DeleteProgram(exec, _mesa_DeleteProgram);
-   SET_DeleteShader(exec, _mesa_DeleteShader);
-   SET_DetachShader(exec, _mesa_DetachShader);
-   SET_GetAttachedShaders(exec, _mesa_GetAttachedShaders);
-   SET_GetProgramiv(exec, _mesa_GetProgramiv);
-   SET_GetProgramInfoLog(exec, _mesa_GetProgramInfoLog);
-   SET_GetShaderiv(exec, _mesa_GetShaderiv);
-   SET_GetShaderInfoLog(exec, _mesa_GetShaderInfoLog);
-   SET_IsProgram(exec, _mesa_IsProgram);
-   SET_IsShader(exec, _mesa_IsShader);
-#endif
 
-   /* OpenGL 2.1 */
 #if FEATURE_ARB_shader_objects
-   SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
-   SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
-   SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
-   SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
-   SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
-   SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
+   _mesa_init_shader_dispatch(exec);
+   _mesa_init_shader_uniform_dispatch(exec);
 #endif
-
 
    /* 2. GL_EXT_blend_color */
 #if 0
@@ -479,15 +498,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
    /* 352. GL_EXT_transform_feedback */
-#if _HAVE_FULL_GL
-   SET_BeginTransformFeedbackEXT(exec, _mesa_BeginTransformFeedback);
-   SET_EndTransformFeedbackEXT(exec, _mesa_EndTransformFeedback);
-   SET_BindBufferRangeEXT(exec, _mesa_BindBufferRange);
-   SET_BindBufferBaseEXT(exec, _mesa_BindBufferBase);
-   SET_BindBufferOffsetEXT(exec, _mesa_BindBufferOffsetEXT);
-   SET_TransformFeedbackVaryingsEXT(exec, _mesa_TransformFeedbackVaryings);
-   SET_GetTransformFeedbackVaryingEXT(exec, _mesa_GetTransformFeedbackVarying);
-#endif
+   _mesa_init_transform_feedback_dispatch(exec);
 
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(exec, _mesa_ProvokingVertexEXT);
@@ -615,82 +626,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
 #endif
 
-#if FEATURE_ARB_shader_objects
-   SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
-   SET_GetHandleARB(exec, _mesa_GetHandleARB);
-   SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
-   SET_CreateShaderObjectARB(exec, _mesa_CreateShaderObjectARB);
-   SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
-   SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
-   SET_CreateProgramObjectARB(exec, _mesa_CreateProgramObjectARB);
-   SET_AttachObjectARB(exec, _mesa_AttachObjectARB);
-   SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
-   SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
-   SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
-   SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
-   SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
-   SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
-   SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
-   SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
-   SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
-   SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
-   SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
-   SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
-   SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
-   SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
-   SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
-   SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
-   SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
-   SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
-   SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
-   SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
-   SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
-   SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
-   SET_GetObjectParameterfvARB(exec, _mesa_GetObjectParameterfvARB);
-   SET_GetObjectParameterivARB(exec, _mesa_GetObjectParameterivARB);
-   SET_GetInfoLogARB(exec, _mesa_GetInfoLogARB);
-   SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
-   SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
-   SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
-   SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
-   SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
-   SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
-#endif    /* FEATURE_ARB_shader_objects */
-
-#if FEATURE_ARB_vertex_shader
-   SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
-   SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
-   SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
-#endif    /* FEATURE_ARB_vertex_shader */
-
    /* GL_ARB_sync */
-#if FEATURE_ARB_sync
-   SET_IsSync(exec, _mesa_IsSync);
-   SET_DeleteSync(exec, _mesa_DeleteSync);
-   SET_FenceSync(exec, _mesa_FenceSync);
-   SET_ClientWaitSync(exec, _mesa_ClientWaitSync);
-   SET_WaitSync(exec, _mesa_WaitSync);
-   SET_GetInteger64v(exec, _mesa_GetInteger64v);
-   SET_GetSynciv(exec, _mesa_GetSynciv);
-#endif
+   _mesa_init_sync_dispatch(exec);
 
   /* GL_ATI_fragment_shader */
-#if FEATURE_ATI_fragment_shader
-   SET_GenFragmentShadersATI(exec, _mesa_GenFragmentShadersATI);
-   SET_BindFragmentShaderATI(exec, _mesa_BindFragmentShaderATI);
-   SET_DeleteFragmentShaderATI(exec, _mesa_DeleteFragmentShaderATI);
-   SET_BeginFragmentShaderATI(exec, _mesa_BeginFragmentShaderATI);
-   SET_EndFragmentShaderATI(exec, _mesa_EndFragmentShaderATI);
-   SET_PassTexCoordATI(exec, _mesa_PassTexCoordATI);
-   SET_SampleMapATI(exec, _mesa_SampleMapATI);
-   SET_ColorFragmentOp1ATI(exec, _mesa_ColorFragmentOp1ATI);
-   SET_ColorFragmentOp2ATI(exec, _mesa_ColorFragmentOp2ATI);
-   SET_ColorFragmentOp3ATI(exec, _mesa_ColorFragmentOp3ATI);
-   SET_AlphaFragmentOp1ATI(exec, _mesa_AlphaFragmentOp1ATI);
-   SET_AlphaFragmentOp2ATI(exec, _mesa_AlphaFragmentOp2ATI);
-   SET_AlphaFragmentOp3ATI(exec, _mesa_AlphaFragmentOp3ATI);
-   SET_SetFragmentShaderConstantATI(exec, _mesa_SetFragmentShaderConstantATI);
-#endif
+   _mesa_init_ati_fragment_shader_dispatch(exec);
 
   /* GL_ATI_envmap_bumpmap */
    SET_GetTexBumpParameterivATI(exec, _mesa_GetTexBumpParameterivATI);
@@ -777,4 +717,14 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_ObjectUnpurgeableAPPLE(exec, _mesa_ObjectUnpurgeableAPPLE);
    SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
 #endif
+
+#if FEATURE_ARB_geometry_shader4
+   SET_FramebufferTextureARB(exec, _mesa_FramebufferTextureARB);
+   SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
+#endif
+
+
+   return exec;
 }
+
+#endif /* FEATURE_GL */

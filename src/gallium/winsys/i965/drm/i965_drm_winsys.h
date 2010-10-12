@@ -22,8 +22,6 @@ struct i965_libdrm_winsys
    boolean send_cmd;
 
    int fd; /**< Drm file discriptor */
-
-   unsigned id;
 };
 
 static INLINE struct i965_libdrm_winsys *
@@ -31,8 +29,6 @@ i965_libdrm_winsys(struct brw_winsys_screen *iws)
 {
    return (struct i965_libdrm_winsys *)iws;
 }
-
-struct i965_libdrm_winsys *i965_libdrm_winsys_create(int fd, unsigned pci_id);
 
 void i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws);
 

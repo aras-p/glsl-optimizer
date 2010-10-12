@@ -21,10 +21,10 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
-#include "main/context.h"
 #include "main/macros.h"
-#include "shader/atifragshader.h"
+#include "main/atifragshader.h"
 #include "swrast/s_atifragshader.h"
+#include "swrast/s_context.h"
 
 
 /**

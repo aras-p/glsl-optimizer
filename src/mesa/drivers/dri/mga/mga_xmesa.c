@@ -57,7 +57,6 @@
 #include "mgatris.h"
 #include "mgavb.h"
 #include "mgapixel.h"
-#include "mga_xmesa.h"
 #include "mga_dri.h"
 
 #include "utils.h"
@@ -182,7 +181,6 @@ mgaFillInModes( __DRIscreen *psp,
 const __DRIextension *mgaScreenExtensions[] = {
     &driReadDrawableExtension,
     &driSwapControlExtension.base,
-    &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
     NULL
 };
@@ -395,7 +393,6 @@ static const struct dri_extension card_extensions[] =
    { "GL_EXT_stencil_wrap",           NULL },
    { "GL_APPLE_vertex_array_object",  GL_APPLE_vertex_array_object_functions },
    { "GL_MESA_ycbcr_texture",         NULL },
-   { "GL_SGIS_generate_mipmap",       NULL },
    { NULL,                            NULL }
 };
 
@@ -423,7 +420,8 @@ static const struct dri_debug_control debug_control[] =
 
 
 static GLboolean
-mgaCreateContext( const __GLcontextModes *mesaVis,
+mgaCreateContext( gl_api api,
+		  const __GLcontextModes *mesaVis,
                   __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {

@@ -6,11 +6,14 @@ if not 'svga' in env['drivers']:
 
 env = drienv.Clone()
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
+
 env.Prepend(LIBS = [
     st_dri,
     svgadrm,
     svga,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,
@@ -19,6 +22,6 @@ env.Prepend(LIBS = [
 
 env.LoadableModule(
     target = 'vmwgfx_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

@@ -33,7 +33,7 @@
 
 /* for _mesa_share_state */
 #include "state_tracker/st_context.h"
-#include "main/context.h"
+#include "main/core.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -129,6 +129,7 @@ DrvCreateLayerContext(
 {
    int iPixelFormat;
    const struct stw_pixelformat_info *pfi;
+   struct st_context_attribs attribs;
    struct stw_context *ctx = NULL;
    
    if(!stw_dev)
@@ -150,8 +151,12 @@ DrvCreateLayerContext(
    ctx->hdc = hdc;
    ctx->iPixelFormat = iPixelFormat;
 
+   memset(&attribs, 0, sizeof(attribs));
+   attribs.profile = ST_PROFILE_DEFAULT;
+   attribs.visual = pfi->stvis;
+
    ctx->st = stw_dev->stapi->create_context(stw_dev->stapi,
-         stw_dev->smapi, &pfi->stvis, NULL);
+         stw_dev->smapi, &attribs, NULL);
    if (ctx->st == NULL) 
       goto no_st_ctx;
 

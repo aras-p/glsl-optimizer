@@ -1,5 +1,5 @@
 
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "i965_drm_winsys.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
@@ -322,7 +322,7 @@ i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
 		   nr_reloc);
 
    if (BRW_DUMP)
-      brw_dump_data( idws->id,
+      brw_dump_data( idws->base.pci_id,
 		     data_type,
 		     buf->bo->offset + offset, 
 		     data, size );
@@ -460,10 +460,10 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
 		   offset, length);
 
    if (BRW_DUMP)
-      brw_dump_data( idws->id,
+      brw_dump_data( idws->base.pci_id,
 		     buf->data_type,
 		     buf->bo->offset + offset, 
-		     buf->bo->virtual + offset, 
+		     (char*)buf->bo->virtual + offset, 
 		     length );
 }
 

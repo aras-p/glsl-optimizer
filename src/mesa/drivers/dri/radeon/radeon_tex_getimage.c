@@ -31,6 +31,7 @@
 
 #include "radeon_common_context.h"
 #include "radeon_texture.h"
+#include "radeon_mipmap_tree.h"
 
 #include "main/texgetimage.h"
 
@@ -51,7 +52,15 @@ radeon_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                  __func__, ctx, texObj, image, compressed);
 
     if (image->mt) {
+        radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
         /* Map the texture image read-only */
+        if (radeon_bo_is_referenced_by_cs(image->mt->bo, rmesa->cmdbuf.cs)) {
+            radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+                "%s: called for texture that is queued for GPU processing\n",
+                __func__);
+            radeon_firevertices(rmesa);
+        }
+
         radeon_teximage_map(image, GL_FALSE);
     } else {
         /* Image hasn't been uploaded to a miptree yet */

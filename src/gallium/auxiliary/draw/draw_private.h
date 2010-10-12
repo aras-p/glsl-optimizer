@@ -48,6 +48,7 @@
 
 #ifdef HAVE_LLVM
 #include <llvm-c/ExecutionEngine.h>
+struct draw_llvm;
 #endif
 
 
@@ -80,6 +81,9 @@ struct vertex_header {
 /* NOTE: It should match vertex_id size above */
 #define UNDEFINED_VERTEX_ID 0xffff
 
+
+/* maximum number of shader variants we can cache */
+#define DRAW_MAX_SHADER_VARIANTS 1024
 
 /**
  * Private context for the drawing module.
@@ -136,8 +140,7 @@ struct draw_context
       } middle;
 
       struct {
-         struct draw_pt_front_end *vcache;
-         struct draw_pt_front_end *varray;
+         struct draw_pt_front_end *vsplit;
       } front;
 
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
@@ -145,6 +148,8 @@ struct draw_context
 
       struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       unsigned nr_vertex_elements;
+
+      struct pipe_index_buffer index_buffer;
 
       /* user-space vertex data, buffers */
       struct {
@@ -159,9 +164,11 @@ struct draw_context
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
          
-         /** constant buffer (for vertex/geometry shader) */
+         /** constant buffers (for vertex/geometry shader) */
          const void *vs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         unsigned vs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
          const void *gs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         unsigned gs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -169,13 +176,19 @@ struct draw_context
    } pt;
 
    struct {
-      boolean bypass_clipping;
-      boolean bypass_vs;
+      boolean bypass_clip_xy;
+      boolean bypass_clip_z;
    } driver;
 
    boolean flushing;         /**< debugging/sanity */
    boolean suspend_flushing; /**< internally set */
-   boolean bypass_clipping;  /**< set if either api or driver bypass_clipping true */
+
+   /* Flags set if API requires clipping in these planes and the
+    * driver doesn't indicate that it can do it for us.
+    */
+   boolean clip_xy;
+   boolean clip_z;
+   boolean clip_user;
 
    boolean force_passthrough; /**< never clip or shade */
 
@@ -194,6 +207,7 @@ struct draw_context
    struct pipe_viewport_state viewport;
    boolean identity_viewport;
 
+   /** Vertex shader state */
    struct {
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
@@ -223,6 +237,7 @@ struct draw_context
       struct translate_cache *emit_cache;
    } vs;
 
+   /** Geometry shader state */
    struct {
       struct draw_geometry_shader *geometry_shader;
       uint num_gs_outputs;  /**< convenience, from geometry_shader */
@@ -235,17 +250,31 @@ struct draw_context
       struct tgsi_sampler **samplers;
    } gs;
 
+   /** Fragment shader state */
+   struct {
+      struct draw_fragment_shader *fragment_shader;
+   } fs;
+
+   /** Stream output (vertex feedback) state */
+   struct {
+      struct pipe_stream_output_state state;
+      void *buffers[PIPE_MAX_SO_BUFFERS];
+      uint num_buffers;
+   } so;
+
    /* Clip derived state:
     */
    float plane[12][4];
    unsigned nr_planes;
+   boolean depth_clamp;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */
    struct {
-      uint semantic_name;
-      uint semantic_index;
-      int slot;
+      uint num;
+      uint semantic_name[10];
+      uint semantic_index[10];
+      uint slot[10];
    } extra_shader_outputs;
 
    unsigned reduced_prim;
@@ -253,11 +282,50 @@ struct draw_context
    unsigned instance_id;
 
 #ifdef HAVE_LLVM
+   struct draw_llvm *llvm;
    LLVMExecutionEngineRef engine;
 #endif
 
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned num_sampler_views;
+   const struct pipe_sampler_state *samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned num_samplers;
+
    void *driver_private;
 };
+
+
+struct draw_fetch_info {
+   boolean linear;
+   unsigned start;
+   const unsigned *elts;
+   unsigned count;
+};
+
+struct draw_vertex_info {
+   struct vertex_header *verts;
+   unsigned vertex_size;
+   unsigned stride;
+   unsigned count;
+};
+
+/* these flags are set if the primitive is a segment of a larger one */
+#define DRAW_SPLIT_BEFORE 0x1
+#define DRAW_SPLIT_AFTER  0x2
+
+struct draw_prim_info {
+   boolean linear;
+   unsigned start;
+
+   const ushort *elts;
+   unsigned count;
+
+   unsigned prim;
+   unsigned flags;
+   unsigned *primitive_lengths;
+   unsigned primitive_count;
+};
+
 
 /*******************************************************************************
  * Draw common initialization code
@@ -300,6 +368,11 @@ void draw_gs_destroy( struct draw_context *draw );
 uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
 
+int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
+                                   uint semantic_name, uint semantic_index);
+void draw_remove_extra_vertex_attribs(struct draw_context *draw);
+
+
 /*******************************************************************************
  * Vertex processing (was passthrough) code:
  */
@@ -319,35 +392,24 @@ void draw_pipeline_destroy( struct draw_context *draw );
 
 
 
-/* We use the top few bits in the elts[] parameter to convey a little
- * API information.  This limits the number of vertices we can address
- * to only 4096 -- if that becomes a problem, we can switch to 32-bit
- * draw indices.
- *
- * These flags expected at first vertex of lines & triangles when
- * unfilled and/or line stipple modes are operational.
+/*
+ * These flags are used by the pipeline when unfilled and/or line stipple modes
+ * are operational.
  */
-#define DRAW_PIPE_MAX_VERTICES  (0x1<<12)
-#define DRAW_PIPE_EDGE_FLAG_0   (0x1<<12)
-#define DRAW_PIPE_EDGE_FLAG_1   (0x2<<12)
-#define DRAW_PIPE_EDGE_FLAG_2   (0x4<<12)
-#define DRAW_PIPE_EDGE_FLAG_ALL (0x7<<12)
-#define DRAW_PIPE_RESET_STIPPLE (0x8<<12)
-#define DRAW_PIPE_FLAG_MASK     (0xf<<12)
+#define DRAW_PIPE_EDGE_FLAG_0   0x1
+#define DRAW_PIPE_EDGE_FLAG_1   0x2
+#define DRAW_PIPE_EDGE_FLAG_2   0x4
+#define DRAW_PIPE_EDGE_FLAG_ALL 0x7
+#define DRAW_PIPE_RESET_STIPPLE 0x8
 
 void draw_pipeline_run( struct draw_context *draw,
-                        unsigned prim,
-                        struct vertex_header *vertices,
-                        unsigned vertex_count,
-                        unsigned stride,
-                        const ushort *elts,
-                        unsigned count );
+                        const struct draw_vertex_info *vert,
+                        const struct draw_prim_info *prim);
 
 void draw_pipeline_run_linear( struct draw_context *draw,
-                               unsigned prim,
-                               struct vertex_header *vertices,
-                               unsigned count,
-                               unsigned stride );
+                               const struct draw_vertex_info *vert,
+                               const struct draw_prim_info *prim);
+
 
 
 

@@ -33,8 +33,6 @@
 extern "C" {
 #endif
 
-#include "p_compiler.h"
-
 
 struct tgsi_header
 {
@@ -65,17 +63,18 @@ struct tgsi_token
 };
 
 enum tgsi_file_type {
-   TGSI_FILE_NULL         =0,
-   TGSI_FILE_CONSTANT     =1,
-   TGSI_FILE_INPUT        =2,
-   TGSI_FILE_OUTPUT       =3,
-   TGSI_FILE_TEMPORARY    =4,
-   TGSI_FILE_SAMPLER      =5,
-   TGSI_FILE_ADDRESS      =6,
-   TGSI_FILE_IMMEDIATE    =7,
-   TGSI_FILE_LOOP         =8,
-   TGSI_FILE_PREDICATE    =9,
-   TGSI_FILE_SYSTEM_VALUE =10,
+   TGSI_FILE_NULL                =0,
+   TGSI_FILE_CONSTANT            =1,
+   TGSI_FILE_INPUT               =2,
+   TGSI_FILE_OUTPUT              =3,
+   TGSI_FILE_TEMPORARY           =4,
+   TGSI_FILE_SAMPLER             =5,
+   TGSI_FILE_ADDRESS             =6,
+   TGSI_FILE_IMMEDIATE           =7,
+   TGSI_FILE_PREDICATE           =8,
+   TGSI_FILE_SYSTEM_VALUE        =9,
+   TGSI_FILE_IMMEDIATE_ARRAY     =10,
+   TGSI_FILE_TEMPORARY_ARRAY     =11,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -160,9 +159,9 @@ struct tgsi_declaration_semantic
 struct tgsi_immediate
 {
    unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_IMMEDIATE */
-   unsigned NrTokens   : 8;  /**< UINT */
+   unsigned NrTokens   : 14; /**< UINT */
    unsigned DataType   : 4;  /**< one of TGSI_IMM_x */
-   unsigned Padding    : 16;
+   unsigned Padding    : 10;
 };
 
 union tgsi_immediate_data
@@ -174,7 +173,7 @@ union tgsi_immediate_data
 
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
 #define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
-#define TGSI_PROPERTY_GS_MAX_VERTICES        2
+#define TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES 2
 #define TGSI_PROPERTY_FS_COORD_ORIGIN        3
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
 #define TGSI_PROPERTY_COUNT                  5
@@ -200,7 +199,7 @@ struct tgsi_property_data {
  * 
  * For more information on semantics of opcodes and
  * which APIs are known to use which opcodes, see
- * auxiliary/tgsi/tgsi-instruction-set.txt
+ * gallium/docs/source/tgsi.rst
  */
 #define TGSI_OPCODE_ARL                 0
 #define TGSI_OPCODE_MOV                 1

@@ -241,8 +241,9 @@ vmw_ioctl_surface_destroy(struct vmw_winsys_screen *vws, uint32 sid)
 }
 
 void
-vmw_ioctl_command(struct vmw_winsys_screen *vws, void *commands, uint32_t size,
-		       uint32_t * pfence)
+vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
+		  uint32_t throttle_us, void *commands, uint32_t size,
+		  uint32_t *pfence)
 {
    struct drm_vmw_execbuf_arg arg;
    struct drm_vmw_fence_rep rep;
@@ -275,6 +276,7 @@ vmw_ioctl_command(struct vmw_winsys_screen *vws, void *commands, uint32_t size,
    arg.fence_rep = (unsigned long)&rep;
    arg.commands = (unsigned long)commands;
    arg.command_size = size;
+   arg.throttle_us = throttle_us;
 
    do {
        ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_EXECBUF, &arg, sizeof(arg));

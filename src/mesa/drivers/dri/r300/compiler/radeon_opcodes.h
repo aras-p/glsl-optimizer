@@ -64,6 +64,9 @@ typedef enum {
 	 * dst.c = d src0.c / dy */
 	RC_OPCODE_DDY,
 
+	/** scalar instruction: dst = src0.x*src1.x + src0.y*src1.y */
+	RC_OPCODE_DP2,
+
 	/** scalar instruction: dst = src0.x*src1.x + src0.y*src1.y + src0.z*src1.z */
 	RC_OPCODE_DP3,
 
@@ -154,6 +157,9 @@ typedef enum {
 	/** vec4 instruction: dst.c = (src0.c != src1.c) ? 1.0 : 0.0 */
 	RC_OPCODE_SNE,
 
+	/** vec4 instruction: dst.c = (src0.c < 0 ?) -1 : ((src0.c > 0) : 1 : 0) */
+	RC_OPCODE_SSG,
+
 	/** vec4 instruction: dst.c = src0.c - src1.c */
 	RC_OPCODE_SUB,
 
@@ -180,6 +186,14 @@ typedef enum {
 
 	/** branch instruction: has no effect */
 	RC_OPCODE_ENDIF,
+	
+	RC_OPCODE_BGNLOOP,
+
+	RC_OPCODE_BRK,
+
+	RC_OPCODE_ENDLOOP,
+
+	RC_OPCODE_CONT,
 
 	/** special instruction, used in R300-R500 fragment program pair instructions
 	 * indicates that the result of the alpha operation shall be replicated
@@ -190,6 +204,9 @@ typedef enum {
 	 * to indicate the start of a block of texture instructions that
 	 * can run simultaneously. */
 	RC_OPCODE_BEGIN_TEX,
+
+	/** Stop execution of the shader (GLSL discard) */
+	RC_OPCODE_KILP,
 
 	MAX_RC_OPCODE
 } rc_opcode;

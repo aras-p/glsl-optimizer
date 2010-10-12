@@ -30,6 +30,7 @@
 
 #include "i915_batchbuffer.h"
 
+
 #define BEGIN_BATCH(dwords, relocs) \
    (i915_winsys_batchbuffer_check(i915->batch, dwords, relocs))
 
@@ -39,9 +40,14 @@
 #define OUT_RELOC(buf, usage, offset) \
    i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset)
 
-#define FLUSH_BATCH(fence) do {                 \
-   i915_winsys_batchbuffer_flush(i915->batch, fence); \
-   i915->hardware_dirty = ~0;                   \
-} while (0)
+#define FLUSH_BATCH(fence) \
+   i915_flush(i915, fence)
+
+
+/************************************************************************
+ * i915_flush.c
+ */
+void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence);
+
 
 #endif

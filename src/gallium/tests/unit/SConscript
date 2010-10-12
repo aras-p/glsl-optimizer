@@ -4,11 +4,19 @@ env = env.Clone()
 
 env.Prepend(LIBS = [gallium])
 
+if platform in ('freebsd8', 'sunos5'):
+    env.Append(LIBS = ['m'])
+
+if platform == 'freebsd8':
+    env.Append(LIBS = ['pthread'])
+
 progs = [
     'pipe_barrier_test',
     'u_cache_test',
     'u_format_test',
-    'u_half_test'
+    'u_format_compatible_test',
+    'u_half_test',
+    'translate_test'
 ]
 
 for prog in progs:

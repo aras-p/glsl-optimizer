@@ -36,6 +36,20 @@
 #include "util/u_string.h"
 
 
+#define GALLIVM_DEBUG_TGSI      0x1
+#define GALLIVM_DEBUG_IR        0x2
+#define GALLIVM_DEBUG_ASM       0x4
+#define GALLIVM_DEBUG_NO_OPT    0x8
+#define GALLIVM_DEBUG_PERF      0x10
+
+
+#ifdef DEBUG
+extern unsigned gallivm_debug;
+#else
+#define gallivm_debug 0
+#endif
+
+
 static INLINE void
 lp_build_name(LLVMValueRef val, const char *format, ...)
 {
@@ -51,6 +65,10 @@ lp_build_name(LLVMValueRef val, const char *format, ...)
    (void)format;
 #endif
 }
+
+
+void
+lp_debug_dump_value(LLVMValueRef value);
 
 
 boolean

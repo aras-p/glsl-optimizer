@@ -27,10 +27,11 @@
 #include "VG/openvg.h"
 
 #include "vg_context.h"
+#include "api.h"
 
 /* Hardware Queries */
-VGHardwareQueryResult vgHardwareQuery(VGHardwareQueryType key,
-                                      VGint setting)
+VGHardwareQueryResult vegaHardwareQuery(VGHardwareQueryType key,
+                                        VGint setting)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -58,7 +59,7 @@ VGHardwareQueryResult vgHardwareQuery(VGHardwareQueryType key,
 }
 
 /* Renderer and Extension Information */
-const VGubyte *vgGetString(VGStringID name)
+const VGubyte *vegaGetString(VGStringID name)
 {
    struct vg_context *ctx = vg_current_context();
    static const VGubyte *vendor = (VGubyte *)"Tungsten Graphics, Inc";

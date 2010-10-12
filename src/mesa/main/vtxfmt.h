@@ -33,6 +33,9 @@
 #ifndef _VTXFMT_H_
 #define _VTXFMT_H_
 
+#include "compiler.h"
+#include "mtypes.h"
+
 #if FEATURE_beginend
 
 extern void _mesa_init_exec_vtxfmt( GLcontext *ctx );

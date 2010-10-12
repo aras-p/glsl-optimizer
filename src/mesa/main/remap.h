@@ -28,9 +28,18 @@
 #define REMAP_H
 
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+#include "main/mfeatures.h"
 
-struct gl_function_remap;
+struct gl_function_pool_remap {
+   int pool_index;
+   int remap_index;
+};
+
+struct gl_function_remap {
+   int func_index;
+   int dispatch_offset; /* for sanity check */
+};
 
 
 #if FEATURE_remap_table
@@ -39,9 +48,9 @@ extern int
 driDispatchRemapTable[];
 
 extern const char *
-_mesa_get_function_spec(GLint func_index);
+_mesa_get_function_spec(int func_index);
 
-extern GLint
+extern int
 _mesa_map_function_spec(const char *spec);
 
 extern void
@@ -51,17 +60,34 @@ extern void
 _mesa_map_static_functions(void);
 
 extern void
+_mesa_map_static_functions_es1(void);
+
+extern void
+_mesa_map_static_functions_es2(void);
+
+extern void
+_mesa_do_init_remap_table(const char *pool,
+			  int size,
+			  const struct gl_function_pool_remap *remap);
+
+extern void
 _mesa_init_remap_table(void);
+
+extern void
+_mesa_init_remap_table_es1(void);
+
+extern void
+_mesa_init_remap_table_es2(void);
 
 #else /* FEATURE_remap_table */
 
 static INLINE const char *
-_mesa_get_function_spec(GLint func_index)
+_mesa_get_function_spec(int func_index)
 {
    return NULL;
 }
 
-static INLINE GLint
+static INLINE int
 _mesa_map_function_spec(const char *spec)
 {
    return -1;
@@ -77,8 +103,36 @@ _mesa_map_static_functions(void)
 {
 }
 
+
+static INLINE void
+_mesa_map_static_functions_es1(void)
+{
+}
+
+static INLINE void
+_mesa_map_static_functions_es2(void)
+{
+}
+
+static INLINE void
+_mesa_do_init_remap_table(const char *pool,
+			  int size,
+			  const struct gl_function_pool_remap *remap)
+{
+}
+
 static INLINE void
 _mesa_init_remap_table(void)
+{
+}
+
+static INLINE void
+_mesa_init_remap_table_es1(void)
+{
+}
+
+static INLINE void
+_mesa_init_remap_table_es2(void)
 {
 }
 

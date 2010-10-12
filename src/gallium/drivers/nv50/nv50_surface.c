@@ -27,49 +27,51 @@
 #include "nv50_resource.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_pack_color.h"
 
-#include "util/u_tile.h"
 #include "util/u_format.h"
 
-static INLINE int
-nv50_format(enum pipe_format format)
+/* return TRUE for formats that can be converted among each other by NV50_2D */
+static INLINE boolean
+nv50_2d_format_faithful(enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_B8G8R8A8_UNORM:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
-		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
 	case PIPE_FORMAT_B8G8R8A8_SRGB:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_SRGB;
 	case PIPE_FORMAT_B8G8R8X8_SRGB:
-		return NV50_2D_DST_FORMAT_X8R8G8B8_SRGB;
 	case PIPE_FORMAT_B5G6R5_UNORM:
-		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
 	case PIPE_FORMAT_B5G5R5A1_UNORM:
-		return NV50_2D_DST_FORMAT_A1R5G5B5_UNORM;
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_L8_UNORM:
-		return NV50_2D_DST_FORMAT_R8_UNORM;
+	case PIPE_FORMAT_B10G10R10A2_UNORM:
+	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32G32B32A32_FLOAT;
 	case PIPE_FORMAT_R32G32B32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32G32B32X32_FLOAT;
-	case PIPE_FORMAT_Z32_FLOAT:
-		return NV50_2D_DST_FORMAT_R32_FLOAT;
-
-	/* only because we require src format == dst format: */
-	case PIPE_FORMAT_R16G16_SNORM:
-	case PIPE_FORMAT_R16G16_UNORM:
-	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
-		return NV50_2D_DST_FORMAT_R16_UNORM;
-
+		return TRUE;
 	default:
-		return -1;
+		return FALSE;
+	}
+}
+
+static INLINE uint8_t
+nv50_2d_format(enum pipe_format format)
+{
+	uint8_t id = nv50_format_table[format].rt;
+
+	/* Hardware values for color formats range from 0xc0 to 0xff,
+	 * but the 2D engine doesn't support all of them.
+	 */
+	if ((id >= 0xc0) && (0xff0843e080608409ULL & (1ULL << (id - 0xc0))))
+		return id;
+
+	switch (util_format_get_blocksize(format)) {
+	case 1:
+		return NV50_2D_DST_FORMAT_R8_UNORM;
+	case 2:
+		return NV50_2D_DST_FORMAT_R16_UNORM;
+	case 4:
+		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
+	default:
+		return 0;
 	}
 }
 
@@ -83,15 +85,14 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
 
- 	format = nv50_format(ps->format);
-	if (format < 0) {
+	format = nv50_2d_format(ps->format);
+	if (!format) {
 		NOUVEAU_ERR("invalid/unsupported surface format: %s\n",
 			    util_format_name(ps->format));
  		return 1;
 	}
 
  	if (!bo->tile_flags) {
-		MARK_RING (chan, 9, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
@@ -102,7 +103,6 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		OUT_RELOCh(chan, bo, ps->offset, flags);
  		OUT_RELOCl(chan, bo, ps->offset, flags);
  	} else {
-		MARK_RING (chan, 11, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
@@ -138,7 +138,9 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 	struct nouveau_grobj *eng2d = screen->eng2d;
 	int ret;
 
-	WAIT_RING (chan, 32);
+	ret = MARK_RING(chan, 2*16 + 32, 4);
+	if (ret)
+		return ret;
 
 	ret = nv50_surface_set(screen, dst, 1);
 	if (ret)
@@ -171,56 +173,142 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 
 static void
 nv50_surface_copy(struct pipe_context *pipe,
-		  struct pipe_surface *dest, unsigned destx, unsigned desty,
-		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
+		  struct pipe_resource *dest, struct pipe_subresource subdst,
+		  unsigned destx, unsigned desty, unsigned destz,
+		  struct pipe_resource *src, struct pipe_subresource subsrc,
+		  unsigned srcx, unsigned srcy, unsigned srcz,
 		  unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
+	struct pipe_surface *ps_dst, *ps_src;
 
-	assert(src->format == dest->format);
+	assert((src->format == dest->format) ||
+	       (nv50_2d_format_faithful(src->format) &&
+		nv50_2d_format_faithful(dest->format)));
 
-	nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
-				     srcy, width, height);
+	ps_src = nv50_miptree_surface_new(pipe->screen, src, subsrc.face,
+					  subsrc.level, srcz, 0 /* bind flags */);
+	ps_dst = nv50_miptree_surface_new(pipe->screen, dest, subdst.face,
+					  subdst.level, destz, 0 /* bindflags */);
+
+	nv50_surface_do_copy(screen, ps_dst, destx, desty, ps_src, srcx,
+			     srcy, width, height);
+
+	nv50_miptree_surface_del(ps_src);
+	nv50_miptree_surface_del(ps_dst);
 }
 
 static void
-nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
-		  unsigned destx, unsigned desty, unsigned width,
-		  unsigned height, unsigned value)
+nv50_clear_render_target(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 const float *rgba,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_channel *chan = screen->eng2d->channel;
-	struct nouveau_grobj *eng2d = screen->eng2d;
-	int format, ret;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nouveau_bo *bo = mt->base.bo;
 
-	format = nv50_format(dest->format);
-	if (format < 0)
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_COLOR(0), 4);
+	OUT_RINGf (chan, rgba[0]);
+	OUT_RINGf (chan, rgba[1]);
+	OUT_RINGf (chan, rgba[2]);
+	OUT_RINGf (chan, rgba[3]);
+
+	if (MARK_RING(chan, 18, 2))
 		return;
 
-	WAIT_RING (chan, 32);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_CONTROL, 1);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_ADDRESS_HIGH(0), 5);
+	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, nv50_format_table[dst->format].rt);
+	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_HORIZ(0), 2);
+	OUT_RING  (chan, dst->width);
+	OUT_RING  (chan, dst->height);
+	BEGIN_RING(chan, tesla, NV50TCL_RT_ARRAY_MODE, 1);
+	OUT_RING  (chan, 1);
 
-	ret = nv50_surface_set(screen, dest, 1);
-	if (ret)
+	/* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
+
+	BEGIN_RING(chan, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
+	OUT_RING  (chan, (width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
+	OUT_RING  (chan, 0x3c);
+
+	nv50->dirty |= NV50_NEW_FRAMEBUFFER;
+}
+
+static void
+nv50_clear_depth_stencil(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 unsigned clear_flags,
+			 double depth,
+			 unsigned stencil,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_screen *screen = nv50->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nouveau_bo *bo = mt->base.bo;
+	uint32_t mode = 0;
+
+	if (clear_flags & PIPE_CLEAR_DEPTH) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_DEPTH, 1);
+		OUT_RINGf (chan, depth);
+		mode |= NV50TCL_CLEAR_BUFFERS_Z;
+	}
+
+	if (clear_flags & PIPE_CLEAR_STENCIL) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_STENCIL, 1);
+		OUT_RING  (chan, stencil & 0xff);
+		mode |= NV50TCL_CLEAR_BUFFERS_S;
+	}
+
+	if (MARK_RING(chan, 17, 2))
 		return;
 
-	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_SHAPE, 3);
-	OUT_RING  (chan, NV50_2D_DRAW_SHAPE_RECTANGLES);
-	OUT_RING  (chan, format);
-	OUT_RING  (chan, value);
-	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_POINT32_X(0), 4);
-	OUT_RING  (chan, destx);
-	OUT_RING  (chan, desty);
-	OUT_RING  (chan, width);
-	OUT_RING  (chan, height);
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
+	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, nv50_format_table[dst->format].rt);
+	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ENABLE, 1);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_ZETA_HORIZ, 3);
+	OUT_RING  (chan, dst->width);
+	OUT_RING  (chan, dst->height);
+	OUT_RING  (chan, (1 << 16) | 1);
+
+	BEGIN_RING(chan, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
+	OUT_RING  (chan, (width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
+	OUT_RING  (chan, mode);
+
+	nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
 
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
-	nv50->pipe.surface_copy = nv50_surface_copy;
-	nv50->pipe.surface_fill = nv50_surface_fill;
+	nv50->pipe.resource_copy_region = nv50_surface_copy;
+	nv50->pipe.clear_render_target = nv50_clear_render_target;
+	nv50->pipe.clear_depth_stencil = nv50_clear_depth_stencil;
 }
 
 

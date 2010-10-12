@@ -1255,6 +1255,7 @@ fallback_gen_mipmap(struct gen_mipmap_state *ctx,
       make_1d_mipmap(ctx, pt, face, baseLevel, lastLevel);
       break;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       make_2d_mipmap(ctx, pt, face, baseLevel, lastLevel);
       break;
@@ -1295,8 +1296,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
 
    /* rasterizer */
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
-   ctx->rasterizer.front_winding = PIPE_WINDING_CW;
-   ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
+   ctx->rasterizer.cull_face = PIPE_FACE_NONE;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* sampler state */
@@ -1328,8 +1328,10 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    }
 
    /* fragment shader */
-   ctx->fs2d = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
-   ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
+   ctx->fs2d = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
+                                             TGSI_INTERPOLATE_LINEAR);
+   ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE,
+                                               TGSI_INTERPOLATE_LINEAR);
 
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
@@ -1494,7 +1496,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, PIPE_TEXTURE_2D,
-                                    PIPE_BIND_RENDER_TARGET, 0)) {
+                                    pt->nr_samples, PIPE_BIND_RENDER_TARGET, 0)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
    }

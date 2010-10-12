@@ -82,8 +82,7 @@ proc main {argc argv} {
 	glXBindSwapBarrierSGIX glXQueryMaxSwapBarriersSGIX \
 	glXGetSyncValuesOML glXSwapBuffersMscOML \
 	glXWaitForMscOML glXWaitForSbcOML \
-	glXAllocateMemoryMESA glXFreeMemoryMESA \
-	glXGetMemoryOffsetMESA glXReleaseBuffersMESA \
+	glXReleaseBuffersMESA \
 	glXCreateGLXPixmapMESA glXCopySubBufferMESA \
 	glXQueryGLXPbufferSGIX glXCreateGLXPbufferSGIX \
 	glXDestroyGLXPbufferSGIX glXSelectEventSGIX \

@@ -22,8 +22,9 @@
  **************************************************************************/
 
 #include "pipe/p_config.h"
+#include "util/u_cpu_detect.h"
 
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
@@ -231,6 +232,10 @@ static void emit_modrm( struct x86_function *p,
    
    assert(reg.mod == mod_REG);
    
+   /* TODO: support extended x86-64 registers */
+   assert(reg.idx < 8);
+   assert(regmem.idx < 8);
+
    val |= regmem.mod << 6;     	/* mod field */
    val |= reg.idx << 3;		/* reg field */
    val |= regmem.idx;		/* r/m field */
@@ -363,6 +368,12 @@ int x86_get_label( struct x86_function *p )
  */
 
 
+void x64_rexw(struct x86_function *p)
+{
+   if(x86_target(p) != X86_32)
+      emit_1ub(p, 0x48);
+}
+
 void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
 	      int label )
@@ -449,6 +460,52 @@ void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
    emit_1i(p, imm);
 }
 
+void x86_mov_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   if(dst.mod == mod_REG)
+      x86_mov_reg_imm(p, dst, imm);
+   else
+   {
+      emit_1ub(p, 0xc7);
+      emit_modrm_noreg(p, 0, dst);
+      emit_1i(p, imm);
+   }
+}
+
+void x86_mov16_imm( struct x86_function *p, struct x86_reg dst, uint16_t imm )
+{
+   DUMP_RI( dst, imm );
+   emit_1ub(p, 0x66);
+   if(dst.mod == mod_REG)
+   {
+      emit_1ub(p, 0xb8 + dst.idx);
+      emit_2ub(p, imm & 0xff, imm >> 8);
+   }
+   else
+   {
+      emit_1ub(p, 0xc7);
+      emit_modrm_noreg(p, 0, dst);
+      emit_2ub(p, imm & 0xff, imm >> 8);
+   }
+}
+
+void x86_mov8_imm( struct x86_function *p, struct x86_reg dst, uint8_t imm )
+{
+   DUMP_RI( dst, imm );
+   if(dst.mod == mod_REG)
+   {
+      emit_1ub(p, 0xb0 + dst.idx);
+      emit_1ub(p, imm);
+   }
+   else
+   {
+      emit_1ub(p, 0xc6);
+      emit_modrm_noreg(p, 0, dst);
+      emit_1ub(p, imm);
+   }
+}
+
 /**
  * Immediate group 1 instructions.
  */
@@ -520,7 +577,7 @@ void x86_push( struct x86_function *p,
    }
 
 
-   p->stack_offset += 4;
+   p->stack_offset += sizeof(void*);
 }
 
 void x86_push_imm32( struct x86_function *p,
@@ -530,7 +587,7 @@ void x86_push_imm32( struct x86_function *p,
    emit_1ub(p, 0x68);
    emit_1i(p,  imm32);
 
-   p->stack_offset += 4;
+   p->stack_offset += sizeof(void*);
 }
 
 
@@ -540,23 +597,33 @@ void x86_pop( struct x86_function *p,
    DUMP_R( reg );
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x58 + reg.idx);
-   p->stack_offset -= 4;
+   p->stack_offset -= sizeof(void*);
 }
 
 void x86_inc( struct x86_function *p,
 	      struct x86_reg reg )
 {
    DUMP_R( reg );
-   assert(reg.mod == mod_REG);
-   emit_1ub(p, 0x40 + reg.idx);
+   if(x86_target(p) == X86_32 && reg.mod == mod_REG)
+   {
+      emit_1ub(p, 0x40 + reg.idx);
+      return;
+   }
+   emit_1ub(p, 0xff);
+   emit_modrm_noreg(p, 0, reg);
 }
 
 void x86_dec( struct x86_function *p,
 	      struct x86_reg reg )
 {
    DUMP_R( reg );
-   assert(reg.mod == mod_REG);
-   emit_1ub(p, 0x48 + reg.idx);
+   if(x86_target(p) == X86_32 && reg.mod == mod_REG)
+   {
+      emit_1ub(p, 0x48 + reg.idx);
+      return;
+   }
+   emit_1ub(p, 0xff);
+   emit_modrm_noreg(p, 1, reg);
 }
 
 void x86_ret( struct x86_function *p )
@@ -583,7 +650,80 @@ void x86_mov( struct x86_function *p,
 	      struct x86_reg src )
 {
    DUMP_RR( dst, src );
+   /* special hack for reading arguments until we support x86-64 registers everywhere */
+   if(src.mod == mod_REG && dst.mod == mod_REG && (src.idx >= 8 || dst.idx >= 8))
+   {
+      uint8_t rex = 0x40;
+      if(dst.idx >= 8)
+      {
+         rex |= 4;
+         dst.idx -= 8;
+      }
+      if(src.idx >= 8)
+      {
+         rex |= 1;
+         src.idx -= 8;
+      }
+      emit_1ub(p, rex);
+   }
    emit_op_modrm( p, 0x8b, 0x89, dst, src );
+}
+
+void x86_mov16( struct x86_function *p,
+	      struct x86_reg dst,
+	      struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_1ub(p, 0x66);
+   emit_op_modrm( p, 0x8b, 0x89, dst, src );
+}
+
+void x86_mov8( struct x86_function *p,
+	      struct x86_reg dst,
+	      struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_op_modrm( p, 0x8a, 0x88, dst, src );
+}
+
+void x64_mov64( struct x86_function *p,
+	      struct x86_reg dst,
+	      struct x86_reg src )
+{
+   uint8_t rex = 0x48;
+   DUMP_RR( dst, src );
+   assert(x86_target(p) != X86_32);
+
+   /* special hack for reading arguments until we support x86-64 registers everywhere */
+   if(src.mod == mod_REG && dst.mod == mod_REG && (src.idx >= 8 || dst.idx >= 8))
+   {
+      if(dst.idx >= 8)
+      {
+         rex |= 4;
+         dst.idx -= 8;
+      }
+      if(src.idx >= 8)
+      {
+         rex |= 1;
+         src.idx -= 8;
+      }
+   }
+   emit_1ub(p, rex);
+   emit_op_modrm( p, 0x8b, 0x89, dst, src );
+}
+
+void x86_movzx8(struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub(p, 0x0f, 0xb6);
+   emit_modrm(p, dst, src);
+}
+
+void x86_movzx16(struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub(p, 0x0f, 0xb7);
+   emit_modrm(p, dst, src);
 }
 
 void x86_xor( struct x86_function *p,
@@ -680,6 +820,61 @@ void x86_div( struct x86_function *p,
    emit_op_modrm(p, 0xf7, 0, x86_make_reg(file_REG32, 6), src);
 }
 
+void x86_bswap( struct x86_function *p, struct x86_reg reg )
+{
+   DUMP_R(reg);
+   assert(reg.file == file_REG32);
+   assert(reg.mod == mod_REG);
+   emit_2ub(p, 0x0f, 0xc8 + reg.idx);
+}
+
+void x86_shr_imm( struct x86_function *p, struct x86_reg reg, unsigned imm )
+{
+   DUMP_RI(reg, imm);
+   if(imm == 1)
+   {
+      emit_1ub(p, 0xd1);
+      emit_modrm_noreg(p, 5, reg);
+   }
+   else
+   {
+      emit_1ub(p, 0xc1);
+      emit_modrm_noreg(p, 5, reg);
+      emit_1ub(p, imm);
+   }
+}
+
+void x86_sar_imm( struct x86_function *p, struct x86_reg reg, unsigned imm )
+{
+   DUMP_RI(reg, imm);
+   if(imm == 1)
+   {
+      emit_1ub(p, 0xd1);
+      emit_modrm_noreg(p, 7, reg);
+   }
+   else
+   {
+      emit_1ub(p, 0xc1);
+      emit_modrm_noreg(p, 7, reg);
+      emit_1ub(p, imm);
+   }
+}
+
+void x86_shl_imm( struct x86_function *p, struct x86_reg reg, unsigned imm  )
+{
+   DUMP_RI(reg, imm);
+   if(imm == 1)
+   {
+      emit_1ub(p, 0xd1);
+      emit_modrm_noreg(p, 4, reg);
+   }
+   else
+   {
+      emit_1ub(p, 0xc1);
+      emit_modrm_noreg(p, 4, reg);
+      emit_1ub(p, imm);
+   }
+}
 
 
 /***********************************************************************
@@ -1013,6 +1208,77 @@ void sse_movmskps( struct x86_function *p,
  * SSE2 instructions
  */
 
+void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0x66, 0x0f);
+   if(dst.mod == mod_REG && dst.file == file_REG32)
+   {
+      emit_1ub(p, 0x7e);
+      emit_modrm(p, src, dst);
+   }
+   else
+   {
+      emit_op_modrm(p, 0x6e, 0x7e, dst, src);
+   }
+}
+
+void sse2_movq( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   switch (dst.mod) {
+   case mod_REG:
+      emit_3ub(p, 0xf3, 0x0f, 0x7e);
+      emit_modrm(p, dst, src);
+      break;
+   case mod_INDIRECT:
+   case mod_DISP32:
+   case mod_DISP8:
+      assert(src.mod == mod_REG);
+      emit_3ub(p, 0x66, 0x0f, 0xd6);
+      emit_modrm(p, src, dst);
+      break;
+   default:
+      assert(0);
+      break;
+   }
+}
+
+void sse2_movdqu( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0xf3, 0x0f);
+   emit_op_modrm(p, 0x6f, 0x7f, dst, src);
+}
+
+void sse2_movdqa( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0x66, 0x0f);
+   emit_op_modrm(p, 0x6f, 0x7f, dst, src);
+}
+
+void sse2_movsd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0xf2, 0x0f);
+   emit_op_modrm(p, 0x10, 0x11, dst, src);
+}
+
+void sse2_movupd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0x66, 0x0f);
+   emit_op_modrm(p, 0x10, 0x11, dst, src);
+}
+
+void sse2_movapd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_2ub(p, 0x66, 0x0f);
+   emit_op_modrm(p, 0x28, 0x29, dst, src);
+}
+
 /**
  * Perform a reduced swizzle:
  */
@@ -1025,6 +1291,28 @@ void sse2_pshufd( struct x86_function *p,
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dst, src);
    emit_1ub(p, shuf); 
+}
+
+void sse2_pshuflw( struct x86_function *p,
+                  struct x86_reg dst,
+                  struct x86_reg src,
+                  unsigned char shuf)
+{
+   DUMP_RRI( dst, src, shuf );
+   emit_3ub(p, 0xf2, X86_TWOB, 0x70);
+   emit_modrm(p, dst, src);
+   emit_1ub(p, shuf);
+}
+
+void sse2_pshufhw( struct x86_function *p,
+                  struct x86_reg dst,
+                  struct x86_reg src,
+                  unsigned char shuf)
+{
+   DUMP_RRI( dst, src, shuf );
+   emit_3ub(p, 0xf3, X86_TWOB, 0x70);
+   emit_modrm(p, dst, src);
+   emit_1ub(p, shuf);
 }
 
 void sse2_cvttps2dq( struct x86_function *p,
@@ -1042,6 +1330,24 @@ void sse2_cvtps2dq( struct x86_function *p,
 {
    DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x5B);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_cvtsd2ss( struct x86_function *p,
+                    struct x86_reg dst,
+                    struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_3ub(p, 0xf2, 0x0f, 0x5a);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_cvtpd2ps( struct x86_function *p,
+                    struct x86_reg dst,
+                    struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_3ub(p, 0x66, 0x0f, 0x5a);
    emit_modrm( p, dst, src );
 }
 
@@ -1081,6 +1387,97 @@ void sse2_punpcklbw( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
+void sse2_punpcklwd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_3ub(p, 0x66, 0x0f, 0x61);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_punpckldq( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_3ub(p, 0x66, 0x0f, 0x62);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_punpcklqdq( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_3ub(p, 0x66, 0x0f, 0x6c);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_psllw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x71);
+   emit_modrm_noreg(p, 6, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_pslld_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x72);
+   emit_modrm_noreg(p, 6, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psllq_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x73);
+   emit_modrm_noreg(p, 6, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psrlw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x71);
+   emit_modrm_noreg(p, 2, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psrld_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x72);
+   emit_modrm_noreg(p, 2, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psrlq_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x73);
+   emit_modrm_noreg(p, 2, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psraw_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x71);
+   emit_modrm_noreg(p, 4, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_psrad_imm( struct x86_function *p, struct x86_reg dst, unsigned imm )
+{
+   DUMP_RI(dst, imm);
+   emit_3ub(p, 0x66, 0x0f, 0x72);
+   emit_modrm_noreg(p, 4, dst);
+   emit_1ub(p, imm);
+}
+
+void sse2_por( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR(dst, src);
+   emit_3ub(p, 0x66, 0x0f, 0xeb);
+   emit_modrm(p, dst, src);
+}
 
 void sse2_rcpps( struct x86_function *p,
                  struct x86_reg dst,
@@ -1099,18 +1496,6 @@ void sse2_rcpss( struct x86_function *p,
    emit_3ub(p, 0xF3, X86_TWOB, 0x53);
    emit_modrm( p, dst, src );
 }
-
-void sse2_movd( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src )
-{
-   DUMP_RR( dst, src );
-   emit_2ub(p, 0x66, X86_TWOB);
-   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
-}
-
-
-
 
 /***********************************************************************
  * x87 instructions
@@ -1702,23 +2087,80 @@ void x86_cdecl_caller_pop_regs( struct x86_function *p )
 }
 
 
-/* Retreive a reference to one of the function arguments, taking into
- * account any push/pop activity:
- */
 struct x86_reg x86_fn_arg( struct x86_function *p,
-			   unsigned arg )
+                           unsigned arg )
 {
-   return x86_make_disp(x86_make_reg(file_REG32, reg_SP), 
+   switch(x86_target(p))
+   {
+   case X86_64_WIN64_ABI:
+      /* Microsoft uses a different calling convention than the rest of the world */
+      switch(arg)
+      {
+      case 1:
+         return x86_make_reg(file_REG32, reg_CX);
+      case 2:
+         return x86_make_reg(file_REG32, reg_DX);
+      case 3:
+         return x86_make_reg(file_REG32, reg_R8);
+      case 4:
+         return x86_make_reg(file_REG32, reg_R9);
+      default:
+	 /* Win64 allocates stack slots as if it pushed the first 4 arguments too */
+         return x86_make_disp(x86_make_reg(file_REG32, reg_SP),
+               p->stack_offset + arg * 8);
+      }
+   case X86_64_STD_ABI:
+      switch(arg)
+      {
+      case 1:
+         return x86_make_reg(file_REG32, reg_DI);
+      case 2:
+         return x86_make_reg(file_REG32, reg_SI);
+      case 3:
+         return x86_make_reg(file_REG32, reg_DX);
+      case 4:
+         return x86_make_reg(file_REG32, reg_CX);
+      case 5:
+         return x86_make_reg(file_REG32, reg_R8);
+      case 6:
+         return x86_make_reg(file_REG32, reg_R9);
+      default:
+         return x86_make_disp(x86_make_reg(file_REG32, reg_SP),
+               p->stack_offset + (arg - 6) * 8);     /* ??? */
+      }
+   case X86_32:
+      return x86_make_disp(x86_make_reg(file_REG32, reg_SP),
 			p->stack_offset + arg * 4);	/* ??? */
+   default:
+      abort();
+   }
 }
 
+static void x86_init_func_common( struct x86_function *p )
+{
+   util_cpu_detect();
+   p->caps = 0;
+   if(util_cpu_caps.has_mmx)
+      p->caps |= X86_MMX;
+   if(util_cpu_caps.has_mmx2)
+      p->caps |= X86_MMX2;
+   if(util_cpu_caps.has_sse)
+      p->caps |= X86_SSE;
+   if(util_cpu_caps.has_sse2)
+      p->caps |= X86_SSE2;
+   if(util_cpu_caps.has_sse3)
+      p->caps |= X86_SSE3;
+   if(util_cpu_caps.has_sse4_1)
+      p->caps |= X86_SSE4_1;
+   p->csr = p->store;
+   DUMP_START();
+}
 
 void x86_init_func( struct x86_function *p )
 {
    p->size = 0;
    p->store = NULL;
-   p->csr = p->store;
-   DUMP_START();
+   x86_init_func_common(p);
 }
 
 void x86_init_func_size( struct x86_function *p, unsigned code_size )
@@ -1728,8 +2170,7 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size )
    if (p->store == NULL) {
       p->store = p->error_overflow;
    }
-   p->csr = p->store;
-   DUMP_START();
+   x86_init_func_common(p);
 }
 
 void x86_release_func( struct x86_function *p )
@@ -1743,19 +2184,34 @@ void x86_release_func( struct x86_function *p )
 }
 
 
-void (*x86_get_func( struct x86_function *p ))(void)
+static INLINE x86_func
+voidptr_to_x86_func(void *v)
+{
+   union {
+      void *v;
+      x86_func f;
+   } u;
+   assert(sizeof(u.v) == sizeof(u.f));
+   u.v = v;
+   return u.f;
+}
+
+
+x86_func x86_get_func( struct x86_function *p )
 {
    DUMP_END();
    if (DISASSEM && p->store)
       debug_printf("disassemble %p %p\n", p->store, p->csr);
 
    if (p->store == p->error_overflow)
-      return (void (*)(void)) NULL;
+      return voidptr_to_x86_func(NULL);
    else
-      return (void (*)(void)) p->store;
+      return voidptr_to_x86_func(p->store);
 }
 
 #else
+
+void x86sse_dummy( void );
 
 void x86sse_dummy( void )
 {

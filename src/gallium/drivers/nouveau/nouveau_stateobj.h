@@ -151,9 +151,9 @@ so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	if (so->start_alloc <= so->cur_start) {
 		debug_printf("exceeding num_start size\n");
 		assert(0);
-	} else
+	}
 #endif /* DEBUG_NOUVEAU_STATEOBJ */
-		start = so->start;
+	start = so->start;
 
 #ifdef DEBUG_NOUVEAU_STATEOBJ
 	if (so->cur_start > 0 && start[so->cur_start - 1].size > so->cur) {
@@ -162,7 +162,6 @@ so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	}
 #endif /* DEBUG_NOUVEAU_STATEOBJ */
 
-	so->start = start;
 	start[so->cur_start].gr = gr;
 	start[so->cur_start].mthd = mthd;
 	start[so->cur_start].size = size;
@@ -193,11 +192,10 @@ so_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo,
 	if (so->reloc_alloc <= so->cur_reloc) {
 		debug_printf("exceeding num_reloc size\n");
 		assert(0);
-	} else
+	}
 #endif /* DEBUG_NOUVEAU_STATEOBJ */
-		r = so->reloc;
+	r = so->reloc;
 
-	so->reloc = r;
 	r[so->cur_reloc].bo = NULL;
 	nouveau_bo_ref(bo, &(r[so->cur_reloc].bo));
 	r[so->cur_reloc].gr = so->start[so->cur_start-1].gr;

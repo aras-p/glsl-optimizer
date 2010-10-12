@@ -47,12 +47,27 @@
  */
 enum st_api_type {
    ST_API_OPENGL,
-   ST_API_OPENGL_ES1,
-   ST_API_OPENGL_ES2,
    ST_API_OPENVG,
 
    ST_API_COUNT
 };
+
+/**
+ * The profile of a context.
+ */
+enum st_profile_type
+{
+   ST_PROFILE_DEFAULT,
+   ST_PROFILE_OPENGL_CORE,
+   ST_PROFILE_OPENGL_ES1,
+   ST_PROFILE_OPENGL_ES2
+};
+
+/* for profile_mask in st_api */
+#define ST_PROFILE_DEFAULT_MASK      (1 << ST_PROFILE_DEFAULT)
+#define ST_PROFILE_OPENGL_CORE_MASK  (1 << ST_PROFILE_OPENGL_CORE)
+#define ST_PROFILE_OPENGL_ES1_MASK   (1 << ST_PROFILE_OPENGL_ES1)
+#define ST_PROFILE_OPENGL_ES2_MASK   (1 << ST_PROFILE_OPENGL_ES2)
 
 /**
  * Used in st_context_iface->teximage.
@@ -61,7 +76,7 @@ enum st_texture_type {
    ST_TEXTURE_1D,
    ST_TEXTURE_2D,
    ST_TEXTURE_3D,
-   ST_TEXTURE_RECT,
+   ST_TEXTURE_RECT
 };
 
 /**
@@ -102,7 +117,21 @@ enum st_context_resource_type {
    ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_POSITIVE_Z,
    ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
    ST_CONTEXT_RESOURCE_OPENGL_RENDERBUFFER,
-   ST_CONTEXT_RESOURCE_OPENVG_PARENT_IMAGE,
+   ST_CONTEXT_RESOURCE_OPENVG_PARENT_IMAGE
+};
+
+/**
+ * Value to st_manager->get_param function.
+ */
+enum st_manager_param {
+   /**
+    * The dri state tracker on old libGL's doesn't do the right thing
+    * with regards to invalidating the framebuffers.
+    *
+    * For the mesa state tracker that means that it needs to invalidate
+    * the framebuffer in glViewport itself.
+    */
+   ST_MANAGER_BROKEN_INVALIDATE
 };
 
 /**
@@ -132,10 +161,6 @@ struct st_context_resource
  */
 struct st_egl_image
 {
-   /* these fields are filled by the caller */
-   struct st_context_iface *stctxi;
-   void *egl_image;
-
    /* this is owned by the caller */
    struct pipe_resource *texture;
 
@@ -167,6 +192,37 @@ struct st_visual
     * Desired render buffer.
     */
    enum st_attachment_type render_buffer;
+};
+
+/**
+ * Represent the attributes of a context.
+ */
+struct st_context_attribs
+{
+   /**
+    * The profile and minimal version to support.
+    *
+    * The valid profiles and versions are rendering API dependent.  The latest
+    * version satisfying the request should be returned, unless
+    * forward_compatiible is true.
+    */
+   enum st_profile_type profile;
+   int major, minor;
+
+   /**
+    * Enable debugging.
+    */
+   boolean debug;
+
+   /**
+    * Return the exact version and disallow the use of deprecated features.
+    */
+   boolean forward_compatible;
+
+   /**
+    * The visual of the framebuffers the context will be bound to.
+    */
+   struct st_visual visual;
 };
 
 /**
@@ -315,10 +371,27 @@ struct st_manager
    /**
     * Look up and return the info of an EGLImage.
     *
+    * This is used to implement for example EGLImageTargetTexture2DOES.
+    * The GLeglImageOES agrument of that call is passed directly to this
+    * function call and the information needed to access this is returned
+    * in the given struct out.
+    *
+    * @smapi: manager owning the caller context
+    * @stctx: caller context
+    * @egl_image: EGLImage that caller recived
+    * @out: return struct filled out with access information.
+    *
     * This function is optional.
     */
    boolean (*get_egl_image)(struct st_manager *smapi,
-                            struct st_egl_image *stimg);
+                            void *egl_image,
+                            struct st_egl_image *out);
+
+   /**
+    * Query an manager param.
+    */
+   int (*get_param)(struct st_manager *smapi,
+                    enum st_manager_param param);
 };
 
 /**
@@ -328,6 +401,16 @@ struct st_manager
  */
 struct st_api
 {
+   /**
+    * The supported rendering API.
+    */
+   enum st_api_type api;
+
+   /**
+    * The supported profiles.  Tested with ST_PROFILE_*_MASK.
+    */
+   unsigned profile_mask;
+
    /**
     * Destroy the API.
     */
@@ -341,23 +424,18 @@ struct st_api
    st_proc_t (*get_proc_address)(struct st_api *stapi, const char *procname);
 
    /**
-    * Return true if the visual is supported by the state tracker.
-    */
-   boolean (*is_visual_supported)(struct st_api *stapi,
-                                  const struct st_visual *visual);
-
-   /**
     * Create a rendering context.
     */
    struct st_context_iface *(*create_context)(struct st_api *stapi,
                                               struct st_manager *smapi,
-                                              const struct st_visual *visual,
+                                              const struct st_context_attribs *attribs,
                                               struct st_context_iface *stsharei);
 
    /**
     * Bind the context to the calling thread with draw and read as drawables.
     *
-    * The framebuffers might have different visuals than the context does.
+    * The framebuffers might be NULL, or might have different visuals than the
+    * context does.
     */
    boolean (*make_current)(struct st_api *stapi,
                            struct st_context_iface *stctxi,
@@ -378,19 +456,5 @@ st_visual_have_buffers(const struct st_visual *visual, unsigned mask)
 {
    return ((visual->buffer_mask & mask) == mask);
 }
-
-/* these symbols may need to be dynamically lookup up */
-extern PUBLIC struct st_api * st_api_create_OpenGL(void);
-extern PUBLIC struct st_api * st_api_create_OpenGL_ES1(void);
-extern PUBLIC struct st_api * st_api_create_OpenGL_ES2(void);
-extern PUBLIC struct st_api * st_api_create_OpenVG(void);
-
-/**
- * The entry points of the state trackers.
- */
-#define ST_CREATE_OPENGL_SYMBOL      "st_api_create_OpenGL"
-#define ST_CREATE_OPENGL_ES1_SYMBOL  "st_api_create_OpenGL_ES1"
-#define ST_CREATE_OPENGL_ES2_SYMBOL  "st_api_create_OpenGL_ES2"
-#define ST_CREATE_OPENVG_SYMBOL      "st_api_create_OpenVG"
 
 #endif /* _ST_API_H_ */

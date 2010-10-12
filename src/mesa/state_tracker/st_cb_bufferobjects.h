@@ -28,9 +28,12 @@
 #ifndef ST_CB_BUFFEROBJECTS_H
 #define ST_CB_BUFFEROBJECTS_H
 
-struct st_context;
-struct gl_buffer_object;
+#include "main/compiler.h"
+#include "main/mtypes.h"
+
+struct dd_function_table;
 struct pipe_resource;
+struct st_context;
 
 /**
  * State_tracker vertex/pixel buffer object, derived from Mesa's

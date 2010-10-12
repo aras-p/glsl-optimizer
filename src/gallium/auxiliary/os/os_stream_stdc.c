@@ -83,6 +83,14 @@ os_stdc_stream_flush(struct os_stream *_stream)
    fflush(stream->file);
 }
 
+static int
+os_stdc_stream_vprintf (struct os_stream* _stream, const char *format, va_list ap)
+{
+   struct os_stdc_stream *stream = os_stdc_stream(_stream);
+
+   return vfprintf(stream->file, format, ap);
+}
+
 
 struct os_stream *
 os_file_stream_create(const char *filename)
@@ -96,6 +104,7 @@ os_file_stream_create(const char *filename)
    stream->base.close = &os_stdc_stream_close;
    stream->base.write = &os_stdc_stream_write;
    stream->base.flush = &os_stdc_stream_flush;
+   stream->base.vprintf = &os_stdc_stream_vprintf;
 
    stream->file = fopen(filename, "w");
    if(!stream->file)

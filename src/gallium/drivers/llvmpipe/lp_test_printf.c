@@ -29,7 +29,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "util/u_pointer.h"
 #include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_assert.h"
 #include "gallivm/lp_bld_printf.h"
 
 #include <llvm-c/Analysis.h>
@@ -41,6 +44,7 @@
 
 
 struct printf_test_case {
+   int foo;
 };
 
 void
@@ -57,6 +61,7 @@ write_tsv_header(FILE *fp)
 
 typedef void (*test_printf_t)(int i);
 
+
 static LLVMValueRef
 add_printf_test(LLVMModuleRef module)
 {
@@ -71,6 +76,10 @@ add_printf_test(LLVMModuleRef module)
    lp_build_printf(builder, "hello, world\n");
    lp_build_printf(builder, "print 5 6: %d %d\n", LLVMConstInt(LLVMInt32Type(), 5, 0),
 				LLVMConstInt(LLVMInt32Type(), 6, 0));
+
+   /* Also test lp_build_assert().  This should not fail. */
+   lp_build_assert(builder, LLVMConstInt(LLVMInt32Type(), 1, 0), "assert(1)");
+
    LLVMBuildRetVoid(builder);
    LLVMDisposeBuilder(builder);
    return func;
@@ -91,6 +100,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
    float unpacked[4];
    unsigned packed;
    boolean success = TRUE;
+   void *code;
 
    module = LLVMModuleCreateWithName("test");
 
@@ -103,11 +113,16 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
    LLVMDisposeMessage(error);
 
    provider = LLVMCreateModuleProviderForExistingModule(module);
+#if 0
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
    }
+#else
+   (void) provider;
+   engine = lp_build_engine;
+#endif
 
 #if 0
    pass = LLVMCreatePassManager();
@@ -124,7 +139,8 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
    (void)pass;
 #endif
 
-   test_printf = (test_printf_t)LLVMGetPointerToGlobal(engine, test);
+   code = LLVMGetPointerToGlobal(engine, test);
+   test_printf = (test_printf_t)pointer_to_func(code);
 
    memset(unpacked, 0, sizeof unpacked);
    packed = 0;
@@ -147,7 +163,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
 boolean
 test_all(unsigned verbose, FILE *fp)
 {
-   bool success = TRUE;
+   boolean success = TRUE;
 
    test_printf(verbose, fp, NULL);
 
@@ -159,4 +175,12 @@ boolean
 test_some(unsigned verbose, FILE *fp, unsigned long n)
 {
    return test_all(verbose, fp);
+}
+
+
+boolean
+test_single(unsigned verbose, FILE *fp)
+{
+   printf("no test_single()");
+   return TRUE;
 }

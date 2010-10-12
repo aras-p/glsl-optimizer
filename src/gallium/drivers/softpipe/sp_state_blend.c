@@ -34,15 +34,17 @@
 #include "sp_state.h"
 
 
-void *
+static void *
 softpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
    return mem_dup(blend, sizeof(*blend));
 }
 
-void softpipe_bind_blend_state( struct pipe_context *pipe,
-                                void *blend )
+
+static void
+softpipe_bind_blend_state(struct pipe_context *pipe,
+                          void *blend)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -53,15 +55,18 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_BLEND;
 }
 
-void softpipe_delete_blend_state(struct pipe_context *pipe,
-                                 void *blend)
+
+static void
+softpipe_delete_blend_state(struct pipe_context *pipe,
+                            void *blend)
 {
    FREE( blend );
 }
 
 
-void softpipe_set_blend_color( struct pipe_context *pipe,
-                               const struct pipe_blend_color *blend_color )
+static void
+softpipe_set_blend_color(struct pipe_context *pipe,
+                         const struct pipe_blend_color *blend_color)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -73,19 +78,15 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
 }
 
 
-/** XXX move someday?  Or consolidate all these simple state setters
- * into one file.
- */
-
-
-void *
+static void *
 softpipe_create_depth_stencil_state(struct pipe_context *pipe,
                                     const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
    return mem_dup(depth_stencil, sizeof(*depth_stencil));
 }
 
-void
+
+static void
 softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
                                   void *depth_stencil)
 {
@@ -96,18 +97,47 @@ softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
-void
+
+static void
 softpipe_delete_depth_stencil_state(struct pipe_context *pipe, void *depth)
 {
    FREE( depth );
 }
 
-void softpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref )
+
+static void
+softpipe_set_stencil_ref(struct pipe_context *pipe,
+                         const struct pipe_stencil_ref *stencil_ref)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    softpipe->stencil_ref = *stencil_ref;
 
    softpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
+}
+
+
+static void
+softpipe_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+}
+
+
+void
+softpipe_init_blend_funcs(struct pipe_context *pipe)
+{
+   pipe->create_blend_state = softpipe_create_blend_state;
+   pipe->bind_blend_state   = softpipe_bind_blend_state;
+   pipe->delete_blend_state = softpipe_delete_blend_state;
+
+   pipe->set_blend_color = softpipe_set_blend_color;
+
+   pipe->create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
+   pipe->bind_depth_stencil_alpha_state   = softpipe_bind_depth_stencil_state;
+   pipe->delete_depth_stencil_alpha_state = softpipe_delete_depth_stencil_state;
+
+   pipe->set_stencil_ref = softpipe_set_stencil_ref;
+
+   pipe->set_sample_mask = softpipe_set_sample_mask;
 }

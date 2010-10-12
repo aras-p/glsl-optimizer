@@ -35,10 +35,13 @@
 
 #if defined(PIPE_OS_WINDOWS)
 #  define UTIL_DL_EXT ".dll"
+#  define UTIL_DL_PREFIX ""
 #elif defined(PIPE_OS_APPLE)
 #  define UTIL_DL_EXT ".dylib"
+#  define UTIL_DL_PREFIX "lib"
 #else
 #  define UTIL_DL_EXT ".so"
+#  define UTIL_DL_PREFIX "lib"
 #endif
 
 

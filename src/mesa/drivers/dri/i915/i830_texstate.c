@@ -129,7 +129,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /*We need to refcount these. */
 
    if (i830->state.tex_buffer[unit] != NULL) {
-       dri_bo_unreference(i830->state.tex_buffer[unit]);
+       drm_intel_bo_unreference(i830->state.tex_buffer[unit]);
        i830->state.tex_buffer[unit] = NULL;
    }
 
@@ -144,7 +144,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
 				  &dst_x, &dst_y);
 
-   dri_bo_reference(intelObj->mt->region->buffer);
+   drm_intel_bo_reference(intelObj->mt->region->buffer);
    i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
    pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
 
@@ -327,7 +327,7 @@ i830UpdateTextureState(struct intel_context *intel)
             I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(i), GL_FALSE);
 
 	 if (i830->state.tex_buffer[i] != NULL) {
-	    dri_bo_unreference(i830->state.tex_buffer[i]);
+	    drm_intel_bo_unreference(i830->state.tex_buffer[i]);
 	    i830->state.tex_buffer[i] = NULL;
 	 }
          break;

@@ -97,3 +97,52 @@ void brw_destroy_batch_cache( struct brw_context *brw )
 {
    brw_clear_batch_cache(brw);
 }
+
+/**
+ * Allocates a block of space in the batchbuffer for indirect state.
+ *
+ * We don't want to allocate separate BOs for every bit of indirect
+ * state in the driver.  It means overallocating by a significant
+ * margin (4096 bytes, even if the object is just a 20-byte surface
+ * state), and more buffers to walk and count for aperture size checking.
+ *
+ * However, due to the restrictions inposed by the aperture size
+ * checking performance hacks, we can't have the batch point at a
+ * separate indirect state buffer, because once the batch points at
+ * it, no more relocations can be added to it.  So, we sneak these
+ * buffers in at the top of the batchbuffer.
+ */
+void *
+brw_state_batch(struct brw_context *brw,
+		int size,
+		int alignment,
+		drm_intel_bo **out_bo,
+		uint32_t *out_offset)
+{
+   struct intel_batchbuffer *batch = brw->intel.batch;
+   uint32_t offset;
+
+   assert(size < batch->buf->size);
+   offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
+
+   /* If allocating from the top would wrap below the batchbuffer, or
+    * if the batch's used space (plus the reserved pad) collides with our
+    * space, then flush and try again.
+    */
+   if (batch->state_batch_offset < size ||
+       offset < batch->ptr - batch->map + batch->reserved_space) {
+      intel_batchbuffer_flush(batch);
+      offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
+   }
+
+   batch->state_batch_offset = offset;
+
+   if (*out_bo != batch->buf) {
+      drm_intel_bo_unreference(*out_bo);
+      drm_intel_bo_reference(batch->buf);
+      *out_bo = batch->buf;
+   }
+
+   *out_offset = offset;
+   return batch->map + offset;
+}

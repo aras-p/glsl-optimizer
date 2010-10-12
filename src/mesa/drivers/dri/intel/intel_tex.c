@@ -9,23 +9,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
-static GLboolean
-intelIsTextureResident(GLcontext * ctx, struct gl_texture_object *texObj)
-{
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   return
-      intelObj->mt &&
-      intelObj->mt->region &&
-      intel_is_region_resident(intel, intelObj->mt->region);
-#endif
-   return 1;
-}
-
-
-
 static struct gl_texture_image *
 intelNewTextureImage(GLcontext * ctx)
 {
@@ -174,6 +157,10 @@ intelGenerateMipmap(GLcontext *ctx, GLenum target,
       /* sw path: need to map texture images */
       struct intel_context *intel = intel_context(ctx);
       struct intel_texture_object *intelObj = intel_texture_object(texObj);
+
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
+
       intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
       _mesa_generate_mipmap(ctx, target, texObj);
       intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
@@ -216,8 +203,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTexImageData = intelFreeTextureImageData;
-   functions->UpdateTexturePalette = 0;
-   functions->IsTextureResident = intelIsTextureResident;
 
 #if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)

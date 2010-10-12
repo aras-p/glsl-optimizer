@@ -46,6 +46,7 @@
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_sf_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -107,9 +108,17 @@ static void compile_sf_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c.func, &program_size);
 
+   if (INTEL_DEBUG & DEBUG_SF) {
+      printf("sf:\n");
+      for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
+	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+		    intel->gen);
+      printf("\n");
+   }
+
    /* Upload
     */
-   dri_bo_unreference(brw->sf.prog_bo);
+   drm_intel_bo_unreference(brw->sf.prog_bo);
    brw->sf.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_SF_PROG,
 						   &c.key, sizeof(c.key),
 						   NULL, 0,
@@ -154,6 +163,7 @@ static void upload_sf_prog(struct brw_context *brw)
       break;
    }
 
+   /* _NEW_POINT */
    key.do_point_sprite = ctx->Point.PointSprite;
    if (key.do_point_sprite) {
       int i;
@@ -181,7 +191,7 @@ static void upload_sf_prog(struct brw_context *brw)
       key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW) ^ (ctx->DrawBuffer->Name != 0);
    }
 
-   dri_bo_unreference(brw->sf.prog_bo);
+   drm_intel_bo_unreference(brw->sf.prog_bo);
    brw->sf.prog_bo = brw_search_cache(&brw->cache, BRW_SF_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,

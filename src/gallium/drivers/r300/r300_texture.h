@@ -23,20 +23,25 @@
 #ifndef R300_TEXTURE_H
 #define R300_TEXTURE_H
 
-#include "util/u_format.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
+struct pipe_screen;
+struct pipe_resource;
+struct winsys_handle;
+struct r300_texture_format_state;
+struct r300_texture_desc;
 struct r300_texture;
+struct r300_screen;
+
+unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
+                                   const unsigned char *swizzle_view);
 
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle);
+                                  const unsigned char *swizzle_view,
+                                  boolean is_r500);
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
-
-unsigned r300_texture_get_stride(struct r300_screen* screen,
-                                 struct r300_texture* tex, unsigned level);
-
-unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
-                                 unsigned zslice, unsigned face);
 
 void r300_texture_reinterpret_format(struct pipe_screen *screen,
                                      struct pipe_resource *tex,
@@ -48,6 +53,10 @@ boolean r300_is_zs_format_supported(enum pipe_format format);
 
 boolean r300_is_sampler_format_supported(enum pipe_format format);
 
+void r300_texture_setup_format_state(struct r300_screen *screen,
+                                     struct r300_texture_desc *desc,
+                                     unsigned level,
+                                     struct r300_texture_format_state *out);
 
 struct pipe_resource*
 r300_texture_from_handle(struct pipe_screen* screen,

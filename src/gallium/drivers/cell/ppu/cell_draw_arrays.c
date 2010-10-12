@@ -56,16 +56,11 @@
  * XXX should the element buffer be specified/bound with a separate function?
  */
 static void
-cell_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_resource *indexBuffer,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned min_index,
-                         unsigned max_index,
-                         unsigned mode, unsigned start, unsigned count)
+cell_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct cell_context *cell = cell_context(pipe);
    struct draw_context *draw = cell->draw;
+   void *mapped_indices = NULL;
    unsigned i;
 
    if (cell->dirty)
@@ -83,18 +78,13 @@ cell_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
-   if (indexBuffer) {
-      void *mapped_indexes = cell_resource(indexBuffer)->data;
-      draw_set_mapped_element_buffer(draw, indexSize, indexBias, mapped_indexes);
-   }
-   else {
-      /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
-   }
+   if (info->indexed && cell->index_buffer.buffer)
+      mapped_indices = cell_resource(cell->index_buffer.buffer)->data;
 
+   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    /* draw! */
-   draw_arrays(draw, mode, start, count);
+   draw_vbo(draw, info);
 
    /*
     * unmap vertex/index buffers - will cause draw module to flush
@@ -102,8 +92,8 @@ cell_draw_range_elements(struct pipe_context *pipe,
    for (i = 0; i < cell->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
-   if (indexBuffer) {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+   if (mapped_indices) {
+      draw_set_mapped_index_buffer(draw, NULL);
    }
 
    /*
@@ -115,32 +105,9 @@ cell_draw_range_elements(struct pipe_context *pipe,
 }
 
 
-static void
-cell_draw_elements(struct pipe_context *pipe,
-                   struct pipe_resource *indexBuffer,
-                   unsigned indexSize, int indexBias,
-                   unsigned mode, unsigned start, unsigned count)
-{
-   cell_draw_range_elements( pipe, indexBuffer,
-                             indexSize, indeBias,
-                             0, 0xffffffff,
-                             mode, start, count );
-}
-
-
-static void
-cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   cell_draw_elements(pipe, NULL, 0, 0, mode, start, count);
-}
-
-
 void
 cell_init_draw_functions(struct cell_context *cell)
 {
-   cell->pipe.draw_arrays = cell_draw_arrays;
-   cell->pipe.draw_elements = cell_draw_elements;
-   cell->pipe.draw_range_elements = cell_draw_range_elements;
+   cell->pipe.draw_vbo = cell_draw_vbo;
 }
 

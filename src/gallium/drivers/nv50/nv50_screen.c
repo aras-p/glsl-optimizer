@@ -20,11 +20,13 @@
  * SOFTWARE.
  */
 
+#include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
 #include "nv50_resource.h"
+#include "nv50_program.h"
 
 #include "nouveau/nouveau_stateobj.h"
 
@@ -32,69 +34,43 @@ static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format,
 				enum pipe_texture_target target,
-				unsigned tex_usage, unsigned geom_flags)
+				unsigned sample_count,
+				unsigned usage, unsigned geom_flags)
 {
-	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
+	if (sample_count > 1)
+		return FALSE;
+
+	if (!util_format_s3tc_enabled) {
 		switch (format) {
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_R16G16B16A16_SNORM:
-		case PIPE_FORMAT_R16G16B16A16_UNORM:
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		case PIPE_FORMAT_R16G16_SNORM:
-		case PIPE_FORMAT_R16G16_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-	} else
-	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
-		switch (format) {
-		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-			return TRUE;
-		default:
-			break;
-		}
-	} else {
-		switch (format) {
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_B8G8R8A8_SRGB:
-		case PIPE_FORMAT_B8G8R8X8_SRGB:
-		case PIPE_FORMAT_B5G5R5A1_UNORM:
-		case PIPE_FORMAT_B4G4R4A4_UNORM:
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_L8_UNORM:
-		case PIPE_FORMAT_A8_UNORM:
-		case PIPE_FORMAT_I8_UNORM:
-		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_R16G16B16A16_SNORM:
-		case PIPE_FORMAT_R16G16B16A16_UNORM:
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		case PIPE_FORMAT_R16G16_SNORM:
-		case PIPE_FORMAT_R16G16_UNORM:
-			return TRUE;
+			return FALSE;
 		default:
 			break;
 		}
 	}
 
-	return FALSE;
+	switch (format) {
+	case PIPE_FORMAT_Z16_UNORM:
+		if ((nouveau_screen(pscreen)->device->chipset & 0xf0) != 0xa0)
+			return FALSE;
+		break;
+	default:
+		break;
+	}
+
+	/* transfers & shared are always supported */
+	usage &= ~(PIPE_BIND_TRANSFER_READ |
+		   PIPE_BIND_TRANSFER_WRITE |
+		   PIPE_BIND_SHARED);
+
+	return (nv50_format_table[format].usage & usage) == usage;
 }
 
 static int
-nv50_screen_get_param(struct pipe_screen *pscreen, int param)
+nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -108,6 +84,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
+	case PIPE_CAP_SM3:
 		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
@@ -117,6 +94,10 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 8;
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
+        case PIPE_CAP_TIMER_QUERY:
+		return 0;
+	case PIPE_CAP_STREAM_OUTPUT:
+		return 0;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 		return 1;
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -128,7 +109,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 		return 1;
-	case PIPE_CAP_TGSI_CONT_SUPPORTED:
+	case PIPE_CAP_TEXTURE_SWIZZLE:
 		return 1;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return 1;
@@ -136,20 +117,67 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
 		return 0;
+	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+	case PIPE_CAP_DEPTH_CLAMP:
+		return 1;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
 	}
 }
 
+static int
+nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
+			     enum pipe_shader_cap param)
+{
+	switch(shader) {
+	case PIPE_SHADER_FRAGMENT:
+	case PIPE_SHADER_VERTEX:
+		break;
+	case PIPE_SHADER_GEOMETRY:
+	default:
+		return 0;
+	}
+
+	switch(param) {
+	case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+	case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS: /* arbitrary limit */
+		return 16384;
+	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH: /* need stack bo */
+		return 4;
+	case PIPE_SHADER_CAP_MAX_INPUTS: /* 128 / 4 with GP */
+		if (shader == PIPE_SHADER_GEOMETRY)
+			return 128 / 4;
+		else
+			return 64 / 4;
+	case PIPE_SHADER_CAP_MAX_CONSTS:
+		return 65536 / 16;
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS: /* 16 - 1, but not implemented */
+		return 1;
+	case PIPE_SHADER_CAP_MAX_ADDRS: /* no spilling atm */
+		return 1;
+	case PIPE_SHADER_CAP_MAX_PREDS: /* not yet handled */
+		return 0;
+	case PIPE_SHADER_CAP_MAX_TEMPS: /* no spilling atm */
+		return NV50_CAP_MAX_PROGRAM_TEMPS;
+	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 static float
-nv50_screen_get_paramf(struct pipe_screen *pscreen, int param)
+nv50_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
@@ -190,15 +218,43 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_grobj_free(&screen->tesla);
 	nouveau_grobj_free(&screen->eng2d);
 	nouveau_grobj_free(&screen->m2mf);
-	nouveau_resource_destroy(&screen->immd_heap[0]);
-	nouveau_resource_destroy(&screen->parm_heap[0]);
-	nouveau_resource_destroy(&screen->parm_heap[1]);
+	nouveau_resource_destroy(&screen->immd_heap);
 	nouveau_screen_fini(&screen->base);
 	FREE(screen);
 }
 
 #define BGN_RELOC(ch, bo, gr, m, n, fl) \
    OUT_RELOC(ch, bo, (n << 18) | (gr->subc << 13) | m, fl, 0, 0)
+
+void
+nv50_screen_reloc_constbuf(struct nv50_screen *screen, unsigned cbi)
+{
+	struct nouveau_bo *bo;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	unsigned size;
+	const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
+
+	switch (cbi) {
+	case NV50_CB_PMISC:
+		bo = screen->constbuf_misc[0];
+		size = 0x200;
+		break;
+	case NV50_CB_PVP:
+	case NV50_CB_PFP:
+	case NV50_CB_PGP:
+		bo = screen->constbuf_parm[cbi - NV50_CB_PVP];
+		size = 0;
+		break;
+	default:
+		return;
+	}
+
+	BGN_RELOC (chan, bo, tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
+	OUT_RELOCh(chan, bo, 0, rl);
+	OUT_RELOCl(chan, bo, 0, rl);
+	OUT_RELOC (chan, bo, (cbi << 16) | size, rl, 0, 0);
+}
 
 void
 nv50_screen_relocs(struct nv50_screen *screen)
@@ -222,12 +278,7 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOCh(chan, screen->tsc, 0, rl);
 	OUT_RELOCl(chan, screen->tsc, 0, rl);
 
-	BGN_RELOC (chan, screen->constbuf_misc[0],
-		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-	OUT_RELOCh(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOCl(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOC (chan, screen->constbuf_misc[0],
-		   (NV50_CB_PMISC << 16) | 0x0200, rl, 0, 0);
+	nv50_screen_reloc_constbuf(screen, NV50_CB_PMISC);
 
 	BGN_RELOC (chan, screen->constbuf_misc[0],
 		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
@@ -236,15 +287,29 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOC (chan, screen->constbuf_misc[0],
 		   (NV50_CB_AUX << 16) | 0x0200, rl, 0, 0);
 
-	for (i = 0; i < 3; ++i) {
-		BGN_RELOC (chan, screen->constbuf_parm[i],
-			   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOC (chan, screen->constbuf_parm[i],
-			   ((NV50_CB_PVP + i) << 16) | 0x0800, rl, 0, 0);
-	}
+	for (i = 0; i < 3; ++i)
+		nv50_screen_reloc_constbuf(screen, NV50_CB_PVP + i);
+
+	BGN_RELOC (chan, screen->stack_bo,
+		   tesla, NV50TCL_STACK_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->stack_bo, 0, rl);
+	OUT_RELOCl(chan, screen->stack_bo, 0, rl);
+
+	if (!screen->cur_ctx->req_lmem)
+		return;
+
+	BGN_RELOC (chan, screen->local_bo,
+		   tesla, NV50TCL_LOCAL_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->local_bo, 0, rl);
+	OUT_RELOCl(chan, screen->local_bo, 0, rl);
 }
+
+#ifndef NOUVEAU_GETPARAM_GRAPH_UNITS
+# define NOUVEAU_GETPARAM_GRAPH_UNITS 13
+#endif
+
+extern int nouveau_device_get_param(struct nouveau_device *dev,
+                                    uint64_t param, uint64_t *value);
 
 struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
@@ -252,8 +317,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
+	uint64_t value;
 	unsigned chipset = dev->chipset;
 	unsigned tesla_class = 0;
+	unsigned stack_size, local_size, max_warps;
 	int ret, i;
 	const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
@@ -271,6 +338,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->winsys = ws;
 	pscreen->destroy = nv50_screen_destroy;
 	pscreen->get_param = nv50_screen_get_param;
+	pscreen->get_shader_param = nv50_screen_get_shader_param;
 	pscreen->get_paramf = nv50_screen_get_paramf;
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
 	pscreen->context_create = nv50_create;
@@ -394,6 +462,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	BEGIN_RING(chan, screen->tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	OUT_RING  (chan, 8);
 
+	BEGIN_RING(chan, screen->tesla, NV50TCL_CLEAR_FLAGS, 1);
+	OUT_RING  (chan, NV50TCL_CLEAR_FLAGS_D3D);
+
 	/* constant buffers for immediates and VP/FP parameters */
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (32 * 4) * 4,
 			     &screen->constbuf_misc[0]);
@@ -411,7 +482,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RING  (chan, (NV50_CB_AUX << 16) | 0x0200);
 
 	for (i = 0; i < 3; i++) {
-		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (256 * 4) * 4,
+		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (4096 * 4) * 4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
 			nv50_screen_destroy(pscreen);
@@ -420,14 +491,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		BEGIN_RING(chan, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
 		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RING  (chan, ((NV50_CB_PVP + i) << 16) | 0x0800);
+		/* CB_DEF_SET_SIZE value of 0x0000 means 65536 */
+		OUT_RING  (chan, ((NV50_CB_PVP + i) << 16) | 0x0000);
 	}
 
-	if (nouveau_resource_init(&screen->immd_heap[0], 0, 128) ||
-	    nouveau_resource_init(&screen->parm_heap[0], 0, 512) ||
-	    nouveau_resource_init(&screen->parm_heap[1], 0, 512))
-	{
-		NOUVEAU_ERR("Error initialising constant buffers.\n");
+	if (nouveau_resource_init(&screen->immd_heap, 0, 128)) {
+		NOUVEAU_ERR("Error initialising shader immediates heap.\n");
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
@@ -473,6 +542,41 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RING  (chan, 0x121 | (NV50_CB_PGP << 12));
 	OUT_RING  (chan, 0x131 | (NV50_CB_PFP << 12));
 
+	/* shader stack */
+	nouveau_device_get_param(dev, NOUVEAU_GETPARAM_GRAPH_UNITS, &value);
+
+	max_warps  = util_bitcount(value & 0xffff);
+	max_warps *= util_bitcount((value >> 24) & 0xf) * 32;
+
+	stack_size = max_warps * 64 * 8;
+
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
+			     stack_size, &screen->stack_bo);
+	if (ret) {
+		nv50_screen_destroy(pscreen);
+		return NULL;
+	}
+	BEGIN_RING(chan, screen->tesla, NV50TCL_STACK_ADDRESS_HIGH, 3);
+	OUT_RELOCh(chan, screen->stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, screen->stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, 4);
+
+	local_size = (NV50_CAP_MAX_PROGRAM_TEMPS * 16) * max_warps * 32;
+
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
+			     local_size, &screen->local_bo);
+	if (ret) {
+		nv50_screen_destroy(pscreen);
+		return NULL;
+	}
+
+	local_size = NV50_CAP_MAX_PROGRAM_TEMPS * 16;
+
+	BEGIN_RING(chan, screen->tesla, NV50TCL_LOCAL_ADDRESS_HIGH, 3);
+	OUT_RELOCh(chan, screen->local_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, screen->local_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, util_unsigned_logbase2(local_size / 8));
+
 	/* Vertex array limits - max them out */
 	for (i = 0; i < 16; i++) {
 		BEGIN_RING(chan, screen->tesla,
@@ -484,6 +588,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	BEGIN_RING(chan, screen->tesla, NV50TCL_DEPTH_RANGE_NEAR(0), 2);
 	OUT_RINGf (chan, 0.0f);
 	OUT_RINGf (chan, 1.0f);
+
+	BEGIN_RING(chan, screen->tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
+	OUT_RING  (chan, 1);
 
 	/* no dynamic combination of TIC & TSC entries => only BIND_TIC used */
 	BEGIN_RING(chan, screen->tesla, NV50TCL_LINKED_TSC, 1);

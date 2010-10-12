@@ -35,7 +35,7 @@
 
 #include "brw_structs.h"
 #include "brw_defines.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
@@ -520,6 +520,20 @@ static INLINE struct brw_reg brw_acc_reg( void )
 		       0);
 }
 
+static INLINE struct brw_reg brw_notification_1_reg(void)
+{
+
+   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+		  BRW_ARF_NOTIFICATION_COUNT,
+		  1,
+		  BRW_REGISTER_TYPE_UD,
+		  BRW_VERTICAL_STRIDE_0,
+		  BRW_WIDTH_1,
+		  BRW_HORIZONTAL_STRIDE_0,
+		  BRW_SWIZZLE_XXXX,
+		  WRITEMASK_X);
+}
+
 
 static INLINE struct brw_reg brw_flag_reg( void )
 {
@@ -619,6 +633,8 @@ static INLINE struct brw_reg brw_swizzle( struct brw_reg reg,
 					    GLuint z,
 					    GLuint w)
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
+
    reg.dw1.bits.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(reg.dw1.bits.swizzle, x),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
@@ -636,6 +652,7 @@ static INLINE struct brw_reg brw_swizzle1( struct brw_reg reg,
 static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 					      GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask &= mask;
    return reg;
 }
@@ -643,6 +660,7 @@ static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 static INLINE struct brw_reg brw_set_writemask( struct brw_reg reg,
 						  GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = mask;
    return reg;
 }
@@ -752,6 +770,7 @@ void brw_set_compression_control( struct brw_compile *p, GLboolean control );
 void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value );
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
+void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
 void brw_init_compile( struct brw_context *, struct brw_compile *p );
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
@@ -822,15 +841,11 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
 		   GLboolean allocate,
-		   GLboolean used,
-		   GLuint msg_length,
 		   GLuint response_length,
-		   GLboolean eot,
-		   GLboolean writes_complete,
-		   GLuint offset,
-		   GLuint swizzle);
+		   GLboolean eot);
 
 void brw_fb_WRITE(struct brw_compile *p,
+		  int dispatch_width,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
@@ -870,6 +885,12 @@ void brw_math( struct brw_compile *p,
 	       GLuint data_type,
 	       GLuint precision );
 
+void brw_math2(struct brw_compile *p,
+	       struct brw_reg dest,
+	       GLuint function,
+	       struct brw_reg src0,
+	       struct brw_reg src1);
+
 void brw_dp_READ_16( struct brw_compile *p,
 		     struct brw_reg dest,
 		     GLuint scratch_offset );
@@ -882,11 +903,14 @@ void brw_dp_READ_4( struct brw_compile *p,
 
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
-                       GLuint oword,
-                       GLboolean relAddr,
-                       struct brw_reg addrReg,
                        GLuint location,
                        GLuint bind_table_index );
+
+void brw_dp_READ_4_vs_relative(struct brw_compile *p,
+			       struct brw_reg dest,
+			       struct brw_reg addrReg,
+			       GLuint offset,
+			       GLuint bind_table_index);
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
@@ -913,8 +937,8 @@ struct brw_instruction *brw_DO(struct brw_compile *p,
 struct brw_instruction *brw_WHILE(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn);
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p);
-struct brw_instruction *brw_CONT(struct brw_compile *p);
+struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count);
+struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, 
@@ -923,6 +947,8 @@ void brw_land_fwd_jump(struct brw_compile *p,
 
 
 void brw_NOP(struct brw_compile *p);
+
+void brw_WAIT(struct brw_compile *p);
 
 /* Special case: there is never a destination, execution size will be
  * taken from src0:
@@ -970,5 +996,7 @@ void brw_set_src1( struct brw_instruction *insn,
 
 /* brw_optimize.c */
 void brw_optimize(struct brw_compile *p);
+void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
+void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
 
 #endif

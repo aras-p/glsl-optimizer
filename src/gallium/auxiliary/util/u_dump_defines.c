@@ -160,6 +160,49 @@ DEFINE_UTIL_DUMP_CONTINUOUS(blend_func)
 
 
 static const char *
+util_dump_logicop_names[] = {
+   "PIPE_LOGICOP_CLEAR",
+   "PIPE_LOGICOP_NOR",
+   "PIPE_LOGICOP_AND_INVERTED",
+   "PIPE_LOGICOP_COPY_INVERTED",
+   "PIPE_LOGICOP_AND_REVERSE",
+   "PIPE_LOGICOP_INVERT",
+   "PIPE_LOGICOP_XOR",
+   "PIPE_LOGICOP_NAND",
+   "PIPE_LOGICOP_AND",
+   "PIPE_LOGICOP_EQUIV",
+   "PIPE_LOGICOP_NOOP",
+   "PIPE_LOGICOP_OR_INVERTED",
+   "PIPE_LOGICOP_COPY",
+   "PIPE_LOGICOP_OR_REVERSE",
+   "PIPE_LOGICOP_OR",
+   "PIPE_LOGICOP_SET"
+};
+
+static const char *
+util_dump_logicop_short_names[] = {
+   "clear",
+   "nor",
+   "and_inverted",
+   "copy_inverted",
+   "and_reverse",
+   "invert",
+   "xor",
+   "nand",
+   "and",
+   "equiv",
+   "noop",
+   "or_inverted",
+   "copy",
+   "or_reverse",
+   "or",
+   "set"
+};
+
+DEFINE_UTIL_DUMP_CONTINUOUS(logicop)
+
+
+static const char *
 util_dump_func_names[] = {
    "PIPE_FUNC_NEVER",
    "PIPE_FUNC_LESS",
@@ -187,7 +230,35 @@ DEFINE_UTIL_DUMP_CONTINUOUS(func)
 
 
 static const char *
+util_dump_stencil_op_names[] = {
+   "PIPE_STENCIL_OP_KEEP",
+   "PIPE_STENCIL_OP_ZERO",
+   "PIPE_STENCIL_OP_REPLACE",
+   "PIPE_STENCIL_OP_INCR",
+   "PIPE_STENCIL_OP_DECR",
+   "PIPE_STENCIL_OP_INCR_WRAP",
+   "PIPE_STENCIL_OP_DECR_WRAP",
+   "PIPE_STENCIL_OP_INVERT"
+};
+
+static const char *
+util_dump_stencil_op_short_names[] = {
+   "keep",
+   "zero",
+   "replace",
+   "incr",
+   "decr",
+   "incr_wrap",
+   "decr_wrap",
+   "invert"
+};
+
+DEFINE_UTIL_DUMP_CONTINUOUS(stencil_op)
+
+
+static const char *
 util_dump_tex_target_names[] = {
+   "PIPE_BUFFER",
    "PIPE_TEXTURE_1D",
    "PIPE_TEXTURE_2D",
    "PIPE_TEXTURE_3D",
@@ -196,6 +267,7 @@ util_dump_tex_target_names[] = {
 
 static const char *
 util_dump_tex_target_short_names[] = {
+   "buffer",
    "1d",
    "2d",
    "3d",

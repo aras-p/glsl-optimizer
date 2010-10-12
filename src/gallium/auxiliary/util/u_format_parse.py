@@ -43,7 +43,7 @@ ZS = 'zs'
 
 
 def is_pot(x):
-   return (x & (x - 1)) == 0;
+   return (x & (x - 1)) == 0
 
 
 VERY_LARGE = 99999999999999999999999

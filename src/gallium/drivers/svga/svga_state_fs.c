@@ -131,8 +131,7 @@ static int make_fs_key( const struct svga_context *svga,
       /* SVGA_NEW_RAST
        */
       key->light_twoside = svga->curr.rast->templ.light_twoside;
-      key->front_cw = (svga->curr.rast->templ.front_winding == 
-                       PIPE_WINDING_CW);
+      key->front_ccw = svga->curr.rast->templ.front_ccw;
    }
 
    /* The blend workaround for simulating logicop xor behaviour

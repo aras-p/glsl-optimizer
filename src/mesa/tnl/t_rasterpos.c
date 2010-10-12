@@ -25,7 +25,6 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
-#include "main/context.h"
 #include "main/feedback.h"
 #include "main/light.h"
 #include "main/macros.h"

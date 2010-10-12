@@ -86,7 +86,6 @@
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
-#include "colortab.h"
 #include "context.h"
 #include "cpuinfo.h"
 #include "debug.h"
@@ -98,7 +97,6 @@
 #include "feedback.h"
 #include "fog.h"
 #include "framebuffer.h"
-#include "histogram.h"
 #include "hint.h"
 #include "hash.h"
 #include "light.h"
@@ -111,13 +109,12 @@
 #include "points.h"
 #include "polygon.h"
 #include "queryobj.h"
-#if FEATURE_ARB_sync
 #include "syncobj.h"
-#endif
 #include "rastpos.h"
 #include "remap.h"
 #include "scissor.h"
 #include "shared.h"
+#include "shaderobj.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
@@ -129,11 +126,8 @@
 #include "version.h"
 #include "viewport.h"
 #include "vtxfmt.h"
-#include "glapi/glthread.h"
-#include "glapi/glapitable.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif
@@ -141,6 +135,10 @@
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
 #endif
+
+#include "glsl_parser_extras.h"
+
+
 
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0;
@@ -341,23 +339,25 @@ _mesa_destroy_visual( GLvisual *vis )
 static void
 dummy_enum_func(void)
 {
-   gl_buffer_index bi;
-   gl_colortable_index ci;
-   gl_face_index fi;
-   gl_frag_attrib fa;
-   gl_frag_result fr;
-   gl_texture_index ti;
-   gl_vert_attrib va;
-   gl_vert_result vr;
+   gl_buffer_index bi = BUFFER_FRONT_LEFT;
+   gl_face_index fi = FACE_POS_X;
+   gl_frag_attrib fa = FRAG_ATTRIB_WPOS;
+   gl_frag_result fr = FRAG_RESULT_DEPTH;
+   gl_texture_index ti = TEXTURE_2D_ARRAY_INDEX;
+   gl_vert_attrib va = VERT_ATTRIB_POS;
+   gl_vert_result vr = VERT_RESULT_HPOS;
+   gl_geom_attrib ga = GEOM_ATTRIB_POSITION;
+   gl_geom_result gr = GEOM_RESULT_POS;
 
    (void) bi;
-   (void) ci;
    (void) fi;
    (void) fa;
    (void) fr;
    (void) ti;
    (void) va;
    (void) vr;
+   (void) ga;
+   (void) gr;
 }
 
 
@@ -396,9 +396,28 @@ one_time_init( GLcontext *ctx )
 
       _mesa_get_cpu_features();
 
-      _mesa_init_remap_table();
+      switch (ctx->API) {
+#if FEATURE_GL
+      case API_OPENGL:
+	 _mesa_init_remap_table();
+	 break;
+#endif
+#if FEATURE_ES1
+      case API_OPENGLES:
+	 _mesa_init_remap_table_es1();
+	 break;
+#endif
+#if FEATURE_ES2
+      case API_OPENGLES2:
+	 _mesa_init_remap_table_es2();
+	 break;
+#endif
+      default:
+	 break;
+      }
 
       _mesa_init_sqrt_table();
+      _mesa_init_get_hash(ctx);
 
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
@@ -412,6 +431,11 @@ one_time_init( GLcontext *ctx )
       alreadyCalled = GL_TRUE;
    }
    _glthread_UNLOCK_MUTEX(OneTimeLock);
+
+   /* Hopefully atexit() is widely available.  If not, we may need some
+    * #ifdef tests here.
+    */
+   atexit(_mesa_destroy_shader_compiler);
 
    dummy_enum_func();
 }
@@ -441,7 +465,7 @@ _mesa_init_current(GLcontext *ctx)
 
 
 /**
- * Init vertex/fragment program limits.
+ * Init vertex/fragment/geometry program limits.
  * Important: drivers should override these with actual limits.
  */
 static void
@@ -456,15 +480,31 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
 
-   if (type == GL_VERTEX_PROGRAM_ARB) {
+   switch (type) {
+   case GL_VERTEX_PROGRAM_ARB:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-   }
-   else {
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+      break;
+   case MESA_GEOMETRY_PROGRAM:
+      prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
+      prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
+      prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+
+      prog->MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
+      prog->MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
+      prog->MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
+      prog->MaxGeometryUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
+      prog->MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
+      prog->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
+      break;
+   default:
+      assert(0 && "Bad program type in init_program_limits()");
    }
 
    /* Set the native limits to zero.  This implies that there is no native
@@ -516,8 +556,6 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
    ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
-   ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
-   ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
    ctx->Const.MaxShininess = 128.0;
@@ -529,6 +567,9 @@ _mesa_init_constants(GLcontext *ctx)
 #endif
 #if FEATURE_ARB_fragment_program
    init_program_limits(GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
+#endif
+#if FEATURE_ARB_geometry_shader4
+   init_program_limits(MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
@@ -549,6 +590,21 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
+
+   /* Shading language version */
+   if (ctx->API == API_OPENGL) {
+#if FEATURE_ARB_shading_language_120
+      ctx->Const.GLSLVersion = 120;
+#else
+      ctx->Const.GLSLVersion = 110;
+#endif
+   }
+   else if (ctx->API == API_OPENGLES2) {
+      ctx->Const.GLSLVersion = 100;
+   }
+   else if (ctx->API == API_OPENGLES) {
+      ctx->Const.GLSLVersion = 0; /* GLSL not supported */
+   }
 
    /* GL_ARB_framebuffer_object */
    ctx->Const.MaxSamples = 0;
@@ -636,6 +692,9 @@ check_context_limits(GLcontext *ctx)
 
    assert(ctx->Const.MaxDrawBuffers <= MAX_DRAW_BUFFERS);
 
+   /* if this fails, add more enum values to gl_buffer_index */
+   assert(BUFFER_COLOR0 + MAX_DRAW_BUFFERS <= BUFFER_COUNT);
+
    /* XXX probably add more tests */
 }
 
@@ -664,7 +723,6 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_attrib( ctx );
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
-   _mesa_init_colortables( ctx );
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
@@ -673,7 +731,6 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_fbobjects( ctx );
    _mesa_init_feedback( ctx );
    _mesa_init_fog( ctx );
-   _mesa_init_histogram( ctx );
    _mesa_init_hint( ctx );
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
@@ -685,9 +742,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
    _mesa_init_queryobj( ctx );
-#if FEATURE_ARB_sync
    _mesa_init_sync( ctx );
-#endif
    _mesa_init_rastpos( ctx );
    _mesa_init_scissor( ctx );
    _mesa_init_shader_state( ctx );
@@ -749,8 +804,8 @@ generic_nop(void)
 /**
  * Allocate and initialize a new dispatch table.
  */
-static struct _glapi_table *
-alloc_dispatch_table(void)
+struct _glapi_table *
+_mesa_alloc_dispatch_table(int size)
 {
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
@@ -758,7 +813,7 @@ alloc_dispatch_table(void)
     * DRI drivers.
     */
    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
-                           sizeof(struct _glapi_table) / sizeof(_glapi_proc));
+                           size / sizeof(_glapi_proc));
    struct _glapi_table *table =
       (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
@@ -791,6 +846,7 @@ alloc_dispatch_table(void)
  * for debug flags.
  *
  * \param ctx the context to initialize
+ * \param api the GL API type to create the context for
  * \param visual describes the visual attributes for this context
  * \param share_list points to context to share textures, display lists,
  *        etc with, or NULL
@@ -799,26 +855,29 @@ alloc_dispatch_table(void)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context(GLcontext *ctx,
-                         const GLvisual *visual,
-                         GLcontext *share_list,
-                         const struct dd_function_table *driverFunctions,
-                         void *driverContext)
+_mesa_initialize_context_for_api(GLcontext *ctx,
+				 gl_api api,
+				 const GLvisual *visual,
+				 GLcontext *share_list,
+				 const struct dd_function_table *driverFunctions,
+				 void *driverContext)
 {
    struct gl_shared_state *shared;
+   int i;
 
    /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTexImageData);
 
-   /* misc one-time initializations */
-   one_time_init(ctx);
-
+   ctx->API = api;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
    ctx->WinSysDrawBuffer = NULL;
    ctx->WinSysReadBuffer = NULL;
+
+   /* misc one-time initializations */
+   one_time_init(ctx);
 
    /* Plug in driver functions and context pointer here.
     * This is important because when we call alloc_shared_state() below
@@ -849,29 +908,35 @@ _mesa_initialize_context(GLcontext *ctx,
       return GL_FALSE;
    }
 
+#if FEATURE_dispatch
    /* setup the API dispatch tables */
-   ctx->Exec = alloc_dispatch_table();
-   ctx->Save = alloc_dispatch_table();
-   if (!ctx->Exec || !ctx->Save) {
+   switch (ctx->API) {
+#if FEATURE_GL
+   case API_OPENGL:
+      ctx->Exec = _mesa_create_exec_table();
+      break;
+#endif
+#if FEATURE_ES1
+   case API_OPENGLES:
+      ctx->Exec = _mesa_create_exec_table_es1();
+      break;
+#endif
+#if FEATURE_ES2
+   case API_OPENGLES2:
+      ctx->Exec = _mesa_create_exec_table_es2();
+      break;
+#endif
+   default:
+      _mesa_problem(ctx, "unknown or unsupported API");
+      break;
+   }
+
+   if (!ctx->Exec) {
       _mesa_release_shared_state(ctx, ctx->Shared);
-      if (ctx->Exec)
-         free(ctx->Exec);
       return GL_FALSE;
    }
-#if FEATURE_dispatch
-   _mesa_init_exec_table(ctx->Exec);
 #endif
    ctx->CurrentDispatch = ctx->Exec;
-
-#if FEATURE_dlist
-   _mesa_init_save_table(ctx->Save);
-   _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
-#endif
-
-   /* Neutral tnl module stuff */
-   _mesa_init_exec_vtxfmt( ctx ); 
-   ctx->TnlModule.Current = NULL;
-   ctx->TnlModule.SwapCount = 0;
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
@@ -883,15 +948,65 @@ _mesa_initialize_context(GLcontext *ctx,
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    }
 
-#if FEATURE_extra_context_init
-   _mesa_initialize_context_extra(ctx);
+   switch (ctx->API) {
+   case API_OPENGL:
+      /* Neutral tnl module stuff */
+      _mesa_init_exec_vtxfmt( ctx ); 
+      ctx->TnlModule.Current = NULL;
+      ctx->TnlModule.SwapCount = 0;
+
+#if FEATURE_dlist
+      ctx->Save = _mesa_create_save_table();
+      if (!ctx->Save) {
+	 _mesa_release_shared_state(ctx, ctx->Shared);
+	 free(ctx->Exec);
+	 return GL_FALSE;
+      }
+
+      _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 #endif
+      break;
+   case API_OPENGLES:
+      /**
+       * GL_OES_texture_cube_map says
+       * "Initially all texture generation modes are set to REFLECTION_MAP_OES"
+       */
+      for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+	 struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+	 texUnit->GenS.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenT.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenR.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenS._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+	 texUnit->GenT._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+	 texUnit->GenR._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+      }
+      break;
+   case API_OPENGLES2:
+      ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+      ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+      ctx->Point.PointSprite = GL_TRUE;  /* always on for ES 2.x */
+      break;
+   }
 
    ctx->FirstTimeCurrent = GL_TRUE;
 
    return GL_TRUE;
 }
 
+GLboolean
+_mesa_initialize_context(GLcontext *ctx,
+                         const GLvisual *visual,
+                         GLcontext *share_list,
+                         const struct dd_function_table *driverFunctions,
+                         void *driverContext)
+{
+   return _mesa_initialize_context_for_api(ctx,
+					   API_OPENGL,
+					   visual,
+					   share_list,
+					   driverFunctions,
+					   driverContext);
+}
 
 /**
  * Allocate and initialize a GLcontext structure.
@@ -899,6 +1014,7 @@ _mesa_initialize_context(GLcontext *ctx,
  * we need to at least call driverFunctions->NewTextureObject to initialize
  * the rendering context.
  *
+ * \param api the GL API type to create the context for
  * \param visual a GLvisual pointer (we copy the struct contents)
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
@@ -908,10 +1024,11 @@ _mesa_initialize_context(GLcontext *ctx,
  * \return pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
-_mesa_create_context(const GLvisual *visual,
-                     GLcontext *share_list,
-                     const struct dd_function_table *driverFunctions,
-                     void *driverContext)
+_mesa_create_context_for_api(gl_api api,
+			     const GLvisual *visual,
+			     GLcontext *share_list,
+			     const struct dd_function_table *driverFunctions,
+			     void *driverContext)
 {
    GLcontext *ctx;
 
@@ -922,8 +1039,8 @@ _mesa_create_context(const GLvisual *visual,
    if (!ctx)
       return NULL;
 
-   if (_mesa_initialize_context(ctx, visual, share_list,
-                                driverFunctions, driverContext)) {
+   if (_mesa_initialize_context_for_api(ctx, api, visual, share_list,
+					driverFunctions, driverContext)) {
       return ctx;
    }
    else {
@@ -932,6 +1049,17 @@ _mesa_create_context(const GLvisual *visual,
    }
 }
 
+GLcontext *
+_mesa_create_context(const GLvisual *visual,
+		     GLcontext *share_list,
+		     const struct dd_function_table *driverFunctions,
+		     void *driverContext)
+{
+   return _mesa_create_context_for_api(API_OPENGL, visual,
+				       share_list,
+				       driverFunctions,
+				       driverContext);
+}
 
 /**
  * Free the data associated with the given context.
@@ -971,13 +1099,10 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-   _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
    _mesa_free_queryobj_data(ctx);
-#if FEATURE_ARB_sync
    _mesa_free_sync_data(ctx);
-#endif
    _mesa_free_varray_data(ctx);
    _mesa_free_transform_feedback(ctx);
 
@@ -1175,6 +1300,9 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
    if (ctxvis == bufvis)
       return GL_TRUE;
 
+   if (buffer == _mesa_get_incomplete_framebuffer())
+      return GL_TRUE;
+
 #if 0
    /* disabling this fixes the fgl_glxgears pbuffer demo */
    if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)
@@ -1368,6 +1496,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
 
       if (newCtx->FirstTimeCurrent) {
          _mesa_compute_version(newCtx);
+
+         newCtx->Extensions.String = _mesa_make_extension_string(newCtx);
 
          check_context_limits(newCtx);
 
@@ -1577,7 +1707,7 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
       /* using shaders */
       if (!ctx->Shader.CurrentProgram->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(shader not linked), where");
+                     "%s(shader not linked)", where);
          return GL_FALSE;
       }
 #if 0 /* not normally enabled */

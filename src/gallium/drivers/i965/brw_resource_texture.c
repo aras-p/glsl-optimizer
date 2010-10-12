@@ -66,6 +66,7 @@ static GLuint translate_tex_target( unsigned target )
       return BRW_SURFACE_1D;
 
    case PIPE_TEXTURE_2D: 
+   case PIPE_TEXTURE_RECT:
       return BRW_SURFACE_2D;
 
    case PIPE_TEXTURE_3D: 
@@ -210,7 +211,7 @@ brw_texture_get_handle(struct pipe_screen *screen,
 
    stride = tex->pitch * tex->cpp;
 
-   return bscreen->sws->bo_get_handle(tex->bo, whandle, stride);
+   return bscreen->sws->bo_get_handle(tex->bo, whandle, stride) == PIPE_OK;
 }
 
 
@@ -498,7 +499,8 @@ brw_texture_from_handle(struct pipe_screen *screen,
    unsigned pitch;
    GLuint format;
 
-   if (template->target != PIPE_TEXTURE_2D ||
+   if ((template->target != PIPE_TEXTURE_2D
+         && template->target != PIPE_TEXTURE_RECT)  ||
        template->last_level != 0 ||
        template->depth0 != 1)
       return NULL;
@@ -594,7 +596,8 @@ fail:
 boolean brw_is_format_supported( struct pipe_screen *screen,
 				 enum pipe_format format,
 				 enum pipe_texture_target target,
-				 unsigned tex_usage, 
+				 unsigned sample_count,
+				 unsigned tex_usage,
 				 unsigned geom_flags )
 {
    return translate_tex_format(format) != BRW_SURFACEFORMAT_INVALID;

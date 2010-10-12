@@ -57,26 +57,24 @@
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
+#include "draw_fs.h"
 #include "draw_vs.h"
 #include "draw_pipe.h"
 
 
 struct widepoint_stage {
-   struct draw_stage stage;
+   struct draw_stage stage;  /**< base class */
 
    float half_point_size;
 
    float xbias;
    float ybias;
 
-   uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
-   uint texcoord_enable[PIPE_MAX_SHADER_OUTPUTS];
-   uint num_texcoords;
-   uint texcoord_mode;
+   /** for automatic texcoord generation/replacement */
+   uint num_texcoord_gen;
+   uint texcoord_gen_slot[PIPE_MAX_SHADER_OUTPUTS];
 
    int psize_slot;
-
-   int point_coord_fs_input;  /**< input for pointcoord */
 };
 
 
@@ -96,30 +94,20 @@ widepoint_stage( struct draw_stage *stage )
 static void set_texcoords(const struct widepoint_stage *wide,
                           struct vertex_header *v, const float tc[4])
 {
+   const struct draw_context *draw = wide->stage.draw;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+   const uint texcoord_mode = rast->sprite_coord_mode;
    uint i;
-   for (i = 0; i < wide->num_texcoords; i++) {
-      if (wide->texcoord_enable[i]) {
-         uint j = wide->texcoord_slot[i];
-         v->data[j][0] = tc[0];
-         if (wide->texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
-            v->data[j][1] = 1.0f - tc[1];
-         else
-            v->data[j][1] = tc[1];
-         v->data[j][2] = tc[2];
-         v->data[j][3] = tc[3];
-      }
-   }
 
-   if (wide->point_coord_fs_input >= 0) {
-      /* put gl_PointCoord into the extra vertex slot */
-      uint slot = wide->stage.draw->extra_shader_outputs.slot;
+   for (i = 0; i < wide->num_texcoord_gen; i++) {
+      const uint slot = wide->texcoord_gen_slot[i];
       v->data[slot][0] = tc[0];
-      if (wide->texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
+      if (texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
          v->data[slot][1] = 1.0f - tc[1];
       else
          v->data[slot][1] = tc[1];
-      v->data[slot][2] = 0.0F;
-      v->data[slot][3] = 1.0F;
+      v->data[slot][2] = tc[2];
+      v->data[slot][3] = tc[3];
    }
 }
 
@@ -201,18 +189,9 @@ static void widepoint_point( struct draw_stage *stage,
 }
 
 
-static int
-find_pntc_input_attrib(struct draw_context *draw)
-{
-   /* Scan the fragment program's input decls to find the pointcoord
-    * attribute.  The xy components will store the point coord.
-    */
-   return 0; /* XXX fix this */
-}
-
-
-static void widepoint_first_point( struct draw_stage *stage, 
-			      struct prim_header *header )
+static void
+widepoint_first_point(struct draw_stage *stage, 
+                      struct prim_header *header)
 {
    struct widepoint_stage *wide = widepoint_stage(stage);
    struct draw_context *draw = stage->draw;
@@ -226,6 +205,7 @@ static void widepoint_first_point( struct draw_stage *stage,
 
    if (rast->gl_rasterization_rules) {
       wide->xbias = 0.125;
+      wide->ybias = -0.125;
    }
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
@@ -243,31 +223,49 @@ static void widepoint_first_point( struct draw_stage *stage,
       stage->point = draw_pipe_passthrough_point;
    }
 
+   draw_remove_extra_vertex_attribs(draw);
+
    if (rast->point_quad_rasterization) {
-      /* find vertex shader texcoord outputs */
-      const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
-      uint i, j = 0;
-      wide->texcoord_mode = rast->sprite_coord_mode;
-      for (i = 0; i < vs->info.num_outputs; i++) {
-         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
-            wide->texcoord_slot[j] = i;
-            wide->texcoord_enable[j] = (rast->sprite_coord_enable >> j) & 1;
-            j++;
+      const struct draw_fragment_shader *fs = draw->fs.fragment_shader;
+      uint i;
+
+      wide->num_texcoord_gen = 0;
+
+      /* Loop over fragment shader inputs looking for generic inputs
+       * for which bit 'k' in sprite_coord_enable is set.
+       */
+      for (i = 0; i < fs->info.num_inputs; i++) {
+         if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
+            const int generic_index = fs->info.input_semantic_index[i];
+            /* Note that sprite_coord enable is a bitfield of
+             * PIPE_MAX_SHADER_OUTPUTS bits.
+             */
+            if (generic_index < PIPE_MAX_SHADER_OUTPUTS &&
+                (rast->sprite_coord_enable & (1 << generic_index))) {
+               /* OK, this generic attribute needs to be replaced with a
+                * texcoord (see above).
+                */
+               int slot = draw_find_shader_output(draw,
+                                                  TGSI_SEMANTIC_GENERIC,
+                                                  generic_index);
+
+               if (slot > 0) {
+                  /* there's already a post-vertex shader attribute
+                   * for this fragment shader input attribute.
+                   */
+               }
+               else {
+                  /* need to allocate a new post-vertex shader attribute */
+                  slot = draw_alloc_extra_vertex_attrib(draw,
+                                                        TGSI_SEMANTIC_GENERIC,
+                                                        generic_index);
+               }
+
+               /* add this slot to the texcoord-gen list */
+               wide->texcoord_gen_slot[wide->num_texcoord_gen++] = slot;
+            }
          }
       }
-      wide->num_texcoords = j;
-
-      /* find fragment shader PointCoord input */
-      wide->point_coord_fs_input = find_pntc_input_attrib(draw);
-
-      /* setup extra vp output (point coord implemented as a texcoord) */
-      draw->extra_shader_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-      draw->extra_shader_outputs.semantic_index = 0;
-      draw->extra_shader_outputs.slot = draw_current_shader_outputs(draw);
-   }
-   else {
-      wide->point_coord_fs_input = -1;
-      draw->extra_shader_outputs.slot = 0;
    }
 
    wide->psize_slot = -1;
@@ -294,7 +292,8 @@ static void widepoint_flush( struct draw_stage *stage, unsigned flags )
 
    stage->point = widepoint_first_point;
    stage->next->flush( stage->next, flags );
-   stage->draw->extra_shader_outputs.slot = 0;
+
+   draw_remove_extra_vertex_attribs(draw);
 
    /* restore original rasterizer state */
    if (draw->rast_handle) {
@@ -324,9 +323,6 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    if (wide == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
-      goto fail;
-
    wide->stage.draw = draw;
    wide->stage.name = "wide-point";
    wide->stage.next = NULL;
@@ -336,6 +332,9 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    wide->stage.flush = widepoint_flush;
    wide->stage.reset_stipple_counter = widepoint_reset_stipple_counter;
    wide->stage.destroy = widepoint_destroy;
+
+   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
+      goto fail;
 
    return &wide->stage;
 

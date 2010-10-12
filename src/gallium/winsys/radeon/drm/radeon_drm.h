@@ -30,14 +30,7 @@
 #ifndef RADEON_DRM_H
 #define RADEON_DRM_H
 
-#include "state_tracker/drm_api.h"
-
-
-struct pipe_screen* radeon_create_screen(struct drm_api* api,
-                                         int drmFB,
-					 struct drm_create_screen_arg *arg);
-
-void radeon_destroy_drm_api(struct drm_api* api);
+#include "state_tracker/drm_driver.h"
 
 /* Guess at whether this chipset should use r300g.
  *

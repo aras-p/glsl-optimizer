@@ -137,7 +137,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_pack_invert",               NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -271,7 +270,8 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 
 /* Create the device specific rendering context.
  */
-GLboolean r200CreateContext( const __GLcontextModes *glVisual,
+GLboolean r200CreateContext( gl_api api,
+			     const __GLcontextModes *glVisual,
 			     __DRIcontext *driContextPriv,
 			     void *sharedContextPrivate)
 {

@@ -41,8 +41,8 @@
 
 #ifdef USE_GLFBDEV_DRIVER
 
-#include <linux/fb.h>
 #include "GL/glfbdev.h"
+#include <linux/fb.h>
 #include "main/glheader.h"
 #include "main/buffers.h"
 #include "main/context.h"
@@ -216,6 +216,10 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
    DST[1] = VALUE[GCOMP];  \
    DST[2] = VALUE[RCOMP];  \
    DST[3] = VALUE[ACOMP]
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[0] = VALUE[BCOMP];  \
+   DST[1] = VALUE[GCOMP];  \
+   DST[2] = VALUE[RCOMP];
 #define FETCH_PIXEL(DST, SRC) \
    DST[RCOMP] = SRC[2];  \
    DST[GCOMP] = SRC[1];  \
@@ -531,10 +535,12 @@ new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
       rb->Base.Width = visual->var.xres;
       rb->Base.Height = visual->var.yres;
 
+      /*
       rb->Base.RedBits = visual->var.red.length;
       rb->Base.GreenBits = visual->var.green.length;
       rb->Base.BlueBits = visual->var.blue.length;
       rb->Base.AlphaBits = visual->var.transp.length;
+      */
 
       rb->Base.InternalFormat = pixelFormat;
    }

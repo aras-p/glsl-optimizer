@@ -65,9 +65,7 @@ extern "C" {
    typedef unsigned __int8    uint8_t;
    typedef __int16            int16_t;
    typedef unsigned __int16   uint16_t;
-#  ifndef __eglplatform_h_
-     typedef __int32            int32_t;
-#  endif
+   typedef __int32            int32_t;
    typedef unsigned __int32   uint32_t;
    typedef __int64            int64_t;
    typedef unsigned __int64   uint64_t;
@@ -200,6 +198,13 @@ extern "C" {
 #  define __builtin_expect(x, y) x
 #endif
 
+#ifdef __GNUC__
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define likely(x) !!(x)
+#define unlikely(x) !!(x)
+#endif
 
 /**
  * The __FUNCTION__ gcc variable is generally only used for debugging.
@@ -218,6 +223,18 @@ extern "C" {
 #   define __FUNCTION__ "<unknown>"
 #  endif
 # endif
+#endif
+#ifndef __func__
+#  if (__STDC_VERSION__ >= 199901L) || \
+      (defined(__SUNPRO_C) && defined(__C99FEATURES__))
+       /* __func__ is part of C99 */
+#  elif defined(_MSC_VER)
+#    if _MSC_VER >= 1300
+#      define __func__ __FUNCTION__
+#    else
+#      define __func__ "<unknown>"
+#    endif
+#  endif
 #endif
 
 
@@ -311,6 +328,11 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #endif
 #endif
 
+#if (__GNUC__ >= 3)
+#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
+#else
+#define PRINTFLIKE(f, a)
+#endif
 
 #ifndef NULL
 #define NULL 0

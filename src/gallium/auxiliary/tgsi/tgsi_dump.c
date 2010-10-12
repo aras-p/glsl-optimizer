@@ -56,7 +56,7 @@ dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
    va_list ap;
    (void)ctx;
    va_start(ap, format);
-   debug_vprintf(format, ap);
+   _debug_vprintf(format, ap);
    va_end(ap);
 }
 
@@ -100,9 +100,10 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "SAMP",
    "ADDR",
    "IMM",
-   "LOOP",
    "PRED",
-   "SV"
+   "SV",
+   "IMMX",
+   "TEMPX"
 };
 
 static const char *interpolate_names[] =
@@ -175,7 +176,11 @@ static const char *primitive_names[] =
    "TRIANGLE_FAN",
    "QUADS",
    "QUAD_STRIP",
-   "POLYGON"
+   "POLYGON",
+   "LINES_ADJACENCY",
+   "LINE_STRIP_ADJACENCY",
+   "TRIANGLES_ADJACENCY",
+   "TRIANGLE_STRIP_ADJACENCY"
 };
 
 static const char *fs_coord_origin_names[] =
@@ -192,29 +197,30 @@ static const char *fs_coord_pixel_center_names[] =
 
 
 static void
-_dump_register_dst(
-   struct dump_ctx *ctx,
-   uint file,
-   int index)
-{
-   ENM( file, file_names );
-
-   CHR( '[' );
-   SID( index );
-   CHR( ']' );
-}
-
-
-static void
 _dump_register_src(
    struct dump_ctx *ctx,
    const struct tgsi_full_src_register *src )
 {
    ENM(src->Register.File, file_names);
    if (src->Register.Dimension) {
-      CHR('[');
-      SID(src->Dimension.Index);
-      CHR(']');
+      if (src->Dimension.Indirect) {
+         CHR( '[' );
+         ENM( src->DimIndirect.File, file_names );
+         CHR( '[' );
+         SID( src->DimIndirect.Index );
+         TXT( "]." );
+         ENM( src->DimIndirect.SwizzleX, swizzle_names );
+         if (src->Dimension.Index != 0) {
+            if (src->Dimension.Index > 0)
+               CHR( '+' );
+            SID( src->Dimension.Index );
+         }
+         CHR( ']' );
+      } else {
+         CHR('[');
+         SID(src->Dimension.Index);
+         CHR(']');
+      }
    }
    if (src->Register.Indirect) {
       CHR( '[' );
@@ -236,30 +242,52 @@ _dump_register_src(
    }
 }
 
-static void
-_dump_register_ind(
-   struct dump_ctx *ctx,
-   uint file,
-   int index,
-   uint ind_file,
-   int ind_index,
-   uint ind_swizzle )
-{
-   ENM( file, file_names );
-   CHR( '[' );
-   ENM( ind_file, file_names );
-   CHR( '[' );
-   SID( ind_index );
-   TXT( "]." );
-   ENM( ind_swizzle, swizzle_names );
-   if (index != 0) {
-      if (index > 0)
-         CHR( '+' );
-      SID( index );
-   }
-   CHR( ']' );
-}
 
+static void
+_dump_register_dst(
+   struct dump_ctx *ctx,
+   const struct tgsi_full_dst_register *dst )
+{
+   ENM(dst->Register.File, file_names);
+   if (dst->Register.Dimension) {
+      if (dst->Dimension.Indirect) {
+         CHR( '[' );
+         ENM( dst->DimIndirect.File, file_names );
+         CHR( '[' );
+         SID( dst->DimIndirect.Index );
+         TXT( "]." );
+         ENM( dst->DimIndirect.SwizzleX, swizzle_names );
+         if (dst->Dimension.Index != 0) {
+            if (dst->Dimension.Index > 0)
+               CHR( '+' );
+            SID( dst->Dimension.Index );
+         }
+         CHR( ']' );
+      } else {
+         CHR('[');
+         SID(dst->Dimension.Index);
+         CHR(']');
+      }
+   }
+   if (dst->Register.Indirect) {
+      CHR( '[' );
+      ENM( dst->Indirect.File, file_names );
+      CHR( '[' );
+      SID( dst->Indirect.Index );
+      TXT( "]." );
+      ENM( dst->Indirect.SwizzleX, swizzle_names );
+      if (dst->Register.Index != 0) {
+         if (dst->Register.Index > 0)
+            CHR( '+' );
+         SID( dst->Register.Index );
+      }
+      CHR( ']' );
+   } else {
+      CHR( '[' );
+      SID( dst->Register.Index );
+      CHR( ']' );
+   }
+}
 static void
 _dump_writemask(
    struct dump_ctx *ctx,
@@ -276,6 +304,39 @@ _dump_writemask(
       if (writemask & TGSI_WRITEMASK_W)
          CHR( 'w' );
    }
+}
+
+static void
+dump_imm_data(struct tgsi_iterate_context *iter,
+              union tgsi_immediate_data *data,
+              unsigned num_tokens,
+              unsigned data_type)
+{
+   struct dump_ctx *ctx = (struct dump_ctx *)iter;
+   unsigned i ;
+
+   TXT( " {" );
+
+   assert( num_tokens <= 4 );
+   for (i = 0; i < num_tokens; i++) {
+      switch (data_type) {
+      case TGSI_IMM_FLOAT32:
+         FLT( data[i].Float );
+         break;
+      case TGSI_IMM_UINT32:
+         UID(data[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         SID(data[i].Int);
+         break;
+      default:
+         assert( 0 );
+      }
+
+      if (i < num_tokens - 1)
+         TXT( ", " );
+   }
+   TXT( "}" );
 }
 
 static boolean
@@ -358,6 +419,43 @@ iter_declaration(
       }
    }
 
+   if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+      unsigned i;
+      char range_indent[4];
+
+      TXT(" {");
+
+      if (decl->Range.Last < 10)
+         range_indent[0] = '\0';
+      else if (decl->Range.Last < 100) {
+         range_indent[0] = ' ';
+         range_indent[1] = '\0';
+      } else if (decl->Range.Last < 1000) {
+         range_indent[0] = ' ';
+         range_indent[1] = ' ';
+         range_indent[2] = '\0';
+      } else {
+         range_indent[0] = ' ';
+         range_indent[1] = ' ';
+         range_indent[2] = ' ';
+         range_indent[3] = '\0';
+      }
+
+      dump_imm_data(iter, decl->ImmediateData.u,
+                    4, TGSI_IMM_FLOAT32);
+      for(i = 1; i <= decl->Range.Last; ++i) {
+         /* indent by strlen of:
+          *   "DCL IMMX[0..1] {" */
+         CHR('\n');
+         TXT( "                " );
+         TXT( range_indent );
+         dump_imm_data(iter, decl->ImmediateData.u + i,
+                       4, TGSI_IMM_FLOAT32);
+      }
+
+      TXT(" }");
+   }
+
    EOL();
 
    return TRUE;
@@ -431,33 +529,11 @@ iter_immediate(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
 
-   uint i;
-
    TXT( "IMM " );
    ENM( imm->Immediate.DataType, immediate_type_names );
 
-   TXT( " { " );
-
-   assert( imm->Immediate.NrTokens <= 4 + 1 );
-   for (i = 0; i < imm->Immediate.NrTokens - 1; i++) {
-      switch (imm->Immediate.DataType) {
-      case TGSI_IMM_FLOAT32:
-         FLT( imm->u[i].Float );
-         break;
-      case TGSI_IMM_UINT32:
-         UID(imm->u[i].Uint);
-         break;
-      case TGSI_IMM_INT32:
-         SID(imm->u[i].Int);
-         break;
-      default:
-         assert( 0 );
-      }
-
-      if (i < imm->Immediate.NrTokens - 2)
-         TXT( ", " );
-   }
-   TXT( " }" );
+   dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
+                 imm->Immediate.DataType);
 
    EOL();
 
@@ -488,12 +564,36 @@ iter_instruction(
 
    INSTID( instno );
    TXT( ": " );
-   
+
    ctx->indent -= info->pre_dedent;
    for(i = 0; (int)i < ctx->indent; ++i)
       TXT( "  " );
    ctx->indent += info->post_indent;
-   
+
+   if (inst->Instruction.Predicate) {
+      CHR( '(' );
+
+      if (inst->Predicate.Negate)
+         CHR( '!' );
+
+      TXT( "PRED[" );
+      SID( inst->Predicate.Index );
+      CHR( ']' );
+
+      if (inst->Predicate.SwizzleX != TGSI_SWIZZLE_X ||
+          inst->Predicate.SwizzleY != TGSI_SWIZZLE_Y ||
+          inst->Predicate.SwizzleZ != TGSI_SWIZZLE_Z ||
+          inst->Predicate.SwizzleW != TGSI_SWIZZLE_W) {
+         CHR( '.' );
+         ENM( inst->Predicate.SwizzleX, swizzle_names );
+         ENM( inst->Predicate.SwizzleY, swizzle_names );
+         ENM( inst->Predicate.SwizzleZ, swizzle_names );
+         ENM( inst->Predicate.SwizzleW, swizzle_names );
+      }
+
+      TXT( ") " );
+   }
+
    TXT( info->mnemonic );
 
    switch (inst->Instruction.Saturate) {
@@ -516,21 +616,7 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      if (dst->Register.Indirect) {
-         _dump_register_ind(
-            ctx,
-            dst->Register.File,
-            dst->Register.Index,
-            dst->Indirect.File,
-            dst->Indirect.Index,
-            dst->Indirect.SwizzleX );
-      }
-      else {
-         _dump_register_dst(
-            ctx,
-            dst->Register.File,
-            dst->Register.Index );
-      }
+      _dump_register_dst( ctx, dst );
       _dump_writemask( ctx, dst->Register.WriteMask );
 
       first_reg = FALSE;

@@ -48,6 +48,53 @@ nv50_colormask(unsigned mask)
 	return cmask;
 }
 
+static INLINE uint32_t
+nv50_blend_func(unsigned factor)
+{
+	switch (factor) {
+	case PIPE_BLENDFACTOR_ZERO:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ZERO;
+	case PIPE_BLENDFACTOR_ONE:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE;
+	case PIPE_BLENDFACTOR_SRC_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_COLOR;
+	case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_DST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_DST_ALPHA;
+	case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_DST_ALPHA;
+	case PIPE_BLENDFACTOR_DST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_DST_COLOR;
+	case PIPE_BLENDFACTOR_INV_DST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_DST_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC_ALPHA_SATURATE;
+	case PIPE_BLENDFACTOR_CONST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_CONST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_SRC1_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC1_COLOR;
+	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC1_COLOR;
+	case PIPE_BLENDFACTOR_SRC1_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_SRC1_ALPHA;
+	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ONE_MINUS_SRC1_ALPHA;
+	default:
+		return NV50TCL_BLEND_FUNC_SRC_RGB_ZERO;
+	}
+}
+
 static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
@@ -80,12 +127,12 @@ nv50_blend_state_create(struct pipe_context *pipe,
 	if (blend_enabled) {
 		so_method(so, tesla, NV50TCL_BLEND_EQUATION_RGB, 5);
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_src_factor));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_dst_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].rgb_src_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].rgb_dst_factor));
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_src_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].alpha_src_factor));
 		so_method(so, tesla, NV50TCL_BLEND_FUNC_DST_ALPHA, 1);
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_dst_factor));
+		so_data  (so, nv50_blend_func(cso->rt[0].alpha_dst_factor));
 	}
 
 	if (cso->logicop_enable == 0 ) {
@@ -345,7 +392,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
 
 	/*XXX: ignored
-	 * 	- light_twosize
+	 * 	- light_twoside
 	 * 	- point_smooth
 	 * 	- multisample
 	 * 	- point_sprite / sprite_coord_mode
@@ -385,72 +432,44 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_data  (so, cso->point_quad_rasterization ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_POLYGON_MODE_FRONT, 3);
-	if (cso->front_winding == PIPE_WINDING_CCW) {
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
-	} else {
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
-	}
+        so_data(so, nvgl_polygon_mode(cso->fill_front));
+        so_data(so, nvgl_polygon_mode(cso->fill_back));
 	so_data(so, cso->poly_smooth ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_CULL_FACE_ENABLE, 3);
-	so_data  (so, cso->cull_mode != PIPE_WINDING_NONE);
-	if (cso->front_winding == PIPE_WINDING_CCW) {
+	so_data  (so, cso->cull_face != PIPE_FACE_NONE);
+	if (cso->front_ccw) {
 		so_data(so, NV50TCL_FRONT_FACE_CCW);
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			so_data(so, NV50TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_CW:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_BOTH:
-			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		}
-	} else {
+        }
+        else {
 		so_data(so, NV50TCL_FRONT_FACE_CW);
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_CW:
-			so_data(so, NV50TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_BOTH:
-			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		}
+        }
+	switch (cso->cull_face) {
+	case PIPE_FACE_FRONT:
+		so_data(so, NV50TCL_CULL_FACE_FRONT);
+		break;
+	case PIPE_FACE_BACK:
+		so_data(so, NV50TCL_CULL_FACE_BACK);
+		break;
+	case PIPE_FACE_FRONT_AND_BACK:
+		so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
+		break;
+	default:
+		so_data(so, NV50TCL_CULL_FACE_BACK);
+		break;
 	}
 
 	so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
+        so_data(so, cso->offset_point);
+        so_data(so, cso->offset_line);
+        so_data(so, cso->offset_tri);
 
-	if (cso->offset_cw || cso->offset_ccw) {
+	if (cso->offset_point ||
+            cso->offset_line ||
+            cso->offset_tri) {
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_FACTOR, 1);
 		so_data  (so, fui(cso->offset_scale));
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_UNITS, 1);
@@ -574,7 +593,6 @@ nv50_vp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_VERTEX;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -606,7 +624,6 @@ nv50_fp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_FRAGMENT;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -638,7 +655,6 @@ nv50_gp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_GEOMETRY;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -647,7 +663,7 @@ nv50_gp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
-	nv50->fragprog = hwcso;
+	nv50->geomprog = hwcso;
 	nv50->dirty |= NV50_NEW_GEOMPROG;
 }
 
@@ -685,6 +701,16 @@ nv50_set_stencil_ref(struct pipe_context *pipe,
 static void
 nv50_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->clip.depth_clamp = clip->depth_clamp;
+	nv50->dirty |= NV50_NEW_CLIP;
+}
+
+static void
+nv50_set_sample_mask(struct pipe_context *pipe,
+		     unsigned sample_mask)
 {
 }
 
@@ -760,6 +786,20 @@ nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
+static void
+nv50_set_index_buffer(struct pipe_context *pipe,
+		      const struct pipe_index_buffer *ib)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (ib)
+		memcpy(&nv50->idxbuf, ib, sizeof(nv50->idxbuf));
+	else
+		memset(&nv50->idxbuf, 0, sizeof(nv50->idxbuf));
+
+	/* TODO make this more like a state */
+}
+
 static void *
 nv50_vtxelts_state_create(struct pipe_context *pipe,
 			  unsigned num_elements,
@@ -833,6 +873,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.set_blend_color = nv50_set_blend_color;
         nv50->pipe.set_stencil_ref = nv50_set_stencil_ref;
 	nv50->pipe.set_clip_state = nv50_set_clip_state;
+	nv50->pipe.set_sample_mask = nv50_set_sample_mask;
 	nv50->pipe.set_constant_buffer = nv50_set_constant_buffer;
 	nv50->pipe.set_framebuffer_state = nv50_set_framebuffer_state;
 	nv50->pipe.set_polygon_stipple = nv50_set_polygon_stipple;
@@ -844,5 +885,6 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.bind_vertex_elements_state = nv50_vtxelts_state_bind;
 
 	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
+	nv50->pipe.set_index_buffer = nv50_set_index_buffer;
 }
 

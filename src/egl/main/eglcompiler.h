@@ -12,9 +12,7 @@
    typedef unsigned __int8    uint8_t;
    typedef __int16            int16_t;
    typedef unsigned __int16   uint16_t;
-#  ifndef __eglplatform_h_
-     typedef __int32            int32_t;
-#  endif
+   typedef __int32            int32_t;
    typedef unsigned __int32   uint32_t;
    typedef __int64            int64_t;
    typedef unsigned __int64   uint64_t;
@@ -64,10 +62,14 @@
 /**
  * Function visibility
  */
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#  define PUBLIC __attribute__((visibility("default")))
-#else
-#  define PUBLIC
+#ifndef PUBLIC
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#    define PUBLIC __attribute__((visibility("default")))
+#  elif defined(_MSC_VER)
+#    define PUBLIC __declspec(dllexport)
+#  else
+#    define PUBLIC
+#  endif
 #endif
 
 /**

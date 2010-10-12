@@ -30,6 +30,13 @@
 #define ST_CB_BITMAP_H
 
 
+#include "main/compiler.h"
+
+struct dd_function_table;
+struct st_context;
+
+#if FEATURE_drawpix
+
 extern void
 st_init_bitmap_functions(struct dd_function_table *functions);
 
@@ -48,5 +55,33 @@ st_flush_bitmap_cache(struct st_context *st);
 extern void
 st_flush_bitmap(struct st_context *st);
 
+#else
+
+static INLINE void
+st_init_bitmap_functions(struct dd_function_table *functions)
+{
+}
+
+static INLINE void
+st_init_bitmap(struct st_context *st)
+{
+}
+
+static INLINE void
+st_destroy_bitmap(struct st_context *st)
+{
+}
+
+static INLINE void
+st_flush_bitmap_cache(struct st_context *st)
+{
+}
+
+static INLINE void
+st_flush_bitmap(struct st_context *st)
+{
+}
+
+#endif /* FEATURE_drawpix */
 
 #endif /* ST_CB_BITMAP_H */

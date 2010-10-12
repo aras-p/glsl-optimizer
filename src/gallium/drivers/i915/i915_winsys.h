@@ -81,6 +81,8 @@ struct i915_winsys_batchbuffer {
 
 struct i915_winsys {
 
+   unsigned pci_id; /**< PCI ID for the device */
+
    /**
     * Batchbuffer functions.
     */
@@ -219,12 +221,5 @@ struct i915_winsys {
     */
    void (*destroy)(struct i915_winsys *iws);
 };
-
-
-/**
- * Create i915 pipe_screen.
- */
-struct pipe_screen *i915_create_screen(struct i915_winsys *iws, unsigned pci_id);
-
 
 #endif

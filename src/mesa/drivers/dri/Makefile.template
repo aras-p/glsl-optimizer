@@ -17,6 +17,7 @@ COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
 INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
 OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(CXX_SOURCES:.cpp=.o) \
 	  $(ASM_SOURCES:.S=.o) 
 
 
@@ -26,16 +27,22 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \
 	$(LIBDRM_CFLAGS)
 
+CFLAGS += $(API_DEFINES)
+CXXFLAGS += $(API_DEFINES)
 
 ##### RULES #####
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.cpp.o:
+	$(CC) -c $(INCLUDES) $(CXXFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
@@ -52,9 +59,9 @@ lib: symlinks subdirs depend
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
-	$(MKLIB) -o $@.tmp -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
-	$(CC) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS)
+	$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS)
 	@rm -f $@.test
 	mv -f $@.tmp $@
 

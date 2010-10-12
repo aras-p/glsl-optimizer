@@ -117,6 +117,17 @@ tgsi_parse_token(
          next_token( ctx, &decl->Semantic );
       }
 
+      if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+         unsigned i, j;
+         decl->ImmediateData.u = (union tgsi_immediate_data*)
+                                 &ctx->Tokens[ctx->Position];
+         for (i = 0; i <= decl->Range.Last; ++i) {
+            for (j = 0; j < 4; ++j) {
+               ctx->Position++;
+            }
+         }
+      }
+
       break;
    }
 
@@ -181,11 +192,6 @@ tgsi_parse_token(
 
          next_token( ctx, &inst->Dst[i].Register );
 
-         /*
-          * No support for indirect or multi-dimensional addressing.
-          */
-         assert( !inst->Dst[i].Register.Dimension );
-
          if( inst->Dst[i].Register.Indirect ) {
             next_token( ctx, &inst->Dst[i].Indirect );
 
@@ -194,6 +200,24 @@ tgsi_parse_token(
              */
             assert( !inst->Dst[i].Indirect.Dimension );
             assert( !inst->Dst[i].Indirect.Indirect );
+         }
+         if( inst->Dst[i].Register.Dimension ) {
+            next_token( ctx, &inst->Dst[i].Dimension );
+
+            /*
+             * No support for multi-dimensional addressing.
+             */
+            assert( !inst->Dst[i].Dimension.Dimension );
+
+            if( inst->Dst[i].Dimension.Indirect ) {
+               next_token( ctx, &inst->Dst[i].DimIndirect );
+
+               /*
+                * No support for indirect or multi-dimensional addressing.
+                */
+               assert( !inst->Dst[i].Indirect.Indirect );
+               assert( !inst->Dst[i].Indirect.Dimension );
+            }
          }
       }
 
@@ -258,17 +282,6 @@ tgsi_parse_token(
 }
 
 
-unsigned
-tgsi_num_tokens(const struct tgsi_token *tokens)
-{
-   struct tgsi_parse_context ctx;
-   if (tgsi_parse_init(&ctx, tokens) == TGSI_PARSE_OK) {
-      unsigned len = (ctx.FullHeader.Header.HeaderSize +
-                      ctx.FullHeader.Header.BodySize);
-      return len;
-   }
-   return 0;
-}
 
 
 /**
@@ -294,4 +307,20 @@ tgsi_alloc_tokens(unsigned num_tokens)
 {
    unsigned bytes = num_tokens * sizeof(struct tgsi_token);
    return (struct tgsi_token *) MALLOC(bytes);
+}
+
+
+void
+tgsi_dump_tokens(const struct tgsi_token *tokens)
+{
+   const unsigned *dwords = (const unsigned *)tokens;
+   int nr = tgsi_num_tokens(tokens);
+   int i;
+   
+   assert(sizeof(*tokens) == sizeof(unsigned));
+
+   debug_printf("const unsigned tokens[%d] = {\n", nr);
+   for (i = 0; i < nr; i++)
+      debug_printf("0x%08x,\n", dwords[i]);
+   debug_printf("};\n");
 }

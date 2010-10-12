@@ -373,8 +373,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline->fs->sampler_unit = transform.freeSampler;
 
-   aaline->fs->aaline_fs
-      = aaline->driver_create_fs_state(pipe, &aaline_fs);
+   aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
    if (aaline->fs->aaline_fs == NULL)
       goto fail;
 
@@ -425,7 +424,8 @@ aaline_create_texture(struct aaline_stage *aaline)
 
    /* Fill in mipmap images.
     * Basically each level is solid opaque, except for the outermost
-    * texels which are zero.  Special case the 1x1 and 2x2 levels.
+    * texels which are zero.  Special case the 1x1 and 2x2 levels
+    * (though, those levels shouldn't be used - see the max_lod setting).
     */
    for (level = 0; level <= MAX_TEXTURE_LEVEL; level++) {
       struct pipe_transfer *transfer;
@@ -497,7 +497,8 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.normalized_coords = 1;
    sampler.min_lod = 0.0f;
-   sampler.max_lod = MAX_TEXTURE_LEVEL;
+   /* avoid using the 1x1 and 2x2 mipmap levels */
+   sampler.max_lod = MAX_TEXTURE_LEVEL - 2;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
    if (aaline->sampler_cso == NULL)
@@ -669,8 +670,8 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
 
    assert(draw->rasterizer->line_smooth);
 
-   if (draw->rasterizer->line_width <= 3.0)
-      aaline->half_line_width = 1.5f;
+   if (draw->rasterizer->line_width <= 2.2)
+      aaline->half_line_width = 1.1f;
    else
       aaline->half_line_width = 0.5f * draw->rasterizer->line_width;
 
@@ -687,10 +688,9 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    aaline->tex_slot = draw_current_shader_outputs(draw);
    aaline->pos_slot = draw_current_shader_position_output(draw);;
 
-   /* advertise the extra post-transformed vertex attribute */
-   draw->extra_shader_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_shader_outputs.semantic_index = aaline->fs->generic_attrib;
-   draw->extra_shader_outputs.slot = aaline->tex_slot;
+   /* allocate the extra post-transformed vertex attribute */
+   (void) draw_alloc_extra_vertex_attrib(draw, TGSI_SEMANTIC_GENERIC,
+                                         aaline->fs->generic_attrib);
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
@@ -743,7 +743,7 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
 
    draw->suspend_flushing = FALSE;
 
-   draw->extra_shader_outputs.slot = 0;
+   draw_remove_extra_vertex_attribs(draw);
 }
 
 
@@ -788,9 +788,6 @@ draw_aaline_stage(struct draw_context *draw)
    if (aaline == NULL)
       return NULL;
 
-   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
-      goto fail;
-
    aaline->stage.draw = draw;
    aaline->stage.name = "aaline";
    aaline->stage.next = NULL;
@@ -801,11 +798,14 @@ draw_aaline_stage(struct draw_context *draw)
    aaline->stage.reset_stipple_counter = aaline_reset_stipple_counter;
    aaline->stage.destroy = aaline_destroy;
 
+   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
+      goto fail;
+
    return aaline;
 
  fail:
    if (aaline)
-      aaline_destroy(&aaline->stage);
+      aaline->stage.destroy(&aaline->stage);
 
    return NULL;
 }

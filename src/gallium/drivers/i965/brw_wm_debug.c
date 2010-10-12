@@ -101,16 +101,16 @@ void brw_wm_print_value( struct brw_wm_compile *c,
       debug_printf("undef");
    else if( value - c->vreg >= 0 &&
 	    value - c->vreg < BRW_WM_MAX_VREG)
-      debug_printf("r%d", value - c->vreg);
+      debug_printf("r%ld", (long) (value - c->vreg));
    else if (value - c->creg >= 0 &&
 	    value - c->creg < BRW_WM_MAX_PARAM)
-      debug_printf("c%d", value - c->creg);
+      debug_printf("c%ld", (long) (value - c->creg));
    else if (value - c->payload.input_interp >= 0 &&
 	    value - c->payload.input_interp < PIPE_MAX_SHADER_INPUTS)
-      debug_printf("i%d", value - c->payload.input_interp);
+      debug_printf("i%ld", (long) (value - c->payload.input_interp));
    else if (value - c->payload.depth >= 0 &&
 	    value - c->payload.depth < PIPE_MAX_SHADER_INPUTS)
-      debug_printf("d%d", value - c->payload.depth);
+      debug_printf("d%ld", (long) (value - c->payload.depth));
    else 
       debug_printf("?");
 }
@@ -202,7 +202,8 @@ static const char *file_strings[TGSI_FILE_COUNT+1] = {
    "SAMPLER",
    "ADDR",
    "IMM",
-   "LOOP",
+   "PRED",
+   "SV",
    "PAYLOAD"
 };
 

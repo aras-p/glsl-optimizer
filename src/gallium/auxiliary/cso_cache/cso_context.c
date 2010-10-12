@@ -36,6 +36,7 @@
   */
 
 #include "pipe/p_state.h"
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -98,12 +99,9 @@ struct cso_context {
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
+   unsigned sample_mask;
    struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
-
-
-static void
-free_framebuffer_state(struct pipe_framebuffer_state *fb);
 
 
 static boolean delete_blend_state(struct cso_context *ctx, void *state)
@@ -291,6 +289,9 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
+      ctx->pipe->set_fragment_sampler_views(ctx->pipe, 0, NULL);
+      if (ctx->pipe->set_vertex_sampler_views)
+         ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
@@ -303,8 +304,8 @@ void cso_release_all( struct cso_context *ctx )
       pipe_sampler_view_reference(&ctx->vertex_sampler_views_saved[i], NULL);
    }
 
-   free_framebuffer_state(&ctx->fb);
-   free_framebuffer_state(&ctx->fb_saved);
+   util_unreference_framebuffer_state(&ctx->fb);
+   util_unreference_framebuffer_state(&ctx->fb_saved);
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -313,10 +314,13 @@ void cso_release_all( struct cso_context *ctx )
 }
 
 
+/**
+ * Free the CSO context.  NOTE: the state tracker should have previously called
+ * cso_release_all().
+ */
 void cso_destroy_context( struct cso_context *ctx )
 {
    if (ctx) {
-      /*cso_release_all( ctx );*/
       FREE( ctx );
    }
 }
@@ -893,42 +897,11 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 }
 
 
-/**
- * Copy framebuffer state from src to dst with refcounting of surfaces.
- */
-static void
-copy_framebuffer_state(struct pipe_framebuffer_state *dst,
-                       const struct pipe_framebuffer_state *src)
-{
-   uint i;
-
-   dst->width = src->width;
-   dst->height = src->height;
-   dst->nr_cbufs = src->nr_cbufs;
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
-   }
-   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
-}
-
-
-static void
-free_framebuffer_state(struct pipe_framebuffer_state *fb)
-{
-   uint i;
-
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&fb->cbufs[i], NULL);
-   }
-   pipe_surface_reference(&fb->zsbuf, NULL);
-}
-
-
 enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
                                     const struct pipe_framebuffer_state *fb)
 {
    if (memcmp(&ctx->fb, fb, sizeof(*fb)) != 0) {
-      copy_framebuffer_state(&ctx->fb, fb);
+      util_copy_framebuffer_state(&ctx->fb, fb);
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
    return PIPE_OK;
@@ -936,15 +909,15 @@ enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
 
 void cso_save_framebuffer(struct cso_context *ctx)
 {
-   copy_framebuffer_state(&ctx->fb_saved, &ctx->fb);
+   util_copy_framebuffer_state(&ctx->fb_saved, &ctx->fb);
 }
 
 void cso_restore_framebuffer(struct cso_context *ctx)
 {
    if (memcmp(&ctx->fb, &ctx->fb_saved, sizeof(ctx->fb))) {
-      copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
+      util_copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
       ctx->pipe->set_framebuffer_state(ctx->pipe, &ctx->fb);
-      free_framebuffer_state(&ctx->fb_saved);
+      util_unreference_framebuffer_state(&ctx->fb_saved);
    }
 }
 
@@ -980,6 +953,16 @@ enum pipe_error cso_set_blend_color(struct cso_context *ctx,
    if (memcmp(&ctx->blend_color, bc, sizeof(ctx->blend_color))) {
       ctx->blend_color = *bc;
       ctx->pipe->set_blend_color(ctx->pipe, bc);
+   }
+   return PIPE_OK;
+}
+
+enum pipe_error cso_set_sample_mask(struct cso_context *ctx,
+                                    unsigned sample_mask)
+{
+   if (ctx->sample_mask != sample_mask) {
+      ctx->sample_mask = sample_mask;
+      ctx->pipe->set_sample_mask(ctx->pipe, sample_mask);
    }
    return PIPE_OK;
 }
@@ -1049,6 +1032,7 @@ static INLINE void
 clip_state_cpy(struct pipe_clip_state *dst,
                const struct pipe_clip_state *src)
 {
+   dst->depth_clamp = src->depth_clamp;
    dst->nr = src->nr;
    if (src->nr) {
       memcpy(dst->ucp, src->ucp, src->nr * sizeof(src->ucp[0]));
@@ -1059,6 +1043,9 @@ static INLINE int
 clip_state_cmp(const struct pipe_clip_state *a,
                const struct pipe_clip_state *b)
 {
+   if (a->depth_clamp != b->depth_clamp) {
+      return 1;
+   }
    if (a->nr != b->nr) {
       return 1;
    }

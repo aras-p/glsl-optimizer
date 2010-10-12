@@ -39,7 +39,6 @@
 #include <dlfcn.h>
 #include <stdarg.h>
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include "dri_common.h"
 
 #ifndef RTLD_NOW
@@ -159,14 +158,24 @@ driOpenDriver(const char *driverName)
    return handle;
 }
 
+static GLboolean
+__driGetMSCRate(__DRIdrawable *draw,
+		int32_t * numerator, int32_t * denominator,
+		void *loaderPrivate)
+{
+   __GLXDRIdrawable *glxDraw = loaderPrivate;
+
+   return __glxGetMscRate(glxDraw, numerator, denominator);
+}
+
 _X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension = {
    {__DRI_SYSTEM_TIME, __DRI_SYSTEM_TIME_VERSION},
    __glXGetUST,
-   __driGetMscRateOML
+   __driGetMSCRate
 };
 
 #define __ATTRIB(attrib, field) \
-    { attrib, offsetof(__GLcontextModes, field) }
+    { attrib, offsetof(struct glx_config, field) }
 
 static const struct
 {
@@ -215,10 +224,8 @@ __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
                      bindToMipmapTexture),
       __ATTRIB(__DRI_ATTRIB_YINVERTED, yInverted),};
 
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
 static int
-scalarEqual(__GLcontextModes * mode, unsigned int attrib, unsigned int value)
+scalarEqual(struct glx_config *mode, unsigned int attrib, unsigned int value)
 {
    unsigned int glxValue;
    int i;
@@ -233,8 +240,8 @@ scalarEqual(__GLcontextModes * mode, unsigned int attrib, unsigned int value)
 }
 
 static int
-driConfigEqual(const __DRIcoreExtension * core,
-               __GLcontextModes * modes, const __DRIconfig * driConfig)
+driConfigEqual(const __DRIcoreExtension *core,
+               struct glx_config *config, const __DRIconfig *driConfig)
 {
    unsigned int attrib, value, glxValue;
    int i;
@@ -250,7 +257,7 @@ driConfigEqual(const __DRIcoreExtension * core,
          else if (value & __DRI_ATTRIB_COLOR_INDEX_BIT) {
             glxValue |= GLX_COLOR_INDEX_BIT;
          }
-         if (glxValue != modes->renderType)
+         if (glxValue != config->renderType)
             return GL_FALSE;
          break;
 
@@ -261,7 +268,7 @@ driConfigEqual(const __DRIcoreExtension * core,
             glxValue = GLX_SLOW_CONFIG;
          else
             glxValue = GLX_NONE;
-         if (glxValue != modes->visualRating)
+         if (glxValue != config->visualRating)
             return GL_FALSE;
          break;
 
@@ -273,13 +280,13 @@ driConfigEqual(const __DRIcoreExtension * core,
             glxValue |= GLX_TEXTURE_2D_BIT_EXT;
          if (value & __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT)
             glxValue |= GLX_TEXTURE_RECTANGLE_BIT_EXT;
-         if (modes->bindToTextureTargets != GLX_DONT_CARE &&
-             glxValue != modes->bindToTextureTargets)
+         if (config->bindToTextureTargets != GLX_DONT_CARE &&
+             glxValue != config->bindToTextureTargets)
             return GL_FALSE;
          break;
 
       default:
-         if (!scalarEqual(modes, attrib, value))
+         if (!scalarEqual(config, attrib, value))
             return GL_FALSE;
       }
    }
@@ -287,41 +294,41 @@ driConfigEqual(const __DRIcoreExtension * core,
    return GL_TRUE;
 }
 
-static __GLcontextModes *
+static struct glx_config *
 createDriMode(const __DRIcoreExtension * core,
-              __GLcontextModes * modes, const __DRIconfig ** driConfigs)
+	      struct glx_config *config, const __DRIconfig **driConfigs)
 {
-   __GLXDRIconfigPrivate *config;
+   __GLXDRIconfigPrivate *driConfig;
    int i;
 
    for (i = 0; driConfigs[i]; i++) {
-      if (driConfigEqual(core, modes, driConfigs[i]))
+      if (driConfigEqual(core, config, driConfigs[i]))
          break;
    }
 
    if (driConfigs[i] == NULL)
       return NULL;
 
-   config = Xmalloc(sizeof *config);
-   if (config == NULL)
+   driConfig = Xmalloc(sizeof *driConfig);
+   if (driConfig == NULL)
       return NULL;
 
-   config->modes = *modes;
-   config->driConfig = driConfigs[i];
+   driConfig->base = *config;
+   driConfig->driConfig = driConfigs[i];
 
-   return &config->modes;
+   return &driConfig->base;
 }
 
-_X_HIDDEN __GLcontextModes *
+_X_HIDDEN struct glx_config *
 driConvertConfigs(const __DRIcoreExtension * core,
-                  __GLcontextModes * modes, const __DRIconfig ** configs)
+                  struct glx_config *configs, const __DRIconfig **driConfigs)
 {
-   __GLcontextModes head, *tail, *m;
+   struct glx_config head, *tail, *m;
 
    tail = &head;
    head.next = NULL;
-   for (m = modes; m; m = m->next) {
-      tail->next = createDriMode(core, m, configs);
+   for (m = configs; m; m = m->next) {
+      tail->next = createDriMode(core, m, driConfigs);
       if (tail->next == NULL) {
          /* no matching dri config for m */
          continue;
@@ -331,124 +338,72 @@ driConvertConfigs(const __DRIcoreExtension * core,
       tail = tail->next;
    }
 
-   _gl_context_modes_destroy(modes);
+   glx_config_destroy_list(configs);
 
    return head.next;
 }
 
-/* Bind DRI1 specific extensions */
 _X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs *psc)
+driDestroyConfigs(const __DRIconfig **configs)
 {
-   const __DRIextension **extensions;
    int i;
 
-   extensions = psc->core->getExtensions(psc->__driScreen);
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_SWAP_CONTROL
-      /* No DRI2 support for swap_control at the moment, since SwapBuffers
-       * is done by the X server */
-      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	 psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-      }
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-      if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-         psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      }
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-      /* No driver supports this at this time and the extension is
-       * not defined in dri_interface.h.  Will enable
-       * GLX_OML_sync_control if implemented. */
-#endif
-
-      /* Ignore unknown extensions */
-   }
+   for (i = 0; configs[i]; i++)
+      free((__DRIconfig *) configs[i]);
+   free(configs);
 }
 
-/* Bind DRI2 specific extensions */
-_X_HIDDEN void
-dri2BindExtensions(__GLXscreenConfigs *psc)
+_X_HIDDEN __GLXDRIdrawable *
+driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
 {
-   const __DRIextension **extensions;
-   int i;
+   struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
+   __GLXDRIdrawable *pdraw;
+   struct glx_screen *psc;
 
-   extensions = psc->core->getExtensions(psc->__driScreen);
+   if (priv == NULL)
+      return NULL;
 
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_TEX_BUFFER
-      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
-	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
-      }
-#endif
+   psc = priv->screens[gc->screen];
+   if (priv->drawHash == NULL)
+      return NULL;
 
-      __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-      __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
+   if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0)
+      return pdraw;
 
-      /* FIXME: if DRI2 version supports it... */
-      __glXEnableDirectExtension(psc, "INTEL_swap_event");
-
-#ifdef __DRI2_FLUSH
-      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
-	 psc->f = (__DRI2flushExtension *) extensions[i];
-	 /* internal driver extension, no GL extension exposed */
-      }
-#endif
-
-#ifdef __DRI2_CONFIG_QUERY
-      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
-	 psc->config = (__DRI2configQueryExtension *) extensions[i];
-#endif
+   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
+                                          glxDrawable, gc->config);
+   if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
+      (*pdraw->destroyDrawable) (pdraw);
+      return NULL;
    }
+
+   return pdraw;
 }
 
-/* Bind extensions common to DRI1 and DRI2 */
 _X_HIDDEN void
-driBindCommonExtensions(__GLXscreenConfigs *psc)
+driReleaseDrawables(struct glx_context *gc)
 {
-   const __DRIextension **extensions;
-   int i;
+   struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
+   __GLXDRIdrawable *pdraw;
 
-   extensions = psc->core->getExtensions(psc->__driScreen);
+   if (priv == NULL)
+      return;
 
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	 psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
+   if (__glxHashLookup(priv->drawHash,
+		       gc->currentDrawable, (void *) &pdraw) == 0) {
+      if (pdraw->drawable == pdraw->xDrawable) {
+	 (*pdraw->destroyDrawable)(pdraw);
+	 __glxHashDelete(priv->drawHash, gc->currentDrawable);
       }
-#endif
+   }
 
-#ifdef __DRI_ALLOCATE
-      if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	 psc->allocate = (__DRIallocateExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
+   if (gc->currentDrawable != gc->currentReadable &&
+       __glxHashLookup(priv->drawHash,
+		       gc->currentReadable, (void *) &pdraw) == 0) {
+      if (pdraw->drawable == pdraw->xDrawable) {
+	 (*pdraw->destroyDrawable)(pdraw);
+	 __glxHashDelete(priv->drawHash, gc->currentReadable);
       }
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-      if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	 psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
-      }
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	 __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
-      }
-#endif
-
-      /* Ignore unknown extensions */
    }
 }
 

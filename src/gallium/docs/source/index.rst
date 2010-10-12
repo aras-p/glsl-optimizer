@@ -12,8 +12,10 @@ Contents:
    :maxdepth: 2
 
    intro
+   debugging
    tgsi
    screen
+   resources
    context
    cso
    distro

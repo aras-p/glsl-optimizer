@@ -35,13 +35,9 @@
 #define ST_PROGRAM_H
 
 #include "main/mtypes.h"
-#include "shader/program.h"
-#include "pipe/p_shader_tokens.h"
-
-
-struct cso_fragment_shader;
-struct cso_vertex_shader;
-struct translated_vertex_program;
+#include "program/program.h"
+#include "pipe/p_state.h"
+#include "st_context.h"
 
 
 /**
@@ -99,8 +95,6 @@ struct st_vp_varient
 };
 
 
-
-
 /**
  * Derived from Mesa gl_fragment_program:
  */
@@ -126,6 +120,33 @@ struct st_vertex_program
    struct st_vp_varient *varients;
 };
 
+/**
+ * Derived from Mesa gl_geometry_program:
+ */
+struct st_geometry_program
+{
+   struct gl_geometry_program Base;  /**< The Mesa geometry program */
+   GLuint serialNo;
+
+   /** map GP input back to VP output */
+   GLuint input_map[PIPE_MAX_SHADER_INPUTS];
+
+   /** maps a Mesa GEOM_ATTRIB_x to a packed TGSI input index */
+   GLuint input_to_index[GEOM_ATTRIB_MAX];
+   /** maps a TGSI input index back to a Mesa GEOM_ATTRIB_x */
+   GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
+
+   GLuint num_inputs;
+
+   GLuint input_to_slot[GEOM_ATTRIB_MAX];  /**< Maps GEOM_ATTRIB_x to slot */
+   GLuint num_input_slots;
+
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+
+   struct pipe_shader_state tgsi;
+   void *driver_shader;
+};
 
 static INLINE struct st_fragment_program *
 st_fragment_program( struct gl_fragment_program *fp )
@@ -140,11 +161,26 @@ st_vertex_program( struct gl_vertex_program *vp )
    return (struct st_vertex_program *)vp;
 }
 
+static INLINE struct st_geometry_program *
+st_geometry_program( struct gl_geometry_program *vp )
+{
+   return (struct st_geometry_program *)vp;
+}
 
 static INLINE void
 st_reference_vertprog(struct st_context *st,
                       struct st_vertex_program **ptr,
                       struct st_vertex_program *prog)
+{
+   _mesa_reference_program(st->ctx,
+                           (struct gl_program **) ptr,
+                           (struct gl_program *) prog);
+}
+
+static INLINE void
+st_reference_geomprog(struct st_context *st,
+                      struct st_geometry_program **ptr,
+                      struct st_geometry_program *prog)
 {
    _mesa_reference_program(st->ctx,
                            (struct gl_program **) ptr,
@@ -166,6 +202,9 @@ extern void
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *fp);
 
+extern void
+st_translate_geometry_program(struct st_context *st,
+                              struct st_geometry_program *stgp);
 
 /* Called after program string change, discard all previous
  * compilation results.

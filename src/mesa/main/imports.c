@@ -243,41 +243,6 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
 /** \name Math */
 /*@{*/
 
-/** Wrapper around sin() */
-double
-_mesa_sin(double a)
-{
-   return sin(a);
-}
-
-/** Single precision wrapper around sin() */
-float
-_mesa_sinf(float a)
-{
-   return (float) sin((double) a);
-}
-
-/** Wrapper around cos() */
-double
-_mesa_cos(double a)
-{
-   return cos(a);
-}
-
-/** Single precision wrapper around asin() */
-float
-_mesa_asinf(float x)
-{
-   return (float) asin((double) x);
-}
-
-/** Single precision wrapper around atan() */
-float
-_mesa_atanf(float x)
-{
-   return (float) atan((double) x);
-}
-
 /** Wrapper around sqrt() */
 double
 _mesa_sqrtd(double x)
@@ -485,15 +450,6 @@ _mesa_inv_sqrtf(float n)
         return (float) (1.0 / sqrt(n));
 #endif
 }
-
-
-/** Wrapper around pow() */
-double
-_mesa_pow(double x, double y)
-{
-   return pow(x, y);
-}
-
 
 /**
  * Find the first bit set in a word.
@@ -800,7 +756,7 @@ _mesa_strdup( const char *s )
 float
 _mesa_strtof( const char *s, char **end )
 {
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && !defined(__CYGWIN__) && !defined(__FreeBSD__)
    static locale_t loc = NULL;
    if (!loc) {
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);

@@ -40,6 +40,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "util/u_memory.h"
+#include "util/u_string.h"
 #include "intel_decode.h"
 
 /*#include "intel_chipset.h"*/
@@ -115,8 +117,7 @@ decode_mi(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
     };
 
 
-    for (opcode = 0; opcode < sizeof(opcodes_mi) / sizeof(opcodes_mi[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_mi); opcode++) {
 	if ((data[0] & 0x1f800000) >> 23 == opcodes_mi[opcode].opcode) {
 	    unsigned int len = 1, i;
 
@@ -274,8 +275,7 @@ decode_2d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_2d) / sizeof(opcodes_2d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_2d); opcode++) {
 	if ((data[0] & 0x1fc00000) >> 22 == opcodes_2d[opcode].opcode) {
 	    unsigned int i;
 
@@ -478,7 +478,7 @@ i915_get_instruction_src0(const uint32_t *data, int i, char *srcname)
     char swizzle[100];
 
     i915_get_instruction_src_name((a0 >> 7) & 0x7, src_nr, srcname);
-    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    util_snprintf(swizzle, sizeof(swizzle), ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
     if (strcmp(swizzle, ".xyzw") != 0)
 	strcat(srcname, swizzle);
 }
@@ -496,7 +496,7 @@ i915_get_instruction_src1(const uint32_t *data, int i, char *srcname)
     char swizzle[100];
 
     i915_get_instruction_src_name((a1 >> 13) & 0x7, src_nr, srcname);
-    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    util_snprintf(swizzle, sizeof(swizzle), ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
     if (strcmp(swizzle, ".xyzw") != 0)
 	strcat(srcname, swizzle);
 }
@@ -513,7 +513,7 @@ i915_get_instruction_src2(const uint32_t *data, int i, char *srcname)
     char swizzle[100];
 
     i915_get_instruction_src_name((a2 >> 21) & 0x7, src_nr, srcname);
-    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    util_snprintf(swizzle, sizeof(swizzle), ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
     if (strcmp(swizzle, ".xyzw") != 0)
 	strcat(srcname, swizzle);
 }
@@ -642,7 +642,7 @@ i915_decode_dcl(const uint32_t *data, uint32_t hw_offset, int i, char *instr_pre
 
     switch ((d0 >> 19) & 0x3) {
     case 1:
-	sprintf(dcl_mask, ".%s%s%s%s", dcl_x, dcl_y, dcl_z, dcl_w);
+	util_snprintf(dcl_mask, sizeof(dcl_mask), ".%s%s%s%s", dcl_x, dcl_y, dcl_z, dcl_w);
 	if (strcmp(dcl_mask, ".") == 0)
 	    fprintf(out, "bad (empty) dcl mask\n");
 
@@ -976,7 +976,7 @@ decode_3d_1d(const uint32_t *data, int count, uint32_t hw_offset, int *failures,
 
 	    if (i + 3 >= count)
 		BUFFER_FAIL(count, len, "3DSTATE_PIXEL_SHADER_PROGRAM");
-	    sprintf(instr_prefix, "PS%03d", instr);
+	    util_snprintf(instr_prefix, sizeof(instr_prefix), "PS%03d", instr);
 	    i915_decode_instruction(data, hw_offset, i, instr_prefix);
 	    i += 3;
 	}
@@ -1036,9 +1036,7 @@ decode_3d_1d(const uint32_t *data, int count, uint32_t hw_offset, int *failures,
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d_1d) / sizeof(opcodes_3d_1d[0]);
-	 opcode++)
-    {
+    for (opcode = 0; opcode < Elements(opcodes_3d_1d); opcode++) {
 	if (opcodes_3d_1d[opcode].i830_only && !i830)
 	    continue;
 
@@ -1290,8 +1288,7 @@ decode_3d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return decode_3d_1c(data, count, hw_offset, failures);
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0x1f000000) >> 24 == opcodes_3d[opcode].opcode) {
 	    unsigned int len = 1, i;
 
@@ -1636,8 +1633,7 @@ decode_3d_965(const uint32_t *data, int count, uint32_t hw_offset, int *failures
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0xffff0000) >> 16 == opcodes_3d[opcode].opcode) {
 	    unsigned int i;
 	    len = 1;
@@ -1704,8 +1700,7 @@ decode_3d_i830(const uint32_t *data, int count, uint32_t hw_offset, int *failure
 	return decode_3d_1c(data, count, hw_offset, failures);
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0x1f000000) >> 24 == opcodes_3d[opcode].opcode) {
 	    unsigned int len = 1, i;
 

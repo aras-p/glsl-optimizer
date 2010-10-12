@@ -71,5 +71,46 @@ lp_build_struct_get(LLVMBuilderRef builder,
                     unsigned member,
                     const char *name);
 
+/**
+ * Get value pointer to an array element.
+ */
+LLVMValueRef
+lp_build_array_get_ptr(LLVMBuilderRef builder,
+                       LLVMValueRef ptr,
+                       LLVMValueRef index);
+
+/**
+ * Get the value of an array element.
+ */
+LLVMValueRef
+lp_build_array_get(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index);
+
+/**
+ * Set the value of an array element.
+ */
+void
+lp_build_array_set(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index,
+                   LLVMValueRef value);
+
+/**
+ * Get the value of an array element.
+ */
+LLVMValueRef
+lp_build_pointer_get(LLVMBuilderRef builder,
+                   LLVMValueRef ptr,
+                   LLVMValueRef index);
+
+/**
+ * Set the value of an array element.
+ */
+void
+lp_build_pointer_set(LLVMBuilderRef builder,
+                     LLVMValueRef ptr,
+                     LLVMValueRef index,
+                     LLVMValueRef value);
 
 #endif /* !LP_BLD_STRUCT_H */

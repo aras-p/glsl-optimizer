@@ -1,0 +1,735 @@
+/*
+ * Copyright (C) 2008-2010  Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * Authors:
+ *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com> 
+ */
+
+#ifndef _EVERGREEN_SQ_H_
+#define _EVERGREEN_SQ_H_
+
+enum{
+//CF
+    EG_CF_WORD0__ADDR_shift          = 0,
+    EG_CF_WORD0__ADDR_mask           = 0xFFFFFF,
+    EG_CF_WORD0__JUMPTABLE_SEL_shift = 24,
+    EG_CF_WORD0__JUMPTABLE_SEL_mask  = 0x7 << 24,
+
+    EG_CF_WORD1__POP_COUNT_shift     = 0, //3 bits
+    EG_CF_WORD1__POP_COUNT_mask      = 0x7,
+    EG_CF_WORD1__CF_CONST_shift      = 3, //5 bits
+    EG_CF_WORD1__CF_CONST_mask       = 0x1F << 3,
+    EG_CF_WORD1__COND_shift          = 8, //2 bits
+    EG_CF_WORD1__COND_mask           = 0x3 << 8,
+    EG_CF_WORD1__COUNT_shift         = 10,//6 bits
+    EG_CF_WORD1__COUNT_mask          = 0x3F << 10,
+    EG_CF_WORD1__reserved_shift      = 16,//4 bits
+    EG_CF_WORD1__VPM_shift           = 20,//1 bit
+    EG_CF_WORD1__VPM_bit             = 1 << 20,
+    EG_CF_WORD1__EOP_shift           = 21,//1 bit
+    EG_CF_WORD1__EOP_bit             = 1 << 21,
+    EG_CF_WORD1__CF_INST_shift       = 22,//8 bits
+    EG_CF_WORD1__CF_INST_mask        = 0xFF << 22,
+    EG_CF_WORD1__WQM_shift           = 30,//1 bit
+    EG_CF_WORD1__WQM_bit             = 1 << 30,
+    EG_CF_WORD1__BARRIER_shift       = 31,//1 bit
+    EG_CF_WORD1__BARRIER_bit         = 1 << 31,
+
+    EG_CF_INST_NOP                   = 0,
+    EG_CF_INST_TC                    = 1,
+    EG_CF_INST_VC                    = 2,
+    EG_CF_INST_GDS                   = 3,
+    EG_CF_INST_LOOP_START            = 4,
+    EG_CF_INST_LOOP_END              = 5,
+    EG_CF_INST_LOOP_START_DX10       = 6,
+    EG_CF_INST_LOOP_START_NO_AL      = 7,
+    EG_CF_INST_LOOP_CONTINUE         = 8,
+    EG_CF_INST_LOOP_BREAK            = 9,
+    EG_CF_INST_JUMP                  = 10,
+    EG_CF_INST_PUSH                  = 11,
+    EG_CF_INST_Reserved_12           = 12,
+    EG_CF_INST_ELSE                  = 13,
+    EG_CF_INST_POP                   = 14, 
+    EG_CF_INST_Reserved_15           = 15,
+    EG_CF_INST_Reserved_16           = 16,
+    EG_CF_INST_Reserved_17           = 17,
+    EG_CF_INST_CALL                  = 18,
+    EG_CF_INST_CALL_FS               = 19,
+    EG_CF_INST_RETURN                = 20,
+    EG_CF_INST_EMIT_VERTEX           = 21,
+    EG_CF_INST_EMIT_CUT_VERTEX       = 22,
+    EG_CF_INST_CUT_VERTEX            = 23,
+    EG_CF_INST_KILL                  = 24,
+    EG_CF_INST_Reserved_25           = 25,
+    EG_CF_INST_WAIT_ACK              = 26,
+    EG_CF_INST_TC_ACK                = 27,
+    EG_CF_INST_VC_ACK                = 28,
+    EG_CF_INST_JUMPTABLE             = 29,
+    EG_CF_INST_GLOBAL_WAVE_SYNC      = 30,
+    EG_CF_INST_HALT                  = 31,
+
+//TEX
+    EG_TEX_WORD0__TEX_INST_shift     = 0, //5 bits
+    EG_TEX_WORD0__TEX_INST_mask      = 0x1F,
+    EG_TEX_WORD0__INST_MOD_shift     = 5, //2 bits
+    EG_TEX_WORD0__INST_MOD_mask      = 0x3 << 5,
+    EG_TEX_WORD0__FWQ_shift          = 7, //1 bit
+    EG_TEX_WORD0__FWQ_bit            = 1 << 7,
+    EG_TEX_WORD0__RESOURCE_ID_shift  = 8, //8 bits
+    EG_TEX_WORD0__RESOURCE_ID_mask   = 0xFF << 8,
+    EG_TEX_WORD0__SRC_GPR_shift      = 16,//7 bits
+    EG_TEX_WORD0__SRC_GPR_mask       = 0x7F << 16,
+    EG_TEX_WORD0__SRC_REL_shift      = 23,//1 bit
+    EG_TEX_WORD0__SRC_REL_bit        = 1 << 23,
+    EG_TEX_WORD0__ALT_CONST_shift    = 24,//1 bit
+    EG_TEX_WORD0__ALT_CONST_bit      = 1 << 24,
+    EG_TEX_WORD0__RIM_shift          = 25,//2 bits
+    EG_TEX_WORD0__RIM_mask           = 0x3 << 25,
+    EG_TEX_WORD0__SIM_shift          = 27,//2 bits
+    EG_TEX_WORD0__SIM_mask           = 0x3 << 27,
+    EG_TEX_WORD0__Reserved_shift     = 29,//3 bits
+    EG_TEX_WORD0__Reserved_mask      = 0x7 << 29,
+
+    EG_TEX_INST_Reserved_0           = 0,
+    EG_TEX_INST_Reserved_1           = 1,
+    EG_TEX_INST_Reserved_2           = 2,
+    EG_TEX_INST_LD                   = 3,
+    EG_TEX_INST_GET_TEXTURE_RESINFO  = 4,
+    EG_TEX_INST_GET_NUMBER_OF_SAMPLES= 5,
+    EG_TEX_INST_GET_COMP_TEX_LOD     = 6,
+    EG_TEX_INST_GET_GRADIENTS_H      = 7,
+    EG_TEX_INST_GET_GRADIENTS_V      = 8,
+    EG_TEX_INST_SET_TEXTURE_OFFSETS  = 9,
+    EG_TEX_INST_KEEP_GRADIENTS       = 10,
+    EG_TEX_INST_SET_GRADIENTS_H      = 11,
+    EG_TEX_INST_SET_GRADIENTS_V      = 12,
+    EG_TEX_INST_Reserved_13          = 13,
+    EG_TEX_INST_Reserved_14          = 14,
+    EG_TEX_INST_Reserved_15          = 15,
+    EG_TEX_INST_SAMPLE               = 16,
+    EG_TEX_INST_SAMPLE_L             = 17,
+    EG_TEX_INST_SAMPLE_LB            = 18,
+    EG_TEX_INST_SAMPLE_LZ            = 19,
+    EG_TEX_INST_SAMPLE_G             = 20,
+    EG_TEX_INST_GATHER4              = 21,
+    EG_TEX_INST_SAMPLE_G_LB          = 22,
+    EG_TEX_INST_GATHER4_O            = 23,
+    EG_TEX_INST_SAMPLE_C             = 24,
+    EG_TEX_INST_SAMPLE_C_L           = 25,
+    EG_TEX_INST_SAMPLE_C_LB          = 26,
+    EG_TEX_INST_SAMPLE_C_LZ          = 27,
+    EG_TEX_INST_SAMPLE_C_G           = 28,
+    EG_TEX_INST_GATHER4_C            = 29,
+    EG_TEX_INST_SAMPLE_C_G_LB        = 30,
+    EG_TEX_INST_GATHER4_C_O          = 31,
+
+    EG_TEX_WORD1__DST_GPR_shift      = 0, //7 bits
+    EG_TEX_WORD1__DST_GPR_mask       = 0x7F,
+    EG_TEX_WORD1__DST_REL_shift      = 7, //1 bit
+    EG_TEX_WORD1__DST_REL_bit        = 1 << 7,
+    EG_TEX_WORD1__Reserved_shift     = 8, //1 bit
+    EG_TEX_WORD1__Reserved_bit       = 1 << 8,
+    EG_TEX_WORD1__DST_SEL_X_shift    = 9, //3 bits
+    EG_TEX_WORD1__DST_SEL_X_mask     = 0x7 << 9,
+    EG_TEX_WORD1__DST_SEL_Y_shift    = 12,//3 bits
+    EG_TEX_WORD1__DST_SEL_Y_mask     = 0x7 << 12,
+    EG_TEX_WORD1__DST_SEL_Z_shift    = 15,//3 bits
+    EG_TEX_WORD1__DST_SEL_Z_mask     = 0x7 << 15,
+    EG_TEX_WORD1__DST_SEL_W_shift    = 18,//3 bits
+    EG_TEX_WORD1__DST_SEL_W_mask     = 0x7 << 18,
+    EG_TEX_WORD1__LOD_BIAS_shift     = 21,//7 bits
+    EG_TEX_WORD1__LOD_BIAS_mask      = 0x7F << 21,
+    EG_TEX_WORD1__COORD_TYPE_X_shift = 28,//1 bit
+    EG_TEX_WORD1__COORD_TYPE_X_bit   = 1 << 28,
+    EG_TEX_WORD1__COORD_TYPE_Y_shift = 29,//1 bit
+    EG_TEX_WORD1__COORD_TYPE_Y_bit   = 1 << 29,
+    EG_TEX_WORD1__COORD_TYPE_Z_shift = 30,//1 bit
+    EG_TEX_WORD1__COORD_TYPE_Z_bit   = 1 << 30,
+    EG_TEX_WORD1__COORD_TYPE_W_shift = 31,//1 bit
+    EG_TEX_WORD1__COORD_TYPE_W_bit   = 1 << 31,
+
+    EG_TEX_WORD2__OFFSET_X_shift     = 0, //5 bits
+    EG_TEX_WORD2__OFFSET_X_mask      = 0x1F,
+    EG_TEX_WORD2__OFFSET_Y_shift     = 5, //5 bits
+    EG_TEX_WORD2__OFFSET_Y_mask      = 0x1F << 5,
+    EG_TEX_WORD2__OFFSET_Z_shift     = 10,//5 bits
+    EG_TEX_WORD2__OFFSET_Z_mask      = 0x1F << 10,
+    EG_TEX_WORD2__SAMPLER_ID_shift   = 15,//5 bits
+    EG_TEX_WORD2__SAMPLER_ID_mask    = 0x1F << 15,
+    EG_TEX_WORD2__SRC_SEL_X_shift    = 20,//3 bits
+    EG_TEX_WORD2__SRC_SEL_X_mask     = 0x7 << 20,
+    EG_TEX_WORD2__SRC_SEL_Y_shift    = 23,//3 bits
+    EG_TEX_WORD2__SRC_SEL_Y_mask     = 0x7 << 23,
+    EG_TEX_WORD2__SRC_SEL_Z_shift    = 26,//3 bits
+    EG_TEX_WORD2__SRC_SEL_Z_mask     = 0x7 << 26,
+    EG_TEX_WORD2__SRC_SEL_W_shift    = 29,//3 bits
+    EG_TEX_WORD2__SRC_SEL_W_mask     = 0x7 << 29,
+
+//VTX
+    EG_VTX_WORD0__VC_INST_shift      = 0, //5 bits
+    EG_VTX_WORD0__VC_INST_mask       = 0x1F,
+    EG_VTX_WORD0__FETCH_TYPE_shift   = 5, //2 bits
+    EG_VTX_WORD0__FETCH_TYPE_mask    = 0x3 << 5,
+    EG_VTX_WORD0__FWQ_shift          = 7, //1 bit
+    EG_VTX_WORD0__FWQ_bit            = 1 << 7,
+    EG_VTX_WORD0__BUFFER_ID_shift    = 8, //8 bits
+    EG_VTX_WORD0__BUFFER_ID_mask     = 0xFF << 8,
+    EG_VTX_WORD0__SRC_GPR_shift      = 16,//7 bits
+    EG_VTX_WORD0__SRC_GPR_mask       = 0x7F << 16,
+    EG_VTX_WORD0__SRC_REL_shift      = 23,//1 bit
+    EG_VTX_WORD0__SRC_REL_bit        = 1 << 23,
+    EG_VTX_WORD0__SRC_SEL_X_shift    = 24,//2 bits
+    EG_VTX_WORD0__SRC_SEL_X_mask     = 0x3 << 24,
+    EG_VTX_WORD0__MFC_shift          = 26,//6 bits
+    EG_VTX_WORD0__MFC_mask           = 0x3F << 26,
+
+    EG_VC_INST_FETCH                 = 0,
+    EG_VC_INST_SEMANTIC              = 1,
+    EG_VC_INST_Reserved_2            = 2,
+    EG_VC_INST_Reserved_3            = 3,
+    EG_VC_INST_Reserved_4            = 4,
+    EG_VC_INST_Reserved_5            = 5,
+    EG_VC_INST_Reserved_6            = 6,
+    EG_VC_INST_Reserved_7            = 7,
+    EG_VC_INST_Reserved_8            = 8,
+    EG_VC_INST_Reserved_9            = 9,
+    EG_VC_INST_Reserved_10           = 10,
+    EG_VC_INST_Reserved_11           = 11,
+    EG_VC_INST_Reserved_12           = 12,
+    EG_VC_INST_Reserved_13           = 13,
+    EG_VC_INST_GET_BUFFER_RESINFO    = 14,
+
+    EG_VTX_FETCH_VERTEX_DATA         = 0,
+    EG_VTX_FETCH_INSTANCE_DATA       = 1,
+    EG_VTX_FETCH_NO_INDEX_OFFSET     = 2,
+
+    EG_VTX_WORD1_SEM__SEMANTIC_ID_shift = 0, //8 bits
+    EG_VTX_WORD1_SEM__SEMANTIC_ID_mask  = 0xFF,
+    EG_VTX_WORD1_GPR__DST_GPR_shift  = 0, //7 bits
+    EG_VTX_WORD1_GPR__DST_GPR_mask   = 0x7F,
+    EG_VTX_WORD1_GPR__DST_REL_shift  = 7, //1 bit
+    EG_VTX_WORD1_GPR__DST_REL_bit    = 1 << 7,
+    EG_VTX_WORD1__Reserved_shift     = 8, //1 bit
+    EG_VTX_WORD1__Reserved_bit       = 1 << 8,
+    EG_VTX_WORD1__DST_SEL_X_shift    = 9, //3 bits
+    EG_VTX_WORD1__DST_SEL_X_mask     = 0x7 << 9,
+    EG_VTX_WORD1__DST_SEL_Y_shift    = 12,//3 bits
+    EG_VTX_WORD1__DST_SEL_Y_mask     = 0x7 << 12,
+    EG_VTX_WORD1__DST_SEL_Z_shift    = 15,//3 bits
+    EG_VTX_WORD1__DST_SEL_Z_mask     = 0x7 << 15,
+    EG_VTX_WORD1__DST_SEL_W_shift    = 18,//3 bits
+    EG_VTX_WORD1__DST_SEL_W_mask     = 0x7 << 18,
+    EG_VTX_WORD1__UCF_shift          = 21,//1 bit
+    EG_VTX_WORD1__UCF_bit            = 1 << 21,
+    EG_VTX_WORD1__DATA_FORMAT_shift  = 22,//6 bits
+    EG_VTX_WORD1__DATA_FORMAT_mask   = 0x3F << 22,
+    EG_VTX_WORD1__NFA_shift          = 28,//2 bits
+    EG_VTX_WORD1__NFA_mask           = 0x3 << 28,
+    EG_VTX_WORD1__FCA_shift          = 30,//1 bit
+    EG_VTX_WORD1__FCA_bit            = 1 << 30,
+    EG_VTX_WORD1__SMA_shift          = 31,//1 bit
+    EG_VTX_WORD1__SMA_bit            = 1 << 31,
+
+    EG_VTX_WORD2__OFFSET_shift       = 0, //16 bits
+    EG_VTX_WORD2__OFFSET_mask        = 0xFFFF,
+    EG_VTX_WORD2__ENDIAN_SWAP_shift  = 16,//2 bits
+    EG_VTX_WORD2__ENDIAN_SWAP_mask   = 0x3 << 16,
+    EG_VTX_WORD2__CBNS_shift         = 18,//1 bit
+    EG_VTX_WORD2__CBNS_bit           = 1 << 18,
+    EG_VTX_WORD2__MEGA_FETCH_shift   = 19,//1 bit
+    EG_VTX_WORD2__MEGA_FETCH_mask    = 1 << 19,
+    EG_VTX_WORD2__ALT_CONST_shift    = 20,//1 bit
+    EG_VTX_WORD2__ALT_CONST_mask     = 1 << 20,
+    EG_VTX_WORD2__BIM_shift          = 21,//2 bits
+    EG_VTX_WORD2__BIM_mask           = 0x3 << 21,
+    EG_VTX_WORD2__Reserved_shift     = 23,//9 bits
+    EG_VTX_WORD2__Reserved_mask      = 0x1FF << 23,
+
+//CF_ALU
+    EG_CF_ALU_WORD0__ADDR_shift         = 0, //22 bits
+    EG_CF_ALU_WORD0__ADDR_mask          = 0x3FFFFF,
+    EG_CF_ALU_WORD0__KCACHE_BANK0_shift = 22,//4 bits
+    EG_CF_ALU_WORD0__KCACHE_BANK0_mask  = 0xF << 22,
+    EG_CF_ALU_WORD0__KCACHE_BANK1_shift = 26,//4 bits
+    EG_CF_ALU_WORD0__KCACHE_BANK1_mask  = 0xF << 26,
+    EG_CF_ALU_WORD0__KCACHE_MODE0_shift = 30,//2 bits
+    EG_CF_ALU_WORD0__KCACHE_MODE0_mask  = 0x3 << 30,
+
+    EG_CF_ALU_WORD1__KCACHE_MODE1_shift = 0,  //2 bits
+    EG_CF_ALU_WORD1__KCACHE_MODE1_mask  = 0x3,
+    EG_CF_ALU_WORD1__KCACHE_ADDR0_shift = 2,  //8 bits
+    EG_CF_ALU_WORD1__KCACHE_ADDR0_mask  = 0xFF << 2,
+    EG_CF_ALU_WORD1__KCACHE_ADDR1_shift = 10, //8 bits
+    EG_CF_ALU_WORD1__KCACHE_ADDR1_mask  = 0xFF << 10,
+    EG_CF_ALU_WORD1__COUNT_shift        = 18, //7 bits
+    EG_CF_ALU_WORD1__COUNT_mask         = 0x7F << 18,
+    EG_CF_ALU_WORD1__ALT_CONST_shift    = 25, //1 bit
+    EG_CF_ALU_WORD1__ALT_CONST_bit      = 1 << 25,
+    EG_CF_ALU_WORD1__CF_INST_shift      = 26, //4 bits
+    EG_CF_ALU_WORD1__CF_INST_mask       = 0xF << 26,
+    EG_CF_ALU_WORD1__WQM_shift          = 30, //1 bit
+    EG_CF_ALU_WORD1__WQM_bit            = 1 << 30,
+    EG_CF_ALU_WORD1__BARRIER_shift      = 31, //1 bit
+    EG_CF_ALU_WORD1__BARRIER_bit        = 1 << 31,
+
+    EG_CF_INST_ALU                      = 8,
+    EG_CF_INST_ALU_PUSH_BEFORE          = 9,
+    EG_CF_INST_ALU_POP_AFTER            = 10,
+    EG_CF_INST_ALU_POP2_AFTER           = 11,
+    EG_CF_INST_ALU_EXTENDED             = 12,
+    EG_CF_INST_ALU_CONTINUE             = 13,
+    EG_CF_INST_ALU_BREAK                = 14,
+    EG_CF_INST_ALU_ELSE_AFTER           = 15,
+
+    EG_CF_ALU_WORD0_EXT__Reserved0_shift    = 0, //4 bits
+    EG_CF_ALU_WORD0_EXT__Reserved0_mask     = 0xF,
+    EG_CF_ALU_WORD0_EXT__KBIM0_shift        = 4, //2 bits
+    EG_CF_ALU_WORD0_EXT__KBIM0_mask         = 0x3 << 4,
+    EG_CF_ALU_WORD0_EXT__KBIM1_shift        = 6, //2 bits
+    EG_CF_ALU_WORD0_EXT__KBIM1_mask         = 0x3 << 6,
+    EG_CF_ALU_WORD0_EXT__KBIM2_shift        = 8, //2 bits
+    EG_CF_ALU_WORD0_EXT__KBIM2_mask         = 0x3 << 8,
+    EG_CF_ALU_WORD0_EXT__KBIM3_shift        = 10,//2 bits
+    EG_CF_ALU_WORD0_EXT__KBIM3_mask         = 0x3 << 10,
+    EG_CF_ALU_WORD0_EXT__Reserved12_shift   = 12,//10 bits
+    EG_CF_ALU_WORD0_EXT__Reserved12_mask    = 0x3FF << 12,
+    EG_CF_ALU_WORD0_EXT__KCACHE_BANK2_shift = 22,//4 bits
+    EG_CF_ALU_WORD0_EXT__KCACHE_BANK2_mask  = 0xF << 22,
+    EG_CF_ALU_WORD0_EXT__KCACHE_BANK3_shift = 26,//4 bits
+    EG_CF_ALU_WORD0_EXT__KCACHE_BANK3_mask  = 0xF << 26,
+    EG_CF_ALU_WORD0_EXT__KCACHE_MODE2_shift = 30,//2 btis
+    EG_CF_ALU_WORD0_EXT__KCACHE_MODE2_mask  = 0x3 << 30,
+
+    EG_CF_ALU_WORD1_EXT__KCACHE_MODE3_shift = 0,  //2 bits
+    EG_CF_ALU_WORD1_EXT__KCACHE_MODE3_mask  = 0x3,
+    EG_CF_ALU_WORD1_EXT__KCACHE_ADDR2_shift = 2,  //8 bits
+    EG_CF_ALU_WORD1_EXT__KCACHE_ADDR2_mask  = 0xFF << 2,
+    EG_CF_ALU_WORD1_EXT__KCACHE_ADDR3_shift = 10, //8 bits
+    EG_CF_ALU_WORD1_EXT__KCACHE_ADDR3_mask  = 0xFF << 10,
+    EG_CF_ALU_WORD1_EXT__Reserved18_shift   = 18, //8 bits
+    EG_CF_ALU_WORD1_EXT__Reserved18_mask    = 0xFF << 18,
+    EG_CF_ALU_WORD1_EXT__CF_INST_shift      = 26, //4 bits
+    EG_CF_ALU_WORD1_EXT__CF_INST_mask       = 0xF << 26,
+    EG_CF_ALU_WORD1_EXT__Reserved30_shift   = 30, //1 bit
+    EG_CF_ALU_WORD1_EXT__Reserved30_bit     = 1 << 30,
+    EG_CF_ALU_WORD1_EXT__BARRIER_shift      = 31, //1 bit
+    EG_CF_ALU_WORD1_EXT__BARRIER_bit        = 1 << 31,
+
+//ALU
+    EG_ALU_WORD0__SRC0_SEL_shift            = 0, //9 bits
+    EG_ALU_WORD0__SRC0_SEL_mask             = 0x1FF,
+    EG_ALU_WORD0__SRC1_SEL_shift            = 13,//9 bits
+    EG_ALU_WORD0__SRC1_SEL_mask             = 0x1FF << 13,
+    EG_ALU_WORD0__SRC0_REL_shift            = 9, //1 bit
+    EG_ALU_WORD0__SRC0_REL_bit              = 1 << 9,
+    EG_ALU_WORD0__SRC1_REL_shift            = 22,//1 bit
+    EG_ALU_WORD0__SRC1_REL_bit              = 1 << 22,
+    EG_ALU_WORD0__SRC0_CHAN_shift           = 10,//2 bits
+    EG_ALU_WORD0__SRC0_CHAN_mask            = 0x3 << 10,
+    EG_ALU_WORD0__SRC1_CHAN_shift           = 23,//2 bits
+    EG_ALU_WORD0__SRC1_CHAN_mask            = 0x3 << 23,
+    EG_ALU_WORD0__SRC0_NEG_shift            = 12,//1 bit
+    EG_ALU_WORD0__SRC0_NEG_bit              = 1 << 12,
+    EG_ALU_WORD0__SRC1_NEG_shift            = 25,//1 bit
+    EG_ALU_WORD0__SRC1_NEG_bit              = 1 << 25,
+    EG_ALU_WORD0__INDEX_MODE_shift          = 26,//3 bits
+    EG_ALU_WORD0__INDEX_MODE_mask           = 0x7 << 26,
+    EG_ALU_WORD0__PRED_SEL_shift            = 29,//2 bits
+    EG_ALU_WORD0__PRED_SEL_mask             = 0x3 << 29,
+    EG_ALU_WORD0__LAST_shift                = 31,//1 bit
+    EG_ALU_WORD0__LAST_bit                  = 1 << 31,
+
+    EG_ALU_WORD1_OP2__SRC0_ABS_shift        = 0, //1 bit 
+    EG_ALU_WORD1_OP2__SRC0_ABS_bit          = 1,
+    EG_ALU_WORD1_OP2__SRC1_ABS_shift        = 1, //1 bit 
+    EG_ALU_WORD1_OP2__SRC1_ABS_bit          = 1 << 1,
+    EG_ALU_WORD1_OP2__UEM_shift             = 2, //1 bit 
+    EG_ALU_WORD1_OP2__UEM_bit               = 1 << 2,
+    EG_ALU_WORD1_OP2__UPDATE_PRED_shift     = 3, //1 bit 
+    EG_ALU_WORD1_OP2__UPDATE_PRED_bit       = 1 << 3,
+    EG_ALU_WORD1_OP2__WRITE_MASK_shift      = 4, //1 bit 
+    EG_ALU_WORD1_OP2__WRITE_MASK_bit        = 1 << 4,
+    EG_ALU_WORD1_OP2__OMOD_shift            = 5, //2 bits 
+    EG_ALU_WORD1_OP2__OMOD_mask             = 0x3 << 5,
+    EG_ALU_WORD1_OP2__ALU_INST_shift        = 7, //11 bits
+    EG_ALU_WORD1_OP2__ALU_INST_mask         = 0x7FF << 7,
+
+    EG_ALU_WORD1__BANK_SWIZZLE_shift    = 18,//3 bits
+    EG_ALU_WORD1__BANK_SWIZZLE_mask     = 0x7 << 18,
+    EG_ALU_WORD1__DST_GPR_shift         = 21,//7 bits
+    EG_ALU_WORD1__DST_GPR_mask          = 0x7F << 21,
+    EG_ALU_WORD1__DST_REL_shift         = 28,//1 bit
+    EG_ALU_WORD1__DST_REL_mask          = 1 << 28,
+    EG_ALU_WORD1__DST_CHAN_shift        = 29,//2 bits
+    EG_ALU_WORD1__DST_CHAN_mask         = 0x3 << 29,
+    EG_ALU_WORD1__CLAMP_shift           = 31,//1 bits
+    EG_ALU_WORD1__CLAMP_mask            = 1 << 31,
+
+    EG_ALU_WORD1_OP3__SRC2_SEL_shift        = 0, //9 bits
+    EG_ALU_WORD1_OP3__SRC2_SEL_mask         = 0x1FF,
+    EG_ALU_WORD1_OP3__SRC2_REL_shift        = 9, //1 bit
+    EG_ALU_WORD1_OP3__SRC2_REL_bit          = 1 << 9,
+    EG_ALU_WORD1_OP3__SRC2_CHAN_shift       = 10,//2 bits
+    EG_ALU_WORD1_OP3__SRC2_CHAN_mask        = 0x3 << 10,
+    EG_ALU_WORD1_OP3__SRC2_NEG_shift        = 12,//1 bit
+    EG_ALU_WORD1_OP3__SRC2_NEG_bit          = 1 << 12,
+    EG_ALU_WORD1_OP3__ALU_INST_shift        = 13,//5 bits
+    EG_ALU_WORD1_OP3__ALU_INST_mask         = 0x1F << 13,
+
+    EG_OP3_INST_BFE_UINT                    = 4,
+    EG_OP3_INST_BFE_INT                     = 5,
+    EG_OP3_INST_BFI_INT                     = 6,
+    EG_OP3_INST_FMA                         = 7,
+    EG_OP3_INST_CNDNE_64                    = 9,
+    EG_OP3_INST_FMA_64                      = 10,
+    EG_OP3_INST_LERP_UINT                   = 11,
+    EG_OP3_INST_BIT_ALIGN_INT               = 12,
+    EG_OP3_INST_BYTE_ALIGN_INT              = 13,
+    EG_OP3_INST_SAD_ACCUM_UINT              = 14,
+    EG_OP3_INST_SAD_ACCUM_HI_UINT           = 15,
+    EG_OP3_INST_MULADD_UINT24               = 16,
+    EG_OP3_INST_LDS_IDX_OP                  = 17,
+    EG_OP3_INST_MULADD                      = 20,
+    EG_OP3_INST_MULADD_M2                   = 21,
+    EG_OP3_INST_MULADD_M4                   = 22,
+    EG_OP3_INST_MULADD_D2                   = 23,
+    EG_OP3_INST_MULADD_IEEE                 = 24,
+    EG_OP3_INST_CNDE                        = 25,
+    EG_OP3_INST_CNDGT                       = 26,
+    EG_OP3_INST_CNDGE                       = 27,
+    EG_OP3_INST_CNDE_INT                    = 28,
+    EG_OP3_INST_CMNDGT_INT                  = 29,
+    EG_OP3_INST_CMNDGE_INT                  = 30,
+    EG_OP3_INST_MUL_LIT                     = 31,
+
+    EG_OP2_INST_ADD                       = 0,
+    EG_OP2_INST_MUL                       = 1,
+    EG_OP2_INST_MUL_IEEE                  = 2,
+    EG_OP2_INST_MAX                       = 3,
+    EG_OP2_INST_MIN                       = 4,
+    EG_OP2_INST_MAX_DX10                  = 5,
+    EG_OP2_INST_MIN_DX10                  = 6,
+    EG_OP2_INST_SETE                      = 8,
+    EG_OP2_INST_SETGT                     = 9,
+    EG_OP2_INST_SETGE                     = 10,
+    EG_OP2_INST_SETNE                     = 11,
+    EG_OP2_INST_SETE_DX10                 = 12,
+    EG_OP2_INST_SETGT_DX10                = 13,
+    EG_OP2_INST_SETGE_DX10                = 14,
+    EG_OP2_INST_SETNE_DX10                = 15,
+    EG_OP2_INST_FRACT                     = 16,
+    EG_OP2_INST_TRUNC                     = 17,
+    EG_OP2_INST_CEIL                      = 18,
+    EG_OP2_INST_RNDNE                     = 19,
+    EG_OP2_INST_FLOOR                     = 20,
+    EG_OP2_INST_ASHR_INT                  = 21,
+    EG_OP2_INST_LSHR_INT                  = 22,
+    EG_OP2_INST_LSHL_INT                  = 23,
+    EG_OP2_INST_MOV                       = 25,
+    EG_OP2_INST_NOP                       = 26,
+    EG_OP2_INST_MUL_64                    = 27,
+    EG_OP2_INST_FLT64_TO_FLT32            = 28,
+    EG_OP2_INST_FLT32_TO_FLT64            = 29,
+    EG_OP2_INST_PRED_SETGT_UINT           = 30,
+    EG_OP2_INST_PRED_SETGE_UINT           = 31,
+    EG_OP2_INST_PRED_SETE                 = 32,
+    EG_OP2_INST_PRED_SETGT                = 33,
+    EG_OP2_INST_PRED_SETGE                = 34,
+    EG_OP2_INST_PRED_SETNE                = 35,
+    EG_OP2_INST_PRED_SET_INV              = 36,
+    EG_OP2_INST_PRED_SET_POP              = 37,
+    EG_OP2_INST_PRED_SET_CLR              = 38,
+    EG_OP2_INST_PRED_SET_RESTORE          = 39,
+    EG_OP2_INST_PRED_SETE_PUSH            = 40,
+    EG_OP2_INST_PRED_SETGT_PUSH           = 41,
+    EG_OP2_INST_PRED_SETGE_PUSH           = 42,
+    EG_OP2_INST_PRED_SETNE_PUSH           = 43,
+    EG_OP2_INST_KILLE                     = 44,
+    EG_OP2_INST_KILLGT                    = 45,
+    EG_OP2_INST_KILLGE                    = 46,
+    EG_OP2_INST_KILLNE                    = 47,
+    EG_OP2_INST_AND_INT                   = 48,
+    EG_OP2_INST_OR_INT                    = 49,
+    EG_OP2_INST_XOR_INT                   = 50,
+    EG_OP2_INST_NOT_INT                   = 51,
+    EG_OP2_INST_ADD_INT                   = 52,
+    EG_OP2_INST_SUB_INT                   = 53,
+    EG_OP2_INST_MAX_INT                   = 54,
+    EG_OP2_INST_MIN_INT                   = 55,
+    EG_OP2_INST_MAX_UINT                  = 56,
+    EG_OP2_INST_MIN_UINT                  = 57,
+    EG_OP2_INST_SETE_INT                  = 58,
+    EG_OP2_INST_SETGT_INT                 = 59,
+    EG_OP2_INST_SETGE_INT                 = 60,
+    EG_OP2_INST_SETNE_INT                 = 61,
+    EG_OP2_INST_SETGT_UINT                = 62,
+    EG_OP2_INST_SETGE_UINT                = 63,
+    EG_OP2_INST_KILLGT_UINT               = 64,
+    EG_OP2_INST_KILLGE_UINT               = 65,
+    EG_OP2_INST_PREDE_INT                 = 66,
+    EG_OP2_INST_PRED_SETGT_INT            = 67,
+    EG_OP2_INST_PRED_SETGE_INT            = 68,
+    EG_OP2_INST_PRED_SETNE_INT            = 69,
+    EG_OP2_INST_KILLE_INT                 = 70,
+    EG_OP2_INST_KILLGT_INT                = 71,
+    EG_OP2_INST_KILLGE_INT                = 72,
+    EG_OP2_INST_KILLNE_INT                = 73,
+    EG_OP2_INST_PRED_SETE_PUSH_INT        = 74,
+    EG_OP2_INST_PRED_SETGT_PUSH_INT       = 75,
+    EG_OP2_INST_PRED_SETGE_PUSH_INT       = 76,
+    EG_OP2_INST_PRED_SETNE_PUSH_INT       = 77,
+    EG_OP2_INST_PRED_SETLT_PUSH_INT       = 78,
+    EG_OP2_INST_PRED_SETLE_PUSH_INT       = 79,
+    EG_OP2_INST_FLT_TO_INT                = 80,
+    EG_OP2_INST_BFREV_INT                 = 81,
+    EG_OP2_INST_ADDC_UINT                 = 82,
+    EG_OP2_INST_SUBB_UINT                 = 83,
+    EG_OP2_INST_GROUP_BARRIER             = 84,
+    EG_OP2_INST_GROUP_SEQ_BEGIN           = 85,
+    EG_OP2_INST_GROUP_SEQ_END             = 86,
+    EG_OP2_INST_SET_MODE                  = 87,
+    EG_OP2_INST_SET_CF_IDX0               = 88,
+    EG_OP2_INST_SET_CF_IDX1               = 89,
+    EG_OP2_INST_SET_LDS_SIZE              = 90,
+    EG_OP2_INST_EXP_IEEE                  = 129,
+    EG_OP2_INST_LOG_CLAMPED               = 130,
+    EG_OP2_INST_LOG_IEEE                  = 131,
+    EG_OP2_INST_RECIP_CLAMPED             = 132,
+    EG_OP2_INST_RECIP_FF                  = 133,
+    EG_OP2_INST_RECIP_IEEE                = 134,
+    EG_OP2_INST_RECIPSQRT_CLAMPED         = 135,
+    EG_OP2_INST_RECIPSQRT_FF              = 136,
+    EG_OP2_INST_RECIPSQRT_IEEE            = 137,
+    EG_OP2_INST_SQRT_IEEE                 = 138,
+    EG_OP2_INST_SIN                       = 141,
+    EG_OP2_INST_COS                       = 142,
+    EG_OP2_INST_MULLO_INT                 = 143,
+    EG_OP2_INST_MULHI_INT                 = 144,
+    EG_OP2_INST_MULLO_UINT                = 145,
+    EG_OP2_INST_MULHI_UINT                = 146,
+    EG_OP2_INST_RECIP_INT                 = 147,
+    EG_OP2_INST_RECIP_UINT                = 148,
+    EG_OP2_INST_RECIP_64                  = 149,
+    EG_OP2_INST_RECIP_CLAMPED_64          = 150,
+    EG_OP2_INST_RECIPSQRT_64              = 151,
+    EG_OP2_INST_RECIPSQRT_CLAMPED_64      = 152,
+    EG_OP2_INST_SQRT_64                   = 153,
+    EG_OP2_INST_FLT_TO_UINT               = 154,
+    EG_OP2_INST_INT_TO_FLT                = 155,
+    EG_OP2_INST_UINT_TO_FLT               = 156,
+    EG_OP2_INST_BFM_INT                   = 160,
+    EG_OP2_INST_FLT32_TO_FLT16            = 162,
+    EG_OP2_INST_FLT16_TO_FLT32            = 163,
+    EG_OP2_INST_UBYTE0_FLT                = 164,
+    EG_OP2_INST_UBYTE1_FLT                = 165,
+    EG_OP2_INST_UBYTE2_FLT                = 166,
+    EG_OP2_INST_UBYTE3_FLT                = 167,
+    EG_OP2_INST_BCNT_INT                  = 170,
+    EG_OP2_INST_FFBH_UINT                 = 171,
+    EG_OP2_INST_FFBL_INT                  = 172,
+    EG_OP2_INST_FFBH_INT                  = 173,
+    EG_OP2_INST_FLT_TO_UINT4              = 174,
+    EG_OP2_INST_DOT_IEEE                  = 175,
+    EG_OP2_INST_FLT_TO_INT_RPI            = 176,
+    EG_OP2_INST_FLT_TO_INT_FLOOR          = 177,
+    EG_OP2_INST_MULHI_UINT24              = 178,
+    EG_OP2_INST_MBCNT_32HI_INT            = 179,
+    EG_OP2_INST_OFFSET_TO_FLT             = 180,
+    EG_OP2_INST_MUL_UINT24                = 181,
+    EG_OP2_INST_BCNT_ACCUM_PREV_INT       = 182,
+    EG_OP2_INST_MBCNT_32LO_ACCUM_PREV_INT = 183,
+    EG_OP2_INST_SETE_64                   = 184,
+    EG_OP2_INST_SETNE_64                  = 185,
+    EG_OP2_INST_SETGT_64                  = 186,
+    EG_OP2_INST_SETGE_64                  = 187,
+    EG_OP2_INST_MIN_64                    = 188,
+    EG_OP2_INST_MAX_64                    = 189,
+    EG_OP2_INST_DOT4                      = 190,
+    EG_OP2_INST_DOT4_IEEE                 = 191,
+    EG_OP2_INST_CUBE                      = 192,
+    EG_OP2_INST_MAX4                      = 193,
+    EG_OP2_INST_FREXP_64                  = 196,
+    EG_OP2_INST_LDEXP_64                  = 197,
+    EG_OP2_INST_FRACT_64                  = 198,
+    EG_OP2_INST_PRED_SETGT_64             = 199,
+    EG_OP2_INST_PRED_SETE_64              = 200,
+    EG_OP2_INST_PRED_SETGE_64             = 201,
+    EG_OP2_INST_MUL_64_2                  = 202, //same as prev?
+    EG_OP2_INST_ADD_64                    = 203,
+    EG_OP2_INST_MOVA_INT                  = 204,
+    EG_OP2_INST_FLT64_TO_FLT32_2          = 205, //same as prev?
+    EG_OP2_INST_FLT32_TO_FLT64_2          = 206, //same as prev?
+    EG_OP2_INST_SAD_ACCUM_PREV_UINT       = 207,
+    EG_OP2_INST_DOT                       = 208,
+    EG_OP2_INST_MUL_PREV                  = 209,
+    EG_OP2_INST_MUL_IEEE_PREV             = 210,
+    EG_OP2_INST_ADD_PREV                  = 211,
+    EG_OP2_INST_MULADD_PREV               = 212,
+    EG_OP2_INST_MULADD_IEEE_PREV          = 213,
+    EG_OP2_INST_INTERP_XY                 = 214,
+    EG_OP2_INST_INTERP_ZW                 = 215,
+    EG_OP2_INST_INTERP_X                  = 216,
+    EG_OP2_INST_INTERP_Z                  = 217,
+    EG_OP2_INST_STORE_FLAGS               = 218,
+    EG_OP2_INST_LOAD_STORE_FLAGS          = 219,
+    EG_OP2_INST_LDS_1A                    = 220,
+    EG_OP2_INST_LDS_1A1D                  = 221,
+    EG_OP2_INST_LDS_2A                    = 223,
+    EG_OP2_INST_INTERP_LOAD_P0            = 224,
+    EG_OP2_INST_INTERP_LOAD_P10           = 225,
+    EG_OP2_INST_INTERP_LOAD_P20           = 226,
+
+    EG_SRC_SEL__GPR_start                 = 0,
+    EG_SRC_SEL__GPR_end                   = 127,
+    EG_SRC_SEL__KCONST_BANK0_start        = 128,
+    EG_SRC_SEL__KCONST_BANK0_end          = 159,
+    EG_SRC_SEL__KCONST_BANK1_start        = 160,
+    EG_SRC_SEL__KCONST_BANK1_end          = 191,
+    EG_SRC_SEL__INLINE_satrt              = 192,
+    EG_SRC_SEL__INLINE_end                = 255,
+    EG_SRC_SEL__KCONST_BANK2_start        = 256,
+    EG_SRC_SEL__KCONST_BANK2_end          = 287,
+    EG_SRC_SEL__KCONST_BANK3_start        = 288,
+    EG_SRC_SEL__KCONST_BANK3_end          = 319,
+    EG_SRC_SEL__ALU_SRC_LDS_OQ_A             = 219,
+    EG_SRC_SEL__ALU_SRC_LDS_OQ_B             = 220,
+    EG_SRC_SEL__ALU_SRC_LDS_OQ_A_POP         = 221,
+    EG_SRC_SEL__ALU_SRC_LDS_OQ_B_POP         = 222,
+    EG_SRC_SEL__ALU_SRC_LDS_DIRECT_A         = 223,
+    EG_SRC_SEL__ALU_SRC_LDS_DIRECT_B         = 224,
+    EG_SRC_SEL__ALU_SRC_TIME_HI              = 227,
+    EG_SRC_SEL__ALU_SRC_TIME_LO              = 228,
+    EG_SRC_SEL__ALU_SRC_MASK_HI              = 229,
+    EG_SRC_SEL__ALU_SRC_MASK_LO              = 230,
+    EG_SRC_SEL__ALU_SRC_HW_WAVE_ID           = 231,
+    EG_SRC_SEL__ALU_SRC_SIMD_ID              = 232,
+    EG_SRC_SEL__ALU_SRC_SE_ID                = 233,
+    EG_SRC_SEL__ALU_SRC_HW_THREADGRP_ID      = 234,
+    EG_SRC_SEL__ALU_SRC_WAVE_ID_IN_GRP       = 235,
+    EG_SRC_SEL__ALU_SRC_NUM_THREADGRP_WAVES  = 236,
+    EG_SRC_SEL__ALU_SRC_HW_ALU_ODD           = 237,
+    EG_SRC_SEL__ALU_SRC_LOOP_IDX             = 238,
+    EG_SRC_SEL__ALU_SRC_PARAM_BASE_ADDR      = 240,
+    EG_SRC_SEL__ALU_SRC_NEW_PRIM_MASK        = 241,
+    EG_SRC_SEL__ALU_SRC_PRIM_MASK_HI         = 242,
+    EG_SRC_SEL__ALU_SRC_PRIM_MASK_LO         = 243,
+    EG_SRC_SEL__ALU_SRC_1_DBL_L              = 244,
+    EG_SRC_SEL__ALU_SRC_1_DBL_M              = 245,
+    EG_SRC_SEL__ALU_SRC_0_5_DBL_L            = 246,
+    EG_SRC_SEL__ALU_SRC_0_5_DBL_M            = 247,
+    EG_SRC_SEL__ALU_SRC_0                    = 248,
+    EG_SRC_SEL__ALU_SRC_1                    = 249,
+    EG_SRC_SEL__ALU_SRC_1_INT                = 250,
+    EG_SRC_SEL__ALU_SRC_M_1_INT              = 251,
+    EG_SRC_SEL__ALU_SRC_0_5                  = 252,
+    EG_SRC_SEL__ALU_SRC_LITERAL              = 253,
+    EG_SRC_SEL__ALU_SRC_PV                   = 254,
+    EG_SRC_SEL__ALU_SRC_PS                   = 255,
+
+//ALLOC_EXPORT
+    EG_CF_ALLOC_EXPORT_WORD0__ARRAY_BASE_shift = 0, //13 bits 
+    EG_CF_ALLOC_EXPORT_WORD0__ARRAY_BASE_mask  = 0x1FFF,
+    EG_CF_ALLOC_EXPORT_WORD0__TYPE_shift       = 13,//2 bits
+    EG_CF_ALLOC_EXPORT_WORD0__TYPE_mask        = 0x3 << 13,
+    EG_CF_ALLOC_EXPORT_WORD0__RW_GPR_shift     = 15,//7 bits
+    EG_CF_ALLOC_EXPORT_WORD0__RW_GPR_mask      = 0x7F << 15,
+    EG_CF_ALLOC_EXPORT_WORD0__RW_REL_shift     = 22,//1 bit
+    EG_CF_ALLOC_EXPORT_WORD0__RW_REL_bit       = 1 << 22,
+    EG_CF_ALLOC_EXPORT_WORD0__INDEX_GPR_shift  = 23,//7 bits
+    EG_CF_ALLOC_EXPORT_WORD0__INDEX_GPR_mask   = 0x7F << 23,
+    EG_CF_ALLOC_EXPORT_WORD0__ELEM_SIZE_shift  = 30,//2 bits
+    EG_CF_ALLOC_EXPORT_WORD0__ELEM_SIZE_mask   = 0x3 << 30,
+
+    EG_CF_ALLOC_EXPORT_WORD1_BUF__ARRAY_SIZE_shift  = 0, //12 bits
+    EG_CF_ALLOC_EXPORT_WORD1_BUF__ARRAY_SIZE_mask   = 0xFFF,
+    EG_CF_ALLOC_EXPORT_WORD1_BUF__COMP_MASK_shift   = 12, //4 bits
+    EG_CF_ALLOC_EXPORT_WORD1_BUF__COMP_MASK_mask    = 0xF << 12,
+
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_X_shift      = 0, //3 bits
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_X_mask       = 0x7,
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_Y_shift      = 3, //3 bits
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_Y_mask       = 0x7 << 3,
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_Z_shift      = 6, //3 bits
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_Z_mask       = 0x7 << 6,
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_W_shift      = 9, //3 bits
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__SEL_W_mask       = 0x7 << 9,
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__Resreve_shift    = 12,//4 bits
+    EG_CF_ALLOC_EXPORT_WORD1_SWIZ__Resreve_mask     = 0xF << 12,
+
+    EG_CF_ALLOC_EXPORT_WORD1__BURST_COUNT_shift = 16, //4 bits
+    EG_CF_ALLOC_EXPORT_WORD1__BURST_COUNT_mask  = 0xF << 16, 
+    EG_CF_ALLOC_EXPORT_WORD1__VPM_shift         = 20, //1 bit
+    EG_CF_ALLOC_EXPORT_WORD1__VPM_bit           = 1 << 20,
+    EG_CF_ALLOC_EXPORT_WORD1__EOP_shift         = 21, //1 bit
+    EG_CF_ALLOC_EXPORT_WORD1__EOP_bit           = 1 << 21,
+    EG_CF_ALLOC_EXPORT_WORD1__CF_INST_shift     = 22, //8 bits
+    EG_CF_ALLOC_EXPORT_WORD1__CF_INST_mask      = 0xFF << 22,
+    EG_CF_ALLOC_EXPORT_WORD1__MARK_shift        = 30, //1 bit
+    EG_CF_ALLOC_EXPORT_WORD1__MARK_bit          = 1 << 30,
+    EG_CF_ALLOC_EXPORT_WORD1__BARRIER_shift     = 31, //1 bit
+    EG_CF_ALLOC_EXPORT_WORD1__BARRIER_bit       = 1 << 31,
+
+    EG_CF_INST_MEM_STREAM0_BUF0              = 64 ,
+    EG_CF_INST_MEM_STREAM0_BUF1              = 65,
+    EG_CF_INST_MEM_STREAM0_BUF2              = 66,
+    EG_CF_INST_MEM_STREAM0_BUF3              = 67,
+    EG_CF_INST_MEM_STREAM1_BUF0              = 68,
+    EG_CF_INST_MEM_STREAM1_BUF1              = 69,
+    EG_CF_INST_MEM_STREAM1_BUF2              = 70,
+    EG_CF_INST_MEM_STREAM1_BUF3              = 71,
+    EG_CF_INST_MEM_STREAM2_BUF0              = 72,
+    EG_CF_INST_MEM_STREAM2_BUF1              = 73,
+    EG_CF_INST_MEM_STREAM2_BUF2              = 74,
+    EG_CF_INST_MEM_STREAM2_BUF3              = 75,
+    EG_CF_INST_MEM_STREAM3_BUF0              = 76,
+    EG_CF_INST_MEM_STREAM3_BUF1              = 77,
+    EG_CF_INST_MEM_STREAM3_BUF2              = 78,
+    EG_CF_INST_MEM_STREAM3_BUF3              = 79,
+    EG_CF_INST_MEM_WR_SCRATCH                = 80,
+    EG_CF_INST_MEM_RING                      = 82,
+    EG_CF_INST_EXPORT                        = 83,
+    EG_CF_INST_EXPORT_DONE                   = 84,
+    EG_CF_INST_MEM_EXPORT                    = 85,
+    EG_CF_INST_MEM_RAT                       = 86,
+    EG_CF_INST_MEM_RAT_CACHELESS             = 87,
+    EG_CF_INST_MEM_RING1                     = 88,
+    EG_CF_INST_MEM_RING2                     = 89,
+    EG_CF_INST_MEM_RING3                     = 90,
+    EG_CF_INST_MEM_EXPORT_COMBINED           = 91,
+    EG_CF_INST_MEM_RAT_COMBINED_CACHELESS    = 92,
+
+    EG_EXPORT_PIXEL         = 0,
+    EG_EXPORT_WRITE         = 0,
+    EG_EXPORT_POS           = 1,
+    EG_EXPORT_WRITE_IND     = 1,
+    EG_EXPORT_PARAM         = 2,
+    EG_EXPORT_WRITE_ACK     = 2,
+    EG_EXPORT_WRITE_IND_ACK = 3,
+
+    /* PS interp param source */
+    EG_ALU_SRC_PARAM_BASE                    = 0x000001c0,
+    EG_ALU_SRC_PARAM_SIZE                    = 0x00000021,
+};
+
+#endif //_EVERGREEN_SQ_H_
+
+

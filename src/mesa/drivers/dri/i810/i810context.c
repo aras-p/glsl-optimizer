@@ -127,7 +127,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_EXT_texture_rectangle",          NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -166,7 +165,8 @@ static const struct dri_debug_control debug_control[] =
 };
 
 GLboolean
-i810CreateContext( const __GLcontextModes *mesaVis,
+i810CreateContext( gl_api api,
+		   const __GLcontextModes *mesaVis,
                    __DRIcontext *driContextPriv,
                    void *sharedContextPrivate )
 {

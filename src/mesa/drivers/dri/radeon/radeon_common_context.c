@@ -93,6 +93,11 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_RV730: return "RV730";
 	case CHIP_FAMILY_RV710: return "RV710";
 	case CHIP_FAMILY_RV740: return "RV740";
+	case CHIP_FAMILY_CEDAR: return "CEDAR";
+	case CHIP_FAMILY_REDWOOD: return "REDWOOD";
+	case CHIP_FAMILY_JUNIPER: return "JUNIPER";
+	case CHIP_FAMILY_CYPRESS: return "CYPRESS";
+	case CHIP_FAMILY_HEMLOCK: return "HEMLOCK";
 	default: return "unknown";
 	}
 }
@@ -240,9 +245,16 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	if (IS_R600_CLASS(radeon->radeonScreen)) {
-		radeon->texture_row_align = 256;
-		radeon->texture_rect_row_align = 256;
-		radeon->texture_compressed_row_align = 256;
+		int chip_family = radeon->radeonScreen->chip_family;
+		if (chip_family >= CHIP_FAMILY_CEDAR) {
+			radeon->texture_row_align = 512;
+			radeon->texture_rect_row_align = 512;
+			radeon->texture_compressed_row_align = 512;
+		} else {
+			radeon->texture_row_align = 256;
+			radeon->texture_rect_row_align = 256;
+			radeon->texture_compressed_row_align = 256;
+		}
 	} else if (IS_R200_CLASS(radeon->radeonScreen) ||
 		   IS_R100_CLASS(radeon->radeonScreen)) {
 		radeon->texture_row_align = 32;
@@ -300,10 +312,10 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 	_mesa_meta_free(radeon->glCtx);
 
 	if (radeon == current) {
-		radeon_firevertices(radeon);
 		_mesa_make_current(NULL, NULL, NULL);
 	}
 
+	radeon_firevertices(radeon);
 	if (!is_empty_list(&radeon->dma.reserved)) {
 		rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 	}
@@ -357,6 +369,9 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 	if (RADEON_DEBUG & RADEON_DRI)
 		fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
 			radeon->glCtx);
+
+	/* Unset current context and dispath table */
+	_mesa_make_current(NULL, NULL, NULL);
 
 	return GL_TRUE;
 }
@@ -493,6 +508,50 @@ radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
    return _mesa_get_format_bytes(rb->base.Format) * 8; 
 }
 
+/*
+ * Check if drawable has been invalidated by dri2InvalidateDrawable().
+ * Update renderbuffers if so. This prevents a client from accessing
+ * a backbuffer that has a swap pending but not yet completed.
+ *
+ * See intel_prepare_render for equivalent code in intel driver.
+ *
+ */
+void radeon_prepare_render(radeonContextPtr radeon)
+{
+    __DRIcontext *driContext = radeon->dri.context;
+    __DRIdrawable *drawable;
+    __DRIscreen *screen;
+
+    screen = driContext->driScreenPriv;
+    if (!screen->dri2.loader)
+        return;
+
+    drawable = driContext->driDrawablePriv;
+    if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
+	if (drawable->lastStamp != drawable->dri2.stamp)
+	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
+
+	/* Intel driver does the equivalent of this, no clue if it is needed:
+	 * radeon_draw_buffer(radeon->glCtx, &(drawable->driverPrivate)->base);
+	 */
+	driContext->dri2.draw_stamp = drawable->dri2.stamp;
+    }
+
+    drawable = driContext->driReadablePriv;
+    if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
+	if (drawable->lastStamp != drawable->dri2.stamp)
+	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
+	driContext->dri2.read_stamp = drawable->dri2.stamp;
+    }
+
+    /* If we're currently rendering to the front buffer, the rendering
+     * that will happen next will probably dirty the front buffer.  So
+     * mark it as dirty here.
+     */
+    if (radeon->is_front_buffer_rendering)
+	radeon->front_buffer_dirty = GL_TRUE;
+}
+
 void
 radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			    GLboolean front_only)
@@ -513,6 +572,11 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 	draw = drawable->driverPrivate;
 	screen = context->driScreenPriv;
 	radeon = (radeonContextPtr) context->driverPrivate;
+
+	/* Set this up front, so that in case our buffers get invalidated
+	 * while we're getting new buffers, we don't clobber the stamp and
+	 * thus ignore the invalidate. */
+	drawable->lastStamp = drawable->dri2.stamp;
 
 	if (screen->dri2.loader
 	   && (screen->dri2.loader->base.version > 2)
@@ -650,6 +714,13 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 		rb->base.Height = drawable->h;
 		rb->has_surface = 0;
 
+		/* r6xx+ tiling */
+		rb->tile_config = radeon->radeonScreen->tile_config;
+		rb->group_bytes = radeon->radeonScreen->group_bytes;
+		rb->num_channels = radeon->radeonScreen->num_channels;
+		rb->num_banks = radeon->radeonScreen->num_banks;
+		rb->r7xx_bank_op = radeon->radeonScreen->r7xx_bank_op;
+
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
 			if (RADEON_DEBUG & RADEON_DRI)
 				fprintf(stderr, "(reusing depth buffer as stencil)\n");
@@ -678,7 +749,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 				bo->flags |= RADEON_BO_FLAGS_MACRO_TILE;
 			if (tiling_flags & RADEON_TILING_MICRO)
 				bo->flags |= RADEON_BO_FLAGS_MICRO_TILE;
-			
+
 		}
 
 		if (buffers[i].attachment == __DRI_BUFFER_DEPTH) {

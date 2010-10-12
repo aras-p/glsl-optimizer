@@ -125,7 +125,7 @@ apple_glx_pixmap_create(Display * dpy, int screen, Pixmap pixmap,
    bool double_buffered;
    bool uses_stereo;
    CGLError error;
-   const __GLcontextModes *cmodes = mode;
+   const struct glx_config *cmodes = mode;
 
    if (apple_glx_drawable_create(dpy, screen, pixmap, &d, &callbacks))
       return true;

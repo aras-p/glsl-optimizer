@@ -49,8 +49,9 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nvfx_query *q = nvfx_query(pq);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 	uint64_t tmp;
+
+	assert(!nvfx->query);
 
 	/* Happens when end_query() is called, then another begin_query()
 	 * without querying the result in-between.  For now we'll wait for
@@ -71,33 +72,42 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
 	nouveau_notifier_reset(nvfx->screen->query, q->object->start);
 
-	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_RESET, 1);
-	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_UNK17CC, 1);
-	OUT_RING  (chan, 1);
+	WAIT_RING(chan, 4);
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_RESET, 1));
+	OUT_RING(chan, 1);
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+	OUT_RING(chan, 1);
 
 	q->ready = FALSE;
+
+	nvfx->query = pq;
 }
 
 static void
 nvfx_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nvfx_screen *screen = nvfx->screen;
-	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
 	struct nvfx_query *q = nvfx_query(pq);
 
-	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_GET, 1);
-	OUT_RING  (chan, (0x01 << NV34TCL_QUERY_GET_UNK24_SHIFT) |
-		   ((q->object->start * 32) << NV34TCL_QUERY_GET_OFFSET_SHIFT));
+	assert(nvfx->query == pq);
+
+	WAIT_RING(chan, 4);
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_GET, 1));
+	OUT_RING  (chan, (0x01 << NV30_3D_QUERY_GET_UNK24__SHIFT) |
+		   ((q->object->start * 32) << NV30_3D_QUERY_GET_OFFSET__SHIFT));
+	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+	OUT_RING(chan, 0);
 	FIRE_RING(chan);
+
+	nvfx->query = 0;
 }
 
 static boolean
 nvfx_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, uint64_t *result)
+		  boolean wait, void *vresult)
 {
+	uint64_t *result = (uint64_t *)vresult;
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_query *q = nvfx_query(pq);
 

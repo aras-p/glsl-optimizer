@@ -84,9 +84,9 @@ static struct array_state *get_array_entry(const struct array_state_vector
                                            *arrays, GLenum key,
                                            unsigned index);
 static void fill_array_info_cache(struct array_state_vector *arrays);
-static GLboolean validate_mode(__GLXcontext * gc, GLenum mode);
-static GLboolean validate_count(__GLXcontext * gc, GLsizei count);
-static GLboolean validate_type(__GLXcontext * gc, GLenum type);
+static GLboolean validate_mode(struct glx_context * gc, GLenum mode);
+static GLboolean validate_count(struct glx_context * gc, GLsizei count);
+static GLboolean validate_type(struct glx_context * gc, GLenum type);
 
 
 /**
@@ -109,7 +109,7 @@ const GLuint __glXTypeSize_table[16] = {
  * __glXInitVertexArrayState().
  */
 void
-__glXFreeVertexArrayState(__GLXcontext * gc)
+__glXFreeVertexArrayState(struct glx_context * gc)
 {
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -135,8 +135,8 @@ __glXFreeVertexArrayState(__GLXcontext * gc)
  * \param gc  GLX context whose vertex array state is to be initialized.
  *
  * \warning
- * This function may only be called after __GLXcontext::gl_extension_bits,
- * __GLXcontext::server_minor, and __GLXcontext::server_major have been
+ * This function may only be called after struct glx_context::gl_extension_bits,
+ * struct glx_context::server_minor, and __GLXcontext::server_major have been
  * initialized.  These values are used to determine what vertex arrays are
  * supported.
  *
@@ -144,7 +144,7 @@ __glXFreeVertexArrayState(__GLXcontext * gc)
  * Return values from malloc are not properly tested.
  */
 void
-__glXInitVertexArrayState(__GLXcontext * gc)
+__glXInitVertexArrayState(struct glx_context * gc)
 {
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays;
@@ -487,7 +487,7 @@ fill_array_info_cache(struct array_state_vector *arrays)
 void
 emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -549,7 +549,7 @@ emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count)
  * A pointer to the buffer for array data.
  */
 static GLubyte *
-emit_DrawArrays_header_old(__GLXcontext * gc,
+emit_DrawArrays_header_old(struct glx_context * gc,
                            struct array_state_vector *arrays,
                            size_t * elements_per_request,
                            unsigned int *total_requests,
@@ -658,7 +658,7 @@ emit_DrawArrays_header_old(__GLXcontext * gc,
 void
 emit_DrawArrays_old(GLenum mode, GLint first, GLsizei count)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -720,7 +720,7 @@ void
 emit_DrawElements_none(GLenum mode, GLsizei count, GLenum type,
                        const GLvoid * indices)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -787,7 +787,7 @@ void
 emit_DrawElements_old(GLenum mode, GLsizei count, GLenum type,
                       const GLvoid * indices)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -875,7 +875,7 @@ emit_DrawElements_old(GLenum mode, GLsizei count, GLenum type,
  * \c GL_TRUE if the argument is valid, \c GL_FALSE if is not.
  */
 static GLboolean
-validate_mode(__GLXcontext * gc, GLenum mode)
+validate_mode(struct glx_context * gc, GLenum mode)
 {
    switch (mode) {
    case GL_POINTS:
@@ -908,7 +908,7 @@ validate_mode(__GLXcontext * gc, GLenum mode)
  * \c GL_TRUE if the argument is valid, \c GL_FALSE if it is not.
  */
 static GLboolean
-validate_count(__GLXcontext * gc, GLsizei count)
+validate_count(struct glx_context * gc, GLsizei count)
 {
    if (count < 0) {
       __glXSetError(gc, GL_INVALID_VALUE);
@@ -927,7 +927,7 @@ validate_count(__GLXcontext * gc, GLsizei count)
  * \c GL_TRUE if the argument is valid, \c GL_FALSE if it is not.
  */
 static GLboolean
-validate_type(__GLXcontext * gc, GLenum type)
+validate_type(struct glx_context * gc, GLenum type)
 {
    switch (type) {
    case GL_UNSIGNED_INT:
@@ -944,7 +944,7 @@ validate_type(__GLXcontext * gc, GLenum type)
 void
 __indirect_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -963,7 +963,7 @@ __indirect_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 void
 __indirect_glArrayElement(GLint index)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -989,7 +989,7 @@ void
 __indirect_glDrawElements(GLenum mode, GLsizei count, GLenum type,
                           const GLvoid * indices)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -1011,7 +1011,7 @@ __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
                                GLsizei count, GLenum type,
                                const GLvoid * indices)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -1034,10 +1034,10 @@ __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
 
 
 void
-__indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count,
-                                GLsizei primcount)
+__indirect_glMultiDrawArraysEXT(GLenum mode, const GLint *first,
+                                const GLsizei *count, GLsizei primcount)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -1063,7 +1063,7 @@ __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count,
                                   GLenum type, const GLvoid ** indices,
                                   GLsizei primcount)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =
       (const __GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
@@ -1119,7 +1119,7 @@ __indirect_glVertexPointer(GLint size, GLenum type, GLsizei stride,
       0, 0, X_GLrop_Vertex2dv, X_GLrop_Vertex3dv, X_GLrop_Vertex4dv
    };
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1164,7 +1164,7 @@ __indirect_glNormalPointer(GLenum type, GLsizei stride,
                            const GLvoid * pointer)
 {
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1235,7 +1235,7 @@ __indirect_glColorPointer(GLint size, GLenum type, GLsizei stride,
       0, 0, 0, X_GLrop_Color3dv, X_GLrop_Color4dv
    };
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1290,7 +1290,7 @@ void
 __indirect_glIndexPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1335,7 +1335,7 @@ __indirect_glIndexPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 void
 __indirect_glEdgeFlagPointer(GLsizei stride, const GLvoid * pointer)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1397,7 +1397,7 @@ __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
    };
 
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1470,7 +1470,7 @@ __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride,
                                       const GLvoid * pointer)
 {
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1530,7 +1530,7 @@ __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride,
                                 const GLvoid * pointer)
 {
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1577,7 +1577,7 @@ __indirect_glVertexAttribPointerARB(GLuint index, GLint size,
    static const uint16_t double_ops[5] = { 0, 4197, 4198, 4199, 4200 };
 
    uint16_t opcode;
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *arrays = state->array_state;
    struct array_state *a;
@@ -1690,7 +1690,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
                                    GLenum type, GLsizei stride,
                                    const GLvoid * pointer)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    GLboolean normalized = GL_FALSE;
 
 
@@ -1718,7 +1718,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
 void
 __indirect_glClientActiveTextureARB(GLenum texture)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    __GLXattribute *const state =
       (__GLXattribute *) (gc->client_state_private);
    struct array_state_vector *const arrays = state->array_state;

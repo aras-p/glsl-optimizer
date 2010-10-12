@@ -1,0 +1,37 @@
+Import('*')
+
+try:
+    graw
+except NameError:
+    print 'warning: graw library not avaiable: skipping build of graw test'
+    Return()
+
+env = env.Clone()
+
+env.Prepend(LIBPATH = [graw.dir])
+env.Prepend(LIBS = ['graw'] + gallium)
+
+if platform in ('freebsd8', 'sunos5'):
+    env.Append(LIBS = ['m'])
+
+if platform == 'freebsd8':
+    env.Append(LIBS = ['pthread'])
+
+progs = [
+    'clear',
+    'tri',
+    'tri-instanced',
+    'quad-tex',
+    'fs-test',
+    'vs-test',
+    'gs-test',
+    'shader-leak',
+    'tri-gs',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = prog + '.c',
+    )
+

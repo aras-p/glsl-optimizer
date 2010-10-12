@@ -40,15 +40,21 @@
 #include "svga_debug.h"
 
 
-/* Allocate a winsys_buffer (ie. DMA, aka GMR memory).
+/**
+ * Allocate a winsys_buffer (ie. DMA, aka GMR memory).
+ *
+ * It will flush and retry in case the first attempt to create a DMA buffer
+ * fails, so it should not be called from any function involved in flushing
+ * to avoid recursion.
  */
 struct svga_winsys_buffer *
-svga_winsys_buffer_create( struct svga_screen *ss,
+svga_winsys_buffer_create( struct svga_context *svga,
                            unsigned alignment, 
                            unsigned usage,
                            unsigned size )
 {
-   struct svga_winsys_screen *sws = ss->sws;
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
+   struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_winsys_buffer *buf;
    
    /* Just try */
@@ -59,9 +65,8 @@ svga_winsys_buffer_create( struct svga_screen *ss,
                size); 
       
       /* Try flushing all pending DMAs */
-      svga_screen_flush(ss, NULL);
+      svga_context_flush(svga, NULL);
       buf = sws->buffer_create(sws, alignment, usage, size);
-
    }
    
    return buf;
@@ -95,11 +100,12 @@ svga_buffer_create_hw_storage(struct svga_screen *ss,
    assert(!sbuf->user);
 
    if(!sbuf->hwbuf) {
+      struct svga_winsys_screen *sws = ss->sws;
       unsigned alignment = 16;
       unsigned usage = 0;
       unsigned size = sbuf->b.b.width0;
       
-      sbuf->hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+      sbuf->hwbuf = sws->buffer_create(sws, alignment, usage, size);
       if(!sbuf->hwbuf)
          return PIPE_ERROR_OUT_OF_MEMORY;
       
@@ -476,12 +482,12 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
          if (offset + size > range->end)
             size = range->end - offset;
 
-         hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+         hwbuf = sws->buffer_create(sws, alignment, usage, size);
          while (!hwbuf) {
             size /= 2;
             if (!size)
                return PIPE_ERROR_OUT_OF_MEMORY;
-            hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+            hwbuf = sws->buffer_create(sws, alignment, usage, size);
          }
 
          SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",

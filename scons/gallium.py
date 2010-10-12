@@ -49,14 +49,14 @@ def symlink(target, source, env):
     os.symlink(os.path.basename(source), target)
 
 def install(env, source, subdir):
-    target_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build'], subdir)
+    target_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build_dir'], subdir)
     env.Install(target_dir, source)
 
 def install_program(env, source):
     install(env, source, 'bin')
 
 def install_shared_library(env, sources, version = ()):
-    install_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build'])
+    install_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build_dir'])
     version = tuple(map(str, version))
     if env['SHLIBSUFFIX'] == '.dll':
         dlls = env.FindIxes(sources, 'SHLIBPREFIX', 'SHLIBSUFFIX')
@@ -130,7 +130,6 @@ def generate(env):
     env['msvc'] = env['CC'] == 'cl'
 
     # shortcuts
-    debug = env['debug']
     machine = env['machine']
     platform = env['platform']
     x86 = env['machine'] == 'x86'
@@ -138,20 +137,42 @@ def generate(env):
     gcc = env['gcc']
     msvc = env['msvc']
 
+    # Backwards compatability with the debug= profile= options
+    if env['build'] == 'debug':
+        if not env['debug']:
+            print 'scons: debug option is deprecated: use instead build=release'
+            env['build'] = 'release'
+        if env['profile']:
+            print 'scons: profile option is deprecated: use instead build=profile'
+            env['build'] = 'profile'
+    if False:
+        # Enforce SConscripts to use the new build variable
+        env.popitem('debug')
+        env.popitem('profile')
+    else:
+        # Backwards portability with older sconscripts
+        if env['build'] in ('debug', 'checked'):
+            env['debug'] = True
+            env['profile'] = False
+        if env['build'] == 'profile':
+            env['debug'] = False
+            env['profile'] = True
+        if env['build'] == 'release':
+            env['debug'] = False
+            env['profile'] = False
+
     # Put build output in a separate dir, which depends on the current
     # configuration. See also http://www.scons.org/wiki/AdvancedBuildExample
     build_topdir = 'build'
     build_subdir = env['platform']
     if env['machine'] != 'generic':
         build_subdir += '-' + env['machine']
-    if env['debug']:
-        build_subdir += "-debug"
-    if env['profile']:
-        build_subdir += "-profile"
+    if env['build'] != 'release':
+        build_subdir += '-' +  env['build']
     build_dir = os.path.join(build_topdir, build_subdir)
     # Place the .sconsign file in the build dir too, to avoid issues with
     # different scons versions building the same source file
-    env['build'] = build_dir
+    env['build_dir'] = build_dir
     env.SConsignFile(os.path.join(build_dir, '.sconsign'))
     if 'SCONS_CACHE_DIR' in os.environ:
         print 'scons: Using build cache in %s.' % (os.environ['SCONS_CACHE_DIR'],)
@@ -165,11 +186,11 @@ def generate(env):
 
     # C preprocessor options
     cppdefines = []
-    if debug:
+    if env['build'] in ('debug', 'checked'):
         cppdefines += ['DEBUG']
     else:
         cppdefines += ['NDEBUG']
-    if env['profile']:
+    if env['build'] == 'profile':
         cppdefines += ['PROFILE']
     if platform == 'windows':
         cppdefines += [
@@ -190,7 +211,7 @@ def generate(env):
                 '_SCL_SECURE_NO_WARNINGS',
                 '_SCL_SECURE_NO_DEPRECATE',
             ]
-        if debug:
+        if env['build'] in ('debug', 'checked'):
             cppdefines += ['_DEBUG']
     if env['toolchain'] == 'winddk':
         # Mimic WINDDK's builtin flags. See also:
@@ -217,7 +238,7 @@ def generate(env):
             ('__BUILDMACHINE__', 'WinDDK'),
             ('FPO', '0'),
         ]
-        if debug:
+        if env['build'] in ('debug', 'checked'):
             cppdefines += [('DBG', 1)]
     if platform == 'wince':
         cppdefines += [
@@ -253,15 +274,16 @@ def generate(env):
     ccflags = [] # C & C++
     if gcc:
         ccversion = env['CCVERSION']
-        if debug:
-            ccflags += ['-O0', '-g3']
+        if env['build'] == 'debug':
+            ccflags += ['-O0']
         elif ccversion.startswith('4.2.'):
             # gcc 4.2.x optimizer is broken
             print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
-            ccflags += ['-O0', '-g3']
+            ccflags += ['-O0']
         else:
-            ccflags += ['-O3', '-g3']
-        if env['profile']:
+            ccflags += ['-O3']
+        ccflags += ['-g3']
+        if env['build'] in ('checked', 'profile'):
             # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
             ccflags += [
                 '-fno-omit-frame-pointer',
@@ -271,28 +293,32 @@ def generate(env):
             ccflags += [
                 '-m32',
                 #'-march=pentium4',
-                #'-mfpmath=sse',
             ]
-            if platform != 'windows':
-                # XXX: -mstackrealign causes stack corruption on MinGW. Ditto
-                # for -mincoming-stack-boundary=2.  Still enable it on other
-                # platforms for now, but we can't rely on it for cross platform
-                # code. We have to use __attribute__((force_align_arg_pointer))
-                # instead.
-                ccflags += [
-                    '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
-                ]
             if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+                # NOTE: We need to ensure stack is realigned given that we
+                # produce shared objects, and have no control over the stack
+                # alignment policy of the application. Therefore we need
+                # -mstackrealign ore -mincoming-stack-boundary=2.
+                #
+                # XXX: We could have SSE without -mstackrealign if we always used
+                # __attribute__((force_align_arg_pointer)), but that's not
+                # always the case.
                 ccflags += [
                     '-mstackrealign', # ensure stack is aligned
+                    '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                    #'-mfpmath=sse',
                 ]
+            if platform in ['windows', 'darwin']:
+                # Workaround http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216
+                ccflags += ['-fno-common']
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
+            if platform == 'darwin':
+                ccflags += ['-fno-common']
         # See also:
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
             '-Wall',
-            '-Wmissing-field-initializers',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
@@ -301,6 +327,10 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.0'):
+            ccflags += [
+                '-Wmissing-field-initializers',
+            ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
             ccflags += [
                 '-Werror=pointer-arith',
@@ -312,7 +342,7 @@ def generate(env):
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
         # - cl /?
-        if debug:
+        if env['build'] == 'debug':
             ccflags += [
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
@@ -381,7 +411,7 @@ def generate(env):
     if env['platform'] == 'windows' and msvc:
         # Choose the appropriate MSVC CRT
         # http://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx
-        if env['debug']:
+        if env['build'] in ('debug', 'checked'):
             env.Append(CCFLAGS = ['/MTd'])
             env.Append(SHCCFLAGS = ['/LDd'])
         else:
@@ -413,7 +443,7 @@ def generate(env):
         else:
             env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
-        if not env['debug']:
+        if env['build'] != 'debug':
             # enable Link-time Code Generation
             linkflags += ['/LTCG']
             env.Append(ARFLAGS = ['/LTCG'])
@@ -452,7 +482,7 @@ def generate(env):
 
             '/entry:DrvEnableDriver',
         ]
-        if env['debug'] or env['profile']:
+        if env['build'] != 'release':
             linkflags += [
                 '/MAP', # http://msdn.microsoft.com/en-us/library/k7xkk3e2.aspx
             ]

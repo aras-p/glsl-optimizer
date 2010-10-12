@@ -8,21 +8,28 @@ if env['platform'] != 'linux':
 
 env = env.Clone()
 
+env.Tool('x11')
+
 env.Prepend(LIBS = [
     ws_xlib,
     trace,
+    rbug,
     identity,
 #    gallium,
 ])
 
 env.Append(CPPPATH = [
     '#src/gallium/drivers',
+    '#src/gallium/include/state_tracker',
 ])
 
 
 sources = [
     'graw_xlib.c',
+    'graw_util.c',
 ]
+
+env.Tool('x11')
 
 if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')

@@ -67,6 +67,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 		rb->DataType = GL_UNSIGNED_SHORT;
 		s->cpp = 2;
 		break;
+	case GL_DEPTH_COMPONENT:
 	case GL_DEPTH_COMPONENT24:
 	case GL_STENCIL_INDEX8_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
@@ -188,6 +189,7 @@ nouveau_framebuffer_dri_new(const GLvisual *visual)
 		return NULL;
 
 	_mesa_initialize_window_framebuffer(&nfb->base, visual);
+	nfb->need_front = !visual->doubleBufferMode;
 
 	return &nfb->base;
 }
@@ -220,7 +222,7 @@ get_tex_format(struct gl_texture_image *ti)
 	case MESA_FORMAT_RGB565:
 		return GL_RGB5;
 	default:
-		assert(0);
+		return GL_NONE;
 	}
 }
 
@@ -231,7 +233,6 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 	struct gl_renderbuffer *rb = att->Renderbuffer;
 	struct gl_texture_image *ti =
 		att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-	int ret;
 
 	/* Allocate a renderbuffer object for the texture if we
 	 * haven't already done so. */
@@ -244,9 +245,7 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 	}
 
 	/* Update the renderbuffer fields from the texture. */
-	ret = set_renderbuffer_format(rb, get_tex_format(ti));
-	assert(ret);
-
+	set_renderbuffer_format(rb, get_tex_format(ti));
 	rb->Width = ti->Width;
 	rb->Height = ti->Height;
 	nouveau_surface_ref(&to_nouveau_teximage(ti)->surface,
@@ -265,10 +264,12 @@ nouveau_finish_render_texture(GLcontext *ctx,
 void
 nouveau_fbo_functions_init(struct dd_function_table *functions)
 {
+#if FEATURE_EXT_framebuffer_object
 	functions->NewFramebuffer = nouveau_framebuffer_new;
 	functions->NewRenderbuffer = nouveau_renderbuffer_new;
 	functions->BindFramebuffer = nouveau_bind_framebuffer;
 	functions->FramebufferRenderbuffer = nouveau_framebuffer_renderbuffer;
 	functions->RenderTexture = nouveau_render_texture;
 	functions->FinishRenderTexture = nouveau_finish_render_texture;
+#endif
 }
