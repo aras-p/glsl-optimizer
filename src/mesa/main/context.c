@@ -1753,6 +1753,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
    /* FINISHME: If GL_NV_geometry_program4 is ever supported, the current
     * FINISHME: geometry program should validated here.
     */
+   (void) geom_from_glsl_shader;
 
    if (!frag_from_glsl_shader
        && ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
