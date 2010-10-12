@@ -321,8 +321,8 @@ transpose4_epi32(const __m128i * restrict a,
  */
 static INLINE __m128i mm_mullo_epi32(const __m128i a, const __m128i b)
 {
-   __m128i a4   = _mm_srli_si128(a, 4);  /* shift by one dword */
-   __m128i b4   = _mm_srli_si128(b, 4);  /* shift by one dword */
+   __m128i a4   = _mm_srli_epi64(a, 32);  /* shift by one dword */
+   __m128i b4   = _mm_srli_epi64(b, 32);  /* shift by one dword */
    __m128i ba   = _mm_mul_epu32(b, a);   /* multply dwords 0, 2 */
    __m128i b4a4 = _mm_mul_epu32(b4, a4); /* multiply dwords 1, 3 */
 
@@ -336,8 +336,7 @@ static INLINE __m128i mm_mullo_epi32(const __m128i a, const __m128i b)
 #else
    __m128i mask            = _mm_setr_epi32(~0,0,~0,0);
    __m128i ba_mask         = _mm_and_si128(ba, mask);
-   __m128i b4a4_mask       = _mm_and_si128(b4a4, mask);
-   __m128i b4a4_mask_shift = _mm_slli_si128(b4a4_mask, 4);
+   __m128i b4a4_mask_shift = _mm_slli_epi64(b4a4, 32);
    __m128i result          = _mm_or_si128(ba_mask, b4a4_mask_shift);
 #endif
 
