@@ -239,46 +239,6 @@ sign_bits4(const __m128i *cstep, int cdiff)
    return _mm_movemask_epi8(result);
 }
 
-#endif
-
-
-
-
-#define TAG(x) x##_1
-#define NR_PLANES 1
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_2
-#define NR_PLANES 2
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_3
-#define NR_PLANES 3
-/*#define TRI_4 lp_rast_triangle_3_4*/
-/*#define TRI_16 lp_rast_triangle_3_16*/
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_4
-#define NR_PLANES 4
-#define TRI_16 lp_rast_triangle_4_16
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_5
-#define NR_PLANES 5
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_6
-#define NR_PLANES 6
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_7
-#define NR_PLANES 7
-#include "lp_rast_tri_tmp.h"
-
-#define TAG(x) x##_8
-#define NR_PLANES 8
-#include "lp_rast_tri_tmp.h"
-
 
 static INLINE void
 transpose4_epi32(const __m128i * restrict a,
@@ -537,3 +497,45 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
                                   0xffff & ~mask);
    }
 }
+
+#undef NR_PLANES
+#endif
+
+
+
+
+#define TAG(x) x##_1
+#define NR_PLANES 1
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_2
+#define NR_PLANES 2
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_3
+#define NR_PLANES 3
+/*#define TRI_4 lp_rast_triangle_3_4*/
+/*#define TRI_16 lp_rast_triangle_3_16*/
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_4
+#define NR_PLANES 4
+#define TRI_16 lp_rast_triangle_4_16
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_5
+#define NR_PLANES 5
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_6
+#define NR_PLANES 6
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_7
+#define NR_PLANES 7
+#include "lp_rast_tri_tmp.h"
+
+#define TAG(x) x##_8
+#define NR_PLANES 8
+#include "lp_rast_tri_tmp.h"
+
