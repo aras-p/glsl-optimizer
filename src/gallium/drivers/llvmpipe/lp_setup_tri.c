@@ -32,6 +32,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_sse.h"
 #include "lp_perf.h"
 #include "lp_setup_context.h"
 #include "lp_setup_coef.h"
@@ -40,7 +41,9 @@
 
 #define NUM_CHANNELS 4
 
-
+#if defined(PIPE_ARCH_SSE)
+#include <emmintrin.h>
+#endif
    
 static INLINE int
 subpixel_snap(float a)
@@ -230,11 +233,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *tri;
    struct lp_rast_plane *plane;
-   int x[3];
-   int y[3];
+   int x[4];
+   int y[4];
    struct u_rect bbox;
    unsigned tri_bytes;
-   int i;
    int nr_planes = 3;
 
    if (0)
@@ -251,10 +253,12 @@ do_triangle_ccw(struct lp_setup_context *setup,
    x[0] = subpixel_snap(v0[0][0] - setup->pixel_offset);
    x[1] = subpixel_snap(v1[0][0] - setup->pixel_offset);
    x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
+   x[3] = 0;
    y[0] = subpixel_snap(v0[0][1] - setup->pixel_offset);
    y[1] = subpixel_snap(v1[0][1] - setup->pixel_offset);
    y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-
+   y[3] = 0;
+   
 
    /* Bounding rectangle (in pixels) */
    {
@@ -307,15 +311,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->v[2][1] = v2[0][1];
 #endif
 
-   plane = GET_PLANES(tri);
-   plane[0].dcdy = x[0] - x[1];
-   plane[1].dcdy = x[1] - x[2];
-   plane[2].dcdy = x[2] - x[0];
-
-   plane[0].dcdx = y[0] - y[1];
-   plane[1].dcdx = y[1] - y[2];
-   plane[2].dcdx = y[2] - y[0];
-
    LP_COUNT(nr_tris);
 
    /* Setup parameter interpolants:
@@ -326,54 +321,150 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
 
+   plane = GET_PLANES(tri);
+
+#if defined(PIPE_ARCH_SSE)
+   {
+      __m128i vertx, verty;
+      __m128i shufx, shufy;
+      __m128i dcdx, dcdy, c;
+      __m128i unused;
+      __m128i dcdx_neg_mask;
+      __m128i dcdy_neg_mask;
+      __m128i dcdx_zero_mask;
+      __m128i top_left_flag;
+      __m128i c_inc_mask, c_inc;
+      __m128i eo, p0, p1, p2;
+      __m128i zero = _mm_setzero_si128();
+
+      vertx = _mm_loadu_si128((__m128i *)x); /* vertex x coords */
+      verty = _mm_loadu_si128((__m128i *)y); /* vertex y coords */
+
+      shufx = _mm_shuffle_epi32(vertx, _MM_SHUFFLE(3,0,2,1));
+      shufy = _mm_shuffle_epi32(verty, _MM_SHUFFLE(3,0,2,1));
+
+      dcdx = _mm_sub_epi32(verty, shufy);
+      dcdy = _mm_sub_epi32(vertx, shufx);
+
+      dcdx_neg_mask = _mm_srai_epi32(dcdx, 31);
+      dcdx_zero_mask = _mm_cmpeq_epi32(dcdx, zero);
+      dcdy_neg_mask = _mm_srai_epi32(dcdy, 31);
+
+      top_left_flag = _mm_set1_epi32((setup->pixel_offset == 0) ? ~0 : 0);
+
+      c_inc_mask = _mm_or_si128(dcdx_neg_mask,
+                                _mm_and_si128(dcdx_zero_mask,
+                                              _mm_xor_si128(dcdy_neg_mask,
+                                                            top_left_flag)));
+
+      c_inc = _mm_srli_epi32(c_inc_mask, 31);
+
+      c = _mm_sub_epi32(mm_mullo_epi32(dcdx, vertx),
+                        mm_mullo_epi32(dcdy, verty));
+
+      c = _mm_add_epi32(c, c_inc);
+
+      /* Scale up to match c:
+       */
+      dcdx = _mm_slli_epi32(dcdx, FIXED_ORDER);
+      dcdy = _mm_slli_epi32(dcdy, FIXED_ORDER);
+
+      /* Calculate trivial reject values:
+       */
+      eo = _mm_sub_epi32(_mm_andnot_si128(dcdy_neg_mask, dcdy),
+                         _mm_and_si128(dcdx_neg_mask, dcdx));
+
+      /* ei = _mm_sub_epi32(_mm_sub_epi32(dcdy, dcdx), eo); */
+
+      /* Pointless transpose which gets undone immediately in
+       * rasterization:
+       */
+      transpose4_epi32(&c, &dcdx, &dcdy, &eo,
+                       &p0, &p1, &p2, &unused);
+
+      _mm_storeu_si128((__m128i *)&plane[0], p0);
+      _mm_storeu_si128((__m128i *)&plane[1], p1);
+      _mm_storeu_si128((__m128i *)&plane[2], p2);
+   }
+#else
+   {
+      int i;
+      plane[0].dcdy = x[0] - x[1];
+      plane[1].dcdy = x[1] - x[2];
+      plane[2].dcdy = x[2] - x[0];
+      plane[0].dcdx = y[0] - y[1];
+      plane[1].dcdx = y[1] - y[2];
+      plane[2].dcdx = y[2] - y[0];
   
-   for (i = 0; i < 3; i++) {
-      /* half-edge constants, will be interated over the whole render
-       * target.
-       */
-      plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
+      for (i = 0; i < 3; i++) {
+         /* half-edge constants, will be interated over the whole render
+          * target.
+          */
+         plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
 
-      /* correct for top-left vs. bottom-left fill convention.  
-       *
-       * note that we're overloading gl_rasterization_rules to mean
-       * both (0.5,0.5) pixel centers *and* bottom-left filling
-       * convention.
-       *
-       * GL actually has a top-left filling convention, but GL's
-       * notion of "top" differs from gallium's...
-       *
-       * Also, sometimes (in FBO cases) GL will render upside down
-       * to its usual method, in which case it will probably want
-       * to use the opposite, top-left convention.
-       */         
-      if (plane[i].dcdx < 0) {
-         /* both fill conventions want this - adjust for left edges */
-         plane[i].c++;            
-      }
-      else if (plane[i].dcdx == 0) {
-         if (setup->pixel_offset == 0) {
-            /* correct for top-left fill convention:
-             */
-            if (plane[i].dcdy > 0) plane[i].c++;
+         /* correct for top-left vs. bottom-left fill convention.  
+          *
+          * note that we're overloading gl_rasterization_rules to mean
+          * both (0.5,0.5) pixel centers *and* bottom-left filling
+          * convention.
+          *
+          * GL actually has a top-left filling convention, but GL's
+          * notion of "top" differs from gallium's...
+          *
+          * Also, sometimes (in FBO cases) GL will render upside down
+          * to its usual method, in which case it will probably want
+          * to use the opposite, top-left convention.
+          */         
+         if (plane[i].dcdx < 0) {
+            /* both fill conventions want this - adjust for left edges */
+            plane[i].c++;            
          }
-         else {
-            /* correct for bottom-left fill convention:
-             */
-            if (plane[i].dcdy < 0) plane[i].c++;
+         else if (plane[i].dcdx == 0) {
+            if (setup->pixel_offset == 0) {
+               /* correct for top-left fill convention:
+                */
+               if (plane[i].dcdy > 0) plane[i].c++;
+            }
+            else {
+               /* correct for bottom-left fill convention:
+                */
+               if (plane[i].dcdy < 0) plane[i].c++;
+            }
          }
+
+         plane[i].dcdx *= FIXED_ONE;
+         plane[i].dcdy *= FIXED_ONE;
+
+         /* find trivial reject offsets for each edge for a single-pixel
+          * sized block.  These will be scaled up at each recursive level to
+          * match the active blocksize.  Scaling in this way works best if
+          * the blocks are square.
+          */
+         plane[i].eo = 0;
+         if (plane[i].dcdx < 0) plane[i].eo -= plane[i].dcdx;
+         if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
       }
+   }
+#endif
 
-      plane[i].dcdx *= FIXED_ONE;
-      plane[i].dcdy *= FIXED_ONE;
-
-      /* find trivial reject offsets for each edge for a single-pixel
-       * sized block.  These will be scaled up at each recursive level to
-       * match the active blocksize.  Scaling in this way works best if
-       * the blocks are square.
-       */
-      plane[i].eo = 0;
-      if (plane[i].dcdx < 0) plane[i].eo -= plane[i].dcdx;
-      if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
+   if (0) {
+      debug_printf("p0: %08x/%08x/%08x/%08x\n",
+                   plane[0].c,
+                   plane[0].dcdx,
+                   plane[0].dcdy,
+                   plane[0].eo);
+      
+      debug_printf("p1: %08x/%08x/%08x/%08x\n",
+                   plane[1].c,
+                   plane[1].dcdx,
+                   plane[1].dcdy,
+                   plane[1].eo);
+      
+      debug_printf("p0: %08x/%08x/%08x/%08x\n",
+                   plane[2].c,
+                   plane[2].dcdx,
+                   plane[2].dcdy,
+                   plane[2].eo);
    }
 
 
