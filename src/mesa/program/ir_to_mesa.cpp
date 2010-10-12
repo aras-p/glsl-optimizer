@@ -311,7 +311,7 @@ swizzle_for_size(int size)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
 
-   assert(size < 4);
+   assert((size >= 1) && (size <= 4));
    return size_swizzles[size - 1];
 }
 
