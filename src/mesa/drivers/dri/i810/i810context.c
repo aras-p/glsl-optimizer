@@ -96,7 +96,7 @@ static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
    }
 }
 
-static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
+static void i810BufferSize(struct gl_framebuffer *buffer, GLuint *width, GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -453,8 +453,8 @@ i810MakeCurrent(__DRIcontext *driContextPriv,
       imesa->driDrawable = driDrawPriv;
 
       _mesa_make_current(imesa->glCtx,
-                         (GLframebuffer *) driDrawPriv->driverPrivate,
-                         (GLframebuffer *) driReadPriv->driverPrivate);
+                         (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                         (struct gl_framebuffer *) driReadPriv->driverPrivate);
 
       /* Are these necessary?
        */

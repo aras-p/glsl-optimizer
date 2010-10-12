@@ -50,7 +50,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Return the width and height of the given buffer.
  */
 static void
-sisGetBufferSize( GLframebuffer *buffer,
+sisGetBufferSize( struct gl_framebuffer *buffer,
 			      GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);

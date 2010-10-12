@@ -226,7 +226,7 @@ struct savage_context_t {
     /* DRI stuff */
     GLuint bufferSize;
 
-    GLframebuffer *glBuffer;
+    struct gl_framebuffer *glBuffer;
    
     /* Two flags to keep track of fallbacks. */
     GLuint Fallback;

@@ -352,7 +352,7 @@ calculate_buffer_parameters(struct via_context *vmesa,
 }
 
 
-void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+void viaReAllocateBuffers(GLcontext *ctx, struct gl_framebuffer *drawbuffer,
                           GLuint width, GLuint height)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -833,8 +833,8 @@ viaMakeCurrent(__DRIcontext *driContextPriv,
 	GLcontext *ctx = vmesa->glCtx;
         struct gl_framebuffer *drawBuffer, *readBuffer;
 
-        drawBuffer = (GLframebuffer *)driDrawPriv->driverPrivate;
-        readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
+        drawBuffer = (struct gl_framebuffer *)driDrawPriv->driverPrivate;
+        readBuffer = (struct gl_framebuffer *)driReadPriv->driverPrivate;
 
        if ((vmesa->driDrawable != driDrawPriv)
 	   || (vmesa->driReadable != driReadPriv)) {

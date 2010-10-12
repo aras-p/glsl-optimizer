@@ -263,7 +263,7 @@ void	gldEnableExtensions_DX9(GLcontext *ctx);
 void	gldInstallPipeline_DX9(GLcontext *ctx);
 void	gldSetupDriverPointers_DX9(GLcontext *ctx);
 //void	gldResizeBuffers_DX9(GLcontext *ctx);
-void	gldResizeBuffers_DX9(GLframebuffer *fb);
+void	gldResizeBuffers_DX9(struct gl_framebuffer *fb);
 
 
 // Texture functions

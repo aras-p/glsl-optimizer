@@ -228,7 +228,7 @@ PROC	gldGetProcAddress_DX7(LPCSTR a);
 void	gldEnableExtensions_DX7(GLcontext *ctx);
 void	gldInstallPipeline_DX7(GLcontext *ctx);
 void	gldSetupDriverPointers_DX7(GLcontext *ctx);
-void	gldResizeBuffers_DX7(GLframebuffer *fb);
+void	gldResizeBuffers_DX7(struct gl_framebuffer *fb);
 
 
 // Texture functions

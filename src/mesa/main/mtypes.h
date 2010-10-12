@@ -125,7 +125,6 @@ struct gl_texture_image;
 struct gl_texture_object;
 struct st_context;
 typedef struct __GLcontextRec GLcontext;
-typedef struct gl_framebuffer GLframebuffer;
 /*@}*/
 
 
@@ -3062,10 +3061,10 @@ struct __GLcontextRec
    /*@}*/
 
    struct gl_config Visual;
-   GLframebuffer *DrawBuffer;	/**< buffer for writing */
-   GLframebuffer *ReadBuffer;	/**< buffer for reading */
-   GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
-   GLframebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
+   struct gl_framebuffer *DrawBuffer;	/**< buffer for writing */
+   struct gl_framebuffer *ReadBuffer;	/**< buffer for reading */
+   struct gl_framebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
+   struct gl_framebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
 
    /**
     * Device driver function pointer table

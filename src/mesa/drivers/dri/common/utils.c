@@ -337,7 +337,7 @@ driCheckDriDdxDrmVersions2(const char * driver_name,
 				drmActual, drmExpected);
 }
 
-GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
+GLboolean driClipRectToFramebuffer( const struct gl_framebuffer *buffer,
 				    GLint *x, GLint *y,
 				    GLsizei *width, GLsizei *height )
 {

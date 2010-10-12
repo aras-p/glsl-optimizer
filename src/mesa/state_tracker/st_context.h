@@ -202,12 +202,12 @@ static INLINE struct st_context *st_context(GLcontext *ctx)
 
 
 /**
- * Wrapper for GLframebuffer.
+ * Wrapper for struct gl_framebuffer.
  * This is an opaque type to the outside world.
  */
 struct st_framebuffer
 {
-   GLframebuffer Base;
+   struct gl_framebuffer Base;
    void *Private;
 
    struct st_framebuffer_iface *iface;

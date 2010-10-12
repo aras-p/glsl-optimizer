@@ -260,7 +260,7 @@ void	gldEnableExtensions_DX8(GLcontext *ctx);
 void	gldInstallPipeline_DX8(GLcontext *ctx);
 void	gldSetupDriverPointers_DX8(GLcontext *ctx);
 //void	gldResizeBuffers_DX8(GLcontext *ctx);
-void	gldResizeBuffers_DX8(GLframebuffer *fb);
+void	gldResizeBuffers_DX8(struct gl_framebuffer *fb);
 
 
 // Texture functions

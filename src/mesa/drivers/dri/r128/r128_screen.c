@@ -349,7 +349,7 @@ r128CreateBuffer( __DRIscreen *driScrnPriv,
 static void
 r128DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 

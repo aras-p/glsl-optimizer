@@ -170,7 +170,7 @@ check_stencil_per_fragment_ops( const GLcontext *ctx )
 
 static GLboolean
 clip_pixelrect( const GLcontext *ctx,
-		const GLframebuffer *buffer,
+		const struct gl_framebuffer *buffer,
 		GLint *x, GLint *y,
 		GLsizei *width, GLsizei *height,
 		GLint *skipPixels, GLint *skipRows,

@@ -828,7 +828,7 @@ static GLboolean set_draw_buffer( GLcontext* ctx, GLenum mode )
 //---------------------------------------------------------------------------
 
 
-static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+static void set_read_buffer(GLcontext *ctx, struct gl_framebuffer *colorBuffer,
                             GLenum buffer )
 {
   /* XXX todo */
@@ -843,7 +843,7 @@ static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 //static void buffer_size( GLcontext* ctx, GLuint *width, GLuint *height )
 // Altered for Mesa 5.x. KeithH
 static void buffer_size(
-	GLframebuffer *buffer,
+	struct gl_framebuffer *buffer,
 	GLuint *width,
 	GLuint *height)
 {

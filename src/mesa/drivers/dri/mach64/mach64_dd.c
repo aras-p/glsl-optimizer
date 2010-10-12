@@ -41,7 +41,7 @@
 
 /* Return the current color buffer size.
  */
-static void mach64DDGetBufferSize( GLframebuffer *buffer,
+static void mach64DDGetBufferSize( struct gl_framebuffer *buffer,
 				   GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);

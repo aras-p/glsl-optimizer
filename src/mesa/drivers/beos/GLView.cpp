@@ -105,7 +105,7 @@ public:
 	MesaDriver();
 	~MesaDriver();
 	
-	void 		Init(BGLView * bglview, GLcontext * c, struct gl_config * v, GLframebuffer * b);
+	void 		Init(BGLView * bglview, GLcontext * c, struct gl_config * v, struct gl_framebuffer * b);
 
 	void 		LockGL();
 	void 		UnlockGL();
@@ -122,7 +122,7 @@ private:
 
 	GLcontext * 	m_glcontext;
 	struct gl_config * 		m_glvisual;
-	GLframebuffer *	m_glframebuffer;
+	struct gl_framebuffer *	m_glframebuffer;
 
 	BGLView *		m_bglview;
 	BBitmap *		m_bitmap;
@@ -147,9 +147,9 @@ private:
    static void 		Index(GLcontext *ctx, GLuint index);
    static void 		Color(GLcontext *ctx, GLubyte r, GLubyte g,
                      GLubyte b, GLubyte a);
-   static void 		SetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+   static void 		SetBuffer(GLcontext *ctx, struct gl_framebuffer *colorBuffer,
                              GLenum mode);
-   static void 		GetBufferSize(GLframebuffer * framebuffer, GLuint *width,
+   static void 		GetBufferSize(struct gl_framebuffer * framebuffer, GLuint *width,
                              GLuint *height);
    static void		Error(GLcontext *ctx);
    static const GLubyte *	GetString(GLcontext *ctx, GLenum name);
@@ -332,7 +332,7 @@ BGLView::BGLView(BRect rect, char *name,
 
 
    // create core framebuffer
-   GLframebuffer * buffer = _mesa_create_framebuffer(visual,
+   struct gl_framebuffer * buffer = _mesa_create_framebuffer(visual,
                                               depth > 0 ? GL_TRUE : GL_FALSE,
                                               stencil > 0 ? GL_TRUE: GL_FALSE,
                                               accum > 0 ? GL_TRUE : GL_FALSE,
@@ -668,7 +668,7 @@ MesaDriver::~MesaDriver()
 }
 
 
-void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, struct gl_config * visual, GLframebuffer * framebuffer)
+void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, struct gl_config * visual, struct gl_framebuffer * framebuffer)
 {
 	m_bglview 		= bglview;
 	m_glcontext 	= ctx;
@@ -984,7 +984,7 @@ void MesaDriver::ClearBack(GLcontext *ctx,
 }
 
 
-void MesaDriver::SetBuffer(GLcontext *ctx, GLframebuffer *buffer,
+void MesaDriver::SetBuffer(GLcontext *ctx, struct gl_framebuffer *buffer,
                             GLenum mode)
 {
    /* TODO */
@@ -993,7 +993,7 @@ void MesaDriver::SetBuffer(GLcontext *ctx, GLframebuffer *buffer,
 	(void) mode;
 }
 
-void MesaDriver::GetBufferSize(GLframebuffer * framebuffer, GLuint *width,
+void MesaDriver::GetBufferSize(struct gl_framebuffer * framebuffer, GLuint *width,
                             GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);

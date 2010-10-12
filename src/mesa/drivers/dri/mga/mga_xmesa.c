@@ -812,7 +812,7 @@ mgaCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 mgaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void
@@ -875,8 +875,8 @@ mgaMakeCurrent(__DRIcontext *driContextPriv,
       mmesa->driReadable = driReadPriv;
 
       _mesa_make_current(mmesa->glCtx,
-                         (GLframebuffer *) driDrawPriv->driverPrivate,
-                         (GLframebuffer *) driReadPriv->driverPrivate);
+                         (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                         (struct gl_framebuffer *) driReadPriv->driverPrivate);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

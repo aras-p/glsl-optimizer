@@ -45,7 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Return the width and height of the current color buffer.
  */
-static void r128GetBufferSize( GLframebuffer *buffer,
+static void r128GetBufferSize( struct gl_framebuffer *buffer,
 				 GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);

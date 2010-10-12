@@ -94,7 +94,7 @@ extern GLboolean driCheckDriDdxDrmVersions3(const char * driver_name,
     const __DRIversion * ddxActual, const __DRIutilversion2 * ddxExpected,
     const __DRIversion * drmActual, const __DRIversion * drmExpected);
 
-extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
+extern GLboolean driClipRectToFramebuffer( const struct gl_framebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
 

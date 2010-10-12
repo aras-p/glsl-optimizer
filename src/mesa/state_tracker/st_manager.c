@@ -54,13 +54,13 @@
 #include "st_manager.h"
 
 /**
- * Cast wrapper to convert a GLframebuffer to an st_framebuffer.
- * Return NULL if the GLframebuffer is a user-created framebuffer.
+ * Cast wrapper to convert a struct gl_framebuffer to an st_framebuffer.
+ * Return NULL if the struct gl_framebuffer is a user-created framebuffer.
  * We'll only return non-null for window system framebuffers.
  * Note that this function may fail.
  */
 static INLINE struct st_framebuffer *
-st_ws_framebuffer(GLframebuffer *fb)
+st_ws_framebuffer(struct gl_framebuffer *fb)
 {
    /* FBO cannot be casted.  See st_new_framebuffer */
    return (struct st_framebuffer *) ((fb && !fb->Name) ? fb : NULL);
@@ -429,7 +429,7 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
 
    /* for FBO-only context */
    if (!stfbi) {
-      GLframebuffer *base = _mesa_get_incomplete_framebuffer();
+      struct gl_framebuffer *base = _mesa_get_incomplete_framebuffer();
 
       stfb->Base = *base;
 
@@ -471,8 +471,8 @@ static void
 st_framebuffer_reference(struct st_framebuffer **ptr,
                          struct st_framebuffer *stfb)
 {
-   GLframebuffer *fb = &stfb->Base;
-   _mesa_reference_framebuffer((GLframebuffer **) ptr, fb);
+   struct gl_framebuffer *fb = &stfb->Base;
+   _mesa_reference_framebuffer((struct gl_framebuffer **) ptr, fb);
 }
 
 static void
@@ -832,7 +832,7 @@ st_manager_validate_framebuffers(struct st_context *st)
  * Add a color renderbuffer on demand.
  */
 boolean
-st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
+st_manager_add_color_renderbuffer(struct st_context *st, struct gl_framebuffer *fb,
                                   gl_buffer_index idx)
 {
    struct st_framebuffer *stfb = st_ws_framebuffer(fb);

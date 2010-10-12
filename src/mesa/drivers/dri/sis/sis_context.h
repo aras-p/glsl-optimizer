@@ -444,7 +444,7 @@ extern GLboolean sisCreateContext( gl_api api,
                                    void *sharedContextPrivate );
 extern void sisDestroyContext( __DRIcontext * );
 
-void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+void sisReAllocateBuffers(GLcontext *ctx, struct gl_framebuffer *drawbuffer,
                           GLuint width, GLuint height);
 
 extern GLboolean sisMakeCurrent( __DRIcontext *driContextPriv,

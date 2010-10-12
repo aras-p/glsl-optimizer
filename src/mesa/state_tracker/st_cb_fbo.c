@@ -547,7 +547,7 @@ static void
 st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
 {
    struct st_context *st = st_context(ctx);
-   GLframebuffer *fb = ctx->DrawBuffer;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
 
    (void) count;
@@ -568,7 +568,7 @@ static void
 st_ReadBuffer(GLcontext *ctx, GLenum buffer)
 {
    struct st_context *st = st_context(ctx);
-   GLframebuffer *fb = ctx->ReadBuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
 
    (void) buffer;
 

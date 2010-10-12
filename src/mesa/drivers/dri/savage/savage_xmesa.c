@@ -681,7 +681,7 @@ savageCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 savageDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 #if 0
@@ -789,9 +789,9 @@ savageMakeCurrent(__DRIcontext *driContextPriv,
       savageContextPtr imesa
          = (savageContextPtr) driContextPriv->driverPrivate;
       struct gl_framebuffer *drawBuffer
-         = (GLframebuffer *) driDrawPriv->driverPrivate;
+         = (struct gl_framebuffer *) driDrawPriv->driverPrivate;
       struct gl_framebuffer *readBuffer
-         = (GLframebuffer *) driReadPriv->driverPrivate;
+         = (struct gl_framebuffer *) driReadPriv->driverPrivate;
       driRenderbuffer *frontRb = (driRenderbuffer *)
          drawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
       driRenderbuffer *backRb = (driRenderbuffer *)

@@ -83,10 +83,10 @@ struct GLFBDevVisualRec {
 };
 
 /**
- * Derived from Mesa's GLframebuffer class.
+ * Derived from Mesa's struct gl_framebuffer class.
  */
 struct GLFBDevBufferRec {
-   GLframebuffer glframebuffer;    /* base class */
+   struct gl_framebuffer glframebuffer;    /* base class */
    GLFBDevVisualPtr visual;
    struct fb_fix_screeninfo fix;
    struct fb_var_screeninfo var;
@@ -146,7 +146,7 @@ update_state( GLcontext *ctx, GLuint new_state )
 
 
 static void
-get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
+get_buffer_size( struct gl_framebuffer *buffer, GLuint *width, GLuint *height )
 {
    const GLFBDevBufferPtr fbdevbuffer = (GLFBDevBufferPtr) buffer;
    *width = fbdevbuffer->var.xres;
@@ -162,7 +162,7 @@ static void
 viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    GLuint newWidth, newHeight;
-   GLframebuffer *buffer;
+   struct gl_framebuffer *buffer;
 
    buffer = ctx->WinSysDrawBuffer;
    get_buffer_size( buffer, &newWidth, &newHeight );

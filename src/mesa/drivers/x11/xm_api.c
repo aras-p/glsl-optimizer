@@ -349,7 +349,7 @@ XMesaBuffer XMesaBufferList = NULL;
 
 /**
  * Allocate a new XMesaBuffer object which corresponds to the given drawable.
- * Note that XMesaBuffer is derived from GLframebuffer.
+ * Note that XMesaBuffer is derived from struct gl_framebuffer.
  * The new XMesaBuffer will not have any size (Width=Height=0).
  *
  * \param d  the corresponding X drawable (window or pixmap)
@@ -1788,7 +1788,7 @@ XMesaDestroyBuffer(XMesaBuffer b)
 
 
 /**
- * Query the current window size and update the corresponding GLframebuffer
+ * Query the current window size and update the corresponding struct gl_framebuffer
  * and all attached renderbuffers.
  * Called when:
  *  1. the first time a buffer is bound to a context.

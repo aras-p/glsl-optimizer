@@ -64,7 +64,7 @@ struct osmesa_context
    GLcontext mesa;		/*< Base class - this must be first */
    struct gl_config *gl_visual;		/*< Describes the buffers */
    struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
-   GLframebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
+   struct gl_framebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
    GLenum format;		/*< User-specified context format */
    GLint userRowLength;		/*< user-specified number of pixels per row */
    GLint rInd, gInd, bInd, aInd;/*< index offsets for RGBA formats */

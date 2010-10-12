@@ -238,7 +238,7 @@ static GLboolean gld_set_draw_buffer_DX9(
 
 static void gld_set_read_buffer_DX9(
 	GLcontext *ctx,
-	GLframebuffer *buffer,
+	struct gl_framebuffer *buffer,
 	GLenum mode)
 {
    /* separate read buffer not supported */
@@ -341,7 +341,7 @@ void gld_Clear_DX9(
 // Mesa 5: Parameter change
 static void gld_buffer_size_DX9(
 //	GLcontext *ctx,
-	GLframebuffer *fb,
+	struct gl_framebuffer *fb,
 	GLuint *width,
 	GLuint *height)
 {
@@ -1068,7 +1068,7 @@ extern BOOL dglWglResizeBuffers(GLcontext *ctx, BOOL bDefaultDriver);
 // Mesa 5: Parameter change
 void gldResizeBuffers_DX9(
 //	GLcontext *ctx)
-	GLframebuffer *fb)
+	struct gl_framebuffer *fb)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	dglWglResizeBuffers(ctx, TRUE);

@@ -334,8 +334,8 @@ mach64MakeCurrent( __DRIcontext *driContextPriv,
       }
 
       _mesa_make_current( newMach64Ctx->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+                          (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                          (struct gl_framebuffer *) driReadPriv->driverPrivate );
 
 
       newMach64Ctx->new_state |=  MACH64_NEW_CLIP;

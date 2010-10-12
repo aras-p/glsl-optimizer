@@ -1691,7 +1691,7 @@ radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
     if (!rfb)
 	return;
     radeon_cleanup_renderbuffers(rfb);
-    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+    _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 

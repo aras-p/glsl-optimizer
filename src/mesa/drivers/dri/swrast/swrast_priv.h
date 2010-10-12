@@ -79,7 +79,7 @@ swrast_context(GLcontext *ctx)
 struct dri_drawable
 {
     /* mesa, base class, must be first */
-    GLframebuffer Base;
+    struct gl_framebuffer Base;
 
     /* dri */
     __DRIdrawable *dPriv;
@@ -95,7 +95,7 @@ dri_drawable(__DRIdrawable * driDrawPriv)
 }
 
 static INLINE struct dri_drawable *
-swrast_drawable(GLframebuffer *fb)
+swrast_drawable(struct gl_framebuffer *fb)
 {
     return (struct dri_drawable *) fb;
 }

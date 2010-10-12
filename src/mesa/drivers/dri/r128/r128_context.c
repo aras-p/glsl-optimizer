@@ -348,8 +348,8 @@ r128MakeCurrent( __DRIcontext *driContextPriv,
       newR128Ctx->driDrawable = driDrawPriv;
 
       _mesa_make_current( newR128Ctx->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+                          (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                          (struct gl_framebuffer *) driReadPriv->driverPrivate );
 
       newR128Ctx->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
    } else {

@@ -146,7 +146,7 @@ struct i810_context_t {
    /* DRI stuff
     */
    GLuint needClip;
-   GLframebuffer *glBuffer;
+   struct gl_framebuffer *glBuffer;
    GLboolean doPageFlip;
 
    /* These refer to the current draw (front vs. back) buffer:

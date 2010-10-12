@@ -423,7 +423,7 @@ static XMesaBuffer XMesaBufferList = NULL;
 
 /**
  * Allocate a new XMesaBuffer object which corresponds to the given drawable.
- * Note that XMesaBuffer is derived from GLframebuffer.
+ * Note that XMesaBuffer is derived from struct gl_framebuffer.
  * The new XMesaBuffer will not have any size (Width=Height=0).
  *
  * \param d  the corresponding X drawable (window or pixmap)

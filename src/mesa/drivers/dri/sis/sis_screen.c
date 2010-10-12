@@ -220,7 +220,7 @@ sisCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 sisDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void sisCopyBuffer( __DRIdrawable *dPriv )

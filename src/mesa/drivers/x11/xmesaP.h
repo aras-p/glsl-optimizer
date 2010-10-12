@@ -205,7 +205,7 @@ struct xmesa_renderbuffer
  * Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
-   GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
+   struct gl_framebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
 				/* This MUST BE FIRST! */
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
@@ -553,11 +553,11 @@ XMESA_CONTEXT(GLcontext *ctx)
 
 
 /**
- * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
+ * Return pointer to XMesaBuffer corresponding to a Mesa struct gl_framebuffer.
  * Since we're using structure containment, it's just a cast!.
  */
 static INLINE XMesaBuffer
-XMESA_BUFFER(GLframebuffer *b)
+XMESA_BUFFER(struct gl_framebuffer *b)
 {
    return (XMesaBuffer) b;
 }

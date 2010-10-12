@@ -32,13 +32,13 @@
  * - GLcontext: this contains the Mesa rendering state
  * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether or not
  *   there's a depth buffer, stencil buffer, etc.
- * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
+ * - struct gl_framebuffer:  contains pointers to the depth buffer, stencil buffer,
  *   accum buffer and alpha buffers.
  *
  * These types should be encapsulated by corresponding device driver
  * data types.  See xmesa.h and xmesaP.h for an example.
  *
- * In OOP terms, GLcontext, struct gl_config, and GLframebuffer are base classes
+ * In OOP terms, GLcontext, struct gl_config, and struct gl_framebuffer are base classes
  * which the device driver must derive from.
  *
  * The following functions create and destroy these data types.
@@ -142,8 +142,8 @@ extern void
 _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height);
 
 extern GLboolean
-_mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
-                    GLframebuffer *readBuffer );
+_mesa_make_current( GLcontext *ctx, struct gl_framebuffer *drawBuffer,
+                    struct gl_framebuffer *readBuffer );
 
 extern GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);

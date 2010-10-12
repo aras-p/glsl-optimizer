@@ -1291,7 +1291,7 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
 static GLboolean 
-check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
+check_compatible(const GLcontext *ctx, const struct gl_framebuffer *buffer)
 {
    const struct gl_config *ctxvis = &ctx->Visual;
    const struct gl_config *bufvis = &buffer->Visual;
@@ -1340,7 +1340,7 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
  * Really, the device driver should totally take care of this.
  */
 static void
-initialize_framebuffer_size(GLcontext *ctx, GLframebuffer *fb)
+initialize_framebuffer_size(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    GLuint width, height;
    if (ctx->Driver.GetBufferSize) {
@@ -1385,8 +1385,8 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
  * \param readBuffer  the reading framebuffer
  */
 GLboolean
-_mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                    GLframebuffer *readBuffer )
+_mesa_make_current( GLcontext *newCtx, struct gl_framebuffer *drawBuffer,
+                    struct gl_framebuffer *readBuffer )
 {
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");

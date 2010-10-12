@@ -83,9 +83,9 @@ wmesa_lookup_framebuffer(HDC hdc)
 
 
 /**
- * Given a GLframebuffer, return the corresponding WMesaFramebuffer.
+ * Given a struct gl_framebuffer, return the corresponding WMesaFramebuffer.
  */
-static WMesaFramebuffer wmesa_framebuffer(GLframebuffer *fb)
+static WMesaFramebuffer wmesa_framebuffer(struct gl_framebuffer *fb)
 {
     return (WMesaFramebuffer) fb;
 }
@@ -217,7 +217,7 @@ get_window_size(HDC hdc, GLuint *width, GLuint *height)
 
 
 static void
-wmesa_get_buffer_size(GLframebuffer *buffer, GLuint *width, GLuint *height)
+wmesa_get_buffer_size(struct gl_framebuffer *buffer, GLuint *width, GLuint *height)
 {
     WMesaFramebuffer pwfb = wmesa_framebuffer(buffer);
     get_window_size(pwfb->hDC, width, height);
@@ -1320,7 +1320,7 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
  * Resize the front/back colorbuffers to match the latest window size.
  */
 static void
-wmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
+wmesa_resize_buffers(GLcontext *ctx, struct gl_framebuffer *buffer,
                      GLuint width, GLuint height)
 {
     WMesaContext pwc = wmesa_context(ctx);

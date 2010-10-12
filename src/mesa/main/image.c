@@ -5678,7 +5678,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *unpack)
 {
-   const GLframebuffer *buffer = ctx->DrawBuffer;
+   const struct gl_framebuffer *buffer = ctx->DrawBuffer;
 
    if (unpack->RowLength == 0) {
       unpack->RowLength = *width;
@@ -5749,7 +5749,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack)
 {
-   const GLframebuffer *buffer = ctx->ReadBuffer;
+   const struct gl_framebuffer *buffer = ctx->ReadBuffer;
 
    if (pack->RowLength == 0) {
       pack->RowLength = *width;

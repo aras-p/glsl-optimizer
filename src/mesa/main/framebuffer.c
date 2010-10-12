@@ -372,7 +372,7 @@ _mesa_resizebuffers( GLcontext *ctx )
 
    if (ctx->WinSysDrawBuffer) {
       GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->WinSysDrawBuffer;
+      struct gl_framebuffer *buffer = ctx->WinSysDrawBuffer;
 
       assert(buffer->Name == 0);
 
@@ -389,7 +389,7 @@ _mesa_resizebuffers( GLcontext *ctx )
    if (ctx->WinSysReadBuffer
        && ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
       GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->WinSysReadBuffer;
+      struct gl_framebuffer *buffer = ctx->WinSysReadBuffer;
 
       assert(buffer->Name == 0);
 
