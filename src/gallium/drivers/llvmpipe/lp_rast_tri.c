@@ -282,19 +282,19 @@ sign_bits4(const __m128i *cstep, int cdiff)
 
 
 static INLINE void
-transpose4_epi32(__m128i a,
-                 __m128i b,
-                 __m128i c,
-                 __m128i d,
-                 __m128i *o,
-                 __m128i *p,
-                 __m128i *q,
-                 __m128i *r)
+transpose4_epi32(const __m128i * restrict a,
+                 const __m128i * restrict b,
+                 const __m128i * restrict c,
+                 const __m128i * restrict d,
+                 __m128i * restrict o,
+                 __m128i * restrict p,
+                 __m128i * restrict q,
+                 __m128i * restrict r)
 {
-  __m128i t0 = _mm_unpacklo_epi32(a, b);
-  __m128i t1 = _mm_unpacklo_epi32(c, d);
-  __m128i t2 = _mm_unpackhi_epi32(a, b);
-  __m128i t3 = _mm_unpackhi_epi32(c, d);
+  __m128i t0 = _mm_unpacklo_epi32(*a, *b);
+  __m128i t1 = _mm_unpacklo_epi32(*c, *d);
+  __m128i t2 = _mm_unpackhi_epi32(*a, *b);
+  __m128i t3 = _mm_unpackhi_epi32(*c, *d);
 
   *o = _mm_unpacklo_epi64(t0, t1);
   *p = _mm_unpackhi_epi64(t0, t1);
@@ -379,8 +379,8 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
    __m128i span_2;                /* 0,dcdx,2dcdx,3dcdx for plane 2 */
    __m128i unused;
    
-   transpose4_epi32(p0, p1, p2, zero,
-                   &c, &dcdx, &dcdy, &rej4);
+   transpose4_epi32(&p0, &p1, &p2, &zero,
+                    &c, &dcdx, &dcdy, &rej4);
 
    /* Adjust dcdx;
     */
@@ -393,8 +393,8 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
    dcdx2 = _mm_add_epi32(dcdx, dcdx);
    dcdx3 = _mm_add_epi32(dcdx2, dcdx);
 
-   transpose4_epi32(zero, dcdx, dcdx2, dcdx3,
-                   &span_0, &span_1, &span_2, &unused);
+   transpose4_epi32(&zero, &dcdx, &dcdx2, &dcdx3,
+                    &span_0, &span_1, &span_2, &unused);
 
    for (i = 0; i < 4; i++) {
       __m128i cx = c;
@@ -484,7 +484,7 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
    __m128i span_2;                /* 0,dcdx,2dcdx,3dcdx for plane 2 */
    __m128i unused;
    
-   transpose4_epi32(p0, p1, p2, zero,
+   transpose4_epi32(&p0, &p1, &p2, &zero,
                     &c, &dcdx, &dcdy, &unused);
 
    /* Adjust dcdx;
@@ -497,7 +497,7 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
    dcdx2 = _mm_add_epi32(dcdx, dcdx);
    dcdx3 = _mm_add_epi32(dcdx2, dcdx);
 
-   transpose4_epi32(zero, dcdx, dcdx2, dcdx3,
+   transpose4_epi32(&zero, &dcdx, &dcdx2, &dcdx3,
                     &span_0, &span_1, &span_2, &unused);
 
 
