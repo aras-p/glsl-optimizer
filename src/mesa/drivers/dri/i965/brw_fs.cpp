@@ -854,8 +854,6 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_i2f:
    case ir_unop_b2f:
    case ir_unop_b2i:
-      emit(fs_inst(BRW_OPCODE_MOV, this->result, op[0]));
-      break;
    case ir_unop_f2i:
       emit(fs_inst(BRW_OPCODE_MOV, this->result, op[0]));
       break;
@@ -863,6 +861,9 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_i2b:
       inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      inst = emit(fs_inst(BRW_OPCODE_AND, this->result,
+			  this->result, fs_reg(1)));
+      break;
 
    case ir_unop_trunc:
       emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
