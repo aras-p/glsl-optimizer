@@ -72,6 +72,84 @@ _mm_castps_si128(__m128 a)
 #endif /* defined(_MSC_VER) && _MSC_VER < 1500 */
 
 
+static INLINE void u_print_epi8(const char *name, __m128i r)
+{
+   union { __m128i m; ubyte ub[16]; } u;
+   u.m = r;
+
+   debug_printf("%s: "
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x/"
+                "%02x\n",
+                name,
+                u.ub[0],  u.ub[1],  u.ub[2],  u.ub[3],
+                u.ub[4],  u.ub[5],  u.ub[6],  u.ub[7],
+                u.ub[8],  u.ub[9],  u.ub[10], u.ub[11],
+                u.ub[12], u.ub[13], u.ub[14], u.ub[15]);
+}
+
+static INLINE void u_print_epi16(const char *name, __m128i r)
+{
+   union { __m128i m; ushort us[8]; } u;
+   u.m = r;
+
+   debug_printf("%s: "
+                "%04x/"
+                "%04x/"
+                "%04x/"
+                "%04x/"
+                "%04x/"
+                "%04x/"
+                "%04x/"
+                "%04x\n",
+                name,
+                u.us[0],  u.us[1],  u.us[2],  u.us[3],
+                u.us[4],  u.us[5],  u.us[6],  u.us[7]);
+}
+
+static INLINE void u_print_epi32(const char *name, __m128i r)
+{
+   union { __m128i m; uint ui[4]; } u;
+   u.m = r;
+
+   debug_printf("%s: "
+                "%08x/"
+                "%08x/"
+                "%08x/"
+                "%08x\n",
+                name,
+                u.ui[0],  u.ui[1],  u.ui[2],  u.ui[3]);
+}
+
+static INLINE void u_print_ps(const char *name, __m128 r)
+{
+   union { __m128 m; float f[4]; } u;
+   u.m = r;
+
+   debug_printf("%s: "
+                "%f/"
+                "%f/"
+                "%f/"
+                "%f\n",
+                name,
+                u.f[0],  u.f[1],  u.f[2],  u.f[3]);
+}
+
+
+
 #if defined(PIPE_ARCH_SSSE3)
 
 #include <tmmintrin.h>
@@ -98,6 +176,6 @@ _mm_shuffle_epi8(__m128i a, __m128i mask)
 #endif /* !PIPE_ARCH_SSSE3 */
 
 
-#endif /* PIPE_ARCH_X86 || PIPE_ARCH_X86_64 */
+#endif /* PIPE_ARCH_SSE */
 
 #endif /* U_SSE_H_ */

@@ -32,7 +32,6 @@
 #include <limits.h>
 #include "util/u_math.h"
 #include "lp_debug.h"
-#include "lp_debug_intrin.h"
 #include "lp_perf.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
