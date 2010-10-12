@@ -26,8 +26,7 @@
 /**
  * \file ir_to_mesa.cpp
  *
- * Translates the IR to ARB_fragment_program text if possible,
- * printing the result
+ * Translate GLSL IR to Mesa's gl_program representation.
  */
 
 #include <stdio.h>
@@ -288,19 +287,22 @@ ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
    PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
 
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-   {
-      va_list args;
-      va_start(args, fmt);
-      prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
-      va_end(args);
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...)
+{
+   va_list args;
+   va_start(args, fmt);
+   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   va_end(args);
 
-      prog->LinkStatus = GL_FALSE;
-   }
+   prog->LinkStatus = GL_FALSE;
+}
 
-static int swizzle_for_size(int size)
+static int
+swizzle_for_size(int size)
 {
    int size_swizzles[4] = {
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
@@ -309,6 +311,7 @@ static int swizzle_for_size(int size)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
 
+   assert(size < 4);
    return size_swizzles[size - 1];
 }
 
@@ -2254,6 +2257,10 @@ set_uniform_initializers(GLcontext *ctx,
    talloc_free(mem_ctx);
 }
 
+
+/**
+ * Convert a shader's GLSL IR into a Mesa gl_program.
+ */
 struct gl_program *
 get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
@@ -2344,10 +2351,12 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
+   /* Convert ir_mesa_instructions into prog_instructions.
+    */
    mesa_inst = mesa_instructions;
    i = 0;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
-      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+      const ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;
@@ -2368,6 +2377,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
       if (mesa_inst->DstReg.RelAddr)
          prog->IndirectRegisterFiles |= 1 << mesa_inst->DstReg.File;
 
+      /* Update program's bitmask of indirectly accessed register files */
       for (unsigned src = 0; src < 3; src++)
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
@@ -2429,6 +2439,12 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 }
 
 extern "C" {
+
+/**
+ * Called via ctx->Driver.CompilerShader().
+ * This is a no-op.
+ * XXX can we remove the ctx->Driver.CompileShader() hook?
+ */
 GLboolean
 _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 {
@@ -2438,6 +2454,13 @@ _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    return GL_TRUE;
 }
 
+
+/**
+ * Link a shader.
+ * Called via ctx->Driver.LinkShader()
+ * This actually involves converting GLSL IR into Mesa gl_programs with
+ * code lowering and other optimizations.
+ */
 GLboolean
 _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
@@ -2446,7 +2469,7 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
-      struct gl_shader_compiler_options *options =
+      const struct gl_shader_compiler_options *options =
             &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(prog->_LinkedShaders[i]->Type)];
 
       do {
@@ -2516,6 +2539,10 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    return GL_TRUE;
 }
 
+
+/**
+ * Compile a GLSL shader.  Called via glCompileShader().
+ */
 void
 _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 {
@@ -2600,6 +2627,10 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    }
 }
 
+
+/**
+ * Link a GLSL shader program.  Called via glLinkProgram().
+ */
 void
 _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
