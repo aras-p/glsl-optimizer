@@ -343,26 +343,34 @@ do_triangle_ccw(struct lp_setup_context *setup,
        * Also, sometimes (in FBO cases) GL will render upside down
        * to its usual method, in which case it will probably want
        * to use the opposite, top-left convention.
+       *
+       * XXX: Chances are this will get stripped away.  In fact this
+       * is only meaningful if:
+       *
+       *          (plane->c & (FIXED_ONE-1)) == 0
+       *
        */         
-      if (plane->dcdx < 0) {
-         /* both fill conventions want this - adjust for left edges */
-         plane->c++;            
-      }
-      else if (plane->dcdx == 0) {
-         if (setup->pixel_offset == 0) {
-            /* correct for top-left fill convention:
-             */
-            if (plane->dcdy > 0) plane->c++;
+      if ((plane->c & (FIXED_ONE-1)) == 0) {
+         if (plane->dcdx < 0) {
+            /* both fill conventions want this - adjust for left edges */
+            plane->c++;            
          }
-         else {
-            /* correct for bottom-left fill convention:
-             */
-            if (plane->dcdy < 0) plane->c++;
+         else if (plane->dcdx == 0) {
+            if (setup->pixel_offset == 0) {
+               /* correct for top-left fill convention:
+                */
+               if (plane->dcdy > 0) plane->c++;
+            }
+            else {
+               /* correct for bottom-left fill convention:
+                */
+               if (plane->dcdy < 0) plane->c++;
+            }
          }
       }
 
-      plane->dcdx *= FIXED_ONE;
-      plane->dcdy *= FIXED_ONE;
+      plane->c = (plane->c + (FIXED_ONE-1)) / FIXED_ONE;
+
 
       /* find trivial reject offsets for each edge for a single-pixel
        * sized block.  These will be scaled up at each recursive level to

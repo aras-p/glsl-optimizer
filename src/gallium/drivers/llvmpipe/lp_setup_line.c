@@ -640,8 +640,7 @@ try_setup_line( struct lp_setup_context *setup,
          }
       }
 
-      plane->dcdx *= FIXED_ONE;
-      plane->dcdy *= FIXED_ONE;
+      plane->c = (plane->c + (FIXED_ONE-1)) / FIXED_ONE;
 
       /* find trivial reject offsets for each edge for a single-pixel
        * sized block.  These will be scaled up at each recursive level to
