@@ -402,19 +402,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     if (!drv_init_drm(pScrn))
 	return FALSE;
 
-    use3D = cust ? !cust->no_3d : TRUE;
-    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
-				    &use3D) ?
-	X_CONFIG : X_PROBED;
-
-    ms->no3D = !use3D;
-
-    if (!drv_init_resource_management(pScrn)) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
-					       "Gallium3D or libKMS.");
-	return FALSE;
-    }
-
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
     pScrn->rgbBits = 8;
@@ -448,6 +435,19 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     memcpy(ms->Options, drv_options, sizeof(drv_options));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ms->Options);
+
+    use3D = cust ? !cust->no_3d : TRUE;
+    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				    &use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
+
+    if (!drv_init_resource_management(pScrn)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
+					       "Gallium3D or libKMS.");
+	return FALSE;
+    }
 
     /* Allocate an xf86CrtcConfig */
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
