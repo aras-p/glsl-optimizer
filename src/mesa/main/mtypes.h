@@ -562,8 +562,6 @@ struct gl_shine_tab
  * \sa _gl_context_modes_create
  */
 typedef struct __GLcontextModesRec {
-   struct __GLcontextModesRec * next;
-
    GLboolean rgbMode;
    GLboolean floatMode;
    GLboolean colorIndexMode;
@@ -587,14 +585,6 @@ typedef struct __GLcontextModesRec {
 
    GLint level;
 
-   GLint pixmapMode;
-
-   /* GLX */
-   GLint visualID;
-   GLint visualType;     /**< One of the GLX X visual types. (i.e., 
-			  * \c GLX_TRUE_COLOR, etc.)
-			  */
-
    /* EXT_visual_rating / GLX 1.2 */
    GLint visualRating;
 
@@ -608,12 +598,6 @@ typedef struct __GLcontextModesRec {
    GLint sampleBuffers;
    GLint samples;
 
-   /* SGIX_fbconfig / GLX 1.3 */
-   GLint drawableType;
-   GLint renderType;
-   GLint xRenderable;
-   GLint fbconfigID;
-
    /* SGIX_pbuffer / GLX 1.3 */
    GLint maxPbufferWidth;
    GLint maxPbufferHeight;
@@ -621,13 +605,8 @@ typedef struct __GLcontextModesRec {
    GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
    GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
 
-   /* SGIX_visual_select_group */
-   GLint visualSelectGroup;
-
    /* OML_swap_method */
    GLint swapMethod;
-
-   GLint screen;
 
    /* EXT_texture_from_pixmap */
    GLint bindToTextureRgb;

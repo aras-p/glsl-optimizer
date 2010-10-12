@@ -569,7 +569,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       /* RGB WINDOW:
        * We support RGB rendering into almost any kind of visual.
        */
-      const int xclass = v->mesa_visual.visualType;
+      const int xclass = v->visualType;
       if (xclass != GLX_TRUE_COLOR && xclass == !GLX_DIRECT_COLOR) {
 	 _mesa_warning(NULL,
             "XMesa: RGB mode rendering not supported in given visual.\n");
@@ -716,13 +716,13 @@ XMesaVisual XMesaCreateVisual( Display *display,
    v->mesa_visual.redMask = visinfo->red_mask;
    v->mesa_visual.greenMask = visinfo->green_mask;
    v->mesa_visual.blueMask = visinfo->blue_mask;
-   v->mesa_visual.visualID = visinfo->visualid;
-   v->mesa_visual.screen = visinfo->screen;
+   v->visualID = visinfo->visualid;
+   v->screen = visinfo->screen;
 
 #if !(defined(__cplusplus) || defined(c_plusplus))
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->class);
 #else
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
 #endif
 
    v->mesa_visual.visualRating = visualCaveat;
@@ -733,7 +733,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
    (void) initialize_visual_and_buffer( v, NULL, rgb_flag, 0, 0 );
 
    {
-      const int xclass = v->mesa_visual.visualType;
+      const int xclass = v->visualType;
       if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
          red_bits   = _mesa_bitcount(GET_REDMASK(v));
          green_bits = _mesa_bitcount(GET_GREENMASK(v));
@@ -783,7 +783,6 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
       vis->numAuxBuffers = 0;
       vis->level = 0;
-      vis->pixmapMode = 0;
       vis->sampleBuffers = 0;
       vis->samples = 0;
    }

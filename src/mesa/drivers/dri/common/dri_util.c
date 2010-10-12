@@ -444,8 +444,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
     pdp->driScreenPriv = psp;
 
-    if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes,
-					renderType == GLX_PIXMAP_BIT)) {
+    if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes, 0)) {
        free(pdp);
        return NULL;
     }

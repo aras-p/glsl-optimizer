@@ -86,6 +86,7 @@ enum pixel_format {
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
+   int screen, visualID;
 #ifdef XFree86Server
    GLint ColormapEntries;
    GLint nplanes;

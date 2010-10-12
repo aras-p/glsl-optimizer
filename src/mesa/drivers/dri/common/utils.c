@@ -620,9 +620,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		    modes->transparentBlue = GLX_DONT_CARE;
 		    modes->transparentAlpha = GLX_DONT_CARE;
 		    modes->transparentIndex = GLX_DONT_CARE;
-		    modes->visualType = GLX_DONT_CARE;
-		    modes->renderType = GLX_RGBA_BIT;
-		    modes->drawableType = GLX_WINDOW_BIT;
 		    modes->rgbMode = GL_TRUE;
 
 		    if ( db_modes[i] == GLX_NONE ) {

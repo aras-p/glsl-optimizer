@@ -1397,14 +1397,14 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    v->mesa_visual.redMask = visinfo->redMask;
    v->mesa_visual.greenMask = visinfo->greenMask;
    v->mesa_visual.blueMask = visinfo->blueMask;
-   v->mesa_visual.visualID = visinfo->vid;
-   v->mesa_visual.screen = 0; /* FIXME: What should be done here? */
+   v->visualID = visinfo->vid;
+   v->screen = 0; /* FIXME: What should be done here? */
 #else
    v->mesa_visual.redMask = visinfo->red_mask;
    v->mesa_visual.greenMask = visinfo->green_mask;
    v->mesa_visual.blueMask = visinfo->blue_mask;
-   v->mesa_visual.visualID = visinfo->visualid;
-   v->mesa_visual.screen = visinfo->screen;
+   v->visualID = visinfo->visualid;
+   v->screen = visinfo->screen;
 #endif
 
 #if defined(XFree86Server) || !(defined(__cplusplus) || defined(c_plusplus))
