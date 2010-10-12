@@ -74,10 +74,10 @@ analyse_src(struct analysis_context *ctx,
          if (src->File == TGSI_FILE_IMMEDIATE) {
             assert(src->Index < Elements(ctx->imm));
             if (src->Index < Elements(ctx->imm)) {
-               chan_info->value = ctx->imm[src->Index][swizzle];
+               chan_info->u.value = ctx->imm[src->Index][swizzle];
             }
          } else {
-            chan_info->index = src->Index;
+            chan_info->u.index = src->Index;
             chan_info->swizzle = swizzle;
          }
       }
@@ -92,7 +92,7 @@ static boolean
 is_immediate(const struct lp_tgsi_channel_info *chan_info, float value)
 {
    return chan_info->file == TGSI_FILE_IMMEDIATE &&
-          chan_info->value == value;
+          chan_info->u.value == value;
 }
 
 
@@ -342,7 +342,7 @@ dump_info(const struct tgsi_token *tokens,
          if (chan_info->file != TGSI_FILE_NULL) {
             debug_printf(" %s[%u].%c",
                          tgsi_file_names[chan_info->file],
-                         chan_info->index,
+                         chan_info->u.index,
                          "xyzw01"[chan_info->swizzle]);
          } else {
             debug_printf(" _");
@@ -360,7 +360,7 @@ dump_info(const struct tgsi_token *tokens,
          if (chan_info->file != TGSI_FILE_NULL) {
             debug_printf("OUT[%u].%c = ", index, "xyzw"[chan]);
             if (chan_info->file == TGSI_FILE_IMMEDIATE) {
-               debug_printf("%f", chan_info->value);
+               debug_printf("%f", chan_info->u.value);
             } else {
                const char *file_name;
                switch (chan_info->file) {
@@ -376,7 +376,7 @@ dump_info(const struct tgsi_token *tokens,
                }
                debug_printf("%s[%u].%c",
                             file_name,
-                            chan_info->index,
+                            chan_info->u.index,
                             "xyzw01"[chan_info->swizzle]);
             }
             debug_printf("\n");

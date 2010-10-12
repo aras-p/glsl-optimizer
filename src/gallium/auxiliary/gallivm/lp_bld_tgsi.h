@@ -76,7 +76,7 @@ struct lp_tgsi_channel_info
    union {
       uint32_t index;
       float value; /* for TGSI_FILE_IMMEDIATE */
-   };
+   } u;
 };
 
 
