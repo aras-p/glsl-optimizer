@@ -369,6 +369,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     ms = modesettingPTR(pScrn);
     ms->pEnt = pEnt;
     ms->cust = cust;
+    ms->fb_id = 1;
 
     pScrn->displayWidth = 640;	       /* default it */
 
@@ -864,8 +865,10 @@ drv_leave_vt(int scrnIndex, int flags)
 	}
     }
 
-    drmModeRmFB(ms->fd, ms->fb_id);
-    ms->fb_id = -1;
+    if (ms->fb_id != -1) {
+	drmModeRmFB(ms->fd, ms->fb_id);
+	ms->fb_id = -1;
+    }
 
     /* idle hardware */
     if (!ms->kms)
@@ -946,7 +949,6 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     }
 #endif
 
-    drmModeRmFB(ms->fd, ms->fb_id);
     ms->destroy_front_buffer(pScrn);
 
     if (ms->exa)
