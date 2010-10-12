@@ -491,8 +491,8 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
     */
    dcdx = _mm_sub_epi32(zero, dcdx);
 
-   c = _mm_add_epi32(c, _mm_mullo_epi32(dcdx, _mm_set1_epi32(x)));
-   c = _mm_add_epi32(c, _mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdx, _mm_set1_epi32(x)));
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
 
    dcdx2 = _mm_add_epi32(dcdx, dcdx);
    dcdx3 = _mm_add_epi32(dcdx2, dcdx);
