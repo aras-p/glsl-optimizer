@@ -29,7 +29,6 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
 #include "lp_bld_debug.h"
