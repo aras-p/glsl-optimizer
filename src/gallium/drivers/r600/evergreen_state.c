@@ -241,6 +241,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
+	unsigned clip_rule;
 
 	if (rs == NULL) {
 		return NULL;
@@ -249,6 +250,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rstate = &rs->rstate;
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
+
+	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
 	/* offset */
 	rs->offset_units = state->offset_units;
@@ -299,6 +302,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL, 0x00000005, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL);
 	return rstate;
 }
 
@@ -630,18 +634,6 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
 	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
 	r600_pipe_state_add_reg(rstate,
-				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028034_PA_SC_SCREEN_SCISSOR_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
 				R_028210_PA_SC_CLIPRECT_0_TL, tl,
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
@@ -664,15 +656,6 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_02822C_PA_SC_CLIPRECT_3_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_02820C_PA_SC_CLIPRECT_RULE, 0x0000FFFF,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
 				0xFFFFFFFF, NULL);
 
 	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
@@ -912,34 +895,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
-				R_028210_PA_SC_CLIPRECT_0_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028214_PA_SC_CLIPRECT_0_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028218_PA_SC_CLIPRECT_1_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_02821C_PA_SC_CLIPRECT_1_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028220_PA_SC_CLIPRECT_2_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028224_PA_SC_CLIPRECT_2_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_028228_PA_SC_CLIPRECT_3_TL, tl,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_02822C_PA_SC_CLIPRECT_3_BR, br,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
 				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_02820C_PA_SC_CLIPRECT_RULE, 0x0000FFFF,
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
