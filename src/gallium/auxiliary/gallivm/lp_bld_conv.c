@@ -267,7 +267,9 @@ lp_build_conv(LLVMBuilderRef builder,
        dst_type.sign     == 0 &&
        dst_type.norm     == 1 &&
        dst_type.width    == 8 &&
-       dst_type.length   == 16)
+       dst_type.length   == 16 &&
+
+       util_cpu_caps.has_sse2)
    {
       int i;
 
@@ -306,23 +308,7 @@ lp_build_conv(LLVMBuilderRef builder,
          c = LLVMBuildFMul(builder, src[2], const_255f, "");
          d = LLVMBuildFMul(builder, src[3], const_255f, "");
 
-         /* lp_build_round generates excessively general code without
-          * sse2, so do rounding manually.
-          */
-         if (!util_cpu_caps.has_sse2) {
-            LLVMValueRef const_half = lp_build_const_vec(src_type, 0.5f);
-
-            a = LLVMBuildFAdd(builder, a, const_half, "");
-            b = LLVMBuildFAdd(builder, b, const_half, "");
-            c = LLVMBuildFAdd(builder, c, const_half, "");
-            d = LLVMBuildFAdd(builder, d, const_half, "");
-
-            src_int0 = LLVMBuildFPToSI(builder, a, int32_vec_type, "");
-            src_int1 = LLVMBuildFPToSI(builder, b, int32_vec_type, "");
-            src_int2 = LLVMBuildFPToSI(builder, c, int32_vec_type, "");
-            src_int3 = LLVMBuildFPToSI(builder, d, int32_vec_type, "");
-         }
-         else {
+         {
             struct lp_build_context bld;
 
             bld.builder = builder;
@@ -339,7 +325,7 @@ lp_build_conv(LLVMBuilderRef builder,
             src_int2 = lp_build_iround(&bld, c);
             src_int3 = lp_build_iround(&bld, d);
          }
-
+         /* relying on clamping behavior of sse2 intrinsics here */
          lo = lp_build_pack2(builder, int32_type, int16_type, src_int0, src_int1);
          hi = lp_build_pack2(builder, int32_type, int16_type, src_int2, src_int3);
          dst[i] = lp_build_pack2(builder, int16_type, dst_type, lo, hi);
