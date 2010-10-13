@@ -873,6 +873,26 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lod_fpart = LLVMBuildTrunc(builder, lod_fpart, h16_bld.elem_type, "");
          lod_fpart = lp_build_broadcast_scalar(&h16_bld, lod_fpart);
 
+#if HAVE_LLVM == 0x208
+         /* This is a work-around for a bug in LLVM 2.8.
+          * Evidently, something goes wrong in the construction of the
+          * lod_fpart short[8] vector.  Adding this no-effect shuffle seems
+          * to force the vector to be properly constructed.
+          * Tested with mesa-demos/src/tests/mipmap_limits.c (press t, f).
+          */
+         {
+            LLVMValueRef shuffles[8], shuffle;
+            int i;
+            assert(h16_bld.type.length <= Elements(shuffles));
+            for (i = 0; i < h16_bld.type.length; i++)
+               shuffles[i] = lp_build_const_int32(2 * (i & 1));
+            shuffle = LLVMConstVector(shuffles, h16_bld.type.length);
+            lod_fpart = LLVMBuildShuffleVector(builder,
+                                               lod_fpart, lod_fpart,
+                                               shuffle, "");
+         }
+#endif
+
          colors0_lo = lp_build_lerp(&h16_bld, lod_fpart,
                                     colors0_lo, colors1_lo);
          colors0_hi = lp_build_lerp(&h16_bld, lod_fpart,
