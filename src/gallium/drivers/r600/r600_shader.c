@@ -1860,7 +1860,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
 			alu.src[0].sel = src_gpr;
-			alu.src[0].chan = i;
+			alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = i;
 			if (i == 3)
