@@ -451,7 +451,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		bo[0] = rbuffer->bo;
 		bo[1] = rbuffer->bo;
 	}
-	pitch = align(tmp->pitch[0] / tmp->bpt, 8);
+	pitch = align(tmp->pitch_in_bytes[0] / tmp->bpt, 8);
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
@@ -740,8 +740,8 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	bo[1] = rbuffer->bo;
 	bo[2] = rbuffer->bo;
 
-	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
-	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[cb]->height / 64 - 1;
+	pitch = (rtex->pitch_in_bytes[level] / rtex->bpt) / 8 - 1;
+	slice = (rtex->pitch_in_bytes[level] / rtex->bpt) * state->cbufs[cb]->height / 64 - 1;
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -802,8 +802,8 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	rbuffer = &rtex->resource;
 
 	level = state->zsbuf->level;
-	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
-	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
+	pitch = (rtex->pitch_in_bytes[level] / rtex->bpt) / 8 - 1;
+	slice = (rtex->pitch_in_bytes[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
 
@@ -815,7 +815,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	if (stencil_format) {
 		uint32_t stencil_offset;
 
-		stencil_offset = ((state->zsbuf->height * rtex->pitch[level]) + 255) & ~255;
+		stencil_offset = ((state->zsbuf->height * rtex->pitch_in_bytes[level]) + 255) & ~255;
 		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
 					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,

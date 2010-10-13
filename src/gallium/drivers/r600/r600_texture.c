@@ -151,7 +151,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			size = layer_size * u_minify(ptex->depth0, i);
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
-		rtex->pitch[i] = pitch;
+		rtex->pitch_in_bytes[i] = pitch;
 		offset += size;
 	}
 	rtex->size = offset;
@@ -340,7 +340,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.sr = sr;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	trans->transfer.stride = rtex->pitch[sr.level];
+	trans->transfer.stride = rtex->pitch_in_bytes[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
 	if (rtex->depth) {
 		r = r600_texture_depth_flush(ctx, texture);
