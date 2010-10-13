@@ -246,9 +246,9 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
                                  struct pipe_sampler_view **views)
 {
    unsigned i;
-   uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS];
-   uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS];
-   const void *data[DRAW_MAX_TEXTURE_LEVELS];
+   uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
+   uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
+   const void *data[PIPE_MAX_TEXTURE_LEVELS];
 
    assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
    if (!num)

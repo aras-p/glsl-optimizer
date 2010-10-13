@@ -72,12 +72,12 @@ init_globals(struct draw_llvm *llvm)
       elem_types[DRAW_JIT_TEXTURE_DEPTH] = LLVMInt32Type();
       elem_types[DRAW_JIT_TEXTURE_LAST_LEVEL] = LLVMInt32Type();
       elem_types[DRAW_JIT_TEXTURE_ROW_STRIDE] =
-         LLVMArrayType(LLVMInt32Type(), DRAW_MAX_TEXTURE_LEVELS);
+         LLVMArrayType(LLVMInt32Type(), PIPE_MAX_TEXTURE_LEVELS);
       elem_types[DRAW_JIT_TEXTURE_IMG_STRIDE] =
-         LLVMArrayType(LLVMInt32Type(), DRAW_MAX_TEXTURE_LEVELS);
+         LLVMArrayType(LLVMInt32Type(), PIPE_MAX_TEXTURE_LEVELS);
       elem_types[DRAW_JIT_TEXTURE_DATA] =
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
-                       DRAW_MAX_TEXTURE_LEVELS);
+                       PIPE_MAX_TEXTURE_LEVELS);
       elem_types[DRAW_JIT_TEXTURE_MIN_LOD] = LLVMFloatType();
       elem_types[DRAW_JIT_TEXTURE_MAX_LOD] = LLVMFloatType();
       elem_types[DRAW_JIT_TEXTURE_LOD_BIAS] = LLVMFloatType();
@@ -1066,9 +1066,9 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
                              unsigned sampler_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
                              uint32_t last_level,
-                             uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS],
-                             uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS],
-                             const void *data[DRAW_MAX_TEXTURE_LEVELS])
+                             uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
+                             uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
+                             const void *data[PIPE_MAX_TEXTURE_LEVELS])
 {
    unsigned j;
    struct draw_jit_texture *jit_tex;
