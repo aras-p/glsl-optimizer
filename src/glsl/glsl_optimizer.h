@@ -34,7 +34,7 @@ enum glslopt_options {
 	kGlslOptionSkipPreprocessor = (1<<0), // Skip preprocessing shader source. Saves some time if you know you don't need it.
 };
 
-glslopt_ctx* glslopt_initialize ();
+glslopt_ctx* glslopt_initialize (bool openglES);
 void glslopt_cleanup (glslopt_ctx* ctx);
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options);

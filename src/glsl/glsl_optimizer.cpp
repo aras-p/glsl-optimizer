@@ -63,9 +63,9 @@ initialize_mesa_context(GLcontext *ctx, gl_api api)
 
 
 struct glslopt_ctx {
-	glslopt_ctx () {
+	glslopt_ctx (bool openglES) {
 		mem_ctx = talloc_new (NULL);
-		initialize_mesa_context (&mesa_ctx, API_OPENGL);
+		initialize_mesa_context (&mesa_ctx, openglES ? API_OPENGLES2 : API_OPENGL);
 	}
 	~glslopt_ctx() {
 		talloc_free (mem_ctx);
@@ -74,9 +74,9 @@ struct glslopt_ctx {
 	void* mem_ctx;
 };
 
-glslopt_ctx* glslopt_initialize ()
+glslopt_ctx* glslopt_initialize (bool openglES)
 {
-	return new glslopt_ctx();
+	return new glslopt_ctx(openglES);
 }
 
 void glslopt_cleanup (glslopt_ctx* ctx)
