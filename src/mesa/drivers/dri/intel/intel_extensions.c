@@ -55,6 +55,7 @@
 #define need_GL_EXT_point_parameters
 #define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_separate_shader_objects
 #define need_GL_EXT_stencil_two_side
 #define need_GL_EXT_timer_query
 #define need_GL_APPLE_vertex_array_object
@@ -114,6 +115,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_packed_depth_stencil",       NULL },
    { "GL_EXT_provoking_vertex",           GL_EXT_provoking_vertex_functions },
    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+   { "GL_EXT_separate_shader_objects",    GL_EXT_separate_shader_objects_functions },
    { "GL_EXT_stencil_wrap",               NULL },
    { "GL_EXT_texture_edge_clamp",         NULL },
    { "GL_EXT_texture_env_combine",        NULL },
