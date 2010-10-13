@@ -125,8 +125,6 @@ struct r600_pipe_context {
 	struct pipe_clip_state		clip;
 	unsigned			vs_nconst;
 	unsigned			ps_nconst;
-	struct r600_pipe_state		*vs_const;
-	struct r600_pipe_state		*ps_const;
 	struct r600_pipe_state		*vs_resource;
 	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
