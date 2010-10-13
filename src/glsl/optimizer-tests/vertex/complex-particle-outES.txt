@@ -1,0 +1,16 @@
+varying vec2 xlv_TEXCOORD0;
+varying vec4 xlv_COLOR;
+uniform mat4 glstate_matrix_mvp;
+uniform vec4 _MainTex_ST;
+attribute vec4 _glesColor;
+attribute vec4 _glesMultiTexCoord1;
+attribute vec4 _glesMultiTexCoord0;
+attribute vec3 _glesNormal;
+attribute vec4 _glesVertex;
+void main ()
+{
+  gl_Position = (glstate_matrix_mvp * _glesVertex);
+  xlv_COLOR = _glesColor;
+  xlv_TEXCOORD0 = ((_glesMultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+}
+
