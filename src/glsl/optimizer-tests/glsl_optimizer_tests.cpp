@@ -321,7 +321,7 @@ int main (int argc, const char** argv)
 		static const char* kApiIn [2] = {"-inES.txt", "-in.txt"};
 		static const char* kApiIR [2] = {"-irES.txt", "-ir.txt"};
 		static const char* kApiOut[2] = {"-outES.txt", "-out.txt"};
-		for (int api = 0; api < 1; ++api)
+		for (int api = 0; api < 2; ++api)
 		{
 			printf ("** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
 			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
