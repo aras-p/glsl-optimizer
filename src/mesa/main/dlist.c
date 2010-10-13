@@ -417,6 +417,10 @@ typedef enum
    OPCODE_TEXPARAMETER_I,
    OPCODE_TEXPARAMETER_UI,
 
+   /* GL_EXT_separate_shader_objects */
+   OPCODE_ACTIVE_PROGRAM_EXT,
+   OPCODE_USE_SHADER_PROGRAM_EXT,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -6793,6 +6797,36 @@ save_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
    }
 }
 
+static void GLAPIENTRY
+save_UseShaderProgramEXT(GLenum type, GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_USE_SHADER_PROGRAM_EXT, 2);
+   if (n) {
+      n[1].ui = type;
+      n[2].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_UseShaderProgramEXT(ctx->Exec, (type, program));
+   }
+}
+
+static void GLAPIENTRY
+save_ActiveProgramEXT(GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_ACTIVE_PROGRAM_EXT, 1);
+   if (n) {
+      n[1].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ActiveProgramEXT(ctx->Exec, (program));
+   }
+}
 
 /** GL_EXT_texture_integer */
 static void GLAPIENTRY
@@ -7780,6 +7814,12 @@ execute_list(struct gl_context *ctx, GLuint list)
 
 	 case OPCODE_USE_PROGRAM:
 	    CALL_UseProgramObjectARB(ctx->Exec, (n[1].ui));
+	    break;
+	 case OPCODE_USE_SHADER_PROGRAM_EXT:
+	    CALL_UseShaderProgramEXT(ctx->Exec, (n[1].ui, n[2].ui));
+	    break;
+	 case OPCODE_ACTIVE_PROGRAM_EXT:
+	    CALL_ActiveProgramEXT(ctx->Exec, (n[1].ui));
 	    break;
 	 case OPCODE_UNIFORM_1F:
 	    CALL_Uniform1fARB(ctx->Exec, (n[1].i, n[2].f));
@@ -9675,6 +9715,10 @@ _mesa_create_save_table(void)
    SET_TexParameterIuivEXT(table, save_TexParameterIuiv);
    SET_GetTexParameterIivEXT(table, exec_GetTexParameterIiv);
    SET_GetTexParameterIuivEXT(table, exec_GetTexParameterIuiv);
+
+   /* 377. GL_EXT_separate_shader_objects */
+   SET_UseShaderProgramEXT(table, save_UseShaderProgramEXT);
+   SET_ActiveProgramEXT(table, save_ActiveProgramEXT);
 
    /* GL 3.0 */
 #if 0
