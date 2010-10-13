@@ -3122,7 +3122,6 @@ _mesa_texstore_s8(TEXSTORE_PARAMS)
 {
    ASSERT(dstFormat == MESA_FORMAT_S8);
    ASSERT(srcFormat == GL_STENCIL_INDEX);
-   ASSERT(texelBytes == 1);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
