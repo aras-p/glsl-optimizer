@@ -1,7 +1,7 @@
-varying vec2 xlv_VPOS;
+varying highp vec2 xlv_VPOS;
 void main ()
 {
-  vec4 tmpvar_1;
+  highp vec4 tmpvar_1;
   tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = xlv_VPOS;
   gl_FragData[0] = tmpvar_1;

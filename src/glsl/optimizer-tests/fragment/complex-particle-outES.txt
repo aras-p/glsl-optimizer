@@ -1,5 +1,5 @@
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR;
+varying mediump vec2 xlv_TEXCOORD0;
+varying lowp vec4 xlv_COLOR;
 uniform sampler2D _MainTex;
 void main ()
 {

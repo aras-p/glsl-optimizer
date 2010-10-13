@@ -1,9 +1,9 @@
-varying vec2 xlv_VPOS;
+varying highp vec2 xlv_VPOS;
 vec4 xlat_main (
-  in vec2 pos
+  in highp vec2 pos
 )
 {
-  vec4 tmpvar_1;
+  highp vec4 tmpvar_1;
   tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = pos.xy;
   return tmpvar_1;
@@ -11,17 +11,17 @@ vec4 xlat_main (
 
 void main ()
 {
-  vec4 xl_retval;
-  vec2 tmpvar_1;
+  mediump vec4 xl_retval;
+  highp vec2 tmpvar_1;
   tmpvar_1 = xlv_VPOS.xy;
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = xlat_main (tmpvar_1);
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xl_retval = tmpvar_3;
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = xl_retval.xyzw;
-  vec4 tmpvar_5;
+  highp vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   gl_FragData[0] = tmpvar_5;
 }

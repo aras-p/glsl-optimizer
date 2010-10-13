@@ -1,33 +1,33 @@
-varying vec3 xlv_TEXCOORD1;
-varying vec2 xlv_TEXCOORD0;
-uniform vec4 _ZBufferParams;
-uniform mat4 _View2Shadow3;
-uniform mat4 _View2Shadow2;
-uniform mat4 _View2Shadow1;
-uniform mat4 _View2Shadow;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+uniform highp vec4 _ZBufferParams;
+uniform highp mat4 _View2Shadow3;
+uniform highp mat4 _View2Shadow2;
+uniform highp mat4 _View2Shadow1;
+uniform highp mat4 _View2Shadow;
 uniform sampler2D _ShadowMapTexture;
-uniform vec4 _LightSplitsNear;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightShadowData;
+uniform highp vec4 _LightSplitsNear;
+uniform highp vec4 _LightSplitsFar;
+uniform highp vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
-  vec4 res;
-  float tmpvar_1;
+  highp vec4 res;
+  highp float tmpvar_1;
   tmpvar_1 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x) + _ZBufferParams.y));
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2.w = 1.0;
   tmpvar_2.xyz = (xlv_TEXCOORD1 * tmpvar_1);
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = tmpvar_2.z;
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = (vec4(greaterThanEqual (vec4(tmpvar_3), _LightSplitsNear)) * vec4(lessThan (vec4(tmpvar_3), _LightSplitsFar)));
-  vec4 tmpvar_5;
+  highp vec4 tmpvar_5;
   tmpvar_5.w = 1.0;
   tmpvar_5.xyz = (((((_View2Shadow * tmpvar_2).xyz * tmpvar_4.x) + ((_View2Shadow1 * tmpvar_2).xyz * tmpvar_4.y)) + ((_View2Shadow2 * tmpvar_2).xyz * tmpvar_4.z)) + ((_View2Shadow3 * tmpvar_2).xyz * tmpvar_4.w));
-  vec4 tmpvar_6;
+  highp vec4 tmpvar_6;
   tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
-  float tmpvar_7;
+  highp float tmpvar_7;
   if ((tmpvar_6.x < tmpvar_5.z)) {
     tmpvar_7 = _LightShadowData.x;
   } else {
@@ -35,8 +35,8 @@ void main ()
   };
   res.x = tmpvar_7;
   res.y = 1.0;
-  vec2 enc;
-  vec2 tmpvar_8;
+  highp vec2 enc;
+  highp vec2 tmpvar_8;
   tmpvar_8 = fract ((vec2(1.0, 255.0) * (1.0 - tmpvar_1)));
   enc = tmpvar_8;
   enc.x = (tmpvar_8.x - (tmpvar_8.y * 0.00392157));

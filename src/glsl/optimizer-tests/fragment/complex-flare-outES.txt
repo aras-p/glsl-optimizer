@@ -1,5 +1,5 @@
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_COLOR;
 uniform sampler2D _FlareTexture;
 void main ()
 {

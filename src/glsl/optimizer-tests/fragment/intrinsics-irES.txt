@@ -1,22 +1,22 @@
-varying vec4 xlv_TEXCOORD0;
+varying highp vec4 xlv_TEXCOORD0;
 float xll_mod (
-  in float x,
-  in float y
+  in highp float x,
+  in highp float y
 )
 {
-  float f;
-  float d;
-  float tmpvar_1;
+  highp float f;
+  highp float d;
+  highp float tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = abs (d);
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
-  float tmpvar_4;
+  highp float tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((d >= 0.0)) {
     tmpvar_5 = f;
   } else {
@@ -26,76 +26,76 @@ float xll_mod (
 }
 
 vec2 xll_mod (
-  in vec2 x,
-  in vec2 y
+  in highp vec2 x,
+  in highp vec2 y
 )
 {
-  vec2 f;
-  vec2 d;
-  vec2 tmpvar_1;
+  highp vec2 f;
+  highp vec2 d;
+  highp vec2 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  vec2 tmpvar_2;
+  highp vec2 tmpvar_2;
   tmpvar_2 = abs (d);
-  vec2 tmpvar_3;
+  highp vec2 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
-  vec2 tmpvar_4;
+  highp vec2 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  float tmpvar_6;
+  highp float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
     tmpvar_6 = -(f.y);
   };
-  vec2 tmpvar_7;
+  highp vec2 tmpvar_7;
   tmpvar_7.x = tmpvar_5;
   tmpvar_7.y = tmpvar_6;
   return tmpvar_7;
 }
 
 vec3 xll_mod (
-  in vec3 x,
-  in vec3 y
+  in highp vec3 x,
+  in highp vec3 y
 )
 {
-  vec3 f;
-  vec3 d;
-  vec3 tmpvar_1;
+  highp vec3 f;
+  highp vec3 d;
+  highp vec3 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  vec3 tmpvar_2;
+  highp vec3 tmpvar_2;
   tmpvar_2 = abs (d);
-  vec3 tmpvar_3;
+  highp vec3 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
-  vec3 tmpvar_4;
+  highp vec3 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  float tmpvar_6;
+  highp float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
     tmpvar_6 = -(f.y);
   };
-  float tmpvar_7;
+  highp float tmpvar_7;
   if ((d.z >= 0.0)) {
     tmpvar_7 = f.z;
   } else {
     tmpvar_7 = -(f.z);
   };
-  vec3 tmpvar_8;
+  highp vec3 tmpvar_8;
   tmpvar_8.x = tmpvar_5;
   tmpvar_8.y = tmpvar_6;
   tmpvar_8.z = tmpvar_7;
@@ -103,47 +103,47 @@ vec3 xll_mod (
 }
 
 vec4 xll_mod (
-  in vec4 x,
-  in vec4 y
+  in highp vec4 x,
+  in highp vec4 y
 )
 {
-  vec4 f;
-  vec4 d;
-  vec4 tmpvar_1;
+  highp vec4 f;
+  highp vec4 d;
+  highp vec4 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = abs (d);
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  float tmpvar_6;
+  highp float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
     tmpvar_6 = -(f.y);
   };
-  float tmpvar_7;
+  highp float tmpvar_7;
   if ((d.z >= 0.0)) {
     tmpvar_7 = f.z;
   } else {
     tmpvar_7 = -(f.z);
   };
-  float tmpvar_8;
+  highp float tmpvar_8;
   if ((d.w >= 0.0)) {
     tmpvar_8 = f.w;
   } else {
     tmpvar_8 = -(f.w);
   };
-  vec4 tmpvar_9;
+  highp vec4 tmpvar_9;
   tmpvar_9.x = tmpvar_5;
   tmpvar_9.y = tmpvar_6;
   tmpvar_9.z = tmpvar_7;
@@ -152,7 +152,7 @@ vec4 xll_mod (
 }
 
 float xll_modf (
-  in float x,
+  in highp float x,
   out int ip
 )
 {
@@ -163,22 +163,22 @@ float xll_modf (
 }
 
 float xll_modf (
-  in float x,
-  out float ip
+  in highp float x,
+  out highp float ip
 )
 {
   int i;
   int tmpvar_1;
   tmpvar_1 = int(x);
   i = tmpvar_1;
-  float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = float(i);
   ip = tmpvar_2;
   return (x - ip);
 }
 
 vec2 xll_modf (
-  in vec2 x,
+  in highp vec2 x,
   out ivec2 ip
 )
 {
@@ -187,14 +187,14 @@ vec2 xll_modf (
   ivec2 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
-  vec2 tmpvar_3;
+  highp vec2 tmpvar_3;
   tmpvar_3 = vec2(ip).xy;
   return (x - tmpvar_3);
 }
 
 vec2 xll_modf (
-  in vec2 x,
-  out vec2 ip
+  in highp vec2 x,
+  out highp vec2 ip
 )
 {
   ivec2 i;
@@ -203,16 +203,16 @@ vec2 xll_modf (
   ivec2 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
-  vec2 tmpvar_3;
+  highp vec2 tmpvar_3;
   tmpvar_3 = vec2(i).xy;
-  vec2 tmpvar_4;
+  highp vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;
   return (x - ip);
 }
 
 vec3 xll_modf (
-  in vec3 x,
+  in highp vec3 x,
   out ivec3 ip
 )
 {
@@ -221,14 +221,14 @@ vec3 xll_modf (
   ivec3 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
-  vec3 tmpvar_3;
+  highp vec3 tmpvar_3;
   tmpvar_3 = vec3(ip).xyz;
   return (x - tmpvar_3);
 }
 
 vec3 xll_modf (
-  in vec3 x,
-  out vec3 ip
+  in highp vec3 x,
+  out highp vec3 ip
 )
 {
   ivec3 i;
@@ -237,16 +237,16 @@ vec3 xll_modf (
   ivec3 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
-  vec3 tmpvar_3;
+  highp vec3 tmpvar_3;
   tmpvar_3 = vec3(i).xyz;
-  vec3 tmpvar_4;
+  highp vec3 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;
   return (x - ip);
 }
 
 vec4 xll_modf (
-  in vec4 x,
+  in highp vec4 x,
   out ivec4 ip
 )
 {
@@ -255,14 +255,14 @@ vec4 xll_modf (
   ivec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = vec4(ip).xyzw;
   return (x - tmpvar_3);
 }
 
 vec4 xll_modf (
-  in vec4 x,
-  out vec4 ip
+  in highp vec4 x,
+  out highp vec4 ip
 )
 {
   ivec4 i;
@@ -271,61 +271,61 @@ vec4 xll_modf (
   ivec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = vec4(i).xyzw;
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;
   return (x - ip);
 }
 
 vec4 xlat_main (
-  in vec4 uv
+  in highp vec4 uv
 )
 {
-  vec4 d;
-  vec4 c;
-  vec4 tmpvar_1;
+  mediump vec4 d;
+  mediump vec4 c;
+  highp vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   c = tmpvar_1;
-  float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = xll_mod (uv.x, 2.0);
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = (c.x + tmpvar_2);
   c.x = tmpvar_3;
-  vec2 tmpvar_4;
+  highp vec2 tmpvar_4;
   tmpvar_4 = xll_mod (uv.xy, vec2(2.0, 2.0));
-  vec2 tmpvar_5;
+  highp vec2 tmpvar_5;
   tmpvar_5 = (c.xy + tmpvar_4);
   c.xy = tmpvar_5.xy.xy;
-  vec3 tmpvar_6;
+  highp vec3 tmpvar_6;
   tmpvar_6 = xll_mod (uv.xyz, vec3(2.0, 2.0, 2.0));
-  vec3 tmpvar_7;
+  highp vec3 tmpvar_7;
   tmpvar_7 = (c.xyz + tmpvar_6);
   c.xyz = tmpvar_7.xyz.xyz;
-  vec4 tmpvar_8;
+  highp vec4 tmpvar_8;
   tmpvar_8 = xll_mod (uv.xyzw, vec4(2.0, 2.0, 2.0, 2.0));
-  vec4 tmpvar_9;
+  highp vec4 tmpvar_9;
   tmpvar_9 = (c.xyzw + tmpvar_8);
   c = tmpvar_9.xyzw.xyzw;
-  float tmpvar_10;
+  highp float tmpvar_10;
   tmpvar_10 = xll_modf (uv.x, d.x);
-  float tmpvar_11;
+  highp float tmpvar_11;
   tmpvar_11 = (c.x + tmpvar_10);
   c.x = tmpvar_11;
-  vec2 tmpvar_12;
+  highp vec2 tmpvar_12;
   tmpvar_12 = xll_modf (uv.xy, d.xy);
-  vec2 tmpvar_13;
+  highp vec2 tmpvar_13;
   tmpvar_13 = (c.xy + tmpvar_12);
   c.xy = tmpvar_13.xy.xy;
-  vec3 tmpvar_14;
+  highp vec3 tmpvar_14;
   tmpvar_14 = xll_modf (uv.xyz, d.xyz);
-  vec3 tmpvar_15;
+  highp vec3 tmpvar_15;
   tmpvar_15 = (c.xyz + tmpvar_14);
   c.xyz = tmpvar_15.xyz.xyz;
-  vec4 tmpvar_16;
+  highp vec4 tmpvar_16;
   tmpvar_16 = xll_modf (uv.xyzw, d.xyzw);
-  vec4 tmpvar_17;
+  highp vec4 tmpvar_17;
   tmpvar_17 = (c.xyzw + tmpvar_16);
   c = tmpvar_17.xyzw.xyzw;
   return c;
@@ -333,17 +333,17 @@ vec4 xlat_main (
 
 void main ()
 {
-  vec4 xl_retval;
-  vec4 tmpvar_1;
+  mediump vec4 xl_retval;
+  highp vec4 tmpvar_1;
   tmpvar_1 = xlv_TEXCOORD0.xyzw;
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = xlat_main (tmpvar_1);
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xl_retval = tmpvar_3;
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = xl_retval.xyzw;
-  vec4 tmpvar_5;
+  highp vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   gl_FragData[0] = tmpvar_5;
 }

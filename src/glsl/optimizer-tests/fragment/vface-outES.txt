@@ -1,4 +1,4 @@
-varying float xlv_VFACE;
+varying highp float xlv_VFACE;
 void main ()
 {
   gl_FragData[0] = vec4(xlv_VFACE);

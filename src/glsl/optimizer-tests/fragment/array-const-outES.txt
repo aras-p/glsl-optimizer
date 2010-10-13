@@ -1,6 +1,6 @@
 void main ()
 {
-  vec4 c;
+  mediump vec4 c;
   vec2 poisson[8];
   poisson[0] = vec2(0.0, 0.0);
   poisson[1] = vec2(0.527837, -0.085868);

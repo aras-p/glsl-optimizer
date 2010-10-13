@@ -1,40 +1,40 @@
 vec4 xlat_main ()
 {
-  float foo;
-  float tmpvar_1;
+  highp float foo;
+  highp float tmpvar_1;
   tmpvar_1 = 1.0;
   foo = tmpvar_1;
-  float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = (foo + 1.0);
   foo = tmpvar_2;
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = (foo + 100000.0);
   foo = tmpvar_3;
-  float tmpvar_4;
+  highp float tmpvar_4;
   tmpvar_4 = (foo + -(0.001));
   foo = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   tmpvar_5 = (foo + 2.0);
   foo = tmpvar_5;
-  float tmpvar_6;
+  highp float tmpvar_6;
   tmpvar_6 = (foo + 3.0);
   foo = tmpvar_6;
-  vec4 tmpvar_7;
+  highp vec4 tmpvar_7;
   tmpvar_7 = vec4(foo);
   return tmpvar_7;
 }
 
 void main ()
 {
-  vec4 xl_retval;
-  vec4 tmpvar_1;
+  mediump vec4 xl_retval;
+  highp vec4 tmpvar_1;
   tmpvar_1 = xlat_main ();
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   xl_retval = tmpvar_2;
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = xl_retval.xyzw;
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   gl_FragData[0] = tmpvar_4;
 }
