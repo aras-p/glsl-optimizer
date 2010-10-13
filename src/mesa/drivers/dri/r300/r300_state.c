@@ -2292,6 +2292,7 @@ static void r300SetupUsOutputFormat(GLcontext *ctx)
 			break;
 		default:
 			assert(!"Unsupported format");
+			hw_format = 0;
 			break;
 	}
 
