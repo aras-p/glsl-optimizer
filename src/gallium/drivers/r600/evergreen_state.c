@@ -1558,6 +1558,11 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 						R_02880C_DB_SHADER_CONTROL,
 						S_02880C_Z_EXPORT_ENABLE(1),
 						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+			r600_pipe_state_add_reg(rstate,
+						R_02880C_DB_SHADER_CONTROL,
+						S_02880C_STENCIL_EXPORT_ENABLE(1),
+						S_02880C_STENCIL_EXPORT_ENABLE(1), NULL);
 	}
 
 	exports_ps = 0;
