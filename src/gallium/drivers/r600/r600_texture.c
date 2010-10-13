@@ -387,6 +387,9 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			FREE(trans);
 			return NULL;
 		}
+
+		trans->transfer.stride =
+		  ((struct r600_resource_texture *)trans->linear_texture)->pitch_in_bytes[0];
 		if (usage & PIPE_TRANSFER_READ) {
 			/* We cannot map a tiled texture directly because the data is
 			 * in a different order, therefore we do detiling using a blit. */
