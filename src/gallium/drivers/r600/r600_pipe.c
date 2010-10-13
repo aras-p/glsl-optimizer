@@ -85,6 +85,10 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
+	FREE(rctx->ps_resource);
+	FREE(rctx->vs_resource);
+	FREE(rctx->vs_const);
+	FREE(rctx->ps_const);
 	FREE(rctx);
 }
 
@@ -167,6 +171,30 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->vs_const = CALLOC(R600_CONSTANT_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->vs_const) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->ps_const = CALLOC(R600_CONSTANT_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->vs_const) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->vs_resource) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->ps_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->ps_resource) {
 		FREE(rctx);
 		return NULL;
 	}

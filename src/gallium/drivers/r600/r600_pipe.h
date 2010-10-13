@@ -100,6 +100,9 @@ struct r600_textures_info {
 	unsigned                        n_samplers;
 };
 
+#define R600_CONSTANT_ARRAY_SIZE 256
+#define R600_RESOURCE_ARRAY_SIZE 160
+
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -122,10 +125,10 @@ struct r600_pipe_context {
 	struct pipe_clip_state		clip;
 	unsigned			vs_nconst;
 	unsigned			ps_nconst;
-	struct r600_pipe_state		vs_const[256];
-	struct r600_pipe_state		ps_const[256];
-	struct r600_pipe_state		vs_resource[160];
-	struct r600_pipe_state		ps_resource[160];
+	struct r600_pipe_state		*vs_const;
+	struct r600_pipe_state		*ps_const;
+	struct r600_pipe_state		*vs_resource;
+	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
