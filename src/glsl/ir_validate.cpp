@@ -347,11 +347,15 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
-      assert(ir->operands[0]->type == ir->operands[1]->type);
-      assert(ir->type == ir->operands[0]->type);
-      assert(ir->type->base_type == GLSL_TYPE_INT ||
-	     ir->type->base_type == GLSL_TYPE_UINT);
-      break;
+       assert(ir->operands[0]->type->base_type ==
+              ir->operands[1]->type->base_type);
+       assert(ir->type->is_integer());
+       if (ir->operands[0]->type->is_vector() &&
+           ir->operands[1]->type->is_vector()) {
+           assert(ir->operands[0]->type->vector_elements ==
+                  ir->operands[1]->type->vector_elements);
+       }
+       break;
 
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
