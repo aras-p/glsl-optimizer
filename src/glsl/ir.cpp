@@ -1063,9 +1063,9 @@ ir_swizzle::variable_referenced()
 }
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
-			 ir_variable_mode mode)
+			 ir_variable_mode mode, ir_precision precision)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(mode), interpolation(ir_var_smooth), precision(ir_precision_high), array_lvalue(false)
+     mode(mode), interpolation(ir_var_smooth), precision(precision), array_lvalue(false)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1249,4 +1249,14 @@ reparent_ir(exec_list *list, void *mem_ctx)
    foreach_list(node, list) {
       visit_tree((ir_instruction *) node, steal_memory, mem_ctx);
    }
+}
+
+
+ir_precision
+precision_from_ir (ir_instruction* ir)
+{
+	ir_variable* var = ir->as_variable();
+	if (var)
+		return (ir_precision)var->precision;
+	return ir_precision_high;
 }

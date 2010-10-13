@@ -299,7 +299,7 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
 
    ir_variable *const tmp_bvec =
       new(this->mem_ctx) ir_variable(bvec_type, "mat_cmp_bvec",
-				     ir_var_temporary);
+				     ir_var_temporary, ir_precision_undefined);
    this->base_ir->insert_before(tmp_bvec);
 
    for (unsigned i = 0; i < columns; i++) {
@@ -382,7 +382,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 
       op_var[i] = new(mem_ctx) ir_variable(orig_expr->operands[i]->type,
 					   "mat_op_to_vec",
-					   ir_var_temporary);
+					   ir_var_temporary, precision_from_ir(orig_expr->operands[i]));
       base_ir->insert_before(op_var[i]);
 
       lhs_deref = new(mem_ctx) ir_dereference_variable(op_var[i]);

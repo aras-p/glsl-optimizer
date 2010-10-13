@@ -61,7 +61,7 @@ ir_mod_to_fract_visitor::visit_leave(ir_expression *ir)
       return visit_continue;
 
    ir_variable *temp = new(ir) ir_variable(ir->operands[1]->type, "mod_b",
-					   ir_var_temporary);
+					   ir_var_temporary, precision_from_ir(ir->operands[1]));
    this->base_ir->insert_before(temp);
 
    ir_assignment *assign;

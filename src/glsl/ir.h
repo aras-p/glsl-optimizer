@@ -209,7 +209,7 @@ enum ir_precision {
 
 class ir_variable : public ir_instruction {
 public:
-   ir_variable(const struct glsl_type *, const char *, ir_variable_mode);
+   ir_variable(const struct glsl_type *, const char *, ir_variable_mode, ir_precision);
 
    virtual ir_variable *clone(void *mem_ctx, struct hash_table *ht) const;
 
@@ -1531,5 +1531,8 @@ ir_has_call_skip_builtins(ir_instruction *ir);
 
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
+
+extern ir_precision
+precision_from_ir (ir_instruction* ir);
 
 #endif /* IR_H */

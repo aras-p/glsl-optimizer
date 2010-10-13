@@ -151,7 +151,7 @@ process_call(exec_list *instructions, ir_function *f,
 	 var = new(ctx) ir_variable(sig->return_type,
 				    talloc_asprintf(ctx, "%s_retval",
 						    sig->function_name()),
-				    ir_var_temporary);
+				    ir_var_temporary, ir_precision_undefined); ///@TODO
 	 instructions->push_tail(var);
 
 	 deref = new(ctx) ir_dereference_variable(var);
@@ -409,7 +409,7 @@ process_array_constructor(exec_list *instructions,
       return new(ctx) ir_constant(constructor_type, &actual_parameters);
 
    ir_variable *var = new(ctx) ir_variable(constructor_type, "array_ctor",
-					   ir_var_temporary);
+					   ir_var_temporary, ir_precision_undefined); ///@TODO
    instructions->push_tail(var);
 
    int i = 0;
@@ -471,14 +471,14 @@ single_scalar_parameter(exec_list *parameters)
  * body.
  */
 ir_rvalue *
-emit_inline_vector_constructor(const glsl_type *type,
+emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 			       exec_list *instructions,
 			       exec_list *parameters,
 			       void *ctx)
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, "vec_ctor", ir_var_temporary);
+   ir_variable *var = new(ctx) ir_variable(type, "vec_ctor", ir_var_temporary, (ir_precision)ast_precision);
    instructions->push_tail(var);
 
    /* There are two kinds of vector constructors.
@@ -661,14 +661,14 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
  * body.
  */
 ir_rvalue *
-emit_inline_matrix_constructor(const glsl_type *type,
+emit_inline_matrix_constructor(const glsl_type *type, unsigned ast_precision,
 			       exec_list *instructions,
 			       exec_list *parameters,
 			       void *ctx)
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, "mat_ctor", ir_var_temporary);
+   ir_variable *var = new(ctx) ir_variable(type, "mat_ctor", ir_var_temporary, (ir_precision)ast_precision);
    instructions->push_tail(var);
 
    /* There are three kinds of matrix constructors.
@@ -692,7 +692,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        */
       ir_variable *rhs_var =
 	 new(ctx) ir_variable(glsl_type::vec4_type, "mat_ctor_vec",
-			      ir_var_temporary);
+			      ir_var_temporary, (ir_precision)ast_precision);
       instructions->push_tail(rhs_var);
 
       ir_constant_data zero;
@@ -805,7 +805,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        */
       ir_variable *const rhs_var =
 	 new(ctx) ir_variable(first_param->type, "mat_ctor_mat",
-			      ir_var_temporary);
+			      ir_var_temporary, (ir_precision)ast_precision);
       instructions->push_tail(rhs_var);
 
       ir_dereference *const rhs_var_ref =
@@ -866,7 +866,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  * generate a temporary and copy the paramter there.
 	  */
 	 ir_variable *rhs_var =
-	    new(ctx) ir_variable(rhs->type, "mat_ctor_vec", ir_var_temporary);
+	    new(ctx) ir_variable(rhs->type, "mat_ctor_vec", ir_var_temporary, (ir_precision)ast_precision);
 	 instructions->push_tail(rhs_var);
 
 	 ir_dereference *rhs_var_ref =
@@ -933,7 +933,7 @@ emit_inline_record_constructor(const glsl_type *type,
 			       void *mem_ctx)
 {
    ir_variable *const var =
-      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary);
+      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary, ir_precision_undefined);
    ir_dereference_variable *const d = new(mem_ctx) ir_dereference_variable(var);
 
    instructions->push_tail(var);
@@ -1113,7 +1113,7 @@ ast_function_expression::hir(exec_list *instructions,
 
 	    /* Create a temporary containing the matrix. */
 	    ir_variable *var = new(ctx) ir_variable(matrix->type, "matrix_tmp",
-						    ir_var_temporary);
+						    ir_var_temporary, ir_precision_undefined);
 	    instructions->push_tail(var);
 	    instructions->push_tail(new(ctx) ir_assignment(new(ctx)
 	       ir_dereference_variable(var), matrix, NULL));
@@ -1165,13 +1165,13 @@ ast_function_expression::hir(exec_list *instructions,
 	 return dereference_component((ir_rvalue *) actual_parameters.head,
 				      0);
       } else if (constructor_type->is_vector()) {
-	 return emit_inline_vector_constructor(constructor_type,
+	 return emit_inline_vector_constructor(constructor_type, type->precision,
 					       instructions,
 					       &actual_parameters,
 					       ctx);
       } else {
 	 assert(constructor_type->is_matrix());
-	 return emit_inline_matrix_constructor(constructor_type,
+	 return emit_inline_matrix_constructor(constructor_type, type->precision,
 					       instructions,
 					       &actual_parameters,
 					       ctx);

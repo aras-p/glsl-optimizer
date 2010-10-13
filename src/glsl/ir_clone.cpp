@@ -39,14 +39,13 @@ ir_variable *
 ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_variable *var = new(mem_ctx) ir_variable(this->type, this->name,
-					       (ir_variable_mode) this->mode);
+					       (ir_variable_mode) this->mode, (ir_precision)this->precision);
 
    var->max_array_access = this->max_array_access;
    var->read_only = this->read_only;
    var->centroid = this->centroid;
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
-   var->precision = this->precision;
    var->array_lvalue = this->array_lvalue;
    var->location = this->location;
    var->warn_extension = this->warn_extension;

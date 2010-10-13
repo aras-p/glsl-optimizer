@@ -142,7 +142,7 @@ struct switch_generator
          ir_variable *const condition =
 	    new(this->mem_ctx) ir_variable(condition_val->type,
 					   "dereference_array_condition",
-					   ir_var_temporary);
+					   ir_var_temporary, precision_from_ir(condition_val));
          list->push_tail(condition);
 
 	 ir_rvalue *const cond_deref =
@@ -273,7 +273,7 @@ public:
       void *const mem_ctx = talloc_parent(base_ir);
       ir_variable *var =
 	 new(mem_ctx) ir_variable(orig_deref->type, "dereference_array_value",
-				  ir_var_temporary);
+				  ir_var_temporary, precision_from_ir(orig_deref));
       base_ir->insert_before(var);
 
       if (value) {
@@ -286,7 +286,7 @@ public:
       /* Store the index to a temporary to avoid reusing its tree. */
       ir_variable *index =
 	 new(mem_ctx) ir_variable(orig_deref->array_index->type,
-				  "dereference_array_index", ir_var_temporary);
+				  "dereference_array_index", ir_var_temporary, precision_from_ir(orig_deref->array_index));
       base_ir->insert_before(index);
 
       ir_dereference *lhs = new(mem_ctx) ir_dereference_variable(index);

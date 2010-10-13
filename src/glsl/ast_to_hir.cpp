@@ -447,7 +447,6 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    return glsl_type::bool_type;
 }
 
-
 /**
  * Validates that a value can be assigned to a location with a specified type
  *
@@ -568,7 +567,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * ends up not being used, the temp will get copy-propagated out.
     */
    ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp",
-					   ir_var_temporary);
+					   ir_var_temporary, precision_from_ir(rhs));
    ir_dereference_variable *deref_var = new(ctx) ir_dereference_variable(var);
    instructions->push_tail(var);
    instructions->push_tail(new(ctx) ir_assignment(deref_var,
@@ -589,7 +588,7 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    ir_variable *var;
 
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
-			      ir_var_temporary);
+			      ir_var_temporary, precision_from_ir(lvalue));
    instructions->push_tail(var);
    var->mode = ir_var_auto;
 
@@ -898,7 +897,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "and_tmp",
-						       ir_var_temporary);
+						       ir_var_temporary, ir_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -963,7 +962,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp",
-						       ir_var_temporary);
+						       ir_var_temporary, ir_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1154,7 +1153,7 @@ ast_expression::hir(exec_list *instructions,
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
 	 ir_variable *const tmp =
-	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary);
+	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, ir_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1815,7 +1814,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 var_type = decl_type;
       }
 
-      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto);
+      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, (ir_precision)this->type->specifier->precision);
 
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
@@ -2237,7 +2236,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    }
 
    is_void = false;
-   ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in);
+   ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in, (ir_precision)this->type->specifier->precision);
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
