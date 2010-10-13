@@ -97,58 +97,104 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(src_type);
    LLVMValueRef res;
    unsigned mantissa;
-   unsigned n;
-   unsigned long long ubound;
-   unsigned long long mask;
-   double scale;
-   double bias;
 
    assert(src_type.floating);
+   assert(dst_width <= src_type.width);
+   src_type.sign = FALSE;
 
    mantissa = lp_mantissa(src_type);
 
-   /* We cannot carry more bits than the mantissa */
-   n = MIN2(mantissa, dst_width);
-
-   /* This magic coefficients will make the desired result to appear in the
-    * lowest significant bits of the mantissa.
-    */
-   ubound = ((unsigned long long)1 << n);
-   mask = ubound - 1;
-   scale = (double)mask/ubound;
-   bias = (double)((unsigned long long)1 << (mantissa - n));
-
-   res = LLVMBuildFMul(builder, src, lp_build_const_vec(src_type, scale), "");
-   res = LLVMBuildFAdd(builder, res, lp_build_const_vec(src_type, bias), "");
-   res = LLVMBuildBitCast(builder, res, int_vec_type, "");
-
-   if(dst_width > n) {
-      int shift = dst_width - n;
-      res = LLVMBuildShl(builder, res, lp_build_const_int_vec(src_type, shift), "");
-
-      /* TODO: Fill in the empty lower bits for additional precision? */
-      /* YES: this fixes progs/trivial/tri-z-eq.c.
-       * Otherwise vertex Z=1.0 values get converted to something like
-       * 0xfffffb00 and the test for equality with 0xffffffff fails.
+   if (dst_width <= mantissa) {
+      /*
+       * Apply magic coefficients that will make the desired result to appear
+       * in the lowest significant bits of the mantissa, with correct rounding.
+       *
+       * This only works if the destination width fits in the mantissa.
        */
-#if 0
-      {
-         LLVMValueRef msb;
-         msb = LLVMBuildLShr(builder, res, lp_build_const_int_vec(src_type, dst_width - 1), "");
-         msb = LLVMBuildShl(builder, msb, lp_build_const_int_vec(src_type, shift), "");
-         msb = LLVMBuildSub(builder, msb, lp_build_const_int_vec(src_type, 1), "");
-         res = LLVMBuildOr(builder, res, msb, "");
-      }
-#elif 0
-      while(shift > 0) {
-         res = LLVMBuildOr(builder, res, LLVMBuildLShr(builder, res, lp_build_const_int_vec(src_type, n), ""), "");
-         shift -= n;
-         n *= 2;
-      }
-#endif
-   }
-   else
+
+      unsigned long long ubound;
+      unsigned long long mask;
+      double scale;
+      double bias;
+
+      ubound = (1ULL << dst_width);
+      mask = ubound - 1;
+      scale = (double)mask/ubound;
+      bias = (double)(1ULL << (mantissa - dst_width));
+
+      res = LLVMBuildFMul(builder, src, lp_build_const_vec(src_type, scale), "");
+      res = LLVMBuildFAdd(builder, res, lp_build_const_vec(src_type, bias), "");
+      res = LLVMBuildBitCast(builder, res, int_vec_type, "");
       res = LLVMBuildAnd(builder, res, lp_build_const_int_vec(src_type, mask), "");
+   }
+   else if (dst_width == (mantissa + 1)) {
+      /*
+       * The destination width matches exactly what can be represented in
+       * floating point (i.e., mantissa + 1 bits). So do a straight
+       * multiplication followed by casting. No further rounding is necessary.
+       */
+
+      double scale;
+
+      scale = (double)((1ULL << dst_width) - 1);
+
+      res = LLVMBuildFMul(builder, src, lp_build_const_vec(src_type, scale), "");
+      res = LLVMBuildFPToSI(builder, res, int_vec_type, "");
+   }
+   else {
+      /*
+       * The destination exceeds what can be represented in the floating point.
+       * So multiply by the largest power two we get away with, and when
+       * subtract the most significant bit to rescale to normalized values.
+       *
+       * The largest power of two factor we can get away is
+       * (1 << (src_type.width - 1)), because we need to use signed . In theory it
+       * should be (1 << (src_type.width - 2)), but IEEE 754 rules states
+       * INT_MIN should be returned in FPToSI, which is the correct result for
+       * values near 1.0!
+       *
+       * This means we get (src_type.width - 1) correct bits for values near 0.0,
+       * and (mantissa + 1) correct bits for values near 1.0. Equally or more
+       * important, we also get exact results for 0.0 and 1.0.
+       */
+
+      unsigned n = MIN2(src_type.width - 1, dst_width);
+
+      double scale = (double)(1ULL << n);
+      unsigned lshift = dst_width - n;
+      unsigned rshift = n;
+      LLVMValueRef lshifted;
+      LLVMValueRef rshifted;
+
+      res = LLVMBuildFMul(builder, src, lp_build_const_vec(src_type, scale), "");
+      res = LLVMBuildFPToSI(builder, res, int_vec_type, "");
+
+      /*
+       * Align the most significant bit to its final place.
+       *
+       * This will cause 1.0 to overflow to 0, but the later adjustment will
+       * get it right.
+       */
+      if (lshift) {
+         lshifted = LLVMBuildShl(builder, res,
+                                 lp_build_const_int_vec(src_type, lshift), "");
+      } else {
+         lshifted = res;
+      }
+
+      /*
+       * Align the most significant bit to the right.
+       */
+      rshifted =  LLVMBuildAShr(builder, res,
+                                lp_build_const_int_vec(src_type, rshift), "");
+
+      /*
+       * Subtract the MSB to the LSB, therefore re-scaling from
+       * (1 << dst_width) to ((1 << dst_width) - 1).
+       */
+
+      res = LLVMBuildSub(builder, lshifted, rshifted, "");
+   }
 
    return res;
 }
