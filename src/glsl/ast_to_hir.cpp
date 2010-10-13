@@ -2429,7 +2429,7 @@ ast_function::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (sig == NULL) {
-      sig = new(ctx) ir_function_signature(return_type);
+      sig = new(ctx) ir_function_signature(return_type, (ir_precision)this->return_type->specifier->precision);
       f->add_signature(sig);
    }
 

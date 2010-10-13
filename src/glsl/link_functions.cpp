@@ -113,7 +113,7 @@ public:
       ir_function_signature *linked_sig =
 	 f->exact_matching_signature(&callee->parameters);
       if (linked_sig == NULL) {
-	 linked_sig = new(linked) ir_function_signature(callee->return_type);
+	 linked_sig = new(linked) ir_function_signature(callee->return_type, callee->precision);
 	 f->add_signature(linked_sig);
       }
 

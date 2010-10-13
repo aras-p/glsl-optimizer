@@ -151,7 +151,7 @@ process_call(exec_list *instructions, ir_function *f,
 	 var = new(ctx) ir_variable(sig->return_type,
 				    talloc_asprintf(ctx, "%s_retval",
 						    sig->function_name()),
-				    ir_var_temporary, ir_precision_undefined); ///@TODO
+				    ir_var_temporary, sig->precision);
 	 instructions->push_tail(var);
 
 	 deref = new(ctx) ir_dereference_variable(var);

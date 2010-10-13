@@ -83,7 +83,7 @@ public:
       assert(this->function != NULL);
 
       ir_function_signature *copy =
-	 new(mem_ctx) ir_function_signature(ir->return_type);
+	 new(mem_ctx) ir_function_signature(ir->return_type, ir->precision);
 
       copy->is_defined = false;
       copy->is_builtin = ir->is_builtin;

@@ -1117,8 +1117,8 @@ ir_variable::component_slots() const
 }
 
 
-ir_function_signature::ir_function_signature(const glsl_type *return_type)
-   : return_type(return_type), is_defined(false), _function(NULL)
+ir_function_signature::ir_function_signature(const glsl_type *return_type, ir_precision precision)
+   : return_type(return_type), precision(precision), is_defined(false), _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
    this->is_builtin = false;
@@ -1264,6 +1264,12 @@ precision_from_ir (ir_instruction* ir)
 		ir_variable* var = rv->variable_referenced();
 		if (var)
 			return (ir_precision)var->precision;
+	}
+	ir_call* call = ir->as_call();
+	if (call)
+	{
+		if (call->get_callee())
+			return call->get_callee()->precision;
 	}
 	return ir_precision_high;
 }

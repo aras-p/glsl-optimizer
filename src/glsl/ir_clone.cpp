@@ -275,7 +275,7 @@ ir_function_signature *
 ir_function_signature::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_function_signature *copy =
-      new(mem_ctx) ir_function_signature(this->return_type);
+      new(mem_ctx) ir_function_signature(this->return_type, this->precision);
 
    copy->is_defined = this->is_defined;
    copy->is_builtin = this->is_builtin;

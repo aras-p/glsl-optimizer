@@ -348,7 +348,7 @@ class ir_function_signature : public ir_instruction {
     * an ir_function.
     */
 public:
-   ir_function_signature(const glsl_type *return_type);
+   ir_function_signature(const glsl_type *return_type, ir_precision precision);
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
@@ -398,10 +398,10 @@ public:
 
    /**
     * Function return type.
-    *
-    * \note This discards the optional precision qualifier.
     */
    const struct glsl_type *return_type;
+
+   ir_precision precision;
 
    /**
     * List of ir_variable of function parameters.
