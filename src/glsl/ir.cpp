@@ -1258,5 +1258,12 @@ precision_from_ir (ir_instruction* ir)
 	ir_variable* var = ir->as_variable();
 	if (var)
 		return (ir_precision)var->precision;
+	ir_dereference* rv = ir->as_dereference();
+	if (rv)
+	{
+		ir_variable* var = rv->variable_referenced();
+		if (var)
+			return (ir_precision)var->precision;
+	}
 	return ir_precision_high;
 }
