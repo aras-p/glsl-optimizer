@@ -123,8 +123,6 @@ struct r600_pipe_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
-	unsigned			vs_nconst;
-	unsigned			ps_nconst;
 	struct r600_pipe_state		*vs_resource;
 	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
