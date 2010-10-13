@@ -49,12 +49,12 @@ struct r600_resource {
 
 struct r600_resource_texture {
 	struct r600_resource		resource;
-	unsigned long			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch_in_pixels[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			layer_size[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch_override;
-	unsigned long			size;
+	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_pixels[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_override;
+	unsigned			size;
 	unsigned			tiled;
 	unsigned			array_mode;
 	unsigned			tile_type;

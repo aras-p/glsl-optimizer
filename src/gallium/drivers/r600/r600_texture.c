@@ -72,11 +72,11 @@ static void r600_copy_into_tiled_texture(struct pipe_context *ctx, struct r600_t
 	ctx->flush(ctx, 0, NULL);
 }
 
-static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
+static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned zslice,
 					unsigned face)
 {
-	unsigned long offset = rtex->offset[level];
+	unsigned offset = rtex->offset[level];
 
 	switch (rtex->resource.base.b.target) {
 	case PIPE_TEXTURE_3D:
@@ -139,7 +139,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
-	unsigned long pitch, size, layer_size, i, offset;
+	unsigned pitch, size, layer_size, i, offset;
 	unsigned nblocksy;
 
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
@@ -238,7 +238,7 @@ static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
-	unsigned long offset;
+	unsigned offset;
 
 	if (surface == NULL)
 		return NULL;
@@ -427,7 +427,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_bo *bo;
 	enum pipe_format format = transfer->resource->format;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
-	unsigned long offset = 0;
+	unsigned offset = 0;
 	char *map;
 
 	if (rtransfer->linear_texture) {
