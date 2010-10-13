@@ -349,8 +349,6 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.sr = sr;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	trans->transfer.stride = rtex->pitch_in_bytes[sr.level];
-	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
 	if (rtex->depth) {
 		r = r600_texture_depth_flush(ctx, texture);
 		if (r < 0) {
@@ -398,7 +396,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			/* Always referenced in the blit. */
 			ctx->flush(ctx, 0, NULL);
 		}
+		return &trans->transfer;
 	}
+	trans->transfer.stride = rtex->pitch_in_bytes[sr.level];
+	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
 	return &trans->transfer;
 }
 
