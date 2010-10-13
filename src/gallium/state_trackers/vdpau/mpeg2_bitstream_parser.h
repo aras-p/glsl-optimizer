@@ -34,17 +34,25 @@
 
 enum vdpMPEG2States
 {
-	MPEG2_HEADER_START_CODE,
-	MPEG2_HEADER_DONE
+	MPEG2_SEEK_HEADER,
+	MPEG2_HEADER_DONE,
+	MPEG2_BITSTREAM_DONE
+	MPEG2
+};
+
+enum vdpMPEG2Action
+{
+	MPEG2_
 };
 
 struct vdpMPEG2BitstreamParser
 {
 	enum vdpMPEG2States state;
-	uint32_t cursor;                // current bit cursor
+	enum vdpMPEG2Actions action;
 	uint32_t cur_bitstream;
-	uint32_t cur_bitstream_length;
-	uint8_t *ptr_bitstream;
+	const uint8_t *ptr_bitstream_end;
+	const uint8_t *ptr_bitstream;
+	uint8_t code;
 	
 	/* The decoded bitstream goes here: */
 	/* Sequence_header_info */

@@ -24,7 +24,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-
+#include <stdio.h>
+#include <stdlib.h>
 #include "mpeg2_bitstream_parser.h"
 
 int
@@ -32,31 +33,24 @@ vlVdpMPEG2NextStartCode(struct vdpMPEG2BitstreamParser *parser)
 {
 	uint32_t integer = 0xffffff00;
 	uint8_t * ptr_read = parser->ptr_bitstream;
-	int32_t bytes_to_end;
-	
-	/* Move cursor to the start of a byte */
-	while(parser->cursor % 8)
-		parser->cursor++;
+	int8_t * bytes_to_end;
 		
-	bytes_to_end = parser->cur_bitstream_length - parser->cursor/8 - 1;
+	bytes_to_end = parser->ptr_bitstream_end - parser->ptr_bitstream;
 		
 	/* Read byte after byte, until startcode is found */
 	while(integer != 0x00000100)
 	{
-		if (bytes_to_end < 0)
+		if (bytes_to_end <= 0)
 		{
-			parser->state = MPEG2_HEADER_DONE;
-			return 1;
+			parser->state = MPEG2_BITSTREAM_DONE;
+			parser->code = 0;
+			return 0;
 		}
 		integer = ( integer | *ptr_read++ ) << 8;
-	
-		debug_printf("[VDPAU][Bitstream parser] Current read uint32_t: %08x .. Bytes to end: %d\n", integer,bytes_to_end);
-	
-		bytes_to_end--;
-		parser->cursor += 8;
-		
+		bytes_to_end--;	
 	}
-	
+	parser->ptr_bitstream = ptr_read;
+	parser->code = parser->ptr_bitstream;
 	/* start_code found. rewind cursor a byte */
 	//parser->cursor -= 8;
 	
@@ -74,37 +68,74 @@ vlVdpMPEG2BitstreamToMacroblock (
 	bool b_header_done = false;
 	struct vdpMPEG2BitstreamParser parser;
 	
-	debug_printf("[VDPAU] Starting decoding MPEG2 stream");
+	#if(1)
+	FILE *fp;
+   
+      if ((fp = fopen("binout", "w"))==NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+      }
+	fwrite(bitstream_buffers[0].bitstream, 1, bitstream_buffers[0].bitstream_bytes, fp);
+	fclose(fp);
+	
+	#endif
+	
+	
+	debug_printf("[VDPAU] Starting decoding MPEG2 stream\n");
 	
 	num_macroblocks[0] = 0;
 	
 	memset(&parser,0,sizeof(parser));
 	parser.state = MPEG2_HEADER_START_CODE;
-	parser.cur_bitstream_length = bitstream_buffers[0].bitstream_bytes;
 	parser.ptr_bitstream = (unsigned char *)bitstream_buffers[0].bitstream;
+	parser.ptr_bitstream_end = parser.ptr_bitstream + bitstream_buffers[0].bitstream_bytes;
 	
 	/* Main header parser loop */
 	while(!b_header_done)
 	{
 		switch (parser.state)
 		{
-		case MPEG2_HEADER_START_CODE:
+		case MPEG2_SEEK_HEADER:
 			if (vlVdpMPEG2NextStartCode(&parser))
 				exit(1);
-			debug_printf("[VDPAU] START_CODE: %02x\n",(parser.ptr_bitstream + parser.cursor/8)[0]);
+			break;
 			/* Start_code found */
-			switch ((parser.ptr_bitstream + parser.cursor/8)[0])
+			switch (parser.code)
 			{
 				/* sequence_header_code */
 				case 0xB3:
-				debug_printf("[VDPAU][Bitstream parser] Sequence header code found at cursor pos: %d\n", parser.cursor);
-				exit(1);
+				debug_printf("[VDPAU][Bitstream parser] Sequence header code found\n");
+				
+				/* We dont need to read this, because we already have this information */
 				break;
+				case 0xB5:
+				debug_printf("[VDPAU][Bitstream parser] Extension start code found\n");
+				//exit(1);
+				break;
+				
+				case 0xB8:
+				debug_printf("[VDPAU][Bitstream parser] Extension start code found\n");
+				//exit(1);
+				break;
+				
 			}
 		
 		break;
-		case MPEG2_HEADER_DONE:
-			debug_printf("[VDPAU][Bitstream parser] Done parsing current header\n");
+		case MPEG2_BITSTREAM_DONE:
+			if (parser.cur_bitstream < bitstream_buffer_count - 1)
+			{
+				debug_printf("[VDPAU][Bitstream parser] Done parsing current bitstream. Moving to the next\n");
+				parser.cur_bitstream++;
+				parser.ptr_bitstream = (unsigned char *)bitstream_buffers[parser.cur_bitstream].bitstream;
+				parser.ptr_bitstream_end = parser.ptr_bitstream + bitstream_buffers[parser.cur_bitstream].bitstream_bytes; 
+				parser.state = MPEG2_HEADER_START_CODE;
+			}
+			else
+			{
+				debug_printf("[VDPAU][Bitstream parser] Done with frame\n");
+				exit(0);
+				// return 0;
+			}
 		break;
 		
 		}
