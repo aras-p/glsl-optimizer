@@ -63,7 +63,7 @@ void main ()
   tmpvar_13.y = tmpvar_12;
   vec4 tmpvar_14;
   tmpvar_14 = abs (((fract ((((fract (((_Time.yy + tmpvar_13).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
-  vec4 tmpvar_15;
+  highp vec4 tmpvar_15;
   tmpvar_15 = ((tmpvar_14 * tmpvar_14) * (3.0 - (2.0 * tmpvar_14)));
   highp vec2 tmpvar_16;
   tmpvar_16 = (tmpvar_15.xz + tmpvar_15.yw);

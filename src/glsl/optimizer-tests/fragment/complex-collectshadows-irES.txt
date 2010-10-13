@@ -132,9 +132,9 @@ vec4 xlat_main (
   highp float tmpvar_2;
   tmpvar_2 = tmpvar_1.x;
   depth = tmpvar_2;
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = Linear01Depth (depth);
-  float tmpvar_4;
+  highp float tmpvar_4;
   tmpvar_4 = tmpvar_3;
   depth = tmpvar_4;
   highp vec4 tmpvar_5;
@@ -143,9 +143,9 @@ vec4 xlat_main (
   highp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   vpos = tmpvar_6;
-  float tmpvar_7;
+  mediump float tmpvar_7;
   tmpvar_7 = unitySampleShadow (vpos);
-  float tmpvar_8;
+  mediump float tmpvar_8;
   tmpvar_8 = tmpvar_7;
   shadow = tmpvar_8;
   mediump float tmpvar_9;
@@ -154,9 +154,9 @@ vec4 xlat_main (
   highp float tmpvar_10;
   tmpvar_10 = 1.0;
   res.y = vec2(tmpvar_10).y;
-  vec2 tmpvar_11;
+  highp vec2 tmpvar_11;
   tmpvar_11 = EncodeFloatRG ((1.0 - depth));
-  vec2 tmpvar_12;
+  highp vec2 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   res.zw = tmpvar_12.xxxy.zw;
   return res;
@@ -179,9 +179,9 @@ void main ()
   highp vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.ray = tmpvar_5;
-  vec4 tmpvar_6;
+  mediump vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
-  vec4 tmpvar_7;
+  mediump vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
   mediump vec4 tmpvar_8;

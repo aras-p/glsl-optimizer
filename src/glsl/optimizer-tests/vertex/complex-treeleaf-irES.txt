@@ -150,9 +150,9 @@ vec4 SmoothTriangleWave (
   in highp vec4 x
 )
 {
-  vec4 tmpvar_1;
+  highp vec4 tmpvar_1;
   tmpvar_1 = TriangleWave (x);
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = SmoothCurve (tmpvar_1);
   return tmpvar_2;
 }
@@ -204,9 +204,9 @@ vec4 AnimateVertex (
   highp vec4 tmpvar_12;
   tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
   vWaves = tmpvar_12;
-  vec4 tmpvar_13;
+  highp vec4 tmpvar_13;
   tmpvar_13 = SmoothTriangleWave (vWaves);
-  vec4 tmpvar_14;
+  highp vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   vWaves = tmpvar_14;
   highp vec2 tmpvar_15;
@@ -238,14 +238,14 @@ void TreeVertLeaf (
   highp vec4 tmpvar_2;
   tmpvar_2.xy = v.color.xy.xy;
   tmpvar_2.zw = v.texcoord1.xy.xy;
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
-  vec4 tmpvar_4;
+  highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   v.vertex = tmpvar_4;
-  vec4 tmpvar_5;
+  highp vec4 tmpvar_5;
   tmpvar_5 = Squash (v.vertex);
-  vec4 tmpvar_6;
+  highp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   v.vertex = tmpvar_6;
   highp vec4 tmpvar_7;
@@ -344,12 +344,12 @@ v2f_surf xlat_main (
   highp mat3 tmpvar_16;
   tmpvar_16 = (tmpvar_6);
   rotation = (tmpvar_16);
-  vec3 tmpvar_17;
+  highp vec3 tmpvar_17;
   tmpvar_17 = ObjSpaceLightDir (v.vertex);
   highp vec3 tmpvar_18;
   tmpvar_18 = (rotation * tmpvar_17);
   o.lightDir = tmpvar_18;
-  vec3 tmpvar_19;
+  highp vec3 tmpvar_19;
   tmpvar_19 = ObjSpaceViewDir (v.vertex);
   highp vec3 tmpvar_20;
   tmpvar_20 = (rotation * tmpvar_19);

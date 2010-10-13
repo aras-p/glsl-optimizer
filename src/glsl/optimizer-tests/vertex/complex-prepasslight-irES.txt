@@ -45,9 +45,9 @@ v2f xlat_main (
   highp vec4 tmpvar_1;
   tmpvar_1 = (glstate_matrix_mvp * v.vertex);
   o.pos = tmpvar_1;
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_2;
   tmpvar_2 = ComputeScreenPos (o.pos);
-  vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   o.uv = tmpvar_3;
   highp vec3 tmpvar_4;

@@ -62,9 +62,9 @@ void main ()
   mediump vec4 xl_retval;
   highp vec4 tmpvar_1;
   tmpvar_1 = xlv_TEXCOORD0.xyzw;
-  vec4 tmpvar_2;
+  mediump vec4 tmpvar_2;
   tmpvar_2 = xlat_main (tmpvar_1);
-  vec4 tmpvar_3;
+  mediump vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xl_retval = tmpvar_3;
   mediump vec4 tmpvar_4;

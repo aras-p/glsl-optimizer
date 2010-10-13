@@ -32,9 +32,9 @@ void main ()
   mediump vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.texcoord = tmpvar_5;
-  vec4 tmpvar_6;
+  mediump vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
-  vec4 tmpvar_7;
+  mediump vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
   mediump vec4 tmpvar_8;

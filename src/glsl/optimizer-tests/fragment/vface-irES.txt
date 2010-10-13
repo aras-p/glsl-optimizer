@@ -11,9 +11,9 @@ vec4 xlat_main (
 void main ()
 {
   mediump vec4 xl_retval;
-  vec4 tmpvar_1;
+  mediump vec4 tmpvar_1;
   tmpvar_1 = xlat_main (xlv_VFACE);
-  vec4 tmpvar_2;
+  mediump vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   xl_retval = tmpvar_2;
   mediump vec4 tmpvar_3;

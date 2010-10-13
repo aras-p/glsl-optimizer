@@ -13,7 +13,7 @@ uniform sampler2D _CameraDepthTexture;
 void main ()
 {
   highp vec4 res;
-  float tmpvar_1;
+  highp float tmpvar_1;
   tmpvar_1 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x) + _ZBufferParams.y));
   highp vec4 tmpvar_2;
   tmpvar_2.w = 1.0;
