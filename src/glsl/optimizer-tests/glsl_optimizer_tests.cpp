@@ -198,8 +198,29 @@ static void DeleteFile (const std::string& path)
 	#endif
 }
 
+static void MassageVertexForGLES (std::string& s)
+{
+	std::string pre;
+	pre += "#define gl_Vertex _glesVertex\nattribute highp vec4 _glesVertex;\n";
+	pre += "#define gl_Normal _glesNormal\nattribute mediump vec3 _glesNormal;\n";
+	pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nattribute highp vec4 _glesMultiTexCoord0;\n";
+	pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nattribute highp vec4 _glesMultiTexCoord1;\n";
+	pre += "#define gl_Color _glesColor\nattribute lowp vec4 _glesColor;\n";
+	s = pre + s;
+}
 
-static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPath, const std::string& hirPath, const std::string& outputPath, bool doCheckGLSL)
+static void MassageFragmentForGLES (std::string& s)
+{
+	std::string pre;
+	s = pre + s;
+}
+
+static bool TestFile (glslopt_ctx* ctx, bool vertex,
+	const std::string& inputPath,
+	const std::string& hirPath,
+	const std::string& outputPath,
+	bool gles,
+	bool doCheckGLSL)
 {
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
@@ -210,6 +231,14 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPat
 	if (doCheckGLSL && !CheckGLSL (vertex, "input", input.c_str()))
 	{
 		return false;
+	}
+
+	if (gles)
+	{
+		if (vertex)
+			MassageVertexForGLES (input);
+		else
+			MassageFragmentForGLES (input);
 	}
 
 	bool res = true;
@@ -272,7 +301,10 @@ int main (int argc, const char** argv)
 	}
 
 	bool hasOpenGL = InitializeOpenGL ();
-	glslopt_ctx* ctx = glslopt_initialize();
+	glslopt_ctx* ctx[2] = {
+		glslopt_initialize(true),
+		glslopt_initialize(false),
+	};
 
 	std::string baseFolder = argv[1];
 
@@ -283,23 +315,31 @@ int main (int argc, const char** argv)
 	size_t errors = 0;
 	for (int type = 0; type < 2; ++type)
 	{
-		printf ("** running %s...\n", kTypeName[type]);
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
-		StringVector inputFiles = GetFiles (testFolder, "-in.txt");
 
-		size_t n = inputFiles.size();
-		for (size_t i = 0; i < n; ++i)
+		static const char* kAPIName[2] = { "OpenGL ES 2.0", "OpenGL" };
+		static const char* kApiIn [2] = {"-inES.txt", "-in.txt"};
+		static const char* kApiIR [2] = {"-irES.txt", "-ir.txt"};
+		static const char* kApiOut[2] = {"-outES.txt", "-out.txt"};
+		for (int api = 0; api < 1; ++api)
 		{
-			std::string inname = inputFiles[i];
-			printf ("test %s\n", inname.c_str());
-			std::string hirname = inname.substr (0,inname.size()-7) + "-ir.txt";
-			std::string outname = inname.substr (0,inname.size()-7) + "-out.txt";
-			bool ok = TestFile (ctx, type==0, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, hasOpenGL);
-			if (!ok)
+			printf ("** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
+			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
+
+			size_t n = inputFiles.size();
+			for (size_t i = 0; i < n; ++i)
 			{
-				++errors;
+				std::string inname = inputFiles[i];
+				printf ("test %s\n", inname.c_str());
+				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
+				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
+				bool ok = TestFile (ctx[api], type==0, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
+				if (!ok)
+				{
+					++errors;
+				}
+				++tests;
 			}
-			++tests;
 		}
 	}
 	clock_t time1 = clock();
@@ -310,7 +350,8 @@ int main (int argc, const char** argv)
 	else
 		printf ("**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
 
-	glslopt_cleanup (ctx);
+	for (int i = 0; i < 2; ++i)
+		glslopt_cleanup (ctx[i]);
 
 	return errors ? 1 : 0;
 }
