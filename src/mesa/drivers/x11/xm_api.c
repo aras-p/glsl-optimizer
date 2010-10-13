@@ -1047,7 +1047,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
                              XMesaColormap cmap)
 {
    int client = 0;
-   const int xclass = v->mesa_visual.visualType;
+   const int xclass = v->visualType;
 
 #ifdef XFree86Server
    client = (window) ? CLIENT_ID(window->id) : 0;
@@ -1408,9 +1408,9 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 #endif
 
 #if defined(XFree86Server) || !(defined(__cplusplus) || defined(c_plusplus))
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->class);
 #else
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
 #endif
 
    v->mesa_visual.visualRating = visualCaveat;
@@ -1421,7 +1421,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    (void) initialize_visual_and_buffer( v, NULL, 0, 0 );
 
    {
-      const int xclass = v->mesa_visual.visualType;
+      const int xclass = v->visualType;
       if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
          red_bits   = _mesa_bitcount(GET_REDMASK(v));
          green_bits = _mesa_bitcount(GET_GREENMASK(v));

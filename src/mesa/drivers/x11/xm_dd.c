@@ -139,7 +139,7 @@ color_mask(struct gl_context *ctx,
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer xmbuf;
-   const int xclass = xmesa->xm_visual->mesa_visual.visualType;
+   const int xclass = xmesa->xm_visual->visualType;
    (void) amask;
 
    if (ctx->DrawBuffer->Name != 0)

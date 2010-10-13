@@ -87,6 +87,7 @@ struct xmesa_visual {
    struct gl_config mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
    int screen, visualID;
+   int visualType;
 #ifdef XFree86Server
    GLint ColormapEntries;
    GLint nplanes;
