@@ -22,6 +22,7 @@
  */
 #include <util/u_surface.h>
 #include <util/u_blitter.h>
+#include <util/u_format.h>
 #include "r600_pipe.h"
 
 enum r600_blitter_op /* bitmask */
@@ -163,6 +164,26 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 }
 
 
+
+/* Copy a block of pixels from one surface to another using HW. */
+static void r600_hw_copy_region(struct pipe_context *ctx,
+                                struct pipe_resource *dst,
+                                struct pipe_subresource subdst,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
+                                struct pipe_resource *src,
+                                struct pipe_subresource subsrc,
+                                unsigned srcx, unsigned srcy, unsigned srcz,
+                                unsigned width, unsigned height)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_blitter_begin(ctx, R600_COPY);
+	util_blitter_copy_region(rctx->blitter, dst, subdst, dstx, dsty, dstz,
+				 src, subsrc, srcx, srcy, srcz, width, height,
+				 TRUE);
+	r600_blitter_end(ctx);
+}
+
 static void r600_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
 				      struct pipe_subresource subdst,
@@ -172,8 +193,16 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned srcx, unsigned srcy, unsigned srcz,
 				      unsigned width, unsigned height)
 {
-	util_resource_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
-				  src, subsrc, srcx, srcy, srcz, width, height);
+	boolean is_depth;
+	/* there is something wrong with depth resource copies at the moment so avoid them for now */
+	is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
+	if (is_depth)
+		util_resource_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
+					  src, subsrc, srcx, srcy, srcz, width, height);
+	else
+		r600_hw_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
+				    src, subsrc, srcx, srcy, srcz, width, height);
+
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)
