@@ -358,10 +358,12 @@ static void vbo_exec_fixup_vertex( struct gl_context *ctx,
 #define ATTR( A, N, V0, V1, V2, V3 )				\
 do {								\
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
-								\
-   if (exec->vtx.active_sz[A] != N)				\
-      vbo_exec_fixup_vertex(ctx, A, N);			\
-								\
+									\
+   if (unlikely(!(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT))) \
+      ctx->Driver.BeginVertices( ctx );                                 \
+   if (unlikely(exec->vtx.active_sz[A] != N))				\
+      vbo_exec_fixup_vertex(ctx, A, N);					\
+   									\
    {								\
       GLfloat *dest = exec->vtx.attrptr[A];			\
       if (N>0) dest[0] = V0;					\
@@ -911,10 +913,8 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
-   if (exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) {
-      _mesa_restore_exec_vtxfmt( ctx );
+   if (exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
       exec->ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
-   }
 
    exec->ctx->Driver.NeedFlush &= ~flags;
 

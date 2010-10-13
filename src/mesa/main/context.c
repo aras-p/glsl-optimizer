@@ -949,11 +949,6 @@ _mesa_initialize_context_for_api(struct gl_context *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
-      /* Neutral tnl module stuff */
-      _mesa_init_exec_vtxfmt( ctx ); 
-      ctx->TnlModule.Current = NULL;
-      ctx->TnlModule.SwapCount = 0;
-
 #if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {

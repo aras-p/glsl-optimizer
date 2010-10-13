@@ -2942,32 +2942,6 @@ struct gl_matrix_stack
 #include "dd.h"
 
 
-#define NUM_VERTEX_FORMAT_ENTRIES (sizeof(GLvertexformat) / sizeof(void *))
-
-/**
- * Core Mesa's support for tnl modules:
- */
-struct gl_tnl_module
-{
-   /**
-    * Vertex format to be lazily swapped into current dispatch.
-    */
-   const GLvertexformat *Current;
-
-   /**
-    * \name Record of functions swapped out.  
-    * On restore, only need to swap these functions back in.
-    */
-   /*@{*/
-   struct {
-       _glapi_proc * location;
-       _glapi_proc function;
-   } Swapped[NUM_VERTEX_FORMAT_ENTRIES];
-   GLuint SwapCount;
-   /*@}*/
-};
-
-
 /**
  * Display list flags.
  * Strictly this is a tnl-private concept, but it doesn't seem
@@ -3230,9 +3204,6 @@ struct gl_context
     * transformation?
     */
    GLboolean mvp_with_dp4;
-
-   /** Core tnl module support */
-   struct gl_tnl_module TnlModule;
 
    /**
     * \name Hooks for module contexts.  
