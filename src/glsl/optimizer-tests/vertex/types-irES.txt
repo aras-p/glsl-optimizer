@@ -67,12 +67,12 @@ void main ()
   xlt_v.uv = tmpvar_4;
   mediump vec3 tmpvar_5;
   tmpvar_5 = _glesNormal.xyz;
-  highp vec3 tmpvar_6;
+  mediump vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_v.normal = tmpvar_6;
   lowp vec4 tmpvar_7;
   tmpvar_7 = _glesColor.xyzw;
-  highp vec4 tmpvar_8;
+  lowp vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_v.color = tmpvar_8;
   v2f tmpvar_9;

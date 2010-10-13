@@ -47,7 +47,7 @@ v2f xlat_main (
   o.pos = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = ComputeScreenPos (o.pos);
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   o.uv = tmpvar_3;
   highp vec3 tmpvar_4;
@@ -57,7 +57,7 @@ v2f xlat_main (
   tmpvar_5 = vec3(float((v.normal.z != 0.0)));
   vec3 tmpvar_6;
   tmpvar_6 = mix (o.ray, v.normal, tmpvar_5);
-  highp vec3 tmpvar_7;
+  vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   o.ray = tmpvar_7;
   return o;

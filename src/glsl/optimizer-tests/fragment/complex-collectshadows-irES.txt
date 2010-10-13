@@ -79,7 +79,7 @@ float unitySampleShadow (
   } else {
     tmpvar_18 = 1.0;
   };
-  highp float tmpvar_19;
+  float tmpvar_19;
   tmpvar_19 = tmpvar_18;
   shadow = tmpvar_19;
   return shadow;
@@ -110,7 +110,7 @@ vec2 EncodeFloatRG (
   enc = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = fract (enc);
-  highp vec2 tmpvar_5;
+  vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   enc = tmpvar_5;
   highp float tmpvar_6;
@@ -134,7 +134,7 @@ vec4 xlat_main (
   depth = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = Linear01Depth (depth);
-  highp float tmpvar_4;
+  float tmpvar_4;
   tmpvar_4 = tmpvar_3;
   depth = tmpvar_4;
   highp vec4 tmpvar_5;
@@ -145,10 +145,10 @@ vec4 xlat_main (
   vpos = tmpvar_6;
   float tmpvar_7;
   tmpvar_7 = unitySampleShadow (vpos);
-  highp float tmpvar_8;
+  float tmpvar_8;
   tmpvar_8 = tmpvar_7;
   shadow = tmpvar_8;
-  highp float tmpvar_9;
+  mediump float tmpvar_9;
   tmpvar_9 = shadow;
   res.x = tmpvar_9;
   highp float tmpvar_10;
@@ -156,7 +156,7 @@ vec4 xlat_main (
   res.y = vec2(tmpvar_10).y;
   vec2 tmpvar_11;
   tmpvar_11 = EncodeFloatRG ((1.0 - depth));
-  highp vec2 tmpvar_12;
+  vec2 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   res.zw = tmpvar_12.xxxy.zw;
   return res;
@@ -181,12 +181,12 @@ void main ()
   xlt_i.ray = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
-  highp vec4 tmpvar_7;
+  vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
   mediump vec4 tmpvar_8;
   tmpvar_8 = xl_retval.xyzw;
-  highp vec4 tmpvar_9;
+  mediump vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   gl_FragData[0] = tmpvar_9;
 }

@@ -45,7 +45,7 @@ void main ()
   xlt_v.vertex = tmpvar_2;
   lowp vec4 tmpvar_3;
   tmpvar_3 = _glesColor.xyzw;
-  highp vec4 tmpvar_4;
+  lowp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_v.color = tmpvar_4;
   highp vec2 tmpvar_5;
@@ -65,12 +65,12 @@ void main ()
   gl_Position = tmpvar_10;
   lowp vec4 tmpvar_11;
   tmpvar_11 = xl_retval.color.xyzw;
-  highp vec4 tmpvar_12;
+  lowp vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   xlv_COLOR = tmpvar_12;
   mediump vec2 tmpvar_13;
   tmpvar_13 = xl_retval.texcoord.xy;
-  highp vec2 tmpvar_14;
+  mediump vec2 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   xlv_TEXCOORD0 = tmpvar_14;
 }
