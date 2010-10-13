@@ -294,23 +294,13 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          if (bld->static_state->normalized_coords) {
             /* mul by tex size */
             coord = lp_build_mul(coord_bld, coord, length_f);
-            /* clamp to length max */
-            coord = lp_build_min(coord_bld, coord, length_f);
-            /* subtract 0.5 */
-            coord = lp_build_sub(coord_bld, coord, half);
-            /* clamp to [0, length - 0.5] */
-            coord = lp_build_max(coord_bld, coord, coord_bld->zero);
          }
-         /* XXX this is odd normalized ranges from 0 to length-0.5 after denorm
-            but non-normalized ranges from to 0.5 to length-0.5 after clamp.
-            Is this missing the sub 0.5? */
-         else {
-            LLVMValueRef min, max;
-            /* clamp to [0.5, length - 0.5] */
-            min = half;
-            max = lp_build_sub(coord_bld, length_f, min);
-            coord = lp_build_clamp(coord_bld, coord, min, max);
-         }
+         /* clamp to length max */
+         coord = lp_build_min(coord_bld, coord, length_f);
+         /* subtract 0.5 */
+         coord = lp_build_sub(coord_bld, coord, half);
+         /* clamp to [0, length - 0.5] */
+         coord = lp_build_max(coord_bld, coord, coord_bld->zero);
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(&abs_coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
