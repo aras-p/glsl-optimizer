@@ -1177,6 +1177,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 void
 fs_visitor::visit(ir_texture *ir)
 {
+   int sampler;
    fs_inst *inst = NULL;
 
    ir->coordinate->accept(this);
@@ -1184,6 +1185,44 @@ fs_visitor::visit(ir_texture *ir)
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
+
+   sampler = _mesa_get_sampler_uniform_value(ir->sampler,
+					     ctx->Shader.CurrentProgram,
+					     &brw->fragment_program->Base);
+   sampler = c->fp->program.Base.SamplerUnits[sampler];
+
+   /* The 965 requires the EU to do the normalization of GL rectangle
+    * texture coordinates.  We use the program parameter state
+    * tracking to get the scaling factor.
+    */
+   if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
+      struct gl_program_parameter_list *params = c->fp->program.Base.Parameters;
+      int tokens[STATE_LENGTH] = {
+	 STATE_INTERNAL,
+	 STATE_TEXRECT_SCALE,
+	 sampler,
+	 0,
+	 0
+      };
+
+      fs_reg scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
+      fs_reg scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
+      GLuint index = _mesa_add_state_reference(params,
+					       (gl_state_index *)tokens);
+      float *vec_values = this->fp->Base.Parameters->ParameterValues[index];
+
+      c->prog_data.param[c->prog_data.nr_params++] = &vec_values[0];
+      c->prog_data.param[c->prog_data.nr_params++] = &vec_values[1];
+
+      fs_reg dst = fs_reg(this, ir->coordinate->type);
+      fs_reg src = coordinate;
+      coordinate = dst;
+
+      emit(fs_inst(BRW_OPCODE_MUL, dst, src, scale_x));
+      dst.reg_offset++;
+      src.reg_offset++;
+      emit(fs_inst(BRW_OPCODE_MUL, dst, src, scale_y));
+   }
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
     * samples, so don't worry about them.
@@ -1196,11 +1235,7 @@ fs_visitor::visit(ir_texture *ir)
       inst = emit_texture_gen5(ir, dst, coordinate);
    }
 
-   inst->sampler =
-      _mesa_get_sampler_uniform_value(ir->sampler,
-				      ctx->Shader.CurrentProgram,
-				      &brw->fragment_program->Base);
-   inst->sampler = c->fp->program.Base.SamplerUnits[inst->sampler];
+   inst->sampler = sampler;
 
    this->result = dst;
 
