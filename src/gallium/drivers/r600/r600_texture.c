@@ -125,6 +125,14 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 	return util_format_get_nblocksy(ptex->format, height);
 }
 
+/* Get a width in pixels from a stride in bytes. */
+static unsigned pitch_to_width(enum pipe_format format,
+                                unsigned pitch_in_bytes)
+{
+    return (pitch_in_bytes / util_format_get_blocksize(format)) *
+            util_format_get_blockwidth(format);
+}
+
 static void r600_setup_miptree(struct pipe_screen *screen,
 			       struct r600_resource_texture *rtex)
 {
@@ -134,7 +142,6 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	unsigned long pitch, size, layer_size, i, offset;
 	unsigned nblocksy;
 
-	rtex->bpt = util_format_get_blocksize(ptex->format);
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		pitch = r600_texture_get_stride(screen, rtex, i);
 		nblocksy = r600_texture_get_nblocksy(screen, rtex, i);
@@ -152,6 +159,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch_in_bytes[i] = pitch;
+		rtex->pitch_in_pixels[i] = pitch_to_width(ptex->format, pitch);
 		offset += size;
 	}
 	rtex->size = offset;

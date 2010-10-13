@@ -653,7 +653,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		bo[0] = rbuffer->bo;
 		bo[1] = rbuffer->bo;
 	}
-	pitch = align(tmp->pitch_in_bytes[0] / tmp->bpt, 8);
+	pitch = align(tmp->pitch_in_pixels[0], 8);
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
@@ -943,8 +943,8 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	bo[1] = rbuffer->bo;
 	bo[2] = rbuffer->bo;
 
-	pitch = (rtex->pitch_in_bytes[level] / rtex->bpt) / 8 - 1;
-	slice = (rtex->pitch_in_bytes[level] / rtex->bpt) * state->cbufs[cb]->height / 64 - 1;
+	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
+	slice = rtex->pitch_in_pixels[level] * state->cbufs[cb]->height / 64 - 1;
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -1003,8 +1003,8 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	rbuffer = &rtex->resource;
 
 	level = state->zsbuf->level;
-	pitch = (rtex->pitch_in_bytes[level] / rtex->bpt) / 8 - 1;
-	slice = (rtex->pitch_in_bytes[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
+	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
+	slice = rtex->pitch_in_pixels[level] * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
