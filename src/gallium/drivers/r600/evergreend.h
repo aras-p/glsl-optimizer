@@ -686,6 +686,9 @@
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
 #define   C_02880C_Z_EXPORT_ENABLE                     0xFFFFFFFE
+#define   S_02880C_STENCIL_EXPORT_ENABLE(x)            (((x) & 0x2) << 0)
+#define   G_02880C_STENCIL_EXPORT_ENABLE(x)            (((x) >> 0) & 0x2)
+#define   C_02880C_STENCIL_EXPORT_ENABLE               0xFFFFFFFD
 #define   S_02880C_Z_ORDER(x)                          (((x) & 0x3) << 4)
 #define   G_02880C_Z_ORDER(x)                          (((x) >> 4) & 0x3)
 #define   C_02880C_Z_ORDER                             0xFFFFFCFF
