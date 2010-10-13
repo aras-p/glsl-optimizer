@@ -7,7 +7,7 @@ void main ()
   tmpvar_1 = (xlv_TEXCOORD0.x / 2.0);
   highp float tmpvar_2;
   tmpvar_2 = (fract (abs (tmpvar_1)) * 2.0);
-  highp float tmpvar_3;
+  float tmpvar_3;
   if ((tmpvar_1 >= 0.0)) {
     tmpvar_3 = tmpvar_2;
   } else {
@@ -18,13 +18,13 @@ void main ()
   tmpvar_4 = (xlv_TEXCOORD0.xy / vec2(2.0, 2.0));
   highp vec2 tmpvar_5;
   tmpvar_5 = (fract (abs (tmpvar_4)) * vec2(2.0, 2.0));
-  highp float tmpvar_6;
+  float tmpvar_6;
   if ((tmpvar_4.x >= 0.0)) {
     tmpvar_6 = tmpvar_5.x;
   } else {
     tmpvar_6 = -(tmpvar_5.x);
   };
-  highp float tmpvar_7;
+  float tmpvar_7;
   if ((tmpvar_4.y >= 0.0)) {
     tmpvar_7 = tmpvar_5.y;
   } else {
@@ -38,19 +38,19 @@ void main ()
   tmpvar_9 = (xlv_TEXCOORD0.xyz / vec3(2.0, 2.0, 2.0));
   highp vec3 tmpvar_10;
   tmpvar_10 = (fract (abs (tmpvar_9)) * vec3(2.0, 2.0, 2.0));
-  highp float tmpvar_11;
+  float tmpvar_11;
   if ((tmpvar_9.x >= 0.0)) {
     tmpvar_11 = tmpvar_10.x;
   } else {
     tmpvar_11 = -(tmpvar_10.x);
   };
-  highp float tmpvar_12;
+  float tmpvar_12;
   if ((tmpvar_9.y >= 0.0)) {
     tmpvar_12 = tmpvar_10.y;
   } else {
     tmpvar_12 = -(tmpvar_10.y);
   };
-  highp float tmpvar_13;
+  float tmpvar_13;
   if ((tmpvar_9.z >= 0.0)) {
     tmpvar_13 = tmpvar_10.z;
   } else {
@@ -65,25 +65,25 @@ void main ()
   tmpvar_15 = (xlv_TEXCOORD0 / vec4(2.0, 2.0, 2.0, 2.0));
   highp vec4 tmpvar_16;
   tmpvar_16 = (fract (abs (tmpvar_15)) * vec4(2.0, 2.0, 2.0, 2.0));
-  highp float tmpvar_17;
+  float tmpvar_17;
   if ((tmpvar_15.x >= 0.0)) {
     tmpvar_17 = tmpvar_16.x;
   } else {
     tmpvar_17 = -(tmpvar_16.x);
   };
-  highp float tmpvar_18;
+  float tmpvar_18;
   if ((tmpvar_15.y >= 0.0)) {
     tmpvar_18 = tmpvar_16.y;
   } else {
     tmpvar_18 = -(tmpvar_16.y);
   };
-  highp float tmpvar_19;
+  float tmpvar_19;
   if ((tmpvar_15.z >= 0.0)) {
     tmpvar_19 = tmpvar_16.z;
   } else {
     tmpvar_19 = -(tmpvar_16.z);
   };
-  highp float tmpvar_20;
+  float tmpvar_20;
   if ((tmpvar_15.w >= 0.0)) {
     tmpvar_20 = tmpvar_16.w;
   } else {

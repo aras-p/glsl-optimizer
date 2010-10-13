@@ -24,7 +24,7 @@ float xll_saturate (
   in highp float x
 )
 {
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
@@ -33,7 +33,7 @@ vec2 xll_saturate (
   in highp vec2 x
 )
 {
-  highp vec2 tmpvar_1;
+  vec2 tmpvar_1;
   tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
@@ -42,7 +42,7 @@ vec3 xll_saturate (
   in highp vec3 x
 )
 {
-  highp vec3 tmpvar_1;
+  vec3 tmpvar_1;
   tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
@@ -51,7 +51,7 @@ vec4 xll_saturate (
   in highp vec4 x
 )
 {
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
@@ -60,9 +60,9 @@ mat2 xll_saturate (
   in highp mat2 m
 )
 {
-  highp vec2 tmpvar_1;
+  vec2 tmpvar_1;
   tmpvar_1 = clamp (m[0], 0.0, 1.0);
-  highp vec2 tmpvar_2;
+  vec2 tmpvar_2;
   tmpvar_2 = clamp (m[1], 0.0, 1.0);
   highp mat2 tmpvar_3;
   highp vec2 tmpvar_4;
@@ -78,11 +78,11 @@ mat3 xll_saturate (
   in highp mat3 m
 )
 {
-  highp vec3 tmpvar_1;
+  vec3 tmpvar_1;
   tmpvar_1 = clamp (m[0], 0.0, 1.0);
-  highp vec3 tmpvar_2;
+  vec3 tmpvar_2;
   tmpvar_2 = clamp (m[1], 0.0, 1.0);
-  highp vec3 tmpvar_3;
+  vec3 tmpvar_3;
   tmpvar_3 = clamp (m[2], 0.0, 1.0);
   highp mat3 tmpvar_4;
   highp vec3 tmpvar_5;
@@ -101,13 +101,13 @@ mat4 xll_saturate (
   in highp mat4 m
 )
 {
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = clamp (m[0], 0.0, 1.0);
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = clamp (m[1], 0.0, 1.0);
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   tmpvar_3 = clamp (m[2], 0.0, 1.0);
-  highp vec4 tmpvar_4;
+  vec4 tmpvar_4;
   tmpvar_4 = clamp (m[3], 0.0, 1.0);
   highp mat4 tmpvar_5;
   highp vec4 tmpvar_6;
@@ -131,13 +131,13 @@ vec2 xll_vecTSel (
   in highp vec2 c
 )
 {
-  highp float tmpvar_1;
+  float tmpvar_1;
   if (a.x) {
     tmpvar_1 = b.x;
   } else {
     tmpvar_1 = c.x;
   };
-  highp float tmpvar_2;
+  float tmpvar_2;
   if (a.y) {
     tmpvar_2 = b.y;
   } else {
@@ -155,19 +155,19 @@ vec3 xll_vecTSel (
   in highp vec3 c
 )
 {
-  highp float tmpvar_1;
+  float tmpvar_1;
   if (a.x) {
     tmpvar_1 = b.x;
   } else {
     tmpvar_1 = c.x;
   };
-  highp float tmpvar_2;
+  float tmpvar_2;
   if (a.y) {
     tmpvar_2 = b.y;
   } else {
     tmpvar_2 = c.y;
   };
-  highp float tmpvar_3;
+  float tmpvar_3;
   if (a.z) {
     tmpvar_3 = b.z;
   } else {
@@ -186,25 +186,25 @@ vec4 xll_vecTSel (
   in highp vec4 c
 )
 {
-  highp float tmpvar_1;
+  float tmpvar_1;
   if (a.x) {
     tmpvar_1 = b.x;
   } else {
     tmpvar_1 = c.x;
   };
-  highp float tmpvar_2;
+  float tmpvar_2;
   if (a.y) {
     tmpvar_2 = b.y;
   } else {
     tmpvar_2 = c.y;
   };
-  highp float tmpvar_3;
+  float tmpvar_3;
   if (a.z) {
     tmpvar_3 = b.z;
   } else {
     tmpvar_3 = c.z;
   };
-  highp float tmpvar_4;
+  float tmpvar_4;
   if (a.w) {
     tmpvar_4 = b.w;
   } else {
@@ -222,7 +222,7 @@ float Luminance (
   in mediump vec3 c
 )
 {
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = dot (c, vec3(0.22, 0.707, 0.071));
   return tmpvar_1;
 }
@@ -242,7 +242,7 @@ float DecodeFloatRGBA (
   highp vec4 tmpvar_1;
   tmpvar_1 = vec4(1.0, 0.00392157, 1.53787e-005, 0.0);
   kDecodeDot = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = dot (enc, kDecodeDot);
   return tmpvar_2;
 }
@@ -252,12 +252,12 @@ float SampleCubeDistance (
 )
 {
   highp vec4 packDist;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = textureCube (_ShadowMapTexture, vec);
   highp vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   packDist = tmpvar_2;
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = DecodeFloatRGBA (packDist);
   return tmpvar_3;
 }
@@ -277,7 +277,7 @@ float unitySampleShadow (
   tmpvar_2.x = z;
   tmpvar_2.y = z;
   tmpvar_2.z = z;
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = SampleCubeDistance ((vec + tmpvar_2));
   highp float tmpvar_4;
   tmpvar_4 = tmpvar_3;
@@ -286,7 +286,7 @@ float unitySampleShadow (
   tmpvar_5.x = -(z);
   tmpvar_5.y = -(z);
   tmpvar_5.z = z;
-  highp float tmpvar_6;
+  float tmpvar_6;
   tmpvar_6 = SampleCubeDistance ((vec + tmpvar_5));
   highp float tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -295,7 +295,7 @@ float unitySampleShadow (
   tmpvar_8.x = -(z);
   tmpvar_8.y = z;
   tmpvar_8.z = -(z);
-  highp float tmpvar_9;
+  float tmpvar_9;
   tmpvar_9 = SampleCubeDistance ((vec + tmpvar_8));
   highp float tmpvar_10;
   tmpvar_10 = tmpvar_9;
@@ -304,7 +304,7 @@ float unitySampleShadow (
   tmpvar_11.x = z;
   tmpvar_11.y = -(z);
   tmpvar_11.z = -(z);
-  highp float tmpvar_12;
+  float tmpvar_12;
   tmpvar_12 = SampleCubeDistance ((vec + tmpvar_11));
   highp float tmpvar_13;
   tmpvar_13 = tmpvar_12;
@@ -317,12 +317,12 @@ float unitySampleShadow (
   tmpvar_16 = lessThan (shadowVals, tmpvar_15);
   highp vec4 tmpvar_17;
   tmpvar_17 = _LightShadowData.xxxx.xyzw;
-  highp vec4 tmpvar_18;
+  vec4 tmpvar_18;
   tmpvar_18 = xll_vecTSel (tmpvar_16, tmpvar_17, vec4(1.0, 1.0, 1.0, 1.0));
   highp vec4 tmpvar_19;
   tmpvar_19 = tmpvar_18;
   shadows = tmpvar_19;
-  highp float tmpvar_20;
+  float tmpvar_20;
   tmpvar_20 = dot (shadows, vec4(0.25, 0.25, 0.25, 0.25));
   return tmpvar_20;
 }
@@ -338,12 +338,12 @@ float ComputeShadow (
   highp float tmpvar_1;
   tmpvar_1 = ((z * _LightShadowData.z) + _LightShadowData.w);
   fade = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = xll_saturate (fade);
   highp float tmpvar_3;
   tmpvar_3 = tmpvar_2;
   fade = tmpvar_3;
-  highp float tmpvar_4;
+  float tmpvar_4;
   tmpvar_4 = length (vec);
   highp float tmpvar_5;
   tmpvar_5 = (tmpvar_4 * _LightPositionRange.w);
@@ -351,7 +351,7 @@ float ComputeShadow (
   highp float tmpvar_6;
   tmpvar_6 = (mydist * 0.97);
   mydist = tmpvar_6;
-  highp float tmpvar_7;
+  float tmpvar_7;
   tmpvar_7 = unitySampleShadow (vec, mydist);
   return tmpvar_7;
   return 1.0;
@@ -382,7 +382,7 @@ vec4 xlat_main (
   highp vec2 tmpvar_2;
   tmpvar_2 = (i.uv.xy / i.uv.w);
   uv = tmpvar_2;
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   tmpvar_3 = texture2D (_CameraNormalsTexture, uv);
   highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
@@ -390,17 +390,17 @@ vec4 xlat_main (
   highp vec3 tmpvar_5;
   tmpvar_5 = ((nspec.xyz * 2.0) - 1.0);
   normal = tmpvar_5;
-  highp vec3 tmpvar_6;
+  vec3 tmpvar_6;
   tmpvar_6 = normalize (normal);
   highp vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   normal = tmpvar_7;
-  highp vec4 tmpvar_8;
+  vec4 tmpvar_8;
   tmpvar_8 = texture2D (_CameraDepthTexture, uv);
   highp float tmpvar_9;
   tmpvar_9 = tmpvar_8.x;
   depth = tmpvar_9;
-  highp float tmpvar_10;
+  float tmpvar_10;
   tmpvar_10 = Linear01Depth (depth);
   highp float tmpvar_11;
   tmpvar_11 = tmpvar_10;
@@ -417,12 +417,12 @@ vec4 xlat_main (
   highp vec3 tmpvar_15;
   tmpvar_15 = (wpos - _LightPos.xyz);
   tolight = tmpvar_15;
-  highp vec3 tmpvar_16;
+  vec3 tmpvar_16;
   tmpvar_16 = normalize (tolight);
   highp vec3 tmpvar_17;
   tmpvar_17 = -(tmpvar_16);
   lightDir = tmpvar_17;
-  highp float tmpvar_18;
+  float tmpvar_18;
   tmpvar_18 = dot (tolight, tolight);
   highp float tmpvar_19;
   tmpvar_19 = (tmpvar_18 * _LightPos.w);
@@ -431,12 +431,12 @@ vec4 xlat_main (
   tmpvar_20 = vec2(att);
   highp vec2 tmpvar_21;
   tmpvar_21 = tmpvar_20.xy;
-  highp vec4 tmpvar_22;
+  vec4 tmpvar_22;
   tmpvar_22 = texture2D (_LightTextureB0, tmpvar_21);
   highp float tmpvar_23;
   tmpvar_23 = tmpvar_22.w;
   atten = tmpvar_23;
-  highp float tmpvar_24;
+  float tmpvar_24;
   tmpvar_24 = ComputeShadow (tolight, vpos.z, uv);
   highp float tmpvar_25;
   tmpvar_25 = (atten * tmpvar_24);
@@ -444,35 +444,35 @@ vec4 xlat_main (
   highp vec4 tmpvar_26;
   tmpvar_26.w = 1.0;
   tmpvar_26.xyz = wpos.xyz;
-  highp vec4 tmpvar_27;
+  vec4 tmpvar_27;
   tmpvar_27 = textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_26).xyz);
   highp float tmpvar_28;
   tmpvar_28 = (atten * tmpvar_27.w);
   atten = tmpvar_28;
-  highp float tmpvar_29;
+  float tmpvar_29;
   tmpvar_29 = dot (lightDir, normal);
-  highp float tmpvar_30;
+  float tmpvar_30;
   tmpvar_30 = max (0.0, tmpvar_29);
   highp float tmpvar_31;
   tmpvar_31 = tmpvar_30;
   diff = tmpvar_31;
-  highp vec3 tmpvar_32;
+  vec3 tmpvar_32;
   tmpvar_32 = normalize ((wpos - _WorldSpaceCameraPos));
-  highp vec3 tmpvar_33;
+  vec3 tmpvar_33;
   tmpvar_33 = normalize ((lightDir - tmpvar_32));
   highp vec3 tmpvar_34;
   tmpvar_34 = tmpvar_33;
   h = tmpvar_34;
-  highp float tmpvar_35;
+  float tmpvar_35;
   tmpvar_35 = dot (h, normal);
-  highp float tmpvar_36;
+  float tmpvar_36;
   tmpvar_36 = max (0.0, tmpvar_35);
-  highp float tmpvar_37;
+  float tmpvar_37;
   tmpvar_37 = pow (tmpvar_36, (nspec.w * 128.0));
   highp float tmpvar_38;
   tmpvar_38 = tmpvar_37;
   spec = tmpvar_38;
-  highp float tmpvar_39;
+  float tmpvar_39;
   tmpvar_39 = xll_saturate (atten);
   highp float tmpvar_40;
   tmpvar_40 = (spec * tmpvar_39);
@@ -480,7 +480,7 @@ vec4 xlat_main (
   highp vec3 tmpvar_41;
   tmpvar_41 = (_LightColor.xyz * (diff * atten));
   res.xyz = tmpvar_41.xyz.xyz;
-  highp float tmpvar_42;
+  float tmpvar_42;
   tmpvar_42 = Luminance (_LightColor.xyz);
   highp float tmpvar_43;
   tmpvar_43 = (spec * tmpvar_42);
@@ -488,12 +488,12 @@ vec4 xlat_main (
   highp float tmpvar_44;
   tmpvar_44 = ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w);
   fade = tmpvar_44;
-  highp float tmpvar_45;
+  float tmpvar_45;
   tmpvar_45 = xll_saturate ((1.0 - fade));
   highp vec4 tmpvar_46;
   tmpvar_46 = (res * tmpvar_45);
   res = tmpvar_46;
-  highp vec4 tmpvar_47;
+  vec4 tmpvar_47;
   tmpvar_47 = exp2 (-(res));
   return tmpvar_47;
 }
@@ -515,12 +515,12 @@ void main ()
   highp vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.ray = tmpvar_5;
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
   highp vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
-  highp vec4 tmpvar_8;
+  mediump vec4 tmpvar_8;
   tmpvar_8 = xl_retval.xyzw;
   highp vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;

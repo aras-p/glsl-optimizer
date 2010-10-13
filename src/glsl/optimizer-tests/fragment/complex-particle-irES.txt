@@ -10,7 +10,7 @@ vec4 xlat_main (
   in v2f i
 )
 {
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
   return (i.color * tmpvar_1);
 }
@@ -22,22 +22,22 @@ void main ()
   highp vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.vertex = tmpvar_1;
-  highp vec4 tmpvar_2;
+  lowp vec4 tmpvar_2;
   tmpvar_2 = xlv_COLOR.xyzw;
   highp vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.color = tmpvar_3;
-  highp vec2 tmpvar_4;
+  mediump vec2 tmpvar_4;
   tmpvar_4 = xlv_TEXCOORD0.xy;
   highp vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.texcoord = tmpvar_5;
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
   highp vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
-  highp vec4 tmpvar_8;
+  mediump vec4 tmpvar_8;
   tmpvar_8 = xl_retval.xyzw;
   highp vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;

@@ -3,7 +3,7 @@ void main ()
 {
   mediump vec4 c;
   c = vec4(0.0, 0.0, 0.0, 0.0);
-  highp float tmpvar_1;
+  float tmpvar_1;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_1 = 0.9;
   } else {
@@ -12,7 +12,7 @@ void main ()
   highp vec4 tmpvar_2;
   tmpvar_2 = vec4(tmpvar_1);
   c = tmpvar_2;
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_3 = vec4(0.9, 0.9, 0.9, 0.9);
   } else {
@@ -21,23 +21,23 @@ void main ()
   highp vec4 tmpvar_4;
   tmpvar_4 = (tmpvar_2 + tmpvar_3);
   c = tmpvar_4;
-  highp vec3 tmpvar_5;
+  vec3 tmpvar_5;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_5 = vec3(0.9, 0.9, 0.9);
   } else {
     tmpvar_5 = vec3(0.1, 0.1, 0.1);
   };
   c.xyz = (tmpvar_4.xyz + tmpvar_5);
-  highp vec2 tmpvar_6;
+  vec2 tmpvar_6;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_6 = vec2(0.9, 0.9);
   } else {
     tmpvar_6 = vec2(0.1, 0.1);
   };
   c.xy = (c.xy + tmpvar_6);
-  highp float tmpvar_7;
+  float tmpvar_7;
   tmpvar_7 = fract (xlv_TEXCOORD0.x);
-  highp float tmpvar_8;
+  float tmpvar_8;
   if (bool(tmpvar_7)) {
     tmpvar_8 = 0.9;
   } else {

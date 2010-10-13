@@ -50,14 +50,14 @@ vec4 Squash (
   planeNormal = tmpvar_1;
   highp vec3 tmpvar_2;
   tmpvar_2 = pos.xyz;
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = dot (planeNormal, tmpvar_2);
   highp vec3 tmpvar_4;
   tmpvar_4 = (pos.xyz - ((tmpvar_3 + _SquashPlaneNormal.w) * planeNormal));
   projectedVertex = tmpvar_4;
   highp vec3 tmpvar_5;
   tmpvar_5 = vec3(_SquashAmount);
-  highp vec3 tmpvar_6;
+  vec3 tmpvar_6;
   tmpvar_6 = mix (projectedVertex, pos.xyz, tmpvar_5);
   highp vec4 tmpvar_7;
   tmpvar_7.w = 1.0;
@@ -78,7 +78,7 @@ void ExpandBillboard (
   highp vec3 tanb;
   highp vec3 norb;
   highp float isBillboard;
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = abs (tangent.w);
   highp float tmpvar_2;
   tmpvar_2 = (1.0 - tmpvar_1);
@@ -86,7 +86,7 @@ void ExpandBillboard (
   highp vec4 tmpvar_3;
   tmpvar_3.w = 0.0;
   tmpvar_3.xyz = normal.xyz;
-  highp vec4 tmpvar_4;
+  vec4 tmpvar_4;
   tmpvar_4 = normalize ((tmpvar_3 * mat));
   highp vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4.xyz;
@@ -96,7 +96,7 @@ void ExpandBillboard (
   highp vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
   tmpvar_7.xyz = tangent.xyz.xyz;
-  highp vec4 tmpvar_8;
+  vec4 tmpvar_8;
   tmpvar_8 = normalize ((tmpvar_7 * mat));
   highp vec3 tmpvar_9;
   tmpvar_9 = tmpvar_8.xyz;
@@ -111,7 +111,7 @@ void ExpandBillboard (
   pos = tmpvar_12;
   highp vec3 tmpvar_13;
   tmpvar_13 = vec3(isBillboard);
-  highp vec3 tmpvar_14;
+  vec3 tmpvar_14;
   tmpvar_14 = mix (normal, norb, tmpvar_13);
   highp vec3 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -121,7 +121,7 @@ void ExpandBillboard (
   tmpvar_16.xyz = tanb.xyz;
   highp vec4 tmpvar_17;
   tmpvar_17 = vec4(isBillboard);
-  highp vec4 tmpvar_18;
+  vec4 tmpvar_18;
   tmpvar_18 = mix (tangent, tmpvar_16, tmpvar_17);
   highp vec4 tmpvar_19;
   tmpvar_19 = tmpvar_18;
@@ -132,9 +132,9 @@ vec4 TriangleWave (
   in highp vec4 x
 )
 {
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = fract ((x + 0.5));
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = abs (((tmpvar_1 * 2.0) - 1.0));
   return tmpvar_2;
 }
@@ -150,9 +150,9 @@ vec4 SmoothTriangleWave (
   in highp vec4 x
 )
 {
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = TriangleWave (x);
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = SmoothCurve (tmpvar_1);
   return tmpvar_2;
 }
@@ -178,7 +178,7 @@ vec4 AnimateVertex (
   highp float tmpvar_2;
   tmpvar_2 = 0.3;
   fBranchAmp = tmpvar_2;
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
   highp float tmpvar_4;
   tmpvar_4 = tmpvar_3;
@@ -188,7 +188,7 @@ vec4 AnimateVertex (
   fBranchPhase = tmpvar_5;
   highp vec3 tmpvar_6;
   tmpvar_6 = vec3((animParams.y + fBranchPhase));
-  highp float tmpvar_7;
+  float tmpvar_7;
   tmpvar_7 = dot (pos.xyz, tmpvar_6);
   highp float tmpvar_8;
   tmpvar_8 = tmpvar_7;
@@ -199,12 +199,12 @@ vec4 AnimateVertex (
   highp vec2 tmpvar_10;
   tmpvar_10 = (_Time.yy + tmpvar_9);
   vWavesIn = tmpvar_10;
-  highp vec4 tmpvar_11;
+  vec4 tmpvar_11;
   tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
   highp vec4 tmpvar_12;
   tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
   vWaves = tmpvar_12;
-  highp vec4 tmpvar_13;
+  vec4 tmpvar_13;
   tmpvar_13 = SmoothTriangleWave (vWaves);
   highp vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
@@ -238,12 +238,12 @@ void TreeVertLeaf (
   highp vec4 tmpvar_2;
   tmpvar_2.xy = v.color.xy.xy;
   tmpvar_2.zw = v.texcoord1.xy.xy;
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
   highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   v.vertex = tmpvar_4;
-  highp vec4 tmpvar_5;
+  vec4 tmpvar_5;
   tmpvar_5 = Squash (v.vertex);
   highp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
@@ -254,12 +254,12 @@ void TreeVertLeaf (
   highp vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   v.color = tmpvar_8;
-  highp vec3 tmpvar_9;
+  vec3 tmpvar_9;
   tmpvar_9 = normalize (v.normal);
   highp vec3 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   v.normal = tmpvar_10;
-  highp vec3 tmpvar_11;
+  vec3 tmpvar_11;
   tmpvar_11 = normalize (v.tangent.xyz);
   highp vec3 tmpvar_12;
   tmpvar_12 = tmpvar_11;
@@ -308,7 +308,7 @@ v2f_surf xlat_main (
   highp vec4 tmpvar_3;
   tmpvar_3 = v.color;
   o.lop_color = tmpvar_3;
-  highp vec3 tmpvar_4;
+  vec3 tmpvar_4;
   tmpvar_4 = cross (v.normal, v.tangent.xyz);
   highp vec3 tmpvar_5;
   tmpvar_5 = (tmpvar_4 * v.tangent.w);
@@ -344,12 +344,12 @@ v2f_surf xlat_main (
   highp mat3 tmpvar_16;
   tmpvar_16 = (tmpvar_6);
   rotation = (tmpvar_16);
-  highp vec3 tmpvar_17;
+  vec3 tmpvar_17;
   tmpvar_17 = ObjSpaceLightDir (v.vertex);
   highp vec3 tmpvar_18;
   tmpvar_18 = (rotation * tmpvar_17);
   o.lightDir = tmpvar_18;
-  highp vec3 tmpvar_19;
+  vec3 tmpvar_19;
   tmpvar_19 = ObjSpaceViewDir (v.vertex);
   highp vec3 tmpvar_20;
   tmpvar_20 = (rotation * tmpvar_19);

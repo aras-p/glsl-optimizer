@@ -36,12 +36,12 @@ void main ()
   highp vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.color = tmpvar_5;
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
   highp vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
-  highp vec4 tmpvar_8;
+  mediump vec4 tmpvar_8;
   tmpvar_8 = xl_retval.xyzw;
   highp vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;

@@ -9,14 +9,14 @@ float xll_mod (
   highp float tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = abs (d);
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
   highp float tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  highp float tmpvar_5;
+  float tmpvar_5;
   if ((d >= 0.0)) {
     tmpvar_5 = f;
   } else {
@@ -35,20 +35,20 @@ vec2 xll_mod (
   highp vec2 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  highp vec2 tmpvar_2;
+  vec2 tmpvar_2;
   tmpvar_2 = abs (d);
-  highp vec2 tmpvar_3;
+  vec2 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
   highp vec2 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  highp float tmpvar_5;
+  float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  highp float tmpvar_6;
+  float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
@@ -70,26 +70,26 @@ vec3 xll_mod (
   highp vec3 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  highp vec3 tmpvar_2;
+  vec3 tmpvar_2;
   tmpvar_2 = abs (d);
-  highp vec3 tmpvar_3;
+  vec3 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
   highp vec3 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  highp float tmpvar_5;
+  float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  highp float tmpvar_6;
+  float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
     tmpvar_6 = -(f.y);
   };
-  highp float tmpvar_7;
+  float tmpvar_7;
   if ((d.z >= 0.0)) {
     tmpvar_7 = f.z;
   } else {
@@ -112,32 +112,32 @@ vec4 xll_mod (
   highp vec4 tmpvar_1;
   tmpvar_1 = (x / y);
   d = tmpvar_1;
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = abs (d);
-  highp vec4 tmpvar_3;
+  vec4 tmpvar_3;
   tmpvar_3 = fract (tmpvar_2);
   highp vec4 tmpvar_4;
   tmpvar_4 = (tmpvar_3 * y);
   f = tmpvar_4;
-  highp float tmpvar_5;
+  float tmpvar_5;
   if ((d.x >= 0.0)) {
     tmpvar_5 = f.x;
   } else {
     tmpvar_5 = -(f.x);
   };
-  highp float tmpvar_6;
+  float tmpvar_6;
   if ((d.y >= 0.0)) {
     tmpvar_6 = f.y;
   } else {
     tmpvar_6 = -(f.y);
   };
-  highp float tmpvar_7;
+  float tmpvar_7;
   if ((d.z >= 0.0)) {
     tmpvar_7 = f.z;
   } else {
     tmpvar_7 = -(f.z);
   };
-  highp float tmpvar_8;
+  float tmpvar_8;
   if ((d.w >= 0.0)) {
     tmpvar_8 = f.w;
   } else {
@@ -288,42 +288,42 @@ vec4 xlat_main (
   highp vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   c = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = xll_mod (uv.x, 2.0);
   highp float tmpvar_3;
   tmpvar_3 = (c.x + tmpvar_2);
   c.x = tmpvar_3;
-  highp vec2 tmpvar_4;
+  vec2 tmpvar_4;
   tmpvar_4 = xll_mod (uv.xy, vec2(2.0, 2.0));
   highp vec2 tmpvar_5;
   tmpvar_5 = (c.xy + tmpvar_4);
   c.xy = tmpvar_5.xy.xy;
-  highp vec3 tmpvar_6;
+  vec3 tmpvar_6;
   tmpvar_6 = xll_mod (uv.xyz, vec3(2.0, 2.0, 2.0));
   highp vec3 tmpvar_7;
   tmpvar_7 = (c.xyz + tmpvar_6);
   c.xyz = tmpvar_7.xyz.xyz;
-  highp vec4 tmpvar_8;
+  vec4 tmpvar_8;
   tmpvar_8 = xll_mod (uv.xyzw, vec4(2.0, 2.0, 2.0, 2.0));
   highp vec4 tmpvar_9;
   tmpvar_9 = (c.xyzw + tmpvar_8);
   c = tmpvar_9.xyzw.xyzw;
-  highp float tmpvar_10;
+  float tmpvar_10;
   tmpvar_10 = xll_modf (uv.x, d.x);
   highp float tmpvar_11;
   tmpvar_11 = (c.x + tmpvar_10);
   c.x = tmpvar_11;
-  highp vec2 tmpvar_12;
+  vec2 tmpvar_12;
   tmpvar_12 = xll_modf (uv.xy, d.xy);
   highp vec2 tmpvar_13;
   tmpvar_13 = (c.xy + tmpvar_12);
   c.xy = tmpvar_13.xy.xy;
-  highp vec3 tmpvar_14;
+  vec3 tmpvar_14;
   tmpvar_14 = xll_modf (uv.xyz, d.xyz);
   highp vec3 tmpvar_15;
   tmpvar_15 = (c.xyz + tmpvar_14);
   c.xyz = tmpvar_15.xyz.xyz;
-  highp vec4 tmpvar_16;
+  vec4 tmpvar_16;
   tmpvar_16 = xll_modf (uv.xyzw, d.xyzw);
   highp vec4 tmpvar_17;
   tmpvar_17 = (c.xyzw + tmpvar_16);
@@ -336,12 +336,12 @@ void main ()
   mediump vec4 xl_retval;
   highp vec4 tmpvar_1;
   tmpvar_1 = xlv_TEXCOORD0.xyzw;
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = xlat_main (tmpvar_1);
   highp vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xl_retval = tmpvar_3;
-  highp vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4 = xl_retval.xyzw;
   highp vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;

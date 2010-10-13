@@ -13,7 +13,7 @@ uniform sampler2D _CameraDepthTexture;
 void main ()
 {
   highp vec4 res;
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x) + _ZBufferParams.y));
   highp vec4 tmpvar_2;
   tmpvar_2.w = 1.0;
@@ -25,9 +25,9 @@ void main ()
   highp vec4 tmpvar_5;
   tmpvar_5.w = 1.0;
   tmpvar_5.xyz = (((((_View2Shadow * tmpvar_2).xyz * tmpvar_4.x) + ((_View2Shadow1 * tmpvar_2).xyz * tmpvar_4.y)) + ((_View2Shadow2 * tmpvar_2).xyz * tmpvar_4.z)) + ((_View2Shadow3 * tmpvar_2).xyz * tmpvar_4.w));
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
-  highp float tmpvar_7;
+  float tmpvar_7;
   if ((tmpvar_6.x < tmpvar_5.z)) {
     tmpvar_7 = _LightShadowData.x;
   } else {
@@ -36,7 +36,7 @@ void main ()
   res.x = tmpvar_7;
   res.y = 1.0;
   highp vec2 enc;
-  highp vec2 tmpvar_8;
+  vec2 tmpvar_8;
   tmpvar_8 = fract ((vec2(1.0, 255.0) * (1.0 - tmpvar_1)));
   enc = tmpvar_8;
   enc.x = (tmpvar_8.x - (tmpvar_8.y * 0.00392157));

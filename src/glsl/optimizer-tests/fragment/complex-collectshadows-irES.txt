@@ -71,9 +71,9 @@ float unitySampleShadow (
   highp vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   coord = tmpvar_16;
-  highp vec4 tmpvar_17;
+  vec4 tmpvar_17;
   tmpvar_17 = texture2D (_ShadowMapTexture, coord.xy);
-  highp float tmpvar_18;
+  float tmpvar_18;
   if ((tmpvar_17.x < coord.z)) {
     tmpvar_18 = _LightShadowData.x;
   } else {
@@ -108,7 +108,7 @@ vec2 EncodeFloatRG (
   highp vec2 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);
   enc = tmpvar_3;
-  highp vec2 tmpvar_4;
+  vec2 tmpvar_4;
   tmpvar_4 = fract (enc);
   highp vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
@@ -127,12 +127,12 @@ vec4 xlat_main (
   mediump float shadow;
   highp vec4 vpos;
   highp float depth;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = texture2D (_CameraDepthTexture, i.uv);
   highp float tmpvar_2;
   tmpvar_2 = tmpvar_1.x;
   depth = tmpvar_2;
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = Linear01Depth (depth);
   highp float tmpvar_4;
   tmpvar_4 = tmpvar_3;
@@ -143,7 +143,7 @@ vec4 xlat_main (
   highp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   vpos = tmpvar_6;
-  highp float tmpvar_7;
+  float tmpvar_7;
   tmpvar_7 = unitySampleShadow (vpos);
   highp float tmpvar_8;
   tmpvar_8 = tmpvar_7;
@@ -154,7 +154,7 @@ vec4 xlat_main (
   highp float tmpvar_10;
   tmpvar_10 = 1.0;
   res.y = vec2(tmpvar_10).y;
-  highp vec2 tmpvar_11;
+  vec2 tmpvar_11;
   tmpvar_11 = EncodeFloatRG ((1.0 - depth));
   highp vec2 tmpvar_12;
   tmpvar_12 = tmpvar_11;
@@ -179,12 +179,12 @@ void main ()
   highp vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.ray = tmpvar_5;
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6 = xlat_main (xlt_i);
   highp vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
-  highp vec4 tmpvar_8;
+  mediump vec4 tmpvar_8;
   tmpvar_8 = xl_retval.xyzw;
   highp vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
