@@ -917,6 +917,7 @@ tdfxTMMoveOutTM_NoLock( tdfxContextPtr fxMesa, struct gl_texture_object *tObj )
     case TDFX_TMU_SPLIT:
     case TDFX_TMU_BOTH:
         assert(!shared->umaTexMemory);
+        (void) shared;
         RemoveRange_NoLock(fxMesa, TDFX_TMU0, ti->tm[TDFX_TMU0]);
         RemoveRange_NoLock(fxMesa, TDFX_TMU1, ti->tm[TDFX_TMU1]);
         break;
