@@ -751,7 +751,7 @@ ir_dereference_array::constant_expression_value()
 	  */
 	 const unsigned mat_idx = column * column_type->vector_elements;
 
-	 ir_constant_data data;
+	 ir_constant_data data = { { 0 } };
 
 	 switch (column_type->base_type) {
 	 case GLSL_TYPE_UINT:
