@@ -1423,8 +1423,6 @@ lp_build_ifloor_fract(struct lp_build_context *bld,
                       LLVMValueRef *out_ipart,
                       LLVMValueRef *out_fpart)
 {
-
-
    const struct lp_type type = bld->type;
    LLVMValueRef ipart;
 
