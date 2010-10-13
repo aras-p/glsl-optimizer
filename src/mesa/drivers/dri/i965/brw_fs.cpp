@@ -872,7 +872,7 @@ fs_visitor::visit(ir_expression *ir)
       emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
       break;
    case ir_unop_ceil:
-      op[0].negate = ~op[0].negate;
+      op[0].negate = !op[0].negate;
       inst = emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
       this->result.negate = true;
       break;
