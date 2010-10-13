@@ -65,6 +65,12 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             boolean do_branch);
 
 void
+lp_build_depth_write(LLVMBuilderRef builder,
+                     const struct util_format_description *format_desc,
+                     LLVMValueRef zs_dst_ptr,
+                     LLVMValueRef zs_value);
+
+void
 lp_build_deferred_depth_write(LLVMBuilderRef builder,
                               struct lp_type z_src_type,
                               const struct util_format_description *format_desc,

@@ -325,8 +325,9 @@ generate_fs(struct llvmpipe_context *lp,
                                   &zs_value,
                                   !simple_shader);
 
-      if (depth_mode & EARLY_DEPTH_WRITE)
-         LLVMBuildStore(builder, zs_value, depth_ptr);
+      if (depth_mode & EARLY_DEPTH_WRITE) {
+         lp_build_depth_write(builder, zs_format_desc, depth_ptr, zs_value);
+      }
    }
 
    lp_build_interp_soa_update_inputs(interp, i);
@@ -379,8 +380,9 @@ generate_fs(struct llvmpipe_context *lp,
                                   &zs_value,
                                   !simple_shader);
       /* Late Z write */
-      if (depth_mode & LATE_DEPTH_WRITE)
-         LLVMBuildStore(builder, zs_value, depth_ptr);
+      if (depth_mode & LATE_DEPTH_WRITE) {
+         lp_build_depth_write(builder, zs_format_desc, depth_ptr, zs_value);
+      }
    }
    else if ((depth_mode & EARLY_DEPTH_TEST) &&
             (depth_mode & LATE_DEPTH_WRITE))
@@ -534,6 +536,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef blend_mask;
    LLVMValueRef function;
    LLVMValueRef facing;
+   const struct util_format_description *zs_format_desc;
    unsigned num_fs;
    unsigned i;
    unsigned chan;
@@ -579,7 +582,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
    arg_types[6] = LLVMPointerType(fs_elem_type, 0);    /* dady */
    arg_types[7] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
-   arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
+   arg_types[8] = LLVMPointerType(LLVMInt8Type(), 0);  /* depth */
    arg_types[9] = LLVMInt32Type();                     /* mask_input */
    arg_types[10] = LLVMPointerType(LLVMInt32Type(), 0);/* counter */
 
@@ -648,12 +651,16 @@ generate_fragment(struct llvmpipe_context *lp,
    sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);
 
    /* loop over quads in the block */
+   zs_format_desc = util_format_description(key->zsbuf_format);
+
    for(i = 0; i < num_fs; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef depth_offset = LLVMConstInt(LLVMInt32Type(),
+                                               i*fs_type.length*zs_format_desc->block.bits/8,
+                                               0);
       LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
 
-      depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");
+      depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &depth_offset, 1, "");
 
       generate_fs(lp, shader, key,
                   builder,
