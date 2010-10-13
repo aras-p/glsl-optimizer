@@ -1692,6 +1692,19 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 }
 
 
+static void
+apply_precision_to_variable(const struct ast_type_specifier *spec,
+				 ir_variable *var,
+				 struct _mesa_glsl_parse_state *state)
+{
+	if (!state->es_shader)
+		return;
+	if (var->type->is_sampler() && spec->precision == ast_precision_high)
+		return;
+	var->precision = spec->precision;
+}
+
+
 ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
@@ -1832,6 +1845,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
+	  apply_precision_to_variable(this->type->specifier, var, state);
 
       if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
@@ -2229,6 +2243,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for function parameters the default mode is 'in'.
     */
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc);
+   apply_precision_to_variable(this->type->specifier, var, state);
 
    instructions->push_tail(var);
 

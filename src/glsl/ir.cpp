@@ -1065,7 +1065,7 @@ ir_swizzle::variable_referenced()
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(mode), interpolation(ir_var_smooth), array_lvalue(false)
+     mode(mode), interpolation(ir_var_smooth), precision(ir_precision_high), array_lvalue(false)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1095,6 +1095,19 @@ ir_variable::interpolation_string() const
    return "";
 }
 
+const char *
+ir_variable::precision_string() const
+{
+   switch (this->precision) {
+   case ir_precision_high:   return "highp ";
+   case ir_precision_medium: return "mediump ";
+   case ir_precision_low:    return "lowp ";
+   case ir_precision_undefined:    return "";
+   }
+
+   assert(!"Should not get here.");
+   return "";
+}
 
 unsigned
 ir_variable::component_slots() const
@@ -1123,6 +1136,7 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *a = (ir_variable *)iter_a.get();
       ir_variable *b = (ir_variable *)iter_b.get();
 
+      /* NOTE: precision does not affect qualifier matching */
       if (a->read_only != b->read_only ||
 	  a->mode != b->mode ||
 	  a->interpolation != b->interpolation ||

@@ -198,6 +198,14 @@ enum ir_variable_interpolation {
    ir_var_noperspective
 };
 
+enum ir_precision {
+	ir_precision_high = 0, /**< Default precision. */
+	ir_precision_medium,
+	ir_precision_low,
+	ir_precision_undefined,
+};
+
+
 
 class ir_variable : public ir_instruction {
 public:
@@ -227,6 +235,8 @@ public:
     * This function should only be used on a shader input or output variable.
     */
    const char *interpolation_string() const;
+
+   const char *precision_string() const;
 
    /**
     * Calculate the number of slots required to hold this variable
@@ -271,6 +281,8 @@ public:
     * \sa ir_variable_interpolation
     */
    unsigned interpolation:2;
+
+   unsigned precision:2;
 
    /**
     * Flag that the whole array is assignable

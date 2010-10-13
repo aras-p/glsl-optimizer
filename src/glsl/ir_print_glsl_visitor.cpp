@@ -35,13 +35,14 @@ static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
 
 class ir_print_glsl_visitor : public ir_visitor {
 public:
-	ir_print_glsl_visitor(char* buf, PrintGlslMode mode_)
+	ir_print_glsl_visitor(char* buf, PrintGlslMode mode_, bool use_precision_)
 	{
 		indentation = 0;
 		buffer = buf;
 		mode = mode_;
 		temp_var_counter = 0;
 		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+		use_precision = use_precision_;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -82,6 +83,7 @@ public:
 	PrintGlslMode mode;
 	unsigned	temp_var_counter;
 	hash_table*	temp_var_hash;
+	bool	use_precision;
 };
 
 
@@ -123,7 +125,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			continue;
 	  }
 
-	  ir_print_glsl_visitor v (buffer, mode);
+	  ir_print_glsl_visitor v (buffer, mode, state->es_shader);
 	  ir->accept(&v);
 	  buffer = v.buffer;
       if (ir->ir_type != ir_type_function)
@@ -200,6 +202,8 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
+   if (this->use_precision && ir->type->is_float())
+	   buffer = talloc_asprintf_append(buffer, "%s", ir->precision_string());
    buffer = print_type(buffer, ir->type, false);
    buffer = talloc_asprintf_append(buffer, " ");
    print_var_name (ir);
