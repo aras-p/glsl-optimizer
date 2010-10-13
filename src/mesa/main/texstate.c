@@ -496,22 +496,27 @@ update_texture_state( struct gl_context *ctx )
    struct gl_vertex_program *vprog = NULL;
    GLbitfield enabledFragUnits = 0x0;
 
-   if (ctx->Shader.CurrentProgram &&
-       ctx->Shader.CurrentProgram->LinkStatus) {
-      fprog = ctx->Shader.CurrentProgram->FragmentProgram;
-      vprog = ctx->Shader.CurrentProgram->VertexProgram;
+   if (ctx->Shader.CurrentVertexProgram &&
+       ctx->Shader.CurrentVertexProgram->LinkStatus) {
+      vprog = ctx->Shader.CurrentVertexProgram->VertexProgram;
+   } else if (ctx->VertexProgram._Enabled) {
+      /* XXX enable this if/when non-shader vertex programs get
+       * texture fetches:
+       vprog = ctx->VertexProgram.Current;
+       */
    }
-   else {
-      if (ctx->FragmentProgram._Enabled) {
-         fprog = ctx->FragmentProgram.Current;
-      }
-      if (ctx->VertexProgram._Enabled) {
-         /* XXX enable this if/when non-shader vertex programs get
-          * texture fetches:
-         vprog = ctx->VertexProgram.Current;
-         */
-      }
+
+   if (ctx->Shader.CurrentFragmentProgram &&
+       ctx->Shader.CurrentFragmentProgram->LinkStatus) {
+      fprog = ctx->Shader.CurrentFragmentProgram->FragmentProgram;
    }
+   else if (ctx->FragmentProgram._Enabled) {
+      fprog = ctx->FragmentProgram.Current;
+   }
+
+   /* FINISHME: Geometry shader texture accesses should also be considered
+    * FINISHME: here.
+    */
 
    /* TODO: only set this if there are actual changes */
    ctx->NewState |= _NEW_TEXTURE;

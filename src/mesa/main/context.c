@@ -1697,11 +1697,10 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (ctx->Shader.CurrentProgram) {
-      struct gl_shader_program *const prog = ctx->Shader.CurrentProgram;
+   if (ctx->Shader.CurrentVertexProgram) {
+      vert_from_glsl_shader = true;
 
-      /* The current shader program must be successfully linked */
-      if (!prog->LinkStatus) {
+      if (!ctx->Shader.CurrentVertexProgram->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(shader not linked)", where);
          return GL_FALSE;
@@ -1709,34 +1708,56 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 #if 0 /* not normally enabled */
       {
          char errMsg[100];
-         if (!_mesa_validate_shader_program(ctx, prog, errMsg)) {
+         if (!_mesa_validate_shader_program(ctx,
+					    ctx->Shader.CurrentVertexProgram,
+                                            errMsg)) {
             _mesa_warning(ctx, "Shader program %u is invalid: %s",
-                          prog->Name, errMsg);
+                          ctx->Shader.CurrentVertexProgram->Name, errMsg);
          }
       }
 #endif
-
-      /* Figure out which shader stages are provided by the GLSL program.  For
-       * any stages that are not provided, the corresponding assembly shader
-       * target will be validated below.
-       */
-      vert_from_glsl_shader =
-	 prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL;
-      geom_from_glsl_shader =
-	 prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL;
-      frag_from_glsl_shader =
-	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL;
    }
 
-   /* If drawing to integer-valued color buffers, there must be an
-    * active fragment shader (GL_EXT_texture_integer).
-    */
-   if (ctx->DrawBuffer && ctx->DrawBuffer->_IntegerColor) {
-      if (!frag_from_glsl_shader) {
+   if (ctx->Shader.CurrentGeometryProgram) {
+      geom_from_glsl_shader = true;
+
+      if (!ctx->Shader.CurrentGeometryProgram->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(integer format but no fragment shader)", where);
+                     "%s(shader not linked)", where);
          return GL_FALSE;
       }
+#if 0 /* not normally enabled */
+      {
+         char errMsg[100];
+         if (!_mesa_validate_shader_program(ctx,
+					    ctx->Shader.CurrentGeometryProgram,
+                                            errMsg)) {
+            _mesa_warning(ctx, "Shader program %u is invalid: %s",
+                          ctx->Shader.CurrentGeometryProgram->Name, errMsg);
+         }
+      }
+#endif
+   }
+
+   if (ctx->Shader.CurrentFragmentProgram) {
+      frag_from_glsl_shader = true;
+
+      if (!ctx->Shader.CurrentFragmentProgram->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(shader not linked)", where);
+         return GL_FALSE;
+      }
+#if 0 /* not normally enabled */
+      {
+         char errMsg[100];
+         if (!_mesa_validate_shader_program(ctx,
+					    ctx->Shader.CurrentFragmentProgram,
+                                            errMsg)) {
+            _mesa_warning(ctx, "Shader program %u is invalid: %s",
+                          ctx->Shader.CurrentFragmentProgram->Name, errMsg);
+         }
+      }
+#endif
    }
 
    /* Any shader stages that are not supplied by the GLSL shader and have
@@ -1754,11 +1775,21 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
     */
    (void) geom_from_glsl_shader;
 
-   if (!frag_from_glsl_shader
-       && ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-		  "%s(fragment program not valid)", where);
-      return GL_FALSE;
+   if (!frag_from_glsl_shader) {
+      if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
+		     "%s(fragment program not valid)", where);
+	 return GL_FALSE;
+      }
+
+      /* If drawing to integer-valued color buffers, there must be an
+       * active fragment shader (GL_EXT_texture_integer).
+       */
+      if (ctx->DrawBuffer && ctx->DrawBuffer->_IntegerColor) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(integer format but no fragment shader)", where);
+         return GL_FALSE;
+      }
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -1769,26 +1800,51 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 
 #ifdef DEBUG
    if (ctx->Shader.Flags & GLSL_LOG) {
-      struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-      if (shProg) {
-         if (!shProg->_Used) {
-            /* This is the first time this shader is being used.
-             * Append shader's constants/uniforms to log file.
-             */
-            GLuint i;
-            for (i = 0; i < shProg->NumShaders; i++) {
-               struct gl_shader *sh = shProg->Shaders[i];
-               if (sh->Type == GL_VERTEX_SHADER) {
-                  _mesa_append_uniforms_to_file(sh,
-                                                &shProg->VertexProgram->Base);
-               }
-               else if (sh->Type == GL_FRAGMENT_SHADER) {
-                  _mesa_append_uniforms_to_file(sh,
-                                                &shProg->FragmentProgram->Base);
-               }
-            }
-            shProg->_Used = GL_TRUE;
-         }
+      struct gl_shader_program *shProg[MESA_SHADER_TYPES];
+      unsigned i;
+
+      shProg[MESA_SHADER_VERTEX] = ctx->Shader.CurrentVertexProgram;
+      shProg[MESA_SHADER_GEOMETRY] = ctx->Shader.CurrentGeometryProgram;
+      shProg[MESA_SHADER_FRAGMENT] = ctx->Shader.CurrentFragmentProgram;
+
+      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+	 struct gl_shader *sh;
+
+	 if (shProg[i] == NULL || shProg[i]->_Used
+	     || shProg[i]->_LinkedShaders[i] == NULL)
+	    continue;
+
+	 /* This is the first time this shader is being used.
+	  * Append shader's constants/uniforms to log file.
+	  *
+	  * The logic is a little odd here.  We only want to log data for each
+	  * shader target that will actually be used, and we only want to log
+	  * it once.  It's possible to have a program bound to the vertex
+	  * shader target that also supplied a fragment shader.  If that
+	  * program isn't also bound to the fragment shader target we don't
+	  * want to log its fragment data.
+	  */
+	 sh = shProg[i]->_LinkedShaders[i];
+	 switch (sh->Type) {
+	 case GL_VERTEX_SHADER:
+	    _mesa_append_uniforms_to_file(sh, &shProg[i]->VertexProgram->Base);
+	    break;
+
+	 case GL_GEOMETRY_SHADER_ARB:
+	    _mesa_append_uniforms_to_file(sh,
+					  &shProg[i]->GeometryProgram->Base);
+	    break;
+
+	 case GL_FRAGMENT_SHADER:
+	    _mesa_append_uniforms_to_file(sh,
+					  &shProg[i]->FragmentProgram->Base);
+	    break;
+	 }
+      }
+
+      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+	 if (shProg[i] != NULL)
+	    shProg[i]->_Used = GL_TRUE;
       }
    }
 #endif

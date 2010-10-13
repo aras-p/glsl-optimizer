@@ -2142,9 +2142,15 @@ struct gl_shader_program
 struct gl_shader_state
 {
    /**
-    * Program used for rendering.
+    * Programs used for rendering
+    *
+    * There is a separate program set for each shader stage.  If
+    * GL_EXT_separate_shader_objects is not supported, each of these must point
+    * to \c NULL or to the same program.
     */
-   struct gl_shader_program *CurrentProgram;
+   struct gl_shader_program *CurrentVertexProgram;
+   struct gl_shader_program *CurrentGeometryProgram;
+   struct gl_shader_program *CurrentFragmentProgram;
 
    /**
     * Program used by glUniform calls.

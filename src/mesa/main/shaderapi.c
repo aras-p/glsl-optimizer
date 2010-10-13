@@ -116,7 +116,11 @@ _mesa_init_shader_state(struct gl_context *ctx)
 void
 _mesa_free_shader_state(struct gl_context *ctx)
 {
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, NULL);
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentVertexProgram, NULL);
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentGeometryProgram,
+				  NULL);
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentFragmentProgram,
+				  NULL);
    _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
 }
 
@@ -846,7 +850,10 @@ link_program(struct gl_context *ctx, GLuint program)
    if (!shProg)
       return;
 
-   if (obj->Active && shProg == ctx->Shader.CurrentProgram) {
+   if (obj->Active
+       && (shProg == ctx->Shader.CurrentVertexProgram
+	   || shProg == ctx->Shader.CurrentGeometryProgram
+	   || shProg == ctx->Shader.CurrentFragmentProgram)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glLinkProgram(transform feedback active");
       return;
@@ -927,6 +934,54 @@ active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 }
 
 /**
+ */
+static bool
+use_shader_program(struct gl_context *ctx, GLenum type,
+		   struct gl_shader_program *shProg)
+{
+   struct gl_shader_program **target;
+
+   switch (type) {
+#if FEATURE_ARB_vertex_shader
+   case GL_VERTEX_SHADER:
+      target = &ctx->Shader.CurrentVertexProgram;
+      if ((shProg == NULL)
+	  || (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL)) {
+	 shProg = NULL;
+      }
+      break;
+#endif
+#if FEATURE_ARB_geometry_shader4
+   case GL_GEOMETRY_SHADER_ARB:
+      target = &ctx->Shader.CurrentGeometryProgram;
+      if ((shProg == NULL)
+	  || (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY] == NULL)) {
+	 shProg = NULL;
+      }
+      break;
+#endif
+#if FEATURE_ARB_fragment_shader
+   case GL_FRAGMENT_SHADER:
+      target = &ctx->Shader.CurrentFragmentProgram;
+      if ((shProg == NULL)
+	  || (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)) {
+	 shProg = NULL;
+      }
+      break;
+#endif
+   default:
+      return false;
+   }
+
+   if (*target != shProg) {
+      _mesa_reference_shader_program(ctx, target, shProg);
+      return true;
+   }
+
+   return false;
+}
+
+/**
  * Use the named shader program for subsequent rendering.
  */
 void
@@ -935,16 +990,11 @@ _mesa_use_program(struct gl_context *ctx, GLuint program)
    struct gl_shader_program *shProg;
    struct gl_transform_feedback_object *obj =
       ctx->TransformFeedback.CurrentObject;
+   bool changed = false;
 
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
-      return;
-   }
-
-   if (ctx->Shader.CurrentProgram &&
-       ctx->Shader.CurrentProgram->Name == program) {
-      /* no-op */
       return;
    }
 
@@ -959,8 +1009,6 @@ _mesa_use_program(struct gl_context *ctx, GLuint program)
          return;
       }
 
-      active_program(ctx, shProg, "glUseProgram");
-
       /* debug code */
       if (ctx->Shader.Flags & GLSL_USE_PROG) {
          print_shader_info(shProg);
@@ -970,9 +1018,15 @@ _mesa_use_program(struct gl_context *ctx, GLuint program)
       shProg = NULL;
    }
 
-   if (ctx->Shader.CurrentProgram != shProg) {
+   changed = use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
+   changed = use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg)
+      || changed;
+   changed = use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg)
+      || changed;
+   active_program(ctx, shProg, "glUseProgram");
+
+   if (changed) {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
-      _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
    }
 
    if (ctx->Driver.UseProgram)
@@ -1643,7 +1697,8 @@ void GLAPIENTRY
 _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_shader_program *shProg;
+   struct gl_shader_program *shProg = NULL;
+   bool changed = false;
 
    if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
@@ -1669,8 +1724,12 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       }
    }
 
-   _mesa_error(ctx, GL_INVALID_OPERATION,
-	       "glUseShaderProgramEXT(NOT YET IMPLEMENTED)");
+   changed = use_shader_program(ctx, type, shProg);
+   if (changed)
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+
+   if (ctx->Driver.UseProgram)
+      ctx->Driver.UseProgram(ctx, shProg);
    return;
 }
 

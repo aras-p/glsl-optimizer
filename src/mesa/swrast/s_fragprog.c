@@ -169,7 +169,7 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
    machine->Samplers = program->Base.SamplerUnits;
 
    /* if running a GLSL program (not ARB_fragment_program) */
-   if (ctx->Shader.CurrentProgram) {
+   if (ctx->Shader.CurrentFragmentProgram) {
       /* Store front/back facing value */
       machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0F - span->facing;
    }

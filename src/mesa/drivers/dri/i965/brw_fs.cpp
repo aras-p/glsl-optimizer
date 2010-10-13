@@ -1186,7 +1186,7 @@ fs_visitor::visit(ir_texture *ir)
    assert(!ir->projector);
 
    sampler = _mesa_get_sampler_uniform_value(ir->sampler,
-					     ctx->Shader.CurrentProgram,
+					     ctx->Shader.CurrentFragmentProgram,
 					     &brw->fragment_program->Base);
    sampler = c->fp->program.Base.SamplerUnits[sampler];
 
@@ -3093,7 +3093,7 @@ fs_visitor::generate_code()
 
    if (INTEL_DEBUG & DEBUG_WM) {
       printf("Native code for fragment shader %d:\n",
-	     ctx->Shader.CurrentProgram->Name);
+	     ctx->Shader.CurrentFragmentProgram->Name);
    }
 
    if_depth_in_loop[loop_stack_depth] = 0;
@@ -3320,7 +3320,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   struct gl_shader_program *prog = ctx->Shader.CurrentProgram;
+   struct gl_shader_program *prog = ctx->Shader.CurrentFragmentProgram;
 
    if (!prog)
       return GL_FALSE;

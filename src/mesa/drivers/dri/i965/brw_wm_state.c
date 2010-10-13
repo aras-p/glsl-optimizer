@@ -137,9 +137,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* If using the fragment shader backend, the program is always
     * 8-wide.
     */
-   if (ctx->Shader.CurrentProgram) {
+   if (ctx->Shader.CurrentFragmentProgram) {
       struct brw_shader *shader = (struct brw_shader *)
-	 ctx->Shader.CurrentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
+	 ctx->Shader.CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
       if (shader != NULL && shader->ir != NULL) {
 	 key->is_glsl = GL_TRUE;

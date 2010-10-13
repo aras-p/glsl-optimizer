@@ -143,7 +143,10 @@ struct save_state
    struct gl_vertex_program *VertexProgram;
    GLboolean FragmentProgramEnabled;
    struct gl_fragment_program *FragmentProgram;
-   GLuint Shader;
+   GLuint VertexShader;
+   GLuint GeometryShader;
+   GLuint FragmentShader;
+   GLuint ActiveShader;
 
    /** META_STENCIL_TEST */
    struct gl_stencil_attrib Stencil;
@@ -433,8 +436,15 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       }
 
       if (ctx->Extensions.ARB_shader_objects) {
-         save->Shader = ctx->Shader.CurrentProgram ?
-            ctx->Shader.CurrentProgram->Name : 0;
+         save->VertexShader = ctx->Shader.CurrentVertexProgram ?
+            ctx->Shader.CurrentVertexProgram->Name : 0;
+         save->GeometryShader = ctx->Shader.CurrentGeometryProgram ?
+            ctx->Shader.CurrentGeometryProgram->Name : 0;
+         save->FragmentShader = ctx->Shader.CurrentFragmentProgram ?
+            ctx->Shader.CurrentFragmentProgram->Name : 0;
+         save->ActiveShader = ctx->Shader.ActiveProgram ?
+            ctx->Shader.ActiveProgram->Name : 0;
+
          _mesa_UseProgramObjectARB(0);
       }
    }
@@ -664,9 +674,17 @@ _mesa_meta_end(struct gl_context *ctx)
 	 _mesa_reference_fragprog(ctx, &save->FragmentProgram, NULL);
       }
 
-      if (ctx->Extensions.ARB_shader_objects) {
-         _mesa_UseProgramObjectARB(save->Shader);
-      }
+      if (ctx->Extensions.ARB_vertex_shader)
+	 _mesa_UseShaderProgramEXT(GL_VERTEX_SHADER, save->VertexShader);
+
+      if (ctx->Extensions.ARB_geometry_shader4)
+	 _mesa_UseShaderProgramEXT(GL_GEOMETRY_SHADER_ARB,
+				   save->GeometryShader);
+
+      if (ctx->Extensions.ARB_fragment_shader)
+	 _mesa_UseShaderProgramEXT(GL_FRAGMENT_SHADER, save->FragmentShader);
+
+      _mesa_ActiveProgramEXT(save->ActiveShader);
    }
 
    if (state & META_STENCIL_TEST) {

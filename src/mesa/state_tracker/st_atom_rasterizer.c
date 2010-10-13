@@ -96,9 +96,8 @@ static void update_raster_state( struct st_context *st )
     */
    if (ctx->VertexProgram._Current) {
       if (ctx->VertexProgram._Enabled ||
-          (ctx->Shader.CurrentProgram &&
-           ctx->Shader.CurrentProgram->VertexProgram &&
-           ctx->Shader.CurrentProgram->LinkStatus)) {
+          (ctx->Shader.CurrentVertexProgram &&
+           ctx->Shader.CurrentVertexProgram->LinkStatus)) {
          /* user-defined vertex program or shader */
          raster->light_twoside = ctx->VertexProgram.TwoSideEnabled;
       }

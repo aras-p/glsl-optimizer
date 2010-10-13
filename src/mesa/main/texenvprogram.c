@@ -310,9 +310,10 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
 static GLbitfield get_fp_input_mask( struct gl_context *ctx )
 {
    /* _NEW_PROGRAM */
-   const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
-				   ctx->Shader.CurrentProgram->LinkStatus &&
-                                   ctx->Shader.CurrentProgram->VertexProgram);
+   const GLboolean vertexShader =
+      (ctx->Shader.CurrentVertexProgram &&
+       ctx->Shader.CurrentVertexProgram->LinkStatus &&
+       ctx->Shader.CurrentVertexProgram->VertexProgram);
    const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
    GLbitfield fp_inputs = 0x0;
 
@@ -377,7 +378,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
        * validation (see additional comments in state.c).
        */
       if (vertexShader)
-         vprog = ctx->Shader.CurrentProgram->VertexProgram;
+         vprog = ctx->Shader.CurrentVertexProgram->VertexProgram;
       else
          vprog = ctx->VertexProgram.Current;
 

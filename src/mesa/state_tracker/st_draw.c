@@ -547,11 +547,21 @@ setup_index_buffer(struct gl_context *ctx,
 static void
 check_uniforms(struct gl_context *ctx)
 {
-   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   if (shProg && shProg->LinkStatus) {
-      GLuint i;
-      for (i = 0; i < shProg->Uniforms->NumUniforms; i++) {
-         const struct gl_uniform *u = &shProg->Uniforms->Uniforms[i];
+   struct gl_shader_program *shProg[3] = {
+      ctx->Shader.CurrentVertexProgram,
+      ctx->Shader.CurrentGeometryProgram,
+      ctx->Shader.CurrentFragmentProgram,
+   };
+   unsigned j;
+
+   for (j = 0; j < 3; j++) {
+      unsigned i;
+
+      if (shProg[j] == NULL || !shProg[j]->LinkStatus)
+	 continue;
+
+      for (i = 0; i < shProg[j]->Uniforms->NumUniforms; i++) {
+         const struct gl_uniform *u = &shProg[j]->Uniforms->Uniforms[i];
          if (!u->Initialized) {
             _mesa_warning(ctx,
                           "Using shader with uninitialized uniform: %s",

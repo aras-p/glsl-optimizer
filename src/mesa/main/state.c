@@ -247,7 +247,9 @@ update_program_enables(struct gl_context *ctx)
 static GLbitfield
 update_program(struct gl_context *ctx)
 {
-   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   const struct gl_shader_program *vsProg = ctx->Shader.CurrentVertexProgram;
+   const struct gl_shader_program *gsProg = ctx->Shader.CurrentGeometryProgram;
+   const struct gl_shader_program *fsProg = ctx->Shader.CurrentFragmentProgram;
    const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
    const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
    const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
@@ -269,10 +271,10 @@ update_program(struct gl_context *ctx)
     * come up, or matter.
     */
 
-   if (shProg && shProg->LinkStatus && shProg->FragmentProgram) {
+   if (fsProg && fsProg->LinkStatus && fsProg->FragmentProgram) {
       /* Use shader programs */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               shProg->FragmentProgram);
+                               fsProg->FragmentProgram);
    }
    else if (ctx->FragmentProgram._Enabled) {
       /* use user-defined vertex program */
@@ -292,10 +294,10 @@ update_program(struct gl_context *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    }
 
-   if (shProg && shProg->LinkStatus && shProg->GeometryProgram) {
+   if (gsProg && gsProg->LinkStatus && gsProg->GeometryProgram) {
       /* Use shader programs */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
-                               shProg->GeometryProgram);
+                               gsProg->GeometryProgram);
    } else {
       /* no fragment program */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
@@ -305,10 +307,10 @@ update_program(struct gl_context *ctx)
     * _mesa_get_fixed_func_vertex_program() needs to know active
     * fragprog inputs.
     */
-   if (shProg && shProg->LinkStatus && shProg->VertexProgram) {
+   if (vsProg && vsProg->LinkStatus && vsProg->VertexProgram) {
       /* Use shader programs */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                            shProg->VertexProgram);
+                            vsProg->VertexProgram);
    }
    else if (ctx->VertexProgram._Enabled) {
       /* use user-defined vertex program */

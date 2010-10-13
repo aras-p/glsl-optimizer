@@ -718,12 +718,38 @@ st_translate_geometry_program(struct st_context *st,
 void
 st_print_shaders(struct gl_context *ctx)
 {
-   struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   if (shProg) {
-      GLuint i;
-      for (i = 0; i < shProg->NumShaders; i++) {
-         printf("GLSL shader %u of %u:\n", i, shProg->NumShaders);
-         printf("%s\n", shProg->Shaders[i]->Source);
+   struct gl_shader_program *shProg[3] = {
+      ctx->Shader.CurrentVertexProgram,
+      ctx->Shader.CurrentGeometryProgram,
+      ctx->Shader.CurrentFragmentProgram,
+   };
+   unsigned j;
+
+   for (j = 0; j < 3; j++) {
+      unsigned i;
+
+      if (shProg[j] == NULL)
+	 continue;
+
+      for (i = 0; i < shProg[j]->NumShaders; i++) {
+	 struct gl_shader *sh;
+
+	 switch (shProg[j]->Shaders[i]->Type) {
+	 case GL_VERTEX_SHADER:
+	    sh = (i != 0) ? NULL : shProg[j]->Shaders[i];
+	    break;
+	 case GL_GEOMETRY_SHADER_ARB:
+	    sh = (i != 1) ? NULL : shProg[j]->Shaders[i];
+	    break;
+	 case GL_FRAGMENT_SHADER:
+	    sh = (i != 2) ? NULL : shProg[j]->Shaders[i];
+	    break;
+	 }
+
+	 if (sh != NULL) {
+	    printf("GLSL shader %u of %u:\n", i, shProg[j]->NumShaders);
+	    printf("%s\n", sh->Source);
+	 }
       }
    }
 }
