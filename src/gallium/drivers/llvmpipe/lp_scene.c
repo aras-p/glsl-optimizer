@@ -203,7 +203,9 @@ lp_scene_end_rasterization(struct lp_scene *scene )
    for (i = 0; i < scene->tiles_x; i++) {
       for (j = 0; j < scene->tiles_y; j++) {
          struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         bin->head = bin->tail = NULL;
+         bin->head = NULL;
+         bin->tail = NULL;
+         bin->last_state = NULL;
       }
    }
 

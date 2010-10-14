@@ -200,14 +200,16 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
       }
 
       LP_COUNT(nr_shade_opaque_64);
-      return lp_scene_bin_command( scene, tx, ty,
-                                   LP_RAST_OP_SHADE_TILE_OPAQUE,
-                                   lp_rast_arg_inputs(inputs) );
+      return lp_scene_bin_cmd_with_state( scene, tx, ty,
+                                          setup->fs.stored,
+                                          LP_RAST_OP_SHADE_TILE_OPAQUE,
+                                          lp_rast_arg_inputs(inputs) );
    } else {
       LP_COUNT(nr_shade_64);
-      return lp_scene_bin_command( scene, tx, ty,
-                                   LP_RAST_OP_SHADE_TILE,
-                                   lp_rast_arg_inputs(inputs) );
+      return lp_scene_bin_cmd_with_state( scene, tx, ty,
+                                          setup->fs.stored, 
+                                          LP_RAST_OP_SHADE_TILE,
+                                          lp_rast_arg_inputs(inputs) );
    }
 }
 
@@ -320,7 +322,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
-   tri->inputs.state = setup->fs.stored;
 
   
    for (i = 0; i < 3; i++) {
@@ -491,34 +492,36 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
          {
             /* Triangle is contained in a single 4x4 stamp:
              */
-
-            return lp_scene_bin_command( scene, ix0, iy0,
-                                         LP_RAST_OP_TRIANGLE_3_4,
-                                         lp_rast_arg_triangle(tri, mask) );
+            return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
+                                                setup->fs.stored,
+                                                LP_RAST_OP_TRIANGLE_3_4,
+                                                lp_rast_arg_triangle(tri, mask) );
          }
 
          if (sz < 16)
          {
             /* Triangle is contained in a single 16x16 block:
              */
-            return lp_scene_bin_command( scene, ix0, iy0,
-                                         LP_RAST_OP_TRIANGLE_3_16,
-                                         lp_rast_arg_triangle(tri, mask) );
+            return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
+                                                setup->fs.stored,
+                                                LP_RAST_OP_TRIANGLE_3_16,
+                                                lp_rast_arg_triangle(tri, mask) );
          }
       }
       else if (nr_planes == 4 && sz < 16) 
       {
-         return lp_scene_bin_command( scene, ix0, iy0,
-                                      LP_RAST_OP_TRIANGLE_4_16,
-                                      lp_rast_arg_triangle(tri, mask) );
+         return lp_scene_bin_cmd_with_state(scene, ix0, iy0,
+                                            setup->fs.stored,
+                                            LP_RAST_OP_TRIANGLE_4_16,
+                                            lp_rast_arg_triangle(tri, mask) );
       }
 
 
       /* Triangle is contained in a single tile:
        */
-      return lp_scene_bin_command( scene, ix0, iy0,
-                                   lp_rast_tri_tab[nr_planes], 
-                                   lp_rast_arg_triangle(tri, (1<<nr_planes)-1) );
+      return lp_scene_bin_cmd_with_state( scene, ix0, iy0, setup->fs.stored,
+                                          lp_rast_tri_tab[nr_planes], 
+                                          lp_rast_arg_triangle(tri, (1<<nr_planes)-1) );
    }
    else
    {
@@ -584,9 +587,11 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                 */
                int count = util_bitcount(partial);
                in = TRUE;
-               if (!lp_scene_bin_command( scene, x, y,
-                                          lp_rast_tri_tab[count], 
-                                          lp_rast_arg_triangle(tri, partial) ))
+               
+               if (!lp_scene_bin_cmd_with_state( scene, x, y,
+                                                 setup->fs.stored,
+                                                 lp_rast_tri_tab[count], 
+                                                 lp_rast_arg_triangle(tri, partial) ))
                   goto fail;
 
                LP_COUNT(nr_partially_covered_64);

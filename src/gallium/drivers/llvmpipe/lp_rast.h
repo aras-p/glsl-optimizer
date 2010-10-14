@@ -85,8 +85,6 @@ struct lp_rast_shader_inputs {
    float (*a0)[4];
    float (*dadx)[4];
    float (*dady)[4];
-
-   const struct lp_rast_state *state;
 };
 
 /* Note: the order of these values is important as they are loaded by
@@ -154,6 +152,7 @@ union lp_rast_cmd_arg {
       uint32_t value;
       uint32_t mask;
    } clear_zstencil;
+   const struct lp_rast_state *state;
    struct lp_fence *fence;
    struct llvmpipe_query *query_obj;
 };
@@ -245,8 +244,9 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_SHADE_TILE_OPAQUE 0xe
 #define LP_RAST_OP_BEGIN_QUERY       0xf
 #define LP_RAST_OP_END_QUERY         0x10
+#define LP_RAST_OP_SET_STATE         0x11
 
-#define LP_RAST_OP_MAX               0x11
+#define LP_RAST_OP_MAX               0x12
 #define LP_RAST_OP_MASK              0xff
 
 void

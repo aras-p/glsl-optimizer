@@ -334,7 +334,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
 {
    const struct lp_scene *scene = task->scene;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
@@ -414,7 +414,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                          unsigned x, unsigned y,
                          unsigned mask)
 {
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const struct lp_scene *scene = task->scene;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
@@ -487,6 +487,14 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
 {
    task->query->count[task->thread_index] += task->vis_counter;
    task->query = NULL;
+}
+
+
+void
+lp_rast_set_state(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
+{
+   task->state = arg.state;
 }
 
 
@@ -602,6 +610,7 @@ static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
    lp_rast_shade_tile_opaque,
    lp_rast_begin_query,
    lp_rast_end_query,
+   lp_rast_set_state,
 };
 
 

@@ -374,7 +374,6 @@ try_setup_point( struct lp_setup_context *setup,
    setup_point_coefficients(setup, point, &info);
 
    point->inputs.facing = 1.0F;
-   point->inputs.state = setup->fs.stored;
    point->inputs.disable = FALSE;
    point->inputs.opaque = FALSE;
 

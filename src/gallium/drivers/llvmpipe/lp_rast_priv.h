@@ -77,6 +77,7 @@ struct cmd_bin;
 struct lp_rasterizer_task
 {
    const struct cmd_bin *bin;
+   const struct lp_rast_state *state;
 
    struct lp_scene *scene;
    unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
@@ -244,7 +245,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                          unsigned x, unsigned y )
 {
    const struct lp_scene *scene = task->scene;
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
@@ -297,6 +298,10 @@ void lp_rast_triangle_3_16( struct lp_rasterizer_task *,
 void lp_rast_triangle_4_16( struct lp_rasterizer_task *, 
                             const union lp_rast_cmd_arg );
 
+void
+lp_rast_set_state(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg);
+ 
 void
 lp_debug_bin( const struct cmd_bin *bin );
 
