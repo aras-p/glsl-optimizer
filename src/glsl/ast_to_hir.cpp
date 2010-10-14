@@ -2814,6 +2814,7 @@ ast_struct_specifier::hir(exec_list *instructions,
 	 fields[i].type = (field_type != NULL)
 	    ? field_type : glsl_type::error_type;
 	 fields[i].name = decl->identifier;
+	 fields[i].precision = (glsl_precision)decl_list->type->specifier->precision;
 	 i++;
       }
    }

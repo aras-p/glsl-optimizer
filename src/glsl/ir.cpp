@@ -838,6 +838,8 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
    this->field = talloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
+   if (this->record)
+      this->precision = this->record->type->field_precision(field);
 }
 
 
@@ -852,6 +854,8 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
    this->field = talloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
+   if (this->record)
+      this->precision = this->record->type->field_precision(field);
 }
 
 bool type_contains_sampler(const glsl_type *type)

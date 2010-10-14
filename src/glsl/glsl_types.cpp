@@ -96,6 +96,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].type = fields[i].type;
       this->fields.structure[i].name = talloc_strdup(this->fields.structure,
 						     fields[i].name);
+	  this->fields.structure[i].precision = fields[i].precision;
    }
 }
 
@@ -451,6 +452,20 @@ glsl_type::field_type(const char *name) const
    }
 
    return error_type;
+}
+
+const glsl_precision
+glsl_type::field_precision(const char *name) const
+{
+   if (this->base_type != GLSL_TYPE_STRUCT)
+      return glsl_precision_undefined;
+
+   for (unsigned i = 0; i < this->length; i++) {
+      if (strcmp(name, this->fields.structure[i].name) == 0)
+	 return this->fields.structure[i].precision;
+   }
+
+   return glsl_precision_undefined;
 }
 
 

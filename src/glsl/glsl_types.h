@@ -371,6 +371,8 @@ struct glsl_type {
     */
    const glsl_type *field_type(const char *name) const;
 
+   const glsl_precision field_precision(const char *name) const;
+
 
    /**
     * Get the location of a filed within a record type
@@ -477,6 +479,7 @@ private:
 struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
+   glsl_precision precision;
 };
 
 #endif /* GLSL_TYPES_H */
