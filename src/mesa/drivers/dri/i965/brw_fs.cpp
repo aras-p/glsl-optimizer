@@ -717,6 +717,9 @@ fs_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
+      /* Note that BRW_OPCODE_NOT is not appropriate here, since it is
+       * ones complement of the whole register, not just bit 0.
+       */
       emit(fs_inst(BRW_OPCODE_ADD, this->result, op[0], fs_reg(-1)));
       break;
    case ir_unop_neg:
@@ -1342,6 +1345,91 @@ fs_visitor::visit(ir_constant *ir)
 void
 fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 {
+   ir_expression *expr = ir->as_expression();
+
+   if (expr) {
+      fs_reg op[2];
+      fs_inst *inst;
+
+      for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
+	 assert(expr->operands[i]->type->is_scalar());
+
+	 expr->operands[i]->accept(this);
+	 op[i] = this->result;
+      }
+
+      switch (expr->operation) {
+      case ir_unop_logic_not:
+	 inst = emit(fs_inst(BRW_OPCODE_ADD, reg_null, op[0], fs_reg(-1)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_binop_logic_xor:
+	 inst = emit(fs_inst(BRW_OPCODE_XOR, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_binop_logic_or:
+	 inst = emit(fs_inst(BRW_OPCODE_OR, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_binop_logic_and:
+	 inst = emit(fs_inst(BRW_OPCODE_AND, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_unop_f2b:
+	 if (intel->gen >= 6) {
+	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
+	 } else {
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, op[0]));
+	 }
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_unop_i2b:
+	 if (intel->gen >= 6) {
+	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0)));
+	 } else {
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, op[0]));
+	 }
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+
+      case ir_binop_greater:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_G;
+	 break;
+      case ir_binop_gequal:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_GE;
+	 break;
+      case ir_binop_less:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+	 break;
+      case ir_binop_lequal:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_LE;
+	 break;
+      case ir_binop_equal:
+      case ir_binop_all_equal:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
+	 break;
+      case ir_binop_nequal:
+      case ir_binop_any_nequal:
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 break;
+      default:
+	 assert(!"not reached");
+	 this->fail = true;
+	 break;
+      }
+      return;
+   }
 
    ir->accept(this);
 
