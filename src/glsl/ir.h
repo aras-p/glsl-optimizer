@@ -87,6 +87,15 @@ enum ir_node_type {
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
+
+enum ir_precision {
+	ir_precision_high = 0, /**< Default precision. */
+	ir_precision_medium,
+	ir_precision_low,
+	ir_precision_undefined,
+};
+
+
 /**
  * Base class of all IR instructions
  */
@@ -175,8 +184,12 @@ public:
       return NULL;
    }
 
+   ir_precision get_precision() const { return precision; }
+
 protected:
-   ir_rvalue();
+   ir_rvalue(ir_precision precision);
+
+   ir_precision precision;
 };
 
 
@@ -196,13 +209,6 @@ enum ir_variable_interpolation {
    ir_var_smooth = 0,
    ir_var_flat,
    ir_var_noperspective
-};
-
-enum ir_precision {
-	ir_precision_high = 0, /**< Default precision. */
-	ir_precision_medium,
-	ir_precision_low,
-	ir_precision_undefined,
 };
 
 
@@ -860,7 +866,7 @@ public:
 class ir_call : public ir_rvalue {
 public:
    ir_call(ir_function_signature *callee, exec_list *actual_parameters)
-      : callee(callee)
+      : ir_rvalue(callee->precision), callee(callee)
    {
       ir_type = ir_type_call;
       assert(callee->return_type != NULL);
@@ -931,7 +937,7 @@ public:
 
 private:
    ir_call()
-      : callee(NULL)
+      : ir_rvalue(ir_precision_undefined), callee(NULL)
    {
       this->ir_type = ir_type_call;
    }
@@ -1103,7 +1109,7 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op), projector(NULL), shadow_comparitor(NULL)
+      : ir_rvalue(ir_precision_low), op(op), projector(NULL), shadow_comparitor(NULL)
    {
       this->ir_type = ir_type_texture;
    }
@@ -1259,6 +1265,9 @@ public:
     * Get the variable that is ultimately referenced by an r-value
     */
    virtual ir_variable *variable_referenced() = 0;
+
+protected:
+	ir_dereference(ir_precision precision) : ir_rvalue(precision) { }
 };
 
 
