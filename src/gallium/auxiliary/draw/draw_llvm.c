@@ -1430,6 +1430,7 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->enable_d3dclipping = (boolean)!llvm->draw->rasterizer->gl_rasterization_rules;
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
    key->nr_planes = llvm->draw->nr_planes;
+   key->pad = 0;
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the

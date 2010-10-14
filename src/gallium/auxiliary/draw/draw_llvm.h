@@ -168,7 +168,8 @@ struct draw_llvm_variant_key
    unsigned bypass_viewport:1;
    unsigned enable_d3dclipping:1;
    unsigned need_edgeflags:1;
-   unsigned nr_planes;
+   unsigned nr_planes:4;
+   unsigned pad:26;
 
    /* Variable number of vertex elements:
     */
