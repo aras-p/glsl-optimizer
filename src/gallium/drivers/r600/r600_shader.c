@@ -174,7 +174,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	spi_ps_in_control_1 = 0;
 	if (face_index != -1) {
 		spi_ps_in_control_1 |= S_0286D0_FRONT_FACE_ENA(1) |
-			S_286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
+			S_0286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
 	}
 
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
