@@ -406,14 +406,15 @@ generate_fs(struct llvmpipe_context *lp,
       if (shader->info.base.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR)
       {
          unsigned cbuf = shader->info.base.output_semantic_index[attrib];
-         for(chan = 0; chan < NUM_CHANNELS; ++chan)
-         {
-            /* XXX: just initialize outputs to point at colors[] and
-             * skip this.
-             */
-            LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
-            lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
-            LLVMBuildStore(builder, out, color[cbuf][chan]);
+         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+            if(outputs[attrib][chan]) {
+               /* XXX: just initialize outputs to point at colors[] and
+                * skip this.
+                */
+               LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+               lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
+               LLVMBuildStore(builder, out, color[cbuf][chan]);
+            }
          }
       }
    }
