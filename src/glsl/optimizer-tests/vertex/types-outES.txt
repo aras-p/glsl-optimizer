@@ -9,8 +9,8 @@ attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
 void main ()
 {
-  float tmpvar_1;
-  vec4 tmpvar_2;
+  highp float tmpvar_1;
+  highp vec4 tmpvar_2;
   tmpvar_2 = _glesColor;
   tmpvar_2.xyz = (_glesColor.xyz + _glesNormal);
   gl_Position = (mvp * _glesVertex);

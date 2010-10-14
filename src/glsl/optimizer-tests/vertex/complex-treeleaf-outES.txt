@@ -25,8 +25,8 @@ attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
 void main ()
 {
-  vec4 tmpvar_1;
-  vec4 tmpvar_2;
+  highp vec4 tmpvar_1;
+  highp vec4 tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = (1.0 - abs (TANGENT.w));
   highp vec4 tmpvar_4;
