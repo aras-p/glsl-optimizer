@@ -235,8 +235,6 @@ public:
     */
    const char *interpolation_string() const;
 
-   const char *precision_string() const;
-
    /**
     * Calculate the number of slots required to hold this variable
     *

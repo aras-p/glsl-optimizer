@@ -32,6 +32,18 @@
 static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
 static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
 
+static inline const char* get_precision_string (glsl_precision p)
+{
+	switch (p) {
+	case glsl_precision_high:		return "highp ";
+	case glsl_precision_medium:		return "mediump ";
+	case glsl_precision_low:		return "lowp ";
+	case glsl_precision_undefined:	return "";
+	}
+	assert(!"Should not get here.");
+	return "";
+}
+
 
 class ir_print_glsl_visitor : public ir_visitor {
 public:
@@ -59,6 +71,7 @@ public:
 
 	void indent(void);
 	void print_var_name (ir_variable* v);
+	void print_precision (ir_instruction* ir);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -160,6 +173,21 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 	}
 }
 
+void ir_print_glsl_visitor::print_precision (ir_instruction* ir)
+{
+	if (!this->use_precision)
+		return;
+	if (ir->type && !ir->type->is_float())
+		return;
+	glsl_precision prec = precision_from_ir(ir);
+	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
+	{
+		if (ir->ir_type == ir_type_function_signature)
+			return;
+	}
+	buffer = talloc_asprintf_append(buffer, "%s", get_precision_string(prec));
+}
+
 
 static char*
 print_type(char* buffer, const glsl_type *t, bool arraySize)
@@ -202,8 +230,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
-   if (this->use_precision && ir->type->is_float())
-	   buffer = talloc_asprintf_append(buffer, "%s", ir->precision_string());
+   print_precision (ir);
    buffer = print_type(buffer, ir->type, false);
    buffer = talloc_asprintf_append(buffer, " ");
    print_var_name (ir);
@@ -214,6 +241,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
    this->temp_var_counter = 0;
+   print_precision (ir);
    buffer = print_type(buffer, ir->return_type, true);
    buffer = talloc_asprintf_append(buffer, " %s (", ir->function_name());
 

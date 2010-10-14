@@ -1131,20 +1131,6 @@ ir_variable::interpolation_string() const
    return "";
 }
 
-const char *
-ir_variable::precision_string() const
-{
-   switch (this->precision) {
-   case glsl_precision_high:   return "highp ";
-   case glsl_precision_medium: return "mediump ";
-   case glsl_precision_low:    return "lowp ";
-   case glsl_precision_undefined:    return "";
-   }
-
-   assert(!"Should not get here.");
-   return "";
-}
-
 unsigned
 ir_variable::component_slots() const
 {
@@ -1300,5 +1286,10 @@ precision_from_ir (ir_instruction* ir)
 	ir_rvalue* rv = ir->as_rvalue();
 	if (rv)
 		return rv->get_precision();
+	if (ir->ir_type == ir_type_function_signature)
+	{
+		ir_function_signature* sig = (ir_function_signature*)ir;
+		return sig->precision;
+	}
 	return glsl_precision_high;
 }
