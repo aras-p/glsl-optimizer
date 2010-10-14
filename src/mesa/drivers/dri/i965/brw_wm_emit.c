@@ -1772,7 +1772,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_TRUNC:
-	 emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
+	 for (i = 0; i < 4; i++) {
+	    if (dst_flags & (1<<i)) {
+	       brw_RNDZ(p, dst[i], args[0][i]);
+	    }
+	 }
 	 break;
 
       case OPCODE_LRP:
