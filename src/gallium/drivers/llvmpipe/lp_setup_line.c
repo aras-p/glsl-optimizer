@@ -596,7 +596,7 @@ try_setup_line( struct lp_setup_context *setup,
     */
    setup_line_coefficients( setup, line, &info); 
 
-   line->inputs.facing = 1.0F;
+   line->inputs.frontfacing = TRUE;
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
 

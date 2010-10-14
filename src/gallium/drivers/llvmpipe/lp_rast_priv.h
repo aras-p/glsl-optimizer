@@ -261,7 +261,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    BEGIN_JIT_CALL(state);
    variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                       x, y,
-                                      inputs->facing,
+                                      inputs->frontfacing,
                                       inputs->a0,
                                       inputs->dadx,
                                       inputs->dady,

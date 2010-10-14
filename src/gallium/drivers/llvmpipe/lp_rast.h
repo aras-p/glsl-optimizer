@@ -78,7 +78,7 @@ struct lp_rast_state {
  * These pointers point into the bin data buffer.
  */
 struct lp_rast_shader_inputs {
-   float facing;     /** Positive for front-facing, negative for back-facing */
+   unsigned frontfacing;     /** One for front-facing */
    unsigned disable:1;  /** Partially binned, disable this command */
    unsigned opaque:1;   /** Is opaque */
 

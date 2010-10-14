@@ -144,7 +144,7 @@ typedef void
 (*lp_jit_frag_func)(const struct lp_jit_context *context,
                     uint32_t x,
                     uint32_t y,
-                    float facing,
+                    uint32_t facing,
                     const void *a0,
                     const void *dadx,
                     const void *dady,

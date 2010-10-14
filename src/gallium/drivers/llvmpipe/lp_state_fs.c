@@ -579,7 +579,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
    arg_types[2] = LLVMInt32Type();                     /* y */
-   arg_types[3] = LLVMFloatType();                     /* facing */
+   arg_types[3] = LLVMInt32Type();                     /* facing */
    arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
    arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
    arg_types[6] = LLVMPointerType(fs_elem_type, 0);    /* dady */

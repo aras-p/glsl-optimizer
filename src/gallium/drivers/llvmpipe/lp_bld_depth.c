@@ -446,7 +446,7 @@ lp_build_occlusion_count(LLVMBuilderRef builder,
  * \param stencil_refs  the front/back stencil ref values (scalar)
  * \param z_src  the incoming depth/stencil values (a 2x2 quad, float32)
  * \param zs_dst_ptr  pointer to depth/stencil values in framebuffer
- * \param facing  contains float value indicating front/back facing polygon
+ * \param facing  contains boolean value indicating front/back facing polygon
  */
 void
 lp_build_depth_stencil_test(LLVMBuilderRef builder,
@@ -576,10 +576,10 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    if (stencil[0].enabled) {
 
       if (face) {
-         LLVMValueRef zero = LLVMConstReal(LLVMFloatType(), 0.0);
+         LLVMValueRef zero = LLVMConstInt(LLVMInt32Type(), 0, 0);
 
-         /* front_facing = face > 0.0 ? ~0 : 0 */
-         front_facing = LLVMBuildFCmp(builder, LLVMRealUGT, face, zero, "");
+         /* front_facing = face != 0 ? ~0 : 0 */
+         front_facing = LLVMBuildICmp(builder, LLVMIntNE, face, zero, "");
          front_facing = LLVMBuildSExt(builder, front_facing,
                                       LLVMIntType(s_bld.type.length*s_bld.type.width),
                                       "");

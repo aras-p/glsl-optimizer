@@ -319,7 +319,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
     */
    lp_setup_tri_coef( setup, &tri->inputs, v0, v1, v2, frontfacing );
 
-   tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
+   tri->inputs.frontfacing = frontfacing;
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
 
