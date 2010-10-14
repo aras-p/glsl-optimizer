@@ -19,7 +19,7 @@ void main ()
 {
   v2f xlt_i;
   mediump vec4 xl_retval;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.vertex = tmpvar_1;
   lowp vec4 tmpvar_2;

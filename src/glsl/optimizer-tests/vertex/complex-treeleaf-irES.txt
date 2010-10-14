@@ -80,7 +80,7 @@ void ExpandBillboard (
   highp float isBillboard;
   float tmpvar_1;
   tmpvar_1 = abs (tangent.w);
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = (1.0 - tmpvar_1);
   isBillboard = tmpvar_2;
   highp vec4 tmpvar_3;
@@ -172,10 +172,10 @@ vec4 AnimateVertex (
   highp float fObjPhase;
   highp float fBranchAmp;
   highp float fDetailAmp;
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = 0.1;
   fDetailAmp = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = 0.3;
   fBranchAmp = tmpvar_2;
   float tmpvar_3;
@@ -201,7 +201,7 @@ vec4 AnimateVertex (
   vWavesIn = tmpvar_10;
   vec4 tmpvar_11;
   tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
-  highp vec4 tmpvar_12;
+  vec4 tmpvar_12;
   tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
   vWaves = tmpvar_12;
   highp vec4 tmpvar_13;

@@ -22,15 +22,15 @@ void main ()
   tmpvar_2 = ((tmpvar_1.xyz * _Color.xyz) * xlv_COLOR0.w);
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
-  highp float tmpvar_4;
+  mediump float tmpvar_4;
   tmpvar_4 = tmpvar_3.z;
   highp float tmpvar_5;
   tmpvar_5 = (tmpvar_3.w * _Color.x);
-  highp float tmpvar_6;
+  mediump float tmpvar_6;
   tmpvar_6 = tmpvar_1.w;
   vec4 tmpvar_7;
   tmpvar_7 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
-  highp float tmpvar_8;
+  mediump float tmpvar_8;
   tmpvar_8 = tmpvar_7.x;
   mediump vec4 normal;
   normal.xy = ((tmpvar_7.wy * 2.0) - 1.0);

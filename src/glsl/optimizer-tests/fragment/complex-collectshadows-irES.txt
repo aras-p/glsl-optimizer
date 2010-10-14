@@ -99,10 +99,10 @@ vec2 EncodeFloatRG (
   highp vec2 enc;
   highp float kEncodeBit;
   highp vec2 kEncodeMul;
-  highp vec2 tmpvar_1;
+  vec2 tmpvar_1;
   tmpvar_1 = vec2(1.0, 255.0);
   kEncodeMul = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = 0.00392157;
   kEncodeBit = tmpvar_2;
   highp vec2 tmpvar_3;
@@ -129,7 +129,7 @@ vec4 xlat_main (
   highp float depth;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_CameraDepthTexture, i.uv);
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = tmpvar_1.x;
   depth = tmpvar_2;
   highp float tmpvar_3;
@@ -151,7 +151,7 @@ vec4 xlat_main (
   mediump float tmpvar_9;
   tmpvar_9 = shadow;
   res.x = tmpvar_9;
-  highp float tmpvar_10;
+  float tmpvar_10;
   tmpvar_10 = 1.0;
   res.y = vec2(tmpvar_10).y;
   highp vec2 tmpvar_11;
@@ -166,7 +166,7 @@ void main ()
 {
   v2f xlt_i;
   mediump vec4 xl_retval;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.pos = tmpvar_1;
   highp vec2 tmpvar_2;

@@ -239,7 +239,7 @@ float DecodeFloatRGBA (
 )
 {
   highp vec4 kDecodeDot;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(1.0, 0.00392157, 1.53787e-005, 0.0);
   kDecodeDot = tmpvar_1;
   float tmpvar_2;
@@ -270,7 +270,7 @@ float unitySampleShadow (
   mediump vec4 shadows;
   highp vec4 shadowVals;
   highp float z;
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = 0.0078125;
   z = tmpvar_1;
   highp vec3 tmpvar_2;
@@ -387,7 +387,7 @@ vec4 xlat_main (
   vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   nspec = tmpvar_4;
-  highp vec3 tmpvar_5;
+  mediump vec3 tmpvar_5;
   tmpvar_5 = ((nspec.xyz * 2.0) - 1.0);
   normal = tmpvar_5;
   vec3 tmpvar_6;
@@ -397,7 +397,7 @@ vec4 xlat_main (
   normal = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8 = texture2D (_CameraDepthTexture, uv);
-  highp float tmpvar_9;
+  float tmpvar_9;
   tmpvar_9 = tmpvar_8.x;
   depth = tmpvar_9;
   highp float tmpvar_10;
@@ -419,7 +419,7 @@ vec4 xlat_main (
   tolight = tmpvar_15;
   vec3 tmpvar_16;
   tmpvar_16 = normalize (tolight);
-  highp vec3 tmpvar_17;
+  vec3 tmpvar_17;
   tmpvar_17 = -(tmpvar_16);
   lightDir = tmpvar_17;
   float tmpvar_18;
@@ -433,7 +433,7 @@ vec4 xlat_main (
   tmpvar_21 = tmpvar_20.xy;
   vec4 tmpvar_22;
   tmpvar_22 = texture2D (_LightTextureB0, tmpvar_21);
-  highp float tmpvar_23;
+  float tmpvar_23;
   tmpvar_23 = tmpvar_22.w;
   atten = tmpvar_23;
   mediump float tmpvar_24;
@@ -502,7 +502,7 @@ void main ()
 {
   v2f xlt_i;
   mediump vec4 xl_retval;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.pos = tmpvar_1;
   highp vec4 tmpvar_2;

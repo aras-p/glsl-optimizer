@@ -154,7 +154,7 @@ vec4 UnpackNormal (
 )
 {
   mediump vec4 normal;
-  highp vec2 tmpvar_1;
+  mediump vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.0) - 1.0);
   normal.xy = tmpvar_1.xy.xy;
   float tmpvar_2;
@@ -186,13 +186,13 @@ void surf (
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   trngls = tmpvar_5;
-  highp float tmpvar_6;
+  mediump float tmpvar_6;
   tmpvar_6 = trngls.z;
   o.Translucency = tmpvar_6;
   highp float tmpvar_7;
   tmpvar_7 = (trngls.w * _Color.x);
   o.Gloss = tmpvar_7;
-  highp float tmpvar_8;
+  mediump float tmpvar_8;
   tmpvar_8 = c.w;
   o.Alpha = tmpvar_8;
   vec4 tmpvar_9;
@@ -200,10 +200,10 @@ void surf (
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   norspc = tmpvar_10;
-  highp float tmpvar_11;
+  mediump float tmpvar_11;
   tmpvar_11 = norspc.x;
   o.Specular = tmpvar_11;
-  highp float tmpvar_12;
+  mediump float tmpvar_12;
   tmpvar_12 = norspc.z;
   o.ShadowOffset = tmpvar_12;
   mediump vec4 tmpvar_13;
@@ -281,7 +281,7 @@ vec4 LightingTreeLeaf (
   c.xyz = tmpvar_20.xyz.xyz;
   float tmpvar_21;
   tmpvar_21 = mix (2.0, (atten * 2.0), _ShadowStrength);
-  highp vec3 tmpvar_22;
+  mediump vec3 tmpvar_22;
   tmpvar_22 = (c.xyz * tmpvar_21);
   c.xyz = tmpvar_22.xyz.xyz;
   return c;
@@ -301,16 +301,16 @@ vec4 xlat_main (
   highp vec4 tmpvar_2;
   tmpvar_2 = IN.lop_color;
   surfIN.color = tmpvar_2;
-  highp vec3 tmpvar_3;
+  vec3 tmpvar_3;
   tmpvar_3 = vec3(0.0, 0.0, 0.0);
   o.Albedo = tmpvar_3;
-  highp vec3 tmpvar_4;
+  vec3 tmpvar_4;
   tmpvar_4 = vec3(0.0, 0.0, 0.0);
   o.Emission = tmpvar_4;
-  highp float tmpvar_5;
+  float tmpvar_5;
   tmpvar_5 = 0.0;
   o.Specular = tmpvar_5;
-  highp float tmpvar_6;
+  float tmpvar_6;
   tmpvar_6 = 0.0;
   o.Alpha = tmpvar_6;
   surf (surfIN, o);
@@ -339,7 +339,7 @@ void main ()
 {
   v2f_surf xlt_IN;
   mediump vec4 xl_retval;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_IN.pos = tmpvar_1;
   highp vec2 tmpvar_2;

@@ -9,7 +9,7 @@ void main ()
   } else {
     tmpvar_1 = 0.1;
   };
-  highp vec4 tmpvar_2;
+  mediump vec4 tmpvar_2;
   tmpvar_2 = vec4(tmpvar_1);
   c = tmpvar_2;
   vec4 tmpvar_3;
@@ -18,7 +18,7 @@ void main ()
   } else {
     tmpvar_3 = vec4(0.1, 0.1, 0.1, 0.1);
   };
-  highp vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4 = (tmpvar_2 + tmpvar_3);
   c = tmpvar_4;
   vec3 tmpvar_5;

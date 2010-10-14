@@ -97,7 +97,7 @@ vec4 xlat_main (
 )
 {
   highp vec4 a;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   a = tmpvar_1;
   bvec4 tmpvar_2;

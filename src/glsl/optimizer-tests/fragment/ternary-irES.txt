@@ -4,7 +4,7 @@ vec4 xlat_main (
 )
 {
   mediump vec4 c;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   c = tmpvar_1;
   float tmpvar_2;
@@ -13,7 +13,7 @@ vec4 xlat_main (
   } else {
     tmpvar_2 = 0.1;
   };
-  highp vec4 tmpvar_3;
+  mediump vec4 tmpvar_3;
   tmpvar_3 = (c + tmpvar_2);
   c = tmpvar_3;
   vec4 tmpvar_4;
@@ -22,7 +22,7 @@ vec4 xlat_main (
   } else {
     tmpvar_4 = vec4(0.1, 0.1, 0.1, 0.1);
   };
-  highp vec4 tmpvar_5;
+  mediump vec4 tmpvar_5;
   tmpvar_5 = (c + tmpvar_4);
   c = tmpvar_5;
   vec3 tmpvar_6;
@@ -31,7 +31,7 @@ vec4 xlat_main (
   } else {
     tmpvar_6 = vec3(0.1, 0.1, 0.1);
   };
-  highp vec3 tmpvar_7;
+  mediump vec3 tmpvar_7;
   tmpvar_7 = (c.xyz + tmpvar_6);
   c.xyz = tmpvar_7.xyz.xyz;
   vec2 tmpvar_8;
@@ -40,7 +40,7 @@ vec4 xlat_main (
   } else {
     tmpvar_8 = vec2(0.1, 0.1);
   };
-  highp vec2 tmpvar_9;
+  mediump vec2 tmpvar_9;
   tmpvar_9 = (c.xy + tmpvar_8);
   c.xy = tmpvar_9.xy.xy;
   float tmpvar_10;
@@ -51,7 +51,7 @@ vec4 xlat_main (
   } else {
     tmpvar_11 = 0.1;
   };
-  highp float tmpvar_12;
+  mediump float tmpvar_12;
   tmpvar_12 = (c.x + tmpvar_11);
   c.x = tmpvar_12;
   return c;

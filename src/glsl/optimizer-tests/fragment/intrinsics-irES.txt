@@ -285,7 +285,7 @@ vec4 xlat_main (
 {
   mediump vec4 d;
   mediump vec4 c;
-  highp vec4 tmpvar_1;
+  vec4 tmpvar_1;
   tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   c = tmpvar_1;
   highp float tmpvar_2;
