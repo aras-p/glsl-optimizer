@@ -33,6 +33,7 @@ extern "C" {
 #include <talloc.h>
 }
 
+#include "glsl_types.h"
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
@@ -85,14 +86,6 @@ enum ir_node_type {
    ir_type_swizzle,
    ir_type_texture,
    ir_type_max /**< maximum ir_type enum number, for validation */
-};
-
-
-enum glsl_precision {
-	glsl_precision_high = 0,
-	glsl_precision_medium,
-	glsl_precision_low,
-	glsl_precision_undefined,
 };
 
 

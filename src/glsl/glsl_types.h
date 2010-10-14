@@ -63,6 +63,12 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_BUF
 };
 
+enum glsl_precision {
+	glsl_precision_high = 0,
+	glsl_precision_medium,
+	glsl_precision_low,
+	glsl_precision_undefined,
+};
 
 struct glsl_type {
    GLenum gl_type;
