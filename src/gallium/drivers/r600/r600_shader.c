@@ -117,6 +117,9 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
 		if (rshader->input[i].centroid)
 			tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+			tmp |= S_028644_SEL_LINEAR(1);
+
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			pos_index = i;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
