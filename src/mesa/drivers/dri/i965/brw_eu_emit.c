@@ -700,6 +700,7 @@ ALU2(PLN)
 
 
 ROUND(RNDZ)
+ROUND(RNDE)
 
 
 struct brw_instruction *brw_ADD(struct brw_compile *p,

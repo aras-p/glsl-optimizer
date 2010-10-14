@@ -874,6 +874,9 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_fract:
       inst = emit(fs_inst(BRW_OPCODE_FRC, this->result, op[0]));
       break;
+   case ir_unop_round_even:
+      emit(fs_inst(BRW_OPCODE_RNDE, this->result, op[0]));
+      break;
 
    case ir_binop_min:
       inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
@@ -3015,6 +3018,9 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_RNDD:
 	 brw_RNDD(p, dst, src[0]);
+	 break;
+      case BRW_OPCODE_RNDE:
+	 brw_RNDE(p, dst, src[0]);
 	 break;
       case BRW_OPCODE_RNDZ:
 	 brw_RNDZ(p, dst, src[0]);

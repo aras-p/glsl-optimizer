@@ -820,6 +820,7 @@ ALU2(LINE)
 ALU2(PLN)
 
 ROUND(RNDZ)
+ROUND(RNDE)
 
 #undef ALU1
 #undef ALU2
