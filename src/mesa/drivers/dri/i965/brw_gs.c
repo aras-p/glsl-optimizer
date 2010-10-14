@@ -96,8 +96,6 @@ static void compile_gs_prog( struct brw_context *brw,
       brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
-      /* XXX fix GS hang issue */
-      assert(intel->gen < 6);
       brw_gs_lines( &c );
       break;
    case GL_LINES:

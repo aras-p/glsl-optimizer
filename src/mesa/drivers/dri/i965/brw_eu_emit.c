@@ -1848,7 +1848,8 @@ void brw_ff_sync(struct brw_compile *p,
    if (intel->gen >= 6) {
       brw_push_insn_state(p);
       brw_set_mask_control( p, BRW_MASK_DISABLE );
-      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
+	      retype(src0, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
       src0 = brw_message_reg(msg_reg_nr);
    }
