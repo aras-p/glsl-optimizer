@@ -4699,6 +4699,30 @@ static const char *builtin_transpose =
    "\n"
    ""
 ;
+static const char *builtin_trunc =
+   "((function trunc\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float arg0))\n"
+   "     ((return (expression float trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 arg0))\n"
+   "     ((return (expression vec2 trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 arg0))\n"
+   "     ((return (expression vec3 trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 arg0))\n"
+   "     ((return (expression vec4 trunc (var_ref arg0)))))\n"
+   "))\n"
+   ""
+;
 static const char *prototypes_for_100_frag =
    "(\n"
    "(function radians\n"
@@ -13226,6 +13250,23 @@ static const char *prototypes_for_130_frag =
    "    (parameters\n"
    "      (declare (in) vec4 x))\n"
    "    ()))\n"
+   "(function trunc\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
    "(function ceil\n"
    "  (signature float\n"
    "    (parameters\n"
@@ -15873,6 +15914,7 @@ static const char *functions_for_130_frag [] = {
    builtin_textureProjGrad,
    builtin_textureProjLod,
    builtin_transpose,
+   builtin_trunc,
 };
 static const char *prototypes_for_130_vert =
    "(\n"
@@ -16273,6 +16315,23 @@ static const char *prototypes_for_130_vert =
    "      (declare (in) ivec4 x))\n"
    "    ()))\n"
    "(function floor\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
+   "(function trunc\n"
    "  (signature float\n"
    "    (parameters\n"
    "      (declare (in) float x))\n"
@@ -18887,6 +18946,7 @@ static const char *functions_for_130_vert [] = {
    builtin_textureProjGrad,
    builtin_textureProjLod,
    builtin_transpose,
+   builtin_trunc,
 };
 static const char *prototypes_for_ARB_texture_rectangle_frag =
    "(\n"
