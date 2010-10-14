@@ -389,11 +389,9 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	}
 #endif
 	for (j = 0; j < i->Instruction.NumSrcRegs; j++) {
-		if (i->Src[j].Register.Dimension ||
-			i->Src[j].Register.Absolute) {
-			R600_ERR("unsupported src %d (dimension %d|absolute %d)\n", j,
-				 i->Src[j].Register.Dimension,
-				 i->Src[j].Register.Absolute);
+		if (i->Src[j].Register.Dimension) {
+			R600_ERR("unsupported src %d (dimension %d)\n", j,
+				 i->Src[j].Register.Dimension);
 			return -EINVAL;
 		}
 	}
@@ -760,6 +758,7 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 	if (tgsi_src->Register.Indirect)
 		r600_src->rel = V_SQ_REL_RELATIVE;
 	r600_src->neg = tgsi_src->Register.Negate;
+	r600_src->abs = tgsi_src->Register.Absolute;
 	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	return 0;
 }
