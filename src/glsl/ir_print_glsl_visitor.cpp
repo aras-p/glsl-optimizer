@@ -120,6 +120,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 
 	 for (unsigned j = 0; j < s->length; j++) {
 	    buffer = talloc_asprintf_append(buffer, "  ");
+		if (state->es_shader)
+			buffer = talloc_asprintf_append(buffer, "%s", get_precision_string(s->fields.structure[j].precision));
 	    buffer = print_type(buffer, s->fields.structure[j].type, false);
 	    buffer = talloc_asprintf_append(buffer, " %s", s->fields.structure[j].name);
         buffer = print_type_post(buffer, s->fields.structure[j].type, false);
@@ -382,6 +384,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
+			print_precision (ir);
 			buffer = print_type(buffer, ir->type, true);
 			buffer = talloc_asprintf_append(buffer, "(");
 		} else {
@@ -476,6 +479,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 	{
 		if (ir->mask.num_components != 1)
 		{
+			print_precision (ir);
 			buffer = print_type(buffer, ir->type, true);
 			buffer = talloc_asprintf_append(buffer, "(");
 		}
@@ -605,6 +609,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
    const glsl_type *const base_type = ir->type->get_base_type();
 
+   print_precision (ir);
    buffer = print_type(buffer, type, true);
    buffer = talloc_asprintf_append(buffer, "(");
 
