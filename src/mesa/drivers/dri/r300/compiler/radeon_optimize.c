@@ -408,6 +408,7 @@ static void constant_folding_add(struct rc_instruction * inst)
 static void constant_folding(struct radeon_compiler * c, struct rc_instruction * inst)
 {
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned int i;
 
 	/* Replace 0.0, 1.0 and 0.5 immediates by their explicit swizzles */
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
@@ -480,6 +481,13 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 		constant_folding_mul(inst);
 	else if (inst->U.I.Opcode == RC_OPCODE_ADD)
 		constant_folding_add(inst);
+
+	/* In case this instruction has been converted, make sure all of the
+	 * registers that are no longer used are empty. */
+	opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	for(i = opcode->NumSrcRegs; i < 3; i++) {
+		memset(&inst->U.I.SrcReg[i], 0, sizeof(struct rc_src_register));
+	}
 }
 
 /**
