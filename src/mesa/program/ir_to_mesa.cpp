@@ -1130,6 +1130,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
+   case ir_unop_round_even:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
