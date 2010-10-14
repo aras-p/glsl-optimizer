@@ -15,7 +15,7 @@ uniform highp vec4 _LightSplitsNear;
 uniform highp vec4 _LightSplitsFar;
 uniform highp vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
-float unitySampleShadow (
+mediump float unitySampleShadow (
   in highp vec4 eyePos
 )
 {
@@ -119,7 +119,7 @@ vec2 EncodeFloatRG (
   return enc;
 }
 
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in v2f i
 )
 {

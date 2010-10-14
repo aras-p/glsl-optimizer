@@ -279,7 +279,7 @@ vec4 xll_modf (
   return (x - ip);
 }
 
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp vec4 uv
 )
 {

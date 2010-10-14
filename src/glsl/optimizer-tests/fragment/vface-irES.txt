@@ -1,5 +1,5 @@
 varying highp float xlv_VFACE;
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp float face
 )
 {

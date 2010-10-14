@@ -92,7 +92,7 @@ vec4 xll_vecTSel (
   return tmpvar_5;
 }
 
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp vec4 uv
 )
 {

@@ -1,6 +1,6 @@
 varying highp vec4 xlv_TEXCOORD1;
 varying highp vec4 xlv_TEXCOORD0;
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp vec4 uv,
   in highp vec4 foobar_xlv_foo
 )

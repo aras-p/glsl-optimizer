@@ -218,7 +218,7 @@ vec4 xll_vecTSel (
   return tmpvar_5;
 }
 
-float Luminance (
+mediump float Luminance (
   in mediump vec3 c
 )
 {
@@ -262,7 +262,7 @@ float SampleCubeDistance (
   return tmpvar_3;
 }
 
-float unitySampleShadow (
+mediump float unitySampleShadow (
   in highp vec3 vec,
   in highp float mydist
 )
@@ -327,7 +327,7 @@ float unitySampleShadow (
   return tmpvar_20;
 }
 
-float ComputeShadow (
+mediump float ComputeShadow (
   in highp vec3 vec,
   in highp float z,
   in highp vec2 uv
@@ -357,7 +357,7 @@ float ComputeShadow (
   return 1.0;
 }
 
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in v2f i
 )
 {

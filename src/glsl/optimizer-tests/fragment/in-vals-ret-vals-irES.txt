@@ -1,6 +1,6 @@
 varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp vec2 uv,
   in highp vec4 color
 )

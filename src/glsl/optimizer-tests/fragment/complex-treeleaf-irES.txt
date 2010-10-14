@@ -149,7 +149,7 @@ mat4 xll_saturate (
   return tmpvar_5;
 }
 
-vec4 UnpackNormal (
+mediump vec4 UnpackNormal (
   in mediump vec4 packednormal
 )
 {
@@ -215,7 +215,7 @@ void surf (
   o.Normal = tmpvar_15;
 }
 
-vec4 LightingTreeLeaf (
+mediump vec4 LightingTreeLeaf (
   in LeafSurfaceOutput s,
   in mediump vec3 lightDir,
   in mediump vec3 viewDir,
@@ -287,7 +287,7 @@ vec4 LightingTreeLeaf (
   return c;
 }
 
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in v2f_surf IN
 )
 {

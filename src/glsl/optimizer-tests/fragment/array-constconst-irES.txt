@@ -1,4 +1,4 @@
-vec4 xlat_main ()
+mediump vec4 xlat_main ()
 {
   int i;
   mediump vec4 c;

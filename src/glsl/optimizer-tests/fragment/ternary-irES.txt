@@ -1,5 +1,5 @@
 varying highp vec4 xlv_TEXCOORD0;
-vec4 xlat_main (
+mediump vec4 xlat_main (
   in highp vec4 uv
 )
 {
