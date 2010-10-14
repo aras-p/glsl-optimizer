@@ -969,10 +969,7 @@ fs_visitor::visit(ir_assignment *ir)
    assert(r.file != BAD_FILE);
 
    if (ir->condition) {
-      /* Get the condition bool into the predicate. */
-      ir->condition->accept(this);
-      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, this->result, fs_reg(0)));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      emit_bool_to_cond_code(ir->condition);
    }
 
    if (ir->lhs->type->is_scalar() ||
@@ -1343,6 +1340,22 @@ fs_visitor::visit(ir_constant *ir)
 }
 
 void
+fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
+{
+
+   ir->accept(this);
+
+   if (intel->gen >= 6) {
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_AND, reg_null,
+				   this->result, fs_reg(1)));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   } else {
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, this->result));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   }
+}
+
+void
 fs_visitor::visit(ir_if *ir)
 {
    fs_inst *inst;
@@ -1352,10 +1365,7 @@ fs_visitor::visit(ir_if *ir)
     */
    this->base_ir = ir->condition;
 
-   /* Generate the condition into the condition code. */
-   ir->condition->accept(this);
-   inst = emit(fs_inst(BRW_OPCODE_MOV, fs_reg(brw_null_reg()), this->result));
-   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   emit_bool_to_cond_code(ir->condition);
 
    inst = emit(fs_inst(BRW_OPCODE_IF));
    inst->predicated = true;
