@@ -1,6 +1,5 @@
 struct v2f {
   vec4 pos;
-  float fog;
   vec2 uv;
   vec4 color;
 };
@@ -12,7 +11,6 @@ struct a2v {
 };
 varying vec4 xlv_COLOR;
 varying vec2 xlv_TEXCOORD0;
-varying float xlv_FOG;
 uniform mat4 mvp;
 v2f xlat_main (
   in a2v v
@@ -80,18 +78,15 @@ void main ()
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_Position = tmpvar_12;
-  float tmpvar_13;
-  tmpvar_13 = xl_retval.fog;
-  xlv_FOG = tmpvar_13;
+  vec2 tmpvar_13;
+  tmpvar_13 = xl_retval.uv.xy;
   vec2 tmpvar_14;
-  tmpvar_14 = xl_retval.uv.xy;
-  vec2 tmpvar_15;
-  tmpvar_15 = tmpvar_14;
-  xlv_TEXCOORD0 = tmpvar_15;
+  tmpvar_14 = tmpvar_13;
+  xlv_TEXCOORD0 = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.color.xyzw;
   vec4 tmpvar_16;
-  tmpvar_16 = xl_retval.color.xyzw;
-  vec4 tmpvar_17;
-  tmpvar_17 = tmpvar_16;
-  xlv_COLOR = tmpvar_17;
+  tmpvar_16 = tmpvar_15;
+  xlv_COLOR = tmpvar_16;
 }
 

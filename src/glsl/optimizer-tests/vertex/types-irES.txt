@@ -1,8 +1,7 @@
 struct v2f {
   highp vec4 pos;
-  highp float fog;
-  highp vec2 uv;
-  highp vec4 color;
+  mediump vec2 uv;
+  lowp vec4 color;
 };
 struct a2v {
   highp vec4 pos;
@@ -10,9 +9,8 @@ struct a2v {
   mediump vec3 normal;
   lowp vec4 color;
 };
-varying highp vec4 xlv_COLOR;
-varying highp vec2 xlv_TEXCOORD0;
-varying highp float xlv_FOG;
+varying lowp vec4 xlv_COLOR;
+varying mediump vec2 xlv_TEXCOORD0;
 uniform highp mat4 mvp;
 attribute lowp vec4 _glesColor;
 attribute highp vec4 _glesMultiTexCoord1;
@@ -33,7 +31,7 @@ v2f xlat_main (
   lowp vec4 tmpvar_2;
   tmpvar_2 = v.color;
   o.color = tmpvar_2;
-  highp vec3 tmpvar_3;
+  mediump vec3 tmpvar_3;
   tmpvar_3 = (o.color.xyz + v.normal);
   o.color.xyz = tmpvar_3.xyz.xyz;
   highp vec2 tmpvar_4;
@@ -85,18 +83,15 @@ void main ()
   highp vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_Position = tmpvar_12;
-  highp float tmpvar_13;
-  tmpvar_13 = xl_retval.fog;
-  xlv_FOG = tmpvar_13;
-  highp vec2 tmpvar_14;
-  tmpvar_14 = xl_retval.uv.xy;
-  highp vec2 tmpvar_15;
-  tmpvar_15 = tmpvar_14;
-  xlv_TEXCOORD0 = tmpvar_15;
-  highp vec4 tmpvar_16;
-  tmpvar_16 = xl_retval.color.xyzw;
-  highp vec4 tmpvar_17;
-  tmpvar_17 = tmpvar_16;
-  xlv_COLOR = tmpvar_17;
+  mediump vec2 tmpvar_13;
+  tmpvar_13 = xl_retval.uv.xy;
+  mediump vec2 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xlv_TEXCOORD0 = tmpvar_14;
+  lowp vec4 tmpvar_15;
+  tmpvar_15 = xl_retval.color.xyzw;
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  xlv_COLOR = tmpvar_16;
 }
 

@@ -1,7 +1,7 @@
 struct v2f {
   highp vec4 pos;
-  highp vec2 uv;
-  highp vec4 color;
+  mediump vec2 uv;
+  lowp vec4 color;
 };
 varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
@@ -10,10 +10,10 @@ mediump vec4 xlat_main (
 )
 {
   mediump vec4 c;
-  highp vec4 tmpvar_1;
+  lowp vec4 tmpvar_1;
   tmpvar_1 = i.color;
   c = tmpvar_1;
-  highp vec2 tmpvar_2;
+  mediump vec2 tmpvar_2;
   tmpvar_2 = (c.xy + i.uv);
   c.xy = tmpvar_2.xy.xy;
   return c;
