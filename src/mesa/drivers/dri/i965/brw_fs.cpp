@@ -48,7 +48,6 @@ extern "C" {
 #include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 
-static int using_new_fs = -1;
 static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
 
 struct gl_shader *
@@ -92,17 +91,10 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   if (using_new_fs == -1) {
-      if (intel->gen >= 6)
-	 using_new_fs = 1;
-      else
-	 using_new_fs = getenv("INTEL_NEW_FS") != NULL;
-   }
-
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       struct brw_shader *shader = (struct brw_shader *)prog->_LinkedShaders[i];
 
-      if (using_new_fs && shader->base.Type == GL_FRAGMENT_SHADER) {
+      if (shader->base.Type == GL_FRAGMENT_SHADER) {
 	 void *mem_ctx = talloc_new(NULL);
 	 bool progress;
 
@@ -3188,9 +3180,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    struct gl_shader_program *prog = ctx->Shader.CurrentProgram;
 
    if (!prog)
-      return GL_FALSE;
-
-   if (!using_new_fs)
       return GL_FALSE;
 
    for (unsigned int i = 0; i < prog->_NumLinkedShaders; i++) {
