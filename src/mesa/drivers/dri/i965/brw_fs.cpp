@@ -2237,6 +2237,7 @@ fs_visitor::assign_regs()
 
       aligned_pair_class = class_count;
       classes[aligned_pair_class] = ra_alloc_reg_class(regs);
+      class_sizes[aligned_pair_class] = 2;
       class_base_reg[aligned_pair_class] = 0;
       class_reg_count[aligned_pair_class] = 0;
       int start = (this->first_non_payload_grf & 1) ? 1 : 0;
