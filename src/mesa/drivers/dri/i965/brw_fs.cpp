@@ -2563,6 +2563,10 @@ fs_visitor::register_coalesce()
 	 continue;
       }
 
+      /* Update live interval so we don't have to recalculate. */
+      this->virtual_grf_use[inst->src[0].reg] = MAX2(virtual_grf_use[inst->src[0].reg],
+						     virtual_grf_use[inst->dst.reg]);
+
       /* Rewrite the later usage to point at the source of the move to
        * be removed.
        */
