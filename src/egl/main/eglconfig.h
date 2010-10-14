@@ -6,26 +6,49 @@
 #include "egltypedefs.h"
 
 
-#define _EGL_CONFIG_FIRST_ATTRIB EGL_BUFFER_SIZE
-#define _EGL_CONFIG_LAST_ATTRIB EGL_CONFORMANT
-#define _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS \
-   (_EGL_CONFIG_LAST_ATTRIB - _EGL_CONFIG_FIRST_ATTRIB + 1)
-
-/* Attributes outside the contiguous block:
- *
- *   EGL_Y_INVERTED_NOK
- */
-#define _EGL_CONFIG_FIRST_EXTRA_ATTRIB _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS
-#define _EGL_CONFIG_NUM_EXTRA_ATTRIBS 1
-
-#define _EGL_CONFIG_NUM_ATTRIBS \
-   _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS + _EGL_CONFIG_NUM_EXTRA_ATTRIBS
-
-
+/* update _eglValidationTable and _eglOffsetOfConfig before updating this
+ * struct */
 struct _egl_config
 {
    _EGLDisplay *Display;
-   EGLint Storage[_EGL_CONFIG_NUM_ATTRIBS];
+
+   /* core */
+   EGLint BufferSize;
+   EGLint AlphaSize;
+   EGLint BlueSize;
+   EGLint GreenSize;
+   EGLint RedSize;
+   EGLint DepthSize;
+   EGLint StencilSize;
+   EGLint ConfigCaveat;
+   EGLint ConfigID;
+   EGLint Level;
+   EGLint MaxPbufferHeight;
+   EGLint MaxPbufferPixels;
+   EGLint MaxPbufferWidth;
+   EGLint NativeRenderable;
+   EGLint NativeVisualID;
+   EGLint NativeVisualType;
+   EGLint Samples;
+   EGLint SampleBuffers;
+   EGLint SurfaceType;
+   EGLint TransparentType;
+   EGLint TransparentBlueValue;
+   EGLint TransparentGreenValue;
+   EGLint TransparentRedValue;
+   EGLint BindToTextureRGB;
+   EGLint BindToTextureRGBA;
+   EGLint MinSwapInterval;
+   EGLint MaxSwapInterval;
+   EGLint LuminanceSize;
+   EGLint AlphaMaskSize;
+   EGLint ColorBufferType;
+   EGLint RenderableType;
+   EGLint MatchNativePixmap;
+   EGLint Conformant;
+
+   /* extensions */
+   EGLint YInvertedNOK;
 };
 
 
@@ -37,35 +60,53 @@ struct _egl_config
 
 
 /**
- * Given a key, return an index into the storage of the config.
- * Return -1 if the key is invalid.
+ * Map an EGL attribute enum to the offset of the member in _EGLConfig.
  */
 static INLINE EGLint
-_eglIndexConfig(const _EGLConfig *conf, EGLint key)
+_eglOffsetOfConfig(EGLint attr)
 {
-   (void) conf;
-   if (key >= _EGL_CONFIG_FIRST_ATTRIB &&
-       key < _EGL_CONFIG_FIRST_ATTRIB + _EGL_CONFIG_NUM_CONTIGUOUS_ATTRIBS)
-      return key - _EGL_CONFIG_FIRST_ATTRIB;
-   
-   switch (key) {
-   case EGL_Y_INVERTED_NOK:
-      return _EGL_CONFIG_FIRST_EXTRA_ATTRIB;
+   switch (attr) {
+#define ATTRIB_MAP(attr, memb) case attr: return offsetof(_EGLConfig, memb)
+   /* core */
+   ATTRIB_MAP(EGL_BUFFER_SIZE,               BufferSize);
+   ATTRIB_MAP(EGL_ALPHA_SIZE,                AlphaSize);
+   ATTRIB_MAP(EGL_BLUE_SIZE,                 BlueSize);
+   ATTRIB_MAP(EGL_GREEN_SIZE,                GreenSize);
+   ATTRIB_MAP(EGL_RED_SIZE,                  RedSize);
+   ATTRIB_MAP(EGL_DEPTH_SIZE,                DepthSize);
+   ATTRIB_MAP(EGL_STENCIL_SIZE,              StencilSize);
+   ATTRIB_MAP(EGL_CONFIG_CAVEAT,             ConfigCaveat);
+   ATTRIB_MAP(EGL_CONFIG_ID,                 ConfigID);
+   ATTRIB_MAP(EGL_LEVEL,                     Level);
+   ATTRIB_MAP(EGL_MAX_PBUFFER_HEIGHT,        MaxPbufferHeight);
+   ATTRIB_MAP(EGL_MAX_PBUFFER_PIXELS,        MaxPbufferPixels);
+   ATTRIB_MAP(EGL_MAX_PBUFFER_WIDTH,         MaxPbufferWidth);
+   ATTRIB_MAP(EGL_NATIVE_RENDERABLE,         NativeRenderable);
+   ATTRIB_MAP(EGL_NATIVE_VISUAL_ID,          NativeVisualID);
+   ATTRIB_MAP(EGL_NATIVE_VISUAL_TYPE,        NativeVisualType);
+   ATTRIB_MAP(EGL_SAMPLES,                   Samples);
+   ATTRIB_MAP(EGL_SAMPLE_BUFFERS,            SampleBuffers);
+   ATTRIB_MAP(EGL_SURFACE_TYPE,              SurfaceType);
+   ATTRIB_MAP(EGL_TRANSPARENT_TYPE,          TransparentType);
+   ATTRIB_MAP(EGL_TRANSPARENT_BLUE_VALUE,    TransparentBlueValue);
+   ATTRIB_MAP(EGL_TRANSPARENT_GREEN_VALUE,   TransparentGreenValue);
+   ATTRIB_MAP(EGL_TRANSPARENT_RED_VALUE,     TransparentRedValue);
+   ATTRIB_MAP(EGL_BIND_TO_TEXTURE_RGB,       BindToTextureRGB);
+   ATTRIB_MAP(EGL_BIND_TO_TEXTURE_RGBA,      BindToTextureRGBA);
+   ATTRIB_MAP(EGL_MIN_SWAP_INTERVAL,         MinSwapInterval);
+   ATTRIB_MAP(EGL_MAX_SWAP_INTERVAL,         MaxSwapInterval);
+   ATTRIB_MAP(EGL_LUMINANCE_SIZE,            LuminanceSize);
+   ATTRIB_MAP(EGL_ALPHA_MASK_SIZE,           AlphaMaskSize);
+   ATTRIB_MAP(EGL_COLOR_BUFFER_TYPE,         ColorBufferType);
+   ATTRIB_MAP(EGL_RENDERABLE_TYPE,           RenderableType);
+   ATTRIB_MAP(EGL_MATCH_NATIVE_PIXMAP,       MatchNativePixmap);
+   ATTRIB_MAP(EGL_CONFORMANT,                Conformant);
+   /* extensions */
+   ATTRIB_MAP(EGL_Y_INVERTED_NOK,            YInvertedNOK);
+#undef ATTRIB_MAP
    default:
       return -1;
    }
-}
-
-
-/**
- * Reset all keys in the config to a given value.
- */
-static INLINE void
-_eglResetConfigKeys(_EGLConfig *conf, EGLint val)
-{
-   EGLint i;
-   for (i = 0; i < _EGL_CONFIG_NUM_ATTRIBS; i++)
-      conf->Storage[i] = val;
 }
 
 
@@ -79,9 +120,9 @@ _eglResetConfigKeys(_EGLConfig *conf, EGLint val)
 static INLINE void
 _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
 {
-   EGLint idx = _eglIndexConfig(conf, key);
-   assert(idx >= 0);
-   conf->Storage[idx] = val;
+   EGLint offset = _eglOffsetOfConfig(key);
+   assert(offset >= 0);
+   *((EGLint *) ((char *) conf + offset)) = val;
 }
 
 
@@ -91,9 +132,9 @@ _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
 static INLINE EGLint
 _eglGetConfigKey(const _EGLConfig *conf, EGLint key)
 {
-   EGLint idx = _eglIndexConfig(conf, key);
-   assert(idx >= 0);
-   return conf->Storage[idx];
+   EGLint offset = _eglOffsetOfConfig(key);
+   assert(offset >= 0);
+   return *((EGLint *) ((char *) conf + offset));
 }
 
 

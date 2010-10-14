@@ -104,6 +104,7 @@ static const struct {
    EGLint default_value;
 } _eglValidationTable[] =
 {
+   /* core */
    { EGL_BUFFER_SIZE,               ATTRIB_TYPE_INTEGER,
                                     ATTRIB_CRITERION_ATLEAST,
                                     0 },
@@ -200,22 +201,13 @@ static const struct {
    { EGL_TRANSPARENT_BLUE_VALUE,    ATTRIB_TYPE_INTEGER,
                                     ATTRIB_CRITERION_EXACT,
                                     EGL_DONT_CARE },
-   /* these are not real attributes */
    { EGL_MATCH_NATIVE_PIXMAP,       ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_SPECIAL,
                                     EGL_NONE },
-   /* there is a gap before EGL_SAMPLES */
-   { 0x3030,                        ATTRIB_TYPE_PSEUDO,
-                                    ATTRIB_CRITERION_IGNORE,
-                                    0 },
-   { EGL_NONE,                      ATTRIB_TYPE_PSEUDO,
-                                    ATTRIB_CRITERION_IGNORE,
-                                    0 },
-
+   /* extensions */
    { EGL_Y_INVERTED_NOK,            ATTRIB_TYPE_BOOLEAN,
                                     ATTRIB_CRITERION_EXACT,
-                                    EGL_DONT_CARE },
-
+                                    EGL_DONT_CARE }
 };
 
 
@@ -234,9 +226,6 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
    EGLBoolean valid = EGL_TRUE;
    EGLint red_size = 0, green_size = 0, blue_size = 0, luminance_size = 0;
    EGLint alpha_size = 0, buffer_size = 0;
-
-   /* all attributes should have been listed */
-   assert(ARRAY_SIZE(_eglValidationTable) == _EGL_CONFIG_NUM_ATTRIBS);
 
    /* check attributes by their types */
    for (i = 0; i < ARRAY_SIZE(_eglValidationTable); i++) {
@@ -478,16 +467,11 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
 static INLINE EGLBoolean
 _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
 {
-   if (_eglIndexConfig(conf, attr) < 0)
+   if (_eglOffsetOfConfig(attr) < 0)
       return EGL_FALSE;
 
-   /* there are some holes in the range */
    switch (attr) {
-   case 0x3030 /* a gap before EGL_SAMPLES */:
-   case EGL_NONE:
-#ifdef EGL_VERSION_1_4
    case EGL_MATCH_NATIVE_PIXMAP:
-#endif
       return EGL_FALSE;
    case EGL_Y_INVERTED_NOK:
       return conf->Display->Extensions.NOK_texture_from_pixmap;
@@ -556,9 +540,12 @@ _eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list)
       return EGL_FALSE;
 
    /* ignore other attributes when EGL_CONFIG_ID is given */
-   if (config_id > 0) {
-      _eglResetConfigKeys(conf, EGL_DONT_CARE);
-      SET_CONFIG_ATTRIB(conf, EGL_CONFIG_ID, config_id);
+   if (conf->ConfigID > 0) {
+      for (i = 0; i < ARRAY_SIZE(_eglValidationTable); i++) {
+         attr = _eglValidationTable[i].attr;
+         if (attr != EGL_CONFIG_ID)
+            SET_CONFIG_ATTRIB(conf, attr, EGL_DONT_CARE);
+      }
    }
    else {
       if (has_native_visual_type) {
