@@ -25,7 +25,7 @@ v2f xlat_main (
   highp vec4 tmpvar_1;
   tmpvar_1 = (glstate_matrix_mvp * v.vertex);
   o.vertex = tmpvar_1;
-  highp vec4 tmpvar_2;
+  lowp vec4 tmpvar_2;
   tmpvar_2 = v.color;
   o.color = tmpvar_2;
   highp vec2 tmpvar_3;

@@ -30,7 +30,7 @@ v2f xlat_main (
   highp vec4 tmpvar_1;
   tmpvar_1 = (mvp * v.pos);
   o.pos = tmpvar_1;
-  highp vec4 tmpvar_2;
+  lowp vec4 tmpvar_2;
   tmpvar_2 = v.color;
   o.color = tmpvar_2;
   highp vec3 tmpvar_3;

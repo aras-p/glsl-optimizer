@@ -248,7 +248,7 @@ vec4 LightingTreeLeaf (
   nh = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = pow (nh, (s.Specular * 128.0));
-  highp float tmpvar_9;
+  mediump float tmpvar_9;
   tmpvar_9 = (tmpvar_8 * s.Gloss);
   spec = tmpvar_9;
   float tmpvar_10;
@@ -265,7 +265,7 @@ vec4 LightingTreeLeaf (
   float tmpvar_15;
   tmpvar_15 = tmpvar_14;
   backContrib = tmpvar_15;
-  highp vec3 tmpvar_16;
+  mediump vec3 tmpvar_16;
   tmpvar_16 = ((backContrib * s.Translucency) * _TranslucencyColor);
   translucencyColor = tmpvar_16;
   float tmpvar_17;
@@ -273,7 +273,7 @@ vec4 LightingTreeLeaf (
   float tmpvar_18;
   tmpvar_18 = tmpvar_17;
   nl = tmpvar_18;
-  highp vec3 tmpvar_19;
+  mediump vec3 tmpvar_19;
   tmpvar_19 = (s.Albedo * ((translucencyColor * 2.0) + nl));
   c.xyz = tmpvar_19.xyz.xyz;
   highp vec3 tmpvar_20;
@@ -329,7 +329,7 @@ vec4 xlat_main (
   mediump vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   c = tmpvar_12;
-  highp float tmpvar_13;
+  mediump float tmpvar_13;
   tmpvar_13 = o.Alpha;
   c.w = vec4(tmpvar_13).w;
   return c;
