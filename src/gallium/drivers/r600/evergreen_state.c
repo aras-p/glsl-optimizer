@@ -1529,23 +1529,39 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z;
-	boolean have_pos = FALSE, have_face = FALSE;
+	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	int pos_index = -1, face_index = -1;
+	int ninterp = 0;
+	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
+	unsigned spi_baryc_cntl;
 
 	/* clear previous register */
 	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
+		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
+		   POSITION goes via GPRs from the SC so isn't counted */
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
-			have_pos = TRUE;
+			pos_index = i;
+		else if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			face_index = i;
+		else {
+			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR ||
+			    rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
+				ninterp++;
+			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+				have_linear = TRUE;
+			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
+				have_perspective = TRUE;
+			if (rshader->input[i].centroid)
+				have_centroid = TRUE;
+		}
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
-		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			have_face = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
 			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
@@ -1568,7 +1584,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	exports_ps = 0;
 	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION ||			    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION ||
+		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
 			num_cout++;
@@ -1580,18 +1597,48 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		exports_ps = 2;
 	}
 
-	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
-				S_0286CC_PERSP_GRADIENT_ENA(1);
+	if (ninterp == 0) {
+		ninterp = 1;
+		have_perspective = TRUE;
+	}
+
+	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(ninterp) |
+		              S_0286CC_PERSP_GRADIENT_ENA(have_perspective) |
+		              S_0286CC_LINEAR_GRADIENT_ENA(have_linear);
 	spi_input_z = 0;
-	if (have_pos) {
-		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1);
+	if (pos_index != -1) {
+		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1) |
+			S_0286CC_POSITION_CENTROID(rshader->input[pos_index].centroid) |
+			S_0286CC_POSITION_ADDR(rshader->input[pos_index].gpr);
 		spi_input_z |= 1;
 	}
+
+	spi_ps_in_control_1 = 0;
+	if (face_index != -1) {
+		spi_ps_in_control_1 |= S_0286D0_FRONT_FACE_ENA(1) |
+			S_0286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
+	}
+
+	spi_baryc_cntl = 0;
+	if (have_perspective)
+		spi_baryc_cntl |= S_0286E0_PERSP_CENTER_ENA(1) |
+				  S_0286E0_PERSP_CENTROID_ENA(have_centroid);
+	if (have_linear)
+		spi_baryc_cntl |= S_0286E0_LINEAR_CENTER_ENA(1) |
+			          S_0286E0_LINEAR_CENTROID_ENA(have_centroid);
+				
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0,
 				spi_ps_in_control_0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1,
-				S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
+				spi_ps_in_control_1, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286E4_SPI_PS_IN_CONTROL_2,
+				0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_0286E0_SPI_BARYC_CNTL,
+				spi_baryc_cntl,
+				0xFFFFFFFF, NULL);
+
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
 				(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
@@ -1607,11 +1654,6 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-				R_0286E0_SPI_BARYC_CNTL,
-				S_0286E0_PERSP_CENTROID_ENA(1) |
-				S_0286E0_LINEAR_CENTROID_ENA(1),
-				0xFFFFFFFF, NULL);
 
 	if (rshader->uses_kill) {
 		/* only set some bits here, the other bits are set in the dsa state */

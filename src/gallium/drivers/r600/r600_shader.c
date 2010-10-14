@@ -357,6 +357,11 @@ struct r600_shader_ctx {
 	u32					*literals;
 	u32					nliterals;
 	u32					max_driver_temp_used;
+	/* needed for evergreen interpolation */
+	boolean                                 input_centroid;
+	boolean                                 input_linear;
+	boolean                                 input_perspective;
+	int					num_interp_gpr;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -404,10 +409,33 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int gpr)
+static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 {
 	int i, r;
 	struct r600_bc_alu alu;
+	int gpr = 0, base_chan = 0;
+	int ij_index = 0;
+
+	if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_PERSPECTIVE) {
+		ij_index = 0;
+		if (ctx->shader->input[input].centroid)
+			ij_index++;
+	} else if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_LINEAR) {
+		ij_index = 0;
+		/* if we have perspective add one */
+		if (ctx->input_perspective)  {
+			ij_index++;
+			/* if we have perspective centroid */
+			if (ctx->input_centroid)
+				ij_index++;
+		}
+		if (ctx->shader->input[input].centroid)
+			ij_index++;
+	}
+		
+	/* work out gpr and base_chan from index */
+	gpr = ij_index / 2;
+	base_chan = (2 * (ij_index % 2)) + 1;
 
 	for (i = 0; i < 8; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -418,13 +446,16 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int gpr)
 			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY;
 
 		if ((i > 1) && (i < 6)) {
-			alu.dst.sel = ctx->shader->input[gpr].gpr;
+			alu.dst.sel = ctx->shader->input[input].gpr;
 			alu.dst.write = 1;
 		}
 
 		alu.dst.chan = i % 4;
-		alu.src[0].chan = (1 - (i % 2));
-		alu.src[1].sel = V_SQ_ALU_SRC_PARAM_BASE + gpr;
+
+		alu.src[0].sel = gpr;
+		alu.src[0].chan = (base_chan - (i % 2));
+
+		alu.src[1].sel = V_SQ_ALU_SRC_PARAM_BASE + ctx->shader->input[input].lds_pos;
 
 		alu.bank_swizzle_force = SQ_ALU_VEC_210;
 		if ((i % 4) == 3)
@@ -474,7 +505,12 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		}
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev == 2) {
 			/* turn input into interpolate on EG */
-			evergreen_interp_alu(ctx, i);
+			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
+				if (ctx->shader->input[i].interpolate > 0) {
+					ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
+					evergreen_interp_alu(ctx, i);
+				}
+			}
 		}
 		break;
 	case TGSI_FILE_OUTPUT:
@@ -499,6 +535,53 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 static int r600_get_temp(struct r600_shader_ctx *ctx)
 {
 	return ctx->temp_reg + ctx->max_driver_temp_used++;
+}
+
+/* 
+ * for evergreen we need to scan the shader to find the number of GPRs we need to
+ * reserve for interpolation.
+ *
+ * we need to know if we are going to emit
+ * any centroid inputs
+ * if perspective and linear are required
+*/
+static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
+{
+	int i;
+	int num_baryc;
+
+	ctx->input_linear = FALSE;
+	ctx->input_perspective = FALSE;
+	ctx->input_centroid = FALSE;
+	ctx->num_interp_gpr = 1;
+
+	/* any centroid inputs */
+	for (i = 0; i < ctx->info.num_inputs; i++) {
+		/* skip position/face */
+		if (ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_POSITION ||
+		    ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_FACE)
+			continue;
+		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_LINEAR)
+			ctx->input_linear = TRUE;
+		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_PERSPECTIVE)
+			ctx->input_perspective = TRUE;
+		if (ctx->info.input_centroid[i])
+			ctx->input_centroid = TRUE;
+	}
+
+	num_baryc = 0;
+	/* ignoring sample for now */
+	if (ctx->input_perspective)
+		num_baryc++;
+	if (ctx->input_linear)
+		num_baryc++;
+	if (ctx->input_centroid)
+		num_baryc *= 2;
+
+	ctx->num_interp_gpr += (num_baryc + 1) >> 1;
+
+	/* TODO PULL MODEL and LINE STIPPLE, FIXED PT POS */
+	return ctx->num_interp_gpr;
 }
 
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader)
@@ -547,7 +630,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
 	}
 	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == 2) {
-		ctx.file_offset[TGSI_FILE_INPUT] = 1;
+		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
 						ctx.info.file_count[TGSI_FILE_INPUT];
