@@ -115,7 +115,8 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
-		tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].centroid)
+			tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
@@ -439,6 +440,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
+		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 			/* turn input into fetch */

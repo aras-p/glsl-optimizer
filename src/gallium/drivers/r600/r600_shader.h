@@ -31,6 +31,7 @@ struct r600_shader_io {
 	unsigned		done;
 	int			sid;
 	unsigned		interpolate;
+	boolean                 centroid;
 };
 
 struct r600_shader {
