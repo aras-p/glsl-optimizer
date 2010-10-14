@@ -2252,7 +2252,6 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border, GLenum format,
                   GLenum type, const GLvoid *pixels )
 {
-   GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2272,7 +2271,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       const GLuint face = _mesa_tex_target_to_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 1, postConvWidth, 1, 1, border)) {
+                              format, type, 1, width, 1, 1, border)) {
          return;   /* error was recorded */
       }
 
@@ -2295,7 +2294,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
             clear_teximage_fields(texImage); /* not really needed, but helpful */
             _mesa_init_teximage_fields(ctx, target, texImage,
-                                       postConvWidth, 1, 1,
+                                       width, 1, 1,
                                        border, internalFormat);
 
             _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
@@ -2327,7 +2326,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_image *texImage;
       texImage = _mesa_get_proxy_tex_image(ctx, target, level);
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 1, postConvWidth, 1, 1, border)) {
+                              format, type, 1, width, 1, 1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
             clear_teximage_fields(texImage);
@@ -2338,7 +2337,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
             _mesa_get_current_tex_object(ctx, target);
          ASSERT(texImage);
          _mesa_init_teximage_fields(ctx, target, texImage,
-                                    postConvWidth, 1, 1,
+                                    width, 1, 1,
                                     border, internalFormat);
          _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
                                      internalFormat, format, type);
@@ -2357,7 +2356,6 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                   GLenum format, GLenum type,
                   const GLvoid *pixels )
 {
-   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2384,8 +2382,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       const GLuint face = _mesa_tex_target_to_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 2, postConvWidth, postConvHeight,
-                              1, border)) {
+                              format, type, 2, width, height, 1, border)) {
          return;   /* error was recorded */
       }
 
@@ -2407,7 +2404,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
             ASSERT(texImage->Data == NULL);
             clear_teximage_fields(texImage); /* not really needed, but helpful */
             _mesa_init_teximage_fields(ctx, target, texImage,
-                                       postConvWidth, postConvHeight, 1,
+                                       width, height, 1,
                                        border, internalFormat);
 
             _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
@@ -2445,8 +2442,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_image *texImage;
       texImage = _mesa_get_proxy_tex_image(ctx, target, level);
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 2, postConvWidth, postConvHeight,
-                              1, border)) {
+                              format, type, 2, width, height, 1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
             clear_teximage_fields(texImage);
@@ -2456,7 +2452,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          struct gl_texture_object *texObj =
             _mesa_get_current_tex_object(ctx, target);
          _mesa_init_teximage_fields(ctx, target, texImage,
-                                    postConvWidth, postConvHeight, 1,
+                                    width, height, 1,
                                     border, internalFormat);
          _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
                                      internalFormat, format, type);
@@ -2643,7 +2639,6 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GLsizei postConvWidth = width;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
@@ -2659,7 +2654,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
-			       postConvWidth, 1, 1, format, type)) {
+			       width, 1, 1, format, type)) {
       return;   /* error was detected */
    }
 
@@ -2672,8 +2667,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (subtexture_error_check2(ctx, 1, target, level, xoffset, 0, 0,
-				  postConvWidth, 1, 1,
-                                  format, type, texImage)) {
+				  width, 1, 1, format, type, texImage)) {
          /* error was recorded */
       }
       else if (width > 0) {
@@ -2701,7 +2695,6 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GLsizei postConvWidth = width, postConvHeight = height;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
@@ -2718,7 +2711,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
-			      postConvWidth, postConvHeight, 1, format, type)) {
+			      width, height, 1, format, type)) {
       return;   /* error was detected */
    }
 
@@ -2729,8 +2722,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (subtexture_error_check2(ctx, 2, target, level, xoffset, yoffset, 0,
-				  postConvWidth, postConvHeight, 1,
-                                  format, type, texImage)) {
+				  width, height, 1, format, type, texImage)) {
 	 /* error was recorded */
       }
       else if (width > 0 && height >= 0) {
@@ -2823,7 +2815,6 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width;
    const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -2838,7 +2829,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       _mesa_update_state(ctx);
 
    if (copytexture_error_check(ctx, 1, target, level, internalFormat,
-                               postConvWidth, 1, border))
+                               width, 1, border))
       return;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2857,7 +2848,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
          ASSERT(texImage->Data == NULL);
 
          clear_teximage_fields(texImage); /* not really needed, but helpful */
-         _mesa_init_teximage_fields(ctx, target, texImage, postConvWidth, 1, 1,
+         _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
                                     border, internalFormat);
 
          _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
@@ -2892,7 +2883,6 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width, postConvHeight = height;
    const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -2907,7 +2897,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
       _mesa_update_state(ctx);
 
    if (copytexture_error_check(ctx, 2, target, level, internalFormat,
-                               postConvWidth, postConvHeight, border))
+                               width, height, border))
       return;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2928,7 +2918,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 
          clear_teximage_fields(texImage); /* not really needed, but helpful */
          _mesa_init_teximage_fields(ctx, target, texImage,
-                                    postConvWidth, postConvHeight, 1,
+                                    width, height, 1,
                                     border, internalFormat);
 
          _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
@@ -2961,7 +2951,6 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width;
    GLint yoffset = 0;
    GLsizei height = 1;
 
@@ -2986,8 +2975,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (copytexsubimage_error_check2(ctx, 1, target, level,
-				       xoffset, 0, 0, postConvWidth, 1,
-				       texImage)) {
+				       xoffset, 0, 0, width, 1, texImage)) {
          /* error was recorded */
       }
       else {
@@ -3018,7 +3006,6 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -3041,8 +3028,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
 
       if (copytexsubimage_error_check2(ctx, 2, target, level,
                                        xoffset, yoffset, 0,
-				       postConvWidth, postConvHeight,
-                                       texImage)) {
+				       width, height, texImage)) {
          /* error was recorded */
       }
       else {
@@ -3074,7 +3060,6 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -3096,8 +3081,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (copytexsubimage_error_check2(ctx, 3, target, level, xoffset, yoffset,
-				       zoffset, postConvWidth, postConvHeight,
-				       texImage)) {
+				       zoffset, width, height, texImage)) {
          /* error was recored */
       }
       else {
