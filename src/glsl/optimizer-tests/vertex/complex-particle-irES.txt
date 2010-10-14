@@ -1,12 +1,12 @@
 struct v2f {
-  vec4 vertex;
-  vec4 color;
-  vec2 texcoord;
+  highp vec4 vertex;
+  lowp vec4 color;
+  mediump vec2 texcoord;
 };
 struct appdata_t {
-  vec4 vertex;
-  vec4 color;
-  vec2 texcoord;
+  highp vec4 vertex;
+  lowp vec4 color;
+  highp vec2 texcoord;
 };
 varying mediump vec2 xlv_TEXCOORD0;
 varying lowp vec4 xlv_COLOR;

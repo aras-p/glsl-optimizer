@@ -34,14 +34,14 @@ void main ()
   highp vec3 tmpvar_5;
   tmpvar_5 = (tmpvar_4 - _LightPos.xyz);
   lightDir = -(normalize (tmpvar_5));
-  atten = texture2D (_LightTextureB0, vec2((dot (tmpvar_5, tmpvar_5) * _LightPos.w))).w;
+  atten = texture2D (_LightTextureB0, highp vec2((dot (tmpvar_5, tmpvar_5) * _LightPos.w))).w;
   highp vec4 shadowVals;
   shadowVals.x = dot (textureCube (_ShadowMapTexture, (tmpvar_5 + vec3(0.0078125, 0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
   shadowVals.y = dot (textureCube (_ShadowMapTexture, (tmpvar_5 + vec3(-0.0078125, -0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
   shadowVals.z = dot (textureCube (_ShadowMapTexture, (tmpvar_5 + vec3(-0.0078125, 0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
   shadowVals.w = dot (textureCube (_ShadowMapTexture, (tmpvar_5 + vec3(0.0078125, -0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
   bvec4 tmpvar_6;
-  tmpvar_6 = lessThan (shadowVals, vec4(((length (tmpvar_5) * _LightPositionRange.w) * 0.97)));
+  tmpvar_6 = lessThan (shadowVals, highp vec4(((length (tmpvar_5) * _LightPositionRange.w) * 0.97)));
   highp vec4 tmpvar_7;
   tmpvar_7 = _LightShadowData.xxxx;
   float tmpvar_8;

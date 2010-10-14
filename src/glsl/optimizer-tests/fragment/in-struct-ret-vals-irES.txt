@@ -1,7 +1,7 @@
 struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec4 color;
+  highp vec4 pos;
+  highp vec2 uv;
+  highp vec4 color;
 };
 varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;

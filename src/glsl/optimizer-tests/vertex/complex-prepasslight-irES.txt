@@ -1,11 +1,11 @@
 struct v2f {
-  vec4 pos;
-  vec4 uv;
-  vec3 ray;
+  highp vec4 pos;
+  highp vec4 uv;
+  highp vec3 ray;
 };
 struct appdata {
-  vec4 vertex;
-  vec3 normal;
+  highp vec4 vertex;
+  highp vec3 normal;
 };
 varying highp vec3 xlv_TEXCOORD1;
 varying highp vec4 xlv_TEXCOORD0;
@@ -54,7 +54,7 @@ v2f xlat_main (
   tmpvar_4 = ((glstate_matrix_modelview0 * v.vertex).xyz * vec3(-1.0, -1.0, 1.0));
   o.ray = tmpvar_4;
   highp vec3 tmpvar_5;
-  tmpvar_5 = vec3(float((v.normal.z != 0.0)));
+  tmpvar_5 = highp vec3(highp float((v.normal.z != 0.0)));
   vec3 tmpvar_6;
   tmpvar_6 = mix (o.ray, v.normal, tmpvar_5);
   vec3 tmpvar_7;

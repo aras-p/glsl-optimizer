@@ -1,24 +1,24 @@
 struct LeafSurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Translucency;
-  float ShadowOffset;
-  float Specular;
-  float Gloss;
-  float Alpha;
+  mediump vec3 Albedo;
+  mediump vec3 Normal;
+  mediump vec3 Emission;
+  mediump float Translucency;
+  mediump float ShadowOffset;
+  mediump float Specular;
+  mediump float Gloss;
+  mediump float Alpha;
 };
 struct Input {
-  vec2 uv_MainTex;
-  vec4 color;
+  highp vec2 uv_MainTex;
+  highp vec4 color;
 };
 struct v2f_surf {
-  vec4 pos;
-  vec2 hip_pack0;
-  vec4 lop_color;
-  vec3 lightDir;
-  vec3 viewDir;
-  vec2 _LightCoord;
+  highp vec4 pos;
+  highp vec2 hip_pack0;
+  highp vec4 lop_color;
+  highp vec3 lightDir;
+  highp vec3 viewDir;
+  highp vec2 _LightCoord;
 };
 varying highp vec2 xlv_TEXCOORD3;
 varying highp vec3 xlv_TEXCOORD2;
@@ -331,7 +331,7 @@ mediump vec4 xlat_main (
   c = tmpvar_12;
   mediump float tmpvar_13;
   tmpvar_13 = o.Alpha;
-  c.w = vec4(tmpvar_13).w;
+  c.w = mediump vec4(tmpvar_13).w;
   return c;
 }
 

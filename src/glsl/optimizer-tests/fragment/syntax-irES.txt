@@ -20,7 +20,7 @@ mediump vec4 xlat_main ()
   tmpvar_6 = (foo + 3.0);
   foo = tmpvar_6;
   highp vec4 tmpvar_7;
-  tmpvar_7 = vec4(foo);
+  tmpvar_7 = highp vec4(foo);
   return tmpvar_7;
 }
 
