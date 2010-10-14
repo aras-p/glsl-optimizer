@@ -434,7 +434,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
 	if (state->flatshade_first)
 		prov_vtx = 0;
-	tmp = 0x00000001;
+	tmp = S_0286D4_FLAT_SHADE_ENA(1);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
 			S_0286D4_PNT_SPRITE_OVRD_X(2) |
