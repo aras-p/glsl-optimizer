@@ -654,6 +654,26 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
    return brw_alu2(p, BRW_OPCODE_##OP, dest, src0, src1);	\
 }
 
+/* Rounding operations (other than RNDD) require two instructions - the first
+ * stores a rounded value (possibly the wrong way) in the dest register, but
+ * also sets a per-channel "increment bit" in the flag register.  A predicated
+ * add of 1.0 fixes dest to contain the desired result.
+ */
+#define ROUND(OP)							      \
+void brw_##OP(struct brw_compile *p,					      \
+	      struct brw_reg dest,					      \
+	      struct brw_reg src)					      \
+{									      \
+   struct brw_instruction *rnd, *add;					      \
+   rnd = next_insn(p, BRW_OPCODE_##OP);					      \
+   brw_set_dest(rnd, dest);						      \
+   brw_set_src0(rnd, src);						      \
+   rnd->header.destreg__conditionalmod = 0x7; /* turn on round-increments */  \
+									      \
+   add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \
+   add->header.predicate_control = BRW_PREDICATE_NORMAL;		      \
+}
+
 
 ALU1(MOV)
 ALU2(SEL)
@@ -668,7 +688,6 @@ ALU2(RSL)
 ALU2(ASR)
 ALU1(FRC)
 ALU1(RNDD)
-ALU1(RNDZ)
 ALU2(MAC)
 ALU2(MACH)
 ALU1(LZD)
@@ -678,6 +697,10 @@ ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
+
+
+ROUND(RNDZ)
+
 
 struct brw_instruction *brw_ADD(struct brw_compile *p,
 				struct brw_reg dest,

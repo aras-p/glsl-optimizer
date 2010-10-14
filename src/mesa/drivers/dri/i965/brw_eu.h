@@ -789,6 +789,10 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg src0,			\
 	      struct brw_reg src1);
 
+#define ROUND(OP) \
+void brw_##OP(struct brw_compile *p, struct brw_reg dest, struct brw_reg src0);
+
+
 ALU1(MOV)
 ALU2(SEL)
 ALU1(NOT)
@@ -805,7 +809,6 @@ ALU2(ADD)
 ALU2(MUL)
 ALU1(FRC)
 ALU1(RNDD)
-ALU1(RNDZ)
 ALU2(MAC)
 ALU2(MACH)
 ALU1(LZD)
@@ -816,9 +819,11 @@ ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
 
+ROUND(RNDZ)
+
 #undef ALU1
 #undef ALU2
-
+#undef ROUND
 
 
 /* Helpers for SEND instruction:
