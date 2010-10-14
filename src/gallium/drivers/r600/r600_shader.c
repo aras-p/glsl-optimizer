@@ -107,8 +107,8 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z;
-	boolean have_pos = FALSE, have_face = FALSE;
+	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	int pos_index = -1, face_index = -1;
 
 	/* clear previous register */
 	rstate->nregs = 0;
@@ -118,14 +118,14 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		if (rshader->input[i].centroid)
 			tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
-			have_pos = TRUE;
+			pos_index = i;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
 		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			have_face = TRUE;
+			face_index = i;
 		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
 			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
@@ -163,13 +163,22 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
 				S_0286CC_PERSP_GRADIENT_ENA(1);
 	spi_input_z = 0;
-	if (have_pos) {
-		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1) |
-					S_0286CC_BARYC_SAMPLE_CNTL(1);
+	if (pos_index != -1) {
+		spi_ps_in_control_0 |= (S_0286CC_POSITION_ENA(1) |
+					S_0286CC_POSITION_CENTROID(rshader->input[pos_index].centroid) |
+					S_0286CC_POSITION_ADDR(rshader->input[pos_index].gpr) |
+					S_0286CC_BARYC_SAMPLE_CNTL(1));
 		spi_input_z |= 1;
 	}
+
+	spi_ps_in_control_1 = 0;
+	if (face_index != -1) {
+		spi_ps_in_control_1 |= S_0286D0_FRONT_FACE_ENA(1) |
+			S_286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
+	}
+
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, spi_ps_in_control_1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
