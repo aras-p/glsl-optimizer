@@ -204,13 +204,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
-   /* XXX FIXME */
-   if (brw->intel.gen >= 6) {
-       for (i = 0; i < nr_prims; i++)
-	   if (prim[i].mode == GL_LINE_LOOP)
-	       return GL_TRUE;
-   }
-
    /* If we don't require strict OpenGL conformance, never 
     * use fallbacks.  If we're forcing fallbacks, always
     * use fallfacks.
