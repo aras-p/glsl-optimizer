@@ -179,9 +179,15 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
-	radeon->cman->destroy(radeon->cman);
-	radeon->kman->destroy(radeon->kman);
-	drmClose(radeon->fd);
+        if (radeon->cman)
+           radeon->cman->destroy(radeon->cman);
+
+        if (radeon->kman)
+           radeon->kman->destroy(radeon->kman);
+
+        if (radeon->fd >= 0)
+           drmClose(radeon->fd);
+
 	free(radeon);
 	return NULL;
 }
