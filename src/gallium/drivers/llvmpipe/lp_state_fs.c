@@ -99,6 +99,7 @@
 
 
 #include <llvm-c/Analysis.h>
+#include <llvm-c/BitWriter.h>
 
 
 static unsigned fs_no = 0;
@@ -776,6 +777,11 @@ generate_fragment(struct llvmpipe_context *lp,
       /* Print the LLVM IR to stderr */
       lp_debug_dump_value(function);
       debug_printf("\n");
+   }
+
+   /* Dump byte code to a file */
+   if (0) {
+      LLVMWriteBitcodeToFile(lp_build_module, "llvmpipe.bc");
    }
 
    /*
