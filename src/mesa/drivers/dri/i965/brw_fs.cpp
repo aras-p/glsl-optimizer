@@ -2111,6 +2111,7 @@ static void
 assign_reg(int *reg_hw_locations, fs_reg *reg)
 {
    if (reg->file == GRF && reg->reg != 0) {
+      assert(reg->reg_offset >= 0);
       reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset;
       reg->reg = 0;
    }
@@ -2302,7 +2303,7 @@ fs_visitor::assign_regs()
 	 }
       }
 
-      assert(hw_reg != -1);
+      assert(hw_reg >= 0);
       hw_reg_mapping[i] = this->first_non_payload_grf + hw_reg;
       last_grf = MAX2(last_grf,
 		      hw_reg_mapping[i] + this->virtual_grf_sizes[i] - 1);
@@ -2320,6 +2321,92 @@ fs_visitor::assign_regs()
 
    talloc_free(g);
    talloc_free(regs);
+}
+
+/**
+ * Split large virtual GRFs into separate components if we can.
+ *
+ * This is mostly duplicated with what brw_fs_vector_splitting does,
+ * but that's really conservative because it's afraid of doing
+ * splitting that doesn't result in real progress after the rest of
+ * the optimization phases, which would cause infinite looping in
+ * optimization.  We can do it once here, safely.  This also has the
+ * opportunity to split interpolated values, or maybe even uniforms,
+ * which we don't have at the IR level.
+ *
+ * We want to split, because virtual GRFs are what we register
+ * allocate and spill (due to contiguousness requirements for some
+ * instructions), and they're what we naturally generate in the
+ * codegen process, but most virtual GRFs don't actually need to be
+ * contiguous sets of GRFs.  If we split, we'll end up with reduced
+ * live intervals and better dead code elimination and coalescing.
+ */
+void
+fs_visitor::split_virtual_grfs()
+{
+   int num_vars = this->virtual_grf_next;
+   bool split_grf[num_vars];
+   int new_virtual_grf[num_vars];
+
+   /* Try to split anything > 0 sized. */
+   for (int i = 0; i < num_vars; i++) {
+      if (this->virtual_grf_sizes[i] != 1)
+	 split_grf[i] = true;
+      else
+	 split_grf[i] = false;
+   }
+
+   if (brw->has_pln) {
+      /* PLN opcodes rely on the delta_xy being contiguous. */
+      split_grf[this->delta_x.reg] = false;
+   }
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      /* Texturing produces 4 contiguous registers, so no splitting. */
+      if ((inst->opcode == FS_OPCODE_TEX ||
+	   inst->opcode == FS_OPCODE_TXB ||
+	   inst->opcode == FS_OPCODE_TXL) &&
+	  inst->dst.file == GRF) {
+	 split_grf[inst->dst.reg] = false;
+      }
+   }
+
+   /* Allocate new space for split regs.  Note that the virtual
+    * numbers will be contiguous.
+    */
+   for (int i = 0; i < num_vars; i++) {
+      if (split_grf[i]) {
+	 new_virtual_grf[i] = virtual_grf_alloc(1);
+	 for (int j = 2; j < this->virtual_grf_sizes[i]; j++) {
+	    int reg = virtual_grf_alloc(1);
+	    assert(reg == new_virtual_grf[i] + j - 1);
+	 }
+	 this->virtual_grf_sizes[i] = 1;
+      }
+   }
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->dst.file == GRF &&
+	  split_grf[inst->dst.reg] &&
+	  inst->dst.reg_offset != 0) {
+	 inst->dst.reg = (new_virtual_grf[inst->dst.reg] +
+			  inst->dst.reg_offset - 1);
+	 inst->dst.reg_offset = 0;
+      }
+      for (int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF &&
+	     split_grf[inst->src[i].reg] &&
+	     inst->src[i].reg_offset != 0) {
+	    inst->src[i].reg = (new_virtual_grf[inst->src[i].reg] +
+				inst->src[i].reg_offset - 1);
+	    inst->src[i].reg_offset = 0;
+	 }
+      }
+   }
 }
 
 void
@@ -3054,13 +3141,15 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       }
 
       v.emit_fb_writes();
+
+      v.split_virtual_grfs();
+
       v.assign_curb_setup();
       v.assign_urb_setup();
 
       bool progress;
       do {
 	 progress = false;
-
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;

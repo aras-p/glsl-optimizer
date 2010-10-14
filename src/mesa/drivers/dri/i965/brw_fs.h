@@ -213,6 +213,9 @@ public:
       init();
       this->opcode = opcode;
       this->dst = dst;
+
+      if (dst.file == GRF)
+	 assert(dst.reg_offset >= 0);
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
@@ -221,6 +224,11 @@ public:
       this->opcode = opcode;
       this->dst = dst;
       this->src[0] = src0;
+
+      if (dst.file == GRF)
+	 assert(dst.reg_offset >= 0);
+      if (src[0].file == GRF)
+	 assert(src[0].reg_offset >= 0);
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
@@ -230,6 +238,13 @@ public:
       this->dst = dst;
       this->src[0] = src0;
       this->src[1] = src1;
+
+      if (dst.file == GRF)
+	 assert(dst.reg_offset >= 0);
+      if (src[0].file == GRF)
+	 assert(src[0].reg_offset >= 0);
+      if (src[1].file == GRF)
+	 assert(src[1].reg_offset >= 0);
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
@@ -240,6 +255,15 @@ public:
       this->src[0] = src0;
       this->src[1] = src1;
       this->src[2] = src2;
+
+      if (dst.file == GRF)
+	 assert(dst.reg_offset >= 0);
+      if (src[0].file == GRF)
+	 assert(src[0].reg_offset >= 0);
+      if (src[1].file == GRF)
+	 assert(src[1].reg_offset >= 0);
+      if (src[2].file == GRF)
+	 assert(src[2].reg_offset >= 0);
    }
 
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
@@ -336,6 +360,7 @@ public:
    void assign_urb_setup();
    void assign_regs();
    void assign_regs_trivial();
+   void split_virtual_grfs();
    void calculate_live_intervals();
    bool propagate_constants();
    bool register_coalesce();
