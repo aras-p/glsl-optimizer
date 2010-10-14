@@ -194,53 +194,48 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT))
       surface_type |= EGL_PBUFFER_BIT;
 
-   SET_CONFIG_ATTRIB(conf, EGL_CONFORMANT, api_mask);
-   SET_CONFIG_ATTRIB(conf, EGL_RENDERABLE_TYPE, api_mask);
+   conf->Conformant = api_mask;
+   conf->RenderableType = api_mask;
 
-   SET_CONFIG_ATTRIB(conf, EGL_RED_SIZE, rgba[0]);
-   SET_CONFIG_ATTRIB(conf, EGL_GREEN_SIZE, rgba[1]);
-   SET_CONFIG_ATTRIB(conf, EGL_BLUE_SIZE, rgba[2]);
-   SET_CONFIG_ATTRIB(conf, EGL_ALPHA_SIZE, rgba[3]);
-   SET_CONFIG_ATTRIB(conf, EGL_BUFFER_SIZE, buffer_size);
+   conf->RedSize = rgba[0];
+   conf->GreenSize = rgba[1];
+   conf->BlueSize = rgba[2];
+   conf->AlphaSize = rgba[3];
+   conf->BufferSize = buffer_size;
 
-   SET_CONFIG_ATTRIB(conf, EGL_DEPTH_SIZE, depth_stencil[0]);
-   SET_CONFIG_ATTRIB(conf, EGL_STENCIL_SIZE, depth_stencil[1]);
+   conf->DepthSize = depth_stencil[0];
+   conf->StencilSize = depth_stencil[1];
 
-   SET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE, surface_type);
+   conf->SurfaceType = surface_type;
 
-   SET_CONFIG_ATTRIB(conf, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   conf->NativeRenderable = EGL_TRUE;
    if (surface_type & EGL_WINDOW_BIT) {
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_ID, nconf->native_visual_id);
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_TYPE,
-            nconf->native_visual_type);
+      conf->NativeVisualID = nconf->native_visual_id;
+      conf->NativeVisualType = nconf->native_visual_type;
    }
 
    if (surface_type & EGL_PBUFFER_BIT) {
-      SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE);
+      conf->BindToTextureRGB = EGL_TRUE;
       if (rgba[3])
-         SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE);
+         conf->BindToTextureRGBA = EGL_TRUE;
 
-      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_WIDTH, 4096);
-      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_HEIGHT, 4096);
-      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_PIXELS, 4096 * 4096);
+      conf->MaxPbufferWidth = 4096;
+      conf->MaxPbufferHeight = 4096;
+      conf->MaxPbufferPixels = 4096 * 4096;
    }
 
-   SET_CONFIG_ATTRIB(conf, EGL_LEVEL, nconf->level);
-   SET_CONFIG_ATTRIB(conf, EGL_SAMPLES, nconf->samples);
-   SET_CONFIG_ATTRIB(conf, EGL_SAMPLE_BUFFERS, 1);
+   conf->Level = nconf->level;
+   conf->Samples = nconf->samples;
+   conf->SampleBuffers = 0;
 
    if (nconf->slow_config)
-      SET_CONFIG_ATTRIB(conf, EGL_CONFIG_CAVEAT, EGL_SLOW_CONFIG);
+      conf->ConfigCaveat = EGL_SLOW_CONFIG;
 
    if (nconf->transparent_rgb) {
-      rgba[0] = nconf->transparent_rgb_values[0];
-      rgba[1] = nconf->transparent_rgb_values[1];
-      rgba[2] = nconf->transparent_rgb_values[2];
-
-      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_TYPE, EGL_TRANSPARENT_RGB);
-      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_RED_VALUE, rgba[0]);
-      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_GREEN_VALUE, rgba[1]);
-      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_BLUE_VALUE, rgba[2]);
+      conf->TransparentType = EGL_TRANSPARENT_RGB;
+      conf->TransparentRedValue = nconf->transparent_rgb_values[0];
+      conf->TransparentGreenValue = nconf->transparent_rgb_values[1];
+      conf->TransparentBlueValue = nconf->transparent_rgb_values[2];
    }
 
    return _eglValidateConfig(conf, EGL_FALSE);
