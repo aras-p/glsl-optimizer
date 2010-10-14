@@ -1702,10 +1702,10 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       _mesa_update_state(ctx);
 
    if (ctx->Shader.CurrentProgram) {
-      unsigned i;
+      struct gl_shader_program *const prog = ctx->Shader.CurrentProgram;
 
       /* using shaders */
-      if (!ctx->Shader.CurrentProgram->LinkStatus) {
+      if (!prog->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(shader not linked)", where);
          return GL_FALSE;
@@ -1713,10 +1713,9 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 #if 0 /* not normally enabled */
       {
          char errMsg[100];
-         if (!_mesa_validate_shader_program(ctx, ctx->Shader.CurrentProgram,
-                                            errMsg)) {
+         if (!_mesa_validate_shader_program(ctx, prog, errMsg)) {
             _mesa_warning(ctx, "Shader program %u is invalid: %s",
-                          ctx->Shader.CurrentProgram->Name, errMsg);
+                          prog->Name, errMsg);
          }
       }
 #endif
@@ -1725,13 +1724,12 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
        * any stages that are not provided, the corresponding assembly shader
        * target will be validated below.
        */
-      for (i = 0; i < ctx->Shader.CurrentProgram->_NumLinkedShaders; i++) {
-	 switch (ctx->Shader.CurrentProgram->_LinkedShaders[i]->Type) {
-	 case GL_VERTEX_SHADER: vert_from_glsl_shader = true; break;
-	 case GL_GEOMETRY_SHADER_ARB: geom_from_glsl_shader = true; break;
-	 case GL_FRAGMENT_SHADER: frag_from_glsl_shader = true; break;
-	 }
-      }
+      vert_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL;
+      geom_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL;
+      frag_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL;
    }
 
 

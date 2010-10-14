@@ -326,10 +326,12 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    shProg->TransformFeedback.NumVarying = 0;
 
 
-   for (i = 0; i < shProg->_NumLinkedShaders; i++) {
-      ctx->Driver.DeleteShader(ctx, shProg->_LinkedShaders[i]);
+   for (i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (shProg->_LinkedShaders[i] != NULL) {
+	 ctx->Driver.DeleteShader(ctx, shProg->_LinkedShaders[i]);
+	 shProg->_LinkedShaders[i] = NULL;
+      }
    }
-   shProg->_NumLinkedShaders = 0;
 }
 
 

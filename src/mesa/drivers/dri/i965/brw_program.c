@@ -148,15 +148,9 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
        * using the new FS backend.
        */
       shader_program = _mesa_lookup_shader_program(ctx, prog->Id);
-      if (shader_program) {
-	 for (i = 0; i < shader_program->_NumLinkedShaders; i++) {
-	    struct brw_shader *shader;
-
-	    shader = (struct brw_shader *)shader_program->_LinkedShaders[i];
-	    if (shader->base.Type == GL_FRAGMENT_SHADER && shader->ir) {
-	       return GL_TRUE;
-	    }
-	 }
+      if (shader_program
+	  && shader_program->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
+	 return GL_TRUE;
       }
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {

@@ -2238,8 +2238,12 @@ set_uniform_initializers(struct gl_context *ctx,
 {
    void *mem_ctx = NULL;
 
-   for (unsigned int i = 0; i < shader_program->_NumLinkedShaders; i++) {
+   for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_shader *shader = shader_program->_LinkedShaders[i];
+
+      if (shader == NULL)
+	 continue;
+
       foreach_iter(exec_list_iterator, iter, *shader->ir) {
 	 ir_instruction *ir = (ir_instruction *)iter.get();
 	 ir_variable *var = ir->as_variable();
@@ -2467,7 +2471,10 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    assert(prog->LinkStatus);
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
       const struct gl_shader_compiler_options *options =
@@ -2511,9 +2518,12 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_ir_tree(ir);
    }
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_program *linked_prog;
       bool ok = true;
+
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
 
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 

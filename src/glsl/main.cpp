@@ -40,8 +40,19 @@
 extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
+extern "C" void
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh);
+
 /* Copied from shader_api.c for the stand-alone compiler.
  */
+void
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh)
+{
+   *ptr = sh;
+}
+
 struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
@@ -319,7 +330,7 @@ main(int argc, char **argv)
 	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
 
-   for (unsigned i = 0; i < whole_program->_NumLinkedShaders; i++)
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++)
       talloc_free(whole_program->_LinkedShaders[i]);
 
    talloc_free(whole_program);

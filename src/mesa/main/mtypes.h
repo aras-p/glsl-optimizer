@@ -2117,11 +2117,12 @@ struct gl_shader_program
 
    /**
     * Per-stage shaders resulting from the first stage of linking.
+    *
+    * Set of linked shaders for this program.  The array is accessed using the
+    * \c MESA_SHADER_* defines.  Entries for non-existent stages will be
+    * \c NULL.
     */
-   /*@{*/
-   GLuint _NumLinkedShaders;
-   struct gl_shader *_LinkedShaders[2];
-   /*@}*/
+   struct gl_shader *_LinkedShaders[MESA_SHADER_TYPES];
 };   
 
 
