@@ -26,14 +26,14 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
-static inline ir_precision higher_precision (ir_precision a, ir_precision b)
+static inline glsl_precision higher_precision (glsl_precision a, glsl_precision b)
 {
 	return MIN2 (a, b);
 }
-static inline ir_precision higher_precision (ir_instruction* a, ir_instruction* b)
+static inline glsl_precision higher_precision (ir_instruction* a, ir_instruction* b)
 {
 	if (!a && !b)
-		return ir_precision_undefined;
+		return glsl_precision_undefined;
 	if (!a)
 		return precision_from_ir (b);
 	if (!b)
@@ -42,7 +42,7 @@ static inline ir_precision higher_precision (ir_instruction* a, ir_instruction* 
 }
 
 
-ir_rvalue::ir_rvalue(ir_precision precision)
+ir_rvalue::ir_rvalue(glsl_precision precision)
 : precision(precision)
 {
    this->type = glsl_type::error_type;
@@ -363,14 +363,14 @@ ir_expression::get_operator(const char *str)
 }
 
 ir_constant::ir_constant()
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
 }
 
 ir_constant::ir_constant(const struct glsl_type *type,
 			 const ir_constant_data *data)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    assert((type->base_type >= GLSL_TYPE_UINT)
 	  && (type->base_type <= GLSL_TYPE_BOOL));
@@ -381,7 +381,7 @@ ir_constant::ir_constant(const struct glsl_type *type,
 }
 
 ir_constant::ir_constant(float f)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
    this->type = glsl_type::float_type;
@@ -392,7 +392,7 @@ ir_constant::ir_constant(float f)
 }
 
 ir_constant::ir_constant(unsigned int u)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
    this->type = glsl_type::uint_type;
@@ -403,7 +403,7 @@ ir_constant::ir_constant(unsigned int u)
 }
 
 ir_constant::ir_constant(int i)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
    this->type = glsl_type::int_type;
@@ -414,7 +414,7 @@ ir_constant::ir_constant(int i)
 }
 
 ir_constant::ir_constant(bool b)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
    this->type = glsl_type::bool_type;
@@ -440,7 +440,7 @@ ir_constant::ir_constant(const ir_constant *c, unsigned i)
 }
 
 ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
-: ir_rvalue(ir_precision_undefined)
+: ir_rvalue(glsl_precision_undefined)
 {
    this->ir_type = ir_type_constant;
    this->type = type;
@@ -1095,7 +1095,7 @@ ir_swizzle::variable_referenced()
 }
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
-			 ir_variable_mode mode, ir_precision precision)
+			 ir_variable_mode mode, glsl_precision precision)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
      mode(mode), interpolation(ir_var_smooth), precision(precision), array_lvalue(false)
 {
@@ -1131,10 +1131,10 @@ const char *
 ir_variable::precision_string() const
 {
    switch (this->precision) {
-   case ir_precision_high:   return "highp ";
-   case ir_precision_medium: return "mediump ";
-   case ir_precision_low:    return "lowp ";
-   case ir_precision_undefined:    return "";
+   case glsl_precision_high:   return "highp ";
+   case glsl_precision_medium: return "mediump ";
+   case glsl_precision_low:    return "lowp ";
+   case glsl_precision_undefined:    return "";
    }
 
    assert(!"Should not get here.");
@@ -1149,7 +1149,7 @@ ir_variable::component_slots() const
 }
 
 
-ir_function_signature::ir_function_signature(const glsl_type *return_type, ir_precision precision)
+ir_function_signature::ir_function_signature(const glsl_type *return_type, glsl_precision precision)
    : return_type(return_type), precision(precision), is_defined(false), _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
@@ -1285,16 +1285,16 @@ reparent_ir(exec_list *list, void *mem_ctx)
 }
 
 
-ir_precision
+glsl_precision
 precision_from_ir (ir_instruction* ir)
 {
 	if (!ir)
-		return ir_precision_undefined;
+		return glsl_precision_undefined;
 	ir_variable* var = ir->as_variable();
 	if (var)
-		return (ir_precision)var->precision;
+		return (glsl_precision)var->precision;
 	ir_rvalue* rv = ir->as_rvalue();
 	if (rv)
 		return rv->get_precision();
-	return ir_precision_high;
+	return glsl_precision_high;
 }

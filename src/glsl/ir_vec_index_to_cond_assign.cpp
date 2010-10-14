@@ -89,7 +89,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
    /* Store the index to a temporary to avoid reusing its tree. */
    index = new(base_ir) ir_variable(glsl_type::int_type,
 				    "vec_index_tmp_i",
-				    ir_var_temporary, ir_precision_undefined);
+				    ir_var_temporary, glsl_precision_undefined);
    base_ir->insert_before(index);
    deref = new(base_ir) ir_dereference_variable(index);
    assign = new(base_ir) ir_assignment(deref, orig_deref->array_index, NULL);
@@ -173,7 +173,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 
    /* Store the index to a temporary to avoid reusing its tree. */
    index = new(ir) ir_variable(glsl_type::int_type, "vec_index_tmp_i",
-			       ir_var_temporary, ir_precision_undefined);
+			       ir_var_temporary, glsl_precision_undefined);
    ir->insert_before(index);
    deref = new(ir) ir_dereference_variable(index);
    assign = new(ir) ir_assignment(deref, orig_deref->array_index, NULL);

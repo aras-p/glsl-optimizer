@@ -409,7 +409,7 @@ process_array_constructor(exec_list *instructions,
       return new(ctx) ir_constant(constructor_type, &actual_parameters);
 
    ir_variable *var = new(ctx) ir_variable(constructor_type, "array_ctor",
-					   ir_var_temporary, ir_precision_undefined); ///@TODO
+					   ir_var_temporary, glsl_precision_undefined); ///@TODO
    instructions->push_tail(var);
 
    int i = 0;
@@ -478,7 +478,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, "vec_ctor", ir_var_temporary, (ir_precision)ast_precision);
+   ir_variable *var = new(ctx) ir_variable(type, "vec_ctor", ir_var_temporary, (glsl_precision)ast_precision);
    instructions->push_tail(var);
 
    /* There are two kinds of vector constructors.
@@ -668,7 +668,7 @@ emit_inline_matrix_constructor(const glsl_type *type, unsigned ast_precision,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, "mat_ctor", ir_var_temporary, (ir_precision)ast_precision);
+   ir_variable *var = new(ctx) ir_variable(type, "mat_ctor", ir_var_temporary, (glsl_precision)ast_precision);
    instructions->push_tail(var);
 
    /* There are three kinds of matrix constructors.
@@ -692,7 +692,7 @@ emit_inline_matrix_constructor(const glsl_type *type, unsigned ast_precision,
        */
       ir_variable *rhs_var =
 	 new(ctx) ir_variable(glsl_type::vec4_type, "mat_ctor_vec",
-			      ir_var_temporary, (ir_precision)ast_precision);
+			      ir_var_temporary, (glsl_precision)ast_precision);
       instructions->push_tail(rhs_var);
 
       ir_constant_data zero;
@@ -805,7 +805,7 @@ emit_inline_matrix_constructor(const glsl_type *type, unsigned ast_precision,
        */
       ir_variable *const rhs_var =
 	 new(ctx) ir_variable(first_param->type, "mat_ctor_mat",
-			      ir_var_temporary, (ir_precision)ast_precision);
+			      ir_var_temporary, (glsl_precision)ast_precision);
       instructions->push_tail(rhs_var);
 
       ir_dereference *const rhs_var_ref =
@@ -866,7 +866,7 @@ emit_inline_matrix_constructor(const glsl_type *type, unsigned ast_precision,
 	  * generate a temporary and copy the paramter there.
 	  */
 	 ir_variable *rhs_var =
-	    new(ctx) ir_variable(rhs->type, "mat_ctor_vec", ir_var_temporary, (ir_precision)ast_precision);
+	    new(ctx) ir_variable(rhs->type, "mat_ctor_vec", ir_var_temporary, (glsl_precision)ast_precision);
 	 instructions->push_tail(rhs_var);
 
 	 ir_dereference *rhs_var_ref =
@@ -933,7 +933,7 @@ emit_inline_record_constructor(const glsl_type *type,
 			       void *mem_ctx)
 {
    ir_variable *const var =
-      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary, ir_precision_undefined);
+      new(mem_ctx) ir_variable(type, "record_ctor", ir_var_temporary, glsl_precision_undefined);
    ir_dereference_variable *const d = new(mem_ctx) ir_dereference_variable(var);
 
    instructions->push_tail(var);
@@ -1113,7 +1113,7 @@ ast_function_expression::hir(exec_list *instructions,
 
 	    /* Create a temporary containing the matrix. */
 	    ir_variable *var = new(ctx) ir_variable(matrix->type, "matrix_tmp",
-						    ir_var_temporary, ir_precision_undefined);
+						    ir_var_temporary, glsl_precision_undefined);
 	    instructions->push_tail(var);
 	    instructions->push_tail(new(ctx) ir_assignment(new(ctx)
 	       ir_dereference_variable(var), matrix, NULL));

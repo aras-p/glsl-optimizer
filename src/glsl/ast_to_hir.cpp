@@ -897,7 +897,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "and_tmp",
-						       ir_var_temporary, ir_precision_undefined);
+						       ir_var_temporary, glsl_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -962,7 +962,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp",
-						       ir_var_temporary, ir_precision_undefined);
+						       ir_var_temporary, glsl_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1153,7 +1153,7 @@ ast_expression::hir(exec_list *instructions,
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
 	 ir_variable *const tmp =
-	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, ir_precision_undefined);
+	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, glsl_precision_undefined);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1814,7 +1814,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 var_type = decl_type;
       }
 
-      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, (ir_precision)this->type->specifier->precision);
+      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, (glsl_precision)this->type->specifier->precision);
 
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
@@ -2236,7 +2236,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    }
 
    is_void = false;
-   ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in, (ir_precision)this->type->specifier->precision);
+   ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in, (glsl_precision)this->type->specifier->precision);
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
@@ -2429,7 +2429,7 @@ ast_function::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (sig == NULL) {
-      sig = new(ctx) ir_function_signature(return_type, (ir_precision)this->return_type->specifier->precision);
+      sig = new(ctx) ir_function_signature(return_type, (glsl_precision)this->return_type->specifier->precision);
       f->add_signature(sig);
    }
 

@@ -289,7 +289,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
    ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
    if (sig == NULL && skip_body) {
       /* If scanning for prototypes, generate a new signature. */
-      sig = new(ctx) ir_function_signature(return_type, ir_precision_undefined);
+      sig = new(ctx) ir_function_signature(return_type, glsl_precision_undefined);
       sig->is_builtin = true;
       f->add_signature(sig);
    } else if (sig != NULL) {
@@ -432,7 +432,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    ir_variable *var = new(ctx) ir_variable(type, var_name->value(),
-					   ir_var_auto, ir_precision_undefined);
+					   ir_var_auto, glsl_precision_undefined);
 
    foreach_iter(exec_list_iterator, it, quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());

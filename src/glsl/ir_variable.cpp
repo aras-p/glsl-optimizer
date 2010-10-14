@@ -35,7 +35,7 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
 	     const glsl_type *type, exec_list *instructions,
 		     glsl_symbol_table *symtab)
 {
-   ir_variable *var = new(symtab) ir_variable(type, name, mode, ir_precision_undefined);
+   ir_variable *var = new(symtab) ir_variable(type, name, mode, glsl_precision_undefined);
 
    switch (var->mode) {
    case ir_var_auto:

@@ -39,7 +39,7 @@ ir_variable *
 ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_variable *var = new(mem_ctx) ir_variable(this->type, this->name,
-					       (ir_variable_mode) this->mode, (ir_precision)this->precision);
+					       (ir_variable_mode) this->mode, (glsl_precision)this->precision);
 
    var->max_array_access = this->max_array_access;
    var->read_only = this->read_only;

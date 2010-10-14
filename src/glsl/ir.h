@@ -88,11 +88,11 @@ enum ir_node_type {
 };
 
 
-enum ir_precision {
-	ir_precision_high = 0, /**< Default precision. */
-	ir_precision_medium,
-	ir_precision_low,
-	ir_precision_undefined,
+enum glsl_precision {
+	glsl_precision_high = 0,
+	glsl_precision_medium,
+	glsl_precision_low,
+	glsl_precision_undefined,
 };
 
 
@@ -184,12 +184,12 @@ public:
       return NULL;
    }
 
-   ir_precision get_precision() const { return precision; }
+   glsl_precision get_precision() const { return precision; }
 
 protected:
-   ir_rvalue(ir_precision precision);
+   ir_rvalue(glsl_precision precision);
 
-   ir_precision precision;
+   glsl_precision precision;
 };
 
 
@@ -215,7 +215,7 @@ enum ir_variable_interpolation {
 
 class ir_variable : public ir_instruction {
 public:
-   ir_variable(const struct glsl_type *, const char *, ir_variable_mode, ir_precision);
+   ir_variable(const struct glsl_type *, const char *, ir_variable_mode, glsl_precision);
 
    virtual ir_variable *clone(void *mem_ctx, struct hash_table *ht) const;
 
@@ -354,7 +354,7 @@ class ir_function_signature : public ir_instruction {
     * an ir_function.
     */
 public:
-   ir_function_signature(const glsl_type *return_type, ir_precision precision);
+   ir_function_signature(const glsl_type *return_type, glsl_precision precision);
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
@@ -407,7 +407,7 @@ public:
     */
    const struct glsl_type *return_type;
 
-   ir_precision precision;
+   glsl_precision precision;
 
    /**
     * List of ir_variable of function parameters.
@@ -937,7 +937,7 @@ public:
 
 private:
    ir_call()
-      : ir_rvalue(ir_precision_undefined), callee(NULL)
+      : ir_rvalue(glsl_precision_undefined), callee(NULL)
    {
       this->ir_type = ir_type_call;
    }
@@ -1109,7 +1109,7 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : ir_rvalue(ir_precision_low), op(op), projector(NULL), shadow_comparitor(NULL)
+      : ir_rvalue(glsl_precision_low), op(op), projector(NULL), shadow_comparitor(NULL)
    {
       this->ir_type = ir_type_texture;
    }
@@ -1267,7 +1267,7 @@ public:
    virtual ir_variable *variable_referenced() = 0;
 
 protected:
-	ir_dereference(ir_precision precision) : ir_rvalue(precision) { }
+	ir_dereference(glsl_precision precision) : ir_rvalue(precision) { }
 };
 
 
@@ -1541,7 +1541,7 @@ ir_has_call_skip_builtins(ir_instruction *ir);
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
 
-extern ir_precision
+extern glsl_precision
 precision_from_ir (ir_instruction* ir);
 
 #endif /* IR_H */
