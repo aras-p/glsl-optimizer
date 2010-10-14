@@ -127,13 +127,15 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 
 void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
-   install_vtxfmt( ctx->Exec, vfmt );
+   if (ctx->API == API_OPENGL)
+      install_vtxfmt( ctx->Exec, vfmt );
 }
 
 
 void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
-   install_vtxfmt( ctx->Save, vfmt );
+   if (ctx->API == API_OPENGL)
+      install_vtxfmt( ctx->Save, vfmt );
 }
 
 
