@@ -10,7 +10,7 @@ LIBRARY_INCLUDES = \
 	$(shell pkg-config libkms --atleast-version=1.0 \
 				&& echo "-DHAVE_LIBKMS") \
 	$(shell pkg-config libkms --silence-errors --cflags-only-I) \
-	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
+	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto dri2proto) \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/include \
