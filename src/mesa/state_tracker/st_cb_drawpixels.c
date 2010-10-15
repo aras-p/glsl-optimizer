@@ -172,10 +172,15 @@ make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean w
 {
    struct gl_context *ctx = st->ctx;
    struct gl_program *p;
+   struct st_fragment_program *stp;
    GLuint ic = 0;
+   const GLuint shaderIndex = write_depth * 2 + write_stencil;
 
-   if (st->drawpix.z_shader) {
-      return st->drawpix.z_shader->driver_shader;
+   assert(shaderIndex < Elements(st->drawpix.shaders));
+
+   if (st->drawpix.shaders[shaderIndex]) {
+      /* already have the proper shader */
+      return st->drawpix.shaders[shaderIndex]->driver_shader;
    }
 
    /*
@@ -235,10 +240,15 @@ make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean w
    p->SamplersUsed =  0x1;  /* sampler 0 (bit 0) is used */
    if (write_stencil)
       p->SamplersUsed |= 1 << 1;
-   st->drawpix.z_shader = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, st->drawpix.z_shader);
 
-   return st->drawpix.z_shader->driver_shader;
+   stp = st_fragment_program((struct gl_fragment_program *) p);
+
+   /* save the new shader */
+   st->drawpix.shaders[shaderIndex] = stp;
+
+   st_translate_fragment_program(st, stp);
+
+   return stp->driver_shader;
 }
 
 
@@ -1194,7 +1204,13 @@ void st_init_drawpixels_functions(struct dd_function_table *functions)
 void
 st_destroy_drawpix(struct st_context *st)
 {
-   st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
+   GLuint i;
+
+   for (i = 0; i < Elements(st->drawpix.shaders); i++) {
+      if (st->drawpix.shaders[i])
+         st_reference_fragprog(st, &st->drawpix.shaders[i], NULL);
+   }
+
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
    if (st->drawpix.vert_shaders[0])
       ureg_free_tokens(st->drawpix.vert_shaders[0]);
