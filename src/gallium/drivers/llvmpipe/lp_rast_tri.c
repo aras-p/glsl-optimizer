@@ -261,9 +261,9 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
    struct { unsigned mask:16; unsigned i:8; unsigned j:8; } out[16];
    unsigned nr = 0;
 
-   __m128i p0 = _mm_loadu_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
-   __m128i p1 = _mm_loadu_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
-   __m128i p2 = _mm_loadu_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
+   __m128i p0 = _mm_load_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
+   __m128i p1 = _mm_load_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
+   __m128i p2 = _mm_load_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
    __m128i zero = _mm_setzero_si128();
 
    __m128i c;
@@ -367,9 +367,9 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
    int x = (arg.triangle.plane_mask & 0xff) + task->x;
    int y = (arg.triangle.plane_mask >> 8) + task->y;
 
-   __m128i p0 = _mm_loadu_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
-   __m128i p1 = _mm_loadu_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
-   __m128i p2 = _mm_loadu_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
+   __m128i p0 = _mm_load_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
+   __m128i p1 = _mm_load_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
+   __m128i p2 = _mm_load_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
    __m128i zero = _mm_setzero_si128();
 
    __m128i c;

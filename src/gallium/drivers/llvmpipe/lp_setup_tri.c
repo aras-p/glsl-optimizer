@@ -382,9 +382,9 @@ do_triangle_ccw(struct lp_setup_context *setup,
       transpose4_epi32(&c, &dcdx, &dcdy, &eo,
                        &p0, &p1, &p2, &unused);
 
-      _mm_storeu_si128((__m128i *)&plane[0], p0);
-      _mm_storeu_si128((__m128i *)&plane[1], p1);
-      _mm_storeu_si128((__m128i *)&plane[2], p2);
+      _mm_store_si128((__m128i *)&plane[0], p0);
+      _mm_store_si128((__m128i *)&plane[1], p1);
+      _mm_store_si128((__m128i *)&plane[2], p2);
    }
 #else
    {
