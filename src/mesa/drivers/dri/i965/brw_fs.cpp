@@ -94,53 +94,53 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_shader *shader =
       (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (shader != NULL) {
-	 void *mem_ctx = talloc_new(NULL);
-	 bool progress;
+      void *mem_ctx = talloc_new(NULL);
+      bool progress;
 
-	 if (shader->ir)
-	    talloc_free(shader->ir);
-	 shader->ir = new(shader) exec_list;
-	 clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
+      if (shader->ir)
+	 talloc_free(shader->ir);
+      shader->ir = new(shader) exec_list;
+      clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
-	 do_mat_op_to_vec(shader->ir);
-	 do_mod_to_fract(shader->ir);
-	 do_div_to_mul_rcp(shader->ir);
-	 do_sub_to_add_neg(shader->ir);
-	 do_explog_to_explog2(shader->ir);
-	 do_lower_texture_projection(shader->ir);
-	 brw_do_cubemap_normalize(shader->ir);
+      do_mat_op_to_vec(shader->ir);
+      do_mod_to_fract(shader->ir);
+      do_div_to_mul_rcp(shader->ir);
+      do_sub_to_add_neg(shader->ir);
+      do_explog_to_explog2(shader->ir);
+      do_lower_texture_projection(shader->ir);
+      brw_do_cubemap_normalize(shader->ir);
 
-	 do {
-	    progress = false;
+      do {
+	 progress = false;
 
-	    brw_do_channel_expressions(shader->ir);
-	    brw_do_vector_splitting(shader->ir);
+	 brw_do_channel_expressions(shader->ir);
+	 brw_do_vector_splitting(shader->ir);
 
-	    progress = do_lower_jumps(shader->ir, true, true,
-				      true, /* main return */
-				      false, /* continue */
-				      false /* loops */
-				      ) || progress;
+	 progress = do_lower_jumps(shader->ir, true, true,
+				   true, /* main return */
+				   false, /* continue */
+				   false /* loops */
+				   ) || progress;
 
-	    progress = do_common_optimization(shader->ir, true, 32) || progress;
+	 progress = do_common_optimization(shader->ir, true, 32) || progress;
 
-	    progress = lower_noise(shader->ir) || progress;
-	    progress =
-	       lower_variable_index_to_cond_assign(shader->ir,
-						   GL_TRUE, /* input */
-						   GL_TRUE, /* output */
-						   GL_TRUE, /* temp */
-						   GL_TRUE /* uniform */
-						   ) || progress;
-	    if (intel->gen == 6) {
-	       progress = do_if_to_cond_assign(shader->ir) || progress;
-	    }
-	 } while (progress);
+	 progress = lower_noise(shader->ir) || progress;
+	 progress =
+	    lower_variable_index_to_cond_assign(shader->ir,
+						GL_TRUE, /* input */
+						GL_TRUE, /* output */
+						GL_TRUE, /* temp */
+						GL_TRUE /* uniform */
+						) || progress;
+	 if (intel->gen == 6) {
+	    progress = do_if_to_cond_assign(shader->ir) || progress;
+	 }
+      } while (progress);
 
-	 validate_ir_tree(shader->ir);
+      validate_ir_tree(shader->ir);
 
-	 reparent_ir(shader->ir, shader->ir);
-	 talloc_free(mem_ctx);
+      reparent_ir(shader->ir, shader->ir);
+      talloc_free(mem_ctx);
    }
 
    if (!_mesa_ir_link_shader(ctx, prog))
