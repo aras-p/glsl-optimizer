@@ -15,7 +15,7 @@ sw_screen_wrap(struct pipe_screen *screen)
    struct sw_winsys *sws;
    struct pipe_screen *sw_screen;
 
-   sws = wrapper_sw_winsys_warp_pipe_screen(screen);
+   sws = wrapper_sw_winsys_wrap_pipe_screen(screen);
    if (!sws)
       goto err;
 

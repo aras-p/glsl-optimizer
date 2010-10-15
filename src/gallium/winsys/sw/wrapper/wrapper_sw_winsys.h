@@ -30,6 +30,6 @@
 struct sw_winsys;
 struct pipe_screen;
 
-struct sw_winsys *wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen);
+struct sw_winsys *wrapper_sw_winsys_wrap_pipe_screen(struct pipe_screen *screen);
 
 #endif

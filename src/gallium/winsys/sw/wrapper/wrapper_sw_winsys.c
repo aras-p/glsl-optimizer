@@ -272,7 +272,7 @@ wsw_destroy(struct sw_winsys *ws)
 }
 
 struct sw_winsys *
-wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
+wrapper_sw_winsys_wrap_pipe_screen(struct pipe_screen *screen)
 {
    struct wrapper_sw_winsys *wsw = CALLOC_STRUCT(wrapper_sw_winsys);
 
