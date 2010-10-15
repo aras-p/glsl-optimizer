@@ -1482,7 +1482,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
 
       if (!validate_vertex_shader_executable(prog, sh))
-	  goto done;
+	 goto done;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_VERTEX],
 			     sh);
@@ -1496,7 +1496,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
 
       if (!validate_fragment_shader_executable(prog, sh))
-	  goto done;
+	 goto done;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
 			     sh);
