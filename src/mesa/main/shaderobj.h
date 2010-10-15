@@ -27,6 +27,7 @@
 #define SHADEROBJ_H
 
 
+#include "main/compiler.h"
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "program/ir_to_mesa.h"
