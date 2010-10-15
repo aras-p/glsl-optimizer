@@ -29,6 +29,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "lp_bld_const.h"
 #include "lp_bld_printf.h"
 
 
@@ -119,3 +120,22 @@ lp_build_printf(LLVMBuilderRef builder, const char *fmt, ...)
    return LLVMBuildCall(builder, func_printf, params, argcount + 1, "");
 }
 
+
+
+/**
+ * Print a float[4] vector.
+ */
+LLVMValueRef
+lp_build_print_vec4(LLVMBuilderRef builder, const char *msg, LLVMValueRef vec)
+{
+   char format[1000];
+   LLVMValueRef x, y, z, w;
+
+   x = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(0), "");
+   y = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(1), "");
+   z = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(2), "");
+   w = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(3), "");
+
+   snprintf(format, sizeof(format), "%s %%f %%f %%f %%f\n", msg);
+   return lp_build_printf(builder, format, x, y, z, w);
+}

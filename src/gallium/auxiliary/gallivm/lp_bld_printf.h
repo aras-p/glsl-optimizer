@@ -35,5 +35,9 @@
 LLVMValueRef lp_build_const_string_variable(LLVMModuleRef module, const char *str, int len);
 LLVMValueRef lp_build_printf(LLVMBuilderRef builder, const char *fmt, ...);
 
+LLVMValueRef
+lp_build_print_vec4(LLVMBuilderRef builder, const char *msg, LLVMValueRef vec);
+
+
 #endif
 
