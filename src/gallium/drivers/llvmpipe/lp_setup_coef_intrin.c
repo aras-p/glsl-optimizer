@@ -40,14 +40,13 @@
 #include <emmintrin.h>
 
 
-static void constant_coef4( struct lp_rast_shader_inputs *inputs,
-			    const struct lp_tri_info *info,
+static void constant_coef4( struct lp_tri_info *info,
 			    unsigned slot,
 			    const float *attr)
 {
-   *(__m128 *)inputs->a0[slot]   = *(__m128 *)attr;
-   *(__m128 *)inputs->dadx[slot] = _mm_set1_ps(0.0);
-   *(__m128 *)inputs->dady[slot] = _mm_set1_ps(0.0);
+   *(__m128 *)info->a0[slot]   = *(__m128 *)attr;
+   *(__m128 *)info->dadx[slot] = _mm_set1_ps(0.0);
+   *(__m128 *)info->dady[slot] = _mm_set1_ps(0.0);
 }
 
 
@@ -56,8 +55,7 @@ static void constant_coef4( struct lp_rast_shader_inputs *inputs,
  * Setup the fragment input attribute with the front-facing value.
  * \param frontface  is the triangle front facing?
  */
-static void setup_facing_coef( struct lp_rast_shader_inputs *inputs,
-			       const struct lp_tri_info *info,
+static void setup_facing_coef( struct lp_tri_info *info,
 			       unsigned slot )
 {
    /* XXX: just pass frontface directly to the shader, don't bother
@@ -66,15 +64,14 @@ static void setup_facing_coef( struct lp_rast_shader_inputs *inputs,
    __m128 a0 = _mm_setr_ps(info->frontfacing ? 1.0 : -1.0,
 			   0, 0, 0);
 
-   *(__m128 *)inputs->a0[slot]   = a0;
-   *(__m128 *)inputs->dadx[slot] = _mm_set1_ps(0.0);
-   *(__m128 *)inputs->dady[slot] = _mm_set1_ps(0.0);
+   *(__m128 *)info->a0[slot]   = a0;
+   *(__m128 *)info->dadx[slot] = _mm_set1_ps(0.0);
+   *(__m128 *)info->dady[slot] = _mm_set1_ps(0.0);
 }
 
 
 
-static void calc_coef4( struct lp_rast_shader_inputs *inputs,
-			const struct lp_tri_info *info,
+static void calc_coef4(	const struct lp_tri_info *info,
 			unsigned slot,
 			__m128 a0,
 			__m128 a1,
@@ -96,14 +93,13 @@ static void calc_coef4( struct lp_rast_shader_inputs *inputs,
    __m128 attr_v0       = _mm_add_ps(dadx_x0, dady_y0);
    __m128 attr_0        = _mm_sub_ps(a0, attr_v0);
 
-   *(__m128 *)inputs->a0[slot]   = attr_0;
-   *(__m128 *)inputs->dadx[slot] = dadx;
-   *(__m128 *)inputs->dady[slot] = dady;
+   *(__m128 *)info->a0[slot]   = attr_0;
+   *(__m128 *)info->dadx[slot] = dadx;
+   *(__m128 *)info->dady[slot] = dady;
 }
 
 
-static void linear_coef( struct lp_rast_shader_inputs *inputs,
-                         const struct lp_tri_info *info,
+static void linear_coef( struct lp_tri_info *info,
                          unsigned slot,
                          unsigned vert_attr)
 {
@@ -111,7 +107,7 @@ static void linear_coef( struct lp_rast_shader_inputs *inputs,
    __m128 a1 = *(const __m128 *)info->v1[vert_attr];
    __m128 a2 = *(const __m128 *)info->v2[vert_attr];
 
-   calc_coef4(inputs, info, slot, a0, a1, a2);
+   calc_coef4(info, slot, a0, a1, a2);
 }
 
 
@@ -124,8 +120,7 @@ static void linear_coef( struct lp_rast_shader_inputs *inputs,
  * Later, when we compute the value at a particular fragment position we'll
  * divide the interpolated value by the interpolated W at that fragment.
  */
-static void perspective_coef( struct lp_rast_shader_inputs *inputs,
-                              const struct lp_tri_info *info,
+static void perspective_coef( const struct lp_tri_info *info,
                               unsigned slot,
 			      unsigned vert_attr)
 {
@@ -139,7 +134,7 @@ static void perspective_coef( struct lp_rast_shader_inputs *inputs,
    __m128 a1_oow = _mm_mul_ps(a1, _mm_set1_ps(info->v1[0][3]));
    __m128 a2_oow = _mm_mul_ps(a2, _mm_set1_ps(info->v2[0][3]));
 
-   calc_coef4(inputs, info, slot, a0_oow, a1_oow, a2_oow);
+   calc_coef4(info, slot, a0_oow, a1_oow, a2_oow);
 }
 
 
@@ -174,11 +169,14 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
    info.dx20_ooa  = dx20 * oneoverarea;
    info.dy01_ooa  = dy01 * oneoverarea;
    info.dy20_ooa  = dy20 * oneoverarea;
+   info.a0 = GET_A0(inputs);
+   info.dadx = GET_DADX(inputs);
+   info.dady = GET_DADY(inputs);
 
 
    /* The internal position input is in slot zero:
     */
-   linear_coef(inputs, &info, 0, 0);
+   linear_coef(&info, 0, 0);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -188,19 +186,19 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
          if (setup->flatshade_first) {
-	    constant_coef4(inputs, &info, slot+1, info.v0[vert_attr]);
+	    constant_coef4(&info, slot+1, info.v0[vert_attr]);
          }
          else {
-	    constant_coef4(inputs, &info, slot+1, info.v2[vert_attr]);
+	    constant_coef4(&info, slot+1, info.v2[vert_attr]);
          }
          break;
 
       case LP_INTERP_LINEAR:
-	 linear_coef(inputs, &info, slot+1, vert_attr);
+	 linear_coef(&info, slot+1, vert_attr);
          break;
 
       case LP_INTERP_PERSPECTIVE:
-	 perspective_coef(inputs, &info, slot+1, vert_attr);
+	 perspective_coef(&info, slot+1, vert_attr);
          break;
 
       case LP_INTERP_POSITION:
@@ -211,7 +209,7 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
          break;
 
       case LP_INTERP_FACING:
-         setup_facing_coef(inputs, &info, slot+1);
+         setup_facing_coef(&info, slot+1);
          break;
 
       default:

@@ -178,6 +178,7 @@ debug_triangle(int tilex, int tiley,
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
+   const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
    struct lp_rast_plane plane[8];
    int x, y;
    int count = 0;
@@ -190,7 +191,7 @@ debug_triangle(int tilex, int tiley,
    }
 
    while (plane_mask) {
-      plane[nr_planes] = tri->plane[u_bit_scan(&plane_mask)];
+      plane[nr_planes] = tri_plane[u_bit_scan(&plane_mask)];
       plane[nr_planes].c = (plane[nr_planes].c +
                             plane[nr_planes].dcdy * tiley -
                             plane[nr_planes].dcdx * tilex);

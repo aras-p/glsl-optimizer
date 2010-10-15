@@ -78,13 +78,14 @@ struct lp_rast_state {
  * These pointers point into the bin data buffer.
  */
 struct lp_rast_shader_inputs {
-   unsigned frontfacing;     /** One for front-facing */
-   unsigned disable:1;  /** Partially binned, disable this command */
-   unsigned opaque:1;   /** Is opaque */
-
-   float (*a0)[4];
-   float (*dadx)[4];
-   float (*dady)[4];
+   unsigned frontfacing:1;      /** True for front-facing */
+   unsigned disable:1;          /** Partially binned, disable this command */
+   unsigned opaque:1;           /** Is opaque */
+   unsigned pad0:29;            /* wasted space */
+   unsigned stride;             /* how much to advance data between a0, dadx, dady */
+   unsigned pad2;               /* wasted space */
+   unsigned pad3;               /* wasted space */
+   /* followed by a0, dadx, dady and planes[] */
 };
 
 /* Note: the order of these values is important as they are loaded by
@@ -111,15 +112,22 @@ struct lp_rast_plane {
  * Objects of this type are put into the lp_setup_context::data buffer.
  */
 struct lp_rast_triangle {
-   /* inputs for the shader */
-   struct lp_rast_shader_inputs inputs;
-
 #ifdef DEBUG
    float v[3][2];
+   float pad0;
+   float pad1;
 #endif
 
-   struct lp_rast_plane plane[8]; /* NOTE: may allocate fewer planes */
+   /* inputs for the shader */
+   struct lp_rast_shader_inputs inputs;
+   /* planes are also allocated here */
 };
+
+
+#define GET_A0(inputs) ((float (*)[4])((inputs)+1))
+#define GET_DADX(inputs) ((float (*)[4])((char *)((inputs) + 1) + (inputs)->stride))
+#define GET_DADY(inputs) ((float (*)[4])((char *)((inputs) + 1) + 2 * (inputs)->stride))
+#define GET_PLANES(tri) ((struct lp_rast_plane *)((char *)(&(tri)->inputs + 1) + 3 * (tri)->inputs.stride))
 
 
 

@@ -42,20 +42,19 @@
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  */
-static void constant_coef( struct lp_rast_shader_inputs *inputs,
+static void constant_coef( struct lp_tri_info *info,
                            unsigned slot,
 			   const float value,
                            unsigned i )
 {
-   inputs->a0[slot][i] = value;
-   inputs->dadx[slot][i] = 0.0f;
-   inputs->dady[slot][i] = 0.0f;
+   info->a0[slot][i] = value;
+   info->dadx[slot][i] = 0.0f;
+   info->dady[slot][i] = 0.0f;
 }
 
 
 
-static void linear_coef( struct lp_rast_shader_inputs *inputs,
-                         const struct lp_tri_info *info,
+static void linear_coef( struct lp_tri_info *info,
                          unsigned slot,
                          unsigned vert_attr,
                          unsigned i)
@@ -69,8 +68,8 @@ static void linear_coef( struct lp_rast_shader_inputs *inputs,
    float dadx = (da01 * info->dy20_ooa - info->dy01_ooa * da20);
    float dady = (da20 * info->dx01_ooa - info->dx20_ooa * da01);
 
-   inputs->dadx[slot][i] = dadx;
-   inputs->dady[slot][i] = dady;
+   info->dadx[slot][i] = dadx;
+   info->dady[slot][i] = dady;
 
    /* calculate a0 as the value which would be sampled for the
     * fragment at (0,0), taking into account that we want to sample at
@@ -84,7 +83,7 @@ static void linear_coef( struct lp_rast_shader_inputs *inputs,
     * to define a0 as the sample at a pixel center somewhere near vmin
     * instead - i'll switch to this later.
     */
-   inputs->a0[slot][i] = a0 - (dadx * info->x0_center +
+   info->a0[slot][i] = a0 - (dadx * info->x0_center +
 				   dady * info->y0_center);
 }
 
@@ -97,8 +96,7 @@ static void linear_coef( struct lp_rast_shader_inputs *inputs,
  * Later, when we compute the value at a particular fragment position we'll
  * divide the interpolated value by the interpolated W at that fragment.
  */
-static void perspective_coef( struct lp_rast_shader_inputs *inputs,
-                              const struct lp_tri_info *info,
+static void perspective_coef( struct lp_tri_info *info,
                               unsigned slot,
 			      unsigned vert_attr,
                               unsigned i)
@@ -113,9 +111,9 @@ static void perspective_coef( struct lp_rast_shader_inputs *inputs,
    float dadx = da01 * info->dy20_ooa - info->dy01_ooa * da20;
    float dady = da20 * info->dx01_ooa - info->dx20_ooa * da01;
 
-   inputs->dadx[slot][i] = dadx;
-   inputs->dady[slot][i] = dady;
-   inputs->a0[slot][i] = a0 - (dadx * info->x0_center +
+   info->dadx[slot][i] = dadx;
+   info->dady[slot][i] = dady;
+   info->a0[slot][i] = a0 - (dadx * info->x0_center +
 				   dady * info->y0_center);
 }
 
@@ -127,23 +125,22 @@ static void perspective_coef( struct lp_rast_shader_inputs *inputs,
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
 static void
-setup_fragcoord_coef(struct lp_rast_shader_inputs *inputs,
-                     const struct lp_tri_info *info,
+setup_fragcoord_coef(struct lp_tri_info *info,
                      unsigned slot,
                      unsigned usage_mask)
 {
    /*X*/
    if (usage_mask & TGSI_WRITEMASK_X) {
-      inputs->a0[slot][0] = 0.0;
-      inputs->dadx[slot][0] = 1.0;
-      inputs->dady[slot][0] = 0.0;
+      info->a0[slot][0] = 0.0;
+      info->dadx[slot][0] = 1.0;
+      info->dady[slot][0] = 0.0;
    }
 
    /*Y*/
    if (usage_mask & TGSI_WRITEMASK_Y) {
-      inputs->a0[slot][1] = 0.0;
-      inputs->dadx[slot][1] = 0.0;
-      inputs->dady[slot][1] = 1.0;
+      info->a0[slot][1] = 0.0;
+      info->dadx[slot][1] = 0.0;
+      info->dady[slot][1] = 1.0;
    }
 
    /*Z*/
@@ -162,23 +159,23 @@ setup_fragcoord_coef(struct lp_rast_shader_inputs *inputs,
  * Setup the fragment input attribute with the front-facing value.
  * \param frontface  is the triangle front facing?
  */
-static void setup_facing_coef( struct lp_rast_shader_inputs *inputs,
+static void setup_facing_coef( struct lp_tri_info *info,
                                unsigned slot,
                                boolean frontface,
                                unsigned usage_mask)
 {
    /* convert TRUE to 1.0 and FALSE to -1.0 */
    if (usage_mask & TGSI_WRITEMASK_X)
-      constant_coef( inputs, slot, 2.0f * frontface - 1.0f, 0 );
+      constant_coef( info, slot, 2.0f * frontface - 1.0f, 0 );
 
    if (usage_mask & TGSI_WRITEMASK_Y)
-      constant_coef( inputs, slot, 0.0f, 1 ); /* wasted */
+      constant_coef( info, slot, 0.0f, 1 ); /* wasted */
 
    if (usage_mask & TGSI_WRITEMASK_Z)
-      constant_coef( inputs, slot, 0.0f, 2 ); /* wasted */
+      constant_coef( info, slot, 0.0f, 2 ); /* wasted */
 
    if (usage_mask & TGSI_WRITEMASK_W)
-      constant_coef( inputs, slot, 0.0f, 3 ); /* wasted */
+      constant_coef( info, slot, 0.0f, 3 ); /* wasted */
 }
 
 
@@ -212,6 +209,10 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
    info.dx20_ooa  = dx20 * oneoverarea;
    info.dy01_ooa  = dy01 * oneoverarea;
    info.dy20_ooa  = dy20 * oneoverarea;
+   info.a0 = GET_A0(inputs);
+   info.dadx = GET_DADX(inputs);
+   info.dady = GET_DADY(inputs);
+      
 
 
    /* setup interpolation for all the remaining attributes:
@@ -225,25 +226,25 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
          if (setup->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(inputs, slot+1, info.v0[vert_attr][i], i);
+                  constant_coef(&info, slot+1, info.v0[vert_attr][i], i);
          }
          else {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(inputs, slot+1, info.v2[vert_attr][i], i);
+                  constant_coef(&info, slot+1, info.v2[vert_attr][i], i);
          }
          break;
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               linear_coef(inputs, &info, slot+1, vert_attr, i);
+               linear_coef(&info, slot+1, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               perspective_coef(inputs, &info, slot+1, vert_attr, i);
+               perspective_coef(&info, slot+1, vert_attr, i);
          fragcoord_usage_mask |= TGSI_WRITEMASK_W;
          break;
 
@@ -257,7 +258,7 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
          break;
 
       case LP_INTERP_FACING:
-         setup_facing_coef(inputs, slot+1, info.frontfacing, usage_mask);
+         setup_facing_coef(&info, slot+1, info.frontfacing, usage_mask);
          break;
 
       default:
@@ -267,7 +268,7 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   setup_fragcoord_coef(inputs, &info, 0, fragcoord_usage_mask);
+   setup_fragcoord_coef(&info, 0, fragcoord_usage_mask);
 }
 
 #else

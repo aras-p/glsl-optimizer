@@ -52,6 +52,10 @@ struct lp_tri_info {
    const float (*v2)[4];
 
    boolean frontfacing;		/* remove eventually */
+
+   float (*a0)[4];
+   float (*dadx)[4];
+   float (*dady)[4];
 };
 
 void lp_setup_tri_coef( struct lp_setup_context *setup,

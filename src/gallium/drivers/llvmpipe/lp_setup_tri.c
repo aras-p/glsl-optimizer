@@ -75,23 +75,24 @@ lp_setup_alloc_triangle(struct lp_scene *scene,
                         unsigned *tri_size)
 {
    unsigned input_array_sz = NUM_CHANNELS * (nr_inputs + 1) * sizeof(float);
+   unsigned plane_sz = nr_planes * sizeof(struct lp_rast_plane);
    struct lp_rast_triangle *tri;
-   unsigned tri_bytes, bytes;
-   char *inputs;
 
-   tri_bytes = align(Offset(struct lp_rast_triangle, plane[nr_planes]), 16);
-   bytes = tri_bytes + (3 * input_array_sz);
+   *tri_size = (sizeof(struct lp_rast_triangle) +
+                3 * input_array_sz +
+                plane_sz);
 
-   tri = lp_scene_alloc_aligned( scene, bytes, 16 );
-
+   tri = lp_scene_alloc_aligned( scene, *tri_size, 16 );
    if (tri) {
-      inputs = ((char *)tri) + tri_bytes;
-      tri->inputs.a0   = (float (*)[4]) inputs;
-      tri->inputs.dadx = (float (*)[4]) (inputs + input_array_sz);
-      tri->inputs.dady = (float (*)[4]) (inputs + 2 * input_array_sz);
-
-      *tri_size = bytes;
+      tri->inputs.stride = input_array_sz;
    }
+
+   {
+      char *a = (char *)tri;
+      char *b = (char *)&GET_PLANES(tri)[nr_planes];
+      assert(b - a == *tri_size);
+   }
+
 
    return tri;
 }
@@ -228,6 +229,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 {
    struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *tri;
+   struct lp_rast_plane *plane;
    int x[3];
    int y[3];
    struct u_rect bbox;
@@ -296,7 +298,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    if (!tri)
       return FALSE;
 
-#ifdef DEBUG
+#if 0
    tri->v[0][0] = v0[0][0];
    tri->v[1][0] = v1[0][0];
    tri->v[2][0] = v2[0][0];
@@ -305,13 +307,14 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->v[2][1] = v2[0][1];
 #endif
 
-   tri->plane[0].dcdy = x[0] - x[1];
-   tri->plane[1].dcdy = x[1] - x[2];
-   tri->plane[2].dcdy = x[2] - x[0];
+   plane = GET_PLANES(tri);
+   plane[0].dcdy = x[0] - x[1];
+   plane[1].dcdy = x[1] - x[2];
+   plane[2].dcdy = x[2] - x[0];
 
-   tri->plane[0].dcdx = y[0] - y[1];
-   tri->plane[1].dcdx = y[1] - y[2];
-   tri->plane[2].dcdx = y[2] - y[0];
+   plane[0].dcdx = y[0] - y[1];
+   plane[1].dcdx = y[1] - y[2];
+   plane[2].dcdx = y[2] - y[0];
 
    LP_COUNT(nr_tris);
 
@@ -325,12 +328,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
   
    for (i = 0; i < 3; i++) {
-      struct lp_rast_plane *plane = &tri->plane[i];
-
       /* half-edge constants, will be interated over the whole render
        * target.
        */
-      plane->c = plane->dcdx * x[i] - plane->dcdy * y[i];
+      plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
 
       /* correct for top-left vs. bottom-left fill convention.  
        *
@@ -345,38 +346,38 @@ do_triangle_ccw(struct lp_setup_context *setup,
        * to its usual method, in which case it will probably want
        * to use the opposite, top-left convention.
        */         
-      if (plane->dcdx < 0) {
+      if (plane[i].dcdx < 0) {
          /* both fill conventions want this - adjust for left edges */
-         plane->c++;            
+         plane[i].c++;            
       }
-      else if (plane->dcdx == 0) {
+      else if (plane[i].dcdx == 0) {
          if (setup->pixel_offset == 0) {
             /* correct for top-left fill convention:
              */
-            if (plane->dcdy > 0) plane->c++;
+            if (plane[i].dcdy > 0) plane[i].c++;
          }
          else {
             /* correct for bottom-left fill convention:
              */
-            if (plane->dcdy < 0) plane->c++;
+            if (plane[i].dcdy < 0) plane[i].c++;
          }
       }
 
-      plane->dcdx *= FIXED_ONE;
-      plane->dcdy *= FIXED_ONE;
+      plane[i].dcdx *= FIXED_ONE;
+      plane[i].dcdy *= FIXED_ONE;
 
       /* find trivial reject offsets for each edge for a single-pixel
        * sized block.  These will be scaled up at each recursive level to
        * match the active blocksize.  Scaling in this way works best if
        * the blocks are square.
        */
-      plane->eo = 0;
-      if (plane->dcdx < 0) plane->eo -= plane->dcdx;
-      if (plane->dcdy > 0) plane->eo += plane->dcdy;
+      plane[i].eo = 0;
+      if (plane[i].dcdx < 0) plane[i].eo -= plane[i].dcdx;
+      if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
 
       /* Calculate trivial accept offsets from the above.
        */
-      plane->ei = plane->dcdy - plane->dcdx - plane->eo;
+      plane[i].ei = plane[i].dcdy - plane[i].dcdx - plane[i].eo;
    }
 
 
@@ -399,29 +400,29 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
-      tri->plane[3].dcdx = -1;
-      tri->plane[3].dcdy = 0;
-      tri->plane[3].c = 1-bbox.x0;
-      tri->plane[3].ei = 0;
-      tri->plane[3].eo = 1;
+      plane[3].dcdx = -1;
+      plane[3].dcdy = 0;
+      plane[3].c = 1-bbox.x0;
+      plane[3].ei = 0;
+      plane[3].eo = 1;
 
-      tri->plane[4].dcdx = 1;
-      tri->plane[4].dcdy = 0;
-      tri->plane[4].c = bbox.x1+1;
-      tri->plane[4].ei = -1;
-      tri->plane[4].eo = 0;
+      plane[4].dcdx = 1;
+      plane[4].dcdy = 0;
+      plane[4].c = bbox.x1+1;
+      plane[4].ei = -1;
+      plane[4].eo = 0;
 
-      tri->plane[5].dcdx = 0;
-      tri->plane[5].dcdy = 1;
-      tri->plane[5].c = 1-bbox.y0;
-      tri->plane[5].ei = 0;
-      tri->plane[5].eo = 1;
+      plane[5].dcdx = 0;
+      plane[5].dcdy = 1;
+      plane[5].c = 1-bbox.y0;
+      plane[5].ei = 0;
+      plane[5].eo = 1;
 
-      tri->plane[6].dcdx = 0;
-      tri->plane[6].dcdy = -1;
-      tri->plane[6].c = bbox.y1+1;
-      tri->plane[6].ei = -1;
-      tri->plane[6].eo = 0;
+      plane[6].dcdx = 0;
+      plane[6].dcdy = -1;
+      plane[6].c = bbox.y1+1;
+      plane[6].ei = -1;
+      plane[6].eo = 0;
    }
 
    return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
@@ -525,6 +526,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    }
    else
    {
+      struct lp_rast_plane *plane = GET_PLANES(tri);
       int c[MAX_PLANES];
       int ei[MAX_PLANES];
       int eo[MAX_PLANES];
@@ -538,14 +540,14 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       int iy1 = bbox->y1 / TILE_SIZE;
       
       for (i = 0; i < nr_planes; i++) {
-         c[i] = (tri->plane[i].c + 
-                 tri->plane[i].dcdy * iy0 * TILE_SIZE - 
-                 tri->plane[i].dcdx * ix0 * TILE_SIZE);
+         c[i] = (plane[i].c + 
+                 plane[i].dcdy * iy0 * TILE_SIZE - 
+                 plane[i].dcdx * ix0 * TILE_SIZE);
 
-         ei[i] = tri->plane[i].ei << TILE_ORDER;
-         eo[i] = tri->plane[i].eo << TILE_ORDER;
-         xstep[i] = -(tri->plane[i].dcdx << TILE_ORDER);
-         ystep[i] = tri->plane[i].dcdy << TILE_ORDER;
+         ei[i] = plane[i].ei << TILE_ORDER;
+         eo[i] = plane[i].eo << TILE_ORDER;
+         xstep[i] = -(plane[i].dcdx << TILE_ORDER);
+         ystep[i] = plane[i].dcdy << TILE_ORDER;
       }
 
 
