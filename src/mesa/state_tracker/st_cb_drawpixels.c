@@ -162,14 +162,15 @@ combined_drawpix_fragment_program(struct gl_context *ctx)
 
 
 /**
- * Create fragment shader that does a TEX() instruction to get a Z
- * value, then writes to FRAG_RESULT_DEPTH.
+ * Create fragment shader that does a TEX() instruction to get a Z and/or
+ * stencil value value, then writes to FRAG_RESULT_DEPTH/FRAG_RESULT_STENCIL.
+ * Used for glDrawPixels(GL_DEPTH_COMPONENT / GL_STENCIL_INDEX).
  * Pass fragment color through as-is.
  * \return pointer to the Gallium driver fragment shader
  */
 static void *
-make_fragment_shader_z(struct st_context *st, GLboolean write_depth,
-                       GLboolean write_stencil)
+make_fragment_shader_z_stencil(struct st_context *st, GLboolean write_depth,
+                               GLboolean write_stencil)
 {
    struct gl_context *ctx = st->ctx;
    struct gl_program *p;
@@ -663,6 +664,10 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 }
 
 
+/**
+ * Software fallback to do glDrawPixels(GL_STENCIL_INDEX) when we
+ * can't use a fragment shader to write stencil values.
+ */
 static void
 draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height, GLenum format, GLenum type,
@@ -860,7 +865,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    st_validate_state(st);
 
    if (write_depth || write_stencil) {
-      driver_fp = make_fragment_shader_z(st, write_depth, write_stencil);
+      driver_fp = make_fragment_shader_z_stencil(st, write_depth, write_stencil);
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
@@ -912,6 +917,9 @@ stencil_fallback:
 
 
 
+/**
+ * Software fallback for glCopyPixels(GL_STENCIL).
+ */
 static void
 copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
@@ -1062,7 +1070,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-      driver_fp = make_fragment_shader_z(st, GL_TRUE, GL_FALSE);
+      driver_fp = make_fragment_shader_z_stencil(st, GL_TRUE, GL_FALSE);
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
