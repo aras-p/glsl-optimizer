@@ -364,6 +364,71 @@ unary_arithmetic_result_type(const struct glsl_type *type,
    return type;
 }
 
+/**
+ * \brief Return the result type of a bit-logic operation.
+ *
+ * If the given types to the bit-logic operator are invalid, return
+ * glsl_type::error_type.
+ *
+ * \param type_a Type of LHS of bit-logic op
+ * \param type_b Type of RHS of bit-logic op
+ */
+static const struct glsl_type *
+bit_logic_result_type(const struct glsl_type *type_a,
+                      const struct glsl_type *type_b,
+                      ast_operators op,
+                      struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
+{
+    if (state->language_version < 130) {
+       _mesa_glsl_error(loc, state, "bit operations require GLSL 1.30");
+       return glsl_type::error_type;
+    }
+
+    /* From page 50 (page 56 of PDF) of GLSL 1.30 spec:
+     *
+     *     "The bitwise operators and (&), exclusive-or (^), and inclusive-or
+     *     (|). The operands must be of type signed or unsigned integers or
+     *     integer vectors."
+     */
+    if (!type_a->is_integer()) {
+       _mesa_glsl_error(loc, state, "LHS of `%s' must be an integer",
+                         ast_expression::operator_string(op));
+       return glsl_type::error_type;
+    }
+    if (!type_b->is_integer()) {
+       _mesa_glsl_error(loc, state, "RHS of `%s' must be an integer",
+                        ast_expression::operator_string(op));
+       return glsl_type::error_type;
+    }
+
+    /*     "The fundamental types of the operands (signed or unsigned) must
+     *     match,"
+     */
+    if (type_a->base_type != type_b->base_type) {
+       _mesa_glsl_error(loc, state, "operands of `%s' must have the same "
+                        "base type", ast_expression::operator_string(op));
+       return glsl_type::error_type;
+    }
+
+    /*     "The operands cannot be vectors of differing size." */
+    if (type_a->is_vector() &&
+        type_b->is_vector() &&
+        type_a->vector_elements != type_b->vector_elements) {
+       _mesa_glsl_error(loc, state, "operands of `%s' cannot be vectors of "
+                        "different sizes", ast_expression::operator_string(op));
+       return glsl_type::error_type;
+    }
+
+    /*     "If one operand is a scalar and the other a vector, the scalar is
+     *     applied component-wise to the vector, resulting in the same type as
+     *     the vector. The fundamental types of the operands [...] will be the
+     *     resulting fundamental type."
+     */
+    if (type_a->is_scalar())
+        return type_b;
+    else
+        return type_a;
+}
 
 static const struct glsl_type *
 modulus_result_type(const struct glsl_type *type_a,
@@ -888,38 +953,8 @@ ast_expression::hir(exec_list *instructions,
    case ast_bit_or:
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
-
-      if (state->language_version < 130) {
-	 _mesa_glsl_error(&loc, state, "bit-wise operations require GLSL 1.30");
-	 error_emitted = true;
-      }
-
-      if (!op[0]->type->is_integer()) {
-	 _mesa_glsl_error(&loc, state, "LHS of `%s' must be an integer",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
-
-      if (!op[1]->type->is_integer()) {
-	 _mesa_glsl_error(&loc, state, "RHS of `%s' must be an integer",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
-
-      if (op[0]->type->base_type != op[1]->type->base_type) {
-	 _mesa_glsl_error(&loc, state, "operands of `%s' must have the same "
-			  "base type", operator_string(this->oper));
-	 error_emitted = true;
-      }
-
-      if (op[0]->type->is_vector() && op[1]->type->is_vector()
-	  && op[0]->type->vector_elements != op[1]->type->vector_elements) {
-	 _mesa_glsl_error(&loc, state, "operands of `%s' cannot be vectors of "
-			  "different sizes", operator_string(this->oper));
-	 error_emitted = true;
-      }
-
-      type = op[0]->type->is_scalar() ? op[1]->type : op[0]->type;
+      type = bit_logic_result_type(op[0]->type, op[1]->type, this->oper,
+                                   state, &loc);
       result = new(ctx) ir_expression(operations[this->oper], type,
 				      op[0], op[1]);
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
