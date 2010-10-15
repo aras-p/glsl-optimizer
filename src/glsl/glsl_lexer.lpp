@@ -250,7 +250,7 @@ layout		{
 \<\<=		return LEFT_ASSIGN;
 >>=		return RIGHT_ASSIGN;
 &=		return AND_ASSIGN;
-^=		return XOR_ASSIGN;
+"^="		return XOR_ASSIGN;
 \|=		return OR_ASSIGN;
 -=		return SUB_ASSIGN;
 
