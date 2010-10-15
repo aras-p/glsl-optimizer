@@ -30,6 +30,15 @@
 struct sw_winsys;
 struct pipe_screen;
 
+/*
+ * Wrap a pipe screen.
+ */
 struct sw_winsys *wrapper_sw_winsys_wrap_pipe_screen(struct pipe_screen *screen);
+
+/*
+ * Destroy the sw_winsys and return the wrapped pipe_screen.
+ * Not destroying it as sw_winsys::destroy does.
+ */
+struct pipe_screen *wrapper_sw_winsys_dewrap_pipe_screen(struct sw_winsys *sw_winsys);
 
 #endif

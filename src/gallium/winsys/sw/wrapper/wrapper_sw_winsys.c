@@ -304,3 +304,16 @@ err_free:
 err:
    return NULL;
 }
+
+struct pipe_screen *
+wrapper_sw_winsys_dewrap_pipe_screen(struct sw_winsys *ws)
+{
+   struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
+   struct pipe_screen *screen = wsw->screen;
+
+   wsw->pipe->destroy(wsw->pipe);
+   /* don't destroy the screen its needed later on */
+
+   FREE(wsw);
+   return screen;
+}

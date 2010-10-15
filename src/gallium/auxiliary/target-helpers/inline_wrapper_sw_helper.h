@@ -26,9 +26,9 @@ sw_screen_wrap(struct pipe_screen *screen)
    return sw_screen;
 
 err_winsys:
-   sws->destroy(sws);
+   return wrapper_sw_winsys_dewrap_pipe_screen(sws);
 err:
-  return screen;
+   return screen;
 }
 
 #endif
