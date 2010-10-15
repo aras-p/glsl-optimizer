@@ -1197,11 +1197,19 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_and_assign:
    case ast_xor_assign:
-   case ast_or_assign:
-      _mesa_glsl_error(& loc, state,
-		       "FINISHME: implement logic assignment operators");
-      error_emitted = true;
+   case ast_or_assign: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+      type = bit_logic_result_type(op[0]->type, op[1]->type, this->oper,
+                                   state, &loc);
+      ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
+                                                   type, op[0], op[1]);
+      result = do_assignment(instructions, state, op[0]->clone(ctx, NULL),
+                             temp_rhs,
+                             this->subexpressions[0]->get_location());
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
       break;
+   }
 
    case ast_conditional: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
