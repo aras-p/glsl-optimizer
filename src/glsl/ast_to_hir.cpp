@@ -447,6 +447,71 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    return glsl_type::bool_type;
 }
 
+/**
+ * \brief Return the result type of a bit-shift operation.
+ *
+ * If the given types to the bit-shift operator are invalid, return
+ * glsl_type::error_type.
+ *
+ * \param type_a Type of LHS of bit-shift op
+ * \param type_b Type of RHS of bit-shift op
+ */
+static const struct glsl_type *
+shift_result_type(const struct glsl_type *type_a,
+                  const struct glsl_type *type_b,
+                  ast_operators op,
+                  struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
+{
+   if (state->language_version < 130) {
+      _mesa_glsl_error(loc, state, "bit operations require GLSL 1.30");
+      return glsl_type::error_type;
+   }
+
+   /* From page 50 (page 56 of the PDF) of the GLSL 1.30 spec:
+    *
+    *     "The shift operators (<<) and (>>). For both operators, the operands
+    *     must be signed or unsigned integers or integer vectors. One operand
+    *     can be signed while the other is unsigned."
+    */
+   if (!type_a->is_integer()) {
+      _mesa_glsl_error(loc, state, "LHS of operator %s must be an integer or "
+              "integer vector", ast_expression::operator_string(op));
+     return glsl_type::error_type;
+
+   }
+   if (!type_b->is_integer()) {
+      _mesa_glsl_error(loc, state, "RHS of operator %s must be an integer or "
+              "integer vector", ast_expression::operator_string(op));
+     return glsl_type::error_type;
+   }
+
+   /*     "If the first operand is a scalar, the second operand has to be
+    *     a scalar as well."
+    */
+   if (type_a->is_scalar() && !type_b->is_scalar()) {
+      _mesa_glsl_error(loc, state, "If the first operand of %s is scalar, the "
+              "second must be scalar as well",
+              ast_expression::operator_string(op));
+     return glsl_type::error_type;
+   }
+
+   /* If both operands are vectors, check that they have same number of
+    * elements.
+    */
+   if (type_a->is_vector() &&
+      type_b->is_vector() &&
+      type_a->vector_elements != type_b->vector_elements) {
+      _mesa_glsl_error(loc, state, "Vector operands to operator %s must "
+              "have same number of elements",
+              ast_expression::operator_string(op));
+     return glsl_type::error_type;
+   }
+
+   /*     "In all cases, the resulting type will be the same type as the left
+    *     operand."
+    */
+   return type_a;
+}
 
 /**
  * Validates that a value can be assigned to a location with a specified type
@@ -754,49 +819,10 @@ ast_expression::hir(exec_list *instructions,
           error_emitted = true;
        }
 
-       /* From page 50 (page 56 of the PDF) of the GLSL 1.30 spec:
-        *
-        *     The shift operators (<<) and (>>). For both operators, the operands
-        *     must be signed or unsigned integers or integer vectors. One operand
-        *     can be signed while the other is unsigned. In all cases, the
-        *     resulting type will be the same type as the left operand. If the
-        *     first operand is a scalar, the second operand has to be a scalar as
-        *     well. If the first operand is a vector, the second operand must be
-        *     a scalar or a vector, [...]
-        */
-
        op[0] = this->subexpressions[0]->hir(instructions, state);
        op[1] = this->subexpressions[1]->hir(instructions, state);
-
-       if (!op[0]->type->is_integer()) {
-           _mesa_glsl_error(& loc, state,
-               "LHS of operator %s must be an integer or integer vector",
-               operator_string(this->oper));
-           error_emitted = true;
-       }
-       if (!op[1]->type->is_integer()) {
-           _mesa_glsl_error(& loc, state,
-               "RHS of operator %s must be an integer or integer vector",
-               operator_string(this->oper));
-           error_emitted = true;
-       }
-       if (op[0]->type->is_scalar() && !op[1]->type->is_scalar()) {
-           _mesa_glsl_error(& loc, state,
-               "If the first operand of %s is scalar, the second must be"
-               "scalar as well", operator_string(this->oper));
-           error_emitted = true;
-       }
-       if (op[0]->type->is_vector() &&
-           op[1]->type->is_vector() &&
-           op[0]->type->components() != op[1]->type->components()) {
-
-           _mesa_glsl_error(& loc, state,
-               "Vector operands of %s must have same number of components",
-               operator_string(this->oper));
-           error_emitted = true;
-       }
-
-       type = op[0]->type;
+       type = shift_result_type(op[0]->type, op[1]->type, this->oper, state,
+                                &loc);
        result = new(ctx) ir_expression(operations[this->oper], type,
                                        op[0], op[1]);
        error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
