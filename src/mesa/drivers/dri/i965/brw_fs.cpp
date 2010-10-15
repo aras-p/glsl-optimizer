@@ -180,7 +180,8 @@ type_size(const struct glsl_type *type)
 }
 
 static const fs_reg reg_undef;
-static const fs_reg reg_null(ARF, BRW_ARF_NULL);
+static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
+static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 int
 fs_visitor::virtual_grf_alloc(int size)
@@ -207,6 +208,15 @@ fs_reg::fs_reg(enum register_file file, int hw_reg)
    this->file = file;
    this->hw_reg = hw_reg;
    this->type = BRW_REGISTER_TYPE_F;
+}
+
+/** Fixed HW reg constructor. */
+fs_reg::fs_reg(enum register_file file, int hw_reg, uint32_t type)
+{
+   init();
+   this->file = file;
+   this->hw_reg = hw_reg;
+   this->type = type;
 }
 
 int
@@ -572,7 +582,7 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       inst = emit(fs_inst(opcode, dst, src0, src1));
    } else {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1), src1));
-      inst = emit(fs_inst(opcode, dst, src0, reg_null));
+      inst = emit(fs_inst(opcode, dst, src0, reg_null_f));
 
       inst->base_mrf = base_mrf;
       inst->mlen = 2;
@@ -725,12 +735,12 @@ fs_visitor::visit(ir_expression *ir)
 
       emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(0.0f)));
 
-      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
+      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_G;
       inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(1.0f)));
       inst->predicated = true;
 
-      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
+      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_L;
       inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(-1.0f)));
       inst->predicated = true;
@@ -1303,8 +1313,8 @@ fs_visitor::visit(ir_discard *ir)
 
    assert(ir->condition == NULL); /* FINISHME */
 
-   emit(fs_inst(FS_OPCODE_DISCARD_NOT, temp, reg_null));
-   emit(fs_inst(FS_OPCODE_DISCARD_AND, reg_null, temp));
+   emit(fs_inst(FS_OPCODE_DISCARD_NOT, temp, reg_null_d));
+   emit(fs_inst(FS_OPCODE_DISCARD_AND, reg_null_d, temp));
    kill_emitted = true;
 }
 
@@ -1353,67 +1363,68 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(fs_inst(BRW_OPCODE_ADD, reg_null, op[0], fs_reg(-1)));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 inst = emit(fs_inst(BRW_OPCODE_AND, reg_null_d, op[0], fs_reg(1)));
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 break;
 
       case ir_binop_logic_xor:
-	 inst = emit(fs_inst(BRW_OPCODE_XOR, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_XOR, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_logic_or:
-	 inst = emit(fs_inst(BRW_OPCODE_OR, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_OR, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_logic_and:
-	 inst = emit(fs_inst(BRW_OPCODE_AND, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_AND, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_unop_f2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
+	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d,
+				op[0], fs_reg(0.0f)));
 	 } else {
-	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, op[0]));
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null_d, op[0]));
 	 }
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_unop_i2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0)));
+	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], fs_reg(0)));
 	 } else {
-	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, op[0]));
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null_d, op[0]));
 	 }
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_greater:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_G;
 	 break;
       case ir_binop_gequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_GE;
 	 break;
       case ir_binop_less:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 	 break;
       case ir_binop_lequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_LE;
 	 break;
       case ir_binop_equal:
       case ir_binop_all_equal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 break;
       case ir_binop_nequal:
       case ir_binop_any_nequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
       default:
@@ -1427,11 +1438,11 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
    ir->accept(this);
 
    if (intel->gen >= 6) {
-      fs_inst *inst = emit(fs_inst(BRW_OPCODE_AND, reg_null,
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_AND, reg_null_d,
 				   this->result, fs_reg(1)));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    } else {
-      fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null, this->result));
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null_d, this->result));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    }
 }
@@ -1496,7 +1507,7 @@ fs_visitor::visit(ir_loop *ir)
       this->base_ir = ir->to;
       ir->to->accept(this);
 
-      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null,
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d,
 				   counter, this->result));
       switch (ir->cmp) {
       case ir_binop_equal:
@@ -3277,6 +3288,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	       printf("   %s\n", last_annotation_string);
 	 }
 	 brw_disasm(stdout, &p->store[i], intel->gen);
+	 printf("0x%08x 0x%08x 0x%08x 0x%08x\n",
+		((uint32_t *)&p->store[i])[3],
+		((uint32_t *)&p->store[i])[2],
+		((uint32_t *)&p->store[i])[1],
+		((uint32_t *)&p->store[i])[0]);
       }
       printf("\n");
    }

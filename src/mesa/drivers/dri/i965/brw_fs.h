@@ -144,6 +144,7 @@ public:
    }
 
    fs_reg(enum register_file file, int hw_reg);
+   fs_reg(enum register_file file, int hw_reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    /** Register file: ARF, GRF, MRF, IMM. */
