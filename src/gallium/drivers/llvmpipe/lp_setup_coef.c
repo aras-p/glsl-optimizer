@@ -145,12 +145,12 @@ setup_fragcoord_coef(struct lp_tri_info *info,
 
    /*Z*/
    if (usage_mask & TGSI_WRITEMASK_Z) {
-      linear_coef(inputs, info, slot, 0, 2);
+      linear_coef(info, slot, 0, 2);
    }
 
    /*W*/
    if (usage_mask & TGSI_WRITEMASK_W) {
-      linear_coef(inputs, info, slot, 0, 3);
+      linear_coef(info, slot, 0, 3);
    }
 }
 
