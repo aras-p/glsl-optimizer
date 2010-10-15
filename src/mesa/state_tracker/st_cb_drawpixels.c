@@ -38,27 +38,27 @@
 #include "main/texstore.h"
 #include "program/program.h"
 #include "program/prog_print.h"
+#include "program/prog_instruction.h"
 
-#include "st_debug.h"
-#include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
-#include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
+#include "st_context.h"
+#include "st_debug.h"
 #include "st_format.h"
+#include "st_program.h"
 #include "st_texture.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "util/u_inlines.h"
 #include "tgsi/tgsi_ureg.h"
-#include "util/u_tile.h"
 #include "util/u_draw_quad.h"
 #include "util/u_format.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
-#include "program/prog_instruction.h"
+#include "util/u_tile.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -168,7 +168,8 @@ combined_drawpix_fragment_program(struct gl_context *ctx)
  * \return pointer to the Gallium driver fragment shader
  */
 static void *
-make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean write_stencil)
+make_fragment_shader_z(struct st_context *st, GLboolean write_depth,
+                       GLboolean write_stencil)
 {
    struct gl_context *ctx = st->ctx;
    struct gl_program *p;
@@ -200,8 +201,8 @@ make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean w
    }
    _mesa_init_instructions(p->Instructions, p->NumInstructions);
 
-   /* TEX result.depth, fragment.texcoord[0], texture[0], 2D; */
    if (write_depth) {
+      /* TEX result.depth, fragment.texcoord[0], texture[0], 2D; */
       p->Instructions[ic].Opcode = OPCODE_TEX;
       p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
       p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPTH;
@@ -214,6 +215,7 @@ make_fragment_shader_z(struct st_context *st, GLboolean write_depth, GLboolean w
    }
 
    if (write_stencil) {
+      /* TEX result.stencil, fragment.texcoord[0], texture[0], 2D; */
       p->Instructions[ic].Opcode = OPCODE_TEX;
       p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
       p->Instructions[ic].DstReg.Index = FRAG_RESULT_STENCIL;
@@ -262,8 +264,7 @@ make_passthrough_vertex_shader(struct st_context *st,
                                GLboolean passColor)
 {
    if (!st->drawpix.vert_shaders[passColor]) {
-      struct ureg_program *ureg = 
-         ureg_create( TGSI_PROCESSOR_VERTEX );
+      struct ureg_program *ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
 
       if (ureg == NULL)
          return NULL;
@@ -353,7 +354,8 @@ make_texture(struct st_context *st,
 
    baseFormat = base_format(format);
 
-   mformat = st_ChooseTextureFormat_renderable(ctx, baseFormat, format, type, GL_FALSE);
+   mformat = st_ChooseTextureFormat_renderable(ctx, baseFormat,
+                                               format, type, GL_FALSE);
    assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat);
@@ -526,7 +528,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
                    void *driver_vp,
                    void *driver_fp,
                    const GLfloat *color,
-                   GLboolean invertTex, GLboolean write_depth, GLboolean write_stencil)
+                   GLboolean invertTex,
+                   GLboolean write_depth, GLboolean write_stencil)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -539,7 +542,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* XXX if DrawPixels image is larger than max texture size, break
     * it up into chunks.
     */
-   maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+   maxSize = 1 << (pipe->screen->get_param(pipe->screen,
+                                        PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
    assert(width <= maxSize);
    assert(height <= maxSize);
 
@@ -691,7 +695,8 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    }
 
    if(format != GL_DEPTH_STENCIL && 
-      util_format_get_component_bits(strb->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
+      util_format_get_component_bits(strb->format,
+                                     UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -809,7 +814,8 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
  * Called via ctx->Driver.DrawPixels()
  */
 static void
-st_DrawPixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
+              GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
@@ -835,7 +841,8 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_SHADER_STENCIL_EXPORT))
 	 goto stencil_fallback;
       
-      tex_format = st_choose_format(st->pipe->screen, base_format(format), PIPE_TEXTURE_2D,
+      tex_format = st_choose_format(st->pipe->screen, base_format(format),
+                                    PIPE_TEXTURE_2D,
 				    0, PIPE_BIND_SAMPLER_VIEW);
       if (tex_format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
 	 stencil_format = PIPE_FORMAT_X24S8_USCALED;
@@ -876,12 +883,14 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
 
          if (sv[0]) {
 	    if (write_stencil) {
-	       sv[1] = st_create_texture_sampler_view_format(st->pipe, pt, stencil_format);
+	       sv[1] = st_create_texture_sampler_view_format(st->pipe, pt,
+                                                             stencil_format);
 	       num_sampler_view++;
 	    }
 
             draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                               width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                               width, height,
+                               ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                                sv,
                                num_sampler_view,
                                driver_vp,
@@ -895,6 +904,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       }
    }
    return;
+
 stencil_fallback:
    draw_stencil_pixels(ctx, x, y, width, height, format, type,
 		       unpack, pixels);
@@ -933,7 +943,8 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
-   if(util_format_get_component_bits(rbDraw->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
+   if (util_format_get_component_bits(rbDraw->format,
+                                     UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -1066,7 +1077,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, st->internal_target, sample_count,
+   if (screen->is_format_supported(screen, srcFormat, st->internal_target,
+                                   sample_count,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       texFormat = srcFormat;
    }
