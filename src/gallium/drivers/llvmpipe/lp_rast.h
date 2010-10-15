@@ -100,9 +100,6 @@ struct lp_rast_plane {
 
    /* one-pixel sized trivial reject offsets for each plane */
    int eo;
-
-   /* one-pixel sized trivial accept offsets for each plane */
-   int ei;
 };
 
 /**

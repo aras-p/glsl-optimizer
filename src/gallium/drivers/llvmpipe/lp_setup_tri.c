@@ -374,10 +374,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[i].eo = 0;
       if (plane[i].dcdx < 0) plane[i].eo -= plane[i].dcdx;
       if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
-
-      /* Calculate trivial accept offsets from the above.
-       */
-      plane[i].ei = plane[i].dcdy - plane[i].dcdx - plane[i].eo;
    }
 
 
@@ -403,25 +399,21 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[3].dcdx = -1;
       plane[3].dcdy = 0;
       plane[3].c = 1-bbox.x0;
-      plane[3].ei = 0;
       plane[3].eo = 1;
 
       plane[4].dcdx = 1;
       plane[4].dcdy = 0;
       plane[4].c = bbox.x1+1;
-      plane[4].ei = -1;
       plane[4].eo = 0;
 
       plane[5].dcdx = 0;
       plane[5].dcdy = 1;
       plane[5].c = 1-bbox.y0;
-      plane[5].ei = 0;
       plane[5].eo = 1;
 
       plane[6].dcdx = 0;
       plane[6].dcdy = -1;
       plane[6].c = bbox.y1+1;
-      plane[6].ei = -1;
       plane[6].eo = 0;
    }
 
@@ -544,7 +536,10 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                  plane[i].dcdy * iy0 * TILE_SIZE - 
                  plane[i].dcdx * ix0 * TILE_SIZE);
 
-         ei[i] = plane[i].ei << TILE_ORDER;
+         ei[i] = (plane[i].dcdy - 
+                  plane[i].dcdx - 
+                  plane[i].eo) << TILE_ORDER;
+
          eo[i] = plane[i].eo << TILE_ORDER;
          xstep[i] = -(plane[i].dcdx << TILE_ORDER);
          ystep[i] = plane[i].dcdy << TILE_ORDER;

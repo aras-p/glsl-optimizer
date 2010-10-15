@@ -386,25 +386,21 @@ try_setup_point( struct lp_setup_context *setup,
       plane[0].dcdx = -1;
       plane[0].dcdy = 0;
       plane[0].c = 1-bbox.x0;
-      plane[0].ei = 0;
       plane[0].eo = 1;
 
       plane[1].dcdx = 1;
       plane[1].dcdy = 0;
       plane[1].c = bbox.x1+1;
-      plane[1].ei = -1;
       plane[1].eo = 0;
 
       plane[2].dcdx = 0;
       plane[2].dcdy = 1;
       plane[2].c = 1-bbox.y0;
-      plane[2].ei = 0;
       plane[2].eo = 1;
 
       plane[3].dcdx = 0;
       plane[3].dcdy = -1;
       plane[3].c = bbox.y1+1;
-      plane[3].ei = -1;
       plane[3].eo = 0;
    }
 
