@@ -267,6 +267,7 @@ ir_validate::visit_leave(ir_expression *ir)
       break;
 
    case ir_unop_trunc:
+   case ir_unop_round_even:
    case ir_unop_ceil:
    case ir_unop_floor:
    case ir_unop_fract:
