@@ -404,7 +404,8 @@ generate_fs(struct llvmpipe_context *lp,
    /* Color write  */
    for (attrib = 0; attrib < shader->info.base.num_outputs; ++attrib)
    {
-      if (shader->info.base.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR)
+      if (shader->info.base.output_semantic_name[attrib] == TGSI_SEMANTIC_COLOR &&
+          shader->info.base.output_semantic_index[attrib] < key->nr_cbufs)
       {
          unsigned cbuf = shader->info.base.output_semantic_index[attrib];
          for(chan = 0; chan < NUM_CHANNELS; ++chan) {
