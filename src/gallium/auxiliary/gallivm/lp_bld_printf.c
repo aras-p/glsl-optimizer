@@ -29,6 +29,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "util/u_string.h"
 #include "lp_bld_const.h"
 #include "lp_bld_printf.h"
 
@@ -136,6 +137,6 @@ lp_build_print_vec4(LLVMBuilderRef builder, const char *msg, LLVMValueRef vec)
    z = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(2), "");
    w = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(3), "");
 
-   snprintf(format, sizeof(format), "%s %%f %%f %%f %%f\n", msg);
+   util_snprintf(format, sizeof(format), "%s %%f %%f %%f %%f\n", msg);
    return lp_build_printf(builder, format, x, y, z, w);
 }
