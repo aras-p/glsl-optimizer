@@ -345,7 +345,7 @@ generate_fs(struct llvmpipe_context *lp,
                                            TGSI_SEMANTIC_COLOR,
                                            0);
 
-      if (color0 != -1) {
+      if (color0 != -1 && outputs[color0][3]) {
          LLVMValueRef alpha = LLVMBuildLoad(builder, outputs[color0][3], "alpha");
          LLVMValueRef alpha_ref_value;
 
@@ -364,7 +364,7 @@ generate_fs(struct llvmpipe_context *lp,
                                          TGSI_SEMANTIC_POSITION,
                                          0);
          
-      if (pos0 != -1) {
+      if (pos0 != -1 && outputs[pos0][2]) {
          z = LLVMBuildLoad(builder, outputs[pos0][2], "z");
          lp_build_name(z, "output%u.%u.%c", i, pos0, "xyzw"[chan]);
       }
