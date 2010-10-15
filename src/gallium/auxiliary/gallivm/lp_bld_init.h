@@ -47,4 +47,10 @@ lp_build_init(void);
 extern void
 lp_func_delete_body(LLVMValueRef func);
 
+
+extern LLVMValueRef
+lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
+                       const char *Name);
+
+
 #endif /* !LP_BLD_INIT_H */
