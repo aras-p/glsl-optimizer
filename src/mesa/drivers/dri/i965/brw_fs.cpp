@@ -1043,7 +1043,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
        */
       assert(ir->op == ir_txb || ir->op == ir_txl);
 
-      for (int i = 0; i < ir->coordinate->type->vector_elements * 2;) {
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * 2),
 		      coordinate));
 	 coordinate.reg_offset++;
@@ -1993,17 +1993,17 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst)
 	  */
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 if (inst->shadow_compare) {
-	    assert(inst->mlen == 5);
+	    assert(inst->mlen == 6);
 	 } else {
-	    assert(inst->mlen <= 6);
+	    assert(inst->mlen <= 4);
 	 }
 	 break;
       case FS_OPCODE_TXB:
 	 if (inst->shadow_compare) {
-	    assert(inst->mlen == 5);
+	    assert(inst->mlen == 6);
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 } else {
-	    assert(inst->mlen == 8);
+	    assert(inst->mlen == 9);
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
 	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
