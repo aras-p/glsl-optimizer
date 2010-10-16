@@ -800,9 +800,10 @@ generate_viewport(struct draw_llvm *llvm,
    
    /* for 1/w convention*/
    out3 = LLVMBuildFDiv(builder, const1, out3, "");
-
+   LLVMBuildStore(builder, out3, outputs[0][3]);
+  
    /* Viewport Mapping */
-   for (i=0; i<4; i++){
+   for (i=0; i<3; i++){
       LLVMValueRef out = LLVMBuildLoad(builder, outputs[0][i], ""); /*x0 x1 x2 x3*/
       LLVMValueRef scale = lp_build_const_vec(f32_type, scaleA[i]); /*sx sx sx sx*/     
       LLVMValueRef trans = lp_build_const_vec(f32_type, transA[i]); /*tx tx tx tx*/
