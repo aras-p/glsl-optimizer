@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "vl_mpeg12_mc_renderer.h"
+#include "util/u_draw.h"
 #include <assert.h>
 #include <pipe/p_context.h>
 #include <util/u_inlines.h>
@@ -1074,8 +1075,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->i_vs);
       r->pipe->bind_fs_state(r->pipe, r->i_fs);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24;
    }
 
@@ -1089,8 +1090,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24;
    }
 
@@ -1104,8 +1105,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24;
    }
 
@@ -1119,8 +1120,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24;
    }
 
@@ -1134,8 +1135,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24;
    }
 
@@ -1151,8 +1152,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[0]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24;
    }
 
@@ -1168,8 +1169,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[1]);
 
-      r->pipe->draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
-                           num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24);
+      util_draw_arrays(r->pipe, PIPE_PRIM_TRIANGLES, vb_start,
+                       num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24);
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24;
    }
 

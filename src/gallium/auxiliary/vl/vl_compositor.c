@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "vl_compositor.h"
+#include "util/u_draw.h"
 #include <assert.h>
 #include <pipe/p_context.h>
 #include <util/u_inlines.h>
@@ -555,7 +556,7 @@ static void draw_layers(struct vl_compositor *c,
 
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
       c->pipe->set_fragment_sampler_views(c->pipe, 1, &surface_view);
-      c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
+      util_draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
 
       if (delete_view) {
          pipe_sampler_view_reference(&surface_view, NULL);
