@@ -963,12 +963,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       r = lp_build_broadcast_scalar(&bld->int_coord_bld, face); /* vec */
 
       /* recompute ddx, ddy using the new (s,t) face texcoords */
-      face_ddx[0] = lp_build_ddx(&bld->coord_bld, s);
-      face_ddx[1] = lp_build_ddx(&bld->coord_bld, t);
+      face_ddx[0] = lp_build_scalar_ddx(&bld->coord_bld, s);
+      face_ddx[1] = lp_build_scalar_ddx(&bld->coord_bld, t);
       face_ddx[2] = NULL;
       face_ddx[3] = NULL;
-      face_ddy[0] = lp_build_ddy(&bld->coord_bld, s);
-      face_ddy[1] = lp_build_ddy(&bld->coord_bld, t);
+      face_ddy[0] = lp_build_scalar_ddy(&bld->coord_bld, s);
+      face_ddy[1] = lp_build_scalar_ddy(&bld->coord_bld, t);
       face_ddy[2] = NULL;
       face_ddy[3] = NULL;
       ddx = face_ddx;
