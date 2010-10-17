@@ -330,7 +330,7 @@ lp_depth_type(const struct util_format_description *format_desc,
  * in the Z buffer (typically 0xffffff00 or 0x00ffffff).  That lets us
  * get by with fewer bit twiddling steps.
  */
-static void
+static boolean
 get_z_shift_and_mask(const struct util_format_description *format_desc,
                      unsigned *shift, unsigned *width, unsigned *mask)
 {
@@ -345,7 +345,8 @@ get_z_shift_and_mask(const struct util_format_description *format_desc,
 
    z_swizzle = format_desc->swizzle[0];
 
-   assert(z_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
+   if (z_swizzle == UTIL_FORMAT_SWIZZLE_NONE)
+      return FALSE;
 
    *width = format_desc->channel[z_swizzle].size;
 
@@ -366,6 +367,8 @@ get_z_shift_and_mask(const struct util_format_description *format_desc,
    }
 
    *shift = padding_right;
+
+   return TRUE;
 }
 
 
@@ -554,6 +557,27 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    {
       unsigned s_shift, s_mask;
 
+      if (get_z_shift_and_mask(format_desc, &z_shift, &z_width, &z_mask)) {
+         if (z_mask != 0xffffffff) {
+            z_bitmask = lp_build_const_int_vec(z_type, z_mask);
+         }
+
+         /*
+          * Align the framebuffer Z 's LSB to the right.
+          */
+         if (z_shift) {
+            LLVMValueRef shift = lp_build_const_int_vec(z_type, z_shift);
+            z_dst = LLVMBuildLShr(builder, zs_dst, shift, "z_dst");
+         } else if (z_bitmask) {
+	    /* TODO: Instead of loading a mask from memory and ANDing, it's
+	     * probably faster to just shake the bits with two shifts. */
+            z_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "z_dst");
+         } else {
+            z_dst = zs_dst;
+            lp_build_name(z_dst, "z_dst");
+         }
+      }
+
       if (get_s_shift_and_mask(format_desc, &s_shift, &s_mask)) {
          if (s_shift) {
             LLVMValueRef shift = lp_build_const_int_vec(s_type, s_shift);
@@ -605,8 +629,6 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    }
 
    if (depth->enabled) {
-      get_z_shift_and_mask(format_desc, &z_shift, &z_width, &z_mask);
-
       /*
        * Convert fragment Z to the desired type, aligning the LSB to the right.
        */
@@ -643,23 +665,6 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       assert(lp_check_value(z_type, z_src));
 
       lp_build_name(z_src, "z_src");
-
-      if (z_mask != 0xffffffff) {
-         z_bitmask = lp_build_const_int_vec(z_type, z_mask);
-      }
-
-      /*
-       * Align the framebuffer Z 's LSB to the right.
-       */
-      if (z_shift) {
-         LLVMValueRef shift = lp_build_const_int_vec(z_type, z_shift);
-         z_dst = LLVMBuildLShr(builder, zs_dst, shift, "z_dst");
-      } else if (z_bitmask) {
-         z_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "z_dst");
-      } else {
-         z_dst = zs_dst;
-         lp_build_name(z_dst, "z_dst");
-      }
 
       /* compare src Z to dst Z, returning 'pass' mask */
       z_pass = lp_build_cmp(&z_bld, depth->func, z_src, z_dst);
