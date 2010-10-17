@@ -75,10 +75,7 @@ add_test(LLVMModuleRef module, const char *name, lp_func_t lp_func)
    LLVMValueRef ret;
    struct lp_build_context bld;
 
-   bld.builder = builder;
-   bld.type.floating = 1;
-   bld.type.width = 32;
-   bld.type.length = 4;
+   lp_build_context_init(&bld, builder, lp_float32_vec4_type());
 
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
 
