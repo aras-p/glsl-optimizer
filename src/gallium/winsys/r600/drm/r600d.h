@@ -795,6 +795,7 @@
 #define R_028A48_PA_SC_MPASS_PS_CNTL                 0x028A48
 #define R_028C00_PA_SC_LINE_CNTL                     0x028C00
 #define R_028C04_PA_SC_AA_CONFIG                     0x028C04
+#define R_028C08_PA_SU_VTX_CNTL                      0x028C08
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
 #define R_028C48_PA_SC_AA_MASK                       0x028C48
 #define R_028810_PA_CL_CLIP_CNTL                     0x028810

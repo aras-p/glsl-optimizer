@@ -2100,6 +2100,10 @@
 #define   G_028C00_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
 #define   C_028C00_LAST_PIXEL                          0xFFFFFBFF
 #define R_028C04_PA_SC_AA_CONFIG                     0x028C04
+#define R_028C08_PA_SU_VTX_CNTL                      0x028C08
+#define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
+#define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
+#define   C_028C08_PIX_CENTER_HALF                     0xFFFFFFFE
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
 #define R_028C48_PA_SC_AA_MASK                       0x028C48
 #define R_028810_PA_CL_CLIP_CNTL                     0x028810
