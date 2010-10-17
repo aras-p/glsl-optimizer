@@ -96,7 +96,9 @@ struct vbo_save_vertex_list {
  */
 #define VBO_SAVE_BUFFER_SIZE (8*1024) /* dwords */
 #define VBO_SAVE_PRIM_SIZE   128
-#define VBO_SAVE_PRIM_WEAK 0x40
+#define VBO_SAVE_PRIM_MODE_MASK         0x3f
+#define VBO_SAVE_PRIM_WEAK              0x40
+#define VBO_SAVE_PRIM_NO_CURRENT_UPDATE 0x80
 
 #define VBO_SAVE_FALLBACK    0x10000000
 
