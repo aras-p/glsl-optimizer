@@ -233,12 +233,6 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CEIL                      0x00000012
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE                     0x00000013
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR                     0x00000014
-/* same up to here */
-/*
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA                      0x00000015
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR                0x00000016
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT                  0x00000018
-*/
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT                  0x00000015
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT                  0x00000016
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT                  0x00000017
@@ -336,9 +330,11 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED_64      0x00000098
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_64                   0x00000099
 /* TODO Fill in more ALU */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR          0x000000B1
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4                      0x000000BE
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE                 0x000000BF
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE                      0x000000C0
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT                  0x000000CC
 
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY                      0x000000D6
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW                      0x000000D7

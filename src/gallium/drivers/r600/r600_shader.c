@@ -2610,7 +2610,40 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 }
 
 /* r6/7 only for now */
-static int tgsi_arl(struct r600_shader_ctx *ctx)
+static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int r;
+	
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR;
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+	alu.last = 1;
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	if (r)
+		return r;
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].chan = 0;
+	alu.last = 1;
+	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	if (r)
+		return r;
+	return 0;
+}
+static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 {
 	/* TODO from r600c, ar values don't persist between clauses */
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -2955,7 +2988,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 }
 
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
-	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_arl},
+	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_r600_arl},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 
@@ -3119,7 +3152,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 };
 
 static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
-	{TGSI_OPCODE_ARL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ARL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_eg_arl},
 	{TGSI_OPCODE_MOV,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 	{TGSI_OPCODE_RCP,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE, tgsi_trans_srcx_replicate},
