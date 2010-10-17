@@ -39,6 +39,14 @@
 
 
 /**
+ * Insert a new block, right where builder is pointing to.
+ *
+ * This is useful important not only for aesthetic reasons, but also for
+ * performance reasons, as frequently run blocks should be laid out next to
+ * each other and fall-throughs maximized.
+ *
+ * See also llvm/lib/Transforms/Scalar/BasicBlockPlacement.cpp.
+ *
  * Note: this function has no dependencies on the flow code and could
  * be used elsewhere.
  */
