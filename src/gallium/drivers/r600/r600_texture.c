@@ -192,6 +192,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->pitch_override = pitch_in_bytes_override;
 	rtex->array_mode = array_mode;
 
+	if (array_mode)
+		rtex->tiled = 1;
 	r600_setup_miptree(screen, rtex);
 
 	resource->size = rtex->size;
@@ -271,18 +273,19 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 {
 	struct radeon *rw = (struct radeon*)screen->winsys;
 	struct r600_bo *bo = NULL;
+	unsigned array_mode = 0;
 
 	/* Support only 2D textures without mipmaps */
 	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
 	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	bo = r600_bo_handle(rw, whandle->handle);
+	bo = r600_bo_handle(rw, whandle->handle, &array_mode);
 	if (bo == NULL) {
 		return NULL;
 	}
 
-	return (struct pipe_resource *)r600_texture_create_object(screen, templ, 0,
+	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
 								  whandle->stride,
 								  0,
 								  bo);

@@ -227,7 +227,7 @@ struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 	struct r600_resource *rbuffer;
 	struct r600_bo *bo = NULL;
 
-	bo = r600_bo_handle(rw, whandle->handle);
+	bo = r600_bo_handle(rw, whandle->handle, NULL);
 	if (bo == NULL) {
 		return NULL;
 	}

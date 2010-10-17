@@ -200,3 +200,22 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	*domain = args.domain;
 	return ret;
 }
+
+int radeon_bo_get_tiling_flags(struct radeon *radeon,
+			       struct radeon_bo *bo,
+			       uint32_t *tiling_flags,
+			       uint32_t *pitch)
+{
+	struct drm_radeon_gem_get_tiling args;
+	int ret;
+	
+	args.handle = bo->handle;
+	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_GET_TILING,
+				  &args, sizeof(args));
+	if (ret)
+		return ret;
+	
+	*tiling_flags = args.tiling_flags;
+	*pitch = args.pitch;
+	return ret;
+}

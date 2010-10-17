@@ -26,7 +26,9 @@
 #include <pipe/p_compiler.h>
 #include <pipe/p_screen.h>
 #include <pipebuffer/pb_bufmgr.h>
+#include "radeon_drm.h"
 #include "r600_priv.h"
+#include "r600d.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,
 				  unsigned size, unsigned alignment, unsigned usage)
@@ -55,7 +57,7 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 }
 
 struct r600_bo *r600_bo_handle(struct radeon *radeon,
-					 unsigned handle)
+			       unsigned handle, unsigned *array_mode)
 {
 	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
 	struct radeon_bo *bo;
@@ -68,6 +70,20 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 	bo = radeon_bo_pb_get_bo(ws_bo->pb);
 	ws_bo->size = bo->size;
 	pipe_reference_init(&ws_bo->reference, 1);
+
+	radeon_bo_get_tiling_flags(radeon, bo, &ws_bo->tiling_flags,
+				   &ws_bo->kernel_pitch);
+	if (array_mode) {
+		if (ws_bo->tiling_flags) {
+			if (ws_bo->tiling_flags & RADEON_TILING_MICRO)
+				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
+			if ((ws_bo->tiling_flags & (RADEON_TILING_MICRO | RADEON_TILING_MACRO)) ==
+			    (RADEON_TILING_MICRO | RADEON_TILING_MACRO))
+				*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
+		} else {
+			*array_mode = 0;
+		}
+	}
 	return ws_bo;
 }
 
