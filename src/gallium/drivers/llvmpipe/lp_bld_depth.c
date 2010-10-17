@@ -469,7 +469,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    struct lp_build_context z_bld;
    struct lp_build_context s_bld;
    struct lp_type s_type;
-   unsigned z_shift, z_width, z_mask;
+   unsigned z_shift = 0, z_width = 0, z_mask = 0;
    LLVMValueRef zs_dst, z_dst = NULL;
    LLVMValueRef stencil_vals = NULL;
    LLVMValueRef z_bitmask = NULL, stencil_shift = NULL;
