@@ -365,8 +365,7 @@ generate_fs(struct llvmpipe_context *lp,
                                          0);
          
       if (pos0 != -1 && outputs[pos0][2]) {
-         z = LLVMBuildLoad(builder, outputs[pos0][2], "z");
-         lp_build_name(z, "output%u.%u.%c", i, pos0, "xyzw"[chan]);
+         z = LLVMBuildLoad(builder, outputs[pos0][2], "output.z");
       }
 
       lp_build_depth_stencil_test(builder,
