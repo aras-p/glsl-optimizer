@@ -941,6 +941,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
       for (unsigned int i = 0; i < type->length; i++) {
 	 emit_assignment_writes(l, r, type->fields.array, predicated);
       }
+      break;
 
    case GLSL_TYPE_STRUCT:
       for (unsigned int i = 0; i < type->length; i++) {
