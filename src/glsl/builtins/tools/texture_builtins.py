@@ -369,6 +369,70 @@ def generate_texture_functions(fs):
     generate_sigs("", "tex", "2DArrayShadow")
     end_function(fs, "shadow2DArray")
 
+    # ARB_shader_texture_lod extension
+    start_function("texture1DGradARB")
+    generate_fiu_sigs("txd", "1D")
+    end_function(fs, "texture1DGradARB")
+
+    start_function("texture2DGradARB")
+    generate_fiu_sigs("txd", "2D")
+    end_function(fs, "texture2DGradARB")
+
+    start_function("texture3DGradARB")
+    generate_fiu_sigs("txd", "3D")
+    end_function(fs, "texture3DGradARB")
+
+    start_function("textureCubeGradARB")
+    generate_fiu_sigs("txd", "Cube")
+    end_function(fs, "textureCubeGradARB")
+
+    start_function("texture1DProjGradARB")
+    generate_fiu_sigs("txd", "1D", True)
+    generate_fiu_sigs("txd", "1D", True, 2)
+    end_function(fs, "texture1DProjGradARB")
+
+    start_function("texture2DProjGradARB")
+    generate_fiu_sigs("txd", "2D", True)
+    generate_fiu_sigs("txd", "2D", True, 1)
+    end_function(fs, "texture2DProjGradARB")
+
+    start_function("texture3DProjGradARB")
+    generate_fiu_sigs("txd", "3D", True)
+    end_function(fs, "texture3DProjGradARB")
+
+    start_function("shadow1DGradARB")
+    generate_sigs("", "txd", "1DShadow", False, 1)
+    end_function(fs, "shadow1DGradARB")
+
+    start_function("shadow1DProjGradARB")
+    generate_sigs("", "txd", "1DShadow", True, 1)
+    end_function(fs, "shadow1DProjGradARB")
+
+    start_function("shadow2DGradARB")
+    generate_sigs("", "txd", "2DShadow", False)
+    end_function(fs, "shadow2DGradARB")
+
+    start_function("shadow2DProjGradARB")
+    generate_sigs("", "txd", "2DShadow", True)
+    end_function(fs, "shadow2DProjGradARB")
+
+    start_function("texture2DRectGradARB")
+    generate_sigs("", "txd", "2DRect")
+    end_function(fs, "texture2DRectGradARB")
+
+    start_function("texture2DRectProjGradARB")
+    generate_sigs("", "txd", "2DRect", True)
+    generate_sigs("", "txd", "2DRect", True, 1)
+    end_function(fs, "texture2DRectProjGradARB")
+
+    start_function("shadow2DRectGradARB")
+    generate_sigs("", "txd", "2DRectShadow", False)
+    end_function(fs, "shadow2DRectGradARB")
+
+    start_function("shadow2DRectProjGradARB")
+    generate_sigs("", "txd", "2DRectShadow", True)
+    end_function(fs, "shadow2DRectProjGradARB")
+
     # Deprecated (110/120 style) functions with silly names:
     start_function("texture1D")
     generate_sigs("", "tex", "1D")
