@@ -1,5 +1,6 @@
 
 #include "target-helpers/inline_debug_helper.h"
+#include "target-helpers/inline_wrapper_sw_helper.h"
 #include "state_tracker/drm_driver.h"
 #include "i965/drm/i965_drm_public.h"
 #include "i965/brw_public.h"
