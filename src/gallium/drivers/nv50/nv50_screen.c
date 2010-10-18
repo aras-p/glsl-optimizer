@@ -84,6 +84,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
+	case PIPE_CAP_SM3:
 		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
@@ -94,6 +95,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
         case PIPE_CAP_TIMER_QUERY:
+		return 0;
+	case PIPE_CAP_STREAM_OUTPUT:
 		return 0;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 		return 1;
@@ -137,8 +140,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	switch(shader) {
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
-	case PIPE_SHADER_GEOMETRY:
 		break;
+	case PIPE_SHADER_GEOMETRY:
 	default:
 		return 0;
 	}
@@ -158,6 +161,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 			return 64 / 4;
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return 65536 / 16;
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS: /* 16 - 1, but not implemented */
+		return 1;
 	case PIPE_SHADER_CAP_MAX_ADDRS: /* no spilling atm */
 		return 1;
 	case PIPE_SHADER_CAP_MAX_PREDS: /* not yet handled */
@@ -222,6 +227,36 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    OUT_RELOC(ch, bo, (n << 18) | (gr->subc << 13) | m, fl, 0, 0)
 
 void
+nv50_screen_reloc_constbuf(struct nv50_screen *screen, unsigned cbi)
+{
+	struct nouveau_bo *bo;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *tesla = screen->tesla;
+	unsigned size;
+	const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
+
+	switch (cbi) {
+	case NV50_CB_PMISC:
+		bo = screen->constbuf_misc[0];
+		size = 0x200;
+		break;
+	case NV50_CB_PVP:
+	case NV50_CB_PFP:
+	case NV50_CB_PGP:
+		bo = screen->constbuf_parm[cbi - NV50_CB_PVP];
+		size = 0;
+		break;
+	default:
+		return;
+	}
+
+	BGN_RELOC (chan, bo, tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
+	OUT_RELOCh(chan, bo, 0, rl);
+	OUT_RELOCl(chan, bo, 0, rl);
+	OUT_RELOC (chan, bo, (cbi << 16) | size, rl, 0, 0);
+}
+
+void
 nv50_screen_relocs(struct nv50_screen *screen)
 {
 	struct nouveau_channel *chan = screen->base.channel;
@@ -243,12 +278,7 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOCh(chan, screen->tsc, 0, rl);
 	OUT_RELOCl(chan, screen->tsc, 0, rl);
 
-	BGN_RELOC (chan, screen->constbuf_misc[0],
-		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-	OUT_RELOCh(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOCl(chan, screen->constbuf_misc[0], 0, rl);
-	OUT_RELOC (chan, screen->constbuf_misc[0],
-		   (NV50_CB_PMISC << 16) | 0x0200, rl, 0, 0);
+	nv50_screen_reloc_constbuf(screen, NV50_CB_PMISC);
 
 	BGN_RELOC (chan, screen->constbuf_misc[0],
 		   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
@@ -257,14 +287,21 @@ nv50_screen_relocs(struct nv50_screen *screen)
 	OUT_RELOC (chan, screen->constbuf_misc[0],
 		   (NV50_CB_AUX << 16) | 0x0200, rl, 0, 0);
 
-	for (i = 0; i < 3; ++i) {
-		BGN_RELOC (chan, screen->constbuf_parm[i],
-			   tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3, rl);
-		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RELOC (chan, screen->constbuf_parm[i],
-			   ((NV50_CB_PVP + i) << 16) | 0x0000, rl, 0, 0);
-	}
+	for (i = 0; i < 3; ++i)
+		nv50_screen_reloc_constbuf(screen, NV50_CB_PVP + i);
+
+	BGN_RELOC (chan, screen->stack_bo,
+		   tesla, NV50TCL_STACK_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->stack_bo, 0, rl);
+	OUT_RELOCl(chan, screen->stack_bo, 0, rl);
+
+	if (!screen->cur_ctx->req_lmem)
+		return;
+
+	BGN_RELOC (chan, screen->local_bo,
+		   tesla, NV50TCL_LOCAL_ADDRESS_HIGH, 2, rl);
+	OUT_RELOCh(chan, screen->local_bo, 0, rl);
+	OUT_RELOCl(chan, screen->local_bo, 0, rl);
 }
 
 #ifndef NOUVEAU_GETPARAM_GRAPH_UNITS
@@ -424,6 +461,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, screen->tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	OUT_RING  (chan, 8);
+
+	BEGIN_RING(chan, screen->tesla, NV50TCL_CLEAR_FLAGS, 1);
+	OUT_RING  (chan, NV50TCL_CLEAR_FLAGS_D3D);
 
 	/* constant buffers for immediates and VP/FP parameters */
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (32 * 4) * 4,

@@ -34,7 +34,7 @@
 #include "draw/draw_context.h"
 
 
-void *
+static void *
 softpipe_create_stream_output_state(struct pipe_context *pipe,
                                     const struct pipe_stream_output_state *templ)
 {
@@ -57,7 +57,8 @@ softpipe_create_stream_output_state(struct pipe_context *pipe,
    return so;
 }
 
-void
+
+static void
 softpipe_bind_stream_output_state(struct pipe_context *pipe,
                                   void *so)
 {
@@ -72,13 +73,15 @@ softpipe_bind_stream_output_state(struct pipe_context *pipe,
       draw_set_so_state(softpipe->draw, &sp_so->base);
 }
 
-void
+
+static void
 softpipe_delete_stream_output_state(struct pipe_context *pipe, void *so)
 {
    FREE( so );
 }
 
-void
+
+static void
 softpipe_set_stream_output_buffers(struct pipe_context *pipe,
                                    struct pipe_resource **buffers,
                                    int *offsets,
@@ -122,3 +125,16 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
 
    draw_set_mapped_so_buffers(softpipe->draw, map_buffers, num_buffers);
 }
+
+
+
+void
+softpipe_init_streamout_funcs(struct pipe_context *pipe)
+{
+   pipe->create_stream_output_state = softpipe_create_stream_output_state;
+   pipe->bind_stream_output_state = softpipe_bind_stream_output_state;
+   pipe->delete_stream_output_state = softpipe_delete_stream_output_state;
+
+   pipe->set_stream_output_buffers = softpipe_set_stream_output_buffers;
+}
+

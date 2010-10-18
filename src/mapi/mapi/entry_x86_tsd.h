@@ -63,7 +63,7 @@ entry_patch_public(void)
 void
 entry_patch(mapi_func entry, int slot)
 {
-   void *code = (void *) entry;
+   char *code = (char *) entry;
 
    *((unsigned long *) (code + 11)) = slot * sizeof(mapi_func);
    *((unsigned long *) (code + 22)) = slot * sizeof(mapi_func);

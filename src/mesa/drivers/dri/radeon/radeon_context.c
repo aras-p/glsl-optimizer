@@ -101,7 +101,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -168,7 +167,7 @@ static void r100_vtbl_pre_emit_state(radeonContextPtr radeon)
    radeon->hw.is_dirty = 1;
 }
 
-static void r100_vtbl_free_context(GLcontext *ctx)
+static void r100_vtbl_free_context(struct gl_context *ctx)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    _mesa_vector4f_free( &rmesa->tcl.ObjClean );
@@ -207,7 +206,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
  */
 GLboolean
 r100CreateContext( gl_api api,
-		   const __GLcontextModes *glVisual,
+		   const struct gl_config *glVisual,
 		   __DRIcontext *driContextPriv,
 		   void *sharedContextPrivate)
 {
@@ -215,7 +214,7 @@ r100CreateContext( gl_api api,
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r100ContextPtr rmesa;
-   GLcontext *ctx;
+   struct gl_context *ctx;
    int i;
    int tcl_mode, fthrottle_mode;
 

@@ -100,7 +100,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  * 
  * \param mask bit-mask indicating the buffers to be cleared.
  *
- * Flushes the vertices and verifies the parameter. If __GLcontextRec::NewState
+ * Flushes the vertices and verifies the parameter. If __struct gl_contextRec::NewState
  * is set then calls _mesa_update_state() to update gl_frame_buffer::_Xmin,
  * etc. If the rasterization mode is set to GL_RENDER then requests the driver
  * to clear the buffers, via the dd_function_table::Clear callback.
@@ -191,7 +191,7 @@ _mesa_Clear( GLbitfield mask )
  * Return INVALID_MASK if the drawbuffer value is invalid.
  */
 static GLbitfield
-make_color_buffer_mask(GLcontext *ctx, GLint drawbuffer)
+make_color_buffer_mask(struct gl_context *ctx, GLint drawbuffer)
 {
    const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
    GLbitfield mask = 0x0;

@@ -100,10 +100,13 @@ struct wm_sampler_key {
  * Sets the sampler state for a single unit based off of the sampler key
  * entry.
  */
-static void brw_update_sampler_state(struct wm_sampler_entry *key,
+static void brw_update_sampler_state(struct brw_context *brw,
+				     struct wm_sampler_entry *key,
 				     drm_intel_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
+   struct intel_context *intel = &brw->intel;
+
    memset(sampler, 0, sizeof(*sampler));
 
    switch (key->minfilter) {
@@ -162,6 +165,10 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
    sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
    sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
    sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
+
+   if (intel->gen >= 6 &&
+       sampler->ss0.min_filter != sampler->ss0.mag_filter)
+	sampler->ss0.min_mag_neq = 1;
 
    /* Cube-maps on 965 and later must use the same wrap mode for all 3
     * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
@@ -226,7 +233,7 @@ static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
 			    struct wm_sampler_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    int unit;
    char *last_entry_end = ((char*)&key->sampler_count) + 
       sizeof(key->sampler_count);
@@ -294,7 +301,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
  */
 static void upload_wm_samplers( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct wm_sampler_key key;
    int i, sampler_key_size;
 
@@ -329,7 +336,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 	 if (brw->wm.sdc_bo[i] == NULL)
 	    continue;
 
-	 brw_update_sampler_state(&key.sampler[i], brw->wm.sdc_bo[i],
+	 brw_update_sampler_state(brw, &key.sampler[i], brw->wm.sdc_bo[i],
 				  &sampler[i]);
       }
 

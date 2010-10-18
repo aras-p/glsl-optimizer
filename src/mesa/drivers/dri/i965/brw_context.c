@@ -41,7 +41,6 @@
 #include "intel_span.h"
 #include "tnl/t_pipeline.h"
 
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -58,14 +57,14 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 }
 
 GLboolean brwCreateContext( int api,
-			    const __GLcontextModes *mesaVis,
+			    const struct gl_config *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate)
 {
    struct dd_function_table functions;
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    unsigned i;
 
    if (!brw) {
@@ -123,6 +122,9 @@ GLboolean brwCreateContext( int api,
 	 (i == MESA_SHADER_FRAGMENT);
       ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
+
+      if (intel->gen == 6)
+	 ctx->ShaderCompilerOptions[i].EmitNoIfs = GL_TRUE;
    }
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);

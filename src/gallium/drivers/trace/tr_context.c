@@ -92,15 +92,7 @@ trace_context_draw_vbo(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "draw_vbo");
 
    trace_dump_arg(ptr,  pipe);
-   trace_dump_arg(bool, info->indexed);
-   trace_dump_arg(uint, info->mode);
-   trace_dump_arg(uint, info->start);
-   trace_dump_arg(uint, info->count);
-   trace_dump_arg(uint, info->start_instance);
-   trace_dump_arg(uint, info->instance_count);
-   trace_dump_arg(int,  info->index_bias);
-   trace_dump_arg(uint, info->min_index);
-   trace_dump_arg(uint, info->max_index);
+   trace_dump_arg(draw_info, info);
 
    pipe->draw_vbo(pipe, info);
 
@@ -987,24 +979,24 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_set_index_buffer(struct pipe_context *_pipe,
-                               const struct pipe_index_buffer *_ib)
+                               const struct pipe_index_buffer *ib)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
-
-   if (_ib) {
-      unwrapped_ib = *_ib;
-      unwrapped_ib.buffer = trace_resource_unwrap(tr_ctx, _ib->buffer);
-      ib = &unwrapped_ib;
-   }
 
    trace_dump_call_begin("pipe_context", "set_index_buffer");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(index_buffer, _ib);
+   trace_dump_arg(index_buffer, ib);
 
-   pipe->set_index_buffer(pipe, ib);
+   if (ib) {
+      struct pipe_index_buffer _ib;
+      _ib = *ib;
+      _ib.buffer = trace_resource_unwrap(tr_ctx, ib->buffer);
+      pipe->set_index_buffer(pipe, &_ib);
+   } else {
+      pipe->set_index_buffer(pipe, NULL);
+   }
 
    trace_dump_call_end();
 }

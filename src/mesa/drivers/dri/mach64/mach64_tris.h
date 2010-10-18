@@ -33,10 +33,10 @@
 
 #include "main/mtypes.h"
 
-extern void mach64InitTriFuncs( GLcontext *ctx );
+extern void mach64InitTriFuncs( struct gl_context *ctx );
 
 
-extern void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void mach64Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( mmesa, bit, mode ) mach64Fallback( mmesa->glCtx, bit, mode )
 
 

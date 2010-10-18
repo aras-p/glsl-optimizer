@@ -29,10 +29,10 @@
 #include "main/mtypes.h"
 
 
-typedef void (*FetchTexelLodFunc)(GLcontext *ctx, const GLfloat texcoord[4],
+typedef void (*FetchTexelLodFunc)(struct gl_context *ctx, const GLfloat texcoord[4],
                                   GLfloat lambda, GLuint unit, GLfloat color[4]);
 
-typedef void (*FetchTexelDerivFunc)(GLcontext *ctx, const GLfloat texcoord[4],
+typedef void (*FetchTexelDerivFunc)(struct gl_context *ctx, const GLfloat texcoord[4],
                                     const GLfloat texdx[4],
                                     const GLfloat texdy[4],
                                     GLfloat lodBias,
@@ -74,11 +74,11 @@ struct gl_program_machine
 
 
 extern void
-_mesa_get_program_register(GLcontext *ctx, gl_register_file file,
+_mesa_get_program_register(struct gl_context *ctx, gl_register_file file,
                            GLuint index, GLfloat val[4]);
 
 extern GLboolean
-_mesa_execute_program(GLcontext *ctx,
+_mesa_execute_program(struct gl_context *ctx,
                       const struct gl_program *program,
                       struct gl_program_machine *machine);
 

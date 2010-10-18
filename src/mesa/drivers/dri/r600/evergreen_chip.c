@@ -60,7 +60,7 @@ do {									\
 	insert_at_tail(&context->radeon.hw.atomlist, &context->evergreen_atoms.ATOM); \
 } while (0)
 
-static int check_queryobj(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;
@@ -74,7 +74,7 @@ static int check_queryobj(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static void evergreenSendQueryBegin(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendQueryBegin(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;
@@ -114,12 +114,12 @@ static void evergreen_init_query_stateobj(radeonContextPtr radeon, int SZ)
 }
 
 
-static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_always(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	return atom->cmd_size;
 }
 
-static void evergreenSendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendTexState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -221,7 +221,7 @@ static void evergreenSendTexState(GLcontext *ctx, struct radeon_state_atom *atom
 	}
 }
 
-static int check_evergreen_tx(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_evergreen_tx(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	unsigned int i, count = 0;
@@ -238,7 +238,7 @@ static int check_evergreen_tx(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count * 37 + 6;
 }
 
-static void evergreenSendSQConfig(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendSQConfig(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -269,13 +269,12 @@ static void evergreenSendSQConfig(GLcontext *ctx, struct radeon_state_atom *atom
 }
 
 extern int evergreen_getTypeSize(GLenum type);
-static void evergreenSetupVTXConstants(GLcontext  * ctx,
+static void evergreenSetupVTXConstants(struct gl_context  * ctx,
 				  void *       pAos,
 				  StreamDesc * pStreamDesc)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
-    unsigned int nVBsize;
     BATCH_LOCALS(&context->radeon);
 
     unsigned int uSQ_VTX_CONSTANT_WORD0_0;
@@ -289,21 +288,11 @@ static void evergreenSetupVTXConstants(GLcontext  * ctx,
 
 	r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
-    if(0 == pStreamDesc->stride)
-    {
-        nVBsize = paos->count * pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-    else
-    {
-        nVBsize = (paos->count - 1) * pStreamDesc->stride
-                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-
     //uSQ_VTX_CONSTANT_WORD0_0
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
 
     //uSQ_VTX_CONSTANT_WORD1_0
-    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize;
+    uSQ_VTX_CONSTANT_WORD1_0 = paos->bo->size - paos->offset - 1;
         
     //uSQ_VTX_CONSTANT_WORD2_0
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 
@@ -368,7 +357,7 @@ static void evergreenSetupVTXConstants(GLcontext  * ctx,
     COMMIT_BATCH();
 }
 
-static int check_evergreen_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_evergreen_vtx(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	int count = context->radeon.tcl.aos_count * 12;
@@ -380,7 +369,7 @@ static int check_evergreen_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static void evergreenSendVTX(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendVTX(struct gl_context *ctx, struct radeon_state_atom *atom)
 {    
     context_t         *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *)(context->selected_vp);
@@ -391,17 +380,6 @@ static void evergreenSendVTX(GLcontext *ctx, struct radeon_state_atom *atom)
     if (context->radeon.tcl.aos_count == 0)
 	    return;
 
-    BEGIN_BATCH_NO_AUTOSTATE(6);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-    END_BATCH();
-    COMMIT_BATCH();
-    
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
 	    if(vp->mesa_program->Base.InputsRead & (1 << i))
 	    {
@@ -410,9 +388,9 @@ static void evergreenSendVTX(GLcontext *ctx, struct radeon_state_atom *atom)
 				      &(context->stream_desc[j]));
 		    j++;
 	    }
-    } 
+    }
 }
-static void evergreenSendPA(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendPA(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -533,7 +511,7 @@ static void evergreenSendPA(GLcontext *ctx, struct radeon_state_atom *atom)
 
     COMMIT_BATCH();
 }
-static void evergreenSendTP(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendTP(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     /*
     context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -545,7 +523,7 @@ static void evergreenSendTP(GLcontext *ctx, struct radeon_state_atom *atom)
     */
 }
 
-static void evergreenSendPSresource(GLcontext *ctx)
+static void evergreenSendPSresource(struct gl_context *ctx)
 {    
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -600,7 +578,7 @@ static void evergreenSendPSresource(GLcontext *ctx)
     COMMIT_BATCH();    
 }
 
-static void evergreenSendVSresource(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendVSresource(struct gl_context *ctx, struct radeon_state_atom *atom)
 {    
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -656,7 +634,7 @@ static void evergreenSendVSresource(GLcontext *ctx, struct radeon_state_atom *at
     COMMIT_BATCH();    
 }
 
-static void evergreenSendSQ(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendSQ(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -771,7 +749,7 @@ static void evergreenSendSQ(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 
 }
-static void evergreenSendSPI(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendSPI(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -843,7 +821,7 @@ static void evergreenSendSPI(GLcontext *ctx, struct radeon_state_atom *atom)
 
     COMMIT_BATCH();
 }
-static void evergreenSendSX(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendSX(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -865,7 +843,7 @@ static void evergreenSetDepthTarget(context_t *context)
 {
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct radeon_renderbuffer *rrb;
-    unsigned int nPitchInPixel, height;
+    unsigned int nPitchInPixel, height, offtostencil;
 
     rrb = radeon_get_depthbuffer(&context->radeon);
     if (!rrb)
@@ -898,22 +876,28 @@ static void evergreenSetDepthTarget(context_t *context)
 
     if(4 == rrb->cpp)
     {
-        SETfield(evergreen->DB_Z_INFO.u32All, DEPTH_8_24,
+        SETfield(evergreen->DB_Z_INFO.u32All, EG_Z_24,
                  EG_DB_Z_INFO__FORMAT_shift, 
                  EG_DB_Z_INFO__FORMAT_mask);
     }
     else
     {
-        SETfield(evergreen->DB_Z_INFO.u32All, DEPTH_16,
+        SETfield(evergreen->DB_Z_INFO.u32All, EG_Z_16,
                  EG_DB_Z_INFO__FORMAT_shift, 
                  EG_DB_Z_INFO__FORMAT_mask);
     }
     SETfield(evergreen->DB_Z_INFO.u32All, ARRAY_1D_TILED_THIN1,
              EG_DB_Z_INFO__ARRAY_MODE_shift, 
              EG_DB_Z_INFO__ARRAY_MODE_mask);        
+
+
+    offtostencil = ((height * rrb->pitch) + 255) & ~255;
+    evergreen->DB_STENCIL_WRITE_BASE.u32All = offtostencil >> 8;
+    evergreen->DB_STENCIL_READ_BASE.u32All = offtostencil >> 8;
+
 }
 
-static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendDB(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -971,17 +955,18 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
     END_BATCH();
     
     rrb = radeon_get_depthbuffer(&context->radeon);
+    
 	if( (rrb != NULL) && (rrb->bo != NULL) )
     {
 
 	/* make the hw happy */
         BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
-	EVERGREEN_OUT_BATCH_REGVAL(EG_DB_HTILE_DATA_BASE, evergreen->DB_HTILE_DATA_BASE.u32All);
-	R600_OUT_BATCH_RELOC(evergreen->DB_HTILE_DATA_BASE.u32All,
+	    EVERGREEN_OUT_BATCH_REGVAL(EG_DB_HTILE_DATA_BASE, evergreen->DB_HTILE_DATA_BASE.u32All);
+	    R600_OUT_BATCH_RELOC(evergreen->DB_HTILE_DATA_BASE.u32All,
 			     rrb->bo,
 			     evergreen->DB_HTILE_DATA_BASE.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
-	END_BATCH();
+	    END_BATCH();
 
         //5
         BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
@@ -1015,26 +1000,35 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
             END_BATCH();        
         }
 	}    
-/*
+
     if (ctx->DrawBuffer) 
     {
 		rrb	= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
 		
         if((rrb != NULL) && (rrb->bo != NULL))
-        {
+        {                 
             //5
             BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
-            EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_INFO, evergreen->DB_Z_INFO.u32All);
+            EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_INFO, evergreen->DB_STENCIL_INFO.u32All);
             R600_OUT_BATCH_RELOC(evergreen->DB_STENCIL_INFO.u32All,
             		     rrb->bo,
             		     evergreen->DB_STENCIL_INFO.u32All,
             		     0, RADEON_GEM_DOMAIN_VRAM, 0);
             END_BATCH();
+            
+            //4
+            BEGIN_BATCH_NO_AUTOSTATE(4);
+	        R600_OUT_BATCH_REGSEQ(DB_STENCILREFMASK, 2);
+	        R600_OUT_BATCH(evergreen->DB_STENCILREFMASK.u32All);
+	        R600_OUT_BATCH(evergreen->DB_STENCILREFMASK_BF.u32All);
+	        END_BATCH();
+            //------------------------
 
             //10
             if((evergreen->DB_DEPTH_CONTROL.u32All & STENCIL_ENABLE_bit) > 0)
             {
-                BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+
+                BEGIN_BATCH_NO_AUTOSTATE(3 + 2);                
                 EVERGREEN_OUT_BATCH_REGVAL(EG_DB_STENCIL_READ_BASE, evergreen->DB_STENCIL_READ_BASE.u32All);	
 	            R600_OUT_BATCH_RELOC(evergreen->DB_STENCIL_READ_BASE.u32All,
 			                         rrb->bo,
@@ -1052,7 +1046,7 @@ static void evergreenSendDB(GLcontext *ctx, struct radeon_state_atom *atom)
             }     
         }
 	}   
-*/    
+    
     COMMIT_BATCH();
 }
 
@@ -1372,7 +1366,7 @@ static void evergreenSetRenderTarget(context_t *context, int id)
     evergreen->render_target[id].enabled = GL_TRUE;
 }
 
-static void evergreenSendCB(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendCB(struct gl_context *ctx, struct radeon_state_atom *atom)
 {    
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1415,9 +1409,17 @@ static void evergreenSendCB(GLcontext *ctx, struct radeon_state_atom *atom)
     R600_OUT_BATCH(evergreen->render_target[id].CB_COLOR0_VIEW.u32All);  
     END_BATCH();
 
-    BEGIN_BATCH_NO_AUTOSTATE(4);
-    EVERGREEN_OUT_BATCH_REGSEQ(EG_CB_COLOR0_ATTRIB, 2);
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    EVERGREEN_OUT_BATCH_REGSEQ(EG_CB_COLOR0_ATTRIB, 1);
     R600_OUT_BATCH(evergreen->render_target[id].CB_COLOR0_ATTRIB.u32All); 
+    R600_OUT_BATCH_RELOC(0,
+			 rrb->bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    END_BATCH();
+
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    EVERGREEN_OUT_BATCH_REGSEQ(EG_CB_COLOR0_DIM, 1);
     R600_OUT_BATCH(evergreen->render_target[id].CB_COLOR0_DIM.u32All); 
     /*
     R600_OUT_BATCH(evergreen->render_target[id].CB_COLOR0_CMASK.u32All);  
@@ -1449,7 +1451,7 @@ static void evergreenSendCB(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 }
 
-static void evergreenSendVGT(GLcontext *ctx, struct radeon_state_atom *atom)
+static void evergreenSendVGT(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1514,7 +1516,7 @@ void evergreenInitAtoms(context_t *context)
     context->radeon.hw.atomlist.name = "atom-list";
 
     EVERGREEN_ALLOC_STATE(init, always, 19, evergreenSendSQConfig);
-    EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (6 + (VERT_ATTRIB_MAX * 12)), evergreenSendVTX);
+    EVERGREEN_ALLOC_STATE(vtx,       evergreen_vtx, (VERT_ATTRIB_MAX * 12), evergreenSendVTX);
     EVERGREEN_ALLOC_STATE(pa,        always,        124, evergreenSendPA);
     EVERGREEN_ALLOC_STATE(tp,        always,        0,   evergreenSendTP);
     EVERGREEN_ALLOC_STATE(sq,        always,        86,  evergreenSendSQ); /* 85 */
@@ -1522,8 +1524,8 @@ void evergreenInitAtoms(context_t *context)
     EVERGREEN_ALLOC_STATE(spi,       always,        59,  evergreenSendSPI);
     EVERGREEN_ALLOC_STATE(sx,        always,        9,   evergreenSendSX);
     EVERGREEN_ALLOC_STATE(tx,        evergreen_tx,  (R700_TEXTURE_NUMBERUNITS * (21+5) + 6), evergreenSendTexState); /* 21 for resource, 5 for sampler */
-    EVERGREEN_ALLOC_STATE(db,        always,        65,  evergreenSendDB); 
-    EVERGREEN_ALLOC_STATE(cb,        always,        33,  evergreenSendCB);	
+    EVERGREEN_ALLOC_STATE(db,        always,        69,  evergreenSendDB); 
+    EVERGREEN_ALLOC_STATE(cb,        always,        37,  evergreenSendCB);	
     EVERGREEN_ALLOC_STATE(vgt,       always,        29,  evergreenSendVGT);
 
     evergreen_init_query_stateobj(&context->radeon, 6 * 2);

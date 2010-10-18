@@ -216,19 +216,19 @@ _mesa_PrimitiveRestartIndex(GLuint index);
 
 
 extern void
-_mesa_copy_client_array(GLcontext *ctx,
+_mesa_copy_client_array(struct gl_context *ctx,
                         struct gl_client_array *dst,
                         struct gl_client_array *src);
 
 
 extern void
-_mesa_print_arrays(GLcontext *ctx);
+_mesa_print_arrays(struct gl_context *ctx);
 
 extern void
-_mesa_init_varray( GLcontext * ctx );
+_mesa_init_varray( struct gl_context * ctx );
 
 extern void 
-_mesa_free_varray_data(GLcontext *ctx);
+_mesa_free_varray_data(struct gl_context *ctx);
 
 #else
 

@@ -41,7 +41,7 @@
 	NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ALPHA0
 
 struct combiner_state {
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	int unit;
 	GLboolean alpha;
 	GLboolean premodulate;
@@ -234,7 +234,7 @@ setup_combiner(struct combiner_state *rc)
 }
 
 void
-nv04_emit_tex_env(GLcontext *ctx, int emit)
+nv04_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
 	struct nouveau_channel *chan = context_chan(ctx);

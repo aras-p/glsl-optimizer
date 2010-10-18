@@ -31,7 +31,6 @@
 #include "vg_context.h"
 #include "vg_translate.h"
 #include "api_consts.h"
-#include "image.h"
 #include "api.h"
 
 #include "pipe/p_context.h"

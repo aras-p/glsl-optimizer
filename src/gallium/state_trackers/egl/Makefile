@@ -24,9 +24,9 @@ x11_SOURCES = $(wildcard x11/*.c) \
 x11_OBJECTS = $(x11_SOURCES:.c=.o)
 
 
-kms_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm)
-kms_SOURCES = $(wildcard kms/*.c)
-kms_OBJECTS = $(kms_SOURCES:.c=.o)
+drm_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm)
+drm_SOURCES = $(wildcard drm/*.c)
+drm_OBJECTS = $(drm_SOURCES:.c=.o)
 
 
 fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw
@@ -34,8 +34,8 @@ fbdev_SOURCES = $(wildcard fbdev/*.c)
 fbdev_OBJECTS = $(fbdev_SOURCES:.c=.o)
 
 
-ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES) $(fbdev_INCLUDES)
-ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES) $(fbdev_SOURCES)
+ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(drm_INCLUDES) $(fbdev_INCLUDES)
+ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(drm_SOURCES) $(fbdev_SOURCES)
 
 EGL_OBJECTS = $(common_OBJECTS)
 EGL_CPPFLAGS = $(common_INCLUDES)
@@ -45,9 +45,9 @@ ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 EGL_OBJECTS += $(x11_OBJECTS)
 EGL_CPPFLAGS += -DHAVE_X11_BACKEND
 endif
-ifneq ($(findstring kms, $(EGL_PLATFORMS)),)
-EGL_OBJECTS += $(kms_OBJECTS)
-EGL_CPPFLAGS += -DHAVE_KMS_BACKEND
+ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
+EGL_OBJECTS += $(drm_OBJECTS)
+EGL_CPPFLAGS += -DHAVE_DRM_BACKEND
 endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 EGL_OBJECTS += $(fbdev_OBJECTS)
@@ -87,8 +87,8 @@ $(common_OBJECTS): %.o: %.c
 $(x11_OBJECTS): %.o: %.c
 	$(call egl-cc,x11)
 
-$(kms_OBJECTS): %.o: %.c
-	$(call egl-cc,kms)
+$(drm_OBJECTS): %.o: %.c
+	$(call egl-cc,drm)
 
 $(fbdev_OBJECTS): %.o: %.c
 	$(call egl-cc,fbdev)

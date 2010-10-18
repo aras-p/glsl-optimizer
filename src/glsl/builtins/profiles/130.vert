@@ -143,6 +143,21 @@ vec2  floor(vec2  x);
 vec3  floor(vec3  x);
 vec4  floor(vec4  x);
 
+float trunc(float x);
+vec2  trunc(vec2  x);
+vec3  trunc(vec3  x);
+vec4  trunc(vec4  x);
+
+float round(float x);
+vec2  round(vec2  x);
+vec3  round(vec3  x);
+vec4  round(vec4  x);
+
+float roundEven(float x);
+vec2  roundEven(vec2  x);
+vec3  roundEven(vec3  x);
+vec4  roundEven(vec4  x);
+
 float ceil(float x);
 vec2  ceil(vec2  x);
 vec3  ceil(vec3  x);

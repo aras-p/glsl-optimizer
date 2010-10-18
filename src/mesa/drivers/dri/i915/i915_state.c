@@ -49,7 +49,7 @@
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
 void
-i915_update_stencil(GLcontext * ctx)
+i915_update_stencil(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint front_ref, front_writemask, front_mask;
@@ -147,24 +147,24 @@ i915_update_stencil(GLcontext * ctx)
 }
 
 static void
-i915StencilFuncSeparate(GLcontext * ctx, GLenum face, GLenum func, GLint ref,
+i915StencilFuncSeparate(struct gl_context * ctx, GLenum face, GLenum func, GLint ref,
                         GLuint mask)
 {
 }
 
 static void
-i915StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
+i915StencilMaskSeparate(struct gl_context * ctx, GLenum face, GLuint mask)
 {
 }
 
 static void
-i915StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail, GLenum zfail,
+i915StencilOpSeparate(struct gl_context * ctx, GLenum face, GLenum fail, GLenum zfail,
                       GLenum zpass)
 {
 }
 
 static void
-i915AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
+i915AlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int test = intel_translate_compare_func(func);
@@ -187,7 +187,7 @@ i915AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
  * calls to glEnable.
  */
 static void
-i915EvalLogicOpBlendState(GLcontext * ctx)
+i915EvalLogicOpBlendState(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -210,7 +210,7 @@ i915EvalLogicOpBlendState(GLcontext * ctx)
 }
 
 static void
-i915BlendColor(GLcontext * ctx, const GLfloat color[4])
+i915BlendColor(struct gl_context * ctx, const GLfloat color[4])
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLubyte r, g, b, a;
@@ -255,7 +255,7 @@ translate_blend_equation(GLenum mode)
 }
 
 static void
-i915UpdateBlendState(GLcontext * ctx)
+i915UpdateBlendState(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint iab = (i915->state.Ctx[I915_CTXREG_IAB] &
@@ -306,7 +306,7 @@ i915UpdateBlendState(GLcontext * ctx)
 
 
 static void
-i915BlendFuncSeparate(GLcontext * ctx, GLenum srcRGB,
+i915BlendFuncSeparate(struct gl_context * ctx, GLenum srcRGB,
                       GLenum dstRGB, GLenum srcA, GLenum dstA)
 {
    i915UpdateBlendState(ctx);
@@ -314,14 +314,14 @@ i915BlendFuncSeparate(GLcontext * ctx, GLenum srcRGB,
 
 
 static void
-i915BlendEquationSeparate(GLcontext * ctx, GLenum eqRGB, GLenum eqA)
+i915BlendEquationSeparate(struct gl_context * ctx, GLenum eqRGB, GLenum eqA)
 {
    i915UpdateBlendState(ctx);
 }
 
 
 static void
-i915DepthFunc(GLcontext * ctx, GLenum func)
+i915DepthFunc(struct gl_context * ctx, GLenum func)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int test = intel_translate_compare_func(func);
@@ -334,7 +334,7 @@ i915DepthFunc(GLcontext * ctx, GLenum func)
 }
 
 static void
-i915DepthMask(GLcontext * ctx, GLboolean flag)
+i915DepthMask(struct gl_context * ctx, GLboolean flag)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -357,7 +357,7 @@ i915DepthMask(GLcontext * ctx, GLboolean flag)
  *  - window pos/size or FBO size
  */
 void
-intelCalcViewport(GLcontext * ctx)
+intelCalcViewport(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -390,7 +390,7 @@ intelCalcViewport(GLcontext * ctx)
 
 /** Called from ctx->Driver.Viewport() */
 static void
-i915Viewport(GLcontext * ctx,
+i915Viewport(struct gl_context * ctx,
               GLint x, GLint y, GLsizei width, GLsizei height)
 {
    intelCalcViewport(ctx);
@@ -399,7 +399,7 @@ i915Viewport(GLcontext * ctx,
 
 /** Called from ctx->Driver.DepthRange() */
 static void
-i915DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+i915DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
 {
    intelCalcViewport(ctx);
 }
@@ -412,7 +412,7 @@ i915DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
  * Fortunately stipple is usually a repeating pattern.
  */
 static void
-i915PolygonStipple(GLcontext * ctx, const GLubyte * mask)
+i915PolygonStipple(struct gl_context * ctx, const GLubyte * mask)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    const GLubyte *m;
@@ -474,7 +474,7 @@ i915PolygonStipple(GLcontext * ctx, const GLubyte * mask)
  * Hardware clipping
  */
 static void
-i915Scissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+i915Scissor(struct gl_context * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int x1, y1, x2, y2;
@@ -514,7 +514,7 @@ i915Scissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 static void
-i915LogicOp(GLcontext * ctx, GLenum opcode)
+i915LogicOp(struct gl_context * ctx, GLenum opcode)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int tmp = intel_translate_logic_op(opcode);
@@ -529,7 +529,7 @@ i915LogicOp(GLcontext * ctx, GLenum opcode)
 
 
 static void
-i915CullFaceFrontFace(GLcontext * ctx, GLenum unused)
+i915CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint mode;
@@ -560,7 +560,7 @@ i915CullFaceFrontFace(GLcontext * ctx, GLenum unused)
 }
 
 static void
-i915LineWidth(GLcontext * ctx, GLfloat widthf)
+i915LineWidth(struct gl_context * ctx, GLfloat widthf)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_LINE_WIDTH_MASK;
@@ -579,7 +579,7 @@ i915LineWidth(GLcontext * ctx, GLfloat widthf)
 }
 
 static void
-i915PointSize(GLcontext * ctx, GLfloat size)
+i915PointSize(struct gl_context * ctx, GLfloat size)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_POINT_WIDTH_MASK;
@@ -598,7 +598,7 @@ i915PointSize(GLcontext * ctx, GLfloat size)
 
 
 static void
-i915PointParameterfv(GLcontext * ctx, GLenum pname, const GLfloat *params)
+i915PointParameterfv(struct gl_context * ctx, GLenum pname, const GLfloat *params)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -620,7 +620,7 @@ i915PointParameterfv(GLcontext * ctx, GLenum pname, const GLfloat *params)
  */
 
 static void
-i915ColorMask(GLcontext * ctx,
+i915ColorMask(struct gl_context * ctx,
               GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
@@ -645,7 +645,7 @@ i915ColorMask(GLcontext * ctx,
 }
 
 static void
-update_specular(GLcontext * ctx)
+update_specular(struct gl_context * ctx)
 {
    /* A hack to trigger the rebuild of the fragment program.
     */
@@ -653,7 +653,7 @@ update_specular(GLcontext * ctx)
 }
 
 static void
-i915LightModelfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
+i915LightModelfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
    DBG("%s\n", __FUNCTION__);
    
@@ -663,7 +663,7 @@ i915LightModelfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 }
 
 static void
-i915ShadeModel(GLcontext * ctx, GLenum mode)
+i915ShadeModel(struct gl_context * ctx, GLenum mode)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    I915_STATECHANGE(i915, I915_UPLOAD_CTX);
@@ -684,7 +684,7 @@ i915ShadeModel(GLcontext * ctx, GLenum mode)
  * Fog
  */
 void
-i915_update_fog(GLcontext * ctx)
+i915_update_fog(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLenum mode;
@@ -780,7 +780,7 @@ i915_update_fog(GLcontext * ctx)
 }
 
 static void
-i915Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
+i915Fogfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -820,7 +820,7 @@ i915Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 }
 
 static void
-i915Hint(GLcontext * ctx, GLenum target, GLenum state)
+i915Hint(struct gl_context * ctx, GLenum target, GLenum state)
 {
    switch (target) {
    case GL_FOG_HINT:
@@ -834,7 +834,7 @@ i915Hint(GLcontext * ctx, GLenum target, GLenum state)
  */
 
 static void
-i915Enable(GLcontext * ctx, GLenum cap, GLboolean state)
+i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -1093,7 +1093,7 @@ i915_init_packets(struct i915_context *i915)
 }
 
 void
-i915_update_provoking_vertex(GLcontext * ctx)
+i915_update_provoking_vertex(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
@@ -1150,7 +1150,7 @@ i915InitStateFunctions(struct dd_function_table *functions)
 void
 i915InitState(struct i915_context *i915)
 {
-   GLcontext *ctx = &i915->intel.ctx;
+   struct gl_context *ctx = &i915->intel.ctx;
 
    i915_init_packets(i915);
 

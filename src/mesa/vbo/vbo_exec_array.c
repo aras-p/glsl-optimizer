@@ -43,7 +43,7 @@
  * glDraw[Range]Elements() calls.
  */
 void
-vbo_get_minmax_index(GLcontext *ctx,
+vbo_get_minmax_index(struct gl_context *ctx,
 		     const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
 		     GLuint *min_index, GLuint *max_index)
@@ -115,7 +115,7 @@ vbo_get_minmax_index(GLcontext *ctx,
  * For debugging purposes; not normally used.
  */
 static void
-check_array_data(GLcontext *ctx, struct gl_client_array *array,
+check_array_data(struct gl_context *ctx, struct gl_client_array *array,
                  GLuint attrib, GLuint j)
 {
    if (array->Enabled) {
@@ -161,7 +161,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
  * Unmap the buffer object referenced by given array, if mapped.
  */
 static void
-unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
+unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
@@ -176,7 +176,7 @@ unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
  * For debug purposes; not normally used.
  */
 static void
-check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
+check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
                          const void *elements, GLint basevertex)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
@@ -244,7 +244,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
  * Check array data, looking for NaNs, etc.
  */
 static void
-check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
+check_draw_arrays_data(struct gl_context *ctx, GLint start, GLsizei count)
 {
    /* TO DO */
 }
@@ -254,7 +254,7 @@ check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
  * Print info/data for glDrawArrays(), for debugging.
  */
 static void
-print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
+print_draw_arrays(struct gl_context *ctx, struct vbo_exec_context *exec,
                   GLenum mode, GLint start, GLsizei count)
 {
    int i;
@@ -303,7 +303,7 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
  * Just translate the arrayobj into a sane layout.
  */
 static void
-bind_array_obj(GLcontext *ctx)
+bind_array_obj(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -348,7 +348,7 @@ bind_array_obj(GLcontext *ctx)
  * to point at a zero-stride current value "array".
  */
 static void
-recalculate_input_bindings(GLcontext *ctx)
+recalculate_input_bindings(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -464,7 +464,7 @@ recalculate_input_bindings(GLcontext *ctx)
  * must be done after this call.
  */
 static void
-bind_arrays(GLcontext *ctx)
+bind_arrays(struct gl_context *ctx)
 {
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
@@ -599,7 +599,7 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
  * For debugging.
  */
 static void
-dump_element_buffer(GLcontext *ctx, GLenum type)
+dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
    const GLvoid *map = ctx->Driver.MapBuffer(ctx,
                                              GL_ELEMENT_ARRAY_BUFFER_ARB,
@@ -657,7 +657,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
  * we've validated buffer bounds, etc.
  */
 static void
-vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
+vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 				GLboolean index_bounds_valid,
 				GLuint start, GLuint end,
 				GLsizei count, GLenum type,
@@ -939,7 +939,7 @@ vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
  * This does the actual rendering after we've checked array indexes, etc.
  */
 static void
-vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
+vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 				const GLsizei *count, GLenum type,
 				const GLvoid **indices, GLsizei primcount,
 				const GLint *basevertex)

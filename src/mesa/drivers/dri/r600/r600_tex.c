@@ -276,7 +276,7 @@ static void r600SetTexBorderColor(radeonTexObjPtr t, const GLfloat color[4])
  * next UpdateTextureState
  */
 
-static void r600TexParameter(GLcontext * ctx, GLenum target,
+static void r600TexParameter(struct gl_context * ctx, GLenum target,
 			     struct gl_texture_object *texObj,
 			     GLenum pname, const GLfloat * params)
 {
@@ -332,7 +332,7 @@ static void r600TexParameter(GLcontext * ctx, GLenum target,
 	}
 }
 
-static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
+static void r600DeleteTexture(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
 	context_t* rmesa = R700_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
@@ -368,7 +368,7 @@ static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
  * allocate the default texture objects.
  * Fixup MaxAnisotropy according to user preference.
  */
-static struct gl_texture_object *r600NewTextureObject(GLcontext * ctx,
+static struct gl_texture_object *r600NewTextureObject(struct gl_context * ctx,
 						      GLuint name,
 						      GLenum target)
 {

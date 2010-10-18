@@ -146,7 +146,6 @@ static const struct dri_extension card_extensions[] = {
   {"GL_MESAX_texture_float",		NULL},
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
-  {"GL_SGIS_generate_mipmap",		NULL},
   {"GL_ARB_pixel_buffer_object",        NULL},
   {"GL_ARB_draw_elements_base_vertex",	GL_ARB_draw_elements_base_vertex_functions },
   {NULL,				NULL}
@@ -166,7 +165,6 @@ static const struct dri_extension mm_extensions[] = {
 static const struct dri_extension gl_20_extension[] = {
 #ifdef R600_ENABLE_GLSL_TEST
     {"GL_ARB_shading_language_100",			GL_VERSION_2_0_functions },
-    {"GL_ARB_shading_language_120",			GL_VERSION_2_1_functions },
 #else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 #endif /* R600_ENABLE_GLSL_TEST */
@@ -210,7 +208,7 @@ static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 	r700Start3D((context_t *)radeon);
 }
 
-static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
+static void r600_fallback(struct gl_context *ctx, GLuint bit, GLboolean mode)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	if (mode)
@@ -251,7 +249,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.is_format_renderable = r600IsFormatRenderable;
 }
 
-static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
+static void r600InitConstValues(struct gl_context *ctx, radeonScreenPtr screen)
 {
     context_t         *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700    = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -265,6 +263,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
     {
         r700->bShaderUseMemConstant = GL_FALSE;
     }
+
+        ctx->Const.GLSLVersion = 120;
 
 	ctx->Const.MaxTextureImageUnits = 16;
 	/* 8 per clause on r6xx, 16 on r7xx
@@ -335,7 +335,7 @@ static void r600ParseOptions(context_t *r600, radeonScreenPtr screen)
 
 }
 
-static void r600InitGLExtensions(GLcontext *ctx)
+static void r600InitGLExtensions(struct gl_context *ctx)
 {
 	context_t *r600 = R700_CONTEXT(ctx);
 #ifdef R600_ENABLE_GLSL_TEST
@@ -380,7 +380,7 @@ static void r600InitGLExtensions(GLcontext *ctx)
 /* Create the device specific rendering context.
  */
 GLboolean r600CreateContext(gl_api api,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
@@ -388,7 +388,7 @@ GLboolean r600CreateContext(gl_api api,
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	context_t *r600;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 
 	assert(glVisual);
 	assert(driContextPriv);

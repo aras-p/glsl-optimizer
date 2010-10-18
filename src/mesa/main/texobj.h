@@ -41,45 +41,45 @@
 /*@{*/
 
 extern struct gl_texture_object *
-_mesa_lookup_texture(GLcontext *ctx, GLuint id);
+_mesa_lookup_texture(struct gl_context *ctx, GLuint id);
 
 extern struct gl_texture_object *
-_mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target );
+_mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target );
 
 extern void
 _mesa_initialize_texture_object( struct gl_texture_object *obj,
                                  GLuint name, GLenum target );
 
 extern void
-_mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *obj );
+_mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *obj );
 
 extern void
 _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src );
 
 extern void
-_mesa_clear_texture_object(GLcontext *ctx, struct gl_texture_object *obj);
+_mesa_clear_texture_object(struct gl_context *ctx, struct gl_texture_object *obj);
 
 extern void
 _mesa_reference_texobj(struct gl_texture_object **ptr,
                        struct gl_texture_object *tex);
 
 extern void
-_mesa_test_texobj_completeness( const GLcontext *ctx,
+_mesa_test_texobj_completeness( const struct gl_context *ctx,
                                 struct gl_texture_object *obj );
 
 extern void
-_mesa_dirty_texobj(GLcontext *ctx, struct gl_texture_object *texObj,
+_mesa_dirty_texobj(struct gl_context *ctx, struct gl_texture_object *texObj,
                    GLboolean invalidate_state);
 
 extern struct gl_texture_object *
-_mesa_get_fallback_texture(GLcontext *ctx);
+_mesa_get_fallback_texture(struct gl_context *ctx);
 
 extern void
-_mesa_unlock_context_textures( GLcontext *ctx );
+_mesa_unlock_context_textures( struct gl_context *ctx );
 
 extern void
-_mesa_lock_context_textures( GLcontext *ctx );
+_mesa_lock_context_textures( struct gl_context *ctx );
 
 /*@}*/
 

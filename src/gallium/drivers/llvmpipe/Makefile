@@ -64,11 +64,11 @@ PROGS := lp_test_format	\
 # Need this for the lp_test_*.o files
 CLEAN_EXTRA = *.o
 
+include ../../Makefile.template
+
 lp_test_sincos.o : sse_mathfun.h
 
 PROGS_DEPS := ../../auxiliary/libgallium.a
-
-include ../../Makefile.template
 
 lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_pack.py ../../auxiliary/util/u_format.csv
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@

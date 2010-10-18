@@ -132,7 +132,7 @@ static void compile_sf_prog( struct brw_context *brw,
  */
 static void upload_sf_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_sf_prog_key key;
 
    memset(&key, 0, sizeof(key));

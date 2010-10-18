@@ -190,7 +190,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
  * too.
  */
 void
-_mesa_polygon_stipple(GLcontext *ctx, const GLubyte *pattern)
+_mesa_polygon_stipple(struct gl_context *ctx, const GLubyte *pattern)
 {
    pattern = _mesa_map_validate_pbo_source(ctx, 2,
                                            &ctx->Unpack, 32, 32, 1,
@@ -293,10 +293,10 @@ _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
  *
  * \param ctx GL context.
  *
- * Initializes __GLcontextRec::Polygon and __GLcontextRec::PolygonStipple
+ * Initializes __struct gl_contextRec::Polygon and __struct gl_contextRec::PolygonStipple
  * attribute groups.
  */
-void _mesa_init_polygon( GLcontext * ctx )
+void _mesa_init_polygon( struct gl_context * ctx )
 {
    /* Polygon group */
    ctx->Polygon.CullFlag = GL_FALSE;

@@ -123,12 +123,12 @@ static const struct __DRI2flushExtensionRec intelFlushExtension = {
 };
 
 static __DRIimage *
-intel_create_image_from_name(__DRIcontext *context,
+intel_create_image_from_name(__DRIscreen *screen,
 			     int width, int height, int format,
 			     int name, int pitch, void *loaderPrivate)
 {
+    struct intel_screen *intelScreen = screen->private;
     __DRIimage *image;
-    struct intel_context *intel = context->driverPrivate;
     int cpp;
 
     image = CALLOC(sizeof *image);
@@ -159,7 +159,7 @@ intel_create_image_from_name(__DRIcontext *context,
     image->data = loaderPrivate;
     cpp = _mesa_get_format_bytes(image->format);
 
-    image->region = intel_region_alloc_for_handle(intel->intelScreen,
+    image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
 						  pitch, name, "image");
     if (image->region == NULL) {
@@ -339,7 +339,7 @@ intelDestroyScreen(__DRIscreen * sPriv)
 static GLboolean
 intelCreateBuffer(__DRIscreen * driScrnPriv,
                   __DRIdrawable * driDrawPriv,
-                  const __GLcontextModes * mesaVis, GLboolean isPixmap)
+                  const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
 
@@ -415,22 +415,22 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
  * init-designated function to register chipids and createcontext
  * functions.
  */
-extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i830CreateContext(const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 extern GLboolean i915CreateContext(int api,
-				   const __GLcontextModes * mesaVis,
+				   const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 extern GLboolean brwCreateContext(int api,
-				  const __GLcontextModes * mesaVis,
+				  const struct gl_config * mesaVis,
 				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(gl_api api,
-		   const __GLcontextModes * mesaVis,
+		   const struct gl_config * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
@@ -465,7 +465,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-   /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
@@ -489,7 +488,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const
 __DRIconfig **intelInitScreen2(__DRIscreen *psp)

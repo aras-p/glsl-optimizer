@@ -37,9 +37,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
-extern void r128DDInitSpanFuncs( GLcontext *ctx );
+extern void r128DDInitSpanFuncs( struct gl_context *ctx );
 
 extern void
-r128SetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+r128SetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);
 
 #endif

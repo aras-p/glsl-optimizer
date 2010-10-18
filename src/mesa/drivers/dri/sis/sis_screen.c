@@ -193,7 +193,7 @@ sisDestroyScreen( __DRIscreen *sPriv )
 static GLboolean
 sisCreateBuffer( __DRIscreen *driScrnPriv,
                  __DRIdrawable *driDrawPriv,
-                 const __GLcontextModes *mesaVis,
+                 const struct gl_config *mesaVis,
                  GLboolean isPixmap )
 {
    /*sisScreenPtr screen = (sisScreenPtr) driScrnPriv->private;*/
@@ -220,7 +220,7 @@ sisCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 sisDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void sisCopyBuffer( __DRIdrawable *dPriv )
@@ -262,7 +262,7 @@ sisSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
          sisContextPtr smesa = (sisContextPtr) dPriv->driContextPriv->driverPrivate;
-         GLcontext *ctx = smesa->glCtx;
+         struct gl_context *ctx = smesa->glCtx;
 
       if (ctx->Visual.doubleBufferMode) {
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
@@ -280,7 +280,7 @@ sisSwapBuffers(__DRIdrawable *dPriv)
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 sisInitScreen(__DRIscreen *psp)

@@ -32,7 +32,7 @@ void viaFinishPrimitive(struct via_context *vmesa);
 void viaFlushDma(struct via_context *vmesa);
 void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags);
 
-void viaInitIoctlFuncs(GLcontext *ctx);
+void viaInitIoctlFuncs(struct gl_context *ctx);
 void viaCopyBuffer(__DRIdrawable *dpriv);
 void viaPageFlip(__DRIdrawable *dpriv);
 void viaCheckDma(struct via_context *vmesa, GLuint bytes);

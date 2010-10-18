@@ -35,7 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_TEX_H__
 #define __R128_TEX_H__
 
-extern void r128UpdateTextureState( GLcontext *ctx );
+extern void r128UpdateTextureState( struct gl_context *ctx );
 
 extern void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
 

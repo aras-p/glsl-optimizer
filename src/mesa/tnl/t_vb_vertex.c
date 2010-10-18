@@ -58,7 +58,7 @@ struct vertex_stage_data {
  * t_render_clip.h.
  */
 #define USER_CLIPTEST(NAME, SZ)					\
-static void NAME( GLcontext *ctx,				\
+static void NAME( struct gl_context *ctx,				\
 		  GLvector4f *clip,				\
 		  GLubyte *clipmask,				\
 		  GLubyte *clipormask,				\
@@ -105,7 +105,7 @@ USER_CLIPTEST(userclip2, 2)
 USER_CLIPTEST(userclip3, 3)
 USER_CLIPTEST(userclip4, 4)
 
-static void (*(usercliptab[5]))( GLcontext *,
+static void (*(usercliptab[5]))( struct gl_context *,
 				 GLvector4f *, GLubyte *,
 				 GLubyte *, GLubyte * ) =
 {
@@ -118,7 +118,7 @@ static void (*(usercliptab[5]))( GLcontext *,
 
 
 void
-tnl_clip_prepare(GLcontext *ctx)
+tnl_clip_prepare(struct gl_context *ctx)
 {
    /* Neither the x86 nor sparc asm cliptest functions have been updated
     * for ARB_depth_clamp, so force the C paths.
@@ -134,7 +134,7 @@ tnl_clip_prepare(GLcontext *ctx)
 
 
 
-static GLboolean run_vertex_stage( GLcontext *ctx,
+static GLboolean run_vertex_stage( struct gl_context *ctx,
 				   struct tnl_pipeline_stage *stage )
 {
    struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
@@ -229,7 +229,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 }
 
 
-static GLboolean init_vertex_stage( GLcontext *ctx,
+static GLboolean init_vertex_stage( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

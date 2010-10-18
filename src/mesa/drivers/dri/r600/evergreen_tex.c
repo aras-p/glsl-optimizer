@@ -934,7 +934,7 @@ EG_S_FIXED(float value, uint32_t frac_bits)
    return value * (1 << frac_bits);
 }
 
-static GLboolean evergreen_setup_hardware_state(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean evergreen_setup_hardware_state(struct gl_context * ctx, struct gl_texture_object *texObj, int unit)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
@@ -1289,7 +1289,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	return;
 }
 
-void evergreenUpdateTextureState(GLcontext * ctx)
+void evergreenUpdateTextureState(struct gl_context * ctx)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT * evergreen = GET_EVERGREEN_CHIP(context);	
@@ -1311,7 +1311,7 @@ void evergreenUpdateTextureState(GLcontext * ctx)
 	}
 }
 
-static GLboolean evergreen_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean evergreen_validate_texture(struct gl_context * ctx, struct gl_texture_object *texObj, int unit)
 {
 	radeonTexObj *t = radeon_tex_obj(texObj);
 
@@ -1327,7 +1327,7 @@ static GLboolean evergreen_validate_texture(GLcontext * ctx, struct gl_texture_o
 	return GL_TRUE;
 }
 
-GLboolean evergreenValidateBuffers(GLcontext * ctx)
+GLboolean evergreenValidateBuffers(struct gl_context * ctx)
 {
 	context_t *rmesa = EVERGREEN_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;
@@ -1403,7 +1403,7 @@ GLboolean evergreenValidateBuffers(GLcontext * ctx)
 	return GL_TRUE;
 }
 
-static struct gl_texture_object *evergreenNewTextureObject(GLcontext * ctx,
+static struct gl_texture_object *evergreenNewTextureObject(struct gl_context * ctx,
 						      GLuint name,
 						      GLenum target)
 {
@@ -1426,7 +1426,7 @@ static struct gl_texture_object *evergreenNewTextureObject(GLcontext * ctx,
 	return &t->base;
 }
 
-static void evergreenDeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
+static void evergreenDeleteTexture(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
 	context_t              * rmesa     = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT * evergreen = GET_EVERGREEN_CHIP(rmesa);
@@ -1456,7 +1456,7 @@ static void evergreenDeleteTexture(GLcontext * ctx, struct gl_texture_object *te
 	_mesa_delete_texture_object(ctx, texObj);
 }
 
-static void evergreenTexParameter(GLcontext * ctx, GLenum target,
+static void evergreenTexParameter(struct gl_context * ctx, GLenum target,
 			     struct gl_texture_object *texObj,
 			     GLenum pname, const GLfloat * params)
 {

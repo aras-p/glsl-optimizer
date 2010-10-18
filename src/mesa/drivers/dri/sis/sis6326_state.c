@@ -46,7 +46,7 @@
  */
 
 static void
-sis6326DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
+sis6326DDAlphaFunc( struct gl_context *ctx, GLenum func, GLfloat ref )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    GLubyte refbyte;
@@ -91,7 +91,7 @@ sis6326DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
 }
 
 static void
-sis6326DDBlendFuncSeparate( GLcontext *ctx, 
+sis6326DDBlendFuncSeparate( struct gl_context *ctx, 
 			    GLenum sfactorRGB, GLenum dfactorRGB,
 			    GLenum sfactorA,   GLenum dfactorA )
 {
@@ -172,7 +172,7 @@ sis6326DDBlendFuncSeparate( GLcontext *ctx,
  */
 
 static void
-sis6326DDDepthFunc( GLcontext *ctx, GLenum func )
+sis6326DDDepthFunc( struct gl_context *ctx, GLenum func )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *prev = &smesa->prev;
@@ -214,7 +214,7 @@ sis6326DDDepthFunc( GLcontext *ctx, GLenum func )
 }
 
 static void
-sis6326DDDepthMask( GLcontext *ctx, GLboolean flag )
+sis6326DDDepthMask( struct gl_context *ctx, GLboolean flag )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *current = &smesa->current;
@@ -230,7 +230,7 @@ sis6326DDDepthMask( GLcontext *ctx, GLboolean flag )
  */
 
 static void
-sis6326DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
+sis6326DDFogfv( struct gl_context *ctx, GLenum pname, const GLfloat *params )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *current = &smesa->current;
@@ -258,7 +258,7 @@ sis6326DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
  */
 
 void
-sis6326UpdateClipping(GLcontext *ctx)
+sis6326UpdateClipping(struct gl_context *ctx)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -300,7 +300,7 @@ sis6326UpdateClipping(GLcontext *ctx)
 }
 
 static void
-sis6326DDScissor( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
+sis6326DDScissor( struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
 {
    if (ctx->Scissor.Enabled)
       sis6326UpdateClipping( ctx );
@@ -311,20 +311,20 @@ sis6326DDScissor( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
  */
 
 static void
-sis6326UpdateCull( GLcontext *ctx )
+sis6326UpdateCull( struct gl_context *ctx )
 {
    /* XXX culling */
 }
 
 
 static void
-sis6326DDCullFace( GLcontext *ctx, GLenum mode )
+sis6326DDCullFace( struct gl_context *ctx, GLenum mode )
 {
    sis6326UpdateCull( ctx );
 }
 
 static void
-sis6326DDFrontFace( GLcontext *ctx, GLenum mode )
+sis6326DDFrontFace( struct gl_context *ctx, GLenum mode )
 {
    sis6326UpdateCull( ctx );
 }
@@ -333,7 +333,7 @@ sis6326DDFrontFace( GLcontext *ctx, GLenum mode )
  * Masks
  */
 
-static void sis6326DDColorMask( GLcontext *ctx,
+static void sis6326DDColorMask( struct gl_context *ctx,
 				GLboolean r, GLboolean g,
 				GLboolean b, GLboolean a )
 {
@@ -350,7 +350,7 @@ static void sis6326DDColorMask( GLcontext *ctx,
  * Rendering attributes
  */
 
-static void sis6326UpdateSpecular(GLcontext *ctx)
+static void sis6326UpdateSpecular(struct gl_context *ctx)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *current = &smesa->current;
@@ -361,14 +361,14 @@ static void sis6326UpdateSpecular(GLcontext *ctx)
       current->hwCapEnable &= ~S_ENABLE_Specular;
 }
 
-static void sis6326DDLightModelfv(GLcontext *ctx, GLenum pname,
+static void sis6326DDLightModelfv(struct gl_context *ctx, GLenum pname,
 			      const GLfloat *param)
 {
    if (pname == GL_LIGHT_MODEL_COLOR_CONTROL) {
       sis6326UpdateSpecular(ctx);
    }
 }
-static void sis6326DDShadeModel( GLcontext *ctx, GLenum mode )
+static void sis6326DDShadeModel( struct gl_context *ctx, GLenum mode )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -384,7 +384,7 @@ static void sis6326DDShadeModel( GLcontext *ctx, GLenum mode )
  * Viewport
  */
 
-static void sis6326CalcViewport( GLcontext *ctx )
+static void sis6326CalcViewport( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -400,14 +400,14 @@ static void sis6326CalcViewport( GLcontext *ctx )
    m[MAT_TZ] =   v[MAT_TZ] * smesa->depth_scale;
 }
 
-static void sis6326DDViewport( GLcontext *ctx,
+static void sis6326DDViewport( struct gl_context *ctx,
 			   GLint x, GLint y,
 			   GLsizei width, GLsizei height )
 {
    sis6326CalcViewport( ctx );
 }
 
-static void sis6326DDDepthRange( GLcontext *ctx,
+static void sis6326DDDepthRange( struct gl_context *ctx,
 			     GLclampd nearval, GLclampd farval )
 {
    sis6326CalcViewport( ctx );
@@ -418,7 +418,7 @@ static void sis6326DDDepthRange( GLcontext *ctx,
  */
 
 static void
-sis6326DDLogicOpCode( GLcontext *ctx, GLenum opcode )
+sis6326DDLogicOpCode( struct gl_context *ctx, GLenum opcode )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -487,7 +487,7 @@ sis6326DDLogicOpCode( GLcontext *ctx, GLenum opcode )
    }
 }
 
-void sis6326DDDrawBuffer( GLcontext *ctx, GLenum mode )
+void sis6326DDDrawBuffer( struct gl_context *ctx, GLenum mode )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -544,7 +544,7 @@ void sis6326DDDrawBuffer( GLcontext *ctx, GLenum mode )
  */
 
 static void
-sis6326DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
+sis6326DDEnable( struct gl_context *ctx, GLenum cap, GLboolean state )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -617,7 +617,7 @@ sis6326DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
 /* Called before beginning of rendering. */
 void
-sis6326UpdateHWState( GLcontext *ctx )
+sis6326UpdateHWState( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *prev = &smesa->prev;
@@ -639,7 +639,7 @@ sis6326UpdateHWState( GLcontext *ctx )
 }
 
 static void
-sis6326DDInvalidateState( GLcontext *ctx, GLuint new_state )
+sis6326DDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
 	sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -656,7 +656,7 @@ void sis6326DDInitState( sisContextPtr smesa )
 {
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
-   GLcontext *ctx = smesa->glCtx;
+   struct gl_context *ctx = smesa->glCtx;
 
    /* add Texture Perspective Enable */
    current->hwCapEnable = S_ENABLE_TextureCache |
@@ -708,7 +708,7 @@ void sis6326DDInitState( sisContextPtr smesa )
 
 /* Initialize the driver's state functions.
  */
-void sis6326DDInitStateFuncs( GLcontext *ctx )
+void sis6326DDInitStateFuncs( struct gl_context *ctx )
 {
    ctx->Driver.UpdateState		= sis6326DDInvalidateState;
 

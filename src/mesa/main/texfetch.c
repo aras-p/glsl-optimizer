@@ -314,6 +314,48 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_ycbcr_rev
    },
    {
+      MESA_FORMAT_R8,
+      fetch_texel_1d_f_r8,
+      fetch_texel_2d_f_r8,
+      fetch_texel_3d_f_r8,
+      store_texel_r8,
+   },
+   {
+      MESA_FORMAT_RG88,
+      fetch_texel_1d_f_rg88,
+      fetch_texel_2d_f_rg88,
+      fetch_texel_3d_f_rg88,
+      store_texel_rg88,
+   },
+   {
+      MESA_FORMAT_RG88_REV,
+      fetch_texel_1d_f_rg88_rev,
+      fetch_texel_2d_f_rg88_rev,
+      fetch_texel_3d_f_rg88_rev,
+      store_texel_rg88_rev,
+   },
+   {
+      MESA_FORMAT_R16,
+      fetch_texel_1d_f_r16,
+      fetch_texel_2d_f_r16,
+      fetch_texel_3d_f_r16,
+      store_texel_r16,
+   },
+   {
+      MESA_FORMAT_RG1616,
+      fetch_texel_1d_f_rg1616,
+      fetch_texel_2d_f_rg1616,
+      fetch_texel_3d_f_rg1616,
+      store_texel_rg1616,
+   },
+   {
+      MESA_FORMAT_RG1616_REV,
+      fetch_texel_1d_f_rg1616_rev,
+      fetch_texel_2d_f_rg1616_rev,
+      fetch_texel_3d_f_rg1616_rev,
+      store_texel_rg1616_rev,
+   },
+   {
       MESA_FORMAT_Z24_S8,
       fetch_texel_1d_f_z24_s8,
       fetch_texel_2d_f_z24_s8,

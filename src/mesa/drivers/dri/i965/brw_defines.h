@@ -501,9 +501,26 @@
 #define BRW_MASK_ENABLE   0
 #define BRW_MASK_DISABLE  1
 
-/* Sandybridge is WECtrl (Write enable control) */
+/** @{
+ *
+ * Gen6 has replaced "mask enable/disable" with WECtrl, which is
+ * effectively the same but much simpler to think about.  Now, there
+ * are two contributors ANDed together to whether channels are
+ * executed: The predication on the instruction, and the channel write
+ * enable.
+ */
+/**
+ * This is the default value.  It means that a channel's write enable is set
+ * if the per-channel IP is pointing at this instruction.
+ */
 #define BRW_WE_NORMAL		0
-#define BRW_WE_KILL_PRED	1
+/**
+ * This is used like BRW_MASK_DISABLE, and causes all channels to have
+ * their write enable set.  Note that predication still contributes to
+ * whether the channel actually gets written.
+ */
+#define BRW_WE_ALL		1
+/** @} */
 
 #define BRW_OPCODE_MOV        1
 #define BRW_OPCODE_SEL        2
@@ -930,6 +947,7 @@
 /* DW3 */
 # define GEN6_CLIP_MIN_POINT_WIDTH_SHIFT		17
 # define GEN6_CLIP_MAX_POINT_WIDTH_SHIFT		6
+# define GEN6_CLIP_FORCE_ZERO_RTAINDEX			(1 << 5)
 
 #define CMD_3D_SF_STATE				0x7813 /* GEN6+ */
 /* DW1 */

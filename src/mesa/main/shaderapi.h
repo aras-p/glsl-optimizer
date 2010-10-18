@@ -39,7 +39,7 @@ _mesa_copy_string(GLchar *dst, GLsizei maxLength,
                   GLsizei *length, const GLchar *src);
 
 extern void
-_mesa_use_program(GLcontext *ctx, GLuint program);
+_mesa_use_program(struct gl_context *ctx, GLuint program);
 
 
 extern void

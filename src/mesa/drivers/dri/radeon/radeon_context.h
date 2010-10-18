@@ -451,7 +451,7 @@ struct r100_context {
 #define RADEON_OLD_PACKETS 1
 
 extern GLboolean r100CreateContext( gl_api api,
-				    const __GLcontextModes *glVisual,
+				    const struct gl_config *glVisual,
 				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
 

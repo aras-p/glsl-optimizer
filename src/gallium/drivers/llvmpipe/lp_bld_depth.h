@@ -61,7 +61,27 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef zs_src,
                             LLVMValueRef zs_dst_ptr,
                             LLVMValueRef facing,
-                            LLVMValueRef counter);
+                            LLVMValueRef *zs_value,
+                            boolean do_branch);
 
+void
+lp_build_depth_write(LLVMBuilderRef builder,
+                     const struct util_format_description *format_desc,
+                     LLVMValueRef zs_dst_ptr,
+                     LLVMValueRef zs_value);
+
+void
+lp_build_deferred_depth_write(LLVMBuilderRef builder,
+                              struct lp_type z_src_type,
+                              const struct util_format_description *format_desc,
+                              struct lp_build_mask_context *mask,
+                              LLVMValueRef zs_dst_ptr,
+                              LLVMValueRef zs_value);
+
+void
+lp_build_occlusion_count(LLVMBuilderRef builder,
+                         struct lp_type type,
+                         LLVMValueRef maskvalue,
+                         LLVMValueRef counter);
 
 #endif /* !LP_BLD_DEPTH_H */

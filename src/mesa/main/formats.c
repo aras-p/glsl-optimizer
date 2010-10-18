@@ -321,6 +321,60 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_R8,
+      "MESA_FORMAT_R8",
+      GL_RED,
+      GL_UNSIGNED_NORMALIZED,
+      8, 0, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 1
+   },
+   {
+      MESA_FORMAT_RG88,
+      "MESA_FORMAT_RG88",
+      GL_RG,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_RG88_REV,
+      "MESA_FORMAT_RG88_REV",
+      GL_RG,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_R16,
+      "MESA_FORMAT_R16",
+      GL_RED,
+      GL_UNSIGNED_NORMALIZED,
+      16, 0, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_RG1616,
+      "MESA_FORMAT_RG1616",
+      GL_RG,
+      GL_UNSIGNED_NORMALIZED,
+      16, 16, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
+   {
+      MESA_FORMAT_RG1616_REV,
+      "MESA_FORMAT_RG1616_REV",
+      GL_RG,
+      GL_UNSIGNED_NORMALIZED,
+      16, 16, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
+   {
       MESA_FORMAT_Z24_S8,          /* Name */
       "MESA_FORMAT_Z24_S8",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
@@ -1073,6 +1127,22 @@ _mesa_test_formats(void)
          assert(info->LuminanceBits == 0);
          assert(info->IntensityBits == 0);
       }
+      else if (info->BaseFormat == GL_RG) {
+         assert(info->RedBits > 0);
+         assert(info->GreenBits > 0);
+         assert(info->BlueBits == 0);
+         assert(info->AlphaBits == 0);
+         assert(info->LuminanceBits == 0);
+         assert(info->IntensityBits == 0);
+      }
+      else if (info->BaseFormat == GL_RED) {
+         assert(info->RedBits > 0);
+         assert(info->GreenBits == 0);
+         assert(info->BlueBits == 0);
+         assert(info->AlphaBits == 0);
+         assert(info->LuminanceBits == 0);
+         assert(info->IntensityBits == 0);
+      }
       else if (info->BaseFormat == GL_LUMINANCE) {
          assert(info->RedBits == 0);
          assert(info->GreenBits == 0);
@@ -1137,14 +1207,23 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_AL88:
    case MESA_FORMAT_AL88_REV:
+   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_RG88_REV:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
 
    case MESA_FORMAT_AL1616:
    case MESA_FORMAT_AL1616_REV:
+   case MESA_FORMAT_RG1616:
+   case MESA_FORMAT_RG1616_REV:
       *datatype = GL_UNSIGNED_SHORT;
       *comps = 2;
+      return;
+
+   case MESA_FORMAT_R16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *comps = 1;
       return;
 
    case MESA_FORMAT_RGB332:
@@ -1156,6 +1235,7 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_L8:
    case MESA_FORMAT_I8:
    case MESA_FORMAT_CI8:
+   case MESA_FORMAT_R8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 1;
       return;
@@ -1259,11 +1339,11 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_SRGBA_DXT3:
    case MESA_FORMAT_SRGBA_DXT5:
 #endif
+#endif
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;
       return;
-#endif
 
    case MESA_FORMAT_RGBA_FLOAT32:
       *datatype = GL_FLOAT;

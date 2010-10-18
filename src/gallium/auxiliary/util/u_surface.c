@@ -332,7 +332,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                uint32_t *row = (uint32_t *)dst_map;
                for (j = 0; j < width; j++) {
                   uint32_t tmp = *row & dst_mask;
-                  *row++ = tmp & (zstencil & ~dst_mask);
+                  *row++ = tmp | (zstencil & ~dst_mask);
                }
                dst_map += dst_stride;
             }

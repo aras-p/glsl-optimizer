@@ -176,10 +176,10 @@ do {						\
 
 
 extern void
-_swrast_span_default_attribs(GLcontext *ctx, SWspan *span);
+_swrast_span_default_attribs(struct gl_context *ctx, SWspan *span);
 
 extern void
-_swrast_span_interpolate_z( const GLcontext *ctx, SWspan *span );
+_swrast_span_interpolate_z( const struct gl_context *ctx, SWspan *span );
 
 extern GLfloat
 _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
@@ -188,31 +188,31 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
 
 
 extern void
-_swrast_write_rgba_span( GLcontext *ctx, SWspan *span);
+_swrast_write_rgba_span( struct gl_context *ctx, SWspan *span);
 
 
 extern void
-_swrast_read_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint n, GLint x, GLint y, GLenum type, GLvoid *rgba);
 
 extern void
-_swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLuint count, const GLint x[], const GLint y[],
                    void *values, GLuint valueSize);
 
 extern void
-_swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
                 GLuint count, GLint x, GLint y,
                 const GLvoid *values, GLuint valueSize);
 
 extern void
-_swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
                 GLuint count, GLint x, GLint y,
                 GLvoid *values, GLuint valueSize);
 
 
 extern void *
-_swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_get_dest_rgba(struct gl_context *ctx, struct gl_renderbuffer *rb,
                       SWspan *span);
 
 #endif

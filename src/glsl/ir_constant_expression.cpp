@@ -100,6 +100,21 @@ ir_expression::constant_expression_value()
    }
 
    switch (this->operation) {
+   case ir_unop_bit_not:
+       switch (op[0]->type->base_type) {
+       case GLSL_TYPE_INT:
+           for (unsigned c = 0; c < components; c++)
+               data.i[c] = ~ op[0]->value.i[c];
+           break;
+       case GLSL_TYPE_UINT:
+           for (unsigned c = 0; c < components; c++)
+               data.u[c] = ~ op[0]->value.u[c];
+           break;
+       default:
+           assert(0);
+       }
+       break;
+
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
       for (unsigned c = 0; c < op[0]->type->components(); c++)
@@ -623,41 +638,148 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_binop_equal:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-         data.b[0] = op[0]->value.u[0] == op[1]->value.u[0];
-         break;
-      case GLSL_TYPE_INT:
-         data.b[0] = op[0]->value.i[0] == op[1]->value.i[0];
-         break;
-      case GLSL_TYPE_FLOAT:
-         data.b[0] = op[0]->value.f[0] == op[1]->value.f[0];
-         break;
-      default:
-         assert(0);
+      assert(op[0]->type == op[1]->type);
+      for (unsigned c = 0; c < components; c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[c] = op[0]->value.u[c] == op[1]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[c] = op[0]->value.i[c] == op[1]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[c] = op[0]->value.f[c] == op[1]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
    case ir_binop_nequal:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-         data.b[0] = op[0]->value.u[0] != op[1]->value.u[0];
-         break;
-      case GLSL_TYPE_INT:
-         data.b[0] = op[0]->value.i[0] != op[1]->value.i[0];
-         break;
-      case GLSL_TYPE_FLOAT:
-         data.b[0] = op[0]->value.f[0] != op[1]->value.f[0];
-         break;
-      default:
-         assert(0);
+      assert(op[0]->type != op[1]->type);
+      for (unsigned c = 0; c < components; c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[c] = op[0]->value.u[c] != op[1]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[c] = op[0]->value.i[c] != op[1]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[c] = op[0]->value.f[c] != op[1]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
-
    case ir_binop_all_equal:
       data.b[0] = op[0]->has_value(op[1]);
       break;
    case ir_binop_any_nequal:
       data.b[0] = !op[0]->has_value(op[1]);
+      break;
+
+   case ir_binop_lshift:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          if (op[0]->type->base_type == GLSL_TYPE_INT &&
+              op[1]->type->base_type == GLSL_TYPE_INT) {
+              data.i[c] = op[0]->value.i[c0] << op[1]->value.i[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_INT &&
+                     op[1]->type->base_type == GLSL_TYPE_UINT) {
+              data.i[c] = op[0]->value.i[c0] << op[1]->value.u[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                     op[1]->type->base_type == GLSL_TYPE_INT) {
+              data.u[c] = op[0]->value.u[c0] << op[1]->value.i[c1];
+
+          } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                     op[1]->type->base_type == GLSL_TYPE_UINT) {
+              data.u[c] = op[0]->value.u[c0] << op[1]->value.u[c1];
+          }
+      }
+      break;
+
+   case ir_binop_rshift:
+       for (unsigned c = 0, c0 = 0, c1 = 0;
+            c < components;
+            c0 += c0_inc, c1 += c1_inc, c++) {
+
+           if (op[0]->type->base_type == GLSL_TYPE_INT &&
+               op[1]->type->base_type == GLSL_TYPE_INT) {
+               data.i[c] = op[0]->value.i[c0] >> op[1]->value.i[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_INT &&
+                      op[1]->type->base_type == GLSL_TYPE_UINT) {
+               data.i[c] = op[0]->value.i[c0] >> op[1]->value.u[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                      op[1]->type->base_type == GLSL_TYPE_INT) {
+               data.u[c] = op[0]->value.u[c0] >> op[1]->value.i[c1];
+
+           } else if (op[0]->type->base_type == GLSL_TYPE_UINT &&
+                      op[1]->type->base_type == GLSL_TYPE_UINT) {
+               data.u[c] = op[0]->value.u[c0] >> op[1]->value.u[c1];
+           }
+       }
+       break;
+
+   case ir_binop_bit_and:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] & op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] & op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
+      break;
+
+   case ir_binop_bit_or:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] | op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] | op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
+      break;
+
+   case ir_binop_bit_xor:
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+           c < components;
+           c0 += c0_inc, c1 += c1_inc, c++) {
+
+          switch (op[0]->type->base_type) {
+          case GLSL_TYPE_INT:
+              data.i[c] = op[0]->value.i[c0] ^ op[1]->value.i[c1];
+              break;
+          case GLSL_TYPE_UINT:
+              data.u[c] = op[0]->value.u[c0] ^ op[1]->value.u[c1];
+              break;
+          default:
+              assert(0);
+          }
+      }
       break;
 
    default:
@@ -746,7 +868,7 @@ ir_dereference_array::constant_expression_value()
 	  */
 	 const unsigned mat_idx = column * column_type->vector_elements;
 
-	 ir_constant_data data;
+	 ir_constant_data data = { { 0 } };
 
 	 switch (column_type->base_type) {
 	 case GLSL_TYPE_UINT:

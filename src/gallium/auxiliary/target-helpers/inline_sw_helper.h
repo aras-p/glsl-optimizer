@@ -23,24 +23,11 @@
 #include "cell/ppu/cell_public.h"
 #endif
 
+
 static INLINE struct pipe_screen *
-sw_screen_create(struct sw_winsys *winsys)
+sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
 {
-   const char *default_driver;
-   const char *driver;
    struct pipe_screen *screen = NULL;
-
-#if defined(GALLIUM_CELL)
-   default_driver = "cell";
-#elif defined(GALLIUM_LLVMPIPE)
-   default_driver = "llvmpipe";
-#elif defined(GALLIUM_SOFTPIPE)
-   default_driver = "softpipe";
-#else
-   default_driver = "";
-#endif
-
-   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
 
 #if defined(GALLIUM_CELL)
    if (screen == NULL && strcmp(driver, "cell") == 0)
@@ -59,5 +46,27 @@ sw_screen_create(struct sw_winsys *winsys)
 
    return screen;
 }
+
+
+static INLINE struct pipe_screen *
+sw_screen_create(struct sw_winsys *winsys)
+{
+   const char *default_driver;
+   const char *driver;
+
+#if defined(GALLIUM_CELL)
+   default_driver = "cell";
+#elif defined(GALLIUM_LLVMPIPE)
+   default_driver = "llvmpipe";
+#elif defined(GALLIUM_SOFTPIPE)
+   default_driver = "softpipe";
+#else
+   default_driver = "";
+#endif
+
+   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+   return sw_screen_create_named(winsys, driver);
+}
+
 
 #endif

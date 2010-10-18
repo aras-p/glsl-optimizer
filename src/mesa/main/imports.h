@@ -568,17 +568,19 @@ _mesa_str_checksum(const char *str);
 extern int
 _mesa_snprintf( char *str, size_t size, const char *fmt, ... ) PRINTFLIKE(3, 4);
 
-extern void
-_mesa_warning( __GLcontext *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+struct gl_context;
 
 extern void
-_mesa_problem( const __GLcontext *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+_mesa_warning( struct gl_context *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void
-_mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... ) PRINTFLIKE(3, 4);
+_mesa_problem( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void
-_mesa_debug( const __GLcontext *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... ) PRINTFLIKE(3, 4);
+
+extern void
+_mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 
 #if defined(_MSC_VER) && !defined(snprintf)

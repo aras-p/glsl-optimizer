@@ -80,27 +80,27 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 	struct r700_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
 GLboolean Process_Vertex_Program_Vfetch_Instructions2(
-    GLcontext *ctx,
+    struct gl_context *ctx,
 	struct r700_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
-void Map_Vertex_Program(GLcontext *ctx,
+void Map_Vertex_Program(struct gl_context *ctx,
             struct r700_vertex_program *vp,
 			struct gl_vertex_program   *mesa_vp);
 GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
 					   struct gl_vertex_program   *mesa_vp);
 
-struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
+struct r700_vertex_program* r700TranslateVertexShader(struct gl_context *ctx,
 						      struct gl_vertex_program   *mesa_vp);
 
 /* Interface */
-extern void r700SelectVertexShader(GLcontext *ctx);
-extern void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count);
+extern void r700SelectVertexShader(struct gl_context *ctx);
+extern void r700SetVertexFormat(struct gl_context *ctx, const struct gl_client_array *arrays[], int count);
 
-extern GLboolean r700SetupVertexProgram(GLcontext * ctx);
+extern GLboolean r700SetupVertexProgram(struct gl_context * ctx);
 
-extern void *    r700GetActiveVpShaderBo(GLcontext * ctx);
+extern void *    r700GetActiveVpShaderBo(struct gl_context * ctx);
 
-extern void * r700GetActiveVpShaderConstBo(GLcontext * ctx);
+extern void * r700GetActiveVpShaderConstBo(struct gl_context * ctx);
 
 extern int getTypeSize(GLenum type);
 

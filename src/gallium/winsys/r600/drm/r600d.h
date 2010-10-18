@@ -28,7 +28,7 @@
 
 /* evergreen values */
 #define EG_RESOURCE_OFFSET                 0x00030000
-#define EG_RESOURCE_END                    0x00030400
+#define EG_RESOURCE_END                    0x00034000
 #define EG_LOOP_CONST_OFFSET               0x0003A200
 #define EG_LOOP_CONST_END                  0x0003A26C
 #define EG_BOOL_CONST_OFFSET               0x0003A500
@@ -91,6 +91,7 @@
 #define PKT3_SET_CTL_CONST                     0x6F
 #define PKT3_SURFACE_BASE_UPDATE               0x73
 
+#define EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT 0x14
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
 
@@ -839,6 +840,16 @@
 #define R_028800_DB_DEPTH_CONTROL                    0x028800
 #define R_02880C_DB_SHADER_CONTROL                   0x02880C
 #define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
+#define   S_028D0C_DEPTH_CLEAR_ENABLE(x)               (((x) & 0x1) << 0)
+#define   S_028D0C_STENCIL_CLEAR_ENABLE(x)             (((x) & 0x1) << 1)
+#define   S_028D0C_DEPTH_COPY_ENABLE(x)                (((x) & 0x1) << 2)
+#define   S_028D0C_STENCIL_COPY_ENABLE(x)              (((x) & 0x1) << 3)
+#define   S_028D0C_RESUMMARIZE_ENABLE(x)               (((x) & 0x1) << 4)
+#define   S_028D0C_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
+#define   S_028D0C_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028D0C_COPY_CENTROID(x)                    (((x) & 0x1) << 7)
+#define   S_028D0C_COPY_SAMPLE(x)                      (((x) & 0x1) << 8)
+#define   S_028D0C_R700_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
 #define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
 #define R_028D2C_DB_SRESULTS_COMPARE_STATE1          0x028D2C
 #define R_028D30_DB_PRELOAD_CONTROL                  0x028D30
@@ -2189,5 +2200,13 @@
 #define R_038010_RESOURCE0_WORD4                     0x038010
 #define R_038014_RESOURCE0_WORD5                     0x038014
 #define R_038018_RESOURCE0_WORD6                     0x038018
+
+#define R_028140_ALU_CONST_BUFFER_SIZE_PS_0          0x00028140
+#define R_028180_ALU_CONST_BUFFER_SIZE_VS_0          0x00028180
+#define R_028940_ALU_CONST_CACHE_PS_0                0x00028940
+#define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
+
+#define R_03CFF0_SQ_VTX_BASE_VTX_LOC                 0x03CFF0
+#define R_03CFF4_SQ_VTX_START_INST_LOC               0x03CFF4
 
 #endif

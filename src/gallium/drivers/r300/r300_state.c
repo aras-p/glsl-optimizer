@@ -922,7 +922,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
-    int i;
     float psiz;
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
@@ -935,10 +934,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
     uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
 
-    /* Specifies top of Raster pipe specific enable controls,
-     * i.e. texture coordinates stuffing for points, lines, triangles */
-    uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
-
     /* Point sprites texture coordinates, 0: lower left, 1: upper right */
     float point_texcoord_left = 0;  /* R300_GA_POINT_S0: 0x4200 */
     float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
@@ -950,10 +945,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->rs = *state;
     rs->rs_draw = *state;
 
-    /* Generate point sprite texture coordinates in GENERIC0
-     * if point_quad_rasterization is TRUE. */
     rs->rs.sprite_coord_enable = state->point_quad_rasterization *
-                                 (state->sprite_coord_enable | 1);
+                                 state->sprite_coord_enable;
 
     /* Override some states for Draw. */
     rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
@@ -1054,16 +1047,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
-    /* Point sprites */
-    stuffing_enable = 0;
+    /* Point sprites coord mode */
     if (rs->rs.sprite_coord_enable) {
-        stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
-        for (i = 0; i < 8; i++) {
-            if (rs->rs.sprite_coord_enable & (1 << i))
-                stuffing_enable |=
-                    R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
-        }
-
         switch (state->sprite_coord_mode) {
             case PIPE_SPRITE_COORD_UPPER_LEFT:
                 point_texcoord_top = 0.0f;
@@ -1077,7 +1062,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     }
 
     /* Build the main command buffer. */
-    BEGIN_CB(rs->cb_main, 25);
+    BEGIN_CB(rs->cb_main, RS_STATE_MAIN_SIZE);
     OUT_CB_REG(R300_VAP_CNTL_STATUS, vap_control_status);
     OUT_CB_REG(R300_GA_POINT_SIZE, point_size);
     OUT_CB_REG_SEQ(R300_GA_POINT_MINMAX, 2);
@@ -1091,7 +1076,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     OUT_CB_REG(R300_GA_LINE_STIPPLE_VALUE, line_stipple_value);
     OUT_CB_REG(R300_GA_POLY_MODE, polygon_mode);
     OUT_CB_REG(R300_SC_CLIP_RULE, clip_rule);
-    OUT_CB_REG(R300_GB_ENABLE, stuffing_enable);
     OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
     OUT_CB_32F(point_texcoord_left);
     OUT_CB_32F(point_texcoord_bottom);
@@ -1149,7 +1133,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     UPDATE_STATE(state, r300->rs_state);
-    r300->rs_state.size = 25 + (r300->polygon_offset_enabled ? 5 : 0);
+    r300->rs_state.size = RS_STATE_MAIN_SIZE + (r300->polygon_offset_enabled ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {
@@ -1171,7 +1155,6 @@ static void*
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
     boolean is_r500 = r300->screen->caps.is_r500;
     int lod_bias;
-    union util_color uc;
 
     sampler->state = *state;
 
@@ -1227,9 +1210,6 @@ static void*
     if (DBG_ON(r300, DBG_ANISOHQ) && is_r500) {
         sampler->filter1 |= r500_anisotropy(state->max_anisotropy);
     }
-
-    util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-    sampler->border_color = uc.ui;
 
     /* R500-specific fixups and optimizations */
     if (r300->screen->caps.is_r500) {

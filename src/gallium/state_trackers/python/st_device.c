@@ -31,7 +31,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
-#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"

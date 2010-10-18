@@ -4,14 +4,14 @@ env = env.Clone()
 
 r600_sources = [
     'bof.c',
-    'r600_state.c',
-    'radeon_ctx.c',
-    'radeon_draw.c',
-    'radeon_state.c',
+    'evergreen_hw_context.c',
     'radeon_bo.c',
+    'radeon_bo_pb.c',
     'radeon_pciid.c',
-    'radeon.c',
-    'r600_drm.c'
+    'r600.c',
+    'r600_bo.c',
+    'r600_drm.c',
+    'r600_hw_context.c',
 ]
 
 env.ParseConfig('pkg-config --cflags libdrm_radeon')

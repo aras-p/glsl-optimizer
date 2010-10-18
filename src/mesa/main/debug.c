@@ -85,13 +85,12 @@ void
 _mesa_print_state( const char *msg, GLuint state )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
 	   (state & _NEW_PROJECTION)      ? "ctx->Projection, " : "",
 	   (state & _NEW_TEXTURE_MATRIX)  ? "ctx->TextureMatrix, " : "",
-	   (state & _NEW_COLOR_MATRIX)    ? "ctx->ColorMatrix, " : "",
 	   (state & _NEW_ACCUM)           ? "ctx->Accum, " : "",
 	   (state & _NEW_COLOR)           ? "ctx->Color, " : "",
 	   (state & _NEW_DEPTH)           ? "ctx->Depth, " : "",
@@ -234,7 +233,7 @@ static void add_debug_flags( const char *debug )
 
 
 void 
-_mesa_init_debug( GLcontext *ctx )
+_mesa_init_debug( struct gl_context *ctx )
 {
    char *c;
 
@@ -579,7 +578,7 @@ _mesa_dump_stencil_buffer(const char *filename)
  * Quick and dirty function to "print" a texture to stdout.
  */
 void
-_mesa_print_texture(GLcontext *ctx, const struct gl_texture_image *img)
+_mesa_print_texture(struct gl_context *ctx, const struct gl_texture_image *img)
 {
 #if CHAN_TYPE != GL_UNSIGNED_BYTE
    _mesa_problem(NULL, "PrintTexture not supported");

@@ -75,10 +75,7 @@ add_test(LLVMModuleRef module, const char *name, lp_func_t lp_func)
    LLVMValueRef ret;
    struct lp_build_context bld;
 
-   bld.builder = builder;
-   bld.type.floating = 1;
-   bld.type.width = 32;
-   bld.type.length = 4;
+   lp_build_context_init(&bld, builder, lp_float32_vec4_type());
 
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
 
@@ -100,9 +97,10 @@ printv(char* string, v4sf value)
            f[0], f[1], f[2], f[3]);
 }
 
-static void
+static boolean
 compare(v4sf x, v4sf y)
 {
+   boolean success = TRUE;
    float *xp = (float *) &x;
    float *yp = (float *) &y;
    if (xp[0] != yp[0] ||
@@ -110,7 +108,9 @@ compare(v4sf x, v4sf y)
        xp[2] != yp[2] ||
        xp[3] != yp[3]) {
       printf(" Incorrect result! ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+      success = FALSE;
    }
+   return success;
 }
 
 
@@ -191,7 +191,7 @@ test_round(unsigned verbose, FILE *fp)
       y = round_func(x);
       printv("C round(x)   ", ref);
       printv("LLVM round(x)", y);
-      compare(ref, y);
+      success = success && compare(ref, y);
 
       refp[0] = trunc(xp[0]);
       refp[1] = trunc(xp[1]);
@@ -200,7 +200,7 @@ test_round(unsigned verbose, FILE *fp)
       y = trunc_func(x);
       printv("C trunc(x)   ", ref);
       printv("LLVM trunc(x)", y);
-      compare(ref, y);
+      success = success && compare(ref, y);
 
       refp[0] = floor(xp[0]);
       refp[1] = floor(xp[1]);
@@ -209,7 +209,7 @@ test_round(unsigned verbose, FILE *fp)
       y = floor_func(x);
       printv("C floor(x)   ", ref);
       printv("LLVM floor(x)", y);
-      compare(ref, y);
+      success = success && compare(ref, y);
 
       refp[0] = ceil(xp[0]);
       refp[1] = ceil(xp[1]);
@@ -218,7 +218,7 @@ test_round(unsigned verbose, FILE *fp)
       y = ceil_func(x);
       printv("C ceil(x)    ", ref);
       printv("LLVM ceil(x) ", y);
-      compare(ref, y);
+      success = success && compare(ref, y);
    }
 
    LLVMFreeMachineCodeForFunction(engine, test_round);
@@ -247,11 +247,7 @@ test_round(unsigned verbose, FILE *fp)
 boolean
 test_all(unsigned verbose, FILE *fp)
 {
-   boolean success = TRUE;
-
-   test_round(verbose, fp);
-
-   return success;
+   return test_round(verbose, fp);
 }
 
 

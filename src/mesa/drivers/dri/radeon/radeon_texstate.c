@@ -260,7 +260,7 @@ do {							\
  * Texture unit state management
  */
 
-static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
+static GLboolean radeonUpdateTextureEnv( struct gl_context *ctx, int unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -885,7 +885,7 @@ static void set_texgen_matrix( r100ContextPtr rmesa,
 
 /* Returns GL_FALSE if fallback required.
  */
-static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
+static GLboolean radeon_validate_texgen( struct gl_context *ctx, GLuint unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -1085,7 +1085,7 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
    return GL_TRUE;
 }
 
-static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean radeon_validate_texture(struct gl_context *ctx, struct gl_texture_object *texObj, int unit)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonTexObj *t = radeon_tex_obj(texObj);
@@ -1128,7 +1128,7 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    return !t->border_fallback;
 }
 
-static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
+static GLboolean radeonUpdateTextureUnit( struct gl_context *ctx, int unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
@@ -1155,7 +1155,7 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
    return GL_TRUE;
 }
 
-void radeonUpdateTextureState( GLcontext *ctx )
+void radeonUpdateTextureState( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLboolean ok;

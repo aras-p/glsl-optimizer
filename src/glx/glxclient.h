@@ -89,8 +89,6 @@ typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
 typedef struct __GLXDRIscreenRec __GLXDRIscreen;
 typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
 
-#include "glxextensions.h"
-
 struct __GLXDRIdisplayRec
 {
     /**
@@ -150,6 +148,7 @@ extern __GLXDRIdisplay *driswCreateDisplay(Display * dpy);
 extern __GLXDRIdisplay *driCreateDisplay(Display * dpy);
 extern __GLXDRIdisplay *dri2CreateDisplay(Display * dpy);
 extern void dri2InvalidateBuffers(Display *dpy, XID drawable);
+extern unsigned dri2GetSwapEventType(Display *dpy, XID drawable);
 
 
 /*

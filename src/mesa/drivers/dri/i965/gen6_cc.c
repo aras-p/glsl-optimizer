@@ -49,7 +49,7 @@ static void
 blend_state_populate_key(struct brw_context *brw,
 			 struct gen6_blend_state_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
 
@@ -181,7 +181,7 @@ static void
 color_calc_state_populate_key(struct brw_context *brw,
 			      struct gen6_color_calc_state_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
 

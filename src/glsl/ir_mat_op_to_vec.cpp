@@ -310,14 +310,11 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
 	 new(this->mem_ctx) ir_expression(ir_binop_any_nequal,
 					  glsl_type::bool_type, op0, op1);
 
-      ir_rvalue *const swiz =
-	 new(this->mem_ctx) ir_swizzle(cmp, i, i, i, i, columns);
-
       ir_dereference *const lhs =
 	 new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
 
       ir_assignment *const assign =
-	 new(this->mem_ctx) ir_assignment(lhs, swiz, NULL, (1U << i));
+	 new(this->mem_ctx) ir_assignment(lhs, cmp, NULL, (1U << i));
 
       this->base_ir->insert_before(assign);
    }

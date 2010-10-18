@@ -31,7 +31,7 @@ struct texture_renderbuffer
  * Get row of values from the renderbuffer that wraps a texture image.
  */
 static void
-texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, void *values)
 {
    const struct texture_renderbuffer *trb
@@ -100,7 +100,7 @@ texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], void *values)
 {
    const struct texture_renderbuffer *trb
@@ -167,7 +167,7 @@ texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
  * Put row of values into a renderbuffer that wraps a texture image.
  */
 static void
-texture_put_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const struct texture_renderbuffer *trb
@@ -229,7 +229,7 @@ texture_put_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
  * Put row of RGB values into a renderbuffer that wraps a texture image.
  */
 static void
-texture_put_row_rgb(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_put_row_rgb(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const struct texture_renderbuffer *trb
@@ -289,7 +289,7 @@ texture_put_row_rgb(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-texture_put_mono_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_put_mono_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const struct texture_renderbuffer *trb
@@ -348,7 +348,7 @@ texture_put_mono_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-texture_put_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+texture_put_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], const void *values,
                    const GLubyte *mask)
 {
@@ -407,7 +407,7 @@ texture_put_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
+texture_put_mono_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
                         GLuint count, const GLint x[], const GLint y[],
                         const void *value, const GLubyte *mask)
 {
@@ -486,7 +486,7 @@ delete_texture_wrapper(struct gl_renderbuffer *rb)
  * This allows rendering into the texture as if it were a renderbuffer.
  */
 static void
-wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
+wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb;
    const GLuint name = 0;
@@ -525,7 +525,7 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
  * update the internal format info, etc.
  */
 static void
-update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
+update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
@@ -609,7 +609,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
  * \sa _mesa_framebuffer_renderbuffer
  */
 void
-_mesa_render_texture(GLcontext *ctx,
+_mesa_render_texture(struct gl_context *ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
@@ -623,7 +623,7 @@ _mesa_render_texture(GLcontext *ctx,
 
 
 void
-_mesa_finish_render_texture(GLcontext *ctx,
+_mesa_finish_render_texture(struct gl_context *ctx,
                             struct gl_renderbuffer_attachment *att)
 {
    /* do nothing */

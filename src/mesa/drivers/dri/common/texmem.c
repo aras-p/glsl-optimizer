@@ -89,7 +89,7 @@ driLog2( GLuint n )
  */
 
 GLboolean
-driIsTextureResident( GLcontext * ctx, 
+driIsTextureResident( struct gl_context * ctx, 
 		      struct gl_texture_object * texObj )
 {
    driTextureObject * t;
@@ -1047,7 +1047,7 @@ driCalculateMaxTextureLevels( driTexHeap * const * heaps,
  * \param targets Bit-mask of value texture targets
  */
 
-void driInitTextureObjects( GLcontext *ctx, driTextureObject * swapped,
+void driInitTextureObjects( struct gl_context *ctx, driTextureObject * swapped,
 			    GLuint targets )
 {
    struct gl_texture_object *texObj;

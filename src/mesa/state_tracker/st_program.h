@@ -223,7 +223,7 @@ st_vp_release_varients( struct st_context *st,
                         struct st_vertex_program *stvp );
 
 extern void
-st_print_shaders(GLcontext *ctx);
+st_print_shaders(struct gl_context *ctx);
 
 
 #endif

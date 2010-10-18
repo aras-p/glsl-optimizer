@@ -111,7 +111,7 @@
 #endif
 
 #if DO_TRI
-static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
+static void TAG(triangle)( struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e2 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    VERTEX *v[3];
@@ -335,7 +335,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
 #if DO_QUAD
 #if DO_FULL_QUAD
-static void TAG(quadr)( GLcontext *ctx,
+static void TAG(quadr)( struct gl_context *ctx,
 		       GLuint e0, GLuint e1, GLuint e2, GLuint e3 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
@@ -575,7 +575,7 @@ static void TAG(quadr)( GLcontext *ctx,
    }
 }
 #else
-static void TAG(quadr)( GLcontext *ctx, GLuint e0,
+static void TAG(quadr)( struct gl_context *ctx, GLuint e0,
 		       GLuint e1, GLuint e2, GLuint e3 )
 {
    if (DO_UNFILLED) {
@@ -597,7 +597,7 @@ static void TAG(quadr)( GLcontext *ctx, GLuint e0,
 #endif
 
 #if DO_LINE
-static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
+static void TAG(line)( struct gl_context *ctx, GLuint e0, GLuint e1 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    VERTEX *v[2];
@@ -628,7 +628,7 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 #endif
 
 #if DO_POINTS
-static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
+static void TAG(points)( struct gl_context *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    GLuint i;

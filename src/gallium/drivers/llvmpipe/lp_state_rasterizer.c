@@ -78,8 +78,9 @@ llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
       lp_setup_set_point_state( llvmpipe->setup,
                    llvmpipe->rasterizer->point_size,
                    llvmpipe->rasterizer->point_size_per_vertex,
-                   llvmpipe->rasterizer->sprite_coord_enable);
-       }
+                   llvmpipe->rasterizer->sprite_coord_enable,
+                   llvmpipe->rasterizer->sprite_coord_mode);
+   }
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
 }

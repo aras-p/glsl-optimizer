@@ -35,7 +35,7 @@
  * Used to convert current raster distance to a fog factor in [0,1].
  */
 GLfloat
-_swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z)
+_swrast_z_to_fogfactor(struct gl_context *ctx, GLfloat z)
 {
    GLfloat d, f;
 
@@ -129,7 +129,7 @@ else {										\
  * _PreferPixelFog should be in sync with that state!
  */
 void
-_swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
+_swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
 {
    const SWcontext *swrast = CONST_SWRAST_CONTEXT(ctx);
    GLfloat rFog, gFog, bFog;

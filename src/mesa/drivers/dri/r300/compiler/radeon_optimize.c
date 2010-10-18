@@ -163,7 +163,8 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 
 	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY ||
 	    inst_mov->U.I.DstReg.RelAddr ||
-	    inst_mov->U.I.WriteALUResult)
+	    inst_mov->U.I.WriteALUResult ||
+	    inst_mov->U.I.SaturateMode)
 		return;
 
 	memset(&s, 0, sizeof(s));
@@ -410,27 +411,34 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 
 	/* Replace 0.0, 1.0 and 0.5 immediates by their explicit swizzles */
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
+		struct rc_constant * constant;
+		struct rc_src_register newsrc;
+		int have_real_reference;
+
 		if (inst->U.I.SrcReg[src].File != RC_FILE_CONSTANT ||
 		    inst->U.I.SrcReg[src].RelAddr ||
 		    inst->U.I.SrcReg[src].Index >= c->Program.Constants.Count)
 			continue;
 
-		struct rc_constant * constant =
+		constant =
 			&c->Program.Constants.Constants[inst->U.I.SrcReg[src].Index];
 
 		if (constant->Type != RC_CONSTANT_IMMEDIATE)
 			continue;
 
-		struct rc_src_register newsrc = inst->U.I.SrcReg[src];
-		int have_real_reference = 0;
+		newsrc = inst->U.I.SrcReg[src];
+		have_real_reference = 0;
 		for(unsigned int chan = 0; chan < 4; ++chan) {
 			unsigned int swz = GET_SWZ(newsrc.Swizzle, chan);
+			unsigned int newswz;
+			float imm;
+			float baseimm;
+
 			if (swz >= 4)
 				continue;
 
-			unsigned int newswz;
-			float imm = constant->u.Immediate[swz];
-			float baseimm = imm;
+			imm = constant->u.Immediate[swz];
+			baseimm = imm;
 			if (imm < 0.0)
 				baseimm = -baseimm;
 
@@ -475,8 +483,8 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 }
 
 /**
- * This function returns a writemask that indicates wich components are
- * read by src and also written by dst.
+ * If src and dst use the same register, this function returns a writemask that
+ * indicates wich components are read by src.  Otherwise zero is returned.
  */
 static unsigned int src_reads_dst_mask(struct rc_src_register src,
 						struct rc_dst_register dst)
@@ -563,10 +571,18 @@ static int presub_helper(
 		 * s->Inst->U.I.DstReg, because if it does we must not
 		 * remove s->Inst. */
 		for(i = 0; i < info->NumSrcRegs; i++) {
-			if(s->Inst->U.I.DstReg.WriteMask !=
-					src_reads_dst_mask(inst->U.I.SrcReg[i],
-						s->Inst->U.I.DstReg)) {
-				continue;
+			unsigned int mask = src_reads_dst_mask(
+				inst->U.I.SrcReg[i], s->Inst->U.I.DstReg);
+			/* XXX We could be more aggressive here using
+			 * presubtract.  It is okay if SrcReg[i] only reads
+			 * from some of the mask components. */
+			if(s->Inst->U.I.DstReg.WriteMask != mask) {
+				if (s->Inst->U.I.DstReg.WriteMask & mask) {
+					can_remove = 0;
+					break;
+				} else {
+					continue;
+				}
 			}
 			if (cant_sub || !can_use_presub) {
 				can_remove = 0;
@@ -626,6 +642,21 @@ static void presub_replace_add(struct peephole_state *s,
 	inst->U.I.SrcReg[src_index].Index = presub_opcode;
 }
 
+static int is_presub_candidate(struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned int i;
+
+	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE || inst->U.I.SaturateMode)
+		return 0;
+
+	for(i = 0; i < info->NumSrcRegs; i++) {
+		if (src_reads_dst_mask(inst->U.I.SrcReg[i], inst->U.I.DstReg))
+			return 0;
+	}
+	return 1;
+}
+
 static int peephole_add_presub_add(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst_add)
@@ -635,10 +666,7 @@ static int peephole_add_presub_add(
 	unsigned int i;
 	struct peephole_state s;
 
-	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
-		return 0;
-
-	if (inst_add->U.I.SaturateMode)
+	if (!is_presub_candidate(inst_add))
 		return 0;
 
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
@@ -705,10 +733,7 @@ static int peephole_add_presub_inv(
 	unsigned int i, swz, mask;
 	struct peephole_state s;
 
-	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
-		return 0;
-
-	if (inst_add->U.I.SaturateMode)
+	if (!is_presub_candidate(inst_add))
 		return 0;
 
 	mask = inst_add->U.I.DstReg.WriteMask;

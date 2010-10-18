@@ -605,8 +605,10 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       if ((inst->Src[i].Register.File ==
            inst->Dst[0].Register.File) &&
-          (inst->Src[i].Register.Index ==
-           inst->Dst[0].Register.Index)) {
+          ((inst->Src[i].Register.Index ==
+            inst->Dst[0].Register.Index) ||
+	   inst->Src[i].Register.Indirect ||
+	   inst->Dst[0].Register.Indirect)) {
          /* loop over dest channels */
          uint channelsWritten = 0x0;
          FOR_EACH_ENABLED_CHANNEL(*inst, chan) {

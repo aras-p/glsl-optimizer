@@ -40,33 +40,157 @@ static const struct dri_extension nv10_extensions[] = {
 	{ NULL,				NULL }
 };
 
-static void
-nv10_clear(GLcontext *ctx, GLbitfield buffers)
+static GLboolean
+use_fast_zclear(struct gl_context *ctx, GLbitfield buffers)
 {
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+	if (buffers & BUFFER_BIT_STENCIL) {
+		/*
+		 * The stencil test is bypassed when fast Z clears are
+		 * enabled.
+		 */
+		nctx->hierz.clear_blocked = GL_TRUE;
+		context_dirty(ctx, ZCLEAR);
+		return GL_FALSE;
+	}
+
+	return !nctx->hierz.clear_blocked &&
+		fb->_Xmax == fb->Width && fb->_Xmin == 0 &&
+		fb->_Ymax == fb->Height && fb->_Ymin == 0;
+}
+
+GLboolean
+nv10_use_viewport_zclear(struct gl_context *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+	return context_chipset(ctx) < 0x17 &&
+		!nctx->hierz.clear_blocked && fb->_DepthBuffer &&
+		(_mesa_get_format_bits(fb->_DepthBuffer->Format,
+				       GL_DEPTH_BITS) >= 24);
+}
+
+float
+nv10_transform_depth(struct gl_context *ctx, float z)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+
+	if (nv10_use_viewport_zclear(ctx))
+		return 2097152.0 * (z + (nctx->hierz.clear_seq & 7));
+	else
+		return ctx->DrawBuffer->_DepthMaxF * z;
+}
+
+static void
+nv10_zclear(struct gl_context *ctx, GLbitfield *buffers)
+{
+	/*
+	 * Pre-nv17 cards don't have native support for fast Z clears,
+	 * but in some cases we can still "clear" the Z buffer without
+	 * actually blitting to it if we're willing to sacrifice a few
+	 * bits of depth precision.
+	 *
+	 * Each time a clear is requested we modify the viewport
+	 * transform in such a way that the old contents of the depth
+	 * buffer are clamped to the requested clear value when
+	 * they're read by the GPU.
+	 */
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
+	struct nouveau_surface *s = &to_nouveau_renderbuffer(
+		fb->_DepthBuffer->Wrapped)->surface;
+
+	if (nv10_use_viewport_zclear(ctx)) {
+		int x, y, w, h;
+		float z = ctx->Depth.Clear;
+		uint32_t value = pack_zs_f(s->format, z, 0);
+
+		get_scissors(fb, &x, &y, &w, &h);
+		*buffers &= ~BUFFER_BIT_DEPTH;
+
+		if (use_fast_zclear(ctx, *buffers)) {
+			if (nfb->hierz.clear_value != value) {
+				/* Don't fast clear if we're changing
+				 * the depth value. */
+				nfb->hierz.clear_value = value;
+
+			} else if (z == 0.0) {
+				nctx->hierz.clear_seq++;
+				context_dirty(ctx, ZCLEAR);
+
+				if ((nctx->hierz.clear_seq & 7) != 0 &&
+				    nctx->hierz.clear_seq != 1)
+					/* We didn't wrap around -- no need to
+					 * clear the depth buffer for real. */
+					return;
+
+			} else if (z == 1.0) {
+				nctx->hierz.clear_seq--;
+				context_dirty(ctx, ZCLEAR);
+
+				if ((nctx->hierz.clear_seq & 7) != 7)
+					/* No wrap around */
+					return;
+			}
+		}
+
+		value = pack_zs_f(s->format,
+				  (z + (nctx->hierz.clear_seq & 7)) / 8, 0);
+		context_drv(ctx)->surface_fill(ctx, s, ~0, value, x, y, w, h);
+	}
+}
+
+static void
+nv17_zclear(struct gl_context *ctx, GLbitfield *buffers)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(
 		ctx->DrawBuffer);
+	struct nouveau_surface *s = &to_nouveau_renderbuffer(
+		nfb->base._DepthBuffer->Wrapped)->surface;
 
+	/* Clear the hierarchical depth buffer */
+	BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_FILL_VALUE, 1);
+	OUT_RING(chan, pack_zs_f(s->format, ctx->Depth.Clear, 0));
+	BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_BUFFER_CLEAR, 1);
+	OUT_RING(chan, 1);
+
+	/* Mark the depth buffer as cleared */
+	if (use_fast_zclear(ctx, *buffers)) {
+		if (nctx->hierz.clear_seq)
+			*buffers &= ~BUFFER_BIT_DEPTH;
+
+		nfb->hierz.clear_value =
+			pack_zs_f(s->format, ctx->Depth.Clear, 0);
+		nctx->hierz.clear_seq++;
+
+		context_dirty(ctx, ZCLEAR);
+	}
+}
+
+static void
+nv10_clear(struct gl_context *ctx, GLbitfield buffers)
+{
 	nouveau_validate_framebuffer(ctx);
 
-	/* Clear the LMA depth buffer, if present. */
-	if ((buffers & BUFFER_BIT_DEPTH) && ctx->Depth.Mask &&
-	    nfb->lma_bo) {
-		struct nouveau_surface *s = &to_nouveau_renderbuffer(
-			nfb->base._DepthBuffer->Wrapped)->surface;
-
-		BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_FILL_VALUE, 1);
-		OUT_RING(chan, pack_zs_f(s->format, ctx->Depth.Clear, 0));
-		BEGIN_RING(chan, celsius, NV17TCL_LMA_DEPTH_BUFFER_CLEAR, 1);
-		OUT_RING(chan, 1);
+	if ((buffers & BUFFER_BIT_DEPTH) && ctx->Depth.Mask) {
+		if (context_chipset(ctx) >= 0x17)
+			nv17_zclear(ctx, &buffers);
+		else
+			nv10_zclear(ctx, &buffers);
 	}
 
 	nouveau_clear(ctx, buffers);
 }
 
 static void
-nv10_hwctx_init(GLcontext *ctx)
+nv10_hwctx_init(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -271,14 +395,14 @@ nv10_hwctx_init(GLcontext *ctx)
 	OUT_RING(chan, 1);
 
 	BEGIN_RING(chan, celsius, NV10TCL_DEPTH_RANGE_NEAR, 2);
-	OUT_RING(chan, 0.0);
+	OUT_RINGf(chan, 0.0);
 	OUT_RINGf(chan, 16777216.0);
 
 	FIRE_RING(chan);
 }
 
 static void
-nv10_context_destroy(GLcontext *ctx)
+nv10_context_destroy(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -291,12 +415,12 @@ nv10_context_destroy(GLcontext *ctx)
 	FREE(ctx);
 }
 
-static GLcontext *
-nv10_context_create(struct nouveau_screen *screen, const GLvisual *visual,
-		    GLcontext *share_ctx)
+static struct gl_context *
+nv10_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
+		    struct gl_context *share_ctx)
 {
 	struct nouveau_context *nctx;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	unsigned celsius_class;
 	int ret;
 
@@ -423,7 +547,8 @@ const struct nouveau_driver nv10_driver = {
 		nv10_emit_tex_obj,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
-		nv10_emit_viewport
+		nv10_emit_viewport,
+		nv10_emit_zclear
 	},
-	.num_emit = NUM_NOUVEAU_STATE,
+	.num_emit = NUM_NV10_STATE,
 };

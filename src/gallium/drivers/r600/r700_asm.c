@@ -20,12 +20,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "radeon.h"
-#include "r600_context.h"
-#include "r600_asm.h"
-#include "util/u_memory.h"
-#include "r700_sq.h"
 #include <stdio.h>
+#include "util/u_memory.h"
+#include "r600_pipe.h"
+#include "r600_asm.h"
+#include "r700_sq.h"
 
 
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
@@ -37,7 +36,7 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 		S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
 		S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
 		S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
-		S_SQ_ALU_WORD0_SRC0_REL(alu->src[1].rel) |
+		S_SQ_ALU_WORD0_SRC1_REL(alu->src[1].rel) |
 		S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
 		S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
 		S_SQ_ALU_WORD0_LAST(alu->last);

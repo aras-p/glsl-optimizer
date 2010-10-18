@@ -89,6 +89,18 @@ static GLuint translate_tex_format( gl_format mesa_format,
    case MESA_FORMAT_AL1616:
       return BRW_SURFACEFORMAT_L16A16_UNORM;
 
+   case MESA_FORMAT_R8:
+      return BRW_SURFACEFORMAT_R8_UNORM;
+
+   case MESA_FORMAT_R16:
+      return BRW_SURFACEFORMAT_R16_UNORM;
+
+   case MESA_FORMAT_RG88:
+      return BRW_SURFACEFORMAT_R8G8_UNORM;
+
+   case MESA_FORMAT_RG1616:
+      return BRW_SURFACEFORMAT_R16G16_UNORM;
+
    case MESA_FORMAT_RGB888:
       assert(0);		/* not supported for sampling */
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
@@ -197,7 +209,7 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
 }
 
 static void
-brw_update_texture_surface( GLcontext *ctx, GLuint unit )
+brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -303,7 +315,7 @@ brw_create_constant_surface(struct brw_context *brw,
 static void
 prepare_wm_constants(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
@@ -395,7 +407,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    drm_intel_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
@@ -429,6 +441,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       case MESA_FORMAT_XRGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
+      case MESA_FORMAT_SARGB8:
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
+	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
 	 break;
@@ -440,6 +455,18 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 break;
       case MESA_FORMAT_A8:
 	 key.surface_format = BRW_SURFACEFORMAT_A8_UNORM;
+	 break;
+      case MESA_FORMAT_R8:
+	 key.surface_format = BRW_SURFACEFORMAT_R8_UNORM;
+	 break;
+      case MESA_FORMAT_R16:
+	 key.surface_format = BRW_SURFACEFORMAT_R16_UNORM;
+	 break;
+      case MESA_FORMAT_RG88:
+	 key.surface_format = BRW_SURFACEFORMAT_R8G8_UNORM;
+	 break;
+      case MESA_FORMAT_RG1616:
+	 key.surface_format = BRW_SURFACEFORMAT_R16G16_UNORM;
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
@@ -545,7 +572,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 static void
 prepare_wm_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    int i;
    int nr_surfaces = 0;
 
@@ -592,7 +619,7 @@ prepare_wm_surfaces(struct brw_context *brw)
 static void
 upload_wm_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
    /* _NEW_BUFFERS | _NEW_COLOR */

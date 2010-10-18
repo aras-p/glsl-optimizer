@@ -748,9 +748,64 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_lshift:
    case ast_rshift:
-      _mesa_glsl_error(& loc, state, "FINISHME: implement bit-shift operators");
-      error_emitted = true;
-      break;
+       if (state->language_version < 130) {
+          _mesa_glsl_error(&loc, state, "operator %s requires GLSL 1.30",
+              operator_string(this->oper));
+          error_emitted = true;
+          break;
+       }
+
+       /* From page 50 (page 56 of the PDF) of the GLSL 1.30 spec:
+        *
+        *     The shift operators (<<) and (>>). For both operators, the operands
+        *     must be signed or unsigned integers or integer vectors. One operand
+        *     can be signed while the other is unsigned. In all cases, the
+        *     resulting type will be the same type as the left operand. If the
+        *     first operand is a scalar, the second operand has to be a scalar as
+        *     well. If the first operand is a vector, the second operand must be
+        *     a scalar or a vector, [...]
+        */
+
+       op[0] = this->subexpressions[0]->hir(instructions, state);
+       op[1] = this->subexpressions[1]->hir(instructions, state);
+
+       if (!op[0]->type->is_integer()) {
+           _mesa_glsl_error(& loc, state,
+               "LHS of operator %s must be an integer or integer vector",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (!op[1]->type->is_integer()) {
+           _mesa_glsl_error(& loc, state,
+               "RHS of operator %s must be an integer or integer vector",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (op[0]->type->is_scalar() && !op[1]->type->is_scalar()) {
+           _mesa_glsl_error(& loc, state,
+               "If the first operand of %s is scalar, the second must be"
+               "scalar as well", operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+       if (op[0]->type->is_vector() &&
+           op[1]->type->is_vector() &&
+           op[0]->type->components() != op[1]->type->components()) {
+
+           _mesa_glsl_error(& loc, state,
+               "Vector operands of %s must have same number of components",
+               operator_string(this->oper));
+           error_emitted = true;
+           break;
+       }
+
+       type = op[0]->type;
+       result = new(ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
+       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+       break;
 
    case ast_less:
    case ast_greater:
@@ -1534,17 +1589,12 @@ ast_type_specifier::glsl_type(const char **name,
 {
    const struct glsl_type *type;
 
-   if ((this->type_specifier == ast_struct) && (this->type_name == NULL)) {
-      /* FINISHME: Handle annonymous structures. */
-      type = NULL;
-   } else {
-      type = state->symbols->get_type(this->type_name);
-      *name = this->type_name;
+   type = state->symbols->get_type(this->type_name);
+   *name = this->type_name;
 
-      if (this->is_array) {
-	 YYLTYPE loc = this->get_location();
-	 type = process_array_type(&loc, type, this->array_size, state);
-      }
+   if (this->is_array) {
+      YYLTYPE loc = this->get_location();
+      type = process_array_type(&loc, type, this->array_size, state);
    }
 
    return type;
@@ -1557,18 +1607,19 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 struct _mesa_glsl_parse_state *state,
 				 YYLTYPE *loc)
 {
-   if (qual->invariant)
+   if (qual->flags.q.invariant)
       var->invariant = 1;
 
    /* FINISHME: Mark 'in' variables at global scope as read-only. */
-   if (qual->constant || qual->attribute || qual->uniform
-       || (qual->varying && (state->target == fragment_shader)))
+   if (qual->flags.q.constant || qual->flags.q.attribute
+       || qual->flags.q.uniform
+       || (qual->flags.q.varying && (state->target == fragment_shader)))
       var->read_only = 1;
 
-   if (qual->centroid)
+   if (qual->flags.q.centroid)
       var->centroid = 1;
 
-   if (qual->attribute && state->target != vertex_shader) {
+   if (qual->flags.q.attribute && state->target != vertex_shader) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
 		       "`attribute' variables may not be declared in the "
@@ -1582,7 +1633,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     *     float, vec2, vec3, vec4, mat2, mat3, and mat4, or arrays of
     *     these."
     */
-   if (qual->varying) {
+   if (qual->flags.q.varying) {
       const glsl_type *non_array_type;
 
       if (var->type && var->type->is_array())
@@ -1600,34 +1651,94 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    /* If there is no qualifier that changes the mode of the variable, leave
     * the setting alone.
     */
-   if (qual->in && qual->out)
+   if (qual->flags.q.in && qual->flags.q.out)
       var->mode = ir_var_inout;
-   else if (qual->attribute || qual->in
-	    || (qual->varying && (state->target == fragment_shader)))
+   else if (qual->flags.q.attribute || qual->flags.q.in
+	    || (qual->flags.q.varying && (state->target == fragment_shader)))
       var->mode = ir_var_in;
-   else if (qual->out || (qual->varying && (state->target == vertex_shader)))
+   else if (qual->flags.q.out
+	    || (qual->flags.q.varying && (state->target == vertex_shader)))
       var->mode = ir_var_out;
-   else if (qual->uniform)
+   else if (qual->flags.q.uniform)
       var->mode = ir_var_uniform;
 
-   if (qual->flat)
+   if (qual->flags.q.flat)
       var->interpolation = ir_var_flat;
-   else if (qual->noperspective)
+   else if (qual->flags.q.noperspective)
       var->interpolation = ir_var_noperspective;
    else
       var->interpolation = ir_var_smooth;
 
-   var->pixel_center_integer = qual->pixel_center_integer;
-   var->origin_upper_left = qual->origin_upper_left;
-   if ((qual->origin_upper_left || qual->pixel_center_integer)
+   var->pixel_center_integer = qual->flags.q.pixel_center_integer;
+   var->origin_upper_left = qual->flags.q.origin_upper_left;
+   if ((qual->flags.q.origin_upper_left || qual->flags.q.pixel_center_integer)
        && (strcmp(var->name, "gl_FragCoord") != 0)) {
-      const char *const qual_string = (qual->origin_upper_left)
+      const char *const qual_string = (qual->flags.q.origin_upper_left)
 	 ? "origin_upper_left" : "pixel_center_integer";
 
       _mesa_glsl_error(loc, state,
 		       "layout qualifier `%s' can only be applied to "
 		       "fragment shader input `gl_FragCoord'",
 		       qual_string);
+   }
+
+   if (qual->flags.q.explicit_location) {
+      const bool global_scope = (state->current_function == NULL);
+      bool fail = false;
+      const char *string = "";
+
+      /* In the vertex shader only shader inputs can be given explicit
+       * locations.
+       *
+       * In the fragment shader only shader outputs can be given explicit
+       * locations.
+       */
+      switch (state->target) {
+      case vertex_shader:
+	 if (!global_scope || (var->mode != ir_var_in)) {
+	    fail = true;
+	    string = "input";
+	 }
+	 break;
+
+      case geometry_shader:
+	 _mesa_glsl_error(loc, state,
+			  "geometry shader variables cannot be given "
+			  "explicit locations\n");
+	 break;
+
+      case fragment_shader:
+	 if (!global_scope || (var->mode != ir_var_in)) {
+	    fail = true;
+	    string = "output";
+	 }
+	 break;
+      }
+
+      if (fail) {
+	 _mesa_glsl_error(loc, state,
+			  "only %s shader %s variables can be given an "
+			  "explicit location\n",
+			  _mesa_glsl_shader_target_name(state->target),
+			  string);
+      } else {
+	 var->explicit_location = true;
+
+	 /* This bit of silliness is needed because invalid explicit locations
+	  * are supposed to be flagged during linking.  Small negative values
+	  * biased by VERT_ATTRIB_GENERIC0 or FRAG_RESULT_DATA0 could alias
+	  * built-in values (e.g., -16+VERT_ATTRIB_GENERIC0 = VERT_ATTRIB_POS).
+	  * The linker needs to be able to differentiate these cases.  This
+	  * ensures that negative values stay negative.
+	  */
+	 if (qual->location >= 0) {
+	    var->location = (state->target == vertex_shader)
+	       ? (qual->location + VERT_ATTRIB_GENERIC0)
+	       : (qual->location + FRAG_RESULT_DATA0);
+	 } else {
+	    var->location = qual->location;
+	 }
+      }
    }
 
    if (var->type->is_array() && state->language_version != 110) {
@@ -1759,13 +1870,13 @@ ast_declarator_list::hir(exec_list *instructions,
        * This is relaxed in GLSL 1.30.
        */
       if (state->language_version < 120) {
-	 if (this->type->qualifier.out) {
+	 if (this->type->qualifier.flags.q.out) {
 	    _mesa_glsl_error(& loc, state,
 			     "`out' qualifier in declaration of `%s' "
 			     "only valid for function parameters in GLSL 1.10.",
 			     decl->identifier);
 	 }
-	 if (this->type->qualifier.in) {
+	 if (this->type->qualifier.flags.q.in) {
 	    _mesa_glsl_error(& loc, state,
 			     "`in' qualifier in declaration of `%s' "
 			     "only valid for function parameters in GLSL 1.10.",
@@ -1777,7 +1888,7 @@ ast_declarator_list::hir(exec_list *instructions,
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
 
-      if (this->type->qualifier.invariant) {
+      if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
 						   var->mode == ir_var_inout)) {
 	    /* FINISHME: Note that this doesn't work for invariant on
@@ -1804,16 +1915,16 @@ ast_declarator_list::hir(exec_list *instructions,
 	 /* There is no need to check for 'inout' here because the parser will
 	  * only allow that in function parameter lists.
 	  */
-	 if (this->type->qualifier.attribute) {
+	 if (this->type->qualifier.flags.q.attribute) {
 	    mode = "attribute";
-	 } else if (this->type->qualifier.uniform) {
+	 } else if (this->type->qualifier.flags.q.uniform) {
 	    mode = "uniform";
-	 } else if (this->type->qualifier.varying) {
+	 } else if (this->type->qualifier.flags.q.varying) {
 	    mode = "varying";
-	 } else if (this->type->qualifier.in) {
+	 } else if (this->type->qualifier.flags.q.in) {
 	    mode = "in";
 	    extra = " or in function parameter list";
-	 } else if (this->type->qualifier.out) {
+	 } else if (this->type->qualifier.flags.q.out) {
 	    mode = "out";
 	    extra = " or in function parameter list";
 	 }
@@ -1919,7 +2030,8 @@ ast_declarator_list::hir(exec_list *instructions,
 	 /* Calculate the constant value if this is a const or uniform
 	  * declaration.
 	  */
-	 if (this->type->qualifier.constant || this->type->qualifier.uniform) {
+	 if (this->type->qualifier.flags.q.constant
+	     || this->type->qualifier.flags.q.uniform) {
 	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
 	    if (new_rhs != NULL) {
 	       rhs = new_rhs;
@@ -1929,7 +2041,7 @@ ast_declarator_list::hir(exec_list *instructions,
 		  _mesa_glsl_error(& initializer_loc, state,
 				   "initializer of %s variable `%s' must be a "
 				   "constant expression",
-				   (this->type->qualifier.constant)
+				   (this->type->qualifier.flags.q.constant)
 				   ? "const" : "uniform",
 				   decl->identifier);
 		  if (var->type->is_numeric()) {
@@ -1954,12 +2066,12 @@ ast_declarator_list::hir(exec_list *instructions,
 
 	 if (rhs && !rhs->type->is_error()) {
 	    bool temp = var->read_only;
-	    if (this->type->qualifier.constant)
+	    if (this->type->qualifier.flags.q.constant)
 	       var->read_only = false;
 
 	    /* Never emit code to initialize a uniform.
 	     */
-	    if (!this->type->qualifier.uniform)
+	    if (!this->type->qualifier.flags.q.uniform)
 	       result = do_assignment(&initializer_instructions, state,
 				      lhs, rhs,
 				      this->get_location());
@@ -1973,7 +2085,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *      its declaration, so they must be initialized when
        *      declared."
        */
-      if (this->type->qualifier.constant && decl->initializer == NULL) {
+      if (this->type->qualifier.flags.q.constant && decl->initializer == NULL) {
 	 _mesa_glsl_error(& loc, state,
 			  "const declaration of `%s' must be initialized");
       }
@@ -2705,7 +2817,6 @@ ast_struct_specifier::hir(exec_list *instructions,
       }
    }
 
-
    /* Allocate storage for the structure fields and process the field
     * declarations.  As the declarations are processed, try to also convert
     * the types to HIR.  This ensures that structure definitions embedded in
@@ -2750,21 +2861,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    assert(i == decl_count);
 
-   const char *name;
-   if (this->name == NULL) {
-      static unsigned anon_count = 1;
-      char buf[32];
-
-      snprintf(buf, sizeof(buf), "#anon_struct_%04x", anon_count);
-      anon_count++;
-
-      name = strdup(buf);
-   } else {
-      name = this->name;
-   }
-
    const glsl_type *t =
-      glsl_type::get_record_instance(fields, decl_count, name);
+      glsl_type::get_record_instance(fields, decl_count, this->name);
 
    YYLTYPE loc = this->get_location();
    if (!state->symbols->add_type(name, t)) {

@@ -94,7 +94,7 @@ init_static_data( void )
  * Fog blend factors are in the range [0,1].
  */
 static void
-compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
+compute_fog_blend_factors(struct gl_context *ctx, GLvector4f *out, const GLvector4f *in)
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat *v = in->start;
@@ -140,7 +140,7 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
 
 
 static GLboolean
-run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+run_fog_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -235,7 +235,7 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 /* Called the first time stage->run() is invoked.
  */
 static GLboolean
-alloc_fog_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+alloc_fog_data(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct fog_stage_data *store;

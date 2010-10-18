@@ -33,18 +33,17 @@
 #include "main/mtypes.h"
 #include "t_context.h"
 
-extern void _tnl_run_pipeline( GLcontext *ctx );
+extern void _tnl_run_pipeline( struct gl_context *ctx );
 
-extern void _tnl_destroy_pipeline( GLcontext *ctx );
+extern void _tnl_destroy_pipeline( struct gl_context *ctx );
 
-extern void _tnl_install_pipeline( GLcontext *ctx,
+extern void _tnl_install_pipeline( struct gl_context *ctx,
 				   const struct tnl_pipeline_stage **stages );
 
 
 /* These are implemented in the t_vb_*.c files:
  */
 extern const struct tnl_pipeline_stage _tnl_vertex_transform_stage;
-extern const struct tnl_pipeline_stage _tnl_vertex_cull_stage;
 extern const struct tnl_pipeline_stage _tnl_normal_transform_stage;
 extern const struct tnl_pipeline_stage _tnl_lighting_stage;
 extern const struct tnl_pipeline_stage _tnl_fog_coordinate_stage;
@@ -65,10 +64,10 @@ extern const struct tnl_pipeline_stage *_tnl_vp_pipeline[];
 extern tnl_render_func _tnl_render_tab_elts[];
 extern tnl_render_func _tnl_render_tab_verts[];
 
-extern void _tnl_RenderClippedPolygon( GLcontext *ctx, 
+extern void _tnl_RenderClippedPolygon( struct gl_context *ctx, 
 				       const GLuint *elts, GLuint n );
 
-extern void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj );
+extern void _tnl_RenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj );
 
 
 #endif

@@ -125,7 +125,7 @@ static int blend_factor( r128ContextPtr rmesa, GLenum factor, GLboolean is_src )
 }
 
 
-static void r128UpdateAlphaMode( GLcontext *ctx )
+static void r128UpdateAlphaMode( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint a = rmesa->setup.misc_3d_state_cntl_reg;
@@ -209,7 +209,7 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
    }
 }
 
-static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
+static void r128DDAlphaFunc( struct gl_context *ctx, GLenum func, GLfloat ref )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -217,7 +217,7 @@ static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    rmesa->new_state |= R128_NEW_ALPHA;
 }
 
-static void r128DDBlendEquationSeparate( GLcontext *ctx, 
+static void r128DDBlendEquationSeparate( struct gl_context *ctx, 
 					 GLenum modeRGB, GLenum modeA )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -239,7 +239,7 @@ static void r128DDBlendEquationSeparate( GLcontext *ctx,
    rmesa->new_state |= R128_NEW_ALPHA;
 }
 
-static void r128DDBlendFuncSeparate( GLcontext *ctx,
+static void r128DDBlendFuncSeparate( struct gl_context *ctx,
 				     GLenum sfactorRGB, GLenum dfactorRGB,
 				     GLenum sfactorA, GLenum dfactorA )
 {
@@ -254,7 +254,7 @@ static void r128DDBlendFuncSeparate( GLcontext *ctx,
  */
 
 static void
-r128DDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+r128DDStencilFuncSeparate( struct gl_context *ctx, GLenum face, GLenum func,
                            GLint ref, GLuint mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -302,7 +302,7 @@ r128DDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
 }
 
 static void
-r128DDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
+r128DDStencilMaskSeparate( struct gl_context *ctx, GLenum face, GLuint mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << 0) |
@@ -315,7 +315,7 @@ r128DDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
    }
 }
 
-static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
+static void r128DDStencilOpSeparate( struct gl_context *ctx, GLenum face, GLenum fail,
                                      GLenum zfail, GLenum zpass )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -414,7 +414,7 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
    }
 }
 
-static void r128DDClearStencil( GLcontext *ctx, GLint s )
+static void r128DDClearStencil( struct gl_context *ctx, GLint s )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -428,7 +428,7 @@ static void r128DDClearStencil( GLcontext *ctx, GLint s )
  * Depth testing
  */
 
-static void r128UpdateZMode( GLcontext *ctx )
+static void r128UpdateZMode( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint z = rmesa->setup.z_sten_cntl_c;
@@ -485,7 +485,7 @@ static void r128UpdateZMode( GLcontext *ctx )
    }
 }
 
-static void r128DDDepthFunc( GLcontext *ctx, GLenum func )
+static void r128DDDepthFunc( struct gl_context *ctx, GLenum func )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -493,7 +493,7 @@ static void r128DDDepthFunc( GLcontext *ctx, GLenum func )
    rmesa->new_state |= R128_NEW_DEPTH;
 }
 
-static void r128DDDepthMask( GLcontext *ctx, GLboolean flag )
+static void r128DDDepthMask( struct gl_context *ctx, GLboolean flag )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -501,7 +501,7 @@ static void r128DDDepthMask( GLcontext *ctx, GLboolean flag )
    rmesa->new_state |= R128_NEW_DEPTH;
 }
 
-static void r128DDClearDepth( GLcontext *ctx, GLclampd d )
+static void r128DDClearDepth( struct gl_context *ctx, GLclampd d )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -524,7 +524,7 @@ static void r128DDClearDepth( GLcontext *ctx, GLclampd d )
  * Fog
  */
 
-static void r128UpdateFogAttrib( GLcontext *ctx )
+static void r128UpdateFogAttrib( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint t = rmesa->setup.tex_cntl_c;
@@ -553,7 +553,7 @@ static void r128UpdateFogAttrib( GLcontext *ctx )
    }
 }
 
-static void r128DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
+static void r128DDFogfv( struct gl_context *ctx, GLenum pname, const GLfloat *param )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -566,7 +566,7 @@ static void r128DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
  * Clipping
  */
 
-static void r128UpdateClipping( GLcontext *ctx )
+static void r128UpdateClipping( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -622,7 +622,7 @@ static void r128UpdateClipping( GLcontext *ctx )
    }
 }
 
-static void r128DDScissor( GLcontext *ctx,
+static void r128DDScissor( struct gl_context *ctx,
 			   GLint x, GLint y, GLsizei w, GLsizei h )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -636,7 +636,7 @@ static void r128DDScissor( GLcontext *ctx,
  * Culling
  */
 
-static void r128UpdateCull( GLcontext *ctx )
+static void r128UpdateCull( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint f = rmesa->setup.pm4_vc_fpu_setup;
@@ -675,7 +675,7 @@ static void r128UpdateCull( GLcontext *ctx )
    }
 }
 
-static void r128DDCullFace( GLcontext *ctx, GLenum mode )
+static void r128DDCullFace( struct gl_context *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -683,7 +683,7 @@ static void r128DDCullFace( GLcontext *ctx, GLenum mode )
    rmesa->new_state |= R128_NEW_CULL;
 }
 
-static void r128DDFrontFace( GLcontext *ctx, GLenum mode )
+static void r128DDFrontFace( struct gl_context *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -696,7 +696,7 @@ static void r128DDFrontFace( GLcontext *ctx, GLenum mode )
  * Masks
  */
 
-static void r128UpdateMasks( GLcontext *ctx )
+static void r128UpdateMasks( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -712,7 +712,7 @@ static void r128UpdateMasks( GLcontext *ctx )
    }
 }
 
-static void r128DDColorMask( GLcontext *ctx,
+static void r128DDColorMask( struct gl_context *ctx,
 			     GLboolean r, GLboolean g,
 			     GLboolean b, GLboolean a )
 {
@@ -731,7 +731,7 @@ static void r128DDColorMask( GLcontext *ctx,
  * sense to break them out of the core texture state update routines.
  */
 
-static void updateSpecularLighting( GLcontext *ctx )
+static void updateSpecularLighting( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint t = rmesa->setup.tex_cntl_c;
@@ -761,7 +761,7 @@ static void updateSpecularLighting( GLcontext *ctx )
 }
 
 
-static void r128DDLightModelfv( GLcontext *ctx, GLenum pname,
+static void r128DDLightModelfv( struct gl_context *ctx, GLenum pname,
 				const GLfloat *param )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -777,7 +777,7 @@ static void r128DDLightModelfv( GLcontext *ctx, GLenum pname,
    }
 }
 
-static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
+static void r128DDShadeModel( struct gl_context *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint s = rmesa->setup.pm4_vc_fpu_setup;
@@ -811,7 +811,7 @@ static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
  * Window position
  */
 
-static void r128UpdateWindow( GLcontext *ctx )
+static void r128UpdateWindow( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    int x = rmesa->driDrawable->x;
@@ -834,7 +834,7 @@ static void r128UpdateWindow( GLcontext *ctx )
  * Viewport
  */
 
-static void r128CalcViewport( GLcontext *ctx )
+static void r128CalcViewport( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -850,14 +850,14 @@ static void r128CalcViewport( GLcontext *ctx )
    m[MAT_TZ] =   v[MAT_TZ] * rmesa->depth_scale;
 }
 
-static void r128Viewport( GLcontext *ctx,
+static void r128Viewport( struct gl_context *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
    r128CalcViewport( ctx );
 }
 
-static void r128DepthRange( GLcontext *ctx,
+static void r128DepthRange( struct gl_context *ctx,
 			    GLclampd nearval, GLclampd farval )
 {
    r128CalcViewport( ctx );
@@ -868,7 +868,7 @@ static void r128DepthRange( GLcontext *ctx,
  * Miscellaneous
  */
 
-static void r128DDClearColor( GLcontext *ctx,
+static void r128DDClearColor( struct gl_context *ctx,
 			      const GLfloat color[4] )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -883,7 +883,7 @@ static void r128DDClearColor( GLcontext *ctx,
 				      c[0], c[1], c[2], c[3] );
 }
 
-static void r128DDLogicOpCode( GLcontext *ctx, GLenum opcode )
+static void r128DDLogicOpCode( struct gl_context *ctx, GLenum opcode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -894,7 +894,7 @@ static void r128DDLogicOpCode( GLcontext *ctx, GLenum opcode )
    }
 }
 
-static void r128DDDrawBuffer( GLcontext *ctx, GLenum mode )
+static void r128DDDrawBuffer( struct gl_context *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -921,7 +921,7 @@ static void r128DDDrawBuffer( GLcontext *ctx, GLenum mode )
    rmesa->new_state |= R128_NEW_WINDOW;
 }
 
-static void r128DDReadBuffer( GLcontext *ctx, GLenum mode )
+static void r128DDReadBuffer( struct gl_context *ctx, GLenum mode )
 {
    /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 }
@@ -931,7 +931,7 @@ static void r128DDReadBuffer( GLcontext *ctx, GLenum mode )
  * Polygon stipple
  */
 
-static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+static void r128DDPolygonStipple( struct gl_context *ctx, const GLubyte *mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint stipple[32], i;
@@ -962,7 +962,7 @@ static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
  * Render mode
  */
 
-static void r128DDRenderMode( GLcontext *ctx, GLenum mode )
+static void r128DDRenderMode( struct gl_context *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    FALLBACK( rmesa, R128_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
@@ -974,7 +974,7 @@ static void r128DDRenderMode( GLcontext *ctx, GLenum mode )
  * State enable/disable
  */
 
-static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
+static void r128DDEnable( struct gl_context *ctx, GLenum cap, GLboolean state )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -1206,7 +1206,7 @@ static void r128DDPrintState( const char *msg, GLuint flags )
 	    (flags & R128_NEW_WINDOW)	? "window, " : "" );
 }
 
-void r128DDUpdateHWState( GLcontext *ctx )
+void r128DDUpdateHWState( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    int new_state = rmesa->new_state;
@@ -1253,7 +1253,7 @@ void r128DDUpdateHWState( GLcontext *ctx )
 }
 
 
-static void r128DDInvalidateState( GLcontext *ctx, GLuint new_state )
+static void r128DDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -1404,7 +1404,7 @@ void r128DDInitState( r128ContextPtr rmesa )
 
 /* Initialize the driver's state functions.
  */
-void r128DDInitStateFuncs( GLcontext *ctx )
+void r128DDInitStateFuncs( struct gl_context *ctx )
 {
    ctx->Driver.UpdateState		= r128DDInvalidateState;
 

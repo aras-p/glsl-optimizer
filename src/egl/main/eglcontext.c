@@ -113,13 +113,12 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
 
    err = _eglParseContextAttribList(ctx, attrib_list);
    if (err == EGL_SUCCESS && ctx->Config) {
-      EGLint renderable_type, api_bit;
+      EGLint api_bit;
 
-      renderable_type = GET_CONFIG_ATTRIB(ctx->Config, EGL_RENDERABLE_TYPE);
       api_bit = _eglGetContextAPIBit(ctx);
-      if (!(renderable_type & api_bit)) {
+      if (!(ctx->Config->RenderableType & api_bit)) {
          _eglLog(_EGL_DEBUG, "context api is 0x%x while config supports 0x%x",
-               api_bit, renderable_type);
+               api_bit, ctx->Config->RenderableType);
          err = EGL_BAD_CONFIG;
       }
    }
@@ -183,7 +182,9 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
 
    switch (attribute) {
    case EGL_CONFIG_ID:
-      *value = GET_CONFIG_ATTRIB(c->Config, EGL_CONFIG_ID);
+      if (!c->Config)
+         return _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
+      *value = c->Config->ConfigID;
       break;
    case EGL_CONTEXT_CLIENT_VERSION:
       *value = c->ClientVersion;

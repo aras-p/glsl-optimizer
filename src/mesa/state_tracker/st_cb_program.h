@@ -37,7 +37,7 @@ extern void
 st_init_program_functions(struct dd_function_table *functions);
 
 extern void
-st_delete_program(GLcontext *ctx, struct gl_program *prog);
+st_delete_program(struct gl_context *ctx, struct gl_program *prog);
 
 
 #endif

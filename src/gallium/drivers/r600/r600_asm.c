@@ -20,14 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "radeon.h"
-#include "r600_context.h"
+#include <stdio.h>
+#include <errno.h>
 #include "util/u_memory.h"
+#include "r600_pipe.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
 #include "r600_asm.h"
-#include <stdio.h>
-#include <errno.h>
 
 static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 {
@@ -420,7 +419,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL || bc->cf_last->inst != (type << 3) ||
 		bc->force_add_cf) {
-		/* at most 128 slots, one add alu can add 4 slots + 4 constant worst case */
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nalu);
@@ -434,7 +432,9 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	} else {
 		LIST_ADDTAIL(&nalu->bs_list, &bc->cf_last->curr_bs_head->bs_list);
 	}
-	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
+	/* at most 128 slots, one add alu can add 4 slots + 4 constants(2 slots)
+	 * worst case */
+	if (alu->last && (bc->cf_last->ndw >> 1) >= 120) {
 		bc->force_add_cf = 1;
 	}
 	/* number of gpr == the last gpr used in any alu */
@@ -465,8 +465,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
 
-	if (bc->use_mem_constant)
-		bc->cf_last->kcache0_mode = 2;
+	bc->cf_last->kcache0_mode = 2;
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {
@@ -531,7 +530,8 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
 		(bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX &&
-		 bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC)) {
+		 bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) ||
+	         bc->force_add_cf) {
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nvtx);
@@ -543,6 +543,8 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
+	if ((bc->ndw / 4) > 7)
+		bc->force_add_cf = 1;
 	return 0;
 }
 
@@ -557,7 +559,8 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
-		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX ||
+	        bc->force_add_cf) {
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(ntex);
@@ -569,6 +572,8 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
+	if ((bc->ndw / 4) > 7)
+		bc->force_add_cf = 1;
 	return 0;
 }
 
@@ -595,7 +600,11 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_DST_SEL_Y(vtx->dst_sel_y) |
 				S_SQ_VTX_WORD1_DST_SEL_Z(vtx->dst_sel_z) |
 				S_SQ_VTX_WORD1_DST_SEL_W(vtx->dst_sel_w) |
-				S_SQ_VTX_WORD1_USE_CONST_FIELDS(1) |
+				S_SQ_VTX_WORD1_USE_CONST_FIELDS(vtx->use_const_fields) |
+				S_SQ_VTX_WORD1_DATA_FORMAT(vtx->data_format) |
+				S_SQ_VTX_WORD1_NUM_FORMAT_ALL(vtx->num_format_all) |
+				S_SQ_VTX_WORD1_FORMAT_COMP_ALL(vtx->format_comp_all) |
+				S_SQ_VTX_WORD1_SRF_MODE_ALL(vtx->srf_mode_all) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id++] = S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	bc->bytecode[id++] = 0;
@@ -696,6 +705,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
+					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == 0 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:

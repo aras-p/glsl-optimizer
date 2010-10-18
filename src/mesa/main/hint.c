@@ -97,10 +97,6 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
-         if (!ctx->Extensions.SGIS_generate_mipmap) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return;
-         }
          if (ctx->Hint.GenerateMipmap == mode)
             return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -134,7 +130,7 @@ _mesa_Hint( GLenum target, GLenum mode )
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void _mesa_init_hint( GLcontext * ctx )
+void _mesa_init_hint( struct gl_context * ctx )
 {
    /* Hint group */
    ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;

@@ -55,6 +55,9 @@ update_rhs_swizzle(ir_swizzle_mask &m, unsigned from, unsigned to)
 void
 ir_assignment::set_lhs(ir_rvalue *lhs)
 {
+   void *mem_ctx = this;
+   bool swizzled = false;
+
    while (lhs != NULL) {
       ir_swizzle *swiz = lhs->as_swizzle();
 
@@ -82,7 +85,21 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
       this->write_mask = write_mask;
       lhs = swiz->val;
 
-      this->rhs = new(this) ir_swizzle(this->rhs, rhs_swiz);
+      this->rhs = new(mem_ctx) ir_swizzle(this->rhs, rhs_swiz);
+      swizzled = true;
+   }
+
+   if (swizzled) {
+      /* Now, RHS channels line up with the LHS writemask.  Collapse it
+       * to just the channels that will be written.
+       */
+      ir_swizzle_mask rhs_swiz = { 0, 0, 0, 0, 0, 0 };
+      int rhs_chan = 0;
+      for (int i = 0; i < 4; i++) {
+	 if (write_mask & (1 << i))
+	    update_rhs_swizzle(rhs_swiz, i, rhs_chan++);
+      }
+      this->rhs = new(mem_ctx) ir_swizzle(this->rhs, rhs_swiz);
    }
 
    assert((lhs == NULL) || lhs->as_dereference());
@@ -122,6 +139,16 @@ ir_assignment::ir_assignment(ir_dereference *lhs, ir_rvalue *rhs,
    this->rhs = rhs;
    this->lhs = lhs;
    this->write_mask = write_mask;
+
+   if (lhs->type->is_scalar() || lhs->type->is_vector()) {
+      int lhs_components = 0;
+      for (int i = 0; i < 4; i++) {
+	 if (write_mask & (1 << i))
+	    lhs_components++;
+      }
+
+      assert(lhs_components == this->rhs->type->vector_elements);
+   }
 }
 
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
@@ -189,6 +216,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_ceil */
       1, /* ir_unop_floor */
       1, /* ir_unop_fract */
+      1, /* ir_unop_round_even */
 
       1, /* ir_unop_sin */
       1, /* ir_unop_cos */
@@ -261,6 +289,7 @@ static const char *const operator_strs[] = {
    "ceil",
    "floor",
    "fract",
+   "round_even",
    "sin",
    "cos",
    "dFdx",
@@ -1044,6 +1073,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->ir_type = ir_type_variable;
    this->type = type;
    this->name = talloc_strdup(this, name);
+   this->explicit_location = false;
    this->location = -1;
    this->warn_extension = NULL;
    this->constant_value = NULL;

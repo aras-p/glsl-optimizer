@@ -909,10 +909,12 @@ struct brw_sf_unit_state
 
 };
 
-struct gen6_scissor_state
+struct gen6_scissor_rect
 {
-   GLuint ymin, xmin;
-   GLuint ymax, xmax;
+   GLuint xmin:16;
+   GLuint ymin:16;
+   GLuint xmax:16;
+   GLuint ymax:16;
 };
 
 struct brw_gs_unit_state
@@ -1073,7 +1075,7 @@ struct brw_sampler_state
       GLuint mag_filter:3; 
       GLuint mip_filter:2; 
       GLuint base_level:5; 
-      GLuint pad:1;
+      GLuint min_mag_neq:1;
       GLuint lod_preclamp:1; 
       GLuint default_color_mode:1; 
       GLuint pad0:1;
@@ -1085,7 +1087,8 @@ struct brw_sampler_state
       GLuint r_wrap_mode:3; 
       GLuint t_wrap_mode:3; 
       GLuint s_wrap_mode:3; 
-      GLuint pad:3;
+      GLuint cube_control_mode:1;
+      GLuint pad:2;
       GLuint max_lod:10; 
       GLuint min_lod:10; 
    } ss1;
@@ -1099,7 +1102,9 @@ struct brw_sampler_state
    
    struct
    {
-      GLuint pad:19;
+      GLuint non_normalized_coord:1;
+      GLuint pad:12;
+      GLuint address_round:6;
       GLuint max_aniso:3; 
       GLuint chroma_key_mode:1; 
       GLuint chroma_key_index:2; 
@@ -1210,10 +1215,9 @@ struct brw_surface_state
 
    struct {
       GLuint pad1:16;
-      GLuint llc_mapping:1;
-      GLuint mlc_mapping:1;
+      GLuint cache_control:2;
       GLuint gfdt:1;
-      GLuint gfdt_src:1;
+      GLuint encrypt:1;
       GLuint y_offset:4;
       GLuint pad0:1;
       GLuint x_offset:7;
@@ -1377,6 +1381,18 @@ struct brw_instruction
 	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } ia16;
+
+      struct {
+	 GLuint dest_reg_file:2;
+	 GLuint dest_reg_type:3;
+	 GLuint src0_reg_file:2;
+	 GLuint src0_reg_type:3;
+	 GLuint src1_reg_file:2;
+	 GLuint src1_reg_type:3;
+	 GLuint pad:1;
+
+	 GLint jump_count:16;
+      } branch_gen6;
    } bits1;
 
 

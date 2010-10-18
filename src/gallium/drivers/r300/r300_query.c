@@ -158,7 +158,7 @@ static void r300_render_condition(struct pipe_context *pipe,
                                   uint mode)
 {
     struct r300_context *r300 = r300_context(pipe);
-    uint64_t result;
+    uint64_t result = 0;
     boolean wait;
 
     if (query) {
@@ -167,9 +167,9 @@ static void r300_render_condition(struct pipe_context *pipe,
 
         if (!r300_get_query_result(pipe, query, wait, &result)) {
             r300->skip_rendering = FALSE;
+        } else {
+            r300->skip_rendering = result == 0;
         }
-
-        r300->skip_rendering = result == 0;
     } else {
         r300->skip_rendering = FALSE;
     }

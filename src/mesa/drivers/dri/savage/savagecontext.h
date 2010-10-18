@@ -148,7 +148,7 @@ struct savage_elt_t {
 struct savage_context_t {
     GLint refcount;
 
-    GLcontext *glCtx;
+    struct gl_context *glCtx;
 
     int lastTexHeap;
     driTexHeap *textureHeaps[SAVAGE_NR_TEX_HEAPS];
@@ -226,7 +226,7 @@ struct savage_context_t {
     /* DRI stuff */
     GLuint bufferSize;
 
-    GLframebuffer *glBuffer;
+    struct gl_framebuffer *glBuffer;
    
     /* Two flags to keep track of fallbacks. */
     GLuint Fallback;

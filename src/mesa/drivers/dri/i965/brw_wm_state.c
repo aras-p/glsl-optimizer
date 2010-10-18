@@ -58,7 +58,7 @@ struct brw_wm_unit_key {
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    const struct brw_fragment_program *bfp = (struct brw_fragment_program *) fp;
    struct intel_context *intel = &brw->intel;
@@ -108,16 +108,11 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
     * 8-wide.
     */
    if (ctx->Shader.CurrentProgram) {
-      int i;
+      struct brw_shader *shader = (struct brw_shader *)
+	 ctx->Shader.CurrentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-      for (i = 0; i < ctx->Shader.CurrentProgram->_NumLinkedShaders; i++) {
-	 struct brw_shader *shader =
-	    (struct brw_shader *)ctx->Shader.CurrentProgram->_LinkedShaders[i];;
-
-	 if (shader->base.Type == GL_FRAGMENT_SHADER &&
-	     shader->ir != NULL) {
-	    key->is_glsl = GL_TRUE;
-	 }
+      if (shader != NULL && shader->ir != NULL) {
+	 key->is_glsl = GL_TRUE;
       }
    }
 

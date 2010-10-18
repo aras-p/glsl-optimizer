@@ -207,7 +207,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 #if _HAVE_FULL_GL
 
 static GLboolean
-_mesa_validate_blend_equation( GLcontext *ctx,
+_mesa_validate_blend_equation( struct gl_context *ctx,
 			       GLenum mode, GLboolean is_separate )
 {
    switch (mode) {
@@ -215,8 +215,7 @@ _mesa_validate_blend_equation( GLcontext *ctx,
          break;
       case GL_MIN:
       case GL_MAX:
-         if (!ctx->Extensions.EXT_blend_minmax &&
-             !ctx->Extensions.ARB_imaging) {
+         if (!ctx->Extensions.EXT_blend_minmax) {
             return GL_FALSE;
          }
          break;
@@ -229,8 +228,7 @@ _mesa_validate_blend_equation( GLcontext *ctx,
          break;
       case GL_FUNC_SUBTRACT:
       case GL_FUNC_REVERSE_SUBTRACT:
-         if (!ctx->Extensions.EXT_blend_subtract &&
-             !ctx->Extensions.ARB_imaging) {
+         if (!ctx->Extensions.EXT_blend_subtract) {
             return GL_FALSE;
          }
          break;
@@ -591,9 +589,9 @@ _mesa_ClampColorARB(GLenum target, GLenum clamp)
  * \param ctx GL context.
  *
  * Initializes the related fields in the context color attribute group,
- * __GLcontextRec::Color.
+ * __struct gl_contextRec::Color.
  */
-void _mesa_init_color( GLcontext * ctx )
+void _mesa_init_color( struct gl_context * ctx )
 {
    /* Color buffer group */
    ctx->Color.IndexMask = ~0u;

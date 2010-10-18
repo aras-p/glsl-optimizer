@@ -24,7 +24,7 @@
  *      Jerome Glisse
  */
 #include <stdlib.h>
-#include "radeon_priv.h"
+#include "r600.h"
 
 struct pci_id {
 	unsigned	vendor;

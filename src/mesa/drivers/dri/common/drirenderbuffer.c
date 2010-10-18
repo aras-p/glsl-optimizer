@@ -16,7 +16,7 @@
  * be used.
  */
 static GLboolean
-driRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
+driRenderbufferStorage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLenum internalFormat, GLuint width, GLuint height)
 {
    rb->Width = width;
@@ -187,7 +187,7 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
  * gl_framebuffer object.
  */
 void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv)
+driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {

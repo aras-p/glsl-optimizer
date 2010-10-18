@@ -161,7 +161,7 @@ static void mgaSetTexBorderColor(mgaTextureObjectPtr t, const GLfloat color[4])
 
 
 static gl_format
-mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+mgaChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
 		        GLenum format, GLenum type )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -336,7 +336,7 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 }
 
 
-static void mgaTexEnv( GLcontext *ctx, GLenum target,
+static void mgaTexEnv( struct gl_context *ctx, GLenum target,
 			 GLenum pname, const GLfloat *param )
 {
    GLuint unit = ctx->Texture.CurrentUnit;
@@ -355,7 +355,7 @@ static void mgaTexEnv( GLcontext *ctx, GLenum target,
 }
 
 
-static void mgaTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void mgaTexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint height, GLint border,
 			    GLenum format, GLenum type, const GLvoid *pixels,
@@ -384,7 +384,7 @@ static void mgaTexImage2D( GLcontext *ctx, GLenum target, GLint level,
       t->dirty_images[0] |= (1UL << level);
 }
 
-static void mgaTexSubImage2D( GLcontext *ctx, 
+static void mgaTexSubImage2D( struct gl_context *ctx, 
 			       GLenum target,
 			       GLint level,	
 			       GLint xoffset, GLint yoffset,
@@ -424,7 +424,7 @@ static void mgaTexSubImage2D( GLcontext *ctx,
  */
 
 static void
-mgaTexParameter( GLcontext *ctx, GLenum target,
+mgaTexParameter( struct gl_context *ctx, GLenum target,
 		   struct gl_texture_object *tObj,
 		   GLenum pname, const GLfloat *params )
 {
@@ -480,7 +480,7 @@ mgaTexParameter( GLcontext *ctx, GLenum target,
 
 
 static void
-mgaBindTexture( GLcontext *ctx, GLenum target,
+mgaBindTexture( struct gl_context *ctx, GLenum target,
 		  struct gl_texture_object *tObj )
 {
    assert( (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_NV) ||
@@ -489,7 +489,7 @@ mgaBindTexture( GLcontext *ctx, GLenum target,
 
 
 static void
-mgaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
+mgaDeleteTexture( struct gl_context *ctx, struct gl_texture_object *tObj )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
@@ -516,7 +516,7 @@ mgaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-mgaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+mgaNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);

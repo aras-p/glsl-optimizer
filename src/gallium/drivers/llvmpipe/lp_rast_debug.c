@@ -12,6 +12,7 @@ static INLINE int u_bit_scan(unsigned *mask)
 struct tile {
    int coverage;
    int overdraw;
+   const struct lp_rast_state *state;
    char data[TILE_SIZE][TILE_SIZE];
 };
 
@@ -42,10 +43,12 @@ static const char *cmd_names[LP_RAST_OP_MAX] =
    "triangle_8",
    "triangle_3_4",
    "triangle_3_16",
+   "triangle_4_16",
    "shade_tile",
    "shade_tile_opaque",
    "begin_query",
    "end_query",
+   "set_state",
 };
 
 static const char *cmd_name(unsigned cmd)
@@ -55,31 +58,31 @@ static const char *cmd_name(unsigned cmd)
 }
 
 static const struct lp_fragment_shader_variant *
-get_variant(  const struct cmd_block *block,
-              int k )
+get_variant( const struct lp_rast_state *state,
+             const struct cmd_block *block,
+             int k )
 {
    if (block->cmd[k] == LP_RAST_OP_SHADE_TILE ||
-       block->cmd[k] == LP_RAST_OP_SHADE_TILE_OPAQUE)
-      return  block->arg[k].shade_tile->state->variant;
-
-   if (block->cmd[k] == LP_RAST_OP_TRIANGLE_1 ||
+       block->cmd[k] == LP_RAST_OP_SHADE_TILE_OPAQUE ||
+       block->cmd[k] == LP_RAST_OP_TRIANGLE_1 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_2 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_3 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_4 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_5 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_6 ||
        block->cmd[k] == LP_RAST_OP_TRIANGLE_7)
-      return block->arg[k].triangle.tri->inputs.state->variant;
+      return state->variant;
 
    return NULL;
 }
 
 
 static boolean
-is_blend( const struct cmd_block *block,
+is_blend( const struct lp_rast_state *state,
+          const struct cmd_block *block,
           int k )
 {
-   const struct lp_fragment_shader_variant *variant = get_variant(block, k);
+   const struct lp_fragment_shader_variant *variant = get_variant(state, block, k);
 
    if (variant)
       return  variant->key.blend.rt[0].blend_enable;
@@ -92,6 +95,7 @@ is_blend( const struct cmd_block *block,
 static void
 debug_bin( const struct cmd_bin *bin )
 {
+   const struct lp_rast_state *state;
    const struct cmd_block *head = bin->head;
    int i, j = 0;
 
@@ -99,9 +103,12 @@ debug_bin( const struct cmd_bin *bin )
                 
    while (head) {
       for (i = 0; i < head->count; i++, j++) {
+         if (head->cmd[i] == LP_RAST_OP_SET_STATE)
+            state = head->arg[i].state;
+
          debug_printf("%d: %s %s\n", j,
                       cmd_name(head->cmd[i]),
-                      is_blend(head, i) ? "blended" : "");
+                      is_blend(state, head, i) ? "blended" : "");
       }
       head = head->next;
    }
@@ -133,7 +140,7 @@ debug_shade_tile(int x, int y,
                  char val)
 {
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   boolean blend = inputs->state->variant->key.blend.rt[0].blend_enable;
+   boolean blend = tile->state->variant->key.blend.rt[0].blend_enable;
    unsigned i,j;
 
    if (inputs->disable)
@@ -171,11 +178,12 @@ debug_triangle(int tilex, int tiley,
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
+   const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
    struct lp_rast_plane plane[8];
    int x, y;
    int count = 0;
    unsigned i, nr_planes = 0;
-   boolean blend = tri->inputs.state->variant->key.blend.rt[0].blend_enable;
+   boolean blend = tile->state->variant->key.blend.rt[0].blend_enable;
 
    if (tri->inputs.disable) {
       /* This triangle was partially binned and has been disabled */
@@ -183,7 +191,7 @@ debug_triangle(int tilex, int tiley,
    }
 
    while (plane_mask) {
-      plane[nr_planes] = tri->plane[u_bit_scan(&plane_mask)];
+      plane[nr_planes] = tri_plane[u_bit_scan(&plane_mask)];
       plane[nr_planes].c = (plane[nr_planes].c +
                             plane[nr_planes].dcdy * tiley -
                             plane[nr_planes].dcdx * tilex);
@@ -235,12 +243,15 @@ do_debug_bin( struct tile *tile,
 
    for (block = bin->head; block; block = block->next) {
       for (k = 0; k < block->count; k++, j++) {
-         boolean blend = is_blend(block, k);
+         boolean blend = is_blend(tile->state, block, k);
          char val = get_label(j);
          int count = 0;
             
          if (print_cmds)
             debug_printf("%c: %15s", val, cmd_name(block->cmd[k]));
+
+         if (block->cmd[k] == LP_RAST_OP_SET_STATE)
+            tile->state = block->arg[k].state;
          
          if (block->cmd[k] == LP_RAST_OP_CLEAR_COLOR ||
              block->cmd[k] == LP_RAST_OP_CLEAR_ZSTENCIL)

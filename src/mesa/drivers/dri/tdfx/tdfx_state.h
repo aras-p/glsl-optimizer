@@ -40,21 +40,21 @@
 #include "main/context.h"
 #include "tdfx_context.h"
 
-extern void tdfxDDInitStateFuncs( GLcontext *ctx );
+extern void tdfxDDInitStateFuncs( struct gl_context *ctx );
 
-extern void tdfxDDUpdateHwState( GLcontext *ctx );
+extern void tdfxDDUpdateHwState( struct gl_context *ctx );
 
 extern void tdfxInitState( tdfxContextPtr fxMesa );
 
-extern void tdfxUpdateClipping( GLcontext *ctx );
+extern void tdfxUpdateClipping( struct gl_context *ctx );
 
 
-extern void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void tdfxFallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) tdfxFallback( rmesa->glCtx, bit, mode )
 
-extern void tdfxUpdateCull( GLcontext *ctx );
-extern void tdfxUpdateStipple( GLcontext *ctx );
-extern void tdfxUpdateViewport( GLcontext *ctx );
+extern void tdfxUpdateCull( struct gl_context *ctx );
+extern void tdfxUpdateStipple( struct gl_context *ctx );
+extern void tdfxUpdateViewport( struct gl_context *ctx );
 
 
 #endif

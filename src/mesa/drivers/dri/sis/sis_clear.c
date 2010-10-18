@@ -38,12 +38,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "main/macros.h"
 
-static GLbitfield sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
+static GLbitfield sis_3D_Clear( struct gl_context * ctx, GLbitfield mask,
 				GLint x, GLint y, GLint width,
 				GLint height );
-static void sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x,
+static void sis_clear_color_buffer( struct gl_context *ctx, GLenum mask, GLint x,
 				    GLint y, GLint width, GLint height );
-static void sis_clear_z_stencil_buffer( GLcontext * ctx,
+static void sis_clear_z_stencil_buffer( struct gl_context * ctx,
 					GLbitfield mask, GLint x,
 					GLint y, GLint width,
 					GLint height );
@@ -94,7 +94,7 @@ sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z, GLint stencil )
 }
 
 void
-sisDDClear( GLcontext * ctx, GLbitfield mask )
+sisDDClear( struct gl_context * ctx, GLbitfield mask )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -148,7 +148,7 @@ sisDDClear( GLcontext * ctx, GLbitfield mask )
 
 
 void
-sisDDClearColor( GLcontext * ctx, const GLfloat color[4] )
+sisDDClearColor( struct gl_context * ctx, const GLfloat color[4] )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    GLubyte c[4];
@@ -162,7 +162,7 @@ sisDDClearColor( GLcontext * ctx, const GLfloat color[4] )
 }
 
 void
-sisDDClearDepth( GLcontext * ctx, GLclampd d )
+sisDDClearDepth( struct gl_context * ctx, GLclampd d )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -170,7 +170,7 @@ sisDDClearDepth( GLcontext * ctx, GLclampd d )
 }
 
 void
-sisDDClearStencil( GLcontext * ctx, GLint s )
+sisDDClearStencil( struct gl_context * ctx, GLint s )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -178,7 +178,7 @@ sisDDClearStencil( GLcontext * ctx, GLint s )
 }
 
 static GLbitfield
-sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
+sis_3D_Clear( struct gl_context * ctx, GLbitfield mask,
 	      GLint x, GLint y, GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -323,7 +323,7 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 }
 
 static void
-sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
+sis_clear_color_buffer( struct gl_context *ctx, GLenum mask, GLint x, GLint y,
 			GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -389,7 +389,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 }
 
 static void
-sis_clear_z_stencil_buffer( GLcontext * ctx, GLbitfield mask,
+sis_clear_z_stencil_buffer( struct gl_context * ctx, GLbitfield mask,
 			    GLint x, GLint y, GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);

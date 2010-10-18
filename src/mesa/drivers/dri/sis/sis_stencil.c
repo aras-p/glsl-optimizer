@@ -36,7 +36,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_stencil.h"
 
 static void
-sisDDStencilFuncSeparate( GLcontext * ctx, GLenum face,
+sisDDStencilFuncSeparate( struct gl_context * ctx, GLenum face,
                           GLenum func, GLint ref, GLuint mask )
 {
   sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -85,7 +85,7 @@ sisDDStencilFuncSeparate( GLcontext * ctx, GLenum face,
 }
 
 static void
-sisDDStencilMaskSeparate( GLcontext * ctx, GLenum face, GLuint mask )
+sisDDStencilMaskSeparate( struct gl_context * ctx, GLenum face, GLuint mask )
 {
   if (!ctx->Visual.stencilBits)
     return;
@@ -95,7 +95,7 @@ sisDDStencilMaskSeparate( GLcontext * ctx, GLenum face, GLuint mask )
 }
 
 static void
-sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
+sisDDStencilOpSeparate( struct gl_context * ctx, GLenum face, GLenum fail,
                         GLenum zfail, GLenum zpass )
 {
   sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -197,7 +197,7 @@ sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
 }
 
 void
-sisDDInitStencilFuncs( GLcontext *ctx )
+sisDDInitStencilFuncs( struct gl_context *ctx )
 {
   ctx->Driver.StencilFuncSeparate = sisDDStencilFuncSeparate;
   ctx->Driver.StencilMaskSeparate = sisDDStencilMaskSeparate;

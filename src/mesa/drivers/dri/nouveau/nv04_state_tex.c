@@ -55,26 +55,8 @@ get_tex_format(struct gl_texture_image *ti)
 	}
 }
 
-static inline unsigned
-get_wrap_mode(unsigned wrap)
-{
-	switch (wrap) {
-	case GL_REPEAT:
-		return 0x1;
-	case GL_MIRRORED_REPEAT:
-		return 0x2;
-	case GL_CLAMP:
-	case GL_CLAMP_TO_EDGE:
-		return 0x3;
-	case GL_CLAMP_TO_BORDER:
-		return 0x4;
-	default:
-		assert(0);
-	}
-}
-
 void
-nv04_emit_tex_obj(GLcontext *ctx, int emit)
+nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -106,8 +88,8 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 					 t->LodBias, -16, 15) * 8;
 		}
 
-		format |= get_wrap_mode(t->WrapT) << 28 |
-			get_wrap_mode(t->WrapS) << 24 |
+		format |= nvgl_wrap_mode(t->WrapT) << 28 |
+			nvgl_wrap_mode(t->WrapS) << 24 |
 			ti->HeightLog2 << 20 |
 			ti->WidthLog2 << 16 |
 			lod_max << 12 |

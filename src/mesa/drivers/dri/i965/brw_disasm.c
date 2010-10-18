@@ -164,6 +164,11 @@ char *accwr[2] = {
     [1] = "AccWrEnable"
 };
 
+char *wectrl[2] = {
+    [0] = "WE_normal",
+    [1] = "WE_all"
+};
+
 char *exec_size[8] = {
     [0] = "1",
     [1] = "2",
@@ -651,6 +656,7 @@ static int src_da16 (FILE *file,
 	err |= control (file, "channel select", chan_sel, swz_z, NULL);
 	err |= control (file, "channel select", chan_sel, swz_w, NULL);
     }
+    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     return err;
 }
 
@@ -804,6 +810,44 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
+int esize[6] = {
+	[0] = 1,
+	[1] = 2,
+	[2] = 4,
+	[3] = 8,
+	[4] = 16,
+	[5] = 32,
+};
+
+static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
+{
+    int qtr_ctl = inst->header.compression_control;
+    int exec_size = esize[inst->header.execution_size];
+
+    if (exec_size == 8) {
+	switch (qtr_ctl) {
+	case 0:
+	    string (file, " 1Q");
+	    break;
+	case 1:
+	    string (file, " 2Q");
+	    break;
+	case 2:
+	    string (file, " 3Q");
+	    break;
+	case 3:
+	    string (file, " 4Q");
+	    break;
+	}
+    } else if (exec_size == 16){
+	if (qtr_ctl < 2)
+	    string (file, " 1H");
+	else
+	    string (file, " 2H");
+    }
+    return 0;
+}
+
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 {
     int	err = 0;
@@ -842,13 +886,18 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	string (file, ")");
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND)
+    if (inst->header.opcode == BRW_OPCODE_SEND && gen < 6)
 	format (file, " %d", inst->header.destreg__conditionalmod);
 
     if (opcode[inst->header.opcode].ndst > 0) {
 	pad (file, 16);
 	err |= dest (file, inst);
+    } else if (gen >= 6 && (inst->header.opcode == BRW_OPCODE_IF ||
+			    inst->header.opcode == BRW_OPCODE_ELSE ||
+			    inst->header.opcode == BRW_OPCODE_ENDIF)) {
+       format (file, " %d", inst->bits1.branch_gen6.jump_count);
     }
+
     if (opcode[inst->header.opcode].nsrc > 0) {
 	pad (file, 32);
 	err |= src0 (file, inst);
@@ -998,18 +1047,26 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	string (file, "{");
 	space = 1;
 	err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
-	err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
+	if (gen >= 6)
+	    err |= control (file, "write enable control", wectrl, inst->header.mask_control, &space);
+	else
+	    err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
 
-	if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
-	    opcode[inst->header.opcode].ndst > 0 &&
-	    inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
-	    inst->bits1.da1.dest_reg_nr & (1 << 7)) {
-	   format (file, " compr4");
-	} else {
-	   err |= control (file, "compression control", compr_ctrl,
-			   inst->header.compression_control, &space);
+	if (gen >= 6)
+	    err |= qtr_ctrl (file, inst);
+	else {
+	    if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
+		opcode[inst->header.opcode].ndst > 0 &&
+		inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
+		inst->bits1.da1.dest_reg_nr & (1 << 7)) {
+		format (file, " compr4");
+	    } else {
+		err |= control (file, "compression control", compr_ctrl,
+				inst->header.compression_control, &space);
+	    }
 	}
+
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
 	if (gen >= 6)
 	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);

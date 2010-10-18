@@ -80,7 +80,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
+static const GLubyte *r200GetString( struct gl_context *ctx, GLenum name )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    static char buffer[128];
@@ -137,7 +137,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_pack_invert",               NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -272,7 +271,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific rendering context.
  */
 GLboolean r200CreateContext( gl_api api,
-			     const __GLcontextModes *glVisual,
+			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
 			     void *sharedContextPrivate)
 {
@@ -280,7 +279,7 @@ GLboolean r200CreateContext( gl_api api,
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
-   GLcontext *ctx;
+   struct gl_context *ctx;
    int i;
    int tcl_mode;
 

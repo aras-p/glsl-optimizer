@@ -32,7 +32,7 @@
  * Return major and minor version numbers.
  */
 static void
-compute_version(GLcontext *ctx)
+compute_version(struct gl_context *ctx)
 {
    GLuint major, minor;
    static const int max = 100;
@@ -84,7 +84,7 @@ compute_version(GLcontext *ctx)
 			      (ctx->Extensions.EXT_stencil_two_side
 			       || ctx->Extensions.ATI_separate_stencil));
    const GLboolean ver_2_1 = (ver_2_0 &&
-                              ctx->Extensions.ARB_shading_language_120 &&
+                              ctx->Const.GLSLVersion >= 120 &&
                               ctx->Extensions.EXT_pixel_buffer_object &&
                               ctx->Extensions.EXT_texture_sRGB);
    const GLboolean ver_3_0 = (ver_2_1 &&
@@ -92,6 +92,7 @@ compute_version(GLcontext *ctx)
                               ctx->Extensions.ARB_map_buffer_range &&
                               ctx->Extensions.ARB_texture_float &&
                               ctx->Extensions.ARB_texture_rg &&
+                              ctx->Extensions.ARB_texture_compression_rgtc &&
                               ctx->Extensions.APPLE_vertex_array_object &&
                               ctx->Extensions.EXT_draw_buffers2 &&
                               ctx->Extensions.EXT_framebuffer_blit &&
@@ -101,7 +102,6 @@ compute_version(GLcontext *ctx)
                               ctx->Extensions.EXT_packed_depth_stencil &&
                               ctx->Extensions.EXT_packed_float &&
                               ctx->Extensions.EXT_texture_array &&
-                              ctx->Extensions.EXT_texture_compression_rgtc &&
                               ctx->Extensions.EXT_texture_integer &&
                               ctx->Extensions.EXT_texture_shared_exponent &&
                               ctx->Extensions.EXT_transform_feedback &&
@@ -187,7 +187,7 @@ compute_version(GLcontext *ctx)
 }
 
 static void
-compute_version_es1(GLcontext *ctx)
+compute_version_es1(struct gl_context *ctx)
 {
    static const int max = 100;
 
@@ -223,7 +223,7 @@ compute_version_es1(GLcontext *ctx)
 }
 
 static void
-compute_version_es2(GLcontext *ctx)
+compute_version_es2(struct gl_context *ctx)
 {
    static const int max = 100;
 
@@ -264,7 +264,7 @@ compute_version_es2(GLcontext *ctx)
  * or to perform version check for GLX_ARB_create_context_profile.
  */
 void
-_mesa_compute_version(GLcontext *ctx)
+_mesa_compute_version(struct gl_context *ctx)
 {
    if (ctx->VersionMajor)
       return;

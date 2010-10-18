@@ -26,7 +26,6 @@
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/colormac.h"
-#include "main/convolve.h"
 #include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"
@@ -44,7 +43,7 @@
  * Read pixels for format=GL_DEPTH_COMPONENT.
  */
 static void
-read_depth_pixels( GLcontext *ctx,
+read_depth_pixels( struct gl_context *ctx,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum type, GLvoid *pixels,
@@ -140,7 +139,7 @@ read_depth_pixels( GLcontext *ctx,
  * Read pixels for format=GL_STENCIL_INDEX.
  */
 static void
-read_stencil_pixels( GLcontext *ctx,
+read_stencil_pixels( struct gl_context *ctx,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum type, GLvoid *pixels,
@@ -178,7 +177,7 @@ read_stencil_pixels( GLcontext *ctx,
  * \return GL_TRUE if success, GL_FALSE if unable to do the readpixels
  */
 static GLboolean
-fast_read_rgba_pixels( GLcontext *ctx,
+fast_read_rgba_pixels( struct gl_context *ctx,
                        GLint x, GLint y,
                        GLsizei width, GLsizei height,
                        GLenum format, GLenum type,
@@ -298,7 +297,7 @@ adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
  * Read R, G, B, A, RGB, L, or LA pixels.
  */
 static void
-read_rgba_pixels( GLcontext *ctx,
+read_rgba_pixels( struct gl_context *ctx,
                   GLint x, GLint y,
                   GLsizei width, GLsizei height,
                   GLenum format, GLenum type, GLvoid *pixels,
@@ -326,57 +325,7 @@ read_rgba_pixels( GLcontext *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
-   if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      GLfloat *dest, *src, *tmpImage, *convImage;
-      GLint row;
-
-      tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!tmpImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-         return;
-      }
-      convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!convImage) {
-         free(tmpImage);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-         return;
-      }
-
-      /* read full RGBA, FLOAT image */
-      dest = tmpImage;
-      for (row = 0; row < height; row++, y++) {
-         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
-         _mesa_apply_rgba_transfer_ops(ctx, 
-                                      transferOps & IMAGE_PRE_CONVOLUTION_BITS,
-                                      width, (GLfloat (*)[4]) dest);
-         dest += width * 4;
-      }
-
-      /* do convolution */
-      if (ctx->Pixel.Convolution2DEnabled) {
-         _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      else {
-         ASSERT(ctx->Pixel.Separable2DEnabled);
-         _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      free(tmpImage);
-
-      /* finish transfer ops and pack the resulting image */
-      src = convImage;
-      for (row = 0; row < height; row++) {
-         GLvoid *dest;
-         dest = _mesa_image_address2d(packing, pixels, width, height,
-                                      format, type, row, 0);
-         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) src,
-                                    format, type, dest, packing,
-                                    transferOps & IMAGE_POST_CONVOLUTION_BITS);
-         src += width * 4;
-      }
-      free(convImage);
-   }
-   else {
-      /* no convolution */
+   do {
       const GLint dstStride
          = _mesa_image_row_stride(packing, width, format, type);
       GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
@@ -384,10 +333,6 @@ read_rgba_pixels( GLcontext *ctx,
       GLubyte *dst
          = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
                                              format, type, 0, 0);
-
-      /* make sure we don't apply 1D convolution */
-      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
-                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
 
       for (row = 0; row < height; row++, y++) {
 
@@ -407,7 +352,7 @@ read_rgba_pixels( GLcontext *ctx,
 
          dst += dstStride;
       }
-   }
+   } while (0);
 }
 
 
@@ -417,7 +362,7 @@ read_rgba_pixels( GLcontext *ctx,
  * depth and stencil buffers really exist.
  */
 static void
-read_depth_stencil_pixels(GLcontext *ctx,
+read_depth_stencil_pixels(struct gl_context *ctx,
                           GLint x, GLint y,
                           GLsizei width, GLsizei height,
                           GLenum type, GLvoid *pixels,
@@ -508,7 +453,7 @@ read_depth_stencil_pixels(GLcontext *ctx,
  * By time we get here, all error checking will have been done.
  */
 void
-_swrast_ReadPixels( GLcontext *ctx,
+_swrast_ReadPixels( struct gl_context *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,
 		    const struct gl_pixelstore_attrib *packing,

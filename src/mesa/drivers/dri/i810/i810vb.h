@@ -36,24 +36,24 @@
 			  _NEW_FOG)
 
 
-extern void i810ChooseVertexState( GLcontext *ctx );
-extern void i810CheckTexSizes( GLcontext *ctx );
-extern void i810BuildVertices( GLcontext *ctx,
+extern void i810ChooseVertexState( struct gl_context *ctx );
+extern void i810CheckTexSizes( struct gl_context *ctx );
+extern void i810BuildVertices( struct gl_context *ctx,
 			       GLuint start,
 			       GLuint count,
 			       GLuint newinputs );
 
 
-extern void *i810_emit_contiguous_verts( GLcontext *ctx,
+extern void *i810_emit_contiguous_verts( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 void *dest );
 
-extern void i810_translate_vertex( GLcontext *ctx,
+extern void i810_translate_vertex( struct gl_context *ctx,
 				   const i810Vertex *src,
 				   SWvertex *dst );
 
-extern void i810InitVB( GLcontext *ctx );
-extern void i810FreeVB( GLcontext *ctx );
+extern void i810InitVB( struct gl_context *ctx );
+extern void i810FreeVB( struct gl_context *ctx );
 
 #endif

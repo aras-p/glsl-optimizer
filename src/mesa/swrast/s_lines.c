@@ -38,7 +38,7 @@
  * Init the mask[] array to implement a line stipple.
  */
 static void
-compute_stipple_mask( GLcontext *ctx, GLuint len, GLubyte mask[] )
+compute_stipple_mask( struct gl_context *ctx, GLuint len, GLubyte mask[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
@@ -60,7 +60,7 @@ compute_stipple_mask( GLcontext *ctx, GLuint len, GLubyte mask[] )
  * To draw a wide line we can simply redraw the span N times, side by side.
  */
 static void
-draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
+draw_wide_line( struct gl_context *ctx, SWspan *span, GLboolean xMajor )
 {
    const GLint width = (GLint) CLAMP(ctx->Line.Width,
                                      ctx->Const.MinLineWidth,
@@ -160,7 +160,7 @@ draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
 
 
 void
-_swrast_add_spec_terms_line(GLcontext *ctx,
+_swrast_add_spec_terms_line(struct gl_context *ctx,
                             const SWvertex *v0, const SWvertex *v1)
 {
    SWvertex *ncv0 = (SWvertex *)v0;
@@ -222,7 +222,7 @@ do {                                    \
  * tests to this code.
  */
 void
-_swrast_choose_line( GLcontext *ctx )
+_swrast_choose_line( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLboolean specular = (ctx->Fog.ColorSumEnabled ||

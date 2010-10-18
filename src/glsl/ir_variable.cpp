@@ -52,6 +52,7 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
    }
 
    var->location = slot;
+   var->explicit_location = (slot >= 0);
 
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.
@@ -162,6 +163,9 @@ generate_110_uniforms(exec_list *instructions,
 				    state->Const.MaxTextureCoords);
 
    add_uniform(instructions, state, "gl_TextureMatrix", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixInverse", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixTranspose", mat4_array_type);
+   add_uniform(instructions, state, "gl_TextureMatrixInverseTranspose", mat4_array_type);
 
    add_uniform(instructions, state, "gl_DepthRange",
 		state->symbols->get_type("gl_DepthRangeParameters"));
@@ -418,6 +422,20 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
    }
 }
 
+static void
+generate_ARB_shader_stencil_export_variables(exec_list *instructions,
+					     struct _mesa_glsl_parse_state *state,
+					     bool warn)
+{
+   /* gl_FragStencilRefARB is only available in the fragment shader.
+    */
+   ir_variable *const fd =
+      add_variable("gl_FragStencilRefARB", ir_var_out, FRAG_RESULT_STENCIL,
+		   glsl_type::int_type, instructions, state->symbols);
+
+   if (warn)
+      fd->warn_extension = "GL_ARB_shader_stencil_export";
+}
 
 static void
 generate_120_fs_variables(exec_list *instructions,
@@ -467,6 +485,10 @@ initialize_fs_variables(exec_list *instructions,
       generate_130_fs_variables(instructions, state);
       break;
    }
+
+   if (state->ARB_shader_stencil_export_enable)
+      generate_ARB_shader_stencil_export_variables(instructions, state,
+						   state->ARB_shader_stencil_export_warn);
 }
 
 void

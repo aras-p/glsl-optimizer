@@ -17,12 +17,12 @@
 static void
 _eglClampSwapInterval(_EGLSurface *surf, EGLint interval)
 {
-   EGLint bound = GET_CONFIG_ATTRIB(surf->Config, EGL_MAX_SWAP_INTERVAL);
+   EGLint bound = surf->Config->MaxSwapInterval;
    if (interval >= bound) {
       interval = bound;
    }
    else {
-      bound = GET_CONFIG_ATTRIB(surf->Config, EGL_MIN_SWAP_INTERVAL);
+      bound = surf->Config->MinSwapInterval;
       if (interval < bound)
          interval = bound;
    }
@@ -263,7 +263,7 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
       return EGL_FALSE;
    }
 
-   if ((GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) & type) == 0) {
+   if ((conf->SurfaceType & type) == 0) {
       /* The config can't be used to create a surface of this type */
       _eglError(EGL_BAD_CONFIG, func);
       return EGL_FALSE;
@@ -333,7 +333,7 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       *value = surface->Height;
       break;
    case EGL_CONFIG_ID:
-      *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
+      *value = surface->Config->ConfigID;
       break;
    case EGL_LARGEST_PBUFFER:
       *value = surface->LargestPbuffer;
@@ -445,7 +445,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 
    switch (attribute) {
    case EGL_MIPMAP_LEVEL:
-      confval = GET_CONFIG_ATTRIB(surface->Config, EGL_RENDERABLE_TYPE);
+      confval = surface->Config->RenderableType;
       if (!(confval & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT))) {
          err = EGL_BAD_PARAMETER;
          break;
@@ -457,7 +457,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       case EGL_MULTISAMPLE_RESOLVE_DEFAULT:
          break;
       case EGL_MULTISAMPLE_RESOLVE_BOX:
-         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         confval = surface->Config->SurfaceType;
          if (!(confval & EGL_MULTISAMPLE_RESOLVE_BOX_BIT))
             err = EGL_BAD_MATCH;
          break;
@@ -474,7 +474,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       case EGL_BUFFER_DESTROYED:
          break;
       case EGL_BUFFER_PRESERVED:
-         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         confval = surface->Config->SurfaceType;
          if (!(confval & EGL_SWAP_BEHAVIOR_PRESERVED_BIT))
             err = EGL_BAD_MATCH;
          break;

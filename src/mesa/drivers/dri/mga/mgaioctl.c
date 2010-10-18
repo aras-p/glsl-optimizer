@@ -201,7 +201,7 @@ drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa )
 
 
 static void
-mgaClear( GLcontext *ctx, GLbitfield mask )
+mgaClear( struct gl_context *ctx, GLbitfield mask )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    __DRIdrawable *dPriv = mmesa->driDrawable;
@@ -479,7 +479,7 @@ void mgaCopyBuffer( __DRIdrawable *dPriv )
  *
  * \sa glFinish, mgaFlush, mgaFlushDMA
  */
-static void mgaFinish( GLcontext *ctx  )
+static void mgaFinish( struct gl_context *ctx  )
 {
     mgaContextPtr mmesa = MGA_CONTEXT(ctx);
     uint32_t  fence;
@@ -688,7 +688,7 @@ void mgaGetILoadBufferLocked( mgaContextPtr mmesa )
  *
  * \sa glFlush, mgaFinish, mgaFlushDMA
  */
-static void mgaFlush( GLcontext *ctx )
+static void mgaFlush( struct gl_context *ctx )
 {
     mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 

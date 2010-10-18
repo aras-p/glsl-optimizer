@@ -57,24 +57,24 @@ _mesa_is_bufferobj(const struct gl_buffer_object *obj)
 
 
 extern void
-_mesa_init_buffer_objects( GLcontext *ctx );
+_mesa_init_buffer_objects( struct gl_context *ctx );
 
 extern void
-_mesa_free_buffer_objects( GLcontext *ctx );
+_mesa_free_buffer_objects( struct gl_context *ctx );
 
 extern void
-_mesa_update_default_objects_buffer_objects(GLcontext *ctx);
+_mesa_update_default_objects_buffer_objects(struct gl_context *ctx);
 
 
 extern struct gl_buffer_object *
-_mesa_lookup_bufferobj(GLcontext *ctx, GLuint buffer);
+_mesa_lookup_bufferobj(struct gl_context *ctx, GLuint buffer);
 
 extern void
 _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 				GLuint name, GLenum target );
 
 extern void
-_mesa_reference_buffer_object(GLcontext *ctx,
+_mesa_reference_buffer_object(struct gl_context *ctx,
                               struct gl_buffer_object **ptr,
                               struct gl_buffer_object *bufObj);
 
@@ -85,12 +85,12 @@ _mesa_validate_pbo_access(GLuint dimensions,
                           GLenum format, GLenum type, const GLvoid *ptr);
 
 extern const GLvoid *
-_mesa_map_pbo_source(GLcontext *ctx,
+_mesa_map_pbo_source(struct gl_context *ctx,
                      const struct gl_pixelstore_attrib *unpack,
                      const GLvoid *src);
 
 extern const GLvoid *
-_mesa_map_validate_pbo_source(GLcontext *ctx,
+_mesa_map_validate_pbo_source(struct gl_context *ctx,
                               GLuint dimensions,
                               const struct gl_pixelstore_attrib *unpack,
                               GLsizei width, GLsizei height, GLsizei depth,
@@ -98,16 +98,16 @@ _mesa_map_validate_pbo_source(GLcontext *ctx,
                               const char *where);
 
 extern void
-_mesa_unmap_pbo_source(GLcontext *ctx,
+_mesa_unmap_pbo_source(struct gl_context *ctx,
                        const struct gl_pixelstore_attrib *unpack);
 
 extern void *
-_mesa_map_pbo_dest(GLcontext *ctx,
+_mesa_map_pbo_dest(struct gl_context *ctx,
                    const struct gl_pixelstore_attrib *pack,
                    GLvoid *dest);
 
 extern GLvoid *
-_mesa_map_validate_pbo_dest(GLcontext *ctx,
+_mesa_map_validate_pbo_dest(struct gl_context *ctx,
                             GLuint dimensions,
                             const struct gl_pixelstore_attrib *unpack,
                             GLsizei width, GLsizei height, GLsizei depth,
@@ -115,7 +115,7 @@ _mesa_map_validate_pbo_dest(GLcontext *ctx,
                             const char *where);
 
 extern void
-_mesa_unmap_pbo_dest(GLcontext *ctx,
+_mesa_unmap_pbo_dest(struct gl_context *ctx,
                      const struct gl_pixelstore_attrib *pack);
 
 

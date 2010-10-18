@@ -60,6 +60,7 @@ enum {
 
 	RC_STATE_R300_WINDOW_DIMENSION,
 	RC_STATE_R300_TEXRECT_FACTOR,
+	RC_STATE_R300_TEXSCALE_FACTOR,
 	RC_STATE_R300_VIEWPORT_SCALE,
 	RC_STATE_R300_VIEWPORT_OFFSET
 };
@@ -89,6 +90,7 @@ unsigned rc_constants_add(struct rc_constant_list * c, struct rc_constant * cons
 unsigned rc_constants_add_state(struct rc_constant_list * c, unsigned state1, unsigned state2);
 unsigned rc_constants_add_immediate_vec4(struct rc_constant_list * c, const float * data);
 unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float data, unsigned * swizzle);
+void rc_constants_print(struct rc_constant_list * c);
 
 /**
  * Compare functions.
@@ -126,11 +128,7 @@ struct r300_fragment_program_external_state {
 	struct {
 		/**
 		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
+		 * this field contains swizzle depending on the depth texture mode.
 		 */
 		unsigned depth_texture_swizzle:12;
 
@@ -150,13 +148,9 @@ struct r300_fragment_program_external_state {
 		unsigned compare_mode_enabled : 1;
 
 		/**
-		 * If the sampler needs to fake NPOT, this field is set.
-		 */
-		unsigned fake_npot : 1;
-
-		/**
-		 * If the sampler will recieve non-normalized coords,
-		 * this field is set.
+		 * If the sampler will receive non-normalized coords,
+		 * this field is set. The scaling factor is given by
+		 * RC_STATE_R300_TEXRECT_FACTOR.
 		 */
 		unsigned non_normalized_coords : 1;
 
@@ -166,7 +160,13 @@ struct r300_fragment_program_external_state {
 		 * If this field is \ref RC_WRAP_NONE (aka 0), no wrapping maths
 		 * will be performed on the coordinates.
 		 */
-		unsigned wrap_mode : 2;
+		unsigned wrap_mode : 3;
+
+		/**
+		 * The coords are scaled after applying the wrap mode emulation
+		 * and right before texture fetch. The scaling factor is given by
+		 * RC_STATE_R300_TEXSCALE_FACTOR. */
+		unsigned clamp_and_scale_before_fetch : 1;
 	} unit[16];
 };
 

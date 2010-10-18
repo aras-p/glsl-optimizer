@@ -57,18 +57,21 @@ struct emulate_branch_state {
 
 static void handle_if(struct emulate_branch_state * s, struct rc_instruction * inst)
 {
+	struct branch_info * branch;
+	struct rc_instruction * inst_mov;
+
 	memory_pool_array_reserve(&s->C->Pool, struct branch_info,
 			s->Branches, s->BranchCount, s->BranchReserved, 1);
 
 	DBG("%s\n", __FUNCTION__);
 
-	struct branch_info * branch = &s->Branches[s->BranchCount++];
+	branch = &s->Branches[s->BranchCount++];
 	memset(branch, 0, sizeof(struct branch_info));
 	branch->If = inst;
 
 	/* Make a safety copy of the decision register, because we will need
 	 * it at ENDIF time and it might be overwritten in both branches. */
-	struct rc_instruction * inst_mov = rc_insert_new_instruction(s->C, inst->Prev);
+	inst_mov = rc_insert_new_instruction(s->C, inst->Prev);
 	inst_mov->U.I.Opcode = RC_OPCODE_MOV;
 	inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
 	inst_mov->U.I.DstReg.Index = rc_find_free_temporary(s->C);
@@ -84,6 +87,8 @@ static void handle_if(struct emulate_branch_state * s, struct rc_instruction * i
 
 static void handle_else(struct emulate_branch_state * s, struct rc_instruction * inst)
 {
+	struct branch_info * branch;
+
 	if (!s->BranchCount) {
 		rc_error(s->C, "Encountered ELSE outside of branches");
 		return;
@@ -91,7 +96,7 @@ static void handle_else(struct emulate_branch_state * s, struct rc_instruction *
 
 	DBG("%s\n", __FUNCTION__);
 
-	struct branch_info * branch = &s->Branches[s->BranchCount - 1];
+	branch = &s->Branches[s->BranchCount - 1];
 	branch->Else = inst;
 }
 
@@ -191,6 +196,10 @@ static void inject_cmp(struct emulate_branch_state * s,
 
 static void handle_endif(struct emulate_branch_state * s, struct rc_instruction * inst)
 {
+	struct branch_info * branch;
+	struct register_proxies IfProxies;
+	struct register_proxies ElseProxies;
+
 	if (!s->BranchCount) {
 		rc_error(s->C, "Encountered ENDIF outside of branches");
 		return;
@@ -198,9 +207,7 @@ static void handle_endif(struct emulate_branch_state * s, struct rc_instruction 
 
 	DBG("%s\n", __FUNCTION__);
 
-	struct branch_info * branch = &s->Branches[s->BranchCount - 1];
-	struct register_proxies IfProxies;
-	struct register_proxies ElseProxies;
+	branch = &s->Branches[s->BranchCount - 1];
 
 	memset(&IfProxies, 0, sizeof(IfProxies));
 	memset(&ElseProxies, 0, sizeof(ElseProxies));
@@ -261,16 +268,19 @@ static void remap_output_function(void * userdata, struct rc_instruction * inst,
  */
 static void fix_output_writes(struct emulate_branch_state * s, struct rc_instruction * inst)
 {
+	const struct rc_opcode_info * opcode;
+
 	if (!s->BranchCount)
 		return;
 
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 	if (!opcode->HasDstReg)
 		return;
 
 	if (inst->U.I.DstReg.File == RC_FILE_OUTPUT) {
 		struct remap_output_data remap;
+		struct rc_instruction * inst_mov;
 
 		remap.Output = inst->U.I.DstReg.Index;
 		remap.Temporary = rc_find_free_temporary(s->C);
@@ -281,7 +291,7 @@ static void fix_output_writes(struct emulate_branch_state * s, struct rc_instruc
 			rc_remap_registers(inst, &remap_output_function, &remap);
 		}
 
-		struct rc_instruction * inst_mov = rc_insert_new_instruction(s->C, s->C->Program.Instructions.Prev);
+		inst_mov = rc_insert_new_instruction(s->C, s->C->Program.Instructions.Prev);
 		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
 		inst_mov->U.I.DstReg.File = RC_FILE_OUTPUT;
 		inst_mov->U.I.DstReg.Index = remap.Output;
@@ -299,12 +309,13 @@ static void fix_output_writes(struct emulate_branch_state * s, struct rc_instruc
 void rc_emulate_branches(struct radeon_compiler *c, void *user)
 {
 	struct emulate_branch_state s;
+	struct rc_instruction * ptr;
 
 	memset(&s, 0, sizeof(s));
 	s.C = c;
 
 	/* Untypical loop because we may remove the current instruction */
-	struct rc_instruction * ptr = c->Program.Instructions.Next;
+	ptr = c->Program.Instructions.Next;
 	while(ptr != &c->Program.Instructions) {
 		struct rc_instruction * inst = ptr;
 		ptr = ptr->Next;

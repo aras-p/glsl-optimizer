@@ -37,7 +37,7 @@
 #define TX_MATRIX(i) (NV10TCL_TX0_MATRIX(0) + 64 * (i))
 
 void
-nv10_emit_tex_gen(GLcontext *ctx, int emit)
+nv10_emit_tex_gen(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_GEN0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -70,7 +70,7 @@ nv10_emit_tex_gen(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_tex_mat(GLcontext *ctx, int emit)
+nv10_emit_tex_mat(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -151,7 +151,7 @@ get_tex_format_rect(struct gl_texture_image *ti)
 }
 
 void
-nv10_emit_tex_obj(GLcontext *ctx, int emit)
+nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -225,7 +225,7 @@ nv10_emit_tex_obj(GLcontext *ctx, int emit)
 			bo_flags | NOUVEAU_BO_OR);
 
 	nouveau_bo_markl(bctx, celsius, NV10TCL_TX_OFFSET(i),
-			 s->bo, 0, bo_flags);
+			 s->bo, s->offset, bo_flags);
 
 	BEGIN_RING(chan, celsius, NV10TCL_TX_FILTER(i), 1);
 	OUT_RING(chan, tx_filter);

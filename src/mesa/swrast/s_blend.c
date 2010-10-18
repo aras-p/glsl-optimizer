@@ -70,7 +70,7 @@
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_noop(struct gl_context *ctx, GLuint n, const GLubyte mask[],
            GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLint bytes;
@@ -98,7 +98,7 @@ blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_replace(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_replace(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
@@ -118,7 +118,7 @@ blend_replace(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA).
  */
 static void _BLENDAPI
-blend_transparency_ubyte(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_ubyte(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                          GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLubyte (*rgba)[4] = (GLubyte (*)[4]) src;
@@ -163,7 +163,7 @@ blend_transparency_ubyte(GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 
 static void _BLENDAPI
-blend_transparency_ushort(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_ushort(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLushort (*rgba)[4] = (GLushort (*)[4]) src;
@@ -201,7 +201,7 @@ blend_transparency_ushort(GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 
 static void _BLENDAPI
-blend_transparency_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                          GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLfloat (*rgba)[4] = (GLfloat (*)[4]) src;
@@ -243,7 +243,7 @@ blend_transparency_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_add(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_add(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
@@ -309,7 +309,7 @@ blend_add(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_min(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_min(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
@@ -362,7 +362,7 @@ blend_min(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_max(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_max(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
@@ -416,7 +416,7 @@ blend_max(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_modulate(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_modulate(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
@@ -471,7 +471,7 @@ blend_modulate(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * \param dest  array of pixels from the dest color buffer
  */
 static void
-blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                     GLfloat rgba[][4], GLfloat dest[][4],
                     GLenum chanType)
 {
@@ -816,7 +816,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Do any blending operation, any chanType.
  */
 static void
-blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_general(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               void *src, const void *dst, GLenum chanType)
 {
    GLfloat rgbaF[MAX_WIDTH][4], destF[MAX_WIDTH][4];
@@ -892,7 +892,7 @@ blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Result: the ctx->Color.BlendFunc pointer is updated.
  */
 void
-_swrast_choose_blend_func(GLcontext *ctx, GLenum chanType)
+_swrast_choose_blend_func(struct gl_context *ctx, GLenum chanType)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLenum eq = ctx->Color.BlendEquationRGB;
@@ -985,7 +985,7 @@ _swrast_choose_blend_func(GLcontext *ctx, GLenum chanType)
  * pixel coordinates.
  */
 void
-_swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb, SWspan *span)
+_swrast_blend_span(struct gl_context *ctx, struct gl_renderbuffer *rb, SWspan *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    void *rbPixels;

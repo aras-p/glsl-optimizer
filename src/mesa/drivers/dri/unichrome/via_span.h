@@ -25,11 +25,11 @@
 #ifndef _VIA_SPAN_H
 #define _VIA_SPAN_H
 
-extern void viaInitSpanFuncs(GLcontext *ctx);
-extern void viaSpanRenderStart( GLcontext *ctx );
-extern void viaSpanRenderFinish( GLcontext *ctx );
+extern void viaInitSpanFuncs(struct gl_context *ctx);
+extern void viaSpanRenderStart( struct gl_context *ctx );
+extern void viaSpanRenderFinish( struct gl_context *ctx );
 
 extern void
-viaSetSpanFunctions(struct via_renderbuffer *vrb, const GLvisual *vis);
+viaSetSpanFunctions(struct via_renderbuffer *vrb, const struct gl_config *vis);
 
 #endif

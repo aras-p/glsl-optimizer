@@ -72,7 +72,7 @@ get_texel_array(SWcontext *swrast, GLuint unit)
  * \param rgba         incoming/result fragment colors
  */
 static void
-texture_combine( GLcontext *ctx, GLuint unit, GLuint n,
+texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
                  const float4_array primary_rgba,
                  const GLfloat *texelBuffer,
                  GLchan (*rgbaChan)[4] )
@@ -556,7 +556,7 @@ swizzle_texels(GLuint swizzle, GLuint count, float4_array texels)
  * Apply texture mapping to a span of fragments.
  */
 void
-_swrast_texture_span( GLcontext *ctx, SWspan *span )
+_swrast_texture_span( struct gl_context *ctx, SWspan *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLfloat primary_rgba[MAX_WIDTH][4];

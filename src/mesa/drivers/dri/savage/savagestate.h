@@ -28,14 +28,14 @@
 
 #include "savagecontext.h"
 
-void savageCalcViewport( GLcontext *ctx );
+void savageCalcViewport( struct gl_context *ctx );
 void savageEmitOldState( savageContextPtr imesa );
 void savageEmitChangedState( savageContextPtr imesa );
 
-extern void savageDDUpdateHwState( GLcontext *ctx );
+extern void savageDDUpdateHwState( struct gl_context *ctx );
 extern void savageDDInitState( savageContextPtr imesa );
-extern void savageDDInitStateFuncs( GLcontext *ctx );
-extern void savageDDRenderStart(GLcontext *ctx);
-extern void savageDDRenderEnd(GLcontext *ctx);
+extern void savageDDInitStateFuncs( struct gl_context *ctx );
+extern void savageDDRenderStart(struct gl_context *ctx);
+extern void savageDDRenderEnd(struct gl_context *ctx);
 
 #endif

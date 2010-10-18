@@ -12,6 +12,10 @@
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_pushbuf.h"
 
+#ifndef NV04_PFIFO_MAX_PACKET_LEN
+#define NV04_PFIFO_MAX_PACKET_LEN 2047
+#endif
+
 static INLINE uint32_t
 nouveau_screen_transfer_flags(unsigned pipe)
 {

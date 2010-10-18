@@ -37,7 +37,7 @@
 #ifndef __TDFX_TEXSTATE_H__
 #define __TDFX_TEXSTATE_H__
 
-extern void tdfxUpdateTextureState( GLcontext *ctx );
-extern void tdfxUpdateTextureBinding( GLcontext *ctx );
+extern void tdfxUpdateTextureState( struct gl_context *ctx );
+extern void tdfxUpdateTextureBinding( struct gl_context *ctx );
 
 #endif

@@ -37,7 +37,7 @@ static void
 prepare_wm_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
@@ -81,7 +81,7 @@ static void
 upload_wm_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
@@ -151,8 +151,9 @@ upload_wm_state(struct brw_context *brw)
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
       dw5 |= GEN6_WM_KILL_ENABLE;
 
-   /* This should probably be FS inputs read */
-   dw6 |= brw_count_bits(brw->vs.prog_data->outputs_written) <<
+   dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+
+   dw6 |= brw_count_bits(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
 
    BEGIN_BATCH(9);
@@ -172,7 +173,8 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
-      .mesa  = _NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR,
+      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR |
+		_NEW_PROGRAM_CONSTANTS),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |

@@ -386,8 +386,6 @@ static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
 			case RC_OPCODE_SNE:
 				break;
 			default:
-				rc_error(c, "%s: expected conditional",
-								__FUNCTION__);
 				return 0;
 			}
 			loop->Cond = loop->If->Prev;
@@ -431,8 +429,10 @@ static int transform_loop(struct emulate_loop_state * s,
 
 	loop = &s->Loops[s->LoopCount++];
 
-	if (!build_loop_info(s->C, loop, inst))
+	if (!build_loop_info(s->C, loop, inst)) {
+		rc_error(s->C, "Failed to build loop info\n");
 		return 0;
+	}
 
 	if(try_unroll_loop(s->C, loop)){
 		return 1;
@@ -511,11 +511,12 @@ void rc_emulate_loops(struct radeon_compiler *c, void *user)
 	 * loops are unrolled first.
 	 */
 	for( i = s->LoopCount - 1; i >= 0; i-- ){
+		unsigned int iterations;
+
 		if(!s->Loops[i].EndLoop){
 			continue;
 		}
-		unsigned int iterations = loop_max_possible_iterations(
-					s->C, &s->Loops[i]);
+		iterations = loop_max_possible_iterations(s->C, &s->Loops[i]);
 		unroll_loop(s->C, &s->Loops[i], iterations);
 	}
 }

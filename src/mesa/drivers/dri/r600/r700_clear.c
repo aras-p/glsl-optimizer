@@ -45,7 +45,7 @@ static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
     return GL_FALSE;
 }
 
-void r700Clear(GLcontext * ctx, GLbitfield mask)
+void r700Clear(struct gl_context * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;

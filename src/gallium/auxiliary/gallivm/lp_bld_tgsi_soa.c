@@ -887,21 +887,25 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
+      LLVMTypeRef i32t = LLVMInt32Type();
+      LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
       for (i = 0; i < num_coords; i++) {
-         ddx[i] = emit_fetch( bld, inst, 1, i );
-         ddy[i] = emit_fetch( bld, inst, 2, i );
+         LLVMValueRef src1 = emit_fetch( bld, inst, 1, i );
+         LLVMValueRef src2 = emit_fetch( bld, inst, 2, i );
+         ddx[i] = LLVMBuildExtractElement(bld->base.builder, src1, index0, "");
+         ddy[i] = LLVMBuildExtractElement(bld->base.builder, src2, index0, "");
       }
       unit = inst->Src[3].Register.Index;
    }  else {
       for (i = 0; i < num_coords; i++) {
-         ddx[i] = lp_build_ddx( &bld->base, coords[i] );
-         ddy[i] = lp_build_ddy( &bld->base, coords[i] );
+         ddx[i] = lp_build_scalar_ddx( &bld->base, coords[i] );
+         ddy[i] = lp_build_scalar_ddy( &bld->base, coords[i] );
       }
       unit = inst->Src[1].Register.Index;
    }
    for (i = num_coords; i < 3; i++) {
-      ddx[i] = bld->base.undef;
-      ddy[i] = bld->base.undef;
+      ddx[i] = LLVMGetUndef(bld->base.elem_type);
+      ddy[i] = LLVMGetUndef(bld->base.elem_type);
    }
 
    bld->sampler->emit_fetch_texel(bld->sampler,
@@ -913,6 +917,43 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   texel);
 }
 
+static boolean
+near_end_of_shader(struct lp_build_tgsi_soa_context *bld,
+		   int pc)
+{
+   int i;
+
+   for (i = 0; i < 5; i++) {
+      unsigned opcode;
+
+      if (pc + i >= bld->info->num_instructions)
+	 return TRUE;
+
+      opcode = bld->instructions[pc + i].Instruction.Opcode;
+
+      if (opcode == TGSI_OPCODE_END)
+	 return TRUE;
+
+      if (opcode == TGSI_OPCODE_TEX ||
+	  opcode == TGSI_OPCODE_TXP ||
+	  opcode == TGSI_OPCODE_TXD ||
+	  opcode == TGSI_OPCODE_TXB ||
+	  opcode == TGSI_OPCODE_TXL ||
+	  opcode == TGSI_OPCODE_TXF ||
+	  opcode == TGSI_OPCODE_TXQ ||
+	  opcode == TGSI_OPCODE_CAL ||
+	  opcode == TGSI_OPCODE_CALLNZ ||
+	  opcode == TGSI_OPCODE_IF ||
+	  opcode == TGSI_OPCODE_IFC ||
+	  opcode == TGSI_OPCODE_BGNLOOP ||
+	  opcode == TGSI_OPCODE_SWITCH)
+	 return FALSE;
+   }
+
+   return TRUE;
+}
+
+
 
 /**
  * Kill fragment if any of the src register values are negative.
@@ -920,7 +961,8 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 static void
 emit_kil(
    struct lp_build_tgsi_soa_context *bld,
-   const struct tgsi_full_instruction *inst )
+   const struct tgsi_full_instruction *inst,
+   int pc)
 {
    const struct tgsi_full_src_register *reg = &inst->Src[0];
    LLVMValueRef terms[NUM_CHANNELS];
@@ -959,8 +1001,12 @@ emit_kil(
       }
    }
 
-   if(mask)
+   if(mask) {
       lp_build_mask_update(bld->mask, mask);
+
+      if (!near_end_of_shader(bld, pc))
+	 lp_build_mask_check(bld->mask);
+   }
 }
 
 
@@ -972,7 +1018,8 @@ emit_kil(
  */
 static void
 emit_kilp(struct lp_build_tgsi_soa_context *bld,
-          const struct tgsi_full_instruction *inst)
+          const struct tgsi_full_instruction *inst,
+	  int pc)
 {
    LLVMValueRef mask;
 
@@ -987,6 +1034,9 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    }
 
    lp_build_mask_update(bld->mask, mask);
+
+   if (!near_end_of_shader(bld, pc))
+      lp_build_mask_check(bld->mask);
 }
 
 static void
@@ -1535,12 +1585,12 @@ emit_instruction(
 
    case TGSI_OPCODE_KILP:
       /* predicated kill */
-      emit_kilp( bld, inst );
+      emit_kilp( bld, inst, (*pc)-1 );
       break;
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
-      emit_kil( bld, inst );
+      emit_kil( bld, inst, (*pc)-1 );
       break;
 
    case TGSI_OPCODE_PK2H:

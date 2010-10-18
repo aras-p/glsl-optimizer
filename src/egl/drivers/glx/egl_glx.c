@@ -162,7 +162,8 @@ static EGLBoolean
 convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
                  struct GLX_egl_config *GLX_conf)
 {
-   int err = 0, attr, egl_attr, val, i;
+   int err = 0, attr, egl_attr, val;
+   unsigned i;
    EGLint conformant, config_caveat, surface_type;
 
    for (i = 0; i < ARRAY_SIZE(fbconfig_attributes); i++) {
@@ -243,7 +244,8 @@ static EGLBoolean
 convert_visual(Display *dpy, XVisualInfo *vinfo,
                struct GLX_egl_config *GLX_conf)
 {
-   int err, attr, egl_attr, val, i;
+   int err, attr, egl_attr, val;
+   unsigned i;
    EGLint conformant, config_caveat, surface_type;
 
    /* the visual must support OpenGL */
@@ -457,6 +459,8 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
 {
    struct GLX_egl_display *GLX_dpy;
 
+   (void) drv;
+
    if (disp->Platform != _EGL_PLATFORM_X11)
       return EGL_FALSE;
 
@@ -541,6 +545,8 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_context *GLX_ctx_shared = GLX_egl_context(share_list);
 
+   (void) drv;
+
    if (!GLX_ctx) {
       _eglError(EGL_BAD_ALLOC, "eglCreateContext");
       return NULL;
@@ -604,6 +610,8 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    GLXContext cctx;
    EGLBoolean ret = EGL_FALSE;
 
+   (void) drv;
+
    /* bind the new context and return the "orphaned" one */
    if (!_eglBindContext(&ctx, &dsurf, &rsurf))
       return EGL_FALSE;
@@ -656,6 +664,8 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
    struct GLX_egl_surface *GLX_surf;
    uint width, height;
 
+   (void) drv;
+
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
       _eglError(EGL_BAD_ALLOC, "eglCreateWindowSurface");
@@ -701,6 +711,8 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
    uint width, height;
+
+   (void) drv;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
@@ -762,6 +774,8 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
    int attribs[5];
    int i;
 
+   (void) drv;
+
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
       _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
@@ -820,6 +834,8 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
 static EGLBoolean
 GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
+   (void) drv;
+
    if (!_eglIsSurfaceBound(surf))
       destroy_surface(disp, surf);
 
@@ -833,6 +849,8 @@ GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf = GLX_egl_surface(draw);
 
+   (void) drv;
+
    glXSwapBuffers(GLX_dpy->dpy, GLX_surf->glx_drawable);
 
    return EGL_TRUE;
@@ -844,12 +862,18 @@ GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 static _EGLProc
 GLX_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
+   (void) drv;
+
    return (_EGLProc) glXGetProcAddress((const GLubyte *) procname);
 }
 
 static EGLBoolean
 GLX_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
+   (void) drv;
+   (void) dpy;
+   (void) ctx;
+
    glXWaitGL();
    return EGL_TRUE;
 }
@@ -857,6 +881,9 @@ GLX_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 static EGLBoolean
 GLX_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 {
+   (void) drv;
+   (void) dpy;
+
    if (engine != EGL_CORE_NATIVE_ENGINE)
       return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
    glXWaitX();
@@ -879,6 +906,8 @@ _EGLDriver *
 _eglMain(const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
+
+   (void) args;
 
    if (!GLX_drv)
       return NULL;

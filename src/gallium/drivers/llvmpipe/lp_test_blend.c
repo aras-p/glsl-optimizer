@@ -243,19 +243,6 @@ add_blend_test(LLVMModuleRef module,
 }
 
 
-/** Add and limit result to ceiling of 1.0 */
-#define ADD_SAT(R, A, B) \
-do { \
-   R = (A) + (B);  if (R > 1.0f) R = 1.0f; \
-} while (0)
-
-/** Subtract and limit result to floor of 0.0 */
-#define SUB_SAT(R, A, B) \
-do { \
-   R = (A) - (B);  if (R < 0.0f) R = 0.0f; \
-} while (0)
-
-
 static void
 compute_blend_ref_term(unsigned rgb_factor,
                        unsigned alpha_factor,
@@ -423,19 +410,19 @@ compute_blend_ref(const struct pipe_blend_state *blend,
     */
    switch (blend->rt[0].rgb_func) {
    case PIPE_BLEND_ADD:
-      ADD_SAT(res[0], src_term[0], dst_term[0]); /* R */
-      ADD_SAT(res[1], src_term[1], dst_term[1]); /* G */
-      ADD_SAT(res[2], src_term[2], dst_term[2]); /* B */
+      res[0] = src_term[0] + dst_term[0]; /* R */
+      res[1] = src_term[1] + dst_term[1]; /* G */
+      res[2] = src_term[2] + dst_term[2]; /* B */
       break;
    case PIPE_BLEND_SUBTRACT:
-      SUB_SAT(res[0], src_term[0], dst_term[0]); /* R */
-      SUB_SAT(res[1], src_term[1], dst_term[1]); /* G */
-      SUB_SAT(res[2], src_term[2], dst_term[2]); /* B */
+      res[0] = src_term[0] - dst_term[0]; /* R */
+      res[1] = src_term[1] - dst_term[1]; /* G */
+      res[2] = src_term[2] - dst_term[2]; /* B */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      SUB_SAT(res[0], dst_term[0], src_term[0]); /* R */
-      SUB_SAT(res[1], dst_term[1], src_term[1]); /* G */
-      SUB_SAT(res[2], dst_term[2], src_term[2]); /* B */
+      res[0] = dst_term[0] - src_term[0]; /* R */
+      res[1] = dst_term[1] - src_term[1]; /* G */
+      res[2] = dst_term[2] - src_term[2]; /* B */
       break;
    case PIPE_BLEND_MIN:
       res[0] = MIN2(src_term[0], dst_term[0]); /* R */
@@ -456,13 +443,13 @@ compute_blend_ref(const struct pipe_blend_state *blend,
     */
    switch (blend->rt[0].alpha_func) {
    case PIPE_BLEND_ADD:
-      ADD_SAT(res[3], src_term[3], dst_term[3]); /* A */
+      res[3] = src_term[3] + dst_term[3]; /* A */
       break;
    case PIPE_BLEND_SUBTRACT:
-      SUB_SAT(res[3], src_term[3], dst_term[3]); /* A */
+      res[3] = src_term[3] - dst_term[3]; /* A */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      SUB_SAT(res[3], dst_term[3], src_term[3]); /* A */
+      res[3] = dst_term[3] - src_term[3]; /* A */
       break;
    case PIPE_BLEND_MIN:
       res[3] = MIN2(src_term[3], dst_term[3]); /* A */
@@ -676,6 +663,8 @@ test_one(unsigned verbose,
                fprintf(stderr, "  Ref%c: ", channel);
                dump_vec(stderr, type, ref + j*stride);
                fprintf(stderr, "\n");
+
+               fprintf(stderr, "\n");
             }
          }
       }
@@ -773,7 +762,7 @@ blend_funcs[] = {
 
 const struct lp_type blend_types[] = {
    /* float, fixed,  sign,  norm, width, len */
-   {   TRUE, FALSE, FALSE,  TRUE,    32,   4 }, /* f32 x 4 */
+   {   TRUE, FALSE,  TRUE, FALSE,    32,   4 }, /* f32 x 4 */
    {  FALSE, FALSE, FALSE,  TRUE,     8,  16 }, /* u8n x 16 */
 };
 

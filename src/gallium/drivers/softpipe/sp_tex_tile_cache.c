@@ -298,3 +298,23 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
 
 
+/**
+ * Return the swizzled border color.
+ */
+const float *
+sp_tex_tile_cache_border_color(struct softpipe_tex_tile_cache *tc,
+                               const float border_color[4])
+{
+   float rgba01[6];
+
+   COPY_4V(rgba01, border_color);
+   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
+   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
+
+   tc->swz_border_color[0] = rgba01[tc->swizzle_r];
+   tc->swz_border_color[1] = rgba01[tc->swizzle_g];
+   tc->swz_border_color[2] = rgba01[tc->swizzle_b];
+   tc->swz_border_color[3] = rgba01[tc->swizzle_a];
+
+   return tc->swz_border_color;
+}

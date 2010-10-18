@@ -49,7 +49,7 @@ struct gl_program _mesa_DummyProgram;
  * Init context's vertex/fragment program state
  */
 void
-_mesa_init_program(GLcontext *ctx)
+_mesa_init_program(struct gl_context *ctx)
 {
    GLuint i;
 
@@ -128,7 +128,7 @@ _mesa_init_program(GLcontext *ctx)
  * Free a context's vertex/fragment program state
  */
 void
-_mesa_free_program_data(GLcontext *ctx)
+_mesa_free_program_data(struct gl_context *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
@@ -161,7 +161,7 @@ _mesa_free_program_data(GLcontext *ctx)
  * shared state.
  */
 void
-_mesa_update_default_objects_program(GLcontext *ctx)
+_mesa_update_default_objects_program(struct gl_context *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
@@ -203,7 +203,7 @@ _mesa_update_default_objects_program(GLcontext *ctx)
  * This is generally called from within the parsers.
  */
 void
-_mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
+_mesa_set_program_error(struct gl_context *ctx, GLint pos, const char *string)
 {
    ctx->Program.ErrorPos = pos;
    free((void *) ctx->Program.ErrorString);
@@ -260,7 +260,7 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
  * Initialize a new vertex/fragment program object.
  */
 static struct gl_program *
-_mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
+_mesa_init_program_struct( struct gl_context *ctx, struct gl_program *prog,
                            GLenum target, GLuint id)
 {
    (void) ctx;
@@ -286,7 +286,7 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
  * Initialize a new fragment program object.
  */
 struct gl_program *
-_mesa_init_fragment_program( GLcontext *ctx, struct gl_fragment_program *prog,
+_mesa_init_fragment_program( struct gl_context *ctx, struct gl_fragment_program *prog,
                              GLenum target, GLuint id)
 {
    if (prog)
@@ -300,7 +300,7 @@ _mesa_init_fragment_program( GLcontext *ctx, struct gl_fragment_program *prog,
  * Initialize a new vertex program object.
  */
 struct gl_program *
-_mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
+_mesa_init_vertex_program( struct gl_context *ctx, struct gl_vertex_program *prog,
                            GLenum target, GLuint id)
 {
    if (prog)
@@ -314,7 +314,7 @@ _mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
  * Initialize a new geometry program object.
  */
 struct gl_program *
-_mesa_init_geometry_program( GLcontext *ctx, struct gl_geometry_program *prog,
+_mesa_init_geometry_program( struct gl_context *ctx, struct gl_geometry_program *prog,
                              GLenum target, GLuint id)
 {
    if (prog)
@@ -337,7 +337,7 @@ _mesa_init_geometry_program( GLcontext *ctx, struct gl_geometry_program *prog,
  * \return  pointer to new program object
  */
 struct gl_program *
-_mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
+_mesa_new_program(struct gl_context *ctx, GLenum target, GLuint id)
 {
    struct gl_program *prog;
    switch (target) {
@@ -372,7 +372,7 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
  * by a device driver function.
  */
 void
-_mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
+_mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
 {
    (void) ctx;
    ASSERT(prog);
@@ -406,7 +406,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
  * casts elsewhere.
  */
 struct gl_program *
-_mesa_lookup_program(GLcontext *ctx, GLuint id)
+_mesa_lookup_program(struct gl_context *ctx, GLuint id)
 {
    if (id)
       return (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
@@ -419,7 +419,7 @@ _mesa_lookup_program(GLcontext *ctx, GLuint id)
  * Reference counting for vertex/fragment programs
  */
 void
-_mesa_reference_program(GLcontext *ctx,
+_mesa_reference_program(struct gl_context *ctx,
                         struct gl_program **ptr,
                         struct gl_program *prog)
 {
@@ -486,7 +486,7 @@ _mesa_reference_program(GLcontext *ctx,
  * made by a device driver.
  */
 struct gl_program *
-_mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
+_mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
 {
    struct gl_program *clone;
 
@@ -729,7 +729,7 @@ adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
  * the first program go to the inputs of the second program.
  */
 struct gl_program *
-_mesa_combine_programs(GLcontext *ctx,
+_mesa_combine_programs(struct gl_context *ctx,
                        const struct gl_program *progA,
                        const struct gl_program *progB)
 {
@@ -923,7 +923,7 @@ _mesa_find_free_register(const GLboolean used[],
  * behaviour.
  */
 void
-_mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog)
+_mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog)
 {
    static const GLfloat white[4] = { 0.5, 0.5, 0.5, 0.5 };
    GLuint i;

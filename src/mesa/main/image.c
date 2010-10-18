@@ -286,6 +286,7 @@ _mesa_components_in_format( GLenum format )
          return 1;
       case GL_LUMINANCE_ALPHA:
       case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      case GL_RG:
 	 return 2;
       case GL_RGB:
       case GL_RGB_INTEGER_EXT:
@@ -398,7 +399,7 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type )
  * otherwise.
  */
 GLboolean
-_mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
+_mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum type )
 {
    switch (format) {
       case GL_COLOR_INDEX:
@@ -428,6 +429,24 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
       case GL_LUMINANCE:
       case GL_LUMINANCE_ALPHA:
       case GL_DEPTH_COMPONENT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_TRUE;
+            case GL_HALF_FLOAT_ARB:
+               return ctx->Extensions.ARB_half_float_pixel;
+            default:
+               return GL_FALSE;
+         }
+      case GL_RG:
+	 if (!ctx->Extensions.ARB_texture_rg)
+	    return GL_FALSE;
+
          switch (type) {
             case GL_BYTE:
             case GL_UNSIGNED_BYTE:
@@ -596,6 +615,11 @@ _mesa_is_color_format(GLenum format)
       case GL_INTENSITY8:
       case GL_INTENSITY12:
       case GL_INTENSITY16:
+      case GL_R8:
+      case GL_R16:
+      case GL_RG:
+      case GL_RG8:
+      case GL_RG16:
       case 3:
       case GL_RGB:
       case GL_BGR:
@@ -626,6 +650,10 @@ _mesa_is_color_format(GLenum format)
       case GL_LUMINANCE_ALPHA32F_ARB:
       case GL_INTENSITY16F_ARB:
       case GL_INTENSITY32F_ARB:
+      case GL_R16F:
+      case GL_R32F:
+      case GL_RG16F:
+      case GL_RG32F:
       case GL_RGB16F_ARB:
       case GL_RGB32F_ARB:
       case GL_RGBA16F_ARB:
@@ -635,6 +663,8 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_LUMINANCE:
       case GL_COMPRESSED_LUMINANCE_ALPHA:
       case GL_COMPRESSED_INTENSITY:
+      case GL_COMPRESSED_RED:
+      case GL_COMPRESSED_RG:
       case GL_COMPRESSED_RGB:
       case GL_COMPRESSED_RGBA:
       case GL_RGB_S3TC:
@@ -665,6 +695,10 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SLUMINANCE_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
 #endif /* FEATURE_EXT_texture_sRGB */
+      case GL_COMPRESSED_RED_RGTC1:
+      case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      case GL_COMPRESSED_RG_RGTC2:
+      case GL_COMPRESSED_SIGNED_RG_RGTC2:
          return GL_TRUE;
       /* signed texture formats */
       case GL_RGBA_SNORM:
@@ -835,7 +869,7 @@ _mesa_is_integer_format(GLenum format)
  * \return GL_TRUE if compressed, GL_FALSE if uncompressed
  */
 GLboolean
-_mesa_is_compressed_format(GLcontext *ctx, GLenum format)
+_mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
 {
    switch (format) {
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -857,6 +891,11 @@ _mesa_is_compressed_format(GLcontext *ctx, GLenum format)
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
       return ctx->Extensions.TDFX_texture_compression_FXT1;
+   case GL_COMPRESSED_RED_RGTC1:
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+   case GL_COMPRESSED_RG_RGTC2:
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      return ctx->Extensions.ARB_texture_compression_rgtc;
    default:
       return GL_FALSE;
    }
@@ -1502,7 +1541,7 @@ _mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
  * Apply pixel mapping to an array of floating point RGBA pixels.
  */
 void
-_mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+_mesa_map_rgba( const struct gl_context *ctx, GLuint n, GLfloat rgba[][4] )
 {
    const GLfloat rscale = (GLfloat) (ctx->PixelMaps.RtoR.Size - 1);
    const GLfloat gscale = (GLfloat) (ctx->PixelMaps.GtoG.Size - 1);
@@ -1524,36 +1563,6 @@ _mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
       rgba[i][ACOMP] = aMap[IROUND(a * ascale)];
    }
 }
-
-
-/*
- * Apply the color matrix and post color matrix scaling and biasing.
- */
-void
-_mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
-{
-   const GLfloat rs = ctx->Pixel.PostColorMatrixScale[0];
-   const GLfloat rb = ctx->Pixel.PostColorMatrixBias[0];
-   const GLfloat gs = ctx->Pixel.PostColorMatrixScale[1];
-   const GLfloat gb = ctx->Pixel.PostColorMatrixBias[1];
-   const GLfloat bs = ctx->Pixel.PostColorMatrixScale[2];
-   const GLfloat bb = ctx->Pixel.PostColorMatrixBias[2];
-   const GLfloat as = ctx->Pixel.PostColorMatrixScale[3];
-   const GLfloat ab = ctx->Pixel.PostColorMatrixBias[3];
-   const GLfloat *m = ctx->ColorMatrixStack.Top->m;
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      const GLfloat r = rgba[i][RCOMP];
-      const GLfloat g = rgba[i][GCOMP];
-      const GLfloat b = rgba[i][BCOMP];
-      const GLfloat a = rgba[i][ACOMP];
-      rgba[i][RCOMP] = (m[0] * r + m[4] * g + m[ 8] * b + m[12] * a) * rs + rb;
-      rgba[i][GCOMP] = (m[1] * r + m[5] * g + m[ 9] * b + m[13] * a) * gs + gb;
-      rgba[i][BCOMP] = (m[2] * r + m[6] * g + m[10] * b + m[14] * a) * bs + bb;
-      rgba[i][ACOMP] = (m[3] * r + m[7] * g + m[11] * b + m[15] * a) * as + ab;
-   }
-}
-
 
 /**
  * Apply a color table lookup to an array of floating point RGBA colors.
@@ -1613,6 +1622,25 @@ _mesa_lookup_rgba_float(const struct gl_color_table *table,
             rgba[i][GCOMP] =
             rgba[i][BCOMP] = luminance;
             rgba[i][ACOMP] = alpha;;
+         }
+         break;
+      case GL_RED:
+         /* replace RGB with RGB */
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND(rgba[i][RCOMP] * scale);
+            jR = CLAMP(jR, 0, max);
+            rgba[i][RCOMP] = lut[jR * 3 + 0];
+         }
+         break;
+      case GL_RG:
+         /* replace RG with RG */
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND(rgba[i][RCOMP] * scale);
+            GLint jG = IROUND(rgba[i][GCOMP] * scale);
+            jR = CLAMP(jR, 0, max);
+            jG = CLAMP(jG, 0, max);
+            rgba[i][RCOMP] = lut[jR * 3 + 0];
+            rgba[i][GCOMP] = lut[jG * 3 + 1];
          }
          break;
       case GL_RGB:
@@ -1801,7 +1829,7 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
  * Map color indexes to float rgba values.
  */
 void
-_mesa_map_ci_to_rgba( const GLcontext *ctx, GLuint n,
+_mesa_map_ci_to_rgba( const struct gl_context *ctx, GLuint n,
                       const GLuint index[], GLfloat rgba[][4] )
 {
    GLuint rmask = ctx->PixelMaps.ItoR.Size - 1;
@@ -1826,7 +1854,7 @@ _mesa_map_ci_to_rgba( const GLcontext *ctx, GLuint n,
  * Map ubyte color indexes to ubyte/RGBA values.
  */
 void
-_mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
+_mesa_map_ci8_to_rgba8(const struct gl_context *ctx, GLuint n, const GLubyte index[],
                        GLubyte rgba[][4])
 {
    GLuint rmask = ctx->PixelMaps.ItoR.Size - 1;
@@ -1848,7 +1876,7 @@ _mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
 
 
 void
-_mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
+_mesa_scale_and_bias_depth(const struct gl_context *ctx, GLuint n,
                            GLfloat depthValues[])
 {
    const GLfloat scale = ctx->Pixel.DepthScale;
@@ -1862,7 +1890,7 @@ _mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
+_mesa_scale_and_bias_depth_uint(const struct gl_context *ctx, GLuint n,
                                 GLuint depthValues[])
 {
    const GLdouble max = (double) 0xffffffff;
@@ -1876,75 +1904,12 @@ _mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
    }
 }
 
-
-
-/*
- * Update the min/max values from an array of fragment colors.
- */
-static void
-update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4])
-{
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      /* update mins */
-      if (rgba[i][RCOMP] < ctx->MinMax.Min[RCOMP])
-         ctx->MinMax.Min[RCOMP] = rgba[i][RCOMP];
-      if (rgba[i][GCOMP] < ctx->MinMax.Min[GCOMP])
-         ctx->MinMax.Min[GCOMP] = rgba[i][GCOMP];
-      if (rgba[i][BCOMP] < ctx->MinMax.Min[BCOMP])
-         ctx->MinMax.Min[BCOMP] = rgba[i][BCOMP];
-      if (rgba[i][ACOMP] < ctx->MinMax.Min[ACOMP])
-         ctx->MinMax.Min[ACOMP] = rgba[i][ACOMP];
-
-      /* update maxs */
-      if (rgba[i][RCOMP] > ctx->MinMax.Max[RCOMP])
-         ctx->MinMax.Max[RCOMP] = rgba[i][RCOMP];
-      if (rgba[i][GCOMP] > ctx->MinMax.Max[GCOMP])
-         ctx->MinMax.Max[GCOMP] = rgba[i][GCOMP];
-      if (rgba[i][BCOMP] > ctx->MinMax.Max[BCOMP])
-         ctx->MinMax.Max[BCOMP] = rgba[i][BCOMP];
-      if (rgba[i][ACOMP] > ctx->MinMax.Max[ACOMP])
-         ctx->MinMax.Max[ACOMP] = rgba[i][ACOMP];
-   }
-}
-
-
-/*
- * Update the histogram values from an array of fragment colors.
- */
-static void
-update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4])
-{
-   const GLint max = ctx->Histogram.Width - 1;
-   GLfloat w = (GLfloat) max;
-   GLuint i;
-
-   if (ctx->Histogram.Width == 0)
-      return;
-
-   for (i = 0; i < n; i++) {
-      GLint ri = IROUND(rgba[i][RCOMP] * w);
-      GLint gi = IROUND(rgba[i][GCOMP] * w);
-      GLint bi = IROUND(rgba[i][BCOMP] * w);
-      GLint ai = IROUND(rgba[i][ACOMP] * w);
-      ri = CLAMP(ri, 0, max);
-      gi = CLAMP(gi, 0, max);
-      bi = CLAMP(bi, 0, max);
-      ai = CLAMP(ai, 0, max);
-      ctx->Histogram.Count[ri][RCOMP]++;
-      ctx->Histogram.Count[gi][GCOMP]++;
-      ctx->Histogram.Count[bi][BCOMP]++;
-      ctx->Histogram.Count[ai][ACOMP]++;
-   }
-}
-
-
 /**
  * Apply various pixel transfer operations to an array of RGBA pixels
  * as indicated by the transferOps bitmask
  */
 void
-_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
+_mesa_apply_rgba_transfer_ops(struct gl_context *ctx, GLbitfield transferOps,
                               GLuint n, GLfloat rgba[][4])
 {
    /* scale & bias */
@@ -1959,47 +1924,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
    if (transferOps & IMAGE_MAP_COLOR_BIT) {
       _mesa_map_rgba( ctx, n, rgba );
    }
-   /* GL_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_PRECONVOLUTION], n, rgba);
-   }
-   /* convolution */
-   if (transferOps & IMAGE_CONVOLUTION_BIT) {
-      /* this has to be done in the calling code */
-      _mesa_problem(ctx, "IMAGE_CONVOLUTION_BIT set in _mesa_apply_transfer_ops");
-   }
-   /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
-   if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
-      _mesa_scale_and_bias_rgba(n, rgba,
-                                ctx->Pixel.PostConvolutionScale[RCOMP],
-                                ctx->Pixel.PostConvolutionScale[GCOMP],
-                                ctx->Pixel.PostConvolutionScale[BCOMP],
-                                ctx->Pixel.PostConvolutionScale[ACOMP],
-                                ctx->Pixel.PostConvolutionBias[RCOMP],
-                                ctx->Pixel.PostConvolutionBias[GCOMP],
-                                ctx->Pixel.PostConvolutionBias[BCOMP],
-                                ctx->Pixel.PostConvolutionBias[ACOMP]);
-   }
-   /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_POSTCONVOLUTION], n, rgba);
-   }
-   /* color matrix transform */
-   if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
-      _mesa_transform_rgba(ctx, n, rgba);
-   }
-   /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-   if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-      _mesa_lookup_rgba_float(&ctx->ColorTable[COLORTABLE_POSTCOLORMATRIX], n, rgba);
-   }
-   /* update histogram count */
-   if (transferOps & IMAGE_HISTOGRAM_BIT) {
-      update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
-   }
-   /* update min/max values */
-   if (transferOps & IMAGE_MIN_MAX_BIT) {
-      update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
-   }
+
    /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {
       GLuint i;
@@ -2017,7 +1942,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
  * Apply color index shift and offset to an array of pixels.
  */
 static void
-shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
+shift_and_offset_ci( const struct gl_context *ctx, GLuint n, GLuint indexes[] )
 {
    GLint shift = ctx->Pixel.IndexShift;
    GLint offset = ctx->Pixel.IndexOffset;
@@ -2047,7 +1972,7 @@ shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
  * of color indexes;
  */
 void
-_mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
+_mesa_apply_ci_transfer_ops(const struct gl_context *ctx, GLbitfield transferOps,
                             GLuint n, GLuint indexes[])
 {
    if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
@@ -2069,7 +1994,7 @@ _mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
  * of stencil values.
  */
 void
-_mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
+_mesa_apply_stencil_transfer_ops(const struct gl_context *ctx, GLuint n,
                                  GLstencil stencil[])
 {
    if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
@@ -2105,13 +2030,12 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
 
 /**
  * Used to pack an array [][4] of RGBA float colors as specified
- * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
- * glGetConvolutionFilter(), etc.
+ * by the dstFormat, dstType and dstPacking.  Used by glReadPixels.
  * Note: the rgba values will be modified by this function when any pixel
  * transfer ops are enabled.
  */
 void
-_mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+_mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                            GLenum dstFormat, GLenum dstType,
                            GLvoid *dstAddr,
                            const struct gl_pixelstore_attrib *dstPacking,
@@ -2132,9 +2056,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (transferOps) {
       _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
-      if ((transferOps & IMAGE_MIN_MAX_BIT) && ctx->MinMax.Sink) {
-         return;
-      }
    }
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
@@ -3338,6 +3259,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcFormat == GL_LUMINANCE ||
           srcFormat == GL_LUMINANCE_ALPHA ||
           srcFormat == GL_INTENSITY ||
+          srcFormat == GL_RG ||
           srcFormat == GL_RGB ||
           srcFormat == GL_BGR ||
           srcFormat == GL_RGBA ||
@@ -3419,6 +3341,18 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
       case GL_INTENSITY:
          redIndex = greenIndex = blueIndex = alphaIndex = 0;
          stride = 1;
+         break;
+      case GL_RG:
+      case GL_RG_INTEGER:
+         redIndex = 0;
+         greenIndex = 1;
+         blueIndex = -1;
+         alphaIndex = -1;
+         rComp = 0;
+         gComp = 1;
+         bComp = 2;
+         aComp = 3;
+         stride = 2;
          break;
       case GL_RGB:
       case GL_RGB_INTEGER:
@@ -3978,7 +3912,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_color_span_chan( GLcontext *ctx,
+_mesa_unpack_color_span_chan( struct gl_context *ctx,
                               GLuint n, GLenum dstFormat, GLchan dest[],
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
@@ -3989,6 +3923,8 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
           dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
           dstFormat == GL_INTENSITY ||
+          dstFormat == GL_RED ||
+          dstFormat == GL_RG ||
           dstFormat == GL_RGB ||
           dstFormat == GL_RGBA ||
           dstFormat == GL_COLOR_INDEX);
@@ -4000,6 +3936,7 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
           srcFormat == GL_LUMINANCE ||
           srcFormat == GL_LUMINANCE_ALPHA ||
           srcFormat == GL_INTENSITY ||
+          srcFormat == GL_RG ||
           srcFormat == GL_RGB ||
           srcFormat == GL_BGR ||
           srcFormat == GL_RGBA ||
@@ -4227,6 +4164,17 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
             dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
             dstLuminanceIndex = -1;
             break;
+         case GL_RED:
+            dstRedIndex = 0;
+            dstGreenIndex = dstBlueIndex = -1;
+            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
+         case GL_RG:
+            dstRedIndex = 0;
+            dstGreenIndex = 1;
+            dstBlueIndex = -1;
+            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
          case GL_RGB:
             dstRedIndex = 0;
             dstGreenIndex = 1;
@@ -4314,7 +4262,7 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
  * instead of GLchan.
  */
 void
-_mesa_unpack_color_span_float( GLcontext *ctx,
+_mesa_unpack_color_span_float( struct gl_context *ctx,
                                GLuint n, GLenum dstFormat, GLfloat dest[],
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
@@ -4325,6 +4273,8 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
           dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
           dstFormat == GL_INTENSITY ||
+          dstFormat == GL_RED ||
+          dstFormat == GL_RG ||
           dstFormat == GL_RGB ||
           dstFormat == GL_RGBA ||
           dstFormat == GL_COLOR_INDEX);
@@ -4336,6 +4286,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
           srcFormat == GL_LUMINANCE ||
           srcFormat == GL_LUMINANCE_ALPHA ||
           srcFormat == GL_INTENSITY ||
+          srcFormat == GL_RG ||
           srcFormat == GL_RGB ||
           srcFormat == GL_BGR ||
           srcFormat == GL_RGBA ||
@@ -4452,6 +4403,17 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
             dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
             dstLuminanceIndex = -1;
             break;
+         case GL_RED:
+            dstRedIndex = 0;
+            dstGreenIndex = dstBlueIndex = -1;
+            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
+         case GL_RG:
+            dstRedIndex = 0;
+            dstGreenIndex = 1;
+            dstBlueIndex = -1;
+            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
          case GL_RGB:
             dstRedIndex = 0;
             dstGreenIndex = 1;
@@ -4536,7 +4498,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
  * directly return GLbyte data, no transfer ops apply.
  */
 void
-_mesa_unpack_dudv_span_byte( GLcontext *ctx,
+_mesa_unpack_dudv_span_byte( struct gl_context *ctx,
                              GLuint n, GLenum dstFormat, GLbyte dest[],
                              GLenum srcFormat, GLenum srcType,
                              const GLvoid *source,
@@ -4603,7 +4565,7 @@ _mesa_unpack_dudv_span_byte( GLcontext *ctx,
  *        transferOps - the pixel transfer operations to apply
  */
 void
-_mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_index_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking,
@@ -4681,7 +4643,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_pack_index_span( const GLcontext *ctx, GLuint n,
+_mesa_pack_index_span( const struct gl_context *ctx, GLuint n,
                        GLenum dstType, GLvoid *dest, const GLuint *source,
                        const struct gl_pixelstore_attrib *dstPacking,
                        GLbitfield transferOps )
@@ -4811,7 +4773,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
  *        transferOps - apply offset/bias/lookup ops?
  */
 void
-_mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_stencil_span( const struct gl_context *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *srcPacking,
@@ -4906,7 +4868,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
+_mesa_pack_stencil_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, const GLstencil *source,
                          const struct gl_pixelstore_attrib *dstPacking )
 {
@@ -5081,7 +5043,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
  *                  (ignored for GLfloat).
  */
 void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
+_mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, GLuint depthMax,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
@@ -5280,7 +5242,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
  * Pack an array of depth values.  The values are floats in [0,1].
  */
 void
-_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
+_mesa_pack_depth_span( const struct gl_context *ctx, GLuint n, GLvoid *dest,
                        GLenum dstType, const GLfloat *depthSpan,
                        const struct gl_pixelstore_attrib *dstPacking )
 {
@@ -5396,7 +5358,7 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
  * Pack depth and stencil values as GL_DEPTH_STENCIL/GL_UNSIGNED_INT_24_8.
  */
 void
-_mesa_pack_depth_stencil_span(const GLcontext *ctx, GLuint n, GLuint *dest,
+_mesa_pack_depth_stencil_span(const struct gl_context *ctx, GLuint n, GLuint *dest,
                               const GLfloat *depthVals,
                               const GLstencil *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
@@ -5711,12 +5673,12 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
  *          GL_FALSE if image was completely clipped away (draw nothing)
  */
 GLboolean
-_mesa_clip_drawpixels(const GLcontext *ctx,
+_mesa_clip_drawpixels(const struct gl_context *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *unpack)
 {
-   const GLframebuffer *buffer = ctx->DrawBuffer;
+   const struct gl_framebuffer *buffer = ctx->DrawBuffer;
 
    if (unpack->RowLength == 0) {
       unpack->RowLength = *width;
@@ -5782,12 +5744,12 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
  *          GL_FALSE if image was completely clipped away (draw nothing)
  */
 GLboolean
-_mesa_clip_readpixels(const GLcontext *ctx,
+_mesa_clip_readpixels(const struct gl_context *ctx,
                       GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack)
 {
-   const GLframebuffer *buffer = ctx->ReadBuffer;
+   const struct gl_framebuffer *buffer = ctx->ReadBuffer;
 
    if (pack->RowLength == 0) {
       pack->RowLength = *width;
@@ -5832,7 +5794,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
  * \return GL_FALSE if region is totally clipped, GL_TRUE otherwise.
  */
 GLboolean
-_mesa_clip_copytexsubimage(const GLcontext *ctx,
+_mesa_clip_copytexsubimage(const struct gl_context *ctx,
                            GLint *destX, GLint *destY,
                            GLint *srcX, GLint *srcY,
                            GLsizei *width, GLsizei *height)
@@ -5975,7 +5937,7 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
  * \return GL_TRUE if anything is left to draw, GL_FALSE if totally clipped
  */
 GLboolean
-_mesa_clip_blit(GLcontext *ctx,
+_mesa_clip_blit(struct gl_context *ctx,
                 GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
                 GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1)
 {

@@ -35,7 +35,7 @@
 
 #include "main/mtypes.h"
 
-extern void tdfxDDInitTriFuncs( GLcontext *ctx );
+extern void tdfxDDInitTriFuncs( struct gl_context *ctx );
 
 
 #endif

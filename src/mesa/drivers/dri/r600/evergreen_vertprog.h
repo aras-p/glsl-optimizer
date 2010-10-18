@@ -80,29 +80,29 @@ GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions(
 	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
 GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions2(
-    GLcontext *ctx,
+    struct gl_context *ctx,
 	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
-void evergreen_Map_Vertex_Program(GLcontext *ctx,
+void evergreen_Map_Vertex_Program(struct gl_context *ctx,
             struct evergreen_vertex_program *vp,
 			struct gl_vertex_program   *mesa_vp);
 GLboolean evergreen_Find_Instruction_Dependencies_vp(struct evergreen_vertex_program *vp,
 					   struct gl_vertex_program   *mesa_vp);
 
-struct evergreen_vertex_program* evergreenTranslateVertexShader(GLcontext *ctx,
+struct evergreen_vertex_program* evergreenTranslateVertexShader(struct gl_context *ctx,
 						      struct gl_vertex_program   *mesa_vp);
 
 /* Interface */
-extern void evergreenSelectVertexShader(GLcontext *ctx);
-extern void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count);
+extern void evergreenSelectVertexShader(struct gl_context *ctx);
+extern void evergreenSetVertexFormat(struct gl_context *ctx, const struct gl_client_array *arrays[], int count);
 
-extern GLboolean evergreenSetupVertexProgram(GLcontext * ctx);
+extern GLboolean evergreenSetupVertexProgram(struct gl_context * ctx);
 
-extern GLboolean evergreenSetupVPconstants(GLcontext * ctx);
+extern GLboolean evergreenSetupVPconstants(struct gl_context * ctx);
 
-extern void * evergreenGetActiveVpShaderBo(GLcontext * ctx);
+extern void * evergreenGetActiveVpShaderBo(struct gl_context * ctx);
 
-extern void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx);
+extern void * evergreenGetActiveVpShaderConstBo(struct gl_context * ctx);
 
 extern int evergreen_getTypeSize(GLenum type);
 

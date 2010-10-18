@@ -61,9 +61,9 @@ ir_noop_swizzle_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
    if (elems >= 2 && swiz->mask.y != 1)
       return;
-   if (elems >= 3 && swiz->mask.z != 1)
+   if (elems >= 3 && swiz->mask.z != 2)
       return;
-   if (elems >= 4 && swiz->mask.w != 1)
+   if (elems >= 4 && swiz->mask.w != 3)
       return;
 
    this->progress = true;

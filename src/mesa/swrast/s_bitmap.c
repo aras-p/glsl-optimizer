@@ -45,7 +45,7 @@
  * All parameter error checking will have been done before this is called.
  */
 void
-_swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
+_swrast_Bitmap( struct gl_context *ctx, GLint px, GLint py,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
 		const GLubyte *bitmap )
@@ -144,7 +144,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
  * draw or skip.
  */
 void
-_swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
+_swrast_Bitmap( struct gl_context *ctx, GLint px, GLint py,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
 		const GLubyte *bitmap )

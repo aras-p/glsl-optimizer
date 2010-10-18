@@ -228,61 +228,17 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.priv = priv;
 
    /* state setters */
-   softpipe->pipe.create_blend_state = softpipe_create_blend_state;
-   softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
-   softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+   softpipe_init_blend_funcs(&softpipe->pipe);
+   softpipe_init_clip_funcs(&softpipe->pipe);
+   softpipe_init_query_funcs( softpipe );
+   softpipe_init_rasterizer_funcs(&softpipe->pipe);
+   softpipe_init_sampler_funcs(&softpipe->pipe);
+   softpipe_init_shader_funcs(&softpipe->pipe);
+   softpipe_init_streamout_funcs(&softpipe->pipe);
+   softpipe_init_texture_funcs( &softpipe->pipe );
+   softpipe_init_vertex_funcs(&softpipe->pipe);
 
-   softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_fragment_sampler_states  = softpipe_bind_sampler_states;
-   softpipe->pipe.bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
-   softpipe->pipe.bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
-   softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
-
-   softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
-   softpipe->pipe.bind_depth_stencil_alpha_state   = softpipe_bind_depth_stencil_state;
-   softpipe->pipe.delete_depth_stencil_alpha_state = softpipe_delete_depth_stencil_state;
-
-   softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
-   softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
-   softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
-
-   softpipe->pipe.create_fs_state = softpipe_create_fs_state;
-   softpipe->pipe.bind_fs_state   = softpipe_bind_fs_state;
-   softpipe->pipe.delete_fs_state = softpipe_delete_fs_state;
-
-   softpipe->pipe.create_vs_state = softpipe_create_vs_state;
-   softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
-   softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
-
-   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
-   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
-   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
-
-   softpipe->pipe.create_vertex_elements_state = softpipe_create_vertex_elements_state;
-   softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
-   softpipe->pipe.delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
-
-   softpipe->pipe.create_stream_output_state = softpipe_create_stream_output_state;
-   softpipe->pipe.bind_stream_output_state = softpipe_bind_stream_output_state;
-   softpipe->pipe.delete_stream_output_state = softpipe_delete_stream_output_state;
-
-   softpipe->pipe.set_blend_color = softpipe_set_blend_color;
-   softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
-   softpipe->pipe.set_clip_state = softpipe_set_clip_state;
-   softpipe->pipe.set_sample_mask = softpipe_set_sample_mask;
-   softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
-   softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
-   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_fragment_sampler_views = softpipe_set_sampler_views;
-   softpipe->pipe.set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
-   softpipe->pipe.set_geometry_sampler_views = softpipe_set_geometry_sampler_views;
-   softpipe->pipe.create_sampler_view = softpipe_create_sampler_view;
-   softpipe->pipe.sampler_view_destroy = softpipe_sampler_view_destroy;
-   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
-   softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
-   softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
-   softpipe->pipe.set_index_buffer = softpipe_set_index_buffer;
 
    softpipe->pipe.draw_vbo = softpipe_draw_vbo;
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
@@ -291,9 +247,6 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.flush = softpipe_flush;
 
    softpipe->pipe.is_resource_referenced = softpipe_is_resource_referenced;
-
-   softpipe_init_query_funcs( softpipe );
-   softpipe_init_texture_funcs( &softpipe->pipe );
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 

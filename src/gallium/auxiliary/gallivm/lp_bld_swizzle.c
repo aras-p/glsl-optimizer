@@ -101,6 +101,83 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
 
 
 /**
+ * Combined extract and broadcast (or a mere shuffle when the two types match)
+ */
+LLVMValueRef
+lp_build_extract_broadcast(LLVMBuilderRef builder,
+                           struct lp_type src_type,
+                           struct lp_type dst_type,
+                           LLVMValueRef vector,
+                           LLVMValueRef index)
+{
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMValueRef res;
+
+   assert(src_type.floating == dst_type.floating);
+   assert(src_type.width    == dst_type.width);
+
+   assert(lp_check_value(src_type, vector));
+   assert(LLVMTypeOf(index) == i32t);
+
+   if (src_type.length == 1) {
+      if (dst_type.length == 1) {
+         /*
+          * Trivial scalar -> scalar.
+          */
+
+         res = vector;
+      }
+      else {
+         /*
+          * Broadcast scalar -> vector.
+          */
+
+         res = lp_build_broadcast(builder,
+                                  lp_build_vec_type(dst_type),
+                                  vector);
+      }
+   }
+   else {
+      if (dst_type.length == src_type.length) {
+         /*
+          * Special shuffle of the same size.
+          */
+
+         LLVMValueRef shuffle;
+         shuffle = lp_build_broadcast(builder,
+                                      LLVMVectorType(i32t, dst_type.length),
+                                      index);
+         res = LLVMBuildShuffleVector(builder, vector,
+                                      LLVMGetUndef(lp_build_vec_type(dst_type)),
+                                      shuffle, "");
+      }
+      else {
+         LLVMValueRef scalar;
+         scalar = LLVMBuildExtractElement(builder, vector, index, "");
+         if (dst_type.length == 1) {
+            /*
+             * Trivial extract scalar from vector.
+             */
+
+            res = scalar;
+         }
+         else {
+            /*
+             * General case of different sized vectors.
+             */
+
+            res = lp_build_broadcast(builder,
+                                     lp_build_vec_type(dst_type),
+                                     vector);
+         }
+      }
+   }
+
+   return res;
+}
+
+
+/**
  * Swizzle one channel into all other three channels.
  */
 LLVMValueRef

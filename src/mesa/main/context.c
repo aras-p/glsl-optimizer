@@ -86,7 +86,6 @@
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
-#include "colortab.h"
 #include "context.h"
 #include "cpuinfo.h"
 #include "debug.h"
@@ -98,7 +97,6 @@
 #include "feedback.h"
 #include "fog.h"
 #include "framebuffer.h"
-#include "histogram.h"
 #include "hint.h"
 #include "hash.h"
 #include "light.h"
@@ -139,7 +137,7 @@
 #endif
 
 #include "glsl_parser_extras.h"
-
+#include <stdbool.h>
 
 
 #ifndef MESA_VERBOSE
@@ -165,7 +163,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(__GLcontext *ctx)
+_mesa_notifySwapBuffers(struct gl_context *ctx)
 {
    if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
       _mesa_debug(ctx, "SwapBuffers\n");
@@ -182,7 +180,7 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
 /*@{*/
 
 /**
- * Allocates a GLvisual structure and initializes it via
+ * Allocates a struct gl_config structure and initializes it via
  * _mesa_initialize_visual().
  * 
  * \param dbFlag double buffering
@@ -200,12 +198,12 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
  * \param alphaBits same as above.
  * \param numSamples not really used.
  * 
- * \return pointer to new GLvisual or NULL if requested parameters can't be
+ * \return pointer to new struct gl_config or NULL if requested parameters can't be
  * met.
  *
  * \note Need to add params for level and numAuxBuffers (at least)
  */
-GLvisual *
+struct gl_config *
 _mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -220,7 +218,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint accumAlphaBits,
                      GLint numSamples )
 {
-   GLvisual *vis = (GLvisual *) calloc(1, sizeof(GLvisual));
+   struct gl_config *vis = (struct gl_config *) calloc(1, sizeof(struct gl_config));
    if (vis) {
       if (!_mesa_initialize_visual(vis, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
@@ -237,15 +235,15 @@ _mesa_create_visual( GLboolean dbFlag,
 
 /**
  * Makes some sanity checks and fills in the fields of the
- * GLvisual object with the given parameters.  If the caller needs
- * to set additional fields, he should just probably init the whole GLvisual
+ * struct gl_config object with the given parameters.  If the caller needs
+ * to set additional fields, he should just probably init the whole struct gl_config
  * object himself.
  * \return GL_TRUE on success, or GL_FALSE on failure.
  *
  * \sa _mesa_create_visual() above for the parameter description.
  */
 GLboolean
-_mesa_initialize_visual( GLvisual *vis,
+_mesa_initialize_visual( struct gl_config *vis,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
@@ -298,7 +296,6 @@ _mesa_initialize_visual( GLvisual *vis,
 
    vis->numAuxBuffers = 0;
    vis->level = 0;
-   vis->pixmapMode = 0;
    vis->sampleBuffers = numSamples > 0 ? 1 : 0;
    vis->samples = numSamples;
 
@@ -314,7 +311,7 @@ _mesa_initialize_visual( GLvisual *vis,
  * Frees the visual structure.
  */
 void
-_mesa_destroy_visual( GLvisual *vis )
+_mesa_destroy_visual( struct gl_config *vis )
 {
    free(vis);
 }
@@ -342,7 +339,6 @@ static void
 dummy_enum_func(void)
 {
    gl_buffer_index bi = BUFFER_FRONT_LEFT;
-   gl_colortable_index ci = COLORTABLE_PRECONVOLUTION;
    gl_face_index fi = FACE_POS_X;
    gl_frag_attrib fa = FRAG_ATTRIB_WPOS;
    gl_frag_result fr = FRAG_RESULT_DEPTH;
@@ -353,7 +349,6 @@ dummy_enum_func(void)
    gl_geom_result gr = GEOM_RESULT_POS;
 
    (void) bi;
-   (void) ci;
    (void) fi;
    (void) fa;
    (void) fr;
@@ -382,7 +377,7 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
  * \sa _math_init().
  */
 static void
-one_time_init( GLcontext *ctx )
+one_time_init( struct gl_context *ctx )
 {
    static GLboolean alreadyCalled = GL_FALSE;
    (void) ctx;
@@ -449,7 +444,7 @@ one_time_init( GLcontext *ctx )
  * Initialize fields of gl_current_attrib (aka ctx->Current.*)
  */
 static void
-_mesa_init_current(GLcontext *ctx)
+_mesa_init_current(struct gl_context *ctx)
 {
    GLuint i;
 
@@ -531,7 +526,7 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
  * some of these values (such as number of texture units).
  */
 static void 
-_mesa_init_constants(GLcontext *ctx)
+_mesa_init_constants(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -560,8 +555,6 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
    ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
-   ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
-   ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
    ctx->Const.MaxShininess = 128.0;
@@ -597,6 +590,21 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
+   /* Shading language version */
+   if (ctx->API == API_OPENGL) {
+#if FEATURE_ARB_shading_language_120
+      ctx->Const.GLSLVersion = 120;
+#else
+      ctx->Const.GLSLVersion = 110;
+#endif
+   }
+   else if (ctx->API == API_OPENGLES2) {
+      ctx->Const.GLSLVersion = 100;
+   }
+   else if (ctx->API == API_OPENGLES) {
+      ctx->Const.GLSLVersion = 0; /* GLSL not supported */
+   }
+
    /* GL_ARB_framebuffer_object */
    ctx->Const.MaxSamples = 0;
 
@@ -624,7 +632,7 @@ _mesa_init_constants(GLcontext *ctx)
  * Only called the first time a context is bound.
  */
 static void
-check_context_limits(GLcontext *ctx)
+check_context_limits(struct gl_context *ctx)
 {
    /* check that we don't exceed the size of various bitfields */
    assert(VERT_RESULT_MAX <=
@@ -699,7 +707,7 @@ check_context_limits(GLcontext *ctx)
  * functions for the more complex data structures.
  */
 static GLboolean
-init_attrib_groups(GLcontext *ctx)
+init_attrib_groups(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -714,7 +722,6 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_attrib( ctx );
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
-   _mesa_init_colortables( ctx );
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
@@ -723,7 +730,6 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_fbobjects( ctx );
    _mesa_init_feedback( ctx );
    _mesa_init_fog( ctx );
-   _mesa_init_histogram( ctx );
    _mesa_init_hint( ctx );
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
@@ -769,7 +775,7 @@ init_attrib_groups(GLcontext *ctx)
  * state.
  */
 static GLboolean
-update_default_objects(GLcontext *ctx)
+update_default_objects(struct gl_context *ctx)
 {
    assert(ctx);
 
@@ -821,7 +827,7 @@ _mesa_alloc_dispatch_table(int size)
 
 
 /**
- * Initialize a GLcontext struct (rendering context).
+ * Initialize a struct gl_context struct (rendering context).
  *
  * This includes allocating all the other structs and arrays which hang off of
  * the context by pointers.
@@ -848,10 +854,10 @@ _mesa_alloc_dispatch_table(int size)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context_for_api(GLcontext *ctx,
+_mesa_initialize_context_for_api(struct gl_context *ctx,
 				 gl_api api,
-				 const GLvisual *visual,
-				 GLcontext *share_list,
+				 const struct gl_config *visual,
+				 struct gl_context *share_list,
 				 const struct dd_function_table *driverFunctions,
 				 void *driverContext)
 {
@@ -943,11 +949,6 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
-      /* Neutral tnl module stuff */
-      _mesa_init_exec_vtxfmt( ctx ); 
-      ctx->TnlModule.Current = NULL;
-      ctx->TnlModule.SwapCount = 0;
-
 #if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {
@@ -987,9 +988,9 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 }
 
 GLboolean
-_mesa_initialize_context(GLcontext *ctx,
-                         const GLvisual *visual,
-                         GLcontext *share_list,
+_mesa_initialize_context(struct gl_context *ctx,
+                         const struct gl_config *visual,
+                         struct gl_context *share_list,
                          const struct dd_function_table *driverFunctions,
                          void *driverContext)
 {
@@ -1002,33 +1003,33 @@ _mesa_initialize_context(GLcontext *ctx,
 }
 
 /**
- * Allocate and initialize a GLcontext structure.
+ * Allocate and initialize a struct gl_context structure.
  * Note that the driver needs to pass in its dd_function_table here since
  * we need to at least call driverFunctions->NewTextureObject to initialize
  * the rendering context.
  *
  * \param api the GL API type to create the context for
- * \param visual a GLvisual pointer (we copy the struct contents)
+ * \param visual a struct gl_config pointer (we copy the struct contents)
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
  *        driver has plugged in all its special functions.
  * \param driverContext points to the device driver's private context state
  * 
- * \return pointer to a new __GLcontextRec or NULL if error.
+ * \return pointer to a new __struct gl_contextRec or NULL if error.
  */
-GLcontext *
+struct gl_context *
 _mesa_create_context_for_api(gl_api api,
-			     const GLvisual *visual,
-			     GLcontext *share_list,
+			     const struct gl_config *visual,
+			     struct gl_context *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext)
 {
-   GLcontext *ctx;
+   struct gl_context *ctx;
 
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
-   ctx = (GLcontext *) calloc(1, sizeof(GLcontext));
+   ctx = (struct gl_context *) calloc(1, sizeof(struct gl_context));
    if (!ctx)
       return NULL;
 
@@ -1042,9 +1043,9 @@ _mesa_create_context_for_api(gl_api api,
    }
 }
 
-GLcontext *
-_mesa_create_context(const GLvisual *visual,
-		     GLcontext *share_list,
+struct gl_context *
+_mesa_create_context(const struct gl_config *visual,
+		     struct gl_context *share_list,
 		     const struct dd_function_table *driverFunctions,
 		     void *driverContext)
 {
@@ -1057,12 +1058,12 @@ _mesa_create_context(const GLvisual *visual,
 /**
  * Free the data associated with the given context.
  * 
- * But doesn't free the GLcontext struct itself.
+ * But doesn't free the struct gl_context struct itself.
  *
  * \sa _mesa_initialize_context() and init_attrib_groups().
  */
 void
-_mesa_free_context_data( GLcontext *ctx )
+_mesa_free_context_data( struct gl_context *ctx )
 {
    if (!_mesa_get_current_context()){
       /* No current context, but we may need one in order to delete
@@ -1092,7 +1093,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-   _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
    _mesa_free_queryobj_data(ctx);
@@ -1137,14 +1137,14 @@ _mesa_free_context_data( GLcontext *ctx )
 
 
 /**
- * Destroy a GLcontext structure.
+ * Destroy a struct gl_context structure.
  *
  * \param ctx GL context.
  * 
- * Calls _mesa_free_context_data() and frees the GLcontext structure itself.
+ * Calls _mesa_free_context_data() and frees the struct gl_context structure itself.
  */
 void
-_mesa_destroy_context( GLcontext *ctx )
+_mesa_destroy_context( struct gl_context *ctx )
 {
    if (ctx) {
       _mesa_free_context_data(ctx);
@@ -1167,7 +1167,7 @@ _mesa_destroy_context( GLcontext *ctx )
  * structures.
  */
 void
-_mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
+_mesa_copy_context( const struct gl_context *src, struct gl_context *dst, GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
       /* OK to memcpy */
@@ -1286,10 +1286,10 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
 static GLboolean 
-check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
+check_compatible(const struct gl_context *ctx, const struct gl_framebuffer *buffer)
 {
-   const GLvisual *ctxvis = &ctx->Visual;
-   const GLvisual *bufvis = &buffer->Visual;
+   const struct gl_config *ctxvis = &ctx->Visual;
+   const struct gl_config *bufvis = &buffer->Visual;
 
    if (ctxvis == bufvis)
       return GL_TRUE;
@@ -1335,7 +1335,7 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
  * Really, the device driver should totally take care of this.
  */
 static void
-initialize_framebuffer_size(GLcontext *ctx, GLframebuffer *fb)
+initialize_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    GLuint width, height;
    if (ctx->Driver.GetBufferSize) {
@@ -1352,7 +1352,7 @@ initialize_framebuffer_size(GLcontext *ctx, GLframebuffer *fb)
  * Initialize the size if the given width and height are non-zero.
  */
 void
-_mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
+_mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
 {
    if (!ctx->ViewportInitialized && width > 0 && height > 0) {
       /* Note: set flag here, before calling _mesa_set_viewport(), to prevent
@@ -1380,8 +1380,8 @@ _mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height)
  * \param readBuffer  the reading framebuffer
  */
 GLboolean
-_mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                    GLframebuffer *readBuffer )
+_mesa_make_current( struct gl_context *newCtx, struct gl_framebuffer *drawBuffer,
+                    struct gl_framebuffer *readBuffer )
 {
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
@@ -1519,7 +1519,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
  * be deleted if nobody else is sharing them.
  */
 GLboolean
-_mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
+_mesa_share_state(struct gl_context *ctx, struct gl_context *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
       struct gl_shared_state *oldSharedState = ctx->Shared;
@@ -1550,10 +1550,10 @@ _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
  * context.  If you need speed, see the #GET_CURRENT_CONTEXT macro in
  * context.h.
  */
-GLcontext *
+struct gl_context *
 _mesa_get_current_context( void )
 {
-   return (GLcontext *) _glapi_get_context();
+   return (struct gl_context *) _glapi_get_context();
 }
 
 
@@ -1567,10 +1567,10 @@ _mesa_get_current_context( void )
  *
  * \return pointer to dispatch_table.
  *
- * Simply returns __GLcontextRec::CurrentDispatch.
+ * Simply returns __struct gl_contextRec::CurrentDispatch.
  */
 struct _glapi_table *
-_mesa_get_dispatch(GLcontext *ctx)
+_mesa_get_dispatch(struct gl_context *ctx)
 {
    return ctx->CurrentDispatch;
 }
@@ -1596,7 +1596,7 @@ _mesa_get_dispatch(GLcontext *ctx)
  * This is called via _mesa_error().
  */
 void
-_mesa_record_error(GLcontext *ctx, GLenum error)
+_mesa_record_error(struct gl_context *ctx, GLenum error)
 {
    if (!ctx)
       return;
@@ -1616,7 +1616,7 @@ _mesa_record_error(GLcontext *ctx, GLenum error)
  * Flush commands and wait for completion.
  */
 void
-_mesa_finish(GLcontext *ctx)
+_mesa_finish(struct gl_context *ctx)
 {
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Finish) {
@@ -1629,7 +1629,7 @@ _mesa_finish(GLcontext *ctx)
  * Flush commands.
  */
 void
-_mesa_flush(GLcontext *ctx)
+_mesa_flush(struct gl_context *ctx)
 {
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
@@ -1675,7 +1675,7 @@ _mesa_Flush(void)
  * Otherwise we default to MUL/MAD.
  */
 void
-_mesa_set_mvp_with_dp4( GLcontext *ctx,
+_mesa_set_mvp_with_dp4( struct gl_context *ctx,
                         GLboolean flag )
 {
    ctx->mvp_with_dp4 = flag;
@@ -1691,15 +1691,21 @@ _mesa_set_mvp_with_dp4( GLcontext *ctx,
  * \return GL_TRUE if OK to render, GL_FALSE if not
  */
 GLboolean
-_mesa_valid_to_render(GLcontext *ctx, const char *where)
+_mesa_valid_to_render(struct gl_context *ctx, const char *where)
 {
+   bool vert_from_glsl_shader = false;
+   bool geom_from_glsl_shader = false;
+   bool frag_from_glsl_shader = false;
+
    /* This depends on having up to date derived state (shaders) */
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
    if (ctx->Shader.CurrentProgram) {
+      struct gl_shader_program *const prog = ctx->Shader.CurrentProgram;
+
       /* using shaders */
-      if (!ctx->Shader.CurrentProgram->LinkStatus) {
+      if (!prog->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(shader not linked)", where);
          return GL_FALSE;
@@ -1707,25 +1713,46 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
 #if 0 /* not normally enabled */
       {
          char errMsg[100];
-         if (!_mesa_validate_shader_program(ctx, ctx->Shader.CurrentProgram,
-                                            errMsg)) {
+         if (!_mesa_validate_shader_program(ctx, prog, errMsg)) {
             _mesa_warning(ctx, "Shader program %u is invalid: %s",
-                          ctx->Shader.CurrentProgram->Name, errMsg);
+                          prog->Name, errMsg);
          }
       }
 #endif
+
+      /* Figure out which shader stages are provided by the GLSL program.  For
+       * any stages that are not provided, the corresponding assembly shader
+       * target will be validated below.
+       */
+      vert_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL;
+      geom_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL;
+      frag_from_glsl_shader =
+	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL;
    }
-   else {
-      if (ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(vertex program not valid)", where);
-         return GL_FALSE;
-      }
-      if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "%s(fragment program not valid)", where);
-         return GL_FALSE;
-      }
+
+
+   /* Any shader stages that are not supplied by the GLSL shader and have
+    * assembly shaders enabled must now be validated.
+    */
+   if (!vert_from_glsl_shader
+       && ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "%s(vertex program not valid)", where);
+      return GL_FALSE;
+   }
+
+   /* FINISHME: If GL_NV_geometry_program4 is ever supported, the current
+    * FINISHME: geometry program should validated here.
+    */
+   (void) geom_from_glsl_shader;
+
+   if (!frag_from_glsl_shader
+       && ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "%s(fragment program not valid)", where);
+      return GL_FALSE;
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {

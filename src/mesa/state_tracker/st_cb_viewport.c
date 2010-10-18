@@ -34,19 +34,19 @@
 #include "util/u_atomic.h"
 
 /**
- * Cast wrapper to convert a GLframebuffer to an st_framebuffer.
- * Return NULL if the GLframebuffer is a user-created framebuffer.
+ * Cast wrapper to convert a struct gl_framebuffer to an st_framebuffer.
+ * Return NULL if the struct gl_framebuffer is a user-created framebuffer.
  * We'll only return non-null for window system framebuffers.
  * Note that this function may fail.
  */
 static INLINE struct st_framebuffer *
-st_ws_framebuffer(GLframebuffer *fb)
+st_ws_framebuffer(struct gl_framebuffer *fb)
 {
    /* FBO cannot be casted.  See st_new_framebuffer */
    return (struct st_framebuffer *) ((fb && !fb->Name) ? fb : NULL);
 }
 
-static void st_viewport(GLcontext * ctx, GLint x, GLint y,
+static void st_viewport(struct gl_context * ctx, GLint x, GLint y,
                         GLsizei width, GLsizei height)
 {
    struct st_context *st = ctx->st;

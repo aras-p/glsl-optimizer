@@ -26,8 +26,7 @@
 /**
  * \file ir_to_mesa.cpp
  *
- * Translates the IR to ARB_fragment_program text if possible,
- * printing the result
+ * Translate GLSL IR to Mesa's gl_program representation.
  */
 
 #include <stdio.h>
@@ -54,6 +53,7 @@ extern "C" {
 #include "program/program.h"
 #include "program/prog_uniform.h"
 #include "program/prog_parameter.h"
+#include "program/sampler.h"
 }
 
 static int swizzle_for_size(int size);
@@ -183,7 +183,7 @@ public:
 
    function_entry *current_function;
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
    struct gl_shader_compiler_options *options;
@@ -274,8 +274,6 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
-   int get_sampler_uniform_value(ir_dereference *deref);
-
    void *mem_ctx;
 };
 
@@ -289,19 +287,22 @@ ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
    PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
 
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-   {
-      va_list args;
-      va_start(args, fmt);
-      prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
-      va_end(args);
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...)
+{
+   va_list args;
+   va_start(args, fmt);
+   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   va_end(args);
 
-      prog->LinkStatus = GL_FALSE;
-   }
+   prog->LinkStatus = GL_FALSE;
+}
 
-static int swizzle_for_size(int size)
+static int
+swizzle_for_size(int size)
 {
    int size_swizzles[4] = {
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
@@ -310,6 +311,7 @@ static int swizzle_for_size(int size)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
 
+   assert((size >= 1) && (size <= 4));
    return size_swizzles[size - 1];
 }
 
@@ -578,243 +580,6 @@ ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
    return NULL;
 }
 
-struct statevar_element {
-   const char *field;
-   int tokens[STATE_LENGTH];
-   int swizzle;
-};
-
-static struct statevar_element gl_DepthRange_elements[] = {
-   {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
-   {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
-   {"diff", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
-};
-
-static struct statevar_element gl_ClipPlane_elements[] = {
-   {NULL, {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW}
-};
-
-static struct statevar_element gl_Point_elements[] = {
-   {"size", {STATE_POINT_SIZE}, SWIZZLE_XXXX},
-   {"sizeMin", {STATE_POINT_SIZE}, SWIZZLE_YYYY},
-   {"sizeMax", {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
-   {"fadeThresholdSize", {STATE_POINT_SIZE}, SWIZZLE_WWWW},
-   {"distanceConstantAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX},
-   {"distanceLinearAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY},
-   {"distanceQuadraticAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
-};
-
-static struct statevar_element gl_FrontMaterial_elements[] = {
-   {"emission", {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
-   {"ambient", {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
-   {"diffuse", {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
-   {"specular", {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
-   {"shininess", {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
-};
-
-static struct statevar_element gl_BackMaterial_elements[] = {
-   {"emission", {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
-   {"ambient", {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
-   {"diffuse", {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
-   {"specular", {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
-   {"shininess", {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
-};
-
-static struct statevar_element gl_LightSource_elements[] = {
-   {"ambient", {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
-   {"diffuse", {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
-   {"specular", {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
-   {"position", {STATE_LIGHT, 0, STATE_POSITION}, SWIZZLE_XYZW},
-   {"halfVector", {STATE_LIGHT, 0, STATE_HALF_VECTOR}, SWIZZLE_XYZW},
-   {"spotDirection", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_XYZW},
-   {"spotCosCutoff", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_WWWW},
-   {"spotCutoff", {STATE_LIGHT, 0, STATE_SPOT_CUTOFF}, SWIZZLE_XXXX},
-   {"spotExponent", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_WWWW},
-   {"constantAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_XXXX},
-   {"linearAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_YYYY},
-   {"quadraticAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ},
-};
-
-static struct statevar_element gl_LightModel_elements[] = {
-   {"ambient", {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_FrontLightModelProduct_elements[] = {
-   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_BackLightModelProduct_elements[] = {
-   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_FrontLightProduct_elements[] = {
-   {"ambient", {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
-   {"diffuse", {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
-   {"specular", {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_BackLightProduct_elements[] = {
-   {"ambient", {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
-   {"diffuse", {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
-   {"specular", {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_TextureEnvColor_elements[] = {
-   {NULL, {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_EyePlaneS_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_EyePlaneT_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_EyePlaneR_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_EyePlaneQ_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_ObjectPlaneS_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_ObjectPlaneT_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_ObjectPlaneR_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_ObjectPlaneQ_elements[] = {
-   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW},
-};
-
-static struct statevar_element gl_Fog_elements[] = {
-   {"color", {STATE_FOG_COLOR}, SWIZZLE_XYZW},
-   {"density", {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
-   {"start", {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
-   {"end", {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ},
-   {"scale", {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
-};
-
-static struct statevar_element gl_NormalScale_elements[] = {
-   {NULL, {STATE_NORMAL_SCALE}, SWIZZLE_XXXX},
-};
-
-#define MATRIX(name, statevar, modifier)			\
-   static struct statevar_element name ## _elements[] = {		\
-      { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
-      { NULL, { statevar, 0, 1, 1, modifier}, SWIZZLE_XYZW },		\
-      { NULL, { statevar, 0, 2, 2, modifier}, SWIZZLE_XYZW },		\
-      { NULL, { statevar, 0, 3, 3, modifier}, SWIZZLE_XYZW },		\
-   }
-
-MATRIX(gl_ModelViewMatrix,
-       STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE);
-MATRIX(gl_ModelViewMatrixInverse,
-       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS);
-MATRIX(gl_ModelViewMatrixTranspose,
-       STATE_MODELVIEW_MATRIX, 0);
-MATRIX(gl_ModelViewMatrixInverseTranspose,
-       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE);
-
-MATRIX(gl_ProjectionMatrix,
-       STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE);
-MATRIX(gl_ProjectionMatrixInverse,
-       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS);
-MATRIX(gl_ProjectionMatrixTranspose,
-       STATE_PROJECTION_MATRIX, 0);
-MATRIX(gl_ProjectionMatrixInverseTranspose,
-       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE);
-
-MATRIX(gl_ModelViewProjectionMatrix,
-       STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE);
-MATRIX(gl_ModelViewProjectionMatrixInverse,
-       STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS);
-MATRIX(gl_ModelViewProjectionMatrixTranspose,
-       STATE_MVP_MATRIX, 0);
-MATRIX(gl_ModelViewProjectionMatrixInverseTranspose,
-       STATE_MVP_MATRIX, STATE_MATRIX_INVERSE);
-
-MATRIX(gl_TextureMatrix,
-       STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE);
-MATRIX(gl_TextureMatrixInverse,
-       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS);
-MATRIX(gl_TextureMatrixTranspose,
-       STATE_TEXTURE_MATRIX, 0);
-MATRIX(gl_TextureMatrixInverseTranspose,
-       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE);
-
-static struct statevar_element gl_NormalMatrix_elements[] = {
-   { NULL, { STATE_MODELVIEW_MATRIX, 0, 0, 0, STATE_MATRIX_INVERSE},
-     SWIZZLE_XYZW },
-   { NULL, { STATE_MODELVIEW_MATRIX, 0, 1, 1, STATE_MATRIX_INVERSE},
-     SWIZZLE_XYZW },
-   { NULL, { STATE_MODELVIEW_MATRIX, 0, 2, 2, STATE_MATRIX_INVERSE},
-     SWIZZLE_XYZW },
-};
-
-#undef MATRIX
-
-#define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
-
-static const struct statevar {
-   const char *name;
-   struct statevar_element *elements;
-   unsigned int num_elements;
-} statevars[] = {
-   STATEVAR(gl_DepthRange),
-   STATEVAR(gl_ClipPlane),
-   STATEVAR(gl_Point),
-   STATEVAR(gl_FrontMaterial),
-   STATEVAR(gl_BackMaterial),
-   STATEVAR(gl_LightSource),
-   STATEVAR(gl_LightModel),
-   STATEVAR(gl_FrontLightModelProduct),
-   STATEVAR(gl_BackLightModelProduct),
-   STATEVAR(gl_FrontLightProduct),
-   STATEVAR(gl_BackLightProduct),
-   STATEVAR(gl_TextureEnvColor),
-   STATEVAR(gl_EyePlaneS),
-   STATEVAR(gl_EyePlaneT),
-   STATEVAR(gl_EyePlaneR),
-   STATEVAR(gl_EyePlaneQ),
-   STATEVAR(gl_ObjectPlaneS),
-   STATEVAR(gl_ObjectPlaneT),
-   STATEVAR(gl_ObjectPlaneR),
-   STATEVAR(gl_ObjectPlaneQ),
-   STATEVAR(gl_Fog),
-
-   STATEVAR(gl_ModelViewMatrix),
-   STATEVAR(gl_ModelViewMatrixInverse),
-   STATEVAR(gl_ModelViewMatrixTranspose),
-   STATEVAR(gl_ModelViewMatrixInverseTranspose),
-
-   STATEVAR(gl_ProjectionMatrix),
-   STATEVAR(gl_ProjectionMatrixInverse),
-   STATEVAR(gl_ProjectionMatrixTranspose),
-   STATEVAR(gl_ProjectionMatrixInverseTranspose),
-
-   STATEVAR(gl_ModelViewProjectionMatrix),
-   STATEVAR(gl_ModelViewProjectionMatrixInverse),
-   STATEVAR(gl_ModelViewProjectionMatrixTranspose),
-   STATEVAR(gl_ModelViewProjectionMatrixInverseTranspose),
-
-   STATEVAR(gl_TextureMatrix),
-   STATEVAR(gl_TextureMatrixInverse),
-   STATEVAR(gl_TextureMatrixTranspose),
-   STATEVAR(gl_TextureMatrixInverseTranspose),
-
-   STATEVAR(gl_NormalMatrix),
-   STATEVAR(gl_NormalScale),
-};
-
 void
 ir_to_mesa_visitor::visit(ir_variable *ir)
 {
@@ -827,19 +592,20 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
    if (ir->mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
       unsigned int i;
+      const struct gl_builtin_uniform_desc *statevar;
 
-      for (i = 0; i < Elements(statevars); i++) {
-	 if (strcmp(ir->name, statevars[i].name) == 0)
+      for (i = 0; _mesa_builtin_uniform_desc[i].name; i++) {
+	 if (strcmp(ir->name, _mesa_builtin_uniform_desc[i].name) == 0)
 	    break;
       }
 
-      if (i == Elements(statevars)) {
+      if (!_mesa_builtin_uniform_desc[i].name) {
 	 fail_link(this->shader_program,
 		   "Failed to find builtin uniform `%s'\n", ir->name);
 	 return;
       }
 
-      const struct statevar *statevar = &statevars[i];
+      statevar = &_mesa_builtin_uniform_desc[i];
 
       int array_count;
       if (ir->type->is_array()) {
@@ -882,7 +648,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       for (int a = 0; a < array_count; a++) {
 	 for (unsigned int i = 0; i < statevar->num_elements; i++) {
-	    struct statevar_element *element = &statevar->elements[i];
+	    struct gl_builtin_uniform_element *element = &statevar->elements[i];
 	    int tokens[STATE_LENGTH];
 
 	    memcpy(tokens, element->tokens, sizeof(element->tokens));
@@ -1096,6 +862,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       assert(!ir->operands[operand]->type->is_matrix());
    }
 
+   int vector_elements = ir->operands[0]->type->vector_elements;
+   if (ir->operands[1]) {
+      vector_elements = MAX2(vector_elements,
+			     ir->operands[1]->type->vector_elements);
+   }
+
    this->result.file = PROGRAM_UNDEFINED;
 
    /* Storage for our result.  Ideally for an assignment we'd be using
@@ -1204,7 +976,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 if (vector_elements == 4)
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 else if (vector_elements == 3)
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, temp, temp);
+	 else
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, temp, temp);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ,
 			     result_dst, result_src, src_reg_for_float(0.0));
       } else {
@@ -1218,7 +995,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 if (vector_elements == 4)
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 else if (vector_elements == 3)
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, temp, temp);
+	 else
+	    ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, temp, temp);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     result_dst, result_src, src_reg_for_float(0.0));
       } else {
@@ -1348,6 +1130,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
+   case ir_unop_round_even:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -1577,13 +1360,39 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
       assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
       l.writemask = WRITEMASK_XYZW;
    } else if (ir->lhs->type->is_scalar()) {
-      /* FINISHME: This hack makes writing to gl_FragData, which lives in the
+      /* FINISHME: This hack makes writing to gl_FragDepth, which lives in the
        * FINISHME: W component of fragment shader output zero, work correctly.
        */
       l.writemask = WRITEMASK_XYZW;
    } else {
+      int swizzles[4];
+      int first_enabled_chan = 0;
+      int rhs_chan = 0;
+
       assert(ir->lhs->type->is_vector());
       l.writemask = ir->write_mask;
+
+      for (int i = 0; i < 4; i++) {
+	 if (l.writemask & (1 << i)) {
+	    first_enabled_chan = GET_SWZ(r.swizzle, i);
+	    break;
+	 }
+      }
+
+      /* Swizzle a small RHS vector into the channels being written.
+       *
+       * glsl ir treats write_mask as dictating how many channels are
+       * present on the RHS while Mesa IR treats write_mask as just
+       * showing which channels of the vec4 RHS get written.
+       */
+      for (int i = 0; i < 4; i++) {
+	 if (l.writemask & (1 << i))
+	    swizzles[i] = GET_SWZ(r.swizzle, rhs_chan++);
+	 else
+	    swizzles[i] = first_enabled_chan;
+      }
+      r.swizzle = MAKE_SWIZZLE4(swizzles[0], swizzles[1],
+				swizzles[2], swizzles[3]);
    }
 
    assert(l.file != PROGRAM_UNDEFINED);
@@ -1852,89 +1661,6 @@ ir_to_mesa_visitor::visit(ir_call *ir)
    this->result = entry->return_reg;
 }
 
-class get_sampler_name : public ir_hierarchical_visitor
-{
-public:
-   get_sampler_name(ir_to_mesa_visitor *mesa, ir_dereference *last)
-   {
-      this->mem_ctx = mesa->mem_ctx;
-      this->mesa = mesa;
-      this->name = NULL;
-      this->offset = 0;
-      this->last = last;
-   }
-
-   virtual ir_visitor_status visit(ir_dereference_variable *ir)
-   {
-      this->name = ir->var->name;
-      return visit_continue;
-   }
-
-   virtual ir_visitor_status visit_leave(ir_dereference_record *ir)
-   {
-      this->name = talloc_asprintf(mem_ctx, "%s.%s", name, ir->field);
-      return visit_continue;
-   }
-
-   virtual ir_visitor_status visit_leave(ir_dereference_array *ir)
-   {
-      ir_constant *index = ir->array_index->as_constant();
-      int i;
-
-      if (index) {
-	 i = index->value.i[0];
-      } else {
-	 /* GLSL 1.10 and 1.20 allowed variable sampler array indices,
-	  * while GLSL 1.30 requires that the array indices be
-	  * constant integer expressions.  We don't expect any driver
-	  * to actually work with a really variable array index, so
-	  * all that would work would be an unrolled loop counter that ends
-	  * up being constant above.
-	  */
-	 mesa->shader_program->InfoLog =
-	    talloc_asprintf_append(mesa->shader_program->InfoLog,
-				   "warning: Variable sampler array index "
-				   "unsupported.\nThis feature of the language "
-				   "was removed in GLSL 1.20 and is unlikely "
-				   "to be supported for 1.10 in Mesa.\n");
-	 i = 0;
-      }
-      if (ir != last) {
-	 this->name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
-      } else {
-	 offset = i;
-      }
-      return visit_continue;
-   }
-
-   ir_to_mesa_visitor *mesa;
-   const char *name;
-   void *mem_ctx;
-   int offset;
-   ir_dereference *last;
-};
-
-int
-ir_to_mesa_visitor::get_sampler_uniform_value(ir_dereference *sampler)
-{
-   get_sampler_name getname(this, sampler);
-
-   sampler->accept(&getname);
-
-   GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-					      getname.name);
-
-   if (index < 0) {
-      fail_link(this->shader_program,
-		"failed to find sampler named %s.\n", getname.name);
-      return 0;
-   }
-
-   index += getname.offset;
-
-   return this->prog->Parameters->ParameterValues[index][0];
-}
-
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
@@ -2034,7 +1760,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;
 
-   inst->sampler = get_sampler_uniform_value(ir->sampler);
+   inst->sampler = _mesa_get_sampler_uniform_value(ir->sampler,
+						   this->shader_program,
+						   this->prog);
 
    const glsl_type *sampler_type = ir->sampler->type;
 
@@ -2435,7 +2163,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 }
 
 static void
-set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
+set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
 			struct gl_shader_program *shader_program,
 			const char *name, const glsl_type *type,
 			ir_constant *val)
@@ -2505,13 +2233,17 @@ set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
 }
 
 static void
-set_uniform_initializers(GLcontext *ctx,
+set_uniform_initializers(struct gl_context *ctx,
 			 struct gl_shader_program *shader_program)
 {
    void *mem_ctx = NULL;
 
-   for (unsigned int i = 0; i < shader_program->_NumLinkedShaders; i++) {
+   for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_shader *shader = shader_program->_LinkedShaders[i];
+
+      if (shader == NULL)
+	 continue;
+
       foreach_iter(exec_list_iterator, iter, *shader->ir) {
 	 ir_instruction *ir = (ir_instruction *)iter.get();
 	 ir_variable *var = ir->as_variable();
@@ -2530,8 +2262,12 @@ set_uniform_initializers(GLcontext *ctx,
    talloc_free(mem_ctx);
 }
 
+
+/**
+ * Convert a shader's GLSL IR into a Mesa gl_program.
+ */
 struct gl_program *
-get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
+get_mesa_program(struct gl_context *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
 {
    ir_to_mesa_visitor v;
@@ -2620,10 +2356,12 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
+   /* Convert ir_mesa_instructions into prog_instructions.
+    */
    mesa_inst = mesa_instructions;
    i = 0;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
-      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+      const ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;
@@ -2644,6 +2382,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
       if (mesa_inst->DstReg.RelAddr)
          prog->IndirectRegisterFiles |= 1 << mesa_inst->DstReg.File;
 
+      /* Update program's bitmask of indirectly accessed register files */
       for (unsigned src = 0; src < 3; src++)
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
@@ -2705,8 +2444,14 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 }
 
 extern "C" {
+
+/**
+ * Called via ctx->Driver.CompilerShader().
+ * This is a no-op.
+ * XXX can we remove the ctx->Driver.CompileShader() hook?
+ */
 GLboolean
-_mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    assert(shader->CompileStatus);
    (void) ctx;
@@ -2714,15 +2459,25 @@ _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    return GL_TRUE;
 }
 
+
+/**
+ * Link a shader.
+ * Called via ctx->Driver.LinkShader()
+ * This actually involves converting GLSL IR into Mesa gl_programs with
+ * code lowering and other optimizations.
+ */
 GLboolean
-_mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    assert(prog->LinkStatus);
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
-      struct gl_shader_compiler_options *options =
+      const struct gl_shader_compiler_options *options =
             &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(prog->_LinkedShaders[i]->Type)];
 
       do {
@@ -2763,9 +2518,12 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       validate_ir_tree(ir);
    }
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_program *linked_prog;
       bool ok = true;
+
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
 
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
@@ -2792,8 +2550,12 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    return GL_TRUE;
 }
 
+
+/**
+ * Compile a GLSL shader.  Called via glCompileShader().
+ */
 void
-_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
@@ -2876,8 +2638,12 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    }
 }
 
+
+/**
+ * Link a GLSL shader program.  Called via glLinkProgram().
+ */
 void
-_mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    unsigned int i;
 

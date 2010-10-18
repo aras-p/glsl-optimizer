@@ -117,10 +117,6 @@ GLbitfield GL_APIENTRY _es_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[
         {GL_MODELVIEW, GL_MODELVIEW_MATRIX},
         {GL_PROJECTION, GL_PROJECTION_MATRIX},
         {GL_TEXTURE, GL_TEXTURE_MATRIX},
-#if 0
-        /* this doesn't exist in GLES */
-        {GL_COLOR, GL_COLOR_MATRIX},
-#endif
     };
 
     /* Call Mesa to get the current matrix in floating-point form.  First,

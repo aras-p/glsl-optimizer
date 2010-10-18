@@ -55,8 +55,8 @@
 #include "i830_context.h"
 #include "i830_reg.h"
 
-static void intelRenderPrimitive(GLcontext * ctx, GLenum prim);
-static void intelRasterPrimitive(GLcontext * ctx, GLenum rprim,
+static void intelRenderPrimitive(struct gl_context * ctx, GLenum prim);
+static void intelRasterPrimitive(struct gl_context * ctx, GLenum rprim,
                                  GLuint hwprim);
 
 static void
@@ -427,7 +427,7 @@ intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
 static void
 intel_atten_point(struct intel_context *intel, intelVertexPtr v0)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    GLfloat psz[4], col[4], restore_psz, restore_alpha;
 
    _tnl_get_attr(ctx, v0, _TNL_ATTRIB_POINTSIZE, psz);
@@ -784,7 +784,7 @@ static void
 intel_fallback_tri(struct intel_context *intel,
                    intelVertex * v0, intelVertex * v1, intelVertex * v2)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    SWvertex v[3];
 
    if (0)
@@ -805,7 +805,7 @@ static void
 intel_fallback_line(struct intel_context *intel,
                     intelVertex * v0, intelVertex * v1)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    SWvertex v[2];
 
    if (0)
@@ -824,7 +824,7 @@ static void
 intel_fallback_point(struct intel_context *intel,
 		     intelVertex * v0)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    SWvertex v[1];
 
    if (0)
@@ -877,7 +877,7 @@ intel_fallback_point(struct intel_context *intel,
 
 
 static void
-intelRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
+intelRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint n)
 {
    struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -901,7 +901,7 @@ intelRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
 }
 
 static void
-intelRenderClippedLine(GLcontext * ctx, GLuint ii, GLuint jj)
+intelRenderClippedLine(struct gl_context * ctx, GLuint ii, GLuint jj)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
@@ -909,7 +909,7 @@ intelRenderClippedLine(GLcontext * ctx, GLuint ii, GLuint jj)
 }
 
 static void
-intelFastRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
+intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint n)
 {
    struct intel_context *intel = intel_context(ctx);
    const GLuint vertsize = intel->vertex_size;
@@ -936,7 +936,7 @@ intelFastRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET | DD_TRI_UNFILLED)
 
 void
-intelChooseRenderState(GLcontext * ctx)
+intelChooseRenderState(struct gl_context * ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
@@ -1049,7 +1049,7 @@ static const GLenum reduced_prim[GL_POLYGON + 1] = {
 
 
 static void
-intelRunPipeline(GLcontext * ctx)
+intelRunPipeline(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -1079,7 +1079,7 @@ intelRunPipeline(GLcontext * ctx)
 }
 
 static void
-intelRenderStart(GLcontext * ctx)
+intelRenderStart(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -1089,7 +1089,7 @@ intelRenderStart(GLcontext * ctx)
 }
 
 static void
-intelRenderFinish(GLcontext * ctx)
+intelRenderFinish(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -1106,7 +1106,7 @@ intelRenderFinish(GLcontext * ctx)
   * primitive.
   */
 static void
-intelRasterPrimitive(GLcontext * ctx, GLenum rprim, GLuint hwprim)
+intelRasterPrimitive(struct gl_context * ctx, GLenum rprim, GLuint hwprim)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -1129,7 +1129,7 @@ intelRasterPrimitive(GLcontext * ctx, GLenum rprim, GLuint hwprim)
  /* 
   */
 static void
-intelRenderPrimitive(GLcontext * ctx, GLenum prim)
+intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -1201,7 +1201,7 @@ getFallbackString(GLuint bit)
 void
 intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const GLbitfield oldfallback = intel->Fallback;
 
@@ -1253,7 +1253,7 @@ union fi
 
 
 void
-intelInitTriFuncs(GLcontext * ctx)
+intelInitTriFuncs(struct gl_context * ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;

@@ -324,6 +324,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
                               vs_outputs->bcolor[1] != ATTR_UNUSED;
     int *stream_loc_notcl = r300->stream_loc_notcl;
+    uint32_t stuffing_enable = 0;
 
     if (r300->screen->caps.is_r500) {
         rX00_rs_col       = r500_rs_col;
@@ -436,7 +437,11 @@ static void r300_update_rs_block(struct r300_context *r300)
 
     /* Rasterize texture coordinates. */
     for (i = 0; i < ATTR_GENERIC_COUNT && tex_count < 8; i++) {
-	bool sprite_coord = !!(r300->sprite_coord_enable & (1 << i));
+	bool sprite_coord = false;
+
+	if (fs_inputs->generic[i] != ATTR_UNUSED) {
+	    sprite_coord = !!(r300->sprite_coord_enable & (1 << i));
+	}
 
         if (vs_outputs->generic[i] != ATTR_UNUSED || sprite_coord) {
             if (!sprite_coord) {
@@ -444,7 +449,9 @@ static void r300_update_rs_block(struct r300_context *r300)
                 rs.vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << tex_count);
                 rs.vap_out_vtx_fmt[1] |= (4 << (3 * tex_count));
                 stream_loc_notcl[loc++] = 6 + tex_count;
-            }
+            } else
+                stuffing_enable |=
+                    R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (tex_count*2));
 
             /* Rasterize it. */
             rX00_rs_tex(&rs, tex_count, tex_ptr,
@@ -456,8 +463,8 @@ static void r300_update_rs_block(struct r300_context *r300)
                 fp_offset++;
 
                 DBG(r300, DBG_RS,
-                    "r300: Rasterized generic %i written to FS%s.\n",
-                    i, sprite_coord ? " (sprite coord)" : "");
+                    "r300: Rasterized generic %i written to FS%s in texcoord %d.\n",
+                    i, sprite_coord ? " (sprite coord)" : "", tex_count);
             } else {
                 DBG(r300, DBG_RS,
                     "r300: Rasterized generic %i unused%s.\n",
@@ -560,11 +567,70 @@ static void r300_update_rs_block(struct r300_context *r300)
     count = MAX3(col_count, tex_count, 1);
     rs.inst_count = count - 1;
 
+    /* set the GB enable flags */
+    if (r300->sprite_coord_enable)
+	stuffing_enable |= R300_GB_POINT_STUFF_ENABLE;
+
+    rs.gb_enable = stuffing_enable;
+
     /* Now, after all that, see if we actually need to update the state. */
     if (memcmp(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block))) {
         memcpy(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block));
-        r300->rs_block_state.size = 11 + count*2;
+        r300->rs_block_state.size = 13 + count*2;
     }
+}
+
+static uint32_t r300_get_border_color(enum pipe_format format,
+                                      const float border[4])
+{
+    const struct util_format_description *desc;
+    float border_swizzled[4] = {
+        border[2],
+        border[1],
+        border[0],
+        border[3]
+    };
+    uint32_t r;
+
+    desc = util_format_description(format);
+
+    /* We don't use util_pack_format because it does not handle the formats
+     * we want, e.g. R4G4B4A4 is non-existent in Gallium. */
+    switch (desc->channel[0].size) {
+        case 4:
+            r = ((float_to_ubyte(border_swizzled[0]) & 0xf0) >> 4) |
+                ((float_to_ubyte(border_swizzled[1]) & 0xf0) << 0) |
+                ((float_to_ubyte(border_swizzled[2]) & 0xf0) << 4) |
+                ((float_to_ubyte(border_swizzled[3]) & 0xf0) << 8);
+            break;
+
+        case 5:
+            if (desc->channel[1].size == 5) {
+                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
+                    ((float_to_ubyte(border_swizzled[1]) & 0xf8) << 2) |
+                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 7) |
+                    ((float_to_ubyte(border_swizzled[3]) & 0x80) << 8);
+            } else if (desc->channel[1].size == 6) {
+                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
+                    ((float_to_ubyte(border_swizzled[1]) & 0xfc) << 3) |
+                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 8);
+            } else {
+                assert(0);
+                r = 0;
+            }
+            break;
+
+        default:
+            /* I think the fat formats (16, 32) are specified
+             * as the 8-bit ones. I am not sure how compressed formats
+             * work here. */
+            r = ((float_to_ubyte(border_swizzled[0]) & 0xff) << 0) |
+                ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
+                ((float_to_ubyte(border_swizzled[2]) & 0xff) << 16) |
+                ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+    }
+
+    return r;
 }
 
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
@@ -599,7 +665,11 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->format = view->format;
             texstate->filter0 = sampler->filter0;
             texstate->filter1 = sampler->filter1;
-            texstate->border_color = sampler->border_color;
+
+            /* Set the border color. */
+            texstate->border_color =
+                r300_get_border_color(view->base.format,
+                                      sampler->state.border_color);
 
             /* determine min/max levels */
             max_level = MIN3(sampler->max_lod + view->base.first_level,

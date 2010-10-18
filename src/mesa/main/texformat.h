@@ -32,7 +32,7 @@
 
 
 extern gl_format
-_mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
+_mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
                          GLenum format, GLenum type );
 
 

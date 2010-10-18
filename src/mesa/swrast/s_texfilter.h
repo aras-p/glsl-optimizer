@@ -32,7 +32,7 @@
 
 
 extern texture_sample_func
-_swrast_choose_texture_sample_func( GLcontext *ctx,
+_swrast_choose_texture_sample_func( struct gl_context *ctx,
 				    const struct gl_texture_object *tObj );
 
 

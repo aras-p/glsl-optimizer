@@ -42,7 +42,7 @@ _mesa_generate_mipmap_level(GLenum target,
 
 
 extern void
-_mesa_generate_mipmap(GLcontext *ctx, GLenum target,
+_mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj);
 
 

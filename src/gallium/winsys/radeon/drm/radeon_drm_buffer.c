@@ -11,8 +11,10 @@
 #include "util/u_simple_list.h"
 #include "pipebuffer/pb_buffer.h"
 #include "pipebuffer/pb_bufmgr.h"
+#include "os/os_thread.h"
 
 #include "radeon_winsys.h"
+
 struct radeon_drm_bufmgr;
 
 struct radeon_drm_buffer {
@@ -39,10 +41,19 @@ radeon_drm_buffer(struct pb_buffer *buf)
 }
 
 struct radeon_drm_bufmgr {
+    /* Base class. */
     struct pb_manager base;
+
+    /* Winsys. */
     struct radeon_libdrm_winsys *rws;
+
+    /* List of mapped buffers and its mutex. */
     struct radeon_drm_buffer buffer_map_list;
+    pipe_mutex buffer_map_list_mutex;
+
+    /* List of buffer handles and its mutex. */
     struct util_hash_table *buffer_handles;
+    pipe_mutex buffer_handles_mutex;
 };
 
 static INLINE struct radeon_drm_bufmgr *
@@ -59,14 +70,21 @@ radeon_drm_buffer_destroy(struct pb_buffer *_buf)
     int name;
 
     if (buf->bo->ptr != NULL) {
-	remove_from_list(buf);
-	radeon_bo_unmap(buf->bo);
-	buf->bo->ptr = NULL;
+        pipe_mutex_lock(buf->mgr->buffer_map_list_mutex);
+        /* Now test it again inside the mutex. */
+        if (buf->bo->ptr != NULL) {
+            remove_from_list(buf);
+            radeon_bo_unmap(buf->bo);
+            buf->bo->ptr = NULL;
+        }
+        pipe_mutex_unlock(buf->mgr->buffer_map_list_mutex);
     }
     name = radeon_gem_name_bo(buf->bo);
     if (name) {
+        pipe_mutex_lock(buf->mgr->buffer_handles_mutex);
 	util_hash_table_remove(buf->mgr->buffer_handles,
 			       (void*)(uintptr_t)name);
+        pipe_mutex_unlock(buf->mgr->buffer_handles_mutex);
     }
     radeon_bo_unref(buf->bo);
 
@@ -118,8 +136,16 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
 		return NULL;
     }
 
-    if (buf->bo->ptr != NULL)
+    if (buf->bo->ptr != NULL) {
+        pipe_mutex_lock(buf->mgr->buffer_map_list_mutex);
+        /* Now test ptr again inside the mutex. We might have gotten a race
+         * during the first test. */
+        if (buf->bo->ptr != NULL) {
+            remove_from_list(buf);
+        }
+        pipe_mutex_unlock(buf->mgr->buffer_map_list_mutex);
 	return buf->bo->ptr;
+    }
 
     if (flags & PB_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -142,14 +168,22 @@ radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
     if (radeon_bo_map(buf->bo, write)) {
         return NULL;
     }
-    insert_at_tail(&buf->mgr->buffer_map_list, buf);
+
+    pipe_mutex_lock(buf->mgr->buffer_map_list_mutex);
+    remove_from_list(buf);
+    pipe_mutex_unlock(buf->mgr->buffer_map_list_mutex);
     return buf->bo->ptr;
 }
 
 static void
 radeon_drm_buffer_unmap_internal(struct pb_buffer *_buf)
 {
-    (void)_buf;
+    struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
+    pipe_mutex_lock(buf->mgr->buffer_map_list_mutex);
+    if (is_empty_list(buf)) { /* = is not inserted... */
+        insert_at_tail(&buf->mgr->buffer_map_list, buf);
+    }
+    pipe_mutex_unlock(buf->mgr->buffer_map_list_mutex);
 }
 
 static void
@@ -163,7 +197,7 @@ radeon_drm_buffer_get_base_buffer(struct pb_buffer *buf,
 
 
 static enum pipe_error
-radeon_drm_buffer_validate(struct pb_buffer *_buf, 
+radeon_drm_buffer_validate(struct pb_buffer *_buf,
 			   struct pb_validate *vl,
 			   unsigned flags)
 {
@@ -186,8 +220,9 @@ const struct pb_vtbl radeon_drm_buffer_vtbl = {
     radeon_drm_buffer_get_base_buffer,
 };
 
-struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
-							      uint32_t handle)
+static struct pb_buffer *
+radeon_drm_bufmgr_create_buffer_from_handle_unsafe(struct pb_manager *_mgr,
+                                                   uint32_t handle)
 {
     struct radeon_drm_bufmgr *mgr = radeon_drm_bufmgr(_mgr);
     struct radeon_libdrm_winsys *rws = mgr->rws;
@@ -195,6 +230,7 @@ struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager 
     struct radeon_bo *bo;
 
     buf = util_hash_table_get(mgr->buffer_handles, (void*)(uintptr_t)handle);
+
     if (buf) {
         struct pb_buffer *b = NULL;
         pb_reference(&b, &buf->base);
@@ -226,6 +262,20 @@ struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager 
     util_hash_table_set(mgr->buffer_handles, (void*)(uintptr_t)handle, buf);
 
     return &buf->base;
+}
+
+struct pb_buffer *
+radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
+                                            uint32_t handle)
+{
+    struct radeon_drm_bufmgr *mgr = radeon_drm_bufmgr(_mgr);
+    struct pb_buffer *pb;
+
+    pipe_mutex_lock(mgr->buffer_handles_mutex);
+    pb = radeon_drm_bufmgr_create_buffer_from_handle_unsafe(_mgr, handle);
+    pipe_mutex_unlock(mgr->buffer_handles_mutex);
+
+    return pb;
 }
 
 static struct pb_buffer *
@@ -279,6 +329,8 @@ radeon_drm_bufmgr_destroy(struct pb_manager *_mgr)
 {
     struct radeon_drm_bufmgr *mgr = radeon_drm_bufmgr(_mgr);
     util_hash_table_destroy(mgr->buffer_handles);
+    pipe_mutex_destroy(mgr->buffer_map_list_mutex);
+    pipe_mutex_destroy(mgr->buffer_handles_mutex);
     FREE(mgr);
 }
 
@@ -308,6 +360,8 @@ radeon_drm_bufmgr_create(struct radeon_libdrm_winsys *rws)
     mgr->rws = rws;
     make_empty_list(&mgr->buffer_map_list);
     mgr->buffer_handles = util_hash_table_create(handle_hash, handle_compare);
+    pipe_mutex_init(mgr->buffer_map_list_mutex);
+    pipe_mutex_init(mgr->buffer_handles_mutex);
     return &mgr->base;
 }
 
@@ -483,6 +537,8 @@ void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr)
     struct radeon_drm_bufmgr *mgr = radeon_drm_bufmgr(_mgr);
     struct radeon_drm_buffer *rpb, *t_rpb;
 
+    pipe_mutex_lock(mgr->buffer_map_list_mutex);
+
     foreach_s(rpb, t_rpb, &mgr->buffer_map_list) {
 	radeon_bo_unmap(rpb->bo);
 	rpb->bo->ptr = NULL;
@@ -490,6 +546,8 @@ void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr)
     }
 
     make_empty_list(&mgr->buffer_map_list);
+
+    pipe_mutex_unlock(mgr->buffer_map_list_mutex);
 }
 
 void radeon_drm_bufmgr_wait(struct r300_winsys_screen *ws,

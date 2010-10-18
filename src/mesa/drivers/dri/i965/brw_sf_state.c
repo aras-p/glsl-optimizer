@@ -38,7 +38,7 @@
 
 static void upload_sf_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
@@ -139,7 +139,7 @@ struct brw_sf_unit_key {
 static void
 sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */

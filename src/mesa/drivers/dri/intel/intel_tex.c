@@ -9,25 +9,8 @@
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
-static GLboolean
-intelIsTextureResident(GLcontext * ctx, struct gl_texture_object *texObj)
-{
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   return
-      intelObj->mt &&
-      intelObj->mt->region &&
-      intel_is_region_resident(intel, intelObj->mt->region);
-#endif
-   return 1;
-}
-
-
-
 static struct gl_texture_image *
-intelNewTextureImage(GLcontext * ctx)
+intelNewTextureImage(struct gl_context * ctx)
 {
    DBG("%s\n", __FUNCTION__);
    (void) ctx;
@@ -36,7 +19,7 @@ intelNewTextureImage(GLcontext * ctx)
 
 
 static struct gl_texture_object *
-intelNewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
+intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 {
    struct intel_texture_object *obj = CALLOC_STRUCT(intel_texture_object);
 
@@ -47,7 +30,7 @@ intelNewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
 }
 
 static void 
-intelDeleteTextureObject(GLcontext *ctx,
+intelDeleteTextureObject(struct gl_context *ctx,
 			 struct gl_texture_object *texObj)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -61,7 +44,7 @@ intelDeleteTextureObject(GLcontext *ctx,
 
 
 static void
-intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
+intelFreeTextureImageData(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -167,13 +150,17 @@ timed_memcpy(void *dest, const void *src, size_t n)
  * map/unmap the base level texture image.
  */
 static void
-intelGenerateMipmap(GLcontext *ctx, GLenum target,
+intelGenerateMipmap(struct gl_context *ctx, GLenum target,
                     struct gl_texture_object *texObj)
 {
    if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
       /* sw path: need to map texture images */
       struct intel_context *intel = intel_context(ctx);
       struct intel_texture_object *intelObj = intel_texture_object(texObj);
+
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
+
       intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
       _mesa_generate_mipmap(ctx, target, texObj);
       intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
@@ -216,8 +203,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTexImageData = intelFreeTextureImageData;
-   functions->UpdateTexturePalette = 0;
-   functions->IsTextureResident = intelIsTextureResident;
 
 #if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)

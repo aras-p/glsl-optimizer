@@ -74,7 +74,7 @@ static void use_temporary(struct r300_fragment_program_code *code, unsigned int 
 		code->pixsize = index;
 }
 
-static unsigned int use_source(struct r300_fragment_program_code* code, struct radeon_pair_instruction_source src)
+static unsigned int use_source(struct r300_fragment_program_code* code, struct rc_pair_instruction_source src)
 {
 	if (src.File == RC_FILE_CONSTANT) {
 		return src.Index | (1 << 5);
@@ -133,6 +133,8 @@ static unsigned int translate_alpha_opcode(struct r300_fragment_program_compiler
  */
 static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* inst)
 {
+	int ip;
+	int j;
 	PROG_CODE;
 
 	if (code->alu.length >= c->Base.max_alu_insts) {
@@ -140,20 +142,20 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 		return 0;
 	}
 
-	int ip = code->alu.length++;
-	int j;
+	ip = code->alu.length++;
 
 	code->alu.inst[ip].rgb_inst = translate_rgb_opcode(c, inst->RGB.Opcode);
 	code->alu.inst[ip].alpha_inst = translate_alpha_opcode(c, inst->Alpha.Opcode);
 
 	for(j = 0; j < 3; ++j) {
 		unsigned int src = use_source(code, inst->RGB.Src[j]);
+		unsigned int arg;
 		code->alu.inst[ip].rgb_addr |= src << (6*j);
 
 		src = use_source(code, inst->Alpha.Src[j]);
 		code->alu.inst[ip].alpha_addr |= src << (6*j);
 
-		unsigned int arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
+		arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
 		arg |= inst->RGB.Arg[j].Abs << 6;
 		arg |= inst->RGB.Arg[j].Negate << 5;
 		code->alu.inst[ip].rgb_inst |= arg << (7*j);
@@ -259,6 +261,10 @@ static int finish_node(struct r300_emit_state * emit)
 {
 	struct r300_fragment_program_compiler * c = emit->compiler;
 	struct r300_fragment_program_code *code = &emit->compiler->code->code.r300;
+	unsigned alu_offset;
+	unsigned alu_end;
+	unsigned tex_offset;
+	unsigned tex_end;
 
 	if (code->alu.length == emit->node_first_alu) {
 		/* Generate a single NOP for this node */
@@ -268,10 +274,10 @@ static int finish_node(struct r300_emit_state * emit)
 			return 0;
 	}
 
-	unsigned alu_offset = emit->node_first_alu;
-	unsigned alu_end = code->alu.length - alu_offset - 1;
-	unsigned tex_offset = emit->node_first_tex;
-	unsigned tex_end = code->tex.length - tex_offset - 1;
+	alu_offset = emit->node_first_alu;
+	alu_end = code->alu.length - alu_offset - 1;
+	tex_offset = emit->node_first_tex;
+	tex_end = code->tex.length - tex_offset - 1;
 
 	if (code->tex.length == emit->node_first_tex) {
 		if (emit->current_node > 0) {
@@ -334,6 +340,9 @@ static int begin_tex(struct r300_emit_state * emit)
 
 static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 {
+	unsigned int unit;
+	unsigned int dest;
+	unsigned int opcode;
 	PROG_CODE;
 
 	if (code->tex.length >= R300_PFS_MAX_TEX_INST) {
@@ -341,9 +350,8 @@ static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 		return 0;
 	}
 
-	unsigned int unit = inst->U.I.TexSrcUnit;
-	unsigned int dest = inst->U.I.DstReg.Index;
-	unsigned int opcode;
+	unit = inst->U.I.TexSrcUnit;
+	dest = inst->U.I.DstReg.Index;
 
 	switch(inst->U.I.Opcode) {
 	case RC_OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;

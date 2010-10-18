@@ -67,7 +67,7 @@ static void set_active_eval2( struct vbo_exec_context *exec, GLuint attr, GLuint
 
 void vbo_exec_eval_update( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    GLuint attr;
 
    /* Vertex program maps have priority over conventional attribs */

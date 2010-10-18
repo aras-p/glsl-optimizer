@@ -11,9 +11,9 @@
       (assign (constant bool (1)) (x) (var_ref b) (expression float noise (expression vec4 + (var_ref p) (constant vec4 (601.0 313.0 29.0 277.0)))))
       (assign (constant bool (1)) (x) (var_ref c) (expression float noise (expression vec4 + (var_ref p) (constant vec4 (1559.0 113.0 1861.0 797.0)))))
 
-      (assign (constant bool (1)) (x) (var_ref t) (swiz xxx (var_ref a)))
-      (assign (constant bool (1)) (y) (var_ref t) (swiz xxx (var_ref b)))
-      (assign (constant bool (1)) (z) (var_ref t) (swiz xxx (var_ref c)))
+      (assign (constant bool (1)) (x) (var_ref t) (var_ref a))
+      (assign (constant bool (1)) (y) (var_ref t) (var_ref b))
+      (assign (constant bool (1)) (z) (var_ref t) (var_ref c))
       (return (var_ref t))
     ))
 
@@ -29,9 +29,9 @@
       (assign (constant bool (1)) (x) (var_ref b) (expression float noise (expression vec3 + (var_ref p) (constant vec3 (601.0 313.0 29.0)))))
       (assign (constant bool (1)) (x) (var_ref c) (expression float noise (expression vec3 + (var_ref p) (constant vec3 (1559.0 113.0 1861.0)))))
 
-      (assign (constant bool (1)) (x) (var_ref t) (swiz xxx (var_ref a)))
-      (assign (constant bool (1)) (y) (var_ref t) (swiz xxx (var_ref b)))
-      (assign (constant bool (1)) (z) (var_ref t) (swiz xxx (var_ref c)))
+      (assign (constant bool (1)) (x) (var_ref t) (var_ref a))
+      (assign (constant bool (1)) (y) (var_ref t) (var_ref b))
+      (assign (constant bool (1)) (z) (var_ref t) (var_ref c))
       (return (var_ref t))
     ))
 
@@ -47,9 +47,9 @@
       (assign (constant bool (1)) (x) (var_ref b) (expression float noise (expression vec2 + (var_ref p) (constant vec2 (601.0 313.0)))))
       (assign (constant bool (1)) (x) (var_ref c) (expression float noise (expression vec2 + (var_ref p) (constant vec2 (1559.0 113.0)))))
 
-      (assign (constant bool (1)) (x) (var_ref t) (swiz xxx (var_ref a)))
-      (assign (constant bool (1)) (y) (var_ref t) (swiz xxx (var_ref b)))
-      (assign (constant bool (1)) (z) (var_ref t) (swiz xxx (var_ref c)))
+      (assign (constant bool (1)) (x) (var_ref t) (var_ref a))
+      (assign (constant bool (1)) (y) (var_ref t) (var_ref b))
+      (assign (constant bool (1)) (z) (var_ref t) (var_ref c))
       (return (var_ref t))
     ))
 
@@ -65,9 +65,9 @@
       (assign (constant bool (1)) (x) (var_ref b) (expression float noise (expression float + (var_ref p) (constant float (601.0)))))
       (assign (constant bool (1)) (x) (var_ref c) (expression float noise (expression float + (var_ref p) (constant float (1559.0)))))
 
-      (assign (constant bool (1)) (x) (var_ref t) (swiz xxx (var_ref a)))
-      (assign (constant bool (1)) (y) (var_ref t) (swiz xxx (var_ref b)))
-      (assign (constant bool (1)) (z) (var_ref t) (swiz xxx (var_ref c)))
+      (assign (constant bool (1)) (x) (var_ref t) (var_ref a))
+      (assign (constant bool (1)) (y) (var_ref t) (var_ref b))
+      (assign (constant bool (1)) (z) (var_ref t) (var_ref c))
       (return (var_ref t))
     ))
 ))

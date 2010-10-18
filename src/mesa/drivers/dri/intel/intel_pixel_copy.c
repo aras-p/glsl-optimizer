@@ -76,7 +76,7 @@ copypix_src_region(struct intel_context *intel, GLenum type)
  * we allow Scissor.
  */
 static GLboolean
-intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
+intel_check_copypixel_blit_fragment_ops(struct gl_context * ctx)
 {
    if (ctx->NewState)
       _mesa_update_state(ctx);
@@ -102,7 +102,7 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
  * CopyPixels with the blitter.  Don't support zooming, pixel transfer, etc.
  */
 static GLboolean
-do_blit_copypixels(GLcontext * ctx,
+do_blit_copypixels(struct gl_context * ctx,
                    GLint srcx, GLint srcy,
                    GLsizei width, GLsizei height,
                    GLint dstx, GLint dsty, GLenum type)
@@ -198,7 +198,7 @@ out:
 
 
 void
-intelCopyPixels(GLcontext * ctx,
+intelCopyPixels(struct gl_context * ctx,
                 GLint srcx, GLint srcy,
                 GLsizei width, GLsizei height,
                 GLint destx, GLint desty, GLenum type)

@@ -291,25 +291,26 @@ dri2_flush_frontbuffer(struct dri_drawable *drawable,
 }
 
 static __DRIimage *
-dri2_lookup_egl_image(struct dri_context *ctx, void *handle)
+dri2_lookup_egl_image(struct dri_screen *screen, void *handle)
 {
-   __DRIimageLookupExtension *loader = ctx->sPriv->dri2.image;
+   __DRIimageLookupExtension *loader = screen->sPriv->dri2.image;
    __DRIimage *img;
 
    if (!loader->lookupEGLImage)
       return NULL;
 
-   img = loader->lookupEGLImage(ctx->cPriv, handle, ctx->cPriv->loaderPrivate);
+   img = loader->lookupEGLImage(screen->sPriv,
+				handle, screen->sPriv->loaderPrivate);
 
    return img;
 }
 
 static __DRIimage *
-dri2_create_image_from_name(__DRIcontext *context,
+dri2_create_image_from_name(__DRIscreen *_screen,
                             int width, int height, int format,
                             int name, int pitch, void *loaderPrivate)
 {
-   struct dri_screen *screen = dri_screen(context->driScreenPriv);
+   struct dri_screen *screen = dri_screen(_screen);
    __DRIimage *img;
    struct pipe_resource templ;
    struct winsys_handle whandle;
@@ -501,7 +502,7 @@ static const __DRIextension *dri_screen_extensions[] = {
 /**
  * This is the driver specific part of the createNewScreen entry point.
  *
- * Returns the __GLcontextModes supported by this driver.
+ * Returns the struct gl_config supported by this driver.
  */
 static const __DRIconfig **
 dri2_init_screen(__DRIscreen * sPriv)
@@ -537,6 +538,7 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
+   screen->lookup_egl_image = dri2_lookup_egl_image;
 
    return configs;
 fail:
@@ -546,7 +548,7 @@ fail:
 }
 
 static boolean
-dri2_create_context(gl_api api, const __GLcontextModes * visual,
+dri2_create_context(gl_api api, const struct gl_config * visual,
                     __DRIcontext * cPriv, void *sharedContextPrivate)
 {
    struct dri_context *ctx = NULL;
@@ -556,15 +558,13 @@ dri2_create_context(gl_api api, const __GLcontextModes * visual,
 
    ctx = cPriv->driverPrivate;
 
-   ctx->lookup_egl_image = dri2_lookup_egl_image;
-
    return TRUE;
 }
 
 static boolean
 dri2_create_buffer(__DRIscreen * sPriv,
                    __DRIdrawable * dPriv,
-                   const __GLcontextModes * visual, boolean isPixmap)
+                   const struct gl_config * visual, boolean isPixmap)
 {
    struct dri_drawable *drawable = NULL;
 

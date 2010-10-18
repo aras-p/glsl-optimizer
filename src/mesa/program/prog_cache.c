@@ -104,7 +104,7 @@ rehash(struct gl_program_cache *cache)
 
 
 static void
-clear_cache(GLcontext *ctx, struct gl_program_cache *cache)
+clear_cache(struct gl_context *ctx, struct gl_program_cache *cache)
 {
    struct cache_item *c, *next;
    GLuint i;
@@ -145,7 +145,7 @@ _mesa_new_program_cache(void)
 
 
 void
-_mesa_delete_program_cache(GLcontext *ctx, struct gl_program_cache *cache)
+_mesa_delete_program_cache(struct gl_context *ctx, struct gl_program_cache *cache)
 {
    clear_cache(ctx, cache);
    free(cache->items);
@@ -178,7 +178,7 @@ _mesa_search_program_cache(struct gl_program_cache *cache,
 
 
 void
-_mesa_program_cache_insert(GLcontext *ctx,
+_mesa_program_cache_insert(struct gl_context *ctx,
                            struct gl_program_cache *cache,
                            const void *key, GLuint keysize,
                            struct gl_program *program)

@@ -29,15 +29,15 @@
 #include "main/simple_list.h"
 #include "radeon_common_context.h"
 
-extern void radeonEmitQueryBegin(GLcontext *ctx);
-extern void radeonEmitQueryEnd(GLcontext *ctx);
+extern void radeonEmitQueryBegin(struct gl_context *ctx);
+extern void radeonEmitQueryEnd(struct gl_context *ctx);
 
 extern void radeonInitQueryObjFunctions(struct dd_function_table *functions);
 
 #define RADEON_QUERY_PAGE_SIZE 4096
 
-int radeon_check_query_active(GLcontext *ctx, struct radeon_state_atom *atom);
-void radeon_emit_queryobj(GLcontext *ctx, struct radeon_state_atom *atom);
+int radeon_check_query_active(struct gl_context *ctx, struct radeon_state_atom *atom);
+void radeon_emit_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom);
 
 static inline void radeon_init_query_stateobj(radeonContextPtr radeon, int SZ)
 {

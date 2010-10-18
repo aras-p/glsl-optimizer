@@ -58,12 +58,12 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
  *
  * \sa glScissor().
  *
- * Verifies the parameters and updates __GLcontextRec::Scissor. On a
+ * Verifies the parameters and updates __struct gl_contextRec::Scissor. On a
  * change flushes the vertices and notifies the driver via
  * the dd_function_table::Scissor callback.
  */
 void
-_mesa_set_scissor(GLcontext *ctx, 
+_mesa_set_scissor(struct gl_context *ctx, 
                   GLint x, GLint y, GLsizei width, GLsizei height)
 {
    if (x == ctx->Scissor.X &&
@@ -88,7 +88,7 @@ _mesa_set_scissor(GLcontext *ctx,
  * \param ctx  the GL context.
  */
 void
-_mesa_init_scissor(GLcontext *ctx)
+_mesa_init_scissor(struct gl_context *ctx)
 {
    /* Scissor group */
    ctx->Scissor.Enabled = GL_FALSE;

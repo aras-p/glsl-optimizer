@@ -122,8 +122,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* imaging */
    driver->CopyColorTable = _mesa_meta_CopyColorTable;
    driver->CopyColorSubTable = _mesa_meta_CopyColorSubTable;
-   driver->CopyConvolutionFilter1D = _mesa_meta_CopyConvolutionFilter1D;
-   driver->CopyConvolutionFilter2D = _mesa_meta_CopyConvolutionFilter2D;
 
    /* Vertex/fragment programs */
    driver->BindProgram = NULL;
@@ -226,7 +224,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
  * Only the Intel drivers use this so far.
  */
 void
-_mesa_init_driver_state(GLcontext *ctx)
+_mesa_init_driver_state(struct gl_context *ctx)
 {
    ctx->Driver.AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 

@@ -15,7 +15,7 @@
  * immediately after sampling...
  */
 gl_format
-intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
+intelChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
                          GLenum format, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -93,6 +93,10 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
+      /* i915 could implement this mode using MT_32BIT_RG1616.  However, this
+       * would require an extra swizzle instruction in the fragment shader to
+       * convert the { R, G, 1.0, 1.0 } to { R, R, R, G }.
+       */
 #ifndef I915
       return MESA_FORMAT_AL1616;
 #else
@@ -193,6 +197,22 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_RGBA_SNORM:
    case GL_RGBA8_SNORM:
       return MESA_FORMAT_SIGNED_RGBA8888_REV;
+
+   /* i915 can do a RG16, but it can't do any of the other RED or RG formats.
+    * In addition, it only implements the broken D3D mode where undefined
+    * components are read as 1.0.  I'm not sure who thought reading
+    * { R, G, 1.0, 1.0 } from a red-green texture would be useful.
+    */
+   case GL_RED:
+   case GL_R8:
+      return MESA_FORMAT_R8;
+   case GL_R16:
+      return MESA_FORMAT_R16;
+   case GL_RG:
+   case GL_RG8:
+      return MESA_FORMAT_RG88;
+   case GL_RG16:
+      return MESA_FORMAT_RG1616;
 #endif
 
    default:

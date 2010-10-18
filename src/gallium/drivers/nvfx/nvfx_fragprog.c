@@ -1235,10 +1235,9 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	struct nvfx_vertex_program* vp;
-	/* Gallium always puts the point coord in GENERIC[0]
-	 * TODO: this is wrong, Gallium needs to be fixed
-	 */
-	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * (nvfx->rasterizer->pipe.sprite_coord_enable | 1);
+
+	// TODO: the multiplication by point_quad_rasterization is probably superfluous
+	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
 
 	boolean emulate_sprite_flipping = sprite_coord_enable && nvfx->rasterizer->pipe.sprite_coord_mode;
 	unsigned key = emulate_sprite_flipping;
@@ -1297,7 +1296,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 				unsigned used_texcoords = 0;
 				for(unsigned i = 0; i < fp->num_slots; ++i) {
 					unsigned generic = fp->slot_to_generic[i];
-					if(!((1 << generic) & sprite_coord_enable))
+					if((generic < 32) && !((1 << generic) & sprite_coord_enable))
 					{
 						unsigned char slot_mask = vp->generic_to_fp_input[generic];
 						if(slot_mask >= 0xf0)
@@ -1320,7 +1319,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 
 		for(i = 0; i < fp->num_slots; ++i) {
 			unsigned generic = fp->slot_to_generic[i];
-			if((1 << generic) & sprite_coord_enable)
+			if((generic < 32) && ((1 << generic) & sprite_coord_enable))
 			{
 				if(fp->slot_to_fp_input[i] != sprite_reloc_input)
 					goto update_slots;
@@ -1346,7 +1345,7 @@ update_slots:
 			for(; i < fp->num_slots; ++i)
 			{
 				unsigned generic = fp->slot_to_generic[i];
-				if((1 << generic) & sprite_coord_enable)
+				if((generic < 32) && ((1 << generic) & sprite_coord_enable))
 					fp->slot_to_fp_input[i] = sprite_reloc_input;
 				else
 					fp->slot_to_fp_input[i] = vp->generic_to_fp_input[generic] & 0xf;
@@ -1559,7 +1558,7 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 			struct nvfx_fragment_program_bo* next = fpbo->next;
 			nouveau_bo_unmap(fpbo->bo);
 			nouveau_bo_ref(0, &fpbo->bo);
-			free(fpbo);
+			os_free_aligned(fpbo);
 			fpbo = next;
 		}
 		while(fpbo != fp->fpbo);

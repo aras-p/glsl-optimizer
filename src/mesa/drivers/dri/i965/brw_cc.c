@@ -39,7 +39,7 @@
 void
 brw_update_cc_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_viewport ccv;
 
    memset(&ccv, 0, sizeof(ccv));
@@ -90,7 +90,8 @@ static void prepare_cc_unit(struct brw_context *brw)
  */
 static void upload_cc_unit(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_unit_state cc;
    void *map;
 
@@ -203,11 +204,11 @@ static void upload_cc_unit(struct brw_context *brw)
       cc.cc2.depth_write_enable = ctx->Depth.Mask;
    }
 
+   if (intel->stats_wm || (INTEL_DEBUG & DEBUG_STATS))
+      cc.cc5.statistics_enable = 1;
+
    /* CACHE_NEW_CC_VP */
    cc.cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
-
-   if (INTEL_DEBUG & DEBUG_STATS)
-      cc.cc5.statistics_enable = 1;
 
    map = brw_state_batch(brw, sizeof(cc), 64,
 			 &brw->cc.state_bo, &brw->cc.state_offset);

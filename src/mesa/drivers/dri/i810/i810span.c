@@ -81,7 +81,7 @@ do {									\
 
 /* Move locking out to get reasonable span performance.
  */
-void i810SpanRenderStart( GLcontext *ctx )
+void i810SpanRenderStart( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    I810_FIREVERTICES(imesa);
@@ -89,14 +89,14 @@ void i810SpanRenderStart( GLcontext *ctx )
    i810RegetLockQuiescent( imesa );
 }
 
-void i810SpanRenderFinish( GLcontext *ctx )
+void i810SpanRenderFinish( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    _swrast_flush( ctx );
    UNLOCK_HARDWARE( imesa );
 }
 
-void i810InitSpanFuncs( GLcontext *ctx )
+void i810InitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = i810SpanRenderStart;
@@ -109,7 +109,7 @@ void i810InitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-i810SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+i810SetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       /* always 565 RGB */

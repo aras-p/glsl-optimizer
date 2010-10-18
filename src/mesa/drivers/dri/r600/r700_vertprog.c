@@ -170,7 +170,7 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 }
 
 GLboolean Process_Vertex_Program_Vfetch_Instructions2(
-    GLcontext *ctx,
+    struct gl_context *ctx,
 	struct r700_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp)
 {
@@ -197,7 +197,7 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions2(
     return GL_TRUE;
 }
 
-void Map_Vertex_Program(GLcontext *ctx,
+void Map_Vertex_Program(struct gl_context *ctx,
                         struct r700_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
@@ -293,7 +293,7 @@ GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
     return GL_TRUE;
 }
 
-struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
+struct r700_vertex_program* r700TranslateVertexShader(struct gl_context *ctx,
 						      struct gl_vertex_program *mesa_vp)
 {
 	context_t *context = R700_CONTEXT(ctx);
@@ -385,7 +385,7 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 	return vp;
 }
 
-void r700SelectVertexShader(GLcontext *ctx)
+void r700SelectVertexShader(struct gl_context *ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program_cont *vpc;
@@ -459,7 +459,7 @@ int getTypeSize(GLenum type)
     }
 }
 
-static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
+static void r700TranslateAttrib(struct gl_context *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
 {
     context_t *context = R700_CONTEXT(ctx);
     
@@ -545,7 +545,7 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
 	context->nNumActiveAos++;
 }
 
-void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
+void r700SetVertexFormat(struct gl_context *ctx, const struct gl_client_array *arrays[], int count)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vpc
@@ -574,7 +574,7 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
     context->radeon.tcl.aos_count = context->nNumActiveAos;
 }
 
-void * r700GetActiveVpShaderBo(GLcontext * ctx)
+void * r700GetActiveVpShaderBo(struct gl_context * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vp = context->selected_vp;;
@@ -585,7 +585,7 @@ void * r700GetActiveVpShaderBo(GLcontext * ctx)
 	return NULL;
 }
 
-void * r700GetActiveVpShaderConstBo(GLcontext * ctx)
+void * r700GetActiveVpShaderConstBo(struct gl_context * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vp = context->selected_vp;;
@@ -596,7 +596,7 @@ void * r700GetActiveVpShaderConstBo(GLcontext * ctx)
 	return NULL;
 }
 
-GLboolean r700SetupVertexProgram(GLcontext * ctx)
+GLboolean r700SetupVertexProgram(struct gl_context * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);

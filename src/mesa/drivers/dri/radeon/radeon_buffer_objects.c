@@ -40,7 +40,7 @@ get_radeon_buffer_object(struct gl_buffer_object *obj)
 }
 
 static struct gl_buffer_object *
-radeonNewBufferObject(GLcontext * ctx,
+radeonNewBufferObject(struct gl_context * ctx,
                       GLuint name,
                       GLenum target)
 {
@@ -57,7 +57,7 @@ radeonNewBufferObject(GLcontext * ctx,
  * Called via glDeleteBuffersARB().
  */
 static void
-radeonDeleteBufferObject(GLcontext * ctx,
+radeonDeleteBufferObject(struct gl_context * ctx,
                          struct gl_buffer_object *obj)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
@@ -82,7 +82,7 @@ radeonDeleteBufferObject(GLcontext * ctx,
  * \return GL_TRUE for success, GL_FALSE if out of memory
  */
 static GLboolean
-radeonBufferData(GLcontext * ctx,
+radeonBufferData(struct gl_context * ctx,
                  GLenum target,
                  GLsizeiptrARB size,
                  const GLvoid * data,
@@ -129,7 +129,7 @@ radeonBufferData(GLcontext * ctx,
  * Called via glBufferSubDataARB().
  */
 static void
-radeonBufferSubData(GLcontext * ctx,
+radeonBufferSubData(struct gl_context * ctx,
                     GLenum target,
                     GLintptrARB offset,
                     GLsizeiptrARB size,
@@ -154,7 +154,7 @@ radeonBufferSubData(GLcontext * ctx,
  * Called via glGetBufferSubDataARB()
  */
 static void
-radeonGetBufferSubData(GLcontext * ctx,
+radeonGetBufferSubData(struct gl_context * ctx,
                        GLenum target,
                        GLintptrARB offset,
                        GLsizeiptrARB size,
@@ -174,7 +174,7 @@ radeonGetBufferSubData(GLcontext * ctx,
  * Called via glMapBufferARB()
  */
 static void *
-radeonMapBuffer(GLcontext * ctx,
+radeonMapBuffer(struct gl_context * ctx,
                 GLenum target,
                 GLenum access,
                 struct gl_buffer_object *obj)
@@ -204,7 +204,7 @@ radeonMapBuffer(GLcontext * ctx,
  * Called via glUnmapBufferARB()
  */
 static GLboolean
-radeonUnmapBuffer(GLcontext * ctx,
+radeonUnmapBuffer(struct gl_context * ctx,
                   GLenum target,
                   struct gl_buffer_object *obj)
 {

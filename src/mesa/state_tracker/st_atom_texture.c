@@ -52,7 +52,7 @@
  *
  * \param format     PIPE_FORMAT_*.
  * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
- * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA.
+ * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA, GL_RED.
  */
 static GLuint apply_depthmode(enum pipe_format format,
                               GLuint swizzle, GLenum depthmode)
@@ -96,6 +96,14 @@ static GLuint apply_depthmode(enum pipe_format format,
             else if (swiz[i] < SWIZZLE_W)
                swiz[i] = SWIZZLE_ZERO;
          break;
+      case GL_RED:
+	 /* Rewrite reads W to 1, XYZ to X00 */
+	 for (i = 0; i < 4; i++)
+	    if (swiz[i] == SWIZZLE_W)
+	       swiz[i] = SWIZZLE_ONE;
+	    else if (swiz[i] == SWIZZLE_Y || swiz[i] == SWIZZLE_Z)
+	       swiz[i] = SWIZZLE_ZERO;
+	 break;
    }
 
    return MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);

@@ -105,14 +105,14 @@ lerp_3d(float a, float b, float c,
 
 /**
  * Compute coord % size for repeat wrap modes.
- * Note that if coord is a signed integer, coord % size doesn't give
- * the right value for coord < 0 (in terms of texture repeat).  Just
- * casting to unsigned fixes that.
+ * Note that if coord is negative, coord % size doesn't give the right
+ * value.  To avoid that problem we add a large multiple of the size
+ * (rather than using a conditional).
  */
 static INLINE int
 repeat(int coord, unsigned size)
 {
-   return (int) ((unsigned) coord % size);
+   return (coord + size * 1024) % size;
 }
 
 
@@ -656,7 +656,8 @@ get_texel_2d(const struct sp_sampler_varient *samp,
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level)) {
-      return samp->sampler->border_color;
+      return sp_tex_tile_cache_border_color(samp->cache,
+                                            samp->sampler->border_color);
    }
    else {
       return get_texel_2d_no_border( samp, addr, x, y );
@@ -750,7 +751,8 @@ get_texel_3d(const struct sp_sampler_varient *samp,
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level) ||
        z < 0 || z >= (int) u_minify(texture->depth0, level)) {
-      return samp->sampler->border_color;
+      return sp_tex_tile_cache_border_color(samp->cache,
+                                            samp->sampler->border_color);
    }
    else {
       return get_texel_3d_no_border( samp, addr, x, y, z );

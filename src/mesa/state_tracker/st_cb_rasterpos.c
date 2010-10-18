@@ -44,7 +44,6 @@
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_cb_rasterpos.h"
-#include "st_draw.h"
 #include "draw/draw_context.h"
 #include "draw/draw_pipe.h"
 #include "vbo/vbo.h"
@@ -58,7 +57,7 @@
 struct rastpos_stage
 {
    struct draw_stage stage;   /**< Base class */
-   GLcontext *ctx;            /**< Rendering context */
+   struct gl_context *ctx;            /**< Rendering context */
 
    /* vertex attrib info we can setup once and re-use */
    struct gl_client_array array[VERT_ATTRIB_MAX];
@@ -111,7 +110,7 @@ rastpos_destroy(struct draw_stage *stage)
  * else copy the current attrib.
  */
 static void
-update_attrib(GLcontext *ctx, const GLuint *outputMapping,
+update_attrib(struct gl_context *ctx, const GLuint *outputMapping,
               const struct vertex_header *vert,
               GLfloat *dest,
               GLuint result, GLuint defaultAttrib)
@@ -133,7 +132,7 @@ static void
 rastpos_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct rastpos_stage *rs = rastpos_stage(stage);
-   GLcontext *ctx = rs->ctx;
+   struct gl_context *ctx = rs->ctx;
    struct st_context *st = st_context(ctx);
    const GLfloat height = (GLfloat) ctx->DrawBuffer->Height;
    const GLuint *outputMapping = st->vertex_result_to_slot;
@@ -178,7 +177,7 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
  * Create rasterpos "drawing" stage.
  */
 static struct rastpos_stage *
-new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
+new_draw_rastpos_stage(struct gl_context *ctx, struct draw_context *draw)
 {
    struct rastpos_stage *rs = ST_CALLOC_STRUCT(rastpos_stage);
    GLuint i;
@@ -220,7 +219,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
 
 
 static void
-st_RasterPos(GLcontext *ctx, const GLfloat v[4])
+st_RasterPos(struct gl_context *ctx, const GLfloat v[4])
 {
    struct st_context *st = st_context(ctx);
    struct draw_context *draw = st->draw;

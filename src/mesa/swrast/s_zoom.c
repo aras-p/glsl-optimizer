@@ -45,7 +45,7 @@
  * \return GL_TRUE if any zoomed pixels visible, GL_FALSE if totally clipped
  */
 static GLboolean
-compute_zoomed_bounds(GLcontext *ctx, GLint imageX, GLint imageY,
+compute_zoomed_bounds(struct gl_context *ctx, GLint imageX, GLint imageY,
                       GLint spanX, GLint spanY, GLint width,
                       GLint *x0, GLint *x1, GLint *y0, GLint *y1)
 {
@@ -127,7 +127,7 @@ unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
  * index/depth_span().
  */
 static void
-zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
+zoom_span( struct gl_context *ctx, GLint imgX, GLint imgY, const SWspan *span,
            const GLvoid *src, GLenum format )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -320,7 +320,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
 
 void
-_swrast_write_zoomed_rgba_span(GLcontext *ctx, GLint imgX, GLint imgY,
+_swrast_write_zoomed_rgba_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                                const SWspan *span, const GLvoid *rgba)
 {
    zoom_span(ctx, imgX, imgY, span, rgba, GL_RGBA);
@@ -328,7 +328,7 @@ _swrast_write_zoomed_rgba_span(GLcontext *ctx, GLint imgX, GLint imgY,
 
 
 void
-_swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
+_swrast_write_zoomed_rgb_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                               const SWspan *span, const GLvoid *rgb)
 {
    zoom_span(ctx, imgX, imgY, span, rgb, GL_RGB);
@@ -336,7 +336,7 @@ _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
 
 
 void
-_swrast_write_zoomed_depth_span(GLcontext *ctx, GLint imgX, GLint imgY,
+_swrast_write_zoomed_depth_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                                 const SWspan *span)
 {
    zoom_span(ctx, imgX, imgY, span,
@@ -349,7 +349,7 @@ _swrast_write_zoomed_depth_span(GLcontext *ctx, GLint imgX, GLint imgY,
  * No per-fragment operations are applied.
  */
 void
-_swrast_write_zoomed_stencil_span(GLcontext *ctx, GLint imgX, GLint imgY,
+_swrast_write_zoomed_stencil_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                                   GLint width, GLint spanX, GLint spanY,
                                   const GLstencil stencil[])
 {
@@ -386,7 +386,7 @@ _swrast_write_zoomed_stencil_span(GLcontext *ctx, GLint imgX, GLint imgY,
  * No per-fragment operations are applied.
  */
 void
-_swrast_write_zoomed_z_span(GLcontext *ctx, GLint imgX, GLint imgY,
+_swrast_write_zoomed_z_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                             GLint width, GLint spanX, GLint spanY,
                             const GLvoid *z)
 {

@@ -30,10 +30,10 @@
 #include "swrast.h"
 
 void
-_swrast_choose_line( GLcontext *ctx );
+_swrast_choose_line( struct gl_context *ctx );
 
 void
-_swrast_add_spec_terms_line( GLcontext *ctx,
+_swrast_add_spec_terms_line( struct gl_context *ctx,
 			     const SWvertex *v0,
 			     const SWvertex *v1 );
 

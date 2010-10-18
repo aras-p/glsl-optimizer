@@ -432,4 +432,15 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
    xscr->dri_invalidate_buffers(xscr, drawable, xscr->dri_user_data);
 }
 
+extern unsigned
+dri2GetSwapEventType(Display *dpy, XID drawable);
+
+/**
+ * This is also called from src/glx/dri2.c.
+ */
+unsigned dri2GetSwapEventType(Display *dpy, XID drawable)
+{
+   return 0;
+}
+
 #endif /* GLX_DIRECT_RENDERING */

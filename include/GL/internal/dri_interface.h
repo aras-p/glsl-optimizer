@@ -805,7 +805,7 @@ typedef struct __DRIimageExtensionRec __DRIimageExtension;
 struct __DRIimageExtensionRec {
     __DRIextension base;
 
-    __DRIimage *(*createImageFromName)(__DRIcontext *context,
+    __DRIimage *(*createImageFromName)(__DRIscreen *screen,
 				       int width, int height, int format,
 				       int name, int pitch,
 				       void *loaderPrivate);
@@ -841,7 +841,7 @@ typedef struct __DRIimageLookupExtensionRec __DRIimageLookupExtension;
 struct __DRIimageLookupExtensionRec {
     __DRIextension base;
 
-    __DRIimage *(*lookupEGLImage)(__DRIcontext *context, void *image,
+    __DRIimage *(*lookupEGLImage)(__DRIscreen *screen, void *image,
 				  void *loaderPrivate);
 };
 

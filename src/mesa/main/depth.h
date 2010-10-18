@@ -50,7 +50,7 @@ extern void GLAPIENTRY
 _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax );
 
 extern void 
-_mesa_init_depth( GLcontext * ctx );
+_mesa_init_depth( struct gl_context * ctx );
 
 #else
 

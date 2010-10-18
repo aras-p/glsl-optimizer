@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "math/m_translate.h"
 #include "radeon_context.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
@@ -55,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 union emit_union { float f; GLuint ui; radeon_color_t rgba; };
 
 static struct {
-   void   (*emit)( GLcontext *, GLuint, GLuint, void * );
+   void   (*emit)( struct gl_context *, GLuint, GLuint, void * );
    GLuint vertex_size;
    GLuint vertex_format;
 } setup_tab[RADEON_TCL_MAX_SETUP];
@@ -308,7 +307,7 @@ static void init_tcl_verts( void )
 }
 
 
-void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
+void radeonEmitArrays( struct gl_context *ctx, GLuint inputs )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

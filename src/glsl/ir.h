@@ -41,7 +41,31 @@ extern "C" {
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
+/**
+ * \defgroup IR Intermediate representation nodes
+ *
+ * @{
+ */
+
+/**
+ * Class tags
+ *
+ * Each concrete class derived from \c ir_instruction has a value in this
+ * enumerant.  The value for the type is stored in \c ir_instruction::ir_type
+ * by the constructor.  While using type tags is not very C++, it is extremely
+ * convenient.  For example, during debugging you can simply inspect
+ * \c ir_instruction::ir_type to find out the actual type of the object.
+ *
+ * In addition, it is possible to use a switch-statement based on \c
+ * \c ir_instruction::ir_type to select different behavior for different object
+ * types.  For functions that have only slight differences for several object
+ * types, this allows writing very straightforward, readable code.
+ */
 enum ir_node_type {
+   /**
+    * Zero is unused so that the IR validator can detect cases where
+    * \c ir_instruction::ir_type has not been initialized.
+    */
    ir_type_unset,
    ir_type_variable,
    ir_type_assignment,
@@ -156,9 +180,12 @@ protected:
 };
 
 
+/**
+ * Variable storage classes
+ */
 enum ir_variable_mode {
-   ir_var_auto = 0,
-   ir_var_uniform,
+   ir_var_auto = 0,     /**< Function local variables and globals. */
+   ir_var_uniform,      /**< Variable declared as a uniform. */
    ir_var_in,
    ir_var_out,
    ir_var_inout,
@@ -209,6 +236,9 @@ public:
     */
    unsigned component_slots() const;
 
+   /**
+    * Delcared name of the variable
+    */
    const char *name;
 
    /**
@@ -218,11 +248,28 @@ public:
     */
    unsigned max_array_access;
 
+   /**
+    * Is the variable read-only?
+    *
+    * This is set for variables declared as \c const, shader inputs,
+    * and uniforms.
+    */
    unsigned read_only:1;
    unsigned centroid:1;
    unsigned invariant:1;
 
+   /**
+    * Storage class of the variable.
+    *
+    * \sa ir_variable_mode
+    */
    unsigned mode:3;
+
+   /**
+    * Interpolation mode for shader inputs / outputs
+    *
+    * \sa ir_variable_interpolation
+    */
    unsigned interpolation:2;
 
    /**
@@ -233,9 +280,22 @@ public:
     */
    unsigned array_lvalue:1;
 
-   /* ARB_fragment_coord_conventions */
+   /**
+    * \name ARB_fragment_coord_conventions
+    * @{
+    */
    unsigned origin_upper_left:1;
    unsigned pixel_center_integer:1;
+   /*@}*/
+
+   /**
+    * Was the location explicitly set in the shader?
+    *
+    * If the location is explicitly set in the shader, it \b cannot be changed
+    * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
+    * no effect).
+    */
+   unsigned explicit_location:1;
 
    /**
     * Storage location of the base of this variable
@@ -595,6 +655,14 @@ public:
     * For non-vector types in the LHS, this field will be zero.  For vector
     * types, a bit will be set for each component that is written.  Note that
     * for \c vec2 and \c vec3 types only the lower bits will ever be set.
+    *
+    * A partially-set write mask means that each enabled channel gets
+    * the value from a consecutive channel of the rhs.  For example,
+    * to write just .xyw of gl_FrontColor with color:
+    *
+    * (assign (constant bool (1)) (xyw)
+    *     (var_ref gl_FragColor)
+    *     (swiz xyw (var_ref color)))
     */
    unsigned write_mask:4;
 };
@@ -632,6 +700,7 @@ enum ir_expression_operation {
    ir_unop_ceil,
    ir_unop_floor,
    ir_unop_fract,
+   ir_unop_round_even,
    /*@}*/
 
    /**
@@ -668,7 +737,8 @@ enum ir_expression_operation {
    ir_binop_mod,
 
    /**
-    * \name Binary comparison operators
+    * \name Binary comparison operators which return a boolean vector.
+    * The type of both operands must be equal.
     */
    /*@{*/
    ir_binop_less,
@@ -724,9 +794,22 @@ public:
 
    virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
+   /**
+    * Attempt to constant-fold the expression
+    *
+    * If the expression cannot be constant folded, this method will return
+    * \c NULL.
+    */
    virtual ir_constant *constant_expression_value();
 
+   /**
+    * Determine the number of operands used by an expression
+    */
    static unsigned int get_num_operands(ir_expression_operation);
+
+   /**
+    * Determine the number of operands used by an expression
+    */
    unsigned int get_num_operands() const
    {
       return get_num_operands(operation);
@@ -813,6 +896,9 @@ public:
       return callee->function_name();
    }
 
+   /**
+    * Get the function signature bound to this function call
+    */
    ir_function_signature *get_callee()
    {
       return callee;
@@ -977,11 +1063,11 @@ public:
  * Texture sampling opcodes used in ir_texture
  */
 enum ir_texture_opcode {
-   ir_tex,		/* Regular texture look-up */
-   ir_txb,		/* Texture look-up with LOD bias */
-   ir_txl,		/* Texture look-up with explicit LOD */
-   ir_txd,		/* Texture look-up with partial derivatvies */
-   ir_txf		/* Texel fetch with explicit LOD */
+   ir_tex,		/**< Regular texture look-up */
+   ir_txb,		/**< Texture look-up with LOD bias */
+   ir_txl,		/**< Texture look-up with explicit LOD */
+   ir_txd,		/**< Texture look-up with partial derivatvies */
+   ir_txf		/**< Texel fetch with explicit LOD */
 };
 
 
@@ -1384,9 +1470,17 @@ private:
    ir_constant(void);
 };
 
+/*@}*/
+
+/**
+ * Apply a visitor to each IR node in a list
+ */
 void
 visit_exec_list(exec_list *list, ir_visitor *visitor);
 
+/**
+ * Validate invariants on each IR node in a list
+ */
 void validate_ir_tree(exec_list *instructions);
 
 /**

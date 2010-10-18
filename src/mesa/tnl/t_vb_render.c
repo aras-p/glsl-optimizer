@@ -146,7 +146,7 @@ do {							\
 
 /* TODO: do this for all primitives, verts and elts:
  */
-static void clip_elt_triangles( GLcontext *ctx,
+static void clip_elt_triangles( struct gl_context *ctx,
 				GLuint start,
 				GLuint count,
 				GLuint flags )
@@ -235,7 +235,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 /*              Helper functions for drivers                  */
 /**********************************************************************/
 
-void _tnl_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n )
+void _tnl_RenderClippedPolygon( struct gl_context *ctx, const GLuint *elts, GLuint n )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -246,7 +246,7 @@ void _tnl_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n )
    VB->Elts = tmp;
 }
 
-void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+void _tnl_RenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
@@ -259,7 +259,7 @@ void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
 /**********************************************************************/
 
 
-static GLboolean run_render( GLcontext *ctx,
+static GLboolean run_render( struct gl_context *ctx,
 			     struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);

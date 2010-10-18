@@ -85,7 +85,8 @@ void
 lp_setup_set_point_state( struct lp_setup_context *setup,
                           float point_size,                          
                           boolean point_size_per_vertex,
-                          uint sprite);
+                          uint sprite_coord_enable,
+                          uint sprite_coord_origin);
 
 void
 lp_setup_set_setup_variant( struct lp_setup_context *setup,
@@ -120,6 +121,11 @@ void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
                                     struct pipe_sampler_view **views);
+
+void
+lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
+                                    unsigned num,
+                                    const struct pipe_sampler_state **samplers);
 
 unsigned
 lp_setup_is_resource_referenced( const struct lp_setup_context *setup,

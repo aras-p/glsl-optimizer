@@ -161,6 +161,7 @@ const		return CONST_TOK;
 bool		return BOOL_TOK;
 float		return FLOAT_TOK;
 int		return INT_TOK;
+uint		TOKEN_OR_IDENTIFIER(130, UINT_TOK);
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -178,6 +179,9 @@ bvec4		return BVEC4;
 ivec2		return IVEC2;
 ivec3		return IVEC3;
 ivec4		return IVEC4;
+uvec2		TOKEN_OR_IDENTIFIER(130, UVEC2);
+uvec3		TOKEN_OR_IDENTIFIER(130, UVEC3);
+uvec4		TOKEN_OR_IDENTIFIER(130, UVEC4);
 vec2		return VEC2;
 vec3		return VEC3;
 vec4		return VEC4;
@@ -218,6 +222,7 @@ void		return VOID_TOK;
 
 layout		{
 		  if ((yyextra->language_version >= 140)
+		      || yyextra->ARB_explicit_attrib_location_enable
 		      || (yyextra->ARB_fragment_coord_conventions_enable)){
 		      return LAYOUT_TOK;
 		   } else {
@@ -235,6 +240,8 @@ layout		{
 &&		return AND_OP;
 \|\|		return OR_OP;
 "^^"		return XOR_OP;
+"<<"		return LEFT_OP;
+">>"		return RIGHT_OP;
 
 \*=		return MUL_ASSIGN;
 \/=		return DIV_ASSIGN;

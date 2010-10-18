@@ -177,7 +177,7 @@ while (0)
  * discrete and there are no intervening state changes.  (Somewhat
  * duplicates changes to DrawArrays code)
  */
-static void r200EmitPrim( GLcontext *ctx, 
+static void r200EmitPrim( struct gl_context *ctx, 
 		          GLenum prim, 
 		          GLuint hwprim, 
 		          GLuint start, 
@@ -241,7 +241,7 @@ static void r200EmitPrim( GLcontext *ctx,
 /*                          External entrypoints                     */
 /**********************************************************************/
 
-void r200EmitPrimitive( GLcontext *ctx, 
+void r200EmitPrimitive( struct gl_context *ctx, 
 			  GLuint first,
 			  GLuint last,
 			  GLuint flags )
@@ -249,7 +249,7 @@ void r200EmitPrimitive( GLcontext *ctx,
    tcl_render_tab_verts[flags&PRIM_MODE_MASK]( ctx, first, last, flags );
 }
 
-void r200EmitEltPrimitive( GLcontext *ctx, 
+void r200EmitEltPrimitive( struct gl_context *ctx, 
 			     GLuint first,
 			     GLuint last,
 			     GLuint flags )
@@ -257,7 +257,7 @@ void r200EmitEltPrimitive( GLcontext *ctx,
    tcl_render_tab_elts[flags&PRIM_MODE_MASK]( ctx, first, last, flags );
 }
 
-void r200TclPrimitive( GLcontext *ctx, 
+void r200TclPrimitive( struct gl_context *ctx, 
 			 GLenum prim,
 			 int hw_prim )
 {
@@ -265,6 +265,8 @@ void r200TclPrimitive( GLcontext *ctx,
    GLuint newprim = hw_prim | R200_VF_TCL_OUTPUT_VTX_ENABLE;
 
    radeon_prepare_render(&rmesa->radeon);
+   if (rmesa->radeon.NewGLState)
+      r200ValidateState( ctx );
 
    if (newprim != rmesa->tcl.hw_primitive ||
        !discrete_prim[hw_prim&0xf]) {
@@ -337,7 +339,7 @@ r200InitStaticFogData( void )
  * Fog blend factors are in the range [0,1].
  */
 float
-r200ComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
+r200ComputeFogBlendFactor( struct gl_context *ctx, GLfloat fogcoord )
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat d, temp;
@@ -372,7 +374,7 @@ r200ComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
  * Predict total emit size for next rendering operation so there is no flush in middle of rendering
  * Prediction has to aim towards the best possible value that is worse than worst case scenario
  */
-static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
+static GLuint r200EnsureEmitSize( struct gl_context * ctx , GLubyte* vimap_rev )
 {
   r200ContextPtr rmesa = R200_CONTEXT(ctx);
   TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -437,7 +439,7 @@ static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
 
 /* TCL render.
  */
-static GLboolean r200_run_tcl_render( GLcontext *ctx,
+static GLboolean r200_run_tcl_render( struct gl_context *ctx,
 				      struct tnl_pipeline_stage *stage )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -594,7 +596,7 @@ const struct tnl_pipeline_stage _r200_tcl_stage =
  */
 
 
-static void transition_to_swtnl( GLcontext *ctx )
+static void transition_to_swtnl( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -618,7 +620,7 @@ static void transition_to_swtnl( GLcontext *ctx )
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~(R200_VAP_TCL_ENABLE|R200_VAP_PROG_VTX_SHADER_ENABLE);
 }
 
-static void transition_to_hwtnl( GLcontext *ctx )
+static void transition_to_hwtnl( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -688,7 +690,7 @@ static char *getFallbackString(GLuint bit)
 
 
 
-void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void r200TclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
 	r200ContextPtr rmesa = R200_CONTEXT(ctx);
 	GLuint oldfallback = rmesa->radeon.TclFallback;

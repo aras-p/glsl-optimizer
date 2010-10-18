@@ -37,6 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 
-extern void radeonEmitArrays( GLcontext *ctx, GLuint inputs );
+extern void radeonEmitArrays( struct gl_context *ctx, GLuint inputs );
 
 #endif

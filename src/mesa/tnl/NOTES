@@ -17,16 +17,16 @@ STATE
 
 To create and destroy the module:
 
-	GLboolean _tnl_CreateContext( GLcontext *ctx );
-	void _tnl_DestroyContext( GLcontext *ctx );
+	GLboolean _tnl_CreateContext( struct gl_context *ctx );
+	void _tnl_DestroyContext( struct gl_context *ctx );
 
 The module is not active by default, and must be installed by calling
 _tnl_Wakeup().  This function installs internal tnl functions into all
 the vtxfmt dispatch hooks, thus taking over the task of transformation
 and lighting entirely:
 
-        void _tnl_wakeup_exec( GLcontext *ctx );
-	void _tnl_wakeup_save_exec( GLcontext *ctx );
+        void _tnl_wakeup_exec( struct gl_context *ctx );
+	void _tnl_wakeup_save_exec( struct gl_context *ctx );
 
    
 This module tracks state changes internally and maintains derived
@@ -34,7 +34,7 @@ values based on the current state.  For this to work, the driver
 ensure the following funciton is called whenever the state changes and
 the swsetup module is 'awake':
 
-	void _tnl_InvalidateState( GLcontext *ctx, GLuint new_state );
+	void _tnl_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 There is no explicit call to put the tnl module to sleep.  Simply
 install other function pointers into all the vtxfmt dispatch slots,
@@ -58,13 +58,13 @@ higher-level primitives (for example the radeon driver).
 In addition, the following functions provide further tweaks:
 
 extern void
-_tnl_need_projected_coords( GLcontext *ctx, GLboolean flag );
+_tnl_need_projected_coords( struct gl_context *ctx, GLboolean flag );
 
 	- Direct the default vertex transformation stage to
           produce/not produce projected clip coordinates.
 	  
 extern void
-_tnl_need_dlist_loopback( GLcontext *ctx, GLboolean flag );
+_tnl_need_dlist_loopback( struct gl_context *ctx, GLboolean flag );
       
         - Direct the display list component of the tnl module to
           replay display lists as 'glVertex' type calls, rather than
@@ -76,7 +76,7 @@ _tnl_need_dlist_loopback( GLcontext *ctx, GLboolean flag );
 
 
 extern void
-_tnl_need_dlist_norm_lengths( GLcontext *ctx, GLboolean flag );
+_tnl_need_dlist_norm_lengths( struct gl_context *ctx, GLboolean flag );
 
 	- Direct the display list component to enable/disable caching
           1/length values for display list normals.  Doing so is
@@ -88,7 +88,7 @@ DRIVER INTERFACE
 
 The module itself offers a minimal driver interface:
 
-	 void (*RunPipeline)( GLcontext *ctx );
+	 void (*RunPipeline)( struct gl_context *ctx );
 
 Normally this is set to _tnl_RunPipeline(), however the driver can use
 this hook to wrap checks or other code around this call. 

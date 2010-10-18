@@ -99,7 +99,7 @@ static struct swtnl_attr_info {
 };
 
 static void
-swtnl_choose_attrs(GLcontext *ctx)
+swtnl_choose_attrs(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -153,7 +153,7 @@ swtnl_choose_attrs(GLcontext *ctx)
 }
 
 static void
-swtnl_alloc_vertices(GLcontext *ctx)
+swtnl_alloc_vertices(struct gl_context *ctx)
 {
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl;
 
@@ -164,7 +164,7 @@ swtnl_alloc_vertices(GLcontext *ctx)
 }
 
 static void
-swtnl_bind_vertices(GLcontext *ctx)
+swtnl_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_swtnl_state *swtnl = &render->swtnl;
@@ -182,7 +182,7 @@ swtnl_bind_vertices(GLcontext *ctx)
 }
 
 static void
-swtnl_unbind_vertices(GLcontext *ctx)
+swtnl_unbind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i;
@@ -200,7 +200,7 @@ swtnl_unbind_vertices(GLcontext *ctx)
 }
 
 static void
-swtnl_flush_vertices(GLcontext *ctx)
+swtnl_flush_vertices(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl;
@@ -232,25 +232,25 @@ swtnl_flush_vertices(GLcontext *ctx)
 /* TnL renderer entry points */
 
 static void
-swtnl_start(GLcontext *ctx)
+swtnl_start(struct gl_context *ctx)
 {
 	swtnl_choose_attrs(ctx);
 }
 
 static void
-swtnl_finish(GLcontext *ctx)
+swtnl_finish(struct gl_context *ctx)
 {
 	swtnl_flush_vertices(ctx);
 	swtnl_unbind_vertices(ctx);
 }
 
 static void
-swtnl_primitive(GLcontext *ctx, GLenum mode)
+swtnl_primitive(struct gl_context *ctx, GLenum mode)
 {
 }
 
 static void
-swtnl_reset_stipple(GLcontext *ctx)
+swtnl_reset_stipple(struct gl_context *ctx)
 {
 }
 
@@ -273,7 +273,7 @@ swtnl_reset_stipple(GLcontext *ctx)
 	} while (0)
 
 static void
-swtnl_points(GLcontext *ctx, GLuint first, GLuint last)
+swtnl_points(struct gl_context *ctx, GLuint first, GLuint last)
 {
 	int i, count;
 
@@ -289,7 +289,7 @@ swtnl_points(GLcontext *ctx, GLuint first, GLuint last)
 }
 
 static void
-swtnl_line(GLcontext *ctx, GLuint v1, GLuint v2)
+swtnl_line(struct gl_context *ctx, GLuint v1, GLuint v2)
 {
 	BEGIN_PRIMITIVE(GL_LINES, 2);
 	OUT_VERTEX(v1);
@@ -297,7 +297,7 @@ swtnl_line(GLcontext *ctx, GLuint v1, GLuint v2)
 }
 
 static void
-swtnl_triangle(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3)
+swtnl_triangle(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3)
 {
 	BEGIN_PRIMITIVE(GL_TRIANGLES, 3);
 	OUT_VERTEX(v1);
@@ -306,7 +306,7 @@ swtnl_triangle(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3)
 }
 
 static void
-swtnl_quad(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
+swtnl_quad(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
 {
 	BEGIN_PRIMITIVE(GL_QUADS, 4);
 	OUT_VERTEX(v1);
@@ -317,7 +317,7 @@ swtnl_quad(GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
 
 /* TnL initialization. */
 static void
-TAG(swtnl_init)(GLcontext *ctx)
+TAG(swtnl_init)(struct gl_context *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 
@@ -348,7 +348,7 @@ TAG(swtnl_init)(GLcontext *ctx)
 }
 
 static void
-TAG(swtnl_destroy)(GLcontext *ctx)
+TAG(swtnl_destroy)(struct gl_context *ctx)
 {
 	nouveau_bo_ref(NULL, &to_render_state(ctx)->swtnl.vbo);
 }

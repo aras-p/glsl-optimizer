@@ -113,7 +113,11 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef y);
 
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
+lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
+                           int quad_index);
+
+void
+lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
                            int quad_index);
 
 

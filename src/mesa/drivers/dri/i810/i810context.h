@@ -79,7 +79,7 @@ typedef void (*i810_point_func)( i810ContextPtr, i810Vertex * );
 
 struct i810_context_t {
    GLint refcount;   
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
 
    /* Texture object bookkeeping
     */
@@ -146,7 +146,7 @@ struct i810_context_t {
    /* DRI stuff
     */
    GLuint needClip;
-   GLframebuffer *glBuffer;
+   struct gl_framebuffer *glBuffer;
    GLboolean doPageFlip;
 
    /* These refer to the current draw (front vs. back) buffer:

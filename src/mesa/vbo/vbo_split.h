@@ -49,7 +49,7 @@
  */
 GLboolean split_prim_inplace(GLenum mode, GLuint *first, GLuint *incr);
 
-void vbo_split_inplace( GLcontext *ctx,
+void vbo_split_inplace( struct gl_context *ctx,
 			const struct gl_client_array *arrays[],
 			const struct _mesa_prim *prim,
 			GLuint nr_prims,
@@ -61,7 +61,7 @@ void vbo_split_inplace( GLcontext *ctx,
 
 /* Requires ib != NULL:
  */
-void vbo_split_copy( GLcontext *ctx,
+void vbo_split_copy( struct gl_context *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,

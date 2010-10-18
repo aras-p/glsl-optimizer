@@ -145,6 +145,7 @@ const struct brw_tracked_state *gen6_atoms[] =
    &gen6_wm_state,
 
    &gen6_scissor_state,
+   &gen6_scissor_state_pointers,
 
    &brw_state_base_address,
 
@@ -231,7 +232,6 @@ static struct dirty_bit_map mesa_bits[] = {
    DEFINE_BIT(_NEW_MODELVIEW),
    DEFINE_BIT(_NEW_PROJECTION),
    DEFINE_BIT(_NEW_TEXTURE_MATRIX),
-   DEFINE_BIT(_NEW_COLOR_MATRIX),
    DEFINE_BIT(_NEW_ACCUM),
    DEFINE_BIT(_NEW_COLOR),
    DEFINE_BIT(_NEW_DEPTH),
@@ -336,7 +336,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
  */
 void brw_validate_state( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;

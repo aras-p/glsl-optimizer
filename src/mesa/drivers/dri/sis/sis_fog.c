@@ -40,7 +40,7 @@ static GLint convertFtToFogFt( GLfloat dwInValue );
 static GLint doFPtoFixedNoRound( GLfloat dwInValue, int nFraction );
 
 void
-sisDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
+sisDDFogfv( struct gl_context *ctx, GLenum pname, const GLfloat *params )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *prev = &smesa->prev;

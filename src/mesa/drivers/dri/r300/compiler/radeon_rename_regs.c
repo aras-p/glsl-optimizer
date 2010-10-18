@@ -104,13 +104,14 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 					inst != &c->Program.Instructions;
 					inst = inst->Next) {
 		const struct rc_opcode_info * info;
+		unsigned int old_index, temp_index;
+		struct rc_dst_register * dst;
 		if(inst->Type != RC_INSTRUCTION_NORMAL) {
 			rc_error(c, "%s only works with normal instructions.",
 								__FUNCTION__);
 			return;
 		}
-		unsigned int old_index, temp_index;
-		struct rc_dst_register * dst = &inst->U.I.DstReg;
+		dst = &inst->U.I.DstReg;
 		info = rc_get_opcode_info(inst->U.I.Opcode);
 		if(!info->HasDstReg || dst->File != RC_FILE_TEMPORARY) {
 			continue;

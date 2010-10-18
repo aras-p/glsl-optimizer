@@ -719,7 +719,7 @@ void brwInitVtbl( struct brw_context *brw );
  * brw_context.c
  */
 GLboolean brwCreateContext( int api,
-			    const __GLcontextModes *mesaVis,
+			    const struct gl_config *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate);
 
@@ -763,15 +763,15 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /* brw_state.c */
-void brw_enable(GLcontext * ctx, GLenum cap, GLboolean state);
-void brw_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval);
+void brw_enable(struct gl_context * ctx, GLenum cap, GLboolean state);
+void brw_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
 static INLINE struct brw_context *
-brw_context( GLcontext *ctx )
+brw_context( struct gl_context *ctx )
 {
    return (struct brw_context *)ctx;
 }
@@ -799,6 +799,8 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
 }
+
+GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
 
 #endif
 

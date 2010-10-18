@@ -127,13 +127,13 @@ get_blend_func(unsigned func)
 }
 
 void
-nv04_defer_control(GLcontext *ctx, int emit)
+nv04_defer_control(struct gl_context *ctx, int emit)
 {
 	context_dirty(ctx, CONTROL);
 }
 
 void
-nv04_emit_control(GLcontext *ctx, int emit)
+nv04_emit_control(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
@@ -247,13 +247,13 @@ nv04_emit_control(GLcontext *ctx, int emit)
 }
 
 void
-nv04_defer_blend(GLcontext *ctx, int emit)
+nv04_defer_blend(struct gl_context *ctx, int emit)
 {
 	context_dirty(ctx, BLEND);
 }
 
 void
-nv04_emit_blend(GLcontext *ctx, int emit)
+nv04_emit_blend(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);

@@ -296,6 +296,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
             reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
+    set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_W, 0,
+	    brw_vec8_grf(c->key.source_w_reg, 0));
     reg_index += c->key.nr_payload_regs;
 
     /* constants */
@@ -340,30 +342,46 @@ static void prealloc_reg(struct brw_wm_compile *c)
               }
            }
            /* number of constant regs used (each reg is float[8]) */
-           c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
-           reg_index += c->nr_creg;
+	   c->nr_creg = ALIGN(nr_params, 2) / 2;
+	   reg_index += c->nr_creg;
         }
     }
 
-    /* fragment shader inputs */
-    for (i = 0; i < VERT_RESULT_MAX; i++) {
-       int fp_input;
+    /* fragment shader inputs: One 2-reg pair of interpolation
+     * coefficients for each vec4 to be set up.
+     */
+    if (intel->gen >= 6) {
+       for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+	  if (!(c->fp->program.Base.InputsRead & BITFIELD64_BIT(i)))
+	     continue;
 
-       if (i >= VERT_RESULT_VAR0)
-	  fp_input = i - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
-       else if (i <= VERT_RESULT_TEX7)
-	  fp_input = i;
-       else
-	  fp_input = -1;
-
-       if (fp_input >= 0 && inputs & (1 << fp_input)) {
-	  urb_read_length = reg_index;
 	  reg = brw_vec8_grf(reg_index, 0);
-	  for (j = 0; j < 4; j++)
-	     set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
-       }
-       if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
+	  for (j = 0; j < 4; j++) {
+	     set_reg(c, PROGRAM_PAYLOAD, i, j, reg);
+	  }
 	  reg_index += 2;
+       }
+       urb_read_length = reg_index;
+    } else {
+       for (i = 0; i < VERT_RESULT_MAX; i++) {
+	  int fp_input;
+
+	  if (i >= VERT_RESULT_VAR0)
+	     fp_input = i - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
+	  else if (i <= VERT_RESULT_TEX7)
+	     fp_input = i;
+	  else
+	     fp_input = -1;
+
+	  if (fp_input >= 0 && inputs & (1 << fp_input)) {
+	     urb_read_length = reg_index;
+	     reg = brw_vec8_grf(reg_index, 0);
+	     for (j = 0; j < 4; j++)
+		set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
+	  }
+	  if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
+	     reg_index += 2;
+	  }
        }
     }
 
@@ -614,21 +632,6 @@ static void emit_arl(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-/**
- * For GLSL shaders, this KIL will be unconditional.
- * It may be contained inside an IF/ENDIF structure of course.
- */
-static void emit_kil(struct brw_wm_compile *c)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-    brw_push_insn_state(p);
-    brw_set_mask_control(p, BRW_MASK_DISABLE);
-    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
-    brw_AND(p, depth, c->emit_mask_reg, depth);
-    brw_pop_insn_state(p);
-}
-
 static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
@@ -707,6 +710,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
     brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+
+    if (intel->gen >= 6)
+	brw_set_acc_write_control(p, 1);
 
     for (i = 0; i < c->nr_fp_insns; i++) {
         const struct prog_instruction *inst = &c->prog_instructions[i];
@@ -898,7 +904,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 			 c->fp->program.Base.SamplerUnits[inst->TexSrcUnit]);
 		break;
 	    case OPCODE_KIL_NV:
-		emit_kil(c);
+		emit_kil_nv(c);
 		break;
 	    case OPCODE_IF:
 		assert(if_depth < MAX_IF_DEPTH);

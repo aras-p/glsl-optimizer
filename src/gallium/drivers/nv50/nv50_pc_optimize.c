@@ -452,7 +452,7 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
       if (nvi->opcode == NV_OP_SAT) {
          mi = nvi->src[0]->value->insn;
 
-         if (mi->opcode != NV_OP_ADD || mi->opcode != NV_OP_MAD)
+         if (mi->opcode != NV_OP_ADD && mi->opcode != NV_OP_MAD)
             continue;
          if (mi->flags_def || mi->def[0]->refc > 1)
             continue;

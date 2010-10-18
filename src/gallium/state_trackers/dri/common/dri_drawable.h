@@ -79,7 +79,7 @@ dri_drawable(__DRIdrawable * driDrawPriv)
 boolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, boolean isPixmap);
+		  const struct gl_config * visual, boolean isPixmap);
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
 

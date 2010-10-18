@@ -21,9 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "r600_context.h"
-#include "r600_resource.h"
-#include "r600_screen.h"
+#include "r600_pipe.h"
 
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
@@ -46,7 +44,16 @@ static struct pipe_resource *r600_resource_from_handle(struct pipe_screen * scre
 	}
 }
 
-void r600_init_context_resource_functions(struct r600_context *r600)
+void r600_init_screen_resource_functions(struct pipe_screen *screen)
+{
+	screen->resource_create = r600_resource_create;
+	screen->resource_from_handle = r600_resource_from_handle;
+	screen->resource_get_handle = u_resource_get_handle_vtbl;
+	screen->resource_destroy = u_resource_destroy_vtbl;
+	screen->user_buffer_create = r600_user_buffer_create;
+}
+
+void r600_init_context_resource_functions(struct r600_pipe_context *r600)
 {
 	r600->context.get_transfer = u_get_transfer_vtbl;
 	r600->context.transfer_map = u_transfer_map_vtbl;
@@ -55,13 +62,4 @@ void r600_init_context_resource_functions(struct r600_context *r600)
 	r600->context.transfer_destroy = u_transfer_destroy_vtbl;
 	r600->context.transfer_inline_write = u_transfer_inline_write_vtbl;
 	r600->context.is_resource_referenced = u_is_resource_referenced_vtbl;
-}
-
-void r600_init_screen_resource_functions(struct pipe_screen *screen)
-{
-	screen->resource_create = r600_resource_create;
-	screen->resource_from_handle = r600_resource_from_handle;
-	screen->resource_get_handle = u_resource_get_handle_vtbl;
-	screen->resource_destroy = u_resource_destroy_vtbl;
-	screen->user_buffer_create = r600_user_buffer_create;
 }

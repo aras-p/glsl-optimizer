@@ -27,7 +27,6 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/condrender.h"
-#include "main/convolve.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -94,106 +93,10 @@ regions_overlap(GLint srcx, GLint srcy,
 
 
 /**
- * RGBA copypixels with convolution.
- */
-static void
-copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
-                      GLint width, GLint height, GLint destx, GLint desty)
-{
-   GLint row;
-   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLbitfield transferOps = ctx->_ImageTransferState;
-   const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
-      || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
-   GLfloat *dest, *tmpImage, *convImage;
-   SWspan span;
-
-   INIT_SPAN(span, GL_BITMAP);
-   _swrast_span_default_attribs(ctx, &span);
-   span.arrayMask = SPAN_RGBA;
-   span.arrayAttribs = FRAG_BIT_COL0;
-
-   /* allocate space for GLfloat image */
-   tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   if (!tmpImage) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
-      return;
-   }
-   convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   if (!convImage) {
-      free(tmpImage);
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
-      return;
-   }
-
-   /* read source image as float/RGBA */
-   dest = tmpImage;
-   for (row = 0; row < height; row++) {
-      _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                             width, srcx, srcy + row, GL_FLOAT, dest);
-      dest += 4 * width;
-   }
-
-   /* do the image transfer ops which preceed convolution */
-   for (row = 0; row < height; row++) {
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) (tmpImage + row * width * 4);
-      _mesa_apply_rgba_transfer_ops(ctx,
-                                    transferOps & IMAGE_PRE_CONVOLUTION_BITS,
-                                    width, rgba);
-   }
-
-   /* do convolution */
-   if (ctx->Pixel.Convolution2DEnabled) {
-      _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
-   }
-   else {
-      ASSERT(ctx->Pixel.Separable2DEnabled);
-      _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
-   }
-   free(tmpImage);
-
-   /* do remaining post-convolution image transfer ops */
-   for (row = 0; row < height; row++) {
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) (convImage + row * width * 4);
-      _mesa_apply_rgba_transfer_ops(ctx,
-                                    transferOps & IMAGE_POST_CONVOLUTION_BITS,
-                                    width, rgba);
-   }
-
-   if (!sink) {
-      /* write the new image */
-      for (row = 0; row < height; row++) {
-         const GLfloat *src = convImage + row * width * 4;
-         GLfloat *rgba = (GLfloat *) span.array->attribs[FRAG_ATTRIB_COL0];
-
-         /* copy convolved colors into span array */
-         memcpy(rgba, src, width * 4 * sizeof(GLfloat));
-
-         /* write span */
-         span.x = destx;
-         span.y = desty + row;
-         span.end = width;
-         span.array->ChanType = GL_FLOAT;
-         if (zoom) {
-            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, rgba);
-         }
-         else {
-            _swrast_write_rgba_span(ctx, &span);
-         }
-      }
-      /* restore this */
-      span.array->ChanType = CHAN_TYPE;
-   }
-
-   free(convImage);
-}
-
-
-/**
  * RGBA copypixels
  */
 static void
-copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
    GLfloat *tmpImage, *p;
@@ -206,16 +109,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
       /* no readbuffer - OK */
       return;
-   }
-
-   if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
-      return;
-   }
-   else if (ctx->Pixel.Convolution1DEnabled) {
-      /* make sure we don't apply 1D convolution */
-      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
-                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
    }
 
    if (ctx->DrawBuffer == ctx->ReadBuffer) {
@@ -312,7 +205,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
  * Z scale and bias.
  */
 static void
-scale_and_bias_z(GLcontext *ctx, GLuint width,
+scale_and_bias_z(struct gl_context *ctx, GLuint width,
                  const GLfloat depth[], GLuint z[])
 {
    const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
@@ -347,7 +240,7 @@ scale_and_bias_z(GLcontext *ctx, GLuint width,
  * TODO: Optimize!!!!
  */
 static void
-copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                    GLint width, GLint height,
                    GLint destx, GLint desty )
 {
@@ -441,7 +334,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
 
 static void
-copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                      GLint width, GLint height,
                      GLint destx, GLint desty )
 {
@@ -534,7 +427,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
  * CopyPixels function.
  */
 static void
-copy_depth_stencil_pixels(GLcontext *ctx,
+copy_depth_stencil_pixels(struct gl_context *ctx,
                           const GLint srcX, const GLint srcY,
                           const GLint width, const GLint height,
                           const GLint destX, const GLint destY)
@@ -709,7 +602,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
  * Try to do a fast copy pixels.
  */
 static GLboolean
-fast_copy_pixels(GLcontext *ctx,
+fast_copy_pixels(struct gl_context *ctx,
                  GLint srcX, GLint srcY, GLsizei width, GLsizei height,
                  GLint dstX, GLint dstY, GLenum type)
 {
@@ -791,7 +684,7 @@ fast_copy_pixels(GLcontext *ctx,
  * By time we get here, all parameters will have been error-checked.
  */
 void
-_swrast_CopyPixels( GLcontext *ctx,
+_swrast_CopyPixels( struct gl_context *ctx,
 		    GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 		    GLint destx, GLint desty, GLenum type )
 {

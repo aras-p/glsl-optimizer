@@ -25,14 +25,13 @@
 
 /**
  * \file texcompress_fxt1.c
- * GL_EXT_texture_compression_fxt1 support.
+ * GL_3DFX_texture_compression_FXT1 support.
  */
 
 
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
-#include "convolve.h"
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -86,7 +85,6 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 3 * srcWidth;
       srcFormat = GL_RGB;
@@ -143,7 +141,6 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 4 * srcWidth;
       srcFormat = GL_RGBA;

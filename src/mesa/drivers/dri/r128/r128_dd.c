@@ -45,7 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Return the width and height of the current color buffer.
  */
-static void r128GetBufferSize( GLframebuffer *buffer,
+static void r128GetBufferSize( struct gl_framebuffer *buffer,
 				 GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -59,7 +59,7 @@ static void r128GetBufferSize( GLframebuffer *buffer,
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *r128GetString( GLcontext *ctx, GLenum name )
+static const GLubyte *r128GetString( struct gl_context *ctx, GLenum name )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    static char buffer[128];
@@ -97,7 +97,7 @@ static const GLubyte *r128GetString( GLcontext *ctx, GLenum name )
  * hardware.  All commands that are normally sent to the ring are
  * already considered `flushed'.
  */
-static void r128Flush( GLcontext *ctx )
+static void r128Flush( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -118,7 +118,7 @@ static void r128Flush( GLcontext *ctx )
 /* Make sure all commands have been sent to the hardware and have
  * completed processing.
  */
-static void r128Finish( GLcontext *ctx )
+static void r128Finish( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 

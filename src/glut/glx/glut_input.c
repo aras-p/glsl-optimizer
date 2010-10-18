@@ -292,10 +292,10 @@ __glutProcessDeviceEvents(XEvent * event)
   return 0;
 }
 
+#if !defined(_WIN32)
 static GLUTeventParser eventParser =
 {__glutProcessDeviceEvents, NULL};
 
-#if !defined(_WIN32)
 static void
 addDeviceEventParser(void)
 {

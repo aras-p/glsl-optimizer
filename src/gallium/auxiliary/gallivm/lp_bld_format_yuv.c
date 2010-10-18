@@ -35,6 +35,7 @@
 
 
 #include "util/u_format.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_bld_arit.h"
 #include "lp_bld_type.h"
@@ -42,7 +43,7 @@
 #include "lp_bld_conv.h"
 #include "lp_bld_gather.h"
 #include "lp_bld_format.h"
-
+#include "lp_bld_logic.h"
 
 /**
  * Extract Y, U, V channels from packed UYVY.
@@ -59,7 +60,7 @@ uyvy_to_yuv_soa(LLVMBuilderRef builder,
                 LLVMValueRef *v)
 {
    struct lp_type type;
-   LLVMValueRef shift, mask;
+   LLVMValueRef mask;
 
    memset(&type, 0, sizeof type);
    type.width = 32;
@@ -69,14 +70,37 @@ uyvy_to_yuv_soa(LLVMBuilderRef builder,
    assert(lp_check_value(type, i));
 
    /*
-    * y = (uyvy >> 16*i) & 0xff
+    * y = (uyvy >> (16*i + 8)) & 0xff
     * u = (uyvy        ) & 0xff
     * v = (uyvy >> 16  ) & 0xff
     */
 
-   shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
-   shift = LLVMBuildAdd(builder, shift, lp_build_const_int_vec(type, 8), "");
-   *y = LLVMBuildLShr(builder, packed, shift, "");
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   /*
+    * Avoid shift with per-element count.
+    * No support on x86, gets translated to roughly 5 instructions
+    * per element. Didn't measure performance but cuts shader size
+    * by quite a bit (less difference if cpu has no sse4.1 support).
+    */
+   if (util_cpu_caps.has_sse2 && n == 4) {
+      LLVMValueRef sel, tmp, tmp2;
+      struct lp_build_context bld32;
+
+      lp_build_context_init(&bld32, builder, type);
+
+      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 8), "");
+      tmp2 = LLVMBuildLShr(builder, tmp, lp_build_const_int_vec(type, 16), "");
+      sel = lp_build_compare(builder, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(type, 0));
+      *y = lp_build_select(&bld32, sel, tmp, tmp2);
+   } else
+#endif
+   {
+      LLVMValueRef shift;
+      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
+      shift = LLVMBuildAdd(builder, shift, lp_build_const_int_vec(type, 8), "");
+      *y = LLVMBuildLShr(builder, packed, shift, "");
+   }
+
    *u = packed;
    *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 16), "");
 
@@ -103,7 +127,7 @@ yuyv_to_yuv_soa(LLVMBuilderRef builder,
                 LLVMValueRef *v)
 {
    struct lp_type type;
-   LLVMValueRef shift, mask;
+   LLVMValueRef mask;
 
    memset(&type, 0, sizeof type);
    type.width = 32;
@@ -118,8 +142,30 @@ yuyv_to_yuv_soa(LLVMBuilderRef builder,
     * v = (yuyv >> 24  ) & 0xff
     */
 
-   shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
-   *y = LLVMBuildLShr(builder, packed, shift, "");
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   /*
+    * Avoid shift with per-element count.
+    * No support on x86, gets translated to roughly 5 instructions
+    * per element. Didn't measure performance but cuts shader size
+    * by quite a bit (less difference if cpu has no sse4.1 support).
+    */
+   if (util_cpu_caps.has_sse2 && n == 4) {
+      LLVMValueRef sel, tmp;
+      struct lp_build_context bld32;
+
+      lp_build_context_init(&bld32, builder, type);
+
+      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 16), "");
+      sel = lp_build_compare(builder, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(type, 0));
+       *y = lp_build_select(&bld32, sel, packed, tmp);
+   } else
+#endif
+   {
+      LLVMValueRef shift;
+      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
+      *y = LLVMBuildLShr(builder, packed, shift, "");
+   }
+
    *u = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 8), "");
    *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 24), "");
 

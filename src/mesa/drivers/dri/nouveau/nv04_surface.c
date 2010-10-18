@@ -191,7 +191,7 @@ sifm_format(gl_format format)
 }
 
 static void
-nv04_surface_copy_swizzle(GLcontext *ctx,
+nv04_surface_copy_swizzle(struct gl_context *ctx,
 			  struct nouveau_surface *dst,
 			  struct nouveau_surface *src,
 			  int dx, int dy, int sx, int sy,
@@ -213,11 +213,6 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
         /* Swizzled surfaces must be POT  */
 	assert(_mesa_is_pow_two(dst->width) &&
 	       _mesa_is_pow_two(dst->height));
-
-        /* If area is too large to copy in one shot we must copy it in
-	 * POT chunks to meet alignment requirements */
-	assert(sub_w == w || _mesa_is_pow_two(w));
-	assert(sub_h == h || _mesa_is_pow_two(h));
 
 	nouveau_bo_marko(bctx, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE,
 			 src->bo, bo_flags | NOUVEAU_BO_RD);
@@ -274,7 +269,7 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 }
 
 static void
-nv04_surface_copy_m2mf(GLcontext *ctx,
+nv04_surface_copy_m2mf(struct gl_context *ctx,
 		       struct nouveau_surface *dst,
 		       struct nouveau_surface *src,
 		       int dx, int dy, int sx, int sy,
@@ -367,7 +362,7 @@ get_swizzled_offset(struct nouveau_surface *s, unsigned x, unsigned y)
 }
 
 static void
-nv04_surface_copy_cpu(GLcontext *ctx,
+nv04_surface_copy_cpu(struct gl_context *ctx,
 		      struct nouveau_surface *dst,
 		      struct nouveau_surface *src,
 		      int dx, int dy, int sx, int sy,
@@ -398,7 +393,7 @@ nv04_surface_copy_cpu(GLcontext *ctx,
 }
 
 void
-nv04_surface_copy(GLcontext *ctx,
+nv04_surface_copy(struct gl_context *ctx,
 		  struct nouveau_surface *dst,
 		  struct nouveau_surface *src,
 		  int dx, int dy, int sx, int sy,
@@ -423,7 +418,7 @@ nv04_surface_copy(GLcontext *ctx,
 }
 
 void
-nv04_surface_fill(GLcontext *ctx,
+nv04_surface_fill(struct gl_context *ctx,
 		  struct nouveau_surface *dst,
 		  unsigned mask, unsigned value,
 		  int dx, int dy, int w, int h)
@@ -465,7 +460,7 @@ nv04_surface_fill(GLcontext *ctx,
 }
 
 void
-nv04_surface_takedown(GLcontext *ctx)
+nv04_surface_takedown(struct gl_context *ctx)
 {
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
 
@@ -480,7 +475,7 @@ nv04_surface_takedown(GLcontext *ctx)
 }
 
 GLboolean
-nv04_surface_init(GLcontext *ctx)
+nv04_surface_init(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;

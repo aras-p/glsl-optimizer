@@ -164,7 +164,7 @@ static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr )
  * discrete and there are no intervening state changes.  (Somewhat
  * duplicates changes to DrawArrays code)
  */
-static void radeonEmitPrim( GLcontext *ctx, 
+static void radeonEmitPrim( struct gl_context *ctx, 
 		       GLenum prim, 
 		       GLuint hwprim, 
 		       GLuint start, 
@@ -228,7 +228,7 @@ static void radeonEmitPrim( GLcontext *ctx,
 /*                          External entrypoints                     */
 /**********************************************************************/
 
-void radeonEmitPrimitive( GLcontext *ctx, 
+void radeonEmitPrimitive( struct gl_context *ctx, 
 			  GLuint first,
 			  GLuint last,
 			  GLuint flags )
@@ -236,7 +236,7 @@ void radeonEmitPrimitive( GLcontext *ctx,
    tcl_render_tab_verts[flags&PRIM_MODE_MASK]( ctx, first, last, flags );
 }
 
-void radeonEmitEltPrimitive( GLcontext *ctx, 
+void radeonEmitEltPrimitive( struct gl_context *ctx, 
 			     GLuint first,
 			     GLuint last,
 			     GLuint flags )
@@ -244,7 +244,7 @@ void radeonEmitEltPrimitive( GLcontext *ctx,
    tcl_render_tab_elts[flags&PRIM_MODE_MASK]( ctx, first, last, flags );
 }
 
-void radeonTclPrimitive( GLcontext *ctx, 
+void radeonTclPrimitive( struct gl_context *ctx, 
 			 GLenum prim,
 			 int hw_prim )
 {
@@ -326,7 +326,7 @@ radeonInitStaticFogData( void )
  * Fog blend factors are in the range [0,1].
  */
 float
-radeonComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
+radeonComputeFogBlendFactor( struct gl_context *ctx, GLfloat fogcoord )
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat d, temp;
@@ -361,7 +361,7 @@ radeonComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
  * Predict total emit size for next rendering operation so there is no flush in middle of rendering
  * Prediction has to aim towards the best possible value that is worse than worst case scenario
  */
-static GLuint radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
+static GLuint radeonEnsureEmitSize( struct gl_context * ctx , GLuint inputs )
 {
   r100ContextPtr rmesa = R100_CONTEXT(ctx);
   TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -432,7 +432,7 @@ static GLuint radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
 
 /* TCL render.
  */
-static GLboolean radeon_run_tcl_render( GLcontext *ctx,
+static GLboolean radeon_run_tcl_render( struct gl_context *ctx,
 					struct tnl_pipeline_stage *stage )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -529,7 +529,7 @@ const struct tnl_pipeline_stage _radeon_tcl_stage =
  */
 
 
-static void transition_to_swtnl( GLcontext *ctx )
+static void transition_to_swtnl( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -558,7 +558,7 @@ static void transition_to_swtnl( GLcontext *ctx )
 }
 
 
-static void transition_to_hwtnl( GLcontext *ctx )
+static void transition_to_hwtnl( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -618,7 +618,7 @@ static char *getFallbackString(GLuint bit)
 
 
 
-void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void radeonTclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint oldfallback = rmesa->radeon.TclFallback;

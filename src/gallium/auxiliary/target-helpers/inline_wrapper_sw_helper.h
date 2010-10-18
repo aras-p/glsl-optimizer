@@ -13,22 +13,28 @@ static INLINE struct pipe_screen *
 sw_screen_wrap(struct pipe_screen *screen)
 {
    struct sw_winsys *sws;
-   struct pipe_screen *sw_screen;
+   struct pipe_screen *sw_screen = NULL;
+   const char *driver;
 
-   sws = wrapper_sw_winsys_warp_pipe_screen(screen);
+   driver = debug_get_option("GALLIUM_DRIVER", "native");
+   if (strcmp(driver, "native") == 0)
+      return screen;
+
+   sws = wrapper_sw_winsys_wrap_pipe_screen(screen);
    if (!sws)
       goto err;
 
-   sw_screen = sw_screen_create(sws);
-   if (sw_screen == screen)
+   sw_screen = sw_screen_create_named(sws, driver);
+
+   if (!sw_screen)
       goto err_winsys;
 
    return sw_screen;
 
 err_winsys:
-   sws->destroy(sws);
+   return wrapper_sw_winsys_dewrap_pipe_screen(sws);
 err:
-  return screen;
+   return screen;
 }
 
 #endif

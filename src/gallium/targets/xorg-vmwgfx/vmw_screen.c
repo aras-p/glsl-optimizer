@@ -245,6 +245,7 @@ vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
     cust->winsys_enter_vt = vmw_screen_enter_vt;
     cust->winsys_leave_vt = vmw_screen_leave_vt;
     cust->no_3d = TRUE;
+    cust->unhidden_hw_cursor_update = TRUE;
     vmw->pScrn = pScrn;
 
     pScrn->driverPrivate = cust;

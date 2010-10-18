@@ -50,7 +50,7 @@
  * Create a new framebuffer object.
  */
 static struct gl_framebuffer *
-intel_new_framebuffer(GLcontext * ctx, GLuint name)
+intel_new_framebuffer(struct gl_context * ctx, GLuint name)
 {
    /* Only drawable state in intel_framebuffer at this time, just use Mesa's
     * class
@@ -81,7 +81,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
  * Return a pointer to a specific pixel in a renderbuffer.
  */
 static void *
-intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
                   GLint x, GLint y)
 {
    /* By returning NULL we force all software rendering to go through
@@ -96,17 +96,35 @@ intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
  * storage for a user-created renderbuffer.
  */
 static GLboolean
-intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   int cpp;
+   int cpp, tiling;
 
    ASSERT(rb->Name != 0);
 
    switch (internalFormat) {
+   case GL_RED:
+   case GL_R8:
+      rb->Format = MESA_FORMAT_R8;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      break;
+   case GL_R16:
+      rb->Format = MESA_FORMAT_R16;
+      rb->DataType = GL_UNSIGNED_SHORT;
+      break;
+   case GL_RG:
+   case GL_RG8:
+      rb->Format = MESA_FORMAT_RG88;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      break;
+   case GL_RG16:
+      rb->Format = MESA_FORMAT_RG1616;
+      rb->DataType = GL_UNSIGNED_SHORT;
+      break;
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
@@ -176,7 +194,13 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    /* alloc hardware renderbuffer */
    DBG("Allocating %d x %d Intel RBO\n", width, height);
 
-   irb->region = intel_region_alloc(intel->intelScreen, I915_TILING_NONE, cpp,
+   tiling = I915_TILING_NONE;
+
+   /* Gen6 requires depth must be tiling */
+   if (intel->gen >= 6 && rb->Format == MESA_FORMAT_S8_Z24)
+       tiling = I915_TILING_Y;
+
+   irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
 				    width, height, GL_TRUE);
    if (!irb->region)
       return GL_FALSE;       /* out of memory? */
@@ -192,7 +216,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 #if FEATURE_OES_EGL_image
 static void
-intel_image_target_renderbuffer_storage(GLcontext *ctx,
+intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 					struct gl_renderbuffer *rb,
 					void *image_handle)
 {
@@ -202,8 +226,8 @@ intel_image_target_renderbuffer_storage(GLcontext *ctx,
    __DRIimage *image;
 
    screen = intel->intelScreen->driScrnPriv;
-   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
-					      intel->driContext->loaderPrivate);
+   image = screen->dri2.image->lookupEGLImage(screen, image_handle,
+					      screen->loaderPrivate);
    if (image == NULL)
       return;
 
@@ -228,7 +252,7 @@ intel_image_target_renderbuffer_storage(GLcontext *ctx,
  * Not used for user-created renderbuffers!
  */
 static GLboolean
-intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
    ASSERT(rb->Name == 0);
@@ -241,7 +265,7 @@ intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
+intel_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 		     GLuint width, GLuint height)
 {
    int i;
@@ -269,7 +293,7 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
-intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
 {
    _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
@@ -340,6 +364,14 @@ intel_create_renderbuffer(gl_format format)
       irb->Base._BaseFormat = GL_ALPHA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
+   case MESA_FORMAT_R8:
+      irb->Base._BaseFormat = GL_RED;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
+   case MESA_FORMAT_RG88:
+      irb->Base._BaseFormat = GL_RG;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
@@ -364,7 +396,7 @@ intel_create_renderbuffer(gl_format format)
  * Typically called via glBindRenderbufferEXT().
  */
 static struct gl_renderbuffer *
-intel_new_renderbuffer(GLcontext * ctx, GLuint name)
+intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
    /*struct intel_context *intel = intel_context(ctx); */
    struct intel_renderbuffer *irb;
@@ -392,7 +424,7 @@ intel_new_renderbuffer(GLcontext * ctx, GLuint name)
  * Called via glBindFramebufferEXT().
  */
 static void
-intel_bind_framebuffer(GLcontext * ctx, GLenum target,
+intel_bind_framebuffer(struct gl_context * ctx, GLenum target,
                        struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
@@ -408,7 +440,7 @@ intel_bind_framebuffer(GLcontext * ctx, GLenum target,
  * Called via glFramebufferRenderbufferEXT().
  */
 static void
-intel_framebuffer_renderbuffer(GLcontext * ctx,
+intel_framebuffer_renderbuffer(struct gl_context * ctx,
                                struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
@@ -422,7 +454,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 
 
 static GLboolean
-intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
+intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
@@ -432,6 +464,10 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    else if (texImage->TexFormat == MESA_FORMAT_XRGB8888) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to XGBA8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_SARGB8) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to SARGB8 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
@@ -448,6 +484,22 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    else if (texImage->TexFormat == MESA_FORMAT_A8) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to A8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_R8) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to R8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_RG88) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to RG88 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_R16) {
+      irb->Base.DataType = GL_UNSIGNED_SHORT;
+      DBG("Render to R8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_RG1616) {
+      irb->Base.DataType = GL_UNSIGNED_SHORT;
+      DBG("Render to RG88 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_Z16) {
       irb->Base.DataType = GL_UNSIGNED_SHORT;
@@ -483,7 +535,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
  * This will have the region info needed for hardware rendering.
  */
 static struct intel_renderbuffer *
-intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
+intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
    const GLuint name = ~0;   /* not significant, but distinct for debugging */
    struct intel_renderbuffer *irb;
@@ -514,7 +566,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
  * before intel_finish_render_texture() is ever called.
  */
 static void
-intel_render_texture(GLcontext * ctx,
+intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
@@ -590,7 +642,7 @@ intel_render_texture(GLcontext * ctx,
  * Called by Mesa when rendering to a texture is done.
  */
 static void
-intel_finish_render_texture(GLcontext * ctx,
+intel_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -598,6 +650,9 @@ intel_finish_render_texture(GLcontext * ctx,
    struct gl_texture_image *image =
       tex_obj->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_texture_image *intel_image = intel_texture_image(image);
+
+   DBG("Finish render texture tid %lx tex=%u\n",
+       _glthread_GetID(), att->Texture->Name);
 
    /* Flag that this image may now be validated into the object's miptree. */
    intel_image->used_as_render_target = GL_FALSE;
@@ -614,7 +669,7 @@ intel_finish_render_texture(GLcontext * ctx,
  * Do additional "completeness" testing of a framebuffer object.
  */
 static void
-intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    const struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
@@ -655,10 +710,15 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_XRGB8888:
+      case MESA_FORMAT_SARGB8:
       case MESA_FORMAT_RGB565:
       case MESA_FORMAT_ARGB1555:
       case MESA_FORMAT_ARGB4444:
       case MESA_FORMAT_A8:
+      case MESA_FORMAT_R8:
+      case MESA_FORMAT_R16:
+      case MESA_FORMAT_RG88:
+      case MESA_FORMAT_RG1616:
 	 break;
       default:
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;

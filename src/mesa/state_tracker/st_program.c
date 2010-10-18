@@ -338,17 +338,6 @@ st_translate_fragment_program(struct st_context *st,
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
-         case FRAG_ATTRIB_PNTC:
-            /* This is a hack.  We really need a new semantic label for
-             * point coord.  The draw module needs to know which fragment
-             * shader input is the point coord attribute so that it can set
-             * up the right vertex attribute values.
-             */
-            input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            input_semantic_index[slot] = 0;
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
-            break;
-
             /* In most cases, there is nothing special about these
              * inputs, so adopt a convention to use the generic
              * semantic name and the mesa FRAG_ATTRIB_ number as the
@@ -364,6 +353,7 @@ st_translate_fragment_program(struct st_context *st,
              * zero or be restricted to a particular range -- nobody
              * should be building tables based on semantic index.
              */
+         case FRAG_ATTRIB_PNTC:
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:
          case FRAG_ATTRIB_TEX2:
@@ -380,7 +370,10 @@ st_translate_fragment_program(struct st_context *st,
             assert(attr >= FRAG_ATTRIB_TEX0);
             input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
             input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+            if (attr == FRAG_ATTRIB_PNTC)
+               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+            else
+               interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          }
       }
@@ -405,11 +398,20 @@ st_translate_fragment_program(struct st_context *st,
          outputsWritten &= ~(1 << FRAG_RESULT_DEPTH);
       }
 
+      if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_STENCIL)) {
+         fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_STENCIL;
+         fs_output_semantic_index[fs_num_outputs] = 0;
+         outputMapping[FRAG_RESULT_STENCIL] = fs_num_outputs;
+         fs_num_outputs++;
+         outputsWritten &= ~(1 << FRAG_RESULT_STENCIL);
+      }
+
       /* handle remaning outputs (color) */
       for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
          if (outputsWritten & BITFIELD64_BIT(attr)) {
             switch (attr) {
             case FRAG_RESULT_DEPTH:
+            case FRAG_RESULT_STENCIL:
                /* handled above */
                assert(0);
                break;
@@ -714,7 +716,7 @@ st_translate_geometry_program(struct st_context *st,
  * Debug- print current shader text
  */
 void
-st_print_shaders(GLcontext *ctx)
+st_print_shaders(struct gl_context *ctx)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    if (shProg) {

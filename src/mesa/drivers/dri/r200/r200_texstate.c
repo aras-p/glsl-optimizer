@@ -302,7 +302,7 @@ do {							\
  * Texture unit state management
  */
 
-static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuint replaceargs )
+static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slot, GLuint replaceargs )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -869,7 +869,7 @@ void r200SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 #define REF_COLOR 1
 #define REF_ALPHA 2
 
-static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
+static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLint i, j, currslot;
@@ -1203,7 +1203,7 @@ static GLuint r200_need_dis_texgen(const GLbitfield texGenEnabled,
 /*
  * Returns GL_FALSE if fallback required.  
  */
-static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
+static GLboolean r200_validate_texgen( struct gl_context *ctx, GLuint unit )
 {  
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -1385,7 +1385,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    return GL_TRUE;
 }
 
-void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
+void set_re_cntl_d3d( struct gl_context *ctx, int unit, GLboolean use_d3d )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -1521,7 +1521,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 
 }
 
-static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
+static GLboolean r200_validate_texture(struct gl_context *ctx, struct gl_texture_object *texObj, int unit)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj *t = radeon_tex_obj(texObj);
@@ -1564,7 +1564,7 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
    return !t->border_fallback;
 }
 
-static GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
+static GLboolean r200UpdateTextureUnit(struct gl_context *ctx, int unit)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint unitneeded = rmesa->state.texture.unit[unit].unitneeded;
@@ -1588,7 +1588,7 @@ static GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
 }
 
 
-void r200UpdateTextureState( GLcontext *ctx )
+void r200UpdateTextureState( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLboolean ok;

@@ -69,16 +69,11 @@ struct gl_enable_attrib
    GLboolean Blend;
    GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
-   GLboolean ColorTable[COLORTABLE_MAX];
-   GLboolean Convolution1D;
-   GLboolean Convolution2D;
-   GLboolean Separable2D;
    GLboolean CullFace;
    GLboolean DepthClamp;
    GLboolean DepthTest;
    GLboolean Dither;
    GLboolean Fog;
-   GLboolean Histogram;
    GLboolean Light[MAX_LIGHTS];
    GLboolean Lighting;
    GLboolean LineSmooth;
@@ -107,7 +102,6 @@ struct gl_enable_attrib
    GLboolean Map2Vertex4;
    GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
 
-   GLboolean MinMax;
    GLboolean Normalize;
    GLboolean PixelTexture;
    GLboolean PointSmooth;
@@ -262,12 +256,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Blend = ctx->Color.BlendEnabled;
       attr->ClipPlanes = ctx->Transform.ClipPlanesEnabled;
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
-      for (i = 0; i < COLORTABLE_MAX; i++) {
-         attr->ColorTable[i] = ctx->Pixel.ColorTableEnabled[i];
-      }
-      attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
-      attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
-      attr->Separable2D = ctx->Pixel.Separable2DEnabled;
       attr->CullFace = ctx->Polygon.CullFlag;
       attr->DepthClamp = ctx->Transform.DepthClamp;
       attr->DepthTest = ctx->Depth.Test;
@@ -279,8 +267,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Lighting = ctx->Light.Enabled;
       attr->LineSmooth = ctx->Line.SmoothFlag;
       attr->LineStipple = ctx->Line.StippleFlag;
-      attr->Histogram = ctx->Pixel.HistogramEnabled;
-      attr->MinMax = ctx->Pixel.MinMaxEnabled;
       attr->IndexLogicOp = ctx->Color.IndexLogicOpEnabled;
       attr->ColorLogicOp = ctx->Color.ColorLogicOpEnabled;
       attr->Map1Color4 = ctx->Eval.Map1Color4;
@@ -487,7 +473,7 @@ end:
 
 
 static void
-pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
+pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
 {
    const GLuint curTexUnitSave = ctx->Texture.CurrentUnit;
    GLuint i;
@@ -519,26 +505,11 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
                    GL_COLOR_MATERIAL);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION],
-                   enable->ColorTable[COLORTABLE_PRECONVOLUTION],
-                   GL_COLOR_TABLE);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION],
-                   enable->ColorTable[COLORTABLE_POSTCONVOLUTION],
-                   GL_POST_CONVOLUTION_COLOR_TABLE);
-   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX],
-                   enable->ColorTable[COLORTABLE_POSTCOLORMATRIX],
-                   GL_POST_COLOR_MATRIX_COLOR_TABLE);
    TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
    TEST_AND_UPDATE(ctx->Transform.DepthClamp, enable->DepthClamp,
 		   GL_DEPTH_CLAMP);
    TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
    TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
-   TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D,
-                   GL_CONVOLUTION_1D);
-   TEST_AND_UPDATE(ctx->Pixel.Convolution2DEnabled, enable->Convolution2D,
-                   GL_CONVOLUTION_2D);
-   TEST_AND_UPDATE(ctx->Pixel.Separable2DEnabled, enable->Separable2D,
-                   GL_SEPARABLE_2D);
    TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
    TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);
    TEST_AND_UPDATE(ctx->Line.SmoothFlag, enable->LineSmooth, GL_LINE_SMOOTH);
@@ -698,7 +669,7 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
  * Pop/restore texture attribute/group state.
  */
 static void
-pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
+pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
 {
    GLuint u;
 
@@ -1352,7 +1323,7 @@ adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
  * object refcounts.
  */
 static void
-copy_pixelstore(GLcontext *ctx,
+copy_pixelstore(struct gl_context *ctx,
                 struct gl_pixelstore_attrib *dst,
                 const struct gl_pixelstore_attrib *src)
 {
@@ -1535,7 +1506,7 @@ _mesa_init_attrib_dispatch(struct _glapi_table *disp)
  * Free any attribute state data that might be attached to the context.
  */
 void
-_mesa_free_attrib_data(GLcontext *ctx)
+_mesa_free_attrib_data(struct gl_context *ctx)
 {
    while (ctx->AttribStackDepth > 0) {
       struct gl_attrib_node *attr, *next;
@@ -1567,7 +1538,7 @@ _mesa_free_attrib_data(GLcontext *ctx)
 }
 
 
-void _mesa_init_attrib( GLcontext *ctx )
+void _mesa_init_attrib( struct gl_context *ctx )
 {
    /* Renderer and client attribute stacks */
    ctx->AttribStackDepth = 0;

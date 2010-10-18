@@ -66,7 +66,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define HAVE_ELTS        0	/* for now */
 
-static void mgaDmaPrimitive( GLcontext *ctx, GLenum prim )
+static void mgaDmaPrimitive( struct gl_context *ctx, GLenum prim )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint hwprim;
@@ -124,7 +124,7 @@ static void mgaDmaPrimitive( GLcontext *ctx, GLenum prim )
 /**********************************************************************/
 
 
-static GLboolean mga_run_render( GLcontext *ctx,
+static GLboolean mga_run_render( struct gl_context *ctx,
 				  struct tnl_pipeline_stage *stage )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);

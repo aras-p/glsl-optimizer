@@ -79,7 +79,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params );
 
 
 extern void
-_mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params);
+_mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *params);
 
 
 /* Lerp between adjacent values in the f(x) lookup table, giving a
@@ -100,36 +100,36 @@ do {									\
 } while (0)
 
 
-extern GLuint _mesa_material_bitmask( GLcontext *ctx,
+extern GLuint _mesa_material_bitmask( struct gl_context *ctx,
                                       GLenum face, GLenum pname,
                                       GLuint legal,
                                       const char * );
 
 extern void _mesa_invalidate_spot_exp_table( struct gl_light *l );
 
-extern void _mesa_invalidate_shine_table( GLcontext *ctx, GLuint i );
+extern void _mesa_invalidate_shine_table( struct gl_context *ctx, GLuint i );
 
-extern void _mesa_validate_all_lighting_tables( GLcontext *ctx );
+extern void _mesa_validate_all_lighting_tables( struct gl_context *ctx );
 
-extern void _mesa_update_lighting( GLcontext *ctx );
+extern void _mesa_update_lighting( struct gl_context *ctx );
 
-extern void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state );
+extern void _mesa_update_tnl_spaces( struct gl_context *ctx, GLuint new_state );
 
-extern void _mesa_update_material( GLcontext *ctx,
+extern void _mesa_update_material( struct gl_context *ctx,
                                    GLuint bitmask );
 
 extern void _mesa_copy_materials( struct gl_material *dst,
 				  const struct gl_material *src,
 				  GLuint bitmask );
 
-extern void _mesa_update_color_material( GLcontext *ctx,
+extern void _mesa_update_color_material( struct gl_context *ctx,
                                          const GLfloat rgba[4] );
 
-extern void _mesa_init_lighting( GLcontext *ctx );
+extern void _mesa_init_lighting( struct gl_context *ctx );
 
-extern void _mesa_free_lighting_data( GLcontext *ctx );
+extern void _mesa_free_lighting_data( struct gl_context *ctx );
 
-extern void _mesa_allow_light_in_model( GLcontext *ctx, GLboolean flag );
+extern void _mesa_allow_light_in_model( struct gl_context *ctx, GLboolean flag );
 
 #else
 #define _mesa_update_color_material( c, r ) ((void)0)

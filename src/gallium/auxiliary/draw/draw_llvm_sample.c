@@ -146,6 +146,10 @@ DRAW_LLVM_TEXTURE_MEMBER(last_level, DRAW_JIT_TEXTURE_LAST_LEVEL, TRUE)
 DRAW_LLVM_TEXTURE_MEMBER(row_stride, DRAW_JIT_TEXTURE_ROW_STRIDE, FALSE)
 DRAW_LLVM_TEXTURE_MEMBER(img_stride, DRAW_JIT_TEXTURE_IMG_STRIDE, FALSE)
 DRAW_LLVM_TEXTURE_MEMBER(data_ptr,   DRAW_JIT_TEXTURE_DATA, FALSE)
+DRAW_LLVM_TEXTURE_MEMBER(min_lod,    DRAW_JIT_TEXTURE_MIN_LOD, TRUE)
+DRAW_LLVM_TEXTURE_MEMBER(max_lod,    DRAW_JIT_TEXTURE_MAX_LOD, TRUE)
+DRAW_LLVM_TEXTURE_MEMBER(lod_bias,   DRAW_JIT_TEXTURE_LOD_BIAS, TRUE)
+DRAW_LLVM_TEXTURE_MEMBER(border_color, DRAW_JIT_TEXTURE_BORDER_COLOR, FALSE)
 
 
 static void
@@ -207,6 +211,10 @@ draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
    sampler->dynamic_state.base.row_stride = draw_llvm_texture_row_stride;
    sampler->dynamic_state.base.img_stride = draw_llvm_texture_img_stride;
    sampler->dynamic_state.base.data_ptr = draw_llvm_texture_data_ptr;
+   sampler->dynamic_state.base.min_lod = draw_llvm_texture_min_lod;
+   sampler->dynamic_state.base.max_lod = draw_llvm_texture_max_lod;
+   sampler->dynamic_state.base.lod_bias = draw_llvm_texture_lod_bias;
+   sampler->dynamic_state.base.border_color = draw_llvm_texture_border_color;
    sampler->dynamic_state.static_state = static_state;
    sampler->dynamic_state.context_ptr = context_ptr;
 

@@ -603,7 +603,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
 
    assert(sizeof key->inputs[0] == sizeof(ushort));
    
-   key->num_inputs = fs->info.num_inputs;
+   key->num_inputs = fs->info.base.num_inputs;
    key->flatshade_first = lp->rasterizer->flatshade_first;
    key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
    key->size = Offset(struct lp_setup_variant_key,

@@ -118,7 +118,7 @@
 
 #if (HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICES)
 
-static void TAG(emit)( GLcontext *ctx,
+static void TAG(emit)( struct gl_context *ctx,
 		       GLuint start, GLuint end,
 		       void *dest,
 		       GLuint stride )
@@ -366,7 +366,7 @@ static void TAG(emit)( GLcontext *ctx,
 #error "cannot use tiny vertices with hw perspective divide"
 #endif
 
-static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
+static void TAG(emit)( struct gl_context *ctx, GLuint start, GLuint end,
 		       void *dest, GLuint stride )
 {
    LOCALVARS
@@ -422,7 +422,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    }
 }
 #else
-static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
+static void TAG(emit)( struct gl_context *ctx, GLuint start, GLuint end,
 		       void *dest, GLuint stride )
 {
    LOCALVARS
@@ -466,7 +466,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
 
 #if (HAVE_PTEX_VERTICES)
-static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
+static GLboolean TAG(check_tex_sizes)( struct gl_context *ctx )
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -494,7 +494,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    return GL_TRUE;
 }
 #else
-static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
+static GLboolean TAG(check_tex_sizes)( struct gl_context *ctx )
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -535,7 +535,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 #endif /* ptex */
 
 
-static void TAG(interp)( GLcontext *ctx,
+static void TAG(interp)( struct gl_context *ctx,
 			 GLfloat t,
 			 GLuint edst, GLuint eout, GLuint ein,
 			 GLboolean force_boundary )

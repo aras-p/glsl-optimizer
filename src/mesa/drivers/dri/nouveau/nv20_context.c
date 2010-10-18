@@ -40,7 +40,7 @@ static const struct dri_extension nv20_extensions[] = {
 };
 
 static void
-nv20_hwctx_init(GLcontext *ctx)
+nv20_hwctx_init(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
@@ -371,7 +371,7 @@ nv20_hwctx_init(GLcontext *ctx)
 }
 
 static void
-nv20_context_destroy(GLcontext *ctx)
+nv20_context_destroy(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
@@ -384,12 +384,12 @@ nv20_context_destroy(GLcontext *ctx)
 	FREE(ctx);
 }
 
-static GLcontext *
-nv20_context_create(struct nouveau_screen *screen, const GLvisual *visual,
-		    GLcontext *share_ctx)
+static struct gl_context *
+nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
+		    struct gl_context *share_ctx)
 {
 	struct nouveau_context *nctx;
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	unsigned kelvin_class;
 	int ret;
 

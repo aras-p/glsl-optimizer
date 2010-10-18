@@ -37,7 +37,7 @@ static void
 upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    unsigned int nr_params = vp->program.Base.Parameters->NumParameters;
@@ -93,7 +93,7 @@ upload_vs_state(struct brw_context *brw)
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_3D_VS_STATE << 16 | (6 - 2));
    OUT_RELOC(brw->vs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
-   OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
+   OUT_BATCH(GEN6_VS_SPF_MODE | (0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
 	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
    OUT_BATCH(0); /* scratch space base offset */
    OUT_BATCH((1 << GEN6_VS_DISPATCH_START_GRF_SHIFT) |

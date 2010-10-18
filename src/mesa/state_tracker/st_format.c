@@ -166,6 +166,8 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_X8Z24_UNORM;
    case MESA_FORMAT_X8_Z24:
       return PIPE_FORMAT_Z24X8_UNORM;
+   case MESA_FORMAT_S8:
+      return PIPE_FORMAT_S8_USCALED;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_UYVY;
 #if FEATURE_texture_s3tc
@@ -200,6 +202,14 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SARGB8:
       return PIPE_FORMAT_B8G8R8A8_SRGB;
 #endif
+   case MESA_FORMAT_R8:
+      return PIPE_FORMAT_R8_UNORM;
+   case MESA_FORMAT_R16:
+      return PIPE_FORMAT_R16_UNORM;
+   case MESA_FORMAT_RG88:
+      return PIPE_FORMAT_R8G8_UNORM;
+   case MESA_FORMAT_RG1616:
+      return PIPE_FORMAT_R16G16_UNORM;
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -297,6 +307,15 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MESA_FORMAT_SARGB8;
 #endif
+
+   case PIPE_FORMAT_R8_UNORM:
+      return MESA_FORMAT_R8;
+   case PIPE_FORMAT_R16_UNORM:
+      return MESA_FORMAT_R16;
+   case PIPE_FORMAT_R8G8_UNORM:
+      return MESA_FORMAT_RG88;
+   case PIPE_FORMAT_R16G16_UNORM:
+      return MESA_FORMAT_RG1616;
    default:
       assert(0);
       return MESA_FORMAT_NONE;
@@ -686,6 +705,55 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       return default_srgba_format( screen, target, sample_count, bindings,
                                    geom_flags );
 
+   case GL_RED:
+   case GL_R8:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8_UNORM;
+      return PIPE_FORMAT_NONE;
+   case GL_RG:
+   case GL_RG8:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8G8_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_R16:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R16_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_RG16:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R16G16_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_RED_RGTC1:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC1_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_SNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC1_SNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_RG_RGTC2:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC2_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_SNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC2_SNORM;
+      return PIPE_FORMAT_NONE;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -713,8 +781,8 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
  * Called via ctx->Driver.chooseTextureFormat().
  */
 gl_format
-st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
-                       GLenum format, GLenum type)
+st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
+				  GLenum format, GLenum type, GLboolean renderable)
 {
    struct pipe_screen *screen = st_context(ctx)->pipe->screen;
    enum pipe_format pFormat;
@@ -726,11 +794,14 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    /* GL textures may wind up being render targets, but we don't know
     * that in advance.  Specify potential render target flags now.
     */
-   if (_mesa_is_depth_format(internalFormat) ||
-       _mesa_is_depthstencil_format(internalFormat))
-      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_DEPTH_STENCIL;
-   else 
-      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   bindings = PIPE_BIND_SAMPLER_VIEW;
+   if (renderable == GL_TRUE) {
+      if (_mesa_is_depth_format(internalFormat) ||
+	  _mesa_is_depth_or_stencil_format(internalFormat))
+	 bindings |= PIPE_BIND_DEPTH_STENCIL;
+      else 
+	 bindings |= PIPE_BIND_RENDER_TARGET;
+   }
 
    pFormat = st_choose_format(screen, internalFormat,
                               PIPE_TEXTURE_2D, 0, bindings);
@@ -749,6 +820,13 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    return st_pipe_format_to_mesa_format(pFormat);
 }
 
+gl_format
+st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
+                       GLenum format, GLenum type)
+{
+   return st_ChooseTextureFormat_renderable(ctx, internalFormat,
+					    format, type, GL_TRUE);
+}
 
 /**
  * Test if a gallium format is equivalent to a GL format/type.

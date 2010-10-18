@@ -607,8 +607,15 @@
 #define   G_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) >> 0) & 0x3FF)
 #define   C_028D34_DEPTH_HEIGHT_TILE_MAX               0xFFFFFC00
 #define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
+#define   S_028D0C_DEPTH_CLEAR_ENABLE(x)               (((x) & 0x1) << 0)
+#define   S_028D0C_STENCIL_CLEAR_ENABLE(x)             (((x) & 0x1) << 1)
+#define   S_028D0C_DEPTH_COPY_ENABLE(x)                (((x) & 0x1) << 2)
+#define   S_028D0C_STENCIL_COPY_ENABLE(x)              (((x) & 0x1) << 3)
+#define   S_028D0C_RESUMMARIZE_ENABLE(x)               (((x) & 0x1) << 4)
 #define   S_028D0C_STENCIL_COMPRESS_DISABLE(x)         (((x) & 0x1) << 5)
 #define   S_028D0C_DEPTH_COMPRESS_DISABLE(x)           (((x) & 0x1) << 6)
+#define   S_028D0C_COPY_CENTROID(x)                    (((x) & 0x1) << 7)
+#define   S_028D0C_COPY_SAMPLE(x)                      (((x) & 0x1) << 8)
 #define   S_028D0C_R700_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 15)
 #define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
 #define   V_028D10_FORCE_OFF                         0
@@ -660,6 +667,9 @@
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
 #define   C_02880C_Z_EXPORT_ENABLE                     0xFFFFFFFE
+#define   S_02880C_STENCIL_REF_EXPORT_ENABLE(x)        (((x) & 0x1) << 1)
+#define   G_02880C_STENCIL_REF_EXPORT_ENABLE(x)        (((x) >> 1) & 0x1)
+#define   C_02880C_STENCIL_REF_EXPORT_ENABLE           0xFFFFFFFD
 #define   S_02880C_Z_ORDER(x)                          (((x) & 0x3) << 4)
 #define   G_02880C_Z_ORDER(x)                          (((x) >> 4) & 0x3)
 #define   C_02880C_Z_ORDER                             0xFFFFFCFF
@@ -894,6 +904,10 @@
 #define   S_038000_TILE_MODE(x)                        (((x) & 0xF) << 3)
 #define   G_038000_TILE_MODE(x)                        (((x) >> 3) & 0xF)
 #define   C_038000_TILE_MODE                           0xFFFFFF87
+#define     V_038000_ARRAY_LINEAR_GENERAL              0x00000000
+#define     V_038000_ARRAY_LINEAR_ALIGNED              0x00000001
+#define     V_038000_ARRAY_1D_TILED_THIN1              0x00000002
+#define     V_038000_ARRAY_2D_TILED_THIN1              0x00000004
 #define   S_038000_TILE_TYPE(x)                        (((x) & 0x1) << 7)
 #define   G_038000_TILE_TYPE(x)                        (((x) >> 7) & 0x1)
 #define   C_038000_TILE_TYPE                           0xFFFFFF7F
@@ -1018,43 +1032,13 @@
 #define   S_038008_DATA_FORMAT(x)                      (((x) & 0x3F) << 20)
 #define   G_038008_DATA_FORMAT(x)                      (((x) >> 20) & 0x3F)
 #define   C_038008_DATA_FORMAT                         0xFC0FFFFF
-#define     V_038008_COLOR_INVALID                     0x00000000
-#define     V_038008_COLOR_8                           0x00000001
-#define     V_038008_COLOR_4_4                         0x00000002
-#define     V_038008_COLOR_3_3_2                       0x00000003
-#define     V_038008_COLOR_16                          0x00000005
-#define     V_038008_COLOR_16_FLOAT                    0x00000006
-#define     V_038008_COLOR_8_8                         0x00000007
-#define     V_038008_COLOR_5_6_5                       0x00000008
-#define     V_038008_COLOR_6_5_5                       0x00000009
-#define     V_038008_COLOR_1_5_5_5                     0x0000000A
-#define     V_038008_COLOR_4_4_4_4                     0x0000000B
-#define     V_038008_COLOR_5_5_5_1                     0x0000000C
-#define     V_038008_COLOR_32                          0x0000000D
-#define     V_038008_COLOR_32_FLOAT                    0x0000000E
-#define     V_038008_COLOR_16_16                       0x0000000F
-#define     V_038008_COLOR_16_16_FLOAT                 0x00000010
-#define     V_038008_COLOR_8_24                        0x00000011
-#define     V_038008_COLOR_8_24_FLOAT                  0x00000012
-#define     V_038008_COLOR_24_8                        0x00000013
-#define     V_038008_COLOR_24_8_FLOAT                  0x00000014
-#define     V_038008_COLOR_10_11_11                    0x00000015
-#define     V_038008_COLOR_10_11_11_FLOAT              0x00000016
-#define     V_038008_COLOR_11_11_10                    0x00000017
-#define     V_038008_COLOR_11_11_10_FLOAT              0x00000018
-#define     V_038008_COLOR_2_10_10_10                  0x00000019
-#define     V_038008_COLOR_8_8_8_8                     0x0000001A
-#define     V_038008_COLOR_10_10_10_2                  0x0000001B
-#define     V_038008_COLOR_X24_8_32_FLOAT              0x0000001C
-#define     V_038008_COLOR_32_32                       0x0000001D
-#define     V_038008_COLOR_32_32_FLOAT                 0x0000001E
-#define     V_038008_COLOR_16_16_16_16                 0x0000001F
-#define     V_038008_COLOR_16_16_16_16_FLOAT           0x00000020
-#define     V_038008_COLOR_32_32_32_32                 0x00000022
-#define     V_038008_COLOR_32_32_32_32_FLOAT           0x00000023
+
 #define   S_038008_NUM_FORMAT_ALL(x)                   (((x) & 0x3) << 26)
 #define   G_038008_NUM_FORMAT_ALL(x)                   (((x) >> 26) & 0x3)
 #define   C_038008_NUM_FORMAT_ALL                      0xF3FFFFFF
+#define     V_038008_SQ_NUM_FORMAT_NORM                0x00000000
+#define     V_038008_SQ_NUM_FORMAT_INT                 0x00000001
+#define     V_038008_SQ_NUM_FORMAT_SCALED              0x00000002
 #define   S_038008_FORMAT_COMP_ALL(x)                  (((x) & 0x1) << 28)
 #define   G_038008_FORMAT_COMP_ALL(x)                  (((x) >> 28) & 0x1)
 #define   C_038008_FORMAT_COMP_ALL                     0xEFFFFFFF
@@ -2112,6 +2096,9 @@
 #define R_0286D4_SPI_INTERP_CONTROL_0                0x0286D4
 #define R_028A48_PA_SC_MPASS_PS_CNTL                 0x028A48
 #define R_028C00_PA_SC_LINE_CNTL                     0x028C00
+#define   S_028C00_LAST_PIXEL(x)                       (((x) & 0x1) << 10)
+#define   G_028C00_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
+#define   C_028C00_LAST_PIXEL                          0xFFFFFBFF
 #define R_028C04_PA_SC_AA_CONFIG                     0x028C04
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
 #define R_028C48_PA_SC_AA_MASK                       0x028C48
@@ -2125,7 +2112,16 @@
 #define R_028814_PA_SU_SC_MODE_CNTL                  0x028814
 #define R_028A00_PA_SU_POINT_SIZE                    0x028A00
 #define R_028A04_PA_SU_POINT_MINMAX                  0x028A04
+#define   S_028A04_MIN_SIZE(x)                         (((x) & 0xFFFF) << 0)
+#define   G_028A04_MIN_SIZE(x)                         (((x) >> 0) & 0xFFFF)
+#define   C_028A04_MIN_SIZE                            0xFFFF0000
+#define   S_028A04_MAX_SIZE(x)                         (((x) & 0xFFFF) << 16)
+#define   G_028A04_MAX_SIZE(x)                         (((x) >> 16) & 0xFFFF)
+#define   C_028A04_MAX_SIZE                            0x0000FFFF
 #define R_028A08_PA_SU_LINE_CNTL                     0x028A08
+#define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)
+#define   G_028A08_WIDTH(x)                            (((x) >> 0) & 0xFFFF)
+#define   C_028A08_WIDTH                               0xFFFF0000
 #define R_028A0C_PA_SC_LINE_STIPPLE                  0x028A0C
 #define R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x028DF8
 #define R_028DFC_PA_SU_POLY_OFFSET_CLAMP             0x028DFC
@@ -2134,6 +2130,27 @@
 #define R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE        0x028E08
 #define R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET       0x028E0C
 #define R_028818_PA_CL_VTE_CNTL                      0x028818
+#define   S_028818_VPORT_X_SCALE_ENA(x)                (((x) & 0x1) << 0)
+#define   G_028818_VPORT_X_SCALE_ENA(x)                (((x) >> 0 & 0x1)
+#define   C_028818_VPORT_X_SCALE_ENA                   0xFFFFFFFE
+#define   S_028818_VPORT_X_OFFSET_ENA(x)               (((x) & 0x1) << 1)
+#define   G_028818_VPORT_X_OFFSET_ENA(x)               (((x) >> 1 & 0x1)
+#define   C_028818_VPORT_X_OFFSET_ENA                  0xFFFFFFFD
+#define   S_028818_VPORT_Y_SCALE_ENA(x)                (((x) & 0x1) << 2)
+#define   G_028818_VPORT_Y_SCALE_ENA(x)                (((x) >> 2 & 0x1)
+#define   C_028818_VPORT_Y_SCALE_ENA                   0xFFFFFFFB
+#define   S_028818_VPORT_Y_OFFSET_ENA(x)               (((x) & 0x1) << 3)
+#define   G_028818_VPORT_Y_OFFSET_ENA(x)               (((x) >> 3 & 0x1)
+#define   C_028818_VPORT_Y_OFFSET_ENA                  0xFFFFFFF7
+#define   S_028818_VPORT_Z_SCALE_ENA(x)                (((x) & 0x1) << 4)
+#define   G_028818_VPORT_Z_SCALE_ENA(x)                (((x) >> 4 & 0x1)
+#define   C_028818_VPORT_Z_SCALE_ENA                   0xFFFFFFEF
+#define   S_028818_VPORT_Z_OFFSET_ENA(x)               (((x) & 0x1) << 5)
+#define   G_028818_VPORT_Z_OFFSET_ENA(x)               (((x) >> 5 & 0x1)
+#define   C_028818_VPORT_Z_OFFSET_ENA                  0xFFFFFFDF
+#define   S_028818_VTX_W0_FMT(x)                       (((x) & 0x1) << 10)
+#define   G_028818_VTX_W0_FMT(x)                       (((x) >> 10) & 0x1)
+#define   C_028818_VTX_W0_FMT                          0xFFFFFBFF
 #define R_02843C_PA_CL_VPORT_XSCALE_0                0x02843C
 #define R_028444_PA_CL_VPORT_YSCALE_0                0x028444
 #define R_02844C_PA_CL_VPORT_ZSCALE_0                0x02844C
@@ -2199,6 +2216,12 @@
 #define R_0286C0_SPI_PS_INPUT_CNTL_31                0x0286C0
 #define R_028850_SQ_PGM_RESOURCES_PS                 0x028850
 #define R_028854_SQ_PGM_EXPORTS_PS                   0x028854
+#define   S_028854_EXPORT_COLORS(x)                    (((x) & 0xF) << 1)
+#define   G_028854_EXPORT_COLORS(x)                    (((x) >> 1) & 0xF)
+#define   C_028854_EXPORT_COLORS                       0xFFFFFFE1
+#define   S_028854_EXPORT_Z(x)                         (((x) & 0x1) << 0)
+#define   G_028854_EXPORT_Z(x)                         (((x) >> 0) & 0x1)
+#define   C_028854_EXPORT_Z                            0xFFFFFFFE
 #define R_008958_VGT_PRIMITIVE_TYPE                  0x008958
 #define R_028A7C_VGT_DMA_INDEX_TYPE                  0x028A7C
 #define R_028A88_VGT_DMA_NUM_INSTANCES               0x028A88
@@ -3434,6 +3457,16 @@
 #define R_038010_RESOURCE0_WORD4                     0x038010
 #define R_038014_RESOURCE0_WORD5                     0x038014
 #define R_038018_RESOURCE0_WORD6                     0x038018
+
+#define R_028140_ALU_CONST_BUFFER_SIZE_PS_0          0x00028140
+#define R_028180_ALU_CONST_BUFFER_SIZE_VS_0          0x00028180
+#define R_028940_ALU_CONST_CACHE_PS_0                0x00028940
+#define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
+
+#define R_03CFF0_SQ_VTX_BASE_VTX_LOC                 0x03CFF0
+#define R_03CFF4_SQ_VTX_START_INST_LOC               0x03CFF4
+
+#define R_03E200_SQ_LOOP_CONST_0                     0x3E200
 
 #define SQ_TEX_INST_LD 0x03
 #define SQ_TEX_INST_GET_GRADIENTS_H 0x7

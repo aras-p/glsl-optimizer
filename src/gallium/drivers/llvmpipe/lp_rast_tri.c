@@ -123,6 +123,16 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
 }
 
 void
+lp_rast_triangle_4_16(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg)
+{
+   union lp_rast_cmd_arg arg2;
+   arg2.triangle.tri = arg.triangle.tri;
+   arg2.triangle.plane_mask = (1<<4)-1;
+   lp_rast_triangle_3(task, arg2);
+}
+
+void
 lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
                       const union lp_rast_cmd_arg arg)
 {
@@ -230,144 +240,207 @@ sign_bits4(const __m128i *cstep, int cdiff)
 }
 
 
-/* Special case for 3 plane triangle which is contained entirely
- * within a 16x16 block.
- */
+#define NR_PLANES 3
+
+
+
+
+
+
+
 void
 lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
                       const union lp_rast_cmd_arg arg)
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
-   unsigned mask = arg.triangle.plane_mask;
-   const int x = task->x + (mask & 0xff);
-   const int y = task->y + (mask >> 8);
-   unsigned outmask, inmask, partmask, partial_mask;
-   unsigned j;
-   __m128i cstep4[3][4];
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
+   int x = (arg.triangle.plane_mask & 0xff) + task->x;
+   int y = (arg.triangle.plane_mask >> 8) + task->y;
+   unsigned i, j;
 
-   outmask = 0;                 /* outside one or more trivial reject planes */
-   partmask = 0;                /* outside one or more trivial accept planes */
+   struct { unsigned mask:16; unsigned i:8; unsigned j:8; } out[16];
+   unsigned nr = 0;
 
-   for (j = 0; j < 3; j++) {
-      const int dcdx = -plane[j].dcdx * 4;
-      const int dcdy = plane[j].dcdy * 4;
-      __m128i xdcdy = _mm_set1_epi32(dcdy);
+   __m128i p0 = _mm_load_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
+   __m128i p1 = _mm_load_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
+   __m128i p2 = _mm_load_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
+   __m128i zero = _mm_setzero_si128();
 
-      cstep4[j][0] = _mm_setr_epi32(0, dcdx, dcdx*2, dcdx*3);
-      cstep4[j][1] = _mm_add_epi32(cstep4[j][0], xdcdy);
-      cstep4[j][2] = _mm_add_epi32(cstep4[j][1], xdcdy);
-      cstep4[j][3] = _mm_add_epi32(cstep4[j][2], xdcdy);
+   __m128i c;
+   __m128i dcdx;
+   __m128i dcdy;
+   __m128i rej4;
 
-      {
-	 const int c = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
-	 const int cox = plane[j].eo * 4;
-	 const int cio = plane[j].ei * 4 - 1;
+   __m128i dcdx2;
+   __m128i dcdx3;
+   
+   __m128i span_0;                /* 0,dcdx,2dcdx,3dcdx for plane 0 */
+   __m128i span_1;                /* 0,dcdx,2dcdx,3dcdx for plane 1 */
+   __m128i span_2;                /* 0,dcdx,2dcdx,3dcdx for plane 2 */
+   __m128i unused;
+   
+   transpose4_epi32(&p0, &p1, &p2, &zero,
+                    &c, &dcdx, &dcdy, &rej4);
 
-	 outmask |= sign_bits4(cstep4[j], c + cox);
-	 partmask |= sign_bits4(cstep4[j], c + cio);
+   /* Adjust dcdx;
+    */
+   dcdx = _mm_sub_epi32(zero, dcdx);
+
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdx, _mm_set1_epi32(x)));
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
+   rej4 = _mm_slli_epi32(rej4, 2);
+
+   dcdx2 = _mm_add_epi32(dcdx, dcdx);
+   dcdx3 = _mm_add_epi32(dcdx2, dcdx);
+
+   transpose4_epi32(&zero, &dcdx, &dcdx2, &dcdx3,
+                    &span_0, &span_1, &span_2, &unused);
+
+   for (i = 0; i < 4; i++) {
+      __m128i cx = c;
+
+      for (j = 0; j < 4; j++) {
+         __m128i c4rej = _mm_add_epi32(cx, rej4);
+         __m128i rej_masks = _mm_srai_epi32(c4rej, 31);
+
+         /* if (is_zero(rej_masks)) */
+         if (_mm_movemask_epi8(rej_masks) == 0) {
+            __m128i c0_0 = _mm_add_epi32(SCALAR_EPI32(cx, 0), span_0);
+            __m128i c1_0 = _mm_add_epi32(SCALAR_EPI32(cx, 1), span_1);
+            __m128i c2_0 = _mm_add_epi32(SCALAR_EPI32(cx, 2), span_2);
+
+            __m128i c_0 = _mm_or_si128(_mm_or_si128(c0_0, c1_0), c2_0);
+
+            __m128i c0_1 = _mm_add_epi32(c0_0, SCALAR_EPI32(dcdy, 0));
+            __m128i c1_1 = _mm_add_epi32(c1_0, SCALAR_EPI32(dcdy, 1));
+            __m128i c2_1 = _mm_add_epi32(c2_0, SCALAR_EPI32(dcdy, 2));
+
+            __m128i c_1 = _mm_or_si128(_mm_or_si128(c0_1, c1_1), c2_1);
+            __m128i c_01 = _mm_packs_epi32(c_0, c_1);
+
+            __m128i c0_2 = _mm_add_epi32(c0_1, SCALAR_EPI32(dcdy, 0));
+            __m128i c1_2 = _mm_add_epi32(c1_1, SCALAR_EPI32(dcdy, 1));
+            __m128i c2_2 = _mm_add_epi32(c2_1, SCALAR_EPI32(dcdy, 2));
+
+            __m128i c_2 = _mm_or_si128(_mm_or_si128(c0_2, c1_2), c2_2);
+
+            __m128i c0_3 = _mm_add_epi32(c0_2, SCALAR_EPI32(dcdy, 0));
+            __m128i c1_3 = _mm_add_epi32(c1_2, SCALAR_EPI32(dcdy, 1));
+            __m128i c2_3 = _mm_add_epi32(c2_2, SCALAR_EPI32(dcdy, 2));
+
+            __m128i c_3 = _mm_or_si128(_mm_or_si128(c0_3, c1_3), c2_3);
+            __m128i c_23 = _mm_packs_epi32(c_2, c_3);
+            __m128i c_0123 = _mm_packs_epi16(c_01, c_23);
+
+            unsigned mask = _mm_movemask_epi8(c_0123);
+
+            out[nr].i = i;
+            out[nr].j = j;
+            out[nr].mask = mask;
+            if (mask != 0xffff)
+               nr++;
+         }
+         cx = _mm_add_epi32(cx, _mm_slli_epi32(dcdx, 2));
       }
+
+      c = _mm_add_epi32(c, _mm_slli_epi32(dcdy, 2));
    }
 
-   if (outmask == 0xffff)
-      return;
-
-   /* Mask of sub-blocks which are inside all trivial accept planes:
-    */
-   inmask = ~partmask & 0xffff;
-
-   /* Mask of sub-blocks which are inside all trivial reject planes,
-    * but outside at least one trivial accept plane:
-    */
-   partial_mask = partmask & ~outmask;
-
-   assert((partial_mask & inmask) == 0);
-
-   /* Iterate over partials:
-    */
-   while (partial_mask) {
-      int i = ffs(partial_mask) - 1;
-      int ix = (i & 3) * 4;
-      int iy = (i >> 2) * 4;
-      int px = x + ix;
-      int py = y + iy; 
-      unsigned mask = 0xffff;
-
-      partial_mask &= ~(1 << i);
-
-      for (j = 0; j < 3; j++) {
-         const int cx = (plane[j].c 
-			 - plane[j].dcdx * px
-			 + plane[j].dcdy * py) * 4;
-
-	 mask &= ~sign_bits4(cstep4[j], cx);
-      }
-
-      if (mask)
-	 lp_rast_shade_quads_mask(task, &tri->inputs, px, py, mask);
-   }
-
-   /* Iterate over fulls: 
-    */
-   while (inmask) {
-      int i = ffs(inmask) - 1;
-      int ix = (i & 3) * 4;
-      int iy = (i >> 2) * 4;
-      int px = x + ix;
-      int py = y + iy; 
-
-      inmask &= ~(1 << i);
-
-      block_full_4(task, tri, px, py);
-   }
+   for (i = 0; i < nr; i++)
+      lp_rast_shade_quads_mask(task,
+                               &tri->inputs,
+                               x + 4 * out[i].j,
+                               y + 4 * out[i].i,
+                               0xffff & ~out[i].mask);
 }
+
+
+
 
 
 void
 lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
-		     const union lp_rast_cmd_arg arg)
+                     const union lp_rast_cmd_arg arg)
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
-   unsigned mask = arg.triangle.plane_mask;
-   const int x = task->x + (mask & 0xff);
-   const int y = task->y + (mask >> 8);
-   unsigned j;
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
+   int x = (arg.triangle.plane_mask & 0xff) + task->x;
+   int y = (arg.triangle.plane_mask >> 8) + task->y;
 
-   /* Iterate over partials:
+   __m128i p0 = _mm_load_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
+   __m128i p1 = _mm_load_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
+   __m128i p2 = _mm_load_si128((__m128i *)&plane[2]); /* c, dcdx, dcdy, eo */
+   __m128i zero = _mm_setzero_si128();
+
+   __m128i c;
+   __m128i dcdx;
+   __m128i dcdy;
+
+   __m128i dcdx2;
+   __m128i dcdx3;
+   
+   __m128i span_0;                /* 0,dcdx,2dcdx,3dcdx for plane 0 */
+   __m128i span_1;                /* 0,dcdx,2dcdx,3dcdx for plane 1 */
+   __m128i span_2;                /* 0,dcdx,2dcdx,3dcdx for plane 2 */
+   __m128i unused;
+   
+   transpose4_epi32(&p0, &p1, &p2, &zero,
+                    &c, &dcdx, &dcdy, &unused);
+
+   /* Adjust dcdx;
     */
+   dcdx = _mm_sub_epi32(zero, dcdx);
+
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdx, _mm_set1_epi32(x)));
+   c = _mm_add_epi32(c, mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
+
+   dcdx2 = _mm_add_epi32(dcdx, dcdx);
+   dcdx3 = _mm_add_epi32(dcdx2, dcdx);
+
+   transpose4_epi32(&zero, &dcdx, &dcdx2, &dcdx3,
+                    &span_0, &span_1, &span_2, &unused);
+
+
    {
-      unsigned mask = 0xffff;
+      __m128i c0_0 = _mm_add_epi32(SCALAR_EPI32(c, 0), span_0);
+      __m128i c1_0 = _mm_add_epi32(SCALAR_EPI32(c, 1), span_1);
+      __m128i c2_0 = _mm_add_epi32(SCALAR_EPI32(c, 2), span_2);
+      
+      __m128i c_0 = _mm_or_si128(_mm_or_si128(c0_0, c1_0), c2_0);
 
-      for (j = 0; j < 3; j++) {
-	 const int cx = (plane[j].c 
-			 - plane[j].dcdx * x
-			 + plane[j].dcdy * y);
+      __m128i c0_1 = _mm_add_epi32(c0_0, SCALAR_EPI32(dcdy, 0));
+      __m128i c1_1 = _mm_add_epi32(c1_0, SCALAR_EPI32(dcdy, 1));
+      __m128i c2_1 = _mm_add_epi32(c2_0, SCALAR_EPI32(dcdy, 2));
 
-	 const int dcdx = -plane[j].dcdx;
-	 const int dcdy = plane[j].dcdy;
-	 __m128i xdcdy = _mm_set1_epi32(dcdy);
+      __m128i c_1 = _mm_or_si128(_mm_or_si128(c0_1, c1_1), c2_1);
+      __m128i c_01 = _mm_packs_epi32(c_0, c_1);
 
-	 __m128i cstep0 = _mm_setr_epi32(cx, cx + dcdx, cx + dcdx*2, cx + dcdx*3);
-	 __m128i cstep1 = _mm_add_epi32(cstep0, xdcdy);
-	 __m128i cstep2 = _mm_add_epi32(cstep1, xdcdy);
-	 __m128i cstep3 = _mm_add_epi32(cstep2, xdcdy);
+      __m128i c0_2 = _mm_add_epi32(c0_1, SCALAR_EPI32(dcdy, 0));
+      __m128i c1_2 = _mm_add_epi32(c1_1, SCALAR_EPI32(dcdy, 1));
+      __m128i c2_2 = _mm_add_epi32(c2_1, SCALAR_EPI32(dcdy, 2));
 
-	 __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
-	 __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
-	 __m128i result = _mm_packs_epi16(cstep01, cstep23);
+      __m128i c_2 = _mm_or_si128(_mm_or_si128(c0_2, c1_2), c2_2);
 
-	 /* Extract the sign bits
-	  */
-	 mask &= ~_mm_movemask_epi8(result);
-      }
+      __m128i c0_3 = _mm_add_epi32(c0_2, SCALAR_EPI32(dcdy, 0));
+      __m128i c1_3 = _mm_add_epi32(c1_2, SCALAR_EPI32(dcdy, 1));
+      __m128i c2_3 = _mm_add_epi32(c2_2, SCALAR_EPI32(dcdy, 2));
 
-      if (mask)
-	 lp_rast_shade_quads_mask(task, &tri->inputs, x, y, mask);
+      __m128i c_3 = _mm_or_si128(_mm_or_si128(c0_3, c1_3), c2_3);
+      __m128i c_23 = _mm_packs_epi32(c_2, c_3);
+      __m128i c_0123 = _mm_packs_epi16(c_01, c_23);
+
+      unsigned mask = _mm_movemask_epi8(c_0123);
+
+      if (mask != 0xffff)
+         lp_rast_shade_quads_mask(task,
+                                  &tri->inputs,
+                                  x,
+                                  y,
+                                  0xffff & ~mask);
    }
 }
 
-
+#undef NR_PLANES
 #endif
 
 
@@ -383,10 +456,13 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
 
 #define TAG(x) x##_3
 #define NR_PLANES 3
+/*#define TRI_4 lp_rast_triangle_3_4*/
+/*#define TRI_16 lp_rast_triangle_3_16*/
 #include "lp_rast_tri_tmp.h"
 
 #define TAG(x) x##_4
 #define NR_PLANES 4
+#define TRI_16 lp_rast_triangle_4_16
 #include "lp_rast_tri_tmp.h"
 
 #define TAG(x) x##_5

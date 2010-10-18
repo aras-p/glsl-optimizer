@@ -65,7 +65,7 @@ const struct brw_tracked_state gen6_clip_vp = {
 static void
 prepare_sf_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
@@ -107,7 +107,9 @@ const struct brw_tracked_state gen6_sf_vp = {
 
 static void prepare_viewport_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->sf.state_bo);
+   brw_add_validated_bo(brw, brw->clip.vp_bo);
+   brw_add_validated_bo(brw, brw->sf.vp_bo);
+   brw_add_validated_bo(brw, brw->cc.vp_bo);
 }
 
 static void upload_viewport_state_pointers(struct brw_context *brw)

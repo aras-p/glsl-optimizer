@@ -57,9 +57,10 @@ static GLuint translate_fill( GLenum mode )
 
 static void update_raster_state( struct st_context *st )
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct pipe_rasterizer_state *raster = &st->state.rasterizer;
    const struct gl_vertex_program *vertProg = ctx->VertexProgram._Current;
+   const struct gl_fragment_program *fragProg = ctx->FragmentProgram._Current;
    uint i;
 
    memset(raster, 0, sizeof(*raster));
@@ -175,17 +176,30 @@ static void update_raster_state( struct st_context *st )
    if (!ctx->Point.PointSprite && ctx->Point.SmoothFlag)
       raster->point_smooth = 1;
 
+   /* _NEW_POINT | _NEW_PROGRAM
+    */
    if (ctx->Point.PointSprite) {
+      /* origin */
       if ((ctx->Point.SpriteOrigin == GL_UPPER_LEFT) ^
           (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM))
          raster->sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
       else 
          raster->sprite_coord_mode = PIPE_SPRITE_COORD_LOWER_LEFT;
+
+      /* Coord replacement flags.  If bit 'k' is set that means
+       * that we need to replace GENERIC[k] attrib with an automatically
+       * computed texture coord.
+       */
       for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
          if (ctx->Point.CoordReplace[i]) {
             raster->sprite_coord_enable |= 1 << i;
          }
       }
+      if (fragProg->Base.InputsRead & FRAG_BIT_PNTC) {
+         raster->sprite_coord_enable |=
+            1 << (FRAG_ATTRIB_PNTC - FRAG_ATTRIB_TEX0);
+      }
+
       raster->point_quad_rasterization = 1;
    }
 

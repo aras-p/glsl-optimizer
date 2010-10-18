@@ -86,7 +86,7 @@ static gl_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
 }
 
 static GLboolean
-do_blit_readpixels(GLcontext * ctx,
+do_blit_readpixels(struct gl_context * ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
@@ -194,7 +194,7 @@ do_blit_readpixels(GLcontext * ctx,
 }
 
 void
-radeonReadPixels(GLcontext * ctx,
+radeonReadPixels(struct gl_context * ctx,
                  GLint x, GLint y, GLsizei width, GLsizei height,
                  GLenum format, GLenum type,
                  const struct gl_pixelstore_attrib *pack, GLvoid * pixels)

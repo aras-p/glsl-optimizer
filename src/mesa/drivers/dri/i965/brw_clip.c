@@ -159,7 +159,7 @@ static void compile_clip_prog( struct brw_context *brw,
 static void upload_clip_prog(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct brw_clip_prog_key key;
 
    memset(&key, 0, sizeof(key));

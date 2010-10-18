@@ -43,7 +43,7 @@ static INLINE GLuint i810PackColor(GLuint format,
 }
 
 
-static void i810AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
+static void i810AlphaFunc(struct gl_context *ctx, GLenum func, GLfloat ref)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLuint a = (ZA_UPDATE_ALPHAFUNC|ZA_UPDATE_ALPHAREF);
@@ -70,7 +70,7 @@ static void i810AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
    imesa->Setup[I810_CTXREG_ZA] |= a;
 }
 
-static void i810BlendEquationSeparate(GLcontext *ctx,
+static void i810BlendEquationSeparate(struct gl_context *ctx,
 				      GLenum modeRGB, GLenum modeA)
 {
    assert( modeRGB == modeA );
@@ -87,7 +87,7 @@ static void i810BlendEquationSeparate(GLcontext *ctx,
 	      ctx->Color.LogicOp != GL_COPY));
 }
 
-static void i810BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
+static void i810BlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
 				     GLenum dfactorRGB, GLenum sfactorA,
 				     GLenum dfactorA )
 {
@@ -156,7 +156,7 @@ static void i810BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
 
 
 
-static void i810DepthFunc(GLcontext *ctx, GLenum func)
+static void i810DepthFunc(struct gl_context *ctx, GLenum func)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    int zmode;
@@ -178,7 +178,7 @@ static void i810DepthFunc(GLcontext *ctx, GLenum func)
    imesa->Setup[I810_CTXREG_LCS] |= zmode;
 }
 
-static void i810DepthMask(GLcontext *ctx, GLboolean flag)
+static void i810DepthMask(struct gl_context *ctx, GLboolean flag)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    I810_STATECHANGE(imesa, I810_UPLOAD_CTX);
@@ -196,7 +196,7 @@ static void i810DepthMask(GLcontext *ctx, GLboolean flag)
  * The i810 supports a 4x4 stipple natively, GL wants 32x32.
  * Fortunately stipple is usually a repeating pattern.
  */
-static void i810PolygonStipple( GLcontext *ctx, const GLubyte *mask )
+static void i810PolygonStipple( struct gl_context *ctx, const GLubyte *mask )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    const GLubyte *m = mask;
@@ -250,7 +250,7 @@ static void i810PolygonStipple( GLcontext *ctx, const GLubyte *mask )
  */
 
 
-static void i810Scissor( GLcontext *ctx, GLint x, GLint y,
+static void i810Scissor( struct gl_context *ctx, GLint x, GLint y,
 			 GLsizei w, GLsizei h )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -267,7 +267,7 @@ static void i810Scissor( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-static void i810LogicOp( GLcontext *ctx, GLenum opcode )
+static void i810LogicOp( struct gl_context *ctx, GLenum opcode )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    FALLBACK( imesa, I810_FALLBACK_LOGICOP,
@@ -276,14 +276,14 @@ static void i810LogicOp( GLcontext *ctx, GLenum opcode )
 
 /* Fallback to swrast for select and feedback.
  */
-static void i810RenderMode( GLcontext *ctx, GLenum mode )
+static void i810RenderMode( struct gl_context *ctx, GLenum mode )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    FALLBACK( imesa, I810_FALLBACK_RENDERMODE, (mode != GL_RENDER) );
 }
 
 
-void i810DrawBuffer(GLcontext *ctx, GLenum mode )
+void i810DrawBuffer(struct gl_context *ctx, GLenum mode )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    int front = 0;
@@ -328,13 +328,13 @@ void i810DrawBuffer(GLcontext *ctx, GLenum mode )
 }
 
 
-static void i810ReadBuffer(GLcontext *ctx, GLenum mode )
+static void i810ReadBuffer(struct gl_context *ctx, GLenum mode )
 {
    /* XXX anything? */
 }
 
 
-static void i810ClearColor(GLcontext *ctx, const GLfloat color[4] )
+static void i810ClearColor(struct gl_context *ctx, const GLfloat color[4] )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLubyte c[4];
@@ -351,7 +351,7 @@ static void i810ClearColor(GLcontext *ctx, const GLfloat color[4] )
  * Culling - the i810 isn't quite as clean here as the rest of
  *           its interfaces, but it's not bad.
  */
-static void i810CullFaceFrontFace(GLcontext *ctx, GLenum unused)
+static void i810CullFaceFrontFace(struct gl_context *ctx, GLenum unused)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLuint mode = LCS_CULL_BOTH;
@@ -375,7 +375,7 @@ static void i810CullFaceFrontFace(GLcontext *ctx, GLenum unused)
 }
 
 
-static void i810LineWidth( GLcontext *ctx, GLfloat widthf )
+static void i810LineWidth( struct gl_context *ctx, GLfloat widthf )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    /* AA, non-AA limits are same */
@@ -394,7 +394,7 @@ static void i810LineWidth( GLcontext *ctx, GLfloat widthf )
    }
 }
 
-static void i810PointSize( GLcontext *ctx, GLfloat sz )
+static void i810PointSize( struct gl_context *ctx, GLfloat sz )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    /* AA, non-AA limits are same */
@@ -417,7 +417,7 @@ static void i810PointSize( GLcontext *ctx, GLfloat sz )
  * Color masks
  */
 
-static void i810ColorMask(GLcontext *ctx,
+static void i810ColorMask(struct gl_context *ctx,
 			  GLboolean r, GLboolean g,
 			  GLboolean b, GLboolean a )
 {
@@ -444,7 +444,7 @@ static void i810ColorMask(GLcontext *ctx,
 
 /* Seperate specular not fully implemented on the i810.
  */
-static void i810LightModelfv(GLcontext *ctx, GLenum pname,
+static void i810LightModelfv(struct gl_context *ctx, GLenum pname,
 			       const GLfloat *param)
 {
    if (pname == GL_LIGHT_MODEL_COLOR_CONTROL)
@@ -458,7 +458,7 @@ static void i810LightModelfv(GLcontext *ctx, GLenum pname,
 
 /* But the 815 has it...
  */
-static void i810LightModelfv_i815(GLcontext *ctx, GLenum pname,
+static void i810LightModelfv_i815(struct gl_context *ctx, GLenum pname,
 				    const GLfloat *param)
 {
    if (pname == GL_LIGHT_MODEL_COLOR_CONTROL)
@@ -475,7 +475,7 @@ static void i810LightModelfv_i815(GLcontext *ctx, GLenum pname,
 
 /* In Mesa 3.5 we can reliably do native flatshading.
  */
-static void i810ShadeModel(GLcontext *ctx, GLenum mode)
+static void i810ShadeModel(struct gl_context *ctx, GLenum mode)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    I810_STATECHANGE(imesa, I810_UPLOAD_CTX);
@@ -490,7 +490,7 @@ static void i810ShadeModel(GLcontext *ctx, GLenum mode)
 /* =============================================================
  * Fog
  */
-static void i810Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
+static void i810Fogfv(struct gl_context *ctx, GLenum pname, const GLfloat *param)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
 
@@ -508,7 +508,7 @@ static void i810Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 
 /* =============================================================
  */
-static void i810Enable(GLcontext *ctx, GLenum cap, GLboolean state)
+static void i810Enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
 
@@ -672,7 +672,7 @@ void i810EmitDrawingRectangle( i810ContextPtr imesa )
 
 
 
-static void i810CalcViewport( GLcontext *ctx )
+static void i810CalcViewport( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -689,14 +689,14 @@ static void i810CalcViewport( GLcontext *ctx )
    m[MAT_TZ] =   v[MAT_TZ] * (1.0 / 0xffff);
 }
 
-static void i810Viewport( GLcontext *ctx,
+static void i810Viewport( struct gl_context *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
    i810CalcViewport( ctx );
 }
 
-static void i810DepthRange( GLcontext *ctx,
+static void i810DepthRange( struct gl_context *ctx,
 			    GLclampd nearval, GLclampd farval )
 {
    i810CalcViewport( ctx );
@@ -718,7 +718,7 @@ void i810PrintDirty( const char *msg, GLuint state )
 
 
 
-void i810InitState( GLcontext *ctx )
+void i810InitState( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    i810ScreenPrivate *i810Screen = imesa->i810Screen;
@@ -953,7 +953,7 @@ void i810InitState( GLcontext *ctx )
 }
 
 
-static void i810InvalidateState( GLcontext *ctx, GLuint new_state )
+static void i810InvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -963,7 +963,7 @@ static void i810InvalidateState( GLcontext *ctx, GLuint new_state )
 }
 
 
-void i810InitStateFuncs(GLcontext *ctx)
+void i810InitStateFuncs(struct gl_context *ctx)
 {
    /* Callbacks for internal Mesa events.
     */

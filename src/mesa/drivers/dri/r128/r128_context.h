@@ -113,7 +113,7 @@ typedef void (*r128_point_func)( r128ContextPtr,
 
 
 struct r128_context {
-   GLcontext *glCtx;			/* Mesa context */
+   struct gl_context *glCtx;			/* Mesa context */
 
    /* Driver and hardware state management
     */
@@ -225,7 +225,7 @@ struct r128_context {
 
 
 extern GLboolean r128CreateContext( gl_api api,
-				    const __GLcontextModes *glVisual,
+				    const struct gl_config *glVisual,
 				    __DRIcontext *driContextPriv,
                                     void *sharedContextPrivate );
 

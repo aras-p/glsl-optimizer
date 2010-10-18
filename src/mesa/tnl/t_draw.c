@@ -38,7 +38,7 @@
 
 
 
-static GLubyte *get_space(GLcontext *ctx, GLuint bytes)
+static GLubyte *get_space(struct gl_context *ctx, GLuint bytes)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLubyte *space = malloc(bytes);
@@ -48,7 +48,7 @@ static GLubyte *get_space(GLcontext *ctx, GLuint bytes)
 }
 
 
-static void free_space(GLcontext *ctx)
+static void free_space(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
@@ -128,7 +128,7 @@ convert_half_to_float(const struct gl_client_array *input,
 /* Adjust pointer to point at first requested element, convert to
  * floating point, populate VB->AttribPtr[].
  */
-static void _tnl_import_array( GLcontext *ctx,
+static void _tnl_import_array( struct gl_context *ctx,
 			       GLuint attrib,
 			       GLuint count,
 			       const struct gl_client_array *input,
@@ -202,7 +202,7 @@ static void _tnl_import_array( GLcontext *ctx,
 #define CLIPVERTS  ((6 + MAX_CLIP_PLANES) * 2)
 
 
-static GLboolean *_tnl_import_edgeflag( GLcontext *ctx,
+static GLboolean *_tnl_import_edgeflag( struct gl_context *ctx,
 					const GLvector4f *input,
 					GLuint count)
 {
@@ -221,7 +221,7 @@ static GLboolean *_tnl_import_edgeflag( GLcontext *ctx,
 }
 
 
-static void bind_inputs( GLcontext *ctx, 
+static void bind_inputs( struct gl_context *ctx, 
 			 const struct gl_client_array *inputs[],
 			 GLint count,
 			 struct gl_buffer_object **bo,
@@ -292,7 +292,7 @@ static void bind_inputs( GLcontext *ctx,
 
 /* Translate indices to GLuints and store in VB->Elts.
  */
-static void bind_indices( GLcontext *ctx,
+static void bind_indices( struct gl_context *ctx,
 			  const struct _mesa_index_buffer *ib,
 			  struct gl_buffer_object **bo,
 			  GLuint *nr_bo)
@@ -345,7 +345,7 @@ static void bind_indices( GLcontext *ctx,
    }
 }
 
-static void bind_prims( GLcontext *ctx,
+static void bind_prims( struct gl_context *ctx,
 			const struct _mesa_prim *prim,
 			GLuint nr_prims )
 {
@@ -356,7 +356,7 @@ static void bind_prims( GLcontext *ctx,
    VB->PrimitiveCount = nr_prims;
 }
 
-static void unmap_vbos( GLcontext *ctx,
+static void unmap_vbos( struct gl_context *ctx,
 			struct gl_buffer_object **bo,
 			GLuint nr_bo )
 {
@@ -369,7 +369,7 @@ static void unmap_vbos( GLcontext *ctx,
 }
 
 
-void _tnl_vbo_draw_prims(GLcontext *ctx,
+void _tnl_vbo_draw_prims(struct gl_context *ctx,
 			 const struct gl_client_array *arrays[],
 			 const struct _mesa_prim *prim,
 			 GLuint nr_prims,
@@ -388,7 +388,7 @@ void _tnl_vbo_draw_prims(GLcontext *ctx,
  * module.  In a regular swtnl driver, this can be plugged straight
  * into the vbo->Driver.DrawPrims() callback.
  */
-void _tnl_draw_prims( GLcontext *ctx,
+void _tnl_draw_prims( struct gl_context *ctx,
 		      const struct gl_client_array *arrays[],
 		      const struct _mesa_prim *prim,
 		      GLuint nr_prims,

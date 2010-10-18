@@ -158,9 +158,17 @@ exec_run( const struct sp_fragment_shader *base,
          case TGSI_SEMANTIC_POSITION:
             {
                uint j;
-               for (j = 0; j < 4; j++) {
+
+               for (j = 0; j < 4; j++)
                   quad->output.depth[j] = machine->Outputs[i].xyzw[2].f[j];
-               }
+            }
+            break;
+         case TGSI_SEMANTIC_STENCIL:
+            {
+               uint j;
+
+               for (j = 0; j < 4; j++)
+                  quad->output.stencil[j] = (unsigned)machine->Outputs[i].xyzw[1].f[j];
             }
             break;
          }

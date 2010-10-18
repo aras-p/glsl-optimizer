@@ -268,7 +268,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
          pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
    }
 
-   for (i = 0; i <= PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
+   for (i = 0; i <= PIPE_MAX_COLOR_BUFS; i++)
       if (ctx->fs_col[i])
          pipe->delete_fs_state(pipe, ctx->fs_col[i]);
 
@@ -964,16 +964,18 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    blitter_restore_CSOs(ctx);
 }
 
-/* Clear a region of a depth stencil surface. */
-void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
-                                      struct pipe_surface *dstsurf)
+/* draw a rectangle across a region using a custom dsa stage - for r600g */
+void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
+				       struct pipe_surface *zsurf,
+				       struct pipe_surface *cbsurf,
+				       void *dsa_stage, float depth)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_framebuffer_state fb_state;
 
-   assert(dstsurf->texture);
-   if (!dstsurf->texture)
+   assert(zsurf->texture);
+   if (!zsurf->texture)
       return;
 
    /* check the saved state */
@@ -981,8 +983,8 @@ void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
    assert(blitter->saved_fb_state.nr_cbufs != ~0);
 
    /* bind CSOs */
-   pipe->bind_blend_state(pipe, ctx->blend_keep_color);
-   pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_flush_depth_stencil);
+   pipe->bind_blend_state(pipe, ctx->blend_write_color);
+   pipe->bind_depth_stencil_alpha_state(pipe, dsa_stage);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0));
@@ -990,15 +992,30 @@ void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
-   fb_state.width = dstsurf->width;
-   fb_state.height = dstsurf->height;
-   fb_state.nr_cbufs = 0;
-   fb_state.cbufs[0] = 0;
-   fb_state.zsbuf = dstsurf;
+   fb_state.width = zsurf->width;
+   fb_state.height = zsurf->height;
+   fb_state.nr_cbufs = 1;
+   if (cbsurf) {
+	   fb_state.cbufs[0] = cbsurf;
+	   fb_state.nr_cbufs = 1;
+   } else {
+	   fb_state.cbufs[0] = NULL;
+	   fb_state.nr_cbufs = 0;
+   }
+   fb_state.zsbuf = zsurf;
    pipe->set_framebuffer_state(pipe, &fb_state);
 
-   blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
-   blitter->draw_rectangle(blitter, 0, 0, dstsurf->width, dstsurf->height, 0,
+   blitter_set_dst_dimensions(ctx, zsurf->width, zsurf->height);
+   blitter->draw_rectangle(blitter, 0, 0, zsurf->width, zsurf->height, depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
    blitter_restore_CSOs(ctx);
+}
+
+/* flush a region of a depth stencil surface for r300g */
+void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
+                                      struct pipe_surface *dstsurf)
+{
+	struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+	util_blitter_custom_depth_stencil(blitter, dstsurf, NULL,
+					  ctx->dsa_flush_depth_stencil, 0.0f);
 }

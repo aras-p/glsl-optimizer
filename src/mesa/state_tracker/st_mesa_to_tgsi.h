@@ -44,7 +44,7 @@ struct gl_program;
 
 enum pipe_error
 st_translate_mesa_program(
-   GLcontext *ctx,
+   struct gl_context *ctx,
    uint procType,
    struct ureg_program *ureg,
    const struct gl_program *program,

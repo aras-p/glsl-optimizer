@@ -40,6 +40,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "util/u_memory.h"
 #include "util/u_string.h"
 #include "intel_decode.h"
 
@@ -116,8 +117,7 @@ decode_mi(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
     };
 
 
-    for (opcode = 0; opcode < sizeof(opcodes_mi) / sizeof(opcodes_mi[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_mi); opcode++) {
 	if ((data[0] & 0x1f800000) >> 23 == opcodes_mi[opcode].opcode) {
 	    unsigned int len = 1, i;
 
@@ -275,8 +275,7 @@ decode_2d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_2d) / sizeof(opcodes_2d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_2d); opcode++) {
 	if ((data[0] & 0x1fc00000) >> 22 == opcodes_2d[opcode].opcode) {
 	    unsigned int i;
 
@@ -1037,9 +1036,7 @@ decode_3d_1d(const uint32_t *data, int count, uint32_t hw_offset, int *failures,
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d_1d) / sizeof(opcodes_3d_1d[0]);
-	 opcode++)
-    {
+    for (opcode = 0; opcode < Elements(opcodes_3d_1d); opcode++) {
 	if (opcodes_3d_1d[opcode].i830_only && !i830)
 	    continue;
 
@@ -1291,8 +1288,7 @@ decode_3d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return decode_3d_1c(data, count, hw_offset, failures);
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0x1f000000) >> 24 == opcodes_3d[opcode].opcode) {
 	    unsigned int len = 1, i;
 
@@ -1637,8 +1633,7 @@ decode_3d_965(const uint32_t *data, int count, uint32_t hw_offset, int *failures
 	return len;
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0xffff0000) >> 16 == opcodes_3d[opcode].opcode) {
 	    unsigned int i;
 	    len = 1;
@@ -1705,8 +1700,7 @@ decode_3d_i830(const uint32_t *data, int count, uint32_t hw_offset, int *failure
 	return decode_3d_1c(data, count, hw_offset, failures);
     }
 
-    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
-	 opcode++) {
+    for (opcode = 0; opcode < Elements(opcodes_3d); opcode++) {
 	if ((data[0] & 0x1f000000) >> 24 == opcodes_3d[opcode].opcode) {
 	    unsigned int len = 1, i;
 

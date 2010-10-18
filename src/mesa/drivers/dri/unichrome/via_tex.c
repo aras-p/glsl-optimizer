@@ -31,8 +31,6 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/formats.h"
-#include "main/colortab.h"
-#include "main/convolve.h"
 #include "main/context.h"
 #include "main/mipmap.h"
 #include "main/mm.h"
@@ -47,7 +45,7 @@
 #include "via_3d_reg.h"
 
 static gl_format
-viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
+viaChooseTexFormat( struct gl_context *ctx, GLint internalFormat,
 		    GLenum format, GLenum type )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -439,7 +437,7 @@ GLboolean viaSwapOutWork( struct via_context *vmesa )
 /* Basically, just collect the image dimensions and addresses for each
  * image and update the texture object state accordingly.
  */
-static GLboolean viaSetTexImages(GLcontext *ctx,
+static GLboolean viaSetTexImages(struct gl_context *ctx,
 				 struct gl_texture_object *texObj)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -626,7 +624,7 @@ static GLboolean viaSetTexImages(GLcontext *ctx,
 }
 
 
-GLboolean viaUpdateTextureState( GLcontext *ctx )
+GLboolean viaUpdateTextureState( struct gl_context *ctx )
 {
    struct gl_texture_unit *texUnit = ctx->Texture.Unit;
    GLuint i;
@@ -653,7 +651,7 @@ GLboolean viaUpdateTextureState( GLcontext *ctx )
 				 
 
 
-static void viaTexImage(GLcontext *ctx, 
+static void viaTexImage(struct gl_context *ctx, 
 			GLint dims,
 			GLenum target, GLint level,
 			GLint internalFormat,
@@ -674,11 +672,6 @@ static void viaTexImage(GLcontext *ctx,
    if (!is_empty_list(&vmesa->freed_tex_buffers)) {
       viaCheckBreadcrumb(vmesa, 0);
       via_release_pending_textures(vmesa);
-   }
-
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-                                         &postConvHeight);
    }
 
    /* choose the texture format */
@@ -805,7 +798,7 @@ static void viaTexImage(GLcontext *ctx,
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
-static void viaTexImage2D(GLcontext *ctx, 
+static void viaTexImage2D(struct gl_context *ctx, 
 			  GLenum target, GLint level,
 			  GLint internalFormat,
 			  GLint width, GLint height, GLint border,
@@ -820,7 +813,7 @@ static void viaTexImage2D(GLcontext *ctx,
 		packing, texObj, texImage );
 }
 
-static void viaTexSubImage2D(GLcontext *ctx,
+static void viaTexSubImage2D(struct gl_context *ctx,
                              GLenum target,
                              GLint level,
                              GLint xoffset, GLint yoffset,
@@ -841,7 +834,7 @@ static void viaTexSubImage2D(GLcontext *ctx,
 			     texImage);
 }
 
-static void viaTexImage1D(GLcontext *ctx, 
+static void viaTexImage1D(struct gl_context *ctx, 
 			  GLenum target, GLint level,
 			  GLint internalFormat,
 			  GLint width, GLint border,
@@ -856,7 +849,7 @@ static void viaTexImage1D(GLcontext *ctx,
 		packing, texObj, texImage );
 }
 
-static void viaTexSubImage1D(GLcontext *ctx,
+static void viaTexSubImage1D(struct gl_context *ctx,
                              GLenum target,
                              GLint level,
                              GLint xoffset,
@@ -879,7 +872,7 @@ static void viaTexSubImage1D(GLcontext *ctx,
 
 
 
-static GLboolean viaIsTextureResident(GLcontext *ctx,
+static GLboolean viaIsTextureResident(struct gl_context *ctx,
                                       struct gl_texture_object *texObj)
 {
    struct via_texture_object *viaObj = 
@@ -891,14 +884,14 @@ static GLboolean viaIsTextureResident(GLcontext *ctx,
 
 
 
-static struct gl_texture_image *viaNewTextureImage( GLcontext *ctx )
+static struct gl_texture_image *viaNewTextureImage( struct gl_context *ctx )
 {
    (void) ctx;
    return (struct gl_texture_image *)CALLOC_STRUCT(via_texture_image);
 }
 
 
-static struct gl_texture_object *viaNewTextureObject( GLcontext *ctx, 
+static struct gl_texture_object *viaNewTextureObject( struct gl_context *ctx, 
 						      GLuint name, 
 						      GLenum target )
 {
@@ -913,7 +906,7 @@ static struct gl_texture_object *viaNewTextureObject( GLcontext *ctx,
 }
 
 
-static void viaFreeTextureImageData( GLcontext *ctx, 
+static void viaFreeTextureImageData( struct gl_context *ctx, 
 				     struct gl_texture_image *texImage )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -958,7 +951,6 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
    functions->TextureMemCpy = memcpy;
 #endif
 
-   functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = viaIsTextureResident;
 }
 

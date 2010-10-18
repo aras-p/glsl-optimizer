@@ -27,7 +27,7 @@
 
 extern "C" {
 #include <talloc.h>
-#include "main/core.h" /* for struct __GLcontextRec */
+#include "main/core.h" /* for struct gl_context */
 }
 
 #include "ast.h"
@@ -36,7 +36,7 @@ extern "C" {
 #include "ir_optimization.h"
 #include "loop_analysis.h"
 
-_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
+_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
 					       GLenum target, void *mem_ctx)
 {
    switch (target) {
@@ -181,6 +181,13 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
 	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
       }
+   } else if (strcmp(name, "GL_ARB_explicit_attrib_location") == 0) {
+      state->ARB_explicit_attrib_location_enable =
+	 (ext_mode != extension_disable);
+      state->ARB_explicit_attrib_location_warn =
+	 (ext_mode == extension_warn);
+
+      unsupported = !state->extensions->ARB_explicit_attrib_location;
    } else if (strcmp(name, "GL_ARB_fragment_coord_conventions") == 0) {
       state->ARB_fragment_coord_conventions_enable =
 	 (ext_mode != extension_disable);
@@ -196,6 +203,14 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       state->EXT_texture_array_warn = (ext_mode == extension_warn);
 
       unsupported = !state->extensions->EXT_texture_array;
+   } else if (strcmp(name, "GL_ARB_shader_stencil_export") == 0) {
+      if (state->target != fragment_shader) {
+	 unsupported = true;
+      } else {
+	 state->ARB_shader_stencil_export_enable = (ext_mode != extension_disable);
+	 state->ARB_shader_stencil_export_warn = (ext_mode == extension_warn);
+	 unsupported = !state->extensions->ARB_shader_stencil_export;
+      }
    } else {
       unsupported = true;
    }
@@ -219,37 +234,37 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 void
 _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 {
-   if (q->constant)
+   if (q->flags.q.constant)
       printf("const ");
 
-   if (q->invariant)
+   if (q->flags.q.invariant)
       printf("invariant ");
 
-   if (q->attribute)
+   if (q->flags.q.attribute)
       printf("attribute ");
 
-   if (q->varying)
+   if (q->flags.q.varying)
       printf("varying ");
 
-   if (q->in && q->out) 
+   if (q->flags.q.in && q->flags.q.out)
       printf("inout ");
    else {
-      if (q->in)
+      if (q->flags.q.in)
 	 printf("in ");
 
-      if (q->out)
+      if (q->flags.q.out)
 	 printf("out ");
    }
 
-   if (q->centroid)
+   if (q->flags.q.centroid)
       printf("centroid ");
-   if (q->uniform)
+   if (q->flags.q.uniform)
       printf("uniform ");
-   if (q->smooth)
+   if (q->flags.q.smooth)
       printf("smooth ");
-   if (q->flat)
+   if (q->flags.q.flat)
       printf("flat ");
-   if (q->noperspective)
+   if (q->flags.q.noperspective)
       printf("noperspective ");
 }
 
@@ -680,6 +695,11 @@ ast_struct_specifier::print(void) const
 ast_struct_specifier::ast_struct_specifier(char *identifier,
 					   ast_node *declarator_list)
 {
+   if (identifier == NULL) {
+      static unsigned anon_count = 1;
+      identifier = talloc_asprintf(this, "#anon_struct_%04x", anon_count);
+      anon_count++;
+   }
    name = identifier;
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }

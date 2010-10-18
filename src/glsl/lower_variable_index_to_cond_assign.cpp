@@ -117,7 +117,7 @@ struct switch_generator
 	    new(this->mem_ctx) ir_dereference_variable(index);
 
          if (comps) {
-	    const ir_swizzle_mask m = { 0, 1, 2, 3, comps, false };
+	    const ir_swizzle_mask m = { 0, 0, 0, 0, comps, false };
 	    broadcast_index = new(this->mem_ctx) ir_swizzle(broadcast_index, m);
 	 }
 

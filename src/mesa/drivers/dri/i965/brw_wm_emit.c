@@ -173,12 +173,28 @@ void emit_delta_xy(struct brw_compile *p,
 		   GLuint mask,
 		   const struct brw_reg *arg0)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
    if (mask == 0)
       return;
 
    assert(mask == WRITEMASK_XY);
+
+   if (intel->gen >= 6) {
+       /* XXX Gen6 WM doesn't have Xstart/Ystart in payload r1.0/r1.1.
+	  Just add them with 0.0 for dst reg.. */
+       r1 = brw_imm_v(0x00000000);
+       brw_ADD(p,
+	       dst[0],
+	       retype(arg0[0], BRW_REGISTER_TYPE_UW),
+	       r1);
+       brw_ADD(p,
+	       dst[1],
+	       retype(arg0[1], BRW_REGISTER_TYPE_UW),
+	       r1);
+       return;
+   }
 
    /* Calc delta X,Y by subtracting origin in r1 from the pixel
     * centers produced by emit_pixel_xy().
@@ -253,6 +269,15 @@ void emit_pixel_w(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
+   struct brw_reg src;
+   struct brw_reg temp_dst;
+
+   if (intel->gen >= 6)
+	temp_dst = dst[3];
+   else
+	temp_dst = brw_message_reg(2);
+
+   assert(intel->gen < 6);
 
    /* Don't need this if all you are doing is interpolating color, for
     * instance.
@@ -264,30 +289,34 @@ void emit_pixel_w(struct brw_wm_compile *c,
        * result straight into a message reg.
        */
       if (can_do_pln(intel, deltas)) {
-	 brw_PLN(p, brw_message_reg(2), interp3, deltas[0]);
+	 brw_PLN(p, temp_dst, interp3, deltas[0]);
       } else {
 	 brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
-	 brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+	 brw_MAC(p, temp_dst, suboffset(interp3, 1), deltas[1]);
       }
 
       /* Calc w */
+      if (intel->gen >= 6)
+	 src = temp_dst;
+      else
+	 src = brw_null_reg();
+
       if (c->dispatch_width == 16) {
 	 brw_math_16(p, dst[3],
 		     BRW_MATH_FUNCTION_INV,
 		     BRW_MATH_SATURATE_NONE,
-		     2, brw_null_reg(),
+		     2, src,
 		     BRW_MATH_PRECISION_FULL);
       } else {
 	 brw_math(p, dst[3],
 		  BRW_MATH_FUNCTION_INV,
 		  BRW_MATH_SATURATE_NONE,
-		  2, brw_null_reg(),
+		  2, src,
 		  BRW_MATH_DATA_VECTOR,
 		  BRW_MATH_PRECISION_FULL);
       }
    }
 }
-
 
 void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
@@ -307,7 +336,9 @@ void emit_linterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 if (can_do_pln(intel, deltas)) {
+	 if (intel->gen >= 6) {
+	    brw_PLN(p, dst[i], interp[i], brw_vec8_grf(2, 0));
+	 } else if (can_do_pln(intel, deltas)) {
 	    brw_PLN(p, dst[i], interp[i], deltas[0]);
 	 } else {
 	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
@@ -329,6 +360,11 @@ void emit_pinterp(struct brw_compile *p,
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
+
+   if (intel->gen >= 6) {
+      emit_linterp(p, dst, mask, arg0, interp);
+      return;
+   }
 
    interp[0] = brw_vec1_grf(nr, 0);
    interp[1] = brw_vec1_grf(nr, 4);
@@ -910,10 +946,8 @@ void emit_math2(struct brw_wm_compile *c,
 		const struct brw_reg *arg1)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-   GLuint saturate = ((mask & SATURATE) ?
-		      BRW_MATH_SATURATE_SATURATE :
-		      BRW_MATH_SATURATE_NONE);
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -922,35 +956,103 @@ void emit_math2(struct brw_wm_compile *c,
 
    brw_push_insn_state(p);
 
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_MOV(p, brw_message_reg(3), arg1[0]);
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
-   }
-
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_math(p, 
-	    dst[dst_chan],
-	    function,
-	    saturate,
-	    2,
-	    arg0[0],
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
-
-   /* Send two messages to perform all 16 operations:
+   /* math can only operate on up to a vec8 at a time, so in
+    * dispatch_width==16 we have to do the second half manually.
     */
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+   if (intel->gen >= 6) {
+      struct brw_reg src0 = arg0[0];
+      struct brw_reg src1 = arg1[0];
+      struct brw_reg temp_dst = dst[dst_chan];
+
+      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	    /* Both scalar arguments.  Do scalar calc. */
+	    src0.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    src1.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    temp_dst.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    temp_dst.width = BRW_WIDTH_1;
+
+	    if (arg0[0].subnr != 0) {
+	       brw_MOV(p, temp_dst, src0);
+	       src0 = temp_dst;
+
+	       /* Ouch.  We've used the temp as a dst, and we still
+		* need a temp to store arg1 in, because src and dst
+		* offsets have to be equal.  Leaving this up to
+		* glsl2-965 to handle correctly.
+		*/
+	       assert(arg1[0].subnr == 0);
+	    } else if (arg1[0].subnr != 0) {
+	       brw_MOV(p, temp_dst, src1);
+	       src1 = temp_dst;
+	    }
+	 } else {
+	    brw_MOV(p, temp_dst, src0);
+	    src0 = temp_dst;
+	 }
+      } else if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 brw_MOV(p, temp_dst, src1);
+	 src1 = temp_dst;
+      }
+
+      brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_math2(p,
+		temp_dst,
+		function,
+		src0,
+		src1);
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_math2(p,
+		   sechalf(temp_dst),
+		   function,
+		   sechalf(src0),
+		   sechalf(src1));
+      }
+
+      /* Splat a scalar result into all the channels. */
+      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 &&
+	  arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 temp_dst.hstride = BRW_HORIZONTAL_STRIDE_0;
+	 temp_dst.vstride = BRW_VERTICAL_STRIDE_0;
+	 brw_MOV(p, dst[dst_chan], temp_dst);
+      }
+   } else {
+      GLuint saturate = ((mask & SATURATE) ?
+			 BRW_MATH_SATURATE_SATURATE :
+			 BRW_MATH_SATURATE_NONE);
+
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_MOV(p, brw_message_reg(3), arg1[0]);
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
+      }
+
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_math(p,
-	       offset(dst[dst_chan],1),
+	       dst[dst_chan],
 	       function,
 	       saturate,
-	       4,
-	       sechalf(arg0[0]),
+	       2,
+	       arg0[0],
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
+
+      /* Send two messages to perform all 16 operations:
+       */
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_math(p,
+		  offset(dst[dst_chan],1),
+		  function,
+		  saturate,
+		  4,
+		  sechalf(arg0[0]),
+		  BRW_MATH_DATA_VECTOR,
+		  BRW_MATH_PRECISION_FULL);
+      }
    }
    brw_pop_insn_state(p);
 }
@@ -1028,7 +1130,7 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Fill in the shadow comparison reference value. */
    if (shadow) {
-      if (intel->gen == 5) {
+      if (intel->gen >= 5) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
 	 cur_mrf += mrf_per_channel;
@@ -1041,7 +1143,7 @@ void emit_tex(struct brw_wm_compile *c,
       cur_mrf += mrf_per_channel;
    }
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 5) {
       if (shadow)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
       else
@@ -1094,7 +1196,7 @@ void emit_txb(struct brw_wm_compile *c,
     * from mattering.
     */
    if (c->dispatch_width == 16 || intel->gen < 5) {
-      if (intel->gen == 5)
+      if (intel->gen >= 5)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
       else
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
@@ -1223,7 +1325,7 @@ static void emit_kil( struct brw_wm_compile *c,
 /* KIL_NV kills the pixels that are currently executing, not based on a test
  * of the arguments.
  */
-static void emit_kil_nv( struct brw_wm_compile *c )
+void emit_kil_nv( struct brw_wm_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
@@ -1553,9 +1655,12 @@ static void spill_values( struct brw_wm_compile *c,
 void brw_wm_emit( struct brw_wm_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    GLuint insn;
 
    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+   if (intel->gen >= 6)
+	brw_set_acc_write_control(p, 1);
 
    /* Check if any of the payload regs need to be spilled:
     */
@@ -1667,7 +1772,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_TRUNC:
-	 emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
+	 for (i = 0; i < 4; i++) {
+	    if (dst_flags & (1<<i)) {
+	       brw_RNDZ(p, dst[i], args[0][i]);
+	    }
+	 }
 	 break;
 
       case OPCODE_LRP:

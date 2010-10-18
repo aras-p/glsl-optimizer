@@ -133,7 +133,7 @@ mach64AllocTexObj( struct gl_texture_object *texObj )
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
 static gl_format
-mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+mach64ChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
 			   GLenum format, GLenum type )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -241,7 +241,7 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    }
 }
 
-static void mach64TexImage1D( GLcontext *ctx, GLenum target, GLint level,
+static void mach64TexImage1D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint border,
 			    GLenum format, GLenum type, const GLvoid *pixels,
@@ -271,7 +271,7 @@ static void mach64TexImage1D( GLcontext *ctx, GLenum target, GLint level,
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
 
-static void mach64TexSubImage1D( GLcontext *ctx,
+static void mach64TexSubImage1D( struct gl_context *ctx,
 				 GLenum target,
 				 GLint level,
 				 GLint xoffset,
@@ -304,7 +304,7 @@ static void mach64TexSubImage1D( GLcontext *ctx,
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
 
-static void mach64TexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void mach64TexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			      GLint internalFormat,
 			      GLint width, GLint height, GLint border,
 			      GLenum format, GLenum type, const GLvoid *pixels,
@@ -334,7 +334,7 @@ static void mach64TexImage2D( GLcontext *ctx, GLenum target, GLint level,
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
 
-static void mach64TexSubImage2D( GLcontext *ctx,
+static void mach64TexSubImage2D( struct gl_context *ctx,
 				 GLenum target,
 				 GLint level,
 				 GLint xoffset, GLint yoffset,
@@ -371,7 +371,7 @@ static void mach64TexSubImage2D( GLcontext *ctx,
  * Device Driver API texture functions
  */
 
-static void mach64DDTexEnv( GLcontext *ctx, GLenum target,
+static void mach64DDTexEnv( struct gl_context *ctx, GLenum target,
 			    GLenum pname, const GLfloat *param )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -425,7 +425,7 @@ static void mach64DDTexEnv( GLcontext *ctx, GLenum target,
    }
 }
 
-static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
+static void mach64DDTexParameter( struct gl_context *ctx, GLenum target,
 				  struct gl_texture_object *tObj,
 				  GLenum pname, const GLfloat *params )
 {
@@ -489,7 +489,7 @@ static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
 
-static void mach64DDBindTexture( GLcontext *ctx, GLenum target,
+static void mach64DDBindTexture( struct gl_context *ctx, GLenum target,
 				 struct gl_texture_object *tObj )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -510,7 +510,7 @@ static void mach64DDBindTexture( GLcontext *ctx, GLenum target,
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
 
-static void mach64DDDeleteTexture( GLcontext *ctx,
+static void mach64DDDeleteTexture( struct gl_context *ctx,
 				   struct gl_texture_object *tObj )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -537,7 +537,7 @@ static void mach64DDDeleteTexture( GLcontext *ctx,
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-mach64NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+mach64NewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);
@@ -558,8 +558,6 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
    functions->NewTextureObject		= mach64NewTextureObject;
    functions->DeleteTexture		= mach64DDDeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;
-
-   functions->UpdateTexturePalette	= NULL;
 
    driInitTextureFormats();
 }

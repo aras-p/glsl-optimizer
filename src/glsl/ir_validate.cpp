@@ -67,6 +67,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_function_signature *ir);
 
    virtual ir_visitor_status visit_leave(ir_expression *ir);
+   virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
 
@@ -124,7 +125,8 @@ ir_validate::visit_leave(ir_loop *ir)
 		"    from:      %p\n"
 		"    to:        %p\n"
 		"    increment: %p\n",
-		ir->counter, ir->from, ir->to, ir->increment);
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
 	 abort();
       }
 
@@ -139,7 +141,8 @@ ir_validate::visit_leave(ir_loop *ir)
 		"    from:      %p\n"
 		"    to:        %p\n"
 		"    increment: %p\n",
-		ir->counter, ir->from, ir->to, ir->increment);
+		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
+                (void *) ir->increment);
 	 abort();
       }
    }
@@ -264,6 +267,7 @@ ir_validate::visit_leave(ir_expression *ir)
       break;
 
    case ir_unop_trunc:
+   case ir_unop_round_even:
    case ir_unop_ceil:
    case ir_unop_floor:
    case ir_unop_fract:
@@ -328,14 +332,31 @@ ir_validate::visit_leave(ir_expression *ir)
 
    case ir_binop_lshift:
    case ir_binop_rshift:
+      assert(ir->operands[0]->type->is_integer() &&
+             ir->operands[1]->type->is_integer());
+      if (ir->operands[0]->type->is_scalar()) {
+          assert(ir->operands[1]->type->is_scalar());
+      }
+      if (ir->operands[0]->type->is_vector() &&
+          ir->operands[1]->type->is_vector()) {
+          assert(ir->operands[0]->type->components() ==
+                 ir->operands[1]->type->components());
+      }
+      assert(ir->type == ir->operands[0]->type);
+      break;
+
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
-      assert(ir->operands[0]->type == ir->operands[1]->type);
-      assert(ir->type == ir->operands[0]->type);
-      assert(ir->type->base_type == GLSL_TYPE_INT ||
-	     ir->type->base_type == GLSL_TYPE_UINT);
-      break;
+       assert(ir->operands[0]->type->base_type ==
+              ir->operands[1]->type->base_type);
+       assert(ir->type->is_integer());
+       if (ir->operands[0]->type->is_vector() &&
+           ir->operands[1]->type->is_vector()) {
+           assert(ir->operands[0]->type->vector_elements ==
+                  ir->operands[1]->type->vector_elements);
+       }
+       break;
 
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
@@ -357,6 +378,23 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[1]->type == glsl_type::vec3_type);
       assert(ir->type == glsl_type::vec3_type);
       break;
+   }
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_leave(ir_swizzle *ir)
+{
+   int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
+
+   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
+      if (chans[i] >= ir->val->type->vector_elements) {
+	 printf("ir_swizzle @ %p specifies a channel not present "
+		"in the value.\n", (void *) ir);
+	 ir->print();
+	 abort();
+      }
    }
 
    return visit_continue;
@@ -389,14 +427,16 @@ ir_validate::visit_enter(ir_assignment *ir)
 	 abort();
       }
 
-      /* Mask of fields that do not exist in the destination.  These should
-       * not be written by the assignment.
-       */
-      const unsigned invalid_mask = ~((1U << lhs->type->components()) - 1);
+      int lhs_components = 0;
+      for (int i = 0; i < 4; i++) {
+	 if (ir->write_mask & (1 << i))
+	    lhs_components++;
+      }
 
-      if ((invalid_mask & ir->write_mask) != 0) {
-	 printf("Assignment write mask enables invalid components for "
-		"type %s:\n", lhs->type->name);
+      if (lhs_components != ir->rhs->type->vector_elements) {
+	 printf("Assignment count of LHS write mask channels enabled not\n"
+		"matching RHS vector size (%d LHS, %d RHS).\n",
+		lhs_components, ir->rhs->type->vector_elements);
 	 ir->print();
 	 abort();
       }

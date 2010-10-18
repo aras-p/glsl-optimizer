@@ -391,17 +391,19 @@ driReleaseDrawables(struct glx_context *gc)
 
    if (__glxHashLookup(priv->drawHash,
 		       gc->currentDrawable, (void *) &pdraw) == 0) {
-      if (pdraw->drawable == pdraw->xDrawable)
+      if (pdraw->drawable == pdraw->xDrawable) {
 	 (*pdraw->destroyDrawable)(pdraw);
-      __glxHashDelete(priv->drawHash, gc->currentDrawable);
+	 __glxHashDelete(priv->drawHash, gc->currentDrawable);
+      }
    }
 
    if (gc->currentDrawable != gc->currentReadable &&
        __glxHashLookup(priv->drawHash,
 		       gc->currentReadable, (void *) &pdraw) == 0) {
-      if (pdraw->drawable == pdraw->xDrawable)
+      if (pdraw->drawable == pdraw->xDrawable) {
 	 (*pdraw->destroyDrawable)(pdraw);
-      __glxHashDelete(priv->drawHash, gc->currentReadable);
+	 __glxHashDelete(priv->drawHash, gc->currentReadable);
+      }
    }
 }
 

@@ -33,13 +33,13 @@
 
 #include "r700_chip.h"
 
-extern void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state);
-extern void r700UpdateShaders (GLcontext * ctx);
-extern void r700UpdateShaderStates(GLcontext * ctx);
+extern void r700UpdateStateParameters(struct gl_context * ctx, GLuint new_state);
+extern void r700UpdateShaders (struct gl_context * ctx);
+extern void r700UpdateShaderStates(struct gl_context * ctx);
 
-extern void r700UpdateViewportOffset(GLcontext * ctx);
+extern void r700UpdateViewportOffset(struct gl_context * ctx);
 
-extern void r700InitState (GLcontext * ctx);
+extern void r700InitState (struct gl_context * ctx);
 extern void r700InitStateFuncs (radeonContextPtr radeon, struct dd_function_table *functions);
 
 extern void r700SetScissor(context_t *context);

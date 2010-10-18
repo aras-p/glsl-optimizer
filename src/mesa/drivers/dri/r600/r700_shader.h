@@ -33,7 +33,7 @@
 #include "r700_shaderinst.h"
 
 
-void r700ShaderInit(GLcontext * ctx);
+void r700ShaderInit(struct gl_context * ctx);
 
 typedef enum R700ShaderType
 {

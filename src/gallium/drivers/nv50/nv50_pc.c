@@ -328,7 +328,7 @@ nv_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f, void *priv)
 static void
 nv_do_print_function(void *priv, struct nv_basic_block *b)
 {
-   struct nv_instruction *i = b->phi;
+   struct nv_instruction *i;
 
    debug_printf("=== BB %i ", b->id);
    if (b->out[0])
@@ -546,6 +546,8 @@ nv50_generate_code(struct nv50_translation_info *ti)
 
    ti->p->fixups = pc->fixups;
    ti->p->num_fixups = pc->num_fixups;
+
+   ti->p->uses_lmem = ti->store_to_memory;
 
    NV50_DBGMSG("SHADER TRANSLATION - %s\n", ret ? "failure" : "success");
 

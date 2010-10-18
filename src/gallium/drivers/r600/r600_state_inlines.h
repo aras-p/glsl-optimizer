@@ -25,6 +25,7 @@
 
 #include "util/u_format.h"
 #include "r600d.h"
+#include "r600_formats.h"
 
 static INLINE uint32_t r600_translate_blend_function(int blend_func)
 {
@@ -123,6 +124,21 @@ static INLINE uint32_t r600_translate_stencil_op(int s_op)
 	return 0;
 }
 
+static INLINE uint32_t r600_translate_fill(uint32_t func)
+{
+	switch(func) {
+	case PIPE_POLYGON_MODE_FILL:
+		return 2;
+	case PIPE_POLYGON_MODE_LINE:
+		return 1;
+	case PIPE_POLYGON_MODE_POINT:
+		return 0;
+	default:
+		assert(0);
+		return 0;
+	}
+}
+
 /* translates straight */
 static INLINE uint32_t r600_translate_ds_func(int func)
 {
@@ -136,17 +152,17 @@ static inline unsigned r600_tex_wrap(unsigned wrap)
 	case PIPE_TEX_WRAP_REPEAT:
 		return V_03C000_SQ_TEX_WRAP;
 	case PIPE_TEX_WRAP_CLAMP:
-		return V_03C000_SQ_TEX_CLAMP_LAST_TEXEL;
-	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
 		return V_03C000_SQ_TEX_CLAMP_HALF_BORDER;
+	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+		return V_03C000_SQ_TEX_CLAMP_LAST_TEXEL;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
 		return V_03C000_SQ_TEX_CLAMP_BORDER;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
 		return V_03C000_SQ_TEX_MIRROR;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP:
-		return V_03C000_SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
-	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
 		return V_03C000_SQ_TEX_MIRROR_ONCE_HALF_BORDER;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+		return V_03C000_SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
 		return V_03C000_SQ_TEX_MIRROR_ONCE_BORDER;
 	}
@@ -283,6 +299,17 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_B4G4R4A4_UNORM:
 	case PIPE_FORMAT_B4G4R4X4_UNORM:
 		return V_0280A0_SWAP_ALT;
+
+	case PIPE_FORMAT_Z16_UNORM:
+		return V_0280A0_SWAP_STD;
+
+	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_R8G8_UNORM:
+		return V_0280A0_SWAP_STD;
+
+	case PIPE_FORMAT_R16_UNORM:
+		return V_0280A0_SWAP_STD;
+
 		/* 32-bit buffers. */
 
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
@@ -310,22 +337,29 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_0280A0_SWAP_STD;
 
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		return V_0280A0_SWAP_STD;
+
 	case PIPE_FORMAT_R10G10B10A2_UNORM:
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
 	case PIPE_FORMAT_B10G10R10A2_UNORM:
 	case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
 		return V_0280A0_SWAP_STD_REV;
 
+	case PIPE_FORMAT_R16G16_UNORM:
+		return V_0280A0_SWAP_STD;
+
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
-		//		return V_0280A0_COLOR_16_16_16_16;
+		//		return FMT_16_16_16_16;
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		//		return V_0280A0_COLOR_16_16_16_16_FLOAT;
+		//		return FMT_16_16_16_16_FLOAT;
 
 		/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		//		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+		//		return FMT_32_32_32_32_FLOAT;
 		return 0;
 	default:
 		R600_ERR("unsupported colorswap format %d\n", format);
@@ -357,6 +391,16 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_B4G4R4X4_UNORM:
 		return V_0280A0_COLOR_4_4_4_4;
 
+	case PIPE_FORMAT_Z16_UNORM:
+		return V_0280A0_COLOR_16;
+
+	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_R8G8_UNORM:
+		return V_0280A0_COLOR_8_8;
+
+	case PIPE_FORMAT_R16_UNORM:
+		return V_0280A0_COLOR_16;
+
 		/* 32-bit buffers. */
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
 	case PIPE_FORMAT_A8B8G8R8_UNORM:
@@ -383,17 +427,40 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_0280A0_COLOR_8_24;
 
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		return V_0280A0_COLOR_24_8;
+
 	case PIPE_FORMAT_R32_FLOAT:
 		return V_0280A0_COLOR_32_FLOAT;
 
+	case PIPE_FORMAT_R16G16_FLOAT:
+		return V_0280A0_COLOR_16_16_FLOAT;
+
+	case PIPE_FORMAT_R16G16_SSCALED:
+	case PIPE_FORMAT_R16G16_UNORM:
+		return V_0280A0_COLOR_16_16;
+
+
 		/* 64-bit buffers. */
+	case PIPE_FORMAT_R16G16B16_USCALED:
+	case PIPE_FORMAT_R16G16B16A16_USCALED:
+	case PIPE_FORMAT_R16G16B16_SSCALED:
+	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 		return V_0280A0_COLOR_16_16_16_16;
+
+	case PIPE_FORMAT_R16G16B16_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 		return V_0280A0_COLOR_16_16_16_16_FLOAT;
+
 	case PIPE_FORMAT_R32G32_FLOAT:
 		return V_0280A0_COLOR_32_32_FLOAT;
+
+	case PIPE_FORMAT_R32G32_USCALED:
+	case PIPE_FORMAT_R32G32_SSCALED:
+		return V_0280A0_COLOR_32_32;
 
 		/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32_FLOAT:
@@ -405,7 +472,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_UYVY:
 	case PIPE_FORMAT_YUYV:
 	default:
-		R600_ERR("unsupported color format %d\n", format);
+		R600_ERR("unsupported color format %d %s\n", format, util_format_name(format));
 		return ~0; /* Unsupported. */
 	}
 }
@@ -429,6 +496,141 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
 {
 	return r600_translate_colorformat(format) != ~0;
+}
+
+static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
+{
+	uint32_t result = 0;
+	const struct util_format_description *desc;
+	unsigned i;
+
+	desc = util_format_description(format);
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
+		goto out_unknown;
+	}
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	switch (desc->channel[i].type) {
+		/* Half-floats, floats, doubles */
+        case UTIL_FORMAT_TYPE_FLOAT:
+		switch (desc->channel[i].size) {
+                case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_16_FLOAT;
+				break;
+			case 2:
+				result = FMT_16_16_FLOAT;
+				break;
+			case 3:
+				result = FMT_16_16_16_FLOAT;
+				break;
+			case 4:
+				result = FMT_16_16_16_16_FLOAT;
+				break;
+			}
+			break;
+                case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_32_FLOAT;
+				break;
+			case 2:
+				result = FMT_32_32_FLOAT;
+				break;
+			case 3:
+				result = FMT_32_32_32_FLOAT;
+				break;
+			case 4:
+				result = FMT_32_32_32_32_FLOAT;
+				break;
+			}
+			break;
+                default:
+			goto out_unknown;
+		}
+		break;
+		/* Unsigned ints */
+        case UTIL_FORMAT_TYPE_UNSIGNED:
+		/* Signed ints */
+        case UTIL_FORMAT_TYPE_SIGNED:
+		switch (desc->channel[i].size) {
+                case 8:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_8;
+				break;
+			case 2:
+				result = FMT_8_8;
+				break;
+			case 3:
+			//	result = FMT_8_8_8; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				result = FMT_8_8_8_8;
+				break;
+			}
+			break;
+                case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_16;
+				break;
+			case 2:
+				result = FMT_16_16;
+				break;
+			case 3:
+			//	result = FMT_16_16_16; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				result = FMT_16_16_16_16;
+				break;
+			}
+			break;
+                case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_32;
+				break;
+			case 2:
+				result = FMT_32_32;
+				break;
+			case 3:
+				result = FMT_32_32_32;
+				break;
+			case 4:
+				result = FMT_32_32_32_32;
+				break;
+			}
+			break;
+                default:
+			goto out_unknown;
+		}
+		break;
+        default:
+		goto out_unknown;
+	}
+	
+	result = S_038008_DATA_FORMAT(result);
+
+	if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+		result |= S_038008_FORMAT_COMP_ALL(1);
+	}
+	if (desc->channel[i].normalized) {
+		result |= S_038008_NUM_FORMAT_ALL(0);
+	} else {
+		result |= S_038008_NUM_FORMAT_ALL(2);
+	}
+	return result;
+out_unknown:
+	R600_ERR("unsupported vertex format %s\n", util_format_name(format));
+	return ~0;
 }
 
 #endif

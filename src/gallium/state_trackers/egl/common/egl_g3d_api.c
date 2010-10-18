@@ -609,8 +609,10 @@ egl_g3d_wait_client(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 
    gctx->stctxi->flush(gctx->stctxi,
          PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
-   screen->fence_finish(screen, fence, 0);
-   screen->fence_reference(screen, &fence, NULL);
+   if (fence) {
+      screen->fence_finish(screen, fence, 0);
+      screen->fence_reference(screen, &fence, NULL);
+   }
 
    return EGL_TRUE;
 }

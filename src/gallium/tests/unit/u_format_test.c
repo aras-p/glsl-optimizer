@@ -67,6 +67,7 @@ print_packed(const struct util_format_description *format_desc,
       sep = " ";
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -88,6 +89,7 @@ print_unpacked_rgba_doubl(const struct util_format_description *format_desc,
       sep = ",\n";
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -109,6 +111,7 @@ print_unpacked_rgba_float(const struct util_format_description *format_desc,
       sep = ",\n";
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -129,6 +132,7 @@ print_unpacked_rgba_8unorm(const struct util_format_description *format_desc,
       }
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -150,6 +154,7 @@ print_unpacked_z_float(const struct util_format_description *format_desc,
       sep = ",\n";
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -170,6 +175,7 @@ print_unpacked_z_32unorm(const struct util_format_description *format_desc,
       }
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -190,6 +196,7 @@ print_unpacked_s_8uscaled(const struct util_format_description *format_desc,
       }
    }
    printf("%s", suffix);
+   fflush(stdout);
 }
 
 
@@ -635,6 +642,7 @@ test_one_func(const struct util_format_description *format_desc,
 
    printf("Testing util_format_%s_%s ...\n",
           format_desc->short_name, suffix);
+   fflush(stdout);
 
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];

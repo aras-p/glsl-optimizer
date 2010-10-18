@@ -55,7 +55,7 @@
 
 
 void
-st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+st_clear_accum_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
    const GLint xpos = ctx->DrawBuffer->_Xmin;
@@ -96,7 +96,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
 /** For ADD/MULT */
 static void
-accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
+accum_mad(struct gl_context *ctx, GLfloat scale, GLfloat bias,
           GLint xpos, GLint ypos, GLint width, GLint height,
           struct st_renderbuffer *acc_strb)
 {
@@ -219,7 +219,7 @@ accum_load(struct st_context *st, GLfloat value,
 
 
 static void
-accum_return(GLcontext *ctx, GLfloat value,
+accum_return(struct gl_context *ctx, GLfloat value,
              GLint xpos, GLint ypos, GLint width, GLint height,
              struct st_renderbuffer *acc_strb,
              struct st_renderbuffer *color_strb)
@@ -286,7 +286,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 
 
 static void
-st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
+st_Accum(struct gl_context *ctx, GLenum op, GLfloat value)
 {
    struct st_context *st = st_context(ctx);
    struct st_renderbuffer *acc_strb

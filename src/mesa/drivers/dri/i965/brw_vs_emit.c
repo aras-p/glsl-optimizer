@@ -254,7 +254,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_overflow_output = 0;
 
    if (intel->gen >= 6)
-      mrf = 4;
+      mrf = 3; /* no more pos store in attribute */
    else if (intel->gen == 5)
       mrf = 8;
    else
@@ -593,11 +593,15 @@ static void emit_math1( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
 
-   if (need_tmp) 
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
+
+   if (need_tmp)
       tmp = get_tmp(c);
 
    brw_math(p, 
@@ -626,9 +630,13 @@ static void emit_math2( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
+
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
 
    if (need_tmp) 
       tmp = get_tmp(c);
@@ -1392,8 +1400,11 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
-	 brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
-	 brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
+	 if (intel->gen < 6) {
+	     brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
+	     brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
+	 } else
+	     brw_MOV(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0));
       }
 
       for (i = 0; i < c->key.nr_userclip; i++) {
@@ -1451,8 +1462,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * position.
        */
       brw_MOV(p, brw_message_reg(2), pos);
-      brw_MOV(p, brw_message_reg(3), pos);
-      len_vertex_header = 2;
+      len_vertex_header = 1;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
@@ -1632,6 +1642,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
 			       GL_TRUE);
       printf("\n");
    }
+
+   /* FIXME Need to fix conditional instruction to remove this */
+   if (intel->gen >= 6)
+       p->single_program_flow = GL_TRUE;
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);

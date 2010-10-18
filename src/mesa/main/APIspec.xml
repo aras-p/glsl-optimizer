@@ -383,6 +383,7 @@
 		<value name="GL_ALPHA"/>
 		<value name="GL_RGB"/>
 		<value name="GL_RGBA"/>
+		<value name="GL_BGRA_EXT"/>
 		<value name="GL_LUMINANCE"/>
 		<value name="GL_LUMINANCE_ALPHA"/>
 		<value name="GL_DEPTH_COMPONENT" category="OES_depth_texture"/>
@@ -458,9 +459,16 @@
 
 	<desc name="format" category="OES_packed_depth_stencil">
 		<value name="GL_DEPTH_STENCIL_OES"/>
-
 		<desc name="type" error="GL_INVALID_OPERATION">
 			<value name="GL_UNSIGNED_INT_24_8_OES"/>
+		</desc>
+	</desc>
+
+	<desc name="format" category="EXT_texture_format_BGRA8888">
+		<value name="GL_BGRA_EXT"/>
+
+		<desc name="type" error="GL_INVALID_OPERATION">
+			<value name="GL_UNSIGNED_BYTE"/>
 		</desc>
 	</desc>
 </template>
@@ -4121,6 +4129,7 @@
 	<category name="OES_depth_texture"/>
 	<category name="OES_packed_depth_stencil"/>
 	<category name="OES_standard_derivatives"/>
+	<category name="EXT_texture_format_BGRA8888"/>
 
 	<category name="EXT_texture_compression_dxt1"/>
 	<category name="EXT_blend_minmax"/>

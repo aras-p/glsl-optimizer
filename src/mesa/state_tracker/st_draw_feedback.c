@@ -52,7 +52,7 @@
  * GL_SELECT or GL_FEEDBACK mode or for glRasterPos.
  */
 static void
-set_feedback_vertex_format(GLcontext *ctx)
+set_feedback_vertex_format(struct gl_context *ctx)
 {
 #if 0
    struct st_context *st = st_context(ctx);
@@ -90,7 +90,7 @@ set_feedback_vertex_format(GLcontext *ctx)
  * Might move this into the failover module some day.
  */
 void
-st_feedback_draw_vbo(GLcontext *ctx,
+st_feedback_draw_vbo(struct gl_context *ctx,
                      const struct gl_client_array **arrays,
                      const struct _mesa_prim *prims,
                      GLuint nr_prims,

@@ -333,7 +333,7 @@ struct state_validate {
 	{ validate_vtxbuf         , NV50_NEW_ARRAYS                           },
 	{ validate_vtxattr        , NV50_NEW_ARRAYS                           },
 	{ validate_clip           , NV50_NEW_CLIP                             },
-	{}
+	{ NULL                    , 0                                         }
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 

@@ -36,7 +36,6 @@
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
-#include "convolve.h"
 #include "dlopen.h"
 #include "image.h"
 #include "macros.h"
@@ -105,7 +104,7 @@ static void *dxtlibhandle = NULL;
 
 
 void
-_mesa_init_texture_s3tc( GLcontext *ctx )
+_mesa_init_texture_s3tc( struct gl_context *ctx )
 {
    /* called during context initialization */
    ctx->Mesa_DXTn = GL_FALSE;
@@ -167,7 +166,8 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGB_DXT1);
+   ASSERT(dstFormat == MESA_FORMAT_RGB_DXT1 ||
+          dstFormat == MESA_FORMAT_SRGB_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -187,7 +187,6 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 3 * srcWidth;
       srcFormat = GL_RGB;
@@ -230,7 +229,8 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT1);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT1 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -250,7 +250,6 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 4 * srcWidth;
       srcFormat = GL_RGBA;
@@ -292,7 +291,8 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT3);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT3 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT3);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -312,7 +312,6 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 4 * srcWidth;
    }
@@ -353,7 +352,8 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT5);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT5 ||
+          dstFormat == MESA_FORMAT_SRGBA_DXT5);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -373,7 +373,6 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
                                              srcPacking);
       if (!tempImage)
          return GL_FALSE; /* out of memory */
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
       pixels = tempImage;
       srcRowStride = 4 * srcWidth;
    }

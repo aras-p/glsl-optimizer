@@ -1031,7 +1031,7 @@ static attrib_func AttribFuncsARB[2][4][8] = {
 /**********************************************************************/
 
 
-GLboolean _ae_create_context( GLcontext *ctx )
+GLboolean _ae_create_context( struct gl_context *ctx )
 {
    if (ctx->aelt_context)
       return GL_TRUE;
@@ -1064,7 +1064,7 @@ GLboolean _ae_create_context( GLcontext *ctx )
 }
 
 
-void _ae_destroy_context( GLcontext *ctx )
+void _ae_destroy_context( struct gl_context *ctx )
 {
    if ( AE_CONTEXT( ctx ) ) {
       FREE( ctx->aelt_context );
@@ -1092,7 +1092,7 @@ static void check_vbo( AEcontext *actx,
  * etc).
  * Note: this may be called during display list construction.
  */
-static void _ae_update_state( GLcontext *ctx )
+static void _ae_update_state( struct gl_context *ctx )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
    AEarray *aa = actx->arrays;
@@ -1211,7 +1211,7 @@ static void _ae_update_state( GLcontext *ctx )
    actx->NewState = 0;
 }
 
-void _ae_map_vbos( GLcontext *ctx )
+void _ae_map_vbos( struct gl_context *ctx )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
    GLuint i;
@@ -1232,7 +1232,7 @@ void _ae_map_vbos( GLcontext *ctx )
       actx->mapped_vbos = GL_TRUE;
 }
 
-void _ae_unmap_vbos( GLcontext *ctx )
+void _ae_unmap_vbos( struct gl_context *ctx )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
    GLuint i;
@@ -1300,7 +1300,7 @@ void GLAPIENTRY _ae_ArrayElement( GLint elt )
 }
 
 
-void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
+void _ae_invalidate_state( struct gl_context *ctx, GLuint new_state )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
 

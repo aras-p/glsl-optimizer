@@ -118,6 +118,8 @@ dri2_destroy_context(struct glx_context *context)
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) context->psc;
 
+   driReleaseDrawables(&pcp->base);
+
    if (context->xid)
       glx_send_destroy_context(psc->base.dpy, context->xid);
 
@@ -136,6 +138,7 @@ dri2_bind_context(struct glx_context *context, struct glx_context *old,
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
    struct dri2_drawable *pdraw, *pread;
+   struct dri2_display *pdp;
 
    pdraw = (struct dri2_drawable *) driFetchDrawable(context, draw);
    pread = (struct dri2_drawable *) driFetchDrawable(context, read);
@@ -143,11 +146,21 @@ dri2_bind_context(struct glx_context *context, struct glx_context *old,
    if (pdraw == NULL || pread == NULL)
       return GLXBadDrawable;
 
-   if ((*psc->core->bindContext) (pcp->driContext,
-				  pdraw->driDrawable, pread->driDrawable))
-      return Success;
+   if (!(*psc->core->bindContext) (pcp->driContext,
+				   pdraw->driDrawable, pread->driDrawable))
+      return GLXBadContext;
 
-   return GLXBadContext;
+   /* If the server doesn't send invalidate events, we may miss a
+    * resize before the rendering starts.  Invalidate the buffers now
+    * so the driver will recheck before rendering starts. */
+   pdp = (struct dri2_display *) psc->base.display;
+   if (!pdp->invalidateAvailable) {
+      dri2InvalidateBuffers(psc->base.dpy, pdraw->base.xDrawable);
+      if (pread != pdraw)
+	 dri2InvalidateBuffers(psc->base.dpy, pread->base.xDrawable);
+   }
+
+   return Success;
 }
 
 static void
@@ -158,7 +171,8 @@ dri2_unbind_context(struct glx_context *context, struct glx_context *new)
 
    (*psc->core->unbindContext) (pcp->driContext);
 
-   driReleaseDrawables(&pcp->base);
+   if (context == new)
+      driReleaseDrawables(&pcp->base);
 }
 
 static struct glx_context *
@@ -497,6 +511,16 @@ process_buffers(struct dri2_drawable * pdraw, DRI2Buffer * buffers,
          pdraw->have_back = 1;
    }
 
+}
+
+unsigned dri2GetSwapEventType(Display* dpy, XID drawable)
+{
+      struct glx_display *glx_dpy = __glXInitialize(dpy);
+      __GLXDRIdrawable *pdraw;
+      pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
+      if (!pdraw || !(pdraw->eventMask & GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK))
+         return 0;
+      return glx_dpy->codes->first_event + GLX_BufferSwapComplete;
 }
 
 static int64_t

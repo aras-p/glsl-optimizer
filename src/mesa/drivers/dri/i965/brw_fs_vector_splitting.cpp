@@ -212,7 +212,6 @@ public:
    struct variable_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
-   void *mem_ctx;
 };
 
 struct variable_entry *
@@ -264,37 +263,43 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
    variable_entry *rhs = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
 
    if (lhs_deref && rhs_deref && (lhs || rhs) && !ir->condition) {
+      unsigned int rhs_chan = 0;
+
       /* Straight assignment of vector variables. */
-      for (unsigned int i = 0; i < ir->rhs->type->vector_elements; i++) {
+      for (unsigned int i = 0; i < ir->lhs->type->vector_elements; i++) {
 	 ir_dereference *new_lhs;
 	 ir_rvalue *new_rhs;
 	 void *mem_ctx = lhs ? lhs->mem_ctx : rhs->mem_ctx;
 	 unsigned int writemask;
 
+	 if (!(ir->write_mask & (1 << i)))
+	    continue;
+
 	 if (lhs) {
 	    new_lhs = new(mem_ctx) ir_dereference_variable(lhs->components[i]);
-	    writemask = (ir->write_mask >> i) & 1;
+	    writemask = 1;
 	 } else {
 	    new_lhs = ir->lhs->clone(mem_ctx, NULL);
-	    writemask = ir->write_mask & (1 << i);
+	    writemask = 1 << i;
 	 }
 
 	 if (rhs) {
-	    new_rhs = new(mem_ctx) ir_dereference_variable(rhs->components[i]);
-	    /* If we're writing into a writemask, smear it out to that channel. */
-	    if (!lhs)
-	       new_rhs = new(mem_ctx) ir_swizzle(new_rhs, i, i, i, i, i + 1);
+	    new_rhs =
+	       new(mem_ctx) ir_dereference_variable(rhs->components[rhs_chan]);
 	 } else {
 	    new_rhs = new(mem_ctx) ir_swizzle(ir->rhs->clone(mem_ctx, NULL),
-					      i, i, i, i, 1);
+					      rhs_chan, 0, 0, 0, 1);
 	 }
 
 	 ir->insert_before(new(mem_ctx) ir_assignment(new_lhs,
 						      new_rhs,
 						      NULL, writemask));
+
+	 rhs_chan++;
       }
       ir->remove();
    } else if (lhs) {
+      void *mem_ctx = lhs->mem_ctx;
       int elem = -1;
 
       switch (ir->write_mask) {
@@ -319,8 +324,6 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
       ir->write_mask = (1 << 0);
 
       handle_rvalue(&ir->rhs);
-      ir->rhs = new(mem_ctx) ir_swizzle(ir->rhs,
-					elem, elem, elem, elem, 1);
    } else {
       handle_rvalue(&ir->rhs);
    }
@@ -330,7 +333,6 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
    return visit_continue;
 }
 
-extern "C" {
 bool
 brw_do_vector_splitting(exec_list *instructions)
 {
@@ -387,5 +389,4 @@ brw_do_vector_splitting(exec_list *instructions)
    talloc_free(mem_ctx);
 
    return true;
-}
 }

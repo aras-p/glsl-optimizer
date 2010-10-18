@@ -251,6 +251,8 @@ __glutRegisterEventParser(GLUTeventParser * parser)
   eventParserList = parser;
 }
 
+
+#if !defined(_WIN32)
 static void
 markWindowHidden(GLUTwindow * window)
 {
@@ -271,8 +273,6 @@ markWindowHidden(GLUTwindow * window)
     }
   }
 }
-
-#if !defined(_WIN32)
 
 static void
 purgeStaleWindow(Window win)

@@ -111,6 +111,7 @@ struct_factories = {
     #"pipe_texture": gallium.Texture,
     'pipe_subresource': gallium.pipe_subresource,
     'pipe_box': gallium.pipe_box,
+    'pipe_draw_info': gallium.pipe_draw_info,
 }
 
 
@@ -533,30 +534,22 @@ class Context(Object):
 
         return minindex + ibias, maxindex + ibias
 
-    def draw_arrays(self, mode, start, count):
-        self.dump_vertices(start, count)
-            
-        self.real.draw_arrays(mode, start, count)
-        self._set_dirty()
-    
-    def draw_elements(self, indexBuffer, indexSize, indexBias, mode, start, count):
-        if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
-            self.dump_vertices(minindex, maxindex - minindex)
+    def set_index_buffer(self, ib):
+        if ib:
+            self.real.set_index_buffer(ib.index_size, ib.offset, ib.buffer)
+        else:
+            self.real.set_index_buffer(0, 0, None)
 
-        self.real.draw_elements(indexBuffer, indexSize, indexBias, mode, start, count)
-        self._set_dirty()
-        
-    def draw_range_elements(self, indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count):
+    def draw_vbo(self, info):
         if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
-            minindex = min(minindex, minIndex)
-            maxindex = min(maxindex, maxIndex)
-            self.dump_vertices(minindex, maxindex - minindex)
+            if 0:
+                minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
 
-        self.real.draw_range_elements(indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count)
+            self.dump_vertices(info.minindex, info.maxindex + 1 - info.minindex)
+
+        self.real.draw_vbo(info)
         self._set_dirty()
-        
+
     def resource_copy_region(self, dst, subdst, dstx, dsty, dstz, src, subsrc, srcx, srcy, srcz, width, height):
         if dst is not None and src is not None:
             if self.interpreter.options.all:
@@ -617,6 +610,15 @@ class Context(Object):
             _rgba[i] = rgba[i]
         self.real.clear(buffers, _rgba, depth, stencil)
         
+    def clear_render_target(self, dst, rgba, dstx, dsty, width, height):
+        _rgba = gallium.FloatArray(4)
+        for i in range(4):
+            _rgba[i] = rgba[i]
+        self.real.clear_render_target(dst, _rgba, dstx, dsty, width, height)
+
+    def clear_depth_stencil(self, dst, clear_flags, depth, stencil, dstx, dsty, width, height):
+        self.real.clear_depth_stencil(dst, clear_flags, depth, stencil, dstx, dsty, width, height)
+
     def _present(self):
         self.real.flush()
     

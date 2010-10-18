@@ -27,7 +27,7 @@
 
 /*
  * Generate fragment programs to implement pixel transfer ops, such as
- * scale/bias, colormatrix, colortable, convolution...
+ * scale/bias, colortable, convolution...
  *
  * Authors:
  *   Brian Paul
@@ -55,8 +55,6 @@
 struct state_key
 {
    GLuint scaleAndBias:1;
-   GLuint colorMatrix:1;
-   GLuint colorMatrixPostScaleBias:1;
    GLuint pixelMaps:1;
 
 #if 0
@@ -70,27 +68,9 @@ struct state_key
 #endif
 };
 
-
-static GLboolean
-is_identity(const GLfloat m[16])
-{
-   GLuint i;
-   for (i = 0; i < 16; i++) {
-      const int row = i % 4, col = i / 4;
-      const float val = (GLfloat)(row == col);
-      if (m[i] != val)
-         return GL_FALSE;
-   }
-   return GL_TRUE;
-}
-
-
 static void
-make_state_key(GLcontext *ctx,  struct state_key *key)
+make_state_key(struct gl_context *ctx,  struct state_key *key)
 {
-   static const GLfloat zero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-   static const GLfloat one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
    memset(key, 0, sizeof(*key));
 
    if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
@@ -100,21 +80,12 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
       key->scaleAndBias = 1;
    }
 
-   if (!is_identity(ctx->ColorMatrixStack.Top->m)) {
-      key->colorMatrix = 1;
-   }
-
-   if (!TEST_EQ_4V(ctx->Pixel.PostColorMatrixScale, one) ||
-       !TEST_EQ_4V(ctx->Pixel.PostColorMatrixBias, zero)) {
-      key->colorMatrixPostScaleBias = 1;
-   }
-
    key->pixelMaps = ctx->Pixel.MapColorFlag;
 }
 
 
 static struct pipe_resource *
-create_color_map_texture(GLcontext *ctx)
+create_color_map_texture(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -137,7 +108,7 @@ create_color_map_texture(GLcontext *ctx)
  * Update the pixelmap texture with the contents of the R/G/B/A pixel maps.
  */
 static void
-load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
+load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -186,7 +157,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
  * Returns a fragment program which implements the current pixel transfer ops.
  */
 static struct gl_fragment_program *
-get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
+get_pixel_transfer_program(struct gl_context *ctx, const struct state_key *key)
 {
    struct st_context *st = st_context(ctx);
    struct prog_instruction inst[MAX_INST];
@@ -306,103 +277,6 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       fp->Base.SamplersUsed |= (1 << 1);  /* sampler 1 is used */
    }
 
-   if (key->colorMatrix) {
-      static const gl_state_index row0_state[STATE_LENGTH] =
-         { STATE_COLOR_MATRIX, 0, 0, 0, 0 };
-      static const gl_state_index row1_state[STATE_LENGTH] =
-         { STATE_COLOR_MATRIX, 0, 1, 1, 0 };
-      static const gl_state_index row2_state[STATE_LENGTH] =
-         { STATE_COLOR_MATRIX, 0, 2, 2, 0 };
-      static const gl_state_index row3_state[STATE_LENGTH] =
-         { STATE_COLOR_MATRIX, 0, 3, 3, 0 };
-
-      GLint row0_p = _mesa_add_state_reference(params, row0_state);
-      GLint row1_p = _mesa_add_state_reference(params, row1_state);
-      GLint row2_p = _mesa_add_state_reference(params, row2_state);
-      GLint row3_p = _mesa_add_state_reference(params, row3_state);
-      const GLuint temp = 1;
-
-      /* DP4 temp.x, colorTemp, matrow0; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = temp;
-      inst[ic].DstReg.WriteMask = WRITEMASK_X;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[1].Index = row0_p;
-      ic++;
-
-      /* DP4 temp.y, colorTemp, matrow1; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = temp;
-      inst[ic].DstReg.WriteMask = WRITEMASK_Y;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[1].Index = row1_p;
-      ic++;
-
-      /* DP4 temp.z, colorTemp, matrow2; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = temp;
-      inst[ic].DstReg.WriteMask = WRITEMASK_Z;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[1].Index = row2_p;
-      ic++;
-
-      /* DP4 temp.w, colorTemp, matrow3; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = temp;
-      inst[ic].DstReg.WriteMask = WRITEMASK_W;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[1].Index = row3_p;
-      ic++;
-
-      /* MOV colorTemp, temp; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_MOV;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = colorTemp;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = temp;
-      ic++;
-   }
-
-   if (key->colorMatrixPostScaleBias) {
-      static const gl_state_index scale_state[STATE_LENGTH] =
-         { STATE_INTERNAL, STATE_PT_SCALE, 0, 0, 0 };
-      static const gl_state_index bias_state[STATE_LENGTH] =
-         { STATE_INTERNAL, STATE_PT_BIAS, 0, 0, 0 };
-      GLint scale_param, bias_param;
-
-      scale_param = _mesa_add_state_reference(params, scale_state);
-      bias_param = _mesa_add_state_reference(params, bias_state);
-
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_MAD;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = colorTemp;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[1].Index = scale_param;
-      inst[ic].SrcReg[2].File = PROGRAM_STATE_VAR;
-      inst[ic].SrcReg[2].Index = bias_param;
-      ic++;
-   }
-
    /* Modify last instruction's dst reg to write to result.color */
    {
       struct prog_instruction *last = &inst[ic - 1];
@@ -446,7 +320,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 static void
 update_pixel_transfer(struct st_context *st)
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct state_key key;
    struct gl_fragment_program *fp;
 
@@ -473,7 +347,7 @@ update_pixel_transfer(struct st_context *st)
 const struct st_tracked_state st_update_pixel_transfer = {
    "st_update_pixel_transfer",				/* name */
    {							/* dirty */
-      _NEW_PIXEL | _NEW_COLOR_MATRIX,			/* mesa */
+      _NEW_PIXEL,					/* mesa */
       0,						/* st */
    },
    update_pixel_transfer				/* update */

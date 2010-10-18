@@ -106,10 +106,10 @@ _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params);
 
 extern void
-_mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program);
+_mesa_setup_nv_temporary_count(struct gl_context *ctx, struct gl_program *program);
 
 extern void
-_mesa_emit_nv_temp_initialization(GLcontext *ctx,
+_mesa_emit_nv_temp_initialization(struct gl_context *ctx,
 				  struct gl_program *program);
 
 #endif

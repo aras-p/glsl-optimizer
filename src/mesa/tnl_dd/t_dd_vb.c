@@ -46,7 +46,7 @@
  * really convenient to put them.  Need to build some actual .o files in
  * this directory?
  */
-static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba4_spec5( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS   
    GLubyte *verts = GET_VERTEX_STORE();
@@ -57,7 +57,7 @@ static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
    dst[5] = src[5];
 }
 
-static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba4( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
@@ -67,7 +67,7 @@ static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
    dst[4] = src[4];
 }
 
-static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba3( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
@@ -78,7 +78,7 @@ static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
 }
 
 
-void TAG(translate_vertex)(GLcontext *ctx,
+void TAG(translate_vertex)(struct gl_context *ctx,
 			   const VERTEX *src,
 			   SWvertex *dst)
 {
@@ -189,10 +189,10 @@ void TAG(translate_vertex)(GLcontext *ctx,
 
 
 /* prototype to silence warning */
-void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v );
+void TAG(print_vertex)( struct gl_context *ctx, const VERTEX *v );
 
 
-void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
+void TAG(print_vertex)( struct gl_context *ctx, const VERTEX *v )
 {
    LOCALVARS
    GLuint format = GET_VERTEX_FORMAT();
@@ -289,7 +289,7 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 #define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
-INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
+INTERP_QUALIFIER void TAG(interp_extras)( struct gl_context *ctx,
 					  GLfloat t,
 					  GLuint dst, GLuint out, GLuint in,
 					  GLboolean force_boundary )
@@ -320,7 +320,7 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    INTERP_VERTEX(ctx, t, dst, out, in, force_boundary);
 }
 
-INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx, 
+INTERP_QUALIFIER void TAG(copy_pv_extras)( struct gl_context *ctx, 
 					   GLuint dst, GLuint src )
 {
    LOCALVARS

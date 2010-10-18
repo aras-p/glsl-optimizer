@@ -62,7 +62,8 @@ struct svga_shader_emitter
 
    int imm_start;
 
-   int nr_hw_const;
+   int nr_hw_float_const;
+   int nr_hw_int_const;
    int nr_hw_temp;
    
    int insn_offset;

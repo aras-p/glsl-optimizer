@@ -47,10 +47,17 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
    start = 0;
 
    while (count) {
-      unsigned nr = count;
-      nr = MIN2(nr, 2047);
+      unsigned nr = AVAIL_RING(chan);
 
-      /* FIXME: emit relocs for unsuiTed MM */
+      if (nr < 8) {
+         FIRE_RING(chan);
+         continue;
+      }
+      nr = MIN2(count, nr - 7);
+      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
+
+      nv50_screen_reloc_constbuf(nv50->screen, cbi);
+
       BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 1);
       OUT_RING  (chan, (start << 8) | cbi);
       BEGIN_RING_NI(chan, tesla, NV50TCL_CB_DATA(0), nr);
@@ -77,8 +84,16 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
       unsigned start = 0;
 
       while (count) {
-         unsigned nr = count;
-         nr = MIN2(nr, 2047);
+         unsigned nr = AVAIL_RING(chan);
+
+         if (nr < 8) {
+            FIRE_RING(chan);
+            continue;
+         }
+         nr = MIN2(count, nr - 7);
+         nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
+
+         nv50_screen_reloc_constbuf(nv50->screen, NV50_CB_PMISC);
 
          BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 1);
          OUT_RING  (chan, (start << 8) | NV50_CB_PMISC);
@@ -111,8 +126,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
       break;
    default:
       assert(0);
-      cbi = 0;
-      break;
+      return;
    }
 
    nv50_transfer_constbuf(nv50, nv50->constbuf[p->type], p->parm_size, cbi);
@@ -281,6 +295,17 @@ nv50_program_validate(struct nv50_program *p)
    return p->translated;
 }
 
+static INLINE void
+nv50_program_validate_common(struct nv50_context *nv50, struct nv50_program *p)
+{
+   nv50_program_validate_code(nv50, p);
+
+   if (p->uses_lmem)
+      nv50->req_lmem |= 1 << p->type;
+   else
+      nv50->req_lmem &= ~(1 << p->type);
+}
+
 struct nouveau_stateobj *
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
@@ -300,7 +325,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_VERTPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;
@@ -325,7 +350,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_FRAGPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;
@@ -336,6 +361,10 @@ nv50_geomprog_validate(struct nv50_context *nv50)
 {
    struct nv50_program *p = nv50->geomprog;
    struct nouveau_stateobj *so = NULL;
+
+   /* GP may be NULL, but VP and FP may not */
+   if (!p)
+      return NULL; /* GP is deactivated in linkage validation */
 
    if (!p->translated) {
       if (nv50_program_validate(p))
@@ -350,7 +379,7 @@ nv50_geomprog_validate(struct nv50_context *nv50)
    if (!(nv50->dirty & NV50_NEW_GEOMPROG))
       return NULL;
 
-   nv50_program_validate_code(nv50, p);
+   nv50_program_validate_common(nv50, p);
 
    so_ref(p->so, &so);
    return so;

@@ -100,7 +100,7 @@ GLuint _mesa_evaluator_components( GLenum target )
  * Return pointer to the gl_1d_map struct for the named target.
  */
 static struct gl_1d_map *
-get_1d_map( GLcontext *ctx, GLenum target )
+get_1d_map( struct gl_context *ctx, GLenum target )
 {
    switch (target) {
       case GL_MAP1_VERTEX_3:
@@ -150,7 +150,7 @@ get_1d_map( GLcontext *ctx, GLenum target )
  * Return pointer to the gl_2d_map struct for the named target.
  */
 static struct gl_2d_map *
-get_2d_map( GLcontext *ctx, GLenum target )
+get_2d_map( struct gl_context *ctx, GLenum target )
 {
    switch (target) {
       case GL_MAP2_VERTEX_3:
@@ -880,7 +880,7 @@ init_2d_map( struct gl_2d_map *map, int n, const float *initial )
 }
 
 
-void _mesa_init_eval( GLcontext *ctx )
+void _mesa_init_eval( struct gl_context *ctx )
 {
    int i;
 
@@ -952,7 +952,7 @@ void _mesa_init_eval( GLcontext *ctx )
 }
 
 
-void _mesa_free_eval_data( GLcontext *ctx )
+void _mesa_free_eval_data( struct gl_context *ctx )
 {
    int i;
 

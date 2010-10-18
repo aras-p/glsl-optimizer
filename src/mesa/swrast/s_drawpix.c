@@ -27,7 +27,6 @@
 #include "main/bufferobj.h"
 #include "main/condrender.h"
 #include "main/context.h"
-#include "main/convolve.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -45,7 +44,7 @@
  * Return:  GL_TRUE if success, GL_FALSE if slow path must be used instead
  */
 static GLboolean
-fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
+fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
                       GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const struct gl_pixelstore_attrib *userUnpack,
@@ -311,7 +310,7 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
  * Draw stencil image.
  */
 static void
-draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum type,
                      const struct gl_pixelstore_attrib *unpack,
@@ -355,7 +354,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
  * Draw depth image.
  */
 static void
-draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum type,
                    const struct gl_pixelstore_attrib *unpack,
@@ -461,7 +460,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
  * Draw RGBA image.
  */
 static void
-draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
+draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height,
                   GLenum format, GLenum type,
                   const struct gl_pixelstore_attrib *unpack,
@@ -484,62 +483,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    span.arrayMask = SPAN_RGBA;
    span.arrayAttribs = FRAG_BIT_COL0; /* we're fill in COL0 attrib values */
 
-   if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      /* Convolution has to be handled specially.  We'll create an
-       * intermediate image, applying all pixel transfer operations
-       * up to convolution.  Then we'll convolve the image.  Then
-       * we'll proceed with the rest of the transfer operations and
-       * rasterize the image.
-       */
-      GLint row;
-      GLfloat *dest, *tmpImage;
-
-      tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!tmpImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
-         return;
-      }
-      convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      if (!convImage) {
-         free(tmpImage);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
-         return;
-      }
-
-      /* Unpack the image and apply transfer ops up to convolution */
-      dest = tmpImage;
-      for (row = 0; row < height; row++) {
-         const GLvoid *source = _mesa_image_address2d(unpack,
-                                  pixels, width, height, format, type, row, 0);
-         _mesa_unpack_color_span_float(ctx, width, GL_RGBA, (GLfloat *) dest,
-                                     format, type, source, unpack,
-                                     transferOps & IMAGE_PRE_CONVOLUTION_BITS);
-         dest += width * 4;
-      }
-
-      /* do convolution */
-      if (ctx->Pixel.Convolution2DEnabled) {
-         _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      else {
-         ASSERT(ctx->Pixel.Separable2DEnabled);
-         _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
-      }
-      free(tmpImage);
-
-      /* continue transfer ops and draw the convolved image */
-      unpack = &ctx->DefaultPacking;
-      pixels = convImage;
-      format = GL_RGBA;
-      type = GL_FLOAT;
-      transferOps &= IMAGE_POST_CONVOLUTION_BITS;
-   }
-   else if (ctx->Pixel.Convolution1DEnabled) {
-      /* we only want to apply 1D convolution to glTexImage1D */
-      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
-                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
-   }
-
    if (ctx->DrawBuffer->_NumColorDrawBuffers > 0 &&
        ctx->DrawBuffer->_ColorDrawBuffers[0]->DataType != GL_FLOAT &&
        ctx->Color.ClampFragmentColor != GL_FALSE) {
@@ -551,8 +494,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
     * General solution
     */
    {
-      const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
-         || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
       const GLbitfield interpMask = span.interpMask;
       const GLbitfield arrayMask = span.arrayMask;
       const GLint srcStride
@@ -575,24 +516,21 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_unpack_color_span_float(ctx, spanWidth, GL_RGBA, rgba,
                                      format, type, source, unpack,
                                      transferOps);
-            /* draw the span */
-            if (!sink) {
-               /* Set these for each row since the _swrast_write_* functions
-                * may change them while clipping/rendering.
-                */
-               span.array->ChanType = GL_FLOAT;
-               span.x = x + skipPixels;
-               span.y = y + row;
-               span.end = spanWidth;
-               span.arrayMask = arrayMask;
-               span.interpMask = interpMask;
-               if (zoom) {
-                  _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, rgba);
-               }
-               else {
-                  _swrast_write_rgba_span(ctx, &span);
-               }
-            }
+	    /* Set these for each row since the _swrast_write_* functions
+	     * may change them while clipping/rendering.
+	     */
+	    span.array->ChanType = GL_FLOAT;
+	    span.x = x + skipPixels;
+	    span.y = y + row;
+	    span.end = spanWidth;
+	    span.arrayMask = arrayMask;
+	    span.interpMask = interpMask;
+	    if (zoom) {
+	       _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, rgba);
+	    }
+	    else {
+	       _swrast_write_rgba_span(ctx, &span);
+	    }
 
             source += srcStride;
          } /* for row */
@@ -619,7 +557,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
  * color buffer(s).
  */
 static void
-draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                           GLsizei width, GLsizei height, GLenum type,
                           const struct gl_pixelstore_attrib *unpack,
                           const GLvoid *pixels)
@@ -749,7 +687,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
  * By time we get here, all error checking will have been done.
  */
 void
-_swrast_DrawPixels( GLcontext *ctx,
+_swrast_DrawPixels( struct gl_context *ctx,
 		    GLint x, GLint y,
 		    GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,

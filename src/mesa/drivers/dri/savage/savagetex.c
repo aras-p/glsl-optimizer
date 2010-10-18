@@ -28,7 +28,6 @@
 #include "main/macros.h"
 #include "main/texstore.h"
 #include "main/texobj.h"
-#include "main/convolve.h"
 #include "main/colormac.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
@@ -586,7 +585,6 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
 
     if (!tempImage)
 	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
         GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr
@@ -626,7 +624,6 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 
     if (!tempImage)
 	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
         GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr
@@ -652,7 +649,7 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
 static gl_format
-savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+savageChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
 			   GLenum format, GLenum type )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1151,7 +1148,7 @@ savage4_set_filter_mode( savageContextPtr imesa, unsigned unit,
 }
 
 
-static void savageUpdateTex0State_s4( GLcontext *ctx )
+static void savageUpdateTex0State_s4( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    struct gl_texture_object	*tObj;
@@ -1395,7 +1392,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
     
     return;
 }
-static void savageUpdateTex1State_s4( GLcontext *ctx )
+static void savageUpdateTex1State_s4( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    struct gl_texture_object	*tObj;
@@ -1578,7 +1575,7 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
     if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s4.texAddr[1].ui |= 0x1;
 }
-static void savageUpdateTexState_s3d( GLcontext *ctx )
+static void savageUpdateTexState_s3d( struct gl_context *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     struct gl_texture_object *tObj;
@@ -1749,7 +1746,7 @@ static void savageTimestampTextures( savageContextPtr imesa )
 }
 
 
-static void savageUpdateTextureState_s4( GLcontext *ctx )
+static void savageUpdateTextureState_s4( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
@@ -1774,7 +1771,7 @@ static void savageUpdateTextureState_s4( GLcontext *ctx )
    imesa->dirty |= (SAVAGE_UPLOAD_TEX0 | 
 		    SAVAGE_UPLOAD_TEX1);
 }
-static void savageUpdateTextureState_s3d( GLcontext *ctx )
+static void savageUpdateTextureState_s3d( struct gl_context *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
@@ -1792,7 +1789,7 @@ static void savageUpdateTextureState_s3d( GLcontext *ctx )
     savageUpdateTexState_s3d( ctx );
     imesa->dirty |= (SAVAGE_UPLOAD_TEX0);
 }
-void savageUpdateTextureState( GLcontext *ctx)
+void savageUpdateTextureState( struct gl_context *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_FALSE);
@@ -1809,7 +1806,7 @@ void savageUpdateTextureState( GLcontext *ctx)
  * DRIVER functions
  *****************************************/
 
-static void savageTexEnv( GLcontext *ctx, GLenum target, 
+static void savageTexEnv( struct gl_context *ctx, GLenum target, 
 			GLenum pname, const GLfloat *param )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
@@ -1850,7 +1847,7 @@ static void savageTexImageChanged (savageTexObjPtr t) {
     }
 }
 
-static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
+static void savageTexImage1D( struct gl_context *ctx, GLenum target, GLint level,
 			      GLint internalFormat,
 			      GLint width, GLint border,
 			      GLenum format, GLenum type, const GLvoid *pixels,
@@ -1875,7 +1872,7 @@ static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageTexSubImage1D( GLcontext *ctx, 
+static void savageTexSubImage1D( struct gl_context *ctx, 
 				 GLenum target,
 				 GLint level,	
 				 GLint xoffset,
@@ -1907,7 +1904,7 @@ static void savageTexSubImage1D( GLcontext *ctx,
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void savageTexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			      GLint internalFormat,
 			      GLint width, GLint height, GLint border,
 			      GLenum format, GLenum type, const GLvoid *pixels,
@@ -1932,7 +1929,7 @@ static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageTexSubImage2D( GLcontext *ctx, 
+static void savageTexSubImage2D( struct gl_context *ctx, 
 				 GLenum target,
 				 GLint level,	
 				 GLint xoffset, GLint yoffset,
@@ -1965,7 +1962,7 @@ static void savageTexSubImage2D( GLcontext *ctx,
 }
 
 static void
-savageCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+savageCompressedTexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint height, GLint border,
 			    GLsizei imageSize, const GLvoid *data,
@@ -1990,7 +1987,7 @@ savageCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 static void
-savageCompressedTexSubImage2D( GLcontext *ctx, 
+savageCompressedTexSubImage2D( struct gl_context *ctx, 
 			       GLenum target,
 			       GLint level,	
 			       GLint xoffset, GLint yoffset,
@@ -2021,7 +2018,7 @@ savageCompressedTexSubImage2D( GLcontext *ctx,
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageTexParameter( GLcontext *ctx, GLenum target,
+static void savageTexParameter( struct gl_context *ctx, GLenum target,
 			      struct gl_texture_object *tObj,
 			      GLenum pname, const GLfloat *params )
 {
@@ -2053,7 +2050,7 @@ static void savageTexParameter( GLcontext *ctx, GLenum target,
    imesa->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageBindTexture( GLcontext *ctx, GLenum target,
+static void savageBindTexture( struct gl_context *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
@@ -2064,7 +2061,7 @@ static void savageBindTexture( GLcontext *ctx, GLenum target,
    imesa->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
-static void savageDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
+static void savageDeleteTexture( struct gl_context *ctx, struct gl_texture_object *tObj )
 {
    driTextureObject *t = (driTextureObject *)tObj->DriverData;
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
@@ -2081,7 +2078,7 @@ static void savageDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj 
 
 
 static struct gl_texture_object *
-savageNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+savageNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
     struct gl_texture_object *obj;
     obj = _mesa_new_texture_object(ctx, name, target);

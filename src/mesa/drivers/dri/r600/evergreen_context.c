@@ -61,7 +61,7 @@ static void evergreen_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 	r700Start3D((context_t *)radeon);
 }
 
-static void evergreen_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
+static void evergreen_fallback(struct gl_context *ctx, GLuint bit, GLboolean mode)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	if (mode)

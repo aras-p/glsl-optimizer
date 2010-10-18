@@ -678,8 +678,6 @@ This instruction replicates its result.
 
   pc = pop()
 
-  Potential restrictions:  
-  * Only occurs at end of function.
 
 .. opcode:: SSG - Set Sign
 
@@ -726,7 +724,7 @@ This instruction replicates its result.
 
   dst.z = 0
 
-  dst.y = 1
+  dst.w = 1
 
 
 .. opcode:: TXB - Texture Lookup With Bias
@@ -1417,6 +1415,12 @@ Edge flags are used to control which lines or points are actually
 drawn when the polygon mode converts triangles/quads/polygons into
 points or lines.
 
+TGSI_SEMANTIC_STENCIL
+""""""""""""""""""""""
+
+For fragment shaders, this semantic label indicates than an output
+is a writable stencil reference value. Only the Y component is writable.
+This allows the fragment shader to change the fragments stencilref value.
 
 
 Properties
@@ -1494,6 +1498,8 @@ well.
 +--------------------+--------------+--------------------+--------------+
 | Z                  | XXX TBD      | (z, z, z, 1)       | (0, z, 0, 1) |
 |                    |              | [#depth-tex-mode]_ |              |
++--------------------+--------------+--------------------+--------------+
+| S                  | (s, s, s, s) | unknown            | unknown      |
 +--------------------+--------------+--------------------+--------------+
 
 .. [#envmap-bumpmap] http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt

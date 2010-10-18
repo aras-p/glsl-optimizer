@@ -49,8 +49,8 @@
 #include "tdfx_render.h"
 
 
-static void tdfxRasterPrimitive( GLcontext *ctx, GLenum prim );
-static void tdfxRenderPrimitive( GLcontext *ctx, GLenum prim );
+static void tdfxRasterPrimitive( struct gl_context *ctx, GLenum prim );
+static void tdfxRenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 static GLenum reduced_prim[GL_POLYGON+1] = {
    GL_POINTS,
@@ -136,7 +136,7 @@ do {						\
  * primitives.  
  */
 static void 
-tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
+tdfx_translate_vertex( struct gl_context *ctx, const tdfxVertex *src, SWvertex *dst)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -193,7 +193,7 @@ tdfx_fallback_tri( tdfxContextPtr fxMesa,
 		   tdfxVertex *v1, 
 		   tdfxVertex *v2 )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    SWvertex v[3];
    tdfx_translate_vertex( ctx, v0, &v[0] );
    tdfx_translate_vertex( ctx, v1, &v[1] );
@@ -207,7 +207,7 @@ tdfx_fallback_line( tdfxContextPtr fxMesa,
 		    tdfxVertex *v0,
 		    tdfxVertex *v1 )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    SWvertex v[2];
    tdfx_translate_vertex( ctx, v0, &v[0] );
    tdfx_translate_vertex( ctx, v1, &v[1] );
@@ -219,7 +219,7 @@ static void
 tdfx_fallback_point( tdfxContextPtr fxMesa, 
 		     tdfxVertex *v0 )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    SWvertex v[1];
    tdfx_translate_vertex( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
@@ -229,7 +229,7 @@ tdfx_fallback_point( tdfxContextPtr fxMesa,
  *                 Functions to draw basic primitives                  *
  ***********************************************************************/
 
-static void tdfx_print_vertex( GLcontext *ctx, const tdfxVertex *v )
+static void tdfx_print_vertex( struct gl_context *ctx, const tdfxVertex *v )
 {
    tdfxContextPtr tmesa = TDFX_CONTEXT( ctx );
 
@@ -557,7 +557,7 @@ static void init_rast_tab( void )
  */
 #define INIT(x) tdfxRenderPrimitive( ctx, x )
 
-static void tdfx_render_vb_points( GLcontext *ctx,
+static void tdfx_render_vb_points( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -584,7 +584,7 @@ static void tdfx_render_vb_points( GLcontext *ctx,
    }
 }
 
-static void tdfx_render_vb_line_strip( GLcontext *ctx,
+static void tdfx_render_vb_line_strip( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -612,7 +612,7 @@ static void tdfx_render_vb_line_strip( GLcontext *ctx,
    }
 }
 
-static void tdfx_render_vb_line_loop( GLcontext *ctx,
+static void tdfx_render_vb_line_loop( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -649,7 +649,7 @@ static void tdfx_render_vb_line_loop( GLcontext *ctx,
    }
 }
 
-static void tdfx_render_vb_lines( GLcontext *ctx,
+static void tdfx_render_vb_lines( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -677,7 +677,7 @@ static void tdfx_render_vb_lines( GLcontext *ctx,
    }
 }
 
-static void tdfx_render_vb_triangles( GLcontext *ctx,
+static void tdfx_render_vb_triangles( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -708,7 +708,7 @@ static void tdfx_render_vb_triangles( GLcontext *ctx,
 }
 
 
-static void tdfx_render_vb_tri_strip( GLcontext *ctx,
+static void tdfx_render_vb_tri_strip( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -730,7 +730,7 @@ static void tdfx_render_vb_tri_strip( GLcontext *ctx,
 }
 
 
-static void tdfx_render_vb_tri_fan( GLcontext *ctx,
+static void tdfx_render_vb_tri_fan( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -745,7 +745,7 @@ static void tdfx_render_vb_tri_fan( GLcontext *ctx,
                                               fxVB + start, sizeof(tdfxVertex) );
 }
 
-static void tdfx_render_vb_quads( GLcontext *ctx,
+static void tdfx_render_vb_quads( struct gl_context *ctx,
 				       GLuint start,
 				       GLuint count,
 				       GLuint flags )
@@ -771,7 +771,7 @@ static void tdfx_render_vb_quads( GLcontext *ctx,
    }
 }
 
-static void tdfx_render_vb_quad_strip( GLcontext *ctx,
+static void tdfx_render_vb_quad_strip( struct gl_context *ctx,
 				       GLuint start,
 				       GLuint count,
 				       GLuint flags )
@@ -788,7 +788,7 @@ static void tdfx_render_vb_quad_strip( GLcontext *ctx,
                                               count-start, fxVB + start, sizeof(tdfxVertex));
 }
 
-static void tdfx_render_vb_poly( GLcontext *ctx,
+static void tdfx_render_vb_poly( struct gl_context *ctx,
 				 GLuint start,
 				 GLuint count,
 				 GLuint flags )
@@ -803,7 +803,7 @@ static void tdfx_render_vb_poly( GLcontext *ctx,
                                               fxVB + start, sizeof(tdfxVertex));
 }
 
-static void tdfx_render_vb_noop( GLcontext *ctx,
+static void tdfx_render_vb_noop( struct gl_context *ctx,
 				 GLuint start,
 				 GLuint count,
 				 GLuint flags )
@@ -811,7 +811,7 @@ static void tdfx_render_vb_noop( GLcontext *ctx,
    (void) (ctx && start && count && flags);
 }
 
-static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
+static void (*tdfx_render_tab_verts[GL_POLYGON+2])(struct gl_context *,
 						   GLuint,
 						   GLuint,
 						   GLuint) = 
@@ -897,7 +897,7 @@ static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 
 
 
-static void tdfxRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
+static void tdfxRenderClippedPoly( struct gl_context *ctx, const GLuint *elts, 
 				   GLuint n )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -920,13 +920,13 @@ static void tdfxRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
       tnl->Driver.Render.PrimitiveNotify( ctx, prim );
 }
 
-static void tdfxRenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+static void tdfxRenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
 }
 
-static void tdfxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
+static void tdfxFastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts, 
 				       GLuint n )
 {
    int i;
@@ -974,7 +974,7 @@ static void tdfxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 			       _NEW_POLYGONSTIPPLE)
 
 
-static void tdfxChooseRenderState(GLcontext *ctx)
+static void tdfxChooseRenderState(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -1061,7 +1061,7 @@ static void tdfxChooseRenderState(GLcontext *ctx)
  * TODO: Use single back-buffer cliprect where possible.  
  * NOTE: <pass> starts at 1, not zero!
  */
-static GLboolean multipass_cliprect( GLcontext *ctx, GLuint pass )
+static GLboolean multipass_cliprect( struct gl_context *ctx, GLuint pass )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (pass >= fxMesa->numClipRects)
@@ -1081,7 +1081,7 @@ static GLboolean multipass_cliprect( GLcontext *ctx, GLuint pass )
 /*                Runtime render state and callbacks                  */
 /**********************************************************************/
 
-static void tdfxRunPipeline( GLcontext *ctx )
+static void tdfxRunPipeline( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1103,7 +1103,7 @@ static void tdfxRunPipeline( GLcontext *ctx )
 }
 
 
-static void tdfxRenderStart( GLcontext *ctx )
+static void tdfxRenderStart( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -1138,7 +1138,7 @@ static void tdfxRenderStart( GLcontext *ctx )
 /* Always called between RenderStart and RenderFinish --> We already
  * hold the lock.
  */
-static void tdfxRasterPrimitive( GLcontext *ctx, GLenum prim )
+static void tdfxRasterPrimitive( struct gl_context *ctx, GLenum prim )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -1170,7 +1170,7 @@ static void tdfxRasterPrimitive( GLcontext *ctx, GLenum prim )
  * which renders strips as strips, the equivalent calculations are
  * performed in tdfx_render.c.
  */
-static void tdfxRenderPrimitive( GLcontext *ctx, GLenum prim )
+static void tdfxRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GLuint rprim = reduced_prim[prim];
@@ -1185,7 +1185,7 @@ static void tdfxRenderPrimitive( GLcontext *ctx, GLenum prim )
    }
 }
 
-static void tdfxRenderFinish( GLcontext *ctx )
+static void tdfxRenderFinish( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1227,7 +1227,7 @@ static char *getFallbackString(GLuint bit)
 }
 
 
-void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void tdfxFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -1266,7 +1266,7 @@ void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 }
 
 
-void tdfxDDInitTriFuncs( GLcontext *ctx )
+void tdfxDDInitTriFuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);

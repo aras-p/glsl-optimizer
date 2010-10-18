@@ -69,6 +69,9 @@ struct dri_screen
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
    enum pipe_texture_target target;
+
+   /* hooks filled in by dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_screen *ctx, void *handle);
 };
 
 /** cast wrapper */
@@ -111,7 +114,7 @@ dri_with_format(__DRIscreen * sPriv)
 
 void
 dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
-                   const __GLcontextModes *mode);
+                   const struct gl_config *mode);
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,

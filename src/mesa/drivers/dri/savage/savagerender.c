@@ -142,7 +142,7 @@
 /*                          Render pipeline stage                     */
 /**********************************************************************/
 
-static GLboolean savage_run_render( GLcontext *ctx,
+static GLboolean savage_run_render( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -234,7 +234,7 @@ struct texnorm_stage_data {
 #define TEXNORM_STAGE_DATA(stage) ((struct texnorm_stage_data *)stage->privatePtr)
 
 
-static GLboolean run_texnorm_stage( GLcontext *ctx,
+static GLboolean run_texnorm_stage( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
@@ -307,7 +307,7 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_texnorm_data( GLcontext *ctx,
+static GLboolean alloc_texnorm_data( struct gl_context *ctx,
 				     struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -325,7 +325,7 @@ static GLboolean alloc_texnorm_data( GLcontext *ctx,
    return GL_TRUE;
 }
 
-static void validate_texnorm( GLcontext *ctx,
+static void validate_texnorm( struct gl_context *ctx,
 			      struct tnl_pipeline_stage *stage )
 {
    struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);

@@ -46,7 +46,6 @@
 #include "fbobject.h"
 #include "formats.h"
 #include "mtypes.h"
-#include "fbobject.h"
 #include "renderbuffer.h"
 
 
@@ -62,7 +61,7 @@
  */
 
 static void *
-get_pointer_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLint x, GLint y)
 {
    if (!rb->Data)
@@ -76,7 +75,7 @@ get_pointer_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
               GLint x, GLint y, void *values)
 {
    const GLubyte *src = (const GLubyte *) rb->Data + y * rb->Width + x;
@@ -86,7 +85,7 @@ get_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                  const GLint x[], const GLint y[], void *values)
 {
    GLubyte *dst = (GLubyte *) values;
@@ -100,7 +99,7 @@ get_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
               GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLubyte *src = (const GLubyte *) values;
@@ -121,7 +120,7 @@ put_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const GLubyte val = *((const GLubyte *) value);
@@ -145,7 +144,7 @@ put_mono_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                  const GLint x[], const GLint y[],
                  const void *values, const GLubyte *mask)
 {
@@ -162,7 +161,7 @@ put_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                       const GLint x[], const GLint y[],
                       const void *value, const GLubyte *mask)
 {
@@ -184,7 +183,7 @@ put_mono_values_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
  */
 
 static void *
-get_pointer_ushort(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLint x, GLint y)
 {
    if (!rb->Data)
@@ -196,7 +195,7 @@ get_pointer_ushort(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
 {
    const void *src = rb->GetPointer(ctx, rb, x, y);
@@ -206,7 +205,7 @@ get_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], void *values)
 {
    GLushort *dst = (GLushort *) values;
@@ -220,7 +219,7 @@ get_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLushort *src = (const GLushort *) values;
@@ -241,7 +240,7 @@ put_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                     GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const GLushort val = *((const GLushort *) value);
@@ -265,7 +264,7 @@ put_mono_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
 {
@@ -282,7 +281,7 @@ put_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
  
 
 static void
-put_mono_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb,
+put_mono_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte *mask)
 {
@@ -313,7 +312,7 @@ put_mono_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 
 static void *
-get_pointer_uint(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_uint(struct gl_context *ctx, struct gl_renderbuffer *rb,
                  GLint x, GLint y)
 {
    if (!rb->Data)
@@ -325,7 +324,7 @@ get_pointer_uint(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
              GLint x, GLint y, void *values)
 {
    const void *src = rb->GetPointer(ctx, rb, x, y);
@@ -336,7 +335,7 @@ get_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 const GLint x[], const GLint y[], void *values)
 {
    GLuint *dst = (GLuint *) values;
@@ -351,7 +350,7 @@ get_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
              GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLuint *src = (const GLuint *) values;
@@ -373,7 +372,7 @@ put_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const GLuint val = *((const GLuint *) value);
@@ -398,7 +397,7 @@ put_mono_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 const GLint x[], const GLint y[], const void *values,
                 const GLubyte *mask)
 {
@@ -416,7 +415,7 @@ put_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      const GLint x[], const GLint y[], const void *value,
                      const GLubyte *mask)
 {
@@ -441,7 +440,7 @@ put_mono_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
  */
 
 static void *
-get_pointer_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLint x, GLint y)
 {
    ASSERT(rb->Format == MESA_FORMAT_RGB888);
@@ -453,7 +452,7 @@ get_pointer_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
 {
    const GLubyte *src = (const GLubyte *) rb->Data + 3 * (y * rb->Width + x);
@@ -471,7 +470,7 @@ get_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], void *values)
 {
    GLubyte *dst = (GLubyte *) values;
@@ -490,7 +489,7 @@ get_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    /* note: incoming values are RGB+A! */
@@ -510,7 +509,7 @@ put_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_rgb_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    /* note: incoming values are RGB+A! */
@@ -530,7 +529,7 @@ put_row_rgb_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                     GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    /* note: incoming value is RGB+A! */
@@ -558,7 +557,7 @@ put_mono_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
 {
@@ -579,7 +578,7 @@ put_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb,
+put_mono_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte *mask)
 {
@@ -607,7 +606,7 @@ put_mono_values_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 
 static void *
-get_pointer_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLint x, GLint y)
 {
    if (!rb->Data)
@@ -619,7 +618,7 @@ get_pointer_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
 {
    const GLubyte *src = (const GLubyte *) rb->Data + 4 * (y * rb->Width + x);
@@ -630,7 +629,7 @@ get_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], void *values)
 {
    /* treat 4*GLubyte as 1*GLuint */
@@ -646,7 +645,7 @@ get_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    /* treat 4*GLubyte as 1*GLuint */
@@ -669,7 +668,7 @@ put_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_rgb_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    /* Store RGB values in RGBA buffer */
@@ -690,7 +689,7 @@ put_row_rgb_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                     GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    /* treat 4*GLubyte as 1*GLuint */
@@ -723,7 +722,7 @@ put_mono_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
 {
@@ -742,7 +741,7 @@ put_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb,
+put_mono_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte *mask)
 {
@@ -766,7 +765,7 @@ put_mono_values_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 
 static void *
-get_pointer_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
                     GLint x, GLint y)
 {
    if (!rb->Data)
@@ -777,7 +776,7 @@ get_pointer_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, void *values)
 {
    const GLshort *src = (const GLshort *) rb->Data + 4 * (y * rb->Width + x);
@@ -787,7 +786,7 @@ get_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], void *values)
 {
    GLushort *dst = (GLushort *) values;
@@ -802,7 +801,7 @@ get_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLushort *src = (const GLushort *) values;
@@ -826,7 +825,7 @@ put_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_rgb_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                     GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    /* Put RGB values in RGBA buffer */
@@ -851,7 +850,7 @@ put_row_rgb_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const GLushort val0 = ((const GLushort *) value)[0];
@@ -879,7 +878,7 @@ put_mono_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], const void *values,
                    const GLubyte *mask)
 {
@@ -899,7 +898,7 @@ put_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb,
+put_mono_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
                         GLuint count, const GLint x[], const GLint y[],
                         const void *value, const GLubyte *mask)
 {
@@ -937,7 +936,7 @@ put_mono_values_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Get/PutValues functions.
  */
 GLboolean
-_mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+_mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                                 GLenum internalFormat,
                                 GLuint width, GLuint height)
 {
@@ -1146,7 +1145,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static GLboolean
-alloc_storage_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
+alloc_storage_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb,
                      GLenum internalFormat, GLuint width, GLuint height)
 {
    ASSERT(arb != arb->Wrapped);
@@ -1196,7 +1195,7 @@ delete_renderbuffer_alpha8(struct gl_renderbuffer *arb)
 
 
 static void *
-get_pointer_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
+get_pointer_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb,
                    GLint x, GLint y)
 {
    return NULL;   /* don't allow direct access! */
@@ -1204,7 +1203,7 @@ get_pointer_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
 
 
 static void
-get_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+get_row_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                GLint x, GLint y, void *values)
 {
    /* NOTE: 'values' is RGBA format! */
@@ -1223,7 +1222,7 @@ get_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-get_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+get_values_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                   const GLint x[], const GLint y[], void *values)
 {
    GLubyte *dst = (GLubyte *) values;
@@ -1241,7 +1240,7 @@ get_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-put_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+put_row_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLubyte *src = (const GLubyte *) values;
@@ -1261,7 +1260,7 @@ put_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-put_row_rgb_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+put_row_rgb_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                    GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    const GLubyte *src = (const GLubyte *) values;
@@ -1281,7 +1280,7 @@ put_row_rgb_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+put_mono_row_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                     GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    const GLubyte val = ((const GLubyte *) value)[3];
@@ -1306,7 +1305,7 @@ put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-put_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
+put_values_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb, GLuint count,
                   const GLint x[], const GLint y[],
                   const void *values, const GLubyte *mask)
 {
@@ -1327,7 +1326,7 @@ put_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 
 
 static void
-put_mono_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
+put_mono_values_alpha8(struct gl_context *ctx, struct gl_renderbuffer *arb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte *mask)
 {
@@ -1369,7 +1368,7 @@ copy_buffer_alpha8(struct gl_renderbuffer* dst, struct gl_renderbuffer* src)
  * direct buffer access is not supported.
  */
 static void *
-nop_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
+nop_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
 {
    return NULL;
 }
@@ -1423,7 +1422,7 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
  * renderbuffers or window-system renderbuffers.
  */
 struct gl_renderbuffer *
-_mesa_new_renderbuffer(GLcontext *ctx, GLuint name)
+_mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_renderbuffer *rb = CALLOC_STRUCT(gl_renderbuffer);
    if (rb) {
@@ -1454,7 +1453,7 @@ _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  * This would not be used for hardware-based renderbuffers.
  */
 struct gl_renderbuffer *
-_mesa_new_soft_renderbuffer(GLcontext *ctx, GLuint name)
+_mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
    if (rb) {
@@ -1477,7 +1476,7 @@ _mesa_new_soft_renderbuffer(GLcontext *ctx, GLuint name)
  * rendering!
  */
 GLboolean
-_mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLuint rgbBits, GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight)
@@ -1541,7 +1540,7 @@ _mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
  * rendering!
  */
 GLboolean
-_mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight)
@@ -1625,7 +1624,7 @@ _mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
  * copy the back buffer alpha channel into the front buffer alpha channel.
  */
 void
-_mesa_copy_soft_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb)
+_mesa_copy_soft_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    if (fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer &&
        fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer)
@@ -1649,7 +1648,7 @@ _mesa_copy_soft_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb)
  * rendering!
  */
 GLboolean
-_mesa_add_depth_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                              GLuint depthBits)
 {
    struct gl_renderbuffer *rb;
@@ -1697,7 +1696,7 @@ _mesa_add_depth_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
  * rendering!
  */
 GLboolean
-_mesa_add_stencil_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                                GLuint stencilBits)
 {
    struct gl_renderbuffer *rb;
@@ -1736,7 +1735,7 @@ _mesa_add_stencil_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
  * rendering!
  */
 GLboolean
-_mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                              GLuint redBits, GLuint greenBits,
                              GLuint blueBits, GLuint alphaBits)
 {
@@ -1777,7 +1776,7 @@ _mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
  * NOTE: color-index aux buffers not supported.
  */
 GLboolean
-_mesa_add_aux_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                             GLuint colorBits, GLuint numBuffers)
 {
    GLuint i;
@@ -1991,7 +1990,7 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
  * \return new depth/stencil renderbuffer
  */
 struct gl_renderbuffer *
-_mesa_new_depthstencil_renderbuffer(GLcontext *ctx, GLuint name)
+_mesa_new_depthstencil_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_renderbuffer *dsrb;
 

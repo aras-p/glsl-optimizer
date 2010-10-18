@@ -448,6 +448,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint msg_control,
 				      GLuint msg_type,
 				      GLuint msg_length,
+				      GLboolean header_present,
 				      GLuint pixel_scoreboard_clear,
 				      GLuint response_length,
 				      GLuint end_of_thread,
@@ -462,7 +463,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_render_cache.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_render_cache.msg_type = msg_type;
        insn->bits3.dp_render_cache.send_commit_msg = send_commit_msg;
-       insn->bits3.dp_render_cache.header_present = 0; /* XXX */
+       insn->bits3.dp_render_cache.header_present = header_present;
        insn->bits3.dp_render_cache.response_length = response_length;
        insn->bits3.dp_render_cache.msg_length = msg_length;
        insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
@@ -476,7 +477,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write_gen5.msg_type = msg_type;
        insn->bits3.dp_write_gen5.send_commit_msg = send_commit_msg;
-       insn->bits3.dp_write_gen5.header_present = 1;
+       insn->bits3.dp_write_gen5.header_present = header_present;
        insn->bits3.dp_write_gen5.response_length = response_length;
        insn->bits3.dp_write_gen5.msg_length = msg_length;
        insn->bits3.dp_write_gen5.end_of_thread = end_of_thread;
@@ -548,7 +549,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen5.sampler = sampler;
       insn->bits3.sampler_gen5.msg_type = msg_type;
@@ -557,8 +558,12 @@ static void brw_set_sampler_message(struct brw_context *brw,
       insn->bits3.sampler_gen5.response_length = response_length;
       insn->bits3.sampler_gen5.msg_length = msg_length;
       insn->bits3.sampler_gen5.end_of_thread = eot;
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
-      insn->bits2.send_gen5.end_of_thread = eot;
+      if (intel->gen >= 6)
+	  insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_SAMPLER;
+      else {
+	  insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
+	  insn->bits2.send_gen5.end_of_thread = eot;
+      }
    } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
@@ -649,6 +654,26 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
    return brw_alu2(p, BRW_OPCODE_##OP, dest, src0, src1);	\
 }
 
+/* Rounding operations (other than RNDD) require two instructions - the first
+ * stores a rounded value (possibly the wrong way) in the dest register, but
+ * also sets a per-channel "increment bit" in the flag register.  A predicated
+ * add of 1.0 fixes dest to contain the desired result.
+ */
+#define ROUND(OP)							      \
+void brw_##OP(struct brw_compile *p,					      \
+	      struct brw_reg dest,					      \
+	      struct brw_reg src)					      \
+{									      \
+   struct brw_instruction *rnd, *add;					      \
+   rnd = next_insn(p, BRW_OPCODE_##OP);					      \
+   brw_set_dest(rnd, dest);						      \
+   brw_set_src0(rnd, src);						      \
+   rnd->header.destreg__conditionalmod = 0x7; /* turn on round-increments */  \
+									      \
+   add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \
+   add->header.predicate_control = BRW_PREDICATE_NORMAL;		      \
+}
+
 
 ALU1(MOV)
 ALU2(SEL)
@@ -663,7 +688,6 @@ ALU2(RSL)
 ALU2(ASR)
 ALU1(FRC)
 ALU1(RNDD)
-ALU1(RNDZ)
 ALU2(MAC)
 ALU2(MACH)
 ALU1(LZD)
@@ -673,6 +697,11 @@ ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
+
+
+ROUND(RNDZ)
+ROUND(RNDE)
+
 
 struct brw_instruction *brw_ADD(struct brw_compile *p,
 				struct brw_reg dest,
@@ -782,6 +811,7 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
 
    if (p->single_program_flow) {
@@ -795,9 +825,15 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 
    /* Override the defaults for this instruction:
     */
-   brw_set_dest(insn, brw_ip_reg());
-   brw_set_src0(insn, brw_ip_reg());
-   brw_set_src1(insn, brw_imm_d(0x0));
+   if (intel->gen < 6) {
+      brw_set_dest(insn, brw_ip_reg());
+      brw_set_src0(insn, brw_ip_reg());
+      brw_set_src1(insn, brw_imm_d(0x0));
+   } else {
+      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_src0(insn, brw_null_reg());
+      brw_set_src1(insn, brw_null_reg());
+   }
 
    insn->header.execution_size = execute_size;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
@@ -819,7 +855,9 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   /* jump count is for 64bit data chunk each, so one 128bit
+      instruction requires 2 chunks. */
+   if (intel->gen >= 5)
       br = 2;
 
    if (p->single_program_flow) {
@@ -828,9 +866,15 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       insn = next_insn(p, BRW_OPCODE_ELSE);
    }
 
-   brw_set_dest(insn, brw_ip_reg());
-   brw_set_src0(insn, brw_ip_reg());
-   brw_set_src1(insn, brw_imm_d(0x0));
+   if (intel->gen < 6) {
+      brw_set_dest(insn, brw_ip_reg());
+      brw_set_src0(insn, brw_ip_reg());
+      brw_set_src1(insn, brw_imm_d(0x0));
+   } else {
+      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_src0(insn, brw_null_reg());
+      brw_set_src1(insn, brw_null_reg());
+   }
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = if_insn->header.execution_size;
@@ -847,9 +891,13 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    } else {
       assert(if_insn->header.opcode == BRW_OPCODE_IF);
 
-      if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
-      if_insn->bits3.if_else.pop_count = 0;
-      if_insn->bits3.if_else.pad0 = 0;
+      if (intel->gen < 6) {
+	 if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
+	 if_insn->bits3.if_else.pop_count = 0;
+	 if_insn->bits3.if_else.pad0 = 0;
+      } else {
+	 if_insn->bits1.branch_gen6.jump_count = br * (insn - if_insn + 1);
+      }
    }
 
    return insn;
@@ -861,7 +909,7 @@ void brw_ENDIF(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -877,9 +925,15 @@ void brw_ENDIF(struct brw_compile *p,
    } else {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);
 
-      brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src1(insn, brw_imm_d(0x0));
+      if (intel->gen < 6) {
+	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+	 brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+	 brw_set_src1(insn, brw_imm_d(0x0));
+      } else {
+	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_W));
+	 brw_set_src0(insn, brw_null_reg());
+	 brw_set_src1(insn, brw_null_reg());
+      }
 
       insn->header.compression_control = BRW_COMPRESSION_NONE;
       insn->header.execution_size = patch_insn->header.execution_size;
@@ -892,25 +946,42 @@ void brw_ENDIF(struct brw_compile *p,
        * instruction respectively.
        */
       if (patch_insn->header.opcode == BRW_OPCODE_IF) {
-	 /* Automagically turn it into an IFF:
-	  */
-	 patch_insn->header.opcode = BRW_OPCODE_IFF;
-	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	 patch_insn->bits3.if_else.pop_count = 0;
-	 patch_insn->bits3.if_else.pad0 = 0;
-      } else if (patch_insn->header.opcode == BRW_OPCODE_ELSE) {
-	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	 patch_insn->bits3.if_else.pop_count = 1;
-	 patch_insn->bits3.if_else.pad0 = 0;
+	 if (intel->gen < 6) {
+	    /* Turn it into an IFF, which means no mask stack operations for
+	     * all-false and jumping past the ENDIF.
+	     */
+	    patch_insn->header.opcode = BRW_OPCODE_IFF;
+	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
+	    patch_insn->bits3.if_else.pop_count = 0;
+	    patch_insn->bits3.if_else.pad0 = 0;
+	 } else {
+	    /* As of gen6, there is no IFF and IF must point to the ENDIF. */
+	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
+	 }
       } else {
-	 assert(0);
+	 assert(patch_insn->header.opcode == BRW_OPCODE_ELSE);
+	 if (intel->gen < 6) {
+	    /* BRW_OPCODE_ELSE pre-gen6 should point just past the
+	     * matching ENDIF.
+	     */
+	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
+	    patch_insn->bits3.if_else.pop_count = 1;
+	    patch_insn->bits3.if_else.pad0 = 0;
+	 } else {
+	    /* BRW_OPCODE_ELSE on gen6 should point to the matching ENDIF. */
+	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
+	 }
       }
 
       /* Also pop item off the stack in the endif instruction:
        */
-      insn->bits3.if_else.jump_count = 0;
-      insn->bits3.if_else.pop_count = 1;
-      insn->bits3.if_else.pad0 = 0;
+      if (intel->gen < 6) {
+	 insn->bits3.if_else.jump_count = 0;
+	 insn->bits3.if_else.pop_count = 1;
+	 insn->bits3.if_else.pad0 = 0;
+      } else {
+	 insn->bits1.branch_gen6.jump_count = 2;
+      }
    }
 }
 
@@ -978,7 +1049,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
       br = 2;
 
    if (p->single_program_flow)
@@ -1022,7 +1093,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
@@ -1100,6 +1171,17 @@ void brw_math( struct brw_compile *p,
    if (intel->gen >= 6) {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
+      assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+      assert(src.file == BRW_GENERAL_REGISTER_FILE);
+
+      assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
+      assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
+
+      if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
+	  function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+	 assert(src.type == BRW_REGISTER_TYPE_F);
+      }
+
       /* Math is the same ISA format as other opcodes, except that CondModifier
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
@@ -1129,6 +1211,45 @@ void brw_math( struct brw_compile *p,
 			   saturate,
 			   data_type);
    }
+}
+
+/** Extended math function, float[8].
+ */
+void brw_math2(struct brw_compile *p,
+	       struct brw_reg dest,
+	       GLuint function,
+	       struct brw_reg src0,
+	       struct brw_reg src1)
+{
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
+
+   assert(intel->gen >= 6);
+   (void) intel;
+
+
+   assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src0.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+
+   assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
+   assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
+   assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
+
+   if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
+       function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+      assert(src0.type == BRW_REGISTER_TYPE_F);
+      assert(src1.type == BRW_REGISTER_TYPE_F);
+   }
+
+   /* Math is the same ISA format as other opcodes, except that CondModifier
+    * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
+    */
+   insn->header.destreg__conditionalmod = function;
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, src0);
+   brw_set_src1(insn, src1);
 }
 
 /**
@@ -1264,6 +1385,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 			       BRW_DATAPORT_OWORD_BLOCK_4_OWORDS, /* msg_control */
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
 			       msg_length,
+			       GL_TRUE, /* header_present */
 			       0, /* pixel scoreboard */
 			       send_commit_msg, /* response_length */
 			       0, /* eot */
@@ -1501,12 +1623,16 @@ void brw_fb_WRITE(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_control, msg_type;
+   GLboolean header_present = GL_TRUE;
 
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (intel->gen >= 6) {
+      if (msg_length == 4)
+	 header_present = GL_FALSE;
+
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
@@ -1530,6 +1656,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_control,
 			    msg_type,
 			    msg_length,
+			    header_present,
 			    1,	/* pixel scoreboard */
 			    response_length,
 			    eot,
@@ -1556,6 +1683,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint header_present,
 		GLuint simd_mode)
 {
+   struct intel_context *intel = &p->brw->intel;
    GLboolean need_stall = 0;
 
    if (writemask == 0) {
@@ -1627,11 +1755,25 @@ void brw_SAMPLE(struct brw_compile *p,
    }
 
    {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+      struct brw_instruction *insn;
    
+      /* Sandybridge doesn't have the implied move for SENDs,
+       * and the first message register index comes from src0.
+       */
+      if (intel->gen >= 6) {
+	  brw_push_insn_state(p);
+	  brw_set_mask_control( p, BRW_MASK_DISABLE );
+	  /* m1 contains header? */
+	  brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+	  brw_pop_insn_state(p);
+	  src0 = brw_message_reg(msg_reg_nr);
+      }
+
+      insn = next_insn(p, BRW_OPCODE_SEND);
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE;
-      insn->header.destreg__conditionalmod = msg_reg_nr;
+      if (intel->gen < 6)
+	  insn->header.destreg__conditionalmod = msg_reg_nr;
 
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src0);
@@ -1721,13 +1863,28 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint response_length,
 		   GLboolean eot)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn;
 
+   /* Sandybridge doesn't have the implied move for SENDs,
+    * and the first message register index comes from src0.
+    */
+   if (intel->gen >= 6) {
+      brw_push_insn_state(p);
+      brw_set_mask_control( p, BRW_MASK_DISABLE );
+      brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
+	      retype(src0, BRW_REGISTER_TYPE_UD));
+      brw_pop_insn_state(p);
+      src0 = brw_message_reg(msg_reg_nr);
+   }
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen < 6)
+       insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_ff_sync_message(p->brw,
 			   insn,

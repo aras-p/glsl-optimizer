@@ -63,8 +63,8 @@
 
 extern const struct tnl_pipeline_stage _r300_render_stage;
 
-extern void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode);
+extern void r300SwitchFallback(struct gl_context *ctx, uint32_t bit, GLboolean mode);
 
-extern void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim);
+extern void r300RunRenderPrimitive(struct gl_context * ctx, int start, int end, int prim);
 
 #endif

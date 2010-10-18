@@ -59,8 +59,8 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
    MACH64_PRIM_POLYGON,
 };
 
-static void mach64RasterPrimitive( GLcontext *ctx, GLuint hwprim );
-static void mach64RenderPrimitive( GLcontext *ctx, GLenum prim );
+static void mach64RasterPrimitive( struct gl_context *ctx, GLuint hwprim );
+static void mach64RenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 
 /* FIXME: Remove this when native template is finished. */
@@ -120,7 +120,7 @@ static INLINE void mach64_draw_quad( mach64ContextPtr mmesa,
 				       mach64VertexPtr v3 )
 {
 #if MACH64_NATIVE_VTXFMT
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    const GLuint vertsize = mmesa->vertex_size;
    GLint a;
    GLfloat ooa;
@@ -425,7 +425,7 @@ static INLINE void mach64_draw_triangle( mach64ContextPtr mmesa,
 					   mach64VertexPtr v2 )
 {
 #if MACH64_NATIVE_VTXFMT
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    GLuint vertsize = mmesa->vertex_size;
    GLint a;
    GLfloat ooa;
@@ -671,7 +671,7 @@ static INLINE void mach64_draw_line( mach64ContextPtr mmesa,
 				     mach64VertexPtr v1 )
 {
 #if MACH64_NATIVE_VTXFMT
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    const GLuint vertsize = mmesa->vertex_size;
    /* 2 fractional bits for hardware: */
    const int width = (int) (2.0 * CLAMP(mmesa->glCtx->Line.Width,
@@ -959,7 +959,7 @@ static INLINE void mach64_draw_point( mach64ContextPtr mmesa,
 				      mach64VertexPtr v0 )
 {
 #if MACH64_NATIVE_VTXFMT
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    const GLuint vertsize = mmesa->vertex_size;
    /* 2 fractional bits for hardware: */
    GLint sz = (GLint) (2.0 * CLAMP(mmesa->glCtx->Point.Size,
@@ -1473,7 +1473,7 @@ mach64_fallback_tri( mach64ContextPtr mmesa,
 		     mach64Vertex *v1,
 		     mach64Vertex *v2 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[3];
    mach64_translate_vertex( ctx, v0, &v[0] );
    mach64_translate_vertex( ctx, v1, &v[1] );
@@ -1487,7 +1487,7 @@ mach64_fallback_line( mach64ContextPtr mmesa,
 		    mach64Vertex *v0,
 		    mach64Vertex *v1 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[2];
    mach64_translate_vertex( ctx, v0, &v[0] );
    mach64_translate_vertex( ctx, v1, &v[1] );
@@ -1499,7 +1499,7 @@ static void
 mach64_fallback_point( mach64ContextPtr mmesa,
 		     mach64Vertex *v0 )
 {
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
    SWvertex v[1];
    mach64_translate_vertex( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
@@ -1549,7 +1549,7 @@ mach64_fallback_point( mach64ContextPtr mmesa,
 /*                    Render clipped primitives                       */
 /**********************************************************************/
 
-static void mach64RenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void mach64RenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 				     GLuint n )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
@@ -1573,14 +1573,14 @@ static void mach64RenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 
 }
 
-static void mach64RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+static void mach64RenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
 }
 
 #if MACH64_NATIVE_VTXFMT
-static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void mach64FastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 					 GLuint n )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
@@ -1675,7 +1675,7 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    assert( vb == vbchk );
 }
 #else
-static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void mach64FastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 					 GLuint n )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
@@ -1715,7 +1715,7 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
 
-static void mach64ChooseRenderState(GLcontext *ctx)
+static void mach64ChooseRenderState(struct gl_context *ctx)
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
@@ -1769,7 +1769,7 @@ static void mach64ChooseRenderState(GLcontext *ctx)
 /*                 Validate state at pipeline start                   */
 /**********************************************************************/
 
-static void mach64RunPipeline( GLcontext *ctx )
+static void mach64RunPipeline( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -1798,7 +1798,7 @@ static void mach64RunPipeline( GLcontext *ctx )
  * and lines, points and bitmaps.
  */
 
-static void mach64RasterPrimitive( GLcontext *ctx, GLuint hwprim )
+static void mach64RasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -1811,7 +1811,7 @@ static void mach64RasterPrimitive( GLcontext *ctx, GLuint hwprim )
    }
 }
 
-static void mach64RenderPrimitive( GLcontext *ctx, GLenum prim )
+static void mach64RenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint hw = hw_prim[prim];
@@ -1825,7 +1825,7 @@ static void mach64RenderPrimitive( GLcontext *ctx, GLenum prim )
 }
 
 
-static void mach64RenderStart( GLcontext *ctx )
+static void mach64RenderStart( struct gl_context *ctx )
 {
    /* Check for projective texturing.  Make sure all texcoord
     * pointers point to something.  (fix in mesa?)
@@ -1833,7 +1833,7 @@ static void mach64RenderStart( GLcontext *ctx )
    mach64CheckTexSizes( ctx );
 }
 
-static void mach64RenderFinish( GLcontext *ctx )
+static void mach64RenderFinish( struct gl_context *ctx )
 {
    if (MACH64_CONTEXT(ctx)->RenderIndex & MACH64_FALLBACK_BIT)
       _swrast_flush( ctx );
@@ -1868,7 +1868,7 @@ static const char *getFallbackString(GLuint bit)
    return fallbackStrings[i];
 }
 
-void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void mach64Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
@@ -1908,7 +1908,7 @@ void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void mach64InitTriFuncs( GLcontext *ctx )
+void mach64InitTriFuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;

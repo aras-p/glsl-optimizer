@@ -192,7 +192,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
 #define INPUT_PREVIOUS			(R128_INPUT_FACTOR_PREV_COLOR |	\
 					 R128_INP_FACTOR_A_PREV_ALPHA)
 
-static GLboolean r128UpdateTextureEnv( GLcontext *ctx, int unit )
+static GLboolean r128UpdateTextureEnv( struct gl_context *ctx, int unit )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLint source = rmesa->tmu_source[unit];
@@ -476,7 +476,7 @@ static GLboolean r128UpdateTextureEnv( GLcontext *ctx, int unit )
    return GL_TRUE;
 }
 
-static void disable_tex( GLcontext *ctx, int unit )
+static void disable_tex( struct gl_context *ctx, int unit )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -499,7 +499,7 @@ static void disable_tex( GLcontext *ctx, int unit )
    rmesa->blend_flags &= ~R128_BLEND_MULTITEX;
 }
 
-static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
+static GLboolean enable_tex_2d( struct gl_context *ctx, int unit )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    const int source = rmesa->tmu_source[unit];
@@ -524,7 +524,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
    return GL_TRUE;
 }
 
-static GLboolean update_tex_common( GLcontext *ctx, int unit )
+static GLboolean update_tex_common( struct gl_context *ctx, int unit )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    const int source = rmesa->tmu_source[unit];
@@ -597,7 +597,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    return r128UpdateTextureEnv( ctx, unit );
 }
 
-static GLboolean updateTextureUnit( GLcontext *ctx, int unit )
+static GLboolean updateTextureUnit( struct gl_context *ctx, int unit )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    const int source = rmesa->tmu_source[unit];
@@ -618,7 +618,7 @@ static GLboolean updateTextureUnit( GLcontext *ctx, int unit )
 }
 
 
-void r128UpdateTextureState( GLcontext *ctx )
+void r128UpdateTextureState( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLboolean ok;

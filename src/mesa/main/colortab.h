@@ -78,11 +78,4 @@ _mesa_init_colortable( struct gl_color_table *table );
 extern void
 _mesa_free_colortable_data( struct gl_color_table *table );
 
-extern void 
-_mesa_init_colortables( GLcontext *ctx );
-
-extern void 
-_mesa_free_colortables_data( GLcontext *ctx );
-
-
 #endif /* COLORTAB_H */

@@ -32,27 +32,27 @@
 
 
 extern GLuint
-_swrast_depth_test_span( GLcontext *ctx, SWspan *span);
+_swrast_depth_test_span( struct gl_context *ctx, SWspan *span);
 
 extern void
-_swrast_depth_clamp_span( GLcontext *ctx, SWspan *span );
+_swrast_depth_clamp_span( struct gl_context *ctx, SWspan *span );
 
 extern GLboolean
-_swrast_depth_bounds_test( GLcontext *ctx, SWspan *span );
+_swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span );
 
 
 extern void
-_swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *rb,
                                GLint n, GLint x, GLint y, GLfloat depth[] );
 
 
 extern void
-_swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_depth_span_uint( struct gl_context *ctx, struct gl_renderbuffer *rb,
                               GLint n, GLint x, GLint y, GLuint depth[] );
 
 
 extern void
-_swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb );
+_swrast_clear_depth_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb );
 
 
 #endif

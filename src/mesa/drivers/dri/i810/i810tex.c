@@ -31,7 +31,6 @@
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/colormac.h"
-#include "main/texobj.h"
 #include "main/mm.h"
 
 #include "texmem.h"
@@ -167,7 +166,7 @@ i810SetTexBorderColor( i810TextureObjectPtr t, const GLfloat color[4] )
 
 
 static i810TextureObjectPtr
-i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
+i810AllocTexObj( struct gl_context *ctx, struct gl_texture_object *texObj )
 {
    i810TextureObjectPtr t;
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -215,7 +214,7 @@ i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
 }
 
 
-static void i810TexParameter( GLcontext *ctx, GLenum target,
+static void i810TexParameter( struct gl_context *ctx, GLenum target,
 			      struct gl_texture_object *tObj,
 			      GLenum pname, const GLfloat *params )
 {
@@ -286,7 +285,7 @@ static void i810TexParameter( GLcontext *ctx, GLenum target,
  * Determine whether or not \c param can be used instead of
  * \c texUnit->EnvColor in the \c GL_TEXTURE_ENV_COLOR case.
  */
-static void i810TexEnv( GLcontext *ctx, GLenum target, 
+static void i810TexEnv( struct gl_context *ctx, GLenum target, 
 			GLenum pname, const GLfloat *param )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
@@ -334,7 +333,7 @@ static void i810TexEnv( GLcontext *ctx, GLenum target,
 
 
 #if 0
-static void i810TexImage1D( GLcontext *ctx, GLenum target, GLint level,
+static void i810TexImage1D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint border,
 			    GLenum format, GLenum type, 
@@ -349,7 +348,7 @@ static void i810TexImage1D( GLcontext *ctx, GLenum target, GLint level,
    }
 }
 
-static void i810TexSubImage1D( GLcontext *ctx, 
+static void i810TexSubImage1D( struct gl_context *ctx, 
 			       GLenum target,
 			       GLint level,	
 			       GLint xoffset,
@@ -364,7 +363,7 @@ static void i810TexSubImage1D( GLcontext *ctx,
 #endif
 
 
-static void i810TexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void i810TexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint height, GLint border,
 			    GLenum format, GLenum type, const GLvoid *pixels,
@@ -389,7 +388,7 @@ static void i810TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			   pixels, packing, texObj, texImage );
 }
 
-static void i810TexSubImage2D( GLcontext *ctx, 
+static void i810TexSubImage2D( struct gl_context *ctx, 
 			       GLenum target,
 			       GLint level,	
 			       GLint xoffset, GLint yoffset,
@@ -411,14 +410,14 @@ static void i810TexSubImage2D( GLcontext *ctx,
 }
 
 
-static void i810BindTexture( GLcontext *ctx, GLenum target,
+static void i810BindTexture( struct gl_context *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
    assert( (target != GL_TEXTURE_2D) || (tObj->DriverData != NULL) );
 }
 
 
-static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
+static void i810DeleteTexture( struct gl_context *ctx, struct gl_texture_object *tObj )
 {
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
    if (t) {
@@ -438,7 +437,7 @@ static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
  * makes this routine pretty simple.
  */
 static gl_format
-i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+i810ChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
 			 GLenum format, GLenum type )
 {
    switch ( internalFormat ) {
@@ -525,7 +524,7 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-i810NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+i810NewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);

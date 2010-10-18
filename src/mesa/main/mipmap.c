@@ -415,7 +415,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       GLuint i, j, k;
       const GLuint *rowA = (const GLuint *) srcRowA;
       const GLuint *rowB = (const GLuint *) srcRowB;
-      GLfloat *dst = (GLfloat *) dstRow;
+      GLuint *dst = (GLuint *) dstRow;
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
          dst[i] = (GLfloat)(rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4);
@@ -1504,7 +1504,7 @@ next_mipmap_level_size(GLenum target, GLint border,
  * GL_TEXTURE_CUBE_MAP_POSITIVE/NEGATIVE_X/Y/Z; never GL_TEXTURE_CUBE_MAP.
  */
 void
-_mesa_generate_mipmap(GLcontext *ctx, GLenum target,
+_mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj)
 {
    const struct gl_texture_image *srcImage;

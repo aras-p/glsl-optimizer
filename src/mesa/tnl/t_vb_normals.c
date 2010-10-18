@@ -47,7 +47,7 @@ struct normal_stage_data {
 
 
 static GLboolean
-run_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+run_normal_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -89,7 +89,7 @@ run_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
  * to point to the appropriate normal transformation routine.
  */
 static void
-validate_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+validate_normal_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
 
@@ -146,7 +146,7 @@ validate_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
  * Allocate stage's private data (storage for transformed normals).
  */
 static GLboolean
-alloc_normal_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+alloc_normal_data(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct normal_stage_data *store;

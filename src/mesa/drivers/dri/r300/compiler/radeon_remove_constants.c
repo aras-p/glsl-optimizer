@@ -28,107 +28,105 @@
 #include "radeon_remove_constants.h"
 #include "radeon_dataflow.h"
 
+struct mark_used_data {
+	unsigned char * const_used;
+	unsigned * has_rel_addr;
+};
+
 static void remap_regs(void * userdata, struct rc_instruction * inst,
 			rc_register_file * pfile, unsigned int * pindex)
 {
-        unsigned *inv_remap_table = userdata;
+	unsigned *inv_remap_table = userdata;
 
-        if (*pfile == RC_FILE_CONSTANT) {
-                *pindex = inv_remap_table[*pindex];
-        }
+	if (*pfile == RC_FILE_CONSTANT) {
+		*pindex = inv_remap_table[*pindex];
+	}
+}
+
+static void mark_used(void * userdata, struct rc_instruction * inst,
+						struct rc_src_register * src)
+{
+	struct mark_used_data * d = userdata;
+
+	if (src->File == RC_FILE_CONSTANT) {
+		if (src->RelAddr) {
+			*d->has_rel_addr = 1;
+		} else {
+			d->const_used[src->Index] = 1;
+		}
+	}
 }
 
 void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 {
 	unsigned **out_remap_table = (unsigned**)user;
-        unsigned char *const_used;
-        unsigned *remap_table;
-        unsigned *inv_remap_table;
-        unsigned has_rel_addr = 0;
-        unsigned is_identity = 1;
+	unsigned char *const_used;
+	unsigned *remap_table;
+	unsigned *inv_remap_table;
+	unsigned has_rel_addr = 0;
+	unsigned is_identity = 1;
 	unsigned are_externals_remapped = 0;
-        struct rc_constant *constants = c->Program.Constants.Constants;
+	struct rc_constant *constants = c->Program.Constants.Constants;
+	struct mark_used_data d;
+	unsigned new_count;
 
-        if (!c->Program.Constants.Count) {
-                *out_remap_table = NULL;
-                return;
-        }
+	if (!c->Program.Constants.Count) {
+		*out_remap_table = NULL;
+		return;
+	}
 
-        const_used = malloc(c->Program.Constants.Count);
-        memset(const_used, 0, c->Program.Constants.Count);
+	const_used = malloc(c->Program.Constants.Count);
+	memset(const_used, 0, c->Program.Constants.Count);
+
+	d.const_used = const_used;
+	d.has_rel_addr = &has_rel_addr;
 
 	/* Pass 1: Mark used constants. */
-        for (struct rc_instruction *inst = c->Program.Instructions.Next;
-             inst != &c->Program.Instructions; inst = inst->Next) {
-                const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	for (struct rc_instruction *inst = c->Program.Instructions.Next;
+	     inst != &c->Program.Instructions; inst = inst->Next) {
+		rc_for_all_reads_src(inst, mark_used, &d);
+	}
 
-                /* XXX: This loop and the if statement after it should be
-                 * replaced by a call to one of the rc_for_all_reads_* functions.
-                 * The reason it does not use one of those functions now is
-                 * because none of them have RelAddr as an argument. */
-                for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
-                        if (inst->U.I.SrcReg[i].File == RC_FILE_CONSTANT) {
-                                if (inst->U.I.SrcReg[i].RelAddr) {
-                                        has_rel_addr = 1;
-                                } else {
-                                        const_used[inst->U.I.SrcReg[i].Index] = 1;
-                                }
-                        }
-                }
-                if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
-			unsigned int i;
-			unsigned int srcp_regs = rc_presubtract_src_reg_count(
-							inst->U.I.PreSub.Opcode);
-			for( i = 0; i < srcp_regs; i++) {
-                                if (inst->U.I.PreSub.SrcReg[i].File ==
-                                                        RC_FILE_CONSTANT) {
-                                        const_used[
-                                            inst->U.I.PreSub.SrcReg[i].Index] = 1;
-                                }
-                        }
-		}
-        }
+	/* Pass 2: If there is relative addressing, mark all externals as used. */
+	if (has_rel_addr) {
+		for (unsigned i = 0; i < c->Program.Constants.Count; i++)
+			if (constants[i].Type == RC_CONSTANT_EXTERNAL)
+				const_used[i] = 1;
+	}
 
-        /* Pass 2: If there is relative addressing, mark all externals as used. */
-        if (has_rel_addr) {
-                for (unsigned i = 0; i < c->Program.Constants.Count; i++)
-                        if (constants[i].Type == RC_CONSTANT_EXTERNAL)
-                                const_used[i] = 1;
-        }
-
-        /* Pass 3: Make the remapping table and remap constants.
+	/* Pass 3: Make the remapping table and remap constants.
 	 * This pass removes unused constants simply by overwriting them by other constants. */
-        remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
-        inv_remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
-        unsigned new_count = 0;
+	remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
+	inv_remap_table = malloc(c->Program.Constants.Count * sizeof(unsigned));
+	new_count = 0;
 
-        for (unsigned i = 0; i < c->Program.Constants.Count; i++) {
-                if (const_used[i]) {
-                        remap_table[new_count] = i;
-                        inv_remap_table[i] = new_count;
+	for (unsigned i = 0; i < c->Program.Constants.Count; i++) {
+		if (const_used[i]) {
+			remap_table[new_count] = i;
+			inv_remap_table[i] = new_count;
 
-                        if (i != new_count) {
+			if (i != new_count) {
 				if (constants[i].Type == RC_CONSTANT_EXTERNAL)
 					are_externals_remapped = 1;
 
 				constants[new_count] = constants[i];
-                                is_identity = 0;
-                        }
-                        new_count++;
-                }
-        }
+				is_identity = 0;
+			}
+			new_count++;
+		}
+	}
 
 	/*  is_identity ==> new_count == old_count
 	 * !is_identity ==> new_count <  old_count */
 	assert( is_identity || new_count <  c->Program.Constants.Count);
 	assert(!(has_rel_addr && are_externals_remapped));
 
-        /* Pass 4: Redirect reads of all constants to their new locations. */
-        if (!is_identity) {
-                for (struct rc_instruction *inst = c->Program.Instructions.Next;
-                     inst != &c->Program.Instructions; inst = inst->Next) {
-                        rc_remap_registers(inst, remap_regs, inv_remap_table);
-                }
+	/* Pass 4: Redirect reads of all constants to their new locations. */
+	if (!is_identity) {
+		for (struct rc_instruction *inst = c->Program.Instructions.Next;
+		     inst != &c->Program.Instructions; inst = inst->Next) {
+			rc_remap_registers(inst, remap_regs, inv_remap_table);
+		}
 
 	}
 
@@ -138,12 +136,15 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	c->Program.Constants.Count = new_count;
 
 	if (are_externals_remapped) {
-                *out_remap_table = remap_table;
-        } else {
-                *out_remap_table = NULL;
-                free(remap_table);
-        }
+		*out_remap_table = remap_table;
+	} else {
+		*out_remap_table = NULL;
+		free(remap_table);
+	}
 
-        free(const_used);
-        free(inv_remap_table);
+	free(const_used);
+	free(inv_remap_table);
+
+	if (c->Debug)
+		rc_constants_print(&c->Program.Constants);
 }

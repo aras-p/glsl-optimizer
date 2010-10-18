@@ -186,6 +186,11 @@ void st_init_limits(struct st_context *st)
     * attributes) supported by a driver. */
    c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_MAX_INPUTS) - 2;
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
+
+   /* XXX we'll need a better query here someday */
+   if (screen->get_param(screen, PIPE_CAP_GLSL)) {
+      c->GLSLVersion = 120;
+   }
 }
 
 
@@ -199,7 +204,7 @@ void st_init_limits(struct st_context *st)
 void st_init_extensions(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    /*
     * Extensions that are supported by all Gallium drivers:
@@ -266,7 +271,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif
 
-   ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 
    /*
@@ -285,7 +289,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
       ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
-      ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {
@@ -370,6 +373,12 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0)) {
+      ctx->Extensions.ARB_texture_rg = GL_TRUE;
+   }
+
    /* s3tc support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 0,
@@ -425,5 +434,9 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_DEPTH_CLAMP)) {
       ctx->Extensions.ARB_depth_clamp = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
+      ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
    }
 }

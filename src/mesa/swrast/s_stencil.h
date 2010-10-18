@@ -33,21 +33,21 @@
 
 
 extern GLboolean
-_swrast_stencil_and_ztest_span(GLcontext *ctx, SWspan *span);
+_swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span);
 
 
 extern void
-_swrast_read_stencil_span(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLint n, GLint x, GLint y, GLstencil stencil[]);
 
 
 extern void
-_swrast_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_write_stencil_span( struct gl_context *ctx, GLint n, GLint x, GLint y,
                           const GLstencil stencil[] );
 
 
 extern void
-_swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb );
+_swrast_clear_stencil_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb );
 
 
 #endif

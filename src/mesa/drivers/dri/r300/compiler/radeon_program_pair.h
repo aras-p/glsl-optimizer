@@ -55,52 +55,35 @@ struct radeon_compiler;
  */
 #define RC_PAIR_PRESUB_SRC 3
 
-struct radeon_pair_instruction_source {
+struct rc_pair_instruction_source {
 	unsigned int Used:1;
 	unsigned int File:3;
 	unsigned int Index:RC_REGISTER_INDEX_BITS;
 };
 
-struct radeon_pair_instruction_rgb {
+struct rc_pair_instruction_arg {
+	unsigned int Source:2;
+	unsigned int Swizzle:9;
+	unsigned int Abs:1;
+	unsigned int Negate:1;
+};
+
+struct rc_pair_sub_instruction {
 	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:3;
-    unsigned int Target:2;
+	unsigned int Target:2;
 	unsigned int OutputWriteMask:3;
-	unsigned int Saturate:1;
-
-	struct radeon_pair_instruction_source Src[4];
-
-	struct {
-		unsigned int Source:2;
-		unsigned int Swizzle:9;
-		unsigned int Abs:1;
-		unsigned int Negate:1;
-	} Arg[3];
-};
-
-struct radeon_pair_instruction_alpha {
-	unsigned int Opcode:8;
-	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
-	unsigned int WriteMask:1;
-    unsigned int Target:2;
-	unsigned int OutputWriteMask:1;
 	unsigned int DepthWriteMask:1;
 	unsigned int Saturate:1;
 
-	struct radeon_pair_instruction_source Src[4];
-
-	struct {
-		unsigned int Source:2;
-		unsigned int Swizzle:3;
-		unsigned int Abs:1;
-		unsigned int Negate:1;
-	} Arg[3];
+	struct rc_pair_instruction_source Src[4];
+	struct rc_pair_instruction_arg Arg[3];
 };
 
 struct rc_pair_instruction {
-	struct radeon_pair_instruction_rgb RGB;
-	struct radeon_pair_instruction_alpha Alpha;
+	struct rc_pair_sub_instruction RGB;
+	struct rc_pair_sub_instruction Alpha;
 
 	unsigned int WriteALUResult:2;
 	unsigned int ALUResultCompare:3;
@@ -108,7 +91,7 @@ struct rc_pair_instruction {
 };
 
 typedef void (*rc_pair_foreach_src_fn)
-			(void *, struct radeon_pair_instruction_source *);
+			(void *, struct rc_pair_instruction_source *);
 
 typedef enum {
 	RC_PAIR_SOURCE_NONE = 0,

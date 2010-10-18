@@ -41,7 +41,7 @@
 
 /* Return the current color buffer size.
  */
-static void mach64DDGetBufferSize( GLframebuffer *buffer,
+static void mach64DDGetBufferSize( struct gl_framebuffer *buffer,
 				   GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -55,7 +55,7 @@ static void mach64DDGetBufferSize( GLframebuffer *buffer,
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *mach64DDGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *mach64DDGetString( struct gl_context *ctx, GLenum name )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    static char buffer[128];
@@ -84,7 +84,7 @@ static const GLubyte *mach64DDGetString( GLcontext *ctx, GLenum name )
  * hardware.  All commands that are normally sent to the ring are
  * already considered `flushed'.
  */
-static void mach64DDFlush( GLcontext *ctx )
+static void mach64DDFlush( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
@@ -107,7 +107,7 @@ static void mach64DDFlush( GLcontext *ctx )
 /* Make sure all commands have been sent to the hardware and have
  * completed processing.
  */
-static void mach64DDFinish( GLcontext *ctx )
+static void mach64DDFinish( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 

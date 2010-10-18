@@ -2830,31 +2830,52 @@ static void soa_to_aos( struct x86_function *func,
  * Check if the instructions dst register is the same as any src
  * register and warn if there's a posible SOA dependency.
  */
-static void
+static boolean
 check_soa_dependencies(const struct tgsi_full_instruction *inst)
 {
-   switch (inst->Instruction.Opcode) {
+   uint opcode = inst->Instruction.Opcode;
+
+   /* XXX: we only handle src/dst aliasing in a few opcodes currently.
+    * Need to use an additional temporay to hold the result in the
+    * cases where the code is too opaque to fix.
+    */
+
+   switch (opcode) {
    case TGSI_OPCODE_ADD:
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_MUL:
+   case TGSI_OPCODE_RCP:
+   case TGSI_OPCODE_RSQ:
+   case TGSI_OPCODE_EXP:
+   case TGSI_OPCODE_LOG:
+   case TGSI_OPCODE_DP3:
+   case TGSI_OPCODE_DP4:
+   case TGSI_OPCODE_DP2A:
+   case TGSI_OPCODE_EX2:
+   case TGSI_OPCODE_LG2:
+   case TGSI_OPCODE_POW:
    case TGSI_OPCODE_XPD:
+   case TGSI_OPCODE_DPH:
+   case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_SIN:
+   case TGSI_OPCODE_TEX:
+   case TGSI_OPCODE_TXB:
+   case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_NRM:
+   case TGSI_OPCODE_NRM4:
+   case TGSI_OPCODE_DP2:
       /* OK - these opcodes correctly handle SOA dependencies */
-      break;
+      return TRUE;
    default:
-      if (tgsi_check_soa_dependencies(inst)) {
-         uint opcode = inst->Instruction.Opcode;
+      if (!tgsi_check_soa_dependencies(inst))
+         return TRUE;
 
-         /* XXX: we only handle src/dst aliasing in a few opcodes
-          * currently.  Need to use an additional temporay to hold
-          * the result in the cases where the code is too opaque to
-          * fix.
-          */
-         if (opcode != TGSI_OPCODE_MOV) {
-            debug_printf("Warning: src/dst aliasing in instruction"
-                         " is not handled:\n");
-            tgsi_dump_instruction(inst, 1);
-         }
-      }
+      debug_printf("Warning: src/dst aliasing in instruction"
+                   " is not handled:\n");
+      debug_printf("Warning: ");
+      tgsi_dump_instruction(inst, 1);
+
+      return FALSE;
    }
 }
 
@@ -2954,7 +2975,8 @@ tgsi_emit_sse2(
                          tgsi_get_processor_name(proc));
 	 }
 
-         check_soa_dependencies(&parse.FullToken.FullInstruction);
+         if (ok)
+            ok = check_soa_dependencies(&parse.FullToken.FullInstruction);
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:

@@ -131,6 +131,44 @@ replacing the native ICD driver, but it's quite an advanced usage, so if you
 need to ask, don't even try it.
 
 
+Profiling
+=========
+
+To profile llvmpipe you should pass the options
+
+  scons debug=no profile=yes <same-as-before>
+
+This will ensure that frame pointers are used both in C and JIT functions, and
+that no tail call optimizations are done by gcc.
+
+
+To better profile JIT code you'll need to build LLVM with oprofile integration.
+
+  source_dir=$PWD/llvm-2.6
+  build_dir=$source_dir/build/profile
+  install_dir=$source_dir-profile
+
+  mkdir -p "$build_dir"
+  cd "$build_dir" && \
+  $source_dir/configure \
+      --prefix=$install_dir \
+      --enable-optimized \
+      --disable-profiling \
+      --enable-targets=host-only \
+      --with-oprofile
+
+  make -C "$build_dir"
+  make -C "$build_dir" install
+
+  find "$install_dir/lib" -iname '*.a' -print0 | xargs -0 strip --strip-debug
+
+The you should define
+
+  export LLVM=/path/to/llvm-2.6-profile
+
+and rebuild.
+
+
 Unit testing
 ============
 

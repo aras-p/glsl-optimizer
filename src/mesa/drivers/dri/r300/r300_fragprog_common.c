@@ -208,7 +208,7 @@ static void allocate_hw_inputs(
 }
 
 
-static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_program_cont *cont, struct r300_fragment_program *fp)
+static void translate_fragment_program(struct gl_context *ctx, struct r300_fragment_program_cont *cont, struct r300_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_fragment_program_compiler compiler;
@@ -278,7 +278,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	rc_destroy(&compiler.Base);
 }
 
-struct r300_fragment_program *r300SelectAndTranslateFragmentShader(GLcontext *ctx)
+struct r300_fragment_program *r300SelectAndTranslateFragmentShader(struct gl_context *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_fragment_program_cont *fp_list;

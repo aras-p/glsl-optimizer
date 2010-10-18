@@ -136,7 +136,7 @@ static __inline void TAG(point)( CTX_ARG,
 #endif
 
 
-static void TAG(fast_clipped_poly)( GLcontext *ctx, const GLuint *elts,
+static void TAG(fast_clipped_poly)( struct gl_context *ctx, const GLuint *elts,
 				    GLuint n )
 {
    LOCAL_VARS

@@ -34,7 +34,7 @@ static void
 upload_clip_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    uint32_t depth_clamp = 0;
    uint32_t provoking;
 
@@ -59,7 +59,7 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_XY_TEST |
 	     depth_clamp |
 	     provoking);
-   OUT_BATCH(0);
+   OUT_BATCH(GEN6_CLIP_FORCE_ZERO_RTAINDEX);
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel->batch);

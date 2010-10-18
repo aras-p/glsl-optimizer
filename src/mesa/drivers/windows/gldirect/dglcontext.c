@@ -42,8 +42,8 @@
 #ifdef _USE_GLD3_WGL
 #include "gld_driver.h"
 
-extern void _gld_mesa_warning(GLcontext *, char *);
-extern void _gld_mesa_fatal(GLcontext *, char *);
+extern void _gld_mesa_warning(struct gl_context *, char *);
+extern void _gld_mesa_fatal(struct gl_context *, char *);
 #endif // _USE_GLD3_WGL
 
 // TODO: Clean out old DX6-specific code from GLD 2.x CAD driver

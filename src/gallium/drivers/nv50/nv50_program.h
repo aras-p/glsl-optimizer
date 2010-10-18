@@ -45,6 +45,7 @@ struct nv50_program {
 
    ubyte type;
    boolean translated;
+   boolean uses_lmem;
 
    struct nouveau_bo *bo;
    struct nouveau_stateobj *so;

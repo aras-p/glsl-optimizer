@@ -18,7 +18,6 @@
 #include "eglmisc.h"
 #include "eglmode.h"
 #include "eglscreen.h"
-#include "eglstring.h"
 #include "eglsurface.h"
 #include "eglimage.h"
 #include "eglsync.h"

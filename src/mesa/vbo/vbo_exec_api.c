@@ -142,7 +142,7 @@ void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
  */
 static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
@@ -193,7 +193,7 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 
 static void vbo_exec_copy_from_current( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    GLint i;
 
@@ -217,7 +217,7 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 					  GLuint attr,
 					  GLuint newsz )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    GLint lastcount = exec->vtx.vert_count;
    GLfloat *tmp;
@@ -318,7 +318,7 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 }
 
 
-static void vbo_exec_fixup_vertex( GLcontext *ctx,
+static void vbo_exec_fixup_vertex( struct gl_context *ctx,
 				   GLuint attr, GLuint sz )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
@@ -358,10 +358,12 @@ static void vbo_exec_fixup_vertex( GLcontext *ctx,
 #define ATTR( A, N, V0, V1, V2, V3 )				\
 do {								\
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
-								\
-   if (exec->vtx.active_sz[A] != N)				\
-      vbo_exec_fixup_vertex(ctx, A, N);			\
-								\
+									\
+   if (unlikely(!(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT))) \
+      ctx->Driver.BeginVertices( ctx );                                 \
+   if (unlikely(exec->vtx.active_sz[A] != N))				\
+      vbo_exec_fixup_vertex(ctx, A, N);					\
+   									\
    {								\
       GLfloat *dest = exec->vtx.attrptr[A];			\
       if (N>0) dest[0] = V0;					\
@@ -740,7 +742,7 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
  * This replaces the malloced buffer which was created in
  * vb_exec_vtx_init() below.
  */
-void vbo_use_buffer_objects(GLcontext *ctx)
+void vbo_use_buffer_objects(struct gl_context *ctx)
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
    /* Any buffer name but 0 can be used here since this bufferobj won't
@@ -769,7 +771,7 @@ void vbo_use_buffer_objects(GLcontext *ctx)
 
 void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
@@ -827,7 +829,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 {
    /* using a real VBO for vertex data */
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    unsigned i;
 
    /* True VBOs should already be unmapped
@@ -858,7 +860,7 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }
 
-void vbo_exec_BeginVertices( GLcontext *ctx )
+void vbo_exec_BeginVertices( struct gl_context *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
    if (0) printf("%s\n", __FUNCTION__);
@@ -868,7 +870,7 @@ void vbo_exec_BeginVertices( GLcontext *ctx )
    exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
-void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
+void vbo_exec_FlushVertices_internal( struct gl_context *ctx, GLboolean unmap )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
@@ -886,7 +888,7 @@ void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
 /**
  * \param flags  bitmask of FLUSH_STORED_VERTICES, FLUSH_UPDATE_CURRENT
  */
-void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
+void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
@@ -911,10 +913,8 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
-   if (exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) {
-      _mesa_restore_exec_vtxfmt( ctx );
+   if (exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
       exec->ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
-   }
 
    exec->ctx->Driver.NeedFlush &= ~flags;
 

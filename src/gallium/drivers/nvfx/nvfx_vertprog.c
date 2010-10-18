@@ -377,6 +377,8 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	src.swz[2] = fsrc->Register.SwizzleZ;
 	src.swz[3] = fsrc->Register.SwizzleW;
 	src.indirect = 0;
+	src.indirect_reg = 0;
+	src.indirect_swz = 0;
 
 	if(fsrc->Register.Indirect) {
 		if(fsrc->Indirect.File == TGSI_FILE_ADDRESS &&
@@ -973,7 +975,7 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
 
 static struct nvfx_vertex_program*
-nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps, const struct tgsi_shader_info* info)
+nvfx_vertprog_translate(struct nvfx_context *nvfx, const struct pipe_shader_state* vps, struct tgsi_shader_info* info)
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_vertex_program* vp = NULL;

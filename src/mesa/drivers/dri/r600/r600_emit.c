@@ -49,7 +49,7 @@ void r600EmitCacheFlush(context_t *rmesa)
 {
 }
 
-GLboolean r600AllocShaderConsts(GLcontext * ctx,
+GLboolean r600AllocShaderConsts(struct gl_context * ctx,
                                 void ** constbo,			 
                                 int sizeinBYTE,
                                 char * szShaderUsage)
@@ -93,7 +93,7 @@ shader_again_alloc:
 
 	return GL_TRUE;
 }
-GLboolean r600EmitShaderConsts(GLcontext * ctx,
+GLboolean r600EmitShaderConsts(struct gl_context * ctx,
                                void * constbo,
                                int    bo_offset,
                                GLvoid * data,
@@ -114,7 +114,7 @@ GLboolean r600EmitShaderConsts(GLcontext * ctx,
 	return GL_TRUE;
 }
 
-GLboolean r600EmitShader(GLcontext * ctx,
+GLboolean r600EmitShader(struct gl_context * ctx,
                          void ** shaderbo,
 			 GLvoid * data,
                          int sizeinDWORD,
@@ -163,7 +163,7 @@ shader_again_alloc:
 	return GL_TRUE;
 }
 
-GLboolean r600DeleteShader(GLcontext * ctx,
+GLboolean r600DeleteShader(struct gl_context * ctx,
                            void * shaderbo)
 {
     struct radeon_bo * pbo = (struct radeon_bo *)shaderbo;

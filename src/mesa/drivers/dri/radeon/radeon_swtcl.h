@@ -39,28 +39,28 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "radeon_context.h"
 
-extern void radeonInitSwtcl( GLcontext *ctx );
+extern void radeonInitSwtcl( struct gl_context *ctx );
 
-extern void radeonChooseRenderState( GLcontext *ctx );
-extern void radeonChooseVertexState( GLcontext *ctx );
+extern void radeonChooseRenderState( struct gl_context *ctx );
+extern void radeonChooseVertexState( struct gl_context *ctx );
 
-extern void radeonCheckTexSizes( GLcontext *ctx );
+extern void radeonCheckTexSizes( struct gl_context *ctx );
 
-extern void radeonBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+extern void radeonBuildVertices( struct gl_context *ctx, GLuint start, GLuint count,
 				 GLuint newinputs );
 
 extern void radeonPrintSetupFlags(char *msg, GLuint flags );
 
 
-extern void radeon_emit_indexed_verts( GLcontext *ctx,
+extern void radeon_emit_indexed_verts( struct gl_context *ctx,
 				       GLuint start,
 				       GLuint count );
 
-extern void radeon_translate_vertex( GLcontext *ctx, 
+extern void radeon_translate_vertex( struct gl_context *ctx, 
 				     const radeonVertex *src, 
 				     SWvertex *dst );
 
-extern void radeon_print_vertex( GLcontext *ctx, const radeonVertex *v );
+extern void radeon_print_vertex( struct gl_context *ctx, const radeonVertex *v );
 
-extern void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
+extern void r100_swtcl_flush(struct gl_context *ctx, uint32_t current_offset);
 #endif

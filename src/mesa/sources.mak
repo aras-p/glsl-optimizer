@@ -154,7 +154,6 @@ TNL_SOURCES = \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c \
-	tnl/t_vb_cull.c \
 	tnl/t_vb_fog.c \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
@@ -248,10 +247,12 @@ PROGRAM_SOURCES = \
 	program/prog_statevars.c \
 	program/prog_uniform.c \
 	program/programopt.c \
+	program/register_allocate.c \
 	program/symbol_table.c
 
 SHADER_CXX_SOURCES = \
-	program/ir_to_mesa.cpp
+	program/ir_to_mesa.cpp \
+	program/sampler.cpp
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \

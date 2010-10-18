@@ -767,7 +767,7 @@ nv50_ctor_register_set(struct nv_pc *pc, struct register_set *set)
 static void
 insert_ordered_tail(struct nv_value *list, struct nv_value *nval)
 {
-   struct nv_value *elem = list->prev;
+   struct nv_value *elem;
 
    for (elem = list->prev;
 	elem != list && elem->livei->bgn > nval->livei->bgn;

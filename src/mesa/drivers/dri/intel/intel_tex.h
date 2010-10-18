@@ -40,7 +40,7 @@ void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
 
 void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
-gl_format intelChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
+gl_format intelChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
                                    GLenum format, GLenum type);
 
 void intelSetTexBuffer(__DRIcontext *pDRICtx,

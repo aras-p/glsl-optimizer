@@ -44,7 +44,7 @@
 
 /** Set texture env mode */
 static void
-set_env_mode(GLcontext *ctx,
+set_env_mode(struct gl_context *ctx,
              struct gl_texture_unit *texUnit,
              GLenum mode)
 {
@@ -89,7 +89,7 @@ set_env_mode(GLcontext *ctx,
 
 
 static void
-set_env_color(GLcontext *ctx,
+set_env_color(struct gl_context *ctx,
               struct gl_texture_unit *texUnit,
               const GLfloat *color)
 {
@@ -107,7 +107,7 @@ set_env_color(GLcontext *ctx,
 
 /** Set an RGB or A combiner mode/function */
 static void
-set_combiner_mode(GLcontext *ctx,
+set_combiner_mode(struct gl_context *ctx,
                   struct gl_texture_unit *texUnit,
                   GLenum pname, GLenum mode)
 {
@@ -181,7 +181,7 @@ set_combiner_mode(GLcontext *ctx,
 
 /** Set an RGB or A combiner source term */
 static void
-set_combiner_source(GLcontext *ctx,
+set_combiner_source(struct gl_context *ctx,
                     struct gl_texture_unit *texUnit,
                     GLenum pname, GLenum param)
 {
@@ -274,7 +274,7 @@ set_combiner_source(GLcontext *ctx,
 
 /** Set an RGB or A combiner operand term */
 static void
-set_combiner_operand(GLcontext *ctx,
+set_combiner_operand(struct gl_context *ctx,
                      struct gl_texture_unit *texUnit,
                      GLenum pname, GLenum param)
 {
@@ -360,7 +360,7 @@ set_combiner_operand(GLcontext *ctx,
 
 
 static void
-set_combiner_scale(GLcontext *ctx,
+set_combiner_scale(struct gl_context *ctx,
                    struct gl_texture_unit *texUnit,
                    GLenum pname, GLfloat scale)
 {
@@ -595,7 +595,7 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
  * \return  value of queried pname or -1 if error.
  */
 static GLint
-get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
             GLenum pname)
 {
    switch (pname) {

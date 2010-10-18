@@ -39,7 +39,7 @@
 #if FEATURE_pixel_transfer
 
 extern void 
-_mesa_update_pixel( GLcontext *ctx, GLuint newstate );
+_mesa_update_pixel( struct gl_context *ctx, GLuint newstate );
 
 extern void
 _mesa_init_pixel_dispatch( struct _glapi_table * disp );
@@ -47,7 +47,7 @@ _mesa_init_pixel_dispatch( struct _glapi_table * disp );
 #else /* FEATURE_pixel_transfer */
 
 static INLINE void
-_mesa_update_pixel(GLcontext *ctx, GLuint newstate)
+_mesa_update_pixel(struct gl_context *ctx, GLuint newstate)
 {
 }
 
@@ -60,7 +60,7 @@ _mesa_init_pixel_dispatch(struct _glapi_table *disp)
 
 
 extern void 
-_mesa_init_pixel( GLcontext * ctx );
+_mesa_init_pixel( struct gl_context * ctx );
 
 /*@}*/
 

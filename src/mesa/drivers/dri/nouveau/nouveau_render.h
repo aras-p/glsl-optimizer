@@ -31,7 +31,7 @@
 
 struct nouveau_array_state;
 
-typedef void (*dispatch_t)(GLcontext *, unsigned int, int, unsigned int);
+typedef void (*dispatch_t)(struct gl_context *, unsigned int, int, unsigned int);
 typedef unsigned (*extract_u_t)(struct nouveau_array_state *, int, int);
 typedef float (*extract_f_t)(struct nouveau_array_state *, int, int);
 
@@ -40,7 +40,7 @@ struct nouveau_attr_info {
 	int imm_method;
 	int imm_fields;
 
-	void (*emit)(GLcontext *, struct nouveau_array_state *, const void *);
+	void (*emit)(struct gl_context *, struct nouveau_array_state *, const void *);
 };
 
 struct nouveau_array_state {
@@ -55,8 +55,8 @@ struct nouveau_array_state {
 	extract_f_t extract_f;
 };
 
-#define RENDER_SCRATCH_COUNT 32
-#define RENDER_SCRATCH_SIZE 64*1024
+#define RENDER_SCRATCH_COUNT 2
+#define RENDER_SCRATCH_SIZE 2*1024*1024
 
 struct nouveau_scratch_state {
 	struct nouveau_bo *bo[RENDER_SCRATCH_COUNT];

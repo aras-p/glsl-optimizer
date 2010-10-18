@@ -28,6 +28,6 @@
 #ifndef __r700_CLEAR_H__
 #define __r700_CLEAR_H__
 
-extern void r700Clear(GLcontext * ctx, GLbitfield mask);
+extern void r700Clear(struct gl_context * ctx, GLbitfield mask);
 
 #endif /* __r700_CLEAR_H__ */

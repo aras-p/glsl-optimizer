@@ -4,6 +4,16 @@ include $(TOP)/configs/current
 
 SUBDIRS = null wrapper
 
+# TODO: this should go through a further indirection level
+# (i.e. EGL should set a variable that is checked here)
+ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
+SUBDIRS += xlib
+endif
+
+ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
+SUBDIRS += fbdev
+endif
+
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \

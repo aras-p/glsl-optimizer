@@ -364,6 +364,7 @@ static INLINE uint16_t
 r300_translate_vertex_data_type(enum pipe_format format) {
     uint32_t result = 0;
     const struct util_format_description *desc;
+    unsigned i;
 
     desc = util_format_description(format);
 
@@ -371,10 +372,17 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         return R300_INVALID_FORMAT;
     }
 
-    switch (desc->channel[0].type) {
+    /* Find the first non-VOID channel. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            break;
+        }
+    }
+
+    switch (desc->channel[i].type) {
         /* Half-floats, floats, doubles */
         case UTIL_FORMAT_TYPE_FLOAT:
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 16:
                     /* Supported only on RV350 and later. */
                     if (desc->nr_channels > 2) {
@@ -394,7 +402,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         case UTIL_FORMAT_TYPE_UNSIGNED:
         /* Signed ints */
         case UTIL_FORMAT_TYPE_SIGNED:
-            switch (desc->channel[0].size) {
+            switch (desc->channel[i].size) {
                 case 8:
                     result = R300_DATA_TYPE_BYTE;
                     break;
@@ -413,10 +421,10 @@ r300_translate_vertex_data_type(enum pipe_format format) {
             return R300_INVALID_FORMAT;
     }
 
-    if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+    if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
         result |= R300_SIGNED;
     }
-    if (desc->channel[0].normalized) {
+    if (desc->channel[i].normalized) {
         result |= R300_NORMALIZE;
     }
 

@@ -93,6 +93,7 @@ enum
    GL_ARB_texture_mirrored_repeat_bit,
    GL_ARB_texture_non_power_of_two_bit,
    GL_ARB_texture_rectangle_bit,
+   GL_ARB_texture_rg_bit,
    GL_ARB_transpose_matrix_bit,
    GL_ARB_vertex_buffer_object_bit,
    GL_ARB_vertex_program_bit,

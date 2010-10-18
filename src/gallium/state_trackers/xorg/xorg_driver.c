@@ -369,6 +369,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     ms = modesettingPTR(pScrn);
     ms->pEnt = pEnt;
     ms->cust = cust;
+    ms->fb_id = -1;
 
     pScrn->displayWidth = 640;	       /* default it */
 
@@ -401,19 +402,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     ms->fd = -1;
     if (!drv_init_drm(pScrn))
 	return FALSE;
-
-    use3D = cust ? !cust->no_3d : TRUE;
-    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
-				    &use3D) ?
-	X_CONFIG : X_PROBED;
-
-    ms->no3D = !use3D;
-
-    if (!drv_init_resource_management(pScrn)) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
-					       "Gallium3D or libKMS.");
-	return FALSE;
-    }
 
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
@@ -448,6 +436,19 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     memcpy(ms->Options, drv_options, sizeof(drv_options));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ms->Options);
+
+    use3D = cust ? !cust->no_3d : TRUE;
+    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				    &use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
+
+    if (!drv_init_resource_management(pScrn)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
+					       "Gallium3D or libKMS.");
+	return FALSE;
+    }
 
     /* Allocate an xf86CrtcConfig */
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
@@ -791,7 +792,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ms->SWCursor)
 	xf86_cursors_init(pScreen, 64, 64,
 			  HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64 |
-			  HARDWARE_CURSOR_ARGB);
+			  HARDWARE_CURSOR_ARGB |
+			  ((cust && cust->unhidden_hw_cursor_update) ?
+			   HARDWARE_CURSOR_UPDATE_UNHIDDEN : 0));
 
     /* Must force it before EnterVT, so we are in control of VT and
      * later memory should be bound when allocating, e.g rotate_mem */
@@ -862,8 +865,10 @@ drv_leave_vt(int scrnIndex, int flags)
 	}
     }
 
-    drmModeRmFB(ms->fd, ms->fb_id);
-    ms->fb_id = -1;
+    if (ms->fb_id != -1) {
+	drmModeRmFB(ms->fd, ms->fb_id);
+	ms->fb_id = -1;
+    }
 
     /* idle hardware */
     if (!ms->kms)
@@ -944,7 +949,6 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     }
 #endif
 
-    drmModeRmFB(ms->fd, ms->fb_id);
     ms->destroy_front_buffer(pScrn);
 
     if (ms->exa)

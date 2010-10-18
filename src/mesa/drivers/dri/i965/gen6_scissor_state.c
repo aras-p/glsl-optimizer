@@ -33,9 +33,9 @@
 static void
 prepare_scissor_state(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
-   struct gen6_scissor_state scissor;
+   struct gen6_scissor_rect scissor;
 
    /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT */
 
@@ -84,7 +84,6 @@ static void upload_scissor_state_pointers(struct brw_context *brw)
    OUT_RELOC(brw->sf.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 

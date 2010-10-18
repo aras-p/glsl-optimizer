@@ -108,7 +108,7 @@ do {								\
 #endif
 
 
-static void NAME(GLcontext *ctx, const SWvertex *v0,
+static void NAME(struct gl_context *ctx, const SWvertex *v0,
                                  const SWvertex *v1,
                                  const SWvertex *v2 )
 {

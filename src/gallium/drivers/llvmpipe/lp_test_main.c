@@ -205,16 +205,19 @@ random_elem(struct lp_type type, void *dst, unsigned index)
    assert(index < type.length);
    value = (double)rand()/(double)RAND_MAX;
    if(!type.norm) {
-      unsigned long long mask;
-      if (type.floating)
-         mask = ~(unsigned long long)0;
-      else if (type.fixed)
-         mask = ((unsigned long long)1 << (type.width / 2)) - 1;
-      else if (type.sign)
-         mask = ((unsigned long long)1 << (type.width - 1)) - 1;
-      else
-         mask = ((unsigned long long)1 << type.width) - 1;
-      value += (double)(mask & rand());
+      if (type.floating) {
+         value *= 2.0;
+      }
+      else {
+         unsigned long long mask;
+	 if (type.fixed)
+            mask = ((unsigned long long)1 << (type.width / 2)) - 1;
+         else if (type.sign)
+            mask = ((unsigned long long)1 << (type.width - 1)) - 1;
+         else
+            mask = ((unsigned long long)1 << type.width) - 1;
+         value += (double)(mask & rand());
+      }
    }
    if(!type.sign)
       if(rand() & 1)
@@ -261,12 +264,18 @@ boolean
 compare_vec_with_eps(struct lp_type type, const void *res, const void *ref, double eps)
 {
    unsigned i;
+   eps *= type.floating ? 8.0 : 2.0;
    for (i = 0; i < type.length; ++i) {
       double res_elem = read_elem(type, res, i);
       double ref_elem = read_elem(type, ref, i);
-      double delta = fabs(res_elem - ref_elem);
-      if(delta >= 2.0*eps)
+      double delta = res_elem - ref_elem;
+      if (ref_elem < -1.0 || ref_elem > 1.0) {
+	 delta /= ref_elem;
+      }
+      delta = fabs(delta);
+      if (delta >= eps) {
          return FALSE;
+      }
    }
 
    return TRUE;
