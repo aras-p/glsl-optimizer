@@ -384,7 +384,6 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
-			print_precision (ir);
 			buffer = print_type(buffer, ir->type, true);
 			buffer = talloc_asprintf_append(buffer, "(");
 		} else {
@@ -479,7 +478,6 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 	{
 		if (ir->mask.num_components != 1)
 		{
-			print_precision (ir);
 			buffer = print_type(buffer, ir->type, true);
 			buffer = talloc_asprintf_append(buffer, "(");
 		}
@@ -609,7 +607,6 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
    const glsl_type *const base_type = ir->type->get_base_type();
 
-   print_precision (ir);
    buffer = print_type(buffer, type, true);
    buffer = talloc_asprintf_append(buffer, "(");
 
