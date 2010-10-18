@@ -559,7 +559,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
       return;
 
    /* If we're in system memory, just map and memcpy. */
-   if (intel_src->sys_buffer || intel_dst->sys_buffer) {
+   if (intel_src->sys_buffer || intel_dst->sys_buffer || intel->gen >= 6) {
       /* The same buffer may be used, but note that regions copied may
        * not overlap.
        */
@@ -582,6 +582,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 	 intel_bufferobj_unmap(ctx, GL_COPY_READ_BUFFER, src);
 	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
       }
+      return;
    }
 
    /* Otherwise, we have real BOs, so blit them. */
