@@ -3288,12 +3288,14 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	    if (last_annotation_string)
 	       printf("   %s\n", last_annotation_string);
 	 }
+	 if (0) {
+	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		   ((uint32_t *)&p->store[i])[3],
+		   ((uint32_t *)&p->store[i])[2],
+		   ((uint32_t *)&p->store[i])[1],
+		   ((uint32_t *)&p->store[i])[0]);
+	 }
 	 brw_disasm(stdout, &p->store[i], intel->gen);
-	 printf("0x%08x 0x%08x 0x%08x 0x%08x\n",
-		((uint32_t *)&p->store[i])[3],
-		((uint32_t *)&p->store[i])[2],
-		((uint32_t *)&p->store[i])[1],
-		((uint32_t *)&p->store[i])[0]);
       }
       printf("\n");
    }
