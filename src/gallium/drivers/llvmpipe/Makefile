@@ -28,8 +28,6 @@ C_SOURCES = \
 	lp_scene_queue.c \
 	lp_screen.c \
 	lp_setup.c \
-	lp_setup_coef.c \
-	lp_setup_coef_intrin.c \
 	lp_setup_line.c \
 	lp_setup_point.c \
 	lp_setup_tri.c \
