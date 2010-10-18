@@ -173,6 +173,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	// Optimization passes
+	const bool linked = !(options & kGlslOptionNotFullShader);
 	if (!state->error && !ir->is_empty())
 	{
 		bool progress;
@@ -184,7 +185,11 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_structure_splitting(ir) || progress; debug_print_ir ("After struct splitting", ir, state, ctx->mem_ctx);
 			progress = do_if_simplification(ir) || progress; debug_print_ir ("After if simpl", ir, state, ctx->mem_ctx);
 			progress = do_copy_propagation(ir) || progress; debug_print_ir ("After copy propagation", ir, state, ctx->mem_ctx);
-			progress = do_dead_code_unlinked(ir) || progress; debug_print_ir ("After dead code unlinked", ir, state, ctx->mem_ctx);
+			if (!linked) {
+				progress = do_dead_code_unlinked(ir) || progress; debug_print_ir ("After dead code unlinked", ir, state, ctx->mem_ctx);
+			} else {
+				progress = do_dead_code(ir) || progress; debug_print_ir ("After dead code", ir, state, ctx->mem_ctx);
+			}
 			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
 			progress = do_tree_grafting(ir) || progress; debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
 			progress = do_constant_propagation(ir) || progress; debug_print_ir ("After const propagation", ir, state, ctx->mem_ctx);
