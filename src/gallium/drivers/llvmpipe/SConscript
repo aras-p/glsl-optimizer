@@ -55,7 +55,6 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_scene_queue.c',
 		'lp_screen.c',
 		'lp_setup.c',
-		'lp_setup_debug.c',
 		'lp_setup_line.c',
 		'lp_setup_point.c',
 		'lp_setup_tri.c',
