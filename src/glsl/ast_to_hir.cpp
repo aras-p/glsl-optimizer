@@ -752,7 +752,6 @@ ast_expression::hir(exec_list *instructions,
           _mesa_glsl_error(&loc, state, "operator %s requires GLSL 1.30",
               operator_string(this->oper));
           error_emitted = true;
-          break;
        }
 
        /* From page 50 (page 56 of the PDF) of the GLSL 1.30 spec:
@@ -774,21 +773,18 @@ ast_expression::hir(exec_list *instructions,
                "LHS of operator %s must be an integer or integer vector",
                operator_string(this->oper));
            error_emitted = true;
-           break;
        }
        if (!op[1]->type->is_integer()) {
            _mesa_glsl_error(& loc, state,
                "RHS of operator %s must be an integer or integer vector",
                operator_string(this->oper));
            error_emitted = true;
-           break;
        }
        if (op[0]->type->is_scalar() && !op[1]->type->is_scalar()) {
            _mesa_glsl_error(& loc, state,
                "If the first operand of %s is scalar, the second must be"
                "scalar as well", operator_string(this->oper));
            error_emitted = true;
-           break;
        }
        if (op[0]->type->is_vector() &&
            op[1]->type->is_vector() &&
@@ -798,7 +794,6 @@ ast_expression::hir(exec_list *instructions,
                "Vector operands of %s must have same number of components",
                operator_string(this->oper));
            error_emitted = true;
-           break;
        }
 
        type = op[0]->type;
