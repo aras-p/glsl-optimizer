@@ -500,15 +500,27 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
+	int i;
 
-	rctx->ps_samplers.views = resource;
-	rctx->ps_samplers.n_views = count;
+	for (i = 0; i < count; i++) {
+		if (&rctx->ps_samplers.views[i]->base != views[i]) {
+			if (resource[i])
+				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+			else
+				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
 
-	for (int i = 0; i < count; i++) {
-		if (resource[i]) {
-			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+			pipe_sampler_view_reference(
+				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
+				views[i]);
 		}
 	}
+	for (i = count; i < NUM_TEX_UNITS; i++) {
+		if (rctx->ps_samplers.views[i]) {
+			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
+		}
+	}
+	rctx->ps_samplers.n_views = count;
 }
 
 static void evergreen_bind_state(struct pipe_context *ctx, void *state)
@@ -527,7 +539,8 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
-	rctx->ps_samplers.samplers = states;
+
+	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
 	rctx->ps_samplers.n_samplers = count;
 
 	for (int i = 0; i < count; i++) {

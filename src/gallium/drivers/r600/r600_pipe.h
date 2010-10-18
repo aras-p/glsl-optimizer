@@ -94,10 +94,12 @@ struct r600_pipe_shader {
 };
 
 /* needed for blitter save */
+#define NUM_TEX_UNITS 16
+
 struct r600_textures_info {
-	struct r600_pipe_sampler_view   **views;
+	struct r600_pipe_sampler_view   *views[NUM_TEX_UNITS];
 	unsigned                        n_views;
-	void				**samplers;
+	void				*samplers[NUM_TEX_UNITS];
 	unsigned                        n_samplers;
 };
 
