@@ -974,7 +974,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
-		S_0280A0_ARRAY_MODE(rtex->array_mode);
+		S_0280A0_ARRAY_MODE(rtex->array_mode) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
