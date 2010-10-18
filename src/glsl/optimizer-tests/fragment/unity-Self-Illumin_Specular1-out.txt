@@ -1,7 +1,4 @@
 uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform sampler2D _Illum;
-uniform vec4 _Color;
 void main ()
 {
   vec4 res;

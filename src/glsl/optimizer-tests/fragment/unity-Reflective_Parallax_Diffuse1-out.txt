@@ -1,4 +1,3 @@
-varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
 uniform vec4 _ReflectColor;
 uniform sampler2D _ParallaxMap;

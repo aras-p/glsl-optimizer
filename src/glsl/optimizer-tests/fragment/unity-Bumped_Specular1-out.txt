@@ -1,4 +1,3 @@
-varying vec4 xlv_FOG;
 uniform vec4 _SpecColor;
 uniform float _Shininess;
 uniform sampler2D _MainTex;

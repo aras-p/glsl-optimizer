@@ -1,4 +1,3 @@
-attribute vec4 TANGENT;
 uniform mat4 _TerrainEngineBendTree;
 uniform vec4 _SquashPlaneNormal;
 uniform float _SquashAmount;

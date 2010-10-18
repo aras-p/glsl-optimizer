@@ -1,13 +1,9 @@
-uniform sampler2D _TranslucencyMap;
-uniform vec4 _TranslucencyColor;
-uniform float _Shininess;
 uniform sampler2D _ShadowMapTexture;
 uniform vec4 _ProjectionParams;
 uniform sampler2D _MainTex;
 uniform vec4 _LightSplitsNear;
 uniform vec4 _LightSplitsFar;
 uniform vec4 _LightShadowData;
-uniform sampler2D _GlossMap;
 uniform float _Cutoff;
 uniform sampler2D _BumpMap;
 void main ()

@@ -1,4 +1,3 @@
-attribute vec4 TANGENT;
 void main ()
 {
   mat3 tmpvar_1;

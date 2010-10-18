@@ -1,6 +1,5 @@
 uniform sampler2D _ShadowMapTexture;
 uniform vec4 _ProjectionParams;
-uniform sampler2D _MainTex;
 uniform vec4 _LightSplitsNear;
 uniform vec4 _LightSplitsFar;
 uniform vec4 _LightShadowData;

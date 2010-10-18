@@ -1,5 +1,3 @@
-uniform sampler2D _TranslucencyMap;
-uniform sampler2D _MainTex;
 uniform sampler2D _BumpSpecMap;
 void main ()
 {

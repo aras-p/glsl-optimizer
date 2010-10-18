@@ -1,6 +1,3 @@
-uniform sampler2D _MainTex;
-uniform sampler2D _LightMap;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 void main ()
 {

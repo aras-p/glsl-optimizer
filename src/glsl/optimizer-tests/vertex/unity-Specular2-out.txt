@@ -1,5 +1,4 @@
 varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
 uniform vec4 unity_LightmapST;
 uniform vec4 unity_LightmapFade;
 uniform vec4 _ProjectionParams;

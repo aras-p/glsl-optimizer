@@ -1,4 +1,3 @@
-attribute vec4 TANGENT;
 uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
 void main ()

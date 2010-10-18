@@ -1,5 +1,4 @@
 varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
 uniform vec4 unity_Scale;
 uniform vec4 _WorldSpaceLightPos0;
 uniform mat4 _Object2World;

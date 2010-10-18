@@ -1,8 +1,6 @@
-varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
 uniform vec4 _SpecColor;
-uniform float _Shininess;
 uniform sampler2D _MainTex;
 uniform sampler2D _LightBuffer;
 uniform float _Cutoff;

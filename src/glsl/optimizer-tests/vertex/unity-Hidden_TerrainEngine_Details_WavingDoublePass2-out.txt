@@ -1,5 +1,4 @@
 varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
 uniform vec4 _WavingTint;
 uniform vec4 _WaveAndDistance;
 uniform vec4 _ProjectionParams;

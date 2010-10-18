@@ -1,8 +1,4 @@
 uniform float _Shininess;
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform samplerCube _Cube;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 void main ()
 {

@@ -1,4 +1,3 @@
-uniform sampler2D _MainTex;
 void main ()
 {
   vec4 res;

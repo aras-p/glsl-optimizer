@@ -1,4 +1,3 @@
-varying vec4 xlv_FOG;
 uniform vec4 _WorldSpaceLightPos0;
 uniform sampler2D _ShadowMapTexture;
 uniform sampler2D _MainTex;

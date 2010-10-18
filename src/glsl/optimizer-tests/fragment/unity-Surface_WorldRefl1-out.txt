@@ -1,4 +1,3 @@
-uniform samplerCube _Cube;
 void main ()
 {
   vec4 res;

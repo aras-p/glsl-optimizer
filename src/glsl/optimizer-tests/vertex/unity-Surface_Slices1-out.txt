@@ -1,5 +1,4 @@
 varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
 uniform vec4 _ProjectionParams;
 uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;

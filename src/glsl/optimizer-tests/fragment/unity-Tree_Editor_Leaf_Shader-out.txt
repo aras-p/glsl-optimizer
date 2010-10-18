@@ -1,4 +1,3 @@
-varying vec4 xlv_FOG;
 uniform sampler2D _TranslucencyMap;
 uniform vec4 _TranslucencyColor;
 uniform float _Shininess;

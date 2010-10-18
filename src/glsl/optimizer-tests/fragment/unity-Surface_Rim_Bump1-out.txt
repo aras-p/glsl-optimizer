@@ -1,6 +1,3 @@
-varying vec4 xlv_FOG;
-uniform float _RimPower;
-uniform vec4 _RimColor;
 uniform sampler2D _MainTex;
 uniform sampler2D _LightTextureB0;
 uniform samplerCube _LightTexture0;

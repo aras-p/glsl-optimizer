@@ -1,6 +1,4 @@
-uniform sampler2D _MainTex;
 uniform vec4 _LightPositionRange;
-uniform vec4 _Color;
 void main ()
 {
   vec4 tmpvar_1;
