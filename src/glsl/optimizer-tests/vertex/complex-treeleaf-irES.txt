@@ -56,7 +56,7 @@ vec4 Squash (
   tmpvar_4 = (pos.xyz - ((tmpvar_3 + _SquashPlaneNormal.w) * planeNormal));
   projectedVertex = tmpvar_4;
   highp vec3 tmpvar_5;
-  tmpvar_5 = highp vec3(_SquashAmount);
+  tmpvar_5 = vec3(_SquashAmount);
   vec3 tmpvar_6;
   tmpvar_6 = mix (projectedVertex, pos.xyz, tmpvar_5);
   highp vec4 tmpvar_7;
@@ -110,7 +110,7 @@ void ExpandBillboard (
   tmpvar_12 = (pos + ((tmpvar_11 * mat) * isBillboard));
   pos = tmpvar_12;
   highp vec3 tmpvar_13;
-  tmpvar_13 = highp vec3(isBillboard);
+  tmpvar_13 = vec3(isBillboard);
   vec3 tmpvar_14;
   tmpvar_14 = mix (normal, norb, tmpvar_13);
   vec3 tmpvar_15;
@@ -120,7 +120,7 @@ void ExpandBillboard (
   tmpvar_16.w = -1.0;
   tmpvar_16.xyz = tanb.xyz;
   highp vec4 tmpvar_17;
-  tmpvar_17 = highp vec4(isBillboard);
+  tmpvar_17 = vec4(isBillboard);
   vec4 tmpvar_18;
   tmpvar_18 = mix (tangent, tmpvar_16, tmpvar_17);
   vec4 tmpvar_19;
@@ -187,7 +187,7 @@ vec4 AnimateVertex (
   tmpvar_5 = (fObjPhase + animParams.x);
   fBranchPhase = tmpvar_5;
   highp vec3 tmpvar_6;
-  tmpvar_6 = highp vec3((animParams.y + fBranchPhase));
+  tmpvar_6 = vec3((animParams.y + fBranchPhase));
   float tmpvar_7;
   tmpvar_7 = dot (pos.xyz, tmpvar_6);
   float tmpvar_8;
@@ -217,7 +217,7 @@ vec4 AnimateVertex (
   bend = tmpvar_16;
   highp float tmpvar_17;
   tmpvar_17 = (animParams.w * fBranchAmp);
-  bend.y = highp vec2(tmpvar_17).y;
+  bend.y = vec2(tmpvar_17).y;
   highp vec3 tmpvar_18;
   tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
   pos.xyz = tmpvar_18.xyz.xyz;

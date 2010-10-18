@@ -331,7 +331,7 @@ mediump vec4 xlat_main (
   c = tmpvar_12;
   mediump float tmpvar_13;
   tmpvar_13 = o.Alpha;
-  c.w = mediump vec4(tmpvar_13).w;
+  c.w = vec4(tmpvar_13).w;
   return c;
 }
 

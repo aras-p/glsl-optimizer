@@ -20,6 +20,6 @@ void main ()
   o_i0.zw = tmpvar_1.zw;
   gl_Position = tmpvar_1;
   xlv_TEXCOORD0 = o_i0;
-  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), _glesNormal, highp vec3(highp float((_glesNormal.z != 0.0))));
+  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), _glesNormal, vec3(float((_glesNormal.z != 0.0))));
 }
 

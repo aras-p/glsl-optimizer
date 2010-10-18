@@ -97,14 +97,14 @@ void main ()
   c = (c + tmpvar_21);
   highp float x_i0_i1_i2_i3;
   x_i0_i1_i2_i3 = xlv_TEXCOORD0.x;
-  c.x = (c.x + (x_i0_i1_i2_i3 - highp float(int(x_i0_i1_i2_i3))));
+  c.x = (c.x + (x_i0_i1_i2_i3 - float(int(x_i0_i1_i2_i3))));
   highp vec2 x_i0_i1_i2_i3_i4;
   x_i0_i1_i2_i3_i4 = xlv_TEXCOORD0.xy;
-  c.xy = (c.xy + (x_i0_i1_i2_i3_i4 - highp vec2(ivec2(x_i0_i1_i2_i3_i4))));
+  c.xy = (c.xy + (x_i0_i1_i2_i3_i4 - vec2(ivec2(x_i0_i1_i2_i3_i4))));
   highp vec3 x_i0_i1_i2_i3_i4_i5;
   x_i0_i1_i2_i3_i4_i5 = xlv_TEXCOORD0.xyz;
-  c.xyz = (c.xyz + (x_i0_i1_i2_i3_i4_i5 - highp vec3(ivec3(x_i0_i1_i2_i3_i4_i5))));
-  c = (c + (xlv_TEXCOORD0 - highp vec4(ivec4(xlv_TEXCOORD0))));
+  c.xyz = (c.xyz + (x_i0_i1_i2_i3_i4_i5 - vec3(ivec3(x_i0_i1_i2_i3_i4_i5))));
+  c = (c + (xlv_TEXCOORD0 - vec4(ivec4(xlv_TEXCOORD0))));
   gl_FragData[0] = c;
 }
 

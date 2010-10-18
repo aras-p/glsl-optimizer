@@ -4,7 +4,7 @@ mediump vec4 xlat_main (
 )
 {
   highp vec4 tmpvar_1;
-  tmpvar_1 = highp vec4(face);
+  tmpvar_1 = vec4(face);
   return tmpvar_1;
 }
 

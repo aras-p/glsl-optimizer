@@ -159,7 +159,7 @@ float xll_modf (
   int tmpvar_1;
   tmpvar_1 = int(x);
   ip = tmpvar_1;
-  return (x - highp float(ip));
+  return (x - float(ip));
 }
 
 float xll_modf (
@@ -172,7 +172,7 @@ float xll_modf (
   tmpvar_1 = int(x);
   i = tmpvar_1;
   highp float tmpvar_2;
-  tmpvar_2 = highp float(i);
+  tmpvar_2 = float(i);
   ip = tmpvar_2;
   return (x - ip);
 }
@@ -188,7 +188,7 @@ vec2 xll_modf (
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
   highp vec2 tmpvar_3;
-  tmpvar_3 = highp vec2(ip).xy;
+  tmpvar_3 = vec2(ip).xy;
   return (x - tmpvar_3);
 }
 
@@ -204,7 +204,7 @@ vec2 xll_modf (
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
   highp vec2 tmpvar_3;
-  tmpvar_3 = highp vec2(i).xy;
+  tmpvar_3 = vec2(i).xy;
   highp vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;
@@ -222,7 +222,7 @@ vec3 xll_modf (
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
   highp vec3 tmpvar_3;
-  tmpvar_3 = highp vec3(ip).xyz;
+  tmpvar_3 = vec3(ip).xyz;
   return (x - tmpvar_3);
 }
 
@@ -238,7 +238,7 @@ vec3 xll_modf (
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
   highp vec3 tmpvar_3;
-  tmpvar_3 = highp vec3(i).xyz;
+  tmpvar_3 = vec3(i).xyz;
   highp vec3 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;
@@ -256,7 +256,7 @@ vec4 xll_modf (
   tmpvar_2 = tmpvar_1;
   ip = tmpvar_2;
   highp vec4 tmpvar_3;
-  tmpvar_3 = highp vec4(ip).xyzw;
+  tmpvar_3 = vec4(ip).xyzw;
   return (x - tmpvar_3);
 }
 
@@ -272,7 +272,7 @@ vec4 xll_modf (
   tmpvar_2 = tmpvar_1;
   i = tmpvar_2;
   highp vec4 tmpvar_3;
-  tmpvar_3 = highp vec4(i).xyzw;
+  tmpvar_3 = vec4(i).xyzw;
   highp vec4 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   ip = tmpvar_4;

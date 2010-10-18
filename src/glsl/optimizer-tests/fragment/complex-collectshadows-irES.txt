@@ -45,7 +45,7 @@ mediump float unitySampleShadow (
   tmpvar_5 = eyePos.z;
   z = tmpvar_5;
   highp vec4 tmpvar_6;
-  tmpvar_6 = highp vec4(z);
+  tmpvar_6 = vec4(z);
   bvec4 tmpvar_7;
   tmpvar_7 = greaterThanEqual (tmpvar_6, _LightSplitsNear);
   highp vec4 tmpvar_8;
@@ -54,7 +54,7 @@ mediump float unitySampleShadow (
   tmpvar_9 = tmpvar_8;
   near = tmpvar_9;
   highp vec4 tmpvar_10;
-  tmpvar_10 = highp vec4(z);
+  tmpvar_10 = vec4(z);
   bvec4 tmpvar_11;
   tmpvar_11 = lessThan (tmpvar_10, _LightSplitsFar);
   highp vec4 tmpvar_12;
