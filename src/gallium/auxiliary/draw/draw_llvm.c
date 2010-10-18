@@ -861,9 +861,11 @@ generate_clipmask(LLVMBuilderRef builder,
 
    struct lp_type f32_type = lp_type_float_vec(32); 
 
+   mask = lp_build_const_int_vec(lp_type_int_vec(32), 0);
+   temp = lp_build_const_int_vec(lp_type_int_vec(32), 0);
    zero = lp_build_const_vec(f32_type, 0);                    /* 0.0f 0.0f 0.0f 0.0f */
    shift = lp_build_const_int_vec(lp_type_int_vec(32), 1);    /* 1 1 1 1 */
-  
+
    /* Assuming position stored at output[0] */
    pos_x = LLVMBuildLoad(builder, outputs[0][0], ""); /*x0 x1 x2 x3*/
    pos_y = LLVMBuildLoad(builder, outputs[0][1], ""); /*y0 y1 y2 y3*/
@@ -900,10 +902,10 @@ generate_clipmask(LLVMBuilderRef builder,
    }
 
    if (clip_z){
+      temp = lp_build_const_int_vec(lp_type_int_vec(32), 16);
       if (clip_halfz){
          /* plane 5 */
          test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, pos_z);
-         temp = LLVMBuildShl(builder, temp, shift, "");
          test = LLVMBuildAnd(builder, test, temp, ""); 
          mask = LLVMBuildOr(builder, mask, test, "");
       }  
@@ -911,7 +913,6 @@ generate_clipmask(LLVMBuilderRef builder,
          /* plane 5 */
          test = LLVMBuildFAdd(builder, pos_z, pos_w, "");
          test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, test);
-         temp = LLVMBuildShl(builder, temp, shift, "");
          test = LLVMBuildAnd(builder, test, temp, ""); 
          mask = LLVMBuildOr(builder, mask, test, "");
       }
@@ -925,6 +926,7 @@ generate_clipmask(LLVMBuilderRef builder,
    if (clip_user){
       LLVMValueRef planes_ptr = draw_jit_context_planes(builder, context_ptr);
       LLVMValueRef indices[3];
+      temp = lp_build_const_int_vec(lp_type_int_vec(32), 32);
 
       /* userclip planes */
       for (i = 6; i < nr; i++) {
