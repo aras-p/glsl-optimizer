@@ -318,7 +318,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.bind = 0;
 	resource.flags = 0;
 
-	resource.bind |= PIPE_BIND_RENDER_TARGET;
+	resource.bind |= PIPE_BIND_DEPTH_STENCIL;
 
 	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
