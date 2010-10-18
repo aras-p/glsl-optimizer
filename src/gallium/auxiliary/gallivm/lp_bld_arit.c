@@ -983,6 +983,12 @@ enum lp_build_round_sse41_mode
 };
 
 
+/**
+ * Helper for SSE4.1's ROUNDxx instructions.
+ *
+ * NOTE: In the SSE4.1's nearest mode, if two values are equally close, the
+ * result is the even value.  That is, rounding 2.5 will be 2.0, and not 3.0.
+ */
 static INLINE LLVMValueRef
 lp_build_round_sse41(struct lp_build_context *bld,
                      LLVMValueRef a,
