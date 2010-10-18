@@ -378,7 +378,8 @@ static void r300_translate_fragment_shader(
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
-    compiler.Base.Debug = DBG_ON(r300, DBG_FP);
+    DBG_ON(r300, DBG_FP) ? compiler.Base.Debug |= RC_DBG_LOG : 0;
+    DBG_ON(r300, DBG_P_STAT) ? compiler.Base.Debug |= RC_DBG_STATS : 0;
 
     compiler.code = &shader->code;
     compiler.state = shader->compare_state;
@@ -395,7 +396,7 @@ static void r300_translate_fragment_shader(
 
     find_output_registers(&compiler, shader);
 
-    if (compiler.Base.Debug) {
+    if (compiler.Base.Debug & RC_DBG_LOG) {
         DBG(r300, DBG_FP, "r300: Initial fragment program\n");
         tgsi_dump(tokens, 0);
     }

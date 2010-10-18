@@ -145,6 +145,6 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	free(const_used);
 	free(inv_remap_table);
 
-	if (c->Debug)
+	if (c->Debug & RC_DBG_LOG)
 		rc_constants_print(&c->Program.Constants);
 }
