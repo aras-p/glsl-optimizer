@@ -930,6 +930,8 @@ get_constant(struct brw_vs_compile *c,
 
    assert(argIndex < 3);
 
+   assert(c->func.brw->intel.gen < 6); /* FINISHME */
+
    if (c->current_const[argIndex].index != src->Index) {
       /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;
@@ -965,6 +967,8 @@ get_reladdr_constant(struct brw_vs_compile *c,
    struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
 
    assert(argIndex < 3);
+
+   assert(c->func.brw->intel.gen < 6); /* FINISHME */
 
    /* Can't reuse a reladdr constant load. */
    c->current_const[argIndex].index = -1;
