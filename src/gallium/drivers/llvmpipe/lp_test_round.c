@@ -171,9 +171,12 @@ test_round(unsigned verbose, FILE *fp)
       LLVMDumpModule(module);
 
    for (i = 0; i < 3; i++) {
+      /* NOTE: There are several acceptable rules for x.5 rounding: ceiling,
+       * nearest even, etc. So we avoid testing such corner cases here.
+       */
       v4sf xvals[3] = {
          {-10.0, -1, 0, 12.0},
-         {-1.5, -0.25, 1.25, 2.5},
+         {-1.49, -0.25, 1.25, 2.51},
          {-0.99, -0.01, 0.01, 0.99}
       };
       v4sf x = xvals[i];
