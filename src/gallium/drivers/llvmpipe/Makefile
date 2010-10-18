@@ -38,6 +38,7 @@ C_SOURCES = \
 	lp_state_clip.c \
 	lp_state_derived.c \
 	lp_state_fs.c \
+	lp_state_setup.c \
 	lp_state_gs.c \
 	lp_state_rasterizer.c \
 	lp_state_sampler.c \

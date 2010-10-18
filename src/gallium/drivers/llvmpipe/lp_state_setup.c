@@ -704,17 +704,8 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
       }
 
       variant = generate_setup_variant(screen, key);
-      if (variant) {
-         insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
-         lp->nr_setup_variants++;
-      }
-      else {
-	 /* Keep the old path around for debugging, and also perhaps
-	  * in case malloc fails during compilation.
-	  */
-	 variant = &lp->setup_variant;
-	 variant->jit_function = lp_setup_tri_fallback;
-      }
+      insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
+      lp->nr_setup_variants++;
    }
 
    lp_setup_set_setup_variant(lp->setup,
