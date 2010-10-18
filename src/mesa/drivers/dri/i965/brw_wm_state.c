@@ -52,8 +52,35 @@ struct brw_wm_unit_key {
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
    GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
+   GLboolean color_write_enable;
    GLfloat offset_units, offset_factor;
 };
+
+bool
+brw_color_buffer_write_enabled(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   const struct gl_fragment_program *fp = brw->fragment_program;
+   int i;
+
+   /* _NEW_BUFFERS */
+   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+
+      /* _NEW_COLOR */
+      if (rb &&
+	  (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR) ||
+	   fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0 + i)) &&
+	  (ctx->Color.ColorMask[i][0] ||
+	   ctx->Color.ColorMask[i][1] ||
+	   ctx->Color.ColorMask[i][2] ||
+	   ctx->Color.ColorMask[i][3])) {
+	 return true;
+      }
+   }
+
+   return false;
+}
 
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
@@ -99,6 +126,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
     */
    if (brw->state.depth_region == NULL)
       key->computes_depth = 0;
+
+   /* _NEW_BUFFERS | _NEW_COLOR */
+   key->color_write_enable = brw_color_buffer_write_enabled(brw);
 
    /* _NEW_COLOR */
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
@@ -188,7 +218,13 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
       wm.wm5.enable_16_pix = 1;
 
    wm.wm5.max_threads = brw->wm_max_threads - 1;
-   wm.wm5.thread_dispatch_enable = 1;	/* AKA: color_write */
+
+   if (key->color_write_enable ||
+       key->uses_kill ||
+       key->computes_depth) {
+      wm.wm5.thread_dispatch_enable = 1;
+   }
+
    wm.wm5.legacy_line_rast = 0;
    wm.wm5.legacy_global_depth_bias = 0;
    wm.wm5.early_depth_test = 1;	        /* never need to disable */
@@ -293,7 +329,8 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
 	       _NEW_COLOR |
-	       _NEW_DEPTH),
+	       _NEW_DEPTH |
+	       _NEW_BUFFERS),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |

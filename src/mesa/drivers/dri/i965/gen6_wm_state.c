@@ -29,6 +29,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
+#include "brw_wm.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
@@ -123,7 +124,6 @@ upload_wm_state(struct brw_context *brw)
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
 
    dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
-   dw5 |= GEN6_WM_DISPATCH_ENABLE;
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    if (fp->isGLSL)
@@ -149,6 +149,11 @@ upload_wm_state(struct brw_context *brw)
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
       dw5 |= GEN6_WM_KILL_ENABLE;
 
+   if (brw_color_buffer_write_enabled(brw) ||
+       dw5 & (GEN6_WM_KILL_ENABLE | GEN6_WM_COMPUTED_DEPTH)) {
+      dw5 |= GEN6_WM_DISPATCH_ENABLE;
+   }
+
    dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
 
    dw6 |= brw_count_bits(brw->fragment_program->Base.InputsRead) <<
@@ -169,7 +174,7 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR |
+      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
 		_NEW_PROGRAM_CONSTANTS),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |

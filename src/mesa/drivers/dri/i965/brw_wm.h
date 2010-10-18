@@ -33,6 +33,7 @@
 #ifndef BRW_WM_H
 #define BRW_WM_H
 
+#include <stdbool.h>
 
 #include "program/prog_instruction.h"
 #include "brw_context.h"
@@ -472,5 +473,7 @@ GLboolean brw_compile_shader(struct gl_context *ctx,
 GLboolean brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
 struct gl_shader *brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type);
 struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint name);
+
+bool brw_color_buffer_write_enabled(struct brw_context *brw);
 
 #endif
