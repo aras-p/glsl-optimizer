@@ -46,7 +46,19 @@ prepare_scissor_state(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   if (render_to_fbo) {
+   if (ctx->DrawBuffer->_Xmin == ctx->DrawBuffer->_Xmax ||
+       ctx->DrawBuffer->_Ymin == ctx->DrawBuffer->_Ymax) {
+      /* If the scissor was out of bounds and got clamped to 0
+       * width/height at the bounds, the subtraction of 1 from
+       * maximums could produce a negative number and thus not clip
+       * anything.  Instead, just provide a min > max scissor inside
+       * the bounds, which produces the expected no rendering.
+       */
+      scissor.xmin = 1;
+      scissor.xmax = 0;
+      scissor.ymin = 1;
+      scissor.ymax = 0;
+   } else if (render_to_fbo) {
       /* texmemory: Y=0=bottom */
       scissor.xmin = ctx->DrawBuffer->_Xmin;
       scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
