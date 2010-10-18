@@ -193,7 +193,11 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_dead_code_local(ir) || progress; debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
 			progress = do_tree_grafting(ir) || progress; debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
 			progress = do_constant_propagation(ir) || progress; debug_print_ir ("After const propagation", ir, state, ctx->mem_ctx);
-			progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state, ctx->mem_ctx);
+			if (!linked) {
+				progress = do_constant_variable_unlinked(ir) || progress; debug_print_ir ("After const variable unlinked", ir, state, ctx->mem_ctx);
+			} else {
+				progress = do_constant_variable(ir) || progress; debug_print_ir ("After const variable", ir, state, ctx->mem_ctx);
+			}
 			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state, ctx->mem_ctx);
 			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state, ctx->mem_ctx);
 			progress = do_lower_jumps(ir) || progress; debug_print_ir ("After lower jumps", ir, state, ctx->mem_ctx);
