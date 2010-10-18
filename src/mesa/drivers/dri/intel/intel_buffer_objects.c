@@ -214,21 +214,28 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
    else {
       /* Flush any existing batchbuffer that might reference this data. */
-      if (drm_intel_bo_busy(intel_obj->buffer) ||
-	  drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
-	 drm_intel_bo *temp_bo;
+      if (intel->gen < 6) {
+	 if (drm_intel_bo_busy(intel_obj->buffer) ||
+	     drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
+	    drm_intel_bo *temp_bo;
 
-	 temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
+	    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
 
-	 drm_intel_bo_subdata(temp_bo, 0, size, data);
+	    drm_intel_bo_subdata(temp_bo, 0, size, data);
 
-	 intel_emit_linear_blit(intel,
-				intel_obj->buffer, offset,
-				temp_bo, 0,
-				size);
+	    intel_emit_linear_blit(intel,
+				   intel_obj->buffer, offset,
+				   temp_bo, 0,
+				   size);
 
-	 drm_intel_bo_unreference(temp_bo);
+	    drm_intel_bo_unreference(temp_bo);
+	 } else {
+	    drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
+	 }
       } else {
+	 if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
+	    intel_batchbuffer_flush(intel->batch);
+	 }
 	 drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
       }
    }
