@@ -720,7 +720,7 @@ fs_visitor::visit(ir_expression *ir)
       /* Note that BRW_OPCODE_NOT is not appropriate here, since it is
        * ones complement of the whole register, not just bit 0.
        */
-      emit(fs_inst(BRW_OPCODE_ADD, this->result, op[0], fs_reg(-1)));
+      emit(fs_inst(BRW_OPCODE_XOR, this->result, op[0], fs_reg(1)));
       break;
    case ir_unop_neg:
       op[0].negate = !op[0].negate;
