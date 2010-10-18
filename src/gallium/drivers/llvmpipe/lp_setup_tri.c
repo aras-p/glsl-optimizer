@@ -323,8 +323,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 				       frontfacing,
 				       GET_A0(&tri->inputs),
 				       GET_DADX(&tri->inputs),
-				       GET_DADY(&tri->inputs),
-				       &setup->setup.variant->key );
+				       GET_DADY(&tri->inputs) );
 
    tri->inputs.frontfacing = frontfacing;
    tri->inputs.disable = FALSE;

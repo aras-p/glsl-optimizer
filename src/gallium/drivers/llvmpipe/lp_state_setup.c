@@ -485,7 +485,7 @@ generate_setup_variant(struct llvmpipe_screen *screen,
    char func_name[256];
    LLVMTypeRef vec4f_type;
    LLVMTypeRef func_type;
-   LLVMTypeRef arg_types[8];
+   LLVMTypeRef arg_types[7];
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    int64_t t0, t1;
@@ -521,7 +521,6 @@ generate_setup_variant(struct llvmpipe_screen *screen,
    arg_types[4] = LLVMPointerType(vec4f_type, 0);	/* a0, aligned */
    arg_types[5] = LLVMPointerType(vec4f_type, 0);	/* dadx, aligned */
    arg_types[6] = LLVMPointerType(vec4f_type, 0);	/* dady, aligned */
-   arg_types[7] = LLVMPointerType(vec4f_type, 0);       /* key, unused */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
