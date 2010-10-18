@@ -81,18 +81,9 @@ static void r600_blitter_end(struct pipe_context *ctx)
 int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct pipe_framebuffer_state fb = *rctx->pframebuffer;
 	struct pipe_surface *zsurf, *cbsurf;
 	int level = 0;
 	float depth = 1.0f;
-
-	r600_context_queries_suspend(&rctx->ctx);
-	for (int i = 0; i < fb.nr_cbufs; i++) {
-		fb.cbufs[i] = NULL;
-		pipe_surface_reference(&fb.cbufs[i], rctx->pframebuffer->cbufs[i]);
-	}
-	fb.zsbuf = NULL;
-	pipe_surface_reference(&fb.zsbuf, rctx->pframebuffer->zsbuf);
 
 	zsurf = ctx->screen->get_tex_surface(ctx->screen, &texture->resource.base.b, 0, level, 0,
 					     PIPE_BIND_DEPTH_STENCIL);
@@ -101,21 +92,17 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 			(struct pipe_resource*)texture->flushed_depth_texture,
 			0, level, 0, PIPE_BIND_RENDER_TARGET);
 
-	r600_blitter_begin(ctx, R600_CLEAR);
-	util_blitter_save_framebuffer(rctx->blitter, &fb);
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
-		rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
+	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
 
+	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
+	r600_blitter_end(ctx);
 
 	pipe_surface_reference(&zsurf, NULL);
 	pipe_surface_reference(&cbsurf, NULL);
-	for (int i = 0; i < fb.nr_cbufs; i++) {
-		pipe_surface_reference(&fb.cbufs[i], NULL);
-	}
-	pipe_surface_reference(&fb.zsbuf, NULL);
-	r600_context_queries_resume(&rctx->ctx);
+
 
 	return 0;
 }
