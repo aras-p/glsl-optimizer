@@ -847,7 +847,7 @@ generate_clipmask(LLVMBuilderRef builder,
                   boolean clip_xy,
                   boolean clip_z,
                   boolean clip_user,
-                  boolean enable_d3dclipping,
+                  boolean clip_halfz,
                   unsigned nr,
                   LLVMValueRef context_ptr)
 {
@@ -900,7 +900,7 @@ generate_clipmask(LLVMBuilderRef builder,
    }
 
    if (clip_z){
-      if (enable_d3dclipping){
+      if (clip_halfz){
          /* plane 5 */
          test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, pos_z);
          temp = LLVMBuildShl(builder, temp, shift, "");
@@ -980,18 +980,13 @@ clipmask_bool(LLVMBuilderRef builder,
    LLVMValueRef temp;
    int i;
 
-   LLVMDumpValue(clipmask);
-
    for (i=0; i<4; i++){   
       temp = LLVMBuildExtractElement(builder, clipmask,
                                      LLVMConstInt(LLVMInt32Type(), i, 0) , "");
       ret = LLVMBuildOr(builder, ret, temp, "");
-      LLVMDumpValue(ret);  
    }
    
    LLVMBuildStore(builder, ret, ret_ptr);
-   LLVMDumpValue(ret_ptr); 
-
 }
 
 static void
@@ -1133,7 +1128,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                                       variant->key.clip_xy,
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
-                                      variant->key.enable_d3dclipping,
+                                      variant->key.clip_halfz,
                                       variant->key.nr_planes,
                                       context_ptr);
          /* return clipping boolean value for function */
@@ -1344,7 +1339,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
                                       variant->key.clip_xy,
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
-                                      variant->key.enable_d3dclipping,
+                                      variant->key.clip_halfz,
                                       variant->key.nr_planes,
                                       context_ptr);
          /* return clipping boolean value for function */
@@ -1428,7 +1423,7 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->clip_z = llvm->draw->clip_z;
    key->clip_user = llvm->draw->clip_user;
    key->bypass_viewport = llvm->draw->identity_viewport;
-   key->enable_d3dclipping = (boolean)!llvm->draw->rasterizer->gl_rasterization_rules;
+   key->clip_halfz = !llvm->draw->rasterizer->gl_rasterization_rules;
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
    key->nr_planes = llvm->draw->nr_planes;
    key->pad = 0;
