@@ -240,6 +240,7 @@ do_debug_bin( struct tile *tile,
    memset(tile->data, ' ', sizeof tile->data);
    tile->coverage = 0;
    tile->overdraw = 0;
+   tile->state = NULL;
 
    for (block = bin->head; block; block = block->next) {
       for (k = 0; k < block->count; k++, j++) {
