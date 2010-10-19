@@ -95,7 +95,7 @@ is_blend( const struct lp_rast_state *state,
 static void
 debug_bin( const struct cmd_bin *bin )
 {
-   const struct lp_rast_state *state;
+   const struct lp_rast_state *state = NULL;
    const struct cmd_block *head = bin->head;
    int i, j = 0;
 
