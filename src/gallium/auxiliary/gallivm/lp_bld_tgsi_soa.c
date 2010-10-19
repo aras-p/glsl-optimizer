@@ -1030,7 +1030,8 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
       mask = LLVMBuildNot(bld->base.builder, bld->exec_mask.exec_mask, "kilp");
    }
    else {
-      mask = bld->base.zero;
+      LLVMValueRef zero = LLVMConstNull(bld->base.int_vec_type);
+      mask = zero;
    }
 
    lp_build_mask_update(bld->mask, mask);
