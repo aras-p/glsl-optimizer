@@ -361,7 +361,7 @@ crtc_destroy(xf86CrtcPtr crtc)
 
     drmModeFreeCrtc(crtcp->drm_crtc);
 
-    xfree(crtcp);
+    free(crtcp);
     crtc->driver_private = NULL;
 }
 
@@ -409,7 +409,7 @@ xorg_crtc_init(ScrnInfoPtr pScrn)
 	if (crtc == NULL)
 	    goto out;
 
-	crtcp = xcalloc(1, sizeof(struct crtc_private));
+	crtcp = calloc(1, sizeof(struct crtc_private));
 	if (!crtcp) {
 	    xf86CrtcDestroy(crtc);
 	    goto out;

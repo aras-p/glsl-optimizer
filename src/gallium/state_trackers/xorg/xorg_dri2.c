@@ -201,11 +201,11 @@ dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment, unsigned int form
     DRI2Buffer2Ptr buffer;
     BufferPrivatePtr private;
 
-    buffer = xcalloc(1, sizeof *buffer);
+    buffer = calloc(1, sizeof *buffer);
     if (!buffer)
 	return NULL;
 
-    private = xcalloc(1, sizeof *private);
+    private = calloc(1, sizeof *private);
     if (!private) {
 	goto fail;
     }
@@ -217,9 +217,9 @@ dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment, unsigned int form
     if (dri2_do_create_buffer(pDraw, (DRI2BufferPtr)buffer, format))
 	return buffer;
 
-    xfree(private);
+    free(private);
 fail:
-    xfree(buffer);
+    free(buffer);
     return NULL;
 }
 
@@ -229,8 +229,8 @@ dri2_destroy_buffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
     /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
     dri2_do_destroy_buffer(pDraw, (DRI2BufferPtr)buffer);
 
-    xfree(buffer->driverPrivate);
-    xfree(buffer);
+    free(buffer->driverPrivate);
+    free(buffer);
 }
 
 #endif /* DRI2INFOREC_VERSION >= 2 */
@@ -244,11 +244,11 @@ dri2_create_buffers(DrawablePtr pDraw, unsigned int *attachments, int count)
     DRI2BufferPtr buffers;
     int i;
 
-    buffers = xcalloc(count, sizeof *buffers);
+    buffers = calloc(count, sizeof *buffers);
     if (!buffers)
 	goto fail_buffers;
 
-    privates = xcalloc(count, sizeof *privates);
+    privates = calloc(count, sizeof *privates);
     if (!privates)
 	goto fail_privates;
 
@@ -263,9 +263,9 @@ dri2_create_buffers(DrawablePtr pDraw, unsigned int *attachments, int count)
     return buffers;
 
 fail:
-    xfree(privates);
+    free(privates);
 fail_privates:
-    xfree(buffers);
+    free(buffers);
 fail_buffers:
     return NULL;
 }
@@ -280,8 +280,8 @@ dri2_destroy_buffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 
     if (buffers) {
-	xfree(buffers[0].driverPrivate);
-	xfree(buffers);
+	free(buffers[0].driverPrivate);
+	free(buffers);
     }
 }
 

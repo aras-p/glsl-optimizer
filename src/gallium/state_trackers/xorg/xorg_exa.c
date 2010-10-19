@@ -720,7 +720,7 @@ ExaCreatePixmap(ScreenPtr pScreen, int size, int align)
 {
     struct exa_pixmap_priv *priv;
 
-    priv = xcalloc(1, sizeof(struct exa_pixmap_priv));
+    priv = calloc(1, sizeof(struct exa_pixmap_priv));
     if (!priv)
 	return NULL;
 
@@ -737,7 +737,7 @@ ExaDestroyPixmap(ScreenPtr pScreen, void *dPriv)
 
     pipe_resource_reference(&priv->tex, NULL);
 
-    xfree(priv);
+    free(priv);
 }
 
 static Bool
@@ -975,7 +975,7 @@ xorg_exa_close(ScrnInfoPtr pScrn)
    ms->ctx = NULL;
 
    exaDriverFini(pScrn->pScreen);
-   xfree(exa);
+   free(exa);
    ms->exa = NULL;
 }
 
@@ -987,7 +987,7 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    ExaDriverPtr pExa;
    CustomizerPtr cust = ms->cust;
 
-   exa = xcalloc(1, sizeof(struct exa_context));
+   exa = calloc(1, sizeof(struct exa_context));
    if (!exa)
       return NULL;
 

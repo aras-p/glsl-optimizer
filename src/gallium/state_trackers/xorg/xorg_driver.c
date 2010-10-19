@@ -122,7 +122,7 @@ xorg_tracker_set_functions(ScrnInfoPtr scrn)
 Bool
 xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
 {
-    char *BusID = xalloc(64);
+    char *BusID = malloc(64);
     sprintf(BusID, "pci:%04x:%02x:%02x.%d",
 	    device->domain, device->bus,
 	    device->dev, device->func);
@@ -130,14 +130,14 @@ xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
     if (drmCheckModesettingSupported(BusID)) {
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
 		       "Drm modesetting not supported %s\n", BusID);
-	xfree(BusID);
+	free(BusID);
 	return FALSE;
     }
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
 		   "Drm modesetting supported on %s\n", BusID);
 
-    xfree(BusID);
+    free(BusID);
     return TRUE;
 }
 
@@ -174,7 +174,7 @@ drv_free_rec(ScrnInfoPtr pScrn)
     if (!pScrn->driverPrivate)
 	return;
 
-    xfree(pScrn->driverPrivate);
+    free(pScrn->driverPrivate);
 
     pScrn->driverPrivate = NULL;
 }
@@ -274,7 +274,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
     if (ms->fd < 0) {
 	char *BusID;
 
-	BusID = xalloc(64);
+	BusID = malloc(64);
 	sprintf(BusID, "PCI:%d:%d:%d",
 		((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
 		ms->PciInfo->dev, ms->PciInfo->func
@@ -283,7 +283,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
 
 	ms->fd = drmOpen(driver_descriptor.driver_name, BusID);
 	ms->isMaster = TRUE;
-	xfree(BusID);
+	free(BusID);
 
 	if (ms->fd >= 0)
 	    return TRUE;
@@ -432,7 +432,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 
     /* Process the options */
     xf86CollectOptions(pScrn, NULL);
-    if (!(ms->Options = xalloc(sizeof(drv_options))))
+    if (!(ms->Options = malloc(sizeof(drv_options))))
 	return FALSE;
     memcpy(ms->Options, drv_options, sizeof(drv_options));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ms->Options);
