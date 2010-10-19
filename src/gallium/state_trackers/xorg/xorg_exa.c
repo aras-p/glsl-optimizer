@@ -1057,6 +1057,7 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
 
 out_err:
    xorg_exa_close(pScrn);
+   free(exa);
 
    return NULL;
 }
