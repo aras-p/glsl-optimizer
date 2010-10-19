@@ -688,7 +688,6 @@ fs_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
    fs_reg op[2], temp;
-   fs_reg result;
    fs_inst *inst;
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
