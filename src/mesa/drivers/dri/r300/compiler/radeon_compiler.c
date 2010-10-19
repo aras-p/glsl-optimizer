@@ -364,7 +364,7 @@ static void reg_count_callback(void * userdata, struct rc_instruction * inst,
 static void print_stats(struct radeon_compiler * c)
 {
 	struct rc_instruction * tmp;
-	unsigned i, max_reg, insts, fc, tex, alpha, rgb, presub;
+	unsigned max_reg, insts, fc, tex, alpha, rgb, presub;
 	max_reg = insts = fc = tex = alpha = rgb = presub = 0;
 	for(tmp = c->Program.Instructions.Next; tmp != &c->Program.Instructions;
 							tmp = tmp->Next){
