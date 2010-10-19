@@ -318,6 +318,12 @@ static void brw_wm_populate_key( struct brw_context *brw,
       /* R31: MSAA position offsets. */
       /* R32-: bary for 32-pixel. */
       /* R58-59: interp W for 32-pixel. */
+
+      if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+	 key->source_depth_to_render_target = GL_TRUE;
+	 key->computes_depth = GL_TRUE;
+      }
+
    } else {
       brw_wm_lookup_iz(intel,
 	      	       line_aa,
