@@ -177,6 +177,11 @@ vec2  mod(vec2  x, vec2  y);
 vec3  mod(vec3  x, vec3  y);
 vec4  mod(vec4  x, vec4  y);
 
+float modf(float x, out float i);
+vec2  modf(vec2  x, out vec2  i);
+vec3  modf(vec3  x, out vec3  i);
+vec4  modf(vec4  x, out vec4  i);
+
 float min(float x, float y);
 vec2  min(vec2  x, vec2  y);
 vec3  min(vec3  x, vec3  y);
