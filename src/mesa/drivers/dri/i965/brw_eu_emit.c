@@ -831,6 +831,7 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
       brw_set_src1(insn, brw_imm_d(0x0));
    } else {
       brw_set_dest(insn, brw_imm_w(0));
+      insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(insn, brw_null_reg());
       brw_set_src1(insn, brw_null_reg());
    }
@@ -847,6 +848,29 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
    return insn;
 }
 
+struct brw_instruction *
+brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
+	    struct brw_reg src0, struct brw_reg src1)
+{
+   struct brw_instruction *insn;
+
+   insn = next_insn(p, BRW_OPCODE_IF);
+
+   brw_set_dest(insn, brw_imm_w(0));
+   insn->header.execution_size = BRW_EXECUTE_8;
+   insn->bits1.branch_gen6.jump_count = 0;
+   brw_set_src0(insn, src0);
+   brw_set_src1(insn, src1);
+
+   assert(insn->header.compression_control == BRW_COMPRESSION_NONE);
+   assert(insn->header.predicate_control == BRW_PREDICATE_NONE);
+   insn->header.destreg__conditionalmod = conditional;
+
+   if (!p->single_program_flow)
+       insn->header.thread_control = BRW_THREAD_SWITCH;
+
+   return insn;
+}
 
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn)
@@ -872,6 +896,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       brw_set_src1(insn, brw_imm_d(0x0));
    } else {
       brw_set_dest(insn, brw_imm_w(0));
+      insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(insn, brw_null_reg());
       brw_set_src1(insn, brw_null_reg());
    }
@@ -940,7 +965,10 @@ void brw_ENDIF(struct brw_compile *p,
       insn->header.mask_control = BRW_MASK_ENABLE;
       insn->header.thread_control = BRW_THREAD_SWITCH;
 
-      assert(patch_insn->bits3.if_else.jump_count == 0);
+      if (intel->gen < 6)
+	 assert(patch_insn->bits3.if_else.jump_count == 0);
+      else
+	 assert(patch_insn->bits1.branch_gen6.jump_count == 0);
 
       /* Patch the if or else instructions to point at this or the next
        * instruction respectively.

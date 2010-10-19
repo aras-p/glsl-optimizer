@@ -927,6 +927,8 @@ void brw_dp_WRITE_16( struct brw_compile *p,
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, 
 			       GLuint execute_size);
+struct brw_instruction *brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
+				    struct brw_reg src0, struct brw_reg src1);
 
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn);
