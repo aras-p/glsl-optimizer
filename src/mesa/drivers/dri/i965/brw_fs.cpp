@@ -179,10 +179,6 @@ type_size(const struct glsl_type *type)
    }
 }
 
-static const fs_reg reg_undef;
-static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
-static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
-
 int
 fs_visitor::virtual_grf_alloc(int size)
 {
@@ -2227,6 +2223,47 @@ fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
 }
 
 void
+fs_visitor::generate_spill(fs_inst *inst, struct brw_reg src)
+{
+   assert(inst->mlen != 0);
+
+   brw_MOV(p,
+	   retype(brw_message_reg(inst->base_mrf + 1), BRW_REGISTER_TYPE_UD),
+	   retype(src, BRW_REGISTER_TYPE_UD));
+   brw_oword_block_write(p, brw_message_reg(inst->base_mrf), 1, inst->offset);
+}
+
+void
+fs_visitor::generate_unspill(fs_inst *inst, struct brw_reg dst)
+{
+   assert(inst->mlen != 0);
+
+   /* Clear any post destination dependencies that would be ignored by
+    * the block read.  See the B-Spec for pre-gen5 send instruction.
+    *
+    * This could use a better solution, since texture sampling and
+    * math reads could potentially run into it as well -- anywhere
+    * that we have a SEND with a destination that is a register that
+    * was written but not read within the last N instructions (what's
+    * N?  unsure).  This is rare because of dead code elimination, but
+    * not impossible.
+    */
+   if (intel->gen == 4 && !intel->is_g4x)
+      brw_MOV(p, brw_null_reg(), dst);
+
+   brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf), 1,
+			inst->offset);
+
+   if (intel->gen == 4 && !intel->is_g4x) {
+      /* gen4 errata: destination from a send can't be used as a
+       * destination until it's been read.  Just read it so we don't
+       * have to worry.
+       */
+      brw_MOV(p, brw_null_reg(), dst);
+   }
+}
+
+void
 fs_visitor::assign_curb_setup()
 {
    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
@@ -3040,6 +3077,15 @@ fs_visitor::generate_code()
       case FS_OPCODE_DDY:
 	 generate_ddy(inst, dst, src[0]);
 	 break;
+
+      case FS_OPCODE_SPILL:
+	 generate_spill(inst, src[0]);
+	 break;
+
+      case FS_OPCODE_UNSPILL:
+	 generate_unspill(inst, dst);
+	 break;
+
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
 	 break;
@@ -3145,10 +3191,25 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
 
+      if (0) {
+	 /* Debug of register spilling: Go spill everything. */
+	 int virtual_grf_count = v.virtual_grf_next;
+	 for (int i = 1; i < virtual_grf_count; i++) {
+	    v.spill_reg(i);
+	 }
+	 v.calculate_live_intervals();
+      }
+
       if (0)
 	 v.assign_regs_trivial();
-      else
-	 v.assign_regs();
+      else {
+	 while (!v.assign_regs()) {
+	    if (v.fail)
+	       break;
+
+	    v.calculate_live_intervals();
+	 }
+      }
    }
 
    if (!v.fail)

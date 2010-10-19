@@ -1576,9 +1576,7 @@ static void emit_spill( struct brw_wm_compile *c,
      mov (1) r0.2<1>:d    0x00000080:d     { Align1 NoMask }
      send (16) null.0<1>:uw m1               r0.0<8;8,1>:uw   0x053003ff:ud    { Align1 }
    */
-   brw_dp_WRITE_16(p, 
-		   retype(vec16(brw_vec8_grf(0, 0)), BRW_REGISTER_TYPE_UW),
-		   slot);
+   brw_oword_block_write(p, brw_message_reg(1), 2, slot);
 }
 
 
@@ -1603,9 +1601,7 @@ static void emit_unspill( struct brw_wm_compile *c,
      send (16) r110.0<1>:uw m1               r0.0<8;8,1>:uw   0x041243ff:ud    { Align1 }
    */
 
-   brw_dp_READ_16(p,
-		  retype(vec16(reg), BRW_REGISTER_TYPE_UW),
-		  slot);
+   brw_oword_block_read(p, vec16(reg), brw_message_reg(1), 2, slot);
 }
 
 

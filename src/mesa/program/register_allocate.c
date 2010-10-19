@@ -72,6 +72,7 @@ struct ra_node {
    unsigned int adjacency_count;
    unsigned int reg;
    GLboolean in_stack;
+   float spill_cost;
 };
 
 struct ra_graph {
@@ -358,4 +359,66 @@ unsigned int
 ra_get_node_reg(struct ra_graph *g, unsigned int n)
 {
    return g->nodes[n].reg;
+}
+
+static float
+ra_get_spill_benefit(struct ra_graph *g, unsigned int n)
+{
+   int j;
+   float benefit = 0;
+   int n_class = g->nodes[n].class;
+
+   /* Define the benefit of eliminating an interference between n, j
+    * through spilling as q(C, B) / p(C).  This is similar to the
+    * "count number of edges" approach of traditional graph coloring,
+    * but takes classes into account.
+    */
+   for (j = 0; j < g->count; j++) {
+      if (j != n && g->nodes[n].adjacency[j]) {
+	 unsigned int j_class = g->nodes[j].class;
+	 benefit += ((float)g->regs->classes[n_class]->q[j_class] /
+		     g->regs->classes[n_class]->p);
+	 break;
+      }
+   }
+
+   return benefit;
+}
+
+/**
+ * Returns a node number to be spilled according to the cost/benefit using
+ * the pq test, or -1 if there are no spillable nodes.
+ */
+int
+ra_get_best_spill_node(struct ra_graph *g)
+{
+   unsigned int best_node = -1;
+   unsigned int best_benefit = 0.0;
+   unsigned int n;
+
+   for (n = 0; n < g->count; n++) {
+      float cost = g->nodes[n].spill_cost;
+
+      if (cost <= 0.0)
+	 continue;
+
+      float benefit = ra_get_spill_benefit(g, n);
+
+      if (benefit / cost > best_benefit) {
+	 best_benefit = benefit / cost;
+	 best_node = n;
+      }
+   }
+
+   return best_node;
+}
+
+/**
+ * Only nodes with a spill cost set (cost != 0.0) will be considered
+ * for register spilling.
+ */
+void
+ra_set_node_spill_cost(struct ra_graph *g, unsigned int n, float cost)
+{
+   g->nodes[n].spill_cost = cost;
 }

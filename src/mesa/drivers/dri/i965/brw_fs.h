@@ -74,6 +74,8 @@ enum fs_opcodes {
    FS_OPCODE_TXL,
    FS_OPCODE_DISCARD_NOT,
    FS_OPCODE_DISCARD_AND,
+   FS_OPCODE_SPILL,
+   FS_OPCODE_UNSPILL,
 };
 
 
@@ -196,6 +198,7 @@ public:
       this->shadow_compare = false;
       this->mlen = 0;
       this->base_mrf = 0;
+      this->offset = 0;
    }
 
    fs_inst()
@@ -281,6 +284,7 @@ public:
    bool eot;
    bool header_present;
    bool shadow_compare;
+   uint32_t offset; /* spill/unspill offset */
 
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
@@ -359,8 +363,10 @@ public:
    void assign_curb_setup();
    void calculate_urb_setup();
    void assign_urb_setup();
-   void assign_regs();
+   bool assign_regs();
    void assign_regs_trivial();
+   int choose_spill_reg(struct ra_graph *g);
+   void spill_reg(int spill_reg);
    void split_virtual_grfs();
    void calculate_live_intervals();
    bool propagate_constants();
@@ -378,6 +384,8 @@ public:
    void generate_discard_and(fs_inst *inst, struct brw_reg temp);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_spill(fs_inst *inst, struct brw_reg src);
+   void generate_unspill(fs_inst *inst, struct brw_reg dst);
 
    void emit_dummy_fs();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
@@ -391,6 +399,7 @@ public:
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
+   void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
 
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
@@ -443,6 +452,10 @@ public:
 
    int grf_used;
 };
+
+static const fs_reg reg_undef;
+static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
+static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);
 GLboolean brw_do_vector_splitting(struct exec_list *instructions);

@@ -84,7 +84,7 @@ fs_visitor::assign_regs_trivial()
    this->grf_used = last_grf + 1;
 }
 
-void
+bool
 fs_visitor::assign_regs()
 {
    int last_grf = 0;
@@ -220,11 +220,22 @@ fs_visitor::assign_regs()
       }
    }
 
-   /* FINISHME: Handle spilling */
    if (!ra_allocate_no_spills(g)) {
-      fprintf(stderr, "Failed to allocate registers.\n");
-      this->fail = true;
-      return;
+      /* Failed to allocate registers.  Spill a reg, and the caller will
+       * loop back into here to try again.
+       */
+      int reg = choose_spill_reg(g);
+      if (reg == -1) {
+	 this->fail = true;
+      } else {
+	 spill_reg(reg);
+      }
+
+
+      talloc_free(g);
+      talloc_free(regs);
+
+      return false;
    }
 
    /* Get the chosen virtual registers for each node, and map virtual
@@ -262,4 +273,146 @@ fs_visitor::assign_regs()
 
    talloc_free(g);
    talloc_free(regs);
+
+   return true;
+}
+
+void
+fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset)
+{
+   int size = virtual_grf_sizes[dst.reg];
+   dst.reg_offset = 0;
+
+   for (int chan = 0; chan < size; chan++) {
+      fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL,
+						   dst);
+      dst.reg_offset++;
+      unspill_inst->offset = spill_offset + chan * REG_SIZE;
+      unspill_inst->ir = inst->ir;
+      unspill_inst->annotation = inst->annotation;
+
+      /* Choose a MRF that won't conflict with an MRF that's live across the
+       * spill.  Nothing else will make it up to MRF 14/15.
+       */
+      unspill_inst->base_mrf = 14;
+      unspill_inst->mlen = 1; /* header contains offset */
+      inst->insert_before(unspill_inst);
+   }
+}
+
+int
+fs_visitor::choose_spill_reg(struct ra_graph *g)
+{
+   float loop_scale = 1.0;
+   float spill_costs[this->virtual_grf_next];
+   bool no_spill[this->virtual_grf_next];
+
+   for (int i = 0; i < this->virtual_grf_next; i++) {
+      spill_costs[i] = 0.0;
+      no_spill[i] = false;
+   }
+
+   /* Calculate costs for spilling nodes.  Call it a cost of 1 per
+    * spill/unspill we'll have to do, and guess that the insides of
+    * loops run 10 times.
+    */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      for (unsigned int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF) {
+	    int size = virtual_grf_sizes[inst->src[i].reg];
+	    spill_costs[inst->src[i].reg] += size * loop_scale;
+	 }
+      }
+
+      if (inst->dst.file == GRF) {
+	 int size = virtual_grf_sizes[inst->dst.reg];
+	 spill_costs[inst->dst.reg] += size * loop_scale;
+      }
+
+      switch (inst->opcode) {
+
+      case BRW_OPCODE_DO:
+	 loop_scale *= 10;
+	 break;
+
+      case BRW_OPCODE_WHILE:
+	 loop_scale /= 10;
+	 break;
+
+      case FS_OPCODE_SPILL:
+	 if (inst->src[0].file == GRF)
+	    no_spill[inst->src[0].reg] = true;
+	 break;
+
+      case FS_OPCODE_UNSPILL:
+	 if (inst->dst.file == GRF)
+	    no_spill[inst->dst.reg] = true;
+	 break;
+      }
+   }
+
+   for (int i = 0; i < this->virtual_grf_next; i++) {
+      if (!no_spill[i])
+	 ra_set_node_spill_cost(g, i, spill_costs[i]);
+   }
+
+   return ra_get_best_spill_node(g);
+}
+
+void
+fs_visitor::spill_reg(int spill_reg)
+{
+   int size = virtual_grf_sizes[spill_reg];
+   unsigned int spill_offset = c->last_scratch;
+   assert(ALIGN(spill_offset, 16) == spill_offset); /* oword read/write req. */
+   c->last_scratch += size * REG_SIZE;
+
+   /* Generate spill/unspill instructions for the objects being
+    * spilled.  Right now, we spill or unspill the whole thing to a
+    * virtual grf of the same size.  For most instructions, though, we
+    * could just spill/unspill the GRF being accessed.
+    */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      for (unsigned int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF &&
+	     inst->src[i].reg == spill_reg) {
+	    inst->src[i].reg = virtual_grf_alloc(size);
+	    emit_unspill(inst, inst->src[i], spill_offset);
+	 }
+      }
+
+      if (inst->dst.file == GRF &&
+	  inst->dst.reg == spill_reg) {
+	 inst->dst.reg = virtual_grf_alloc(size);
+
+	 /* Since we spill/unspill the whole thing even if we access
+	  * just a component, we may need to unspill before the
+	  * instruction we're spilling for.
+	  */
+	 if (size != 1 || inst->predicated) {
+	    emit_unspill(inst, inst->dst, spill_offset);
+	 }
+
+	 fs_reg spill_src = inst->dst;
+	 spill_src.reg_offset = 0;
+	 spill_src.abs = false;
+	 spill_src.negate = false;
+
+	 for (int chan = 0; chan < size; chan++) {
+	    fs_inst *spill_inst = new(mem_ctx) fs_inst(FS_OPCODE_SPILL,
+						       reg_null_f, spill_src);
+	    spill_src.reg_offset++;
+	    spill_inst->offset = spill_offset + chan * REG_SIZE;
+	    spill_inst->ir = inst->ir;
+	    spill_inst->annotation = inst->annotation;
+	    spill_inst->base_mrf = 14;
+	    spill_inst->mlen = 2; /* header, value */
+	    inst->insert_after(spill_inst);
+	 }
+      }
+   }
 }

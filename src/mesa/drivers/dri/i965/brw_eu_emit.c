@@ -1353,16 +1353,29 @@ void brw_math_16( struct brw_compile *p,
 
 
 /**
- * Write block of 16 dwords/floats to the data port Render Cache scratch buffer.
- * Scratch offset should be a multiple of 64.
- * Used for register spilling.
+ * Write a block of OWORDs (half a GRF each) from the scratch buffer,
+ * using a constant offset per channel.
+ *
+ * The offset must be aligned to oword size (16 bytes).  Used for
+ * register spilling.
  */
-void brw_dp_WRITE_16( struct brw_compile *p,
-		      struct brw_reg src,
-		      GLuint scratch_offset )
+void brw_oword_block_write(struct brw_compile *p,
+			   struct brw_reg mrf,
+			   int num_regs,
+			   GLuint offset)
 {
    struct intel_context *intel = &p->brw->intel;
-   GLuint msg_reg_nr = 1;
+   uint32_t msg_control;
+   int mlen;
+
+   if (num_regs == 1) {
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
+      mlen = 2;
+   } else {
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_4_OWORDS;
+      mlen = 3;
+   }
+
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
@@ -1371,20 +1384,24 @@ void brw_dp_WRITE_16( struct brw_compile *p,
       /* set message header global offset field (reg 0, element 2) */
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
-	      brw_imm_d(scratch_offset));
+	      brw_imm_d(offset));
 
       brw_pop_insn_state(p);
    }
 
    {
-      GLuint msg_length = 3;
       struct brw_reg dest;
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
       int send_commit_msg;
+      struct brw_reg src_header = retype(brw_vec8_grf(0, 0),
+					 BRW_REGISTER_TYPE_UW);
 
-      insn->header.predicate_control = 0; /* XXX */
-      insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditionalmod = msg_reg_nr;
+      if (insn->header.compression_control != BRW_COMPRESSION_NONE) {
+	 insn->header.compression_control = BRW_COMPRESSION_NONE;
+	 src_header = vec16(src_header);
+      }
+      assert(insn->header.predicate_control == BRW_PREDICATE_NONE);
+      insn->header.destreg__conditionalmod = mrf.nr;
 
       /* Until gen6, writes followed by reads from the same location
        * are not guaranteed to be ordered unless write_commit is set.
@@ -1400,19 +1417,19 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 	 dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 	 send_commit_msg = 0;
       } else {
-	 dest = brw_uw16_grf(0, 0);
+	 dest = src_header;
 	 send_commit_msg = 1;
       }
 
       brw_set_dest(insn, dest);
-      brw_set_src0(insn, src);
+      brw_set_src0(insn, src_header);
 
       brw_set_dp_write_message(p->brw,
 			       insn,
 			       255, /* binding table index (255=stateless) */
-			       BRW_DATAPORT_OWORD_BLOCK_4_OWORDS, /* msg_control */
+			       msg_control,
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
-			       msg_length,
+			       mlen,
 			       GL_TRUE, /* header_present */
 			       0, /* pixel scoreboard */
 			       send_commit_msg, /* response_length */
@@ -1423,15 +1440,32 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 
 
 /**
- * Read block of 16 dwords/floats from the data port Render Cache scratch buffer.
- * Scratch offset should be a multiple of 64.
- * Used for register spilling.
+ * Read a block of owords (half a GRF each) from the scratch buffer
+ * using a constant index per channel.
+ *
+ * Offset must be aligned to oword size (16 bytes).  Used for register
+ * spilling.
  */
-void brw_dp_READ_16( struct brw_compile *p,
-		      struct brw_reg dest,
-		      GLuint scratch_offset )
+void
+brw_oword_block_read(struct brw_compile *p,
+		     struct brw_reg dest,
+		     struct brw_reg mrf,
+		     int num_regs,
+		     GLuint offset)
 {
-   GLuint msg_reg_nr = 1;
+   uint32_t msg_control;
+   int rlen;
+
+   dest = retype(dest, BRW_REGISTER_TYPE_UW);
+
+   if (num_regs == 1) {
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
+      rlen = 1;
+   } else {
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_4_OWORDS;
+      rlen = 2;
+   }
+
    {
       brw_push_insn_state(p);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1440,29 +1474,29 @@ void brw_dp_READ_16( struct brw_compile *p,
       /* set message header global offset field (reg 0, element 2) */
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
-	      brw_imm_d(scratch_offset));
+	      brw_imm_d(offset));
 
       brw_pop_insn_state(p);
    }
 
    {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
-      insn->header.predicate_control = 0; /* XXX */
-      insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditionalmod = msg_reg_nr;
-  
+
+      assert(insn->header.predicate_control == 0);
+      insn->header.compression_control = BRW_COMPRESSION_NONE;
+      insn->header.destreg__conditionalmod = mrf.nr;
+
       brw_set_dest(insn, dest);	/* UW? */
       brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
       brw_set_dp_read_message(p->brw,
 			      insn,
 			      255, /* binding table index (255=stateless) */
-			      BRW_DATAPORT_OWORD_BLOCK_4_OWORDS,
+			      msg_control,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      1, /* target cache (render/scratch) */
 			      1, /* msg_length */
-			      2, /* response_length */
+			      rlen,
 			      0); /* eot */
    }
 }
