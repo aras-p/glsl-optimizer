@@ -45,6 +45,7 @@
 #include "miscstruct.h"
 #include "dixstruct.h"
 #include "xf86xv.h"
+#include "xorgVersion.h"
 #ifndef XSERVER_LIBPCIACCESS
 #error "libpciaccess needed"
 #endif
@@ -1182,6 +1183,8 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
 				stride,
 				ptr);
 
+#if (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 9, 99, 1, 0))
+
     /* This a hack to work around EnableDisableFBAccess setting the pointer
      * the real fix would be to replace pScrn->EnableDisableFBAccess hook
      * and set the rootPixmap->devPrivate.ptr to something valid before that.
@@ -1190,6 +1193,8 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
      * that, so our hook doesn't get called before the crash happens.
      */
     pScrn->pixmapPrivate.ptr = ptr;
+
+#endif
 
     return TRUE;
 
