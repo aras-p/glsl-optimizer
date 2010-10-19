@@ -1447,6 +1447,104 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
    }
 }
 
+/**
+ * Emit a gen6 IF statement with the comparison folded into the IF
+ * instruction.
+ */
+void
+fs_visitor::emit_if_gen6(ir_if *ir)
+{
+   ir_expression *expr = ir->condition->as_expression();
+
+   if (expr) {
+      fs_reg op[2];
+      fs_inst *inst;
+      fs_reg temp;
+
+      for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
+	 assert(expr->operands[i]->type->is_scalar());
+
+	 expr->operands[i]->accept(this);
+	 op[i] = this->result;
+      }
+
+      switch (expr->operation) {
+      case ir_unop_logic_not:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(1)));
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
+	 return;
+
+      case ir_binop_logic_xor:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+
+      case ir_binop_logic_or:
+	 temp = fs_reg(this, glsl_type::bool_type);
+	 emit(fs_inst(BRW_OPCODE_OR, temp, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, temp, fs_reg(0)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+
+      case ir_binop_logic_and:
+	 temp = fs_reg(this, glsl_type::bool_type);
+	 emit(fs_inst(BRW_OPCODE_AND, temp, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, temp, fs_reg(0)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+
+      case ir_unop_f2b:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_f, op[0], fs_reg(0)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+
+      case ir_unop_i2b:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], fs_reg(0)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+
+      case ir_binop_greater:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_G;
+	 return;
+      case ir_binop_gequal:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_GE;
+	 return;
+      case ir_binop_less:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+	 return;
+      case ir_binop_lequal:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_LE;
+	 return;
+      case ir_binop_equal:
+      case ir_binop_all_equal:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
+	 return;
+      case ir_binop_nequal:
+      case ir_binop_any_nequal:
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 return;
+      default:
+	 assert(!"not reached");
+	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], fs_reg(0)));
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 this->fail = true;
+	 return;
+      }
+      return;
+   }
+
+   ir->condition->accept(this);
+
+   fs_inst *inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, this->result, fs_reg(0)));
+   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+}
+
 void
 fs_visitor::visit(ir_if *ir)
 {
@@ -1457,10 +1555,14 @@ fs_visitor::visit(ir_if *ir)
     */
    this->base_ir = ir->condition;
 
-   emit_bool_to_cond_code(ir->condition);
+   if (intel->gen >= 6) {
+      emit_if_gen6(ir);
+   } else {
+      emit_bool_to_cond_code(ir->condition);
 
-   inst = emit(fs_inst(BRW_OPCODE_IF));
-   inst->predicated = true;
+      inst = emit(fs_inst(BRW_OPCODE_IF));
+      inst->predicated = true;
+   }
 
    foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -3066,10 +3168,16 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_IF:
 	 assert(if_stack_depth < 16);
-	 if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 if (inst->src[0].file != BAD_FILE) {
+	    assert(intel->gen >= 6);
+	    if_stack[if_stack_depth] = brw_IF_gen6(p, inst->conditional_mod, src[0], src[1]);
+	 } else {
+	    if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 }
 	 if_depth_in_loop[loop_stack_depth]++;
 	 if_stack_depth++;
 	 break;
+
       case BRW_OPCODE_ELSE:
 	 if_stack[if_stack_depth - 1] =
 	    brw_ELSE(p, if_stack[if_stack_depth - 1]);

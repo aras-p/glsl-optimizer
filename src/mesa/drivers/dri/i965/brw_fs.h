@@ -390,6 +390,7 @@ public:
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
    void emit_bool_to_cond_code(ir_rvalue *condition);
+   void emit_if_gen6(ir_if *ir);
 
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
