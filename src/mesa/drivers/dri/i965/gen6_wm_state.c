@@ -109,8 +109,6 @@ upload_wm_state(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    dw2 = dw4 = dw5 = dw6 = 0;
    dw4 |= GEN6_WM_STATISTICS_ENABLE;
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
@@ -167,8 +165,6 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(0); /* kernel 1 pointer */
    OUT_BATCH(0); /* kernel 2 pointer */
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_wm_state = {

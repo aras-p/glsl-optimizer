@@ -125,8 +125,6 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
    OUT_RELOC(brw->sf.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_RELOC(brw->cc.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_viewport_state = {

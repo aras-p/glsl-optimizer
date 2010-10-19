@@ -44,8 +44,6 @@ upload_gs_state(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    if (brw->gs.prog_bo) {
       BEGIN_BATCH(7);
       OUT_BATCH(CMD_3D_GS_STATE << 16 | (7 - 2));
