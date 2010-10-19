@@ -832,8 +832,8 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
    } else {
       brw_set_dest(insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
-      brw_set_src0(insn, brw_null_reg());
-      brw_set_src1(insn, brw_null_reg());
+      brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
    insn->header.execution_size = execute_size;
@@ -897,8 +897,8 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    } else {
       brw_set_dest(insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
-      brw_set_src0(insn, brw_null_reg());
-      brw_set_src1(insn, brw_null_reg());
+      brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
@@ -956,8 +956,8 @@ void brw_ENDIF(struct brw_compile *p,
 	 brw_set_src1(insn, brw_imm_d(0x0));
       } else {
 	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_W));
-	 brw_set_src0(insn, brw_null_reg());
-	 brw_set_src1(insn, brw_null_reg());
+	 brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+	 brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       }
 
       insn->header.compression_control = BRW_COMPRESSION_NONE;
