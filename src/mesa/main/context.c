@@ -592,11 +592,7 @@ _mesa_init_constants(struct gl_context *ctx)
 
    /* Shading language version */
    if (ctx->API == API_OPENGL) {
-#if FEATURE_ARB_shading_language_120
       ctx->Const.GLSLVersion = 120;
-#else
-      ctx->Const.GLSLVersion = 110;
-#endif
    }
    else if (ctx->API == API_OPENGLES2) {
       ctx->Const.GLSLVersion = 100;
