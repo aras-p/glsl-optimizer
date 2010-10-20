@@ -2287,7 +2287,7 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 static int tgsi_exp(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bc_alu_src r600_src[3];
+	struct r600_bc_alu_src r600_src[3] = { { 0 } };
 	struct r600_bc_alu alu;
 	int r;
 
