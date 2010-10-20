@@ -751,7 +751,7 @@ _swrast_DrawPixels( struct gl_context *ctx,
                                 type, unpack, pixels);
       break;
    default:
-      _mesa_problem(ctx, "unexpected format in _swrast_DrawPixels");
+      _mesa_problem(ctx, "unexpected format 0x%x in _swrast_DrawPixels", format);
       /* don't return yet, clean-up */
    }
 
