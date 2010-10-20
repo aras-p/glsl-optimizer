@@ -835,11 +835,11 @@ generate_viewport(struct draw_llvm *llvm,
       trans = vec4f_from_scalar(builder, LLVMBuildLoad(builder, trans_i, ""), "trans");
 
       /* divide by w */
-      out = LLVMBuildMul(builder, out, out3, "");
+      out = LLVMBuildFMul(builder, out, out3, "");
       /* mult by scale */
-      out = LLVMBuildMul(builder, out, scale, "");
+      out = LLVMBuildFMul(builder, out, scale, "");
       /* add translation */
-      out = LLVMBuildAdd(builder, out, trans, "");
+      out = LLVMBuildFAdd(builder, out, trans, "");
 
       /* store transformed outputs */
       LLVMBuildStore(builder, out, outputs[0][i]);
@@ -947,27 +947,27 @@ generate_clipmask(LLVMBuilderRef builder,
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_x");
          planes = vec4f_from_scalar(builder, plane1, "plane4_x");
-         sum = LLVMBuildMul(builder, planes, pos_x, "");
+         sum = LLVMBuildFMul(builder, planes, pos_x, "");
 
          indices[2] = LLVMConstInt(LLVMInt32Type(), 1, 0);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_y"); 
          planes = vec4f_from_scalar(builder, plane1, "plane4_y");
-         test = LLVMBuildMul(builder, planes, pos_y, "");
+         test = LLVMBuildFMul(builder, planes, pos_y, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
          
          indices[2] = LLVMConstInt(LLVMInt32Type(), 2, 0);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_z"); 
          planes = vec4f_from_scalar(builder, plane1, "plane4_z");
-         test = LLVMBuildMul(builder, planes, pos_z, "");
+         test = LLVMBuildFMul(builder, planes, pos_z, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
          indices[2] = LLVMConstInt(LLVMInt32Type(), 3, 0);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_w"); 
          planes = vec4f_from_scalar(builder, plane1, "plane4_w");
-         test = LLVMBuildMul(builder, planes, pos_w, "");
+         test = LLVMBuildFMul(builder, planes, pos_w, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
          test = lp_build_compare(builder, f32_type, PIPE_FUNC_GREATER, zero, sum);
