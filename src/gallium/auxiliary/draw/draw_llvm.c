@@ -732,6 +732,7 @@ store_clip(LLVMBuilderRef builder,
    LLVMValueRef clip_ptr0, clip_ptr1, clip_ptr2, clip_ptr3;
    LLVMValueRef clip0_ptr, clip1_ptr, clip2_ptr, clip3_ptr;    
    LLVMValueRef out0elem, out1elem, out2elem, out3elem;
+   int i;
 
    LLVMValueRef ind0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
    LLVMValueRef ind1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
@@ -756,7 +757,7 @@ store_clip(LLVMBuilderRef builder,
    clip_ptr2 = draw_jit_header_clip(builder, io2_ptr);
    clip_ptr3 = draw_jit_header_clip(builder, io3_ptr);
 
-   for (int i = 0; i<4; i++){
+   for (i = 0; i<4; i++){
       clip0_ptr = LLVMBuildGEP(builder, clip_ptr0,
                                indices, 2, ""); //x0
       clip1_ptr = LLVMBuildGEP(builder, clip_ptr1,
