@@ -503,7 +503,6 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 		   *reg,
 		   fs_reg(1)));
    } else {
-      fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
       struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
       /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
        * us front face
