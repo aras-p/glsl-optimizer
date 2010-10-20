@@ -421,7 +421,7 @@ generate_fetch(LLVMBuilderRef builder,
                             "instance_divisor");
    }
 
-   /* limit index to min(inex, vb_max_index) */
+   /* limit index to min(index, vb_max_index) */
    cond = LLVMBuildICmp(builder, LLVMIntULE, index, vb_max_index, "");
    index = LLVMBuildSelect(builder, cond, index, vb_max_index, "");
 
