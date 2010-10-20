@@ -155,6 +155,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
          chipset = "Intel(R) G41";
          break;
       case PCI_CHIP_B43_G:
+      case PCI_CHIP_B43_G1:
          chipset = "Intel(R) B43";
          break;
       case PCI_CHIP_ILD_G:
