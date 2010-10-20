@@ -96,7 +96,7 @@ struct draw_jit_context
 {
    const float *vs_constants;
    const float *gs_constants;
-
+   float (*planes) [12][4];
 
    struct draw_jit_texture textures[PIPE_MAX_VERTEX_SAMPLERS];
 };
@@ -108,18 +108,19 @@ struct draw_jit_context
 #define draw_jit_context_gs_constants(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 1, "gs_constants")
 
-#define DRAW_JIT_CTX_TEXTURES 2
+#define draw_jit_context_planes(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 2, "planes")
+
+#define DRAW_JIT_CTX_TEXTURES 3
 
 #define draw_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
-
-
 
 #define draw_jit_header_id(_builder, _ptr)              \
    lp_build_struct_get_ptr(_builder, _ptr, 0, "id")
 
 #define draw_jit_header_clip(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "clip")
+   lp_build_struct_get_ptr(_builder, _ptr, 1, "clip")
 
 #define draw_jit_header_data(_builder, _ptr)            \
    lp_build_struct_get_ptr(_builder, _ptr, 2, "data")
@@ -135,7 +136,7 @@ struct draw_jit_context
    lp_build_struct_get(_builder, _ptr, 2, "buffer_offset")
 
 
-typedef void
+typedef int
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
                       const char *vbuffers[PIPE_MAX_ATTRIBS],
@@ -146,7 +147,7 @@ typedef void
                       unsigned instance_id);
 
 
-typedef void
+typedef int
 (*draw_jit_vert_func_elts)(struct draw_jit_context *context,
                            struct vertex_header *io,
                            const char *vbuffers[PIPE_MAX_ATTRIBS],
@@ -158,8 +159,16 @@ typedef void
 
 struct draw_llvm_variant_key
 {
-   unsigned nr_vertex_elements:16;
-   unsigned nr_samplers:16;
+   unsigned nr_vertex_elements:8;
+   unsigned nr_samplers:8;
+   unsigned clip_xy:1;
+   unsigned clip_z:1;
+   unsigned clip_user:1;
+   unsigned clip_halfz:1;
+   unsigned bypass_viewport:1;
+   unsigned need_edgeflags:1;
+   unsigned nr_planes:4;
+   unsigned pad:6;
 
    /* Variable number of vertex elements:
     */
