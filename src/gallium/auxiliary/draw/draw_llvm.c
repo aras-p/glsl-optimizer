@@ -131,13 +131,14 @@ init_globals(struct draw_llvm *llvm)
 
    /* struct draw_jit_context */
    {
-      LLVMTypeRef elem_types[4];
+      LLVMTypeRef elem_types[5];
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* vs_constants */
       elem_types[1] = LLVMPointerType(LLVMFloatType(), 0); /* gs_constants */
       elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(LLVMFloatType(), 4), 12), 0); /* planes */
-      elem_types[3] = LLVMArrayType(texture_type,
+      elem_types[3] = LLVMPointerType(LLVMFloatType(), 0); /* viewport */
+      elem_types[4] = LLVMArrayType(texture_type,
                                     PIPE_MAX_VERTEX_SAMPLERS); /* textures */
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
@@ -784,44 +785,6 @@ store_clip(LLVMBuilderRef builder,
 
 }
 
-/*
- * Transforms the outputs for viewport mapping
- */
-static void
-generate_viewport(struct draw_llvm *llvm,
-                  LLVMBuilderRef builder,
-                  LLVMValueRef (*outputs)[NUM_CHANNELS])
-{
-   int i;
-   const float *scaleA = llvm->draw->viewport.scale;
-   const float *transA = llvm->draw->viewport.translate;
-   struct lp_type f32_type = lp_type_float_vec(32);
-   LLVMValueRef out3 = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/   
-   LLVMValueRef const1 = lp_build_const_vec(f32_type, 1.0);       /*1.0 1.0 1.0 1.0*/ 
-   
-   /* for 1/w convention*/
-   out3 = LLVMBuildFDiv(builder, const1, out3, "");
-   LLVMBuildStore(builder, out3, outputs[0][3]);
-  
-   /* Viewport Mapping */
-   for (i=0; i<3; i++){
-      LLVMValueRef out = LLVMBuildLoad(builder, outputs[0][i], ""); /*x0 x1 x2 x3*/
-      LLVMValueRef scale = lp_build_const_vec(f32_type, scaleA[i]); /*sx sx sx sx*/     
-      LLVMValueRef trans = lp_build_const_vec(f32_type, transA[i]); /*tx tx tx tx*/
-      
-      /* divide by w */
-      out = LLVMBuildMul(builder, out, out3, "");
-      /* mult by scale */
-      out = LLVMBuildMul(builder, out, scale, "");
-      /* add translation */
-      out = LLVMBuildAdd(builder, out, trans, "");
-
-      /* store transformed outputs */
-      LLVMBuildStore(builder, out, outputs[0][i]);
-   }
-   
-}
-
 /* Equivalent of _mm_set1_ps(a)
  */
 static LLVMValueRef vec4f_from_scalar(LLVMBuilderRef bld,
@@ -838,6 +801,57 @@ static LLVMValueRef vec4f_from_scalar(LLVMBuilderRef bld,
 
    return res;
 }
+
+/*
+ * Transforms the outputs for viewport mapping
+ */
+static void
+generate_viewport(struct draw_llvm *llvm,
+                  LLVMBuilderRef builder,
+                  LLVMValueRef (*outputs)[NUM_CHANNELS],
+                  LLVMValueRef context_ptr)
+{
+   int i;
+   struct lp_type f32_type = lp_type_float_vec(32);
+   LLVMValueRef out3 = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/   
+   LLVMValueRef const1 = lp_build_const_vec(f32_type, 1.0);       /*1.0 1.0 1.0 1.0*/ 
+   LLVMValueRef vp_ptr = draw_jit_context_viewport(builder, context_ptr);
+
+   /* for 1/w convention*/
+   out3 = LLVMBuildFDiv(builder, const1, out3, "");
+   LLVMBuildStore(builder, out3, outputs[0][3]);
+  
+   /* Viewport Mapping */
+   for (i=0; i<3; i++){
+      LLVMValueRef out = LLVMBuildLoad(builder, outputs[0][i], ""); /*x0 x1 x2 x3*/
+      LLVMValueRef scale;
+      LLVMValueRef trans;
+      LLVMValueRef scale_i;
+      LLVMValueRef trans_i;
+      LLVMValueRef index;
+      
+      index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      scale_i = LLVMBuildGEP(builder, vp_ptr, &index, 1, "");
+
+      index = LLVMConstInt(LLVMInt32Type(), i+4, 0);
+      trans_i = LLVMBuildGEP(builder, vp_ptr, &index, 1, "");
+
+      scale = vec4f_from_scalar(builder, LLVMBuildLoad(builder, scale_i, ""), "scale");
+      trans = vec4f_from_scalar(builder, LLVMBuildLoad(builder, trans_i, ""), "trans");
+
+      /* divide by w */
+      out = LLVMBuildMul(builder, out, out3, "");
+      /* mult by scale */
+      out = LLVMBuildMul(builder, out, scale, "");
+      /* add translation */
+      out = LLVMBuildAdd(builder, out, trans, "");
+
+      /* store transformed outputs */
+      LLVMBuildStore(builder, out, outputs[0][i]);
+   }
+   
+}
+
 
 /*
  * Returns clipmask as 4xi32 bitmask for the 4 vertices
@@ -1143,7 +1157,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       
       /* do viewport mapping */
       if (!bypass_viewport){
-         generate_viewport(llvm, builder, outputs);
+         generate_viewport(llvm, builder, outputs, context_ptr);
       }
 
       /* store clipmask in vertex header and positions in data */
@@ -1354,7 +1368,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
       
       /* do viewport mapping */
       if (!bypass_viewport){
-         generate_viewport(llvm, builder, outputs);
+         generate_viewport(llvm, builder, outputs, context_ptr);
       }
 
       /* store clipmask in vertex header, 

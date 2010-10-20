@@ -97,6 +97,7 @@ struct draw_jit_context
    const float *vs_constants;
    const float *gs_constants;
    float (*planes) [12][4];
+   float *viewport;
 
    struct draw_jit_texture textures[PIPE_MAX_VERTEX_SAMPLERS];
 };
@@ -111,7 +112,10 @@ struct draw_jit_context
 #define draw_jit_context_planes(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 2, "planes")
 
-#define DRAW_JIT_CTX_TEXTURES 3
+#define draw_jit_context_viewport(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 3, "viewport")
+
+#define DRAW_JIT_CTX_TEXTURES 4
 
 #define draw_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
