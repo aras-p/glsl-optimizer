@@ -1785,11 +1785,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	    string = "output";
 	 }
 	 break;
-
-      case ir_shader:
-	 assert(!"Should not get here.");
-	 break;
-      }
+      };
 
       if (fail) {
 	 _mesa_glsl_error(loc, state,

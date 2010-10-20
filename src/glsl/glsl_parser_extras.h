@@ -37,8 +37,7 @@
 enum _mesa_glsl_parser_targets {
    vertex_shader,
    geometry_shader,
-   fragment_shader,
-   ir_shader
+   fragment_shader
 };
 
 struct gl_context;

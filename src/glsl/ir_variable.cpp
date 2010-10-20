@@ -504,9 +504,5 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
    case fragment_shader:
       initialize_fs_variables(instructions, state);
       break;
-   case ir_shader:
-      fprintf(stderr, "ir reader has no builtin variables");
-      exit(1);
-      break;
    }
 }
