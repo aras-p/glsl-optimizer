@@ -1290,19 +1290,20 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 
 
 /**
- * Demote shader outputs that are not read to being just plain global variables
+ * Demote shader inputs and outputs that are not used in other stages
  */
 void
-demote_unread_shader_outputs(gl_shader *sh)
+demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
 {
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != ir_var_out))
+      if ((var == NULL) || (var->mode != int(mode)))
 	 continue;
 
-      /* An 'out' variable is only really a shader output if its value is read
-       * by the following stage.
+      /* A shader 'in' or 'out' variable is only really an input or output if
+       * its value is used by other shader stages.  This will cause the variable
+       * to have a location assigned.
        */
       if (var->location == -1) {
 	 var->mode = ir_var_auto;
@@ -1367,8 +1368,6 @@ assign_varying_locations(struct gl_shader_program *prog,
 	 input_index += slots;
       }
    }
-
-   demote_unread_shader_outputs(producer);
 
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
@@ -1558,10 +1557,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 prog->LinkStatus = false;
 	 goto done;
       }
-
-      if ((prog->_LinkedShaders[MESA_SHADER_GEOMETRY] == NULL)
-	  && (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL))
-	 demote_unread_shader_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX]);
    }
 
    unsigned prev;
@@ -1578,6 +1573,25 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 			       prog->_LinkedShaders[prev],
 			       prog->_LinkedShaders[i]);
       prev = i;
+   }
+
+   if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
+      demote_shader_inputs_and_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX],
+				       ir_var_out);
+   }
+
+   if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
+      gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
+
+      demote_shader_inputs_and_outputs(sh, ir_var_in);
+      demote_shader_inputs_and_outputs(sh, ir_var_inout);
+      demote_shader_inputs_and_outputs(sh, ir_var_out);
+   }
+
+   if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
+      gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
+
+      demote_shader_inputs_and_outputs(sh, ir_var_in);
    }
 
    /* FINISHME: Assign fragment shader output locations. */
