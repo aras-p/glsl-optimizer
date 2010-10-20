@@ -274,13 +274,7 @@ draw_llvm_create(struct draw_context *draw)
          LLVMAddConstantPropagationPass(llvm->pass);
       }
 
-      if(util_cpu_caps.has_sse4_1) {
-         /* FIXME: There is a bug in this pass, whereby the combination of fptosi
-          * and sitofp (necessary for trunc/floor/ceil/round implementation)
-          * somehow becomes invalid code.
-          */
-         LLVMAddInstructionCombiningPass(llvm->pass);
-      }
+      LLVMAddInstructionCombiningPass(llvm->pass);
       LLVMAddGVNPass(llvm->pass);
    } else {
       /* We need at least this pass to prevent the backends to fail in
