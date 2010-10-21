@@ -268,7 +268,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
    LLVMValueRef i32_c8;
    LLVMValueRef width_vec, height_vec, depth_vec;
-   LLVMValueRef s_ipart, t_ipart, r_ipart;
+   LLVMValueRef s_ipart, t_ipart = NULL, r_ipart = NULL;
    LLVMValueRef x_stride;
    LLVMValueRef x_offset, offset;
    LLVMValueRef x_subcoord, y_subcoord, z_subcoord;
