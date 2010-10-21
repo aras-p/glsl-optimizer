@@ -2107,6 +2107,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*2+1] = FLOAT_TO_UBYTE(rgba[i][ACOMP]);
                   }
                   break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
+                     dst[i*2+1] = FLOAT_TO_UBYTE(rgba[i][GCOMP]);
+                  }
+                  break;
                case GL_RGB:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
@@ -2185,6 +2191,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                   for (i=0;i<n;i++) {
                      dst[i*2+0] = FLOAT_TO_BYTE(luminance[i]);
                      dst[i*2+1] = FLOAT_TO_BYTE(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = FLOAT_TO_BYTE(rgba[i][RCOMP]);
+                     dst[i*2+1] = FLOAT_TO_BYTE(rgba[i][GCOMP]);
                   }
                   break;
                case GL_RGB:
@@ -2267,6 +2279,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      CLAMPED_FLOAT_TO_USHORT(dst[i*2+1], rgba[i][ACOMP]);
                   }
                   break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*2+0], rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*2+1], rgba[i][GCOMP]);
+                  }
+                  break;
                case GL_RGB:
                   for (i=0;i<n;i++) {
                      CLAMPED_FLOAT_TO_USHORT(dst[i*3+0], rgba[i][RCOMP]);
@@ -2345,6 +2363,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                   for (i=0;i<n;i++) {
                      dst[i*2+0] = FLOAT_TO_SHORT(luminance[i]);
                      dst[i*2+1] = FLOAT_TO_SHORT(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = FLOAT_TO_SHORT(rgba[i][RCOMP]);
+                     dst[i*2+1] = FLOAT_TO_SHORT(rgba[i][GCOMP]);
                   }
                   break;
                case GL_RGB:
@@ -2427,6 +2451,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*2+1] = FLOAT_TO_UINT(rgba[i][ACOMP]);
                   }
                   break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = FLOAT_TO_UINT(rgba[i][RCOMP]);
+                     dst[i*2+1] = FLOAT_TO_UINT(rgba[i][GCOMP]);
+                  }
+                  break;
                case GL_RGB:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = FLOAT_TO_UINT(rgba[i][RCOMP]);
@@ -2505,6 +2535,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                   for (i=0;i<n;i++) {
                      dst[i*2+0] = FLOAT_TO_INT(luminance[i]);
                      dst[i*2+1] = FLOAT_TO_INT(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = FLOAT_TO_INT(rgba[i][RCOMP]);
+                     dst[i*2+1] = FLOAT_TO_INT(rgba[i][GCOMP]);
                   }
                   break;
                case GL_RGB:
@@ -2587,6 +2623,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*2+1] = rgba[i][ACOMP];
                   }
                   break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = rgba[i][RCOMP];
+                     dst[i*2+1] = rgba[i][GCOMP];
+                  }
+                  break;
                case GL_RGB:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = rgba[i][RCOMP];
@@ -2665,6 +2707,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                   for (i=0;i<n;i++) {
                      dst[i*2+0] = _mesa_float_to_half(luminance[i]);
                      dst[i*2+1] = _mesa_float_to_half(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_RG:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = _mesa_float_to_half(rgba[i][RCOMP]);
+                     dst[i*2+1] = _mesa_float_to_half(rgba[i][GCOMP]);
                   }
                   break;
                case GL_RGB:
