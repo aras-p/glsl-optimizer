@@ -25,6 +25,9 @@
 
 #include "util/u_transfer.h"
 
+/* flag to indicate a resource is to be used as a transfer so should not be tiled */
+#define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
+
 /* Texture transfer. */
 struct r600_transfer {
 	/* Base class. */

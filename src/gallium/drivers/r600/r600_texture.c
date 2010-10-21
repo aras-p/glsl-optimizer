@@ -361,7 +361,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.nr_samples = 0;
 	resource.usage = PIPE_USAGE_DYNAMIC;
 	resource.bind = 0;
-	resource.flags = 0;
+	resource.flags = R600_RESOURCE_FLAG_TRANSFER;
 
 	resource.bind |= PIPE_BIND_DEPTH_STENCIL;
 
@@ -412,7 +412,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		resource.nr_samples = 0;
 		resource.usage = PIPE_USAGE_DYNAMIC;
 		resource.bind = 0;
-		resource.flags = 0;
+		resource.flags = R600_RESOURCE_FLAG_TRANSFER;
 		/* For texture reading, the temporary (detiled) texture is used as
 		 * a render target when blitting from a tiled texture. */
 		if (usage & PIPE_TRANSFER_READ) {
