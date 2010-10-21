@@ -96,13 +96,46 @@ static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
 					 enum pipe_format format,
 					 unsigned array_mode)
 {
-	return 64;
+	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	unsigned pixsize = util_format_get_blocksize(format);
+	int p_align;
+
+	switch(array_mode) {
+	case V_038000_ARRAY_1D_TILED_THIN1:
+		p_align = MAX2(8,
+			       ((rscreen->tiling_info->group_bytes / 8 / pixsize)));
+		break;
+	case V_038000_ARRAY_2D_TILED_THIN1:
+		p_align = MAX2(rscreen->tiling_info->num_banks,
+			       (((rscreen->tiling_info->group_bytes / 8 / pixsize)) *
+				rscreen->tiling_info->num_banks));
+		break;
+	case 0:
+	default:
+		p_align = 64;
+		break;
+	}
+	return p_align;
 }
 
 static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 					  unsigned array_mode)
 {
-	return 1;
+	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	int h_align;
+
+	switch (array_mode) {
+	case V_038000_ARRAY_2D_TILED_THIN1:
+		h_align = rscreen->tiling_info->num_channels * 8;
+		break;
+	case V_038000_ARRAY_1D_TILED_THIN1:
+		h_align = 8;
+		break;
+	default:
+		h_align = 1;
+		break;
+	}
+	return h_align;
 }
 
 static unsigned mip_minify(unsigned size, unsigned level)
@@ -135,8 +168,6 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 	stride = util_format_get_stride(ptex->format, width);
 	if (chipc == EVERGREEN)
 		stride = align(stride, 512);
-	else
-		stride = align(stride, 256);
 	return stride;
 }
 
@@ -168,7 +199,31 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level, unsigned array_mode)
 {
-	rtex->array_mode[level] = array_mode;
+	struct pipe_resource *ptex = &rtex->resource.base.b;
+
+	switch (array_mode) {
+	case V_0280A0_ARRAY_LINEAR_GENERAL:
+	case V_0280A0_ARRAY_LINEAR_ALIGNED:
+	case V_0280A0_ARRAY_1D_TILED_THIN1:
+	default:
+		rtex->array_mode[level] = array_mode;
+		break;
+	case V_0280A0_ARRAY_2D_TILED_THIN1:
+	{
+		unsigned w, h, tile_height, tile_width;
+
+		tile_height = r600_get_height_alignment(screen, array_mode);
+		tile_width = r600_get_pixel_alignment(screen, ptex->format, array_mode);
+
+		w = mip_minify(ptex->width0, level);
+		h = mip_minify(ptex->height0, level);
+		if (w < tile_width || h < tile_height)
+			rtex->array_mode[level] = V_0280A0_ARRAY_1D_TILED_THIN1;
+		else
+			rtex->array_mode[level] = array_mode;
+	}
+	break;
+	}
 }
 
 static void r600_setup_miptree(struct pipe_screen *screen,
