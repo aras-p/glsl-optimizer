@@ -9,10 +9,10 @@
 #include "program.h"
 
 extern "C" struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
@@ -27,7 +27,7 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 
 
 static void
-initialize_mesa_context(GLcontext *ctx, gl_api api)
+initialize_mesa_context(struct gl_context *ctx, gl_api api)
 {
    memset(ctx, 0, sizeof(*ctx));
 
@@ -70,7 +70,7 @@ struct glslopt_ctx {
 	~glslopt_ctx() {
 		talloc_free (mem_ctx);
 	}
-	GLcontext mesa_ctx;
+	struct gl_context mesa_ctx;
 	void* mem_ctx;
 };
 

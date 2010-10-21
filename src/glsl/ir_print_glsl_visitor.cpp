@@ -347,6 +347,7 @@ static const char *const operator_glsl_strs[] = {
 	"ceil",
 	"floor",
 	"fract",
+	"roundEven",
 	"sin",
 	"cos",
 	"dFdx",
