@@ -82,9 +82,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* Multi-line comments */
 "/*"                    { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\n]*
-<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; }
+<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; return NEWLINE; }
 <COMMENT>"*"+[^*/\n]*
-<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; }
+<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; return NEWLINE; }
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
 	if (yyextra->space_tokens)
