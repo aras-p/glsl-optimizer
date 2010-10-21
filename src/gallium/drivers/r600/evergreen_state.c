@@ -377,19 +377,6 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static void *evergreen_create_vertex_elements(struct pipe_context *ctx,
-				unsigned count,
-				const struct pipe_vertex_element *elements)
-{
-	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
-
-	assert(count < 32);
-	v->count = count;
-	v->refcount = 1;
-	memcpy(v->elements, elements, count * sizeof(struct pipe_vertex_element));
-	return v;
-}
-
 static void evergreen_sampler_view_destroy(struct pipe_context *ctx,
 				      struct pipe_sampler_view *state)
 {
@@ -935,40 +922,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
-static void evergreen_set_index_buffer(struct pipe_context *ctx,
-				  const struct pipe_index_buffer *ib)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	if (ib) {
-		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
-		memcpy(&rctx->index_buffer, ib, sizeof(rctx->index_buffer));
-	} else {
-		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
-		memset(&rctx->index_buffer, 0, sizeof(rctx->index_buffer));
-	}
-
-	/* TODO make this more like a state */
-}
-
-static void evergreen_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-					const struct pipe_vertex_buffer *buffers)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	for (int i = 0; i < rctx->nvertex_buffer; i++) {
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
-	}
-	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
-	for (int i = 0; i < count; i++) {
-		rctx->vertex_buffer[i].buffer = NULL;
-		if (r600_buffer_is_user_buffer(buffers[i].buffer))
-			rctx->any_user_vbs = TRUE;
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
-	}
-	rctx->nvertex_buffer = count;
-}
-
 static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					struct pipe_resource *buffer)
 {
@@ -1065,7 +1018,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.create_rasterizer_state = evergreen_create_rs_state;
 	rctx->context.create_sampler_state = evergreen_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
-	rctx->context.create_vertex_elements_state = evergreen_create_vertex_elements;
+	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.create_vs_state = evergreen_create_shader_state;
 	rctx->context.bind_blend_state = evergreen_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = evergreen_bind_state;
@@ -1091,8 +1044,8 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
 	rctx->context.set_scissor_state = evergreen_set_scissor_state;
 	rctx->context.set_stencil_ref = evergreen_set_stencil_ref;
-	rctx->context.set_vertex_buffers = evergreen_set_vertex_buffers;
-	rctx->context.set_index_buffer = evergreen_set_index_buffer;
+	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
+	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = evergreen_sampler_view_destroy;
@@ -1378,6 +1331,12 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 	struct r600_drawl draw;
+	boolean translate = FALSE;
+
+	if (rctx->vertex_elements->incompatible_layout) {
+		r600_begin_vertex_translate(rctx);
+		translate = TRUE;
+	}
 
 	if (rctx->any_user_vbs) {
 		r600_upload_user_buffers(rctx);
@@ -1454,11 +1413,11 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			vertex_buffer->buffer_offset +
 			r600_bo_offset(rbuffer->bo);
 
-		format = r600_translate_vertex_data_type(rctx->vertex_elements->elements[i].src_format);
+		format = r600_translate_vertex_data_type(rctx->vertex_elements->hw_format[i]);
 
 		word2 = format | S_030008_STRIDE(vertex_buffer->stride);
 
-		word3 = r600_translate_vertex_data_swizzle(rctx->vertex_elements->elements[i].src_format);
+		word3 = r600_translate_vertex_data_swizzle(rctx->vertex_elements->hw_format[i]);
 
 		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
@@ -1538,6 +1497,9 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rdraw.indices_bo_offset = draw.index_buffer_offset;
 	}
 	evergreen_context_draw(&rctx->ctx, &rdraw);
+
+	if (translate)
+		r600_end_vertex_translate(rctx);
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
 }

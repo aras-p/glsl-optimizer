@@ -216,10 +216,6 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 void r600_init_state_functions(struct r600_pipe_context *rctx);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void r600_init_config(struct r600_pipe_context *rctx);
-void r600_translate_index_buffer(struct r600_pipe_context *r600,
-					struct pipe_resource **index_buffer,
-					unsigned *index_size,
-					unsigned *start, unsigned count);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
@@ -230,6 +226,22 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 				  const unsigned char *swizzle_view, 
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
 
+/* r600_translate.c */
+void r600_begin_vertex_translate(struct r600_pipe_context *rctx);
+void r600_end_vertex_translate(struct r600_pipe_context *rctx);
+void r600_translate_index_buffer(struct r600_pipe_context *r600,
+				 struct pipe_resource **index_buffer,
+				 unsigned *index_size,
+				 unsigned *start, unsigned count);
+
+/* r600_state_common.c */
+void r600_set_index_buffer(struct pipe_context *ctx,
+			   const struct pipe_index_buffer *ib);
+void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
+			     const struct pipe_vertex_buffer *buffers);
+void *r600_create_vertex_elements(struct pipe_context *ctx,
+				  unsigned count,
+				  const struct pipe_vertex_element *elements);
 /*
  * common helpers
  */
