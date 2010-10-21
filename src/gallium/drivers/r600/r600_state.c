@@ -658,7 +658,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	}
 	pitch = align(tmp->pitch_in_pixels[0], 8);
 	if (tmp->tiled) {
-		array_mode = tmp->array_mode;
+		array_mode = tmp->array_mode[0];
 		tile_type = tmp->tile_type;
 	}
 
@@ -974,7 +974,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
-		S_0280A0_ARRAY_MODE(rtex->array_mode) |
+		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
@@ -1016,14 +1016,15 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	if (state->zsbuf == NULL)
 		return;
 
+	level = state->zsbuf->level;
+
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tiled = 1;
-	rtex->array_mode = 2;
+	rtex->array_mode[level] = 2;
 	rtex->tile_type = 1;
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
-	level = state->zsbuf->level;
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
@@ -1035,7 +1036,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028010_DB_DEPTH_INFO,
-				S_028010_ARRAY_MODE(rtex->array_mode) | S_028010_FORMAT(format),
+				S_028010_ARRAY_MODE(rtex->array_mode[level]) | S_028010_FORMAT(format),
 				0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT,
 				(state->zsbuf->height / 8) - 1, 0xFFFFFFFF, NULL);

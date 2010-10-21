@@ -807,14 +807,15 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	if (state->zsbuf == NULL)
 		return;
 
+	level = state->zsbuf->level;
+
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tiled = 1;
-	rtex->array_mode = 2;
+	rtex->array_mode[level] = 2;
 	rtex->tile_type = 1;
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
-	level = state->zsbuf->level;
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
@@ -840,7 +841,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 				S_028044_FORMAT(stencil_format), 0xFFFFFFFF, rbuffer->bo);
 
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
-				S_028040_ARRAY_MODE(rtex->array_mode) | S_028040_FORMAT(format),
+				S_028040_ARRAY_MODE(rtex->array_mode[level]) | S_028040_FORMAT(format),
 				0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),

@@ -142,8 +142,16 @@ static unsigned pitch_to_width(enum pipe_format format,
             util_format_get_blockwidth(format);
 }
 
+static void r600_texture_set_array_mode(struct pipe_screen *screen,
+					struct r600_resource_texture *rtex,
+					unsigned level, unsigned array_mode)
+{
+	rtex->array_mode[level] = array_mode;
+}
+
 static void r600_setup_miptree(struct pipe_screen *screen,
-			       struct r600_resource_texture *rtex)
+			       struct r600_resource_texture *rtex,
+			       unsigned array_mode)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
@@ -152,6 +160,8 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	unsigned nblocksy;
 
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
+		r600_texture_set_array_mode(screen, rtex, i, array_mode);
+
 		pitch = r600_texture_get_stride(screen, rtex, i);
 		nblocksy = r600_texture_get_nblocksy(screen, rtex, i);
 
@@ -198,11 +208,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->bo = bo;
 	resource->domain = r600_domain_from_usage(resource->base.b.bind);
 	rtex->pitch_override = pitch_in_bytes_override;
-	rtex->array_mode = array_mode;
 
 	if (array_mode)
 		rtex->tiled = 1;
-	r600_setup_miptree(screen, rtex);
+	r600_setup_miptree(screen, rtex, array_mode);
 
 	resource->size = rtex->size;
 
