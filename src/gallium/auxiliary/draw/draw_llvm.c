@@ -46,7 +46,6 @@
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
 
-#include "util/u_cpu_detect.h"
 #include "util/u_math.h"
 #include "util/u_pointer.h"
 #include "util/u_string.h"
