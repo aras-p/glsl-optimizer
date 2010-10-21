@@ -547,6 +547,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       }
       return PIPE_FORMAT_NONE;
 
+   case GL_COMPRESSED_RED:
+   case GL_COMPRESSED_RG:
    case GL_COMPRESSED_RGB:
       /* can only sample from compressed formats */
       if (bindings & ~PIPE_BIND_SAMPLER_VIEW)
