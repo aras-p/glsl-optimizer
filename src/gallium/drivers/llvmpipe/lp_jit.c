@@ -36,7 +36,6 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include "util/u_memory.h"
-#include "util/u_cpu_detect.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_debug.h"
 #include "lp_screen.h"
