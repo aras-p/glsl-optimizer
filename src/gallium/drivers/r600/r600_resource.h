@@ -124,4 +124,9 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
 
+struct r600_surface {
+	struct pipe_surface base;
+	unsigned aligned_height;
+};
+
 #endif

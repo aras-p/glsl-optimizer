@@ -740,6 +740,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
+	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->level;
 	unsigned pitch, slice;
 	unsigned color_info;
@@ -747,6 +748,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 
+	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
 	bo[0] = rbuffer->bo;
@@ -754,7 +756,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	bo[2] = rbuffer->bo;
 
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * state->cbufs[cb]->height / 64 - 1;
+	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -801,6 +803,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
+	struct r600_surface *surf;
 	unsigned level;
 	unsigned pitch, slice, format, stencil_format;
 
@@ -809,6 +812,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	level = state->zsbuf->level;
 
+	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tiled = 1;
 	rtex->array_mode[level] = 2;
@@ -817,7 +821,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	rbuffer = &rtex->resource;
 
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * state->zsbuf->height / 64 - 1;
+	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
 
@@ -829,7 +833,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	if (stencil_format) {
 		uint32_t stencil_offset;
 
-		stencil_offset = ((state->zsbuf->height * rtex->pitch_in_bytes[level]) + 255) & ~255;
+		stencil_offset = ((surf->aligned_height * rtex->pitch_in_bytes[level]) + 255) & ~255;
 		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
 					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,

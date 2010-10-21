@@ -279,24 +279,27 @@ static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
 						unsigned zslice, unsigned flags)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
-	struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
-	unsigned offset;
+	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
+	unsigned offset, tile_height;
 
 	if (surface == NULL)
 		return NULL;
 	offset = r600_texture_get_offset(rtex, level, zslice, face);
-	pipe_reference_init(&surface->reference, 1);
-	pipe_resource_reference(&surface->texture, texture);
-	surface->format = texture->format;
-	surface->width = mip_minify(texture->width0, level);
-	surface->height = mip_minify(texture->height0, level);
-	surface->offset = offset;
-	surface->usage = flags;
-	surface->zslice = zslice;
-	surface->texture = texture;
-	surface->face = face;
-	surface->level = level;
-	return surface;
+	pipe_reference_init(&surface->base.reference, 1);
+	pipe_resource_reference(&surface->base.texture, texture);
+	surface->base.format = texture->format;
+	surface->base.width = mip_minify(texture->width0, level);
+	surface->base.height = mip_minify(texture->height0, level);
+	surface->base.offset = offset;
+	surface->base.usage = flags;
+	surface->base.zslice = zslice;
+	surface->base.texture = texture;
+	surface->base.face = face;
+	surface->base.level = level;
+
+	tile_height = r600_get_height_alignment(screen, rtex->array_mode[level]);
+	surface->aligned_height = align(surface->base.height, tile_height);
+	return &surface->base;
 }
 
 static void r600_tex_surface_destroy(struct pipe_surface *surface)

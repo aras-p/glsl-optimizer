@@ -950,6 +950,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
+	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->level;
 	unsigned pitch, slice;
 	unsigned color_info;
@@ -957,6 +958,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 
+	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
 	bo[0] = rbuffer->bo;
@@ -964,7 +966,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	bo[2] = rbuffer->bo;
 
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * state->cbufs[cb]->height / 64 - 1;
+	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -1010,6 +1012,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
+	struct r600_surface *surf;
 	unsigned level;
 	unsigned pitch, slice, format;
 
@@ -1018,6 +1021,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	level = state->zsbuf->level;
 
+	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tiled = 1;
 	rtex->array_mode[level] = 2;
@@ -1026,7 +1030,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	rbuffer = &rtex->resource;
 
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * state->zsbuf->height / 64 - 1;
+	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
@@ -1039,7 +1043,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				S_028010_ARRAY_MODE(rtex->array_mode[level]) | S_028010_FORMAT(format),
 				0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT,
-				(state->zsbuf->height / 8) - 1, 0xFFFFFFFF, NULL);
+				(surf->aligned_height / 8) - 1, 0xFFFFFFFF, NULL);
 }
 
 static void r600_set_framebuffer_state(struct pipe_context *ctx,
