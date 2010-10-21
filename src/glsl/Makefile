@@ -77,6 +77,10 @@ CXX_SOURCES = \
 	loop_unroll.cpp \
 	lower_noise.cpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	lower_texture_projection.cpp \
+>>>>>>> upstream/master
 =======
 	lower_texture_projection.cpp \
 >>>>>>> upstream/master

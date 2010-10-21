@@ -123,12 +123,16 @@ if __name__ == "__main__":
 #include "ast.h"
 
 extern "C" struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 gl_shader *
 read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
 {
+<<<<<<< HEAD
    GLcontext fakeCtx;
+=======
+   struct gl_context fakeCtx;
+>>>>>>> upstream/master
    fakeCtx.API = API_OPENGL;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =

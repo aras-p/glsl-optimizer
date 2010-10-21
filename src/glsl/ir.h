@@ -709,6 +709,7 @@ enum ir_expression_operation {
    ir_unop_ceil,
    ir_unop_floor,
    ir_unop_fract,
+   ir_unop_round_even,
    /*@}*/
 
    /**

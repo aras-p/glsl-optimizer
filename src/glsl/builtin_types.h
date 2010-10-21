@@ -251,6 +251,8 @@ const glsl_type glsl_type::builtin_130_types[] = {
 };
 
 const glsl_type *const glsl_type::uint_type = & builtin_130_types[0];
+const glsl_type *const glsl_type::uvec2_type = & builtin_130_types[1];
+const glsl_type *const glsl_type::uvec3_type = & builtin_130_types[2];
 const glsl_type *const glsl_type::uvec4_type = & builtin_130_types[3];
 /*@}*/
 

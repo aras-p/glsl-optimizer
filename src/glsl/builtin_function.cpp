@@ -30,12 +30,12 @@
 #include "ast.h"
 
 extern "C" struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 gl_shader *
 read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
 {
-   GLcontext fakeCtx;
+   struct gl_context fakeCtx;
    fakeCtx.API = API_OPENGL;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
@@ -1857,6 +1857,50 @@ static const char *builtin_mod =
    "))\n"
    ""
 ;
+static const char *builtin_modf =
+   "((function modf\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in)  float x)\n"
+   "       (declare (out) float i))\n"
+   "     ((declare () float t)\n"
+   "      (assign (constant bool (1)) (x) (var_ref t)\n"
+   "                                      (expression float trunc (var_ref x)))\n"
+   "      (assign (constant bool (1)) (x) (var_ref i) (var_ref t))\n"
+   "      (return (expression float - (var_ref x) (var_ref t)))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in)  vec2 x)\n"
+   "       (declare (out) vec2 i))\n"
+   "     ((declare () vec2 t)\n"
+   "      (assign (constant bool (1)) (xy) (var_ref t)\n"
+   "                                       (expression vec2 trunc (var_ref x)))\n"
+   "      (assign (constant bool (1)) (xy) (var_ref i) (var_ref t))\n"
+   "      (return (expression vec2 - (var_ref x) (var_ref t)))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in)  vec3 x)\n"
+   "       (declare (out) vec3 i))\n"
+   "     ((declare () vec3 t)\n"
+   "      (assign (constant bool (1)) (xyz) (var_ref t)\n"
+   "                                        (expression vec3 trunc (var_ref x)))\n"
+   "      (assign (constant bool (1)) (xyz) (var_ref i) (var_ref t))\n"
+   "      (return (expression vec3 - (var_ref x) (var_ref t)))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in)  vec4 x)\n"
+   "       (declare (out) vec4 i))\n"
+   "     ((declare () vec4 t)\n"
+   "      (assign (constant bool (1)) (xyzw) (var_ref t)\n"
+   "                                         (expression vec4 trunc (var_ref x)))\n"
+   "      (assign (constant bool (1)) (xyzw) (var_ref i) (var_ref t))\n"
+   "      (return (expression vec4 - (var_ref x) (var_ref t)))))\n"
+   "))\n"
+   ""
+;
 static const char *builtin_noise1 =
    "((function noise1\n"
    "   (signature float\n"
@@ -2547,6 +2591,54 @@ static const char *builtin_refract =
    "		         (expression float sqrt (var_ref k)))\n"
    "		       (var_ref n))))))))\n"
    "\n"
+   "))\n"
+   ""
+;
+static const char *builtin_round =
+   "((function round\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float arg0))\n"
+   "     ((return (expression float round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 arg0))\n"
+   "     ((return (expression vec2 round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 arg0))\n"
+   "     ((return (expression vec3 round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 arg0))\n"
+   "     ((return (expression vec4 round_even (var_ref arg0)))))\n"
+   "))\n"
+   ""
+;
+static const char *builtin_roundEven =
+   "((function roundEven\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float arg0))\n"
+   "     ((return (expression float round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 arg0))\n"
+   "     ((return (expression vec2 round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 arg0))\n"
+   "     ((return (expression vec3 round_even (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 arg0))\n"
+   "     ((return (expression vec4 round_even (var_ref arg0)))))\n"
    "))\n"
    ""
 ;
@@ -4697,6 +4789,30 @@ static const char *builtin_transpose =
    "\n"
    ")\n"
    "\n"
+   ""
+;
+static const char *builtin_trunc =
+   "((function trunc\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float arg0))\n"
+   "     ((return (expression float trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 arg0))\n"
+   "     ((return (expression vec2 trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 arg0))\n"
+   "     ((return (expression vec3 trunc (var_ref arg0)))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 arg0))\n"
+   "     ((return (expression vec4 trunc (var_ref arg0)))))\n"
+   "))\n"
    ""
 ;
 static const char *prototypes_for_100_frag =
@@ -12811,6 +12927,7 @@ static const char *functions_for_120_vert [] = {
    builtin_textureCubeLod,
    builtin_transpose,
 };
+#if 0 // MSVC workaround: too long string constant
 static const char *prototypes_for_130_frag =
    "(\n"
    "(function radians\n"
@@ -13226,6 +13343,57 @@ static const char *prototypes_for_130_frag =
    "    (parameters\n"
    "      (declare (in) vec4 x))\n"
    "    ()))\n"
+   "(function trunc\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
+   "(function round\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
+   "(function roundEven\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
    "(function ceil\n"
    "  (signature float\n"
    "    (parameters\n"
@@ -13295,6 +13463,27 @@ static const char *prototypes_for_130_frag =
    "    (parameters\n"
    "      (declare (in) vec4 x)\n"
    "      (declare (in) vec4 y))\n"
+   "    ()))\n"
+   "(function modf\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x)\n"
+   "      (declare (out) float i))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x)\n"
+   "      (declare (out) vec2 i))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x)\n"
+   "      (declare (out) vec3 i))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x)\n"
+   "      (declare (out) vec4 i))\n"
    "    ()))\n"
    "(function min\n"
    "  (signature float\n"
@@ -15786,6 +15975,7 @@ static const char *prototypes_for_130_frag =
    "      (declare (in) vec4 x))\n"
    "    ())))"
 ;
+#endif
 static const char *functions_for_130_frag [] = {
    builtin_abs,
    builtin_acos,
@@ -15823,6 +16013,7 @@ static const char *functions_for_130_frag [] = {
    builtin_min,
    builtin_mix,
    builtin_mod,
+   builtin_modf,
    builtin_noise1,
    builtin_noise2,
    builtin_noise3,
@@ -15835,6 +16026,8 @@ static const char *functions_for_130_frag [] = {
    builtin_radians,
    builtin_reflect,
    builtin_refract,
+   builtin_round,
+   builtin_roundEven,
    builtin_shadow1D,
    builtin_shadow1DLod,
    builtin_shadow1DProj,
@@ -15873,6 +16066,7 @@ static const char *functions_for_130_frag [] = {
    builtin_textureProjGrad,
    builtin_textureProjLod,
    builtin_transpose,
+   builtin_trunc,
 };
 static const char *prototypes_for_130_vert =
    "(\n"
@@ -16289,6 +16483,57 @@ static const char *prototypes_for_130_vert =
    "    (parameters\n"
    "      (declare (in) vec4 x))\n"
    "    ()))\n"
+   "(function trunc\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
+   "(function round\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
+   "(function roundEven\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x))\n"
+   "    ()))\n"
    "(function ceil\n"
    "  (signature float\n"
    "    (parameters\n"
@@ -16358,6 +16603,27 @@ static const char *prototypes_for_130_vert =
    "    (parameters\n"
    "      (declare (in) vec4 x)\n"
    "      (declare (in) vec4 y))\n"
+   "    ()))\n"
+   "(function modf\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) float x)\n"
+   "      (declare (out) float i))\n"
+   "    ())\n"
+   "  (signature vec2\n"
+   "    (parameters\n"
+   "      (declare (in) vec2 x)\n"
+   "      (declare (out) vec2 i))\n"
+   "    ())\n"
+   "  (signature vec3\n"
+   "    (parameters\n"
+   "      (declare (in) vec3 x)\n"
+   "      (declare (out) vec3 i))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) vec4 x)\n"
+   "      (declare (out) vec4 i))\n"
    "    ()))\n"
    "(function min\n"
    "  (signature float\n"
@@ -18837,6 +19103,7 @@ static const char *functions_for_130_vert [] = {
    builtin_min,
    builtin_mix,
    builtin_mod,
+   builtin_modf,
    builtin_noise1,
    builtin_noise2,
    builtin_noise3,
@@ -18849,6 +19116,8 @@ static const char *functions_for_130_vert [] = {
    builtin_radians,
    builtin_reflect,
    builtin_refract,
+   builtin_round,
+   builtin_roundEven,
    builtin_shadow1D,
    builtin_shadow1DLod,
    builtin_shadow1DProj,
@@ -18887,6 +19156,7 @@ static const char *functions_for_130_vert [] = {
    builtin_textureProjGrad,
    builtin_textureProjLod,
    builtin_transpose,
+   builtin_trunc,
 };
 static const char *prototypes_for_ARB_texture_rectangle_frag =
    "(\n"
@@ -19158,12 +19428,14 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
                          Elements(functions_for_120_vert));
    }
 
+#if 0 // MSVC workaround: too long string constant
    if (state->target == fragment_shader && state->language_version == 130) {
       _mesa_read_profile(state, instructions, 6,
                          prototypes_for_130_frag,
                          functions_for_130_frag,
                          Elements(functions_for_130_frag));
    }
+#endif
 
    if (state->target == vertex_shader && state->language_version == 130) {
       _mesa_read_profile(state, instructions, 7,

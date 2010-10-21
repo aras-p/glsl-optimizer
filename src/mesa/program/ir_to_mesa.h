@@ -28,10 +28,10 @@ extern "C" {
 #include "main/config.h"
 #include "main/mtypes.h"
 
-void _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *sh);
-void _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
-GLboolean _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader);
-GLboolean _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
+void _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *sh);
+void _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
+GLboolean _mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader);
+GLboolean _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
 
 #ifdef __cplusplus
 }

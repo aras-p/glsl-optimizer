@@ -40,35 +40,35 @@
 
 #if _HAVE_FULL_GL
 
-extern void _mesa_enable_sw_extensions(GLcontext *ctx);
+extern void _mesa_enable_sw_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_imaging_extensions(GLcontext *ctx);
+extern void _mesa_enable_imaging_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_1_3_extensions(GLcontext *ctx);
+extern void _mesa_enable_1_3_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_1_4_extensions(GLcontext *ctx);
+extern void _mesa_enable_1_4_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_1_5_extensions(GLcontext *ctx);
+extern void _mesa_enable_1_5_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_2_0_extensions(GLcontext *ctx);
+extern void _mesa_enable_2_0_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_2_1_extensions(GLcontext *ctx);
+extern void _mesa_enable_2_1_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_extension(GLcontext *ctx, const char *name);
+extern void _mesa_enable_extension(struct gl_context *ctx, const char *name);
 
-extern void _mesa_disable_extension(GLcontext *ctx, const char *name);
+extern void _mesa_disable_extension(struct gl_context *ctx, const char *name);
 
-extern GLboolean _mesa_extension_is_enabled(GLcontext *ctx, const char *name);
+extern GLboolean _mesa_extension_is_enabled(struct gl_context *ctx, const char *name);
 
-extern void _mesa_init_extensions(GLcontext *ctx);
+extern void _mesa_init_extensions(struct gl_context *ctx);
 
-extern GLubyte *_mesa_make_extension_string(GLcontext *ctx);
+extern GLubyte *_mesa_make_extension_string(struct gl_context *ctx);
 
 extern GLuint
-_mesa_get_extension_count(GLcontext *ctx);
+_mesa_get_extension_count(struct gl_context *ctx);
 
 extern const GLubyte *
-_mesa_get_enabled_extension(GLcontext *ctx, GLuint index);
+_mesa_get_enabled_extension(struct gl_context *ctx, GLuint index);
 
 
 #else

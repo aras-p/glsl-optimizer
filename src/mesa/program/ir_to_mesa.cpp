@@ -26,8 +26,7 @@
 /**
  * \file ir_to_mesa.cpp
  *
- * Translates the IR to ARB_fragment_program text if possible,
- * printing the result
+ * Translate GLSL IR to Mesa's gl_program representation.
  */
 
 #include <stdio.h>
@@ -184,7 +183,7 @@ public:
 
    function_entry *current_function;
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
    struct gl_shader_compiler_options *options;
@@ -288,6 +287,7 @@ ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
    PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
+<<<<<<< HEAD
 static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
 
 static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
@@ -301,6 +301,24 @@ static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
    }
 
 static int swizzle_for_size(int size)
+=======
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
+
+static void
+fail_link(struct gl_shader_program *prog, const char *fmt, ...)
+{
+   va_list args;
+   va_start(args, fmt);
+   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   va_end(args);
+
+   prog->LinkStatus = GL_FALSE;
+}
+
+static int
+swizzle_for_size(int size)
+>>>>>>> upstream/master
 {
    int size_swizzles[4] = {
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
@@ -309,6 +327,7 @@ static int swizzle_for_size(int size)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
 
+   assert((size >= 1) && (size <= 4));
    return size_swizzles[size - 1];
 }
 
@@ -1127,6 +1146,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
+   case ir_unop_round_even:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -1183,6 +1203,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 static const struct {
@@ -1597,6 +1618,8 @@ ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
 }
 
 
+=======
+>>>>>>> upstream/master
 =======
 >>>>>>> upstream/master
 =======
@@ -2494,6 +2517,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
    unsigned int next_sampler = 0, num_uniforms = 0;
    struct uniform_sort *sorted_uniforms;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
    sorted_uniforms = talloc_array(NULL, struct uniform_sort,
 				  shader_program->Uniforms->NumUniforms);
@@ -2519,6 +2543,157 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	 sorted_uniforms[num_uniforms].pos = parameter_index;
 	 sorted_uniforms[num_uniforms].u = uniform;
 	 num_uniforms++;
+=======
+
+   sorted_uniforms = talloc_array(NULL, struct uniform_sort,
+				  shader_program->Uniforms->NumUniforms);
+
+   for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
+      struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
+      int parameter_index = -1;
+
+      switch (shader->Type) {
+      case GL_VERTEX_SHADER:
+	 parameter_index = uniform->VertPos;
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 parameter_index = uniform->FragPos;
+	 break;
+      case GL_GEOMETRY_SHADER:
+	 parameter_index = uniform->GeomPos;
+	 break;
+      }
+
+      /* Only add uniforms used in our target. */
+      if (parameter_index != -1) {
+	 sorted_uniforms[num_uniforms].pos = parameter_index;
+	 sorted_uniforms[num_uniforms].u = uniform;
+	 num_uniforms++;
+      }
+   }
+
+   qsort(sorted_uniforms, num_uniforms, sizeof(struct uniform_sort),
+	 sort_uniforms);
+
+   for (i = 0; i < num_uniforms; i++) {
+      struct gl_uniform *uniform = sorted_uniforms[i].u;
+      int parameter_index = sorted_uniforms[i].pos;
+      const glsl_type *type = uniform->Type;
+      unsigned int size;
+
+      if (type->is_vector() ||
+	  type->is_scalar()) {
+	 size = type->vector_elements;
+      } else {
+	 size = type_size(type) * 4;
+      }
+
+      gl_register_file file;
+      if (type->is_sampler() ||
+	  (type->is_array() && type->fields.array->is_sampler())) {
+	 file = PROGRAM_SAMPLER;
+      } else {
+	 file = PROGRAM_UNIFORM;
+      }
+
+      GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
+						 uniform->Name);
+
+      if (index < 0) {
+	 index = _mesa_add_parameter(prog->Parameters, file,
+				     uniform->Name, size, type->gl_type,
+				     NULL, NULL, 0x0);
+
+	 /* Sampler uniform values are stored in prog->SamplerUnits,
+	  * and the entry in that array is selected by this index we
+	  * store in ParameterValues[].
+	  */
+	 if (file == PROGRAM_SAMPLER) {
+	    for (unsigned int j = 0; j < size / 4; j++)
+	       prog->Parameters->ParameterValues[index + j][0] = next_sampler++;
+	 }
+
+	 /* The location chosen in the Parameters list here (returned
+	  * from _mesa_add_uniform) has to match what the linker chose.
+	  */
+	 if (index != parameter_index) {
+	    fail_link(shader_program, "Allocation of uniform `%s' to target "
+		      "failed (%d vs %d)\n",
+		      uniform->Name, index, parameter_index);
+	 }
+      }
+   }
+
+   talloc_free(sorted_uniforms);
+}
+
+static void
+set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
+			struct gl_shader_program *shader_program,
+			const char *name, const glsl_type *type,
+			ir_constant *val)
+{
+   if (type->is_record()) {
+      ir_constant *field_constant;
+
+      field_constant = (ir_constant *)val->components.get_head();
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 const char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+					    type->fields.structure[i].name);
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
+				 field_type, field_constant);
+	 field_constant = (ir_constant *)field_constant->next;
+      }
+      return;
+   }
+
+   int loc = _mesa_get_uniform_location(ctx, shader_program, name);
+
+   if (loc == -1) {
+      fail_link(shader_program,
+		"Couldn't find uniform for initializer %s\n", name);
+      return;
+   }
+
+   for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
+      ir_constant *element;
+      const glsl_type *element_type;
+      if (type->is_array()) {
+	 element = val->array_elements[i];
+	 element_type = type->fields.array;
+      } else {
+	 element = val;
+	 element_type = type;
+      }
+
+      void *values;
+
+      if (element_type->base_type == GLSL_TYPE_BOOL) {
+	 int *conv = talloc_array(mem_ctx, int, element_type->components());
+	 for (unsigned int j = 0; j < element_type->components(); j++) {
+	    conv[j] = element->value.b[j];
+	 }
+	 values = (void *)conv;
+	 element_type = glsl_type::get_instance(GLSL_TYPE_INT,
+						element_type->vector_elements,
+						1);
+      } else {
+	 values = &element->value;
+      }
+
+      if (element_type->is_matrix()) {
+	 _mesa_uniform_matrix(ctx, shader_program,
+			      element_type->matrix_columns,
+			      element_type->vector_elements,
+			      loc, 1, GL_FALSE, (GLfloat *)values);
+	 loc += element_type->matrix_columns;
+      } else {
+	 _mesa_uniform(ctx, shader_program, loc, element_type->matrix_columns,
+		       values, element_type->gl_type);
+	 loc += type_size(element_type);
+>>>>>>> upstream/master
       }
    }
 
@@ -2851,8 +3026,42 @@ set_uniform_initializers(GLcontext *ctx,
    talloc_free(mem_ctx);
 }
 
+static void
+set_uniform_initializers(struct gl_context *ctx,
+			 struct gl_shader_program *shader_program)
+{
+   void *mem_ctx = NULL;
+
+   for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
+      struct gl_shader *shader = shader_program->_LinkedShaders[i];
+
+      if (shader == NULL)
+	 continue;
+
+      foreach_iter(exec_list_iterator, iter, *shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 ir_variable *var = ir->as_variable();
+
+	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
+	    continue;
+
+	 if (!mem_ctx)
+	    mem_ctx = talloc_new(NULL);
+
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
+				 var->type, var->constant_value);
+      }
+   }
+
+   talloc_free(mem_ctx);
+}
+
+
+/**
+ * Convert a shader's GLSL IR into a Mesa gl_program.
+ */
 struct gl_program *
-get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
+get_mesa_program(struct gl_context *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
 {
    ir_to_mesa_visitor v;
@@ -2941,10 +3150,12 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
+   /* Convert ir_mesa_instructions into prog_instructions.
+    */
    mesa_inst = mesa_instructions;
    i = 0;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
-      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+      const ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;
@@ -2965,6 +3176,10 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
       if (mesa_inst->DstReg.RelAddr)
          prog->IndirectRegisterFiles |= 1 << mesa_inst->DstReg.File;
 
+<<<<<<< HEAD
+=======
+      /* Update program's bitmask of indirectly accessed register files */
+>>>>>>> upstream/master
       for (unsigned src = 0; src < 3; src++)
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
@@ -3026,8 +3241,14 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 }
 
 extern "C" {
+
+/**
+ * Called via ctx->Driver.CompilerShader().
+ * This is a no-op.
+ * XXX can we remove the ctx->Driver.CompileShader() hook?
+ */
 GLboolean
-_mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    assert(shader->CompileStatus);
    (void) ctx;
@@ -3035,15 +3256,29 @@ _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    return GL_TRUE;
 }
 
+
+/**
+ * Link a shader.
+ * Called via ctx->Driver.LinkShader()
+ * This actually involves converting GLSL IR into Mesa gl_programs with
+ * code lowering and other optimizations.
+ */
 GLboolean
-_mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    assert(prog->LinkStatus);
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
+<<<<<<< HEAD
       struct gl_shader_compiler_options *options =
+=======
+      const struct gl_shader_compiler_options *options =
+>>>>>>> upstream/master
             &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(prog->_LinkedShaders[i]->Type)];
 
       do {
@@ -3084,12 +3319,18 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       validate_ir_tree(ir);
    }
 
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_program *linked_prog;
       bool ok = true;
 
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+<<<<<<< HEAD
+=======
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
+>>>>>>> upstream/master
       switch (prog->_LinkedShaders[i]->Type) {
       case GL_VERTEX_SHADER:
 	 _mesa_reference_vertprog(ctx, &prog->VertexProgram,
@@ -3113,8 +3354,12 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    return GL_TRUE;
 }
 
+
+/**
+ * Compile a GLSL shader.  Called via glCompileShader().
+ */
 void
-_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
@@ -3197,8 +3442,12 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    }
 }
 
+
+/**
+ * Link a GLSL shader program.  Called via glLinkProgram().
+ */
 void
-_mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+_mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    unsigned int i;
 
