@@ -92,6 +92,19 @@ static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
+static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
+					 enum pipe_format format,
+					 unsigned array_mode)
+{
+	return 64;
+}
+
+static unsigned r600_get_height_alignment(struct pipe_screen *screen,
+					  unsigned array_mode)
+{
+	return 1;
+}
+
 static unsigned mip_minify(unsigned size, unsigned level)
 {
 	unsigned val;
@@ -108,14 +121,18 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
-	unsigned width, stride;
+	unsigned width, stride, tile_width;
 	
 	if (rtex->pitch_override)
 		return rtex->pitch_override;
 
 	width = mip_minify(ptex->width0, level);
-
-	stride = util_format_get_stride(ptex->format, align(width, 64));
+	if (util_format_is_plain(ptex->format)) {
+		tile_width = r600_get_pixel_alignment(screen, ptex->format,
+						      rtex->array_mode[level]);
+		width = align(width, tile_width);
+	}
+	stride = util_format_get_stride(ptex->format, width);
 	if (chipc == EVERGREEN)
 		stride = align(stride, 512);
 	else
@@ -128,9 +145,14 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 					  unsigned level)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
-	unsigned height;
+	unsigned height, tile_height;
 
 	height = mip_minify(ptex->height0, level);
+	if (util_format_is_plain(ptex->format)) {
+		tile_height = r600_get_height_alignment(screen,
+							rtex->array_mode[level]);
+		height = align(height, tile_height);
+	}
 	return util_format_get_nblocksy(ptex->format, height);
 }
 
