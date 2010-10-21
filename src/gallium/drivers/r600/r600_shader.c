@@ -270,7 +270,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	}
 	rshader->vertex_elements = *rctx->vertex_elements;
 	for (i = 0; i < rctx->vertex_elements->count; i++) {
-		resource_format[nresources++] = rctx->vertex_elements->elements[i].src_format;
+		resource_format[nresources++] = rctx->vertex_elements->hw_format[i];
 	}
 	r600_bo_reference(rctx->radeon, &rshader->bo, NULL);
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {

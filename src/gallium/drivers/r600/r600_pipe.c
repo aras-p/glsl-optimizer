@@ -85,6 +85,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
+	if (rctx->tran.translate_cache)
+		translate_cache_destroy(rctx->tran.translate_cache);
+
 	FREE(rctx->ps_resource);
 	FREE(rctx->vs_resource);
 	FREE(rctx);
@@ -173,6 +176,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	rctx->tran.translate_cache = translate_cache_create();
+	if (rctx->tran.translate_cache == NULL) {
+		FREE(rctx);
+		return NULL;
+	}
+	
 	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
 	if (!rctx->vs_resource) {
 		FREE(rctx);

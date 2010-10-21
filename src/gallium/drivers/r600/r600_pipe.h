@@ -30,6 +30,7 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 #include <util/u_math.h>
+#include "translate/translate_cache.h"
 #include "r600.h"
 #include "r600_public.h"
 #include "r600_shader.h"
@@ -83,7 +84,10 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	unsigned			refcount;
-	struct pipe_vertex_element	elements[32];
+	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
+	enum pipe_format		hw_format[PIPE_MAX_ATTRIBS];
+	unsigned			hw_format_size[PIPE_MAX_ATTRIBS];
+	boolean incompatible_layout;
 };
 
 struct r600_pipe_shader {
@@ -101,6 +105,16 @@ struct r600_textures_info {
 	unsigned                        n_views;
 	void				*samplers[NUM_TEX_UNITS];
 	unsigned                        n_samplers;
+};
+
+struct r600_translate_context {
+	/* Translate cache for incompatible vertex offset/stride/format fallback. */
+	struct translate_cache *translate_cache;
+
+	/* The vertex buffer slot containing the translated buffer. */
+	unsigned vb_slot;
+	/* Saved and new vertex element state. */
+	void *saved_velems, *new_velems;
 };
 
 #define R600_CONSTANT_ARRAY_SIZE 256
@@ -141,6 +155,9 @@ struct r600_pipe_context {
 	struct u_upload_mgr		*upload_ib;
 	unsigned			any_user_vbs;
 	struct r600_textures_info       ps_samplers;
+
+	unsigned vb_max_index;
+	struct r600_translate_context tran;
 
 };
 
