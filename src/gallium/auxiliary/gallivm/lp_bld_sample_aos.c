@@ -435,8 +435,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef i32_c8, i32_c128, i32_c255;
    LLVMValueRef width_vec, height_vec, depth_vec;
    LLVMValueRef s_ipart, s_fpart, s_fpart_lo, s_fpart_hi;
-   LLVMValueRef t_ipart, t_fpart, t_fpart_lo, t_fpart_hi;
-   LLVMValueRef r_ipart, r_fpart, r_fpart_lo, r_fpart_hi;
+   LLVMValueRef t_ipart = NULL, t_fpart = NULL, t_fpart_lo = NULL, t_fpart_hi = NULL;
+   LLVMValueRef r_ipart = NULL, r_fpart = NULL, r_fpart_lo = NULL, r_fpart_hi = NULL;
    LLVMValueRef x_stride, y_stride, z_stride;
    LLVMValueRef x_offset0, x_offset1;
    LLVMValueRef y_offset0, y_offset1;
