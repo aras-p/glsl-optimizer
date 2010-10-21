@@ -3252,7 +3252,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    }
 
    c->prog_data.total_grf = v.grf_used;
-   c->prog_data.total_scratch = 0;
 
    return GL_TRUE;
 }

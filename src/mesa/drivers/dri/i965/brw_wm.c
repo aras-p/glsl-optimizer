@@ -114,14 +114,6 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    /* how many general-purpose registers are used */
    c->prog_data.total_grf = c->max_wm_grf;
 
-   /* Scratch space is used for register spilling */
-   if (c->last_scratch) {
-      c->prog_data.total_scratch = c->last_scratch + 0x40;
-   }
-   else {
-      c->prog_data.total_scratch = 0;
-   }
-
    /* Emit GEN4 code.
     */
    brw_wm_emit(c);
@@ -191,6 +183,19 @@ static void do_wm_prog( struct brw_context *brw,
 	 c->dispatch_width = 16;
 	 brw_wm_non_glsl_emit(brw, c);
       }
+   }
+
+   /* Scratch space is used for register spilling */
+   if (c->last_scratch) {
+      /* Per-thread scratch space is power-of-two sized. */
+      for (c->prog_data.total_scratch = 1024;
+	   c->prog_data.total_scratch <= c->last_scratch;
+	   c->prog_data.total_scratch *= 2) {
+	 /* empty */
+      }
+   }
+   else {
+      c->prog_data.total_scratch = 0;
    }
 
    if (INTEL_DEBUG & DEBUG_WM)

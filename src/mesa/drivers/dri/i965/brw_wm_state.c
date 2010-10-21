@@ -97,7 +97,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
    key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
-   key->total_scratch = ALIGN(brw->wm.prog_data->total_scratch, 1024);
+   key->total_scratch = brw->wm.prog_data->total_scratch;
 
    /* BRW_NEW_URB_FENCE */
    key->urb_size = brw->urb.vsize;
@@ -184,7 +184,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
 	 brw->wm.scratch_bo->offset >> 10; /* reloc */
-      wm.thread2.per_thread_scratch_space = key->total_scratch / 1024 - 1;
+      wm.thread2.per_thread_scratch_space = ffs(key->total_scratch) - 11;
    } else {
       wm.thread2.scratch_space_base_pointer = 0;
       wm.thread2.per_thread_scratch_space = 0;
@@ -293,7 +293,6 @@ static void upload_wm_unit( struct brw_context *brw )
     * bother reducing the allocation later, since we use scratch so
     * rarely.
     */
-   assert(key.total_scratch <= 12 * 1024);
    if (key.total_scratch) {
       GLuint total = key.total_scratch * brw->wm_max_threads;
 
