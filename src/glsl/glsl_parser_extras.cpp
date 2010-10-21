@@ -88,7 +88,6 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
    case vertex_shader:   return "vertex";
    case fragment_shader: return "fragment";
    case geometry_shader: return "geometry";
-   case ir_shader:       break;
    }
 
    assert(!"Should not get here.");
