@@ -92,6 +92,15 @@ static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
+static unsigned mip_minify(unsigned size, unsigned level)
+{
+	unsigned val;
+	val = u_minify(size, level);
+	if (level > 0)
+		val = util_next_power_of_two(val);
+	return val;
+}
+
 static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level)
@@ -104,7 +113,7 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 	if (rtex->pitch_override)
 		return rtex->pitch_override;
 
-	width = u_minify(ptex->width0, level);
+	width = mip_minify(ptex->width0, level);
 
 	stride = util_format_get_stride(ptex->format, align(width, 64));
 	if (chipc == EVERGREEN)
@@ -121,8 +130,7 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	unsigned height;
 
-	height = u_minify(ptex->height0, level);
-	height = util_next_power_of_two(height);
+	height = mip_minify(ptex->height0, level);
 	return util_format_get_nblocksy(ptex->format, height);
 }
 
@@ -249,8 +257,8 @@ static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
 	pipe_reference_init(&surface->reference, 1);
 	pipe_resource_reference(&surface->texture, texture);
 	surface->format = texture->format;
-	surface->width = u_minify(texture->width0, level);
-	surface->height = u_minify(texture->height0, level);
+	surface->width = mip_minify(texture->width0, level);
+	surface->height = mip_minify(texture->height0, level);
 	surface->offset = offset;
 	surface->usage = flags;
 	surface->zslice = zslice;
