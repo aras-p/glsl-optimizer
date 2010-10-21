@@ -2441,6 +2441,7 @@ fs_visitor::calculate_live_intervals()
    int *use = talloc_array(mem_ctx, int, num_vars);
    int loop_depth = 0;
    int loop_start = 0;
+   int bb_header_ip = 0;
 
    for (int i = 0; i < num_vars; i++) {
       def[i] = 1 << 30;
@@ -2458,12 +2459,8 @@ fs_visitor::calculate_live_intervals()
 	 loop_depth--;
 
 	 if (loop_depth == 0) {
-	    /* FINISHME:
-	     *
-	     * Patches up any vars marked for use within the loop as
-	     * live until the end.  This is conservative, as there
-	     * will often be variables defined and used inside the
-	     * loop but dead at the end of the loop body.
+	    /* Patches up the use of vars marked for being live across
+	     * the whole loop.
 	     */
 	    for (int i = 0; i < num_vars; i++) {
 	       if (use[i] == loop_start) {
@@ -2472,22 +2469,53 @@ fs_visitor::calculate_live_intervals()
 	    }
 	 }
       } else {
-	 int eip = ip;
-
-	 if (loop_depth)
-	    eip = loop_start;
-
 	 for (unsigned int i = 0; i < 3; i++) {
 	    if (inst->src[i].file == GRF && inst->src[i].reg != 0) {
-	       use[inst->src[i].reg] = MAX2(use[inst->src[i].reg], eip);
+	       int reg = inst->src[i].reg;
+
+	       if (!loop_depth || (this->virtual_grf_sizes[reg] == 1 &&
+				   def[reg] >= bb_header_ip)) {
+		  use[reg] = ip;
+	       } else {
+		  def[reg] = MIN2(loop_start, def[reg]);
+		  use[reg] = loop_start;
+
+		  /* Nobody else is going to go smash our start to
+		   * later in the loop now, because def[reg] now
+		   * points before the bb header.
+		   */
+	       }
 	    }
 	 }
 	 if (inst->dst.file == GRF && inst->dst.reg != 0) {
-	    def[inst->dst.reg] = MIN2(def[inst->dst.reg], eip);
+	    int reg = inst->dst.reg;
+
+	    if (!loop_depth || (this->virtual_grf_sizes[reg] == 1 &&
+				!inst->predicated)) {
+	       def[reg] = MIN2(def[reg], ip);
+	    } else {
+	       def[reg] = MIN2(def[reg], loop_start);
+	    }
 	 }
       }
 
       ip++;
+
+      /* Set the basic block header IP.  This is used for determining
+       * if a complete def of single-register virtual GRF in a loop
+       * dominates a use in the same basic block.  It's a quick way to
+       * reduce the live interval range of most register used in a
+       * loop.
+       */
+      if (inst->opcode == BRW_OPCODE_IF ||
+	  inst->opcode == BRW_OPCODE_ELSE ||
+	  inst->opcode == BRW_OPCODE_ENDIF ||
+	  inst->opcode == BRW_OPCODE_DO ||
+	  inst->opcode == BRW_OPCODE_WHILE ||
+	  inst->opcode == BRW_OPCODE_BREAK ||
+	  inst->opcode == BRW_OPCODE_CONTINUE) {
+	 bb_header_ip = ip;
+      }
    }
 
    talloc_free(this->virtual_grf_def);
