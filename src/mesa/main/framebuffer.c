@@ -868,6 +868,7 @@ _mesa_source_buffer_exists(struct gl_context *ctx, GLenum format)
    case GL_LUMINANCE:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
+   case GL_RG:
    case GL_RGB:
    case GL_BGR:
    case GL_RGBA:
