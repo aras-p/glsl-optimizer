@@ -307,6 +307,13 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 {
 	unsigned array_mode = 0;
 
+	if (debug_get_bool_option("R600_FORCE_TILING", FALSE)) {
+		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
+		    !(templ->bind & PIPE_BIND_SCANOUT)) {
+			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
+		}
+	}
+
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
 								  0, 0, NULL);
 
