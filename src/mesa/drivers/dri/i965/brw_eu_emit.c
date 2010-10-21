@@ -1368,6 +1368,8 @@ void brw_oword_block_write(struct brw_compile *p,
    uint32_t msg_control;
    int mlen;
 
+   mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
+
    if (num_regs == 1) {
       msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
       mlen = 2;
@@ -1376,15 +1378,24 @@ void brw_oword_block_write(struct brw_compile *p,
       mlen = 3;
    }
 
+   /* Set up the message header.  This is g0, with g0.2 filled with
+    * the offset.  We don't want to leave our offset around in g0 or
+    * it'll screw up texture samples, so set it up inside the message
+    * reg.
+    */
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
+      brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+
       /* set message header global offset field (reg 0, element 2) */
       brw_MOV(p,
-	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
-	      brw_imm_d(offset));
+	      retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+				  mrf.nr,
+				  2), BRW_REGISTER_TYPE_UD),
+	      brw_imm_ud(offset));
 
       brw_pop_insn_state(p);
    }
@@ -1422,7 +1433,7 @@ void brw_oword_block_write(struct brw_compile *p,
       }
 
       brw_set_dest(insn, dest);
-      brw_set_src0(insn, src_header);
+      brw_set_src0(insn, brw_null_reg());
 
       brw_set_dp_write_message(p->brw,
 			       insn,
@@ -1456,6 +1467,7 @@ brw_oword_block_read(struct brw_compile *p,
    uint32_t msg_control;
    int rlen;
 
+   mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
    dest = retype(dest, BRW_REGISTER_TYPE_UW);
 
    if (num_regs == 1) {
@@ -1471,10 +1483,14 @@ brw_oword_block_read(struct brw_compile *p,
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
 
+      brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+
       /* set message header global offset field (reg 0, element 2) */
       brw_MOV(p,
-	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
-	      brw_imm_d(offset));
+	      retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+				  mrf.nr,
+				  2), BRW_REGISTER_TYPE_UD),
+	      brw_imm_ud(offset));
 
       brw_pop_insn_state(p);
    }
@@ -1487,7 +1503,7 @@ brw_oword_block_read(struct brw_compile *p,
       insn->header.destreg__conditionalmod = mrf.nr;
 
       brw_set_dest(insn, dest);	/* UW? */
-      brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
+      brw_set_src0(insn, brw_null_reg());
 
       brw_set_dp_read_message(p->brw,
 			      insn,
