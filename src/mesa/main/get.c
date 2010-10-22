@@ -320,6 +320,12 @@ extra_NV_vertex_program_ARB_vertex_program_ARB_fragment_program_NV_vertex_progra
    EXTRA_END
 };
 
+static const int
+extra_NV_primitive_restart[] = {
+   EXT(NV_primitive_restart),
+   EXTRA_END
+};
+
 static const int extra_version_30[] = { EXTRA_VERSION_30, EXTRA_END };
 static const int extra_version_31[] = { EXTRA_VERSION_31, EXTRA_END };
 static const int extra_version_32[] = { EXTRA_VERSION_32, EXTRA_END };
@@ -1019,6 +1025,12 @@ static const struct value_desc values[] = {
    { GL_MAX_SPOT_EXPONENT_NV, CONTEXT_FLOAT(Const.MaxSpotExponent),
      extra_NV_light_max_exponent },
      
+   /* GL_NV_primitive_restart */
+   { GL_PRIMITIVE_RESTART_NV, CONTEXT_BOOL(Array.PrimitiveRestart),
+     extra_NV_primitive_restart },
+   { GL_PRIMITIVE_RESTART_INDEX_NV, CONTEXT_INT(Array.RestartIndex),
+     extra_NV_primitive_restart },
+ 
    /* GL_ARB_vertex_buffer_object */
    { GL_INDEX_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT,
      offsetof(struct gl_array_object, Index.BufferObj), NO_EXTRA },
@@ -1182,11 +1194,15 @@ static const struct value_desc values[] = {
    { GL_CONTEXT_FLAGS, CONTEXT_INT(Const.ContextFlags), extra_version_30  },
 
    /* GL 3.1 */
+   /* NOTE: different enum values for GL_PRIMITIVE_RESTART_NV
+    * vs. GL_PRIMITIVE_RESTART!
+    */
    { GL_PRIMITIVE_RESTART, CONTEXT_BOOL(Array.PrimitiveRestart),
      extra_version_31 },
    { GL_PRIMITIVE_RESTART_INDEX, CONTEXT_INT(Array.RestartIndex),
      extra_version_31 },
  
+
    /* GL 3.2 */
    { GL_CONTEXT_PROFILE_MASK, CONTEXT_INT(Const.ProfileMask),
      extra_version_32 },
