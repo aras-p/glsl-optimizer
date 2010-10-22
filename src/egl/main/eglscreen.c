@@ -42,7 +42,8 @@ _eglAllocScreenHandle(void)
    EGLScreenMESA s;
 
    _eglLockMutex(&_eglNextScreenHandleMutex);
-   s = _eglNextScreenHandle++;
+   s = _eglNextScreenHandle;
+   _eglNextScreenHandle += _EGL_SCREEN_MAX_MODES;
    _eglUnlockMutex(&_eglNextScreenHandleMutex);
 
    return s;
@@ -53,12 +54,19 @@ _eglAllocScreenHandle(void)
  * Initialize an _EGLScreen object to default values.
  */
 void
-_eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy)
+_eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy, EGLint num_modes)
 {
    memset(screen, 0, sizeof(_EGLScreen));
+
    screen->Display = dpy;
+   screen->NumModes = num_modes;
    screen->StepX = 1;
    screen->StepY = 1;
+
+   if (num_modes > _EGL_SCREEN_MAX_MODES)
+      num_modes = _EGL_SCREEN_MAX_MODES;
+   screen->Modes = (_EGLMode *) calloc(num_modes, sizeof(*screen->Modes));
+   screen->NumModes = (screen->Modes) ? num_modes : 0;
 }
 
 
@@ -70,6 +78,7 @@ EGLScreenMESA
 _eglLinkScreen(_EGLScreen *screen)
 {
    _EGLDisplay *display;
+   EGLint i;
 
    assert(screen && screen->Display);
    display = screen->Display;
@@ -79,7 +88,11 @@ _eglLinkScreen(_EGLScreen *screen)
       if (!display->Screens)
          return (EGLScreenMESA) 0;
    }
+
    screen->Handle = _eglAllocScreenHandle();
+   for (i = 0; i < screen->NumModes; i++)
+      screen->Modes[i].Handle = screen->Handle + i;
+
    _eglAppendArray(display->Screens, (void *) screen);
 
    return screen->Handle;

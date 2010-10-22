@@ -126,18 +126,18 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
          continue;
       }
 
-      _eglInitScreen(&gscr->base, dpy);
-
-      for (j = 0; j < num_modes; j++) {
+      _eglInitScreen(&gscr->base, dpy, num_modes);
+      for (j = 0; j < gscr->base.NumModes; j++) {
          const struct native_mode *nmode = native_modes[j];
-         _EGLMode *mode;
+         _EGLMode *mode = &gscr->base.Modes[j];
 
-         mode = _eglAddNewMode(&gscr->base, nmode->width, nmode->height,
-               nmode->refresh_rate, nmode->desc);
-         if (!mode)
-            break;
-         /* gscr->native_modes and gscr->base.Modes should be consistent */
-         assert(mode == &gscr->base.Modes[j]);
+         mode->Width = nmode->width;
+         mode->Height = nmode->height;
+         mode->RefreshRate = nmode->refresh_rate;
+         mode->Optimal = EGL_FALSE;
+         mode->Interlaced = EGL_FALSE;
+         /* no need to strdup() */
+         mode->Name = nmode->desc;
       }
 
       gscr->native = nconn;

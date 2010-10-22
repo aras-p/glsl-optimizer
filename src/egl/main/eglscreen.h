@@ -8,6 +8,9 @@
 #ifdef EGL_MESA_screen_surface
 
 
+#define _EGL_SCREEN_MAX_MODES 16
+
+
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to
@@ -35,7 +38,7 @@ struct _egl_screen
 
 
 PUBLIC void
-_eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy);
+_eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy, EGLint num_modes);
 
 
 PUBLIC EGLScreenMESA
