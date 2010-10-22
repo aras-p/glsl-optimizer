@@ -248,21 +248,20 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    if (double_buffer)
       return NULL;
 
-   if (depth > 0 && depth != _eglGetConfigKey(&base, EGL_BUFFER_SIZE))
+   if (depth > 0 && depth != base.BufferSize)
       return NULL;
 
-   _eglSetConfigKey(&base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   base.NativeRenderable = EGL_TRUE;
 
-   _eglSetConfigKey(&base, EGL_SURFACE_TYPE, surface_type);
+   base.SurfaceType = surface_type;
    if (surface_type & (EGL_PIXMAP_BIT | EGL_PBUFFER_BIT)) {
-      _eglSetConfigKey(&base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-      if (_eglGetConfigKey(&base, EGL_ALPHA_SIZE) > 0)
-	 _eglSetConfigKey(&base,
-			  EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+      base.BindToTextureRGB = bind_to_texture_rgb;
+      if (base.AlphaSize > 0)
+         base.BindToTextureRGBA = bind_to_texture_rgba;
    }
 
-   _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, disp->ClientAPIsMask);
-   _eglSetConfigKey(&base, EGL_CONFORMANT, disp->ClientAPIsMask);
+   base.RenderableType = disp->ClientAPIsMask;
+   base.Conformant = disp->ClientAPIsMask;
 
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
@@ -1251,8 +1250,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (type == EGL_PBUFFER_BIT) {
       dri2_surf->drawable = xcb_generate_id(dri2_dpy->conn);
       s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
-      xcb_create_pixmap(dri2_dpy->conn,
-			_eglGetConfigKey(conf, EGL_BUFFER_SIZE),
+      xcb_create_pixmap(dri2_dpy->conn, conf->BufferSize,
 			dri2_surf->drawable, s.data->root,
 			dri2_surf->base.Width, dri2_surf->base.Height);
    } else {
