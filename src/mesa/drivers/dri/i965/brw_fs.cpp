@@ -2940,11 +2940,17 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 void
 fs_visitor::generate_code()
 {
-   unsigned int annotation_len = 0;
    int last_native_inst = 0;
    struct brw_instruction *if_stack[16], *loop_stack[16];
    int if_stack_depth = 0, loop_stack_depth = 0;
    int if_depth_in_loop[16];
+   const char *last_annotation_string = NULL;
+   ir_instruction *last_annotation_ir = NULL;
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("Native code for fragment shader %d:\n",
+	     ctx->Shader.CurrentProgram->Name);
+   }
 
    if_depth_in_loop[loop_stack_depth] = 0;
 
@@ -2952,6 +2958,22 @@ fs_visitor::generate_code()
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
+
+      if (INTEL_DEBUG & DEBUG_WM) {
+	 if (last_annotation_ir != inst->ir) {
+	    last_annotation_ir = inst->ir;
+	    if (last_annotation_ir) {
+	       printf("   ");
+	       last_annotation_ir->print();
+	       printf("\n");
+	    }
+	 }
+	 if (last_annotation_string != inst->annotation) {
+	    last_annotation_string = inst->annotation;
+	    if (last_annotation_string)
+	       printf("   %s\n", last_annotation_string);
+	 }
+      }
 
       for (unsigned int i = 0; i < 3; i++) {
 	 src[i] = brw_reg_from_fs_reg(&inst->src[i]);
@@ -3127,25 +3149,20 @@ fs_visitor::generate_code()
 	 this->fail = true;
       }
 
-      if (annotation_len < p->nr_insn) {
-	 annotation_len *= 2;
-	 if (annotation_len < 16)
-	    annotation_len = 16;
-
-	 this->annotation_string = talloc_realloc(this->mem_ctx,
-						  annotation_string,
-						  const char *,
-						  annotation_len);
-	 this->annotation_ir = talloc_realloc(this->mem_ctx,
-					      annotation_ir,
-					      ir_instruction *,
-					      annotation_len);
+      if (INTEL_DEBUG & DEBUG_WM) {
+	 for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
+	    if (0) {
+	       printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		      ((uint32_t *)&p->store[i])[3],
+		      ((uint32_t *)&p->store[i])[2],
+		      ((uint32_t *)&p->store[i])[1],
+		      ((uint32_t *)&p->store[i])[0]);
+	    }
+	    brw_disasm(stdout, &p->store[i], intel->gen);
+	    printf("\n");
+	 }
       }
 
-      for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
-	 this->annotation_string[i] = inst->annotation;
-	 this->annotation_ir[i] = inst->ir;
-      }
       last_native_inst = p->nr_insn;
    }
 }
@@ -3153,7 +3170,6 @@ fs_visitor::generate_code()
 GLboolean
 brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
-   struct brw_compile *p = &c->func;
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct gl_shader_program *prog = ctx->Shader.CurrentProgram;
@@ -3247,37 +3263,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
    if (v.fail)
       return GL_FALSE;
-
-   if (INTEL_DEBUG & DEBUG_WM) {
-      const char *last_annotation_string = NULL;
-      ir_instruction *last_annotation_ir = NULL;
-
-      printf("Native code for fragment shader %d:\n", prog->Name);
-      for (unsigned int i = 0; i < p->nr_insn; i++) {
-	 if (last_annotation_ir != v.annotation_ir[i]) {
-	    last_annotation_ir = v.annotation_ir[i];
-	    if (last_annotation_ir) {
-	       printf("   ");
-	       last_annotation_ir->print();
-	       printf("\n");
-	    }
-	 }
-	 if (last_annotation_string != v.annotation_string[i]) {
-	    last_annotation_string = v.annotation_string[i];
-	    if (last_annotation_string)
-	       printf("   %s\n", last_annotation_string);
-	 }
-	 if (0) {
-	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		   ((uint32_t *)&p->store[i])[3],
-		   ((uint32_t *)&p->store[i])[2],
-		   ((uint32_t *)&p->store[i])[1],
-		   ((uint32_t *)&p->store[i])[0]);
-	 }
-	 brw_disasm(stdout, &p->store[i], intel->gen);
-      }
-      printf("\n");
-   }
 
    c->prog_data.total_grf = v.grf_used;
 

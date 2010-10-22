@@ -319,8 +319,6 @@ public:
       this->first_non_payload_grf = 0;
 
       this->current_annotation = NULL;
-      this->annotation_string = NULL;
-      this->annotation_ir = NULL;
       this->base_ir = NULL;
 
       this->virtual_grf_sizes = NULL;
@@ -434,8 +432,6 @@ public:
    /** @{ debug annotation info */
    const char *current_annotation;
    ir_instruction *base_ir;
-   const char **annotation_string;
-   ir_instruction **annotation_ir;
    /** @} */
 
    bool fail;
