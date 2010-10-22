@@ -370,7 +370,7 @@ galahad_screen_create(struct pipe_screen *screen)
 
    glhd_screen->screen = screen;
 
-   glhd_warn("Created screen %p", glhd_screen);
+   glhd_warn("Created screen %p", (void *) glhd_screen);
 
    return &glhd_screen->base;
 }
