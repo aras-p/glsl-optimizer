@@ -85,9 +85,6 @@ struct xm_displaytarget
 struct xlib_sw_winsys
 {
    struct sw_winsys base;
-
-
-
    Display *display;
 };
 
@@ -120,7 +117,8 @@ mesaHandleXError(Display *dpy, XErrorEvent *event)
 }
 
 
-static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
+static char *
+alloc_shm(struct xm_displaytarget *buf, unsigned size)
 {
    XShmSegmentInfo *const shminfo = & buf->shminfo;
 
@@ -231,6 +229,7 @@ xm_displaytarget_map(struct sw_winsys *ws,
    return xm_dt->mapped;
 }
 
+
 static void
 xm_displaytarget_unmap(struct sw_winsys *ws,
                        struct sw_displaytarget *dt)
@@ -238,6 +237,7 @@ xm_displaytarget_unmap(struct sw_winsys *ws,
    struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
    xm_dt->mapped = NULL;
 }
+
 
 static void
 xm_displaytarget_destroy(struct sw_winsys *ws,
@@ -325,8 +325,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       XSetFunction( display, xm_dt->gc, GXcopy );
    }
 
-   if (xm_dt->shm)
-   {
+   if (xm_dt->shm) {
       ximage = xm_dt->tempImage;
       ximage->data = xm_dt->data;
 
@@ -356,6 +355,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
    XFlush(xm_dt->display);
 }
 
+
 /**
  * Display/copy the image in the surface into the X window specified
  * by the XMesaBuffer.
@@ -382,7 +382,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    unsigned nblocksy, size;
 
    xm_dt = CALLOC_STRUCT(xm_displaytarget);
-   if(!xm_dt)
+   if (!xm_dt)
       goto no_xm_dt;
 
    xm_dt->display = ((struct xlib_sw_winsys *)winsys)->display;
@@ -401,9 +401,9 @@ xm_displaytarget_create(struct sw_winsys *winsys,
       }
    }
 
-   if(!xm_dt->data) {
+   if (!xm_dt->data) {
       xm_dt->data = align_malloc(size, alignment);
-      if(!xm_dt->data)
+      if (!xm_dt->data)
          goto no_data;
    }
 
@@ -470,4 +470,3 @@ xlib_create_sw_winsys( Display *display )
 
    return &ws->base;
 }
-
