@@ -28,25 +28,6 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
              const EGLint *attrib_list);
 
 
-extern _EGLSync *
-_eglCreateSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy,
-                  EGLenum type, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroySyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync);
-
-
-extern EGLint
-_eglClientWaitSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                      EGLint flags, EGLTimeKHR timeout);
-
-
-extern EGLBoolean
-_eglSignalSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                  EGLenum mode);
-
-
 extern EGLBoolean
 _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
                      EGLint attribute, EGLint *value);

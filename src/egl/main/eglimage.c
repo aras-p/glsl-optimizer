@@ -88,22 +88,4 @@ _eglInitImage(_EGLImage *img, _EGLDisplay *dpy)
 }
 
 
-_EGLImage *
-_eglCreateImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
-                   EGLenum target, EGLClientBuffer buffer,
-                   const EGLint *attr_list)
-{
-   /* driver should override this function */
-   return NULL;
-}
-
-
-EGLBoolean
-_eglDestroyImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image)
-{
-   /* driver should override this function */
-   return EGL_FALSE;
-}
-
-
 #endif /* EGL_KHR_image_base */

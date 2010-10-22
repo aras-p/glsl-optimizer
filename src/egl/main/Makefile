@@ -36,6 +36,7 @@ SOURCES = \
 	eglcurrent.c \
 	egldisplay.c \
 	egldriver.c \
+	eglfallbacks.c \
 	eglglobals.c \
 	eglimage.c \
 	egllog.c \

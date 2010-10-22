@@ -123,50 +123,6 @@ _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *display, EGLScreenMESA *screens
 
 
 /**
- * Drivers should do a proper implementation.
- */
-_EGLSurface *
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                            const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-/**
- * Show the given surface on the named screen.
- * If surface is EGL_NO_SURFACE, disable the screen's output.
- * 
- * This is just a placeholder function; drivers will always override
- * this with code that _really_ shows the surface.
- */
-EGLBoolean
-_eglShowScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy,
-                          _EGLScreen *scrn, _EGLSurface *surf,
-                          _EGLMode *mode)
-{
-   if (!surf) {
-      scrn->CurrentSurface = NULL;
-   }
-   else {
-      if (surf->Type != EGL_SCREEN_BIT_MESA) {
-         _eglError(EGL_BAD_SURFACE, "eglShowSurfaceMESA");
-         return EGL_FALSE;
-      }
-      if (surf->Width < mode->Width || surf->Height < mode->Height) {
-         _eglError(EGL_BAD_SURFACE,
-                   "eglShowSurfaceMESA(surface smaller than screen size)");
-         return EGL_FALSE;
-      }
-
-      scrn->CurrentSurface = surf;
-      scrn->CurrentMode = mode;
-   }
-   return EGL_TRUE;
-}
-
-
-/**
  * Set a screen's current display mode.
  * Note: mode = EGL_NO_MODE is valid (turns off the screen)
  *

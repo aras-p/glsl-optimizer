@@ -37,12 +37,4 @@ extern const char *
 _eglQueryString(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name);
 
 
-extern EGLBoolean
-_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
-
-
-extern EGLBoolean
-_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine);
-
-
 #endif /* EGLMISC_INCLUDED */

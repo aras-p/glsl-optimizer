@@ -80,6 +80,7 @@ extern void
 _eglUnloadDrivers(void);
 
 
+/* defined in eglfallbacks.c */
 PUBLIC void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 

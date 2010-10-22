@@ -42,15 +42,6 @@ PUBLIC EGLBoolean
 _eglInitImage(_EGLImage *img, _EGLDisplay *dpy);
 
 
-extern _EGLImage *
-_eglCreateImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
-                   EGLenum target, EGLClientBuffer buffer, const EGLint *attr_list);
-
-
-extern EGLBoolean
-_eglDestroyImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
-
-
 /**
  * Link an image to a display and return the handle of the link.
  * The handle can be passed to client directly.

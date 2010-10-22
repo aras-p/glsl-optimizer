@@ -158,32 +158,3 @@ _eglQueryString(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name)
       return NULL;
    }
 }
-
-
-EGLBoolean
-_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   (void) ctx;
-   return EGL_TRUE;
-}
-
-
-EGLBoolean
-_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   switch (engine) {
-   case EGL_CORE_NATIVE_ENGINE:
-      break;
-   default:
-      _eglError(EGL_BAD_PARAMETER, "eglWaitNative(engine)");
-      return EGL_FALSE;
-   }
-
-   return EGL_TRUE;
-}

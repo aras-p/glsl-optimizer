@@ -129,29 +129,6 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
-/**
- * Just a placeholder/demo function.  Real driver will never use this!
- */
-_EGLContext *
-_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                  _EGLContext *share_list, const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-/**
- * Default fallback routine - drivers should usually override this.
- */
-EGLBoolean
-_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
-{
-   if (!_eglIsContextBound(ctx))
-      free(ctx);
-   return EGL_TRUE;
-}
-
-
 #ifdef EGL_VERSION_1_2
 static EGLint
 _eglQueryContextRenderBuffer(_EGLContext *ctx)
@@ -374,29 +351,4 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
       *read = NULL;
 
    return EGL_TRUE;
-}
-
-
-/**
- * Just a placeholder/demo function.  Drivers should override this.
- */
-EGLBoolean
-_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw,
-                _EGLSurface *read, _EGLContext *ctx)
-{
-   return EGL_FALSE;
-}
-
-
-/**
- * This is defined by the EGL_MESA_copy_context extension.
- */
-EGLBoolean
-_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source,
-                    EGLContext dest, EGLint mask)
-{
-   /* This function will always have to be overridden/implemented in the
-    * device driver.  If the driver is based on Mesa, use _mesa_copy_context().
-    */
-   return EGL_FALSE;
 }

@@ -34,28 +34,12 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy,
                 _EGLConfig *config, const EGLint *attrib_list);
 
 
-extern _EGLContext *
-_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
-
-
 extern EGLBoolean
 _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint attribute, EGLint *value);
 
 
 PUBLIC EGLBoolean
 _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
-
-
-extern EGLBoolean
-_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
-
-
-extern EGLBoolean
-_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
 
 
 /**

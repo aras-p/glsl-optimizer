@@ -48,14 +48,6 @@ extern EGLBoolean
 _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 
 
-extern _EGLSurface *
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglShowScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLSurface *surf, _EGLMode *m);
-
-
 extern EGLBoolean
 _eglScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLMode *m);
 
