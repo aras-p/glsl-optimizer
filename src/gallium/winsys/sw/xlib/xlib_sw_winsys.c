@@ -75,7 +75,7 @@ struct xm_displaytarget
    Drawable drawable;
 
    XShmSegmentInfo shminfo;
-   int shm;
+   Bool shm;  /** Using shared memory images? */
 };
 
 
@@ -165,7 +165,7 @@ alloc_shm_ximage(struct xm_displaytarget *xm_dt,
                                       &xm_dt->shminfo,
                                       width, height);
    if (xm_dt->tempImage == NULL) {
-      xm_dt->shm = 0;
+      xm_dt->shm = False;
       return;
    }
 
@@ -182,12 +182,12 @@ alloc_shm_ximage(struct xm_displaytarget *xm_dt,
       mesaXErrorFlag = 0;
       XDestroyImage(xm_dt->tempImage);
       xm_dt->tempImage = NULL;
-      xm_dt->shm = 0;
+      xm_dt->shm = False;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   xm_dt->shm = 1;
+   xm_dt->shm = True;
 }
 
 
@@ -397,7 +397,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    if (!debug_get_option_xlib_no_shm()) {
       xm_dt->data = alloc_shm(xm_dt, size);
       if (xm_dt->data) {
-         xm_dt->shm = TRUE;
+         xm_dt->shm = True;
       }
    }
 
