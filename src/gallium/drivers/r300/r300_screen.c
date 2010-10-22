@@ -154,8 +154,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
             return 0;
         default:
-            fprintf(stderr, "r300: Implementation error: Bad param %d\n",
-                param);
+            debug_printf("r300: Warning: Unknown CAP %d in get_param.\n",
+                         param);
             return 0;
     }
 }
@@ -265,8 +265,8 @@ static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
         default:
-            fprintf(stderr, "r300: Implementation error: Bad paramf %d\n",
-                param);
+            debug_printf("r300: Warning: Unknown CAP %d in get_paramf.\n",
+                         param);
             return 0.0f;
     }
 }
