@@ -399,6 +399,41 @@ fbo_incomplete(const char *msg, int index)
 }
 
 
+/**
+ * Is the given base format a legal format for a color renderbuffer?
+ */
+static GLboolean
+is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
+{
+   switch (baseFormat) {
+   case GL_RGB:
+   case GL_RGBA:
+      return GL_TRUE;
+   case GL_ALPHA:
+      return ctx->Extensions.ARB_framebuffer_object;
+   case GL_RED:
+   case GL_RG:
+      return ctx->Extensions.ARB_texture_rg;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Is the given base format a legal format for a depth/stencil renderbuffer?
+ */
+static GLboolean
+is_legal_depth_format(const struct gl_context *ctx, GLenum baseFormat)
+{
+   switch (baseFormat) {
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL_EXT:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
 
 
 /**
@@ -450,14 +485,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
       baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
 
       if (format == GL_COLOR) {
-         if (baseFormat != GL_RGB &&
-             baseFormat != GL_RGBA &&
-	     (!ctx->Extensions.ARB_framebuffer_object ||
-	      baseFormat != GL_ALPHA) &&
-	     (!ctx->Extensions.ARB_texture_rg ||
-	      baseFormat != GL_RED) &&
-	     (!ctx->Extensions.ARB_texture_rg ||
-	      baseFormat != GL_RG)) {
+         if (!is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
@@ -636,11 +664,8 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          maxHeight = MAX2(maxHeight, texImg->Height);
          f = texImg->_BaseFormat;
          numImages++;
-         if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT
-             && f != GL_DEPTH_STENCIL_EXT
-	     && (!ctx->Extensions.ARB_framebuffer_object || f != GL_ALPHA)
-	     && (!ctx->Extensions.ARB_texture_rg || f != GL_RED)
-	     && (!ctx->Extensions.ARB_texture_rg || f != GL_RG)) {
+         if (!is_legal_color_format(ctx, f) &&
+             !is_legal_depth_format(ctx, f)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
             return;
