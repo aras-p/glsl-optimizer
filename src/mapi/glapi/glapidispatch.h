@@ -2383,6 +2383,12 @@
 #define CALL_ProgramNamedParameter4fvNV(disp, parameters) (*((disp)->ProgramNamedParameter4fvNV)) parameters
 #define GET_ProgramNamedParameter4fvNV(disp) ((disp)->ProgramNamedParameter4fvNV)
 #define SET_ProgramNamedParameter4fvNV(disp, fn) ((disp)->ProgramNamedParameter4fvNV = fn)
+#define CALL_PrimitiveRestartIndexNV(disp, parameters) (*((disp)->PrimitiveRestartIndexNV)) parameters
+#define GET_PrimitiveRestartIndexNV(disp) ((disp)->PrimitiveRestartIndexNV)
+#define SET_PrimitiveRestartIndexNV(disp, fn) ((disp)->PrimitiveRestartIndexNV = fn)
+#define CALL_PrimitiveRestartNV(disp, parameters) (*((disp)->PrimitiveRestartNV)) parameters
+#define GET_PrimitiveRestartNV(disp) ((disp)->PrimitiveRestartNV)
+#define SET_PrimitiveRestartNV(disp, fn) ((disp)->PrimitiveRestartNV = fn)
 #define CALL_DepthBoundsEXT(disp, parameters) (*((disp)->DepthBoundsEXT)) parameters
 #define GET_DepthBoundsEXT(disp) ((disp)->DepthBoundsEXT)
 #define SET_DepthBoundsEXT(disp, fn) ((disp)->DepthBoundsEXT = fn)
@@ -2539,7 +2545,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 417
+#define driDispatchRemapTable_size 419
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2908,57 +2914,59 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define ProgramNamedParameter4dvNV_remap_index 363
 #define ProgramNamedParameter4fNV_remap_index 364
 #define ProgramNamedParameter4fvNV_remap_index 365
-#define DepthBoundsEXT_remap_index 366
-#define BlendEquationSeparateEXT_remap_index 367
-#define BindFramebufferEXT_remap_index 368
-#define BindRenderbufferEXT_remap_index 369
-#define CheckFramebufferStatusEXT_remap_index 370
-#define DeleteFramebuffersEXT_remap_index 371
-#define DeleteRenderbuffersEXT_remap_index 372
-#define FramebufferRenderbufferEXT_remap_index 373
-#define FramebufferTexture1DEXT_remap_index 374
-#define FramebufferTexture2DEXT_remap_index 375
-#define FramebufferTexture3DEXT_remap_index 376
-#define GenFramebuffersEXT_remap_index 377
-#define GenRenderbuffersEXT_remap_index 378
-#define GenerateMipmapEXT_remap_index 379
-#define GetFramebufferAttachmentParameterivEXT_remap_index 380
-#define GetRenderbufferParameterivEXT_remap_index 381
-#define IsFramebufferEXT_remap_index 382
-#define IsRenderbufferEXT_remap_index 383
-#define RenderbufferStorageEXT_remap_index 384
-#define BlitFramebufferEXT_remap_index 385
-#define BufferParameteriAPPLE_remap_index 386
-#define FlushMappedBufferRangeAPPLE_remap_index 387
-#define FramebufferTextureLayerEXT_remap_index 388
-#define ColorMaskIndexedEXT_remap_index 389
-#define DisableIndexedEXT_remap_index 390
-#define EnableIndexedEXT_remap_index 391
-#define GetBooleanIndexedvEXT_remap_index 392
-#define GetIntegerIndexedvEXT_remap_index 393
-#define IsEnabledIndexedEXT_remap_index 394
-#define BeginConditionalRenderNV_remap_index 395
-#define EndConditionalRenderNV_remap_index 396
-#define BeginTransformFeedbackEXT_remap_index 397
-#define BindBufferBaseEXT_remap_index 398
-#define BindBufferOffsetEXT_remap_index 399
-#define BindBufferRangeEXT_remap_index 400
-#define EndTransformFeedbackEXT_remap_index 401
-#define GetTransformFeedbackVaryingEXT_remap_index 402
-#define TransformFeedbackVaryingsEXT_remap_index 403
-#define ProvokingVertexEXT_remap_index 404
-#define GetTexParameterPointervAPPLE_remap_index 405
-#define TextureRangeAPPLE_remap_index 406
-#define GetObjectParameterivAPPLE_remap_index 407
-#define ObjectPurgeableAPPLE_remap_index 408
-#define ObjectUnpurgeableAPPLE_remap_index 409
-#define StencilFuncSeparateATI_remap_index 410
-#define ProgramEnvParameters4fvEXT_remap_index 411
-#define ProgramLocalParameters4fvEXT_remap_index 412
-#define GetQueryObjecti64vEXT_remap_index 413
-#define GetQueryObjectui64vEXT_remap_index 414
-#define EGLImageTargetRenderbufferStorageOES_remap_index 415
-#define EGLImageTargetTexture2DOES_remap_index 416
+#define PrimitiveRestartIndexNV_remap_index 366
+#define PrimitiveRestartNV_remap_index 367
+#define DepthBoundsEXT_remap_index 368
+#define BlendEquationSeparateEXT_remap_index 369
+#define BindFramebufferEXT_remap_index 370
+#define BindRenderbufferEXT_remap_index 371
+#define CheckFramebufferStatusEXT_remap_index 372
+#define DeleteFramebuffersEXT_remap_index 373
+#define DeleteRenderbuffersEXT_remap_index 374
+#define FramebufferRenderbufferEXT_remap_index 375
+#define FramebufferTexture1DEXT_remap_index 376
+#define FramebufferTexture2DEXT_remap_index 377
+#define FramebufferTexture3DEXT_remap_index 378
+#define GenFramebuffersEXT_remap_index 379
+#define GenRenderbuffersEXT_remap_index 380
+#define GenerateMipmapEXT_remap_index 381
+#define GetFramebufferAttachmentParameterivEXT_remap_index 382
+#define GetRenderbufferParameterivEXT_remap_index 383
+#define IsFramebufferEXT_remap_index 384
+#define IsRenderbufferEXT_remap_index 385
+#define RenderbufferStorageEXT_remap_index 386
+#define BlitFramebufferEXT_remap_index 387
+#define BufferParameteriAPPLE_remap_index 388
+#define FlushMappedBufferRangeAPPLE_remap_index 389
+#define FramebufferTextureLayerEXT_remap_index 390
+#define ColorMaskIndexedEXT_remap_index 391
+#define DisableIndexedEXT_remap_index 392
+#define EnableIndexedEXT_remap_index 393
+#define GetBooleanIndexedvEXT_remap_index 394
+#define GetIntegerIndexedvEXT_remap_index 395
+#define IsEnabledIndexedEXT_remap_index 396
+#define BeginConditionalRenderNV_remap_index 397
+#define EndConditionalRenderNV_remap_index 398
+#define BeginTransformFeedbackEXT_remap_index 399
+#define BindBufferBaseEXT_remap_index 400
+#define BindBufferOffsetEXT_remap_index 401
+#define BindBufferRangeEXT_remap_index 402
+#define EndTransformFeedbackEXT_remap_index 403
+#define GetTransformFeedbackVaryingEXT_remap_index 404
+#define TransformFeedbackVaryingsEXT_remap_index 405
+#define ProvokingVertexEXT_remap_index 406
+#define GetTexParameterPointervAPPLE_remap_index 407
+#define TextureRangeAPPLE_remap_index 408
+#define GetObjectParameterivAPPLE_remap_index 409
+#define ObjectPurgeableAPPLE_remap_index 410
+#define ObjectUnpurgeableAPPLE_remap_index 411
+#define StencilFuncSeparateATI_remap_index 412
+#define ProgramEnvParameters4fvEXT_remap_index 413
+#define ProgramLocalParameters4fvEXT_remap_index 414
+#define GetQueryObjecti64vEXT_remap_index 415
+#define GetQueryObjectui64vEXT_remap_index 416
+#define EGLImageTargetRenderbufferStorageOES_remap_index 417
+#define EGLImageTargetTexture2DOES_remap_index 418
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4058,6 +4066,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_ProgramNamedParameter4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLfloat *)), driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], parameters)
 #define GET_ProgramNamedParameter4fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index])
 #define SET_ProgramNamedParameter4fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], fn)
+#define CALL_PrimitiveRestartIndexNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[PrimitiveRestartIndexNV_remap_index], parameters)
+#define GET_PrimitiveRestartIndexNV(disp) GET_by_offset(disp, driDispatchRemapTable[PrimitiveRestartIndexNV_remap_index])
+#define SET_PrimitiveRestartIndexNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PrimitiveRestartIndexNV_remap_index], fn)
+#define CALL_PrimitiveRestartNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[PrimitiveRestartNV_remap_index], parameters)
+#define GET_PrimitiveRestartNV(disp) GET_by_offset(disp, driDispatchRemapTable[PrimitiveRestartNV_remap_index])
+#define SET_PrimitiveRestartNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PrimitiveRestartNV_remap_index], fn)
 #define CALL_DepthBoundsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd, GLclampd)), driDispatchRemapTable[DepthBoundsEXT_remap_index], parameters)
 #define GET_DepthBoundsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index])
 #define SET_DepthBoundsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index], fn)
