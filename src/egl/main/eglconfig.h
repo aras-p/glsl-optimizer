@@ -53,13 +53,6 @@ struct _egl_config
 
 
 /**
- * Macros for source level compatibility.
- */
-#define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) _eglSetConfigKey(CONF, ATTR, VAL)
-#define GET_CONFIG_ATTRIB(CONF, ATTR) _eglGetConfigKey(CONF, ATTR)
-
-
-/**
  * Map an EGL attribute enum to the offset of the member in _EGLConfig.
  */
 static INLINE EGLint

@@ -197,7 +197,7 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
    if (!(conformant & EGL_OPENGL_ES_BIT))
       config_caveat = EGL_NON_CONFORMANT_CONFIG;
 
-   _eglSetConfigKey(&GLX_conf->Base, EGL_CONFIG_CAVEAT, config_caveat);
+   GLX_conf->Base.ConfigCaveat = config_caveat;
 
    surface_type = 0;
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_DRAWABLE_TYPE, &val);
@@ -217,7 +217,7 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
          return EGL_FALSE;
    }
 
-   _eglSetConfigKey(&GLX_conf->Base, EGL_SURFACE_TYPE, surface_type);
+   GLX_conf->Base.SurfaceType = surface_type;
 
    return EGL_TRUE;
 }
@@ -283,9 +283,9 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
    if (!(conformant & EGL_OPENGL_ES_BIT))
       config_caveat = EGL_NON_CONFORMANT_CONFIG;
 
-   _eglSetConfigKey(&GLX_conf->Base, EGL_CONFIG_CAVEAT, config_caveat);
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_VISUAL_ID, vinfo->visualid);
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_VISUAL_TYPE, vinfo->class);
+   GLX_conf->Base.ConfigCaveat = config_caveat;
+   GLX_conf->Base.NativeVisualID = vinfo->visualid;
+   GLX_conf->Base.NativeVisualType = vinfo->class;
 
    /* pixmap and pbuffer surfaces must be single-buffered in EGL */
    glXGetConfig(dpy, vinfo, GLX_DOUBLEBUFFER, &val);
@@ -295,9 +295,8 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
    if (!GLX_conf->double_buffered)
       surface_type |= EGL_PIXMAP_BIT;
 
-   _eglSetConfigKey(&GLX_conf->Base, EGL_SURFACE_TYPE, surface_type);
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   GLX_conf->Base.SurfaceType = surface_type;
+   GLX_conf->Base.NativeRenderable = EGL_TRUE;
 
    return EGL_TRUE;
 }
@@ -307,30 +306,24 @@ static void
 fix_config(struct GLX_egl_display *GLX_dpy, struct GLX_egl_config *GLX_conf)
 {
    _EGLConfig *conf = &GLX_conf->Base;
-   EGLint surface_type, r, g, b, a;
 
-   surface_type = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
    if (!GLX_conf->double_buffered && GLX_dpy->single_buffered_quirk) {
       /* some GLX impls do not like single-buffered window surface */
-      surface_type &= ~EGL_WINDOW_BIT;
+      conf->SurfaceType &= ~EGL_WINDOW_BIT;
       /* pbuffer bit is usually not set */
       if (GLX_dpy->have_pbuffer)
-         surface_type |= EGL_PBUFFER_BIT;
-      SET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE, surface_type);
+         conf->SurfaceType |= EGL_PBUFFER_BIT;
    }
 
    /* no visual attribs unless window bit is set */
-   if (!(surface_type & EGL_WINDOW_BIT)) {
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_ID, 0);
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_TYPE, EGL_NONE);
+   if (!(conf->SurfaceType & EGL_WINDOW_BIT)) {
+      conf->NativeVisualID = 0;
+      conf->NativeVisualType = EGL_NONE;
    }
 
    /* make sure buffer size is set correctly */
-   r = GET_CONFIG_ATTRIB(conf, EGL_RED_SIZE);
-   g = GET_CONFIG_ATTRIB(conf, EGL_GREEN_SIZE);
-   b = GET_CONFIG_ATTRIB(conf, EGL_BLUE_SIZE);
-   a = GET_CONFIG_ATTRIB(conf, EGL_ALPHA_SIZE);
-   SET_CONFIG_ATTRIB(conf, EGL_BUFFER_SIZE, r + g + b + a);
+   conf->BufferSize =
+      conf->RedSize + conf->GreenSize + conf->BlueSize + conf->AlphaSize;
 }
 
 
