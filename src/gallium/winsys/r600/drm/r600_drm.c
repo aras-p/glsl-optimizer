@@ -65,7 +65,7 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 				sizeof(struct drm_radeon_info));
 
 	if (r)
-		return r;
+		return 0;
 
 	switch ((tiling_config & 0xe) >> 1) {
 	case 0:
