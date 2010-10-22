@@ -81,13 +81,13 @@ _eglIsSurfaceBound(_EGLSurface *surf)
 
 
 /**
- * Link a surface to a display and return the handle of the link.
+ * Link a surface to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLSurface
-_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
+_eglLinkSurface(_EGLSurface *surf)
 {
-   _eglLinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE, dpy);
+   _eglLinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE);
    return (EGLSurface) surf;
 }
 

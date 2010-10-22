@@ -34,13 +34,13 @@ _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
 
 
 /**
- * Link a sync to a display and return the handle of the link.
+ * Link a sync to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLSyncKHR
-_eglLinkSync(_EGLSync *sync, _EGLDisplay *dpy)
+_eglLinkSync(_EGLSync *sync)
 {
-   _eglLinkResource(&sync->Resource, _EGL_RESOURCE_SYNC, dpy);
+   _eglLinkResource(&sync->Resource, _EGL_RESOURCE_SYNC);
    return (EGLSyncKHR) sync;
 }
 

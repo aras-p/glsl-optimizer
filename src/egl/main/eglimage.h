@@ -43,13 +43,13 @@ _eglInitImage(_EGLImage *img, _EGLDisplay *dpy);
 
 
 /**
- * Link an image to a display and return the handle of the link.
+ * Link an image to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLImageKHR
-_eglLinkImage(_EGLImage *img, _EGLDisplay *dpy)
+_eglLinkImage(_EGLImage *img)
 {
-   _eglLinkResource(&img->Resource, _EGL_RESOURCE_IMAGE, dpy);
+   _eglLinkResource(&img->Resource, _EGL_RESOURCE_IMAGE);
    return (EGLImageKHR) img;
 }
 

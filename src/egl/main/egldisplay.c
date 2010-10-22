@@ -233,17 +233,16 @@ _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 
 
 /**
- * Link a resource to a display.
+ * Link a resource to its display.
  */
 void
-_eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+_eglLinkResource(_EGLResource *res, _EGLResourceType type)
 {
-   assert(!res->Display || res->Display == dpy);
+   assert(res->Display);
 
-   res->Display = dpy;
    res->IsLinked = EGL_TRUE;
-   res->Next = dpy->ResourceLists[type];
-   dpy->ResourceLists[type] = res;
+   res->Next = res->Display->ResourceLists[type];
+   res->Display->ResourceLists[type] = res;
 }
 
 

@@ -56,13 +56,13 @@ _eglIsContextBound(_EGLContext *ctx)
 
 
 /**
- * Link a context to a display and return the handle of the link.
+ * Link a context to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
+_eglLinkContext(_EGLContext *ctx)
 {
-   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT, dpy);
+   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT);
    return (EGLContext) ctx;
 }
 

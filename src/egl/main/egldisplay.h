@@ -162,7 +162,7 @@ _eglGetDisplayHandle(_EGLDisplay *dpy)
 
 
 extern void
-_eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy);
+_eglLinkResource(_EGLResource *res, _EGLResourceType type);
 
 
 extern void
