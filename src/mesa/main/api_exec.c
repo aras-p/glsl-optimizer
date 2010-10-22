@@ -494,6 +494,9 @@ _mesa_create_exec_table(void)
    SET_ActiveStencilFaceEXT(exec, _mesa_ActiveStencilFaceEXT);
 #endif
 
+   /* 285. GL_NV_primitive_restart */
+   SET_PrimitiveRestartIndexNV(exec, _mesa_PrimitiveRestartIndex);
+
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
