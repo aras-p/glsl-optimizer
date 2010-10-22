@@ -42,7 +42,7 @@ GL 3.1:
 GLSL 1.30 and 1.40                                    not started
 Instanced drawing (GL_ARB_draw_instanced)             ~50% done
 Buffer copying (GL_ARB_copy_buffer)                   DONE
-Primitive restart (GL_NV_primitive_restart)           not started
+Primitive restart (GL_NV_primitive_restart)           DONE (gallium)
 16 vertex texture image units                         not started
 Texture buffer objs (GL_ARB_texture_buffer_object)    not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
