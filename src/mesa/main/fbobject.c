@@ -255,7 +255,8 @@ _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
  * point.  Update reference counts, etc.
  */
 void
-_mesa_remove_attachment(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
+_mesa_remove_attachment(struct gl_context *ctx,
+                        struct gl_renderbuffer_attachment *att)
 {
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
@@ -340,7 +341,8 @@ _mesa_set_renderbuffer_attachment(struct gl_context *ctx,
  * Attach a renderbuffer object to a framebuffer object.
  */
 void
-_mesa_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+_mesa_framebuffer_renderbuffer(struct gl_context *ctx,
+                               struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
    struct gl_renderbuffer_attachment *att;
@@ -563,7 +565,8 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
  * framebuffer is complete.
  */
 void
-_mesa_test_framebuffer_completeness(struct gl_context *ctx, struct gl_framebuffer *fb)
+_mesa_test_framebuffer_completeness(struct gl_context *ctx,
+                                    struct gl_framebuffer *fb)
 {
    GLuint numImages;
    GLenum intFormat = GL_NONE; /* color buffers' internal format */
