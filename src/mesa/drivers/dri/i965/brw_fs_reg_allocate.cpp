@@ -401,6 +401,7 @@ fs_visitor::spill_reg(int spill_reg)
 	 spill_src.reg_offset = 0;
 	 spill_src.abs = false;
 	 spill_src.negate = false;
+	 spill_src.smear = -1;
 
 	 for (int chan = 0; chan < size; chan++) {
 	    fs_inst *spill_inst = new(mem_ctx) fs_inst(FS_OPCODE_SPILL,

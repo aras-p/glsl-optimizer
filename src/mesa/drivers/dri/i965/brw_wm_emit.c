@@ -1576,7 +1576,7 @@ static void emit_spill( struct brw_wm_compile *c,
      mov (1) r0.2<1>:d    0x00000080:d     { Align1 NoMask }
      send (16) null.0<1>:uw m1               r0.0<8;8,1>:uw   0x053003ff:ud    { Align1 }
    */
-   brw_oword_block_write(p, brw_message_reg(1), 2, slot);
+   brw_oword_block_write_scratch(p, brw_message_reg(1), 2, slot);
 }
 
 

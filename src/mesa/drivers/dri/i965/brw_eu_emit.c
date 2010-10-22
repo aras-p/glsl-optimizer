@@ -1359,10 +1359,10 @@ void brw_math_16( struct brw_compile *p,
  * The offset must be aligned to oword size (16 bytes).  Used for
  * register spilling.
  */
-void brw_oword_block_write(struct brw_compile *p,
-			   struct brw_reg mrf,
-			   int num_regs,
-			   GLuint offset)
+void brw_oword_block_write_scratch(struct brw_compile *p,
+				   struct brw_reg mrf,
+				   int num_regs,
+				   GLuint offset)
 {
    struct intel_context *intel = &p->brw->intel;
    uint32_t msg_control;
@@ -1458,11 +1458,11 @@ void brw_oword_block_write(struct brw_compile *p,
  * spilling.
  */
 void
-brw_oword_block_read(struct brw_compile *p,
-		     struct brw_reg dest,
-		     struct brw_reg mrf,
-		     int num_regs,
-		     GLuint offset)
+brw_oword_block_read_scratch(struct brw_compile *p,
+			     struct brw_reg dest,
+			     struct brw_reg mrf,
+			     int num_regs,
+			     GLuint offset)
 {
    uint32_t msg_control;
    int rlen;
@@ -1517,63 +1517,55 @@ brw_oword_block_read(struct brw_compile *p,
    }
 }
 
-
 /**
  * Read a float[4] vector from the data port Data Cache (const buffer).
  * Location (in buffer) should be a multiple of 16.
  * Used for fetching shader constants.
- * If relAddr is true, we'll do an indirect fetch using the address register.
  */
-void brw_dp_READ_4( struct brw_compile *p,
-                    struct brw_reg dest,
-                    GLboolean relAddr,
-                    GLuint location,
-                    GLuint bind_table_index )
+void brw_oword_block_read(struct brw_compile *p,
+			  struct brw_reg dest,
+			  struct brw_reg mrf,
+			  uint32_t offset,
+			  uint32_t bind_table_index)
 {
-   /* XXX: relAddr not implemented */
-   GLuint msg_reg_nr = 1;
-   {
-      struct brw_reg b;
-      brw_push_insn_state(p);
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
+   mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
 
-   /* Setup MRF[1] with location/offset into const buffer */
-      b = brw_message_reg(msg_reg_nr);
-      b = retype(b, BRW_REGISTER_TYPE_UD);
-      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
-       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
-       */
-      brw_MOV(p, b, brw_imm_ud(location));
-      brw_pop_insn_state(p);
-   }
+   brw_push_insn_state(p);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
 
-   {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
-      insn->header.predicate_control = BRW_PREDICATE_NONE;
-      insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditionalmod = msg_reg_nr;
-      insn->header.mask_control = BRW_MASK_DISABLE;
-  
-      /* cast dest to a uword[8] vector */
-      dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
+   brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
-      brw_set_dest(insn, dest);
-      brw_set_src0(insn, brw_null_reg());
+   /* set message header global offset field (reg 0, element 2) */
+   brw_MOV(p,
+	   retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+			       mrf.nr,
+			       2), BRW_REGISTER_TYPE_UD),
+	   brw_imm_ud(offset));
 
-      brw_set_dp_read_message(p->brw,
-			      insn,
-			      bind_table_index,
-			      0,  /* msg_control (0 means 1 Oword) */
-			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
-			      0, /* source cache = data cache */
-			      1, /* msg_length */
-			      1, /* response_length (1 Oword) */
-			      0); /* eot */
-   }
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   insn->header.destreg__conditionalmod = mrf.nr;
+
+   /* cast dest to a uword[8] vector */
+   dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_null_reg());
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW,
+			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
+			   0, /* source cache = data cache */
+			   1, /* msg_length */
+			   1, /* response_length (1 reg, 2 owords!) */
+			   0); /* eot */
+
+   brw_pop_insn_state(p);
 }
+
 
 
 /**

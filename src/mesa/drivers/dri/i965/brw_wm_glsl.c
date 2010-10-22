@@ -307,21 +307,20 @@ static void prealloc_reg(struct brw_wm_compile *c)
 
         /* use a real constant buffer, or just use a section of the GRF? */
         /* XXX this heuristic may need adjustment... */
-        if ((nr_params + nr_temps) * 4 + reg_index > 80)
-           c->fp->use_const_buffer = GL_TRUE;
-        else
-           c->fp->use_const_buffer = GL_FALSE;
+        if ((nr_params + nr_temps) * 4 + reg_index > 80) {
+	   for (i = 0; i < nr_params; i++) {
+	      float *pv = c->fp->program.Base.Parameters->ParameterValues[i];
+	      for (j = 0; j < 4; j++) {
+		 c->prog_data.pull_param[c->prog_data.nr_pull_params] = &pv[j];
+		 c->prog_data.nr_pull_params++;
+	      }
+	   }
+
+	   c->prog_data.nr_params = 0;
+	}
         /*printf("WM use_const_buffer = %d\n", c->fp->use_const_buffer);*/
 
-        if (c->fp->use_const_buffer) {
-           /* We'll use a real constant buffer and fetch constants from
-            * it with a dataport read message.
-            */
-
-           /* number of float constants in CURBE */
-           c->prog_data.nr_params = 0;
-        }
-        else {
+        if (!c->prog_data.nr_pull_params) {
            const struct gl_program_parameter_list *plist = 
               c->fp->program.Base.Parameters;
            int index = 0;
@@ -463,7 +462,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
      * They'll be found in these registers.
      * XXX alloc these on demand!
      */
-    if (c->fp->use_const_buffer) {
+    if (c->prog_data.nr_pull_params) {
        for (i = 0; i < 3; i++) {
           c->current_const[i].index = -1;
           c->current_const[i].reg = brw_vec8_grf(alloc_grf(c), 0);
@@ -501,12 +500,11 @@ static void fetch_constants(struct brw_wm_compile *c,
 #endif
 
 	 /* need to fetch the constant now */
-	 brw_dp_READ_4(p,
-		       c->current_const[i].reg,  /* writeback dest */
-		       src->RelAddr,             /* relative indexing? */
-		       16 * src->Index,          /* byte offset */
-		       SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */
-		       );
+	 brw_oword_block_read(p,
+			      c->current_const[i].reg,
+			      brw_message_reg(1),
+			      16 * src->Index,
+			      SURF_INDEX_FRAG_CONST_BUFFER);
       }
    }
 }
@@ -606,7 +604,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
        }
     }
 
-    if (c->fp->use_const_buffer &&
+    if (c->prog_data.nr_pull_params &&
         (src->File == PROGRAM_STATE_VAR ||
          src->File == PROGRAM_CONSTANT ||
          src->File == PROGRAM_UNIFORM)) {
@@ -729,7 +727,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 #endif
 
         /* fetch any constants that this instruction needs */
-        if (c->fp->use_const_buffer)
+        if (c->prog_data.nr_pull_params)
            fetch_constants(c, inst);
 
 	if (inst->Opcode != OPCODE_ARL) {

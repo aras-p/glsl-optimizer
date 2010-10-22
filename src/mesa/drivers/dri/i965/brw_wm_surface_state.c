@@ -319,13 +319,14 @@ prepare_wm_constants(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+   const int size = brw->wm.prog_data->nr_pull_params * sizeof(float);
+   float *constants;
+   unsigned int i;
 
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   if (!fp->use_const_buffer) {
+   if (brw->wm.prog_data->nr_pull_params == 0) {
       if (brw->wm.const_bo) {
 	 drm_intel_bo_unreference(brw->wm.const_bo);
 	 brw->wm.const_bo = NULL;
@@ -335,11 +336,18 @@ prepare_wm_constants(struct brw_context *brw)
    }
 
    drm_intel_bo_unreference(brw->wm.const_bo);
-   brw->wm.const_bo = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
+   brw->wm.const_bo = drm_intel_bo_alloc(intel->bufmgr, "WM const bo",
 					 size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo_subdata(brw->wm.const_bo, 0, size, params->ParameterValues);
+   drm_intel_gem_bo_map_gtt(brw->wm.const_bo);
+   constants = brw->wm.const_bo->virtual;
+   for (i = 0; i < brw->wm.prog_data->nr_pull_params; i++) {
+      constants[i] = *brw->wm.prog_data->pull_param[i];
+   }
+   drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
+
+   brw->state.dirty.brw |= BRW_NEW_WM_CONSTBUF;
 }
 
 const struct brw_tracked_state brw_wm_constants = {

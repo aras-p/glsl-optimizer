@@ -76,6 +76,7 @@ enum fs_opcodes {
    FS_OPCODE_DISCARD_AND,
    FS_OPCODE_SPILL,
    FS_OPCODE_UNSPILL,
+   FS_OPCODE_PULL_CONSTANT_LOAD,
 };
 
 
@@ -100,6 +101,7 @@ public:
       this->negate = 0;
       this->abs = 0;
       this->hw_reg = -1;
+      this->smear = -1;
    }
 
    /** Generic unset register constructor. */
@@ -162,6 +164,7 @@ public:
    bool negate;
    bool abs;
    struct brw_reg fixed_hw_reg;
+   int smear; /* -1, or a channel of the reg to smear to all channels. */
 
    /** Value for file == BRW_IMMMEDIATE_FILE */
    union {
@@ -366,6 +369,7 @@ public:
    int choose_spill_reg(struct ra_graph *g);
    void spill_reg(int spill_reg);
    void split_virtual_grfs();
+   void setup_pull_constants();
    void calculate_live_intervals();
    bool propagate_constants();
    bool register_coalesce();
@@ -384,6 +388,7 @@ public:
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_spill(fs_inst *inst, struct brw_reg src);
    void generate_unspill(fs_inst *inst, struct brw_reg dst);
+   void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst);
 
    void emit_dummy_fs();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);

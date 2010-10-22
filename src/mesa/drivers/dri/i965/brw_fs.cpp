@@ -286,6 +286,7 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_BOOL:
       vec_values = fp->Base.Parameters->ParameterValues[loc];
       for (unsigned int i = 0; i < type->vector_elements; i++) {
+	 assert(c->prog_data.nr_params < ARRAY_SIZE(c->prog_data.param));
 	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
       }
       return 1;
@@ -2230,7 +2231,8 @@ fs_visitor::generate_spill(fs_inst *inst, struct brw_reg src)
    brw_MOV(p,
 	   retype(brw_message_reg(inst->base_mrf + 1), BRW_REGISTER_TYPE_UD),
 	   retype(src, BRW_REGISTER_TYPE_UD));
-   brw_oword_block_write(p, brw_message_reg(inst->base_mrf), 1, inst->offset);
+   brw_oword_block_write_scratch(p, brw_message_reg(inst->base_mrf), 1,
+				 inst->offset);
 }
 
 void
@@ -2251,8 +2253,39 @@ fs_visitor::generate_unspill(fs_inst *inst, struct brw_reg dst)
    if (intel->gen == 4 && !intel->is_g4x)
       brw_MOV(p, brw_null_reg(), dst);
 
-   brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf), 1,
-			inst->offset);
+   brw_oword_block_read_scratch(p, dst, brw_message_reg(inst->base_mrf), 1,
+				inst->offset);
+
+   if (intel->gen == 4 && !intel->is_g4x) {
+      /* gen4 errata: destination from a send can't be used as a
+       * destination until it's been read.  Just read it so we don't
+       * have to worry.
+       */
+      brw_MOV(p, brw_null_reg(), dst);
+   }
+}
+
+
+void
+fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
+{
+   assert(inst->mlen != 0);
+
+   /* Clear any post destination dependencies that would be ignored by
+    * the block read.  See the B-Spec for pre-gen5 send instruction.
+    *
+    * This could use a better solution, since texture sampling and
+    * math reads could potentially run into it as well -- anywhere
+    * that we have a SEND with a destination that is a register that
+    * was written but not read within the last N instructions (what's
+    * N?  unsure).  This is rare because of dead code elimination, but
+    * not impossible.
+    */
+   if (intel->gen == 4 && !intel->is_g4x)
+      brw_MOV(p, brw_null_reg(), dst);
+
+   brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf),
+			inst->offset, SURF_INDEX_FRAG_CONST_BUFFER);
 
    if (intel->gen == 4 && !intel->is_g4x) {
       /* gen4 errata: destination from a send can't be used as a
@@ -2431,6 +2464,66 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
+}
+
+/**
+ * Choose accesses from the UNIFORM file to demote to using the pull
+ * constant buffer.
+ *
+ * We allow a fragment shader to have more than the specified minimum
+ * maximum number of fragment shader uniform components (64).  If
+ * there are too many of these, they'd fill up all of register space.
+ * So, this will push some of them out to the pull constant buffer and
+ * update the program to load them.
+ */
+void
+fs_visitor::setup_pull_constants()
+{
+   /* Only allow 16 registers (128 uniform components) as push constants. */
+   unsigned int max_uniform_components = 16 * 8;
+   if (c->prog_data.nr_params <= max_uniform_components)
+      return;
+
+   /* Just demote the end of the list.  We could probably do better
+    * here, demoting things that are rarely used in the program first.
+    */
+   int pull_uniform_base = max_uniform_components;
+   int pull_uniform_count = c->prog_data.nr_params - pull_uniform_base;
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      for (int i = 0; i < 3; i++) {
+	 if (inst->src[i].file != UNIFORM)
+	    continue;
+
+	 int uniform_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	 if (uniform_nr < pull_uniform_base)
+	    continue;
+
+	 fs_reg dst = fs_reg(this, glsl_type::float_type);
+	 fs_inst *pull = new(mem_ctx) fs_inst(FS_OPCODE_PULL_CONSTANT_LOAD,
+					      dst);
+	 pull->offset = ((uniform_nr - pull_uniform_base) * 4) & ~15;
+	 pull->ir = inst->ir;
+	 pull->annotation = inst->annotation;
+	 pull->base_mrf = 14;
+	 pull->mlen = 1;
+
+	 inst->insert_before(pull);
+
+	 inst->src[i].file = GRF;
+	 inst->src[i].reg = dst.reg;
+	 inst->src[i].reg_offset = 0;
+	 inst->src[i].smear = (uniform_nr - pull_uniform_base) & 3;
+      }
+   }
+
+   for (int i = 0; i < pull_uniform_count; i++) {
+      c->prog_data.pull_param[i] = c->prog_data.param[pull_uniform_base + i];
+   }
+   c->prog_data.nr_params -= pull_uniform_count;
+   c->prog_data.nr_pull_params = pull_uniform_count;
 }
 
 void
@@ -2721,6 +2814,7 @@ fs_visitor::register_coalesce()
 	       scan_inst->src[i].reg_offset = inst->src[0].reg_offset;
 	       scan_inst->src[i].abs |= inst->src[0].abs;
 	       scan_inst->src[i].negate ^= inst->src[0].negate;
+	       scan_inst->src[i].smear = inst->src[0].smear;
 	    }
 	 }
       }
@@ -2749,7 +2843,7 @@ fs_visitor::compute_to_mrf()
 	  inst->predicated ||
 	  inst->dst.file != MRF || inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
-	  inst->src[0].abs || inst->src[0].negate)
+	  inst->src[0].abs || inst->src[0].negate || inst->src[0].smear != -1)
 	 continue;
 
       /* Can't compute-to-MRF this GRF if someone else was going to
@@ -2897,8 +2991,13 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
    case GRF:
    case ARF:
    case MRF:
-      brw_reg = brw_vec8_reg(reg->file,
-			    reg->hw_reg, 0);
+      if (reg->smear == -1) {
+	 brw_reg = brw_vec8_reg(reg->file,
+				reg->hw_reg, 0);
+      } else {
+	 brw_reg = brw_vec1_reg(reg->file,
+				reg->hw_reg, reg->smear);
+      }
       brw_reg = retype(brw_reg, reg->type);
       break;
    case IMM:
@@ -3136,6 +3235,10 @@ fs_visitor::generate_code()
 	 generate_unspill(inst, dst);
 	 break;
 
+      case FS_OPCODE_PULL_CONSTANT_LOAD:
+	 generate_pull_constant_load(inst, dst);
+	 break;
+
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
 	 break;
@@ -3221,6 +3324,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       v.emit_fb_writes();
 
       v.split_virtual_grfs();
+      v.setup_pull_constants();
 
       v.assign_curb_setup();
       v.assign_urb_setup();

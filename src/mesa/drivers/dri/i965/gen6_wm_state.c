@@ -87,7 +87,7 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
-   if (fp->use_const_buffer || brw->wm.prog_data->nr_params == 0) {
+   if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 | (5 - 2));

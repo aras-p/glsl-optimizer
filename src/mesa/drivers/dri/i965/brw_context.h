@@ -173,8 +173,6 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
-   GLboolean use_const_buffer;
-
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
 };
@@ -204,12 +202,14 @@ struct brw_wm_prog_data {
    GLuint total_scratch;
 
    GLuint nr_params;       /**< number of float params/constants */
+   GLuint nr_pull_params;
    GLboolean error;
 
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
     */
-   const GLfloat *param[BRW_MAX_CURBE];
+   const GLfloat *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   const GLfloat *pull_param[MAX_UNIFORMS * 4];
 };
 
 struct brw_sf_prog_data {
