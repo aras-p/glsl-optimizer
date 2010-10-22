@@ -45,6 +45,24 @@ _eglParseImageAttribList(_EGLImageAttribs *attrs, _EGLDisplay *dpy,
       case EGL_GL_TEXTURE_ZOFFSET_KHR:
          attrs->GLTextureZOffset = val;
          break;
+
+      /* EGL_MESA_drm_image */
+      case EGL_WIDTH:
+         attrs->Width = val;
+         break;
+      case EGL_HEIGHT:
+         attrs->Height = val;
+         break;
+      case EGL_DRM_BUFFER_FORMAT_MESA:
+         attrs->DRMBufferFormatMESA = val;
+         break;
+      case EGL_DRM_BUFFER_USE_MESA:
+         attrs->DRMBufferUseMESA = val;
+         break;
+      case EGL_DRM_BUFFER_STRIDE_MESA:
+         attrs->DRMBufferStrideMESA = val;
+         break;
+
       default:
          /* unknown attrs are ignored */
          break;

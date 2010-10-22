@@ -14,6 +14,13 @@ struct _egl_image_attribs
    /* EGL_KHR_gl_image */
    EGLint GLTextureLevel;
    EGLint GLTextureZOffset;
+
+   /* EGL_MESA_drm_image */
+   EGLint Width;
+   EGLint Height;
+   EGLint DRMBufferFormatMESA;
+   EGLint DRMBufferUseMESA;
+   EGLint DRMBufferStrideMESA;
 };
 
 /**
