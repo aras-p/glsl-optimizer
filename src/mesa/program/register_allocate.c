@@ -398,11 +398,12 @@ ra_get_best_spill_node(struct ra_graph *g)
 
    for (n = 0; n < g->count; n++) {
       float cost = g->nodes[n].spill_cost;
+      float benefit;
 
       if (cost <= 0.0)
 	 continue;
 
-      float benefit = ra_get_spill_benefit(g, n);
+      benefit = ra_get_spill_benefit(g, n);
 
       if (benefit / cost > best_benefit) {
 	 best_benefit = benefit / cost;
