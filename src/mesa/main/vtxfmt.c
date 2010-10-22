@@ -92,7 +92,10 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 
    SET_Begin(tab, vfmt->Begin);
    SET_End(tab, vfmt->End);
+   SET_PrimitiveRestartNV(tab, vfmt->PrimitiveRestartNV);
+
    SET_Rectf(tab, vfmt->Rectf);
+
    SET_DrawArrays(tab, vfmt->DrawArrays);
    SET_DrawElements(tab, vfmt->DrawElements);
    SET_DrawRangeElements(tab, vfmt->DrawRangeElements);

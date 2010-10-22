@@ -452,6 +452,7 @@ enum pipe_cap {
    PIPE_CAP_BLEND_EQUATION_SEPARATE,
    PIPE_CAP_SM3,  /*< Shader Model, supported */
    PIPE_CAP_STREAM_OUTPUT,
+   PIPE_CAP_PRIMITIVE_RESTART,
    /** Maximum texture image units accessible from vertex and fragment shaders
     * combined */
    PIPE_CAP_MAX_COMBINED_SAMPLERS,

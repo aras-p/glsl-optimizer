@@ -112,6 +112,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_STREAM_OUTPUT:
       return 1;
+   case PIPE_CAP_PRIMITIVE_RESTART:
+      return 1;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 0;
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
