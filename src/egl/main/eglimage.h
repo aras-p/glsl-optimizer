@@ -6,6 +6,16 @@
 #include "egldisplay.h"
 
 
+struct _egl_image_attribs
+{
+   /* EGL_KHR_image_base */
+   EGLBoolean ImagePreserved;
+
+   /* EGL_KHR_gl_image */
+   EGLint GLTextureLevel;
+   EGLint GLTextureZOffset;
+};
+
 /**
  * "Base" class for device driver images.
  */
@@ -13,15 +23,16 @@ struct _egl_image
 {
    /* An image is a display resource */
    _EGLResource Resource;
-
-   EGLBoolean Preserved;
-   EGLint GLTextureLevel;
-   EGLint GLTextureZOffset;
 };
 
 
+PUBLIC EGLint
+_eglParseImageAttribList(_EGLImageAttribs *attrs, _EGLDisplay *dpy,
+                         const EGLint *attrib_list);
+
+
 PUBLIC EGLBoolean
-_eglInitImage(_EGLImage *img, _EGLDisplay *dpy, const EGLint *attrib_list);
+_eglInitImage(_EGLImage *img, _EGLDisplay *dpy);
 
 
 extern _EGLImage *

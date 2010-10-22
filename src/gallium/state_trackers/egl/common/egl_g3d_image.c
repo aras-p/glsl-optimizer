@@ -245,7 +245,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
       return NULL;
    }
 
-   if (!_eglInitImage(&gimg->base, dpy, attribs)) {
+   if (!_eglInitImage(&gimg->base, dpy)) {
       FREE(gimg);
       return NULL;
    }
@@ -316,7 +316,7 @@ egl_g3d_create_drm_image(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!_eglInitImage(&gimg->base, dpy, attribs)) {
+   if (!_eglInitImage(&gimg->base, dpy)) {
       FREE(gimg);
       return NULL;
    }

@@ -1599,7 +1599,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       free(buffers_reply);
       free(geometry_reply);
       return EGL_NO_IMAGE_KHR;
@@ -1642,7 +1642,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list))
+   if (!_eglInitImage(&dri2_img->base, disp))
       return EGL_NO_IMAGE_KHR;
 
    dri2_img->dri_image = 
@@ -1722,7 +1722,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
       return NULL;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       free(dri2_img);
       return NULL;
    }
@@ -1801,7 +1801,7 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
       goto cleanup_img;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       err = EGL_BAD_PARAMETER;
       goto cleanup_img;
    }
