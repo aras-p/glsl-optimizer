@@ -452,7 +452,7 @@ create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
          memcpy(GLX_conf, &template, sizeof(template));
          GLX_conf->index = i;
 
-         _eglAddConfig(dpy, &GLX_conf->Base);
+         _eglLinkConfig(&GLX_conf->Base);
          id++;
       }
    }

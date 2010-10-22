@@ -40,16 +40,18 @@ _eglInitConfig(_EGLConfig *conf, _EGLDisplay *dpy, EGLint id)
 
 
 /**
- * Link a config to a display and return the handle of the link.
+ * Link a config to its display and return the handle of the link.
  * The handle can be passed to client directly.
  *
  * Note that we just save the ptr to the config (we don't copy the config).
  */
-EGLConfig
-_eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
+PUBLIC EGLConfig
+_eglLinkConfig(_EGLConfig *conf)
 {
+   _EGLDisplay *dpy = conf->Display;
+
    /* sanity check */
-   assert(conf->ConfigID > 0);
+   assert(dpy && conf->ConfigID > 0);
 
    if (!dpy->Configs) {
       dpy->Configs = _eglCreateArray("Config", 16);
@@ -57,23 +59,29 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
          return (EGLConfig) NULL;
    }
 
-   conf->Display = dpy;
    _eglAppendArray(dpy->Configs, (void *) conf);
 
    return (EGLConfig) conf;
 }
 
 
-EGLBoolean
-_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
+/**
+ * Lookup a handle to find the linked config.
+ * Return NULL if the handle has no corresponding linked config.
+ */
+_EGLConfig *
+_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy)
 {
    _EGLConfig *conf;
+
+   if (!dpy)
+      return NULL;
 
    conf = (_EGLConfig *) _eglFindArray(dpy->Configs, (void *) config);
    if (conf)
       assert(conf->Display == dpy);
 
-   return (conf != NULL);
+   return conf;
 }
 
 
@@ -464,9 +472,12 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
  * Return EGL_FALSE if any of the attribute is invalid.
  */
 EGLBoolean
-_eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list)
+_eglParseConfigAttribList(_EGLConfig *conf, _EGLDisplay *dpy,
+                          const EGLint *attrib_list)
 {
    EGLint attr, val, i;
+
+   _eglInitConfig(conf, dpy, EGL_DONT_CARE);
 
    /* reset to default values */
    for (i = 0; i < ARRAY_SIZE(_eglValidationTable); i++) {
@@ -494,7 +505,7 @@ _eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list)
       return EGL_FALSE;
 
    /* ignore other attributes when EGL_CONFIG_ID is given */
-   if (conf->ConfigID > 0) {
+   if (conf->ConfigID != EGL_DONT_CARE) {
       for (i = 0; i < ARRAY_SIZE(_eglValidationTable); i++) {
          attr = _eglValidationTable[i].attr;
          if (attr != EGL_CONFIG_ID)
@@ -683,8 +694,7 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!num_configs)
       return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
 
-   _eglInitConfig(&criteria, disp, 0);
-   if (!_eglParseConfigAttribList(&criteria, attrib_list))
+   if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
    configList = (_EGLConfig **) _eglFilterArray(disp->Configs, &count,

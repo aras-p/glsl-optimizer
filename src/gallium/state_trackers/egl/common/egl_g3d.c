@@ -373,7 +373,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
                break;
             }
 
-            _eglAddConfig(dpy, &gconf->base);
+            _eglLinkConfig(&gconf->base);
             id++;
          }
       }

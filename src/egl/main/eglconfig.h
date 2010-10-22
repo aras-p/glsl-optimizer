@@ -136,34 +136,20 @@ _eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id);
 
 
 PUBLIC EGLConfig
-_eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf);
+_eglLinkConfig(_EGLConfig *conf);
 
 
-extern EGLBoolean
-_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy);
-
-
-/**
- * Lookup a handle to find the linked config.
- * Return NULL if the handle has no corresponding linked config.
- */
-static INLINE _EGLConfig *
-_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy)
-{
-   _EGLConfig *conf = (_EGLConfig *) config;
-   if (!dpy || !_eglCheckConfigHandle(config, dpy))
-      conf = NULL;
-   return conf;
-}
+extern _EGLConfig *
+_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy);
 
 
 /**
- * Return the handle of a linked config, or NULL.
+ * Return the handle of a linked config.
  */
 static INLINE EGLConfig
 _eglGetConfigHandle(_EGLConfig *conf)
 {
-   return (EGLConfig) ((conf && conf->Display) ? conf : NULL);
+   return (EGLConfig) conf;
 }
 
 
@@ -176,7 +162,8 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria);
 
 
 PUBLIC EGLBoolean
-_eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list);
+_eglParseConfigAttribList(_EGLConfig *conf, _EGLDisplay *dpy,
+                          const EGLint *attrib_list);
 
 
 PUBLIC EGLint

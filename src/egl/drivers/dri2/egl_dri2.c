@@ -272,7 +272,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    if (conf != NULL) {
       memcpy(&conf->base, &base, sizeof base);
       conf->dri_config = dri_config;
-      _eglAddConfig(disp, &conf->base);
+      _eglLinkConfig(&conf->base);
    }
 
    return conf;
