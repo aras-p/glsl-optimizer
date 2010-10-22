@@ -126,7 +126,7 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
          continue;
       }
 
-      _eglInitScreen(&gscr->base);
+      _eglInitScreen(&gscr->base, dpy);
 
       for (j = 0; j < num_modes; j++) {
          const struct native_mode *nmode = native_modes[j];
@@ -143,7 +143,7 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
       gscr->native = nconn;
       gscr->native_modes = native_modes;
 
-      _eglAddScreen(dpy, &gscr->base);
+      _eglLinkScreen(&gscr->base);
    }
 
    FREE(native_connectors);
