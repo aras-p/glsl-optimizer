@@ -196,11 +196,14 @@ alloc_ximage(struct xm_displaytarget *xm_dt,
              struct xlib_drawable *xmb,
              unsigned width, unsigned height)
 {
+   /* try allocating a shared memory image first */
    if (xm_dt->shm) {
       alloc_shm_ximage(xm_dt, xmb, width, height);
-      return;
+      if (xm_dt->tempImage)
+         return; /* success */
    }
 
+   /* try regular (non-shared memory) image */
    xm_dt->tempImage = XCreateImage(xm_dt->display,
                                    xmb->visual,
                                    xmb->depth,
@@ -252,6 +255,10 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
          
          xm_dt->shminfo.shmid = -1;
          xm_dt->shminfo.shmaddr = (char *) -1;
+
+         xm_dt->data = NULL;
+         if (xm_dt->tempImage)
+            xm_dt->tempImage->data = NULL;
       }
       else {
          FREE(xm_dt->data);
