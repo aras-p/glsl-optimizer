@@ -7967,6 +7967,8 @@
 
 <xi:include href="NV_conditional_render.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="NV_primitive_restart.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <xi:include href="EXT_transform_feedback.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_draw_instanced.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
