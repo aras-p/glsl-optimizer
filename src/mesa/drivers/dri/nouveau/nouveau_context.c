@@ -180,6 +180,7 @@ void
 nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 {
 	struct gl_context *ctx = dri_ctx->driverPrivate;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	__DRIscreen *screen = dri_ctx->driScreenPriv;
 	struct gl_framebuffer *fb = draw->driverPrivate;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
@@ -211,6 +212,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	for (i = 0; i < count; i++) {
 		struct gl_renderbuffer *rb;
 		struct nouveau_surface *s;
+		uint32_t old_name;
 		int index;
 
 		switch (buffers[i].attachment) {
@@ -239,6 +241,16 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		s->height = draw->h;
 		s->pitch = buffers[i].pitch;
 		s->cpp = buffers[i].cpp;
+
+		if (index == BUFFER_DEPTH && s->bo) {
+			ret = nouveau_bo_handle_get(s->bo, &old_name);
+			/*
+			 * Disable fast Z clears in the next frame, the
+			 * depth buffer contents are undefined.
+			 */
+			if (!ret && old_name != buffers[i].name)
+				nctx->hierz.clear_seq = 0;
+		}
 
 		nouveau_bo_ref(NULL, &s->bo);
 		ret = nouveau_bo_handle_ref(context_dev(ctx),
