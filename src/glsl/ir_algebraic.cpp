@@ -187,8 +187,8 @@ ir_algebraic_visitor::reassociate_constant(ir_expression *ir1, int const_index,
 
    /* Don't want to even think about matrices. */
    if (ir1->operands[0]->type->is_matrix() ||
-       ir1->operands[0]->type->is_matrix() ||
-       ir2->operands[1]->type->is_matrix() ||
+       ir1->operands[1]->type->is_matrix() ||
+       ir2->operands[0]->type->is_matrix() ||
        ir2->operands[1]->type->is_matrix())
       return false;
 
