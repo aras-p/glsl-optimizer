@@ -30,9 +30,11 @@
 #include "enums.h"
 #include "feedback.h"
 #include "framebuffer.h"
+#include "image.h"
 #include "readpix.h"
+#include "shaderobj.h"
 #include "state.h"
-#include "main/dispatch.h"
+#include "dispatch.h"
 
 
 #if FEATURE_drawpix
@@ -92,6 +94,14 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
    if (!ctx->Current.RasterPosValid) {
       goto end; /* no-op, not an error */
+   }
+
+   if (_mesa_is_integer_format(format) &&
+       !_mesa_is_fragment_shader_active(ctx)) {
+      /* A fragment shader is required when drawing integer formats */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glDrawPixels(integer format but no fragment shader)");
+      goto end;
    }
 
    if (ctx->RenderMode == GL_RENDER) {
