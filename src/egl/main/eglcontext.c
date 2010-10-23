@@ -249,10 +249,6 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
    if (!surfaceless && (draw == NULL || read == NULL))
       return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
 
-   /* context stealing from another thread is not allowed */
-   if (ctx->Binding && ctx->Binding != t)
-      return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
-
    /*
     * The spec says
     *
@@ -260,16 +256,23 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
     * bound to contexts in another thread, an EGL_BAD_ACCESS error is
     * generated."
     *
-    * But it also says
+    * and
     *
     * "at most one context may be bound to a particular surface at a given
     * time"
-    *
-    * The latter is more restrictive so we can check only the latter case.
     */
-   if ((draw && draw->CurrentContext && draw->CurrentContext != ctx) ||
-       (read && read->CurrentContext && read->CurrentContext != ctx))
+   if (ctx->Binding && ctx->Binding != t)
       return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
+   if (draw && draw->CurrentContext && draw->CurrentContext != ctx) {
+      if (draw->CurrentContext->Binding != t ||
+          draw->CurrentContext->ClientAPI != ctx->ClientAPI)
+         return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
+   }
+   if (read && read->CurrentContext && read->CurrentContext != ctx) {
+      if (read->CurrentContext->Binding != t ||
+          read->CurrentContext->ClientAPI != ctx->ClientAPI)
+         return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
+   }
 
    /* simply require the configs to be equal */
    if ((draw && draw->Config != ctx->Config) ||
