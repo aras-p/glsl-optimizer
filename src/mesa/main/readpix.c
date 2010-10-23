@@ -78,6 +78,16 @@ _mesa_error_check_format_type(struct gl_context *ctx, GLenum format, GLenum type
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
+   case GL_RED_INTEGER_EXT:
+   case GL_GREEN_INTEGER_EXT:
+   case GL_BLUE_INTEGER_EXT:
+   case GL_ALPHA_INTEGER_EXT:
+   case GL_RGB_INTEGER_EXT:
+   case GL_RGBA_INTEGER_EXT:
+   case GL_BGR_INTEGER_EXT:
+   case GL_BGRA_INTEGER_EXT:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       if (!drawing) {
          /* reading */
          if (!_mesa_source_buffer_exists(ctx, GL_COLOR)) {
