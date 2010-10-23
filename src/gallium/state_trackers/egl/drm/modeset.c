@@ -469,8 +469,8 @@ drm_display_get_modes(struct native_display *ndpy,
       drmmode->base.height = drmmode->mode.vdisplay;
       drmmode->base.refresh_rate = drmmode->mode.vrefresh;
       /* not all kernels have vrefresh = refresh_rate * 1000 */
-      if (drmmode->base.refresh_rate > 1000)
-         drmmode->base.refresh_rate = (drmmode->base.refresh_rate + 500) / 1000;
+      if (drmmode->base.refresh_rate < 1000)
+         drmmode->base.refresh_rate *= 1000;
    }
 
    nmodes_return = MALLOC(count * sizeof(*nmodes_return));

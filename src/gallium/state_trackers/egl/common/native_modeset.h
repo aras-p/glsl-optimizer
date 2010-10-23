@@ -39,7 +39,7 @@ struct native_connector {
 struct native_mode {
    const char *desc;
    int width, height;
-   int refresh_rate;
+   int refresh_rate; /* HZ * 1000 */
 };
 
 /**
