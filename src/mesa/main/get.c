@@ -173,6 +173,7 @@ union value {
 
 #define BUFFER_INT(field) BUFFER_FIELD(field, TYPE_INT)
 #define BUFFER_ENUM(field) BUFFER_FIELD(field, TYPE_ENUM)
+#define BUFFER_BOOL(field) BUFFER_FIELD(field, TYPE_BOOLEAN)
 
 #define CONTEXT_INT(field) CONTEXT_FIELD(field, TYPE_INT)
 #define CONTEXT_INT2(field) CONTEXT_FIELD(field, TYPE_INT_2)
@@ -259,6 +260,12 @@ static const int extra_EXT_fog_coord_flush_current[] = {
    EXTRA_FLUSH_CURRENT,
    EXTRA_END
 };
+
+static const int extra_EXT_texture_integer[] = {
+   EXT(EXT_texture_integer),
+   EXTRA_END
+};
+
 
 EXTRA_EXT(ARB_multitexture);
 EXTRA_EXT(ARB_texture_cube_map);
@@ -1143,6 +1150,10 @@ static const struct value_desc values[] = {
    /* GL_ARB_sync */
    { GL_MAX_SERVER_WAIT_TIMEOUT,
      CONTEXT_INT64(Const.MaxServerWaitTimeout), extra_ARB_sync },
+
+   /* GL_EXT_texture_integer */
+   { GL_RGBA_INTEGER_MODE_EXT, BUFFER_BOOL(_IntegerColor),
+     extra_EXT_texture_integer },
 
    /* GL_EXT_transform_feedback */
    { GL_TRANSFORM_FEEDBACK_BUFFER_BINDING, LOC_CUSTOM, TYPE_INT, 0,
