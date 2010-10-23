@@ -269,8 +269,7 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
       return EGL_FALSE;
    }
 
-   memset(surf, 0, sizeof(_EGLSurface));
-   surf->Resource.Display = dpy;
+   _eglInitResource(&surf->Resource, sizeof(*surf), dpy);
    surf->Type = type;
    surf->Config = conf;
 

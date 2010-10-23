@@ -81,8 +81,7 @@ _eglParseImageAttribList(_EGLImageAttribs *attrs, _EGLDisplay *dpy,
 EGLBoolean
 _eglInitImage(_EGLImage *img, _EGLDisplay *dpy)
 {
-   memset(img, 0, sizeof(_EGLImage));
-   img->Resource.Display = dpy;
+   _eglInitResource(&img->Resource, sizeof(*img), dpy);
 
    return EGL_TRUE;
 }

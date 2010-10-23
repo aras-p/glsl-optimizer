@@ -50,10 +50,7 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
        !(type == EGL_SYNC_FENCE_KHR && dpy->Extensions.KHR_fence_sync))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglCreateSyncKHR");
 
-   memset(sync, 0, sizeof(*sync));
-
-   sync->Resource.Display = dpy;
-
+   _eglInitResource(&sync->Resource, sizeof(*sync), dpy);
    sync->Type = type;
    sync->SyncStatus = EGL_UNSIGNALED_KHR;
    sync->SyncCondition = EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR;

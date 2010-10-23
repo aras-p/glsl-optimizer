@@ -40,6 +40,7 @@ struct _egl_resource
    /* which display the resource belongs to */
    _EGLDisplay *Display;
    EGLBoolean IsLinked;
+   EGLint RefCount;
 
    /* used to link resources of the same type */
    _EGLResource *Next;
@@ -159,6 +160,18 @@ _eglGetDisplayHandle(_EGLDisplay *dpy)
 {
    return (EGLDisplay) ((dpy) ? dpy : EGL_NO_DISPLAY);
 }
+
+
+extern void
+_eglInitResource(_EGLResource *res, EGLint size, _EGLDisplay *dpy);
+
+
+PUBLIC void
+_eglGetResource(_EGLResource *res);
+
+
+PUBLIC EGLBoolean
+_eglPutResource(_EGLResource *res);
 
 
 extern void

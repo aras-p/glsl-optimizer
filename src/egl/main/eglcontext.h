@@ -43,6 +43,28 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
 
 
 /**
+ * Increment reference count for the context.
+ */
+static INLINE _EGLContext *
+_eglGetContext(_EGLContext *ctx)
+{
+   if (ctx)
+      _eglGetResource(&ctx->Resource);
+   return ctx;
+}
+
+
+/**
+ * Decrement reference count for the context.
+ */
+static INLINE EGLBoolean
+_eglPutContext(_EGLContext *ctx)
+{
+   return (ctx) ? _eglPutResource(&ctx->Resource) : EGL_FALSE;
+}
+
+
+/**
  * Return true if the context is bound to a thread.
  *
  * The binding is considered a reference to the context.  Drivers should not

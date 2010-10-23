@@ -81,6 +81,28 @@ _eglIsSurfaceBound(_EGLSurface *surf)
 
 
 /**
+ * Increment reference count for the surface.
+ */
+static INLINE _EGLSurface *
+_eglGetSurface(_EGLSurface *surf)
+{
+   if (surf)
+      _eglGetResource(&surf->Resource);
+   return surf;
+}
+
+
+/**
+ * Decrement reference count for the surface.
+ */
+static INLINE EGLBoolean
+_eglPutSurface(_EGLSurface *surf)
+{
+   return (surf) ? _eglPutResource(&surf->Resource) : EGL_FALSE;
+}
+
+
+/**
  * Link a surface to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */

@@ -43,6 +43,28 @@ _eglInitImage(_EGLImage *img, _EGLDisplay *dpy);
 
 
 /**
+ * Increment reference count for the image.
+ */
+static INLINE _EGLImage *
+_eglGetImage(_EGLImage *img)
+{
+   if (img)
+      _eglGetResource(&img->Resource);
+   return img;
+}
+
+
+/**
+ * Decrement reference count for the image.
+ */
+static INLINE EGLBoolean
+_eglPutImage(_EGLImage *img)
+{
+   return (img) ? _eglPutResource(&img->Resource) : EGL_FALSE;
+}
+
+
+/**
  * Link an image to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */

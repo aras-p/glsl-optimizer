@@ -34,6 +34,28 @@ _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
 
 
 /**
+ * Increment reference count for the sync.
+ */
+static INLINE _EGLSync *
+_eglGetSync(_EGLSync *sync)
+{
+   if (sync)
+      _eglGetResource(&sync->Resource);
+   return sync;
+}
+
+
+/**
+ * Decrement reference count for the sync.
+ */
+static INLINE EGLBoolean
+_eglPutSync(_EGLSync *sync)
+{
+   return (sync) ? _eglPutResource(&sync->Resource) : EGL_FALSE;
+}
+
+
+/**
  * Link a sync to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
