@@ -875,6 +875,16 @@ _mesa_source_buffer_exists(struct gl_context *ctx, GLenum format)
    case GL_BGRA:
    case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
+   case GL_RED_INTEGER_EXT:
+   case GL_GREEN_INTEGER_EXT:
+   case GL_BLUE_INTEGER_EXT:
+   case GL_ALPHA_INTEGER_EXT:
+   case GL_RGB_INTEGER_EXT:
+   case GL_RGBA_INTEGER_EXT:
+   case GL_BGR_INTEGER_EXT:
+   case GL_BGRA_INTEGER_EXT:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       if (ctx->ReadBuffer->_ColorReadBuffer == NULL) {
          return GL_FALSE;
       }
@@ -951,6 +961,16 @@ _mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format)
    case GL_BGRA:
    case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
+   case GL_RED_INTEGER_EXT:
+   case GL_GREEN_INTEGER_EXT:
+   case GL_BLUE_INTEGER_EXT:
+   case GL_ALPHA_INTEGER_EXT:
+   case GL_RGB_INTEGER_EXT:
+   case GL_RGBA_INTEGER_EXT:
+   case GL_BGR_INTEGER_EXT:
+   case GL_BGRA_INTEGER_EXT:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       /* Nothing special since GL_DRAW_BUFFER could be GL_NONE. */
       /* Could assert that colorbuffer has RedBits > 0 */
       break;
