@@ -44,6 +44,9 @@
 #include "sp_tex_tile_cache.h"
 
 
+/** Set to one to help debug texture sampling */
+#define DEBUG_TEX 0
+
 
 /*
  * Return fractional part of 'f'.  Used for computing interpolation weights.
@@ -774,6 +777,18 @@ pot_level_size(unsigned base_pot, unsigned level)
 }
 
 
+static void
+print_sample(const char *function, float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   debug_printf("%s %g %g %g %g, %g %g %g %g, %g %g %g %g, %g %g %g %g\n",
+                function,
+                rgba[0][0], rgba[1][0], rgba[2][0], rgba[3][0],
+                rgba[0][1], rgba[1][1], rgba[2][1], rgba[3][1],
+                rgba[0][2], rgba[1][2], rgba[2][2], rgba[3][2],
+                rgba[0][3], rgba[1][3], rgba[2][3], rgba[3][3]);
+}
+
+
 /* Some image-filter fastpaths:
  */
 static INLINE void
@@ -832,6 +847,10 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                               tx[2][c], tx[3][c]);
       }
    }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
+   }
 }
 
 
@@ -871,6 +890,10 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
       }
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
    }
 }
 
@@ -921,6 +944,10 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
          rgba[c][j] = out[c];
       }
    }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
+   }
 }
 
 
@@ -956,6 +983,10 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
       }
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
    }
 }
 
@@ -996,6 +1027,10 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
       }
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
    }
 }
 
@@ -1044,6 +1079,10 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
       }
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
    }
 }
 
@@ -1357,6 +1396,10 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
          }
       }
    }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
+   }
 }
 
 
@@ -1402,13 +1445,9 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
 
-#if 0
-   printf("RGBA %g %g %g %g, %g %g %g %g, %g %g %g %g, %g %g %g %g\n",
-          rgba[0][0], rgba[1][0], rgba[2][0], rgba[3][0],
-          rgba[0][1], rgba[1][1], rgba[2][1], rgba[3][1],
-          rgba[0][2], rgba[1][2], rgba[2][2], rgba[3][2],
-          rgba[0][3], rgba[1][3], rgba[2][3], rgba[3][3]);
-#endif
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
+   }
 }
 
 
@@ -1509,6 +1548,10 @@ mip_filter_linear_2d_linear_repeat_POT(
             rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
          }
       }
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
    }
 }
 
