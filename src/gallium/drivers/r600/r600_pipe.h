@@ -208,6 +208,7 @@ void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 /* r600_shader.c */
 int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);
 

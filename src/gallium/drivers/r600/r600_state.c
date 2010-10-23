@@ -1095,7 +1095,8 @@ static void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 	if (rctx->ps_shader == shader) {
 		rctx->ps_shader = NULL;
 	}
-	/* TODO proper delete */
+
+	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
 
@@ -1107,7 +1108,8 @@ static void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 	if (rctx->vs_shader == shader) {
 		rctx->vs_shader = NULL;
 	}
-	/* TODO proper delete */
+
+	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
 
