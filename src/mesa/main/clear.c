@@ -96,6 +96,68 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 
 
 /**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
+   COPY_4V(ctx->Color.ClearColor, tmp);
+
+   if (ctx->Driver.ClearColor) {
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
+   COPY_4V(ctx->Color.ClearColor, tmp);
+
+   if (ctx->Driver.ClearColor) {
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
  * Clear buffers.
  * 
  * \param mask bit-mask indicating the buffers to be cleared.
