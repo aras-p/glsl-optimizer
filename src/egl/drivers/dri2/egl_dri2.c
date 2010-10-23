@@ -1160,7 +1160,7 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 
    (void) drv;
 
-   if (_eglIsSurfaceBound(surf))
+   if (!_eglPutSurface(surf))
       return EGL_TRUE;
 
    (*dri2_dpy->core->destroyDrawable)(dri2_surf->dri_drawable);
@@ -1187,11 +1187,13 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct dri2_egl_surface *dri2_dsurf = dri2_egl_surface(dsurf);
    struct dri2_egl_surface *dri2_rsurf = dri2_egl_surface(rsurf);
    struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   _EGLContext *old_ctx;
+   _EGLSurface *old_dsurf, *old_rsurf;
    __DRIdrawable *ddraw, *rdraw;
    __DRIcontext *cctx;
 
-   /* bind the new context and return the "orphaned" one */
-   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
+   /* make new bindings */
+   if (!_eglBindContext(ctx, dsurf, rsurf, &old_ctx, &old_dsurf, &old_rsurf))
       return EGL_FALSE;
 
    /* flush before context switch */
@@ -1204,16 +1206,29 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
 
    if ((cctx == NULL && ddraw == NULL && rdraw == NULL) ||
        dri2_dpy->core->bindContext(cctx, ddraw, rdraw)) {
-      if (dsurf && !_eglIsSurfaceLinked(dsurf))
-	 dri2_destroy_surface(drv, disp, dsurf);
-      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(dsurf))
-	 dri2_destroy_surface(drv, disp, rsurf);
-      if (ctx != NULL && !_eglIsContextLinked(ctx))
-	 dri2_dpy->core->unbindContext(dri2_egl_context(ctx)->dri_context);
+      dri2_destroy_surface(drv, disp, old_dsurf);
+      dri2_destroy_surface(drv, disp, old_rsurf);
+      if (old_ctx) {
+	 dri2_dpy->core->unbindContext(dri2_egl_context(old_ctx)->dri_context);
+         /* no destroy? */
+         _eglPutContext(old_ctx);
+      }
 
       return EGL_TRUE;
    } else {
-      _eglBindContext(&ctx, &dsurf, &rsurf);
+      /* undo the previous _eglBindContext */
+      _eglBindContext(old_ctx, old_dsurf, old_rsurf, &ctx, &dsurf, &rsurf);
+      assert(&dri2_ctx->base == ctx &&
+             &dri2_dsurf->base == dsurf &&
+             &dri2_rsurf->base == rsurf);
+
+      _eglPutSurface(dsurf);
+      _eglPutSurface(rsurf);
+      _eglPutContext(ctx);
+
+      _eglPutSurface(old_dsurf);
+      _eglPutSurface(old_rsurf);
+      _eglPutContext(old_ctx);
 
       return EGL_FALSE;
    }

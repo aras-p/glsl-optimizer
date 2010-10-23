@@ -113,15 +113,4 @@ _eglGetImageHandle(_EGLImage *img)
 }
 
 
-/**
- * Return true if the image is linked to a display.
- */
-static INLINE EGLBoolean
-_eglIsImageLinked(_EGLImage *img)
-{
-   _EGLResource *res = (_EGLResource *) img;
-   return (res && _eglIsResourceLinked(res));
-}
-
-
 #endif /* EGLIMAGE_INCLUDED */

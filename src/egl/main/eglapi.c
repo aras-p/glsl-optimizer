@@ -648,11 +648,12 @@ eglSwapInterval(EGLDisplay dpy, EGLint interval)
 
    _EGL_CHECK_DISPLAY(disp, EGL_FALSE, drv);
 
-   if (!ctx || !_eglIsContextLinked(ctx) || ctx->Resource.Display != disp)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       ctx->Resource.Display != disp)
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
 
    surf = ctx->DrawSurface;
-   if (!_eglIsSurfaceLinked(surf))
+   if (_eglGetSurfaceHandle(surf) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapInterval(drv, disp, surf, interval);
@@ -673,7 +674,8 @@ eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
    _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
 
    /* surface must be bound to current context in EGL 1.4 */
-   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       surf != ctx->DrawSurface)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapBuffers(drv, disp, surf);
@@ -714,7 +716,8 @@ eglWaitClient(void)
    _eglLockMutex(&disp->Mutex);
 
    /* let bad current context imply bad current surface */
-   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       _eglGetSurfaceHandle(ctx->DrawSurface) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
 
    /* a valid current context implies an initialized current display */
@@ -763,7 +766,8 @@ eglWaitNative(EGLint engine)
    _eglLockMutex(&disp->Mutex);
 
    /* let bad current context imply bad current surface */
-   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       _eglGetSurfaceHandle(ctx->DrawSurface) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
 
    /* a valid current context implies an initialized current display */
@@ -1437,7 +1441,8 @@ eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
       RETURN_EGL_EVAL(disp, EGL_FALSE);
 
    /* surface must be bound to current context in EGL 1.4 */
-   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       surf != ctx->DrawSurface)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapBuffersRegionNOK(drv, disp, surf, numRects, rects);

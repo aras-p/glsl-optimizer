@@ -39,7 +39,9 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint att
 
 
 PUBLIC EGLBoolean
-_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
+_eglBindContext(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read,
+                _EGLContext **old_ctx,
+                _EGLSurface **old_draw, _EGLSurface **old_read);
 
 
 /**
@@ -61,19 +63,6 @@ static INLINE EGLBoolean
 _eglPutContext(_EGLContext *ctx)
 {
    return (ctx) ? _eglPutResource(&ctx->Resource) : EGL_FALSE;
-}
-
-
-/**
- * Return true if the context is bound to a thread.
- *
- * The binding is considered a reference to the context.  Drivers should not
- * destroy a context when it is bound.
- */
-static INLINE EGLBoolean
-_eglIsContextBound(_EGLContext *ctx)
-{
-   return (ctx->Binding != NULL);
 }
 
 
@@ -123,20 +112,6 @@ _eglGetContextHandle(_EGLContext *ctx)
    _EGLResource *res = (_EGLResource *) ctx;
    return (res && _eglIsResourceLinked(res)) ?
       (EGLContext) ctx : EGL_NO_CONTEXT;
-}
-
-
-/**
- * Return true if the context is linked to a display.
- *
- * The link is considered a reference to the context (the display is owning the
- * context).  Drivers should not destroy a context when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsContextLinked(_EGLContext *ctx)
-{
-   _EGLResource *res = (_EGLResource *) ctx;
-   return (res && _eglIsResourceLinked(res));
 }
 
 

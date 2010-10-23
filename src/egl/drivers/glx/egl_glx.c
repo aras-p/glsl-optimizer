@@ -677,14 +677,16 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct GLX_egl_surface *GLX_dsurf = GLX_egl_surface(dsurf);
    struct GLX_egl_surface *GLX_rsurf = GLX_egl_surface(rsurf);
    struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
+   _EGLContext *old_ctx;
+   _EGLSurface *old_dsurf, *old_rsurf;
    GLXDrawable ddraw, rdraw;
    GLXContext cctx;
    EGLBoolean ret = EGL_FALSE;
 
    (void) drv;
 
-   /* bind the new context and return the "orphaned" one */
-   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
+   /* make new bindings */
+   if (!_eglBindContext(ctx, dsurf, rsurf, &old_ctx, &old_dsurf, &old_rsurf))
       return EGL_FALSE;
 
    ddraw = (GLX_dsurf) ? GLX_dsurf->glx_drawable : None;
@@ -697,13 +699,27 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
       ret = glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
    if (ret) {
-      if (dsurf && !_eglIsSurfaceLinked(dsurf))
-         destroy_surface(disp, dsurf);
-      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(rsurf))
-         destroy_surface(disp, rsurf);
+      if (_eglPutSurface(old_dsurf))
+         destroy_surface(disp, old_dsurf);
+      if (_eglPutSurface(old_rsurf))
+         destroy_surface(disp, old_rsurf);
+      /* no destroy? */
+      _eglPutContext(old_ctx);
    }
    else {
-      _eglBindContext(&ctx, &dsurf, &rsurf);
+      /* undo the previous _eglBindContext */
+      _eglBindContext(old_ctx, old_dsurf, old_rsurf, &ctx, &dsurf, &rsurf);
+      assert(&GLX_ctx->Base == ctx &&
+             &GLX_dsurf->Base == dsurf &&
+             &GLX_rsurf->Base == rsurf);
+
+      _eglPutSurface(dsurf);
+      _eglPutSurface(rsurf);
+      _eglPutContext(ctx);
+
+      _eglPutSurface(old_dsurf);
+      _eglPutSurface(old_rsurf);
+      _eglPutContext(old_ctx);
    }
 
    return ret;
@@ -907,7 +923,7 @@ GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
    (void) drv;
 
-   if (!_eglIsSurfaceBound(surf))
+   if (_eglPutSurface(surf))
       destroy_surface(disp, surf);
 
    return EGL_TRUE;

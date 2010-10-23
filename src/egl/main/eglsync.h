@@ -103,20 +103,6 @@ _eglGetSyncHandle(_EGLSync *sync)
 }
 
 
-/**
- * Return true if the sync is linked to a display.
- *
- * The link is considered a reference to the sync (the display is owning the
- * sync).  Drivers should not destroy a sync when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsSyncLinked(_EGLSync *sync)
-{
-   _EGLResource *res = (_EGLResource *) sync;
-   return (res && _eglIsResourceLinked(res));
-}
-
-
 #endif /* EGL_KHR_reusable_sync */
 
 

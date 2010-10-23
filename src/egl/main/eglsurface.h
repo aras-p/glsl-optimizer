@@ -68,19 +68,6 @@ _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint in
 
 
 /**
- * Return true if there is a context bound to the surface.
- *
- * The binding is considered a reference to the surface.  Drivers should not
- * destroy a surface when it is bound.
- */
-static INLINE EGLBoolean
-_eglIsSurfaceBound(_EGLSurface *surf)
-{
-   return (surf->CurrentContext != NULL);
-}
-
-
-/**
  * Increment reference count for the surface.
  */
 static INLINE _EGLSurface *
@@ -148,20 +135,6 @@ _eglGetSurfaceHandle(_EGLSurface *surf)
    _EGLResource *res = (_EGLResource *) surf;
    return (res && _eglIsResourceLinked(res)) ?
       (EGLSurface) surf : EGL_NO_SURFACE;
-}
-
-
-/**
- * Return true if the surface is linked to a display.
- *
- * The link is considered a reference to the surface (the display is owning the
- * surface).  Drivers should not destroy a surface when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsSurfaceLinked(_EGLSurface *surf)
-{
-   _EGLResource *res = (_EGLResource *) surf;
-   return (res && _eglIsResourceLinked(res));
 }
 
 

@@ -300,54 +300,65 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
 
 /**
  * Bind the context to the current thread and given surfaces.  Return the
- * "orphaned" context and surfaces.  Each argument is both input and output.
+ * previous bound context and surfaces.  The caller should unreference the
+ * returned context and surfaces.
+ *
+ * Making a second call with the resources returned by the first call
+ * unsurprisingly undoes the first call, except for the resouce reference
+ * counts.
  */
 EGLBoolean
-_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
+_eglBindContext(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read,
+                _EGLContext **old_ctx,
+                _EGLSurface **old_draw, _EGLSurface **old_read)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLContext *newCtx = *ctx, *oldCtx;
-   _EGLSurface *newDraw = *draw, *newRead = *read;
+   _EGLContext *prev_ctx;
+   _EGLSurface *prev_draw, *prev_read;
 
-   if (!_eglCheckMakeCurrent(newCtx, newDraw, newRead))
+   if (!_eglCheckMakeCurrent(ctx, draw, read))
       return EGL_FALSE;
 
+   /* increment refcounts before binding */
+   _eglGetContext(ctx);
+   _eglGetSurface(draw);
+   _eglGetSurface(read);
+
    /* bind the new context */
-   oldCtx = _eglBindContextToThread(newCtx, t);
+   prev_ctx = _eglBindContextToThread(ctx, t);
 
-   /* break old bindings */
-   if (oldCtx) {
-      *ctx = oldCtx;
-      *draw = oldCtx->DrawSurface;
-      *read = oldCtx->ReadSurface;
+   /* break previous bindings */
+   if (prev_ctx) {
+      prev_draw = prev_ctx->DrawSurface;
+      prev_read = prev_ctx->ReadSurface;
 
-      if (*draw)
-         (*draw)->CurrentContext = NULL;
-      if (*read)
-         (*read)->CurrentContext = NULL;
+      if (prev_draw)
+         prev_draw->CurrentContext = NULL;
+      if (prev_read)
+         prev_read->CurrentContext = NULL;
 
-      oldCtx->DrawSurface = NULL;
-      oldCtx->ReadSurface = NULL;
+      prev_ctx->DrawSurface = NULL;
+      prev_ctx->ReadSurface = NULL;
+   }
+   else {
+      prev_draw = prev_read = NULL;
    }
 
    /* establish new bindings */
-   if (newCtx) {
-      if (newDraw)
-         newDraw->CurrentContext = newCtx;
-      if (newRead)
-         newRead->CurrentContext = newCtx;
+   if (ctx) {
+      if (draw)
+         draw->CurrentContext = ctx;
+      if (read)
+         read->CurrentContext = ctx;
 
-      newCtx->DrawSurface = newDraw;
-      newCtx->ReadSurface = newRead;
+      ctx->DrawSurface = draw;
+      ctx->ReadSurface = read;
    }
 
-   /* an old context or surface is not orphaned if it is still bound */
-   if (*ctx == newCtx)
-      *ctx = NULL;
-   if (*draw == newDraw || *draw == newRead)
-      *draw = NULL;
-   if (*read == newDraw || *read == newRead)
-      *read = NULL;
+   assert(old_ctx && old_draw && old_read);
+   *old_ctx = prev_ctx;
+   *old_draw = prev_draw;
+   *old_read = prev_read;
 
    return EGL_TRUE;
 }
