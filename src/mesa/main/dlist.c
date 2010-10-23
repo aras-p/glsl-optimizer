@@ -53,6 +53,7 @@
 #include "image.h"
 #include "light.h"
 #include "macros.h"
+#include "pack.h"
 #include "queryobj.h"
 #include "teximage.h"
 #include "mtypes.h"

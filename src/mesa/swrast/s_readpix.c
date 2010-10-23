@@ -29,8 +29,9 @@
 #include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"
-#include "main/macros.h"
 #include "main/imports.h"
+#include "main/macros.h"
+#include "main/pack.h"
 #include "main/state.h"
 
 #include "s_context.h"

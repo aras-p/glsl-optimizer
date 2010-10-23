@@ -28,8 +28,10 @@
 #include "main/condrender.h"
 #include "main/context.h"
 #include "main/image.h"
-#include "main/macros.h"
 #include "main/imports.h"
+#include "main/macros.h"
+#include "main/pack.h"
+#include "main/pixeltransfer.h"
 #include "main/state.h"
 
 #include "s_context.h"

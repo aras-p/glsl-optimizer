@@ -27,8 +27,8 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/colormac.h"
-#include "main/image.h"
 #include "main/imports.h"
+#include "main/pixeltransfer.h"
 #include "program/prog_instruction.h"
 
 #include "s_context.h"

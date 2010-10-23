@@ -34,6 +34,8 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
+#include "main/pack.h"
+#include "main/pixeltransfer.h"
 #include "main/texcompress.h"
 #include "main/texfetch.h"
 #include "main/texgetimage.h"

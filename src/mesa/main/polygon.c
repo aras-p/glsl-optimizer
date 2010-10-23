@@ -34,6 +34,7 @@
 #include "context.h"
 #include "image.h"
 #include "enums.h"
+#include "pack.h"
 #include "polygon.h"
 #include "mtypes.h"
 

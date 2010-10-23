@@ -27,8 +27,8 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/condrender.h"
-#include "main/image.h"
 #include "main/macros.h"
+#include "main/pixeltransfer.h"
 #include "main/imports.h"
 
 #include "s_context.h"
