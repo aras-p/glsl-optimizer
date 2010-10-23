@@ -2462,6 +2462,9 @@ struct gl_framebuffer
    /** One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
    GLenum _Status;
 
+   /** Integer color values */
+   GLboolean _IntegerColor;
+
    /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
 
