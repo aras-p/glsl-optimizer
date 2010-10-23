@@ -561,13 +561,12 @@ static void evergreen_delete_state(struct pipe_context *ctx, void *state)
 
 static void evergreen_delete_vertex_element(struct pipe_context *ctx, void *state)
 {
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
-	if (v == NULL)
-		return;
-	if (--v->refcount)
-		return;
-	free(v);
+	FREE(state);
+
+	if (rctx->vertex_elements == state)
+		rctx->vertex_elements = NULL;
 }
 
 static void evergreen_set_clip_state(struct pipe_context *ctx,
@@ -610,10 +609,8 @@ static void evergreen_bind_vertex_elements(struct pipe_context *ctx, void *state
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
-	evergreen_delete_vertex_element(ctx, rctx->vertex_elements);
 	rctx->vertex_elements = v;
 	if (v) {
-		v->refcount++;
 //		rctx->vs_rebuild = TRUE;
 	}
 }

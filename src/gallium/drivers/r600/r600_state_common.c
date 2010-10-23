@@ -118,6 +118,5 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 			align(util_format_get_blocksize(v->hw_format[i]), 4);
 	}
 
-	v->refcount = 1;
 	return v;
 }

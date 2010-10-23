@@ -83,7 +83,6 @@ struct r600_pipe_blend {
 struct r600_vertex_element
 {
 	unsigned			count;
-	unsigned			refcount;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
 	enum pipe_format		hw_format[PIPE_MAX_ATTRIBS];
 	unsigned			hw_format_size[PIPE_MAX_ATTRIBS];
