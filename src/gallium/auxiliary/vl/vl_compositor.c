@@ -177,6 +177,7 @@ init_pipe_state(struct vl_compositor *c)
    c->fb_state.nr_cbufs = 1;
    c->fb_state.zsbuf = NULL;
 
+   memset(&sampler, 0, sizeof(sampler));
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;

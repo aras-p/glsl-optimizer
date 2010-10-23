@@ -458,6 +458,7 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    filters[4] = PIPE_TEX_FILTER_LINEAR;
 
    for (i = 0; i < 5; ++i) {
+      memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -603,6 +604,8 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
          sizeof(struct vertex2f) * 2 * 24 * r->macroblocks_per_batch
       );
    }
+
+   memset(&vertex_elems, 0, sizeof(vertex_elems));
 
    /* Position element */
    vertex_elems[0].src_offset = 0;

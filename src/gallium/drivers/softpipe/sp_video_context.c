@@ -348,6 +348,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
 
    assert(ctx);
 
+   memset(&rast, 0, sizeof rast);
    rast.flatshade = 1;
    rast.flatshade_first = 0;
    rast.light_twoside = 0;
@@ -378,6 +379,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
 
+   memset(&blend, 0, sizeof blend);
    blend.independent_blend_enable = 0;
    blend.rt[0].blend_enable = 0;
    blend.rt[0].rgb_func = PIPE_BLEND_ADD;
@@ -394,6 +396,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    ctx->blend = ctx->pipe->create_blend_state(ctx->pipe, &blend);
    ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);
 
+   memset(&dsa, 0, sizeof dsa);
    dsa.depth.enabled = 0;
    dsa.depth.writemask = 0;
    dsa.depth.func = PIPE_FUNC_ALWAYS;
