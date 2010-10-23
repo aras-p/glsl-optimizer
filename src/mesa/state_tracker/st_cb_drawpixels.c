@@ -299,8 +299,8 @@ make_passthrough_vertex_shader(struct st_context *st,
 
 
 /**
- * Return a texture internalFormat for drawing/copying an image
- * of the given type.
+ * Return a texture base format for drawing/copying an image
+ * of the given format.
  */
 static GLenum
 base_format(GLenum format)
@@ -314,6 +314,47 @@ base_format(GLenum format)
       return GL_STENCIL_INDEX;
    default:
       return GL_RGBA;
+   }
+}
+
+
+/**
+ * Return a texture internalFormat for drawing/copying an image
+ * of the given format and type.
+ */
+static GLenum
+internal_format(GLenum format, GLenum type)
+{
+   switch (format) {
+   case GL_DEPTH_COMPONENT:
+      return GL_DEPTH_COMPONENT;
+   case GL_DEPTH_STENCIL:
+      return GL_DEPTH_STENCIL;
+   case GL_STENCIL_INDEX:
+      return GL_STENCIL_INDEX;
+   default:
+      if (_mesa_is_integer_format(format)) {
+         switch (type) {
+         case GL_BYTE:
+            return GL_RGBA8I;
+         case GL_UNSIGNED_BYTE:
+            return GL_RGBA8UI;
+         case GL_SHORT:
+            return GL_RGBA16I;
+         case GL_UNSIGNED_SHORT:
+            return GL_RGBA16UI;
+         case GL_INT:
+            return GL_RGBA32I;
+         case GL_UNSIGNED_INT:
+            return GL_RGBA32UI;
+         default:
+            assert(0 && "Unexpected type in internal_format()");
+            return GL_RGBA_INTEGER;
+         }
+      }
+      else {
+         return GL_RGBA;
+      }
    }
 }
 
@@ -352,11 +393,12 @@ make_texture(struct st_context *st,
    struct pipe_resource *pt;
    enum pipe_format pipeFormat;
    GLuint cpp;
-   GLenum baseFormat;
+   GLenum baseFormat, intFormat;
 
    baseFormat = base_format(format);
+   intFormat = internal_format(format, type);
 
-   mformat = st_ChooseTextureFormat_renderable(ctx, baseFormat,
+   mformat = st_ChooseTextureFormat_renderable(ctx, intFormat,
                                                format, type, GL_FALSE);
    assert(mformat);
 
