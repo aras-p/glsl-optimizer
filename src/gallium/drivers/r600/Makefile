@@ -17,6 +17,7 @@ C_SOURCES = \
 	r600_shader.c \
 	r600_state.c \
 	r600_texture.c \
+	r600_video_context.c \
 	r700_asm.c \
 	evergreen_state.c \
 	eg_asm.c
