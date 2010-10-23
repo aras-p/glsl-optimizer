@@ -82,6 +82,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	bo->handle = handle;
 	pipe_reference_init(&bo->reference, 1);
 	bo->alignment = alignment;
+	LIST_INITHEAD(&bo->fencedlist);
 
 	if (handle) {
 		struct drm_gem_open open_arg;
@@ -123,7 +124,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	if (ptr) {
 		memcpy(bo->data, ptr, size);
 	}
-	LIST_INITHEAD(&bo->fencedlist);
 	return bo;
 }
 
