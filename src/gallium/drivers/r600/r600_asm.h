@@ -185,6 +185,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
 
 /* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
+void r600_bc_clear(struct r600_bc *bc);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
 int r600_bc_add_literal(struct r600_bc *bc, const u32 *value);
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);

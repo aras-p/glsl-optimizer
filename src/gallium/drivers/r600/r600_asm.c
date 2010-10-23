@@ -871,3 +871,39 @@ int r600_bc_build(struct r600_bc *bc)
 	}
 	return 0;
 }
+
+void r600_bc_clear(struct r600_bc *bc)
+{
+	struct r600_bc_cf *cf, *next_cf;
+
+	free(bc->bytecode);
+	bc->bytecode = NULL;
+
+	LIST_FOR_EACH_ENTRY_SAFE(cf, next_cf, &bc->cf, list) {
+		struct r600_bc_alu *alu, *next_alu;
+		struct r600_bc_tex *tex, *next_tex;
+		struct r600_bc_tex *vtx, *next_vtx;
+
+		LIST_FOR_EACH_ENTRY_SAFE(alu, next_alu, &cf->alu, list) {
+			free(alu);
+		}
+
+		LIST_INITHEAD(&cf->alu);
+
+		LIST_FOR_EACH_ENTRY_SAFE(tex, next_tex, &cf->tex, list) {
+			free(tex);
+		}
+
+		LIST_INITHEAD(&cf->tex);
+
+		LIST_FOR_EACH_ENTRY_SAFE(vtx, next_vtx, &cf->vtx, list) {
+			free(vtx);
+		}
+
+		LIST_INITHEAD(&cf->vtx);
+
+		free(cf);
+	}
+
+	LIST_INITHEAD(&cf->list);
+}

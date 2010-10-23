@@ -342,9 +342,10 @@ void
 r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_bc_cf *cf, *next_cf;
 
 	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
+
+	r600_bc_clear(&shader->shader.bc);
 
 	/* FIXME: is there more stuff to free? */
 }
