@@ -210,6 +210,23 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_R8G8_UNORM;
    case MESA_FORMAT_RG1616:
       return PIPE_FORMAT_R16G16_UNORM;
+
+   /* signed int formats */
+   case MESA_FORMAT_RGBA_INT8:
+      return PIPE_FORMAT_R8G8B8A8_SSCALED;
+   case MESA_FORMAT_RGBA_INT16:
+      return PIPE_FORMAT_R16G16B16A16_SSCALED;
+   case MESA_FORMAT_RGBA_INT32:
+      return PIPE_FORMAT_R32G32B32A32_SSCALED;
+
+   /* unsigned int formats */
+   case MESA_FORMAT_RGBA_UINT8:
+      return PIPE_FORMAT_R8G8B8A8_USCALED;
+   case MESA_FORMAT_RGBA_UINT16:
+      return PIPE_FORMAT_R16G16B16A16_USCALED;
+   case MESA_FORMAT_RGBA_UINT32:
+      return PIPE_FORMAT_R32G32B32A32_USCALED;
+
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -316,6 +333,23 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_RG88;
    case PIPE_FORMAT_R16G16_UNORM:
       return MESA_FORMAT_RG1616;
+
+   /* signed int formats */
+   case PIPE_FORMAT_R8G8B8A8_SSCALED:
+      return MESA_FORMAT_RGBA_INT8;
+   case PIPE_FORMAT_R16G16B16A16_SSCALED:
+      return MESA_FORMAT_RGBA_INT16;
+   case PIPE_FORMAT_R32G32B32A32_SSCALED:
+      return MESA_FORMAT_RGBA_INT32;
+
+   /* unsigned int formats */
+   case PIPE_FORMAT_R8G8B8A8_USCALED:
+      return MESA_FORMAT_RGBA_UINT8;
+   case PIPE_FORMAT_R16G16B16A16_USCALED:
+      return MESA_FORMAT_RGBA_UINT16;
+   case PIPE_FORMAT_R32G32B32A32_USCALED:
+      return MESA_FORMAT_RGBA_UINT32;
+
    default:
       assert(0);
       return MESA_FORMAT_NONE;
@@ -754,6 +788,92 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_SNORM, target,
 				      sample_count, bindings, geom_flags))
 	      return PIPE_FORMAT_RGTC2_SNORM;
+      return PIPE_FORMAT_NONE;
+
+   /* signed/unsigned integer formats.
+    * XXX Mesa only has formats for RGBA signed/unsigned integer formats.
+    * If/when new formats are added this code should be updated.
+    */
+   case GL_RED_INTEGER_EXT:
+   case GL_GREEN_INTEGER_EXT:
+   case GL_BLUE_INTEGER_EXT:
+   case GL_ALPHA_INTEGER_EXT:
+   case GL_RGB_INTEGER_EXT:
+   case GL_RGBA_INTEGER_EXT:
+   case GL_BGR_INTEGER_EXT:
+   case GL_BGRA_INTEGER_EXT:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      /* fall-through */
+   case GL_RGBA8I_EXT:
+   case GL_RGB8I_EXT:
+   case GL_ALPHA8I_EXT:
+   case GL_INTENSITY8I_EXT:
+   case GL_LUMINANCE8I_EXT:
+   case GL_LUMINANCE_ALPHA8I_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SSCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R8G8B8A8_SSCALED;
+      return PIPE_FORMAT_NONE;
+   case GL_RGBA16I_EXT:
+   case GL_RGB16I_EXT:
+   case GL_ALPHA16I_EXT:
+   case GL_INTENSITY16I_EXT:
+   case GL_LUMINANCE16I_EXT:
+   case GL_LUMINANCE_ALPHA16I_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SSCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R16G16B16A16_SSCALED;
+      return PIPE_FORMAT_NONE;
+   case GL_RGBA32I_EXT:
+   case GL_RGB32I_EXT:
+   case GL_ALPHA32I_EXT:
+   case GL_INTENSITY32I_EXT:
+   case GL_LUMINANCE32I_EXT:
+   case GL_LUMINANCE_ALPHA32I_EXT:
+      /* xxx */
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_SSCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R32G32B32A32_SSCALED;
+      return PIPE_FORMAT_NONE;
+
+   case GL_RGBA8UI_EXT:
+   case GL_RGB8UI_EXT:
+   case GL_ALPHA8UI_EXT:
+   case GL_INTENSITY8UI_EXT:
+   case GL_LUMINANCE8UI_EXT:
+   case GL_LUMINANCE_ALPHA8UI_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_USCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R8G8B8A8_USCALED;
+      return PIPE_FORMAT_NONE;
+
+   case GL_RGBA16UI_EXT:
+   case GL_RGB16UI_EXT:
+   case GL_ALPHA16UI_EXT:
+   case GL_INTENSITY16UI_EXT:
+   case GL_LUMINANCE16UI_EXT:
+   case GL_LUMINANCE_ALPHA16UI_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_USCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R16G16B16A16_USCALED;
+      return PIPE_FORMAT_NONE;
+
+   case GL_RGBA32UI_EXT:
+   case GL_RGB32UI_EXT:
+   case GL_ALPHA32UI_EXT:
+   case GL_INTENSITY32UI_EXT:
+   case GL_LUMINANCE32UI_EXT:
+   case GL_LUMINANCE_ALPHA32UI_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_USCALED,
+                                      target,
+				      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_R32G32B32A32_USCALED;
       return PIPE_FORMAT_NONE;
 
    default:
