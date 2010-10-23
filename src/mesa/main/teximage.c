@@ -1230,14 +1230,24 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 static GLboolean
 target_can_be_compressed(struct gl_context *ctx, GLenum target)
 {
-   return (((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D))
-           || ((ctx->Extensions.ARB_texture_cube_map &&
-                (target == GL_PROXY_TEXTURE_CUBE_MAP ||
-                 (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-                  target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))))
-           || ((ctx->Extensions.MESA_texture_array &&
-                ((target == GL_PROXY_TEXTURE_2D_ARRAY_EXT) ||
-                 (target == GL_TEXTURE_2D_ARRAY_EXT)))));
+   switch (target) {
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+      return GL_TRUE;
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      return ctx->Extensions.ARB_texture_cube_map;
+   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      return ctx->Extensions.MESA_texture_array;
+   default:
+      return GL_FALSE;
+   }      
 }
 
 
