@@ -29,6 +29,10 @@
 #include <os/os_thread.h>
 #include "va_private.h"
 
+#define VL_HANDLES
+
+typedef uint32_t vlHandle;
+
 #ifdef VL_HANDLES
 static struct handle_table *htab = NULL;
 pipe_static_mutex(htab_lock);

@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include <assert.h>
-#include <VA/va_backend.h>
+#include <va/va_backend.h>
 
 const struct VADriverVTable vtable =
 {

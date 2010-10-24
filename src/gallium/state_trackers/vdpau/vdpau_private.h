@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Younes Manton.
+ * Copyright 2010 Younes Manton & Thomas Balling Sørensen.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

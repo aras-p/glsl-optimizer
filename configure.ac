@@ -1345,6 +1345,13 @@ yes)
             fi
             HAVE_ST_VDPAU="yes"
             ;;
+	va)
+            # Check for libva?
+            if test "x$enable_gallium_g3dvl" != xyes; then
+                AC_MSG_ERROR([cannot build va state tracker without --enable-gallium-g3dvl])
+            fi
+            HAVE_ST_VA="yes"
+            ;;
         esac
 
 	if test -n "$tracker"; then
@@ -1479,7 +1486,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1496,6 +1503,9 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
+    fi
+    if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
 
@@ -1613,8 +1623,13 @@ AC_ARG_ENABLE([gallium-g3dvl],
 if test "x$enable_gallium_g3dvl" = xyes; then
     case "$mesa_driver" in
     xlib)
+	if test "x$HAVE_ST_VDPAU" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
-        ;;
+	fi
+	if test "x$HAVE_ST_VA" = xyes; then
+	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
+	fi
+	;;
     dri)
         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
         ;;
@@ -1627,6 +1642,14 @@ AC_ARG_WITH([vdpau-libdir],
     [VDPAU_LIB_INSTALL_DIR="$withval"],
     [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
 AC_SUBST([VDPAU_LIB_INSTALL_DIR])
+
+dnl Directory for VA libs
+AC_ARG_WITH([va-libdir],
+    [AS_HELP_STRING([--with-va-libdir=DIR],
+        [directory for the VA libraries @<:@default=${libdir}/va@:>@])],
+    [VA_LIB_INSTALL_DIR="$withval"],
+    [VA_LIB_INSTALL_DIR='${libdir}/va'])
+AC_SUBST([VA_LIB_INSTALL_DIR])
 
 dnl
 dnl Gallium swrast configuration
