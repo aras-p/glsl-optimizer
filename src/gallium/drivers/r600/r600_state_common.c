@@ -108,6 +108,17 @@ void r600_delete_state(struct pipe_context *ctx, void *state)
 	free(rstate);
 }
 
+void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
+
+	rctx->vertex_elements = v;
+	if (v) {
+//		rctx->vs_rebuild = TRUE;
+	}
+}
+
 void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -207,4 +218,59 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 	}
 
 	return v;
+}
+
+void *r600_create_shader_state(struct pipe_context *ctx,
+			       const struct pipe_shader_state *state)
+{
+	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
+	int r;
+
+	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
+	if (r) {
+		return NULL;
+	}
+	return shader;
+}
+
+void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	/* TODO delete old shader */
+	rctx->ps_shader = (struct r600_pipe_shader *)state;
+}
+
+void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	/* TODO delete old shader */
+	rctx->vs_shader = (struct r600_pipe_shader *)state;
+}
+
+void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
+
+	if (rctx->ps_shader == shader) {
+		rctx->ps_shader = NULL;
+	}
+
+	r600_pipe_shader_destroy(ctx, shader);
+	free(shader);
+}
+
+void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
+
+	if (rctx->vs_shader == shader) {
+		rctx->vs_shader = NULL;
+	}
+
+	r600_pipe_shader_destroy(ctx, shader);
+	free(shader);
 }

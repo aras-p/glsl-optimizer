@@ -250,7 +250,14 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
 void r600_bind_state(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
+void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
 
+void *r600_create_shader_state(struct pipe_context *ctx,
+			       const struct pipe_shader_state *state);
+void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
+void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
+void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
+void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
 /*
  * common helpers
  */

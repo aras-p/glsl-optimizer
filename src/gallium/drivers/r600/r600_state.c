@@ -709,17 +709,6 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
-static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
-
-	rctx->vertex_elements = v;
-	if (v) {
-//		rctx->vs_rebuild = TRUE;
-	}
-}
-
 static void r600_set_polygon_stipple(struct pipe_context *ctx,
 					 const struct pipe_poly_stipple *state)
 {
@@ -1056,61 +1045,6 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 		R600_ERR("unsupported %d\n", shader);
 		return;
 	}
-}
-
-static void *r600_create_shader_state(struct pipe_context *ctx,
-					const struct pipe_shader_state *state)
-{
-	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
-	int r;
-
-	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
-	if (r) {
-		return NULL;
-	}
-	return shader;
-}
-
-static void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	/* TODO delete old shader */
-	rctx->ps_shader = (struct r600_pipe_shader *)state;
-}
-
-static void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	/* TODO delete old shader */
-	rctx->vs_shader = (struct r600_pipe_shader *)state;
-}
-
-static void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
-
-	if (rctx->ps_shader == shader) {
-		rctx->ps_shader = NULL;
-	}
-
-	r600_pipe_shader_destroy(ctx, shader);
-	free(shader);
-}
-
-static void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
-
-	if (rctx->vs_shader == shader) {
-		rctx->vs_shader = NULL;
-	}
-
-	r600_pipe_shader_destroy(ctx, shader);
-	free(shader);
 }
 
 void r600_init_state_functions(struct r600_pipe_context *rctx)

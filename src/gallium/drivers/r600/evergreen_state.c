@@ -481,20 +481,6 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 	}
 }
 
-static void evergreen_delete_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
-
-	if (rctx->states[rstate->id] == rstate) {
-		rctx->states[rstate->id] = NULL;
-	}
-	for (int i = 0; i < rstate->nregs; i++) {
-		r600_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
-	}
-	free(rstate);
-}
-
 static void evergreen_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
@@ -528,17 +514,6 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	free(rctx->states[R600_PIPE_STATE_CLIP]);
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
-}
-
-static void evergreen_bind_vertex_elements(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
-
-	rctx->vertex_elements = v;
-	if (v) {
-//		rctx->vs_rebuild = TRUE;
-	}
 }
 
 static void evergreen_set_polygon_stipple(struct pipe_context *ctx,
@@ -880,84 +855,31 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 	}
 }
 
-static void *evergreen_create_shader_state(struct pipe_context *ctx,
-					const struct pipe_shader_state *state)
-{
-	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
-	int r;
-
-	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
-	if (r) {
-		return NULL;
-	}
-	return shader;
-}
-
-static void evergreen_bind_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	/* TODO delete old shader */
-	rctx->ps_shader = (struct r600_pipe_shader *)state;
-}
-
-static void evergreen_bind_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	/* TODO delete old shader */
-	rctx->vs_shader = (struct r600_pipe_shader *)state;
-}
-
-static void evergreen_delete_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
-
-	if (rctx->ps_shader == shader) {
-		rctx->ps_shader = NULL;
-	}
-	/* TODO proper delete */
-	free(shader);
-}
-
-static void evergreen_delete_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
-
-	if (rctx->vs_shader == shader) {
-		rctx->vs_shader = NULL;
-	}
-	/* TODO proper delete */
-	free(shader);
-}
-
 void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
-	rctx->context.create_fs_state = evergreen_create_shader_state;
+	rctx->context.create_fs_state = r600_create_shader_state;
 	rctx->context.create_rasterizer_state = evergreen_create_rs_state;
 	rctx->context.create_sampler_state = evergreen_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
-	rctx->context.create_vs_state = evergreen_create_shader_state;
+	rctx->context.create_vs_state = r600_create_shader_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
-	rctx->context.bind_fs_state = evergreen_bind_ps_shader;
+	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
-	rctx->context.bind_vertex_elements_state = evergreen_bind_vertex_elements;
+	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
-	rctx->context.bind_vs_state = evergreen_bind_vs_shader;
+	rctx->context.bind_vs_state = r600_bind_vs_shader;
 	rctx->context.delete_blend_state = r600_delete_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
-	rctx->context.delete_fs_state = evergreen_delete_ps_shader;
+	rctx->context.delete_fs_state = r600_delete_ps_shader;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
 	rctx->context.delete_sampler_state = r600_delete_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
-	rctx->context.delete_vs_state = evergreen_delete_vs_shader;
+	rctx->context.delete_vs_state = r600_delete_vs_shader;
 	rctx->context.set_blend_color = evergreen_set_blend_color;
 	rctx->context.set_clip_state = evergreen_set_clip_state;
 	rctx->context.set_constant_buffer = evergreen_set_constant_buffer;
