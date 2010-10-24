@@ -241,6 +241,15 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements);
+void r600_delete_vertex_element(struct pipe_context *ctx, void *state);
+void r600_bind_blend_state(struct pipe_context *ctx, void *state);
+void r600_bind_rs_state(struct pipe_context *ctx, void *state);
+void r600_delete_rs_state(struct pipe_context *ctx, void *state);
+void r600_sampler_view_destroy(struct pipe_context *ctx,
+			       struct pipe_sampler_view *state);
+void r600_bind_state(struct pipe_context *ctx, void *state);
+void r600_delete_state(struct pipe_context *ctx, void *state);
+
 /*
  * common helpers
  */

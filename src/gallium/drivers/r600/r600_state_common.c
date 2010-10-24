@@ -30,6 +30,94 @@
 #include "r600_pipe.h"
 
 /* common state between evergreen and r600 */
+void r600_bind_blend_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
+	struct r600_pipe_state *rstate;
+
+	if (state == NULL)
+		return;
+	rstate = &blend->rstate;
+	rctx->states[rstate->id] = rstate;
+	rctx->cb_target_mask = blend->cb_target_mask;
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
+}
+
+void r600_bind_rs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	if (state == NULL)
+		return;
+
+	rctx->flatshade = rs->flatshade;
+	rctx->sprite_coord_enable = rs->sprite_coord_enable;
+	rctx->rasterizer = rs;
+
+	rctx->states[rs->rstate.id] = &rs->rstate;
+	r600_context_pipe_state_set(&rctx->ctx, &rs->rstate);
+}
+
+void r600_delete_rs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
+
+	if (rctx->rasterizer == rs) {
+		rctx->rasterizer = NULL;
+	}
+	if (rctx->states[rs->rstate.id] == &rs->rstate) {
+		rctx->states[rs->rstate.id] = NULL;
+	}
+	free(rs);
+}
+
+void r600_sampler_view_destroy(struct pipe_context *ctx,
+			       struct pipe_sampler_view *state)
+{
+	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
+
+	pipe_resource_reference(&state->texture, NULL);
+	FREE(resource);
+}
+
+void r600_bind_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
+
+	if (state == NULL)
+		return;
+	rctx->states[rstate->id] = rstate;
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
+}
+
+void r600_delete_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
+
+	if (rctx->states[rstate->id] == rstate) {
+		rctx->states[rstate->id] = NULL;
+	}
+	for (int i = 0; i < rstate->nregs; i++) {
+		r600_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
+	}
+	free(rstate);
+}
+
+void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	FREE(state);
+
+	if (rctx->vertex_elements == state)
+		rctx->vertex_elements = NULL;
+}
+
 
 void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib)

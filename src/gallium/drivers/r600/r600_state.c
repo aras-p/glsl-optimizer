@@ -324,20 +324,6 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static void r600_bind_blend_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
-	struct r600_pipe_state *rstate;
-
-	if (state == NULL)
-		return;
-	rstate = &blend->rstate;
-	rctx->states[rstate->id] = rstate;
-	rctx->cb_target_mask = blend->cb_target_mask;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
-}
-
 static void *r600_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
@@ -499,36 +485,6 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	if (state == NULL)
-		return;
-
-	rctx->flatshade = rs->flatshade;
-	rctx->sprite_coord_enable = rs->sprite_coord_enable;
-	rctx->rasterizer = rs;
-
-	rctx->states[rs->rstate.id] = &rs->rstate;
-	r600_context_pipe_state_set(&rctx->ctx, &rs->rstate);
-}
-
-static void r600_delete_rs_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
-
-	if (rctx->rasterizer == rs) {
-		rctx->rasterizer = NULL;
-	}
-	if (rctx->states[rs->rstate.id] == &rs->rstate) {
-		rctx->states[rs->rstate.id] = NULL;
-	}
-	free(rs);
-}
-
 static void *r600_create_sampler_state(struct pipe_context *ctx,
 					const struct pipe_sampler_state *state)
 {
@@ -563,16 +519,6 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_00A40C_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color[3]), 0xFFFFFFFF, NULL);
 	}
 	return rstate;
-}
-
-
-static void r600_sampler_view_destroy(struct pipe_context *ctx,
-				      struct pipe_sampler_view *state)
-{
-	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
-
-	pipe_resource_reference(&state->texture, NULL);
-	FREE(resource);
 }
 
 static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *ctx,
@@ -705,17 +651,6 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	rctx->ps_samplers.n_views = count;
 }
 
-static void r600_bind_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
-
-	if (state == NULL)
-		return;
-	rctx->states[rstate->id] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
-}
-
 static void r600_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -737,30 +672,6 @@ static void r600_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void 
 	for (int i = 0; i < count; i++) {
 		r600_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
 	}
-}
-
-static void r600_delete_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
-
-	if (rctx->states[rstate->id] == rstate) {
-		rctx->states[rstate->id] = NULL;
-	}
-	for (int i = 0; i < rstate->nregs; i++) {
-		r600_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
-	}
-	free(rstate);
-}
-
-static void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	FREE(state);
-
-	if (rctx->vertex_elements == state)
-		rctx->vertex_elements = NULL;
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
