@@ -42,5 +42,6 @@ VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
 struct VADriverVTable vlVaGetVtable();
 VAStatus vlVaQueryImageFormats (VADriverContextP ctx,VAImageFormat *format_list,int *num_formats);
 VAStatus vlVaQuerySubpictureFormats(VADriverContextP ctx,VAImageFormat *format_list,unsigned int *flags,unsigned int *num_formats);
+VAStatus vlVaCreateImage(VADriverContextP ctx,VAImageFormat *format,int width,int height,VAImage *image);
  
  #endif // VA_PRIVATE_H

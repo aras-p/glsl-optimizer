@@ -69,7 +69,7 @@ static struct VADriverVTable vtable =
 		unsigned int number_cliprects, 
 		unsigned int flags); */
    &vlVaQueryImageFormats, /* VAStatus (*vaQueryImageFormats) ( VADriverContextP ctx, VAImageFormat *format_list,int *num_formats); */
-   0x24, /* VAStatus (*vaCreateImage) (VADriverContextP ctx,VAImageFormat *format,int width,int height,VAImage *image); */
+   &vlVaCreateImage, /* VAStatus (*vaCreateImage) (VADriverContextP ctx,VAImageFormat *format,int width,int height,VAImage *image); */
    0x25, /* VAStatus (*vaDeriveImage) (VADriverContextP ctx,VASurfaceID surface,VAImage *image); */
    0x26, /* VAStatus (*vaDestroyImage) (VADriverContextP ctx,VAImageID image); */
    0x27, /* VAStatus (*vaSetImagePalette) (VADriverContextP ctx,VAImageID image, unsigned char *palette); */

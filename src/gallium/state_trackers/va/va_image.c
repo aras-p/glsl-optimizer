@@ -36,6 +36,21 @@
 							VAImageFormat *format_list,
 							int *num_formats)
 {
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+	
 
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaCreateImage(	VADriverContextP ctx,
+							VAImageFormat *format,
+							int width,
+							int height,
+							VAImage *image)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+	
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
