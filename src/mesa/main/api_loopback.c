@@ -34,7 +34,6 @@
 #include "api_loopback.h"
 #include "mtypes.h"
 #include "glapi/glapi.h"
-#include "glapi/glapitable.h"
 #include "glapi/glthread.h"
 #include "main/dispatch.h"
 

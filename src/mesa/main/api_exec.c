@@ -160,7 +160,7 @@ _mesa_create_exec_table(void)
 {
    struct _glapi_table *exec;
 
-   exec = _mesa_alloc_dispatch_table(sizeof *exec);
+   exec = _mesa_alloc_dispatch_table(_gloffset_COUNT);
    if (exec == NULL)
       return NULL;
 

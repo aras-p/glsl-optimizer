@@ -807,8 +807,7 @@ _mesa_alloc_dispatch_table(int size)
     * Mesa we do this to accomodate different versions of libGL and various
     * DRI drivers.
     */
-   GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
-                           size / sizeof(_glapi_proc));
+   GLint numEntries = MAX2(_glapi_get_dispatch_table_size(), size);
    struct _glapi_table *table =
       (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
    if (table) {

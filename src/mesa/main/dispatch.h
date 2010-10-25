@@ -30,7 +30,6 @@
 #define _GLAPI_USE_REMAP_TABLE
 #endif
 
-#include "glapi/glapitable.h"
 #include "main/glapidispatch.h"
 
 #endif /* _DISPATCH_H */
