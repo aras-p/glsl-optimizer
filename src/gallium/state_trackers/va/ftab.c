@@ -26,35 +26,34 @@
  **************************************************************************/
 
 #include <assert.h>
+#include <va/va.h>
 #include <va/va_backend.h>
+#include "va_private.h"
 
-const struct VADriverVTable vtable =
+static struct VADriverVTable vtable =
 {
-   0, /* VAStatus (*vaTerminate) ( VADriverContextP ctx ); */
-   0, /* VAStatus (*vaQueryConfigProfiles) ( VADriverContextP ctx, VAProfile *profile_list,int *num_profiles); */
-   0, /* VAStatus (*vaQueryConfigEntrypoints) ( VADriverContextP ctx,	VAProfile profile, VAEntrypoint  *entrypoint_list, int *num_entrypoints	); */
-   0, /* VAStatus (*vaGetConfigAttributes) ( VADriverContextP ctx, VAProfile profile, VAEntrypoint entrypoint, VAConfigAttrib *attrib_list, int num_attribs ); */
-   0, /* VAStatus (*vaCreateConfig) ( VADriverContextP ctx, VAProfile profile, VAEntrypoint entrypoint,	VAConfigAttrib *attrib_list, int num_attribs, VAConfigID *config_id); */
-   0, /* VAStatus (*vaDestroyConfig) ( VADriverContextP ctx, VAConfigID config_id); */
-   0, /* VAStatus (*vaQueryConfigAttributes) ( VADriverContextP ctx, VAConfigID config_id, VAProfile *profile, VAEntrypoint *entrypoint, VAConfigAttrib *attrib_list, int *num_attribs); */
-   0, /* VAStatus (*vaCreateConfig) ( VADriverContextP ctx, VAProfile profile, VAEntrypoint entrypoint,	VAConfigAttrib *attrib_list, int num_attribs, VAConfigID *config_id); */
-   0, /* VAStatus (*vaDestroyConfig) ( VADriverContextP ctx, VAConfigID config_id ); */
-   0, /* VAStatus (*vaQueryConfigAttributes) (VADriverContextP ctx,VAConfigID config_id,VAProfile *profile,VAEntrypoint *entrypoint,VAConfigAttrib *attrib_list,int *num_attribs); */
-   0, /* VAStatus (*vaCreateSurfaces) ( VADriverContextP ctx,int width,int height,int format,int num_surfaces,VASurfaceID *surfaces); */
-   0, /* VAStatus (*vaDestroySurfaces) ( VADriverContextP ctx, VASurfaceID *surface_list, int num_surfaces ); */
-   0, /* VAStatus (*vaCreateContext) (VADriverContextP ctx,VAConfigID config_id,int picture_width,int picture_height,int flag,VASurfaceID *render_targets,int num_render_targets,VAContextID *context); */
-   0, /* VAStatus (*vaDestroyContext) (VADriverContextP ctx,VAContextID context); */
-   0, /* VAStatus (*vaCreateBuffer) (VADriverContextP ctx,VAContextID context,VABufferType type,unsigned int size,unsigned int num_elements,void *data,VABufferID *buf_id); */
-   0, /* VAStatus (*vaBufferSetNumElements) (VADriverContextP ctx,VABufferID buf_id,unsigned int num_elements); */
-   0, /* VAStatus (*vaMapBuffer) (VADriverContextP ctx,VABufferID buf_id,void **pbuf); */
-   0, /* VAStatus (*vaUnmapBuffer) (VADriverContextP ctx,VABufferID buf_id); */
-   0, /* VAStatus (*vaDestroyBuffer) (VADriverContextP ctx,VABufferID buffer_id); */
-   0, /* VAStatus (*vaBeginPicture) (VADriverContextP ctx,VAContextID context,VASurfaceID render_target); */
-   0, /* VAStatus (*vaRenderPicture) (VADriverContextP ctx,VAContextID context,VABufferID *buffers,int num_buffers); */
-   0, /* VAStatus (*vaEndPicture) (VADriverContextP ctx,VAContextID context); */
-   0, /* VAStatus (*vaSyncSurface) (VADriverContextP ctx,VASurfaceID render_target); */
-   0, /* VAStatus (*vaQuerySurfaceStatus) (VADriverContextP ctx,VASurfaceID render_target,VASurfaceStatus *status); */
-   0, /* VAStatus (*vaPutSurface) (
+   0x1, /* VAStatus (*vaTerminate) ( VADriverContextP ctx ); */
+   0x2, /* VAStatus (*vaQueryConfigProfiles) ( VADriverContextP ctx, VAProfile *profile_list,int *num_profiles); */
+   0x3, /* VAStatus (*vaQueryConfigEntrypoints) ( VADriverContextP ctx,	VAProfile profile, VAEntrypoint  *entrypoint_list, int *num_entrypoints	); */
+   0x4, /* VAStatus (*vaGetConfigAttributes) ( VADriverContextP ctx, VAProfile profile, VAEntrypoint entrypoint, VAConfigAttrib *attrib_list, int num_attribs ); */
+   0x5, /* VAStatus (*vaCreateConfig) ( VADriverContextP ctx, VAProfile profile, VAEntrypoint entrypoint,	VAConfigAttrib *attrib_list, int num_attribs, VAConfigID *config_id); */
+   0x6, /* VAStatus (*vaDestroyConfig) ( VADriverContextP ctx, VAConfigID config_id); */
+   0x7, /* VAStatus (*vaQueryConfigAttributes) ( VADriverContextP ctx, VAConfigID config_id, VAProfile *profile, VAEntrypoint *entrypoint, VAConfigAttrib *attrib_list, int *num_attribs); */
+   0x8, /* VAStatus (*vaCreateSurfaces) ( VADriverContextP ctx,int width,int height,int format,int num_surfaces,VASurfaceID *surfaces); */
+   0x9, /* VAStatus (*vaDestroySurfaces) ( VADriverContextP ctx, VASurfaceID *surface_list, int num_surfaces ); */
+   0x10, /* VAStatus (*vaCreateContext) (VADriverContextP ctx,VAConfigID config_id,int picture_width,int picture_height,int flag,VASurfaceID *render_targets,int num_render_targets,VAContextID *context); */
+   0x11, /* VAStatus (*vaDestroyContext) (VADriverContextP ctx,VAContextID context); */
+   0x12, /* VAStatus (*vaCreateBuffer) (VADriverContextP ctx,VAContextID context,VABufferType type,unsigned int size,unsigned int num_elements,void *data,VABufferID *buf_id); */
+   0x13, /* VAStatus (*vaBufferSetNumElements) (VADriverContextP ctx,VABufferID buf_id,unsigned int num_elements); */
+   0x14, /* VAStatus (*vaMapBuffer) (VADriverContextP ctx,VABufferID buf_id,void **pbuf); */
+   0x15, /* VAStatus (*vaUnmapBuffer) (VADriverContextP ctx,VABufferID buf_id); */
+   0x16, /* VAStatus (*vaDestroyBuffer) (VADriverContextP ctx,VABufferID buffer_id); */
+   0x17, /* VAStatus (*vaBeginPicture) (VADriverContextP ctx,VAContextID context,VASurfaceID render_target); */
+   0x18, /* VAStatus (*vaRenderPicture) (VADriverContextP ctx,VAContextID context,VABufferID *buffers,int num_buffers); */
+   0x19, /* VAStatus (*vaEndPicture) (VADriverContextP ctx,VAContextID context); */
+   0x20, /* VAStatus (*vaSyncSurface) (VADriverContextP ctx,VASurfaceID render_target); */
+   0x21, /* VAStatus (*vaQuerySurfaceStatus) (VADriverContextP ctx,VASurfaceID render_target,VASurfaceStatus *status); */
+   0x22, /* VAStatus (*vaPutSurface) (
     		VADriverContextP ctx,
 		VASurfaceID surface,
 		void* draw,
@@ -69,13 +68,13 @@ const struct VADriverVTable vtable =
 		VARectangle *cliprects, 
 		unsigned int number_cliprects, 
 		unsigned int flags); */
-   0, /* VAStatus (*vaQueryImageFormats) ( VADriverContextP ctx, VAImageFormat *format_list,int *num_formats); */
-   0, /* VAStatus (*vaCreateImage) (VADriverContextP ctx,VAImageFormat *format,int width,int height,VAImage *image); */
-   0, /* VAStatus (*vaDeriveImage) (VADriverContextP ctx,VASurfaceID surface,VAImage *image); */
-   0, /* VAStatus (*vaDestroyImage) (VADriverContextP ctx,VAImageID image); */
-   0, /* VAStatus (*vaSetImagePalette) (VADriverContextP ctx,VAImageID image, unsigned char *palette); */
-   0, /* VAStatus (*vaGetImage) (VADriverContextP ctx,VASurfaceID surface,int x,int y,unsigned int width,unsigned int height,VAImageID image); */
-   0, /* VAStatus (*vaPutImage) (
+   &vlVaQueryImageFormats, /* VAStatus (*vaQueryImageFormats) ( VADriverContextP ctx, VAImageFormat *format_list,int *num_formats); */
+   0x24, /* VAStatus (*vaCreateImage) (VADriverContextP ctx,VAImageFormat *format,int width,int height,VAImage *image); */
+   0x25, /* VAStatus (*vaDeriveImage) (VADriverContextP ctx,VASurfaceID surface,VAImage *image); */
+   0x26, /* VAStatus (*vaDestroyImage) (VADriverContextP ctx,VAImageID image); */
+   0x27, /* VAStatus (*vaSetImagePalette) (VADriverContextP ctx,VAImageID image, unsigned char *palette); */
+   0x28, /* VAStatus (*vaGetImage) (VADriverContextP ctx,VASurfaceID surface,int x,int y,unsigned int width,unsigned int height,VAImageID image); */
+   0x29, /* VAStatus (*vaPutImage) (
 		VADriverContextP ctx,
 		VASurfaceID surface,
 		VAImageID image,
@@ -88,13 +87,13 @@ const struct VADriverVTable vtable =
 		unsigned int dest_width,
 		unsigned int dest_height
 	); */
-   0,	/* VAStatus (*vaQuerySubpictureFormats) (VADriverContextP ctx,VAImageFormat *format_list,unsigned int *flags,unsigned int *num_formats); */
-   0, /* VAStatus (*vaCreateSubpicture) (VADriverContextP ctx,VAImageID image,VASubpictureID *subpicture); */
-   0, /* VAStatus (*vaDestroySubpicture) (VADriverContextP ctx,VASubpictureID subpicture); */
-   0, /* VAStatus (*vaSetSubpictureImage) (VADriverContextP ctx,VASubpictureID subpicture,VAImageID image); */
-   0, /* VAStatus (*vaSetSubpictureChromakey) (VADriverContextP ctx,VASubpictureID subpicture,unsigned int chromakey_min,unsigned int chromakey_max,unsigned int chromakey_mask); */
-   0, /* VAStatus (*vaSetSubpictureGlobalAlpha) (VADriverContextP ctx,VASubpictureID subpicture,float global_alpha); */
-   0, /* VAStatus (*vaAssociateSubpicture) (
+   &vlVaQuerySubpictureFormats,	/* VAStatus (*vaQuerySubpictureFormats) (VADriverContextP ctx,VAImageFormat *format_list,unsigned int *flags,unsigned int *num_formats); */
+   0x31, /* VAStatus (*vaCreateSubpicture) (VADriverContextP ctx,VAImageID image,VASubpictureID *subpicture); */
+   0x32, /* VAStatus (*vaDestroySubpicture) (VADriverContextP ctx,VASubpictureID subpicture); */
+   0x33, /* VAStatus (*vaSetSubpictureImage) (VADriverContextP ctx,VASubpictureID subpicture,VAImageID image); */
+   0x34, /* VAStatus (*vaSetSubpictureChromakey) (VADriverContextP ctx,VASubpictureID subpicture,unsigned int chromakey_min,unsigned int chromakey_max,unsigned int chromakey_mask); */
+   0x35, /* VAStatus (*vaSetSubpictureGlobalAlpha) (VADriverContextP ctx,VASubpictureID subpicture,float global_alpha); */
+   0x36, /* VAStatus (*vaAssociateSubpicture) (
 		VADriverContextP ctx,
 		VASubpictureID subpicture,
 		VASurfaceID *target_surfaces,
@@ -108,12 +107,12 @@ const struct VADriverVTable vtable =
 		unsigned short dest_width,
 		unsigned short dest_height,
 		unsigned int flags); */
-   0, /* VAStatus (*vaDeassociateSubpicture) (VADriverContextP ctx,VASubpictureID subpicture,VASurfaceID *target_surfaces,int num_surfaces); */
-   0, /* VAStatus (*vaQueryDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int *num_attributes); */
-   0, /* VAStatus (*vaGetDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int num_attributes); */
-   0, /* VAStatus (*vaSetDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int num_attributes); */
-   0, /* VAStatus (*vaBufferInfo) (VADriverContextP ctx,VAContextID context,VABufferID buf_id,VABufferType *type,unsigned int *size,unsigned int *num_elements); */
-   0, /* VAStatus (*vaLockSurface) (
+   0x37, /* VAStatus (*vaDeassociateSubpicture) (VADriverContextP ctx,VASubpictureID subpicture,VASurfaceID *target_surfaces,int num_surfaces); */
+   0x38, /* VAStatus (*vaQueryDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int *num_attributes); */
+   0x39, /* VAStatus (*vaGetDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int num_attributes); */
+   0x40, /* VAStatus (*vaSetDisplayAttributes) (VADriverContextP ctx,VADisplayAttribute *attr_list,int num_attributes); */
+   0x41, /* VAStatus (*vaBufferInfo) (VADriverContextP ctx,VAContextID context,VABufferID buf_id,VABufferType *type,unsigned int *size,unsigned int *num_elements); */
+   0x42, /* VAStatus (*vaLockSurface) (
 		VADriverContextP ctx,
                 VASurfaceID surface,
                 unsigned int *fourcc,
@@ -125,7 +124,11 @@ const struct VADriverVTable vtable =
                 unsigned int *chroma_v_offset,
                 unsigned int *buffer_name,
                 void **buffer); */
-   0, /* VAStatus (*vaUnlockSurface) (VADriverContextP ctx,VASurfaceID surface); */
-   0 /* struct VADriverVTableGLX *glx; "Optional" */
+   0x43, /* VAStatus (*vaUnlockSurface) (VADriverContextP ctx,VASurfaceID surface); */
+   0x44 /* struct VADriverVTableGLX *glx; "Optional" */
 };
 
+struct VADriverVTable vlVaGetVtable()
+{
+	return vtable;
+}

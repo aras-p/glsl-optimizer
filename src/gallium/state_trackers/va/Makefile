@@ -12,7 +12,11 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/winsys/g3dvl
 
 C_SOURCES = htab.c \
-	    ftab.c 
+	    ftab.c \
+	    va_context.c \
+	    va_image.c \
+	    va_subpicture.c
+	    
 
 
 include ../../Makefile.template

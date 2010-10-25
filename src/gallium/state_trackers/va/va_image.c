@@ -25,22 +25,17 @@
  *
  **************************************************************************/
  
- #ifndef VA_PRIVATE_H
- #define VA_PRIVATE_H
- 
+ #include <util/u_memory.h>
+ #include <util/u_format.h>
  #include <va/va.h>
  #include <va/va_backend.h>
- #define VA_DEBUG(_str,...) debug_printf("[Gallium VA backend]: " _str,__VA_ARGS__)
- #define VA_INFO(_str,...) VA_DEBUG("INFO: " _str,__VA_ARGS__)
- #define VA_WARNING(_str,...) VA_DEBUG("WARNING: " _str,__VA_ARGS__)
- #define VA_ERROR(_str,...) VA_DEBUG("ERROR: " _str,__VA_ARGS__)
-
-// Public functions:
-VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
-
-// Private functions:
-struct VADriverVTable vlVaGetVtable();
-VAStatus vlVaQueryImageFormats (VADriverContextP ctx,VAImageFormat *format_list,int *num_formats);
-VAStatus vlVaQuerySubpictureFormats(VADriverContextP ctx,VAImageFormat *format_list,unsigned int *flags,unsigned int *num_formats);
+ #include "va_private.h"
  
- #endif // VA_PRIVATE_H
+ VAStatus
+ vlVaQueryImageFormats ( 	VADriverContextP ctx, 
+							VAImageFormat *format_list,
+							int *num_formats)
+{
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}

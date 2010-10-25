@@ -25,22 +25,33 @@
  *
  **************************************************************************/
  
- #ifndef VA_PRIVATE_H
- #define VA_PRIVATE_H
- 
- #include <va/va.h>
- #include <va/va_backend.h>
- #define VA_DEBUG(_str,...) debug_printf("[Gallium VA backend]: " _str,__VA_ARGS__)
- #define VA_INFO(_str,...) VA_DEBUG("INFO: " _str,__VA_ARGS__)
- #define VA_WARNING(_str,...) VA_DEBUG("WARNING: " _str,__VA_ARGS__)
- #define VA_ERROR(_str,...) VA_DEBUG("ERROR: " _str,__VA_ARGS__)
+#include <pipe/p_compiler.h>
+#include <pipe/p_video_context.h>
+#include <util/u_debug.h>
+#include <va/va.h>
+#include <va/va_backend.h>
+#include "va_private.h"
 
-// Public functions:
-VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
+//struct VADriverVTable vlVaGetVtable();
 
-// Private functions:
-struct VADriverVTable vlVaGetVtable();
-VAStatus vlVaQueryImageFormats (VADriverContextP ctx,VAImageFormat *format_list,int *num_formats);
-VAStatus vlVaQuerySubpictureFormats(VADriverContextP ctx,VAImageFormat *format_list,unsigned int *flags,unsigned int *num_formats);
- 
- #endif // VA_PRIVATE_H
+PUBLIC
+VAStatus __vaDriverInit_0_31 (VADriverContextP ctx)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+	
+	ctx->str_vendor = "mesa gallium vaapi";
+	ctx->vtable = vlVaGetVtable();
+	ctx->max_attributes = 1;
+	ctx->max_display_attributes = 1;
+	ctx->max_entrypoints = 1;
+	ctx->max_image_formats = 1;
+	ctx->max_profiles = 1;
+	ctx->max_subpic_formats = 1;
+	ctx->version_major = 3;
+	ctx->version_minor = 1;
+	
+	VA_INFO("vl_screen_pointer %p\n",ctx->native_dpy);
+
+	return VA_STATUS_SUCCESS;
+}
