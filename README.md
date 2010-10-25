@@ -13,7 +13,7 @@ in [this blog post](http://aras-p.info/blog/2010/09/29/glsl-optimizer/).
 Almost all actual code is [Mesa 3D's GLSL2](http://cgit.freedesktop.org/mesa/mesa/log/?h=glsl2)
 compiler; all this library does is spits out optimized GLSL back.
 
-This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is be built-in
+This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is built-in
 in [Unity 3.0](http://unity3d.com/unity/whats-new/unity-3).
 
 
