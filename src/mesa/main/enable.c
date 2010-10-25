@@ -130,6 +130,7 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
             goto invalid_enum_error;
          }
          var = &ctx->Array.PrimitiveRestart;
+         flag = 0;
          break;
 
       default:
