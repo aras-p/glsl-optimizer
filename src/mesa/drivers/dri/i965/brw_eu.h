@@ -914,6 +914,11 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 				   int num_regs,
 				   GLuint offset);
 
+void brw_dword_scattered_read(struct brw_compile *p,
+			      struct brw_reg dest,
+			      struct brw_reg mrf,
+			      uint32_t bind_table_index);
+
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
                        GLuint location,

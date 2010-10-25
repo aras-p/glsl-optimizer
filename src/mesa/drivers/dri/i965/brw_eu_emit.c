@@ -1566,6 +1566,46 @@ void brw_oword_block_read(struct brw_compile *p,
    brw_pop_insn_state(p);
 }
 
+/**
+ * Read a set of dwords from the data port Data Cache (const buffer).
+ *
+ * Location (in buffer) appears as UD offsets in the register after
+ * the provided mrf header reg.
+ */
+void brw_dword_scattered_read(struct brw_compile *p,
+			      struct brw_reg dest,
+			      struct brw_reg mrf,
+			      uint32_t bind_table_index)
+{
+   mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
+
+   brw_push_insn_state(p);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   brw_pop_insn_state(p);
+
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   insn->header.destreg__conditionalmod = mrf.nr;
+
+   /* cast dest to a uword[8] vector */
+   dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_null_reg());
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS,
+			   BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ,
+			   0, /* source cache = data cache */
+			   2, /* msg_length */
+			   1, /* response_length */
+			   0); /* eot */
+}
+
 
 
 /**
