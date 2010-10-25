@@ -178,7 +178,7 @@ builtins: builtin_function.cpp builtins/profiles/* builtins/ir/* builtins/tools/
 	cp builtins/tools/builtin_function.cpp .
 	make glsl_compiler
 	@echo Regenerating builtin_function.cpp...
-	./builtins/tools/generate_builtins.py > builtin_function.cpp
+	$(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py > builtin_function.cpp
 	@echo Rebuilding the real compiler...
 	make glsl_compiler
 

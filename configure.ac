@@ -30,6 +30,7 @@ AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_PROGS([MAKE], [gmake make])
+AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PATH_PROG([MKDEP], [makedepend])
 AC_PATH_PROG([SED], [sed])
 
@@ -1691,6 +1692,8 @@ echo ""
 echo "        CFLAGS:          $cflags"
 echo "        CXXFLAGS:        $cxxflags"
 echo "        Macros:          $defines"
+echo ""
+echo "        PYTHON2:         $PYTHON2"
 
 echo ""
 echo "        Run '${MAKE-make}' to build Mesa"
