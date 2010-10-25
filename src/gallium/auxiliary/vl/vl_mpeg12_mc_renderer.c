@@ -278,7 +278,8 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    for (i = 0; i < 4; ++i)
       vtex[i] = ureg_DECL_vs_input(shader, i + 1);
    /* Skip input 5 */
-   vtex[4] = ureg_DECL_vs_input(shader, 5);
+   ureg_DECL_vs_input(shader, 5);
+   vtex[4] = ureg_DECL_vs_input(shader, 6);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
    for (i = 0; i < 5; ++i)
       o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
