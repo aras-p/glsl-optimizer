@@ -31,7 +31,6 @@
 #include "packsingle.h"
 #include "indirect.h"
 #include "glapitable.h"
-#include "glapidispatch.h"
 #include "glapi.h"
 #include "glthread.h"
 #include "glapioffsets.h"
@@ -121,8 +120,8 @@ void NAME(_gloffset_GetSeparableFilter) (GLenum target, GLenum format,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->isDirect) {
-      CALL_GetSeparableFilter(GET_DISPATCH(),
-                              (target, format, type, row, column, span));
+      GET_DISPATCH()->GetSeparableFilter(target, format, type,
+                                         row, column, span);
       return;
    }
    else

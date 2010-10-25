@@ -166,7 +166,6 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		print '#include "indirect.h"'
 		print '#include "glxclient.h"'
 		print '#include "indirect_size.h"'
-		print '#include "glapidispatch.h"'
 		print '#include "glapi.h"'
 		print '#include "glthread.h"'
 		print '#include <GL/glxproto.h>'
@@ -375,7 +374,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 				print ''
 				print '#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)'
 				print '    if (gc->isDirect) {'
-				print '    %sCALL_%s(GET_DISPATCH(), (%s));' % (ret_string, func.name, func.get_called_parameter_string())
+				print '    %sGET_DISPATCH()->%s(%s);' % (ret_string, func.name, func.get_called_parameter_string())
 				print '    } else'
 				print '#endif'
 				print '    {'

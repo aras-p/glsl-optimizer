@@ -58,7 +58,6 @@ struct display_dispatch {
 #ifdef GLX_INDIRECT_RENDERING
 
 #include "glapi/glapitable.h"
-#include "glapi/glapidispatch.h"
 
 #define KEYWORD1 PUBLIC
 
@@ -69,10 +68,10 @@ struct display_dispatch {
 #endif
 
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   GET_DISPATCH()->FUNC ARGS
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
-   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   return GET_DISPATCH()->FUNC ARGS
 
 /* skip normal ones */
 #define _GLAPI_SKIP_NORMAL_ENTRY_POINTS
