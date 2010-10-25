@@ -39,8 +39,6 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 
 	def printRealHeader(self):
-		print '#include "glapi/glapioffsets.h"'
-		print ''
 		print '#ifdef __arch64__'
 		print '#define GL_OFF(N)\t((N) * 8)'
 		print '#define GL_LL\t\tldx'
@@ -223,7 +221,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		for f in api.functionIterateByOffset():
 			name = f.dispatch_name()
 
-			print '\tGL_STUB(gl%s, _gloffset_%s)' % (name, f.name)
+			print '\tGL_STUB(gl%s, %d)' % (name, f.offset)
 
 			if not f.is_static_entry_point(f.name):
 				print '\tHIDDEN(gl%s)' % (name)

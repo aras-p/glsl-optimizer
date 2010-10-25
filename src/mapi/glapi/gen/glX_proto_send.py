@@ -993,6 +993,9 @@ extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
 					asdf = func.static_glx_name(n)
 					if asdf not in func.static_entry_points:
 						print 'extern HIDDEN %s gl%s(%s);' % (func.return_type, asdf, params)
+						# give it a easy-to-remember name
+						if func.client_handcode:
+							print '#define gl_dispatch_stub_%s gl%s' % (n, asdf)
 					else:
 						print 'GLAPI %s GLAPIENTRY gl%s(%s);' % (func.return_type, asdf, params)
 						
