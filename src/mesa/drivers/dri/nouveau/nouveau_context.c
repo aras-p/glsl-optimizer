@@ -365,5 +365,6 @@ nouveau_validate_framebuffer(struct gl_context *ctx)
 		validate_framebuffer(dri_ctx, dri_read,
 				     &dri_ctx->dri2.read_stamp);
 
-	nouveau_state_emit(ctx);
+	if (ctx->NewState & _NEW_BUFFERS)
+		_mesa_update_state(ctx);
 }

@@ -24,6 +24,7 @@
  *
  */
 
+#include "main/state.h"
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
@@ -184,6 +185,9 @@ nv10_clear(struct gl_context *ctx, GLbitfield buffers)
 			nv17_zclear(ctx, &buffers);
 		else
 			nv10_zclear(ctx, &buffers);
+
+		/* Emit the zclear state if it's dirty */
+		_mesa_update_state(ctx);
 	}
 
 	nouveau_clear(ctx, buffers);
