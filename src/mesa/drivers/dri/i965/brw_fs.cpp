@@ -2219,22 +2219,53 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 void
 fs_visitor::generate_discard_not(fs_inst *inst, struct brw_reg mask)
 {
-   brw_push_insn_state(p);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
-   brw_pop_insn_state(p);
+   if (intel->gen >= 6) {
+      /* Gen6 no longer has the mask reg for us to just read the
+       * active channels from.  However, cmp updates just the channels
+       * of the flag reg that are enabled, so we can get at the
+       * channel enables that way.  In this step, make a reg of ones
+       * we'll compare to.
+       */
+      brw_MOV(p, mask, brw_imm_ud(1));
+   } else {
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
+      brw_pop_insn_state(p);
+   }
 }
 
 void
 fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
 {
-   struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-   mask = brw_uw1_reg(mask.file, mask.nr, 0);
+   if (intel->gen >= 6) {
+      struct brw_reg f0 = brw_flag_reg();
+      struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
 
-   brw_push_insn_state(p);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_AND(p, g0, mask, g0);
-   brw_pop_insn_state(p);
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p, f0, brw_imm_uw(0xffff)); /* inactive channels undiscarded */
+      brw_pop_insn_state(p);
+
+      brw_CMP(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
+	      BRW_CONDITIONAL_Z, mask, brw_imm_ud(0)); /* active channels fail test */
+      /* Undo CMP's whacking of predication*/
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_AND(p, g1, f0, g1);
+      brw_pop_insn_state(p);
+   } else {
+      struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+
+      mask = brw_uw1_reg(mask.file, mask.nr, 0);
+
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_AND(p, g0, mask, g0);
+      brw_pop_insn_state(p);
+   }
 }
 
 void
