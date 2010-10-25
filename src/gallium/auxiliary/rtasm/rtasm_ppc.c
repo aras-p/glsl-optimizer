@@ -97,7 +97,7 @@ void (*ppc_get_func(struct ppc_function *p))(void)
       return (void (*)(void)) NULL;
    else
 #endif
-      return (void (*)(void)) p->store;
+      return (void (*)(void)) pointer_to_func(p->store);
 }
 
 
