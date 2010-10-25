@@ -7,15 +7,14 @@ constant folding, constant propagation, arithmetic optimizations and so on.
 
 Apparently quite a few mobile platforms are pretty bad at optimizing GLSL shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
-before can make the shader run much faster on a platform like that. I've seen shaders becoming
-a dozen times faster on one mobile platform!
+before can make the shader run much faster on a platform like that. See performance numbers
+in [this blog post](http://aras-p.info/blog/2010/09/29/glsl-optimizer/).
 
 Almost all actual code is [Mesa 3D's GLSL2](http://cgit.freedesktop.org/mesa/mesa/log/?h=glsl2)
 compiler; all this library does is spits out optimized GLSL back.
 
-This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and will be built-in
-in upcoming [Unity 3.0](http://unity3d.com/unity/coming-soon/unity-3). If you have early beta
-access then it is there in Unity 3.0.0 beta 6 build.
+This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is be built-in
+in [Unity 3.0](http://unity3d.com/unity/whats-new/unity-3).
 
 
 Usage
@@ -43,5 +42,5 @@ Notes
 -----
 
 * I haven't checked if/how it works with higher GLSL versions than the
-  default (1.10?), or with GLSL ES syntax.
+  default (1.10?).
   
