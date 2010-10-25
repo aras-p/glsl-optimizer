@@ -705,56 +705,56 @@ static void GLAPIENTRY _save_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalCoord1f( u );
+   CALL_EvalCoord1f(ctx->Save, (u));
 }
 
 static void GLAPIENTRY _save_EvalCoord1fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalCoord1fv( v );
+   CALL_EvalCoord1fv(ctx->Save, (v));
 }
 
 static void GLAPIENTRY _save_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalCoord2f( u, v );
+   CALL_EvalCoord2f(ctx->Save, (u, v));
 }
 
 static void GLAPIENTRY _save_EvalCoord2fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalCoord2fv( v );
+   CALL_EvalCoord2fv(ctx->Save, (v));
 }
 
 static void GLAPIENTRY _save_EvalPoint1( GLint i )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalPoint1( i );
+   CALL_EvalPoint1(ctx->Save, (i));
 }
 
 static void GLAPIENTRY _save_EvalPoint2( GLint i, GLint j )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->EvalPoint2( i, j );
+   CALL_EvalPoint2(ctx->Save, (i, j));
 }
 
 static void GLAPIENTRY _save_CallList( GLuint l )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->CallList( l );
+   CALL_CallList(ctx->Save, (l));
 }
 
 static void GLAPIENTRY _save_CallLists( GLsizei n, GLenum type, const GLvoid *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    DO_FALLBACK(ctx);
-   ctx->Save->CallLists( n, type, v );
+   CALL_CallLists(ctx->Save, (n, type, v));
 }
 
 
