@@ -199,8 +199,10 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.wm_start * 16;
 
       /* copy float constants */
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
-	 buf[offset + i] = *brw->wm.prog_data->param[i];
+      for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
+	 buf[offset + i] = convert_param(brw->wm.prog_data->param_convert[i],
+					 *brw->wm.prog_data->param[i]);
+      }
    }
 
 

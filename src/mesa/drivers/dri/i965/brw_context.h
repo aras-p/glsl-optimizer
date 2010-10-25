@@ -188,6 +188,13 @@ struct brw_shader_program {
    struct gl_shader_program base;
 };
 
+enum param_conversion {
+   PARAM_NO_CONVERT,
+   PARAM_CONVERT_F2I,
+   PARAM_CONVERT_F2U,
+   PARAM_CONVERT_F2B,
+};
+
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state
  * corresponding to a different brw_wm_prog_key struct, with different
@@ -208,8 +215,10 @@ struct brw_wm_prog_data {
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
     */
-   const GLfloat *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
-   const GLfloat *pull_param[MAX_UNIFORMS * 4];
+   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   enum param_conversion param_convert[MAX_UNIFORMS * 4];
+   const float *pull_param[MAX_UNIFORMS * 4];
+   enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
 };
 
 struct brw_sf_prog_data {
@@ -798,6 +807,35 @@ static INLINE const struct brw_fragment_program *
 brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
+}
+
+static inline
+float convert_param(enum param_conversion conversion, float param)
+{
+   union {
+      float f;
+      uint32_t u;
+      int32_t i;
+   } fi;
+
+   switch (conversion) {
+   case PARAM_NO_CONVERT:
+      return param;
+   case PARAM_CONVERT_F2I:
+      fi.i = param;
+      return fi.f;
+   case PARAM_CONVERT_F2U:
+      fi.u = param;
+      return fi.f;
+   case PARAM_CONVERT_F2B:
+      if (param != 0.0)
+	 fi.i = 1;
+      else
+	 fi.i = 0;
+      return fi.f;
+   default:
+      return param;
+   }
 }
 
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);

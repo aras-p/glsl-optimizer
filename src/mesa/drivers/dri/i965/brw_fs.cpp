@@ -228,6 +228,7 @@ brw_type_for_base_type(const struct glsl_type *type)
       return BRW_REGISTER_TYPE_UD;
    case GLSL_TYPE_ARRAY:
    case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_SAMPLER:
       /* These should be overridden with the type of the member when
        * dereferenced into.  BRW_REGISTER_TYPE_UD seems like a likely
        * way to trip up if we don't.
@@ -286,8 +287,26 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_BOOL:
       vec_values = fp->Base.Parameters->ParameterValues[loc];
       for (unsigned int i = 0; i < type->vector_elements; i++) {
-	 assert(c->prog_data.nr_params < ARRAY_SIZE(c->prog_data.param));
-	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
+	 unsigned int param = c->prog_data.nr_params++;
+
+	 assert(param < ARRAY_SIZE(c->prog_data.param));
+
+	 switch (type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
+	    break;
+	 case GLSL_TYPE_UINT:
+	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2U;
+	    break;
+	 case GLSL_TYPE_INT:
+	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2I;
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
+	    break;
+	 }
+
+	 c->prog_data.param[param] = &vec_values[i];
       }
       return 1;
 
@@ -371,6 +390,8 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	       break;
 	    last_swiz = swiz;
 
+	    c->prog_data.param_convert[c->prog_data.nr_params] =
+	       PARAM_NO_CONVERT;
 	    c->prog_data.param[c->prog_data.nr_params++] = &vec_values[swiz];
 	 }
       }
@@ -625,6 +646,7 @@ fs_visitor::visit(ir_variable *ir)
       }
 
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
+      reg->type = brw_type_for_base_type(ir->type);
    }
 
    if (!reg)
@@ -1203,6 +1225,11 @@ fs_visitor::visit(ir_texture *ir)
 	 0,
 	 0
       };
+
+      c->prog_data.param_convert[c->prog_data.nr_params] =
+	 PARAM_NO_CONVERT;
+      c->prog_data.param_convert[c->prog_data.nr_params + 1] =
+	 PARAM_NO_CONVERT;
 
       fs_reg scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
       fs_reg scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
@@ -2359,7 +2386,7 @@ fs_visitor::assign_curb_setup()
 						  constant_nr % 8);
 
 	    inst->src[i].file = FIXED_HW_REG;
-	    inst->src[i].fixed_hw_reg = brw_reg;
+	    inst->src[i].fixed_hw_reg = retype(brw_reg, inst->src[i].type);
 	 }
       }
    }
@@ -2566,6 +2593,8 @@ fs_visitor::setup_pull_constants()
 
    for (int i = 0; i < pull_uniform_count; i++) {
       c->prog_data.pull_param[i] = c->prog_data.param[pull_uniform_base + i];
+      c->prog_data.pull_param_convert[i] =
+	 c->prog_data.param_convert[pull_uniform_base + i];
    }
    c->prog_data.nr_params -= pull_uniform_count;
    c->prog_data.nr_pull_params = pull_uniform_count;
