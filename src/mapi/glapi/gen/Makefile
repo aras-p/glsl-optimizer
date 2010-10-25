@@ -15,8 +15,7 @@ MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glprocs.h \
 	$(MESA_GLAPI_DIR)/glapitemp.h \
 	$(MESA_GLAPI_DIR)/glapioffsets.h \
-	$(MESA_GLAPI_DIR)/glapitable.h \
-	$(MESA_GLAPI_DIR)/glapidispatch.h
+	$(MESA_GLAPI_DIR)/glapitable.h
 
 MESA_GLAPI_ASM_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_x86.S \
@@ -27,6 +26,7 @@ MESA_OUTPUTS = \
 	$(MESA_GLAPI_OUTPUTS) \
 	$(MESA_GLAPI_ASM_OUTPUTS) \
 	$(MESA_DIR)/main/enums.c \
+	$(MESA_DIR)/main/glapidispatch.h \
 	$(MESA_DIR)/main/remap_helper.h \
 	$(MESA_GLX_DIR)/indirect.c \
 	$(MESA_GLX_DIR)/indirect.h \
@@ -138,9 +138,6 @@ $(MESA_GLAPI_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 $(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_GLAPI_DIR)/glapidispatch.h: gl_table.py $(COMMON)
-	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
-
 ######################################################################
 
 $(MESA_GLAPI_DIR)/glapi_x86.S: gl_x86_asm.py $(COMMON)
@@ -158,6 +155,9 @@ $(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON) $(ES_API)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_API.xml \
 		-f $(MESA_GLAPI_DIR)/gen-es/es1_API.xml \
 		-f $(MESA_GLAPI_DIR)/gen-es/es2_API.xml > $@
+
+$(MESA_DIR)/main/glapidispatch.h: gl_table.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@

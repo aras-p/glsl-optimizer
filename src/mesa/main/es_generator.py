@@ -221,7 +221,7 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #endif
 #include "%sapi/glapi/glapitable.h"
 #include "%sapi/glapi/glapioffsets.h"
-#include "%sapi/glapi/glapidispatch.h"
+#include "%sapi/main/glapidispatch.h"
 
 #if FEATURE_remap_table
 
