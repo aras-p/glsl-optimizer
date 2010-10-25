@@ -14,7 +14,6 @@ MESA_GLX_DIR = $(TOP)/src/glx
 MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glprocs.h \
 	$(MESA_GLAPI_DIR)/glapitemp.h \
-	$(MESA_GLAPI_DIR)/glapioffsets.h \
 	$(MESA_GLAPI_DIR)/glapitable.h
 
 MESA_GLAPI_ASM_OUTPUTS = \
@@ -130,9 +129,6 @@ $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 $(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
-	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
-
-$(MESA_GLAPI_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 $(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)

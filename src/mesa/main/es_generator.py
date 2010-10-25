@@ -220,7 +220,6 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #define GLAPIENTRY GL_APIENTRY
 #endif
 #include "%sapi/glapi/glapitable.h"
-#include "%sapi/glapi/glapioffsets.h"
 #include "%sapi/main/glapidispatch.h"
 
 #if FEATURE_remap_table
@@ -249,7 +248,7 @@ _mesa_map_static_functions_%s(void)
 #endif
 
 typedef void (*_glapi_proc)(void); /* generic function pointer */
-""" % (shortname, shortname, shortname, shortname, shortname, shortname);
+""" % (shortname, shortname, shortname, shortname, shortname);
 
 # Finally we get to the all-important functions
 print """/*************************************************************

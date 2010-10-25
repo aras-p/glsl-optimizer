@@ -31,7 +31,6 @@
 #endif
 
 #include "glapi/glapitable.h"
-#include "glapi/glapioffsets.h"
 #include "main/glapidispatch.h"
 
 #endif /* _DISPATCH_H */

@@ -124,52 +124,54 @@ class PrintRemapTable(gl_XML.gl_print_base):
 				functions.append( [f, count] )
 				count += 1
 			else:
-				abi_functions.append( f )
+				abi_functions.append( [f, -1] )
 
 			if self.es:
 				# remember functions with aliases
 				if len(f.entry_points) > 1:
 					alias_functions.append(f)
 
+		print '/* total number of offsets below */'
+		print '#define _gloffset_COUNT %d' % (len(abi_functions + functions))
+		print ''
 
-		for f in abi_functions:
-			print '#define CALL_%s(disp, parameters) (*((disp)->%s)) parameters' % (f.name, f.name)
-			print '#define GET_%s(disp) ((disp)->%s)' % (f.name, f.name)
-			print '#define SET_%s(disp, fn) ((disp)->%s = fn)' % (f.name, f.name)
-
+		for f, index in abi_functions:
+			print '#define _gloffset_%s %d' % (f.name, f.offset)
 
 		print ''
 		print '#if !defined(_GLAPI_USE_REMAP_TABLE)'
 		print ''
 
-		for [f, index] in functions:
-			print '#define CALL_%s(disp, parameters) (*((disp)->%s)) parameters' % (f.name, f.name)
-			print '#define GET_%s(disp) ((disp)->%s)' % (f.name, f.name)
-			print '#define SET_%s(disp, fn) ((disp)->%s = fn)' % (f.name, f.name)
+		for f, index in functions:
+			print '#define _gloffset_%s %d' % (f.name, f.offset)
 
 		print ''
-		print '#else'
+		print '#else /* !_GLAPI_USE_REMAP_TABLE */'
 		print ''
+
 		print '#define driDispatchRemapTable_size %u' % (count)
 		print 'extern int driDispatchRemapTable[ driDispatchRemapTable_size ];'
 		print ''
 
-		for [f, index] in functions:
+		for f, index in functions:
 			print '#define %s_remap_index %u' % (f.name, index)
 
 		print ''
 
-		for [f, index] in functions:
+		for f, index in functions:
+			print '#define _gloffset_%s driDispatchRemapTable[%s_remap_index]' % (f.name, f.name)
+
+		print ''
+		print '#endif /* _GLAPI_USE_REMAP_TABLE */'
+		print ''
+
+		for f, index in abi_functions + functions:
 			arg_string = gl_XML.create_parameter_string( f.parameters, 0 )
 			cast = '%s (GLAPIENTRYP)(%s)' % (f.return_type, arg_string)
 
-			print '#define CALL_%s(disp, parameters) CALL_by_offset(disp, (%s), driDispatchRemapTable[%s_remap_index], parameters)' % (f.name, cast, f.name)
-			print '#define GET_%s(disp) GET_by_offset(disp, driDispatchRemapTable[%s_remap_index])' % (f.name, f.name)
-			print '#define SET_%s(disp, fn) SET_by_offset(disp, driDispatchRemapTable[%s_remap_index], fn)' % (f.name, f.name)
-
-
-		print ''
-		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
+			print '#define CALL_%s(disp, parameters) CALL_by_offset(disp, (%s), _gloffset_%s, parameters)' % (f.name, cast, f.name)
+			print '#define GET_%s(disp) GET_by_offset(disp, _gloffset_%s)' % (f.name, f.name)
+			print '#define SET_%s(disp, fn) SET_by_offset(disp, _gloffset_%s, fn)' % (f.name, f.name)
 
 		if alias_functions:
 			print ''

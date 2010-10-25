@@ -3,7 +3,6 @@ GLAPI = ../gen
 include $(TOP)/configs/current
 
 OUTPUTS :=			\
-	glapi/glapioffsets.h	\
 	glapi/glapitable.h	\
 	glapi/glapitemp.h	\
 	glapi/glprocs.h		\
@@ -46,9 +45,6 @@ endef
 
 %/glapidispatch.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c -m remap_table)
-
-%/glapioffsets.h: $(GLAPI)/gl_offsets.py $(COMMON)
-	$(call gen-glapi,-c)
 
 %/glapitable.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c)
