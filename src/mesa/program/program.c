@@ -796,7 +796,7 @@ _mesa_combine_programs(struct gl_context *ctx,
          if (p->Type == PROGRAM_STATE_VAR &&
              p->StateIndexes[0] == STATE_INTERNAL &&
              p->StateIndexes[1] == STATE_CURRENT_ATTRIB &&
-             p->StateIndexes[2] == VERT_ATTRIB_COLOR0) {
+             (int) p->StateIndexes[2] == (int) VERT_ATTRIB_COLOR0) {
             progB_inputsRead |= FRAG_BIT_COL0;
             progB_colorFile = PROGRAM_STATE_VAR;
             progB_colorIndex = i;
