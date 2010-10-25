@@ -1736,7 +1736,8 @@ void brw_fb_WRITE(struct brw_compile *p,
    GLboolean header_present = GL_TRUE;
 
    insn = next_insn(p, BRW_OPCODE_SEND);
-   insn->header.predicate_control = 0; /* XXX */
+   /* The execution mask is ignored for render target writes. */
+   insn->header.predicate_control = 0;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (intel->gen >= 6) {
