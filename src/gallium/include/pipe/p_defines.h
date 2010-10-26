@@ -494,10 +494,6 @@ enum pipe_shader_cap
 #define PIPE_REFERENCED_FOR_READ  (1 << 0)
 #define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
 enum pipe_video_codec
 {
    PIPE_VIDEO_CODEC_UNKNOWN = 0,
@@ -523,10 +519,7 @@ enum pipe_video_profile
    PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
 };
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
 /**
  * Composite query types
  */
@@ -540,10 +533,7 @@ struct pipe_query_data_timestamp_disjoint
    uint64_t frequency;
    boolean  disjoint;
 };
-<<<<<<< HEAD
 
-=======
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
 
 #ifdef __cplusplus
 }

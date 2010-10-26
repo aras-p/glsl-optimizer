@@ -1486,11 +1486,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-<<<<<<< HEAD
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
-=======
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes; then
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1499,24 +1495,15 @@ gallium_check_st() {
     if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-<<<<<<< HEAD
-    if test "x$HAVE_ST_XORG" = xyes && test "x$4" != x; then
+    if test "x$HAVE_ST_XVMC" = xyes && test "x$4" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
-    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
+    if test "x$HAVE_ST_VDPAU" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
-    if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
+    if test "x$HAVE_ST_VA" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
-    if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
-    fi
-=======
-    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
-    fi
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
 }
 
 
@@ -1619,11 +1606,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
-<<<<<<< HEAD
-    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau" "xvmc-nouveau"
-=======
     gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "xvmc-nouveau"
->>>>>>> 97a7cf230a70c64fff300931ae7c00aa00449c97
 fi
 
 dnl
