@@ -701,9 +701,14 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
-			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode);
+			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache0_bank) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache1_bank);
 
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
+			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache1_mode) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
 					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == 0 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);

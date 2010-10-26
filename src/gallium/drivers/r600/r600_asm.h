@@ -132,6 +132,11 @@ struct r600_bc_cf {
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
 	unsigned			kcache0_mode;
+	unsigned			kcache1_mode;
+	unsigned			kcache0_addr;
+	unsigned			kcache1_addr;
+	unsigned			kcache0_bank;
+	unsigned			kcache1_bank;
 	unsigned			r6xx_uses_waterfall;
 	struct list_head		alu;
 	struct list_head		tex;
