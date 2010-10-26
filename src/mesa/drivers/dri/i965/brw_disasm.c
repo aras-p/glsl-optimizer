@@ -461,6 +461,9 @@ static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 	case BRW_ARF_ACCUMULATOR:
 	    format (file, "acc%d", _reg_nr & 0x0f);
 	    break;
+	case BRW_ARF_FLAG:
+	    format (file, "f%d", _reg_nr & 0x0f);
+	    break;
 	case BRW_ARF_MASK:
 	    format (file, "mask%d", _reg_nr & 0x0f);
 	    break;
