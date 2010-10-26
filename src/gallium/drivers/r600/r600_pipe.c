@@ -43,6 +43,7 @@
 #include "r600_shader.h"
 #include "r600_pipe.h"
 #include "r600_state_inlines.h"
+#include "r600_video_context.h"
 
 /*
  * pipe_context
@@ -449,6 +450,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
+	rscreen->screen.video_context_create = r600_video_create;
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
 

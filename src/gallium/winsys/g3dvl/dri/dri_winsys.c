@@ -32,13 +32,12 @@
 #include <util/u_memory.h>
 #include <util/u_hash.h>
 #include <util/u_hash_table.h>
-#include <state_tracker/drm_api.h>
+#include <state_tracker/drm_driver.h>
 #include <X11/Xlibint.h>
 
 struct vl_dri_screen
 {
    struct vl_screen base;
-   struct drm_api *api;
    dri_screen_t *dri_screen;
    struct util_hash_table *drawable_table;
    Drawable last_seen_drawable;
@@ -176,7 +175,6 @@ struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
    struct vl_dri_screen *vl_dri_scrn;
-   struct drm_create_screen_arg arg;
 
    assert(display);
 
@@ -187,15 +185,7 @@ vl_screen_create(Display *display, int screen)
    if (dri2CreateScreen(display, screen, &vl_dri_scrn->dri_screen))
       goto no_dri2screen;
 
-   vl_dri_scrn->api = drm_api_create();
-   if (!vl_dri_scrn->api)
-      goto no_drmapi;
-
-   arg.mode = DRM_CREATE_NORMAL;
-
-   vl_dri_scrn->base.pscreen = vl_dri_scrn->api->create_screen(vl_dri_scrn->api,
-                                                               vl_dri_scrn->dri_screen->fd,
-                                                               &arg);
+   vl_dri_scrn->base.pscreen = driver_descriptor.create_screen(vl_dri_scrn->dri_screen->fd);
 
    if (!vl_dri_scrn->base.pscreen)
       goto no_pscreen;
@@ -212,8 +202,6 @@ vl_screen_create(Display *display, int screen)
 no_hash:
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
 no_pscreen:
-   vl_dri_scrn->api->destroy(vl_dri_scrn->api);
-no_drmapi:
    dri2DestroyScreen(vl_dri_scrn->dri_screen);
 no_dri2screen:
    FREE(vl_dri_scrn);
@@ -230,8 +218,6 @@ void vl_screen_destroy(struct vl_screen *vscreen)
    util_hash_table_foreach(vl_dri_scrn->drawable_table, drawable_destroy, vl_dri_scrn);
    util_hash_table_destroy(vl_dri_scrn->drawable_table);
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
-   if (vl_dri_scrn->api->destroy)
-      vl_dri_scrn->api->destroy(vl_dri_scrn->api);
    dri2DestroyScreen(vl_dri_scrn->dri_screen);
    FREE(vl_dri_scrn);
 }
