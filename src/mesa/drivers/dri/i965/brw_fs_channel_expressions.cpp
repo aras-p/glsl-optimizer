@@ -202,6 +202,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_ceil:
    case ir_unop_floor:
    case ir_unop_fract:
+   case ir_unop_round_even:
    case ir_unop_sin:
    case ir_unop_cos:
    case ir_unop_dFdx:
