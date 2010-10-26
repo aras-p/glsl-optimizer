@@ -496,15 +496,15 @@ static void brw_set_dp_write_message( struct brw_context *brw,
    }
 }
 
-static void brw_set_dp_read_message( struct brw_context *brw,
-				      struct brw_instruction *insn,
-				      GLuint binding_table_index,
-				      GLuint msg_control,
-				      GLuint msg_type,
-				      GLuint target_cache,
-				      GLuint msg_length,
-				      GLuint response_length,
-				      GLuint end_of_thread )
+static void
+brw_set_dp_read_message(struct brw_context *brw,
+			struct brw_instruction *insn,
+			GLuint binding_table_index,
+			GLuint msg_control,
+			GLuint msg_type,
+			GLuint target_cache,
+			GLuint msg_length,
+			GLuint response_length)
 {
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
@@ -518,11 +518,11 @@ static void brw_set_dp_read_message( struct brw_context *brw,
        insn->bits3.dp_render_cache.header_present = 1;
        insn->bits3.dp_render_cache.response_length = response_length;
        insn->bits3.dp_render_cache.msg_length = msg_length;
-       insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
+       insn->bits3.dp_render_cache.end_of_thread = 0;
        insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_READ;
 	/* XXX really need below? */
        insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
-       insn->bits2.send_gen5.end_of_thread = end_of_thread;
+       insn->bits2.send_gen5.end_of_thread = 0;
    } else if (intel->gen == 5) {
        insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_read_gen5.msg_control = msg_control;
@@ -532,9 +532,9 @@ static void brw_set_dp_read_message( struct brw_context *brw,
        insn->bits3.dp_read_gen5.response_length = response_length;
        insn->bits3.dp_read_gen5.msg_length = msg_length;
        insn->bits3.dp_read_gen5.pad1 = 0;
-       insn->bits3.dp_read_gen5.end_of_thread = end_of_thread;
+       insn->bits3.dp_read_gen5.end_of_thread = 0;
        insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
-       insn->bits2.send_gen5.end_of_thread = end_of_thread;
+       insn->bits2.send_gen5.end_of_thread = 0;
    } else {
        insn->bits3.dp_read.binding_table_index = binding_table_index; /*0:7*/
        insn->bits3.dp_read.msg_control = msg_control;  /*8:11*/
@@ -544,7 +544,7 @@ static void brw_set_dp_read_message( struct brw_context *brw,
        insn->bits3.dp_read.msg_length = msg_length;  /*20:23*/
        insn->bits3.dp_read.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
        insn->bits3.dp_read.pad1 = 0;  /*28:30*/
-       insn->bits3.dp_read.end_of_thread = end_of_thread;  /*31*/
+       insn->bits3.dp_read.end_of_thread = 0;  /*31*/
    }
 }
 
@@ -1526,8 +1526,7 @@ brw_oword_block_read_scratch(struct brw_compile *p,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      1, /* target cache (render/scratch) */
 			      1, /* msg_length */
-			      rlen,
-			      0); /* eot */
+			      rlen);
    }
 }
 
@@ -1584,8 +1583,7 @@ void brw_oword_block_read(struct brw_compile *p,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
 			   0, /* source cache = data cache */
 			   1, /* msg_length */
-			   1, /* response_length (1 reg, 2 owords!) */
-			   0); /* eot */
+			   1); /* response_length (1 reg, 2 owords!) */
 
    brw_pop_insn_state(p);
 }
@@ -1626,8 +1624,7 @@ void brw_dword_scattered_read(struct brw_compile *p,
 			   BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ,
 			   0, /* source cache = data cache */
 			   2, /* msg_length */
-			   1, /* response_length */
-			   0); /* eot */
+			   1); /* response_length */
 }
 
 
@@ -1684,8 +1681,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			   0, /* source cache = data cache */
 			   1, /* msg_length */
-			   1, /* response_length (1 Oword) */
-			   0); /* eot */
+			   1); /* response_length (1 Oword) */
 }
 
 /**
@@ -1738,8 +1734,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 			   msg_type,
 			   0, /* source cache = data cache */
 			   2, /* msg_length */
-			   1, /* response_length */
-			   0); /* eot */
+			   1); /* response_length */
 }
 
 
