@@ -40,7 +40,7 @@ prepare_urb( struct brw_context *brw )
    else
       brw->urb.nr_gs_entries = 0;
    /* CACHE_NEW_VS_PROG */
-   brw->urb.vs_size = MIN2(brw->vs.prog_data->urb_entry_size, 1);
+   brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
    /* Check that the number of URB rows (8 floats each) allocated is less
     * than the URB space.
