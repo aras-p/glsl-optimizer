@@ -115,7 +115,7 @@ upload_wm_state(struct brw_context *brw)
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
    dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5;
 
-   /* BRW_NEW_NR_SURFACES */
+   /* BRW_NEW_NR_WM_SURFACES */
    dw2 |= brw->wm.nr_surfaces << GEN6_WM_BINDING_TABLE_ENTRY_COUNT_SHIFT;
 
    /* CACHE_NEW_SAMPLER */
