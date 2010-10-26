@@ -225,7 +225,7 @@ fs_visitor::assign_regs()
        * loop back into here to try again.
        */
       int reg = choose_spill_reg(g);
-      if (reg == -1) {
+      if (reg == -1 || intel->gen >= 6) {
 	 this->fail = true;
       } else {
 	 spill_reg(reg);
