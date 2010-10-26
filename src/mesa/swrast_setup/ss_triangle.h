@@ -32,7 +32,7 @@
 #include "main/mtypes.h"
 
 
-void _swsetup_trifuncs_init( GLcontext *ctx );
-void _swsetup_choose_trifuncs( GLcontext *ctx );
+void _swsetup_trifuncs_init( struct gl_context *ctx );
+void _swsetup_choose_trifuncs( struct gl_context *ctx );
 
 #endif

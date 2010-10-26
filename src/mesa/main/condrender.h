@@ -39,7 +39,7 @@ extern void APIENTRY
 _mesa_EndConditionalRender(void);
 
 extern GLboolean
-_mesa_check_conditional_render(GLcontext *ctx);
+_mesa_check_conditional_render(struct gl_context *ctx);
 
 
 #endif /* CONDRENDER_H */

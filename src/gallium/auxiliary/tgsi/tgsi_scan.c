@@ -147,6 +147,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
                   info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
+                  info->input_centroid[reg] = (ubyte)fulldecl->Declaration.Centroid;
                   info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Declaration.CylindricalWrap;
                   info->num_inputs++;
                }
@@ -157,9 +158,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                   /* extra info for special outputs */
                   if (procType == TGSI_PROCESSOR_FRAGMENT &&
-                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
-                     info->writes_z = TRUE;
-                  }
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION)
+                        info->writes_z = TRUE;
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_STENCIL)
+                        info->writes_stencil = TRUE;
                   if (procType == TGSI_PROCESSOR_VERTEX &&
                       fulldecl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG) {
                      info->writes_edgeflag = TRUE;

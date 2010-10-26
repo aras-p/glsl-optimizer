@@ -110,7 +110,7 @@ mgaFillInModes( __DRIscreen *psp,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
@@ -421,13 +421,13 @@ static const struct dri_debug_control debug_control[] =
 
 static GLboolean
 mgaCreateContext( gl_api api,
-		  const __GLcontextModes *mesaVis,
+		  const struct gl_config *mesaVis,
                   __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {
    int i;
    unsigned   maxlevels;
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    mgaContextPtr mmesa;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
@@ -695,7 +695,7 @@ mgaDestroyContext(__DRIcontext *driContextPriv)
 static GLboolean
 mgaCreateBuffer( __DRIscreen *driScrnPriv,
                  __DRIdrawable *driDrawPriv,
-                 const __GLcontextModes *mesaVis,
+                 const struct gl_config *mesaVis,
                  GLboolean isPixmap )
 {
    mgaScreenPrivate *screen = (mgaScreenPrivate *) driScrnPriv->private;
@@ -812,7 +812,7 @@ mgaCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 mgaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void
@@ -820,7 +820,7 @@ mgaSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mgaContextPtr mmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = mmesa->glCtx;
 
@@ -875,8 +875,8 @@ mgaMakeCurrent(__DRIcontext *driContextPriv,
       mmesa->driReadable = driReadPriv;
 
       _mesa_make_current(mmesa->glCtx,
-                         (GLframebuffer *) driDrawPriv->driverPrivate,
-                         (GLframebuffer *) driReadPriv->driverPrivate);
+                         (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                         (struct gl_framebuffer *) driReadPriv->driverPrivate);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
@@ -925,7 +925,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **mgaInitScreen(__DRIscreen *psp)
 {

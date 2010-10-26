@@ -85,6 +85,11 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
+	if (rctx->tran.translate_cache)
+		translate_cache_destroy(rctx->tran.translate_cache);
+
+	FREE(rctx->ps_resource);
+	FREE(rctx->vs_resource);
 	FREE(rctx);
 }
 
@@ -171,6 +176,24 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	rctx->tran.translate_cache = translate_cache_create();
+	if (rctx->tran.translate_cache == NULL) {
+		FREE(rctx);
+		return NULL;
+	}
+	
+	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->vs_resource) {
+		FREE(rctx);
+		return NULL;
+	}
+
+	rctx->ps_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
+	if (!rctx->ps_resource) {
+		FREE(rctx);
+		return NULL;
+	}
+
 	class = r600_get_family_class(rctx->radeon);
 	if (class == R600 || class == R700)
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
@@ -242,6 +265,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 	case PIPE_CAP_DEPTH_CLAMP:
+	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 		return 1;
 
 	/* Unsupported features (boolean caps). */
@@ -257,7 +281,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		/* FIXME allow this once infrastructure is there */
-		return 0;
+		return 16;
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
@@ -427,6 +451,8 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.context_create = r600_create_context;
 	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
+
+	rscreen->tiling_info = r600_get_tiling_info(radeon);
 
 	return &rscreen->screen;
 }

@@ -29,13 +29,13 @@
 #include "nouveau_util.h"
 
 void
-nouveau_surface_alloc(GLcontext *ctx, struct nouveau_surface *s,
+nouveau_surface_alloc(struct gl_context *ctx, struct nouveau_surface *s,
 		      enum nouveau_surface_layout layout,
 		      unsigned flags, unsigned format,
 		      unsigned width, unsigned height)
 {
-	unsigned tile_mode, cpp = _mesa_get_format_bytes(format);
-	int ret;
+	unsigned tile_mode = 0, tile_flags = 0;
+	int ret, cpp = _mesa_get_format_bytes(format);
 
 	nouveau_bo_ref(NULL, &s->bo);
 
@@ -51,13 +51,21 @@ nouveau_surface_alloc(GLcontext *ctx, struct nouveau_surface *s,
 	if (layout == TILED) {
 		s->pitch = align(s->pitch, 256);
 		tile_mode = s->pitch;
+
+		if (cpp == 4)
+			tile_flags = NOUVEAU_BO_TILE_32BPP;
+		else if (cpp == 2)
+			tile_flags = NOUVEAU_BO_TILE_16BPP;
+
+		if (_mesa_get_format_bits(format, GL_DEPTH_BITS))
+			tile_flags |= NOUVEAU_BO_TILE_ZETA;
+
 	} else {
 		s->pitch = align(s->pitch, 64);
-		tile_mode = 0;
 	}
 
 	ret = nouveau_bo_new_tile(context_dev(ctx), flags, 0, s->pitch * height,
-				  tile_mode, 0, &s->bo);
+				  tile_mode, tile_flags, &s->bo);
 	assert(!ret);
 }
 

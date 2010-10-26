@@ -8,7 +8,7 @@ include $(TOP)/configs/current
 
 GLU_MAJOR = 1
 GLU_MINOR = 3
-GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
+GLU_TINY = 0$(MESA_MAJOR)$(MESA_MINOR)0$(MESA_TINY)
 
 INCDIRS = -I$(TOP)/include -Iinclude -Iinternals -Ilibnurbs/internals -Ilibnurbs/interface -Ilibnurbs/nurbtess
 

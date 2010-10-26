@@ -50,7 +50,7 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void radeonFlushElts( GLcontext *ctx );
+extern void radeonFlushElts( struct gl_context *ctx );
 			    
 
 extern GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
@@ -77,9 +77,9 @@ extern void radeonEmitWait( r100ContextPtr rmesa, GLuint flags );
 
 extern void radeonFlushCmdBuf( r100ContextPtr rmesa, const char * );
 
-extern void radeonFlush( GLcontext *ctx );
-extern void radeonFinish( GLcontext *ctx );
-extern void radeonInitIoctlFuncs( GLcontext *ctx );
+extern void radeonFlush( struct gl_context *ctx );
+extern void radeonFinish( struct gl_context *ctx );
+extern void radeonInitIoctlFuncs( struct gl_context *ctx );
 extern void radeonGetAllParams( r100ContextPtr rmesa );
 extern void radeonSetUpAtomList( r100ContextPtr rmesa );
 

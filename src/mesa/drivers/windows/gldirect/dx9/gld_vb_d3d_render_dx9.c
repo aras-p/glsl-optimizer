@@ -61,7 +61,7 @@
 //---------------------------------------------------------------------------
 
 __inline void _gldSetVertexShaderConstants(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLD_driver_dx9 *gld)
 {
 	D3DXMATRIX mat, matView, matProj;
@@ -116,7 +116,7 @@ __inline void _gldSetVertexShaderConstants(
 //---------------------------------------------------------------------------
 
 static GLboolean gld_d3d_render_stage_run(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	struct tnl_pipeline_stage *stage)
 {
 	GLD_context				*gldCtx	= GLD_GET_CONTEXT(ctx);
@@ -237,7 +237,7 @@ static GLboolean gld_d3d_render_stage_run(
 //---------------------------------------------------------------------------
 
 static void gld_d3d_render_stage_check(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	struct tnl_pipeline_stage *stage)
 {
 	GLD_context				*gldCtx	= GLD_GET_CONTEXT(ctx);

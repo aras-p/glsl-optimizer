@@ -69,7 +69,7 @@
 #include "extensions.h"
 
 // For some reason this is not defined in an above header...
-extern void _mesa_enable_imaging_extensions(GLcontext *ctx);
+extern void _mesa_enable_imaging_extensions(struct gl_context *ctx);
 
 //---------------------------------------------------------------------------
 // Hack for the SGIS_multitexture extension that was removed from Mesa
@@ -281,7 +281,7 @@ PROC gldGetProcAddress_DX(
 //---------------------------------------------------------------------------
 
 void gldEnableExtensions_DX8(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	GLuint i;
 

@@ -57,6 +57,8 @@ lp_disassemble(const void* func)
 #ifdef HAVE_UDIS86
    ud_t ud_obj;
    uint64_t max_jmp_pc;
+   uint inst_no;
+   boolean emit_addrs = TRUE, emit_line_nos = FALSE;
 
    ud_init(&ud_obj);
 
@@ -76,13 +78,18 @@ lp_disassemble(const void* func)
 
    while (ud_disassemble(&ud_obj)) {
 
+      if (emit_addrs) {
 #ifdef PIPE_ARCH_X86
-      debug_printf("0x%08lx:\t", (unsigned long)ud_insn_off(&ud_obj));
+         debug_printf("0x%08lx:\t", (unsigned long)ud_insn_off(&ud_obj));
 #endif
 #ifdef PIPE_ARCH_X86_64
-      debug_printf("0x%016llx:\t", (unsigned long long)ud_insn_off(&ud_obj));
+         debug_printf("0x%016llx:\t", (unsigned long long)ud_insn_off(&ud_obj));
 #endif
-
+      }
+      else if (emit_line_nos) {
+         debug_printf("%6d:\t", inst_no);
+         inst_no++;
+      }
 #if 0
       debug_printf("%-16s ", ud_insn_hex(&ud_obj));
 #endif
@@ -115,8 +122,10 @@ lp_disassemble(const void* func)
          }
       }
 
-      if ((ud_insn_off(&ud_obj) >= max_jmp_pc && ud_obj.mnemonic == UD_Iret) ||
-           ud_obj.mnemonic == UD_Iinvalid)
+      if (ud_obj.mnemonic == UD_Iinvalid ||
+          (ud_insn_off(&ud_obj) >= max_jmp_pc &&
+           (ud_obj.mnemonic == UD_Iret ||
+            ud_obj.mnemonic == UD_Ijmp)))
          break;
    }
 

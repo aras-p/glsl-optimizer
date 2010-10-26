@@ -87,7 +87,7 @@ static GLuint radeon_cp_vc_frmts[3][2] =
    { RADEON_CP_VC_FRMT_ST2, RADEON_CP_VC_FRMT_ST2 | RADEON_CP_VC_FRMT_Q2 },
 };
 
-static void radeonSetVertexFormat( GLcontext *ctx )
+static void radeonSetVertexFormat( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -243,7 +243,7 @@ static void radeon_predict_emit_size( r100ContextPtr rmesa )
     }
 }
 
-static void radeonRenderStart( GLcontext *ctx )
+static void radeonRenderStart( struct gl_context *ctx )
 {
     r100ContextPtr rmesa = R100_CONTEXT( ctx );
 
@@ -260,7 +260,7 @@ static void radeonRenderStart( GLcontext *ctx )
  * determine in advance whether or not the hardware can / should do the
  * projection divide or Mesa should do it.
  */
-void radeonChooseVertexState( GLcontext *ctx )
+void radeonChooseVertexState( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -302,7 +302,7 @@ void radeonChooseVertexState( GLcontext *ctx )
    }
 }
 
-void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
+void r100_swtcl_flush(struct gl_context *ctx, uint32_t current_offset)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
@@ -398,7 +398,7 @@ static void* radeon_alloc_verts( r100ContextPtr rmesa , GLuint nr, GLuint size )
 /**********************************************************************/
 
 
-static GLboolean radeon_run_render( GLcontext *ctx,
+static GLboolean radeon_run_render( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -467,9 +467,9 @@ static const GLuint reduced_hw_prim[GL_POLYGON+1] = {
    RADEON_CP_VC_CNTL_PRIM_TYPE_TRI_LIST
 };
 
-static void radeonRasterPrimitive( GLcontext *ctx, GLuint hwprim );
-static void radeonRenderPrimitive( GLcontext *ctx, GLenum prim );
-static void radeonResetLineStipple( GLcontext *ctx );
+static void radeonRasterPrimitive( struct gl_context *ctx, GLuint hwprim );
+static void radeonRenderPrimitive( struct gl_context *ctx, GLenum prim );
+static void radeonResetLineStipple( struct gl_context *ctx );
 
 
 /***********************************************************************
@@ -678,7 +678,7 @@ static void init_rast_tab( void )
 /*                    Choose render functions                         */
 /**********************************************************************/
 
-void radeonChooseRenderState( GLcontext *ctx )
+void radeonChooseRenderState( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -718,7 +718,7 @@ void radeonChooseRenderState( GLcontext *ctx )
 /**********************************************************************/
 
 
-static void radeonRasterPrimitive( GLcontext *ctx, GLuint hwprim )
+static void radeonRasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
@@ -728,7 +728,7 @@ static void radeonRasterPrimitive( GLcontext *ctx, GLuint hwprim )
    }
 }
 
-static void radeonRenderPrimitive( GLcontext *ctx, GLenum prim )
+static void radeonRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    rmesa->radeon.swtcl.render_primitive = prim;
@@ -736,11 +736,11 @@ static void radeonRenderPrimitive( GLcontext *ctx, GLenum prim )
       radeonRasterPrimitive( ctx, reduced_hw_prim[prim] );
 }
 
-static void radeonRenderFinish( GLcontext *ctx )
+static void radeonRenderFinish( struct gl_context *ctx )
 {
 }
 
-static void radeonResetLineStipple( GLcontext *ctx )
+static void radeonResetLineStipple( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    RADEON_STATECHANGE( rmesa, lin );
@@ -774,7 +774,7 @@ static const char *getFallbackString(GLuint bit)
 }
 
 
-void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void radeonFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -831,7 +831,7 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void radeonInitSwtcl( GLcontext *ctx )
+void radeonInitSwtcl( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r100ContextPtr rmesa = R100_CONTEXT(ctx);

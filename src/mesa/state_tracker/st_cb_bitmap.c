@@ -113,7 +113,7 @@ struct bitmap_cache
  * This program will be combined with the user's fragment program.
  */
 static struct st_fragment_program *
-make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
+make_bitmap_fragment_program(struct gl_context *ctx, GLuint samplerIndex)
 {
    struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp;
@@ -187,7 +187,7 @@ find_free_bit(uint bitfield)
  * Combine basic bitmap fragment program with the user-defined program.
  */
 static struct st_fragment_program *
-combined_bitmap_fragment_program(GLcontext *ctx)
+combined_bitmap_fragment_program(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp = st->fp;
@@ -256,7 +256,7 @@ unpack_bitmap(struct st_context *st,
  * Create a texture which represents a bitmap image.
  */
 static struct pipe_resource *
-make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
+make_bitmap_texture(struct gl_context *ctx, GLsizei width, GLsizei height,
                     const struct gl_pixelstore_attrib *unpack,
                     const GLubyte *bitmap)
 {
@@ -403,7 +403,7 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
  * Render a glBitmap by drawing a textured quad
  */
 static void
-draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
+draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
                  GLsizei width, GLsizei height,
                  struct pipe_sampler_view *sv,
                  const GLfloat *color)
@@ -737,7 +737,7 @@ accum_bitmap(struct st_context *st,
  * Called via ctx->Driver.Bitmap()
  */
 static void
-st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+st_Bitmap(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
    struct st_context *st = st_context(ctx);

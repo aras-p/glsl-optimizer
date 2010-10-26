@@ -78,7 +78,7 @@
  * representing the range[-1, 1].
  */
 static void
-rescale_accum( GLcontext *ctx )
+rescale_accum( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *rb
@@ -125,7 +125,7 @@ rescale_accum( GLcontext *ctx )
  * Clear the accumulation Buffer.
  */
 void
-_swrast_clear_accum_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
+_swrast_clear_accum_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint x, y, width, height;
@@ -179,7 +179,7 @@ _swrast_clear_accum_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
 
 
 static void
-accum_add(GLcontext *ctx, GLfloat value,
+accum_add(struct gl_context *ctx, GLfloat value,
           GLint xpos, GLint ypos, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -222,7 +222,7 @@ accum_add(GLcontext *ctx, GLfloat value,
 
 
 static void
-accum_mult(GLcontext *ctx, GLfloat mult,
+accum_mult(struct gl_context *ctx, GLfloat mult,
            GLint xpos, GLint ypos, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -265,7 +265,7 @@ accum_mult(GLcontext *ctx, GLfloat mult,
 
 
 static void
-accum_accum(GLcontext *ctx, GLfloat value,
+accum_accum(struct gl_context *ctx, GLfloat value,
             GLint xpos, GLint ypos, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -341,7 +341,7 @@ accum_accum(GLcontext *ctx, GLfloat value,
 
 
 static void
-accum_load(GLcontext *ctx, GLfloat value,
+accum_load(struct gl_context *ctx, GLfloat value,
            GLint xpos, GLint ypos, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -423,7 +423,7 @@ accum_load(GLcontext *ctx, GLfloat value,
 
 
 static void
-accum_return(GLcontext *ctx, GLfloat value,
+accum_return(struct gl_context *ctx, GLfloat value,
              GLint xpos, GLint ypos, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -540,7 +540,7 @@ accum_return(GLcontext *ctx, GLfloat value,
  * Software fallback for glAccum.
  */
 void
-_swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value)
+_swrast_Accum(struct gl_context *ctx, GLenum op, GLfloat value)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint xpos, ypos, width, height;

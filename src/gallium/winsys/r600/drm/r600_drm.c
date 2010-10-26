@@ -37,6 +37,9 @@
 #include "xf86drm.h"
 #include "radeon_drm.h"
 
+#ifndef RADEON_INFO_TILING_CONFIG
+#define RADEON_INFO_TILING_CONFIG 0x6
+#endif
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;
@@ -48,6 +51,61 @@ static int radeon_get_device(struct radeon *radeon)
 	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
 			sizeof(struct drm_radeon_info));
 	return r;
+}
+
+static int radeon_drm_get_tiling(struct radeon *radeon)
+{
+	struct drm_radeon_info info;
+	int r;
+	uint32_t tiling_config;
+
+	info.request = RADEON_INFO_TILING_CONFIG;
+	info.value = (uintptr_t)&tiling_config;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+				sizeof(struct drm_radeon_info));
+
+	if (r)
+		return 0;
+
+	switch ((tiling_config & 0xe) >> 1) {
+	case 0:
+		radeon->tiling_info.num_channels = 1;
+		break;
+	case 1:
+		radeon->tiling_info.num_channels = 2;
+		break;
+	case 2:
+		radeon->tiling_info.num_channels = 4;
+		break;
+	case 3:
+		radeon->tiling_info.num_channels = 8;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	switch ((tiling_config & 0x30) >> 4) {
+	case 0:
+		radeon->tiling_info.num_banks = 4;
+		break;
+	case 1:
+		radeon->tiling_info.num_banks = 8;
+		break;
+	default:
+		return -EINVAL;
+
+	}
+	switch ((tiling_config & 0xc0) >> 6) {
+	case 0:
+		radeon->tiling_info.group_bytes = 256;
+		break;
+	case 1:
+		radeon->tiling_info.group_bytes = 512;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
 }
 
 struct radeon *radeon_new(int fd, unsigned device)
@@ -157,6 +215,10 @@ struct radeon *radeon_new(int fd, unsigned device)
 		break;
 	}
 
+	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
+		if (radeon_drm_get_tiling(radeon))
+			return NULL;
+	}
 	radeon->kman = radeon_bo_pbmgr_create(radeon);
 	if (!radeon->kman)
 		return NULL;
@@ -179,9 +241,15 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
-	radeon->cman->destroy(radeon->cman);
-	radeon->kman->destroy(radeon->kman);
-	drmClose(radeon->fd);
+        if (radeon->cman)
+           radeon->cman->destroy(radeon->cman);
+
+        if (radeon->kman)
+           radeon->kman->destroy(radeon->kman);
+
+        if (radeon->fd >= 0)
+           drmClose(radeon->fd);
+
 	free(radeon);
 	return NULL;
 }

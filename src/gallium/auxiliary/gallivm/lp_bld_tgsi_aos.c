@@ -513,7 +513,7 @@ emit_instruction(
 {
    LLVMValueRef src0, src1, src2;
    LLVMValueRef tmp0, tmp1;
-   LLVMValueRef dst0;
+   LLVMValueRef dst0 = NULL;
 
    /*
     * Stores and write masks are handled in a general fashion after the long

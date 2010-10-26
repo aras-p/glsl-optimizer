@@ -103,7 +103,7 @@ RESAMPLE(resample_row_16, GLuint, 4)
  * Blit color, depth or stencil with GL_NEAREST filtering.
  */
 static void
-blit_nearest(GLcontext *ctx,
+blit_nearest(struct gl_context *ctx,
              GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
              GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
              GLbitfield buffer)
@@ -316,7 +316,7 @@ resample_linear_row_ub(GLint srcWidth, GLint dstWidth,
  * Bilinear filtered blit (color only).
  */
 static void
-blit_linear(GLcontext *ctx,
+blit_linear(struct gl_context *ctx,
             GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1)
 {
@@ -455,7 +455,7 @@ blit_linear(GLcontext *ctx,
  * XXX we could easily support vertical flipping here.
  */
 static void
-simple_blit(GLcontext *ctx,
+simple_blit(struct gl_context *ctx,
             GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
             GLbitfield buffer)
@@ -556,7 +556,7 @@ simple_blit(GLcontext *ctx,
  * Software fallback for glBlitFramebufferEXT().
  */
 void
-_swrast_BlitFramebuffer(GLcontext *ctx,
+_swrast_BlitFramebuffer(struct gl_context *ctx,
                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                         GLbitfield mask, GLenum filter)

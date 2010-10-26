@@ -41,7 +41,7 @@
 #define LIGHT_MATERIAL      0x2
 #define MAX_LIGHT_FUNC      0x4
 
-typedef void (*light_func)( GLcontext *ctx,
+typedef void (*light_func)( struct gl_context *ctx,
 			    struct vertex_buffer *VB,
 			    struct tnl_pipeline_stage *stage,
 			    GLvector4f *input );
@@ -85,7 +85,7 @@ struct light_stage_data {
  * It's called per-vertex in the lighting loop.
  */
 static void
-update_materials(GLcontext *ctx, struct light_stage_data *store)
+update_materials(struct gl_context *ctx, struct light_stage_data *store)
 {
    GLuint i;
 
@@ -110,7 +110,7 @@ update_materials(GLcontext *ctx, struct light_stage_data *store)
  * Return number of material attributes which will track vertex color.
  */
 static GLuint
-prepare_materials(GLcontext *ctx,
+prepare_materials(struct gl_context *ctx,
                   struct vertex_buffer *VB, struct light_stage_data *store)
 {
    GLuint i;
@@ -192,7 +192,7 @@ static void init_lighting_tables( void )
 }
 
 
-static GLboolean run_lighting( GLcontext *ctx, 
+static GLboolean run_lighting( struct gl_context *ctx, 
 			       struct tnl_pipeline_stage *stage )
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
@@ -250,7 +250,7 @@ static GLboolean run_lighting( GLcontext *ctx,
 
 /* Called in place of do_lighting when the light table may have changed.
  */
-static void validate_lighting( GLcontext *ctx,
+static void validate_lighting( struct gl_context *ctx,
 					struct tnl_pipeline_stage *stage )
 {
    light_func *tab;
@@ -284,7 +284,7 @@ static void validate_lighting( GLcontext *ctx,
 /* Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
-static GLboolean init_lighting( GLcontext *ctx,
+static GLboolean init_lighting( struct gl_context *ctx,
 				struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);

@@ -153,8 +153,8 @@ struct via_texture_object {
 
 struct via_context {
    GLint refcount;   
-   GLcontext *glCtx;
-   GLcontext *shareCtx;
+   struct gl_context *glCtx;
+   struct gl_context *shareCtx;
 
    /* XXX These don't belong here.  They should be per-drawable state. */
    struct via_renderbuffer front;
@@ -394,7 +394,7 @@ extern void viaEmitHwStateLocked(struct via_context *vmesa);
 extern void viaEmitScissorValues(struct via_context *vmesa, int box_nr, int emit);
 extern void viaXMesaSetBackClipRects(struct via_context *vmesa);
 extern void viaXMesaSetFrontClipRects(struct via_context *vmesa);
-extern void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer, GLuint width, GLuint height);
+extern void viaReAllocateBuffers(struct gl_context *ctx, struct gl_framebuffer *drawbuffer, GLuint width, GLuint height);
 extern void viaXMesaWindowMoved(struct via_context *vmesa);
 
 extern GLboolean viaTexCombineState(struct via_context *vmesa,

@@ -106,8 +106,6 @@ _EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
 struct egl_g3d_sync {
    _EGLSync base;
 
-   int refs;
-
    /* the mutex protects only the condvar, not the struct */
    pipe_mutex mutex;
    pipe_condvar condvar;

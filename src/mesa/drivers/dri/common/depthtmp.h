@@ -21,7 +21,7 @@
 #define HAVE_HW_DEPTH_PIXELS 0
 #endif
 
-static void TAG(WriteDepthSpan)( GLcontext *ctx,
+static void TAG(WriteDepthSpan)( struct gl_context *ctx,
                                  struct gl_renderbuffer *rb,
                                  GLuint n, GLint x, GLint y,
 				 const void *values,
@@ -72,7 +72,7 @@ static void TAG(WriteDepthSpan)( GLcontext *ctx,
 #if HAVE_HW_DEPTH_SPANS
 /* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
 static void
-TAG(WriteMonoDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+TAG(WriteMonoDepthSpan)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                          GLuint n, GLint x, GLint y,
                          const void *value, const GLubyte mask[] )
 {
@@ -84,7 +84,7 @@ TAG(WriteMonoDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
    TAG(WriteDepthSpan)(ctx, rb, n, x, y, depths, mask);
 }
 #else
-static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
+static void TAG(WriteMonoDepthSpan)( struct gl_context *ctx,
                                      struct gl_renderbuffer *rb,
                                      GLuint n, GLint x, GLint y,
                                      const void *value,
@@ -124,7 +124,7 @@ static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
 #endif
 
 
-static void TAG(WriteDepthPixels)( GLcontext *ctx,
+static void TAG(WriteDepthPixels)( struct gl_context *ctx,
                                    struct gl_renderbuffer *rb,
 				   GLuint n,
 				   const GLint x[],
@@ -173,7 +173,7 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 
 /* Read depth spans and pixels
  */
-static void TAG(ReadDepthSpan)( GLcontext *ctx,
+static void TAG(ReadDepthSpan)( struct gl_context *ctx,
                                 struct gl_renderbuffer *rb,
 				GLuint n, GLint x, GLint y,
 				void *values )
@@ -207,7 +207,7 @@ static void TAG(ReadDepthSpan)( GLcontext *ctx,
    HW_READ_UNLOCK();
 }
 
-static void TAG(ReadDepthPixels)( GLcontext *ctx,
+static void TAG(ReadDepthPixels)( struct gl_context *ctx,
                                   struct gl_renderbuffer *rb,
                                   GLuint n,
 				  const GLint x[], const GLint y[],

@@ -80,7 +80,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
 static GLuint brw_set_prim(struct brw_context *brw,
 			   const struct _mesa_prim *prim)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLenum mode = prim->mode;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
@@ -201,15 +201,8 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
-
-   /* XXX FIXME */
-   if (brw->intel.gen >= 6) {
-       for (i = 0; i < nr_prims; i++)
-	   if (prim[i].mode == GL_LINE_LOOP)
-	       return GL_TRUE;
-   }
 
    /* If we don't require strict OpenGL conformance, never 
     * use fallbacks.  If we're forcing fallbacks, always
@@ -300,7 +293,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
-static GLboolean brw_try_draw_prims( GLcontext *ctx,
+static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 				     const struct gl_client_array *arrays[],
 				     const struct _mesa_prim *prim,
 				     GLuint nr_prims,
@@ -423,7 +416,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return retval;
 }
 
-void brw_draw_prims( GLcontext *ctx,
+void brw_draw_prims( struct gl_context *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
@@ -441,7 +434,7 @@ void brw_draw_prims( GLcontext *ctx,
       /* Decide if we want to rebase.  If so we end up recursing once
        * only into this function.
        */
-      if (min_index != 0) {
+      if (min_index != 0 && !vbo_any_varyings_in_vbos(arrays)) {
 	 vbo_rebase_prims(ctx, arrays,
 			  prim, nr_prims,
 			  ib, min_index, max_index,
@@ -467,7 +460,7 @@ void brw_draw_prims( GLcontext *ctx,
 
 void brw_draw_init( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
 
    /* Register our drawing function: 

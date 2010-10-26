@@ -49,7 +49,7 @@
  */
 struct copy_context {
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
    const struct gl_client_array **array;
    const struct _mesa_prim *prim;
    GLuint nr_prims;
@@ -137,7 +137,7 @@ check_flush( struct copy_context *copy )
  * Dump the parameters/info for a vbo->draw() call.
  */
 static void
-dump_draw_info(GLcontext *ctx,
+dump_draw_info(struct gl_context *ctx,
                const struct gl_client_array **arrays,
                const struct _mesa_prim *prims,
                GLuint nr_prims,
@@ -419,7 +419,7 @@ replay_elts( struct copy_context *copy )
 static void
 replay_init( struct copy_context *copy )
 {
-   GLcontext *ctx = copy->ctx;
+   struct gl_context *ctx = copy->ctx;
    GLuint i;
    GLuint offset;
    const GLvoid *srcptr;
@@ -548,7 +548,7 @@ replay_init( struct copy_context *copy )
 static void
 replay_finish( struct copy_context *copy )
 {
-   GLcontext *ctx = copy->ctx;
+   struct gl_context *ctx = copy->ctx;
    GLuint i;
 
    /* Free our vertex and index buffers: 
@@ -577,7 +577,7 @@ replay_finish( struct copy_context *copy )
 /**
  * Split VBO into smaller pieces, draw the pieces.
  */
-void vbo_split_copy( GLcontext *ctx,
+void vbo_split_copy( struct gl_context *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,

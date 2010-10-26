@@ -73,20 +73,20 @@
 
 
 /**
- * Derived from Mesa's GLvisual class.
+ * Derived from Mesa's struct gl_config class.
  */
 struct GLFBDevVisualRec {
-   GLvisual glvisual;              /* base class */
+   struct gl_config glvisual;              /* base class */
    struct fb_fix_screeninfo fix;
    struct fb_var_screeninfo var;
    int pixelFormat;
 };
 
 /**
- * Derived from Mesa's GLframebuffer class.
+ * Derived from Mesa's struct gl_framebuffer class.
  */
 struct GLFBDevBufferRec {
-   GLframebuffer glframebuffer;    /* base class */
+   struct gl_framebuffer glframebuffer;    /* base class */
    GLFBDevVisualPtr visual;
    struct fb_fix_screeninfo fix;
    struct fb_var_screeninfo var;
@@ -95,10 +95,10 @@ struct GLFBDevBufferRec {
 };
 
 /**
- * Derived from Mesa's GLcontext class.
+ * Derived from Mesa's struct gl_context class.
  */
 struct GLFBDevContextRec {
-   GLcontext glcontext;            /* base class */
+   struct gl_context glcontext;            /* base class */
    GLFBDevVisualPtr visual;
    GLFBDevBufferPtr drawBuffer;
    GLFBDevBufferPtr readBuffer;
@@ -122,7 +122,7 @@ struct GLFBDevRenderbufferRec {
 
 
 static const GLubyte *
-get_string(GLcontext *ctx, GLenum pname)
+get_string(struct gl_context *ctx, GLenum pname)
 {
    (void) ctx;
    switch (pname) {
@@ -135,7 +135,7 @@ get_string(GLcontext *ctx, GLenum pname)
 
 
 static void
-update_state( GLcontext *ctx, GLuint new_state )
+update_state( struct gl_context *ctx, GLuint new_state )
 {
    /* not much to do here - pass it on */
    _swrast_InvalidateState( ctx, new_state );
@@ -146,7 +146,7 @@ update_state( GLcontext *ctx, GLuint new_state )
 
 
 static void
-get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
+get_buffer_size( struct gl_framebuffer *buffer, GLuint *width, GLuint *height )
 {
    const GLFBDevBufferPtr fbdevbuffer = (GLFBDevBufferPtr) buffer;
    *width = fbdevbuffer->var.xres;
@@ -159,10 +159,10 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
  * framebuffer size has changed (and update corresponding state).
  */
 static void
-viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    GLuint newWidth, newHeight;
-   GLframebuffer *buffer;
+   struct gl_framebuffer *buffer;
 
    buffer = ctx->WinSysDrawBuffer;
    get_buffer_size( buffer, &newWidth, &newHeight );
@@ -463,7 +463,7 @@ delete_renderbuffer(struct gl_renderbuffer *rb)
 
 
 static GLboolean
-renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                      GLenum internalFormat, GLuint width, GLuint height)
 {
    /* no-op: the renderbuffer storage is allocated just once when it's
@@ -706,7 +706,7 @@ GLFBDevContextPtr
 glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
 {
    GLFBDevContextPtr ctx;
-   GLcontext *glctx;
+   struct gl_context *glctx;
    struct dd_function_table functions;
 
    ASSERT(visual);
@@ -732,7 +732,7 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    ctx->visual = visual;
 
    /* Create module contexts */
-   glctx = (GLcontext *) &ctx->glcontext;
+   glctx = (struct gl_context *) &ctx->glcontext;
    _swrast_CreateContext( glctx );
    _vbo_CreateContext( glctx );
    _tnl_CreateContext( glctx );
@@ -762,7 +762,7 @@ glFBDevDestroyContext( GLFBDevContextPtr context )
    GLFBDevContextPtr fbdevctx = glFBDevGetCurrentContext();
 
    if (context) {
-      GLcontext *mesaCtx = &context->glcontext;
+      struct gl_context *mesaCtx = &context->glcontext;
 
       _swsetup_DestroyContext( mesaCtx );
       _swrast_DestroyContext( mesaCtx );

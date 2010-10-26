@@ -277,7 +277,7 @@
 //---------------------------------------------------------------------------
 
 __inline DWORD _gldComputeFog(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	SWvertex *swv)
 {
 	// Full fog calculation.
@@ -300,7 +300,7 @@ __inline DWORD _gldComputeFog(
 //---------------------------------------------------------------------------
 
 void gld_ResetLineStipple_DX7(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	// TODO: Fake stipple with a 32x32 texture.
 }
@@ -310,7 +310,7 @@ void gld_ResetLineStipple_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Points2D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint first,
 	GLuint last)
 {
@@ -358,7 +358,7 @@ void gld_Points2D_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Line2DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1)
 {
@@ -391,7 +391,7 @@ void gld_Line2DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Line2DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1)
 {
@@ -422,7 +422,7 @@ void gld_Line2DSmooth_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle2DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -461,7 +461,7 @@ void gld_Triangle2DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle2DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -500,7 +500,7 @@ void gld_Triangle2DSmooth_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle2DFlatExtras_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -549,7 +549,7 @@ void gld_Triangle2DFlatExtras_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle2DSmoothExtras_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -589,7 +589,7 @@ void gld_Triangle2DSmoothExtras_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad2DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -653,7 +653,7 @@ void gld_Quad2DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad2DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -716,7 +716,7 @@ void gld_Quad2DSmooth_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad2DFlatExtras_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -793,7 +793,7 @@ void gld_Quad2DFlatExtras_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad2DSmoothExtras_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -860,7 +860,7 @@ void gld_Quad2DSmoothExtras_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Points3D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint first,
 	GLuint last)
 {
@@ -913,7 +913,7 @@ void gld_Points3D_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Line3DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1)
 {
@@ -939,7 +939,7 @@ void gld_Line3DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Line3DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1)
 {
@@ -966,7 +966,7 @@ void gld_Line3DSmooth_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle3DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -999,7 +999,7 @@ void gld_Triangle3DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Triangle3DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2)
@@ -1033,7 +1033,7 @@ void gld_Triangle3DSmooth_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad3DFlat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -1085,7 +1085,7 @@ void gld_Quad3DFlat_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Quad3DSmooth_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint v0,
 	GLuint v1,
 	GLuint v2,
@@ -1139,34 +1139,34 @@ void gld_Quad3DSmooth_DX7(
 
 /*
 
-void gld_Points2DTwoside_DX8(GLcontext *ctx, GLuint first, GLuint last)
+void gld_Points2DTwoside_DX8(struct gl_context *ctx, GLuint first, GLuint last)
 {
 	// NOTE: Two-sided lighting does not apply to Points
 }
 
 //---------------------------------------------------------------------------
 
-void gld_Line2DFlatTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1)
+void gld_Line2DFlatTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1)
 {
 	// NOTE: Two-sided lighting does not apply to Lines
 }
 
 //---------------------------------------------------------------------------
 
-void gld_Line2DSmoothTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1)
+void gld_Line2DSmoothTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1)
 {
 	// NOTE: Two-sided lighting does not apply to Lines
 }
 
 //---------------------------------------------------------------------------
 
-void gld_Triangle2DFlatTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2)
+void gld_Triangle2DFlatTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2)
 {
 }
 
 //---------------------------------------------------------------------------
 
-void gld_Triangle2DSmoothTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2)
+void gld_Triangle2DSmoothTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8		*gld	= GLD_GET_DX8_DRIVER(gldCtx);
@@ -1231,7 +1231,7 @@ void gld_Triangle2DSmoothTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuin
 
 //---------------------------------------------------------------------------
 
-void gld_Quad2DFlatTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+void gld_Quad2DFlatTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8		*gld	= GLD_GET_DX8_DRIVER(gldCtx);
@@ -1338,7 +1338,7 @@ void gld_Quad2DFlatTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, 
 
 //---------------------------------------------------------------------------
 
-void gld_Quad2DSmoothTwoside_DX8(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+void gld_Quad2DSmoothTwoside_DX8(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 {
 	GLD_context			*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8		*gld	= GLD_GET_DX8_DRIVER(gldCtx);

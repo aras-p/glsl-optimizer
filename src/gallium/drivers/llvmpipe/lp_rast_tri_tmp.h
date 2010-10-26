@@ -82,7 +82,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
       const int dcdx = -plane[j].dcdx * 4;
       const int dcdy = plane[j].dcdy * 4;
       const int cox = plane[j].eo * 4;
-      const int cio = plane[j].ei * 4 - 1;
+      const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+      const int cio = ei * 4 - 1;
 
       build_masks(c[j] + cox,
 		  cio - cox,
@@ -156,6 +157,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
+   const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
    const int x = task->x, y = task->y;
    struct lp_rast_plane plane[NR_PLANES];
    int c[NR_PLANES];
@@ -172,7 +174,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 
    while (plane_mask) {
       int i = ffs(plane_mask) - 1;
-      plane[j] = tri->plane[i];
+      plane[j] = tri_plane[i];
       plane_mask &= ~(1 << i);
       c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
 
@@ -180,7 +182,8 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 	 const int dcdx = -plane[j].dcdx * 16;
 	 const int dcdy = plane[j].dcdy * 16;
 	 const int cox = plane[j].eo * 16;
-	 const int cio = plane[j].ei * 16 - 1;
+         const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+         const int cio = ei * 16 - 1;
 
 	 build_masks(c[j] + cox,
 		     cio - cox,
@@ -245,6 +248,133 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    }
 }
 
+#if defined(PIPE_ARCH_SSE) && defined(TRI_16)
+/* XXX: special case this when intersection is not required.
+ *      - tile completely within bbox,
+ *      - bbox completely within tile.
+ */
+void
+TRI_16(struct lp_rasterizer_task *task,
+       const union lp_rast_cmd_arg arg)
+{
+   const struct lp_rast_triangle *tri = arg.triangle.tri;
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
+   unsigned mask = arg.triangle.plane_mask;
+   unsigned outmask, partial_mask;
+   unsigned j;
+   __m128i cstep4[NR_PLANES][4];
+
+   int x = (mask & 0xff);
+   int y = (mask >> 8);
+
+   outmask = 0;                 /* outside one or more trivial reject planes */
+   
+   x += task->x;
+   y += task->y;
+
+   for (j = 0; j < NR_PLANES; j++) {
+      const int dcdx = -plane[j].dcdx * 4;
+      const int dcdy = plane[j].dcdy * 4;
+      __m128i xdcdy = _mm_set1_epi32(dcdy);
+
+      cstep4[j][0] = _mm_setr_epi32(0, dcdx, dcdx*2, dcdx*3);
+      cstep4[j][1] = _mm_add_epi32(cstep4[j][0], xdcdy);
+      cstep4[j][2] = _mm_add_epi32(cstep4[j][1], xdcdy);
+      cstep4[j][3] = _mm_add_epi32(cstep4[j][2], xdcdy);
+
+      {
+	 const int c = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
+	 const int cox = plane[j].eo * 4;
+
+	 outmask |= sign_bits4(cstep4[j], c + cox);
+      }
+   }
+
+   if (outmask == 0xffff)
+      return;
+
+
+   /* Mask of sub-blocks which are inside all trivial reject planes,
+    * but outside at least one trivial accept plane:
+    */
+   partial_mask = 0xffff & ~outmask;
+
+   /* Iterate over partials:
+    */
+   while (partial_mask) {
+      int i = ffs(partial_mask) - 1;
+      int ix = (i & 3) * 4;
+      int iy = (i >> 2) * 4;
+      int px = x + ix;
+      int py = y + iy; 
+      unsigned mask = 0xffff;
+
+      partial_mask &= ~(1 << i);
+
+      for (j = 0; j < NR_PLANES; j++) {
+         const int cx = (plane[j].c - 1
+			 - plane[j].dcdx * px
+			 + plane[j].dcdy * py) * 4;
+
+	 mask &= ~sign_bits4(cstep4[j], cx);
+      }
+
+      if (mask)
+	 lp_rast_shade_quads_mask(task, &tri->inputs, px, py, mask);
+   }
+}
+#endif
+
+#if defined(PIPE_ARCH_SSE) && defined(TRI_4)
+void
+TRI_4(struct lp_rasterizer_task *task,
+      const union lp_rast_cmd_arg arg)
+{
+   const struct lp_rast_triangle *tri = arg.triangle.tri;
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
+   unsigned mask = arg.triangle.plane_mask;
+   const int x = task->x + (mask & 0xff);
+   const int y = task->y + (mask >> 8);
+   unsigned j;
+
+   /* Iterate over partials:
+    */
+   {
+      unsigned mask = 0xffff;
+
+      for (j = 0; j < NR_PLANES; j++) {
+	 const int cx = (plane[j].c 
+			 - plane[j].dcdx * x
+			 + plane[j].dcdy * y);
+
+	 const int dcdx = -plane[j].dcdx;
+	 const int dcdy = plane[j].dcdy;
+	 __m128i xdcdy = _mm_set1_epi32(dcdy);
+
+	 __m128i cstep0 = _mm_setr_epi32(cx, cx + dcdx, cx + dcdx*2, cx + dcdx*3);
+	 __m128i cstep1 = _mm_add_epi32(cstep0, xdcdy);
+	 __m128i cstep2 = _mm_add_epi32(cstep1, xdcdy);
+	 __m128i cstep3 = _mm_add_epi32(cstep2, xdcdy);
+
+	 __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
+	 __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
+	 __m128i result = _mm_packs_epi16(cstep01, cstep23);
+
+	 /* Extract the sign bits
+	  */
+	 mask &= ~_mm_movemask_epi8(result);
+      }
+
+      if (mask)
+	 lp_rast_shade_quads_mask(task, &tri->inputs, x, y, mask);
+   }
+}
+#endif
+
+
+
 #undef TAG
+#undef TRI_4
+#undef TRI_16
 #undef NR_PLANES
 

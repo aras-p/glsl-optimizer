@@ -69,7 +69,7 @@ i830_render_prevalidate(struct intel_context *intel)
 static void
 i830_render_start(struct intel_context *intel)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct i830_context *i830 = i830_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -591,7 +591,7 @@ i830_set_draw_region(struct intel_context *intel,
 		     GLuint num_regions)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
@@ -703,6 +703,7 @@ i830_assert_not_dirty( struct intel_context *intel )
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    assert(!get_dirty(&i830->state));
+   (void) i830;
 }
 
 static void

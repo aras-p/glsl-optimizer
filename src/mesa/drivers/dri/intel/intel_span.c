@@ -246,7 +246,7 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
  * Old note: Moved locking out to get reasonable span performance.
  */
 void
-intelSpanRenderStart(GLcontext * ctx)
+intelSpanRenderStart(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    GLuint i;
@@ -273,7 +273,7 @@ intelSpanRenderStart(GLcontext * ctx)
  * the above function.
  */
 void
-intelSpanRenderFinish(GLcontext * ctx)
+intelSpanRenderFinish(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    GLuint i;
@@ -294,7 +294,7 @@ intelSpanRenderFinish(GLcontext * ctx)
 
 
 void
-intelInitSpanFuncs(GLcontext * ctx)
+intelInitSpanFuncs(struct gl_context * ctx)
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = intelSpanRenderStart;
@@ -302,7 +302,7 @@ intelInitSpanFuncs(GLcontext * ctx)
 }
 
 void
-intel_map_vertex_shader_textures(GLcontext *ctx)
+intel_map_vertex_shader_textures(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    int i;
@@ -321,7 +321,7 @@ intel_map_vertex_shader_textures(GLcontext *ctx)
 }
 
 void
-intel_unmap_vertex_shader_textures(GLcontext *ctx)
+intel_unmap_vertex_shader_textures(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    int i;

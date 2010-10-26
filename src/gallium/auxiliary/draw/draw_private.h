@@ -169,6 +169,9 @@ struct draw_context
          unsigned vs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
          const void *gs_constants[PIPE_MAX_CONSTANT_BUFFERS];
          unsigned gs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
+         
+         /* pointer to planes */
+         float (*planes)[12][4]; 
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */

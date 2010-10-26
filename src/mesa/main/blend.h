@@ -82,6 +82,6 @@ _mesa_ClampColorARB(GLenum target, GLenum clamp);
 
 
 extern void  
-_mesa_init_color( GLcontext * ctx );
+_mesa_init_color( struct gl_context * ctx );
 
 #endif

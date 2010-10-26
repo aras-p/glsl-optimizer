@@ -31,7 +31,7 @@
 
 
 extern void
-_swrast_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb);
+_swrast_clear_accum_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb);
 
 
 #endif

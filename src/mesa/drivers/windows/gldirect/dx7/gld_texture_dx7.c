@@ -817,7 +817,7 @@ void _gldClearSurface(
 //---------------------------------------------------------------------------
 
 void gldCopyTexImage1D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target, GLint level,
 	GLenum internalFormat,
 	GLint x, GLint y,
@@ -829,7 +829,7 @@ void gldCopyTexImage1D_DX7(
 //---------------------------------------------------------------------------
 
 void gldCopyTexImage2D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target,
 	GLint level,
 	GLenum internalFormat,
@@ -845,7 +845,7 @@ void gldCopyTexImage2D_DX7(
 //---------------------------------------------------------------------------
 
 void gldCopyTexSubImage1D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target, GLint level,
 	GLint xoffset, GLint x, GLint y, GLsizei width )
 {
@@ -855,7 +855,7 @@ void gldCopyTexSubImage1D_DX7(
 //---------------------------------------------------------------------------
 
 void gldCopyTexSubImage2D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target,
 	GLint level,
 	GLint xoffset,
@@ -871,7 +871,7 @@ void gldCopyTexSubImage2D_DX7(
 //---------------------------------------------------------------------------
 
 void gldCopyTexSubImage3D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target,
 	GLint level,
 	GLint xoffset,
@@ -903,7 +903,7 @@ typedef struct {
 //---------------------------------------------------------------------------
 
 HRESULT _gldDrawPixels(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	BOOL bChromakey,	// Alpha test for glBitmap() images
 	GLint x,			// GL x position
 	GLint y,			// GL y position (needs flipping)
@@ -1009,7 +1009,7 @@ HRESULT _gldDrawPixels(
 //---------------------------------------------------------------------------
 
 void gld_DrawPixels_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint x, GLint y, GLsizei width, GLsizei height,
 	GLenum format, GLenum type,
 	const struct gl_pixelstore_attrib *unpack,
@@ -1086,7 +1086,7 @@ void gld_DrawPixels_DX7(
 //---------------------------------------------------------------------------
 
 void gld_ReadPixels_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint x, GLint y, GLsizei width, GLsizei height,
 	GLenum format, GLenum type,
 	const struct gl_pixelstore_attrib *pack,
@@ -1241,7 +1241,7 @@ gld_ReadPixels_DX7_return:
 //---------------------------------------------------------------------------
 
 void gld_CopyPixels_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint srcx,
 	GLint srcy,
 	GLsizei width,
@@ -1330,7 +1330,7 @@ void gld_CopyPixels_DX7(
 //---------------------------------------------------------------------------
 
 void gld_Bitmap_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint x,
 	GLint y,
 	GLsizei width,
@@ -1475,7 +1475,7 @@ void gld_Bitmap_DX7(
 //---------------------------------------------------------------------------
 
 void _gldAllocateTexture(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	struct gl_texture_object *tObj,
 	struct gl_texture_image *texImage)
 {
@@ -1533,7 +1533,7 @@ void _gldAllocateTexture(
 //---------------------------------------------------------------------------
 
 const struct gl_texture_format* gld_ChooseTextureFormat_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint internalFormat,
 	GLenum srcFormat,
 	GLenum srcType)
@@ -1622,7 +1622,7 @@ const struct gl_texture_format* gld_ChooseTextureFormat_DX7(
 /*
 // Safer(?), slower version.
 void gld_TexImage2D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target,
 	GLint level,
 	GLint internalFormat,
@@ -1700,7 +1700,7 @@ void gld_TexImage2D_DX7(
 // Faster, more efficient version.
 // Copies subimage straight to dest texture
 void gld_TexImage2D_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum target,
 	GLint level,
 	GLint internalFormat,
@@ -1792,7 +1792,7 @@ void gld_TexImage2D_DX7(
 
 //---------------------------------------------------------------------------
 
-void gld_TexImage1D_DX7(GLcontext *ctx, GLenum target, GLint level,
+void gld_TexImage1D_DX7(struct gl_context *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
@@ -1807,7 +1807,7 @@ void gld_TexImage1D_DX7(GLcontext *ctx, GLenum target, GLint level,
 //---------------------------------------------------------------------------
 
 /*
-void gld_TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
+void gld_TexSubImage2D( struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLint yoffset,
                           GLsizei width, GLsizei height,
                           GLenum format, GLenum type,
@@ -1883,7 +1883,7 @@ void gld_TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
 
 // Faster, more efficient version.
 // Copies subimage straight to dest texture
-void gld_TexSubImage2D_DX7( GLcontext *ctx, GLenum target, GLint level,
+void gld_TexSubImage2D_DX7( struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLint yoffset,
                           GLsizei width, GLsizei height,
                           GLenum format, GLenum type,
@@ -1963,7 +1963,7 @@ void gld_TexSubImage2D_DX7( GLcontext *ctx, GLenum target, GLint level,
 
 //---------------------------------------------------------------------------
 
-void gld_TexSubImage1D_DX7( GLcontext *ctx, GLenum target, GLint level,
+void gld_TexSubImage1D_DX7( struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLsizei width,
                           GLenum format, GLenum type,
                           const GLvoid *pixels,
@@ -1977,7 +1977,7 @@ void gld_TexSubImage1D_DX7( GLcontext *ctx, GLenum target, GLint level,
 //---------------------------------------------------------------------------
 
 void gld_DeleteTexture_DX7(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	struct gl_texture_object *tObj)
 {
 	GLD_context *gld = (GLD_context*)(ctx->DriverCtx);
@@ -2036,7 +2036,7 @@ __inline void _gldSetAlphaOps(
 //---------------------------------------------------------------------------
 
 void gldUpdateTextureUnit(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint unit,
 	BOOL bPassThrough)
 {
@@ -2145,7 +2145,7 @@ void gldUpdateTextureUnit(
 //---------------------------------------------------------------------------
 
 void gld_NEW_TEXTURE_DX7(
-	GLcontext *ctx)
+	struct gl_context *ctx)
 {
 	// TODO: Support for three (ATI Radeon) or more (nVidia GeForce3) texture units
 

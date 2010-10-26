@@ -96,11 +96,73 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 
 
 /**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
+   COPY_4V(ctx->Color.ClearColor, tmp);
+
+   if (ctx->Driver.ClearColor) {
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
+   COPY_4V(ctx->Color.ClearColor, tmp);
+
+   if (ctx->Driver.ClearColor) {
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
  * Clear buffers.
  * 
  * \param mask bit-mask indicating the buffers to be cleared.
  *
- * Flushes the vertices and verifies the parameter. If __GLcontextRec::NewState
+ * Flushes the vertices and verifies the parameter. If __struct gl_contextRec::NewState
  * is set then calls _mesa_update_state() to update gl_frame_buffer::_Xmin,
  * etc. If the rasterization mode is set to GL_RENDER then requests the driver
  * to clear the buffers, via the dd_function_table::Clear callback.
@@ -191,7 +253,7 @@ _mesa_Clear( GLbitfield mask )
  * Return INVALID_MASK if the drawbuffer value is invalid.
  */
 static GLbitfield
-make_color_buffer_mask(GLcontext *ctx, GLint drawbuffer)
+make_color_buffer_mask(struct gl_context *ctx, GLint drawbuffer)
 {
    const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
    GLbitfield mask = 0x0;

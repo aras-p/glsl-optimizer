@@ -41,33 +41,33 @@
 #include "main/context.h"
 
 extern void
-tdfx_bitmap_R5G6B5( GLcontext *ctx, GLint px, GLint py,
+tdfx_bitmap_R5G6B5( struct gl_context *ctx, GLint px, GLint py,
 		    GLsizei width, GLsizei height,
 		    const struct gl_pixelstore_attrib *unpack,
 		    const GLubyte *bitmap );
 
 extern void
-tdfx_bitmap_R8G8B8A8( GLcontext *ctx, GLint px, GLint py,
+tdfx_bitmap_R8G8B8A8( struct gl_context *ctx, GLint px, GLint py,
 		      GLsizei width, GLsizei height,
 		      const struct gl_pixelstore_attrib *unpack,
 		      const GLubyte *bitmap );
 
 extern void
-tdfx_readpixels_R5G6B5( GLcontext *ctx, GLint x, GLint y,
+tdfx_readpixels_R5G6B5( struct gl_context *ctx, GLint x, GLint y,
 			GLsizei width, GLsizei height,
 			GLenum format, GLenum type,
 			const struct gl_pixelstore_attrib *packing,
 			GLvoid *dstImage );
 
 extern void
-tdfx_readpixels_R8G8B8A8( GLcontext *ctx, GLint x, GLint y,
+tdfx_readpixels_R8G8B8A8( struct gl_context *ctx, GLint x, GLint y,
 			  GLsizei width, GLsizei height,
 			  GLenum format, GLenum type,
 			  const struct gl_pixelstore_attrib *packing,
 			  GLvoid *dstImage );
 
 extern void
-tdfx_drawpixels_R8G8B8A8( GLcontext *ctx, GLint x, GLint y,
+tdfx_drawpixels_R8G8B8A8( struct gl_context *ctx, GLint x, GLint y,
 			  GLsizei width, GLsizei height,
 			  GLenum format, GLenum type,
 			  const struct gl_pixelstore_attrib *unpack,

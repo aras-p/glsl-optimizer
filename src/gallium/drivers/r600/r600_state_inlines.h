@@ -25,6 +25,7 @@
 
 #include "util/u_format.h"
 #include "r600d.h"
+#include "r600_formats.h"
 
 static INLINE uint32_t r600_translate_blend_function(int blend_func)
 {
@@ -303,6 +304,10 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		return V_0280A0_SWAP_STD;
 
 	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_R8G8_UNORM:
+		return V_0280A0_SWAP_STD;
+
+	case PIPE_FORMAT_R16_UNORM:
 		return V_0280A0_SWAP_STD;
 
 		/* 32-bit buffers. */
@@ -342,16 +347,19 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
 		return V_0280A0_SWAP_STD_REV;
 
+	case PIPE_FORMAT_R16G16_UNORM:
+		return V_0280A0_SWAP_STD;
+
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
-		//		return V_0280A0_COLOR_16_16_16_16;
+		//		return FMT_16_16_16_16;
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		//		return V_0280A0_COLOR_16_16_16_16_FLOAT;
+		//		return FMT_16_16_16_16_FLOAT;
 
 		/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		//		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+		//		return FMT_32_32_32_32_FLOAT;
 		return 0;
 	default:
 		R600_ERR("unsupported colorswap format %d\n", format);
@@ -387,7 +395,11 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_16;
 
 	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_R8G8_UNORM:
 		return V_0280A0_COLOR_8_8;
+
+	case PIPE_FORMAT_R16_UNORM:
+		return V_0280A0_COLOR_16;
 
 		/* 32-bit buffers. */
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
@@ -426,6 +438,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_16_16_FLOAT;
 
 	case PIPE_FORMAT_R16G16_SSCALED:
+	case PIPE_FORMAT_R16G16_UNORM:
 		return V_0280A0_COLOR_16_16;
 
 
@@ -510,32 +523,32 @@ static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
                 case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_038008_FMT_16_FLOAT;
+				result = FMT_16_FLOAT;
 				break;
 			case 2:
-				result = V_038008_FMT_16_16_FLOAT;
+				result = FMT_16_16_FLOAT;
 				break;
 			case 3:
-				result = V_038008_FMT_16_16_16_FLOAT;
+				result = FMT_16_16_16_FLOAT;
 				break;
 			case 4:
-				result = V_038008_FMT_16_16_16_16_FLOAT;
+				result = FMT_16_16_16_16_FLOAT;
 				break;
 			}
 			break;
                 case 32:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_038008_FMT_32_FLOAT;
+				result = FMT_32_FLOAT;
 				break;
 			case 2:
-				result = V_038008_FMT_32_32_FLOAT;
+				result = FMT_32_32_FLOAT;
 				break;
 			case 3:
-				result = V_038008_FMT_32_32_32_FLOAT;
+				result = FMT_32_32_32_FLOAT;
 				break;
 			case 4:
-				result = V_038008_FMT_32_32_32_32_FLOAT;
+				result = FMT_32_32_32_32_FLOAT;
 				break;
 			}
 			break;
@@ -551,48 +564,48 @@ static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
                 case 8:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_038008_FMT_8;
+				result = FMT_8;
 				break;
 			case 2:
-				result = V_038008_FMT_8_8;
+				result = FMT_8_8;
 				break;
 			case 3:
-			//	result = V_038008_FMT_8_8_8; /* fails piglit draw-vertices test */
+			//	result = FMT_8_8_8; /* fails piglit draw-vertices test */
 			//	break;
 			case 4:
-				result = V_038008_FMT_8_8_8_8;
+				result = FMT_8_8_8_8;
 				break;
 			}
 			break;
                 case 16:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_038008_FMT_16;
+				result = FMT_16;
 				break;
 			case 2:
-				result = V_038008_FMT_16_16;
+				result = FMT_16_16;
 				break;
 			case 3:
-			//	result = V_038008_FMT_16_16_16; /* fails piglit draw-vertices test */
+			//	result = FMT_16_16_16; /* fails piglit draw-vertices test */
 			//	break;
 			case 4:
-				result = V_038008_FMT_16_16_16_16;
+				result = FMT_16_16_16_16;
 				break;
 			}
 			break;
                 case 32:
 			switch (desc->nr_channels) {
 			case 1:
-				result = V_038008_FMT_32;
+				result = FMT_32;
 				break;
 			case 2:
-				result = V_038008_FMT_32_32;
+				result = FMT_32_32;
 				break;
 			case 3:
-				result = V_038008_FMT_32_32_32;
+				result = FMT_32_32_32;
 				break;
 			case 4:
-				result = V_038008_FMT_32_32_32_32;
+				result = FMT_32_32_32_32;
 				break;
 			}
 			break;

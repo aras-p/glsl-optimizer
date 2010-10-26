@@ -35,6 +35,7 @@
 #include "lp_perf.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 #include "tgsi/tgsi_scan.h"
 
 #define NUM_CHANNELS 4
@@ -45,6 +46,10 @@ struct point_info {
    int dx01, dx12;
 
    const float (*v0)[4];
+
+   float (*a0)[4];
+   float (*dadx)[4];
+   float (*dady)[4];
 };   
 
 
@@ -53,14 +58,37 @@ struct point_info {
  */
 static void
 constant_coef(struct lp_setup_context *setup,
-              struct lp_rast_triangle *point,
+              struct point_info *info,
               unsigned slot,
               const float value,
               unsigned i)
 {
-   point->inputs.a0[slot][i] = value;
-   point->inputs.dadx[slot][i] = 0.0f;
-   point->inputs.dady[slot][i] = 0.0f;
+   info->a0[slot][i] = value;
+   info->dadx[slot][i] = 0.0f;
+   info->dady[slot][i] = 0.0f;
+}
+
+
+static void
+point_persp_coeff(struct lp_setup_context *setup,
+                  const struct point_info *info,
+                  unsigned slot,
+                  unsigned i)
+{
+   /*
+    * Fragment shader expects pre-multiplied w for LP_INTERP_PERSPECTIVE. A
+    * better stratergy would be to take the primitive in consideration when
+    * generating the fragment shader key, and therefore avoid the per-fragment
+    * perspective divide.
+    */
+
+   float w0 = info->v0[0][3];
+
+   assert(i < 4);
+
+   info->a0[slot][i] = info->v0[slot][i]*w0;
+   info->dadx[slot][i] = 0.0f;
+   info->dady[slot][i] = 0.0f;
 }
 
 
@@ -69,17 +97,19 @@ constant_coef(struct lp_setup_context *setup,
  * \param slot  the vertex attribute slot to setup
  * \param i  the attribute channel in [0,3]
  * \param sprite_coord_origin  one of PIPE_SPRITE_COORD_x
- * \param perspective_proj  will the TEX instruction do a divide by Q?
+ * \param perspective  does the shader expects pre-multiplied w, i.e.,
+ *    LP_INTERP_PERSPECTIVE is specified in the shader key
  */
 static void
 texcoord_coef(struct lp_setup_context *setup,
-              struct lp_rast_triangle *point,
               const struct point_info *info,
               unsigned slot,
               unsigned i,
               unsigned sprite_coord_origin,
-              boolean perspective_proj)
+              boolean perspective)
 {
+   float w0 = info->v0[0][3];
+
    assert(i < 4);
 
    if (i == 0) {
@@ -88,21 +118,14 @@ texcoord_coef(struct lp_setup_context *setup,
       float x0 = info->v0[0][0] - setup->pixel_offset;
       float y0 = info->v0[0][1] - setup->pixel_offset;
 
-      point->inputs.dadx[slot][0] = dadx;
-      point->inputs.dady[slot][0] = dady;
-      point->inputs.a0[slot][0] = 0.5 - (dadx * x0 + dady * y0);
+      info->dadx[slot][0] = dadx;
+      info->dady[slot][0] = dady;
+      info->a0[slot][0] = 0.5 - (dadx * x0 + dady * y0);
 
-      if (!perspective_proj) {
-         /* Divide coefficients by vertex.w here.
-          *
-          * It would be clearer to always multiply by w0 above and
-          * then divide it out for perspective projection here, but
-          * doing it this way involves less algebra.
-          */
-         float w0 = info->v0[0][3];
-         point->inputs.dadx[slot][0] *= w0;
-         point->inputs.dady[slot][0] *= w0;
-         point->inputs.a0[slot][0] *= w0;
+      if (perspective) {
+         info->dadx[slot][0] *= w0;
+         info->dady[slot][0] *= w0;
+         info->a0[slot][0] *= w0;
       }
    }
    else if (i == 1) {
@@ -115,26 +138,25 @@ texcoord_coef(struct lp_setup_context *setup,
          dady = -dady;
       }
 
-      point->inputs.dadx[slot][1] = dadx;
-      point->inputs.dady[slot][1] = dady;
-      point->inputs.a0[slot][1] = 0.5 - (dadx * x0 + dady * y0);
+      info->dadx[slot][1] = dadx;
+      info->dady[slot][1] = dady;
+      info->a0[slot][1] = 0.5 - (dadx * x0 + dady * y0);
 
-      if (!perspective_proj) {
-         float w0 = info->v0[0][3];
-         point->inputs.dadx[slot][1] *= w0;
-         point->inputs.dady[slot][1] *= w0;
-         point->inputs.a0[slot][1] *= w0;
+      if (perspective) {
+         info->dadx[slot][1] *= w0;
+         info->dady[slot][1] *= w0;
+         info->a0[slot][1] *= w0;
       }
    }
    else if (i == 2) {
-      point->inputs.a0[slot][2] = 0.0f;
-      point->inputs.dadx[slot][2] = 0.0f;
-      point->inputs.dady[slot][2] = 0.0f;
+      info->a0[slot][2] = 0.0f;
+      info->dadx[slot][2] = 0.0f;
+      info->dady[slot][2] = 0.0f;
    }
    else {
-      point->inputs.a0[slot][3] = 1.0f;
-      point->inputs.dadx[slot][3] = 0.0f;
-      point->inputs.dady[slot][3] = 0.0f;
+      info->a0[slot][3] = perspective ? w0 : 1.0f;
+      info->dadx[slot][3] = 0.0f;
+      info->dady[slot][3] = 0.0f;
    }
 }
 
@@ -147,33 +169,32 @@ texcoord_coef(struct lp_setup_context *setup,
  */
 static void
 setup_point_fragcoord_coef(struct lp_setup_context *setup,
-                           struct lp_rast_triangle *point,
-                           const struct point_info *info,
+                           struct point_info *info,
                            unsigned slot,
                            unsigned usage_mask)
 {
    /*X*/
    if (usage_mask & TGSI_WRITEMASK_X) {
-      point->inputs.a0[slot][0] = 0.0;
-      point->inputs.dadx[slot][0] = 1.0;
-      point->inputs.dady[slot][0] = 0.0;
+      info->a0[slot][0] = 0.0;
+      info->dadx[slot][0] = 1.0;
+      info->dady[slot][0] = 0.0;
    }
 
    /*Y*/
    if (usage_mask & TGSI_WRITEMASK_Y) {
-      point->inputs.a0[slot][1] = 0.0;
-      point->inputs.dadx[slot][1] = 0.0;
-      point->inputs.dady[slot][1] = 1.0;
+      info->a0[slot][1] = 0.0;
+      info->dadx[slot][1] = 0.0;
+      info->dady[slot][1] = 1.0;
    }
 
    /*Z*/
    if (usage_mask & TGSI_WRITEMASK_Z) {
-      constant_coef(setup, point, slot, info->v0[0][2], 2);
+      constant_coef(setup, info, slot, info->v0[0][2], 2);
    }
 
    /*W*/
    if (usage_mask & TGSI_WRITEMASK_W) {
-      constant_coef(setup, point, slot, info->v0[0][3], 3);
+      constant_coef(setup, info, slot, info->v0[0][3], 3);
    }
 }
 
@@ -183,21 +204,27 @@ setup_point_fragcoord_coef(struct lp_setup_context *setup,
  */
 static void   
 setup_point_coefficients( struct lp_setup_context *setup,
-                          struct lp_rast_triangle *point,
-                          const struct point_info *info)
+                          struct point_info *info)
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    const struct lp_fragment_shader *shader = setup->fs.current.variant->shader;
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
-      unsigned vert_attr = setup->fs.input[slot].src_index;
-      unsigned usage_mask = setup->fs.input[slot].usage_mask;
+   for (slot = 0; slot < key->num_inputs; slot++) {
+      unsigned vert_attr = key->inputs[slot].src_index;
+      unsigned usage_mask = key->inputs[slot].usage_mask;
+      enum lp_interp interp = key->inputs[slot].interp;
+      boolean perspective = !!(interp == LP_INTERP_PERSPECTIVE);
       unsigned i;
+
+      if (perspective & usage_mask) {
+         fragcoord_usage_mask |= TGSI_WRITEMASK_W;
+      }
       
-      switch (setup->fs.input[slot].interp) {
+      switch (interp) {
       case LP_INTERP_POSITION:
          /*
           * The generated pixel interpolators will pick up the coeffs from
@@ -210,39 +237,45 @@ setup_point_coefficients( struct lp_setup_context *setup,
       case LP_INTERP_LINEAR:
          /* Sprite tex coords may use linear interpolation someday */
          /* fall-through */
-
       case LP_INTERP_PERSPECTIVE:
          /* check if the sprite coord flag is set for this attribute.
           * If so, set it up so it up so x and y vary from 0 to 1.
           */
-         if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
-            const int index = shader->info.input_semantic_index[slot];
+         if (shader->info.base.input_semantic_name[slot] == TGSI_SEMANTIC_GENERIC) {
+            unsigned semantic_index = shader->info.base.input_semantic_index[slot];
             /* Note that sprite_coord enable is a bitfield of
              * PIPE_MAX_SHADER_OUTPUTS bits.
              */
-            if (index < PIPE_MAX_SHADER_OUTPUTS &&
-                (setup->sprite_coord_enable & (1 << index))) {
-               for (i = 0; i < NUM_CHANNELS; i++)
-                  if (usage_mask & (1 << i))
-                     texcoord_coef(setup, point, info, slot + 1, i,
+            if (semantic_index < PIPE_MAX_SHADER_OUTPUTS &&
+                (setup->sprite_coord_enable & (1 << semantic_index))) {
+               for (i = 0; i < NUM_CHANNELS; i++) {
+                  if (usage_mask & (1 << i)) {
+                     texcoord_coef(setup, info, slot + 1, i,
                                    setup->sprite_coord_origin,
-                                   (usage_mask & TGSI_WRITEMASK_W));
-               fragcoord_usage_mask |= TGSI_WRITEMASK_W;
-               break;                     
+                                   perspective);
+                  }
+               }
+               break;
             }
          }
-         /* FALLTHROUGH */
+         /* fall-through */
       case LP_INTERP_CONSTANT:
          for (i = 0; i < NUM_CHANNELS; i++) {
-            if (usage_mask & (1 << i))
-               constant_coef(setup, point, slot+1, info->v0[vert_attr][i], i);
+            if (usage_mask & (1 << i)) {
+               if (perspective) {
+                  point_persp_coeff(setup, info, slot+1, i);
+               }
+               else {
+                  constant_coef(setup, info, slot+1, info->v0[vert_attr][i], i);
+               }
+            }
          }
          break;
 
       case LP_INTERP_FACING:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               constant_coef(setup, point, slot+1, 1.0, i);
+               constant_coef(setup, info, slot+1, 1.0, i);
          break;
 
       default:
@@ -253,7 +286,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   setup_point_fragcoord_coef(setup, point, info, 0,
+   setup_point_fragcoord_coef(setup, info, 0,
                               fragcoord_usage_mask);
 }
 
@@ -270,6 +303,7 @@ try_setup_point( struct lp_setup_context *setup,
                  const float (*v0)[4] )
 {
    /* x/y positions in fixed point */
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    const int sizeAttr = setup->psize;
    const float size
       = (setup->point_size_per_vertex && sizeAttr > 0) ? v0[sizeAttr][0]
@@ -321,7 +355,7 @@ try_setup_point( struct lp_setup_context *setup,
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
    point = lp_setup_alloc_triangle(scene,
-                                   setup->fs.nr_inputs,
+                                   key->num_inputs,
                                    nr_planes,
                                    &bytes);
    if (!point)
@@ -337,40 +371,40 @@ try_setup_point( struct lp_setup_context *setup,
    info.dx12 = fixed_width;
    info.dy01 = fixed_width;
    info.dy12 = 0;
+   info.a0 = GET_A0(&point->inputs);
+   info.dadx = GET_DADX(&point->inputs);
+   info.dady = GET_DADY(&point->inputs);
    
    /* Setup parameter interpolants:
     */
-   setup_point_coefficients(setup, point, &info);
+   setup_point_coefficients(setup, &info);
 
-   point->inputs.facing = 1.0F;
-   point->inputs.state = setup->fs.stored;
+   point->inputs.frontfacing = TRUE;
    point->inputs.disable = FALSE;
    point->inputs.opaque = FALSE;
 
    {
-      point->plane[0].dcdx = -1;
-      point->plane[0].dcdy = 0;
-      point->plane[0].c = 1-bbox.x0;
-      point->plane[0].ei = 0;
-      point->plane[0].eo = 1;
+      struct lp_rast_plane *plane = GET_PLANES(point);
 
-      point->plane[1].dcdx = 1;
-      point->plane[1].dcdy = 0;
-      point->plane[1].c = bbox.x1+1;
-      point->plane[1].ei = -1;
-      point->plane[1].eo = 0;
+      plane[0].dcdx = -1;
+      plane[0].dcdy = 0;
+      plane[0].c = 1-bbox.x0;
+      plane[0].eo = 1;
 
-      point->plane[2].dcdx = 0;
-      point->plane[2].dcdy = 1;
-      point->plane[2].c = 1-bbox.y0;
-      point->plane[2].ei = 0;
-      point->plane[2].eo = 1;
+      plane[1].dcdx = 1;
+      plane[1].dcdy = 0;
+      plane[1].c = bbox.x1+1;
+      plane[1].eo = 0;
 
-      point->plane[3].dcdx = 0;
-      point->plane[3].dcdy = -1;
-      point->plane[3].c = bbox.y1+1;
-      point->plane[3].ei = -1;
-      point->plane[3].eo = 0;
+      plane[2].dcdx = 0;
+      plane[2].dcdy = 1;
+      plane[2].c = 1-bbox.y0;
+      plane[2].eo = 1;
+
+      plane[3].dcdx = 0;
+      plane[3].dcdy = -1;
+      plane[3].c = bbox.y1+1;
+      plane[3].eo = 0;
    }
 
    return lp_setup_bin_triangle(setup, point, &bbox, nr_planes);
@@ -383,10 +417,11 @@ lp_setup_point(struct lp_setup_context *setup,
 {
    if (!try_setup_point( setup, v0 ))
    {
-      lp_setup_flush_and_restart(setup);
+      if (!lp_setup_flush_and_restart(setup))
+         return;
 
       if (!try_setup_point( setup, v0 ))
-         assert(0);
+         return;
    }
 }
 

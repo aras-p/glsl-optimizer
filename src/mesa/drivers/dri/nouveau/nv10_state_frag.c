@@ -61,7 +61,7 @@
 #define RC_OUT_SUM	NV10TCL_RC_OUT_RGB_SUM_OUTPUT_SPARE0
 
 struct combiner_state {
-	GLcontext *ctx;
+	struct gl_context *ctx;
 	int unit;
 	GLboolean premodulate;
 
@@ -298,7 +298,7 @@ setup_combiner(struct combiner_state *rc)
 }
 
 void
-nv10_get_general_combiner(GLcontext *ctx, int i,
+nv10_get_general_combiner(struct gl_context *ctx, int i,
 			  uint32_t *a_in, uint32_t *a_out,
 			  uint32_t *c_in, uint32_t *c_out, uint32_t *k)
 {
@@ -328,7 +328,7 @@ nv10_get_general_combiner(GLcontext *ctx, int i,
 }
 
 void
-nv10_get_final_combiner(GLcontext *ctx, uint64_t *in, int *n)
+nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 {
 	struct combiner_state rc = {};
 
@@ -366,7 +366,7 @@ nv10_get_final_combiner(GLcontext *ctx, uint64_t *in, int *n)
 }
 
 void
-nv10_emit_tex_env(GLcontext *ctx, int emit)
+nv10_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -398,7 +398,7 @@ nv10_emit_tex_env(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_frag(GLcontext *ctx, int emit)
+nv10_emit_frag(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);

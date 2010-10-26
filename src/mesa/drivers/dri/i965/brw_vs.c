@@ -43,7 +43,7 @@ static void do_vs_prog( struct brw_context *brw,
 			struct brw_vertex_program *vp,
 			struct brw_vs_prog_key *key )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
@@ -96,6 +96,7 @@ static void do_vs_prog( struct brw_context *brw,
 	  sizeof(c.prog_data));
    assert(ctx->Const.VertexProgram.MaxNativeParameters ==
 	  ARRAY_SIZE(c.constant_map));
+   (void) ctx;
 
    aux_size = sizeof(c.prog_data);
    if (c.vp->use_const_buffer)
@@ -114,7 +115,7 @@ static void do_vs_prog( struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;

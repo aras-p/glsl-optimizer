@@ -54,7 +54,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(xlib_no_shm, "XLIB_NO_SHM", FALSE)
  * Display target for Xlib winsys.
  * Low-level OS/window system memory buffer
  */
-struct xm_displaytarget
+struct xlib_displaytarget
 {
    enum pipe_format format;
    unsigned width;
@@ -75,7 +75,7 @@ struct xm_displaytarget
    Drawable drawable;
 
    XShmSegmentInfo shminfo;
-   int shm;
+   Bool shm;  /** Using shared memory images? */
 };
 
 
@@ -85,19 +85,16 @@ struct xm_displaytarget
 struct xlib_sw_winsys
 {
    struct sw_winsys base;
-
-
-
    Display *display;
 };
 
 
 
 /** Cast wrapper */
-static INLINE struct xm_displaytarget *
-xm_displaytarget( struct sw_displaytarget *dt )
+static INLINE struct xlib_displaytarget *
+xlib_displaytarget(struct sw_displaytarget *dt)
 {
-   return (struct xm_displaytarget *)dt;
+   return (struct xlib_displaytarget *) dt;
 }
 
 
@@ -105,22 +102,23 @@ xm_displaytarget( struct sw_displaytarget *dt )
  * X Shared Memory Image extension code
  */
 
-static volatile int mesaXErrorFlag = 0;
+static volatile int XErrorFlag = 0;
 
 /**
  * Catches potential Xlib errors.
  */
 static int
-mesaHandleXError(Display *dpy, XErrorEvent *event)
+handle_xerror(Display *dpy, XErrorEvent *event)
 {
    (void) dpy;
    (void) event;
-   mesaXErrorFlag = 1;
+   XErrorFlag = 1;
    return 0;
 }
 
 
-static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
+static char *
+alloc_shm(struct xlib_displaytarget *buf, unsigned size)
 {
    XShmSegmentInfo *const shminfo = & buf->shminfo;
 
@@ -144,10 +142,10 @@ static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
 
 
 /**
- * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
+ * Allocate a shared memory XImage back buffer for the given display target.
  */
 static void
-alloc_shm_ximage(struct xm_displaytarget *xm_dt,
+alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
                  struct xlib_drawable *xmb,
                  unsigned width, unsigned height)
 {
@@ -159,51 +157,54 @@ alloc_shm_ximage(struct xm_displaytarget *xm_dt,
     */
    int (*old_handler)(Display *, XErrorEvent *);
 
-   xm_dt->tempImage = XShmCreateImage(xm_dt->display,
+   xlib_dt->tempImage = XShmCreateImage(xlib_dt->display,
                                       xmb->visual,
                                       xmb->depth,
                                       ZPixmap,
                                       NULL,
-                                      &xm_dt->shminfo,
+                                      &xlib_dt->shminfo,
                                       width, height);
-   if (xm_dt->tempImage == NULL) {
-      xm_dt->shm = 0;
+   if (xlib_dt->tempImage == NULL) {
+      xlib_dt->shm = False;
       return;
    }
 
 
-   mesaXErrorFlag = 0;
-   old_handler = XSetErrorHandler(mesaHandleXError);
+   XErrorFlag = 0;
+   old_handler = XSetErrorHandler(handle_xerror);
    /* This may trigger the X protocol error we're ready to catch: */
-   XShmAttach(xm_dt->display, &xm_dt->shminfo);
-   XSync(xm_dt->display, False);
+   XShmAttach(xlib_dt->display, &xlib_dt->shminfo);
+   XSync(xlib_dt->display, False);
 
-   if (mesaXErrorFlag) {
+   if (XErrorFlag) {
       /* we are on a remote display, this error is normal, don't print it */
-      XFlush(xm_dt->display);
-      mesaXErrorFlag = 0;
-      XDestroyImage(xm_dt->tempImage);
-      xm_dt->tempImage = NULL;
-      xm_dt->shm = 0;
+      XFlush(xlib_dt->display);
+      XErrorFlag = 0;
+      XDestroyImage(xlib_dt->tempImage);
+      xlib_dt->tempImage = NULL;
+      xlib_dt->shm = False;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   xm_dt->shm = 1;
+   xlib_dt->shm = True;
 }
 
 
 static void
-alloc_ximage(struct xm_displaytarget *xm_dt,
+alloc_ximage(struct xlib_displaytarget *xlib_dt,
              struct xlib_drawable *xmb,
              unsigned width, unsigned height)
 {
-   if (xm_dt->shm) {
-      alloc_shm_ximage(xm_dt, xmb, width, height);
-      return;
+   /* try allocating a shared memory image first */
+   if (xlib_dt->shm) {
+      alloc_shm_ximage(xlib_dt, xmb, width, height);
+      if (xlib_dt->tempImage)
+         return; /* success */
    }
 
-   xm_dt->tempImage = XCreateImage(xm_dt->display,
+   /* try regular (non-shared memory) image */
+   xlib_dt->tempImage = XCreateImage(xlib_dt->display,
                                    xmb->visual,
                                    xmb->depth,
                                    ZPixmap, 0,
@@ -212,9 +213,9 @@ alloc_ximage(struct xm_displaytarget *xm_dt,
 }
 
 static boolean
-xm_is_displaytarget_format_supported( struct sw_winsys *ws,
-                                      unsigned tex_usage,
-                                      enum pipe_format format )
+xlib_is_displaytarget_format_supported(struct sw_winsys *ws,
+                                       unsigned tex_usage,
+                                       enum pipe_format format)
 {
    /* TODO: check visuals or other sensible thing here */
    return TRUE;
@@ -222,61 +223,67 @@ xm_is_displaytarget_format_supported( struct sw_winsys *ws,
 
 
 static void *
-xm_displaytarget_map(struct sw_winsys *ws,
-                     struct sw_displaytarget *dt,
-                     unsigned flags)
+xlib_displaytarget_map(struct sw_winsys *ws,
+                       struct sw_displaytarget *dt,
+                       unsigned flags)
 {
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
-   xm_dt->mapped = xm_dt->data;
-   return xm_dt->mapped;
+   struct xlib_displaytarget *xlib_dt = xlib_displaytarget(dt);
+   xlib_dt->mapped = xlib_dt->data;
+   return xlib_dt->mapped;
 }
 
-static void
-xm_displaytarget_unmap(struct sw_winsys *ws,
-                       struct sw_displaytarget *dt)
-{
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
-   xm_dt->mapped = NULL;
-}
 
 static void
-xm_displaytarget_destroy(struct sw_winsys *ws,
+xlib_displaytarget_unmap(struct sw_winsys *ws,
                          struct sw_displaytarget *dt)
 {
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
+   struct xlib_displaytarget *xlib_dt = xlib_displaytarget(dt);
+   xlib_dt->mapped = NULL;
+}
 
-   if (xm_dt->data) {
-      if (xm_dt->shminfo.shmid >= 0) {
-         shmdt(xm_dt->shminfo.shmaddr);
-         shmctl(xm_dt->shminfo.shmid, IPC_RMID, 0);
+
+static void
+xlib_displaytarget_destroy(struct sw_winsys *ws,
+                           struct sw_displaytarget *dt)
+{
+   struct xlib_displaytarget *xlib_dt = xlib_displaytarget(dt);
+
+   if (xlib_dt->data) {
+      if (xlib_dt->shminfo.shmid >= 0) {
+         shmdt(xlib_dt->shminfo.shmaddr);
+         shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
          
-         xm_dt->shminfo.shmid = -1;
-         xm_dt->shminfo.shmaddr = (char *) -1;
+         xlib_dt->shminfo.shmid = -1;
+         xlib_dt->shminfo.shmaddr = (char *) -1;
+
+         xlib_dt->data = NULL;
+         if (xlib_dt->tempImage)
+            xlib_dt->tempImage->data = NULL;
       }
       else {
-         FREE(xm_dt->data);
-         if (xm_dt->tempImage && xm_dt->tempImage->data == xm_dt->data) {
-            xm_dt->tempImage->data = NULL;
+         FREE(xlib_dt->data);
+         if (xlib_dt->tempImage && xlib_dt->tempImage->data == xlib_dt->data) {
+            xlib_dt->tempImage->data = NULL;
          }
-         xm_dt->data = NULL;
+         xlib_dt->data = NULL;
       }
    }
 
-   if (xm_dt->tempImage) {
-      XDestroyImage(xm_dt->tempImage);
-      xm_dt->tempImage = NULL;
+   if (xlib_dt->tempImage) {
+      XDestroyImage(xlib_dt->tempImage);
+      xlib_dt->tempImage = NULL;
    }
 
-   if (xm_dt->gc)
-      XFreeGC(xm_dt->display, xm_dt->gc);
+   if (xlib_dt->gc)
+      XFreeGC(xlib_dt->display, xlib_dt->gc);
 
-   FREE(xm_dt);
+   FREE(xlib_dt);
 }
 
 
 /**
  * Display/copy the image in the surface into the X window specified
- * by the XMesaBuffer.
+ * by the display target.
  */
 static void
 xlib_sw_display(struct xlib_drawable *xlib_drawable,
@@ -284,8 +291,8 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
 {
    static boolean no_swap = 0;
    static boolean firsttime = 1;
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
-   Display *display = xm_dt->display;
+   struct xlib_displaytarget *xlib_dt = xlib_displaytarget(dt);
+   Display *display = xlib_dt->display;
    XImage *ximage;
 
    if (firsttime) {
@@ -296,74 +303,74 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
    if (no_swap)
       return;
 
-   if (xm_dt->drawable != xlib_drawable->drawable) {
-      if (xm_dt->gc) {
-         XFreeGC( display, xm_dt->gc );
-         xm_dt->gc = NULL;
+   if (xlib_dt->drawable != xlib_drawable->drawable) {
+      if (xlib_dt->gc) {
+         XFreeGC(display, xlib_dt->gc);
+         xlib_dt->gc = NULL;
       }
 
-      if (xm_dt->tempImage) {
-         XDestroyImage( xm_dt->tempImage );
-         xm_dt->tempImage = NULL;
+      if (xlib_dt->tempImage) {
+         XDestroyImage(xlib_dt->tempImage);
+         xlib_dt->tempImage = NULL;
       }
 
-      xm_dt->drawable = xlib_drawable->drawable;
+      xlib_dt->drawable = xlib_drawable->drawable;
    }
 
-   if (xm_dt->tempImage == NULL) {
-      assert(util_format_get_blockwidth(xm_dt->format) == 1);
-      assert(util_format_get_blockheight(xm_dt->format) == 1);
-      alloc_ximage(xm_dt, xlib_drawable,
-                   xm_dt->stride / util_format_get_blocksize(xm_dt->format),
-                   xm_dt->height);
-      if (!xm_dt->tempImage)
+   if (xlib_dt->tempImage == NULL) {
+      assert(util_format_get_blockwidth(xlib_dt->format) == 1);
+      assert(util_format_get_blockheight(xlib_dt->format) == 1);
+      alloc_ximage(xlib_dt, xlib_drawable,
+                   xlib_dt->stride / util_format_get_blocksize(xlib_dt->format),
+                   xlib_dt->height);
+      if (!xlib_dt->tempImage)
          return;
    }
 
-   if (xm_dt->gc == NULL) {
-      xm_dt->gc = XCreateGC( display, xlib_drawable->drawable, 0, NULL );
-      XSetFunction( display, xm_dt->gc, GXcopy );
+   if (xlib_dt->gc == NULL) {
+      xlib_dt->gc = XCreateGC(display, xlib_drawable->drawable, 0, NULL);
+      XSetFunction(display, xlib_dt->gc, GXcopy);
    }
 
-   if (xm_dt->shm)
-   {
-      ximage = xm_dt->tempImage;
-      ximage->data = xm_dt->data;
+   if (xlib_dt->shm) {
+      ximage = xlib_dt->tempImage;
+      ximage->data = xlib_dt->data;
 
       /* _debug_printf("XSHM\n"); */
-      XShmPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
-                   ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height, False);
+      XShmPutImage(xlib_dt->display, xlib_drawable->drawable, xlib_dt->gc,
+                   ximage, 0, 0, 0, 0, xlib_dt->width, xlib_dt->height, False);
    }
    else {
       /* display image in Window */
-      ximage = xm_dt->tempImage;
-      ximage->data = xm_dt->data;
+      ximage = xlib_dt->tempImage;
+      ximage->data = xlib_dt->data;
 
       /* check that the XImage has been previously initialized */
       assert(ximage->format);
       assert(ximage->bitmap_unit);
 
       /* update XImage's fields */
-      ximage->width = xm_dt->width;
-      ximage->height = xm_dt->height;
-      ximage->bytes_per_line = xm_dt->stride;
+      ximage->width = xlib_dt->width;
+      ximage->height = xlib_dt->height;
+      ximage->bytes_per_line = xlib_dt->stride;
 
       /* _debug_printf("XPUT\n"); */
-      XPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
-                ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height);
+      XPutImage(xlib_dt->display, xlib_drawable->drawable, xlib_dt->gc,
+                ximage, 0, 0, 0, 0, xlib_dt->width, xlib_dt->height);
    }
 
-   XFlush(xm_dt->display);
+   XFlush(xlib_dt->display);
 }
+
 
 /**
  * Display/copy the image in the surface into the X window specified
- * by the XMesaBuffer.
+ * by the display target.
  */
 static void
-xm_displaytarget_display(struct sw_winsys *ws,
-                         struct sw_displaytarget *dt,
-                         void *context_private)
+xlib_displaytarget_display(struct sw_winsys *ws,
+                           struct sw_displaytarget *dt,
+                           void *context_private)
 {
    struct xlib_drawable *xlib_drawable = (struct xlib_drawable *)context_private;
    xlib_sw_display(xlib_drawable, dt);
@@ -371,57 +378,57 @@ xm_displaytarget_display(struct sw_winsys *ws,
 
 
 static struct sw_displaytarget *
-xm_displaytarget_create(struct sw_winsys *winsys,
-                        unsigned tex_usage,
-                        enum pipe_format format,
-                        unsigned width, unsigned height,
-                        unsigned alignment,
-                        unsigned *stride)
+xlib_displaytarget_create(struct sw_winsys *winsys,
+                          unsigned tex_usage,
+                          enum pipe_format format,
+                          unsigned width, unsigned height,
+                          unsigned alignment,
+                          unsigned *stride)
 {
-   struct xm_displaytarget *xm_dt;
+   struct xlib_displaytarget *xlib_dt;
    unsigned nblocksy, size;
 
-   xm_dt = CALLOC_STRUCT(xm_displaytarget);
-   if(!xm_dt)
-      goto no_xm_dt;
+   xlib_dt = CALLOC_STRUCT(xlib_displaytarget);
+   if (!xlib_dt)
+      goto no_xlib_dt;
 
-   xm_dt->display = ((struct xlib_sw_winsys *)winsys)->display;
-   xm_dt->format = format;
-   xm_dt->width = width;
-   xm_dt->height = height;
+   xlib_dt->display = ((struct xlib_sw_winsys *)winsys)->display;
+   xlib_dt->format = format;
+   xlib_dt->width = width;
+   xlib_dt->height = height;
 
    nblocksy = util_format_get_nblocksy(format, height);
-   xm_dt->stride = align(util_format_get_stride(format, width), alignment);
-   size = xm_dt->stride * nblocksy;
+   xlib_dt->stride = align(util_format_get_stride(format, width), alignment);
+   size = xlib_dt->stride * nblocksy;
 
    if (!debug_get_option_xlib_no_shm()) {
-      xm_dt->data = alloc_shm(xm_dt, size);
-      if (xm_dt->data) {
-         xm_dt->shm = TRUE;
+      xlib_dt->data = alloc_shm(xlib_dt, size);
+      if (xlib_dt->data) {
+         xlib_dt->shm = True;
       }
    }
 
-   if(!xm_dt->data) {
-      xm_dt->data = align_malloc(size, alignment);
-      if(!xm_dt->data)
+   if (!xlib_dt->data) {
+      xlib_dt->data = align_malloc(size, alignment);
+      if (!xlib_dt->data)
          goto no_data;
    }
 
-   *stride = xm_dt->stride;
-   return (struct sw_displaytarget *)xm_dt;
+   *stride = xlib_dt->stride;
+   return (struct sw_displaytarget *)xlib_dt;
 
 no_data:
-   FREE(xm_dt);
-no_xm_dt:
+   FREE(xlib_dt);
+no_xlib_dt:
    return NULL;
 }
 
 
 static struct sw_displaytarget *
-xm_displaytarget_from_handle(struct sw_winsys *winsys,
-                             const struct pipe_resource *templet,
-                             struct winsys_handle *whandle,
-                             unsigned *stride)
+xlib_displaytarget_from_handle(struct sw_winsys *winsys,
+                               const struct pipe_resource *templet,
+                               struct winsys_handle *whandle,
+                               unsigned *stride)
 {
    assert(0);
    return NULL;
@@ -429,9 +436,9 @@ xm_displaytarget_from_handle(struct sw_winsys *winsys,
 
 
 static boolean
-xm_displaytarget_get_handle(struct sw_winsys *winsys,
-                            struct sw_displaytarget *dt,
-                            struct winsys_handle *whandle)
+xlib_displaytarget_get_handle(struct sw_winsys *winsys,
+                              struct sw_displaytarget *dt,
+                              struct winsys_handle *whandle)
 {
    assert(0);
    return FALSE;
@@ -439,14 +446,14 @@ xm_displaytarget_get_handle(struct sw_winsys *winsys,
 
 
 static void
-xm_destroy( struct sw_winsys *ws )
+xlib_destroy(struct sw_winsys *ws)
 {
    FREE(ws);
 }
 
 
 struct sw_winsys *
-xlib_create_sw_winsys( Display *display )
+xlib_create_sw_winsys(Display *display)
 {
    struct xlib_sw_winsys *ws;
 
@@ -455,19 +462,18 @@ xlib_create_sw_winsys( Display *display )
       return NULL;
 
    ws->display = display;
-   ws->base.destroy = xm_destroy;
+   ws->base.destroy = xlib_destroy;
 
-   ws->base.is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
+   ws->base.is_displaytarget_format_supported = xlib_is_displaytarget_format_supported;
 
-   ws->base.displaytarget_create = xm_displaytarget_create;
-   ws->base.displaytarget_from_handle = xm_displaytarget_from_handle;
-   ws->base.displaytarget_get_handle = xm_displaytarget_get_handle;
-   ws->base.displaytarget_map = xm_displaytarget_map;
-   ws->base.displaytarget_unmap = xm_displaytarget_unmap;
-   ws->base.displaytarget_destroy = xm_displaytarget_destroy;
+   ws->base.displaytarget_create = xlib_displaytarget_create;
+   ws->base.displaytarget_from_handle = xlib_displaytarget_from_handle;
+   ws->base.displaytarget_get_handle = xlib_displaytarget_get_handle;
+   ws->base.displaytarget_map = xlib_displaytarget_map;
+   ws->base.displaytarget_unmap = xlib_displaytarget_unmap;
+   ws->base.displaytarget_destroy = xlib_displaytarget_destroy;
 
-   ws->base.displaytarget_display = xm_displaytarget_display;
+   ws->base.displaytarget_display = xlib_displaytarget_display;
 
    return &ws->base;
 }
-

@@ -37,6 +37,6 @@
 					_NEW_FOG |		\
 					_NEW_POINT)
 
-extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
+extern void _tnl_UpdateFixedFunctionProgram( struct gl_context *ctx );
 
 #endif

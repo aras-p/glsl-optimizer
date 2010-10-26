@@ -30,7 +30,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/dri2tokens.h>
 #include "GL/gl.h" /* for GL types needed by __GLcontextModes */
-#include "GL/internal/glcore.h"  /* for __GLcontextModes */
+#include "glcore.h"  /* for __GLcontextModes */
 #include "pipe/p_compiler.h"
 #include "common/native.h"
 

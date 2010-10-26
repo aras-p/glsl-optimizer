@@ -92,9 +92,23 @@ lp_build_compare(LLVMBuilderRef builder,
    if(func == PIPE_FUNC_ALWAYS)
       return ones;
 
-   /* TODO: optimize the constant case */
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   /*
+    * There are no unsigned integer comparison instructions in SSE.
+    */
 
-   /* XXX: It is not clear if we should use the ordered or unordered operators */
+   if (!type.floating && !type.sign &&
+       type.width * type.length == 128 &&
+       util_cpu_caps.has_sse2 &&
+       (func == PIPE_FUNC_LESS ||
+        func == PIPE_FUNC_LEQUAL ||
+        func == PIPE_FUNC_GREATER ||
+        func == PIPE_FUNC_GEQUAL) &&
+       (gallivm_debug & GALLIVM_DEBUG_PERF)) {
+         debug_printf("%s: inefficient <%u x i%u> unsigned comparison\n",
+                      __FUNCTION__, type.length, type.width);
+   }
+#endif
 
 #if HAVE_LLVM < 0x0207
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
@@ -224,6 +238,8 @@ lp_build_compare(LLVMBuilderRef builder,
    } /* if (type.width * type.length == 128) */
 #endif
 #endif /* HAVE_LLVM < 0x0207 */
+
+   /* XXX: It is not clear if we should use the ordered or unordered operators */
 
    if(type.floating) {
       LLVMRealPredicate op;
@@ -446,10 +462,12 @@ lp_build_select(struct lp_build_context *bld,
       LLVMTypeRef arg_type;
       LLVMValueRef args[3];
 
-      if (type.width == 64) {
+      if (type.floating &&
+          type.width == 64) {
          intrinsic = "llvm.x86.sse41.blendvpd";
          arg_type = LLVMVectorType(LLVMDoubleType(), 2);
-      } else if (type.width == 32) {
+      } else if (type.floating &&
+                 type.width == 32) {
          intrinsic = "llvm.x86.sse41.blendvps";
          arg_type = LLVMVectorType(LLVMFloatType(), 4);
       } else {

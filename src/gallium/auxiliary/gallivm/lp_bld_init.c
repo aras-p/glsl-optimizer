@@ -44,6 +44,7 @@ static const struct debug_named_value lp_bld_debug_flags[] = {
    { "asm",    GALLIVM_DEBUG_ASM, NULL },
    { "nopt",   GALLIVM_DEBUG_NO_OPT, NULL },
    { "perf",   GALLIVM_DEBUG_PERF, NULL },
+   { "no_brilinear", GALLIVM_DEBUG_NO_BRILINEAR, NULL },
    DEBUG_NAMED_VALUE_END
 };
 

@@ -42,6 +42,7 @@ struct radeon {
 	enum chip_class			chip_class;
 	struct pb_manager *kman; /* kernel bo manager */
 	struct pb_manager *cman; /* cached bo manager */
+	struct r600_tiling_info tiling_info;
 };
 
 struct radeon *r600_new(int fd, unsigned device);
@@ -64,9 +65,9 @@ struct radeon_bo {
 	unsigned			map_count;
 	void				*data;
 	struct list_head		fencedlist;
+	unsigned			fence;
+	struct r600_context		*ctx;
 	boolean				shared;
-	int64_t				last_busy;
-	boolean				set_busy;
 	struct r600_reloc		*reloc;
 	unsigned			reloc_id;
 	unsigned			last_flush;
@@ -76,6 +77,8 @@ struct r600_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*pb;
 	unsigned			size;
+	unsigned			tiling_flags;
+	unsigned                        kernel_pitch;
 };
 
 
@@ -94,7 +97,10 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
 void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
 int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
-
+int radeon_bo_get_tiling_flags(struct radeon *radeon,
+			       struct radeon_bo *bo,
+			       uint32_t *tiling_flags,
+			       uint32_t *pitch);
 
 /* radeon_bo_pb.c */
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
@@ -103,6 +109,7 @@ struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr
 							 uint32_t handle);
 
 /* r600_hw_context.c */
+int r600_context_init_fence(struct r600_context *ctx);
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
@@ -161,6 +168,7 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
+	LIST_DELINIT(&block->list);
 }
 
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)

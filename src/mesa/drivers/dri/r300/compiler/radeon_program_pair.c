@@ -206,34 +206,22 @@ void rc_pair_foreach_source_that_rgb_reads(
 
 /*return 0 for rgb, 1 for alpha -1 for error. */
 
-rc_pair_source_type rc_source_type_that_arg_reads(
+unsigned int rc_source_type_that_arg_reads(
 	unsigned int source,
-	unsigned int swizzle,
-	unsigned int channels)
+	unsigned int swizzle)
 {
 	unsigned int chan;
 	unsigned int swz = RC_SWIZZLE_UNUSED;
-	int isRGB = 0;
-	int isAlpha = 0;
-	/* Find a swizzle that is either X,Y,Z,or W.  We assume here
-	 * that if one channel swizzles X,Y, or Z, then none of the
-	 * other channels swizzle W, and vice-versa. */
-	for(chan = 0; chan < channels; chan++) {
+	unsigned int ret = RC_PAIR_SOURCE_NONE;
+
+	for(chan = 0; chan < 3; chan++) {
 		swz = GET_SWZ(swizzle, chan);
 		if (swz == RC_SWIZZLE_W) {
-			isAlpha = 1;
+			ret |= RC_PAIR_SOURCE_ALPHA;
 		} else if (swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y
 						|| swz == RC_SWIZZLE_Z) {
-			isRGB = 1;
+			ret |= RC_PAIR_SOURCE_RGB;
 		}
 	}
-	assert(!isRGB || !isAlpha);
-
-	if(!isRGB && !isAlpha)
-		return RC_PAIR_SOURCE_NONE;
-
-	if (isRGB)
-		return RC_PAIR_SOURCE_RGB;
-	/*isAlpha*/
-	return RC_PAIR_SOURCE_ALPHA;
+	return ret;
 }

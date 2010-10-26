@@ -78,10 +78,10 @@ extern unsigned driParseDebugString( const char * debug,
 extern unsigned driGetRendererString( char * buffer,
     const char * hardware_name, const char * driver_date, GLuint agp_mode );
 
-extern void driInitExtensions( GLcontext * ctx, 
+extern void driInitExtensions( struct gl_context * ctx, 
     const struct dri_extension * card_extensions, GLboolean enable_imaging );
 
-extern void driInitSingleExtension( GLcontext * ctx,
+extern void driInitSingleExtension( struct gl_context * ctx,
     const struct dri_extension * ext );
 
 extern GLboolean driCheckDriDdxDrmVersions2(const char * driver_name,
@@ -94,12 +94,12 @@ extern GLboolean driCheckDriDdxDrmVersions3(const char * driver_name,
     const __DRIversion * ddxActual, const __DRIutilversion2 * ddxExpected,
     const __DRIversion * drmActual, const __DRIversion * drmExpected);
 
-extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
+extern GLboolean driClipRectToFramebuffer( const struct gl_framebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
 
 struct __DRIconfigRec {
-    __GLcontextModes modes;
+    struct gl_config modes;
 };
 
 extern __DRIconfig **

@@ -27,13 +27,7 @@ env.Depends('lp_tile_soa.c', [
 ])
 
 
-# Only enable SSSE3 for lp_tile_soa_sse3.c
-ssse3_env = env.Clone()
-if env['gcc'] \
-   and distutils.version.LooseVersion(env['CCVERSION']) >= distutils.version.LooseVersion('4.3') \
-   and env['machine'] in ('x86', 'x86_64') :
-    ssse3_env.Append(CCFLAGS = ['-mssse3'])
-lp_tile_soa_os = ssse3_env.SharedObject('lp_tile_soa.c')
+lp_tile_soa_os = env.SharedObject('lp_tile_soa.c')
 
 
 llvmpipe = env.ConvenienceLibrary(
@@ -64,13 +58,12 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_setup_line.c',
 		'lp_setup_point.c',
 		'lp_setup_tri.c',
-		'lp_setup_coef.c',
-		'lp_setup_coef_intrin.c',
 		'lp_setup_vbuf.c',
 		'lp_state_blend.c',
 		'lp_state_clip.c',
 		'lp_state_derived.c',
 		'lp_state_fs.c',
+		'lp_state_setup.c',
 		'lp_state_gs.c',
 		'lp_state_rasterizer.c',
 		'lp_state_sampler.c',

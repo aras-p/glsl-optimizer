@@ -36,7 +36,7 @@
 
 
 extern void
-_mesa_set_enable( GLcontext* ctx, GLenum cap, GLboolean state );
+_mesa_set_enable( struct gl_context* ctx, GLenum cap, GLboolean state );
 
 extern void GLAPIENTRY
 _mesa_Disable( GLenum cap );
@@ -48,7 +48,7 @@ extern GLboolean GLAPIENTRY
 _mesa_IsEnabled( GLenum cap );
 
 extern void
-_mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state);
+_mesa_set_enablei(struct gl_context *ctx, GLenum cap, GLuint index, GLboolean state);
 
 extern void GLAPIENTRY
 _mesa_DisableIndexed( GLenum cap, GLuint index );

@@ -37,7 +37,7 @@
 #define TX_MATRIX(i) (NV20TCL_TX0_MATRIX(0) + 64 * (i))
 
 void
-nv20_emit_tex_gen(GLcontext *ctx, int emit)
+nv20_emit_tex_gen(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_GEN0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -67,7 +67,7 @@ nv20_emit_tex_gen(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_tex_mat(GLcontext *ctx, int emit)
+nv20_emit_tex_mat(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -154,7 +154,7 @@ get_tex_format_rect(struct gl_texture_image *ti)
 }
 
 void
-nv20_emit_tex_obj(GLcontext *ctx, int emit)
+nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -251,7 +251,7 @@ nv20_emit_tex_obj(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_tex_shader(GLcontext *ctx, int emit)
+nv20_emit_tex_shader(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);

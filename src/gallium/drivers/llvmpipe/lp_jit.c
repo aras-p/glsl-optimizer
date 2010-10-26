@@ -36,7 +36,6 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include "util/u_memory.h"
-#include "util/u_cpu_detect.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_debug.h"
 #include "lp_screen.h"
@@ -162,9 +161,6 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen)
 {
-   if(screen->engine)
-      LLVMDisposeExecutionEngine(screen->engine);
-
    if(screen->pass)
       LLVMDisposePassManager(screen->pass);
 }
@@ -190,13 +186,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
       LLVMAddCFGSimplificationPass(screen->pass);
       LLVMAddPromoteMemoryToRegisterPass(screen->pass);
       LLVMAddConstantPropagationPass(screen->pass);
-      if(util_cpu_caps.has_sse4_1) {
-         /* FIXME: There is a bug in this pass, whereby the combination of fptosi
-          * and sitofp (necessary for trunc/floor/ceil/round implementation)
-          * somehow becomes invalid code.
-          */
-         LLVMAddInstructionCombiningPass(screen->pass);
-      }
+      LLVMAddInstructionCombiningPass(screen->pass);
       LLVMAddGVNPass(screen->pass);
    } else {
       /* We need at least this pass to prevent the backends to fail in

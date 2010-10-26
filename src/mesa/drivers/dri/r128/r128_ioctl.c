@@ -398,7 +398,7 @@ void r128PageFlip( __DRIdrawable *dPriv )
  * Buffer clear
  */
 
-static void r128Clear( GLcontext *ctx, GLbitfield mask )
+static void r128Clear( struct gl_context *ctx, GLbitfield mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    __DRIdrawable *dPriv = rmesa->driDrawable;

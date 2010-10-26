@@ -83,6 +83,9 @@ struct lp_sampler_static_state
    unsigned compare_func:3;
    unsigned normalized_coords:1;
    unsigned min_max_lod_equal:1;  /**< min_lod == max_lod ? */
+   unsigned lod_bias_non_zero:1;
+   unsigned apply_min_lod:1;  /**< min_lod > 0 ? */
+   unsigned apply_max_lod:1;  /**< max_lod < last_level ? */
 };
 
 
@@ -176,6 +179,9 @@ struct lp_build_sample_context
 
    const struct util_format_description *format_desc;
 
+   /* See texture_dims() */
+   unsigned dims;
+
    /** regular scalar float type */
    struct lp_type float_type;
    struct lp_build_context float_bld;
@@ -191,17 +197,32 @@ struct lp_build_sample_context
    struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
-   /** Unsigned integer coordinates */
-   struct lp_type uint_coord_type;
-   struct lp_build_context uint_coord_bld;
-
    /** Signed integer coordinates */
    struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
 
+   /** Unsigned integer texture size */
+   struct lp_type int_size_type;
+   struct lp_build_context int_size_bld;
+
+   /** Unsigned integer texture size */
+   struct lp_type float_size_type;
+   struct lp_build_context float_size_bld;
+
    /** Output texels type and build context */
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
+
+   /* Common dynamic state values */
+   LLVMValueRef width;
+   LLVMValueRef height;
+   LLVMValueRef depth;
+   LLVMValueRef row_stride_array;
+   LLVMValueRef img_stride_array;
+   LLVMValueRef data_array;
+
+   /** Integer vector with texture width, height, depth */
+   LLVMValueRef int_size;
 };
 
 
@@ -238,7 +259,7 @@ apply_sampler_swizzle(struct lp_build_sample_context *bld,
 }
 
 
-static INLINE int
+static INLINE unsigned
 texture_dims(enum pipe_texture_target tex)
 {
    switch (tex) {
@@ -271,16 +292,16 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_sampler_state *sampler);
 
 
-LLVMValueRef
+void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned unit,
                       const LLVMValueRef ddx[4],
                       const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
-                      LLVMValueRef width,
-                      LLVMValueRef height,
-                      LLVMValueRef depth);
+                      unsigned mip_filter,
+                      LLVMValueRef *out_lod_ipart,
+                      LLVMValueRef *out_lod_fpart);
 
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
@@ -291,40 +312,44 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            unsigned unit,
-                           LLVMValueRef lod,
+                           LLVMValueRef lod_ipart,
+                           LLVMValueRef *lod_fpart_inout,
                            LLVMValueRef *level0_out,
-                           LLVMValueRef *level1_out,
-                           LLVMValueRef *weight_out);
+                           LLVMValueRef *level1_out);
 
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
-                          LLVMValueRef data_array, LLVMValueRef level);
+                          LLVMValueRef level);
 
 LLVMValueRef
 lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
-                                LLVMValueRef data_array, int level);
+                                int level);
 
 
 void
 lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
-                            unsigned dims,
-                            LLVMValueRef width_vec,
-                            LLVMValueRef height_vec,
-                            LLVMValueRef depth_vec,
-                            LLVMValueRef ilevel0,
-                            LLVMValueRef ilevel1,
-                            LLVMValueRef row_stride_array,
-                            LLVMValueRef img_stride_array,
-                            LLVMValueRef *width0_vec,
-                            LLVMValueRef *width1_vec,
-                            LLVMValueRef *height0_vec,
-                            LLVMValueRef *height1_vec,
-                            LLVMValueRef *depth0_vec,
-                            LLVMValueRef *depth1_vec,
-                            LLVMValueRef *row_stride0_vec,
-                            LLVMValueRef *row_stride1_vec,
-                            LLVMValueRef *img_stride0_vec,
-                            LLVMValueRef *img_stride1_vec);
+                            LLVMValueRef ilevel,
+                            LLVMValueRef *out_size_vec,
+                            LLVMValueRef *row_stride_vec,
+                            LLVMValueRef *img_stride_vec);
+
+
+void
+lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
+                             struct lp_type size_type,
+                             struct lp_type coord_type,
+                             LLVMValueRef size,
+                             LLVMValueRef *out_width,
+                             LLVMValueRef *out_height,
+                             LLVMValueRef *out_depth);
+
+
+void
+lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
+                             LLVMValueRef flt_size,
+                             LLVMValueRef *s,
+                             LLVMValueRef *t,
+                             LLVMValueRef *r);
 
 
 void

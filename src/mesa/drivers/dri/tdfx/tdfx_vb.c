@@ -33,7 +33,7 @@
 #include "tdfx_vb.h"
 #include "tdfx_render.h"
 
-static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    tdfxVertex *dst = fxMesa->verts + edst;
@@ -42,10 +42,10 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 }
 
 static struct {
-   void                (*emit)( GLcontext *, GLuint, GLuint, void * );
+   void                (*emit)( struct gl_context *, GLuint, GLuint, void * );
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean           (*check_tex_sizes)( struct gl_context *ctx );
    GLuint               vertex_format;
 } setup_tab[TDFX_MAX_SETUP];
 
@@ -55,7 +55,7 @@ static struct {
 #define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
-static void interp_extras( GLcontext *ctx,
+static void interp_extras( struct gl_context *ctx,
 			   GLfloat t,
 			   GLuint dst, GLuint out, GLuint in,
 			   GLboolean force_boundary )
@@ -79,7 +79,7 @@ static void interp_extras( GLcontext *ctx,
 						   force_boundary);
 }
 
-static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
+static void copy_pv_extras( struct gl_context *ctx, GLuint dst, GLuint src )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
@@ -204,7 +204,7 @@ void tdfxPrintSetupFlags(char *msg, GLuint flags )
 
 
 
-void tdfxCheckTexSizes( GLcontext *ctx )
+void tdfxCheckTexSizes( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
@@ -234,7 +234,7 @@ void tdfxCheckTexSizes( GLcontext *ctx )
 }
 
 
-void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
+void tdfxBuildVertices( struct gl_context *ctx, GLuint start, GLuint end,
 			GLuint newinputs )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
@@ -275,7 +275,7 @@ void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
 }
 
 
-void tdfxChooseVertexState( GLcontext *ctx )
+void tdfxChooseVertexState( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
@@ -321,7 +321,7 @@ void tdfxChooseVertexState( GLcontext *ctx )
 
 
 
-void tdfxInitVB( GLcontext *ctx )
+void tdfxInitVB( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
@@ -337,7 +337,7 @@ void tdfxInitVB( GLcontext *ctx )
 }
 
 
-void tdfxFreeVB( GLcontext *ctx )
+void tdfxFreeVB( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (fxMesa->verts) {

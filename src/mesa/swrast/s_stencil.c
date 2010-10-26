@@ -61,7 +61,7 @@ ENDIF
  * Output:  stencil - modified values
  */
 static void
-apply_stencil_op( const GLcontext *ctx, GLenum oper, GLuint face,
+apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
                   GLuint n, GLstencil stencil[], const GLubyte mask[] )
 {
    const GLstencil ref = ctx->Stencil.Ref[face];
@@ -225,7 +225,7 @@ apply_stencil_op( const GLcontext *ctx, GLenum oper, GLuint face,
  * Return:  GL_FALSE = all pixels failed, GL_TRUE = zero or more pixels passed.
  */
 static GLboolean
-do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
+do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stencil[],
                  GLubyte mask[] )
 {
    GLubyte fail[MAX_WIDTH];
@@ -418,7 +418,7 @@ compute_pass_fail_masks(GLuint n, const GLubyte origMask[],
  *
  */
 static GLboolean
-stencil_and_ztest_span(GLcontext *ctx, SWspan *span, GLuint face)
+stencil_and_ztest_span(struct gl_context *ctx, SWspan *span, GLuint face)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
@@ -524,7 +524,7 @@ stencil_and_ztest_span(GLcontext *ctx, SWspan *span, GLuint face)
  *         mask - array [n] of flag:  1=apply operator, 0=don't apply operator
  */
 static void
-apply_stencil_op_to_pixels( GLcontext *ctx,
+apply_stencil_op_to_pixels( struct gl_context *ctx,
                             GLuint n, const GLint x[], const GLint y[],
                             GLenum oper, GLuint face, const GLubyte mask[] )
 {
@@ -698,7 +698,7 @@ apply_stencil_op_to_pixels( GLcontext *ctx,
  * \return  GL_FALSE = all pixels failed, GL_TRUE = zero or more pixels passed.
  */
 static GLboolean
-stencil_test_pixels( GLcontext *ctx, GLuint face, GLuint n,
+stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
                      const GLint x[], const GLint y[], GLubyte mask[] )
 {
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -897,7 +897,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint face, GLuint n,
  *         GL_TRUE - one or more fragments passed the testing
  */
 static GLboolean
-stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
+stencil_and_ztest_pixels( struct gl_context *ctx, SWspan *span, GLuint face )
 {
    GLubyte passMask[MAX_WIDTH], failMask[MAX_WIDTH], origMask[MAX_WIDTH];
    struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -990,7 +990,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
  * GL_FALSE = all fragments failed.
  */
 GLboolean
-_swrast_stencil_and_ztest_span(GLcontext *ctx, SWspan *span)
+_swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
 {
    const GLuint face = (span->facing == 0) ? 0 : ctx->Stencil._BackFace;
 
@@ -1042,7 +1042,7 @@ clip_span(GLuint bufferWidth, GLuint bufferHeight,
  * Output:  stencil - the array of stencil values
  */
 void
-_swrast_read_stencil_span(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLint n, GLint x, GLint y, GLstencil stencil[])
 {
    if (y < 0 || y >= (GLint) rb->Height ||
@@ -1079,7 +1079,7 @@ _swrast_read_stencil_span(GLcontext *ctx, struct gl_renderbuffer *rb,
  *         stencil - the array of stencil values
  */
 void
-_swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
                            const GLstencil stencil[] )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -1128,7 +1128,7 @@ _swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
  * Clear the stencil buffer.
  */
 void
-_swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
+_swrast_clear_stencil_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb )
 {
    const GLubyte stencilBits = ctx->DrawBuffer->Visual.stencilBits;
    const GLuint mask = ctx->Stencil.WriteMask[0];

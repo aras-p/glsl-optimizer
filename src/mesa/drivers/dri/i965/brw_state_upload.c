@@ -336,7 +336,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
  */
 void brw_validate_state( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;

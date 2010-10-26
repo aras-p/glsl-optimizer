@@ -41,6 +41,7 @@
 #include "lp_debug.h"
 
 struct lp_scene_queue;
+struct lp_rast_state;
 
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
@@ -94,6 +95,7 @@ struct data_block {
 struct cmd_bin {
    ushort x;
    ushort y;
+   const struct lp_rast_state *last_state;       /* most recent state set in bin */
    struct cmd_block *head;
    struct cmd_block *tail;
 };
@@ -297,7 +299,7 @@ lp_scene_bin_command( struct lp_scene *scene,
 
    assert(x < scene->tiles_x);
    assert(y < scene->tiles_y);
-   assert(cmd <= LP_RAST_OP_END_QUERY);
+   assert(cmd < LP_RAST_OP_MAX);
 
    if (tail == NULL || tail->count == CMD_BLOCK_MAX) {
       tail = lp_scene_new_cmd_block( scene, bin );
@@ -314,6 +316,30 @@ lp_scene_bin_command( struct lp_scene *scene,
       tail->count++;
    }
    
+   return TRUE;
+}
+
+
+static INLINE boolean
+lp_scene_bin_cmd_with_state( struct lp_scene *scene,
+                             unsigned x, unsigned y,
+                             const struct lp_rast_state *state,
+                             unsigned cmd,
+                             union lp_rast_cmd_arg arg )
+{
+   struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
+
+   if (state != bin->last_state) {
+      bin->last_state = state;
+      if (!lp_scene_bin_command(scene, x, y,
+                                LP_RAST_OP_SET_STATE,
+                                lp_rast_arg_state(state)))
+         return FALSE;
+   }
+
+   if (!lp_scene_bin_command( scene, x, y, cmd, arg ))
+      return FALSE;
+
    return TRUE;
 }
 

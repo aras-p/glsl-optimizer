@@ -30,27 +30,27 @@
 #include "main/mtypes.h"
 
 extern void _ASMAPI
-_mesa_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
+_mesa_mmx_blend_transparency( struct gl_context *ctx, GLuint n, const GLubyte mask[],
                               GLvoid *rgba, const GLvoid *dest,
                               GLenum chanType );
 
 extern void _ASMAPI
-_mesa_mmx_blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
+_mesa_mmx_blend_add( struct gl_context *ctx, GLuint n, const GLubyte mask[],
                      GLvoid *rgba, const GLvoid *dest,
                      GLenum chanType );
 
 extern void _ASMAPI
-_mesa_mmx_blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
+_mesa_mmx_blend_min( struct gl_context *ctx, GLuint n, const GLubyte mask[],
                      GLvoid *rgba, const GLvoid *dest,
                      GLenum chanType );
 
 extern void _ASMAPI
-_mesa_mmx_blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
+_mesa_mmx_blend_max( struct gl_context *ctx, GLuint n, const GLubyte mask[],
                      GLvoid *rgba, const GLvoid *dest,
                      GLenum chanType );
 
 extern void _ASMAPI
-_mesa_mmx_blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
+_mesa_mmx_blend_modulate( struct gl_context *ctx, GLuint n, const GLubyte mask[],
                           GLvoid *rgba, const GLvoid *dest,
                           GLenum chanType );
 

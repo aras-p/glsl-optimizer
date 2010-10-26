@@ -163,13 +163,13 @@ static unsigned long read_pixel( XMesaDisplay *dpy,
 
 
 #define PUT_ROW_ARGS \
-	GLcontext *ctx,					\
+	struct gl_context *ctx,					\
 	struct gl_renderbuffer *rb,			\
 	GLuint n, GLint x, GLint y,			\
 	const void *values, const GLubyte mask[]
 
 #define RGB_SPAN_ARGS \
-	GLcontext *ctx,					\
+	struct gl_context *ctx,					\
 	struct gl_renderbuffer *rb,			\
 	GLuint n, GLint x, GLint y,			\
 	const void *values, const GLubyte mask[]
@@ -2242,7 +2242,7 @@ static void put_row_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
 
 
 #define PUT_VALUES_ARGS \
-	GLcontext *ctx, struct gl_renderbuffer *rb,	\
+	struct gl_context *ctx, struct gl_renderbuffer *rb,	\
 	GLuint n, const GLint x[], const GLint y[],	\
 	const void *values, const GLubyte mask[]
 
@@ -2829,7 +2829,7 @@ static void put_values_GRAYSCALE8_ximage( PUT_VALUES_ARGS )
 /**********************************************************************/
 
 #define PUT_MONO_ROW_ARGS \
-	GLcontext *ctx, struct gl_renderbuffer *rb,	\
+	struct gl_context *ctx, struct gl_renderbuffer *rb,	\
 	GLuint n, GLint x, GLint y, const void *value,	\
 	const GLubyte mask[]
 
@@ -3267,7 +3267,7 @@ static void put_mono_row_DITHER_5R6G5B_ximage( PUT_MONO_ROW_ARGS )
 /**********************************************************************/
 
 #define PUT_MONO_VALUES_ARGS \
-	GLcontext *ctx, struct gl_renderbuffer *rb,	\
+	struct gl_context *ctx, struct gl_renderbuffer *rb,	\
 	GLuint n, const GLint x[], const GLint y[],	\
 	const void *value, const GLubyte mask[]
 
@@ -3773,7 +3773,7 @@ static void put_values_ci_ximage( PUT_VALUES_ARGS )
  *          else return number of pixels to skip in the destination array.
  */
 static int
-clip_for_xgetimage(GLcontext *ctx, XMesaPixmap pixmap, GLuint *n, GLint *x, GLint *y)
+clip_for_xgetimage(struct gl_context *ctx, XMesaPixmap pixmap, GLuint *n, GLint *x, GLint *y)
 {
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer source = XMESA_BUFFER(ctx->DrawBuffer);
@@ -3813,7 +3813,7 @@ clip_for_xgetimage(GLcontext *ctx, XMesaPixmap pixmap, GLuint *n, GLint *x, GLin
  * Read a horizontal span of color-index pixels.
  */
 static void
-get_row_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_row_ci(struct gl_context *ctx, struct gl_renderbuffer *rb,
            GLuint n, GLint x, GLint y, void *values)
 {
    GLuint *index = (GLuint *) values;
@@ -3870,7 +3870,7 @@ get_row_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Read a horizontal span of color pixels.
  */
 static void
-get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_row_rgba(struct gl_context *ctx, struct gl_renderbuffer *rb,
              GLuint n, GLint x, GLint y, void *values)
 {
    GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
@@ -4272,7 +4272,7 @@ get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Read an array of color index pixels.
  */
 static void
-get_values_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_values_ci(struct gl_context *ctx, struct gl_renderbuffer *rb,
               GLuint n, const GLint x[], const GLint y[], void *values)
 {
    GLuint *indx = (GLuint *) values;
@@ -4296,7 +4296,7 @@ get_values_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_values_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_values_rgba(struct gl_context *ctx, struct gl_renderbuffer *rb,
                 GLuint n, const GLint x[], const GLint y[], void *values)
 {
    GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;

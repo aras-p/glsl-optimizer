@@ -32,7 +32,7 @@
 #include "main/mtypes.h"
 
 extern void
-_mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum target,
+_mesa_parse_nv_vertex_program(struct gl_context *ctx, GLenum target,
                               const GLubyte *str, GLsizei len,
                               struct gl_vertex_program *program);
 

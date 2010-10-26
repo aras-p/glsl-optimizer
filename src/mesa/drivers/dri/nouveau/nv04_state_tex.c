@@ -56,7 +56,7 @@ get_tex_format(struct gl_texture_image *ti)
 }
 
 void
-nv04_emit_tex_obj(GLcontext *ctx, int emit)
+nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
 	struct nouveau_channel *chan = context_chan(ctx);

@@ -105,18 +105,18 @@ enum {
 	MAX_NOUVEAU_STATE = NUM_NOUVEAU_STATE + 16,
 };
 
-typedef void (*nouveau_state_func)(GLcontext *ctx, int emit);
+typedef void (*nouveau_state_func)(struct gl_context *ctx, int emit);
 
 void
-nouveau_state_init(GLcontext *ctx);
+nouveau_state_init(struct gl_context *ctx);
 
 void
-nouveau_emit_nothing(GLcontext *ctx, int emit);
+nouveau_emit_nothing(struct gl_context *ctx, int emit);
 
 int
-nouveau_next_dirty_state(GLcontext *ctx);
+nouveau_next_dirty_state(struct gl_context *ctx);
 
 void
-nouveau_state_emit(GLcontext *ctx);
+nouveau_state_emit(struct gl_context *ctx);
 
 #endif

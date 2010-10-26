@@ -50,7 +50,7 @@
  * Helper to enable/disable client-side state.
  */
 static void
-client_state(GLcontext *ctx, GLenum cap, GLboolean state)
+client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint flag;
@@ -123,6 +123,15 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          }
          break;
 #endif /* FEATURE_NV_vertex_program */
+
+      /* GL_NV_primitive_restart */
+      case GL_PRIMITIVE_RESTART_NV:
+	 if (!ctx->Extensions.NV_primitive_restart) {
+            goto invalid_enum_error;
+         }
+         var = &ctx->Array.PrimitiveRestart;
+         flag = 0;
+         break;
 
       default:
          goto invalid_enum_error;
@@ -207,7 +216,7 @@ _mesa_DisableClientState( GLenum cap )
  * higher than the number of supported coordinate units.  And we'll return NULL.
  */
 static struct gl_texture_unit *
-get_texcoord_unit(GLcontext *ctx)
+get_texcoord_unit(struct gl_context *ctx)
 {
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEnable/Disable(texcoord unit)");
@@ -225,7 +234,7 @@ get_texcoord_unit(GLcontext *ctx)
  * \return GL_TRUE if state is changing or GL_FALSE if no change
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
+enable_texture(struct gl_context *ctx, GLboolean state, GLbitfield texBit)
 {
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    const GLbitfield newenabled = state
@@ -253,7 +262,7 @@ enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
  * dd_function_table::Enable.
  */
 void
-_mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
+_mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "%s %s (newstate is %x)\n",
@@ -945,9 +954,11 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          break;
 #endif
 
-      /* GL 3.1 primitive restart */
+      /* GL 3.1 primitive restart.  Note: this enum is different from
+       * GL_PRIMITIVE_RESTART_NV (which is client state).
+       */
       case GL_PRIMITIVE_RESTART:
-	 if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
             goto invalid_enum_error;
          }
          if (ctx->Array.PrimitiveRestart != state) {
@@ -1005,7 +1016,7 @@ _mesa_Disable( GLenum cap )
  * Enable/disable an indexed state var.
  */
 void
-_mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
+_mesa_set_enablei(struct gl_context *ctx, GLenum cap, GLuint index, GLboolean state)
 {
    ASSERT(state == 0 || state == 1);
    switch (cap) {
@@ -1095,7 +1106,7 @@ _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
  * Helper function to determine whether a texture target is enabled.
  */
 static GLboolean
-is_texture_enabled(GLcontext *ctx, GLbitfield bit)
+is_texture_enabled(struct gl_context *ctx, GLbitfield bit)
 {
    const struct gl_texture_unit *const texUnit =
        &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1454,9 +1465,16 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->TransformFeedback.RasterDiscard;
 #endif
 
+      /* GL_NV_primitive_restart */
+      case GL_PRIMITIVE_RESTART_NV:
+	 if (!ctx->Extensions.NV_primitive_restart) {
+            goto invalid_enum_error;
+         }
+         return ctx->Array.PrimitiveRestart;
+
       /* GL 3.1 primitive restart */
       case GL_PRIMITIVE_RESTART:
-	 if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
             goto invalid_enum_error;
          }
          return ctx->Array.PrimitiveRestart;

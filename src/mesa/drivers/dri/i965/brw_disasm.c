@@ -165,8 +165,8 @@ char *accwr[2] = {
 };
 
 char *wectrl[2] = {
-    [0] = "WEnormal",
-    [1] = "WEpredicted"
+    [0] = "WE_normal",
+    [1] = "WE_all"
 };
 
 char *exec_size[8] = {
@@ -892,7 +892,12 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
     if (opcode[inst->header.opcode].ndst > 0) {
 	pad (file, 16);
 	err |= dest (file, inst);
+    } else if (gen >= 6 && (inst->header.opcode == BRW_OPCODE_IF ||
+			    inst->header.opcode == BRW_OPCODE_ELSE ||
+			    inst->header.opcode == BRW_OPCODE_ENDIF)) {
+       format (file, " %d", inst->bits1.branch_gen6.jump_count);
     }
+
     if (opcode[inst->header.opcode].nsrc > 0) {
 	pad (file, 32);
 	err |= src0 (file, inst);

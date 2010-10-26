@@ -132,6 +132,11 @@ struct r600_bc_cf {
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
 	unsigned			kcache0_mode;
+	unsigned			kcache1_mode;
+	unsigned			kcache0_addr;
+	unsigned			kcache1_addr;
+	unsigned			kcache0_bank;
+	unsigned			kcache1_bank;
 	unsigned			r6xx_uses_waterfall;
 	struct list_head		alu;
 	struct list_head		tex;
@@ -185,6 +190,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
 
 /* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
+void r600_bc_clear(struct r600_bc *bc);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
 int r600_bc_add_literal(struct r600_bc *bc, const u32 *value);
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);

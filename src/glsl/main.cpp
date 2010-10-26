@@ -38,12 +38,23 @@
 #include "loop_analysis.h"
 
 extern "C" struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
+
+extern "C" void
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh);
 
 /* Copied from shader_api.c for the stand-alone compiler.
  */
+void
+_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh)
+{
+   *ptr = sh;
+}
+
 struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
+_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
 
@@ -60,7 +71,7 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 }
 
 static void
-initialize_context(GLcontext *ctx, gl_api api)
+initialize_context(struct gl_context *ctx, gl_api api)
 {
    memset(ctx, 0, sizeof(*ctx));
 
@@ -160,7 +171,7 @@ const struct option compiler_opts[] = {
 };
 
 void
-compile_shader(GLcontext *ctx, struct gl_shader *shader)
+compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state =
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
@@ -252,8 +263,8 @@ int
 main(int argc, char **argv)
 {
    int status = EXIT_SUCCESS;
-   GLcontext local_ctx;
-   GLcontext *ctx = &local_ctx;
+   struct gl_context local_ctx;
+   struct gl_context *ctx = &local_ctx;
 
    int c;
    int idx = 0;
@@ -319,7 +330,7 @@ main(int argc, char **argv)
 	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
 
-   for (unsigned i = 0; i < whole_program->_NumLinkedShaders; i++)
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++)
       talloc_free(whole_program->_LinkedShaders[i]);
 
    talloc_free(whole_program);

@@ -29,8 +29,9 @@
 #include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"
-#include "main/macros.h"
 #include "main/imports.h"
+#include "main/macros.h"
+#include "main/pack.h"
 #include "main/state.h"
 
 #include "s_context.h"
@@ -43,7 +44,7 @@
  * Read pixels for format=GL_DEPTH_COMPONENT.
  */
 static void
-read_depth_pixels( GLcontext *ctx,
+read_depth_pixels( struct gl_context *ctx,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum type, GLvoid *pixels,
@@ -139,7 +140,7 @@ read_depth_pixels( GLcontext *ctx,
  * Read pixels for format=GL_STENCIL_INDEX.
  */
 static void
-read_stencil_pixels( GLcontext *ctx,
+read_stencil_pixels( struct gl_context *ctx,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum type, GLvoid *pixels,
@@ -177,7 +178,7 @@ read_stencil_pixels( GLcontext *ctx,
  * \return GL_TRUE if success, GL_FALSE if unable to do the readpixels
  */
 static GLboolean
-fast_read_rgba_pixels( GLcontext *ctx,
+fast_read_rgba_pixels( struct gl_context *ctx,
                        GLint x, GLint y,
                        GLsizei width, GLsizei height,
                        GLenum format, GLenum type,
@@ -297,7 +298,7 @@ adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
  * Read R, G, B, A, RGB, L, or LA pixels.
  */
 static void
-read_rgba_pixels( GLcontext *ctx,
+read_rgba_pixels( struct gl_context *ctx,
                   GLint x, GLint y,
                   GLsizei width, GLsizei height,
                   GLenum format, GLenum type, GLvoid *pixels,
@@ -362,7 +363,7 @@ read_rgba_pixels( GLcontext *ctx,
  * depth and stencil buffers really exist.
  */
 static void
-read_depth_stencil_pixels(GLcontext *ctx,
+read_depth_stencil_pixels(struct gl_context *ctx,
                           GLint x, GLint y,
                           GLsizei width, GLsizei height,
                           GLenum type, GLvoid *pixels,
@@ -453,7 +454,7 @@ read_depth_stencil_pixels(GLcontext *ctx,
  * By time we get here, all error checking will have been done.
  */
 void
-_swrast_ReadPixels( GLcontext *ctx,
+_swrast_ReadPixels( struct gl_context *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,
 		    const struct gl_pixelstore_attrib *packing,

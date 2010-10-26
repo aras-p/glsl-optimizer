@@ -41,7 +41,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
-static void brwBindProgram( GLcontext *ctx,
+static void brwBindProgram( struct gl_context *ctx,
 			    GLenum target, 
 			    struct gl_program *prog )
 {
@@ -57,7 +57,7 @@ static void brwBindProgram( GLcontext *ctx,
    }
 }
 
-static struct gl_program *brwNewProgram( GLcontext *ctx,
+static struct gl_program *brwNewProgram( struct gl_context *ctx,
 				      GLenum target, 
 				      GLuint id )
 {
@@ -93,14 +93,14 @@ static struct gl_program *brwNewProgram( GLcontext *ctx,
    }
 }
 
-static void brwDeleteProgram( GLcontext *ctx,
+static void brwDeleteProgram( struct gl_context *ctx,
 			      struct gl_program *prog )
 {
    _mesa_delete_program( ctx, prog );
 }
 
 
-static GLboolean brwIsProgramNative( GLcontext *ctx,
+static GLboolean brwIsProgramNative( struct gl_context *ctx,
 				     GLenum target, 
 				     struct gl_program *prog )
 {
@@ -108,7 +108,7 @@ static GLboolean brwIsProgramNative( GLcontext *ctx,
 }
 
 static void
-shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
+shader_error(struct gl_context *ctx, struct gl_program *prog, const char *msg)
 {
    struct gl_shader_program *shader;
 
@@ -120,7 +120,7 @@ shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
    }
 }
 
-static GLboolean brwProgramStringNotify( GLcontext *ctx,
+static GLboolean brwProgramStringNotify( struct gl_context *ctx,
                                          GLenum target,
                                          struct gl_program *prog )
 {
@@ -148,15 +148,9 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
        * using the new FS backend.
        */
       shader_program = _mesa_lookup_shader_program(ctx, prog->Id);
-      if (shader_program) {
-	 for (i = 0; i < shader_program->_NumLinkedShaders; i++) {
-	    struct brw_shader *shader;
-
-	    shader = (struct brw_shader *)shader_program->_LinkedShaders[i];
-	    if (shader->base.Type == GL_FRAGMENT_SHADER && shader->ir) {
-	       return GL_TRUE;
-	    }
-	 }
+      if (shader_program
+	  && shader_program->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
+	 return GL_TRUE;
       }
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {

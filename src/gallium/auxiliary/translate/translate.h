@@ -68,6 +68,33 @@ struct translate_key {
 };
 
 
+struct translate;
+
+
+typedef void (PIPE_CDECL *run_elts_func)(struct translate *,
+                                         const unsigned *elts,
+                                         unsigned count,
+                                         unsigned instance_id,
+                                         void *output_buffer);
+
+typedef void (PIPE_CDECL *run_elts16_func)(struct translate *,
+                                           const uint16_t *elts,
+                                           unsigned count,
+                                           unsigned instance_id,
+                                           void *output_buffer);
+
+typedef void (PIPE_CDECL *run_elts8_func)(struct translate *,
+                                          const uint8_t *elts,
+                                          unsigned count,
+                                          unsigned instance_id,
+                                          void *output_buffer);
+
+typedef void (PIPE_CDECL *run_func)(struct translate *,
+                                    unsigned start,
+                                    unsigned count,
+                                    unsigned instance_id,
+                                    void *output_buffer);
+
 struct translate {
    struct translate_key key;
 
@@ -79,40 +106,12 @@ struct translate {
 		       unsigned stride,
 		       unsigned max_index );
 
-   void (PIPE_CDECL *run_elts)( struct translate *,
-                                const unsigned *elts,
-                                unsigned count,
-                                unsigned instance_id,
-                                void *output_buffer);
-
-   void (PIPE_CDECL *run_elts16)( struct translate *,
-                                const uint16_t *elts,
-                                unsigned count,
-                                unsigned instance_id,
-                                void *output_buffer);
-
-   void (PIPE_CDECL *run_elts8)( struct translate *,
-                                const uint8_t *elts,
-                                unsigned count,
-                                unsigned instance_id,
-                                void *output_buffer);
-
-   void (PIPE_CDECL *run)( struct translate *,
-                           unsigned start,
-                           unsigned count,
-                           unsigned instance_id,
-                           void *output_buffer);
+   run_elts_func run_elts;
+   run_elts16_func run_elts16;
+   run_elts8_func run_elts8;
+   run_func run;
 };
 
-
-
-#if 0
-struct translate_context *translate_context_create( void );
-void translate_context_destroy( struct translate_context * );
-
-struct translate *translate_lookup_or_create( struct translate_context *tctx,
-					      const struct translate_key *key );
-#endif
 
 
 struct translate *translate_create( const struct translate_key *key );

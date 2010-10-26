@@ -53,8 +53,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "savagetex.h"
 #include "savageioctl.h"
 
-static void savageRasterPrimitive( GLcontext *ctx, GLuint prim );
-static void savageRenderPrimitive( GLcontext *ctx, GLenum prim );
+static void savageRasterPrimitive( struct gl_context *ctx, GLuint prim );
+static void savageRenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 
 static GLenum reduced_prim[GL_POLYGON+1] = {
@@ -562,7 +562,7 @@ savage_fallback_tri( savageContextPtr imesa,
 		     savageVertexPtr v1,
 		     savageVertexPtr v2 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[3];
    FLUSH_BATCH(imesa);
    WAIT_IDLE_EMPTY(imesa);
@@ -578,7 +578,7 @@ savage_fallback_line( savageContextPtr imesa,
 		      savageVertexPtr v0,
 		      savageVertexPtr v1 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[2];
    FLUSH_BATCH(imesa);
    WAIT_IDLE_EMPTY(imesa);
@@ -592,7 +592,7 @@ static void
 savage_fallback_point( savageContextPtr imesa,
 		       savageVertexPtr v0 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[1];
    FLUSH_BATCH(imesa);
    WAIT_IDLE_EMPTY(imesa);
@@ -645,7 +645,7 @@ savage_fallback_point( savageContextPtr imesa,
 /*                    Render clipped primitives                       */
 /**********************************************************************/
 
-static void savageRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void savageRenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 				     GLuint n )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -661,13 +661,13 @@ static void savageRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    }
 }
 
-static void savageRenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+static void savageRenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
 }
 /*
-static void savageFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void savageFastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 					 GLuint n )
 {
    r128ContextPtr rmesa = R128_CONTEXT( ctx );
@@ -711,7 +711,7 @@ static void savageFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
 
-static void savageChooseRenderState(GLcontext *ctx)
+static void savageChooseRenderState(struct gl_context *ctx)
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
@@ -781,7 +781,7 @@ static void savageChooseRenderState(GLcontext *ctx)
 /*                 Validate state at pipeline start                   */
 /**********************************************************************/
 
-static void savageRunPipeline( GLcontext *ctx )
+static void savageRunPipeline( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
@@ -829,7 +829,7 @@ static void savageRunPipeline( GLcontext *ctx )
  * primitives.
  */
 
-static void savageRasterPrimitive( GLcontext *ctx, GLuint prim )
+static void savageRasterPrimitive( struct gl_context *ctx, GLuint prim )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
@@ -851,7 +851,7 @@ static void savageRasterPrimitive( GLcontext *ctx, GLuint prim )
 #endif
 }
 
-static void savageRenderPrimitive( GLcontext *ctx, GLenum prim )
+static void savageRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    GLuint rprim = reduced_prim[prim];
@@ -870,7 +870,7 @@ static void savageRenderPrimitive( GLcontext *ctx, GLenum prim )
  * them. Fallback to swrast we can't. Returns GL_TRUE if projective
  * texture coordinates must be faked, GL_FALSE otherwise.
  */
-static GLboolean savageCheckPTexHack( GLcontext *ctx )
+static GLboolean savageCheckPTexHack( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -933,7 +933,7 @@ do {									\
 #define SAVAGE_EMIT_ST1  0x0300
 
 
-static INLINE GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
+static INLINE GLuint savageChooseVertexFormat_s3d( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -996,7 +996,7 @@ static INLINE GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
 }
 
 
-static INLINE GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
+static INLINE GLuint savageChooseVertexFormat_s4( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -1121,7 +1121,7 @@ static INLINE GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
 }
 
 
-static void savageRenderStart( GLcontext *ctx )
+static void savageRenderStart( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -1199,7 +1199,7 @@ static void savageRenderStart( GLcontext *ctx )
    }
 }
 
-static void savageRenderFinish( GLcontext *ctx )
+static void savageRenderFinish( struct gl_context *ctx )
 {
    /* Flush the last primitive now, before any state is changed. */
    savageFlushVertices(SAVAGE_CONTEXT(ctx));
@@ -1227,7 +1227,7 @@ static const char * const fallbackStrings[] = {
    "Projective texture",
 };
 
-void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void savageFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1279,7 +1279,7 @@ void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void savageInitTriFuncs( GLcontext *ctx )
+void savageInitTriFuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;

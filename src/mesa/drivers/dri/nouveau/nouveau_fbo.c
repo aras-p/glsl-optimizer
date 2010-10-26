@@ -86,7 +86,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 }
 
 static GLboolean
-nouveau_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+nouveau_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			     GLenum internalFormat,
 			     GLuint width, GLuint height)
 {
@@ -115,7 +115,7 @@ nouveau_renderbuffer_del(struct gl_renderbuffer *rb)
 }
 
 static struct gl_renderbuffer *
-nouveau_renderbuffer_new(GLcontext *ctx, GLuint name)
+nouveau_renderbuffer_new(struct gl_context *ctx, GLuint name)
 {
 	struct gl_renderbuffer *rb;
 
@@ -133,7 +133,7 @@ nouveau_renderbuffer_new(GLcontext *ctx, GLuint name)
 }
 
 static GLboolean
-nouveau_renderbuffer_dri_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+nouveau_renderbuffer_dri_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 				 GLenum internalFormat,
 				 GLuint width, GLuint height)
 {
@@ -166,7 +166,7 @@ nouveau_renderbuffer_dri_new(GLenum format, __DRIdrawable *drawable)
 }
 
 static struct gl_framebuffer *
-nouveau_framebuffer_new(GLcontext *ctx, GLuint name)
+nouveau_framebuffer_new(struct gl_context *ctx, GLuint name)
 {
 	struct nouveau_framebuffer *nfb;
 
@@ -180,7 +180,7 @@ nouveau_framebuffer_new(GLcontext *ctx, GLuint name)
 }
 
 struct gl_framebuffer *
-nouveau_framebuffer_dri_new(const GLvisual *visual)
+nouveau_framebuffer_dri_new(const struct gl_config *visual)
 {
 	struct nouveau_framebuffer *nfb;
 
@@ -195,7 +195,7 @@ nouveau_framebuffer_dri_new(const GLvisual *visual)
 }
 
 static void
-nouveau_bind_framebuffer(GLcontext *ctx, GLenum target,
+nouveau_bind_framebuffer(struct gl_context *ctx, GLenum target,
 			 struct gl_framebuffer *dfb,
 			 struct gl_framebuffer *rfb)
 {
@@ -203,7 +203,7 @@ nouveau_bind_framebuffer(GLcontext *ctx, GLenum target,
 }
 
 static void
-nouveau_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+nouveau_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 				 GLenum attachment, struct gl_renderbuffer *rb)
 {
 	_mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
@@ -227,7 +227,7 @@ get_tex_format(struct gl_texture_image *ti)
 }
 
 static void
-nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
+nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 		       struct gl_renderbuffer_attachment *att)
 {
 	struct gl_renderbuffer *rb = att->Renderbuffer;
@@ -255,7 +255,7 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 }
 
 static void
-nouveau_finish_render_texture(GLcontext *ctx,
+nouveau_finish_render_texture(struct gl_context *ctx,
 			      struct gl_renderbuffer_attachment *att)
 {
 	texture_dirty(att->Texture);

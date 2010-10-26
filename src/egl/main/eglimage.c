@@ -12,28 +12,57 @@
 /**
  * Parse the list of image attributes and return the proper error code.
  */
-static EGLint
-_eglParseImageAttribList(_EGLImage *img, const EGLint *attrib_list)
+EGLint
+_eglParseImageAttribList(_EGLImageAttribs *attrs, _EGLDisplay *dpy,
+                         const EGLint *attrib_list)
 {
    EGLint i, err = EGL_SUCCESS;
 
+   (void) dpy;
+
+   memset(attrs, 0, sizeof(attrs));
+   attrs->ImagePreserved = EGL_FALSE;
+   attrs->GLTextureLevel = 0;
+   attrs->GLTextureZOffset = 0;
+
    if (!attrib_list)
-      return EGL_SUCCESS;
+      return err;
 
    for (i = 0; attrib_list[i] != EGL_NONE; i++) {
       EGLint attr = attrib_list[i++];
       EGLint val = attrib_list[i];
 
       switch (attr) {
+      /* EGL_KHR_image_base */
       case EGL_IMAGE_PRESERVED_KHR:
-         img->Preserved = val;
+         attrs->ImagePreserved = val;
          break;
+
+      /* EGL_KHR_gl_image */
       case EGL_GL_TEXTURE_LEVEL_KHR:
-         img->GLTextureLevel = val;
+         attrs->GLTextureLevel = val;
          break;
       case EGL_GL_TEXTURE_ZOFFSET_KHR:
-         img->GLTextureZOffset = val;
+         attrs->GLTextureZOffset = val;
          break;
+
+      /* EGL_MESA_drm_image */
+      case EGL_WIDTH:
+         attrs->Width = val;
+         break;
+      case EGL_HEIGHT:
+         attrs->Height = val;
+         break;
+      case EGL_DRM_BUFFER_FORMAT_MESA:
+         attrs->DRMBufferFormatMESA = val;
+         break;
+      case EGL_DRM_BUFFER_USE_MESA:
+         attrs->DRMBufferUseMESA = val;
+         break;
+      case EGL_DRM_BUFFER_STRIDE_MESA:
+         attrs->DRMBufferStrideMESA = val;
+         break;
+
       default:
          /* unknown attrs are ignored */
          break;
@@ -50,40 +79,11 @@ _eglParseImageAttribList(_EGLImage *img, const EGLint *attrib_list)
 
 
 EGLBoolean
-_eglInitImage(_EGLImage *img, _EGLDisplay *dpy, const EGLint *attrib_list)
+_eglInitImage(_EGLImage *img, _EGLDisplay *dpy)
 {
-   EGLint err;
-
-   memset(img, 0, sizeof(_EGLImage));
-   img->Resource.Display = dpy;
-
-   img->Preserved = EGL_FALSE;
-   img->GLTextureLevel = 0;
-   img->GLTextureZOffset = 0;
-
-   err = _eglParseImageAttribList(img, attrib_list);
-   if (err != EGL_SUCCESS)
-      return _eglError(err, "eglCreateImageKHR");
+   _eglInitResource(&img->Resource, sizeof(*img), dpy);
 
    return EGL_TRUE;
-}
-
-
-_EGLImage *
-_eglCreateImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
-                   EGLenum target, EGLClientBuffer buffer,
-                   const EGLint *attr_list)
-{
-   /* driver should override this function */
-   return NULL;
-}
-
-
-EGLBoolean
-_eglDestroyImageKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image)
-{
-   /* driver should override this function */
-   return EGL_FALSE;
 }
 
 

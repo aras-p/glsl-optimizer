@@ -31,7 +31,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver);
 
 
 extern void
-_mesa_init_driver_state(GLcontext *ctx);
+_mesa_init_driver_state(struct gl_context *ctx);
 
 
 #endif

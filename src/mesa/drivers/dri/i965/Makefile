@@ -105,8 +105,10 @@ C_SOURCES = \
 	$(DRIVER_SOURCES)
 
 CXX_SOURCES = \
+	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
 	brw_fs_channel_expressions.cpp \
+	brw_fs_reg_allocate.cpp \
 	brw_fs_vector_splitting.cpp
 
 ASM_SOURCES = 

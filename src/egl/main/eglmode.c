@@ -31,56 +31,24 @@ _eglLookupMode(EGLModeMESA mode, _EGLDisplay *disp)
    /* loop over all screens on the display */
    for (scrnum = 0; scrnum < disp->Screens->Size; scrnum++) {
       const _EGLScreen *scrn = disp->Screens->Elements[scrnum];
-      EGLint i;
-      /* search list of modes for handle */
-      for (i = 0; i < scrn->NumModes; i++) {
-         if (scrn->Modes[i].Handle == mode) {
-            return scrn->Modes + i;
-         }
+      EGLint idx;
+
+      /*
+       * the mode ids of a screen ranges from scrn->Handle to scrn->Handle +
+       * scrn->NumModes
+       */
+      if (mode >= scrn->Handle &&
+          mode < scrn->Handle + _EGL_SCREEN_MAX_MODES) {
+         idx = mode - scrn->Handle;
+
+         assert(idx < scrn->NumModes && scrn->Modes[idx].Handle == mode);
+
+         return &scrn->Modes[idx];
       }
    }
 
    return NULL;
 }
-
-
-/**
- * Add a new mode with the given attributes (width, height, depth, refreshRate)
- * to the given screen.
- * Assign a new mode ID/handle to the mode as well.
- * \return pointer to the new _EGLMode
- */
-_EGLMode *
-_eglAddNewMode(_EGLScreen *screen, EGLint width, EGLint height,
-               EGLint refreshRate, const char *name)
-{
-   EGLint n;
-   _EGLMode *newModes;
-
-   assert(screen);
-   assert(width > 0);
-   assert(height > 0);
-   assert(refreshRate > 0);
-
-   n = screen->NumModes;
-   newModes = (_EGLMode *) realloc(screen->Modes, (n+1) * sizeof(_EGLMode));
-   if (newModes) {
-      screen->Modes = newModes;
-      screen->Modes[n].Handle = n + 1;
-      screen->Modes[n].Width = width;
-      screen->Modes[n].Height = height;
-      screen->Modes[n].RefreshRate = refreshRate;
-      screen->Modes[n].Optimal = EGL_FALSE;
-      screen->Modes[n].Interlaced = EGL_FALSE;
-      screen->Modes[n].Name = _eglstrdup(name);
-      screen->NumModes++;
-      return screen->Modes + n;
-   }
-   else {
-      return NULL;
-   }
-}
-
 
 
 /**

@@ -45,7 +45,7 @@
  ***************************************/
 
 
-static const GLubyte *savageDDGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *savageDDGetString( struct gl_context *ctx, GLenum name )
 {
    static char *cardNames[S3_LAST] = {
        "Unknown",
@@ -79,7 +79,7 @@ static const GLubyte *savageDDGetString( GLcontext *ctx, GLenum name )
    }
 }
 #if 0
-static GLint savageGetParameteri(const GLcontext *ctx, GLint param)
+static GLint savageGetParameteri(const struct gl_context *ctx, GLint param)
 {
    switch (param) {
    case DD_HAVE_HARDWARE_FOG:
@@ -91,7 +91,7 @@ static GLint savageGetParameteri(const GLcontext *ctx, GLint param)
 #endif
 
 
-void savageDDInitDriverFuncs( GLcontext *ctx )
+void savageDDInitDriverFuncs( struct gl_context *ctx )
 {
    ctx->Driver.GetString = savageDDGetString;
 }

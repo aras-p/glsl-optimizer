@@ -38,7 +38,7 @@ struct pipe_context;
 struct st_context;
 
 extern GLboolean
-st_finalize_texture(GLcontext *ctx,
+st_finalize_texture(struct gl_context *ctx,
 		    struct pipe_context *pipe, 
 		    struct gl_texture_object *tObj);
 

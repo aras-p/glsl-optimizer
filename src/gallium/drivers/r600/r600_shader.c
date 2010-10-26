@@ -107,24 +107,28 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z;
-	boolean have_pos = FALSE, have_face = FALSE;
+	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	int pos_index = -1, face_index = -1;
 
 	/* clear previous register */
 	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
-		tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].centroid)
+			tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+			tmp |= S_028644_SEL_LINEAR(1);
+
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
-			have_pos = TRUE;
+			pos_index = i;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
 		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			have_face = TRUE;
+			face_index = i;
 		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
 			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
@@ -132,17 +136,22 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
 	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			r600_pipe_state_add_reg(rstate,
 						R_02880C_DB_SHADER_CONTROL,
 						S_02880C_Z_EXPORT_ENABLE(1),
 						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+			r600_pipe_state_add_reg(rstate,
+						R_02880C_DB_SHADER_CONTROL,
+						S_02880C_STENCIL_REF_EXPORT_ENABLE(1),
+						S_02880C_STENCIL_REF_EXPORT_ENABLE(1), NULL);
 	}
 
 	exports_ps = 0;
 	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION || rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
 			num_cout++;
@@ -157,13 +166,22 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
 				S_0286CC_PERSP_GRADIENT_ENA(1);
 	spi_input_z = 0;
-	if (have_pos) {
-		spi_ps_in_control_0 |=  S_0286CC_POSITION_ENA(1) |
-					S_0286CC_BARYC_SAMPLE_CNTL(1);
+	if (pos_index != -1) {
+		spi_ps_in_control_0 |= (S_0286CC_POSITION_ENA(1) |
+					S_0286CC_POSITION_CENTROID(rshader->input[pos_index].centroid) |
+					S_0286CC_POSITION_ADDR(rshader->input[pos_index].gpr) |
+					S_0286CC_BARYC_SAMPLE_CNTL(1));
 		spi_input_z |= 1;
 	}
+
+	spi_ps_in_control_1 = 0;
+	if (face_index != -1) {
+		spi_ps_in_control_1 |= S_0286D0_FRONT_FACE_ENA(1) |
+			S_0286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
+	}
+
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, S_0286D0_FRONT_FACE_ENA(have_face), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, spi_ps_in_control_1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
@@ -252,7 +270,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	}
 	rshader->vertex_elements = *rctx->vertex_elements;
 	for (i = 0; i < rctx->vertex_elements->count; i++) {
-		resource_format[nresources++] = rctx->vertex_elements->elements[i].src_format;
+		resource_format[nresources++] = rctx->vertex_elements->hw_format[i];
 	}
 	r600_bo_reference(rctx->radeon, &rshader->bo, NULL);
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
@@ -320,6 +338,18 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 	return 0;
 }
 
+void
+r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
+
+	r600_bc_clear(&shader->shader.bc);
+
+	/* FIXME: is there more stuff to free? */
+}
+
 /*
  * tgsi -> r600 shader
  */
@@ -339,6 +369,11 @@ struct r600_shader_ctx {
 	u32					*literals;
 	u32					nliterals;
 	u32					max_driver_temp_used;
+	/* needed for evergreen interpolation */
+	boolean                                 input_centroid;
+	boolean                                 input_linear;
+	boolean                                 input_perspective;
+	int					num_interp_gpr;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -371,11 +406,9 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	}
 #endif
 	for (j = 0; j < i->Instruction.NumSrcRegs; j++) {
-		if (i->Src[j].Register.Dimension ||
-			i->Src[j].Register.Absolute) {
-			R600_ERR("unsupported src %d (dimension %d|absolute %d)\n", j,
-				 i->Src[j].Register.Dimension,
-				 i->Src[j].Register.Absolute);
+		if (i->Src[j].Register.Dimension) {
+			R600_ERR("unsupported src %d (dimension %d)\n", j,
+				 i->Src[j].Register.Dimension);
 			return -EINVAL;
 		}
 	}
@@ -388,10 +421,33 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int gpr)
+static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 {
 	int i, r;
 	struct r600_bc_alu alu;
+	int gpr = 0, base_chan = 0;
+	int ij_index = 0;
+
+	if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_PERSPECTIVE) {
+		ij_index = 0;
+		if (ctx->shader->input[input].centroid)
+			ij_index++;
+	} else if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_LINEAR) {
+		ij_index = 0;
+		/* if we have perspective add one */
+		if (ctx->input_perspective)  {
+			ij_index++;
+			/* if we have perspective centroid */
+			if (ctx->input_centroid)
+				ij_index++;
+		}
+		if (ctx->shader->input[input].centroid)
+			ij_index++;
+	}
+		
+	/* work out gpr and base_chan from index */
+	gpr = ij_index / 2;
+	base_chan = (2 * (ij_index % 2)) + 1;
 
 	for (i = 0; i < 8; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -402,13 +458,16 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int gpr)
 			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY;
 
 		if ((i > 1) && (i < 6)) {
-			alu.dst.sel = ctx->shader->input[gpr].gpr;
+			alu.dst.sel = ctx->shader->input[input].gpr;
 			alu.dst.write = 1;
 		}
 
 		alu.dst.chan = i % 4;
-		alu.src[0].chan = (1 - (i % 2));
-		alu.src[1].sel = V_SQ_ALU_SRC_PARAM_BASE + gpr;
+
+		alu.src[0].sel = gpr;
+		alu.src[0].chan = (base_chan - (i % 2));
+
+		alu.src[1].sel = V_SQ_ALU_SRC_PARAM_BASE + ctx->shader->input[input].lds_pos;
 
 		alu.bank_swizzle_force = SQ_ALU_VEC_210;
 		if ((i % 4) == 3)
@@ -434,6 +493,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
+		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 			/* turn input into fetch */
@@ -457,7 +517,12 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		}
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev == 2) {
 			/* turn input into interpolate on EG */
-			evergreen_interp_alu(ctx, i);
+			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
+				if (ctx->shader->input[i].interpolate > 0) {
+					ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
+					evergreen_interp_alu(ctx, i);
+				}
+			}
 		}
 		break;
 	case TGSI_FILE_OUTPUT:
@@ -482,6 +547,53 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 static int r600_get_temp(struct r600_shader_ctx *ctx)
 {
 	return ctx->temp_reg + ctx->max_driver_temp_used++;
+}
+
+/* 
+ * for evergreen we need to scan the shader to find the number of GPRs we need to
+ * reserve for interpolation.
+ *
+ * we need to know if we are going to emit
+ * any centroid inputs
+ * if perspective and linear are required
+*/
+static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
+{
+	int i;
+	int num_baryc;
+
+	ctx->input_linear = FALSE;
+	ctx->input_perspective = FALSE;
+	ctx->input_centroid = FALSE;
+	ctx->num_interp_gpr = 1;
+
+	/* any centroid inputs */
+	for (i = 0; i < ctx->info.num_inputs; i++) {
+		/* skip position/face */
+		if (ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_POSITION ||
+		    ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_FACE)
+			continue;
+		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_LINEAR)
+			ctx->input_linear = TRUE;
+		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_PERSPECTIVE)
+			ctx->input_perspective = TRUE;
+		if (ctx->info.input_centroid[i])
+			ctx->input_centroid = TRUE;
+	}
+
+	num_baryc = 0;
+	/* ignoring sample for now */
+	if (ctx->input_perspective)
+		num_baryc++;
+	if (ctx->input_linear)
+		num_baryc++;
+	if (ctx->input_centroid)
+		num_baryc *= 2;
+
+	ctx->num_interp_gpr += (num_baryc + 1) >> 1;
+
+	/* TODO PULL MODEL and LINE STIPPLE, FIXED PT POS */
+	return ctx->num_interp_gpr;
 }
 
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader)
@@ -528,6 +640,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	}
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
+	}
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == 2) {
+		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
 						ctx.info.file_count[TGSI_FILE_INPUT];
@@ -625,7 +740,14 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
 				output[i].array_base = 61;
 				output[i].swizzle_x = 2;
-				output[i].swizzle_y = output[i].swizzle_z = output[i].swizzle_w = 7;
+				output[i].swizzle_y = 7;
+				output[i].swizzle_z = output[i].swizzle_w = 7;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+			} else if (shader->output[i].name == TGSI_SEMANTIC_STENCIL) {
+				output[i].array_base = 61;
+				output[i].swizzle_x = 7;
+				output[i].swizzle_y = 1;
+				output[i].swizzle_z = output[i].swizzle_w = 7;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
@@ -731,6 +853,7 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 	if (tgsi_src->Register.Indirect)
 		r600_src->rel = V_SQ_REL_RELATIVE;
 	r600_src->neg = tgsi_src->Register.Negate;
+	r600_src->abs = tgsi_src->Register.Absolute;
 	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	return 0;
 }
@@ -793,6 +916,7 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx, struct r600_bc_alu_s
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
 				alu.src[0].sel = r600_src[i].sel;
 				alu.src[0].chan = k;
+				alu.src[0].rel = r600_src[i].rel;
 				alu.dst.sel = treg;
 				alu.dst.chan = k;
 				alu.dst.write = 1;
@@ -803,6 +927,7 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx, struct r600_bc_alu_s
 					return r;
 			}
 			r600_src[i].sel = treg;
+			r600_src[i].rel =0;
 			j--;
 		}
 	}
@@ -1843,7 +1968,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
 			alu.src[0].sel = src_gpr;
-			alu.src[0].chan = i;
+			alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = i;
 			if (i == 3)
@@ -1863,8 +1988,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
-	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
-	tex.sampler_id = tex.resource_id;
+	tex.sampler_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+	tex.resource_id = tex.sampler_id;
+	if (ctx->shader->processor_type == TGSI_PROCESSOR_VERTEX)
+		tex.resource_id += PIPE_MAX_ATTRIBS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
 	tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
@@ -2172,7 +2299,7 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 static int tgsi_exp(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bc_alu_src r600_src[3];
+	struct r600_bc_alu_src r600_src[3] = { { 0 } };
 	struct r600_bc_alu alu;
 	int r;
 
@@ -2495,7 +2622,40 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 }
 
 /* r6/7 only for now */
-static int tgsi_arl(struct r600_shader_ctx *ctx)
+static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int r;
+	
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR;
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+	alu.last = 1;
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	if (r)
+		return r;
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].chan = 0;
+	alu.last = 1;
+	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	if (r)
+		return r;
+	return 0;
+}
+static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 {
 	/* TODO from r600c, ar values don't persist between clauses */
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -2840,7 +3000,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 }
 
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
-	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_arl},
+	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_r600_arl},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 
@@ -2921,7 +3081,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_NRM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DIV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
-	{TGSI_OPCODE_TXL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXL,	0, SQ_TEX_INST_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */
@@ -3004,7 +3164,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 };
 
 static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
-	{TGSI_OPCODE_ARL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ARL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_eg_arl},
 	{TGSI_OPCODE_MOV,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 	{TGSI_OPCODE_RCP,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE, tgsi_trans_srcx_replicate},
@@ -3079,7 +3239,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_NRM,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DIV,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DP2,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
-	{TGSI_OPCODE_TXL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXL,	0, SQ_TEX_INST_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */

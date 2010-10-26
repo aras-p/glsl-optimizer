@@ -160,7 +160,7 @@ destroy_context(_EGLDisplay *dpy, _EGLContext *ctx)
 static EGLBoolean
 egl_g3d_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
-   if (!_eglIsContextBound(ctx))
+   if (_eglPutContext(ctx))
       destroy_context(dpy, ctx);
    return EGL_TRUE;
 }
@@ -433,7 +433,7 @@ destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
 static EGLBoolean
 egl_g3d_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 {
-   if (!_eglIsSurfaceBound(surf))
+   if (_eglPutSurface(surf))
       destroy_surface(dpy, surf);
    return EGL_TRUE;
 }
@@ -446,13 +446,15 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
    struct egl_g3d_surface *gdraw = egl_g3d_surface(draw);
    struct egl_g3d_surface *gread = egl_g3d_surface(read);
    struct egl_g3d_context *old_gctx;
+   _EGLContext *old_ctx;
+   _EGLSurface *old_draw, *old_read;
    EGLBoolean ok = EGL_TRUE;
 
-   /* bind the new context and return the "orphaned" one */
-   if (!_eglBindContext(&ctx, &draw, &read))
+   /* make new bindings */
+   if (!_eglBindContext(ctx, draw, read, &old_ctx, &old_draw, &old_read))
       return EGL_FALSE;
-   old_gctx = egl_g3d_context(ctx);
 
+   old_gctx = egl_g3d_context(old_ctx);
    if (old_gctx) {
       /* flush old context */
       old_gctx->stctxi->flush(old_gctx->stctxi,
@@ -481,15 +483,33 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    else if (old_gctx) {
       ok = old_gctx->stapi->make_current(old_gctx->stapi, NULL, NULL, NULL);
-      old_gctx->base.WindowRenderBuffer = EGL_NONE;
+      if (ok)
+         old_gctx->base.WindowRenderBuffer = EGL_NONE;
    }
 
-   if (ctx && !_eglIsContextLinked(ctx))
-      destroy_context(dpy, ctx);
-   if (draw && !_eglIsSurfaceLinked(draw))
-      destroy_surface(dpy, draw);
-   if (read && read != draw && !_eglIsSurfaceLinked(read))
-      destroy_surface(dpy, read);
+   if (ok) {
+      if (_eglPutContext(old_ctx))
+         destroy_context(dpy, old_ctx);
+      if (_eglPutSurface(old_draw))
+         destroy_surface(dpy, old_draw);
+      if (_eglPutSurface(old_read))
+         destroy_surface(dpy, old_read);
+   }
+   else {
+      /* undo the previous _eglBindContext */
+      _eglBindContext(old_ctx, old_draw, old_read, &ctx, &draw, &read);
+      assert(&gctx->base == ctx &&
+             &gdraw->base == draw &&
+             &gread->base == read);
+
+      _eglPutSurface(draw);
+      _eglPutSurface(read);
+      _eglPutContext(ctx);
+
+      _eglPutSurface(old_draw);
+      _eglPutSurface(old_read);
+      _eglPutContext(old_ctx);
+   }
 
    return ok;
 }
@@ -609,8 +629,10 @@ egl_g3d_wait_client(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 
    gctx->stctxi->flush(gctx->stctxi,
          PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
-   screen->fence_finish(screen, fence, 0);
-   screen->fence_reference(screen, &fence, NULL);
+   if (fence) {
+      screen->fence_finish(screen, fence, 0);
+      screen->fence_reference(screen, &fence, NULL);
+   }
 
    return EGL_TRUE;
 }

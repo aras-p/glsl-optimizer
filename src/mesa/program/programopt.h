@@ -29,10 +29,10 @@
 #include "main/mtypes.h"
 
 extern void
-_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog);
+_mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog);
 
 extern void
-_mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog);
+_mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog);
 
 extern void
 _mesa_count_texture_indirections(struct gl_program *prog);
@@ -44,10 +44,10 @@ extern void
 _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type);
 
 extern void
-_mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog);
+_mesa_nop_fragment_program(struct gl_context *ctx, struct gl_fragment_program *prog);
 
 extern void
-_mesa_nop_vertex_program(GLcontext *ctx, struct gl_vertex_program *prog);
+_mesa_nop_vertex_program(struct gl_context *ctx, struct gl_vertex_program *prog);
 
 
 #endif /* PROGRAMOPT_H */

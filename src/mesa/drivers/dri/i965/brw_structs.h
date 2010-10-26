@@ -1381,6 +1381,18 @@ struct brw_instruction
 	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } ia16;
+
+      struct {
+	 GLuint dest_reg_file:2;
+	 GLuint dest_reg_type:3;
+	 GLuint src0_reg_file:2;
+	 GLuint src0_reg_type:3;
+	 GLuint src1_reg_file:2;
+	 GLuint src1_reg_type:3;
+	 GLuint pad:1;
+
+	 GLint jump_count:16;
+      } branch_gen6;
    } bits1;
 
 

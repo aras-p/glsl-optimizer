@@ -62,7 +62,7 @@ static const char *buffer_names[] = {
  * Called by ctx->Driver.Clear.
  */
 static void
-intelClear(GLcontext *ctx, GLbitfield mask)
+intelClear(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);

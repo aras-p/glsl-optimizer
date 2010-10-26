@@ -31,7 +31,7 @@
 #include "s_span.h"
 
 extern void
-_swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
+_swrast_logicop_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           SWspan *span);
 
 

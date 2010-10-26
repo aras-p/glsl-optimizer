@@ -909,7 +909,7 @@ binary(GLbitfield64 val)
  */
 static void
 _mesa_fprint_program_parameters(FILE *f,
-                                GLcontext *ctx,
+                                struct gl_context *ctx,
                                 const struct gl_program *prog)
 {
    GLuint i;
@@ -951,7 +951,7 @@ _mesa_fprint_program_parameters(FILE *f,
  * Print all of a program's parameters/fields to stderr.
  */
 void
-_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
+_mesa_print_program_parameters(struct gl_context *ctx, const struct gl_program *prog)
 {
    _mesa_fprint_program_parameters(stderr, ctx, prog);
 }

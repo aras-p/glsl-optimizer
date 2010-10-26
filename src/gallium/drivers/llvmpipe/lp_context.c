@@ -82,6 +82,8 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       }
    }
 
+   lp_delete_setup_variants(llvmpipe);
+
    align_free( llvmpipe );
 }
 
@@ -108,6 +110,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    memset(llvmpipe, 0, sizeof *llvmpipe);
 
    make_empty_list(&llvmpipe->fs_variants_list);
+   make_empty_list(&llvmpipe->setup_variants_list);
 
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;

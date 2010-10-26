@@ -29,47 +29,47 @@
 #include "mtypes.h"
 
 extern void
-_mesa_init_fbobjects(GLcontext *ctx);
+_mesa_init_fbobjects(struct gl_context *ctx);
 
 extern struct gl_framebuffer *
 _mesa_get_incomplete_framebuffer(void);
 
 extern struct gl_renderbuffer *
-_mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id);
+_mesa_lookup_renderbuffer(struct gl_context *ctx, GLuint id);
 
 extern struct gl_framebuffer *
-_mesa_lookup_framebuffer(GLcontext *ctx, GLuint id);
+_mesa_lookup_framebuffer(struct gl_context *ctx, GLuint id);
 
 extern struct gl_renderbuffer_attachment *
-_mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                      GLenum attachment);
 
 
 extern void
-_mesa_remove_attachment(GLcontext *ctx,
+_mesa_remove_attachment(struct gl_context *ctx,
                         struct gl_renderbuffer_attachment *att);
 
 extern void
-_mesa_set_texture_attachment(GLcontext *ctx,
+_mesa_set_texture_attachment(struct gl_context *ctx,
                              struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
                              GLenum texTarget, GLuint level, GLuint zoffset);
 
 extern void
-_mesa_set_renderbuffer_attachment(GLcontext *ctx,
+_mesa_set_renderbuffer_attachment(struct gl_context *ctx,
                                   struct gl_renderbuffer_attachment *att,
                                   struct gl_renderbuffer *rb);
 
 extern void
-_mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb);
 
 extern void
-_mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb);
+_mesa_test_framebuffer_completeness(struct gl_context *ctx, struct gl_framebuffer *fb);
 
 extern GLenum
-_mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat);
+_mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsRenderbufferEXT(GLuint renderbuffer);

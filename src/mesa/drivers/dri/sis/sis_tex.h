@@ -32,6 +32,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __SIS_TEX_H__
 
 extern void sisInitTextureFuncs( struct dd_function_table *table );
-extern void sisUpdateTextureState( GLcontext *ctx );
+extern void sisUpdateTextureState( struct gl_context *ctx );
 
 #endif /* __SIS_TEX_H__ */

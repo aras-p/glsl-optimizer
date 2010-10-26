@@ -48,21 +48,21 @@
 			       _NEW_FOG)
 
 
-extern void tdfxValidateBuildProjVerts(GLcontext *ctx,
+extern void tdfxValidateBuildProjVerts(struct gl_context *ctx,
 				       GLuint start, GLuint count,
 				       GLuint newinputs );
 
 extern void tdfxPrintSetupFlags(char *msg, GLuint flags );
 
-extern void tdfxInitVB( GLcontext *ctx );
+extern void tdfxInitVB( struct gl_context *ctx );
 
-extern void tdfxFreeVB( GLcontext *ctx );
+extern void tdfxFreeVB( struct gl_context *ctx );
 
-extern void tdfxCheckTexSizes( GLcontext *ctx );
+extern void tdfxCheckTexSizes( struct gl_context *ctx );
 
-extern void tdfxChooseVertexState( GLcontext *ctx );
+extern void tdfxChooseVertexState( struct gl_context *ctx );
 
-extern void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
+extern void tdfxBuildVertices( struct gl_context *ctx, GLuint start, GLuint end,
                                GLuint newinputs );
 
 #endif

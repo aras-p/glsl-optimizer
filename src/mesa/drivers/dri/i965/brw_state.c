@@ -28,7 +28,7 @@
 #include "brw_context.h"
 
 void
-brw_enable(GLcontext *ctx, GLenum cap, GLboolean state)
+brw_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -40,7 +40,7 @@ brw_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 }
 
 void
-brw_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+brw_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval)
 {
    struct brw_context *brw = brw_context(ctx);
 

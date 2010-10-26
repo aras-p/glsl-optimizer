@@ -56,7 +56,7 @@
 
 
 static GLboolean
-check_depth_stencil_24_8( const GLcontext *ctx, GLenum type,
+check_depth_stencil_24_8( const struct gl_context *ctx, GLenum type,
 			  const struct gl_pixelstore_attrib *packing,
 			  const void *pixels, GLint sz,
 			  GLint pitch )
@@ -80,7 +80,7 @@ check_depth_stencil_24_8( const GLcontext *ctx, GLenum type,
 
 
 static GLboolean
-check_depth( const GLcontext *ctx, GLenum type,
+check_depth( const struct gl_context *ctx, GLenum type,
 	     const struct gl_pixelstore_attrib *packing,
 	     const void *pixels, GLint sz, GLint pitch )
 {
@@ -100,7 +100,7 @@ check_depth( const GLcontext *ctx, GLenum type,
 
 
 static GLboolean
-check_color( const GLcontext *ctx, GLenum type, GLenum format,
+check_color( const struct gl_context *ctx, GLenum type, GLenum format,
 	     const struct gl_pixelstore_attrib *packing,
 	     const void *pixels, GLint sz, GLint pitch )
 {
@@ -125,7 +125,7 @@ check_color( const GLcontext *ctx, GLenum type, GLenum format,
 }
 
 static GLboolean
-check_color_per_fragment_ops( const GLcontext *ctx )
+check_color_per_fragment_ops( const struct gl_context *ctx )
 {
    return (!(       ctx->Color.AlphaEnabled ||
 		    ctx->Depth.Test ||
@@ -145,7 +145,7 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 }
 
 static GLboolean
-check_depth_per_fragment_ops( const GLcontext *ctx )
+check_depth_per_fragment_ops( const struct gl_context *ctx )
 {
    return ( ctx->Current.RasterPosValid &&
 	    ctx->Color.ColorMask[0][RCOMP] == 0 &&
@@ -160,7 +160,7 @@ check_depth_per_fragment_ops( const GLcontext *ctx )
  */
 #if defined(MESA_packed_depth_stencil)
 static GLboolean
-check_stencil_per_fragment_ops( const GLcontext *ctx )
+check_stencil_per_fragment_ops( const struct gl_context *ctx )
 {
    return ( !ctx->Pixel.IndexShift &&
 	    !ctx->Pixel.IndexOffset );
@@ -169,8 +169,8 @@ check_stencil_per_fragment_ops( const GLcontext *ctx )
 
 
 static GLboolean
-clip_pixelrect( const GLcontext *ctx,
-		const GLframebuffer *buffer,
+clip_pixelrect( const struct gl_context *ctx,
+		const struct gl_framebuffer *buffer,
 		GLint *x, GLint *y,
 		GLsizei *width, GLsizei *height,
 		GLint *skipPixels, GLint *skipRows,
@@ -215,7 +215,7 @@ clip_pixelrect( const GLcontext *ctx,
 }
 
 static GLboolean
-mgaTryReadPixels( GLcontext *ctx,
+mgaTryReadPixels( struct gl_context *ctx,
 		  GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type,
 		  const struct gl_pixelstore_attrib *pack,
@@ -373,7 +373,7 @@ mgaTryReadPixels( GLcontext *ctx,
 }
 
 static void
-mgaDDReadPixels( GLcontext *ctx,
+mgaDDReadPixels( struct gl_context *ctx,
 		 GLint x, GLint y, GLsizei width, GLsizei height,
 		 GLenum format, GLenum type,
 		 const struct gl_pixelstore_attrib *pack,
@@ -386,7 +386,7 @@ mgaDDReadPixels( GLcontext *ctx,
 
 
 
-static void do_draw_pix( GLcontext *ctx,
+static void do_draw_pix( struct gl_context *ctx,
 			 GLint x, GLint y, GLsizei width, GLsizei height,
 			 GLint pitch,
 			 const void *pixels,
@@ -470,7 +470,7 @@ static void do_draw_pix( GLcontext *ctx,
 
 
 static GLboolean
-mgaTryDrawPixels( GLcontext *ctx,
+mgaTryDrawPixels( struct gl_context *ctx,
 		  GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type,
 		  const struct gl_pixelstore_attrib *unpack,
@@ -619,7 +619,7 @@ mgaTryDrawPixels( GLcontext *ctx,
 }
 
 static void
-mgaDDDrawPixels( GLcontext *ctx,
+mgaDDDrawPixels( struct gl_context *ctx,
 		 GLint x, GLint y, GLsizei width, GLsizei height,
 		 GLenum format, GLenum type,
 		 const struct gl_pixelstore_attrib *unpack,
@@ -637,7 +637,7 @@ mgaDDDrawPixels( GLcontext *ctx,
  * the same block of agp space which isn't used for anything else at
  * present.
  */
-void mgaDDInitPixelFuncs( GLcontext *ctx )
+void mgaDDInitPixelFuncs( struct gl_context *ctx )
 {
 #if 0
    /* evidently, these functions don't always work */

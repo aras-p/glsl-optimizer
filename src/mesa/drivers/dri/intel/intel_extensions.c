@@ -78,6 +78,7 @@
  */
 static const struct dri_extension card_extensions[] = {
    { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
+   { "GL_ARB_explicit_attrib_location",   NULL },
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
@@ -196,18 +197,35 @@ static const struct dri_extension fragment_shader_extensions[] = {
 };
 
 /**
+ * \brief Get GLSL version from the environment.
+ *
+ * If the environment variable INTEL_GLSL_VERSION is set, convert its value
+ * to an integer and return it. Otherwise, return the default version, 120.
+ */
+static GLuint
+get_glsl_version()
+{
+    const char * s = getenv("INTEL_GLSL_VERSION");
+    if (s == NULL)
+        return 120;
+    else
+        return (GLuint) atoi(s);
+}
+
+/**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
 void
-intelInitExtensions(GLcontext *ctx)
+intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
    _mesa_map_function_array(GL_VERSION_2_1_functions);
-   ctx->Const.GLSLVersion = 120;
+
+   ctx->Const.GLSLVersion = get_glsl_version();
 
    if (intel->gen >= 5)
       driInitExtensions(ctx, ironlake_extensions, GL_FALSE);

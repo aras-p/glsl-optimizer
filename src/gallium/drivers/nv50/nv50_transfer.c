@@ -45,7 +45,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 
 	WAIT_RING (chan, 14);
 
-	if (!src_bo->tile_flags) {
+	if (!nouveau_bo_tile_layout(src_bo)) {
 		BEGIN_RING(chan, m2mf,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_IN, 1);
 		OUT_RING  (chan, 1);
@@ -64,7 +64,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RING  (chan, sz); /* copying only 1 zslice per call */
 	}
 
-	if (!dst_bo->tile_flags) {
+	if (!nouveau_bo_tile_layout(dst_bo)) {
 		BEGIN_RING(chan, m2mf,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_OUT, 1);
 		OUT_RING  (chan, 1);
@@ -95,14 +95,14 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
 		OUT_RELOCl(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
-		if (src_bo->tile_flags) {
+		if (nouveau_bo_tile_layout(src_bo)) {
 			BEGIN_RING(chan, m2mf,
 				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_IN, 1);
 			OUT_RING  (chan, (sy << 16) | (sx * cpp));
 		} else {
 			src_offset += (line_count * src_pitch);
 		}
-		if (dst_bo->tile_flags) {
+		if (nouveau_bo_tile_layout(dst_bo)) {
 			BEGIN_RING(chan, m2mf,
 				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_OUT, 1);
 			OUT_RING  (chan, (dy << 16) | (dx * cpp));
@@ -280,7 +280,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 	MARK_RING (chan, 32, 2); /* flush on lack of space or relocs */
 
-	if (bo->tile_flags) {
+	if (nouveau_bo_tile_layout(bo)) {
 		BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 5);
 		OUT_RING  (chan, dst_format);
 		OUT_RING  (chan, 0);

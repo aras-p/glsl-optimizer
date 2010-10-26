@@ -108,7 +108,7 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
    t->maxLog2 = baseImage->MaxLog2;
 }
 
-static void mach64UpdateTextureEnv( GLcontext *ctx, int unit )
+static void mach64UpdateTextureEnv( struct gl_context *ctx, int unit )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLint source = mmesa->tmu_source[unit];
@@ -284,7 +284,7 @@ static void mach64UpdateTextureEnv( GLcontext *ctx, int unit )
 }
 
 
-static void mach64UpdateTextureUnit( GLcontext *ctx, int unit )
+static void mach64UpdateTextureUnit( struct gl_context *ctx, int unit )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    int source = mmesa->tmu_source[unit];
@@ -427,7 +427,7 @@ static void mach64UpdateTextureUnit( GLcontext *ctx, int unit )
 
 
 /* Update the hardware texture state */
-void mach64UpdateTextureState( GLcontext *ctx )
+void mach64UpdateTextureState( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 

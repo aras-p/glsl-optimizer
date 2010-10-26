@@ -54,7 +54,7 @@
 struct x86_program {
    struct x86_function func;
 
-   GLcontext *ctx;
+   struct gl_context *ctx;
    GLboolean inputs_safe;
    GLboolean outputs_safe;
    GLboolean have_sse2;
@@ -342,7 +342,7 @@ static void update_src_ptr( struct x86_program *p,
  */
 static GLboolean build_vertex_emit( struct x86_program *p )
 {
-   GLcontext *ctx = p->ctx;
+   struct gl_context *ctx = p->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    GLuint j = 0;
@@ -638,7 +638,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 
 
 
-void _tnl_generate_sse_emit( GLcontext *ctx )
+void _tnl_generate_sse_emit( struct gl_context *ctx )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    struct x86_program p;   
@@ -676,7 +676,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 
 #else
 
-void _tnl_generate_sse_emit( GLcontext *ctx )
+void _tnl_generate_sse_emit( struct gl_context *ctx )
 {
    /* Dummy version for when USE_SSE_ASM not defined */
 }

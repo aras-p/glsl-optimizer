@@ -34,51 +34,46 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy,
                 _EGLConfig *config, const EGLint *attrib_list);
 
 
-extern _EGLContext *
-_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
-
-
 extern EGLBoolean
 _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint attribute, EGLint *value);
 
 
 PUBLIC EGLBoolean
-_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
-
-
-extern EGLBoolean
-_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
-
-
-extern EGLBoolean
-_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
+_eglBindContext(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read,
+                _EGLContext **old_ctx,
+                _EGLSurface **old_draw, _EGLSurface **old_read);
 
 
 /**
- * Return true if the context is bound to a thread.
- *
- * The binding is considered a reference to the context.  Drivers should not
- * destroy a context when it is bound.
+ * Increment reference count for the context.
  */
-static INLINE EGLBoolean
-_eglIsContextBound(_EGLContext *ctx)
+static INLINE _EGLContext *
+_eglGetContext(_EGLContext *ctx)
 {
-   return (ctx->Binding != NULL);
+   if (ctx)
+      _eglGetResource(&ctx->Resource);
+   return ctx;
 }
 
 
 /**
- * Link a context to a display and return the handle of the link.
+ * Decrement reference count for the context.
+ */
+static INLINE EGLBoolean
+_eglPutContext(_EGLContext *ctx)
+{
+   return (ctx) ? _eglPutResource(&ctx->Resource) : EGL_FALSE;
+}
+
+
+/**
+ * Link a context to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
+_eglLinkContext(_EGLContext *ctx)
 {
-   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT, dpy);
+   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT);
    return (EGLContext) ctx;
 }
 
@@ -117,20 +112,6 @@ _eglGetContextHandle(_EGLContext *ctx)
    _EGLResource *res = (_EGLResource *) ctx;
    return (res && _eglIsResourceLinked(res)) ?
       (EGLContext) ctx : EGL_NO_CONTEXT;
-}
-
-
-/**
- * Return true if the context is linked to a display.
- *
- * The link is considered a reference to the context (the display is owning the
- * context).  Drivers should not destroy a context when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsContextLinked(_EGLContext *ctx)
-{
-   _EGLResource *res = (_EGLResource *) ctx;
-   return (res && _eglIsResourceLinked(res));
 }
 
 

@@ -124,7 +124,7 @@ static const struct dri_extension napalm_extensions[] =
 /*
  * Enable/Disable the extensions for this context.
  */
-static void tdfxDDInitExtensions( GLcontext *ctx )
+static void tdfxDDInitExtensions( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -163,12 +163,12 @@ static const struct dri_debug_control debug_control[] =
 };
 
 GLboolean tdfxCreateContext( gl_api api,
-			     const __GLcontextModes *mesaVis,
+			     const struct gl_config *mesaVis,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {
    tdfxContextPtr fxMesa;
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
@@ -635,7 +635,7 @@ tdfxMakeCurrent( __DRIcontext *driContextPriv,
 
    if ( driContextPriv ) {
       tdfxContextPtr newFx = (tdfxContextPtr) driContextPriv->driverPrivate;
-      GLcontext *newCtx = newFx->glCtx;
+      struct gl_context *newCtx = newFx->glCtx;
       GET_CURRENT_CONTEXT(curCtx);
 
       if ((newFx->driDrawable != driDrawPriv)
@@ -651,8 +651,8 @@ tdfxMakeCurrent( __DRIcontext *driContextPriv,
              * dispatch is set correctly.
              */
             _mesa_make_current( newCtx,
-                                (GLframebuffer *) driDrawPriv->driverPrivate,
-                                (GLframebuffer *) driReadPriv->driverPrivate );
+                                (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                                (struct gl_framebuffer *) driReadPriv->driverPrivate );
             return GL_TRUE;
 	 }
 	 /* [dBorca] tunnel2 requires this */
@@ -689,8 +689,8 @@ tdfxMakeCurrent( __DRIcontext *driContextPriv,
       }
 
       _mesa_make_current( newCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+                          (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                          (struct gl_framebuffer *) driReadPriv->driverPrivate );
    } else {
       _mesa_make_current( NULL, NULL, NULL );
    }

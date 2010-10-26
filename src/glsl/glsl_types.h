@@ -149,6 +149,8 @@ struct glsl_type {
    static const glsl_type *const int_type;
    static const glsl_type *const ivec4_type;
    static const glsl_type *const uint_type;
+   static const glsl_type *const uvec2_type;
+   static const glsl_type *const uvec3_type;
    static const glsl_type *const uvec4_type;
    static const glsl_type *const float_type;
    static const glsl_type *const vec2_type;

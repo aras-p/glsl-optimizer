@@ -545,7 +545,7 @@ emit_inline_vector_constructor(const glsl_type *type,
 	    /* Mask of fields to be written in the assignment.
 	     */
 	    constant_mask |= ((1U << rhs_components) - 1) << base_lhs_component;
-	    constant_components++;
+	    constant_components += rhs_components;
 
 	    base_component += rhs_components;
 	 }

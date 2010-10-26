@@ -52,7 +52,7 @@ get_attr_override(struct brw_context *brw, int fs_attr)
     * for this output attribute.  attr is currently a VERT_RESULT_* but should
     * be FRAG_ATTRIB_*.
     */
-   for (i = 0; i < vs_attr; i++) {
+   for (i = 1; i < vs_attr; i++) {
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
@@ -64,7 +64,7 @@ static void
 upload_sf_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
@@ -75,6 +75,7 @@ upload_sf_state(struct brw_context *brw)
    int attr = 0;
 
    dw1 =
+      GEN6_SF_SWIZZLE_ENABLE |
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
       1 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
@@ -125,7 +126,8 @@ upload_sf_state(struct brw_context *brw)
    }
 
    /* _NEW_POINT */
-   if (ctx->Point._Attenuated)
+   if (!(ctx->VertexProgram.PointSizeEnabled ||
+	 ctx->Point._Attenuated))
       dw4 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
    dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 225.875), 3) <<
@@ -185,8 +187,6 @@ upload_sf_state(struct brw_context *brw)
    OUT_BATCH(0); /* wrapshortest enables 0-7 */
    OUT_BATCH(0); /* wrapshortest enables 8-15 */
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_sf_state = {

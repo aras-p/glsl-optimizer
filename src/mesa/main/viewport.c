@@ -60,7 +60,7 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
  * \param height height of the viewport rectangle.
  */
 void
-_mesa_set_viewport(GLcontext *ctx, GLint x, GLint y,
+_mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height)
 {
    if (MESA_VERBOSE & VERBOSE_API)
@@ -151,7 +151,7 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
  * Initialize the context viewport attribute group.
  * \param ctx  the GL context.
  */
-void _mesa_init_viewport(GLcontext *ctx)
+void _mesa_init_viewport(struct gl_context *ctx)
 {
    GLfloat depthMax = 65535.0F; /* sorf of arbitrary */
 
@@ -173,7 +173,7 @@ void _mesa_init_viewport(GLcontext *ctx)
  * Free the context viewport attribute group data.
  * \param ctx  the GL context.
  */
-void _mesa_free_viewport_data(GLcontext *ctx)
+void _mesa_free_viewport_data(struct gl_context *ctx)
 {
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 }

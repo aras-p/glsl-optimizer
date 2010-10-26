@@ -53,7 +53,7 @@ static GLuint SerialNo = 1;
  * Called via ctx->Driver.BindProgram() to bind an ARB vertex or
  * fragment program.
  */
-static void st_bind_program( GLcontext *ctx,
+static void st_bind_program( struct gl_context *ctx,
 			     GLenum target, 
 			     struct gl_program *prog )
 {
@@ -77,7 +77,7 @@ static void st_bind_program( GLcontext *ctx,
  * Called via ctx->Driver.UseProgram() to bind a linked GLSL program
  * (vertex shader + fragment shader).
  */
-static void st_use_program( GLcontext *ctx, struct gl_shader_program *shProg)
+static void st_use_program( struct gl_context *ctx, struct gl_shader_program *shProg)
 {
    struct st_context *st = st_context(ctx);
 
@@ -92,7 +92,7 @@ static void st_use_program( GLcontext *ctx, struct gl_shader_program *shProg)
  * Called via ctx->Driver.NewProgram() to allocate a new vertex or
  * fragment program.
  */
-static struct gl_program *st_new_program( GLcontext *ctx,
+static struct gl_program *st_new_program( struct gl_context *ctx,
 					  GLenum target,
 					  GLuint id )
 {
@@ -139,7 +139,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
 
 void
-st_delete_program(GLcontext *ctx, struct gl_program *prog)
+st_delete_program(struct gl_context *ctx, struct gl_program *prog)
 {
    struct st_context *st = st_context(ctx);
 
@@ -195,7 +195,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
 }
 
 
-static GLboolean st_is_program_native( GLcontext *ctx,
+static GLboolean st_is_program_native( struct gl_context *ctx,
 				       GLenum target, 
 				       struct gl_program *prog )
 {
@@ -203,7 +203,7 @@ static GLboolean st_is_program_native( GLcontext *ctx,
 }
 
 
-static GLboolean st_program_string_notify( GLcontext *ctx,
+static GLboolean st_program_string_notify( struct gl_context *ctx,
                                            GLenum target,
                                            struct gl_program *prog )
 {

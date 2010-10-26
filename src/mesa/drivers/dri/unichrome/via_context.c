@@ -77,7 +77,7 @@ GLuint VIA_DEBUG = 0;
  *
  * \sa glGetString
  */
-static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
+static const GLubyte *viaGetString(struct gl_context *ctx, GLenum name)
 {
    static char buffer[128];
    unsigned   offset;
@@ -133,7 +133,7 @@ viaDeleteRenderbuffer(struct gl_renderbuffer *rb)
 }
 
 static GLboolean
-viaRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
+viaRenderbufferStorage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLenum internalFormat, GLuint width, GLuint height)
 {
    rb->Width = width;
@@ -352,7 +352,7 @@ calculate_buffer_parameters(struct via_context *vmesa,
 }
 
 
-void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+void viaReAllocateBuffers(struct gl_context *ctx, struct gl_framebuffer *drawbuffer,
                           GLuint width, GLuint height)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -457,11 +457,11 @@ FreeBuffer(struct via_context *vmesa)
 
 GLboolean
 viaCreateContext(gl_api api,
-		 const __GLcontextModes *visual,
+		 const struct gl_config *visual,
                  __DRIcontext *driContextPriv,
                  void *sharedContextPrivate)
 {
-    GLcontext *ctx, *shareCtx;
+    struct gl_context *ctx, *shareCtx;
     struct via_context *vmesa;
     __DRIscreen *sPriv = driContextPriv->driScreenPriv;
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
@@ -830,11 +830,11 @@ viaMakeCurrent(__DRIcontext *driContextPriv,
     if (driContextPriv) {
         struct via_context *vmesa = 
 	   (struct via_context *)driContextPriv->driverPrivate;
-	GLcontext *ctx = vmesa->glCtx;
+	struct gl_context *ctx = vmesa->glCtx;
         struct gl_framebuffer *drawBuffer, *readBuffer;
 
-        drawBuffer = (GLframebuffer *)driDrawPriv->driverPrivate;
-        readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
+        drawBuffer = (struct gl_framebuffer *)driDrawPriv->driverPrivate;
+        readBuffer = (struct gl_framebuffer *)driReadPriv->driverPrivate;
 
        if ((vmesa->driDrawable != driDrawPriv)
 	   || (vmesa->driReadable != driReadPriv)) {
@@ -935,7 +935,7 @@ viaSwapBuffers(__DRIdrawable *drawablePrivate)
 	dPriv->driContextPriv->driverPrivate) {
         struct via_context *vmesa = 
 	   (struct via_context *)dPriv->driContextPriv->driverPrivate;
-        GLcontext *ctx = vmesa->glCtx;
+        struct gl_context *ctx = vmesa->glCtx;
 
 	_mesa_notifySwapBuffers(ctx);
 

@@ -874,8 +874,8 @@ BOOL APIENTRY _GLD_WGL_EXPORT(SetPixelFormat)(
 // Copied from GLD2.x. KeithH
 //
 static GLboolean _gldShareLists(
-	GLcontext *ctx1,
-	GLcontext *ctx2)
+	struct gl_context *ctx1,
+	struct gl_context *ctx2)
 {
 	/* Sanity check context pointers */
 	if (ctx1 == NULL || ctx2 == NULL)
@@ -955,7 +955,7 @@ BOOL APIENTRY _GLD_WGL_EXPORT(SwapLayerBuffers)(
 // either MESA glViewport() or GLD wglMakeCurrent().
 
 BOOL dglWglResizeBuffers(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	BOOL bDefaultDriver)
 {
 	DGL_ctx						*dgl = NULL;

@@ -41,7 +41,7 @@ static void
 depth_stencil_state_populate_key(struct brw_context *brw,
 				 struct brw_depth_stencil_state_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const unsigned back = ctx->Stencil._BackFace;
 
    memset(key, 0, sizeof(*key));

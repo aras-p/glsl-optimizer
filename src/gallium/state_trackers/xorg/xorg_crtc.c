@@ -234,6 +234,10 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ms->ctx->transfer_unmap(ms->ctx, transfer);
     ms->ctx->transfer_destroy(ms->ctx, transfer);
+
+    if (crtc->cursor_shown)
+	drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id,
+			 crtcp->cursor_handle, 64, 64);
 }
 
 #if HAVE_LIBKMS
@@ -270,6 +274,10 @@ crtc_load_cursor_argb_kms(xf86CrtcPtr crtc, CARD32 * image)
     kms_bo_map(crtcp->cursor_bo, (void**)&ptr);
     memcpy(ptr, image, 64*64*4);
     kms_bo_unmap(crtcp->cursor_bo);
+
+    if (crtc->cursor_shown)
+	drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id,
+			 crtcp->cursor_handle, 64, 64);
 
     return;
 
@@ -353,7 +361,7 @@ crtc_destroy(xf86CrtcPtr crtc)
 
     drmModeFreeCrtc(crtcp->drm_crtc);
 
-    xfree(crtcp);
+    free(crtcp);
     crtc->driver_private = NULL;
 }
 
@@ -401,7 +409,7 @@ xorg_crtc_init(ScrnInfoPtr pScrn)
 	if (crtc == NULL)
 	    goto out;
 
-	crtcp = xcalloc(1, sizeof(struct crtc_private));
+	crtcp = calloc(1, sizeof(struct crtc_private));
 	if (!crtcp) {
 	    xf86CrtcDestroy(crtc);
 	    goto out;

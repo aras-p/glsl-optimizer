@@ -97,7 +97,7 @@ update_depth_stencil_alpha(struct st_context *st)
 {
    struct pipe_depth_stencil_alpha_state *dsa = &st->state.depth_stencil;
    struct pipe_stencil_ref sr;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    memset(dsa, 0, sizeof(*dsa));
    memset(&sr, 0, sizeof(sr));

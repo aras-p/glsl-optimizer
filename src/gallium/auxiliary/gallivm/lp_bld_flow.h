@@ -41,51 +41,48 @@
 struct lp_type;
 
 
-struct lp_build_flow_context;
+/**
+ * Early exit. Useful to skip to the end of a function or block when
+ * the execution mask becomes zero or when there is an error condition.
+ */
+struct lp_build_skip_context
+{
+   LLVMBuilderRef builder;
 
-
-struct lp_build_flow_context *
-lp_build_flow_create(LLVMBuilderRef builder);
-
-void
-lp_build_flow_destroy(struct lp_build_flow_context *flow);
-
-void
-lp_build_flow_scope_begin(struct lp_build_flow_context *flow);
-
-void
-lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
-                            LLVMValueRef *variable);
+   /** Block to skip to */
+   LLVMBasicBlockRef block;
+};
 
 void
-lp_build_flow_scope_end(struct lp_build_flow_context *flow);
+lp_build_flow_skip_begin(struct lp_build_skip_context *ctx,
+                         LLVMBuilderRef builder);
 
 void
-lp_build_flow_skip_begin(struct lp_build_flow_context *flow);
-
-void
-lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
+lp_build_flow_skip_cond_break(struct lp_build_skip_context *ctx,
                               LLVMValueRef cond);
 
 void
-lp_build_flow_skip_end(struct lp_build_flow_context *flow);
+lp_build_flow_skip_end(struct lp_build_skip_context *ctx);
 
 
 struct lp_build_mask_context
 {
-   struct lp_build_flow_context *flow;
+   struct lp_build_skip_context skip;
 
    LLVMTypeRef reg_type;
 
-   LLVMValueRef value;
+   LLVMValueRef var;
 };
 
 
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    struct lp_build_flow_context *flow,
+                    LLVMBuilderRef builder,
                     struct lp_type type,
                     LLVMValueRef value);
+
+LLVMValueRef
+lp_build_mask_value(struct lp_build_mask_context *mask);
 
 /**
  * Bitwise AND the mask with the given value, if a previous mask was set.
@@ -93,6 +90,9 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
 void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value);
+
+void
+lp_build_mask_check(struct lp_build_mask_context *mask);
 
 LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask);
@@ -108,6 +108,7 @@ lp_build_mask_end(struct lp_build_mask_context *mask);
 struct lp_build_loop_state
 {
   LLVMBasicBlockRef block;
+  LLVMValueRef counter_var;
   LLVMValueRef counter;
 };
 
@@ -128,22 +129,28 @@ void
 lp_build_loop_end_cond(LLVMBuilderRef builder,
                        LLVMValueRef end,
                        LLVMValueRef step,
-                       int cond, /* LLVM condition */
+                       LLVMIntPredicate cond,
                        struct lp_build_loop_state *state);
 
 
 
 
+/**
+ * if/else/endif.
+ */
 struct lp_build_if_state
 {
    LLVMBuilderRef builder;
-   struct lp_build_flow_context *flow;
+   LLVMValueRef condition;
+   LLVMBasicBlockRef entry_block;
+   LLVMBasicBlockRef true_block;
+   LLVMBasicBlockRef false_block;
+   LLVMBasicBlockRef merge_block;
 };
 
 
 void
 lp_build_if(struct lp_build_if_state *ctx,
-            struct lp_build_flow_context *flow,
             LLVMBuilderRef builder,
             LLVMValueRef condition);
 

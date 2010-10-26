@@ -202,7 +202,8 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
 
-    compiler.Base.Debug = DBG_ON(r300, DBG_VP);
+    DBG_ON(r300, DBG_VP) ? compiler.Base.Debug |= RC_DBG_LOG : 0;
+    DBG_ON(r300, DBG_P_STAT) ? compiler.Base.Debug |= RC_DBG_STATS : 0;
     compiler.code = &vs->code;
     compiler.UserData = vs;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
@@ -214,7 +215,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.Base.max_alu_insts = r300->screen->caps.is_r500 ? 1024 : 256;
     compiler.Base.remove_unused_constants = TRUE;
 
-    if (compiler.Base.Debug) {
+    if (compiler.Base.Debug & RC_DBG_LOG) {
         DBG(r300, DBG_VP, "r300: Initial vertex program\n");
         tgsi_dump(vs->state.tokens, 0);
     }

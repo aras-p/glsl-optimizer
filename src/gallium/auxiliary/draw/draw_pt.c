@@ -287,6 +287,84 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 }
 
 
+/** Helper code for below */
+#define PRIM_RESTART_LOOP(elements) \
+   do { \
+      for (i = start; i < end; i++) { \
+         if (elements[i] == info->restart_index) { \
+            if (cur_count > 0) { \
+               /* draw elts up to prev pos */ \
+               draw_pt_arrays(draw, prim, cur_start, cur_count); \
+            } \
+            /* begin new prim at next elt */ \
+            cur_start = i + 1; \
+            cur_count = 0; \
+         } \
+         else { \
+            cur_count++; \
+         } \
+      } \
+      if (cur_count > 0) { \
+         draw_pt_arrays(draw, prim, cur_start, cur_count); \
+      } \
+   } while (0)
+
+
+/**
+ * For drawing prims with primitive restart enabled.
+ * Scan for restart indexes and draw the runs of elements/vertices between
+ * the restarts.
+ */
+static void
+draw_pt_arrays_restart(struct draw_context *draw,
+                       const struct pipe_draw_info *info)
+{
+   const unsigned prim = info->mode;
+   const unsigned start = info->start;
+   const unsigned count = info->count;
+   const unsigned end = start + count;
+   unsigned i, cur_start, cur_count;
+
+   assert(info->primitive_restart);
+
+   if (draw->pt.user.elts) {
+      /* indexed prims (draw_elements) */
+      cur_start = start;
+      cur_count = 0;
+
+      switch (draw->pt.user.eltSize) {
+      case 1:
+         {
+            const ubyte *elt_ub = (const ubyte *) draw->pt.user.elts;
+            PRIM_RESTART_LOOP(elt_ub);
+         }
+         break;
+      case 2:
+         {
+            const ushort *elt_us = (const ushort *) draw->pt.user.elts;
+            PRIM_RESTART_LOOP(elt_us);
+         }
+         break;
+      case 4:
+         {
+            const uint *elt_ui = (const uint *) draw->pt.user.elts;
+            PRIM_RESTART_LOOP(elt_ui);
+         }
+         break;
+      default:
+         assert(0 && "bad eltSize in draw_arrays()");
+      }
+   }
+   else {
+      /* Non-indexed prims (draw_arrays).
+       * Primitive restart should have been handled in the state tracker.
+       */
+      draw_pt_arrays(draw, prim, start, count);
+   }
+}
+
+
+
 /**
  * Non-instanced drawing.
  * \sa draw_arrays_instanced
@@ -395,6 +473,12 @@ draw_vbo(struct draw_context *draw,
 
    for (instance = 0; instance < info->instance_count; instance++) {
       draw->instance_id = instance + info->start_instance;
-      draw_pt_arrays(draw, info->mode, info->start, info->count);
+
+      if (info->primitive_restart) {
+         draw_pt_arrays_restart(draw, info);
+      }
+      else {
+         draw_pt_arrays(draw, info->mode, info->start, info->count);
+      }
    }
 }

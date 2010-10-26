@@ -50,10 +50,7 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
        !(type == EGL_SYNC_FENCE_KHR && dpy->Extensions.KHR_fence_sync))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglCreateSyncKHR");
 
-   memset(sync, 0, sizeof(*sync));
-
-   sync->Resource.Display = dpy;
-
+   _eglInitResource(&sync->Resource, sizeof(*sync), dpy);
    sync->Type = type;
    sync->SyncStatus = EGL_UNSIGNALED_KHR;
    sync->SyncCondition = EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR;
@@ -63,37 +60,6 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
       return _eglError(err, "eglCreateSyncKHR");
 
    return EGL_TRUE;
-}
-
-
-_EGLSync *
-_eglCreateSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy,
-                  EGLenum type, const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-EGLBoolean
-_eglDestroySyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync)
-{
-   return EGL_TRUE;
-}
-
-
-EGLint
-_eglClientWaitSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                      EGLint flags, EGLTimeKHR timeout)
-{
-   return EGL_FALSE;
-}
-
-
-EGLBoolean
-_eglSignalSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                  EGLenum mode)
-{
-   return EGL_FALSE;
 }
 
 

@@ -155,7 +155,7 @@ tdfxInitDriver( __DRIscreen *sPriv )
 static GLboolean
 tdfxCreateBuffer( __DRIscreen *driScrnPriv,
                   __DRIdrawable *driDrawPriv,
-                  const __GLcontextModes *mesaVis,
+                  const struct gl_config *mesaVis,
                   GLboolean isPixmap )
 {
    tdfxScreenPrivate *screen = (tdfxScreenPrivate *) driScrnPriv->private;
@@ -227,7 +227,7 @@ tdfxCreateBuffer( __DRIscreen *driScrnPriv,
 static void
 tdfxDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -237,13 +237,13 @@ tdfxSwapBuffers( __DRIdrawable *driDrawPriv )
 {
    GET_CURRENT_CONTEXT(ctx);
    tdfxContextPtr fxMesa = 0;
-   GLframebuffer *mesaBuffer;
+   struct gl_framebuffer *mesaBuffer;
 
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)driDrawPriv );
    }
 
-   mesaBuffer = (GLframebuffer *) driDrawPriv->driverPrivate;
+   mesaBuffer = (struct gl_framebuffer *) driDrawPriv->driverPrivate;
    if ( !mesaBuffer->Visual.doubleBufferMode )
       return; /* can't swap a single-buffered window */
 
@@ -394,7 +394,7 @@ tdfxFillInModes(__DRIscreen *psp,
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 tdfxInitScreen(__DRIscreen *psp)

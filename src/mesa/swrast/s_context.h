@@ -50,26 +50,26 @@
 #include "s_span.h"
 
 
-typedef void (*texture_sample_func)(GLcontext *ctx,
+typedef void (*texture_sample_func)(struct gl_context *ctx,
                                     const struct gl_texture_object *tObj,
                                     GLuint n, const GLfloat texcoords[][4],
                                     const GLfloat lambda[], GLfloat rgba[][4]);
 
-typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
+typedef void (_ASMAPIP blend_func)( struct gl_context *ctx, GLuint n,
                                     const GLubyte mask[],
                                     GLvoid *src, const GLvoid *dst,
                                     GLenum chanType);
 
-typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
+typedef void (*swrast_point_func)( struct gl_context *ctx, const SWvertex *);
 
-typedef void (*swrast_line_func)( GLcontext *ctx,
+typedef void (*swrast_line_func)( struct gl_context *ctx,
                                   const SWvertex *, const SWvertex *);
 
-typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
+typedef void (*swrast_tri_func)( struct gl_context *ctx, const SWvertex *,
                                  const SWvertex *, const SWvertex *);
 
 
-typedef void (*validate_texture_image_func)(GLcontext *ctx,
+typedef void (*validate_texture_image_func)(struct gl_context *ctx,
                                             struct gl_texture_object *texObj,
                                             GLuint face, GLuint level);
 
@@ -160,7 +160,7 @@ typedef struct
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
    GLboolean SpecularVertexAdd; /**< Add specular/secondary color per vertex */
 
-   void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
+   void (*InvalidateState)( struct gl_context *ctx, GLbitfield new_state );
 
    /**
     * When the NewState mask intersects these masks, we invalidate the
@@ -177,9 +177,9 @@ typedef struct
     * Will be called when the GL state change mask intersects the above masks.
     */
    /*@{*/
-   void (*choose_point)( GLcontext * );
-   void (*choose_line)( GLcontext * );
-   void (*choose_triangle)( GLcontext * );
+   void (*choose_point)( struct gl_context * );
+   void (*choose_line)( struct gl_context * );
+   void (*choose_triangle)( struct gl_context * );
    /*@}*/
 
    /**
@@ -234,22 +234,22 @@ typedef struct
 
 
 extern void
-_swrast_validate_derived( GLcontext *ctx );
+_swrast_validate_derived( struct gl_context *ctx );
 
 extern void
-_swrast_update_texture_samplers(GLcontext *ctx);
+_swrast_update_texture_samplers(struct gl_context *ctx);
 
 
-/** Return SWcontext for the given GLcontext */
+/** Return SWcontext for the given struct gl_context */
 static INLINE SWcontext *
-SWRAST_CONTEXT(GLcontext *ctx)
+SWRAST_CONTEXT(struct gl_context *ctx)
 {
    return (SWcontext *) ctx->swrast_context;
 }
 
 /** const version of above */
 static INLINE const SWcontext *
-CONST_SWRAST_CONTEXT(const GLcontext *ctx)
+CONST_SWRAST_CONTEXT(const struct gl_context *ctx)
 {
    return (const SWcontext *) ctx->swrast_context;
 }
@@ -261,7 +261,7 @@ CONST_SWRAST_CONTEXT(const GLcontext *ctx)
  * driver's opportunity to map renderbuffers and textures.
  */
 static INLINE void
-swrast_render_start(GLcontext *ctx)
+swrast_render_start(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderStart)
@@ -271,7 +271,7 @@ swrast_render_start(GLcontext *ctx)
 
 /** Called after framebuffer reading/writing */
 static INLINE void
-swrast_render_finish(GLcontext *ctx)
+swrast_render_finish(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderFinish)

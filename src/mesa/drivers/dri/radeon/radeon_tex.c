@@ -253,7 +253,7 @@ static void radeonSetTexBorderColor( radeonTexObjPtr t, const GLfloat color[4] )
 #define SCALED_FLOAT_TO_BYTE( x, scale ) \
 		(((GLuint)((255.0F / scale) * (x))) / 2)
 
-static void radeonTexEnv( GLcontext *ctx, GLenum target,
+static void radeonTexEnv( struct gl_context *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -316,7 +316,7 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
  * next UpdateTextureState
  */
 
-static void radeonTexParameter( GLcontext *ctx, GLenum target,
+static void radeonTexParameter( struct gl_context *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
@@ -354,7 +354,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
    }
 }
 
-static void radeonDeleteTexture( GLcontext *ctx,
+static void radeonDeleteTexture( struct gl_context *ctx,
 				 struct gl_texture_object *texObj )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -392,7 +392,7 @@ static void radeonDeleteTexture( GLcontext *ctx,
  * Basically impossible to do this on the fly - just collect some
  * basic info & do the checks from ValidateState().
  */
-static void radeonTexGen( GLcontext *ctx,
+static void radeonTexGen( struct gl_context *ctx,
 			  GLenum coord,
 			  GLenum pname,
 			  const GLfloat *params )
@@ -409,7 +409,7 @@ static void radeonTexGen( GLcontext *ctx,
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);

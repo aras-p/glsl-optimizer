@@ -398,11 +398,20 @@ st_translate_fragment_program(struct st_context *st,
          outputsWritten &= ~(1 << FRAG_RESULT_DEPTH);
       }
 
+      if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_STENCIL)) {
+         fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_STENCIL;
+         fs_output_semantic_index[fs_num_outputs] = 0;
+         outputMapping[FRAG_RESULT_STENCIL] = fs_num_outputs;
+         fs_num_outputs++;
+         outputsWritten &= ~(1 << FRAG_RESULT_STENCIL);
+      }
+
       /* handle remaning outputs (color) */
       for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
          if (outputsWritten & BITFIELD64_BIT(attr)) {
             switch (attr) {
             case FRAG_RESULT_DEPTH:
+            case FRAG_RESULT_STENCIL:
                /* handled above */
                assert(0);
                break;
@@ -707,7 +716,7 @@ st_translate_geometry_program(struct st_context *st,
  * Debug- print current shader text
  */
 void
-st_print_shaders(GLcontext *ctx)
+st_print_shaders(struct gl_context *ctx)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    if (shProg) {

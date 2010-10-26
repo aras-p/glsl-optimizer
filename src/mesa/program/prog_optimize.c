@@ -1216,7 +1216,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
 
 #if 0
 static void
-print_it(GLcontext *ctx, struct gl_program *program, const char *txt) {
+print_it(struct gl_context *ctx, struct gl_program *program, const char *txt) {
    fprintf(stderr, "%s (%u inst):\n", txt, program->NumInstructions);
    _mesa_print_program(program);
    _mesa_print_program_parameters(ctx, program);
@@ -1230,7 +1230,7 @@ print_it(GLcontext *ctx, struct gl_program *program, const char *txt) {
  * instructions, temp regs, etc.
  */
 void
-_mesa_optimize_program(GLcontext *ctx, struct gl_program *program)
+_mesa_optimize_program(struct gl_context *ctx, struct gl_program *program)
 {
    GLboolean any_change;
 

@@ -31,7 +31,7 @@
 
 #include "main/mtypes.h"
 
-void _swsetup_vb_init( GLcontext *ctx );
-void _swsetup_choose_rastersetup_func( GLcontext *ctx );
+void _swsetup_vb_init( struct gl_context *ctx );
+void _swsetup_choose_rastersetup_func( struct gl_context *ctx );
 
 #endif

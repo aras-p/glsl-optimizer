@@ -339,7 +339,7 @@ intelDestroyScreen(__DRIscreen * sPriv)
 static GLboolean
 intelCreateBuffer(__DRIscreen * driScrnPriv,
                   __DRIdrawable * driDrawPriv,
-                  const __GLcontextModes * mesaVis, GLboolean isPixmap)
+                  const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
 
@@ -415,22 +415,22 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
  * init-designated function to register chipids and createcontext
  * functions.
  */
-extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i830CreateContext(const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 extern GLboolean i915CreateContext(int api,
-				   const __GLcontextModes * mesaVis,
+				   const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 extern GLboolean brwCreateContext(int api,
-				  const __GLcontextModes * mesaVis,
+				  const struct gl_config * mesaVis,
 				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(gl_api api,
-		   const __GLcontextModes * mesaVis,
+		   const struct gl_config * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
@@ -488,7 +488,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const
 __DRIconfig **intelInitScreen2(__DRIscreen *psp)

@@ -49,7 +49,7 @@ static void
 blend_state_populate_key(struct brw_context *brw,
 			 struct gen6_blend_state_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
 
@@ -181,7 +181,7 @@ static void
 color_calc_state_populate_key(struct brw_context *brw,
 			      struct gen6_color_calc_state_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
 
@@ -271,8 +271,6 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 

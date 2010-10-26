@@ -582,7 +582,7 @@ GetFbParams(tdfxContextPtr fxMesa,
 
 
 static void
-tdfxDDWriteDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
+tdfxDDWriteDepthSpan(struct gl_context * ctx, struct gl_renderbuffer *rb,
 		     GLuint n, GLint x, GLint y, const void *values,
 		     const GLubyte mask[])
 {
@@ -819,7 +819,7 @@ tdfxDDWriteDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 static void
-tdfxDDWriteMonoDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
+tdfxDDWriteMonoDepthSpan(struct gl_context * ctx, struct gl_renderbuffer *rb,
                          GLuint n, GLint x, GLint y, const void *value,
                          const GLubyte mask[])
 {
@@ -833,7 +833,7 @@ tdfxDDWriteMonoDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-tdfxDDReadDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
+tdfxDDReadDepthSpan(struct gl_context * ctx, struct gl_renderbuffer *rb,
 		    GLuint n, GLint x, GLint y, void *values)
 {
    GLuint *depth = (GLuint *) values;
@@ -937,7 +937,7 @@ tdfxDDReadDepthSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
+tdfxDDWriteDepthPixels(struct gl_context * ctx, struct gl_renderbuffer *rb,
 		       GLuint n, const GLint x[], const GLint y[],
 		       const void *values, const GLubyte mask[])
 {
@@ -1020,7 +1020,7 @@ tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-tdfxDDReadDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb, GLuint n,
+tdfxDDReadDepthPixels(struct gl_context * ctx, struct gl_renderbuffer *rb, GLuint n,
 		      const GLint x[], const GLint y[], void *values)
 {
    GLuint *depth = (GLuint *) values;
@@ -1107,7 +1107,7 @@ tdfxDDReadDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb, GLuint n,
 #define BUILD_ZS(z, s)  (((s) << 24) | (z))
 
 static void
-write_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
+write_stencil_span(struct gl_context * ctx, struct gl_renderbuffer *rb,
                    GLuint n, GLint x, GLint y,
                    const void *values, const GLubyte mask[])
 {
@@ -1166,7 +1166,7 @@ write_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-write_mono_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
+write_mono_stencil_span(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLuint n, GLint x, GLint y,
                         const void *value, const GLubyte mask[])
 {
@@ -1180,7 +1180,7 @@ write_mono_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-read_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
+read_stencil_span(struct gl_context * ctx, struct gl_renderbuffer *rb,
                   GLuint n, GLint x, GLint y,
                   void *values)
 {
@@ -1232,7 +1232,7 @@ read_stencil_span(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-write_stencil_pixels(GLcontext * ctx, struct gl_renderbuffer *rb,
+write_stencil_pixels(struct gl_context * ctx, struct gl_renderbuffer *rb,
                      GLuint n, const GLint x[], const GLint y[],
                      const void *values, const GLubyte mask[])
 {
@@ -1271,7 +1271,7 @@ write_stencil_pixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 static void
-read_stencil_pixels(GLcontext * ctx, struct gl_renderbuffer *rb,
+read_stencil_pixels(struct gl_context * ctx, struct gl_renderbuffer *rb,
                     GLuint n, const GLint x[], const GLint y[],
                     void *values)
 {
@@ -1318,13 +1318,13 @@ read_stencil_pixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 /**********************************************************************/
 
 
-static void tdfxSpanRenderStart( GLcontext *ctx )
+static void tdfxSpanRenderStart( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    LOCK_HARDWARE(fxMesa);
 }
 
-static void tdfxSpanRenderFinish( GLcontext *ctx )
+static void tdfxSpanRenderFinish( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    _swrast_flush( ctx );
@@ -1335,7 +1335,7 @@ static void tdfxSpanRenderFinish( GLcontext *ctx )
 /*                    Initialize swrast device driver                 */
 /**********************************************************************/
 
-void tdfxDDInitSpanFuncs( GLcontext *ctx )
+void tdfxDDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
    swdd->SpanRenderStart          = tdfxSpanRenderStart;
@@ -1348,7 +1348,7 @@ void tdfxDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-tdfxSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+tdfxSetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {

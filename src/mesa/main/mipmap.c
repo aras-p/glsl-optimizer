@@ -606,7 +606,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
          FILTER_3D(0);
       }
    }
-   if ((datatype == GL_BYTE) && (comps == 4)) {
+   else if ((datatype == GL_BYTE) && (comps == 4)) {
       DECLARE_ROW_POINTERS(GLbyte, 4);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
@@ -1504,7 +1504,7 @@ next_mipmap_level_size(GLenum target, GLint border,
  * GL_TEXTURE_CUBE_MAP_POSITIVE/NEGATIVE_X/Y/Z; never GL_TEXTURE_CUBE_MAP.
  */
 void
-_mesa_generate_mipmap(GLcontext *ctx, GLenum target,
+_mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj)
 {
    const struct gl_texture_image *srcImage;

@@ -49,7 +49,7 @@
 /* Override intel default.
  */
 static void
-i915InvalidateState(GLcontext * ctx, GLuint new_state)
+i915InvalidateState(struct gl_context * ctx, GLuint new_state)
 {
    _swrast_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
@@ -94,7 +94,7 @@ extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
 i915CreateContext(int api,
-		  const __GLcontextModes * mesaVis,
+		  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {
@@ -102,7 +102,7 @@ i915CreateContext(int api,
    struct i915_context *i915 =
       (struct i915_context *) CALLOC_STRUCT(i915_context);
    struct intel_context *intel = &i915->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
 
    if (!i915)
       return GL_FALSE;

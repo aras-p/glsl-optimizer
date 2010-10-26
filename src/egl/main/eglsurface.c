@@ -17,12 +17,12 @@
 static void
 _eglClampSwapInterval(_EGLSurface *surf, EGLint interval)
 {
-   EGLint bound = GET_CONFIG_ATTRIB(surf->Config, EGL_MAX_SWAP_INTERVAL);
+   EGLint bound = surf->Config->MaxSwapInterval;
    if (interval >= bound) {
       interval = bound;
    }
    else {
-      bound = GET_CONFIG_ATTRIB(surf->Config, EGL_MIN_SWAP_INTERVAL);
+      bound = surf->Config->MinSwapInterval;
       if (interval < bound)
          interval = bound;
    }
@@ -263,14 +263,13 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
       return EGL_FALSE;
    }
 
-   if ((GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) & type) == 0) {
+   if ((conf->SurfaceType & type) == 0) {
       /* The config can't be used to create a surface of this type */
       _eglError(EGL_BAD_CONFIG, func);
       return EGL_FALSE;
    }
 
-   memset(surf, 0, sizeof(_EGLSurface));
-   surf->Resource.Display = dpy;
+   _eglInitResource(&surf->Resource, sizeof(*surf), dpy);
    surf->Type = type;
    surf->Config = conf;
 
@@ -304,24 +303,6 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
 
 
 EGLBoolean
-_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
-{
-   /* Drivers have to do the actual buffer swap.  */
-   return EGL_TRUE;
-}
-
-
-EGLBoolean
-_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
-                EGLNativePixmapType target)
-{
-   /* copy surface to native pixmap */
-   /* All implementation burdon for this is in the device driver */
-   return EGL_FALSE;
-}
-
-
-EGLBoolean
 _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                  EGLint attribute, EGLint *value)
 {
@@ -333,7 +314,7 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       *value = surface->Height;
       break;
    case EGL_CONFIG_ID:
-      *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
+      *value = surface->Config->ConfigID;
       break;
    case EGL_LARGEST_PBUFFER:
       *value = surface->LargestPbuffer;
@@ -389,51 +370,6 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 
 
 /**
- * Drivers should do a proper implementation.
- */
-_EGLSurface *
-_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        EGLNativeWindowType window, const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-/**
- * Drivers should do a proper implementation.
- */
-_EGLSurface *
-_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        EGLNativePixmapType pixmap, const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-/**
- * Drivers should do a proper implementation.
- */
-_EGLSurface *
-_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                         const EGLint *attrib_list)
-{
-   return NULL;
-}
-
-
-/**
- * Default fallback routine - drivers should usually override this.
- */
-EGLBoolean
-_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
-{
-   if (!_eglIsSurfaceBound(surf))
-      free(surf);
-   return EGL_TRUE;
-}
-
-
-/**
  * Default fallback routine - drivers might override this.
  */
 EGLBoolean
@@ -445,7 +381,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 
    switch (attribute) {
    case EGL_MIPMAP_LEVEL:
-      confval = GET_CONFIG_ATTRIB(surface->Config, EGL_RENDERABLE_TYPE);
+      confval = surface->Config->RenderableType;
       if (!(confval & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT))) {
          err = EGL_BAD_PARAMETER;
          break;
@@ -457,7 +393,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       case EGL_MULTISAMPLE_RESOLVE_DEFAULT:
          break;
       case EGL_MULTISAMPLE_RESOLVE_BOX:
-         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         confval = surface->Config->SurfaceType;
          if (!(confval & EGL_MULTISAMPLE_RESOLVE_BOX_BIT))
             err = EGL_BAD_MATCH;
          break;
@@ -474,7 +410,7 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       case EGL_BUFFER_DESTROYED:
          break;
       case EGL_BUFFER_PRESERVED:
-         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         confval = surface->Config->SurfaceType;
          if (!(confval & EGL_SWAP_BEHAVIOR_PRESERVED_BIT))
             err = EGL_BAD_MATCH;
          break;
@@ -537,64 +473,9 @@ _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 
 
 EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
-                    EGLint buffer)
-{
-   /* Just do basic error checking and return success/fail.
-    * Drivers must implement the real stuff.
-    */
-
-   if (surface->Type != EGL_PBUFFER_BIT) {
-      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
-      return EGL_FALSE;
-   }
-
-   if (surface->TextureFormat == EGL_NO_TEXTURE) {
-      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
-      return EGL_FALSE;
-   }
-
-   if (buffer != EGL_BACK_BUFFER) {
-      _eglError(EGL_BAD_PARAMETER, "eglReleaseTexImage");
-      return EGL_FALSE;
-   }
-
-   if (!surface->BoundToTexture) {
-      _eglError(EGL_BAD_SURFACE, "eglReleaseTexImage");
-      return EGL_FALSE;
-   }
-
-   surface->BoundToTexture = EGL_FALSE;
-
-   return EGL_TRUE;
-}
-
-
-EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                  EGLint interval)
 {
    _eglClampSwapInterval(surf, interval);
    return EGL_TRUE;
 }
-
-
-#ifdef EGL_VERSION_1_2
-
-/**
- * Example function - drivers should do a proper implementation.
- */
-_EGLSurface *
-_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
-                                  EGLenum buftype, EGLClientBuffer buffer,
-                                  _EGLConfig *conf, const EGLint *attrib_list)
-{
-   if (buftype != EGL_OPENVG_IMAGE) {
-      _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferFromClientBuffer");
-      return NULL;
-   }
-
-   return NULL;
-}
-
-#endif /* EGL_VERSION_1_2 */

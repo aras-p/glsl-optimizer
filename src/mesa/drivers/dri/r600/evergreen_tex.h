@@ -27,9 +27,9 @@
 #ifndef _EVERGREEN_TEX_H_
 #define _EVERGREEN_TEX_H_
 
-extern GLboolean evergreenValidateBuffers(GLcontext * ctx);
+extern GLboolean evergreenValidateBuffers(struct gl_context * ctx);
 
-extern void evergreenUpdateTextureState(GLcontext * ctx);
+extern void evergreenUpdateTextureState(struct gl_context * ctx);
 extern void evergreenInitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions);
 extern void evergreenSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 		                          unsigned long long offset, GLint depth, GLuint pitch);

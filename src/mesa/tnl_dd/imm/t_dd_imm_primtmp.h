@@ -46,7 +46,7 @@
  * GL_POINTS
  */
 
-static void TAG(flush_point_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_point_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    if ( !v0->mask ) {
       LOCAL_VARS;
@@ -59,16 +59,16 @@ static void TAG(flush_point_0)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_LINES
  */
 
-static void TAG(flush_line_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_line_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_line_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    FLUSH_VERTEX = TAG(flush_line_1);
    ACTIVE_VERTEX = IMM_VERTICES( 1 );
 }
 
-static void TAG(flush_line_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v1 = v0 - 1;
@@ -85,10 +85,10 @@ static void TAG(flush_line_1)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_LINE_LOOP
  */
 
-static void TAG(flush_line_loop_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_line_loop_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_line_loop_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_line_loop_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_line_loop_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_loop_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -107,7 +107,7 @@ static void TAG(flush_line_loop_0)( GLcontext *ctx, TNL_VERTEX *v0 )
       EMIT_VERTEX( b );      				\
    }
 
-static void TAG(flush_line_loop_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_loop_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v1 = v0 - 1;
@@ -116,7 +116,7 @@ static void TAG(flush_line_loop_1)( GLcontext *ctx, TNL_VERTEX *v0 )
    DRAW_LINELOOP_LINE( v1, v0 );
 }
 
-static void TAG(flush_line_loop_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_loop_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v1 = v0 + 1;
@@ -125,7 +125,7 @@ static void TAG(flush_line_loop_2)( GLcontext *ctx, TNL_VERTEX *v0 )
    DRAW_LINELOOP_LINE( v1, v0 );
 }
 
-static void TAG(end_line_loop)( GLcontext *ctx )
+static void TAG(end_line_loop)( struct gl_context *ctx )
 {
    LOCAL_VARS;
 
@@ -142,10 +142,10 @@ static void TAG(end_line_loop)( GLcontext *ctx )
  * GL_LINE_STRIP
  */
 
-static void TAG(flush_line_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_line_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_line_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_line_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_line_strip_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_strip_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -154,7 +154,7 @@ static void TAG(flush_line_strip_0)( GLcontext *ctx, TNL_VERTEX *v0 )
 }
 
 
-static void TAG(flush_line_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v1 = v0 - 1;
@@ -173,7 +173,7 @@ static void TAG(flush_line_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
    }      
 }
 
-static void TAG(flush_line_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_line_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v1 = v0 + 1;
@@ -198,10 +198,10 @@ static void TAG(flush_line_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_TRIANGLES
  */
 
-static void TAG(flush_triangle_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_triangle_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_triangle_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_triangle_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_triangle_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_triangle_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -212,7 +212,7 @@ static void TAG(flush_triangle_0)( GLcontext *ctx, TNL_VERTEX *v0 )
    BEGIN_PRIM( GL_TRIANGLES, 0 );
 }
 
-static void TAG(flush_triangle_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_triangle_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -222,7 +222,7 @@ static void TAG(flush_triangle_1)( GLcontext *ctx, TNL_VERTEX *v0 )
    FLUSH_VERTEX = TAG(flush_triangle_2);
 }
 
-static void TAG(flush_triangle_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_triangle_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v2 = v0 - 2;
@@ -249,18 +249,18 @@ static void TAG(flush_triangle_2)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_TRIANGLE_STRIP
  */
 
-static void TAG(flush_tri_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_tri_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_tri_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_tri_strip_3)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_tri_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_tri_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_tri_strip_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 1 );
    FLUSH_VERTEX = TAG(flush_tri_strip_1);
 }
 
-static void TAG(flush_tri_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 2 );
@@ -283,7 +283,7 @@ static void TAG(flush_tri_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
       EMIT_VERTEX( v0 );      					\
    }      
 
-static void TAG(flush_tri_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    FLUSH_VERTEX = TAG(flush_tri_strip_3);
@@ -291,7 +291,7 @@ static void TAG(flush_tri_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
    DO_TRISTRIP_TRI( 0, 1 );
 }
 
-static void TAG(flush_tri_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_3)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    FLUSH_VERTEX = TAG(flush_tri_strip_4);
@@ -299,7 +299,7 @@ static void TAG(flush_tri_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 )
    DO_TRISTRIP_TRI( 1, 2 );
 }
 
-static void TAG(flush_tri_strip_4)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_4)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    FLUSH_VERTEX = TAG(flush_tri_strip_5);
@@ -307,7 +307,7 @@ static void TAG(flush_tri_strip_4)( GLcontext *ctx, TNL_VERTEX *v0 )
    DO_TRISTRIP_TRI( 2, 3 );
 }
 
-static void TAG(flush_tri_strip_5)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_strip_5)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    FLUSH_VERTEX = TAG(flush_tri_strip_2);
@@ -321,10 +321,10 @@ static void TAG(flush_tri_strip_5)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_TRIANGLE_FAN
  */
 
-static void TAG(flush_tri_fan_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_tri_fan_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_tri_fan_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_tri_fan_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_tri_fan_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_fan_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -332,7 +332,7 @@ static void TAG(flush_tri_fan_0)( GLcontext *ctx, TNL_VERTEX *v0 )
    FLUSH_VERTEX = TAG(flush_tri_fan_1);
 }
 
-static void TAG(flush_tri_fan_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_fan_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -356,7 +356,7 @@ static void TAG(flush_tri_fan_1)( GLcontext *ctx, TNL_VERTEX *v0 )
       EMIT_VERTEX( v0 );      					\
    }      
 
-static void TAG(flush_tri_fan_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_fan_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 1 );
@@ -364,7 +364,7 @@ static void TAG(flush_tri_fan_2)( GLcontext *ctx, TNL_VERTEX *v0 )
    DO_TRIFAN_TRI( 0, 1 );
 }
 
-static void TAG(flush_tri_fan_3)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_tri_fan_3)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 2 );
@@ -378,32 +378,32 @@ static void TAG(flush_tri_fan_3)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_QUADS
  */
 
-static void TAG(flush_quad_3)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_quad_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_quad_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_3)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_quad_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    IMM_VERTEX( v0 ) = v0 + 1;
    FLUSH_VERTEX = TAG(flush_quad_1);
 }
 
-static void TAG(flush_quad_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    IMM_VERTEX( v0 ) = v0 + 1;
    FLUSH_VERTEX = TAG(flush_quad_2);
 }
 
-static void TAG(flush_quad_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    IMM_VERTEX( v0 ) = v0 + 1;
    FLUSH_VERTEX = TAG(flush_quad_3);
 }
 
-static void TAG(flush_quad_3)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_3)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v3 = v0 - 3;
@@ -431,11 +431,11 @@ static void TAG(flush_quad_3)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_QUAD_STRIP
  */
 
-static void TAG(flush_quad_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_quad_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_quad_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_strip_3)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_quad_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_quad_strip_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_strip_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -444,7 +444,7 @@ static void TAG(flush_quad_strip_0)( GLcontext *ctx, TNL_VERTEX *v0 )
    FLUSH_VERTEX = TAG(flush_quad_strip_1);
 }
 
-static void TAG(flush_quad_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_strip_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -453,7 +453,7 @@ static void TAG(flush_quad_strip_1)( GLcontext *ctx, TNL_VERTEX *v0 )
    FLUSH_VERTEX = TAG(flush_quad_strip_2);
 }
 
-static void TAG(flush_quad_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_strip_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
 
@@ -462,7 +462,7 @@ static void TAG(flush_quad_strip_2)( GLcontext *ctx, TNL_VERTEX *v0 )
    FLUSH_VERTEX = TAG(flush_quad_strip_3);
 }
 
-static void TAG(flush_quad_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_quad_strip_3)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    TNL_VERTEX *v3 = IMM_VERTEX( v3 );
@@ -489,17 +489,17 @@ static void TAG(flush_quad_strip_3)( GLcontext *ctx, TNL_VERTEX *v0 )
  * GL_POLYGON
  */
 
-static void TAG(flush_poly_2)( GLcontext *ctx, TNL_VERTEX *v0 );
-static void TAG(flush_poly_1)( GLcontext *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_poly_2)( struct gl_context *ctx, TNL_VERTEX *v0 );
+static void TAG(flush_poly_1)( struct gl_context *ctx, TNL_VERTEX *v0 );
 
-static void TAG(flush_poly_0)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_poly_0)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 1 );
    FLUSH_VERTEX = TAG(flush_poly_1);
 }
 
-static void TAG(flush_poly_1)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_poly_1)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 2 );
@@ -522,7 +522,7 @@ static void TAG(flush_poly_1)( GLcontext *ctx, TNL_VERTEX *v0 )
       EMIT_VERTEX( v0 );					\
    }      
 
-static void TAG(flush_poly_2)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_poly_2)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 1 );
@@ -530,7 +530,7 @@ static void TAG(flush_poly_2)( GLcontext *ctx, TNL_VERTEX *v0 )
    DO_POLY_TRI( 0, 1 );
 }
 
-static void TAG(flush_poly_3)( GLcontext *ctx, TNL_VERTEX *v0 )
+static void TAG(flush_poly_3)( struct gl_context *ctx, TNL_VERTEX *v0 )
 {
    LOCAL_VARS;
    ACTIVE_VERTEX = IMM_VERTICES( 2 );
@@ -539,7 +539,7 @@ static void TAG(flush_poly_3)( GLcontext *ctx, TNL_VERTEX *v0 )
 }
 
 
-void (*TAG(flush_tab)[GL_POLYGON+1])( GLcontext *, TNL_VERTEX * ) =
+void (*TAG(flush_tab)[GL_POLYGON+1])( struct gl_context *, TNL_VERTEX * ) =
 {
    TAG(flush_point),
    TAG(flush_line_0),

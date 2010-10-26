@@ -193,7 +193,7 @@ static BOOL	_GetDisplayMode_ERROR(
 //---------------------------------------------------------------------------
 
 const GLubyte* _gldGetStringGeneric(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLenum name)
 {
 	if (!ctx)

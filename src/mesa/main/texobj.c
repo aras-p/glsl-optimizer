@@ -53,7 +53,7 @@
  * Return the gl_texture_object for a given ID.
  */
 struct gl_texture_object *
-_mesa_lookup_texture(GLcontext *ctx, GLuint id)
+_mesa_lookup_texture(struct gl_context *ctx, GLuint id)
 {
    return (struct gl_texture_object *)
       _mesa_HashLookup(ctx->Shared->TexObjects, id);
@@ -77,7 +77,7 @@ _mesa_lookup_texture(GLcontext *ctx, GLuint id)
  * \return pointer to new texture object.
  */
 struct gl_texture_object *
-_mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target )
+_mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    (void) ctx;
@@ -149,7 +149,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
  * target it's getting bound to (GL_TEXTURE_1D/2D/etc).
  */
 static void
-finish_texture_init(GLcontext *ctx, GLenum target,
+finish_texture_init(struct gl_context *ctx, GLenum target,
                     struct gl_texture_object *obj)
 {
    assert(obj->Target == 0);
@@ -181,7 +181,7 @@ finish_texture_init(GLcontext *ctx, GLenum target,
  * \param texObj the texture object to delete.
  */
 void
-_mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
+_mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *texObj )
 {
    GLuint i, face;
 
@@ -265,7 +265,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
  * \sa _mesa_clear_texture_image().
  */
 void
-_mesa_clear_texture_object(GLcontext *ctx, struct gl_texture_object *texObj)
+_mesa_clear_texture_object(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    GLuint i, j;
 
@@ -404,7 +404,7 @@ incomplete(const struct gl_texture_object *t, const char *why)
  * present and has the expected size.
  */
 void
-_mesa_test_texobj_completeness( const GLcontext *ctx,
+_mesa_test_texobj_completeness( const struct gl_context *ctx,
                                 struct gl_texture_object *t )
 {
    const GLint baseLevel = t->BaseLevel;
@@ -696,7 +696,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
  * \param invalidate_state also invalidate context state.
  */
 void
-_mesa_dirty_texobj(GLcontext *ctx, struct gl_texture_object *texObj,
+_mesa_dirty_texobj(struct gl_context *ctx, struct gl_texture_object *texObj,
                    GLboolean invalidate_state)
 {
    texObj->_Complete = GL_FALSE;
@@ -712,7 +712,7 @@ _mesa_dirty_texobj(GLcontext *ctx, struct gl_texture_object *texObj,
  * incomplete texture.
  */
 struct gl_texture_object *
-_mesa_get_fallback_texture(GLcontext *ctx)
+_mesa_get_fallback_texture(struct gl_context *ctx)
 {
    if (!ctx->Shared->FallbackTex) {
       /* create fallback texture now */
@@ -830,7 +830,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
  * read framebuffer.  If so, Unbind it.
  */
 static void
-unbind_texobj_from_fbo(GLcontext *ctx, struct gl_texture_object *texObj)
+unbind_texobj_from_fbo(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    const GLuint n = (ctx->DrawBuffer == ctx->ReadBuffer) ? 1 : 2;
    GLuint i;
@@ -855,7 +855,7 @@ unbind_texobj_from_fbo(GLcontext *ctx, struct gl_texture_object *texObj)
  * unbind it if so (revert to default textures).
  */
 static void
-unbind_texobj_from_texunits(GLcontext *ctx, struct gl_texture_object *texObj)
+unbind_texobj_from_texunits(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    GLuint u, tex;
 
@@ -1214,7 +1214,7 @@ _mesa_IsTexture( GLuint texture )
  * See also _mesa_lock/unlock_texture() in teximage.h
  */
 void
-_mesa_lock_context_textures( GLcontext *ctx )
+_mesa_lock_context_textures( struct gl_context *ctx )
 {
    _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
 
@@ -1226,7 +1226,7 @@ _mesa_lock_context_textures( GLcontext *ctx )
 
 
 void
-_mesa_unlock_context_textures( GLcontext *ctx )
+_mesa_unlock_context_textures( struct gl_context *ctx )
 {
    assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
    _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);

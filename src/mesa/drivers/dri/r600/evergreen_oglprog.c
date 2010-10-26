@@ -40,7 +40,7 @@
 #include "evergreen_vertprog.h"
 
 
-static void evergreen_freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *cache)
+static void evergreen_freeVertProgCache(struct gl_context *ctx, struct r700_vertex_program_cont *cache)
 {
 	struct evergreen_vertex_program *tmp, *vp = cache->progs;
 
@@ -64,7 +64,7 @@ static void evergreen_freeVertProgCache(GLcontext *ctx, struct r700_vertex_progr
 	}
 }
 
-static struct gl_program *evergreenNewProgram(GLcontext * ctx, 
+static struct gl_program *evergreenNewProgram(struct gl_context * ctx, 
                                          GLenum target,
 					                     GLuint id)
 {
@@ -109,7 +109,7 @@ static struct gl_program *evergreenNewProgram(GLcontext * ctx,
 	return pProgram;
 }
 
-static void evergreenDeleteProgram(GLcontext * ctx, struct gl_program *prog)
+static void evergreenDeleteProgram(struct gl_context * ctx, struct gl_program *prog)
 {
     struct evergreen_vertex_program_cont *vpc = (struct evergreen_vertex_program_cont *)prog;
     struct evergreen_fragment_program * fp;
@@ -147,7 +147,7 @@ static void evergreenDeleteProgram(GLcontext * ctx, struct gl_program *prog)
 }
 
 static GLboolean
-evergreenProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+evergreenProgramStringNotify(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 	struct evergreen_vertex_program_cont *vpc = (struct evergreen_vertex_program_cont *)prog;
 	struct evergreen_fragment_program * fp = (struct evergreen_fragment_program*)prog;
@@ -178,7 +178,7 @@ evergreenProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *
 	return GL_TRUE;
 }
 
-static GLboolean evergreenIsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+static GLboolean evergreenIsProgramNative(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
 
 	return GL_TRUE;

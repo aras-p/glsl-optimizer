@@ -578,7 +578,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
  * If individual images are stored in different mipmap trees
  * use the mipmap tree that has the most of the correct data.
  */
-int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *texObj)
+int radeon_validate_texture_miptree(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);

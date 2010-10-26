@@ -178,3 +178,13 @@ lp_func_delete_body(LLVMValueRef FF)
    llvm::Function *func = llvm::unwrap<llvm::Function>(FF);
    func->deleteBody();
 }
+
+
+extern "C"
+LLVMValueRef
+lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
+                       const char *Name)
+{
+   return llvm::wrap(llvm::unwrap(B)->CreateLoad(llvm::unwrap(PointerVal), true, Name));
+}
+

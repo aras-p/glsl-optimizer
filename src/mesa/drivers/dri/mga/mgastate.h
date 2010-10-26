@@ -29,10 +29,10 @@
 #define _MGA_STATE_H
 
 extern void mgaInitState( mgaContextPtr mmesa );
-extern void mgaDDInitStateFuncs(GLcontext *ctx);
-extern void mgaUpdateClipping(const GLcontext *ctx);
-extern void mgaUpdateCull( GLcontext *ctx );
-extern void mgaCalcViewport( GLcontext *ctx );
+extern void mgaDDInitStateFuncs(struct gl_context *ctx);
+extern void mgaUpdateClipping(const struct gl_context *ctx);
+extern void mgaUpdateCull( struct gl_context *ctx );
+extern void mgaCalcViewport( struct gl_context *ctx );
 extern void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers );
 
 #endif

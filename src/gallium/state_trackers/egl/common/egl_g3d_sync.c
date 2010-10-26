@@ -128,13 +128,13 @@ egl_g3d_wait_fence_sync(struct egl_g3d_sync *gsync, EGLTimeKHR timeout)
 static INLINE void
 egl_g3d_ref_sync(struct egl_g3d_sync *gsync)
 {
-   p_atomic_inc(&gsync->refs);
+   _eglGetSync(&gsync->base);
 }
 
 static INLINE void
 egl_g3d_unref_sync(struct egl_g3d_sync *gsync)
 {
-   if (p_atomic_dec_zero(&gsync->refs)) {
+   if (_eglPutSync(&gsync->base)) {
       pipe_condvar_destroy(gsync->condvar);
       pipe_mutex_destroy(gsync->mutex);
 
@@ -194,7 +194,6 @@ egl_g3d_create_sync(_EGLDriver *drv, _EGLDisplay *dpy,
 
    pipe_mutex_init(gsync->mutex);
    pipe_condvar_init(gsync->condvar);
-   p_atomic_set(&gsync->refs, 1);
 
    return &gsync->base;
 }

@@ -289,172 +289,141 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     print
     
 
-def generate_ssse3():
+def generate_sse2():
     print '''
 #if defined(PIPE_ARCH_SSE)
 
 #include "util/u_sse.h"
 
-static void
-lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
-                                         const uint8_t *src, unsigned src_stride,
-                                         unsigned x0, unsigned y0)
+static ALWAYS_INLINE void 
+swz4( const __m128i * restrict x, 
+      const __m128i * restrict y, 
+      const __m128i * restrict z, 
+      const __m128i * restrict w, 
+      __m128i * restrict a, 
+      __m128i * restrict b, 
+      __m128i * restrict c, 
+      __m128i * restrict d)
 {
+   __m128i i, j, k, l;
+   __m128i m, n, o, p;
+   __m128i e, f, g, h;
 
-   unsigned x, y;
-   __m128i *pdst = (__m128i*) dst;
-   const uint8_t *ysrc0 = src + y0*src_stride + x0*sizeof(uint32_t);
-   unsigned int tile_stridex = src_stride*(TILE_VECTOR_HEIGHT - 1) - sizeof(uint32_t)*TILE_VECTOR_WIDTH;
-   unsigned int tile_stridey = src_stride*TILE_VECTOR_HEIGHT;
+   m = _mm_unpacklo_epi8(*x,*y);
+   n = _mm_unpackhi_epi8(*x,*y);
+   o = _mm_unpacklo_epi8(*z,*w);
+   p = _mm_unpackhi_epi8(*z,*w);
 
-   const __m128i shuffle00 = _mm_setr_epi8(0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle01 = _mm_setr_epi8(0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle02 = _mm_setr_epi8(0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle03 = _mm_setr_epi8(0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   i = _mm_unpacklo_epi16(m,n);
+   j = _mm_unpackhi_epi16(m,n);
+   k = _mm_unpacklo_epi16(o,p);
+   l = _mm_unpackhi_epi16(o,p);
 
-   const __m128i shuffle10 = _mm_setr_epi8(0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle11 = _mm_setr_epi8(0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle12 = _mm_setr_epi8(0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
-   const __m128i shuffle13 = _mm_setr_epi8(0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+   e = _mm_unpacklo_epi8(i,j);
+   f = _mm_unpackhi_epi8(i,j);
+   g = _mm_unpacklo_epi8(k,l);
+   h = _mm_unpackhi_epi8(k,l);
 
-   const __m128i shuffle20 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e,0xff,0xff);
-   const __m128i shuffle21 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d,0xff,0xff);
-   const __m128i shuffle22 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c,0xff,0xff);
-   const __m128i shuffle23 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f,0xff,0xff);
+   *a = _mm_unpacklo_epi64(e,g);
+   *b = _mm_unpackhi_epi64(e,g);
+   *c = _mm_unpacklo_epi64(f,h);
+   *d = _mm_unpackhi_epi64(f,h);
+}
 
-   const __m128i shuffle30 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x06,0xff,0xff,0x0a,0x0e);
-   const __m128i shuffle31 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x01,0x05,0xff,0xff,0x09,0x0d);
-   const __m128i shuffle32 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x04,0xff,0xff,0x08,0x0c);
-   const __m128i shuffle33 = _mm_setr_epi8(0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x03,0x07,0xff,0xff,0x0b,0x0f);
+static ALWAYS_INLINE void
+unswz4( const __m128i * restrict a, 
+        const __m128i * restrict b, 
+        const __m128i * restrict c, 
+        const __m128i * restrict d, 
+        __m128i * restrict x, 
+        __m128i * restrict y, 
+        __m128i * restrict z, 
+        __m128i * restrict w)
+{
+   __m128i i, j, k, l;
+   __m128i m, n, o, p;
 
-   for (y = 0; y < TILE_SIZE; y += TILE_VECTOR_HEIGHT) {
-      __m128i line0 = *(__m128i*)ysrc0;
-      const uint8_t *ysrc = ysrc0 + src_stride;
-      ysrc0 += tile_stridey;
+   i = _mm_unpacklo_epi8(*a,*b);
+   j = _mm_unpackhi_epi8(*a,*b);
+   k = _mm_unpacklo_epi8(*c,*d);
+   l = _mm_unpackhi_epi8(*c,*d);
 
-      for (x = 0; x < TILE_SIZE; x += TILE_VECTOR_WIDTH) {
-         __m128i r, g, b, a, line1;
-         line1 = *(__m128i*)ysrc;
-         PIPE_READ_WRITE_BARRIER();
-         ysrc += src_stride;
-         r = _mm_shuffle_epi8(line0, shuffle00);
-         g = _mm_shuffle_epi8(line0, shuffle01);
-         b = _mm_shuffle_epi8(line0, shuffle02);
-         a = _mm_shuffle_epi8(line0, shuffle03);
+   m = _mm_unpacklo_epi16(i,k);
+   n = _mm_unpackhi_epi16(i,k);
+   o = _mm_unpacklo_epi16(j,l);
+   p = _mm_unpackhi_epi16(j,l);
 
-         line0 = *(__m128i*)ysrc;
-         PIPE_READ_WRITE_BARRIER();
-         ysrc += src_stride;
-         r = _mm_or_si128(r, _mm_shuffle_epi8(line1, shuffle10));
-         g = _mm_or_si128(g, _mm_shuffle_epi8(line1, shuffle11));
-         b = _mm_or_si128(b, _mm_shuffle_epi8(line1, shuffle12));
-         a = _mm_or_si128(a, _mm_shuffle_epi8(line1, shuffle13));
-
-         line1 = *(__m128i*)ysrc;
-         PIPE_READ_WRITE_BARRIER();
-         ysrc -= tile_stridex;
-         r = _mm_or_si128(r, _mm_shuffle_epi8(line0, shuffle20));
-         g = _mm_or_si128(g, _mm_shuffle_epi8(line0, shuffle21));
-         b = _mm_or_si128(b, _mm_shuffle_epi8(line0, shuffle22));
-         a = _mm_or_si128(a, _mm_shuffle_epi8(line0, shuffle23));
-
-         if (x + 1 < TILE_SIZE) {
-            line0 = *(__m128i*)ysrc;
-            ysrc += src_stride;
-         }
-
-         PIPE_READ_WRITE_BARRIER();
-         r = _mm_or_si128(r, _mm_shuffle_epi8(line1, shuffle30));
-         g = _mm_or_si128(g, _mm_shuffle_epi8(line1, shuffle31));
-         b = _mm_or_si128(b, _mm_shuffle_epi8(line1, shuffle32));
-         a = _mm_or_si128(a, _mm_shuffle_epi8(line1, shuffle33));
-
-         *pdst++ = r;
-         *pdst++ = g;
-         *pdst++ = b;
-         *pdst++ = a;
-      }
-   }
-
+   *x = _mm_unpacklo_epi64(m,n);
+   *y = _mm_unpackhi_epi64(m,n);
+   *z = _mm_unpacklo_epi64(o,p);
+   *w = _mm_unpackhi_epi64(o,p);
 }
 
 static void
-lp_tile_b8g8r8a8_unorm_unswizzle_4ub_ssse3(const uint8_t *src,
-                                          uint8_t *dst, unsigned dst_stride,
+lp_tile_b8g8r8a8_unorm_swizzle_4ub_sse2(uint8_t * restrict dst,
+                                        const uint8_t * restrict src, unsigned src_stride,
+                                        unsigned x0, unsigned y0)
+{
+   __m128i *dst128 = (__m128i *) dst;
+   unsigned x, y;
+   
+   src += y0 * src_stride;
+   src += x0 * sizeof(uint32_t);
+
+   for (y = 0; y < TILE_SIZE; y += 4) {
+      const uint8_t *src_row = src;
+
+      for (x = 0; x < TILE_SIZE; x += 4) {
+         swz4((const __m128i *) (src_row + 0 * src_stride),
+              (const __m128i *) (src_row + 1 * src_stride),
+              (const __m128i *) (src_row + 2 * src_stride),
+              (const __m128i *) (src_row + 3 * src_stride),
+              dst128 + 2,     /* b */
+              dst128 + 1,     /* g */
+              dst128 + 0,     /* r */
+              dst128 + 3);    /* a */
+
+         dst128 += 4;
+         src_row += sizeof(__m128i);
+      }
+
+      src += 4 * src_stride;
+   }
+}
+
+static void
+lp_tile_b8g8r8a8_unorm_unswizzle_4ub_sse2(const uint8_t * restrict src,
+                                          uint8_t * restrict dst, unsigned dst_stride,
                                           unsigned x0, unsigned y0)
 {
    unsigned int x, y;
-   const __m128i *psrc = (__m128i*) src;
-   const __m128i *end = (__m128i*) (src + (y0 + TILE_SIZE - 1)*dst_stride + (x0 + TILE_SIZE - 1)*sizeof(uint32_t));
-   uint8_t *pdst = dst + y0 * dst_stride + x0 * sizeof(uint32_t);
-   __m128i c0 = *psrc++;
-   __m128i c1;
+   const __m128i *src128 = (const __m128i *) src;
+   
+   dst += y0 * dst_stride;
+   dst += x0 * sizeof(uint32_t);
+   
+   for (y = 0; y < TILE_SIZE; y += 4) {
+      const uint8_t *dst_row = dst;
 
-   const __m128i shuffle00 = _mm_setr_epi8(0xff,0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff);
-   const __m128i shuffle01 = _mm_setr_epi8(0xff,0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff);
-   const __m128i shuffle02 = _mm_setr_epi8(0xff,0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff);
-   const __m128i shuffle03 = _mm_setr_epi8(0xff,0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff);
+      for (x = 0; x < TILE_SIZE; x += 4) {
+         unswz4( &src128[2],     /* b */
+                 &src128[1],     /* g */
+                 &src128[0],     /* r */
+                 &src128[3],     /* a */
+                 (__m128i *) (dst_row + 0 * dst_stride),
+                 (__m128i *) (dst_row + 1 * dst_stride),
+                 (__m128i *) (dst_row + 2 * dst_stride),
+                 (__m128i *) (dst_row + 3 * dst_stride));
 
-   const __m128i shuffle10 = _mm_setr_epi8(0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff,0xff);
-   const __m128i shuffle11 = _mm_setr_epi8(0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff,0xff);
-   const __m128i shuffle12 = _mm_setr_epi8(0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff,0xff);
-   const __m128i shuffle13 = _mm_setr_epi8(0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff,0xff);
-
-   const __m128i shuffle20 = _mm_setr_epi8(0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05,0xff,0xff,0xff);
-   const __m128i shuffle21 = _mm_setr_epi8(0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07,0xff,0xff,0xff);
-   const __m128i shuffle22 = _mm_setr_epi8(0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d,0xff,0xff,0xff);
-   const __m128i shuffle23 = _mm_setr_epi8(0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f,0xff,0xff,0xff);
-
-   const __m128i shuffle30 = _mm_setr_epi8(0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x01,0xff,0xff,0xff,0x04,0xff,0xff,0xff,0x05);
-   const __m128i shuffle31 = _mm_setr_epi8(0xff,0xff,0xff,0x02,0xff,0xff,0xff,0x03,0xff,0xff,0xff,0x06,0xff,0xff,0xff,0x07);
-   const __m128i shuffle32 = _mm_setr_epi8(0xff,0xff,0xff,0x08,0xff,0xff,0xff,0x09,0xff,0xff,0xff,0x0c,0xff,0xff,0xff,0x0d);
-   const __m128i shuffle33 = _mm_setr_epi8(0xff,0xff,0xff,0x0a,0xff,0xff,0xff,0x0b,0xff,0xff,0xff,0x0e,0xff,0xff,0xff,0x0f);
-
-   for (y = 0; y < TILE_SIZE; y += TILE_VECTOR_HEIGHT) {
-      __m128i *tile = (__m128i*) pdst;
-      pdst += dst_stride * TILE_VECTOR_HEIGHT;
-      for (x = 0; x < TILE_SIZE; x += TILE_VECTOR_WIDTH) {
-         uint8_t *linep = (uint8_t*) (tile++);
-         __m128i line0, line1, line2, line3;
-
-         c1 = *psrc++; /* r */
-         PIPE_READ_WRITE_BARRIER();
-         line0 = _mm_shuffle_epi8(c0, shuffle00);
-         line1 = _mm_shuffle_epi8(c0, shuffle01);
-         line2 = _mm_shuffle_epi8(c0, shuffle02);
-         line3 = _mm_shuffle_epi8(c0, shuffle03);
-
-         c0 = *psrc++; /* g */
-         PIPE_READ_WRITE_BARRIER();
-         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c1, shuffle10));
-         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c1, shuffle11));
-         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c1, shuffle12));
-         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c1, shuffle13));
-
-         c1 = *psrc++; /* b */
-         PIPE_READ_WRITE_BARRIER();
-         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c0, shuffle20));
-         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c0, shuffle21));
-         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c0, shuffle22));
-         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c0, shuffle23));
-
-         if (psrc != end)
-                 c0 = *psrc++; /* a */
-         PIPE_READ_WRITE_BARRIER();
-         line0 = _mm_or_si128(line0, _mm_shuffle_epi8(c1, shuffle30));
-         line1 = _mm_or_si128(line1, _mm_shuffle_epi8(c1, shuffle31));
-         line2 = _mm_or_si128(line2, _mm_shuffle_epi8(c1, shuffle32));
-         line3 = _mm_or_si128(line3, _mm_shuffle_epi8(c1, shuffle33));
-
-         *(__m128i*) (linep) = line0;
-         *(__m128i*) (((char*)linep) + dst_stride) = line1;
-         *(__m128i*) (((char*)linep) + 2 * dst_stride) = line2;
-         *(__m128i*) (((char*)linep) + 3 * dst_stride) = line3;
+         src128 += 4;
+         dst_row += sizeof(__m128i);;
       }
+
+      dst += 4 * dst_stride;
    }
 }
 
-#endif /* PIPE_ARCH_SSSE3 */
+#endif /* PIPE_ARCH_SSE */
 '''
 
 
@@ -479,7 +448,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
             func_name = 'lp_tile_%s_swizzle_%s' % (format.short_name(), dst_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
-                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
                 print '#endif'
@@ -517,7 +486,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
             func_name = 'lp_tile_%s_unswizzle_%s' % (format.short_name(), src_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
-                print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
+                print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
                 print '#endif'
@@ -577,7 +546,7 @@ def main():
     print '};'
     print
 
-    generate_ssse3()
+    generate_sse2()
 
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'

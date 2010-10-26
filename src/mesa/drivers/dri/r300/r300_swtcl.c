@@ -68,7 +68,7 @@ do { \
 	++num_attrs; \
 } while (0)
 
-void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_OutputsWritten)
+void r300ChooseSwtclVertexFormat(struct gl_context *ctx, GLuint *_InputsRead,  GLuint *_OutputsWritten)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -226,7 +226,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	RENDERINPUTS_COPY(rmesa->render_inputs_bitset, tnl->render_inputs_bitset);
 }
 
-static void r300PrepareVertices(GLcontext *ctx)
+static void r300PrepareVertices(struct gl_context *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint InputsRead, OutputsWritten;
@@ -285,7 +285,7 @@ static GLuint reduced_prim[] = {
 	GL_TRIANGLES,
 };
 
-static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
+static void r300RasterPrimitive( struct gl_context *ctx, GLuint prim );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -497,7 +497,7 @@ static void init_rast_tab( void )
 /**********************************************************************/
 /*                    Choose render functions                         */
 /**********************************************************************/
-static void r300ChooseRenderState( GLcontext *ctx )
+static void r300ChooseRenderState( struct gl_context *ctx )
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -528,7 +528,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 	}
 }
 
-void r300RenderStart(GLcontext *ctx)
+void r300RenderStart(struct gl_context *ctx)
 {
 	radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
@@ -550,11 +550,11 @@ void r300RenderStart(GLcontext *ctx)
 	}
 }
 
-void r300RenderFinish(GLcontext *ctx)
+void r300RenderFinish(struct gl_context *ctx)
 {
 }
 
-static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
+static void r300RasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
@@ -565,7 +565,7 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 	}
 }
 
-void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
+void r300RenderPrimitive(struct gl_context *ctx, GLenum prim)
 {
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -578,13 +578,13 @@ void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
 }
 
-void r300ResetLineStipple(GLcontext *ctx)
+void r300ResetLineStipple(struct gl_context *ctx)
 {
 	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s\n", __func__);
 }
 
-void r300InitSwtcl(GLcontext *ctx)
+void r300InitSwtcl(struct gl_context *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -620,7 +620,7 @@ void r300InitSwtcl(GLcontext *ctx)
 	_tnl_need_projected_coords( ctx, GL_FALSE );
 }
 
-void r300DestroySwtcl(GLcontext *ctx)
+void r300DestroySwtcl(struct gl_context *ctx)
 {
 }
 
@@ -656,7 +656,7 @@ static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vert
 	END_BATCH();
 }
 
-void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
+void r300_swtcl_flush(struct gl_context *ctx, uint32_t current_offset)
 {
 	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);

@@ -34,10 +34,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 #include "main/mtypes.h"
 
-extern void sisInitTriFuncs( GLcontext *ctx );
+extern void sisInitTriFuncs( struct gl_context *ctx );
 extern void sisFlushPrims( sisContextPtr smesa );
 extern void sisFlushPrimsLocked( sisContextPtr smesa );
-extern void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void sisFallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 
 #define FALLBACK( smesa, bit, mode ) sisFallback( smesa->glCtx, bit, mode )
 

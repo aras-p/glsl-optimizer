@@ -47,7 +47,7 @@ static tnl_quad_func     quad_tab[SS_MAX_TRIFUNC];
 /*
  * Render a triangle respecting edge flags.
  */
-typedef void (* swsetup_edge_render_prim_tri)(GLcontext *ctx,
+typedef void (* swsetup_edge_render_prim_tri)(struct gl_context *ctx,
                                               const GLubyte *ef,
                                               GLuint e0,
                                               GLuint e1,
@@ -60,7 +60,7 @@ typedef void (* swsetup_edge_render_prim_tri)(GLcontext *ctx,
  * Render a triangle using lines and respecting edge flags.
  */
 static void
-_swsetup_edge_render_line_tri(GLcontext *ctx,
+_swsetup_edge_render_line_tri(struct gl_context *ctx,
                               const GLubyte *ef,
                               GLuint e0,
                               GLuint e1,
@@ -86,7 +86,7 @@ _swsetup_edge_render_line_tri(GLcontext *ctx,
  * Render a triangle using points and respecting edge flags.
  */
 static void
-_swsetup_edge_render_point_tri(GLcontext *ctx,
+_swsetup_edge_render_point_tri(struct gl_context *ctx,
                                const GLubyte *ef,
                                GLuint e0,
                                GLuint e1,
@@ -105,7 +105,7 @@ _swsetup_edge_render_point_tri(GLcontext *ctx,
 /*
  * Render a triangle respecting cull and shade model.
  */
-static void _swsetup_render_tri(GLcontext *ctx,
+static void _swsetup_render_tri(struct gl_context *ctx,
                                 GLuint e0,
                                 GLuint e1,
                                 GLuint e2,
@@ -195,7 +195,7 @@ static void _swsetup_render_tri(GLcontext *ctx,
 #include "ss_tritmp.h"
 
 
-void _swsetup_trifuncs_init( GLcontext *ctx )
+void _swsetup_trifuncs_init( struct gl_context *ctx )
 {
    (void) ctx;
 
@@ -210,7 +210,7 @@ void _swsetup_trifuncs_init( GLcontext *ctx )
 }
 
 
-static void swsetup_points( GLcontext *ctx, GLuint first, GLuint last )
+static void swsetup_points( struct gl_context *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
@@ -228,7 +228,7 @@ static void swsetup_points( GLcontext *ctx, GLuint first, GLuint last )
    }
 }
 
-static void swsetup_line( GLcontext *ctx, GLuint v0, GLuint v1 )
+static void swsetup_line( struct gl_context *ctx, GLuint v0, GLuint v1 )
 {
    SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    _swrast_Line( ctx, &verts[v0], &verts[v1] );
@@ -236,7 +236,7 @@ static void swsetup_line( GLcontext *ctx, GLuint v0, GLuint v1 )
 
 
 
-void _swsetup_choose_trifuncs( GLcontext *ctx )
+void _swsetup_choose_trifuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint ind = 0;

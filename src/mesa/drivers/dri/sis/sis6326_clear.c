@@ -34,11 +34,11 @@
 #include "swrast/swrast.h"
 #include "main/macros.h"
 
-static void sis_clear_front_buffer(GLcontext *ctx, GLenum mask, GLint x,
+static void sis_clear_front_buffer(struct gl_context *ctx, GLenum mask, GLint x,
 				   GLint y, GLint width, GLint height);
-static void sis_clear_back_buffer(GLcontext *ctx, GLenum mask, GLint x,
+static void sis_clear_back_buffer(struct gl_context *ctx, GLenum mask, GLint x,
 				  GLint y, GLint width, GLint height);
-static void sis_clear_z_buffer(GLcontext * ctx, GLbitfield mask, GLint x,
+static void sis_clear_z_buffer(struct gl_context * ctx, GLbitfield mask, GLint x,
 			       GLint y, GLint width, GLint height );
 
 static void
@@ -69,7 +69,7 @@ sis6326UpdateZPattern(sisContextPtr smesa, GLclampd z)
 }
 
 void
-sis6326DDClear(GLcontext *ctx, GLbitfield mask)
+sis6326DDClear(struct gl_context *ctx, GLbitfield mask)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    GLint x1, y1, width1, height1;
@@ -114,7 +114,7 @@ sis6326DDClear(GLcontext *ctx, GLbitfield mask)
 
 
 void
-sis6326DDClearColor(GLcontext *ctx, const GLfloat color[4])
+sis6326DDClearColor(struct gl_context *ctx, const GLfloat color[4])
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    GLubyte c[4];
@@ -128,7 +128,7 @@ sis6326DDClearColor(GLcontext *ctx, const GLfloat color[4])
 }
 
 void
-sis6326DDClearDepth(GLcontext *ctx, GLclampd d)
+sis6326DDClearDepth(struct gl_context *ctx, GLclampd d)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -136,7 +136,7 @@ sis6326DDClearDepth(GLcontext *ctx, GLclampd d)
 }
 
 static void
-sis_clear_back_buffer(GLcontext *ctx, GLenum mask, GLint x, GLint y,
+sis_clear_back_buffer(struct gl_context *ctx, GLenum mask, GLint x, GLint y,
 		      GLint width, GLint height)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -160,7 +160,7 @@ sis_clear_back_buffer(GLcontext *ctx, GLenum mask, GLint x, GLint y,
 }
 
 static void
-sis_clear_front_buffer(GLcontext *ctx, GLenum mask, GLint x, GLint y,
+sis_clear_front_buffer(struct gl_context *ctx, GLenum mask, GLint x, GLint y,
 		       GLint width, GLint height)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -211,7 +211,7 @@ sis_clear_front_buffer(GLcontext *ctx, GLenum mask, GLint x, GLint y,
 }
 
 static void
-sis_clear_z_buffer(GLcontext * ctx, GLbitfield mask, GLint x, GLint y,
+sis_clear_z_buffer(struct gl_context * ctx, GLbitfield mask, GLint x, GLint y,
 		   GLint width, GLint height)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);

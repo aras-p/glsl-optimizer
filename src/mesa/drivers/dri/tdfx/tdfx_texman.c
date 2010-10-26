@@ -744,7 +744,7 @@ tdfxTMDownloadTexture(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
 
 
 void
-tdfxTMReloadMipMapLevel(GLcontext *ctx, struct gl_texture_object *tObj,
+tdfxTMReloadMipMapLevel(struct gl_context *ctx, struct gl_texture_object *tObj,
                         GLint level)
 {
     tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -917,6 +917,7 @@ tdfxTMMoveOutTM_NoLock( tdfxContextPtr fxMesa, struct gl_texture_object *tObj )
     case TDFX_TMU_SPLIT:
     case TDFX_TMU_BOTH:
         assert(!shared->umaTexMemory);
+        (void) shared;
         RemoveRange_NoLock(fxMesa, TDFX_TMU0, ti->tm[TDFX_TMU0]);
         RemoveRange_NoLock(fxMesa, TDFX_TMU1, ti->tm[TDFX_TMU1]);
         break;
@@ -963,7 +964,7 @@ tdfxTMFreeTexture(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
  */
 void tdfxTMRestoreTextures_NoLock( tdfxContextPtr fxMesa )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
    GLuint id;
 

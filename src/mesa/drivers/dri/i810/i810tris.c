@@ -49,7 +49,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i810vb.h"
 #include "i810ioctl.h"
 
-static void i810RenderPrimitive( GLcontext *ctx, GLenum prim );
+static void i810RenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -407,7 +407,7 @@ i810_fallback_tri( i810ContextPtr imesa,
 		   i810Vertex *v1,
 		   i810Vertex *v2 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[3];
    i810_translate_vertex( ctx, v0, &v[0] );
    i810_translate_vertex( ctx, v1, &v[1] );
@@ -421,7 +421,7 @@ i810_fallback_line( i810ContextPtr imesa,
 		    i810Vertex *v0,
 		    i810Vertex *v1 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[2];
    i810_translate_vertex( ctx, v0, &v[0] );
    i810_translate_vertex( ctx, v1, &v[1] );
@@ -433,7 +433,7 @@ static void
 i810_fallback_point( i810ContextPtr imesa,
 		     i810Vertex *v0 )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    SWvertex v[1];
    i810_translate_vertex( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
@@ -478,7 +478,7 @@ i810_fallback_point( i810ContextPtr imesa,
 
 
 
-static void i810RenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void i810RenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 				   GLuint n )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -502,13 +502,13 @@ static void i810RenderClippedPoly( GLcontext *ctx, const GLuint *elts,
       tnl->Driver.Render.PrimitiveNotify( ctx, prim );
 }
 
-static void i810RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+static void i810RenderClippedLine( struct gl_context *ctx, GLuint ii, GLuint jj )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->Driver.Render.Line( ctx, ii, jj );
 }
 
-static void i810FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
+static void i810FastRenderClippedPoly( struct gl_context *ctx, const GLuint *elts,
 				       GLuint n )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
@@ -549,7 +549,7 @@ static void i810FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
                             DD_TRI_STIPPLE)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
-static void i810ChooseRenderState(GLcontext *ctx)
+static void i810ChooseRenderState(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -640,7 +640,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  * which renders strips as strips, the equivalent calculations are
  * performed in i810render.c.
  */
-static void i810RenderPrimitive( GLcontext *ctx, GLenum prim )
+static void i810RenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLuint rprim = reduced_prim[prim];
@@ -656,7 +656,7 @@ static void i810RenderPrimitive( GLcontext *ctx, GLenum prim )
    }
 }
 
-static void i810RunPipeline( GLcontext *ctx )
+static void i810RunPipeline( struct gl_context *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
 
@@ -678,7 +678,7 @@ static void i810RunPipeline( GLcontext *ctx )
    _tnl_run_pipeline( ctx );
 }
 
-static void i810RenderStart( GLcontext *ctx )
+static void i810RenderStart( struct gl_context *ctx )
 {
    /* Check for projective textureing.  Make sure all texcoord
     * pointers point to something.  (fix in mesa?)
@@ -686,7 +686,7 @@ static void i810RenderStart( GLcontext *ctx )
    i810CheckTexSizes( ctx );
 }
 
-static void i810RenderFinish( GLcontext *ctx )
+static void i810RenderFinish( struct gl_context *ctx )
 {
    if (I810_CONTEXT(ctx)->RenderIndex & I810_FALLBACK_BIT)
       _swrast_flush( ctx );
@@ -698,7 +698,7 @@ static void i810RenderFinish( GLcontext *ctx )
 /* System to flush dma and emit state changes based on the rasterized
  * primitive.
  */
-void i810RasterPrimitive( GLcontext *ctx,
+void i810RasterPrimitive( struct gl_context *ctx,
 			  GLenum rprim,
 			  GLuint hwprim )
 {
@@ -815,7 +815,7 @@ static char *getFallbackString(GLuint bit)
 
 void i810Fallback( i810ContextPtr imesa, GLuint bit, GLboolean mode )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint oldfallback = imesa->Fallback;
 
@@ -853,7 +853,7 @@ void i810Fallback( i810ContextPtr imesa, GLuint bit, GLboolean mode )
 /**********************************************************************/
 
 
-void i810InitTriFuncs( GLcontext *ctx )
+void i810InitTriFuncs( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;

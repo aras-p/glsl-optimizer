@@ -117,7 +117,7 @@ struct vbo_save_primitive_store {
 
 
 struct vbo_save_context {
-   GLcontext *ctx;
+   struct gl_context *ctx;
    GLvertexformat vtxfmt;
    struct gl_client_array arrays[VBO_ATTRIB_MAX];
    const struct gl_client_array *inputs[VBO_ATTRIB_MAX];
@@ -155,13 +155,13 @@ struct vbo_save_context {
 
 #if FEATURE_dlist
 
-void vbo_save_init( GLcontext *ctx );
-void vbo_save_destroy( GLcontext *ctx );
-void vbo_save_fallback( GLcontext *ctx, GLboolean fallback );
+void vbo_save_init( struct gl_context *ctx );
+void vbo_save_destroy( struct gl_context *ctx );
+void vbo_save_fallback( struct gl_context *ctx, GLboolean fallback );
 
 /* save_loopback.c:
  */
-void vbo_loopback_vertex_list( GLcontext *ctx,
+void vbo_loopback_vertex_list( struct gl_context *ctx,
 			       const GLfloat *buffer,
 			       const GLubyte *attrsz,
 			       const struct _mesa_prim *prim,
@@ -171,26 +171,26 @@ void vbo_loopback_vertex_list( GLcontext *ctx,
 
 /* Callbacks:
  */
-void vbo_save_EndList( GLcontext *ctx );
-void vbo_save_NewList( GLcontext *ctx, GLuint list, GLenum mode );
-void vbo_save_EndCallList( GLcontext *ctx );
-void vbo_save_BeginCallList( GLcontext *ctx, struct gl_display_list *list );
-void vbo_save_SaveFlushVertices( GLcontext *ctx );
-GLboolean vbo_save_NotifyBegin( GLcontext *ctx, GLenum mode );
+void vbo_save_EndList( struct gl_context *ctx );
+void vbo_save_NewList( struct gl_context *ctx, GLuint list, GLenum mode );
+void vbo_save_EndCallList( struct gl_context *ctx );
+void vbo_save_BeginCallList( struct gl_context *ctx, struct gl_display_list *list );
+void vbo_save_SaveFlushVertices( struct gl_context *ctx );
+GLboolean vbo_save_NotifyBegin( struct gl_context *ctx, GLenum mode );
 
-void vbo_save_playback_vertex_list( GLcontext *ctx, void *data );
+void vbo_save_playback_vertex_list( struct gl_context *ctx, void *data );
 
 void vbo_save_api_init( struct vbo_save_context *save );
 
 #else /* FEATURE_dlist */
 
 static INLINE void
-vbo_save_init( GLcontext *ctx )
+vbo_save_init( struct gl_context *ctx )
 {
 }
 
 static INLINE void
-vbo_save_destroy( GLcontext *ctx )
+vbo_save_destroy( struct gl_context *ctx )
 {
 }
 

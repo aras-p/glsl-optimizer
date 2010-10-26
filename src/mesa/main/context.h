@@ -29,16 +29,16 @@
  *
  * There are three large Mesa data types/classes which are meant to be
  * used by device drivers:
- * - GLcontext: this contains the Mesa rendering state
- * - GLvisual:  this describes the color buffer (RGB vs. ci), whether or not
+ * - struct gl_context: this contains the Mesa rendering state
+ * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether or not
  *   there's a depth buffer, stencil buffer, etc.
- * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
+ * - struct gl_framebuffer:  contains pointers to the depth buffer, stencil buffer,
  *   accum buffer and alpha buffers.
  *
  * These types should be encapsulated by corresponding device driver
  * data types.  See xmesa.h and xmesaP.h for an example.
  *
- * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
+ * In OOP terms, struct gl_context, struct gl_config, and struct gl_framebuffer are base classes
  * which the device driver must derive from.
  *
  * The following functions create and destroy these data types.
@@ -59,7 +59,7 @@ struct _glapi_table;
 /** \name Visual-related functions */
 /*@{*/
  
-extern GLvisual *
+extern struct gl_config *
 _mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -75,7 +75,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint numSamples );
 
 extern GLboolean
-_mesa_initialize_visual( GLvisual *v,
+_mesa_initialize_visual( struct gl_config *v,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
@@ -91,7 +91,7 @@ _mesa_initialize_visual( GLvisual *v,
                          GLint numSamples );
 
 extern void
-_mesa_destroy_visual( GLvisual *vis );
+_mesa_destroy_visual( struct gl_config *vis );
 
 /*@}*/
 
@@ -99,78 +99,78 @@ _mesa_destroy_visual( GLvisual *vis );
 /** \name Context-related functions */
 /*@{*/
 
-extern GLcontext *
-_mesa_create_context( const GLvisual *visual,
-                      GLcontext *share_list,
+extern struct gl_context *
+_mesa_create_context( const struct gl_config *visual,
+                      struct gl_context *share_list,
                       const struct dd_function_table *driverFunctions,
                       void *driverContext );
 
 extern GLboolean
-_mesa_initialize_context( GLcontext *ctx,
-                          const GLvisual *visual,
-                          GLcontext *share_list,
+_mesa_initialize_context( struct gl_context *ctx,
+                          const struct gl_config *visual,
+                          struct gl_context *share_list,
                           const struct dd_function_table *driverFunctions,
                           void *driverContext );
 
-extern GLcontext *
+extern struct gl_context *
 _mesa_create_context_for_api(gl_api api,
-			     const GLvisual *visual,
-			     GLcontext *share_list,
+			     const struct gl_config *visual,
+			     struct gl_context *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext);
 
 extern GLboolean
-_mesa_initialize_context_for_api(GLcontext *ctx,
+_mesa_initialize_context_for_api(struct gl_context *ctx,
 				 gl_api api,
-				 const GLvisual *visual,
-				 GLcontext *share_list,
+				 const struct gl_config *visual,
+				 struct gl_context *share_list,
 				 const struct dd_function_table *driverFunctions,
 				 void *driverContext);
 
 extern void
-_mesa_free_context_data( GLcontext *ctx );
+_mesa_free_context_data( struct gl_context *ctx );
 
 extern void
-_mesa_destroy_context( GLcontext *ctx );
-
-
-extern void
-_mesa_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
+_mesa_destroy_context( struct gl_context *ctx );
 
 
 extern void
-_mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height);
+_mesa_copy_context(const struct gl_context *src, struct gl_context *dst, GLuint mask);
+
+
+extern void
+_mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height);
 
 extern GLboolean
-_mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
-                    GLframebuffer *readBuffer );
+_mesa_make_current( struct gl_context *ctx, struct gl_framebuffer *drawBuffer,
+                    struct gl_framebuffer *readBuffer );
 
 extern GLboolean
-_mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);
+_mesa_share_state(struct gl_context *ctx, struct gl_context *ctxToShare);
 
-extern GLcontext *
+extern struct gl_context *
 _mesa_get_current_context(void);
 
 /*@}*/
 
 extern void
-_mesa_init_get_hash(GLcontext *ctx);
+_mesa_init_get_hash(struct gl_context *ctx);
 
 extern void
-_mesa_notifySwapBuffers(__GLcontext *gc);
+_mesa_notifySwapBuffers(struct gl_context *gc);
 
 
 extern struct _glapi_table *
-_mesa_get_dispatch(GLcontext *ctx);
+_mesa_get_dispatch(struct gl_context *ctx);
 
 
 void
-_mesa_set_mvp_with_dp4( GLcontext *ctx,
+_mesa_set_mvp_with_dp4( struct gl_context *ctx,
                         GLboolean flag );
 
 
 extern GLboolean
-_mesa_valid_to_render(GLcontext *ctx, const char *where);
+_mesa_valid_to_render(struct gl_context *ctx, const char *where);
 
 
 
@@ -178,14 +178,14 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where);
 /*@{*/
 
 extern void
-_mesa_record_error( GLcontext *ctx, GLenum error );
+_mesa_record_error( struct gl_context *ctx, GLenum error );
 
 
 extern void
-_mesa_finish(GLcontext *ctx);
+_mesa_finish(struct gl_context *ctx);
 
 extern void
-_mesa_flush(GLcontext *ctx);
+_mesa_flush(struct gl_context *ctx);
 
 
 extern void GLAPIENTRY
@@ -211,7 +211,7 @@ _mesa_Flush( void );
  *
  * Checks if dd_function_table::NeedFlush is marked to flush stored vertices,
  * and calls dd_function_table::FlushVertices if so. Marks
- * __GLcontextRec::NewState with \p newstate.
+ * __struct gl_contextRec::NewState with \p newstate.
  */
 #define FLUSH_VERTICES(ctx, newstate)				\
 do {								\
@@ -230,7 +230,7 @@ do {								\
  *
  * Checks if dd_function_table::NeedFlush is marked to flush current state,
  * and calls dd_function_table::FlushVertices if so. Marks
- * __GLcontextRec::NewState with \p newstate.
+ * __struct gl_contextRec::NewState with \p newstate.
  */
 #define FLUSH_CURRENT(ctx, newstate)				\
 do {								\

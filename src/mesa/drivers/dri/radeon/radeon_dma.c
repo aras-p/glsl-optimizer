@@ -133,7 +133,7 @@ void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
 		}
 }
 
-void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
+void rcommon_emit_vector(struct gl_context * ctx, struct radeon_aos *aos,
 			 const GLvoid * data, int size, int stride, int count)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -389,7 +389,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 
 /* Flush vertices in the current dma region.
  */
-void rcommon_flush_last_swtcl_prim( GLcontext *ctx  )
+void rcommon_flush_last_swtcl_prim( struct gl_context *ctx  )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	struct radeon_dma *dma = &rmesa->dma;
@@ -462,7 +462,7 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 	return head;
 }
 
-void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
+void radeonReleaseArrays( struct gl_context *ctx, GLuint newinputs )
 {
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
    int i;

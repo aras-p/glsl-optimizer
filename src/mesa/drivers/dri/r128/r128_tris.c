@@ -62,8 +62,8 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
    R128_CCE_VC_CNTL_PRIM_TYPE_TRI_LIST,
 };
 
-static void r128RasterPrimitive( GLcontext *ctx, GLuint hwprim );
-static void r128RenderPrimitive( GLcontext *ctx, GLenum prim );
+static void r128RasterPrimitive( struct gl_context *ctx, GLuint hwprim );
+static void r128RenderPrimitive( struct gl_context *ctx, GLenum prim );
 
 
 /***********************************************************************
@@ -344,7 +344,7 @@ r128_fallback_tri( r128ContextPtr rmesa,
 		     r128Vertex *v1,
 		     r128Vertex *v2 )
 {
-   GLcontext *ctx = rmesa->glCtx;
+   struct gl_context *ctx = rmesa->glCtx;
    SWvertex v[3];
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
@@ -358,7 +358,7 @@ r128_fallback_line( r128ContextPtr rmesa,
 		    r128Vertex *v0,
 		    r128Vertex *v1 )
 {
-   GLcontext *ctx = rmesa->glCtx;
+   struct gl_context *ctx = rmesa->glCtx;
    SWvertex v[2];
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
@@ -370,7 +370,7 @@ static void
 r128_fallback_point( r128ContextPtr rmesa,
 		     r128Vertex *v0 )
 {
-   GLcontext *ctx = rmesa->glCtx;
+   struct gl_context *ctx = rmesa->glCtx;
    SWvertex v[1];
    _swsetup_Translate( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
@@ -426,7 +426,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 #define _R128_NEW_RENDER_STATE (ANY_FALLBACK_FLAGS | ANY_RASTER_FLAGS)
 
-void r128ChooseRenderState(GLcontext *ctx)
+void r128ChooseRenderState(struct gl_context *ctx)
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
@@ -479,7 +479,7 @@ void r128ChooseRenderState(GLcontext *ctx)
 /*                 Validate state at pipeline start                   */
 /**********************************************************************/
 
-static void r128RunPipeline( GLcontext *ctx )
+static void r128RunPipeline( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -509,7 +509,7 @@ static void r128RunPipeline( GLcontext *ctx )
  * primitives.
  */
 
-static void r128RasterPrimitive( GLcontext *ctx, GLuint hwprim )
+static void r128RasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -531,7 +531,7 @@ static void r128RasterPrimitive( GLcontext *ctx, GLuint hwprim )
    }
 }
 
-static void r128SetupAntialias( GLcontext *ctx, GLenum prim )
+static void r128SetupAntialias( struct gl_context *ctx, GLenum prim )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -553,7 +553,7 @@ static void r128SetupAntialias( GLcontext *ctx, GLenum prim )
    }
 }
 
-static void r128RenderPrimitive( GLcontext *ctx, GLenum prim )
+static void r128RenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint hw = hw_prim[prim];
@@ -584,7 +584,7 @@ do {									\
    offset += (SIZE);							\
 } while (0)
 
-static void r128RenderStart( GLcontext *ctx )
+static void r128RenderStart( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -681,7 +681,7 @@ static void r128RenderStart( GLcontext *ctx )
    }
 }
 
-static void r128RenderFinish( GLcontext *ctx )
+static void r128RenderFinish( struct gl_context *ctx )
 {
    if (R128_CONTEXT(ctx)->RenderIndex & R128_FALLBACK_BIT)
       _swrast_flush( ctx );
@@ -717,7 +717,7 @@ static const char *getFallbackString(GLuint bit)
    return fallbackStrings[i];
 }
 
-void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
+void r128Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -768,7 +768,7 @@ void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void r128InitTriFuncs( GLcontext *ctx )
+void r128InitTriFuncs( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);

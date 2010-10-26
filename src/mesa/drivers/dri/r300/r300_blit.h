@@ -32,7 +32,7 @@ void r300_blit_init(struct r300_context *r300);
 
 unsigned r300_check_blit(gl_format mesa_format);
 
-unsigned r300_blit(GLcontext *ctx,
+unsigned r300_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,
                    gl_format src_mesaformat,

@@ -43,20 +43,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 void r600EmitCacheFlush(context_t *rmesa);
 
-extern GLboolean r600EmitShader(GLcontext * ctx, 
+extern GLboolean r600EmitShader(struct gl_context * ctx, 
                                 void ** shaderbo,
 			                    GLvoid * data, 
                                 int sizeinDWORD,
                                 char * szShaderUsage); 
 
-extern GLboolean r600DeleteShader(GLcontext * ctx, 
+extern GLboolean r600DeleteShader(struct gl_context * ctx, 
                                  void * shaderbo);
 
-extern GLboolean r600AllocShaderConsts(GLcontext * ctx,
+extern GLboolean r600AllocShaderConsts(struct gl_context * ctx,
                                 void ** constbo,			 
                                 int sizeinBYTE,
                                 char * szShaderUsage);
-GLboolean r600EmitShaderConsts(GLcontext * ctx,
+GLboolean r600EmitShaderConsts(struct gl_context * ctx,
                                void * constbo,
                                int    bo_offset,
                                GLvoid * data,

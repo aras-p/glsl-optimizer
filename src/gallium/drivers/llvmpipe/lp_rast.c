@@ -211,8 +211,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
                        const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
-   unsigned clear_value = arg.clear_zstencil.value;
-   unsigned clear_mask = arg.clear_zstencil.mask;
+   uint32_t clear_value = arg.clear_zstencil.value;
+   uint32_t clear_mask = arg.clear_zstencil.mask;
    const unsigned height = TILE_SIZE / TILE_VECTOR_HEIGHT;
    const unsigned width = TILE_SIZE * TILE_VECTOR_HEIGHT;
    const unsigned block_size = scene->zsbuf.blocksize;
@@ -220,7 +220,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
    uint8_t *dst;
    unsigned i, j;
 
-   LP_DBG(DEBUG_RAST, "%s 0x%x%x\n", __FUNCTION__, clear_value, clear_mask);
+   LP_DBG(DEBUG_RAST, "%s: value=0x%08x, mask=0x%08x\n",
+           __FUNCTION__, clear_value, clear_mask);
 
    /*
     * Clear the aera of the swizzled depth/depth buffer matching this tile, in
@@ -232,16 +233,31 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    dst = task->depth_tile;
 
+   clear_value &= clear_mask;
+
    switch (block_size) {
    case 1:
+      assert(clear_mask == 0xff);
       memset(dst, (uint8_t) clear_value, height * width);
       break;
    case 2:
-      for (i = 0; i < height; i++) {
-         uint16_t *row = (uint16_t *)dst;
-         for (j = 0; j < width; j++)
-            *row++ = (uint16_t) clear_value;
-         dst += dst_stride;
+      if (clear_mask == 0xffff) {
+         for (i = 0; i < height; i++) {
+            uint16_t *row = (uint16_t *)dst;
+            for (j = 0; j < width; j++)
+               *row++ = (uint16_t) clear_value;
+            dst += dst_stride;
+         }
+      }
+      else {
+         for (i = 0; i < height; i++) {
+            uint16_t *row = (uint16_t *)dst;
+            for (j = 0; j < width; j++) {
+               uint16_t tmp = ~clear_mask & *row;
+               *row++ = clear_value | tmp;
+            }
+            dst += dst_stride;
+         }
       }
       break;
    case 4:
@@ -258,7 +274,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
             uint32_t *row = (uint32_t *)dst;
             for (j = 0; j < width; j++) {
                uint32_t tmp = ~clear_mask & *row;
-               *row++ = (clear_value & clear_mask) | tmp;
+               *row++ = clear_value | tmp;
             }
             dst += dst_stride;
          }
@@ -318,7 +334,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
 {
    const struct lp_scene *scene = task->scene;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
@@ -349,10 +365,10 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          BEGIN_JIT_CALL(state);
          variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                             tile_x + x, tile_y + y,
-                                            inputs->facing,
-                                            inputs->a0,
-                                            inputs->dadx,
-                                            inputs->dady,
+                                            inputs->frontfacing,
+                                            GET_A0(inputs),
+                                            GET_DADX(inputs),
+                                            GET_DADY(inputs),
                                             color,
                                             depth,
                                             0xffff,
@@ -398,7 +414,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                          unsigned x, unsigned y,
                          unsigned mask)
 {
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const struct lp_scene *scene = task->scene;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
@@ -430,10 +446,10 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    BEGIN_JIT_CALL(state);
    variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
                                          x, y,
-                                         inputs->facing,
-                                         inputs->a0,
-                                         inputs->dadx,
-                                         inputs->dady,
+                                         inputs->frontfacing,
+                                         GET_A0(inputs),
+                                         GET_DADX(inputs),
+                                         GET_DADY(inputs),
                                          color,
                                          depth,
                                          mask,
@@ -471,6 +487,14 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
 {
    task->query->count[task->thread_index] += task->vis_counter;
    task->query = NULL;
+}
+
+
+void
+lp_rast_set_state(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
+{
+   task->state = arg.state;
 }
 
 
@@ -581,10 +605,12 @@ static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
    lp_rast_triangle_8,
    lp_rast_triangle_3_4,
    lp_rast_triangle_3_16,
+   lp_rast_triangle_4_16,
    lp_rast_shade_tile,
    lp_rast_shade_tile_opaque,
    lp_rast_begin_query,
    lp_rast_end_query,
+   lp_rast_set_state,
 };
 
 

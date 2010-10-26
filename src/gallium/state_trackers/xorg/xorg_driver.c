@@ -45,6 +45,7 @@
 #include "miscstruct.h"
 #include "dixstruct.h"
 #include "xf86xv.h"
+#include "xorgVersion.h"
 #ifndef XSERVER_LIBPCIACCESS
 #error "libpciaccess needed"
 #endif
@@ -122,7 +123,7 @@ xorg_tracker_set_functions(ScrnInfoPtr scrn)
 Bool
 xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
 {
-    char *BusID = xalloc(64);
+    char *BusID = malloc(64);
     sprintf(BusID, "pci:%04x:%02x:%02x.%d",
 	    device->domain, device->bus,
 	    device->dev, device->func);
@@ -130,14 +131,14 @@ xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
     if (drmCheckModesettingSupported(BusID)) {
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
 		       "Drm modesetting not supported %s\n", BusID);
-	xfree(BusID);
+	free(BusID);
 	return FALSE;
     }
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
 		   "Drm modesetting supported on %s\n", BusID);
 
-    xfree(BusID);
+    free(BusID);
     return TRUE;
 }
 
@@ -174,7 +175,7 @@ drv_free_rec(ScrnInfoPtr pScrn)
     if (!pScrn->driverPrivate)
 	return;
 
-    xfree(pScrn->driverPrivate);
+    free(pScrn->driverPrivate);
 
     pScrn->driverPrivate = NULL;
 }
@@ -274,7 +275,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
     if (ms->fd < 0) {
 	char *BusID;
 
-	BusID = xalloc(64);
+	BusID = malloc(64);
 	sprintf(BusID, "PCI:%d:%d:%d",
 		((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
 		ms->PciInfo->dev, ms->PciInfo->func
@@ -283,7 +284,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
 
 	ms->fd = drmOpen(driver_descriptor.driver_name, BusID);
 	ms->isMaster = TRUE;
-	xfree(BusID);
+	free(BusID);
 
 	if (ms->fd >= 0)
 	    return TRUE;
@@ -369,6 +370,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     ms = modesettingPTR(pScrn);
     ms->pEnt = pEnt;
     ms->cust = cust;
+    ms->fb_id = -1;
 
     pScrn->displayWidth = 640;	       /* default it */
 
@@ -402,19 +404,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     if (!drv_init_drm(pScrn))
 	return FALSE;
 
-    use3D = cust ? !cust->no_3d : TRUE;
-    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
-				    &use3D) ?
-	X_CONFIG : X_PROBED;
-
-    ms->no3D = !use3D;
-
-    if (!drv_init_resource_management(pScrn)) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
-					       "Gallium3D or libKMS.");
-	return FALSE;
-    }
-
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
     pScrn->rgbBits = 8;
@@ -444,10 +433,23 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 
     /* Process the options */
     xf86CollectOptions(pScrn, NULL);
-    if (!(ms->Options = xalloc(sizeof(drv_options))))
+    if (!(ms->Options = malloc(sizeof(drv_options))))
 	return FALSE;
     memcpy(ms->Options, drv_options, sizeof(drv_options));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ms->Options);
+
+    use3D = cust ? !cust->no_3d : TRUE;
+    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				    &use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
+
+    if (!drv_init_resource_management(pScrn)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
+					       "Gallium3D or libKMS.");
+	return FALSE;
+    }
 
     /* Allocate an xf86CrtcConfig */
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
@@ -791,7 +793,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ms->SWCursor)
 	xf86_cursors_init(pScreen, 64, 64,
 			  HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64 |
-			  HARDWARE_CURSOR_ARGB);
+			  HARDWARE_CURSOR_ARGB |
+			  ((cust && cust->unhidden_hw_cursor_update) ?
+			   HARDWARE_CURSOR_UPDATE_UNHIDDEN : 0));
 
     /* Must force it before EnterVT, so we are in control of VT and
      * later memory should be bound when allocating, e.g rotate_mem */
@@ -862,8 +866,10 @@ drv_leave_vt(int scrnIndex, int flags)
 	}
     }
 
-    drmModeRmFB(ms->fd, ms->fb_id);
-    ms->fb_id = -1;
+    if (ms->fb_id != -1) {
+	drmModeRmFB(ms->fd, ms->fb_id);
+	ms->fb_id = -1;
+    }
 
     /* idle hardware */
     if (!ms->kms)
@@ -944,7 +950,6 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     }
 #endif
 
-    drmModeRmFB(ms->fd, ms->fb_id);
     ms->destroy_front_buffer(pScrn);
 
     if (ms->exa)
@@ -1178,6 +1183,8 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
 				stride,
 				ptr);
 
+#if (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 9, 99, 1, 0))
+
     /* This a hack to work around EnableDisableFBAccess setting the pointer
      * the real fix would be to replace pScrn->EnableDisableFBAccess hook
      * and set the rootPixmap->devPrivate.ptr to something valid before that.
@@ -1186,6 +1193,8 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
      * that, so our hook doesn't get called before the crash happens.
      */
     pScrn->pixmapPrivate.ptr = ptr;
+
+#endif
 
     return TRUE;
 

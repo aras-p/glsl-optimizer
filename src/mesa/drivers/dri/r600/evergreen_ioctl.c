@@ -40,7 +40,7 @@
 
 #include "r700_clear.h"
 
-void evergreenClear(GLcontext * ctx, GLbitfield mask)
+void evergreenClear(struct gl_context * ctx, GLbitfield mask)
 {    
     r700Clear(ctx, mask);
 }

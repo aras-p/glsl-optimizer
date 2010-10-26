@@ -38,7 +38,7 @@
 
 #include "main/context.h"
 
-extern void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
+extern void tdfxDDInitDriverFuncs( const struct gl_config *visual,
                                    struct dd_function_table *functions );
 
 #endif

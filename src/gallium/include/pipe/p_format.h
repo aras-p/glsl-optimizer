@@ -198,6 +198,10 @@ enum pipe_format {
    PIPE_FORMAT_IA44                  = 141,
    PIPE_FORMAT_AI44                  = 142,
 
+   /* some stencil samplers formats */
+   PIPE_FORMAT_X24S8_USCALED           = 136,
+   PIPE_FORMAT_S8X24_USCALED           = 137,
+   PIPE_FORMAT_X32_S8X24_USCALED       = 138,
    PIPE_FORMAT_COUNT
 };
 

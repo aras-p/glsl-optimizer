@@ -55,7 +55,7 @@
 	 NV20TCL_FRONT_MATERIAL_SHININESS(0))
 
 void
-nv20_emit_clip_plane(GLcontext *ctx, int emit)
+nv20_emit_clip_plane(struct gl_context *ctx, int emit)
 {
 }
 
@@ -86,7 +86,7 @@ get_material_bitmask(unsigned m)
 }
 
 void
-nv20_emit_color_material(GLcontext *ctx, int emit)
+nv20_emit_color_material(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
@@ -140,7 +140,7 @@ get_fog_source(unsigned source)
 }
 
 void
-nv20_emit_fog(GLcontext *ctx, int emit)
+nv20_emit_fog(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -165,7 +165,7 @@ nv20_emit_fog(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_light_model(GLcontext *ctx, int emit)
+nv20_emit_light_model(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
@@ -187,7 +187,7 @@ nv20_emit_light_model(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_light_source(GLcontext *ctx, int emit)
+nv20_emit_light_source(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_LIGHT_SOURCE0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -226,7 +226,7 @@ nv20_emit_light_source(GLcontext *ctx, int emit)
 	 ctx->Light.ColorMaterialBitmask & (1 << MAT_ATTRIB_##attr(side)))
 
 void
-nv20_emit_material_ambient(GLcontext *ctx, int emit)
+nv20_emit_material_ambient(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -269,7 +269,7 @@ nv20_emit_material_ambient(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_material_diffuse(GLcontext *ctx, int emit)
+nv20_emit_material_diffuse(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -292,7 +292,7 @@ nv20_emit_material_diffuse(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_material_specular(GLcontext *ctx, int emit)
+nv20_emit_material_specular(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -311,7 +311,7 @@ nv20_emit_material_specular(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_material_shininess(GLcontext *ctx, int emit)
+nv20_emit_material_shininess(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_SHININESS;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -328,7 +328,7 @@ nv20_emit_material_shininess(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_modelview(GLcontext *ctx, int emit)
+nv20_emit_modelview(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -357,7 +357,7 @@ nv20_emit_modelview(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_projection(GLcontext *ctx, int emit)
+nv20_emit_projection(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);

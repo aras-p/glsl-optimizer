@@ -490,7 +490,7 @@ via_fallback_tri(struct via_context *vmesa,
                  viaVertex *v1,
                  viaVertex *v2)
 {    
-    GLcontext *ctx = vmesa->glCtx;
+    struct gl_context *ctx = vmesa->glCtx;
     SWvertex v[3];
     _swsetup_Translate(ctx, v0, &v[0]);
     _swsetup_Translate(ctx, v1, &v[1]);
@@ -506,7 +506,7 @@ via_fallback_line(struct via_context *vmesa,
                   viaVertex *v0,
                   viaVertex *v1)
 {
-    GLcontext *ctx = vmesa->glCtx;
+    struct gl_context *ctx = vmesa->glCtx;
     SWvertex v[2];
     _swsetup_Translate(ctx, v0, &v[0]);
     _swsetup_Translate(ctx, v1, &v[1]);
@@ -520,7 +520,7 @@ static void
 via_fallback_point(struct via_context *vmesa,
                    viaVertex *v0)
 {
-    GLcontext *ctx = vmesa->glCtx;
+    struct gl_context *ctx = vmesa->glCtx;
     SWvertex v[1];
     _swsetup_Translate(ctx, v0, &v[0]);
     viaSpanRenderStart( ctx );
@@ -528,7 +528,7 @@ via_fallback_point(struct via_context *vmesa,
     viaSpanRenderFinish( ctx );
 }
 
-static void viaResetLineStipple( GLcontext *ctx )
+static void viaResetLineStipple( struct gl_context *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    vmesa->regCmdB |= HC_HLPrst_MASK;
@@ -578,7 +578,7 @@ static void viaResetLineStipple( GLcontext *ctx )
 
 
 
-static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
+static void viaRenderClippedPoly(struct gl_context *ctx, const GLuint *elts,
                                  GLuint n)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -602,13 +602,13 @@ static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
        tnl->Driver.Render.PrimitiveNotify( ctx, prim );
 }
 
-static void viaRenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj)
+static void viaRenderClippedLine(struct gl_context *ctx, GLuint ii, GLuint jj)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     tnl->Driver.Render.Line(ctx, ii, jj);
 }
 
-static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
+static void viaFastRenderClippedPoly(struct gl_context *ctx, const GLuint *elts,
                                      GLuint n)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -645,7 +645,7 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                               _NEW_POLYGONSTIPPLE)
 
 
-static void viaChooseRenderState(GLcontext *ctx)
+static void viaChooseRenderState(struct gl_context *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -739,7 +739,7 @@ do {									\
 
 
 
-static void viaChooseVertexState( GLcontext *ctx )
+static void viaChooseVertexState( struct gl_context *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -822,7 +822,7 @@ static void viaChooseVertexState( GLcontext *ctx )
  * them. Fallback to swrast if we can't. Returns GL_TRUE if projective
  * texture coordinates must be faked, GL_FALSE otherwise.
  */
-static GLboolean viaCheckPTexHack( GLcontext *ctx )
+static GLboolean viaCheckPTexHack( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -853,7 +853,7 @@ static GLboolean viaCheckPTexHack( GLcontext *ctx )
 /**********************************************************************/
 
 
-static void viaRenderStart(GLcontext *ctx)
+static void viaRenderStart(struct gl_context *ctx)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -888,7 +888,7 @@ static void viaRenderStart(GLcontext *ctx)
    VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
 }
 
-static void viaRenderFinish(GLcontext *ctx)
+static void viaRenderFinish(struct gl_context *ctx)
 {
    VIA_FINISH_PRIM(VIA_CONTEXT(ctx));
 }
@@ -897,7 +897,7 @@ static void viaRenderFinish(GLcontext *ctx)
 /* System to flush dma and emit state changes based on the rasterized
  * primitive.
  */
-void viaRasterPrimitive(GLcontext *ctx,
+void viaRasterPrimitive(struct gl_context *ctx,
 			GLenum glprim,
 			GLenum hwprim)
 {
@@ -1035,7 +1035,7 @@ void viaRasterPrimitive(GLcontext *ctx,
 
 /* Callback for mesa:
  */
-static void viaRenderPrimitive( GLcontext *ctx, GLuint prim )
+static void viaRenderPrimitive( struct gl_context *ctx, GLuint prim )
 {
    viaRasterPrimitive( ctx, prim, hwPrim[prim] );
 }
@@ -1103,7 +1103,7 @@ void viaFinishPrimitive(struct via_context *vmesa)
 
 void viaFallback(struct via_context *vmesa, GLuint bit, GLboolean mode)
 {
-    GLcontext *ctx = vmesa->glCtx;
+    struct gl_context *ctx = vmesa->glCtx;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     GLuint oldfallback = vmesa->Fallback;
     
@@ -1148,7 +1148,7 @@ void viaFallback(struct via_context *vmesa, GLuint bit, GLboolean mode)
     }    
 }
 
-static void viaRunPipeline( GLcontext *ctx )
+static void viaRunPipeline( struct gl_context *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1166,7 +1166,7 @@ static void viaRunPipeline( GLcontext *ctx )
 /**********************************************************************/
 
 
-void viaInitTriFuncs(GLcontext *ctx)
+void viaInitTriFuncs(struct gl_context *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);

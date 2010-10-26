@@ -54,7 +54,7 @@ struct xmesa_renderbuffer;
 
 
 /* Function pointer for clearing color buffers */
-typedef void (*ClearFunc)( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+typedef void (*ClearFunc)( struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
                            GLint x, GLint y, GLint width, GLint height );
 
 
@@ -80,12 +80,14 @@ enum pixel_format {
 
 
 /**
- * Visual inforation, derived from GLvisual.
+ * Visual inforation, derived from struct gl_config.
  * Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
-   GLvisual mesa_visual;	/* Device independent visual parameters */
+   struct gl_config mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
+   int screen, visualID;
+   int visualType;
 #ifdef XFree86Server
    GLint ColormapEntries;
    GLint nplanes;
@@ -127,11 +129,11 @@ struct xmesa_visual {
 
 
 /**
- * Context info, derived from GLcontext.
+ * Context info, derived from struct gl_context.
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
-   GLcontext mesa;		/* the core library context (containment) */
+   struct gl_context mesa;		/* the core library context (containment) */
    XMesaVisual xm_visual;	/* Describes the buffers */
    XMesaBuffer xm_buffer;	/* current span/point/line/triangle buffer */
 
@@ -204,7 +206,7 @@ struct xmesa_renderbuffer
  * Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
-   GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
+   struct gl_framebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
 				/* This MUST BE FIRST! */
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
@@ -494,7 +496,7 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name, const struct gl_config *visual,
                        GLboolean backBuffer);
 
 extern void
@@ -504,7 +506,7 @@ extern XMesaBuffer
 xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis);
 
 extern unsigned long
-xmesa_color_to_pixel( GLcontext *ctx,
+xmesa_color_to_pixel( struct gl_context *ctx,
                       GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                       GLuint pixelFormat );
 
@@ -520,7 +522,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
                              struct dd_function_table *driver );
 
 extern void
-xmesa_update_state( GLcontext *ctx, GLbitfield new_state );
+xmesa_update_state( struct gl_context *ctx, GLbitfield new_state );
 
 extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
@@ -541,22 +543,22 @@ xmesa_renderbuffer(struct gl_renderbuffer *rb)
 
 
 /**
- * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
+ * Return pointer to XMesaContext corresponding to a Mesa struct gl_context.
  * Since we're using structure containment, it's just a cast!.
  */
 static INLINE XMesaContext
-XMESA_CONTEXT(GLcontext *ctx)
+XMESA_CONTEXT(struct gl_context *ctx)
 {
    return (XMesaContext) ctx;
 }
 
 
 /**
- * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
+ * Return pointer to XMesaBuffer corresponding to a Mesa struct gl_framebuffer.
  * Since we're using structure containment, it's just a cast!.
  */
 static INLINE XMesaBuffer
-XMESA_BUFFER(GLframebuffer *b)
+XMESA_BUFFER(struct gl_framebuffer *b)
 {
    return (XMesaBuffer) b;
 }
@@ -565,12 +567,12 @@ XMESA_BUFFER(GLframebuffer *b)
 /* Plugged into the software rasterizer.  Try to use internal
  * swrast-style point, line and triangle functions.
  */
-extern void xmesa_choose_point( GLcontext *ctx );
-extern void xmesa_choose_line( GLcontext *ctx );
-extern void xmesa_choose_triangle( GLcontext *ctx );
+extern void xmesa_choose_point( struct gl_context *ctx );
+extern void xmesa_choose_line( struct gl_context *ctx );
+extern void xmesa_choose_triangle( struct gl_context *ctx );
 
 
-extern void xmesa_register_swrast_functions( GLcontext *ctx );
+extern void xmesa_register_swrast_functions( struct gl_context *ctx );
 
 
 

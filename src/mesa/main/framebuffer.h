@@ -29,14 +29,14 @@
 #include "mtypes.h"
 
 extern struct gl_framebuffer *
-_mesa_create_framebuffer(const GLvisual *visual);
+_mesa_create_framebuffer(const struct gl_config *visual);
 
 extern struct gl_framebuffer *
-_mesa_new_framebuffer(GLcontext *ctx, GLuint name);
+_mesa_new_framebuffer(struct gl_context *ctx, GLuint name);
 
 extern void
 _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
-				     const GLvisual *visual);
+				     const struct gl_config *visual);
 
 extern void
 _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name);
@@ -52,45 +52,45 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
                             struct gl_framebuffer *fb);
 
 extern void
-_mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                          GLuint width, GLuint height);
 
 
 extern void
-_mesa_resizebuffers( GLcontext *ctx );
+_mesa_resizebuffers( struct gl_context *ctx );
 
 extern void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void );
 
 
 extern void 
-_mesa_update_draw_buffer_bounds(GLcontext *ctx);
+_mesa_update_draw_buffer_bounds(struct gl_context *ctx);
 
 extern void
 _mesa_update_framebuffer_visual(struct gl_framebuffer *fb);
 
 extern void
-_mesa_update_depth_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                             GLuint attIndex);
 
 extern void
-_mesa_update_stencil_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_update_stencil_buffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                             GLuint attIndex);
 
 extern void
-_mesa_update_framebuffer(GLcontext *ctx);
+_mesa_update_framebuffer(struct gl_context *ctx);
 
 extern GLboolean
-_mesa_source_buffer_exists(GLcontext *ctx, GLenum format);
+_mesa_source_buffer_exists(struct gl_context *ctx, GLenum format);
 
 extern GLboolean
-_mesa_dest_buffer_exists(GLcontext *ctx, GLenum format);
+_mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format);
 
 extern GLenum
-_mesa_get_color_read_type(GLcontext *ctx);
+_mesa_get_color_read_type(struct gl_context *ctx);
 
 extern GLenum
-_mesa_get_color_read_format(GLcontext *ctx);
+_mesa_get_color_read_format(struct gl_context *ctx);
 
 extern void
 _mesa_print_framebuffer(const struct gl_framebuffer *fb);

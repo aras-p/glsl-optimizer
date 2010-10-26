@@ -190,7 +190,7 @@ static GLuint get_input_size(struct brw_context *brw,
  */
 static void calc_wm_input_sizes( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);

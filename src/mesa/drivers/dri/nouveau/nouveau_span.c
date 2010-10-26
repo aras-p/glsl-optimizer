@@ -131,7 +131,7 @@ renderbuffer_map_unmap(struct gl_renderbuffer *rb, GLboolean map)
 }
 
 static void
-texture_unit_map_unmap(GLcontext *ctx, struct gl_texture_unit *u, GLboolean map)
+texture_unit_map_unmap(struct gl_context *ctx, struct gl_texture_unit *u, GLboolean map)
 {
 	if (!u->_ReallyEnabled)
 		return;
@@ -157,7 +157,7 @@ framebuffer_map_unmap(struct gl_framebuffer *fb, GLboolean map)
 }
 
 static void
-span_map_unmap(GLcontext *ctx, GLboolean map)
+span_map_unmap(struct gl_context *ctx, GLboolean map)
 {
 	int i;
 
@@ -171,21 +171,21 @@ span_map_unmap(GLcontext *ctx, GLboolean map)
 }
 
 static void
-nouveau_span_start(GLcontext *ctx)
+nouveau_span_start(struct gl_context *ctx)
 {
 	nouveau_fallback(ctx, SWRAST);
 	span_map_unmap(ctx, GL_TRUE);
 }
 
 static void
-nouveau_span_finish(GLcontext *ctx)
+nouveau_span_finish(struct gl_context *ctx)
 {
 	span_map_unmap(ctx, GL_FALSE);
 	nouveau_fallback(ctx, HWTNL);
 }
 
 void
-nouveau_span_functions_init(GLcontext *ctx)
+nouveau_span_functions_init(struct gl_context *ctx)
 {
 	struct swrast_device_driver *swdd =
 		_swrast_GetDeviceDriverReference(ctx);

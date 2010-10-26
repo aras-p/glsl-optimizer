@@ -122,6 +122,27 @@ typedef unsigned char boolean;
 #  endif
 #endif
 
+/*
+ * Define the C99 restrict keyword.
+ *
+ * See also:
+ * - http://cellperformance.beyond3d.com/articles/2006/05/demystifying-the-restrict-keyword.html
+ */
+#ifndef restrict
+#  if (__STDC_VERSION__ >= 199901L)
+     /* C99 */
+#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
+     /* C99 */
+#  elif defined(__GNUC__)
+#    define restrict __restrict__
+#  elif defined(_MSC_VER)
+#    define restrict __restrict
+#  else
+#    define restrict /* */
+#  endif
+#endif
+
+
 /* Function visibility */
 #ifndef PUBLIC
 #  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))

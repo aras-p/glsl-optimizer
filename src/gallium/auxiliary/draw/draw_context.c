@@ -335,6 +335,7 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
    case PIPE_SHADER_VERTEX:
       draw->pt.user.vs_constants[slot] = buffer;
       draw->pt.user.vs_constants_size[slot] = size;
+      draw->pt.user.planes = (float (*) [12][4]) &(draw->plane[0]);
       draw_vs_set_constants(draw, slot, buffer, size);
       break;
    case PIPE_SHADER_GEOMETRY:
@@ -721,9 +722,9 @@ draw_set_mapped_texture(struct draw_context *draw,
                         unsigned sampler_idx,
                         uint32_t width, uint32_t height, uint32_t depth,
                         uint32_t last_level,
-                        uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS],
-                        uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS],
-                        const void *data[DRAW_MAX_TEXTURE_LEVELS])
+                        uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
+                        uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
+                        const void *data[PIPE_MAX_TEXTURE_LEVELS])
 {
 #ifdef HAVE_LLVM
    if(draw->llvm)

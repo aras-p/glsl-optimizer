@@ -92,7 +92,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		return 1;
 	}
 
- 	if (!bo->tile_flags) {
+	if (!nouveau_bo_tile_layout(bo)) {
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);

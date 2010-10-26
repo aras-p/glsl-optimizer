@@ -19,6 +19,8 @@ C_SOURCES = \
 	r600_texture.c \
 	r700_asm.c \
 	evergreen_state.c \
-	eg_asm.c
+	eg_asm.c \
+	r600_translate.c \
+	r600_state_common.c
 
 include ../../Makefile.template

@@ -154,7 +154,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
 /* TODO: populate these as the vertex is defined:
  */
 static void
-vbo_exec_bind_arrays( GLcontext *ctx )
+vbo_exec_bind_arrays( struct gl_context *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -260,7 +260,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
    GLenum target = GL_ARRAY_BUFFER_ARB;
 
    if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
-      GLcontext *ctx = exec->ctx;
+      struct gl_context *ctx = exec->ctx;
       
       if (ctx->Driver.FlushMappedBufferRange) {
          GLintptr offset = exec->vtx.buffer_used - exec->vtx.bufferobj->Offset;
@@ -289,7 +289,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
+   struct gl_context *ctx = exec->ctx;
    const GLenum target = GL_ARRAY_BUFFER_ARB;
    const GLenum access = GL_READ_WRITE_ARB; /* for MapBuffer */
    const GLenum accessRange = GL_MAP_WRITE_BIT |  /* for MapBufferRange */
@@ -363,7 +363,7 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
       exec->vtx.copied.nr = vbo_copy_vertices( exec ); 
 
       if (exec->vtx.copied.nr != exec->vtx.vert_count) {
-	 GLcontext *ctx = exec->ctx;
+	 struct gl_context *ctx = exec->ctx;
 	 
 	 /* Before the update_state() as this may raise _NEW_ARRAY
           * from _mesa_set_varying_vp_inputs().

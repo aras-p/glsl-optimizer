@@ -32,32 +32,32 @@
 
 
 extern GLuint
-_mesa_max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
+_mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
                        const void *indices,
                        struct gl_buffer_object *elementBuf);
 
 extern GLboolean
-_mesa_validate_DrawArrays(GLcontext *ctx,
+_mesa_validate_DrawArrays(struct gl_context *ctx,
 			  GLenum mode, GLint start, GLsizei count);
 
 extern GLboolean
-_mesa_validate_DrawElements(GLcontext *ctx,
+_mesa_validate_DrawElements(struct gl_context *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices, GLint basevertex);
 
 extern GLboolean
-_mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
+_mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
 				 GLuint start, GLuint end,
 				 GLsizei count, GLenum type,
 				 const GLvoid *indices, GLint basevertex);
 
 
 extern GLboolean
-_mesa_validate_DrawArraysInstanced(GLcontext *ctx, GLenum mode, GLint first,
+_mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint first,
                                    GLsizei count, GLsizei primcount);
 
 extern GLboolean
-_mesa_validate_DrawElementsInstanced(GLcontext *ctx,
+_mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      GLenum mode, GLsizei count, GLenum type,
                                      const GLvoid *indices, GLsizei primcount);
 

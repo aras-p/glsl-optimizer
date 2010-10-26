@@ -51,7 +51,7 @@
 
 
 static void
-NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(get_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                GLuint count, GLint x, GLint y, void *values )
 {
 #ifdef SPAN_VARS
@@ -69,7 +69,7 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(get_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[], void *values )
 {
 #ifdef SPAN_VARS
@@ -86,7 +86,7 @@ NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                GLuint count, GLint x, GLint y,
                const void *values, const GLubyte mask[] )
 {
@@ -115,7 +115,7 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_row_rgb)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLuint count, GLint x, GLint y,
                    const void *values, const GLubyte mask[] )
 {
@@ -140,7 +140,7 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_mono_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                     GLuint count, GLint x, GLint y,
                     const void *value, const GLubyte mask[] )
 {
@@ -169,7 +169,7 @@ NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[],
                   const void *values, const GLubyte mask[] )
 {
@@ -190,7 +190,7 @@ NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_mono_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte mask[] )
 {

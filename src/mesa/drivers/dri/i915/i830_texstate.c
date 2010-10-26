@@ -113,7 +113,7 @@ translate_wrap_mode(GLenum wrap)
 static GLboolean
 i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct i830_context *i830 = i830_context(ctx);
    struct gl_texture_unit *tUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = tUnit->_Current;

@@ -30,7 +30,7 @@
 #include "r600_context.h"
 #include "radeon_drm.h"
 
-extern void evergreenClear(GLcontext * ctx, GLbitfield mask);
+extern void evergreenClear(struct gl_context * ctx, GLbitfield mask);
 extern void evergreenInitIoctlFuncs(struct dd_function_table *functions);
 
 #endif    /* _EVERGREEN_IOCTL_H_ */

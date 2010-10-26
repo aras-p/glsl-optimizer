@@ -96,8 +96,6 @@ static void compile_gs_prog( struct brw_context *brw,
       brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
-      /* XXX fix GS hang issue */
-      assert(intel->gen < 6);
       brw_gs_lines( &c );
       break;
    case GL_LINES:
@@ -167,7 +165,7 @@ static const GLenum gs_prim[GL_POLYGON+1] = {
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */

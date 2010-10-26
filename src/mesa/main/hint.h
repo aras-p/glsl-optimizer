@@ -45,7 +45,7 @@ extern void GLAPIENTRY
 _mesa_Hint( GLenum target, GLenum mode );
 
 extern void 
-_mesa_init_hint( GLcontext * ctx );
+_mesa_init_hint( struct gl_context * ctx );
 
 #else
 

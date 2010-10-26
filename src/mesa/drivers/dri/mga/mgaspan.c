@@ -169,7 +169,7 @@
 
 
 static void
-mgaSpanRenderStart( GLcontext *ctx )
+mgaSpanRenderStart( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    FLUSH_BATCH( mmesa );
@@ -177,7 +177,7 @@ mgaSpanRenderStart( GLcontext *ctx )
 }
 
 static void
-mgaSpanRenderFinish( GLcontext *ctx )
+mgaSpanRenderFinish( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    _swrast_flush( ctx );
@@ -192,7 +192,7 @@ mgaSpanRenderFinish( GLcontext *ctx )
  * write routines for 888 and 8888.  We also need to determine whether or not
  * the visual has destination alpha.
  */
-void mgaDDInitSpanFuncs( GLcontext *ctx )
+void mgaDDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = mgaSpanRenderStart;
@@ -204,7 +204,7 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-mgaSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+mgaSetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {
       mgaInitPointers_565(&drb->Base);

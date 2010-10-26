@@ -32,7 +32,7 @@
 #ifndef __MACH64_TEX_H__
 #define __MACH64_TEX_H__
 
-extern void mach64UpdateTextureState( GLcontext *ctx );
+extern void mach64UpdateTextureState( struct gl_context *ctx );
 
 extern void mach64UploadTexImages( mach64ContextPtr mach64ctx,
 				   mach64TexObjPtr t );

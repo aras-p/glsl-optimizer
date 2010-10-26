@@ -30,7 +30,7 @@
  * This is where we handle assigning vertex colors based on front/back
  * facing, compute polygon offset and handle glPolygonMode().
  */
-static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
+static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e2 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
@@ -213,7 +213,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
 /* Need to fixup edgeflags when decomposing to triangles:
  */
-static void TAG(quadfunc)( GLcontext *ctx, GLuint v0,
+static void TAG(quadfunc)( struct gl_context *ctx, GLuint v0,
 		       GLuint v1, GLuint v2, GLuint v3 )
 {
    if (IND & SS_UNFILLED_BIT) {

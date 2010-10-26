@@ -440,7 +440,7 @@ emit_passthrough(struct i830_context *i830)
 void
 i830EmitTextureBlend(struct i830_context *i830)
 {
-   GLcontext *ctx = &i830->intel.ctx;
+   struct gl_context *ctx = &i830->intel.ctx;
    GLuint unit, last_stage = 0, blendunit = 0;
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, GL_FALSE);

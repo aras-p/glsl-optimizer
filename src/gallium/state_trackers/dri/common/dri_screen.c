@@ -227,7 +227,7 @@ dri_fill_in_modes(struct dri_screen *screen,
  */
 void
 dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
-                   const __GLcontextModes *mode)
+                   const struct gl_config *mode)
 {
    memset(stvis, 0, sizeof(*stvis));
 

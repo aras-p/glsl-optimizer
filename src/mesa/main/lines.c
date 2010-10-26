@@ -102,11 +102,11 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
  *
  * \param ctx GL context.
  *
- * Initializes __GLcontextRec::Line and line related constants in
- * __GLcontextRec::Const.
+ * Initializes __struct gl_contextRec::Line and line related constants in
+ * __struct gl_contextRec::Const.
  */
 void GLAPIENTRY
-_mesa_init_line( GLcontext * ctx )
+_mesa_init_line( struct gl_context * ctx )
 {
    ctx->Line.SmoothFlag = GL_FALSE;
    ctx->Line.StippleFlag = GL_FALSE;

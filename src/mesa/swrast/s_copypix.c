@@ -27,8 +27,8 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/condrender.h"
-#include "main/image.h"
 #include "main/macros.h"
+#include "main/pixeltransfer.h"
 #include "main/imports.h"
 
 #include "s_context.h"
@@ -96,7 +96,7 @@ regions_overlap(GLint srcx, GLint srcy,
  * RGBA copypixels
  */
 static void
-copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
    GLfloat *tmpImage, *p;
@@ -205,7 +205,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
  * Z scale and bias.
  */
 static void
-scale_and_bias_z(GLcontext *ctx, GLuint width,
+scale_and_bias_z(struct gl_context *ctx, GLuint width,
                  const GLfloat depth[], GLuint z[])
 {
    const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
@@ -240,7 +240,7 @@ scale_and_bias_z(GLcontext *ctx, GLuint width,
  * TODO: Optimize!!!!
  */
 static void
-copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                    GLint width, GLint height,
                    GLint destx, GLint desty )
 {
@@ -334,7 +334,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
 
 static void
-copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                      GLint width, GLint height,
                      GLint destx, GLint desty )
 {
@@ -427,7 +427,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
  * CopyPixels function.
  */
 static void
-copy_depth_stencil_pixels(GLcontext *ctx,
+copy_depth_stencil_pixels(struct gl_context *ctx,
                           const GLint srcX, const GLint srcY,
                           const GLint width, const GLint height,
                           const GLint destX, const GLint destY)
@@ -602,7 +602,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
  * Try to do a fast copy pixels.
  */
 static GLboolean
-fast_copy_pixels(GLcontext *ctx,
+fast_copy_pixels(struct gl_context *ctx,
                  GLint srcX, GLint srcY, GLsizei width, GLsizei height,
                  GLint dstX, GLint dstY, GLenum type)
 {
@@ -684,7 +684,7 @@ fast_copy_pixels(GLcontext *ctx,
  * By time we get here, all parameters will have been error-checked.
  */
 void
-_swrast_CopyPixels( GLcontext *ctx,
+_swrast_CopyPixels( struct gl_context *ctx,
 		    GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 		    GLint destx, GLint desty, GLenum type )
 {

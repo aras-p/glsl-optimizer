@@ -244,7 +244,7 @@ static int r700NumVerts(int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end,
+static void r700RunRenderPrimitive(struct gl_context * ctx, int start, int end,
 				   int prim, GLint basevertex)
 {
     context_t *context = R700_CONTEXT(ctx);
@@ -315,7 +315,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end,
     COMMIT_BATCH();
 }
 
-static void r700RunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end, int prim)
+static void r700RunRenderPrimitiveImmediate(struct gl_context * ctx, int start, int end, int prim)
 {
     context_t *context = R700_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
@@ -434,7 +434,7 @@ static void r700RunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end,
 /* start 3d, idle, cb/db flush */
 #define PRE_EMIT_STATE_BUFSZ 5 + 5 + 14
 
-static GLuint r700PredictRenderSize(GLcontext* ctx,
+static GLuint r700PredictRenderSize(struct gl_context* ctx,
 				    const struct _mesa_prim *prim,
 				    const struct _mesa_index_buffer *ib,
 				    GLuint nr_prims)
@@ -501,7 +501,7 @@ static GLuint r700PredictRenderSize(GLcontext* ctx,
  * Convert attribute data type to float
  * If the attribute uses named buffer object replace the bo with newly allocated bo
  */
-static void r700ConvertAttrib(GLcontext *ctx, int count, 
+static void r700ConvertAttrib(struct gl_context *ctx, int count, 
                               const struct gl_client_array *input, 
                               struct StreamDesc *attr)
 {
@@ -580,7 +580,7 @@ static void r700ConvertAttrib(GLcontext *ctx, int count,
     }
 }
 
-static void r700AlignDataToDword(GLcontext *ctx, 
+static void r700AlignDataToDword(struct gl_context *ctx, 
                                  const struct gl_client_array *input, 
                                  int count, 
                                  struct StreamDesc *attr)
@@ -622,7 +622,7 @@ static void r700AlignDataToDword(GLcontext *ctx,
     attr->stride = dst_stride;
 }
 
-static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input[], int count)
+static void r700SetupStreams(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {
 	context_t *context = R700_CONTEXT(ctx);
     GLuint stride;
@@ -723,7 +723,7 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
                                         RADEON_GEM_DOMAIN_GTT, 0);    
 }
 
-static void r700FreeData(GLcontext *ctx)
+static void r700FreeData(struct gl_context *ctx)
 {
     /* Need to zero tcl.aos[n].bo and tcl.elt_dma_bo
      * to prevent double unref in radeonReleaseArrays
@@ -748,7 +748,7 @@ static void r700FreeData(GLcontext *ctx)
     }
 }
 
-static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void r700FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
     context_t *context = R700_CONTEXT(ctx);
     GLvoid *src_ptr;
@@ -823,7 +823,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
     }
 }
 
-static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void r700SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
     context_t *context = R700_CONTEXT(ctx);
 
@@ -876,7 +876,7 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
     }
 }
 
-static GLboolean check_fallbacks(GLcontext *ctx)
+static GLboolean check_fallbacks(struct gl_context *ctx)
 {
 	if (ctx->RenderMode != GL_RENDER)
 		return GL_TRUE;
@@ -884,7 +884,7 @@ static GLboolean check_fallbacks(GLcontext *ctx)
 	return GL_FALSE;
 }
 
-static GLboolean r700TryDrawPrims(GLcontext *ctx,
+static GLboolean r700TryDrawPrims(struct gl_context *ctx,
 				  const struct gl_client_array *arrays[],
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims,
@@ -972,7 +972,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     return GL_TRUE;
 }
 
-static void r700DrawPrims(GLcontext *ctx,
+static void r700DrawPrims(struct gl_context *ctx,
 			  const struct gl_client_array *arrays[],
 			  const struct _mesa_prim *prim,
 			  GLuint nr_prims,
@@ -1011,7 +1011,7 @@ static void r700DrawPrims(GLcontext *ctx,
 	}
 }
 
-void r700InitDraw(GLcontext *ctx)
+void r700InitDraw(struct gl_context *ctx)
 {
 	struct vbo_context *vbo = vbo_context(ctx);
 

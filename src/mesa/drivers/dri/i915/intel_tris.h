@@ -42,9 +42,9 @@
 			       _NEW_PROGRAM |		\
 			       _NEW_POLYGONSTIPPLE)
 
-extern void intelInitTriFuncs(GLcontext * ctx);
+extern void intelInitTriFuncs(struct gl_context * ctx);
 
-extern void intelChooseRenderState(GLcontext * ctx);
+extern void intelChooseRenderState(struct gl_context * ctx);
 
 void intel_set_prim(struct intel_context *intel, uint32_t prim);
 GLuint *intel_get_prim_space(struct intel_context *intel, unsigned int count);

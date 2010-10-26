@@ -29,29 +29,29 @@
 #include "mtypes.h"
 
 extern struct gl_renderbuffer *
-_mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
+_mesa_new_z24_renderbuffer_wrapper(struct gl_context *ctx,
                                    struct gl_renderbuffer *dsrb);
 
 
 extern struct gl_renderbuffer *
-_mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx,
+_mesa_new_s8_renderbuffer_wrapper(struct gl_context *ctx,
                                   struct gl_renderbuffer *dsrb);
 
 
 extern void
-_mesa_extract_stencil(GLcontext *ctx,
+_mesa_extract_stencil(struct gl_context *ctx,
                       struct gl_renderbuffer *dsRb,
                       struct gl_renderbuffer *stencilRb);
 
 
 extern void
-_mesa_insert_stencil(GLcontext *ctx,
+_mesa_insert_stencil(struct gl_context *ctx,
                      struct gl_renderbuffer *dsRb,
                      struct gl_renderbuffer *stencilRb);
 
 
 extern void
-_mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb);
+_mesa_promote_stencil(struct gl_context *ctx, struct gl_renderbuffer *stencilRb);
 
 
 #endif /* DEPTHSTENCIL_H */

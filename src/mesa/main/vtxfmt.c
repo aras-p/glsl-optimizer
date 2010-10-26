@@ -34,50 +34,10 @@
 #include "vtxfmt.h"
 #include "eval.h"
 #include "dlist.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_beginend
-
-
-/* The neutral vertex format.  This wraps all tnl module functions,
- * verifying that the currently-installed module is valid and then
- * installing the function pointers in a lazy fashion.  It records the
- * function pointers that have been swapped out, which allows a fast
- * restoration of the neutral module in almost all cases -- a typical
- * app might only require 4-6 functions to be modified from the neutral
- * baseline, and only restoring these is certainly preferable to doing
- * the entire module's 60 or so function pointers.
- */
-
-#define PRE_LOOPBACK( FUNC )						\
-{									\
-   GET_CURRENT_CONTEXT(ctx);						\
-   struct gl_tnl_module * const tnl = &(ctx->TnlModule);		\
-   const int tmp_offset = _gloffset_ ## FUNC ;				\
-									\
-   ASSERT( tnl->Current );						\
-   ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
-   ASSERT( tmp_offset >= 0 );						\
-                                                                        \
-   if (tnl->SwapCount == 0)                                             \
-      ctx->Driver.BeginVertices( ctx );                                 \
-                                                                        \
-   /* Save the swapped function's dispatch entry so it can be */        \
-   /* restored later. */                                                \
-   tnl->Swapped[tnl->SwapCount].location = & (((_glapi_proc *)ctx->Exec)[tmp_offset]); \
-   tnl->Swapped[tnl->SwapCount].function = (_glapi_proc)TAG(FUNC);	\
-   tnl->SwapCount++;							\
-									\
-   if ( 0 )								\
-      _mesa_debug(ctx, "   swapping gl" #FUNC"...\n" );			\
-									\
-   /* Install the tnl function pointer.	*/				\
-   SET_ ## FUNC(ctx->Exec, tnl->Current->FUNC);				\
-}
-
-#define TAG(x) neutral_##x
-#include "vtxfmt_tmp.h"
-
 
 /**
  * Use the per-vertex functions found in <vfmt> to initialze the given
@@ -132,7 +92,10 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 
    SET_Begin(tab, vfmt->Begin);
    SET_End(tab, vfmt->End);
+   SET_PrimitiveRestartNV(tab, vfmt->PrimitiveRestartNV);
+
    SET_Rectf(tab, vfmt->Rectf);
+
    SET_DrawArrays(tab, vfmt->DrawArrays);
    SET_DrawElements(tab, vfmt->DrawElements);
    SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
@@ -165,38 +128,17 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 }
 
 
-void _mesa_init_exec_vtxfmt( GLcontext *ctx )
+void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
-   install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
-   ctx->TnlModule.SwapCount = 0;
+   if (ctx->API == API_OPENGL)
+      install_vtxfmt( ctx->Exec, vfmt );
 }
 
 
-void _mesa_install_exec_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
+void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
-   ctx->TnlModule.Current = vfmt;
-   _mesa_restore_exec_vtxfmt( ctx );
-}
-
-
-void _mesa_install_save_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt )
-{
-   install_vtxfmt( ctx->Save, vfmt );
-}
-
-
-void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
-{
-   struct gl_tnl_module *tnl = &(ctx->TnlModule);
-   GLuint i;
-
-   /* Restore the neutral tnl module wrapper.
-    */
-   for ( i = 0 ; i < tnl->SwapCount ; i++ ) {
-      *(tnl->Swapped[i].location) = tnl->Swapped[i].function;
-   }
-
-   tnl->SwapCount = 0;
+   if (ctx->API == API_OPENGL)
+      install_vtxfmt( ctx->Save, vfmt );
 }
 
 

@@ -191,7 +191,7 @@ static const unsigned operand_modifiers[] = {
  * a reasonable place to make note of it.
  */
 static GLboolean
-i810UpdateTexEnvCombine( GLcontext *ctx, GLuint unit, 
+i810UpdateTexEnvCombine( struct gl_context *ctx, GLuint unit, 
 			 int * color_stage, int * alpha_stage )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -533,7 +533,7 @@ i810UpdateTexEnvCombine( GLcontext *ctx, GLuint unit,
    return GL_TRUE;
 }
 
-static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
+static GLboolean enable_tex_common( struct gl_context *ctx, GLuint unit )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -570,7 +570,7 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
   return GL_TRUE;
 }
 
-static GLboolean enable_tex_rect( GLcontext *ctx, GLuint unit )
+static GLboolean enable_tex_rect( struct gl_context *ctx, GLuint unit )
 {
   i810ContextPtr imesa = I810_CONTEXT(ctx);
   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -590,7 +590,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, GLuint unit )
   return GL_TRUE;
 }
 
-static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
+static GLboolean enable_tex_2d( struct gl_context *ctx, GLuint unit )
 {
   i810ContextPtr imesa = I810_CONTEXT(ctx);
   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -610,7 +610,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
   return GL_TRUE;
 }
 
-static void disable_tex( GLcontext *ctx, GLuint unit )
+static void disable_tex( struct gl_context *ctx, GLuint unit )
 {
   i810ContextPtr imesa = I810_CONTEXT(ctx);
 
@@ -627,7 +627,7 @@ static void disable_tex( GLcontext *ctx, GLuint unit )
  * 1D textures should be supported!  Just use a 2D texture with the second
  * texture coordinate value fixed at 0.0.
  */
-static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit, 
+static void i810UpdateTexUnit( struct gl_context *ctx, GLuint unit, 
 			      int * next_color_stage, int * next_alpha_stage )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -664,7 +664,7 @@ static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit,
 }
 
 
-void i810UpdateTextureState( GLcontext *ctx )
+void i810UpdateTextureState( struct gl_context *ctx )
 {
    static const unsigned color_pass[3] = {
       GFX_OP_MAP_COLOR_STAGES | MC_STAGE_0 | MC_UPDATE_DEST | MC_DEST_CURRENT

@@ -24,8 +24,8 @@ $(EGL_DRIVER_PATH): $(EGL_DRIVER)
 
 $(EGL_DRIVER): $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
 	@$(MKLIB) -o $(EGL_DRIVER) -noprefix \
-		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-L$(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-linker '$(CC)' -ldflags '-L$(TOP)/$(LIB_DIR) $(LDFLAGS)' \
+		$(MKLIB_OPTIONS) \
 		$(EGL_OBJECTS) $(EGL_LIBS) -l$(EGL_LIB)
 
 .c.o:

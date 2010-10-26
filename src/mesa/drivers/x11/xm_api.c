@@ -349,7 +349,7 @@ XMesaBuffer XMesaBufferList = NULL;
 
 /**
  * Allocate a new XMesaBuffer object which corresponds to the given drawable.
- * Note that XMesaBuffer is derived from GLframebuffer.
+ * Note that XMesaBuffer is derived from struct gl_framebuffer.
  * The new XMesaBuffer will not have any size (Width=Height=0).
  *
  * \param d  the corresponding X drawable (window or pixmap)
@@ -1047,7 +1047,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
                              XMesaColormap cmap)
 {
    int client = 0;
-   const int xclass = v->mesa_visual.visualType;
+   const int xclass = v->visualType;
 
 #ifdef XFree86Server
    client = (window) ? CLIENT_ID(window->id) : 0;
@@ -1200,7 +1200,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
  * Convert an RGBA color to a pixel value.
  */
 unsigned long
-xmesa_color_to_pixel(GLcontext *ctx,
+xmesa_color_to_pixel(struct gl_context *ctx,
                      GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                      GLuint pixelFormat)
 {
@@ -1397,20 +1397,20 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    v->mesa_visual.redMask = visinfo->redMask;
    v->mesa_visual.greenMask = visinfo->greenMask;
    v->mesa_visual.blueMask = visinfo->blueMask;
-   v->mesa_visual.visualID = visinfo->vid;
-   v->mesa_visual.screen = 0; /* FIXME: What should be done here? */
+   v->visualID = visinfo->vid;
+   v->screen = 0; /* FIXME: What should be done here? */
 #else
    v->mesa_visual.redMask = visinfo->red_mask;
    v->mesa_visual.greenMask = visinfo->green_mask;
    v->mesa_visual.blueMask = visinfo->blue_mask;
-   v->mesa_visual.visualID = visinfo->visualid;
-   v->mesa_visual.screen = visinfo->screen;
+   v->visualID = visinfo->visualid;
+   v->screen = visinfo->screen;
 #endif
 
 #if defined(XFree86Server) || !(defined(__cplusplus) || defined(c_plusplus))
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->class);
 #else
-   v->mesa_visual.visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
+   v->visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
 #endif
 
    v->mesa_visual.visualRating = visualCaveat;
@@ -1421,7 +1421,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    (void) initialize_visual_and_buffer( v, NULL, 0, 0 );
 
    {
-      const int xclass = v->mesa_visual.visualType;
+      const int xclass = v->visualType;
       if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
          red_bits   = _mesa_bitcount(GET_REDMASK(v));
          green_bits = _mesa_bitcount(GET_GREENMASK(v));
@@ -1481,7 +1481,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
-   GLcontext *mesaCtx;
+   struct gl_context *mesaCtx;
    struct dd_function_table functions;
    TNLcontext *tnl;
 
@@ -1490,7 +1490,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       firstTime = GL_FALSE;
    }
 
-   /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
+   /* Note: the XMesaContext contains a Mesa struct gl_context struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
    if (!c)
       return NULL;
@@ -1501,7 +1501,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_init_driver_functions(&functions);
    xmesa_init_driver_functions(v, &functions);
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
-                      share_list ? &(share_list->mesa) : (GLcontext *) NULL,
+                      share_list ? &(share_list->mesa) : (struct gl_context *) NULL,
                       &functions, (void *) c)) {
       free(c);
       return NULL;
@@ -1574,7 +1574,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
-   GLcontext *mesaCtx = &c->mesa;
+   struct gl_context *mesaCtx = &c->mesa;
 
 #ifdef FX
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
@@ -1788,7 +1788,7 @@ XMesaDestroyBuffer(XMesaBuffer b)
 
 
 /**
- * Query the current window size and update the corresponding GLframebuffer
+ * Query the current window size and update the corresponding struct gl_framebuffer
  * and all attached renderbuffers.
  * Called when:
  *  1. the first time a buffer is bound to a context.
@@ -1804,7 +1804,7 @@ xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
    xmesa_get_window_size(drawBuffer->display, drawBuffer, &width, &height);
    if (drawBuffer->mesa_buffer.Width != width ||
        drawBuffer->mesa_buffer.Height != height) {
-      GLcontext *ctx = xmctx ? &xmctx->mesa : NULL;
+      struct gl_context *ctx = xmctx ? &xmctx->mesa : NULL;
       _mesa_resize_framebuffer(ctx, &(drawBuffer->mesa_buffer), width, height);
    }
    drawBuffer->mesa_buffer.Initialized = GL_TRUE; /* XXX TEMPORARY? */
@@ -2252,7 +2252,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
                                 GLfloat red, GLfloat green,
                                 GLfloat blue, GLfloat alpha )
 {
-   GLcontext *ctx = &xmesa->mesa;
+   struct gl_context *ctx = &xmesa->mesa;
    GLint r = (GLint) (red   * 255.0F);
    GLint g = (GLint) (green * 255.0F);
    GLint b = (GLint) (blue  * 255.0F);

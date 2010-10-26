@@ -31,7 +31,7 @@
 #include "nv20_driver.h"
 
 void
-nv20_emit_tex_env(GLcontext *ctx, int emit)
+nv20_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -55,7 +55,7 @@ nv20_emit_tex_env(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_frag(GLcontext *ctx, int emit)
+nv20_emit_frag(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);

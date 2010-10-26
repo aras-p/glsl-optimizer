@@ -113,8 +113,12 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_STREAM_OUTPUT:
       return 1;
+   case PIPE_CAP_PRIMITIVE_RESTART:
+      return 1;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 0;
+   case PIPE_CAP_SHADER_STENCIL_EXPORT:
+      return 1;
    default:
       return 0;
    }
@@ -205,13 +209,6 @@ softpipe_is_format_supported( struct pipe_screen *screen,
        */
       if (format_desc->block.width != 1 ||
           format_desc->block.height != 1)
-         return FALSE;
-
-      /*
-       * TODO: Unfortunately we cannot render into anything more than 32 bits
-       * because we encode color clear values into a 32bit word.
-       */
-      if (format_desc->block.bits > 32)
          return FALSE;
    }
 

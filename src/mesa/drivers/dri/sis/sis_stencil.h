@@ -31,6 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_STENCIL_H__
 #define __SIS_STENCIL_H__
 
-extern void sisDDInitStencilFuncs( GLcontext *ctx );
+extern void sisDDInitStencilFuncs( struct gl_context *ctx );
 
 #endif

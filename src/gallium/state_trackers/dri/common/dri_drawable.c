@@ -112,7 +112,7 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 boolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, boolean isPixmap)
+		  const struct gl_config * visual, boolean isPixmap)
 {
    struct dri_screen *screen = sPriv->private;
    struct dri_drawable *drawable = NULL;

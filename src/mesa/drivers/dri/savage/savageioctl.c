@@ -119,7 +119,7 @@ void savageGetDMABuffer( savageContextPtr imesa )
 #if 0
 /* Still keeping this around because it demonstrates page flipping and
  * automatic z-clear. */
-static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
+static void savage_BCI_clear(struct gl_context *ctx, drm_savage_clear_t *pclear)
 {
 	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 	int nbox = imesa->sarea->nbox;
@@ -325,7 +325,7 @@ static GLuint savageIntersectClipRects(drm_clip_rect_t *dest,
 }
 
 
-static void savageDDClear( GLcontext *ctx, GLbitfield mask )
+static void savageDDClear( struct gl_context *ctx, GLbitfield mask )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
    GLuint colorMask, depthMask, clearColor, clearDepth, flags;
@@ -635,7 +635,7 @@ void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard )
 }
 
 
-static void savageDDFlush( GLcontext *ctx )
+static void savageDDFlush( struct gl_context *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
@@ -644,7 +644,7 @@ static void savageDDFlush( GLcontext *ctx )
     savageFlushCmdBuf(imesa, GL_FALSE);
 }
 
-static void savageDDFinish( GLcontext *ctx  ) 
+static void savageDDFinish( struct gl_context *ctx  ) 
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
@@ -654,7 +654,7 @@ static void savageDDFinish( GLcontext *ctx  )
     WAIT_IDLE_EMPTY(imesa);
 }
 
-void savageDDInitIoctlFuncs( GLcontext *ctx )
+void savageDDInitIoctlFuncs( struct gl_context *ctx )
 {
    ctx->Driver.Clear = savageDDClear;
    ctx->Driver.Flush = savageDDFlush;

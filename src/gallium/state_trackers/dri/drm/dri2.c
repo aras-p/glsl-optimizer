@@ -502,7 +502,7 @@ static const __DRIextension *dri_screen_extensions[] = {
 /**
  * This is the driver specific part of the createNewScreen entry point.
  *
- * Returns the __GLcontextModes supported by this driver.
+ * Returns the struct gl_config supported by this driver.
  */
 static const __DRIconfig **
 dri2_init_screen(__DRIscreen * sPriv)
@@ -548,7 +548,7 @@ fail:
 }
 
 static boolean
-dri2_create_context(gl_api api, const __GLcontextModes * visual,
+dri2_create_context(gl_api api, const struct gl_config * visual,
                     __DRIcontext * cPriv, void *sharedContextPrivate)
 {
    struct dri_context *ctx = NULL;
@@ -564,7 +564,7 @@ dri2_create_context(gl_api api, const __GLcontextModes * visual,
 static boolean
 dri2_create_buffer(__DRIscreen * sPriv,
                    __DRIdrawable * dPriv,
-                   const __GLcontextModes * visual, boolean isPixmap)
+                   const struct gl_config * visual, boolean isPixmap)
 {
    struct dri_drawable *drawable = NULL;
 

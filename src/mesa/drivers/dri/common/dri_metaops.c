@@ -41,7 +41,7 @@
 void
 meta_set_passthrough_transform(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
 
    meta->saved_vp_x = ctx->Viewport.X;
    meta->saved_vp_y = ctx->Viewport.Y;
@@ -87,7 +87,7 @@ meta_restore_transform(struct dri_metaops *meta)
 void
 meta_set_passthrough_vertex_program(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
    static const char *vp =
       "!!ARBvp1.0\n"
       "TEMP vertexClip;\n"
@@ -133,7 +133,7 @@ meta_set_passthrough_vertex_program(struct dri_metaops *meta)
 void
 meta_restore_vertex_program(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
@@ -155,7 +155,7 @@ meta_set_fragment_program(struct dri_metaops *meta,
 			  struct gl_fragment_program **prog,
 			  const char *prog_string)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
    assert(meta->saved_fp == NULL);
 
    _mesa_reference_fragprog(ctx, &meta->saved_fp,
@@ -187,7 +187,7 @@ meta_set_fragment_program(struct dri_metaops *meta,
 void
 meta_restore_fragment_program(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
@@ -208,7 +208,7 @@ static const float default_texcoords[4][2] = { { 0.0, 0.0 },
 void
 meta_set_default_texrect(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
    struct gl_client_array *old_texcoord_array;
 
    meta->saved_active_texture = ctx->Texture.CurrentUnit;
@@ -249,7 +249,7 @@ meta_set_default_texrect(struct dri_metaops *meta)
 void
 meta_restore_texcoords(struct dri_metaops *meta)
 {
-   GLcontext *ctx = meta->ctx;
+   struct gl_context *ctx = meta->ctx;
 
    /* Restore the old TexCoordPointer */
    if (meta->saved_texcoord_vbo) {
@@ -280,7 +280,7 @@ meta_restore_texcoords(struct dri_metaops *meta)
 }
 
 
-void meta_init_metaops(GLcontext *ctx, struct dri_metaops *meta)
+void meta_init_metaops(struct gl_context *ctx, struct dri_metaops *meta)
 {
    meta->ctx = ctx;
 }

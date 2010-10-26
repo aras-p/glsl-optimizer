@@ -41,7 +41,7 @@
 #define MGA_ARG2  1
 #define MGA_ALPHA 2
 
-GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
+GLboolean mgaUpdateTextureEnvCombine( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const int source = mmesa->tmu_source[unit];

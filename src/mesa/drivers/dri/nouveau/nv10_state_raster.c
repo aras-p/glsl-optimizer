@@ -31,7 +31,7 @@
 #include "nv10_driver.h"
 
 void
-nv10_emit_alpha_func(GLcontext *ctx, int emit)
+nv10_emit_alpha_func(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -45,7 +45,7 @@ nv10_emit_alpha_func(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_blend_color(GLcontext *ctx, int emit)
+nv10_emit_blend_color(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -58,7 +58,7 @@ nv10_emit_blend_color(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_blend_equation(GLcontext *ctx, int emit)
+nv10_emit_blend_equation(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -71,7 +71,7 @@ nv10_emit_blend_equation(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_blend_func(GLcontext *ctx, int emit)
+nv10_emit_blend_func(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -82,7 +82,7 @@ nv10_emit_blend_func(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_color_mask(GLcontext *ctx, int emit)
+nv10_emit_color_mask(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -95,7 +95,7 @@ nv10_emit_color_mask(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_depth(GLcontext *ctx, int emit)
+nv10_emit_depth(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -109,7 +109,7 @@ nv10_emit_depth(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_dither(GLcontext *ctx, int emit)
+nv10_emit_dither(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -119,7 +119,7 @@ nv10_emit_dither(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_logic_opcode(GLcontext *ctx, int emit)
+nv10_emit_logic_opcode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -133,7 +133,7 @@ nv10_emit_logic_opcode(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_shade_model(GLcontext *ctx, int emit)
+nv10_emit_shade_model(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -144,7 +144,7 @@ nv10_emit_shade_model(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_stencil_func(GLcontext *ctx, int emit)
+nv10_emit_stencil_func(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -159,7 +159,7 @@ nv10_emit_stencil_func(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_stencil_mask(GLcontext *ctx, int emit)
+nv10_emit_stencil_mask(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -169,7 +169,7 @@ nv10_emit_stencil_mask(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_stencil_op(GLcontext *ctx, int emit)
+nv10_emit_stencil_op(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);

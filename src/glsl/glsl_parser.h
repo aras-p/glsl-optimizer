@@ -242,10 +242,7 @@ typedef union YYSTYPE
    float real;
    char *identifier;
 
-   union {
-      struct ast_type_qualifier q;
-      unsigned i;
-   } type_qualifier;
+   struct ast_type_qualifier type_qualifier;
 
    ast_node *node;
    ast_type_specifier *type_specifier;
@@ -272,7 +269,7 @@ typedef union YYSTYPE
 
 
 /* Line 1685 of yacc.c  */
-#line 276 "glsl_parser.h"
+#line 273 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

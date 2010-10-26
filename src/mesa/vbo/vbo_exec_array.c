@@ -41,16 +41,20 @@
 /**
  * Compute min and max elements by scanning the index buffer for
  * glDraw[Range]Elements() calls.
+ * If primitive restart is enabled, we need to ignore restart
+ * indexes when computing min/max.
  */
 void
-vbo_get_minmax_index(GLcontext *ctx,
+vbo_get_minmax_index(struct gl_context *ctx,
 		     const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
 		     GLuint *min_index, GLuint *max_index)
 {
-   GLuint i;
-   GLuint count = prim->count;
+   const GLboolean restart = ctx->Array.PrimitiveRestart;
+   const GLuint restartIndex = ctx->Array.RestartIndex;
+   const GLuint count = prim->count;
    const void *indices;
+   GLuint i;
 
    if (_mesa_is_bufferobj(ib->obj)) {
       const GLvoid *map =
@@ -64,11 +68,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    switch (ib->type) {
    case GL_UNSIGNED_INT: {
       const GLuint *ui_indices = (const GLuint *)indices;
-      GLuint max_ui = ui_indices[count-1];
-      GLuint min_ui = ui_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
-	 if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+      GLuint max_ui = 0;
+      GLuint min_ui = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (ui_indices[i] != restartIndex) {
+               if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+               if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+            if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+         }
       }
       *min_index = min_ui;
       *max_index = max_ui;
@@ -76,11 +90,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    }
    case GL_UNSIGNED_SHORT: {
       const GLushort *us_indices = (const GLushort *)indices;
-      GLuint max_us = us_indices[count-1];
-      GLuint min_us = us_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (us_indices[i] > max_us) max_us = us_indices[i];
-	 if (us_indices[i] < min_us) min_us = us_indices[i];
+      GLuint max_us = 0;
+      GLuint min_us = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (us_indices[i] != restartIndex) {
+               if (us_indices[i] > max_us) max_us = us_indices[i];
+               if (us_indices[i] < min_us) min_us = us_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (us_indices[i] > max_us) max_us = us_indices[i];
+            if (us_indices[i] < min_us) min_us = us_indices[i];
+         }
       }
       *min_index = min_us;
       *max_index = max_us;
@@ -88,11 +112,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    }
    case GL_UNSIGNED_BYTE: {
       const GLubyte *ub_indices = (const GLubyte *)indices;
-      GLuint max_ub = ub_indices[count-1];
-      GLuint min_ub = ub_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
-	 if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+      GLuint max_ub = 0;
+      GLuint min_ub = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (ub_indices[i] != restartIndex) {
+               if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+               if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+            if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+         }
       }
       *min_index = min_ub;
       *max_index = max_ub;
@@ -115,7 +149,7 @@ vbo_get_minmax_index(GLcontext *ctx,
  * For debugging purposes; not normally used.
  */
 static void
-check_array_data(GLcontext *ctx, struct gl_client_array *array,
+check_array_data(struct gl_context *ctx, struct gl_client_array *array,
                  GLuint attrib, GLuint j)
 {
    if (array->Enabled) {
@@ -161,7 +195,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
  * Unmap the buffer object referenced by given array, if mapped.
  */
 static void
-unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
+unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
@@ -176,7 +210,7 @@ unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
  * For debug purposes; not normally used.
  */
 static void
-check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
+check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
                          const void *elements, GLint basevertex)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
@@ -244,7 +278,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
  * Check array data, looking for NaNs, etc.
  */
 static void
-check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
+check_draw_arrays_data(struct gl_context *ctx, GLint start, GLsizei count)
 {
    /* TO DO */
 }
@@ -254,9 +288,11 @@ check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
  * Print info/data for glDrawArrays(), for debugging.
  */
 static void
-print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
+print_draw_arrays(struct gl_context *ctx,
                   GLenum mode, GLint start, GLsizei count)
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    int i;
 
    printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
@@ -303,7 +339,7 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
  * Just translate the arrayobj into a sane layout.
  */
 static void
-bind_array_obj(GLcontext *ctx)
+bind_array_obj(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -348,7 +384,7 @@ bind_array_obj(GLcontext *ctx)
  * to point at a zero-stride current value "array".
  */
 static void
-recalculate_input_bindings(GLcontext *ctx)
+recalculate_input_bindings(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -464,10 +500,94 @@ recalculate_input_bindings(GLcontext *ctx)
  * must be done after this call.
  */
 static void
-bind_arrays(GLcontext *ctx)
+bind_arrays(struct gl_context *ctx)
 {
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
+}
+
+
+/**
+ * Helper function called by the other DrawArrays() functions below.
+ * This is where we handle primitive restart for drawing non-indexed
+ * arrays.  If primitive restart is enabled, it typically means
+ * splitting one DrawArrays() into two.
+ */
+static void
+vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
+                GLsizei count, GLuint numInstances)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   struct _mesa_prim prim[2];
+
+   bind_arrays(ctx);
+
+   /* Again... because we may have changed the bitmask of per-vertex varying
+    * attributes.  If we regenerate the fixed-function vertex program now
+    * we may be able to prune down the number of vertex attributes which we
+    * need in the shader.
+    */
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   prim[0].begin = 1;
+   prim[0].end = 1;
+   prim[0].weak = 0;
+   prim[0].pad = 0;
+   prim[0].mode = mode;
+   prim[0].start = 0; /* filled in below */
+   prim[0].count = 0; /* filled in below */
+   prim[0].indexed = 0;
+   prim[0].basevertex = 0;
+   prim[0].num_instances = numInstances;
+
+   /* Implement the primitive restart index */
+   if (ctx->Array.PrimitiveRestart && ctx->Array.RestartIndex < count) {
+      GLuint primCount = 0;
+
+      if (ctx->Array.RestartIndex == start) {
+         /* special case: RestartIndex at beginning */
+         if (count > 1) {
+            prim[0].start = start + 1;
+            prim[0].count = count - 1;
+            primCount = 1;
+         }
+      }
+      else if (ctx->Array.RestartIndex == start + count - 1) {
+         /* special case: RestartIndex at end */
+         if (count > 1) {
+            prim[0].start = start;
+            prim[0].count = count - 1;
+            primCount = 1;
+         }
+      }
+      else {
+         /* general case: RestartIndex in middle, split into two prims */
+         prim[0].start = start;
+         prim[0].count = ctx->Array.RestartIndex - start;
+
+         prim[1] = prim[0];
+         prim[1].start = ctx->Array.RestartIndex + 1;
+         prim[1].count = count - prim[1].start;
+
+         primCount = 2;
+      }
+
+      if (primCount > 0) {
+         /* draw one or two prims */
+         vbo->draw_prims(ctx, exec->array.inputs, prim, primCount, NULL,
+                         GL_TRUE, start, start + count - 1);
+      }
+   }
+   else {
+      /* no prim restart */
+      prim[0].start = start;
+      prim[0].count = count;
+
+      vbo->draw_prims(ctx, exec->array.inputs, prim, 1, NULL,
+                      GL_TRUE, start, start + count - 1);
+   }
 }
 
 
@@ -479,9 +599,6 @@ static void GLAPIENTRY
 vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_exec_context *exec = &vbo->exec;
-   struct _mesa_prim prim[1];
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawArrays(%s, %d, %d)\n",
@@ -496,41 +613,13 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
    }
 
-#if 0
-   check_draw_arrays_data(ctx, start, count);
-#else
-   (void) check_draw_arrays_data;
-#endif
+   if (0)
+      check_draw_arrays_data(ctx, start, count);
 
-   bind_arrays( ctx );
+   vbo_draw_arrays(ctx, mode, start, count, 1);
 
-   /* Again... because we may have changed the bitmask of per-vertex varying
-    * attributes.  If we regenerate the fixed-function vertex program now
-    * we may be able to prune down the number of vertex attributes which we
-    * need in the shader.
-    */
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
-   prim[0].begin = 1;
-   prim[0].end = 1;
-   prim[0].weak = 0;
-   prim[0].pad = 0;
-   prim[0].mode = mode;
-   prim[0].start = start;
-   prim[0].count = count;
-   prim[0].indexed = 0;
-   prim[0].basevertex = 0;
-   prim[0].num_instances = 1;
-
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL,
-                    GL_TRUE, start, start + count - 1 );
-
-#if 0
-   print_draw_arrays(ctx, exec, mode, start, count);
-#else
-   (void) print_draw_arrays;
-#endif
+   if (0)
+      print_draw_arrays(ctx, mode, start, count);
 }
 
 
@@ -543,9 +632,6 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
                              GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_exec_context *exec = &vbo->exec;
-   struct _mesa_prim prim[1];
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawArraysInstanced(%s, %d, %d, %d)\n",
@@ -560,37 +646,13 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
       return;
    }
 
-#if 0 /* debug */
-   check_draw_arrays_data(ctx, start, count);
-#endif
+   if (0)
+      check_draw_arrays_data(ctx, start, count);
 
-   bind_arrays( ctx );
+   vbo_draw_arrays(ctx, mode, start, count, primcount);
 
-   /* Again... because we may have changed the bitmask of per-vertex varying
-    * attributes.  If we regenerate the fixed-function vertex program now
-    * we may be able to prune down the number of vertex attributes which we
-    * need in the shader.
-    */
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
-   prim[0].begin = 1;
-   prim[0].end = 1;
-   prim[0].weak = 0;
-   prim[0].pad = 0;
-   prim[0].mode = mode;
-   prim[0].start = start;
-   prim[0].count = count;
-   prim[0].indexed = 0;
-   prim[0].basevertex = 0;
-   prim[0].num_instances = primcount;
-
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL,
-                    GL_TRUE, start, start + count - 1 );
-
-#if 0 /* debug */
-   print_draw_arrays(ctx, exec, mode, start, count);
-#endif
+   if (0)
+      print_draw_arrays(ctx, mode, start, count);
 }
 
 
@@ -599,7 +661,7 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
  * For debugging.
  */
 static void
-dump_element_buffer(GLcontext *ctx, GLenum type)
+dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
    const GLvoid *map = ctx->Driver.MapBuffer(ctx,
                                              GL_ELEMENT_ARRAY_BUFFER_ARB,
@@ -657,7 +719,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
  * we've validated buffer bounds, etc.
  */
 static void
-vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
+vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 				GLboolean index_bounds_valid,
 				GLuint start, GLuint end,
 				GLsizei count, GLenum type,
@@ -939,7 +1001,7 @@ vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
  * This does the actual rendering after we've checked array indexes, etc.
  */
 static void
-vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
+vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 				const GLsizei *count, GLenum type,
 				const GLvoid **indices, GLsizei primcount,
 				const GLint *basevertex)
@@ -1003,6 +1065,8 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
    /* Check if we can handle this thing as a bunch of index offsets from the
     * same index pointer.  If we can't, then we have to fall back to doing
     * a draw_prims per primitive.
+    * Check that the difference between each prim's indexes is a multiple of
+    * the index/element size.
     */
    if (index_type_size != 1) {
       for (i = 0; i < primcount; i++) {

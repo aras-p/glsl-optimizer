@@ -30,7 +30,7 @@
 
 struct via_context;
 
-GLboolean viaUpdateTextureState(GLcontext *ctx);
+GLboolean viaUpdateTextureState(struct gl_context *ctx);
 void viaInitTextureFuncs(struct dd_function_table * functions);
 GLboolean viaSwapOutWork( struct via_context *vmesa );
 

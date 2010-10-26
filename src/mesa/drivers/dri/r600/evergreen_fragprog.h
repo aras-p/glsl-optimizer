@@ -51,27 +51,27 @@ struct evergreen_fragment_program
 };
 
 /* Internal */
-void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog);
+void evergreen_insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog);
 
 void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 			  struct gl_fragment_program *mesa_fp,
-                          GLcontext *ctx); 
+                          struct gl_context *ctx); 
 GLboolean evergreen_Find_Instruction_Dependencies_fp(struct evergreen_fragment_program *fp,
 					   struct gl_fragment_program   *mesa_fp);
 
 GLboolean evergreenTranslateFragmentShader(struct evergreen_fragment_program *fp,
 				      struct gl_fragment_program   *mesa_vp,
-                                      GLcontext *ctx); 
+                                      struct gl_context *ctx); 
 
 /* Interface */
-extern void evergreenSelectFragmentShader(GLcontext *ctx);
+extern void evergreenSelectFragmentShader(struct gl_context *ctx);
 
-extern GLboolean evergreenSetupFragmentProgram(GLcontext * ctx);
+extern GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx);
 
-extern GLboolean evergreenSetupFPconstants(GLcontext * ctx);
+extern GLboolean evergreenSetupFPconstants(struct gl_context * ctx);
 
-extern void *    evergreenGetActiveFpShaderBo(GLcontext * ctx);
+extern void *    evergreenGetActiveFpShaderBo(struct gl_context * ctx);
 
-extern void *    evergreenGetActiveFpShaderConstBo(GLcontext * ctx);
+extern void *    evergreenGetActiveFpShaderConstBo(struct gl_context * ctx);
 
 #endif /*_EVERGREEN_FRAGPROG_H_*/

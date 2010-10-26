@@ -83,7 +83,6 @@ channel_expressions_predicate(ir_instruction *ir)
    return false;
 }
 
-extern "C" {
 GLboolean
 brw_do_channel_expressions(exec_list *instructions)
 {
@@ -98,7 +97,6 @@ brw_do_channel_expressions(exec_list *instructions)
    visit_list_elements(&v, instructions);
 
    return v.progress;
-}
 }
 
 ir_rvalue *

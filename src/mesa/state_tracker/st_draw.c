@@ -341,7 +341,7 @@ get_arrays_bounds(const struct st_vertex_program *vp,
  * \param velements  returns vertex element info
  */
 static void
-setup_interleaved_attribs(GLcontext *ctx,
+setup_interleaved_attribs(struct gl_context *ctx,
                           const struct st_vertex_program *vp,
                           const struct st_vp_varient *vpv,
                           const struct gl_client_array **arrays,
@@ -407,7 +407,7 @@ setup_interleaved_attribs(GLcontext *ctx,
  * \param velements  returns vertex element info
  */
 static void
-setup_non_interleaved_attribs(GLcontext *ctx,
+setup_non_interleaved_attribs(struct gl_context *ctx,
                               const struct st_vertex_program *vp,
                               const struct st_vp_varient *vpv,
                               const struct gl_client_array **arrays,
@@ -496,7 +496,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
 
 
 static void
-setup_index_buffer(GLcontext *ctx,
+setup_index_buffer(struct gl_context *ctx,
                    const struct _mesa_index_buffer *ib,
                    struct pipe_index_buffer *ibuffer)
 {
@@ -545,7 +545,7 @@ setup_index_buffer(GLcontext *ctx,
  * issue a warning.
  */
 static void
-check_uniforms(GLcontext *ctx)
+check_uniforms(struct gl_context *ctx)
 {
    const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    if (shProg && shProg->LinkStatus) {
@@ -567,7 +567,7 @@ check_uniforms(GLcontext *ctx)
  * the corresponding Gallium type.
  */
 static unsigned
-translate_prim(const GLcontext *ctx, unsigned prim)
+translate_prim(const struct gl_context *ctx, unsigned prim)
 {
    /* GL prims should match Gallium prims, spot-check a few */
    assert(GL_POINTS == PIPE_PRIM_POINTS);
@@ -595,7 +595,7 @@ translate_prim(const GLcontext *ctx, unsigned prim)
  * Basically, translate the information into the format expected by gallium.
  */
 void
-st_draw_vbo(GLcontext *ctx,
+st_draw_vbo(struct gl_context *ctx,
             const struct gl_client_array **arrays,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
@@ -703,6 +703,9 @@ st_draw_vbo(GLcontext *ctx,
       }
    }
 
+   info.primitive_restart = st->ctx->Array.PrimitiveRestart;
+   info.restart_index = st->ctx->Array.RestartIndex;
+
    /* do actual drawing */
    for (i = 0; i < nr_prims; i++) {
       info.mode = translate_prim( ctx, prims[i].mode );
@@ -736,7 +739,7 @@ st_draw_vbo(GLcontext *ctx,
 
 void st_init_draw( struct st_context *st )
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    vbo_set_draw_func(ctx, st_draw_vbo);
 

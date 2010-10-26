@@ -789,6 +789,10 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg src0,			\
 	      struct brw_reg src1);
 
+#define ROUND(OP) \
+void brw_##OP(struct brw_compile *p, struct brw_reg dest, struct brw_reg src0);
+
+
 ALU1(MOV)
 ALU2(SEL)
 ALU1(NOT)
@@ -805,7 +809,6 @@ ALU2(ADD)
 ALU2(MUL)
 ALU1(FRC)
 ALU1(RNDD)
-ALU1(RNDZ)
 ALU2(MAC)
 ALU2(MACH)
 ALU1(LZD)
@@ -816,9 +819,12 @@ ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
 
+ROUND(RNDZ)
+ROUND(RNDE)
+
 #undef ALU1
 #undef ALU2
-
+#undef ROUND
 
 
 /* Helpers for SEND instruction:
@@ -891,15 +897,22 @@ void brw_math2(struct brw_compile *p,
 	       struct brw_reg src0,
 	       struct brw_reg src1);
 
-void brw_dp_READ_16( struct brw_compile *p,
-		     struct brw_reg dest,
-		     GLuint scratch_offset );
+void brw_oword_block_read(struct brw_compile *p,
+			  struct brw_reg dest,
+			  struct brw_reg mrf,
+			  uint32_t offset,
+			  uint32_t bind_table_index);
 
-void brw_dp_READ_4( struct brw_compile *p,
-                    struct brw_reg dest,
-                    GLboolean relAddr,
-                    GLuint location,
-                    GLuint bind_table_index );
+void brw_oword_block_read_scratch(struct brw_compile *p,
+				  struct brw_reg dest,
+				  struct brw_reg mrf,
+				  int num_regs,
+				  GLuint offset);
+
+void brw_oword_block_write_scratch(struct brw_compile *p,
+				   struct brw_reg mrf,
+				   int num_regs,
+				   GLuint offset);
 
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
@@ -912,15 +925,13 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 			       GLuint offset,
 			       GLuint bind_table_index);
 
-void brw_dp_WRITE_16( struct brw_compile *p,
-		      struct brw_reg src,
-		      GLuint scratch_offset );
-
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, 
 			       GLuint execute_size);
+struct brw_instruction *brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
+				    struct brw_reg src0, struct brw_reg src1);
 
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn);

@@ -45,7 +45,7 @@ struct nouveau_renderbuffer {
 #define to_nouveau_renderbuffer(x) ((struct nouveau_renderbuffer *)(x))
 
 struct gl_framebuffer *
-nouveau_framebuffer_dri_new(const GLvisual *visual);
+nouveau_framebuffer_dri_new(const struct gl_config *visual);
 
 struct gl_renderbuffer *
 nouveau_renderbuffer_dri_new(GLenum format, __DRIdrawable *drawable);
