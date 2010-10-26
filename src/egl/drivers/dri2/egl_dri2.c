@@ -1197,7 +1197,7 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
       return EGL_FALSE;
 
    /* flush before context switch */
-   if (ctx && dri2_drv->glFlush)
+   if (old_ctx && dri2_drv->glFlush)
       dri2_drv->glFlush();
 
    ddraw = (dri2_dsurf) ? dri2_dsurf->dri_drawable : NULL;
