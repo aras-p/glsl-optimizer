@@ -509,7 +509,21 @@ static void brw_set_dp_read_message( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 6) {
+       insn->bits3.dp_render_cache.binding_table_index = binding_table_index;
+       insn->bits3.dp_render_cache.msg_control = msg_control;
+       insn->bits3.dp_render_cache.pixel_scoreboard_clear = 0;
+       insn->bits3.dp_render_cache.msg_type = msg_type;
+       insn->bits3.dp_render_cache.send_commit_msg = 0;
+       insn->bits3.dp_render_cache.header_present = 1;
+       insn->bits3.dp_render_cache.response_length = response_length;
+       insn->bits3.dp_render_cache.msg_length = msg_length;
+       insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
+       insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_READ;
+	/* XXX really need below? */
+       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
+       insn->bits2.send_gen5.end_of_thread = end_of_thread;
+   } else if (intel->gen == 5) {
        insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_read_gen5.msg_control = msg_control;
        insn->bits3.dp_read_gen5.msg_type = msg_type;
@@ -1528,6 +1542,12 @@ void brw_oword_block_read(struct brw_compile *p,
 			  uint32_t offset,
 			  uint32_t bind_table_index)
 {
+   struct intel_context *intel = &p->brw->intel;
+
+   /* On newer hardware, offset is in units of owords. */
+   if (intel->gen >= 6)
+      offset /= 16;
+
    mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
 
    brw_push_insn_state(p);
@@ -1551,7 +1571,11 @@ void brw_oword_block_read(struct brw_compile *p,
    dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
 
    brw_set_dest(insn, dest);
-   brw_set_src0(insn, brw_null_reg());
+   if (intel->gen >= 6) {
+      brw_set_src0(insn, mrf);
+   } else {
+      brw_set_src0(insn, brw_null_reg());
+   }
 
    brw_set_dp_read_message(p->brw,
 			   insn,
