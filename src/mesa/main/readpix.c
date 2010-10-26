@@ -28,6 +28,7 @@
 #include "context.h"
 #include "readpix.h"
 #include "framebuffer.h"
+#include "formats.h"
 #include "image.h"
 #include "state.h"
 
@@ -183,6 +184,20 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    if (_mesa_error_check_format_type(ctx, format, type, GL_FALSE)) {
       /* found an error */
       return;
+   }
+
+   /* Check that the destination format and source buffer are both
+    * integer-valued or both non-integer-valued.
+    */
+   if (ctx->Extensions.EXT_texture_integer && _mesa_is_color_format(format)) {
+      const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+      const GLboolean srcInteger = _mesa_is_format_integer(rb->Format);
+      const GLboolean dstInteger = _mesa_is_integer_format(format);
+      if (dstInteger != srcInteger) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(integer / non-integer format mismatch");
+         return;
+      }
    }
 
    if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
