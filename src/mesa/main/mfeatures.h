@@ -78,7 +78,7 @@
 #define FEATURE_GL !FEATURE_ES
 #endif
 
-#ifdef IN_DRI_DRIVER
+#if defined(IN_DRI_DRIVER) || (FEATURE_GL + FEATURE_ES1 + FEATURE_ES2 > 1)
 #define FEATURE_remap_table               1
 #else
 #define FEATURE_remap_table               0

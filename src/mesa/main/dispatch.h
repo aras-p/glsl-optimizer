@@ -26,7 +26,9 @@
 #ifndef _DISPATCH_H
 #define _DISPATCH_H
 
-#ifdef IN_DRI_DRIVER
+#include "main/mfeatures.h"
+
+#if FEATURE_remap_table
 #define _GLAPI_USE_REMAP_TABLE
 #endif
 

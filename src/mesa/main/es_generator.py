@@ -212,7 +212,7 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #include "main/remap.h"
 
 /* cannot include main/dispatch.h here */
-#ifdef IN_DRI_DRIVER
+#if FEATURE_remap_table
 #define _GLAPI_USE_REMAP_TABLE
 #endif
 /* glapi uses GLAPIENTRY while GLES headers define GL_APIENTRY */
