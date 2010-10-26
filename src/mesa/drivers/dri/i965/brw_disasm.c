@@ -72,6 +72,7 @@ struct {
     [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
 
     [BRW_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
@@ -876,7 +877,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	string (file, " ");
 	err |= control (file, "function", math_function,
 			inst->header.destreg__conditionalmod, NULL);
-    } else if (inst->header.opcode != BRW_OPCODE_SEND)
+    } else if (inst->header.opcode != BRW_OPCODE_SEND &&
+	       inst->header.opcode != BRW_OPCODE_SENDC)
 	err |= control (file, "conditional modifier", conditional_modifier,
 			inst->header.destreg__conditionalmod, NULL);
 
@@ -907,7 +909,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= src1 (file, inst);
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND) {
+    if (inst->header.opcode == BRW_OPCODE_SEND ||
+	inst->header.opcode == BRW_OPCODE_SENDC) {
 	int target;
 
 	if (gen >= 6)
@@ -1070,7 +1073,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
 	if (gen >= 6)
 	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
-	if (inst->header.opcode == BRW_OPCODE_SEND)
+	if (inst->header.opcode == BRW_OPCODE_SEND ||
+	    inst->header.opcode == BRW_OPCODE_SENDC)
 	    err |= control (file, "end of thread", end_of_thread,
 			    inst->bits3.generic.end_of_thread, &space);
 	if (space)

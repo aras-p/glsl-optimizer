@@ -551,6 +551,7 @@
 #define BRW_OPCODE_POP        47
 #define BRW_OPCODE_WAIT       48
 #define BRW_OPCODE_SEND       49
+#define BRW_OPCODE_SENDC      50
 #define BRW_OPCODE_MATH       56
 #define BRW_OPCODE_ADD        64
 #define BRW_OPCODE_MUL        65
