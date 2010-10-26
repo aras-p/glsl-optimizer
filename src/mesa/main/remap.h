@@ -60,24 +60,7 @@ extern void
 _mesa_map_static_functions(void);
 
 extern void
-_mesa_map_static_functions_es1(void);
-
-extern void
-_mesa_map_static_functions_es2(void);
-
-extern void
-_mesa_do_init_remap_table(const char *pool,
-			  int size,
-			  const struct gl_function_pool_remap *remap);
-
-extern void
 _mesa_init_remap_table(void);
-
-extern void
-_mesa_init_remap_table_es1(void);
-
-extern void
-_mesa_init_remap_table_es2(void);
 
 #else /* FEATURE_remap_table */
 
@@ -105,34 +88,7 @@ _mesa_map_static_functions(void)
 
 
 static INLINE void
-_mesa_map_static_functions_es1(void)
-{
-}
-
-static INLINE void
-_mesa_map_static_functions_es2(void)
-{
-}
-
-static INLINE void
-_mesa_do_init_remap_table(const char *pool,
-			  int size,
-			  const struct gl_function_pool_remap *remap)
-{
-}
-
-static INLINE void
 _mesa_init_remap_table(void)
-{
-}
-
-static INLINE void
-_mesa_init_remap_table_es1(void)
-{
-}
-
-static INLINE void
-_mesa_init_remap_table_es2(void)
 {
 }
 

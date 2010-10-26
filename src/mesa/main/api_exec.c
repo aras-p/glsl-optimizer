@@ -105,46 +105,6 @@
 #if FEATURE_GL
 
 
-#ifdef _GLAPI_USE_REMAP_TABLE
-
-#define need_MESA_remap_table
-#include "main/remap.h"
-#include "main/remap_helper.h"
-
-/* This is shared across all APIs but We define this here since
- * desktop GL has the biggest remap table. */
-int driDispatchRemapTable[driDispatchRemapTable_size];
-
-/**
- * Map the functions which are already static.
- *
- * When a extension function are incorporated into the ABI, the
- * extension suffix is usually stripped.  Mapping such functions
- * makes sure the alternative names are available.
- *
- * Note that functions mapped by _mesa_init_remap_table() are
- * excluded.
- */
-void
-_mesa_map_static_functions(void)
-{
-   /* Remap static functions which have alternative names and are in the ABI.
-    * This is to be on the safe side.  glapi should have defined those names.
-    */
-   _mesa_map_function_array(MESA_alt_functions);
-}
-
-void
-_mesa_init_remap_table(void)
-{
-   _mesa_do_init_remap_table(_mesa_function_pool,
-			     driDispatchRemapTable_size,
-			     MESA_remap_table_functions);
-}
-
-#endif /* _GLAPI_USE_REMAP_TABLE */
-
-
 /**
  * Initialize a dispatch table with pointers to Mesa's immediate-mode
  * commands.

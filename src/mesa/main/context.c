@@ -131,6 +131,7 @@
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif
+#include "main/dispatch.h" /* for _gloffset_COUNT */
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
@@ -379,10 +380,12 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
 static void
 one_time_init( struct gl_context *ctx )
 {
-   static GLboolean alreadyCalled = GL_FALSE;
-   (void) ctx;
+   static GLbitfield api_init_mask = 0x0;
+
    _glthread_LOCK_MUTEX(OneTimeLock);
-   if (!alreadyCalled) {
+
+   /* truly one-time init */
+   if (!api_init_mask) {
       GLuint i;
 
       /* do some implementation tests */
@@ -395,27 +398,9 @@ one_time_init( struct gl_context *ctx )
 
       _mesa_get_cpu_features();
 
-      switch (ctx->API) {
-#if FEATURE_GL
-      case API_OPENGL:
-	 _mesa_init_remap_table();
-	 break;
-#endif
-#if FEATURE_ES1
-      case API_OPENGLES:
-	 _mesa_init_remap_table_es1();
-	 break;
-#endif
-#if FEATURE_ES2
-      case API_OPENGLES2:
-	 _mesa_init_remap_table_es2();
-	 break;
-#endif
-      default:
-	 break;
-      }
-
       _mesa_init_sqrt_table();
+
+      /* context dependence is never a one-time thing... */
       _mesa_init_get_hash(ctx);
 
       for (i = 0; i < 256; i++) {
@@ -426,9 +411,22 @@ one_time_init( struct gl_context *ctx )
       _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
                   MESA_VERSION_STRING, __DATE__, __TIME__);
 #endif
-
-      alreadyCalled = GL_TRUE;
    }
+
+   /* per-API one-time init */
+   if (!(api_init_mask & (1 << ctx->API))) {
+      /*
+       * This is fine as ES does not use the remap table, but it may not be
+       * future-proof.  We cannot always initialize the remap table because
+       * when an app is linked to libGLES*, there are not enough dynamic
+       * entries.
+       */
+      if (ctx->API == API_OPENGL)
+         _mesa_init_remap_table();
+   }
+
+   api_init_mask |= 1 << ctx->API;
+
    _glthread_UNLOCK_MUTEX(OneTimeLock);
 
    /* Hopefully atexit() is widely available.  If not, we may need some
@@ -811,9 +809,13 @@ _mesa_alloc_dispatch_table(int size)
     * Mesa we do this to accomodate different versions of libGL and various
     * DRI drivers.
     */
-   GLint numEntries = MAX2(_glapi_get_dispatch_table_size(), size);
-   struct _glapi_table *table =
-      (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
+   GLint numEntries = MAX2(_glapi_get_dispatch_table_size(), _gloffset_COUNT);
+   struct _glapi_table *table;
+
+   /* should never happen, but just in case */
+   numEntries = MAX2(numEntries, size);
+
+   table = (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
       _glapi_proc *entry = (_glapi_proc *) table;
       GLint i;
