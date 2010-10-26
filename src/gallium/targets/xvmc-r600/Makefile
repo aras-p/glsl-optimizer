@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-#LIBNAME =
+LIBBASENAME = XvMCr600
 
 PIPE_DRIVERS = \
         $(TOP)/src/gallium/drivers/r600/libr600.a \

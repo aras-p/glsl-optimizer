@@ -1,6 +1,8 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
+LIBBASENAME = XvMCsoftpipe
+
 DRIVER_DEFINES = -DGALLIUM_SOFTPIPE
 DRIVER_INCLUDES =
 

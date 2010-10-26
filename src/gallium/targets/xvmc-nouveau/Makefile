@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-#LIBNAME =
+LIBBASENAME = XvMCnouveau
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/winsys/g3dvl/dri/libvldri.a \
