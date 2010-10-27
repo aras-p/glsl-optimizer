@@ -514,7 +514,7 @@ _swrast_ReadPixels( struct gl_context *ctx,
                                    type, pixels, &clippedPacking);
          break;
       default:
-	 _mesa_problem(ctx, "unexpected format in _swrast_ReadPixels");
+	 _mesa_problem(ctx, "unexpected format 0x%x in _swrast_ReadPixels", format);
          /* don't return yet, clean-up */
    }
 
