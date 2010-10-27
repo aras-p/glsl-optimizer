@@ -30,9 +30,7 @@
 #include "enums.h"
 #include "feedback.h"
 #include "framebuffer.h"
-#include "image.h"
 #include "readpix.h"
-#include "shaderobj.h"
 #include "state.h"
 #include "dispatch.h"
 
