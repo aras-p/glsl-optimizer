@@ -28,6 +28,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_util.h"
 #include "intel_batchbuffer.h"
 
 static void
@@ -36,7 +37,7 @@ upload_clip_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    uint32_t depth_clamp = 0;
-   uint32_t provoking;
+   uint32_t provoking, userclip;
 
    if (!ctx->Transform.DepthClamp)
       depth_clamp = GEN6_CLIP_Z_TEST;
@@ -50,6 +51,9 @@ upload_clip_state(struct brw_context *brw)
 	 (1 << GEN6_CLIP_LINE_PROVOKE_SHIFT);
    }
 
+   /* _NEW_TRANSFORM */
+   userclip = (1 << brw_count_bits(ctx->Transform.ClipPlanesEnabled)) - 1;
+
    BEGIN_BATCH(4);
    OUT_BATCH(CMD_3D_CLIP_STATE << 16 | (4 - 2));
    OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
@@ -57,6 +61,7 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
 	     GEN6_CLIP_XY_TEST |
+	     userclip << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
 	     depth_clamp |
 	     provoking);
    OUT_BATCH(GEN6_CLIP_FORCE_ZERO_RTAINDEX);

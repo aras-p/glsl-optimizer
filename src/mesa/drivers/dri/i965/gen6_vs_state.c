@@ -44,7 +44,8 @@ upload_vs_state(struct brw_context *brw)
    drm_intel_bo *constant_bo;
    int i;
 
-   if (vp->use_const_buffer || nr_params == 0) {
+   if (vp->use_const_buffer || (nr_params == 0 &&
+				!ctx->Transform.ClipPlanesEnabled)) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 | (5 - 2));
@@ -54,6 +55,9 @@ upload_vs_state(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
+      int params_uploaded = 0;
+      float *param;
+
       if (brw->vertex_program->IsNVProgram)
 	 _mesa_load_tracked_matrices(ctx);
 
@@ -63,14 +67,44 @@ upload_vs_state(struct brw_context *brw)
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters);
 
       constant_bo = drm_intel_bo_alloc(intel->bufmgr, "VS constant_bo",
-				       nr_params * 4 * sizeof(float),
+				       (MAX_CLIP_PLANES + nr_params) *
+				       4 * sizeof(float),
 				       4096);
       drm_intel_gem_bo_map_gtt(constant_bo);
-      for (i = 0; i < nr_params; i++) {
-	 memcpy((char *)constant_bo->virtual + i * 4 * sizeof(float),
-		vp->program.Base.Parameters->ParameterValues[i],
-		4 * sizeof(float));
+      param = constant_bo->virtual;
+
+      /* This should be loaded like any other param, but it's ad-hoc
+       * until we redo the VS backend.
+       */
+      for (i = 0; i < MAX_CLIP_PLANES; i++) {
+	 if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+	    memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
+	    param += 4;
+	    params_uploaded++;
+	 }
       }
+      /* Align to a reg for convenience for brw_vs_emit.c */
+      if (params_uploaded & 1) {
+	 param += 4;
+	 params_uploaded++;
+      }
+
+      for (i = 0; i < nr_params; i++) {
+	 memcpy(param, vp->program.Base.Parameters->ParameterValues[i],
+		4 * sizeof(float));
+	 param += 4;
+	 params_uploaded++;
+      }
+
+      if (0) {
+	 printf("VS constant buffer:\n");
+	 for (i = 0; i < params_uploaded; i++) {
+	    float *buf = (float *)constant_bo->virtual + i * 4;
+	    printf("%d: %f %f %f %f\n",
+		   i, buf[0], buf[1], buf[2], buf[3]);
+	 }
+      }
+
       drm_intel_gem_bo_unmap_gtt(constant_bo);
 
       BEGIN_BATCH(5);
@@ -79,7 +113,7 @@ upload_vs_state(struct brw_context *brw)
 		(5 - 2));
       OUT_RELOC(constant_bo,
 		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		ALIGN(nr_params, 2) / 2 - 1);
+		ALIGN(params_uploaded, 2) / 2 - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);

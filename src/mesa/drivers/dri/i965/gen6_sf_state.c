@@ -73,12 +73,19 @@ upload_sf_state(struct brw_context *brw)
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    int attr = 0;
+   int urb_start;
+
+   /* _NEW_TRANSFORM */
+   if (ctx->Transform.ClipPlanesEnabled)
+      urb_start = 2;
+   else
+      urb_start = 1;
 
    dw1 =
       GEN6_SF_SWIZZLE_ENABLE |
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-      1 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
+      urb_start << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
    dw2 = GEN6_SF_VIEWPORT_TRANSFORM_ENABLE |
       GEN6_SF_STATISTICS_ENABLE;
    dw3 = 0;
@@ -195,7 +202,8 @@ const struct brw_tracked_state gen6_sf_state = {
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_SCISSOR |
-		_NEW_BUFFERS),
+		_NEW_BUFFERS |
+		_NEW_TRANSFORM),
       .brw   = BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_VS_PROG
    },
