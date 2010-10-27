@@ -879,15 +879,15 @@ int r600_bc_build(struct r600_bc *bc)
 
 void r600_bc_clear(struct r600_bc *bc)
 {
-	struct r600_bc_cf *cf, *next_cf;
+	struct r600_bc_cf *cf = NULL, *next_cf;
 
 	free(bc->bytecode);
 	bc->bytecode = NULL;
 
 	LIST_FOR_EACH_ENTRY_SAFE(cf, next_cf, &bc->cf, list) {
-		struct r600_bc_alu *alu, *next_alu;
-		struct r600_bc_tex *tex, *next_tex;
-		struct r600_bc_tex *vtx, *next_vtx;
+		struct r600_bc_alu *alu = NULL, *next_alu;
+		struct r600_bc_tex *tex = NULL, *next_tex;
+		struct r600_bc_tex *vtx = NULL, *next_vtx;
 
 		LIST_FOR_EACH_ENTRY_SAFE(alu, next_alu, &cf->alu, list) {
 			free(alu);
