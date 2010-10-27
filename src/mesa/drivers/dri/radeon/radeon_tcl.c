@@ -253,6 +253,8 @@ void radeonTclPrimitive( struct gl_context *ctx,
    GLuint newprim = hw_prim | RADEON_CP_VC_CNTL_TCL_ENABLE;
 
    radeon_prepare_render(&rmesa->radeon);
+   if (rmesa->radeon.NewGLState)
+      radeonValidateState( ctx );
 
    if (newprim != rmesa->tcl.hw_primitive ||
        !discrete_prim[hw_prim&0xf]) {

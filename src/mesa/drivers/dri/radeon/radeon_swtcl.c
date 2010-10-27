@@ -412,6 +412,8 @@ static GLboolean radeon_run_render( struct gl_context *ctx,
       return GL_TRUE;		
 
    radeon_prepare_render(&rmesa->radeon);
+   if (rmesa->radeon.NewGLState)
+      radeonValidateState( ctx );
 
    tnl->Driver.Render.Start( ctx );
 
