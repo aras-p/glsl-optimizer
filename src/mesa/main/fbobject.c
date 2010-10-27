@@ -696,7 +696,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       }
 
       /* check if integer color */
-      fb->_IntegerColor = _mesa_is_format_integer(mesaFormat);
+      fb->_IntegerColor = _mesa_is_format_integer_color(mesaFormat);
 
       /* Error-check width, height, format, samples
        */

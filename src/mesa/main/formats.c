@@ -1011,7 +1011,7 @@ _mesa_is_format_packed_depth_stencil(gl_format format)
  * Is the given format a signed/unsigned integer color format?
  */
 GLboolean
-_mesa_is_format_integer(gl_format format)
+_mesa_is_format_integer_color(gl_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return (info->DataType == GL_INT || info->DataType == GL_UNSIGNED_INT) &&

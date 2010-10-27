@@ -200,7 +200,7 @@ extern GLboolean
 _mesa_is_format_packed_depth_stencil(gl_format format);
 
 extern GLboolean
-_mesa_is_format_integer(gl_format format);
+_mesa_is_format_integer_color(gl_format format);
 
 extern GLenum
 _mesa_get_format_color_encoding(gl_format format);

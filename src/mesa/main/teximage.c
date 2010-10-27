@@ -2107,9 +2107,9 @@ copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
    /* If copying into an integer texture, the source buffer must also be
     * integer-valued.
     */
-   if (_mesa_is_format_integer(teximage->TexFormat)) {
+   if (_mesa_is_format_integer_color(teximage->TexFormat)) {
       struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-      if (!_mesa_is_format_integer(rb->Format)) {
+      if (!_mesa_is_format_integer_color(rb->Format)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexSubImage%dD(source buffer is not integer format)",
                   dimensions);
