@@ -35,7 +35,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/image.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
