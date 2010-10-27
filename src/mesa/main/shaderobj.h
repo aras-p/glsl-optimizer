@@ -130,18 +130,6 @@ _mesa_shader_index_to_type(GLuint i)
 }
 
 
-/**
- * Check if there's a fragment shader active.
- */
-static INLINE GLboolean
-_mesa_is_fragment_shader_active(const struct gl_context *ctx)
-{
-   return (ctx->Shader.CurrentProgram &&
-           ctx->Shader.CurrentProgram->LinkStatus &&
-           ctx->Shader.CurrentProgram->FragmentProgram);
-}
-
-
 #ifdef __cplusplus
 }
 #endif
