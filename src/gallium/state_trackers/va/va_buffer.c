@@ -73,7 +73,7 @@ VAStatus vlVaUnmapBuffer(		VADriverContextP ctx,
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaDestroyBuffers(		VADriverContextP ctx,
+VAStatus vlVaDestroyBuffer(		VADriverContextP ctx,
                                     VABufferID buffer_id)
 {
 	if (!ctx)

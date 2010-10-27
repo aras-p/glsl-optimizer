@@ -47,7 +47,7 @@ static struct VADriverVTable vtable =
 	&vlVaBufferSetNumElements, /* VAStatus (*vaBufferSetNumElements) (VADriverContextP ctx,VABufferID buf_id,unsigned int num_elements); */
 	&vlVaMapBuffer, /* VAStatus (*vaMapBuffer) (VADriverContextP ctx,VABufferID buf_id,void **pbuf); */
 	&vlVaUnmapBuffer, /* VAStatus (*vaUnmapBuffer) (VADriverContextP ctx,VABufferID buf_id); */
-	&vlVaDestroyBuffers, /* VAStatus (*vaDestroyBuffer) (VADriverContextP ctx,VABufferID buffer_id); */
+	&vlVaDestroyBuffer, /* VAStatus (*vaDestroyBuffer) (VADriverContextP ctx,VABufferID buffer_id); */
 	&vlVaBeginPicture, /* VAStatus (*vaBeginPicture) (VADriverContextP ctx,VAContextID context,VASurfaceID render_target); */
 	&vlVaRenderPicture, /* VAStatus (*vaRenderPicture) (VADriverContextP ctx,VAContextID context,VABufferID *buffers,int num_buffers); */
 	&vlVaEndPicture, /* VAStatus (*vaEndPicture) (VADriverContextP ctx,VAContextID context); */

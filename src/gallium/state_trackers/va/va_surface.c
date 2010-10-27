@@ -33,7 +33,7 @@ VAStatus vlVaCreateSurfaces(       VADriverContextP ctx,
                                                         int width,
                                                         int height,
                                                         int format,
-                                                        int num_surfaces
+                                                        int num_surfaces,
                                                         VASurfaceID *surfaces)
 {
         if (!ctx)
@@ -53,6 +53,7 @@ VAStatus vlVaDestroySurfaces(       VADriverContextP ctx,
 
 VAStatus vlVaSyncSurface(       VADriverContextP ctx,
                                                         VASurfaceID render_target)
+{
         if (!ctx)
                 return VA_STATUS_ERROR_INVALID_CONTEXT;
 
@@ -70,7 +71,6 @@ VAStatus vlVaQuerySurfaceStatus(       VADriverContextP ctx,
 }
 
 VAStatus vlVaPutSurface(       VADriverContextP ctx,
-                                                        VADriverContextP ctx,
                                                         VASurfaceID surface,
                                                         void* draw,
                                                         short srcx,
