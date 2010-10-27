@@ -1700,7 +1700,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
    if (ctx->Shader.CurrentProgram) {
       struct gl_shader_program *const prog = ctx->Shader.CurrentProgram;
 
-      /* using shaders */
+      /* The current shader program must be successfully linked */
       if (!prog->LinkStatus) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(shader not linked)", where);
@@ -1728,6 +1728,16 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL;
    }
 
+   /* If drawing to integer-valued color buffers, there must be an
+    * active fragment shader (GL_EXT_texture_integer).
+    */
+   if (ctx->DrawBuffer && ctx->DrawBuffer->_IntegerColor) {
+      if (!frag_from_glsl_shader) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(integer format but no fragment shader)", where);
+         return GL_FALSE;
+      }
+   }
 
    /* Any shader stages that are not supplied by the GLSL shader and have
     * assembly shaders enabled must now be validated.
