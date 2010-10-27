@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "eglimage.h"
-#include "eglcurrent.h"
 #include "egllog.h"
 
 

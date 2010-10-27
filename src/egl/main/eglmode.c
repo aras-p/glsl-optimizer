@@ -3,11 +3,9 @@
 #include <string.h>
 
 #include "egldisplay.h"
-#include "egldriver.h"
 #include "eglmode.h"
 #include "eglcurrent.h"
 #include "eglscreen.h"
-#include "eglstring.h"
 
 
 #ifdef EGL_MESA_screen_surface

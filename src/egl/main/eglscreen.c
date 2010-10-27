@@ -18,7 +18,6 @@
 #include "egldisplay.h"
 #include "eglcurrent.h"
 #include "eglmode.h"
-#include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglmutex.h"
