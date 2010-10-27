@@ -1623,6 +1623,9 @@ if test "x$enable_gallium_g3dvl" = xyes; then
 	if test "x$HAVE_ST_VDPAU" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
 	fi
+	if test "x$HAVE_ST_XVMC" = xyes; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
+	fi
 	if test "x$HAVE_ST_VA" = xyes; then
 	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
 	fi

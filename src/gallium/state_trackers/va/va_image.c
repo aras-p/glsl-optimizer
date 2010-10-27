@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Thomas Balling Sørensen.
+ * Copyright 2010 Thomas Balling Sørensen & Orasanu Lucian.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,33 +24,99 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
- 
- #include <util/u_memory.h>
- #include <util/u_format.h>
- #include <va/va.h>
- #include <va/va_backend.h>
- #include "va_private.h"
- 
- VAStatus
- vlVaQueryImageFormats ( 	VADriverContextP ctx, 
-							VAImageFormat *format_list,
-							int *num_formats)
+
+#include <util/u_memory.h>
+#include <util/u_format.h>
+#include <va/va.h>
+#include <va/va_backend.h>
+#include "va_private.h"
+
+VAStatus
+vlVaQueryImageFormats ( 	VADriverContextP ctx,
+                            VAImageFormat *format_list,
+                            int *num_formats)
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
-	
+
 
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaCreateImage(	VADriverContextP ctx,
-							VAImageFormat *format,
-							int width,
-							int height,
-							VAImage *image)
+                            VAImageFormat *format,
+                            int width,
+                            int height,
+                            VAImage *image)
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
-	
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaDeriveImage(	VADriverContextP ctx,
+                            VASurfaceID surface,
+                            VAImage *image)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlDestroyImage(	VADriverContextP ctx,
+                            VAImageID image)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlSetImagePalette(	VADriverContextP ctx,
+                            VAImageID image,
+                            unsigned char *palette)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaGetImage(		VADriverContextP ctx,
+                            VASurfaceID surface,
+                            int x,
+                            int y,
+                            unsigned int width,
+                            unsigned int height,
+                            VAImageID image)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaPutImage(		VADriverContextP ctx,
+                            VASurfaceID surface,
+                            VAImageID image,
+                            int src_x,
+                            int src_y,
+                            unsigned int src_width,
+                            unsigned int src_height,
+                            int dest_x,
+                            int dest_y,
+                            unsigned int dest_width,
+                            unsigned int dest_height)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

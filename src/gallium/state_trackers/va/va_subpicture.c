@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Thomas Balling Sørensen.
+ * Copyright 2010 Thomas Balling Sørensen & Orasanu Lucian.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,17 +24,102 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
- 
+
 #include <va/va.h>
 #include <va/va_backend.h>
 #include "va_private.h"
- 
-VAStatus 
-vlVaQuerySubpictureFormats(	VADriverContextP ctx,
-							VAImageFormat *format_list,
-							unsigned int *flags,
-							unsigned int *num_formats)
+
+VAStatus
+vlVaQuerySubpictureFormats(		VADriverContextP ctx,
+                                VAImageFormat *format_list,
+                                unsigned int *flags,
+                                unsigned int *num_formats)
 {
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+
+VAStatus vlVaCreateSubpicture(		VADriverContextP ctx,
+                                    VAImageID image,
+                                    VASubpictureID *subpicture)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaDestroySubpicture(		VADriverContextP ctx,
+                                    VASubpictureID subpicture)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaSubpictureImage(		VADriverContextP ctx,
+                                    VASubpictureID subpicture,
+                                    VAImageID image)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaSetSubpictureChromakey(	VADriverContextP ctx,
+                                        VASubpictureID subpicture,
+                                        unsigned int chromakey_min,
+                                        unsigned int chromakey_max,
+                                        unsigned int chromakey_mask)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaSetSubpictureGlobalAlpha(	VADriverContextP ctx,
+                                        VASubpictureID subpicture,
+                                        float global_alpha)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaAssociateSubpicture(	VADriverContextP ctx,
+                                    VASubpictureID subpicture,
+                                    VASurfaceID *target_surfaces,
+                                    int num_surfaces,
+                                    short src_x,
+                                    short src_y,
+                                    unsigned short src_width,
+                                    unsigned short src_height,
+                                    short dest_x,
+                                    short dest_y,
+                                    unsigned short dest_width,
+                                    unsigned short dest_height,
+                                    unsigned int flags)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaDeassociateSubpicture(	VADriverContextP ctx,
+                                    VASubpictureID subpicture,
+                                    VASurfaceID *target_surfaces,
+                                    int num_surfaces)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

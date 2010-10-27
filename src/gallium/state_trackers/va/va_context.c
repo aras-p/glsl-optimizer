@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Thomas Balling Sørensen.
+ * Copyright 2010 Thomas Balling Sørensen & Orasanu Lucian.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,7 +24,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
- 
+
 #include <pipe/p_compiler.h>
 #include <pipe/p_video_context.h>
 #include <util/u_debug.h>
@@ -39,7 +39,7 @@ VAStatus __vaDriverInit_0_31 (VADriverContextP ctx)
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
-	
+
 	ctx->str_vendor = "mesa gallium vaapi";
 	ctx->vtable = vlVaGetVtable();
 	ctx->max_attributes = 1;
@@ -50,8 +50,40 @@ VAStatus __vaDriverInit_0_31 (VADriverContextP ctx)
 	ctx->max_subpic_formats = 1;
 	ctx->version_major = 3;
 	ctx->version_minor = 1;
-	
+
 	VA_INFO("vl_screen_pointer %p\n",ctx->native_dpy);
 
 	return VA_STATUS_SUCCESS;
+}
+
+VAStatus vlVaCreateContext(       VADriverContextP ctx,
+                                  VAConfigID config_id,
+                                  int picture_width,
+                                  int picture_height,
+                                  int flag,
+                                  VASurfaceID *render_targets,
+                                  int num_render_targets,
+                                  VAContextID *conext)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaDestroyContext(       VADriverContextP ctx,
+                                   VAContextID context)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
+}
+
+VAStatus vlVaTerminate(       VADriverContextP ctx)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

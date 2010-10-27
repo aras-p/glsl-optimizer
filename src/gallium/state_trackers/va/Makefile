@@ -15,7 +15,11 @@ C_SOURCES = htab.c \
 	    ftab.c \
 	    va_context.c \
 	    va_image.c \
-	    va_subpicture.c
+	    va_subpicture.c \
+	    va_buffer.c \
+	    va_config.c \
+            va_picture.c \
+            va_surface.c
 	    
 
 
