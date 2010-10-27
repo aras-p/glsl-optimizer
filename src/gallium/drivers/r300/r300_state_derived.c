@@ -633,6 +633,11 @@ static uint32_t r300_get_border_color(enum pipe_format format,
                 ((float_to_ubyte(border_swizzled[0]) & 0xff) << 16) |
                 ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
             break;
+
+        default:
+            assert(0);
+            r = 0;
+            break;
     }
 
     return r;
