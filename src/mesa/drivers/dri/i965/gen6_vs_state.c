@@ -40,12 +40,11 @@ upload_vs_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
-   unsigned int nr_params = vp->program.Base.Parameters->NumParameters;
+   unsigned int nr_params = brw->vs.prog_data->nr_params / 4;
    drm_intel_bo *constant_bo;
    int i;
 
-   if (vp->use_const_buffer || (nr_params == 0 &&
-				!ctx->Transform.ClipPlanesEnabled)) {
+   if (brw->vs.prog_data->nr_params == 0 && !ctx->Transform.ClipPlanesEnabled) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 | (5 - 2));
@@ -89,11 +88,22 @@ upload_vs_state(struct brw_context *brw)
 	 params_uploaded++;
       }
 
-      for (i = 0; i < nr_params; i++) {
-	 memcpy(param, vp->program.Base.Parameters->ParameterValues[i],
-		4 * sizeof(float));
-	 param += 4;
-	 params_uploaded++;
+      if (vp->use_const_buffer) {
+	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	    if (brw->vs.constant_map[i] != -1) {
+	       memcpy(param + brw->vs.constant_map[i] * 4,
+		      vp->program.Base.Parameters->ParameterValues[i],
+		      4 * sizeof(float));
+	       params_uploaded++;
+	    }
+	 }
+      } else {
+	 for (i = 0; i < nr_params; i++) {
+	    memcpy(param, vp->program.Base.Parameters->ParameterValues[i],
+		   4 * sizeof(float));
+	    param += 4;
+	    params_uploaded++;
+	 }
       }
 
       if (0) {
