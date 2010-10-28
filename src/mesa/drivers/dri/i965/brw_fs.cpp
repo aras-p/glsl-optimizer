@@ -2332,6 +2332,16 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
 	 break;
+      case FS_OPCODE_TXL:
+	 if (inst->shadow_compare) {
+	    assert(inst->mlen == 6);
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE;
+	 } else {
+	    assert(inst->mlen == 9);
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD;
+	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+	 }
+	 break;
       }
    }
    assert(msg_type != -1);
