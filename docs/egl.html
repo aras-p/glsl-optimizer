@@ -32,14 +32,14 @@ cards.</p>
 the Gallium driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --enable-gles-overlay --with-state-trackers=egl,vega --enable-gallium-intel
+  $ ./configure --enable-gles-overlay --enable-openvg --enable-gallium-intel
 </pre>
 
 <p>The main library and OpenGL is enabled by default.  The first option enables
-<a href="opengles.html">OpenGL ES 1.x and 2.x</a>.  The <code>egl</code> state
-tracker is needed by a number of EGL drivers.  EGL drivers will be covered
-later.  The <a href="openvg.html">vega state tracker</a> provides OpenVG
-1.x.</p>
+<a href="opengles.html">OpenGL ES 1.x and 2.x</a>.  The second option enables
+<a href="openvg.html">OpenVG</a>.
+</p>
+
 </li>
 
 <li>Build and install Mesa as usual.</li>
@@ -84,19 +84,10 @@ only be built with SCons.</p>
 
 </li>
 
-<li><code>--with-state-trackers</code>
-
-<p>The argument is a comma separated string.  It is usually used to specify the
-rendering APIs, such as OpenVG, to build.  But it is also used to specify
-<code>egl</code> state tracker that <code>egl_gallium</code> depends on.</p>
-
-</li>
-
 <li><code>--enable-gles-overlay</code>
 
-<p>OpenGL and OpenGL ES are not controlled by
-<code>--with-state-trackers</code>.  OpenGL is always built.  To build OpenGL
-ES, this option must be explicitly given.</p>
+<p>OpenGL is built by default.  To build OpenGL ES, this option must be
+explicitly given.</p>
 
 </li>
 
@@ -105,6 +96,12 @@ ES, this option must be explicitly given.</p>
 <p>Unlike <code>--enable-gles-overlay</code>, which builds one library for each
 rendering API, these options enable OpenGL ES support in OpenGL.  The result is
 one big library that supports multiple APIs.</p>
+
+</li>
+
+<li><code>--enable-openvg</code>
+
+<p>OpenVG must be explicitly enabled by this option.</p>
 
 </li>
 
@@ -141,7 +138,8 @@ specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
 <p><code>egl_gallium</code> dynamically loads hardware drivers and client API
 modules found in <code>EGL_DRIVERS_PATH</code>.  Thus, specifying this variable
-alone is not sufficient for <code>egl_gallium</code> for uninstalled build.</p>
+alone is not sufficient for <code>egl_gallium</code> for an uninstalled
+build.</p>
 
 </li>
 
@@ -177,7 +175,7 @@ variable to true forces the use of software rendering.</p>
 
 <p>This driver is based on Gallium3D.  It supports all rendering APIs and
 hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
-The supported platforms are X11, KMS, FBDEV, and GDI.</p>
+The supported platforms are X11, DRM, FBDEV, and GDI.</p>
 
 </li>
 
@@ -193,16 +191,8 @@ is not available in GLX or GLX extensions.</p>
 
 <p>This driver supports the X Window System as its window system.  It functions
 as a DRI2 driver loader.  Unlike <code>egl_glx</code>, it has no dependency on
-<code>libGL</code>.  It talks to the X server directly using DRI2 protocol.</p>
-
-</li>
-<li><code>egl_dri</code>
-
-<p>This driver lacks maintenance and does <em>not</em> build.  It is similiar
-to <code>egl_dri2</code> in that it functions as a DRI(1) driver loader.  But
-unlike <code>egl_dri2</code>, it supports Linux framebuffer devices as its
-window system and supports EGL_MESA_screen_surface extension.  As DRI1 drivers
-are phasing out, it might eventually be replaced by <code>egl_dri2</code>.</p>
+<code>libGL</code>.  It talks to the X server directly using (XCB-)DRI2
+protocol.</p>
 
 </li>
 </ul>
@@ -295,7 +285,6 @@ should as well lock the display before using it.
 
 <ul>
 <li>Pass the conformance tests</li>
-<li>Reference counting in main library?</li>
 <li>Mixed use of OpenGL, OpenGL ES 1.1, and OpenGL ES 2.0 is supported.  But
 which one of <code>libGL.so</code>, <code>libGLESv1_CM.so</code>, and
 <code>libGLESv2.so</code> should an application link to?  Bad things may happen

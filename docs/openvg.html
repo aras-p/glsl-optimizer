@@ -26,36 +26,27 @@ Please refer to <a href="egl.html">Mesa EGL</a> for more information about EGL.
 
 <h2>Building the library</h2>
 <ol>
-<li>Build Mesa3D with Gallium3D. Any build that builds Gallium3D libraries, EGL, and Gallium EGL drivers will suffice</li>
-<li>cd src/gallium/state_trackers/vega; make</li>
-<li>The last step will build libOpenVG library. You can add the libdir to LD_LIBRARY_PATH or install libOpenVG</li>
+<li>Run <code>configure</code> with <code>--enable-openvg</code>.  If you do
+not need OpenGL, you can add <code>--disable-opengl</code> to save the
+compilation time.</li>
+
+<li>Build and install Mesa as usual.</li>
 </ol>
 
 <h3>Sample build</h3>
 A sample build looks as follows:
 <pre>
-  $ ./configure --with-state-trackers=egl,vega --enable-gallium-intel
+  $ ./configure --disable-opengl --enable-openvg
   $ make
   $ make install
 </pre>
 
+<p>It will install <code>libOpenVG.so</code>, <code>libEGL.so</code>, and one
+or more EGL drivers.</p>
+
 <h2>OpenVG Demos</h2>
 
-<p>
-To build the OpenVG demos:
-</p>
-<pre>
-  cd progs/openvg
-  make
-</pre>
-<p>
-To run a demo:
-</p>
-<pre>
-  cd openvg/demos
-  ./lion
-</pre>
-
+<p>OpenVG demos can be found in mesa/demos repository.</p>
 
 </body>
 </html>
