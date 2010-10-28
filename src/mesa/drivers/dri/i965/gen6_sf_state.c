@@ -203,6 +203,7 @@ const struct brw_tracked_state gen6_sf_state = {
 		_NEW_LINE |
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
+		_NEW_POINT |
 		_NEW_TRANSFORM),
       .brw   = BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_VS_PROG
