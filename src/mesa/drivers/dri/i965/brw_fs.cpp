@@ -2325,7 +2325,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       case FS_OPCODE_TXB:
 	 if (inst->shadow_compare) {
 	    assert(inst->mlen == 6);
-	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_COMPARE;
 	 } else {
 	    assert(inst->mlen == 9);
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
