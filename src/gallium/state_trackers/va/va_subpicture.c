@@ -30,7 +30,7 @@
 #include <pipe/p_format.h>
 #include "va_private.h"
 
-#define NUM_FORMAT_SUPPORTED 2
+#define NUM_FORMATS_SUPPORTED 2
 
 typedef struct  {
 	enum pipe_format;
@@ -38,7 +38,7 @@ typedef struct  {
     unsigned int        va_flags;
 } va_subpicture_formats_supported_t;
 
-static const va_subpicture_formats_supported_t va_subpicture_formats_supported[NUM_FORMAT_SUPPORTED] = 
+static const va_subpicture_formats_supported_t va_subpicture_formats_supported[NUM_FORMATS_SUPPORTED] = 
 {
 	{ PIPE_FORMAT_B8G8R8A8_UNORM,
       { VA_FOURCC('B','G','R','A'), VA_LSB_FIRST, 32,
@@ -64,7 +64,7 @@ vlVaQuerySubpictureFormats(		VADriverContextP ctx,
 		
 	int n = 0;
 	/* Query supported formats */
-	for (n = 0; n < NUM_FORMAT_SUPPORTED; n++)
+	for (n = 0; n < NUM_FORMATS_SUPPORTED; n++)
 	{
 		flags[n] = va_subpicture_formats_supported[n].va_flags;
 		format_list[n] = va_subpicture_formats_supported[n].va_format;
