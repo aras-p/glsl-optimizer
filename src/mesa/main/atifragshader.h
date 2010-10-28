@@ -66,10 +66,10 @@ extern void
 _mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp);
 
 extern struct ati_fragment_shader *
-_mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id);
+_mesa_new_ati_fragment_shader(struct gl_context *ctx, GLuint id);
 
 extern void
-_mesa_delete_ati_fragment_shader(GLcontext *ctx,
+_mesa_delete_ati_fragment_shader(struct gl_context *ctx,
                                  struct ati_fragment_shader *s);
 
 
@@ -133,13 +133,13 @@ _mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp)
 }
 
 static INLINE struct ati_fragment_shader *
-_mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id)
+_mesa_new_ati_fragment_shader(struct gl_context *ctx, GLuint id)
 {
    return NULL;
 }
 
 static INLINE void
-_mesa_delete_ati_fragment_shader(GLcontext *ctx,
+_mesa_delete_ati_fragment_shader(struct gl_context *ctx,
                                  struct ati_fragment_shader *s)
 {
 }

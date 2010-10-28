@@ -104,7 +104,7 @@ static void *dxtlibhandle = NULL;
 
 
 void
-_mesa_init_texture_s3tc( GLcontext *ctx )
+_mesa_init_texture_s3tc( struct gl_context *ctx )
 {
    /* called during context initialization */
    ctx->Mesa_DXTn = GL_FALSE;

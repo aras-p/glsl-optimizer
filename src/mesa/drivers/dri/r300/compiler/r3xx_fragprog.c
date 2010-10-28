@@ -145,8 +145,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
 		{"machine code generation",	0, is_r500,	r500BuildFragmentProgramHwCode,	NULL},
 		{"machine code generation",	0, !is_r500,	r300BuildFragmentProgramHwCode,	NULL},
-		{"dump machine code",		0, is_r500  && c->Base.Debug, r500FragmentProgramDump, NULL},
-		{"dump machine code",		0, !is_r500 && c->Base.Debug, r300FragmentProgramDump, NULL},
+		{"dump machine code",		0, is_r500  && (c->Base.Debug & RC_DBG_LOG), r500FragmentProgramDump, NULL},
+		{"dump machine code",		0, !is_r500 && (c->Base.Debug & RC_DBG_LOG), r300FragmentProgramDump, NULL},
 		{NULL, 0, 0, NULL, NULL}
 	};
 

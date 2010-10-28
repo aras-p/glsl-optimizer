@@ -121,7 +121,7 @@ static GLuint dstmask_table[8] =
    R200_TXC_OUTPUT_MASK_RGB
 };
 
-static void r200UpdateFSArith( GLcontext *ctx )
+static void r200UpdateFSArith( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint *afs_cmd;
@@ -322,7 +322,7 @@ static void r200UpdateFSArith( GLcontext *ctx )
    rmesa->afs_loaded = ctx->ATIFragmentShader.Current;
 }
 
-static void r200UpdateFSRouting( GLcontext *ctx ) {
+static void r200UpdateFSRouting( struct gl_context *ctx ) {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct ati_fragment_shader *shader = ctx->ATIFragmentShader.Current;
    GLuint reg;
@@ -499,7 +499,7 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
    }
 }
 
-static void r200UpdateFSConstants( GLcontext *ctx )
+static void r200UpdateFSConstants( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct ati_fragment_shader *shader = ctx->ATIFragmentShader.Current;
@@ -537,7 +537,7 @@ static void r200UpdateFSConstants( GLcontext *ctx )
  * stored in some DriverData object attached to the mesa atifs object, i.e. binding a
  * shader wouldn't force us to "recompile" the shader).
  */
-void r200UpdateFragmentShader( GLcontext *ctx )
+void r200UpdateFragmentShader( struct gl_context *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 

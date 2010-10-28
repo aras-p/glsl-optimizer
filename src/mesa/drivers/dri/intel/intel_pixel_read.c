@@ -65,7 +65,7 @@
  */
 
 static GLboolean
-do_blit_readpixels(GLcontext * ctx,
+do_blit_readpixels(struct gl_context * ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
@@ -165,7 +165,7 @@ do_blit_readpixels(GLcontext * ctx,
 }
 
 void
-intelReadPixels(GLcontext * ctx,
+intelReadPixels(struct gl_context * ctx,
                 GLint x, GLint y, GLsizei width, GLsizei height,
                 GLenum format, GLenum type,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)

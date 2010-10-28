@@ -215,6 +215,15 @@ lp_build_exp2(struct lp_build_context *bld,
               LLVMValueRef a);
 
 LLVMValueRef
+lp_build_extract_exponent(struct lp_build_context *bld,
+                          LLVMValueRef x,
+                          int bias);
+
+LLVMValueRef
+lp_build_extract_mantissa(struct lp_build_context *bld,
+                          LLVMValueRef x);
+
+LLVMValueRef
 lp_build_log2(struct lp_build_context *bld,
               LLVMValueRef a);
 
@@ -225,7 +234,6 @@ lp_build_fast_log2(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_ilog2(struct lp_build_context *bld,
                LLVMValueRef x);
-
 
 void
 lp_build_exp2_approx(struct lp_build_context *bld,

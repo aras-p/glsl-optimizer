@@ -114,14 +114,6 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    /* how many general-purpose registers are used */
    c->prog_data.total_grf = c->max_wm_grf;
 
-   /* Scratch space is used for register spilling */
-   if (c->last_scratch) {
-      c->prog_data.total_scratch = c->last_scratch + 0x40;
-   }
-   else {
-      c->prog_data.total_scratch = 0;
-   }
-
    /* Emit GEN4 code.
     */
    brw_wm_emit(c);
@@ -193,6 +185,19 @@ static void do_wm_prog( struct brw_context *brw,
       }
    }
 
+   /* Scratch space is used for register spilling */
+   if (c->last_scratch) {
+      /* Per-thread scratch space is power-of-two sized. */
+      for (c->prog_data.total_scratch = 1024;
+	   c->prog_data.total_scratch <= c->last_scratch;
+	   c->prog_data.total_scratch *= 2) {
+	 /* empty */
+      }
+   }
+   else {
+      c->prog_data.total_scratch = 0;
+   }
+
    if (INTEL_DEBUG & DEBUG_WM)
       fprintf(stderr, "\n");
 
@@ -216,7 +221,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
@@ -318,6 +323,12 @@ static void brw_wm_populate_key( struct brw_context *brw,
       /* R31: MSAA position offsets. */
       /* R32-: bary for 32-pixel. */
       /* R58-59: interp W for 32-pixel. */
+
+      if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+	 key->source_depth_to_render_target = GL_TRUE;
+	 key->computes_depth = GL_TRUE;
+      }
+
    } else {
       brw_wm_lookup_iz(intel,
 	      	       line_aa,

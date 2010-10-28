@@ -32,21 +32,10 @@
 #include "framebuffer.h"
 #include "readpix.h"
 #include "state.h"
-#include "main/dispatch.h"
+#include "dispatch.h"
 
 
 #if FEATURE_drawpix
-
-
-/**
- * If a fragment program is enabled, check that it's valid.
- * \return GL_TRUE if valid, GL_FALSE otherwise
- */
-static GLboolean
-valid_fragment_program(GLcontext *ctx)
-{
-   return !(ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled);
-}
 
 
 /*
@@ -65,33 +54,21 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
 
    /* We're not using the current vertex program, and the driver may install
-    * it's own.
+    * its own.  Note: this may dirty some state.
     */
    _mesa_set_vp_override(ctx, GL_TRUE);
 
-   if (ctx->NewState) {
-      _mesa_update_state(ctx);
-   }
-
-   if (!valid_fragment_program(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glDrawPixels (invalid fragment program)");
-      goto end;
+   /* Note: this call does state validation */
+   if (!_mesa_valid_to_render(ctx, "glDrawPixels")) {
+      goto end;      /* the error code was recorded */
    }
 
    if (_mesa_error_check_format_type(ctx, format, type, GL_TRUE)) {
-      /* the error was already recorded */
-      goto end;
-   }
-
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glDrawPixels(incomplete framebuffer)" );
-      goto end;
+      goto end;      /* the error code was recorded */
    }
 
    if (!ctx->Current.RasterPosValid) {
-      goto end; /* no-op, not an error */
+      goto end;  /* no-op, not an error */
    }
 
    if (ctx->RenderMode == GL_RENDER) {
@@ -165,22 +142,17 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
 
    /* We're not using the current vertex program, and the driver may install
-    * it's own.
+    * it's own.  Note: this may dirty some state.
     */
    _mesa_set_vp_override(ctx, GL_TRUE);
 
-   if (ctx->NewState) {
-      _mesa_update_state(ctx);
+   /* Note: this call does state validation */
+   if (!_mesa_valid_to_render(ctx, "glCopyPixels")) {
+      goto end;      /* the error code was recorded */
    }
 
-   if (!valid_fragment_program(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyPixels (invalid fragment program)");
-      goto end;
-   }
-
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
-       ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+   /* Check read buffer's status (draw buffer was already checked) */
+   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glCopyPixels(incomplete framebuffer)" );
       goto end;
@@ -241,19 +213,9 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       return;    /* do nothing */
    }
 
-   if (ctx->NewState) {
-      _mesa_update_state(ctx);
-   }
-
-   if (!valid_fragment_program(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBitmap (invalid fragment program)");
-      return;
-   }
-
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glBitmap(incomplete framebuffer)");
+   /* Note: this call does state validation */
+   if (!_mesa_valid_to_render(ctx, "glBitmap")) {
+      /* the error code was recorded */
       return;
    }
 

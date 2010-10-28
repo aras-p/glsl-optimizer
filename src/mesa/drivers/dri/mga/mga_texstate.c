@@ -196,7 +196,7 @@ mgaSetTexImages( mgaContextPtr mmesa,
  * Texture unit state management
  */
 
-static void mgaUpdateTextureEnvG200( GLcontext *ctx, GLuint unit )
+static void mgaUpdateTextureEnvG200( struct gl_context *ctx, GLuint unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
@@ -526,7 +526,7 @@ static const GLuint g400_alpha_combine[][MGA_MAX_COMBFUNC] =
    },
 };
 
-static GLboolean mgaUpdateTextureEnvBlend( GLcontext *ctx, int unit )
+static GLboolean mgaUpdateTextureEnvBlend( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const int source = mmesa->tmu_source[unit];
@@ -622,7 +622,7 @@ static GLboolean mgaUpdateTextureEnvBlend( GLcontext *ctx, int unit )
    return GL_TRUE;
 }
 
-static void mgaUpdateTextureEnvG400( GLcontext *ctx, GLuint unit )
+static void mgaUpdateTextureEnvG400( struct gl_context *ctx, GLuint unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    const int source = mmesa->tmu_source[unit];
@@ -719,7 +719,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, GLuint unit )
    }
 }
 
-static void disable_tex( GLcontext *ctx, int unit )
+static void disable_tex( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -747,7 +747,7 @@ static void disable_tex( GLcontext *ctx, int unit )
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | (MGA_UPLOAD_TEX0 << unit);
 }
 
-static GLboolean enable_tex( GLcontext *ctx, int unit )
+static GLboolean enable_tex( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const int source = mmesa->tmu_source[unit];
@@ -768,7 +768,7 @@ static GLboolean enable_tex( GLcontext *ctx, int unit )
    return GL_TRUE;
 }
 
-static GLboolean update_tex_common( GLcontext *ctx, int unit )
+static GLboolean update_tex_common( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const int source = mmesa->tmu_source[unit];
@@ -842,7 +842,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 }
 
 
-static GLboolean updateTextureUnit( GLcontext *ctx, int unit )
+static GLboolean updateTextureUnit( struct gl_context *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    const int source = mmesa->tmu_source[unit];
@@ -865,7 +865,7 @@ static GLboolean updateTextureUnit( GLcontext *ctx, int unit )
 
 /* The G400 is now programmed quite differently wrt texture environment.
  */
-void mgaUpdateTextureState( GLcontext *ctx )
+void mgaUpdateTextureState( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    GLboolean ok;

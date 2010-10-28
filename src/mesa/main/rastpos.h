@@ -50,7 +50,7 @@ _mesa_init_rastpos_dispatch(struct _glapi_table *disp)
 #endif /* FEATURE_rastpos */
 
 extern void 
-_mesa_init_rastpos(GLcontext *ctx);
+_mesa_init_rastpos(struct gl_context *ctx);
 
 /*@}*/
 

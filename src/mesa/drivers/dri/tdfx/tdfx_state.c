@@ -60,7 +60,7 @@
  * Alpha blending
  */
 
-static void tdfxUpdateAlphaMode( GLcontext *ctx )
+static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrCmpFnc_t func;
@@ -283,7 +283,7 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
    }
 }
 
-static void tdfxDDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
+static void tdfxDDAlphaFunc( struct gl_context *ctx, GLenum func, GLfloat ref )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -291,7 +291,7 @@ static void tdfxDDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
 
-static void tdfxDDBlendEquationSeparate( GLcontext *ctx, 
+static void tdfxDDBlendEquationSeparate( struct gl_context *ctx, 
 					 GLenum modeRGB, GLenum modeA )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
@@ -301,7 +301,7 @@ static void tdfxDDBlendEquationSeparate( GLcontext *ctx,
    fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
 
-static void tdfxDDBlendFuncSeparate( GLcontext *ctx,
+static void tdfxDDBlendFuncSeparate( struct gl_context *ctx,
 				     GLenum sfactorRGB, GLenum dfactorRGB,
 				     GLenum sfactorA, GLenum dfactorA )
 {
@@ -321,7 +321,7 @@ static void tdfxDDBlendFuncSeparate( GLcontext *ctx,
  * Stipple
  */
 
-void tdfxUpdateStipple( GLcontext *ctx )
+void tdfxUpdateStipple( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    GrStippleMode_t mode = GR_STIPPLE_DISABLE;
@@ -347,7 +347,7 @@ void tdfxUpdateStipple( GLcontext *ctx )
  * Depth testing
  */
 
-static void tdfxUpdateZMode( GLcontext *ctx )
+static void tdfxUpdateZMode( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    GrCmpFnc_t func;
@@ -386,7 +386,7 @@ static void tdfxUpdateZMode( GLcontext *ctx )
    }
 }
 
-static void tdfxDDDepthFunc( GLcontext *ctx, GLenum func )
+static void tdfxDDDepthFunc( struct gl_context *ctx, GLenum func )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -394,7 +394,7 @@ static void tdfxDDDepthFunc( GLcontext *ctx, GLenum func )
    fxMesa->new_state |= TDFX_NEW_DEPTH;
 }
 
-static void tdfxDDDepthMask( GLcontext *ctx, GLboolean flag )
+static void tdfxDDDepthMask( struct gl_context *ctx, GLboolean flag )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -402,7 +402,7 @@ static void tdfxDDDepthMask( GLcontext *ctx, GLboolean flag )
    fxMesa->new_state |= TDFX_NEW_DEPTH;
 }
 
-static void tdfxDDClearDepth( GLcontext *ctx, GLclampd d )
+static void tdfxDDClearDepth( struct gl_context *ctx, GLclampd d )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -445,7 +445,7 @@ static GrStencil_t convertGLStencilOp( GLenum op )
 }
 
 
-static void tdfxUpdateStencil( GLcontext *ctx )
+static void tdfxUpdateStencil( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -470,7 +470,7 @@ static void tdfxUpdateStencil( GLcontext *ctx )
 
 
 static void
-tdfxDDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+tdfxDDStencilFuncSeparate( struct gl_context *ctx, GLenum face, GLenum func,
                            GLint ref, GLuint mask )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -480,7 +480,7 @@ tdfxDDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
 }
 
 static void
-tdfxDDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
+tdfxDDStencilMaskSeparate( struct gl_context *ctx, GLenum face, GLuint mask )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -489,7 +489,7 @@ tdfxDDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
 }
 
 static void
-tdfxDDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum sfail,
+tdfxDDStencilOpSeparate( struct gl_context *ctx, GLenum face, GLenum sfail,
                          GLenum zfail, GLenum zpass )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -503,7 +503,7 @@ tdfxDDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum sfail,
  * Fog - orthographic fog still not working
  */
 
-static void tdfxUpdateFogAttrib( GLcontext *ctx )
+static void tdfxUpdateFogAttrib( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrFogMode_t mode;
@@ -562,7 +562,7 @@ static void tdfxUpdateFogAttrib( GLcontext *ctx )
    }
 }
 
-static void tdfxDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
+static void tdfxDDFogfv( struct gl_context *ctx, GLenum pname, const GLfloat *param )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -614,7 +614,7 @@ static int intersect_rect( drm_clip_rect_t *out,
  * Examine XF86 cliprect list and scissor state to recompute our
  * cliprect list.
  */
-void tdfxUpdateClipping( GLcontext *ctx )
+void tdfxUpdateClipping( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    __DRIdrawable *dPriv = fxMesa->driDrawable;
@@ -695,7 +695,7 @@ void tdfxUpdateClipping( GLcontext *ctx )
  * Culling
  */
 
-void tdfxUpdateCull( GLcontext *ctx )
+void tdfxUpdateCull( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrCullMode_t mode = GR_CULL_DISABLE;
@@ -737,7 +737,7 @@ void tdfxUpdateCull( GLcontext *ctx )
    }
 }
 
-static void tdfxDDCullFace( GLcontext *ctx, GLenum mode )
+static void tdfxDDCullFace( struct gl_context *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -745,7 +745,7 @@ static void tdfxDDCullFace( GLcontext *ctx, GLenum mode )
    fxMesa->new_state |= TDFX_NEW_CULL;
 }
 
-static void tdfxDDFrontFace( GLcontext *ctx, GLenum mode )
+static void tdfxDDFrontFace( struct gl_context *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -758,7 +758,7 @@ static void tdfxDDFrontFace( GLcontext *ctx, GLenum mode )
  * Line drawing.
  */
 
-static void tdfxUpdateLine( GLcontext *ctx )
+static void tdfxUpdateLine( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -771,7 +771,7 @@ static void tdfxUpdateLine( GLcontext *ctx )
 }
 
 
-static void tdfxDDLineWidth( GLcontext *ctx, GLfloat width )
+static void tdfxDDLineWidth( struct gl_context *ctx, GLfloat width )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    FLUSH_BATCH( fxMesa );
@@ -783,7 +783,7 @@ static void tdfxDDLineWidth( GLcontext *ctx, GLfloat width )
  * Color Attributes
  */
 
-static void tdfxDDColorMask( GLcontext *ctx,
+static void tdfxDDColorMask( struct gl_context *ctx,
 			     GLboolean r, GLboolean g,
 			     GLboolean b, GLboolean a )
 {
@@ -810,7 +810,7 @@ static void tdfxDDColorMask( GLcontext *ctx,
 }
 
 
-static void tdfxDDClearColor( GLcontext *ctx,
+static void tdfxDDClearColor( struct gl_context *ctx,
 			      const GLfloat color[4] )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -829,7 +829,7 @@ static void tdfxDDClearColor( GLcontext *ctx,
  * Light Model
  */
 
-static void tdfxDDLightModelfv( GLcontext *ctx, GLenum pname,
+static void tdfxDDLightModelfv( struct gl_context *ctx, GLenum pname,
 				const GLfloat *param )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -841,7 +841,7 @@ static void tdfxDDLightModelfv( GLcontext *ctx, GLenum pname,
    }
 }
 
-static void tdfxDDShadeModel( GLcontext *ctx, GLenum mode )
+static void tdfxDDShadeModel( struct gl_context *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -856,7 +856,7 @@ static void tdfxDDShadeModel( GLcontext *ctx, GLenum mode )
  */
 
 static void
-tdfxDDScissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+tdfxDDScissor(struct gl_context * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FLUSH_BATCH( fxMesa );
@@ -867,7 +867,7 @@ tdfxDDScissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
  * Render
  */
 
-static void tdfxUpdateRenderAttrib( GLcontext *ctx )
+static void tdfxUpdateRenderAttrib( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FLUSH_BATCH( fxMesa );
@@ -878,7 +878,7 @@ static void tdfxUpdateRenderAttrib( GLcontext *ctx )
  * Viewport
  */
 
-void tdfxUpdateViewport( GLcontext *ctx )
+void tdfxUpdateViewport( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -895,7 +895,7 @@ void tdfxUpdateViewport( GLcontext *ctx )
 }
 
 
-static void tdfxDDViewport( GLcontext *ctx, GLint x, GLint y,
+static void tdfxDDViewport( struct gl_context *ctx, GLint x, GLint y,
 			    GLsizei w, GLsizei h )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -904,7 +904,7 @@ static void tdfxDDViewport( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-static void tdfxDDDepthRange( GLcontext *ctx, GLclampd nearVal, GLclampd farVal )
+static void tdfxDDDepthRange( struct gl_context *ctx, GLclampd nearVal, GLclampd farVal )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FLUSH_BATCH( fxMesa );
@@ -916,7 +916,7 @@ static void tdfxDDDepthRange( GLcontext *ctx, GLclampd nearVal, GLclampd farVal 
  * State enable/disable
  */
 
-static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
+static void tdfxDDEnable( struct gl_context *ctx, GLenum cap, GLboolean state )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -1017,7 +1017,7 @@ static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
 /* Set the buffer used for drawing */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static void tdfxDDDrawBuffer( GLcontext *ctx, GLenum mode )
+static void tdfxDDDrawBuffer( struct gl_context *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1054,7 +1054,7 @@ static void tdfxDDDrawBuffer( GLcontext *ctx, GLenum mode )
 }
 
 
-static void tdfxDDReadBuffer( GLcontext *ctx, GLenum mode )
+static void tdfxDDReadBuffer( struct gl_context *ctx, GLenum mode )
 {
    /* XXX ??? */
 }
@@ -1064,7 +1064,7 @@ static void tdfxDDReadBuffer( GLcontext *ctx, GLenum mode )
  * Polygon stipple
  */
 
-static void tdfxDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+static void tdfxDDPolygonStipple( struct gl_context *ctx, const GLubyte *mask )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    const GLubyte *m = mask;
@@ -1119,7 +1119,7 @@ static void tdfxDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
 
 
-static void tdfxDDRenderMode( GLcontext *ctx, GLenum mode )
+static void tdfxDDRenderMode( struct gl_context *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FALLBACK( fxMesa, TDFX_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
@@ -1150,7 +1150,7 @@ static void tdfxDDPrintState( const char *msg, GLuint flags )
 
 
 
-void tdfxDDUpdateHwState( GLcontext *ctx )
+void tdfxDDUpdateHwState( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    int new_state = fxMesa->new_state;
@@ -1226,7 +1226,7 @@ void tdfxDDUpdateHwState( GLcontext *ctx )
 }
 
 
-static void tdfxDDInvalidateState( GLcontext *ctx, GLuint new_state )
+static void tdfxDDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -1242,7 +1242,7 @@ static void tdfxDDInvalidateState( GLcontext *ctx, GLuint new_state )
  */
 void tdfxInitState( tdfxContextPtr fxMesa )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    GLint i;
 
    fxMesa->ColorCombine.Function	= GR_COMBINE_FUNCTION_LOCAL;
@@ -1390,7 +1390,7 @@ void tdfxInitState( tdfxContextPtr fxMesa )
 
 
 
-void tdfxDDInitStateFuncs( GLcontext *ctx )
+void tdfxDDInitStateFuncs( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 

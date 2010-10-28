@@ -29,6 +29,7 @@
 #include "context.h"
 #include "image.h"
 #include "macros.h"
+#include "pack.h"
 #include "state.h"
 #include "teximage.h"
 #include "texstate.h"
@@ -176,7 +177,7 @@ set_component_sizes( struct gl_color_table *table )
  * \param [rgba]Bias - RGBA bias factors
  */
 static void
-store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
+store_colortable_entries(struct gl_context *ctx, struct gl_color_table *table,
 			 GLsizei start, GLsizei count,
 			 GLenum format, GLenum type, const GLvoid *data,
 			 GLfloat rScale, GLfloat rBias,

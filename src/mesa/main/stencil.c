@@ -56,7 +56,7 @@
 
 
 static GLboolean
-validate_stencil_op(GLcontext *ctx, GLenum op)
+validate_stencil_op(struct gl_context *ctx, GLenum op)
 {
    switch (op) {
    case GL_KEEP:
@@ -79,7 +79,7 @@ validate_stencil_op(GLcontext *ctx, GLenum op)
 
 
 static GLboolean
-validate_stencil_func(GLcontext *ctx, GLenum func)
+validate_stencil_func(struct gl_context *ctx, GLenum func)
 {
    switch (func) {
    case GL_NEVER:
@@ -137,7 +137,7 @@ _mesa_ClearStencil( GLint s )
  * \sa glStencilFunc().
  *
  * Verifies the parameters and updates the respective values in
- * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * __struct gl_contextRec::Stencil. On change flushes the vertices and notifies the
  * driver via the dd_function_table::StencilFunc callback.
  */
 void GLAPIENTRY
@@ -192,7 +192,7 @@ _mesa_StencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLui
  * \sa glStencilFunc().
  *
  * Verifies the parameters and updates the respective values in
- * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * __struct gl_contextRec::Stencil. On change flushes the vertices and notifies the
  * driver via the dd_function_table::StencilFunc callback.
  */
 void GLAPIENTRY
@@ -312,7 +312,7 @@ _mesa_StencilMask( GLuint mask )
  * \sa glStencilOp().
  * 
  * Verifies the parameters and updates the respective fields in
- * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * __struct gl_contextRec::Stencil. On change flushes the vertices and notifies the
  * driver via the dd_function_table::StencilOp callback.
  */
 void GLAPIENTRY
@@ -532,7 +532,7 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
  * Update derived stencil state.
  */
 void
-_mesa_update_stencil(GLcontext *ctx)
+_mesa_update_stencil(struct gl_context *ctx)
 {
    const GLint face = ctx->Stencil._BackFace;
 
@@ -556,10 +556,10 @@ _mesa_update_stencil(GLcontext *ctx)
  *
  * \param ctx GL context.
  *
- * Initializes __GLcontextRec::Stencil attribute group.
+ * Initializes __struct gl_contextRec::Stencil attribute group.
  */
 void
-_mesa_init_stencil(GLcontext *ctx)
+_mesa_init_stencil(struct gl_context *ctx)
 {
    ctx->Stencil.Enabled = GL_FALSE;
    ctx->Stencil.TestTwoSide = GL_FALSE;

@@ -37,43 +37,43 @@
  * itself.)
  */
 extern GLboolean
-_tnl_CreateContext( GLcontext *ctx );
+_tnl_CreateContext( struct gl_context *ctx );
 
 extern void
-_tnl_DestroyContext( GLcontext *ctx );
+_tnl_DestroyContext( struct gl_context *ctx );
 
 extern void
-_tnl_InvalidateState( GLcontext *ctx, GLuint new_state );
+_tnl_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 /* Functions to revive the tnl module after being unhooked from
  * dispatch and/or driver callbacks.
  */
 
 extern void
-_tnl_wakeup( GLcontext *ctx );
+_tnl_wakeup( struct gl_context *ctx );
 
 /* Driver configuration options:
  */
 extern void
-_tnl_need_projected_coords( GLcontext *ctx, GLboolean flag );
+_tnl_need_projected_coords( struct gl_context *ctx, GLboolean flag );
 
 
 /* Control whether T&L does per-vertex fog
  */
 extern void
-_tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value );
+_tnl_allow_vertex_fog( struct gl_context *ctx, GLboolean value );
 
 extern void
-_tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value );
+_tnl_allow_pixel_fog( struct gl_context *ctx, GLboolean value );
 
 extern GLboolean
-_tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program);
+_tnl_program_string(struct gl_context *ctx, GLenum target, struct gl_program *program);
 
 struct _mesa_prim;
 struct _mesa_index_buffer;
 
 void
-_tnl_draw_prims( GLcontext *ctx,
+_tnl_draw_prims( struct gl_context *ctx,
 		 const struct gl_client_array *arrays[],
 		 const struct _mesa_prim *prim,
 		 GLuint nr_prims,
@@ -82,7 +82,7 @@ _tnl_draw_prims( GLcontext *ctx,
 		 GLuint max_index);
 
 void
-_tnl_vbo_draw_prims( GLcontext *ctx,
+_tnl_vbo_draw_prims( struct gl_context *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
@@ -92,9 +92,9 @@ _tnl_vbo_draw_prims( GLcontext *ctx,
 		     GLuint max_index);
 
 extern void
-_mesa_load_tracked_matrices(GLcontext *ctx);
+_mesa_load_tracked_matrices(struct gl_context *ctx);
 
 extern void
-_tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4]);
+_tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4]);
 
 #endif

@@ -24,6 +24,8 @@ typedef struct _egl_extensions _EGLExtensions;
 
 typedef struct _egl_image _EGLImage;
 
+typedef struct _egl_image_attribs _EGLImageAttribs;
+
 typedef struct _egl_mode _EGLMode;
 
 typedef struct _egl_resource _EGLResource;

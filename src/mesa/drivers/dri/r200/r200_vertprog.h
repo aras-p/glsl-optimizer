@@ -11,7 +11,7 @@ typedef struct {
 } VERTEX_SHADER_INSTRUCTION;
 
 extern void r200InitShaderFuncs(struct dd_function_table *functions);
-extern void r200SetupVertexProg( GLcontext *ctx );
+extern void r200SetupVertexProg( struct gl_context *ctx );
 
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2

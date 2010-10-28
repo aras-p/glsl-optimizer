@@ -40,9 +40,9 @@
 #include "main/context.h"
 #include "drirenderbuffer.h"
 
-extern void tdfxDDInitSpanFuncs( GLcontext *ctx );
+extern void tdfxDDInitSpanFuncs( struct gl_context *ctx );
 
 extern void
-tdfxSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+tdfxSetSpanFunctions(driRenderbuffer *rb, const struct gl_config *vis);
 
 #endif

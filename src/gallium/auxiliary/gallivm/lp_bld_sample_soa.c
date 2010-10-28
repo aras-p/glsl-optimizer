@@ -131,7 +131,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    }
 
    /* convert x,y,z coords to linear offset from start of texture, in bytes */
-   lp_build_sample_offset(&bld->uint_coord_bld,
+   lp_build_sample_offset(&bld->int_coord_bld,
                           bld->format_desc,
                           x, y, z, y_stride, z_stride,
                           &offset, &i, &j);
@@ -145,7 +145,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
        * coords which are out of bounds to become zero.  Zero's guaranteed
        * to be inside the texture image.
        */
-      offset = lp_build_andnot(&bld->uint_coord_bld, offset, use_border);
+      offset = lp_build_andnot(&bld->int_coord_bld, offset, use_border);
    }
 
    lp_build_fetch_rgba_soa(bld->builder,
@@ -202,11 +202,7 @@ lp_build_coord_mirror(struct lp_build_sample_context *bld,
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef fract, flr, isOdd;
 
-   /* fract = coord - floor(coord) */
-   fract = lp_build_sub(coord_bld, coord, lp_build_floor(coord_bld, coord));
-
-   /* flr = ifloor(coord); */
-   flr = lp_build_ifloor(coord_bld, coord);
+   lp_build_ifloor_fract(coord_bld, coord, &flr, &fract);
 
    /* isOdd = flr & 1 */
    isOdd = LLVMBuildAnd(bld->builder, flr, int_coord_bld->one, "");
@@ -234,6 +230,7 @@ static void
 lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
                             LLVMValueRef coord,
                             LLVMValueRef length,
+                            LLVMValueRef length_f,
                             boolean is_pot,
                             unsigned wrap_mode,
                             LLVMValueRef *x0_out,
@@ -242,10 +239,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
-   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
-   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef coord0, coord1, weight;
 
    switch(wrap_mode) {
@@ -255,19 +250,23 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       coord = lp_build_sub(coord_bld, coord, half);
       /* convert to int, compute lerp weight */
       lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
-      coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
       /* repeat wrap */
       if (is_pot) {
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
          coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
          coord1 = LLVMBuildAnd(bld->builder, coord1, length_minus_one, "");
       }
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
+         LLVMValueRef mask;
          coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
-         coord1 = LLVMBuildAdd(bld->builder, coord1, bias, "");
          coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
-         coord1 = LLVMBuildURem(bld->builder, coord1, length, "");
+         mask = lp_build_compare(bld->builder, int_coord_bld->type,
+                                 PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
+         coord1 = LLVMBuildAnd(bld->builder,
+                              lp_build_add(int_coord_bld, coord0, int_coord_bld->one),
+                              mask, "");
       }
       break;
 
@@ -288,41 +287,39 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      if (bld->static_state->normalized_coords) {
-         /* clamp to [0,1] */
-         coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, coord_bld->one);
-         /* mul by tex size and subtract 0.5 */
-         coord = lp_build_mul(coord_bld, coord, length_f);
+      {
+         struct lp_build_context abs_coord_bld = bld->coord_bld;
+         abs_coord_bld.type.sign = FALSE;
+
+         if (bld->static_state->normalized_coords) {
+            /* mul by tex size */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+         /* clamp to length max */
+         coord = lp_build_min(coord_bld, coord, length_f);
+         /* subtract 0.5 */
          coord = lp_build_sub(coord_bld, coord, half);
+         /* clamp to [0, length - 0.5] */
+         coord = lp_build_max(coord_bld, coord, coord_bld->zero);
+         /* convert to int, compute lerp weight */
+         lp_build_ifloor_fract(&abs_coord_bld, coord, &coord0, &weight);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+         /* coord1 = min(coord1, length-1) */
+         coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
+         break;
       }
-      else {
-         LLVMValueRef min, max;
-         /* clamp to [0.5, length - 0.5] */
-         min = half;
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
-      }
-      /* convert to int, compute lerp weight */
-      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
-      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
-      /* coord0 = max(coord0, 0) */
-      coord0 = lp_build_max(int_coord_bld, coord0, int_coord_bld->zero);
-      /* coord1 = min(coord1, length-1) */
-      coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
-      break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
-         LLVMValueRef min, max;
+         LLVMValueRef min;
          if (bld->static_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
-         /* clamp to [-0.5, length + 0.5] */
-         min = lp_build_const_vec(coord_bld->type, -0.5F);
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
+         /* was: clamp to [-0.5, length + 0.5], then sub 0.5 */
          coord = lp_build_sub(coord_bld, coord, half);
+         min = lp_build_const_vec(coord_bld->type, -1.0F);
+         coord = lp_build_clamp(coord_bld, coord, min, length_f);
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
@@ -368,7 +365,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       {
          LLVMValueRef min, max;
-
+         struct lp_build_context abs_coord_bld = bld->coord_bld;
+         abs_coord_bld.type.sign = FALSE;
          coord = lp_build_abs(coord_bld, coord);
 
          if (bld->static_state->normalized_coords) {
@@ -384,15 +382,13 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          coord = lp_build_sub(coord_bld, coord, half);
 
          /* convert to int, compute lerp weight */
-         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
+         lp_build_ifloor_fract(&abs_coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
-         LLVMValueRef min, max;
-
          coord = lp_build_abs(coord_bld, coord);
 
          if (bld->static_state->normalized_coords) {
@@ -400,12 +396,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
 
-         /* clamp to [-0.5, length + 0.5] */
-         min = lp_build_negate(coord_bld, half);
-         max = lp_build_sub(coord_bld, length_f, min);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
-
+         /* was: clamp to [-0.5, length + 0.5] then sub 0.5 */
+         /* skip -0.5 clamp (always positive), do sub first */
          coord = lp_build_sub(coord_bld, coord, half);
+         coord = lp_build_min(coord_bld, coord, length_f);
 
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
@@ -437,14 +431,13 @@ static LLVMValueRef
 lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
                              LLVMValueRef coord,
                              LLVMValueRef length,
+                             LLVMValueRef length_f,
                              boolean is_pot,
                              unsigned wrap_mode)
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
-   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef icoord;
    
    switch(wrap_mode) {
@@ -455,7 +448,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          icoord = LLVMBuildAnd(bld->builder, icoord, length_minus_one, "");
       else {
          /* Add a bias to the texcoord to handle negative coords */
-         LLVMValueRef bias = lp_build_mul_imm(uint_coord_bld, length, 1024);
+         LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
          icoord = LLVMBuildAdd(bld->builder, icoord, bias, "");
          icoord = LLVMBuildURem(bld->builder, icoord, length, "");
       }
@@ -469,7 +462,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       }
 
       /* floor */
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* use itrunc instead since we clamp to 0 anyway */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1]. */
       icoord = lp_build_clamp(int_coord_bld, icoord, int_coord_bld->zero,
@@ -503,7 +497,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       assert(bld->static_state->normalized_coords);
       coord = lp_build_mul(coord_bld, coord, length_f);
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1] */
       icoord = lp_build_min(int_coord_bld, icoord, length_minus_one);
@@ -518,7 +513,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length - 1] */
       icoord = lp_build_min(int_coord_bld, icoord, length_minus_one);
@@ -532,7 +528,8 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
 
-      icoord = lp_build_ifloor(coord_bld, coord);
+      /* itrunc == ifloor here */
+      icoord = lp_build_itrunc(coord_bld, coord);
 
       /* clamp to [0, length] */
       icoord = lp_build_min(int_coord_bld, icoord, length);
@@ -554,9 +551,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 static void
 lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               unsigned unit,
-                              LLVMValueRef width_vec,
-                              LLVMValueRef height_vec,
-                              LLVMValueRef depth_vec,
+                              LLVMValueRef size,
                               LLVMValueRef row_stride_vec,
                               LLVMValueRef img_stride_vec,
                               LLVMValueRef data_ptr,
@@ -566,24 +561,45 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
+   LLVMValueRef width_vec;
+   LLVMValueRef height_vec;
+   LLVMValueRef depth_vec;
+   LLVMValueRef flt_size;
+   LLVMValueRef flt_width_vec;
+   LLVMValueRef flt_height_vec;
+   LLVMValueRef flt_depth_vec;
    LLVMValueRef x, y, z;
+
+   lp_build_extract_image_sizes(bld,
+                                bld->int_size_type,
+                                bld->int_coord_type,
+                                size,
+                                &width_vec, &height_vec, &depth_vec);
+
+   flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
+
+   lp_build_extract_image_sizes(bld,
+                                bld->float_size_type,
+                                bld->coord_type,
+                                flt_size,
+                                &flt_width_vec, &flt_height_vec, &flt_depth_vec);
 
    /*
     * Compute integer texcoords.
     */
-   x = lp_build_sample_wrap_nearest(bld, s, width_vec,
+   x = lp_build_sample_wrap_nearest(bld, s, width_vec, flt_width_vec,
                                     bld->static_state->pot_width,
                                     bld->static_state->wrap_s);
    lp_build_name(x, "tex.x.wrapped");
 
    if (dims >= 2) {
-      y = lp_build_sample_wrap_nearest(bld, t, height_vec,
+      y = lp_build_sample_wrap_nearest(bld, t, height_vec, flt_height_vec,
                                        bld->static_state->pot_height,
                                        bld->static_state->wrap_t);
       lp_build_name(y, "tex.y.wrapped");
 
       if (dims == 3) {
-         z = lp_build_sample_wrap_nearest(bld, r, depth_vec,
+         z = lp_build_sample_wrap_nearest(bld, r, depth_vec, flt_depth_vec,
                                           bld->static_state->pot_depth,
                                           bld->static_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
@@ -617,9 +633,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              unsigned unit,
-                             LLVMValueRef width_vec,
-                             LLVMValueRef height_vec,
-                             LLVMValueRef depth_vec,
+                             LLVMValueRef size,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
                              LLVMValueRef data_ptr,
@@ -629,15 +643,36 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
+   LLVMValueRef width_vec;
+   LLVMValueRef height_vec;
+   LLVMValueRef depth_vec;
+   LLVMValueRef flt_size;
+   LLVMValueRef flt_width_vec;
+   LLVMValueRef flt_height_vec;
+   LLVMValueRef flt_depth_vec;
    LLVMValueRef x0, y0, z0, x1, y1, z1;
    LLVMValueRef s_fpart, t_fpart, r_fpart;
    LLVMValueRef neighbors[2][2][4];
    int chan;
 
+   lp_build_extract_image_sizes(bld,
+                                bld->int_size_type,
+                                bld->int_coord_type,
+                                size,
+                                &width_vec, &height_vec, &depth_vec);
+
+   flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
+
+   lp_build_extract_image_sizes(bld,
+                                bld->float_size_type,
+                                bld->coord_type,
+                                flt_size,
+                                &flt_width_vec, &flt_height_vec, &flt_depth_vec);
+
    /*
     * Compute integer texcoords.
     */
-   lp_build_sample_wrap_linear(bld, s, width_vec,
+   lp_build_sample_wrap_linear(bld, s, width_vec, flt_width_vec,
                                bld->static_state->pot_width,
                                bld->static_state->wrap_s,
                                &x0, &x1, &s_fpart);
@@ -645,7 +680,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    lp_build_name(x1, "tex.x1.wrapped");
 
    if (dims >= 2) {
-      lp_build_sample_wrap_linear(bld, t, height_vec,
+      lp_build_sample_wrap_linear(bld, t, height_vec, flt_height_vec,
                                   bld->static_state->pot_height,
                                   bld->static_state->wrap_t,
                                   &y0, &y1, &t_fpart);
@@ -653,7 +688,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       lp_build_name(y1, "tex.y1.wrapped");
 
       if (dims == 3) {
-         lp_build_sample_wrap_linear(bld, r, depth_vec,
+         lp_build_sample_wrap_linear(bld, r, depth_vec, flt_depth_vec,
                                      bld->static_state->pot_depth,
                                      bld->static_state->wrap_r,
                                      &z0, &z1, &r_fpart);
@@ -796,12 +831,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef *colors_out)
 {
    LLVMBuilderRef builder = bld->builder;
-   LLVMValueRef width0_vec;
-   LLVMValueRef width1_vec;
-   LLVMValueRef height0_vec;
-   LLVMValueRef height1_vec;
-   LLVMValueRef depth0_vec;
-   LLVMValueRef depth1_vec;
+   LLVMValueRef size0;
+   LLVMValueRef size1;
    LLVMValueRef row_stride0_vec;
    LLVMValueRef row_stride1_vec;
    LLVMValueRef img_stride0_vec;
@@ -813,12 +844,12 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
    /* sample the first mipmap level */
    lp_build_mipmap_level_sizes(bld, ilevel0,
-                               &width0_vec, &height0_vec, &depth0_vec,
+                               &size0,
                                &row_stride0_vec, &img_stride0_vec);
    data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       lp_build_sample_image_nearest(bld, unit,
-                                    width0_vec, height0_vec, depth0_vec,
+                                    size0,
                                     row_stride0_vec, img_stride0_vec,
                                     data_ptr0, s, t, r,
                                     colors0);
@@ -826,7 +857,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
       lp_build_sample_image_linear(bld, unit,
-                                   width0_vec, height0_vec, depth0_vec,
+                                   size0,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, s, t, r,
                                    colors0);
@@ -838,11 +869,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef need_lerp;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       /* need_lerp = lod_fpart > 0 */
       need_lerp = LLVMBuildFCmp(builder, LLVMRealUGT,
@@ -850,23 +878,23 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                 bld->float_bld.zero,
                                 "need_lerp");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, need_lerp);
+      lp_build_if(&if_ctx, builder, need_lerp);
       {
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
-                                     &width1_vec, &height1_vec, &depth1_vec,
+                                     &size1,
                                      &row_stride1_vec, &img_stride1_vec);
          data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
             lp_build_sample_image_nearest(bld, unit,
-                                          width1_vec, height1_vec, depth1_vec,
+                                          size1,
                                           row_stride1_vec, img_stride1_vec,
                                           data_ptr1, s, t, r,
                                           colors1);
          }
          else {
             lp_build_sample_image_linear(bld, unit,
-                                         width1_vec, height1_vec, depth1_vec,
+                                         size1,
                                          row_stride1_vec, img_stride1_vec,
                                          data_ptr1, s, t, r,
                                          colors1);
@@ -883,8 +911,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          }
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 }
 
@@ -937,12 +963,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       r = lp_build_broadcast_scalar(&bld->int_coord_bld, face); /* vec */
 
       /* recompute ddx, ddy using the new (s,t) face texcoords */
-      face_ddx[0] = lp_build_ddx(&bld->coord_bld, s);
-      face_ddx[1] = lp_build_ddx(&bld->coord_bld, t);
+      face_ddx[0] = lp_build_scalar_ddx(&bld->coord_bld, s);
+      face_ddx[1] = lp_build_scalar_ddx(&bld->coord_bld, t);
       face_ddx[2] = NULL;
       face_ddx[3] = NULL;
-      face_ddy[0] = lp_build_ddy(&bld->coord_bld, s);
-      face_ddy[1] = lp_build_ddy(&bld->coord_bld, t);
+      face_ddy[0] = lp_build_scalar_ddy(&bld->coord_bld, s);
+      face_ddy[1] = lp_build_scalar_ddy(&bld->coord_bld, t);
       face_ddy[2] = NULL;
       face_ddy[3] = NULL;
       ddx = face_ddx;
@@ -1020,17 +1046,14 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Emit conditional to choose min image filter or mag image filter
        * depending on the lod being > 0 or <= 0, respectively.
        */
-      struct lp_build_flow_context *flow_ctx;
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
-
-      flow_ctx = lp_build_flow_create(builder);
 
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
 
-      lp_build_if(&if_ctx, flow_ctx, builder, minify);
+      lp_build_if(&if_ctx, builder, minify);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld, unit,
@@ -1049,8 +1072,6 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                 texels);
       }
       lp_build_endif(&if_ctx);
-
-      lp_build_flow_destroy(flow_ctx);
    }
 
    for (chan = 0; chan < 4; ++chan) {
@@ -1166,7 +1187,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.float_type = lp_type_float(32);
    bld.int_type = lp_type_int(32);
    bld.coord_type = type;
-   bld.uint_coord_type = lp_uint_type(type);
    bld.int_coord_type = lp_int_type(type);
    bld.float_size_type = lp_type_float(32);
    bld.float_size_type.length = dims > 1 ? 4 : 1;
@@ -1179,7 +1199,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    lp_build_context_init(&bld.float_vec_bld, builder, float_vec_type);
    lp_build_context_init(&bld.int_bld, builder, bld.int_type);
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
-   lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
    lp_build_context_init(&bld.int_size_bld, builder, bld.int_size_type);
    lp_build_context_init(&bld.float_size_bld, builder, bld.float_size_type);

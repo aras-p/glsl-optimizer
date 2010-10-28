@@ -86,11 +86,11 @@ static const struct dri_extension card_extensions[] =
 /* Create the device specific context.
   */
 GLboolean mach64CreateContext( gl_api api,
-			       const __GLcontextModes *glVisual,
+			       const struct gl_config *glVisual,
 			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate )
 {
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    __DRIscreen *driScreen = driContextPriv->driScreenPriv;
    struct dd_function_table functions;
    mach64ContextPtr mmesa;
@@ -334,8 +334,8 @@ mach64MakeCurrent( __DRIcontext *driContextPriv,
       }
 
       _mesa_make_current( newMach64Ctx->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+                          (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                          (struct gl_framebuffer *) driReadPriv->driverPrivate );
 
 
       newMach64Ctx->new_state |=  MACH64_NEW_CLIP;

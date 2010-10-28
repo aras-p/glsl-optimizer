@@ -52,7 +52,7 @@ get_rt_format(gl_format format)
 }
 
 void
-nv20_emit_framebuffer(GLcontext *ctx, int emit)
+nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
@@ -103,7 +103,7 @@ nv20_emit_framebuffer(GLcontext *ctx, int emit)
 }
 
 void
-nv20_emit_viewport(GLcontext *ctx, int emit)
+nv20_emit_viewport(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);

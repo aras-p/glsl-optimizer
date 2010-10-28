@@ -113,7 +113,7 @@ do {							\
 
 /* Clip a line against the viewport and user clip planes.
  */
-static void TAG(clip_draw_line)( GLcontext *ctx,
+static void TAG(clip_draw_line)( struct gl_context *ctx,
 				 TNL_VERTEX *I,
 				 TNL_VERTEX *J,
 				 GLuint mask )
@@ -140,7 +140,7 @@ static void TAG(clip_draw_line)( GLcontext *ctx,
 
 /* Clip a triangle against the viewport and user clip planes.
  */
-static void TAG(clip_draw_triangle)( GLcontext *ctx,
+static void TAG(clip_draw_triangle)( struct gl_context *ctx,
 				     TNL_VERTEX *v0,
 				     TNL_VERTEX *v1,
 				     TNL_VERTEX *v2,
@@ -173,7 +173,7 @@ static void TAG(clip_draw_triangle)( GLcontext *ctx,
 }
 
 
-static __inline void TAG(draw_triangle)( GLcontext *ctx,
+static __inline void TAG(draw_triangle)( struct gl_context *ctx,
 					 TNL_VERTEX *v0,
 					 TNL_VERTEX *v1,
 					 TNL_VERTEX *v2 )
@@ -188,7 +188,7 @@ static __inline void TAG(draw_triangle)( GLcontext *ctx,
    }
 }
 
-static __inline void TAG(draw_line)( GLcontext *ctx,
+static __inline void TAG(draw_line)( struct gl_context *ctx,
 				     TNL_VERTEX *v0,
 				     TNL_VERTEX *v1 )
 {

@@ -100,7 +100,7 @@ _mesa_fprint_program_opt(FILE *f,
                          GLboolean lineNumbers);
 
 extern void
-_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
+_mesa_print_program_parameters(struct gl_context *ctx, const struct gl_program *prog);
 
 extern void
 _mesa_print_parameter_list(const struct gl_program_parameter_list *list);

@@ -60,7 +60,7 @@
  * during window resize.
  */
 static GLboolean
-st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                               GLenum internalFormat,
                               GLuint width, GLuint height)
 {
@@ -164,7 +164,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
  * gl_renderbuffer::GetPointer()
  */
 static void *
-null_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
+null_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
                  GLint x, GLint y)
 {
    /* By returning NULL we force all software rendering to go through
@@ -181,7 +181,7 @@ null_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
  * Called via ctx->Driver.NewFramebuffer()
  */
 static struct gl_framebuffer *
-st_new_framebuffer(GLcontext *ctx, GLuint name)
+st_new_framebuffer(struct gl_context *ctx, GLuint name)
 {
    /* XXX not sure we need to subclass gl_framebuffer for pipe */
    return _mesa_new_framebuffer(ctx, name);
@@ -192,7 +192,7 @@ st_new_framebuffer(GLcontext *ctx, GLuint name)
  * Called via ctx->Driver.NewRenderbuffer()
  */
 static struct gl_renderbuffer *
-st_new_renderbuffer(GLcontext *ctx, GLuint name)
+st_new_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
@@ -297,7 +297,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
  * Called via ctx->Driver.BindFramebufferEXT().
  */
 static void
-st_bind_framebuffer(GLcontext *ctx, GLenum target,
+st_bind_framebuffer(struct gl_context *ctx, GLenum target,
                     struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
 
@@ -307,7 +307,7 @@ st_bind_framebuffer(GLcontext *ctx, GLenum target,
  * Called by ctx->Driver.FramebufferRenderbuffer
  */
 static void
-st_framebuffer_renderbuffer(GLcontext *ctx, 
+st_framebuffer_renderbuffer(struct gl_context *ctx, 
                             struct gl_framebuffer *fb,
                             GLenum attachment,
                             struct gl_renderbuffer *rb)
@@ -321,7 +321,7 @@ st_framebuffer_renderbuffer(GLcontext *ctx,
  * Called by ctx->Driver.RenderTexture
  */
 static void
-st_render_texture(GLcontext *ctx,
+st_render_texture(struct gl_context *ctx,
                   struct gl_framebuffer *fb,
                   struct gl_renderbuffer_attachment *att)
 {
@@ -411,7 +411,7 @@ st_render_texture(GLcontext *ctx,
  * Called via ctx->Driver.FinishRenderTexture.
  */
 static void
-st_finish_render_texture(GLcontext *ctx,
+st_finish_render_texture(struct gl_context *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
    struct st_context *st = st_context(ctx);
@@ -490,7 +490,7 @@ st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
  * For Gallium we only supports combined Z+stencil, not separate buffers.
  */
 static void
-st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_screen *screen = st->pipe->screen;
@@ -544,10 +544,10 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
  * Called via glDrawBuffer.
  */
 static void
-st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
+st_DrawBuffers(struct gl_context *ctx, GLsizei count, const GLenum *buffers)
 {
    struct st_context *st = st_context(ctx);
-   GLframebuffer *fb = ctx->DrawBuffer;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
 
    (void) count;
@@ -565,10 +565,10 @@ st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
  * Called via glReadBuffer.
  */
 static void
-st_ReadBuffer(GLcontext *ctx, GLenum buffer)
+st_ReadBuffer(struct gl_context *ctx, GLenum buffer)
 {
    struct st_context *st = st_context(ctx);
-   GLframebuffer *fb = ctx->ReadBuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
 
    (void) buffer;
 

@@ -52,7 +52,7 @@ extern GLint
 _mesa_bytes_per_pixel( GLenum format, GLenum type );
 
 extern GLboolean
-_mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type );
+_mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum type );
 
 extern GLboolean
 _mesa_is_color_format(GLenum format);
@@ -82,7 +82,7 @@ extern GLboolean
 _mesa_is_integer_format(GLenum format);
 
 extern GLboolean
-_mesa_is_compressed_format(GLcontext *ctx, GLenum format);
+_mesa_is_compressed_format(struct gl_context *ctx, GLenum format);
 
 extern GLvoid *
 _mesa_image_address( GLuint dimensions,
@@ -124,23 +124,6 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
                           GLint width, GLint height,
                           GLenum format, GLenum type );
 
-extern void
-_mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
-                              const struct gl_pixelstore_attrib *unpacking );
-
-
-extern void
-_mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
-                            const struct gl_pixelstore_attrib *packing );
-
-
-extern GLvoid *
-_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
-                     const struct gl_pixelstore_attrib *packing );
-
-extern void
-_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
-                   GLubyte *dest, const struct gl_pixelstore_attrib *packing );
 
 extern void
 _mesa_expand_bitmap(GLsizei width, GLsizei height,
@@ -150,147 +133,6 @@ _mesa_expand_bitmap(GLsizei width, GLsizei height,
                     GLubyte onValue);
 
 
-/** \name Pixel processing functions */
-/*@{*/
-
-extern void
-_mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
-                          GLfloat rScale, GLfloat gScale,
-                          GLfloat bScale, GLfloat aScale,
-                          GLfloat rBias, GLfloat gBias,
-                          GLfloat bBias, GLfloat aBias);
-
-extern void
-_mesa_map_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
-
-extern void
-_mesa_lookup_rgba_float(const struct gl_color_table *table,
-                        GLuint n, GLfloat rgba[][4]);
-
-extern void
-_mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
-                        GLuint n, GLubyte rgba[][4]);
-
-
-extern void
-_mesa_map_ci_to_rgba(const GLcontext *ctx,
-                     GLuint n, const GLuint index[], GLfloat rgba[][4]);
-
-
-extern void
-_mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
-                       GLubyte rgba[][4]);
-
-
-extern void
-_mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
-                           GLfloat depthValues[]);
-
-extern void
-_mesa_scale_and_bias_depth_uint(const GLcontext *ctx, GLuint n,
-                                GLuint depthValues[]);
-
-extern void
-_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
-                              GLuint n, GLfloat rgba[][4]);
-
-
-extern void
-_mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
-                            GLuint n, GLuint indexes[]);
-
-
-extern void
-_mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
-                                 GLstencil stencil[]);
-
-
-extern void
-_mesa_pack_rgba_span_float( GLcontext *ctx, GLuint n, GLfloat rgba[][4],
-                            GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
-                            const struct gl_pixelstore_attrib *dstPacking,
-                            GLbitfield transferOps );
-
-
-extern void
-_mesa_unpack_color_span_chan( GLcontext *ctx,
-                              GLuint n, GLenum dstFormat, GLchan dest[],
-                              GLenum srcFormat, GLenum srcType,
-                              const GLvoid *source,
-                              const struct gl_pixelstore_attrib *srcPacking,
-                              GLbitfield transferOps );
-
-
-extern void
-_mesa_unpack_color_span_float( GLcontext *ctx,
-                               GLuint n, GLenum dstFormat, GLfloat dest[],
-                               GLenum srcFormat, GLenum srcType,
-                               const GLvoid *source,
-                               const struct gl_pixelstore_attrib *srcPacking,
-                               GLbitfield transferOps );
-
-extern void
-_mesa_unpack_dudv_span_byte( GLcontext *ctx,
-                             GLuint n, GLenum dstFormat, GLbyte dest[],
-                             GLenum srcFormat, GLenum srcType,
-                             const GLvoid *source,
-                             const struct gl_pixelstore_attrib *srcPacking,
-                             GLbitfield transferOps );
-
-extern void
-_mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
-                         GLenum dstType, GLvoid *dest,
-                         GLenum srcType, const GLvoid *source,
-                         const struct gl_pixelstore_attrib *srcPacking,
-                         GLbitfield transferOps );
-
-
-extern void
-_mesa_pack_index_span( const GLcontext *ctx, GLuint n,
-                       GLenum dstType, GLvoid *dest, const GLuint *source,
-                       const struct gl_pixelstore_attrib *dstPacking,
-                       GLbitfield transferOps );
-
-
-extern void
-_mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
-                           GLenum dstType, GLvoid *dest,
-                           GLenum srcType, const GLvoid *source,
-                           const struct gl_pixelstore_attrib *srcPacking,
-                           GLbitfield transferOps );
-
-extern void
-_mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
-                         GLenum dstType, GLvoid *dest, const GLstencil *source,
-                         const struct gl_pixelstore_attrib *dstPacking );
-
-
-extern void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
-                         GLenum dstType, GLvoid *dest, GLuint depthMax,
-                         GLenum srcType, const GLvoid *source,
-                         const struct gl_pixelstore_attrib *srcPacking );
-
-extern void
-_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
-                       GLenum dstType, const GLfloat *depthSpan,
-                       const struct gl_pixelstore_attrib *dstPacking );
-
-
-extern void
-_mesa_pack_depth_stencil_span(const GLcontext *ctx, GLuint n, GLuint *dest,
-                              const GLfloat *depthVals,
-                              const GLstencil *stencilVals,
-                              const struct gl_pixelstore_attrib *dstPacking);
-
-
-extern void *
-_mesa_unpack_image( GLuint dimensions,
-                    GLsizei width, GLsizei height, GLsizei depth,
-                    GLenum format, GLenum type, const GLvoid *pixels,
-                    const struct gl_pixelstore_attrib *unpack );
-
-
 extern void
 _mesa_convert_colors(GLenum srcType, const GLvoid *src,
                      GLenum dstType, GLvoid *dst,
@@ -298,20 +140,20 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
 
 
 extern GLboolean
-_mesa_clip_drawpixels(const GLcontext *ctx,
+_mesa_clip_drawpixels(const struct gl_context *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *unpack);
 
 
 extern GLboolean
-_mesa_clip_readpixels(const GLcontext *ctx,
+_mesa_clip_readpixels(const struct gl_context *ctx,
                       GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack);
 
 extern GLboolean
-_mesa_clip_copytexsubimage(const GLcontext *ctx,
+_mesa_clip_copytexsubimage(const struct gl_context *ctx,
                            GLint *destX, GLint *destY,
                            GLint *srcX, GLint *srcY,
                            GLsizei *width, GLsizei *height);
@@ -323,7 +165,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
                      GLsizei *width, GLsizei *height );
 
 extern GLboolean
-_mesa_clip_blit(GLcontext *ctx,
+_mesa_clip_blit(struct gl_context *ctx,
                 GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
                 GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1);
 

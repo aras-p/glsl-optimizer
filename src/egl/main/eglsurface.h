@@ -52,31 +52,7 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
 
 
 extern EGLBoolean
-_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf);
-
-
-extern EGLBoolean
-_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLNativePixmapType target);
-
-
-extern EGLBoolean
 _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint attribute, EGLint *value);
-
-
-extern _EGLSurface *
-_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLNativeWindowType window, const EGLint *attrib_list);
-
-
-extern _EGLSurface *
-_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLNativePixmapType pixmap, const EGLint *attrib_list);
-
-
-extern _EGLSurface *
-_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf);
 
 
 extern EGLBoolean
@@ -88,44 +64,39 @@ _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint bu
 
 
 extern EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint buffer);
-
-
-extern EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint interval);
 
 
-#ifdef EGL_VERSION_1_2
-
-extern _EGLSurface *
-_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
-                                  EGLenum buftype, EGLClientBuffer buffer,
-                                  _EGLConfig *conf, const EGLint *attrib_list);
-
-#endif /* EGL_VERSION_1_2 */
-
-
 /**
- * Return true if there is a context bound to the surface.
- *
- * The binding is considered a reference to the surface.  Drivers should not
- * destroy a surface when it is bound.
+ * Increment reference count for the surface.
  */
-static INLINE EGLBoolean
-_eglIsSurfaceBound(_EGLSurface *surf)
+static INLINE _EGLSurface *
+_eglGetSurface(_EGLSurface *surf)
 {
-   return (surf->CurrentContext != NULL);
+   if (surf)
+      _eglGetResource(&surf->Resource);
+   return surf;
 }
 
 
 /**
- * Link a surface to a display and return the handle of the link.
+ * Decrement reference count for the surface.
+ */
+static INLINE EGLBoolean
+_eglPutSurface(_EGLSurface *surf)
+{
+   return (surf) ? _eglPutResource(&surf->Resource) : EGL_FALSE;
+}
+
+
+/**
+ * Link a surface to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLSurface
-_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
+_eglLinkSurface(_EGLSurface *surf)
 {
-   _eglLinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE, dpy);
+   _eglLinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE);
    return (EGLSurface) surf;
 }
 
@@ -164,20 +135,6 @@ _eglGetSurfaceHandle(_EGLSurface *surf)
    _EGLResource *res = (_EGLResource *) surf;
    return (res && _eglIsResourceLinked(res)) ?
       (EGLSurface) surf : EGL_NO_SURFACE;
-}
-
-
-/**
- * Return true if the surface is linked to a display.
- *
- * The link is considered a reference to the surface (the display is owning the
- * surface).  Drivers should not destroy a surface when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsSurfaceLinked(_EGLSurface *surf)
-{
-   _EGLResource *res = (_EGLResource *) surf;
-   return (res && _eglIsResourceLinked(res));
 }
 
 

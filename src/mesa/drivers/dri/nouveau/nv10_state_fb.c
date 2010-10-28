@@ -51,7 +51,7 @@ get_rt_format(gl_format format)
 }
 
 static void
-setup_lma_buffer(GLcontext *ctx)
+setup_lma_buffer(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -64,8 +64,8 @@ setup_lma_buffer(GLcontext *ctx)
 
 	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
 		nouveau_bo_ref(NULL, &nfb->hierz.bo);
-		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
-			       &nfb->hierz.bo);
+		nouveau_bo_new_tile(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
+				    0, NOUVEAU_BO_TILE_ZETA, &nfb->hierz.bo);
 	}
 
 	nouveau_bo_markl(bctx, celsius, NV17TCL_LMA_DEPTH_BUFFER_OFFSET,
@@ -86,7 +86,7 @@ setup_lma_buffer(GLcontext *ctx)
 }
 
 void
-nv10_emit_framebuffer(GLcontext *ctx, int emit)
+nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -149,12 +149,12 @@ nv10_emit_framebuffer(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_render_mode(GLcontext *ctx, int emit)
+nv10_emit_render_mode(struct gl_context *ctx, int emit)
 {
 }
 
 void
-nv10_emit_scissor(GLcontext *ctx, int emit)
+nv10_emit_scissor(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -168,16 +168,19 @@ nv10_emit_scissor(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_viewport(GLcontext *ctx, int emit)
+nv10_emit_viewport(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct gl_viewport_attrib *vp = &ctx->Viewport;
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
 
 	get_viewport_translate(ctx, a);
 	a[0] -= 2048;
 	a[1] -= 2048;
+	if (nv10_use_viewport_zclear(ctx))
+		a[2] = nv10_transform_depth(ctx, (vp->Far + vp->Near) / 2);
 
 	BEGIN_RING(chan, celsius, NV10TCL_VIEWPORT_TRANSLATE_X, 4);
 	OUT_RINGp(chan, a, 4);
@@ -191,7 +194,7 @@ nv10_emit_viewport(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_zclear(GLcontext *ctx, int emit)
+nv10_emit_zclear(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -204,5 +207,10 @@ nv10_emit_zclear(GLcontext *ctx, int emit)
 		OUT_RING(chan, nctx->hierz.clear_blocked ? 0 : 1);
 		OUT_RING(chan, nfb->hierz.clear_value |
 			 (nctx->hierz.clear_seq & 0xff));
+	} else {
+		BEGIN_RING(chan, celsius, NV10TCL_DEPTH_RANGE_NEAR, 2);
+		OUT_RINGf(chan, nv10_transform_depth(ctx, 0));
+		OUT_RINGf(chan, nv10_transform_depth(ctx, 1));
+		context_dirty(ctx, VIEWPORT);
 	}
 }

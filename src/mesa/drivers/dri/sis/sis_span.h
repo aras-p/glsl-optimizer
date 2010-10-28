@@ -34,12 +34,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 
 
-extern void sisSpanRenderStart( GLcontext *ctx );
-extern void sisSpanRenderFinish( GLcontext *ctx );
+extern void sisSpanRenderStart( struct gl_context *ctx );
+extern void sisSpanRenderFinish( struct gl_context *ctx );
 
-extern void sisDDInitSpanFuncs( GLcontext *ctx );
+extern void sisDDInitSpanFuncs( struct gl_context *ctx );
 
 extern void
-sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis);
+sisSetSpanFunctions(struct sis_renderbuffer *srb, const struct gl_config *vis);
 
 #endif

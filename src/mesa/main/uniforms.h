@@ -152,16 +152,16 @@ extern GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);
 
 GLint
-_mesa_get_uniform_location(GLcontext *ctx, struct gl_shader_program *shProg,
+_mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
 			   const GLchar *name);
 
 void
-_mesa_uniform(GLcontext *ctx, struct gl_shader_program *shader_program,
+_mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shader_program,
 	      GLint location, GLsizei count,
               const GLvoid *values, GLenum type);
 
 void
-_mesa_uniform_matrix(GLcontext *ctx, struct gl_shader_program *shProg,
+_mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     GLint cols, GLint rows,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values);

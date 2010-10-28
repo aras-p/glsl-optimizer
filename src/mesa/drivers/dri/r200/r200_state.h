@@ -39,25 +39,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r200InitState( r200ContextPtr rmesa );
 extern void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *functions );
-extern void r200InitTnlFuncs( GLcontext *ctx );
+extern void r200InitTnlFuncs( struct gl_context *ctx );
 
-extern void r200UpdateMaterial( GLcontext *ctx );
+extern void r200UpdateMaterial( struct gl_context *ctx );
 
-extern void r200UpdateViewportOffset( GLcontext *ctx );
-extern void r200UpdateWindow( GLcontext *ctx );
-extern void r200UpdateDrawBuffer(GLcontext *ctx);
+extern void r200UpdateViewportOffset( struct gl_context *ctx );
+extern void r200UpdateWindow( struct gl_context *ctx );
+extern void r200UpdateDrawBuffer(struct gl_context *ctx);
 
-extern GLboolean r200ValidateState( GLcontext *ctx );
+extern GLboolean r200ValidateState( struct gl_context *ctx );
 
-extern void r200_vtbl_update_scissor( GLcontext *ctx );
+extern void r200_vtbl_update_scissor( struct gl_context *ctx );
 
-extern void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void r200Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\
    if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\
 		     __FUNCTION__, bit, mode );				\
    r200Fallback( rmesa->radeon.glCtx, bit, mode );				\
 } while (0)
 
-extern void r200LightingSpaceChange( GLcontext *ctx );
+extern void r200LightingSpaceChange( struct gl_context *ctx );
 
 #endif

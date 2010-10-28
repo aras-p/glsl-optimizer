@@ -39,6 +39,7 @@
 #include "lp_rast.h"
 #include "lp_tile_soa.h"        /* for TILE_SIZE */
 #include "lp_scene.h"
+#include "lp_bld_interp.h"	/* for struct lp_shader_input */
 
 #include "draw/draw_vbuf.h"
 #include "util/u_rect.h"
@@ -48,6 +49,8 @@
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
 #define LP_SETUP_NEW_SCISSOR     0x08
 
+
+struct lp_setup_variant;
 
 
 /** Max number of scenes */
@@ -118,9 +121,6 @@ struct lp_setup_context
    } state;
    
    struct {
-      struct lp_shader_input input[PIPE_MAX_ATTRIBS];
-      unsigned nr_inputs;
-
       const struct lp_rast_state *stored; /**< what's in the scene */
       struct lp_rast_state current;  /**< currently set state */
       struct pipe_resource *current_tex[PIPE_MAX_SAMPLERS];
@@ -138,6 +138,10 @@ struct lp_setup_context
       uint8_t *stored;
    } blend_color;
 
+
+   struct {
+      const struct lp_setup_variant *variant;
+   } setup;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 
@@ -181,7 +185,7 @@ lp_setup_print_vertex(struct lp_setup_context *setup,
 
 struct lp_rast_triangle *
 lp_setup_alloc_triangle(struct lp_scene *scene,
-                        unsigned nr_inputs,
+                        unsigned num_inputs,
                         unsigned nr_planes,
                         unsigned *tri_size);
 

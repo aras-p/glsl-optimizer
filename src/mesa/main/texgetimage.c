@@ -35,6 +35,7 @@
 #include "context.h"
 #include "formats.h"
 #include "image.h"
+#include "pack.h"
 #include "texgetimage.h"
 #include "teximage.h"
 
@@ -63,7 +64,7 @@ type_with_negative_values(GLenum type)
  * glGetTexImage for color index pixels.
  */
 static void
-get_tex_color_index(GLcontext *ctx, GLuint dimensions,
+get_tex_color_index(struct gl_context *ctx, GLuint dimensions,
                     GLenum format, GLenum type, GLvoid *pixels,
                     const struct gl_texture_image *texImage)
 {
@@ -111,7 +112,7 @@ get_tex_color_index(GLcontext *ctx, GLuint dimensions,
  * glGetTexImage for depth/Z pixels.
  */
 static void
-get_tex_depth(GLcontext *ctx, GLuint dimensions,
+get_tex_depth(struct gl_context *ctx, GLuint dimensions,
               GLenum format, GLenum type, GLvoid *pixels,
               const struct gl_texture_image *texImage)
 {
@@ -141,7 +142,7 @@ get_tex_depth(GLcontext *ctx, GLuint dimensions,
  * glGetTexImage for depth/stencil pixels.
  */
 static void
-get_tex_depth_stencil(GLcontext *ctx, GLuint dimensions,
+get_tex_depth_stencil(struct gl_context *ctx, GLuint dimensions,
                       GLenum format, GLenum type, GLvoid *pixels,
                       const struct gl_texture_image *texImage)
 {
@@ -171,7 +172,7 @@ get_tex_depth_stencil(GLcontext *ctx, GLuint dimensions,
  * glGetTexImage for YCbCr pixels.
  */
 static void
-get_tex_ycbcr(GLcontext *ctx, GLuint dimensions,
+get_tex_ycbcr(struct gl_context *ctx, GLuint dimensions,
               GLenum format, GLenum type, GLvoid *pixels,
               const struct gl_texture_image *texImage)
 {
@@ -234,7 +235,7 @@ linear_to_nonlinear(GLfloat cl)
  * glGetTexImagefor sRGB pixels;
  */
 static void
-get_tex_srgb(GLcontext *ctx, GLuint dimensions,
+get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, GLvoid *pixels,
              const struct gl_texture_image *texImage)
 {
@@ -285,7 +286,7 @@ get_tex_srgb(GLcontext *ctx, GLuint dimensions,
 
 
 static INLINE void
-get_tex_srgb(GLcontext *ctx, GLuint dimensions,
+get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, GLvoid *pixels,
              const struct gl_texture_image *texImage)
 {
@@ -301,7 +302,7 @@ get_tex_srgb(GLcontext *ctx, GLuint dimensions,
  * This is the slow way since we use texture sampling.
  */
 static void
-get_tex_rgba(GLcontext *ctx, GLuint dimensions,
+get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, GLvoid *pixels,
              const struct gl_texture_image *texImage)
 {
@@ -371,7 +372,7 @@ get_tex_rgba(GLcontext *ctx, GLuint dimensions,
  * \return GL_TRUE if done, GL_FALSE otherwise
  */
 static GLboolean
-get_tex_memcpy(GLcontext *ctx, GLenum format, GLenum type, GLvoid *pixels,
+get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixels,
                const struct gl_texture_object *texObj,
                const struct gl_texture_image *texImage)
 {
@@ -451,7 +452,7 @@ get_tex_memcpy(GLcontext *ctx, GLenum format, GLenum type, GLvoid *pixels,
  * The texture image must be mapped.
  */
 void
-_mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
+_mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
                    GLenum format, GLenum type, GLvoid *pixels,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
@@ -528,7 +529,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
  * All error checking will have been done before this routine is called.
  */
 void
-_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
+_mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level,
                               GLvoid *img,
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage)
@@ -585,7 +586,7 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
  * \return GL_TRUE if any error, GL_FALSE if no errors.
  */
 static GLboolean
-getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
+getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
                         GLenum format, GLenum type, GLvoid *pixels )
 {
    struct gl_texture_object *texObj;
@@ -771,7 +772,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
  * \return GL_TRUE if any error, GL_FALSE if no errors.
  */
 static GLboolean
-getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
+getcompressedteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
                                   GLvoid *img)
 {
    struct gl_texture_object *texObj;

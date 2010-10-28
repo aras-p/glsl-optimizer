@@ -79,7 +79,7 @@ typedef void (*vbo_attrfv_func)( const GLfloat * );
 
 struct vbo_exec_context
 {
-   GLcontext *ctx;   
+   struct gl_context *ctx;   
    GLvertexformat vtxfmt;
 
    struct {
@@ -148,13 +148,13 @@ struct vbo_exec_context
 
 /* External API:
  */
-void vbo_exec_init( GLcontext *ctx );
-void vbo_exec_destroy( GLcontext *ctx );
-void vbo_exec_invalidate_state( GLcontext *ctx, GLuint new_state );
-void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap );
+void vbo_exec_init( struct gl_context *ctx );
+void vbo_exec_destroy( struct gl_context *ctx );
+void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state );
+void vbo_exec_FlushVertices_internal( struct gl_context *ctx, GLboolean unmap );
 
-void vbo_exec_BeginVertices( GLcontext *ctx );
-void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags );
+void vbo_exec_BeginVertices( struct gl_context *ctx );
+void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags );
 
 
 /* Internal functions:

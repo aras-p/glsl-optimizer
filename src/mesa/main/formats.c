@@ -945,6 +945,7 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
  *    GL_UNSIGNED_NORMALIZED = unsigned int representing [0,1]
  *    GL_SIGNED_NORMALIZED = signed int representing [-1, 1]
  *    GL_UNSIGNED_INT = an ordinary unsigned integer
+ *    GL_INT = an ordinary signed integer
  *    GL_FLOAT = an ordinary float
  */
 GLenum
@@ -1003,6 +1004,20 @@ _mesa_is_format_packed_depth_stencil(gl_format format)
    const struct gl_format_info *info = _mesa_get_format_info(format);
 
    return info->BaseFormat == GL_DEPTH_STENCIL;
+}
+
+
+/**
+ * Is the given format a signed/unsigned integer color format?
+ */
+GLboolean
+_mesa_is_format_integer_color(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return (info->DataType == GL_INT || info->DataType == GL_UNSIGNED_INT) &&
+      info->BaseFormat != GL_DEPTH_COMPONENT &&
+      info->BaseFormat != GL_DEPTH_STENCIL &&
+      info->BaseFormat != GL_STENCIL_INDEX;
 }
 
 

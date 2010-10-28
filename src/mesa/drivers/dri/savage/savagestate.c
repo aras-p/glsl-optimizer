@@ -73,8 +73,8 @@
 
 #define S3D_TR   15
 
-static void savageBlendFunc_s4(GLcontext *);
-static void savageBlendFunc_s3d(GLcontext *);
+static void savageBlendFunc_s4(struct gl_context *);
+static void savageBlendFunc_s3d(struct gl_context *);
 
 static INLINE GLuint savagePackColor(GLuint format, 
                                          GLubyte r, GLubyte g, 
@@ -92,16 +92,16 @@ static INLINE GLuint savagePackColor(GLuint format,
 }
 
 
-static void savageDDAlphaFunc_s4(GLcontext *ctx, GLenum func, GLfloat ref)
+static void savageDDAlphaFunc_s4(struct gl_context *ctx, GLenum func, GLfloat ref)
 {
     savageBlendFunc_s4(ctx);
 }
-static void savageDDAlphaFunc_s3d(GLcontext *ctx, GLenum func, GLfloat ref)
+static void savageDDAlphaFunc_s3d(struct gl_context *ctx, GLenum func, GLfloat ref)
 {
     savageBlendFunc_s3d(ctx);
 }
 
-static void savageDDBlendEquationSeparate(GLcontext *ctx,
+static void savageDDBlendEquationSeparate(struct gl_context *ctx,
 					  GLenum modeRGB, GLenum modeA)
 {
     assert( modeRGB == modeA );
@@ -119,7 +119,7 @@ static void savageDDBlendEquationSeparate(GLcontext *ctx,
 }
 
 
-static void savageBlendFunc_s4(GLcontext *ctx)
+static void savageBlendFunc_s4(struct gl_context *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
@@ -294,7 +294,7 @@ static void savageBlendFunc_s4(GLcontext *ctx)
 	drawCtrl1 != imesa->regs.s4.drawCtrl1.ui)
 	imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }
-static void savageBlendFunc_s3d(GLcontext *ctx)
+static void savageBlendFunc_s3d(struct gl_context *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
@@ -465,14 +465,14 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
 
-static void savageDDBlendFuncSeparate_s4( GLcontext *ctx, GLenum sfactorRGB, 
+static void savageDDBlendFuncSeparate_s4( struct gl_context *ctx, GLenum sfactorRGB, 
 					  GLenum dfactorRGB, GLenum sfactorA,
 					  GLenum dfactorA )
 {
     assert (dfactorRGB == dfactorA && sfactorRGB == sfactorA);
     savageBlendFunc_s4( ctx );
 }
-static void savageDDBlendFuncSeparate_s3d( GLcontext *ctx, GLenum sfactorRGB, 
+static void savageDDBlendFuncSeparate_s3d( struct gl_context *ctx, GLenum sfactorRGB, 
 					   GLenum dfactorRGB, GLenum sfactorA,
 					   GLenum dfactorA )
 {
@@ -482,7 +482,7 @@ static void savageDDBlendFuncSeparate_s3d( GLcontext *ctx, GLenum sfactorRGB,
 
 
 
-static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
+static void savageDDDepthFunc_s4(struct gl_context *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     ZCmpFunc zmode;
@@ -546,7 +546,7 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 	zWatermarks != imesa->regs.s4.zWatermarks.ui)
 	imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }
-static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
+static void savageDDDepthFunc_s3d(struct gl_context *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     ZCmpFunc zmode;
@@ -600,11 +600,11 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 	imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }
 
-static void savageDDDepthMask_s4(GLcontext *ctx, GLboolean flag)
+static void savageDDDepthMask_s4(struct gl_context *ctx, GLboolean flag)
 {
     savageDDDepthFunc_s4(ctx,ctx->Depth.Func);
 }
-static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
+static void savageDDDepthMask_s3d(struct gl_context *ctx, GLboolean flag)
 {
     savageDDDepthFunc_s3d(ctx,ctx->Depth.Func);
 }
@@ -617,7 +617,7 @@ static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
  */
 
 
-static void savageDDScissor( GLcontext *ctx, GLint x, GLint y, 
+static void savageDDScissor( struct gl_context *ctx, GLint x, GLint y, 
                              GLsizei w, GLsizei h )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -635,7 +635,7 @@ static void savageDDScissor( GLcontext *ctx, GLint x, GLint y,
 
 
 
-static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
+static void savageDDDrawBuffer(struct gl_context *ctx, GLenum mode )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     uint32_t destCtrl = imesa->regs.s4.destCtrl.ui;
@@ -667,13 +667,13 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
         imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }
 
-static void savageDDReadBuffer(GLcontext *ctx, GLenum mode )
+static void savageDDReadBuffer(struct gl_context *ctx, GLenum mode )
 {
    /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 }
 
 #if 0
-static void savageDDSetColor(GLcontext *ctx, 
+static void savageDDSetColor(struct gl_context *ctx, 
                              GLubyte r, GLubyte g,
                              GLubyte b, GLubyte a )
 {
@@ -686,7 +686,7 @@ static void savageDDSetColor(GLcontext *ctx,
  * Window position and viewport transformation
  */
 
-void savageCalcViewport( GLcontext *ctx )
+void savageCalcViewport( struct gl_context *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -712,14 +712,14 @@ void savageCalcViewport( GLcontext *ctx )
    imesa->SetupNewInputs = ~0;
 }
 
-static void savageViewport( GLcontext *ctx, 
+static void savageViewport( struct gl_context *ctx, 
 			    GLint x, GLint y, 
 			    GLsizei width, GLsizei height )
 {
    savageCalcViewport( ctx );
 }
 
-static void savageDepthRange( GLcontext *ctx, 
+static void savageDepthRange( struct gl_context *ctx, 
 			      GLclampd nearval, GLclampd farval )
 {
    savageCalcViewport( ctx );
@@ -730,7 +730,7 @@ static void savageDepthRange( GLcontext *ctx,
  * Miscellaneous
  */
 
-static void savageDDClearColor(GLcontext *ctx, 
+static void savageDDClearColor(struct gl_context *ctx, 
 			       const GLfloat color[4] )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -746,7 +746,7 @@ static void savageDDClearColor(GLcontext *ctx,
 
 /* Fallback to swrast for select and feedback.
  */
-static void savageRenderMode( GLcontext *ctx, GLenum mode )
+static void savageRenderMode( struct gl_context *ctx, GLenum mode )
 {
    FALLBACK( ctx, SAVAGE_FALLBACK_RENDERMODE, (mode != GL_RENDER) );
 }
@@ -758,7 +758,7 @@ static void savageRenderMode( GLcontext *ctx, GLenum mode )
  * Culling - the savage isn't quite as clean here as the rest of
  *           its interfaces, but it's not bad.
  */
-static void savageDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
+static void savageDDCullFaceFrontFace(struct gl_context *ctx, GLenum unused)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     GLuint cullMode=imesa->LcsCullMode;        
@@ -793,7 +793,7 @@ static void savageDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
 }
 #endif /* end #if HW_CULL */
 
-static void savageUpdateCull( GLcontext *ctx )
+static void savageUpdateCull( struct gl_context *ctx )
 {
 #if HW_CULL
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -829,7 +829,7 @@ static void savageUpdateCull( GLcontext *ctx )
  * to have any effect. If only some channels are masked we need a
  * software fallback on all chips.
  */
-static void savageDDColorMask_s4(GLcontext *ctx, 
+static void savageDDColorMask_s4(struct gl_context *ctx, 
 				 GLboolean r, GLboolean g, 
 				 GLboolean b, GLboolean a )
 {
@@ -855,7 +855,7 @@ static void savageDDColorMask_s4(GLcontext *ctx,
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
     }
 }
-static void savageDDColorMask_s3d(GLcontext *ctx, 
+static void savageDDColorMask_s3d(struct gl_context *ctx, 
 				  GLboolean r, GLboolean g, 
 				  GLboolean b, GLboolean a )
 {
@@ -865,7 +865,7 @@ static void savageDDColorMask_s3d(GLcontext *ctx,
 	FALLBACK (ctx, SAVAGE_FALLBACK_COLORMASK, !(r && g && b));
 }
 
-static void savageUpdateSpecular_s4(GLcontext *ctx) {
+static void savageUpdateSpecular_s4(struct gl_context *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
 
@@ -879,7 +879,7 @@ static void savageUpdateSpecular_s4(GLcontext *ctx) {
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
 
-static void savageUpdateSpecular_s3d(GLcontext *ctx) {
+static void savageUpdateSpecular_s3d(struct gl_context *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
 
@@ -893,18 +893,18 @@ static void savageUpdateSpecular_s3d(GLcontext *ctx) {
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
 
-static void savageDDLightModelfv_s4(GLcontext *ctx, GLenum pname, 
+static void savageDDLightModelfv_s4(struct gl_context *ctx, GLenum pname, 
 				    const GLfloat *param)
 {
     savageUpdateSpecular_s4 (ctx);
 }
-static void savageDDLightModelfv_s3d(GLcontext *ctx, GLenum pname, 
+static void savageDDLightModelfv_s3d(struct gl_context *ctx, GLenum pname, 
 				     const GLfloat *param)
 {
     savageUpdateSpecular_s3d (ctx);
 }
 
-static void savageDDShadeModel_s4(GLcontext *ctx, GLuint mod)
+static void savageDDShadeModel_s4(struct gl_context *ctx, GLuint mod)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
@@ -921,7 +921,7 @@ static void savageDDShadeModel_s4(GLcontext *ctx, GLuint mod)
     if (drawLocalCtrl != imesa->regs.s4.drawLocalCtrl.ui)
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
-static void savageDDShadeModel_s3d(GLcontext *ctx, GLuint mod)
+static void savageDDShadeModel_s3d(struct gl_context *ctx, GLuint mod)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
@@ -946,7 +946,7 @@ static void savageDDShadeModel_s3d(GLcontext *ctx, GLuint mod)
  * on savage3d and savage4. No need for two separate functions.
  */
 
-static void savageDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
+static void savageDDFogfv(struct gl_context *ctx, GLenum pname, const GLfloat *param)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     GLuint  fogClr;
@@ -977,7 +977,7 @@ static void savageDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 
 
 static void
-savageDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
+savageDDStencilFuncSeparate(struct gl_context *ctx, GLenum face, GLenum func,
                             GLint ref, GLuint mask)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1010,7 +1010,7 @@ savageDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 }
 
 static void
-savageDDStencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
+savageDDStencilMaskSeparate(struct gl_context *ctx, GLenum face, GLuint mask)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
@@ -1039,7 +1039,7 @@ static unsigned get_stencil_op_value( GLenum op )
 }
 
 static void
-savageDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
+savageDDStencilOpSeparate(struct gl_context *ctx, GLenum face, GLenum fail,
                           GLenum zfail, GLenum zpass)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1057,7 +1057,7 @@ savageDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 /* =============================================================
  */
 
-static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
+static void savageDDEnable_s4(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1148,7 +1148,7 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             ; 
     }    
 }
-static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
+static void savageDDEnable_s3d(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -1227,7 +1227,7 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
     }    
 }
 
-void savageDDUpdateHwState( GLcontext *ctx )
+void savageDDUpdateHwState( struct gl_context *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
@@ -1671,7 +1671,7 @@ void savageDDInitState( savageContextPtr imesa ) {
                       NEW_TEXTURE_MATRIX|\
                       NEW_USER_CLIP|NEW_CLIENT_STATE))
 
-static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )
+static void savageDDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -1681,7 +1681,7 @@ static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )
 }
 
 
-void savageDDInitStateFuncs(GLcontext *ctx)
+void savageDDInitStateFuncs(struct gl_context *ctx)
 {
     ctx->Driver.UpdateState = savageDDInvalidateState;
     ctx->Driver.BlendEquationSeparate = savageDDBlendEquationSeparate;

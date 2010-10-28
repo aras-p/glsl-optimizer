@@ -593,11 +593,15 @@ static void emit_math1( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
 
-   if (need_tmp) 
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
+
+   if (need_tmp)
       tmp = get_tmp(c);
 
    brw_math(p, 
@@ -626,9 +630,13 @@ static void emit_math2( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (intel->gen < 6 &&
-			 (dst.dw1.bits.writemask != 0xf ||
-			  dst.file != BRW_GENERAL_REGISTER_FILE));
+   GLboolean need_tmp = GL_FALSE;
+
+   if (dst.file != BRW_GENERAL_REGISTER_FILE)
+      need_tmp = GL_TRUE;
+
+   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+      need_tmp = GL_TRUE;
 
    if (need_tmp) 
       tmp = get_tmp(c);
@@ -922,6 +930,8 @@ get_constant(struct brw_vs_compile *c,
 
    assert(argIndex < 3);
 
+   assert(c->func.brw->intel.gen < 6); /* FINISHME */
+
    if (c->current_const[argIndex].index != src->Index) {
       /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;
@@ -957,6 +967,8 @@ get_reladdr_constant(struct brw_vs_compile *c,
    struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
 
    assert(argIndex < 3);
+
+   assert(c->func.brw->intel.gen < 6); /* FINISHME */
 
    /* Can't reuse a reladdr constant load. */
    c->current_const[argIndex].index = -1;

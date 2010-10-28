@@ -42,7 +42,7 @@
 #endif
 
 
-static void TAG(WriteRGBASpan)( GLcontext *ctx,
+static void TAG(WriteRGBASpan)( struct gl_context *ctx,
                                 struct gl_renderbuffer *rb,
 				GLuint n, GLint x, GLint y,
 				const void *values, const GLubyte mask[] )
@@ -85,7 +85,7 @@ static void TAG(WriteRGBASpan)( GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBSpan)( GLcontext *ctx,
+static void TAG(WriteRGBSpan)( struct gl_context *ctx,
                                struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y,
 			       const void *values, const GLubyte mask[] )
@@ -124,7 +124,7 @@ static void TAG(WriteRGBSpan)( GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBAPixels)( GLcontext *ctx,
+static void TAG(WriteRGBAPixels)( struct gl_context *ctx,
                                   struct gl_renderbuffer *rb,
                                   GLuint n, const GLint x[], const GLint y[],
                                   const void *values, const GLubyte mask[] )
@@ -170,7 +170,7 @@ static void TAG(WriteRGBAPixels)( GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBASpan)( GLcontext *ctx,	
+static void TAG(WriteMonoRGBASpan)( struct gl_context *ctx,	
                                     struct gl_renderbuffer *rb,
 				    GLuint n, GLint x, GLint y, 
 				    const void *value,
@@ -210,7 +210,7 @@ static void TAG(WriteMonoRGBASpan)( GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBAPixels)( GLcontext *ctx,
+static void TAG(WriteMonoRGBAPixels)( struct gl_context *ctx,
                                       struct gl_renderbuffer *rb,
 				      GLuint n,
                                       const GLint x[], const GLint y[],
@@ -252,7 +252,7 @@ static void TAG(WriteMonoRGBAPixels)( GLcontext *ctx,
 }
 
 
-static void TAG(ReadRGBASpan)( GLcontext *ctx,
+static void TAG(ReadRGBASpan)( struct gl_context *ctx,
                                struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y,
 			       void *values)
@@ -280,7 +280,7 @@ static void TAG(ReadRGBASpan)( GLcontext *ctx,
 }
 
 
-static void TAG(ReadRGBAPixels)( GLcontext *ctx,
+static void TAG(ReadRGBAPixels)( struct gl_context *ctx,
                                  struct gl_renderbuffer *rb,
 				 GLuint n, const GLint x[], const GLint y[],
 				 void *values )

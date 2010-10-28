@@ -196,7 +196,13 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
 
 
 /**
+ * Check that a framebuffer's attachments match the window's size.
+ *
  * Called via st_framebuffer_iface::validate()
+ *
+ * \param statts  array of framebuffer attachments
+ * \param count  number of framebuffer attachments in statts[]
+ * \param out  returns resources for each of the attachments
  */
 static boolean 
 xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
@@ -209,9 +215,11 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    boolean resized;
    boolean ret;
 
+   /* build mask of ST_ATTACHMENT bits */
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
       statt_mask |= 1 << statts[i];
+
    /* record newly allocated textures */
    new_mask = statt_mask & ~xstfb->texture_mask;
 

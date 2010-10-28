@@ -55,6 +55,7 @@
 #define need_GL_EXT_point_parameters
 #define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_separate_shader_objects
 #define need_GL_EXT_stencil_two_side
 #define need_GL_EXT_timer_query
 #define need_GL_APPLE_vertex_array_object
@@ -114,6 +115,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_packed_depth_stencil",       NULL },
    { "GL_EXT_provoking_vertex",           GL_EXT_provoking_vertex_functions },
    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+   { "GL_EXT_separate_shader_objects",    GL_EXT_separate_shader_objects_functions },
    { "GL_EXT_stencil_wrap",               NULL },
    { "GL_EXT_texture_edge_clamp",         NULL },
    { "GL_EXT_texture_env_combine",        NULL },
@@ -197,18 +199,35 @@ static const struct dri_extension fragment_shader_extensions[] = {
 };
 
 /**
+ * \brief Get GLSL version from the environment.
+ *
+ * If the environment variable INTEL_GLSL_VERSION is set, convert its value
+ * to an integer and return it. Otherwise, return the default version, 120.
+ */
+static GLuint
+get_glsl_version()
+{
+    const char * s = getenv("INTEL_GLSL_VERSION");
+    if (s == NULL)
+        return 120;
+    else
+        return (GLuint) atoi(s);
+}
+
+/**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
 void
-intelInitExtensions(GLcontext *ctx)
+intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
    _mesa_map_function_array(GL_VERSION_2_1_functions);
-   ctx->Const.GLSLVersion = 120;
+
+   ctx->Const.GLSLVersion = get_glsl_version();
 
    if (intel->gen >= 5)
       driInitExtensions(ctx, ironlake_extensions, GL_FALSE);

@@ -28,7 +28,7 @@
 #include "nouveau_context.h"
 
 static GLboolean
-nouveau_bo_marker_emit(GLcontext *ctx, struct nouveau_bo_marker *m,
+nouveau_bo_marker_emit(struct gl_context *ctx, struct nouveau_bo_marker *m,
 		       uint32_t flags)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
@@ -136,7 +136,7 @@ nouveau_bo_context_reset(struct nouveau_bo_context *bctx)
 }
 
 GLboolean
-nouveau_bo_state_emit(GLcontext *ctx)
+nouveau_bo_state_emit(struct gl_context *ctx)
 {
 	struct nouveau_bo_state *s = &to_nouveau_context(ctx)->bo;
 	int i, j;
@@ -155,7 +155,7 @@ nouveau_bo_state_emit(GLcontext *ctx)
 }
 
 void
-nouveau_bo_state_init(GLcontext *ctx)
+nouveau_bo_state_init(struct gl_context *ctx)
 {
 	struct nouveau_bo_state *s = &to_nouveau_context(ctx)->bo;
 	int i;
@@ -165,7 +165,7 @@ nouveau_bo_state_init(GLcontext *ctx)
 }
 
 void
-nouveau_bo_state_destroy(GLcontext *ctx)
+nouveau_bo_state_destroy(struct gl_context *ctx)
 {
 	struct nouveau_bo_state *s = &to_nouveau_context(ctx)->bo;
 	int i, j;

@@ -32,7 +32,7 @@
 
 /* Arbitrary pushbuf length we can assume we can get with a single
  * WAIT_RING. */
-#define PUSHBUF_DWORDS 2048
+#define PUSHBUF_DWORDS 65536
 
 /* Functions to set up struct nouveau_array_state from something like
  * a GL array or index buffer. */
@@ -86,7 +86,7 @@ vbo_deinit_array(struct nouveau_array_state *a)
 }
 
 static int
-get_array_stride(GLcontext *ctx, const struct gl_client_array *a)
+get_array_stride(struct gl_context *ctx, const struct gl_client_array *a)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 
@@ -98,7 +98,7 @@ get_array_stride(GLcontext *ctx, const struct gl_client_array *a)
 }
 
 static void
-vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
+vbo_init_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -124,7 +124,7 @@ vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 }
 
 static void
-vbo_deinit_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
+vbo_deinit_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -149,7 +149,7 @@ vbo_deinit_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 /* Make some rendering decisions from the GL context. */
 
 static void
-vbo_choose_render_mode(GLcontext *ctx, const struct gl_client_array **arrays)
+vbo_choose_render_mode(struct gl_context *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i;
@@ -172,7 +172,7 @@ vbo_choose_render_mode(GLcontext *ctx, const struct gl_client_array **arrays)
 }
 
 static void
-vbo_emit_attr(GLcontext *ctx, const struct gl_client_array **arrays, int attr)
+vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays, int attr)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -209,7 +209,7 @@ vbo_emit_attr(GLcontext *ctx, const struct gl_client_array **arrays, int attr)
 #define MAT(a) (VERT_ATTRIB_GENERIC0 + MAT_ATTRIB_##a)
 
 static void
-vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
+vbo_choose_attrs(struct gl_context *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i;
@@ -251,7 +251,7 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 }
 
 static int
-get_max_client_stride(GLcontext *ctx, const struct gl_client_array **arrays)
+get_max_client_stride(struct gl_context *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i, s = 0;
@@ -271,14 +271,14 @@ get_max_client_stride(GLcontext *ctx, const struct gl_client_array **arrays)
 }
 
 static void
-TAG(vbo_render_prims)(GLcontext *ctx, const struct gl_client_array **arrays,
+TAG(vbo_render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLboolean index_bounds_valid,
 		      GLuint min_index, GLuint max_index);
 
 static GLboolean
-vbo_maybe_split(GLcontext *ctx, const struct gl_client_array **arrays,
+vbo_maybe_split(struct gl_context *ctx, const struct gl_client_array **arrays,
 	    const struct _mesa_prim *prims, GLuint nr_prims,
 	    const struct _mesa_index_buffer *ib,
 	    GLuint min_index, GLuint max_index)
@@ -316,7 +316,7 @@ vbo_maybe_split(GLcontext *ctx, const struct gl_client_array **arrays,
 /* VBO rendering path. */
 
 static void
-vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
+vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
 		  GLint basevertex, GLuint min_index, GLuint max_index)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -354,7 +354,7 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 }
 
 static void
-vbo_draw_vbo(GLcontext *ctx, const struct gl_client_array **arrays,
+vbo_draw_vbo(struct gl_context *ctx, const struct gl_client_array **arrays,
 	     const struct _mesa_prim *prims, GLuint nr_prims,
 	     const struct _mesa_index_buffer *ib, GLuint min_index,
 	     GLuint max_index)
@@ -396,7 +396,7 @@ extract_id(struct nouveau_array_state *a, int i, int j)
 }
 
 static void
-vbo_draw_imm(GLcontext *ctx, const struct gl_client_array **arrays,
+vbo_draw_imm(struct gl_context *ctx, const struct gl_client_array **arrays,
 	     const struct _mesa_prim *prims, GLuint nr_prims,
 	     const struct _mesa_index_buffer *ib, GLuint min_index,
 	     GLuint max_index)
@@ -433,7 +433,7 @@ vbo_draw_imm(GLcontext *ctx, const struct gl_client_array **arrays,
 /* draw_prims entry point when we're doing hw-tnl. */
 
 static void
-TAG(vbo_render_prims)(GLcontext *ctx, const struct gl_client_array **arrays,
+TAG(vbo_render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLboolean index_bounds_valid,

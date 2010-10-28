@@ -73,7 +73,7 @@ do { 						\
 
 
 #if (HAVE_ELTS)
-static void *TAG(emit_elts)( GLcontext *ctx, GLuint *elts, GLuint nr,
+static void *TAG(emit_elts)( struct gl_context *ctx, GLuint *elts, GLuint nr,
 			     void *buf)
 {
    GLint i;
@@ -94,7 +94,7 @@ static void *TAG(emit_elts)( GLcontext *ctx, GLuint *elts, GLuint nr,
 }
 #endif
 
-static __inline void *TAG(emit_verts)( GLcontext *ctx, GLuint start, 
+static __inline void *TAG(emit_verts)( struct gl_context *ctx, GLuint start, 
 				     GLuint count, void *buf )
 {
    return EMIT_VERTS(ctx, start, count, buf);
@@ -104,7 +104,7 @@ static __inline void *TAG(emit_verts)( GLcontext *ctx, GLuint start,
  *                    Render non-indexed primitives.
  ***********************************************************************/
 
-static void TAG(render_points_verts)( GLcontext *ctx,
+static void TAG(render_points_verts)( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -133,7 +133,7 @@ static void TAG(render_points_verts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_lines_verts)( GLcontext *ctx,
+static void TAG(render_lines_verts)( struct gl_context *ctx,
 				     GLuint start,
 				     GLuint count,
 				     GLuint flags )
@@ -169,7 +169,7 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_strip_verts)( GLcontext *ctx,
+static void TAG(render_line_strip_verts)( struct gl_context *ctx,
 					  GLuint start,
 					  GLuint count,
 					  GLuint flags )
@@ -201,7 +201,7 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_loop_verts)( GLcontext *ctx,
+static void TAG(render_line_loop_verts)( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 GLuint flags )
@@ -267,7 +267,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_triangles_verts)( GLcontext *ctx,
+static void TAG(render_triangles_verts)( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 GLuint flags )
@@ -298,7 +298,7 @@ static void TAG(render_triangles_verts)( GLcontext *ctx,
 
 
 
-static void TAG(render_tri_strip_verts)( GLcontext *ctx,
+static void TAG(render_tri_strip_verts)( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 GLuint flags )
@@ -336,7 +336,7 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_tri_fan_verts)( GLcontext *ctx,
+static void TAG(render_tri_fan_verts)( struct gl_context *ctx,
 				       GLuint start,
 				       GLuint count,
 				       GLuint flags )
@@ -376,7 +376,7 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_poly_verts)( GLcontext *ctx,
+static void TAG(render_poly_verts)( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -414,7 +414,7 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_quad_strip_verts)( GLcontext *ctx,
+static void TAG(render_quad_strip_verts)( struct gl_context *ctx,
 					  GLuint start,
 					  GLuint count,
 					  GLuint flags )
@@ -540,7 +540,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_quads_verts)( GLcontext *ctx,
+static void TAG(render_quads_verts)( struct gl_context *ctx,
 				     GLuint start,
 				     GLuint count,
 				     GLuint flags )
@@ -649,7 +649,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_noop)( GLcontext *ctx,
+static void TAG(render_noop)( struct gl_context *ctx,
 			      GLuint start,
 			      GLuint count,
 			      GLuint flags )
@@ -680,7 +680,7 @@ static tnl_render_func TAG(render_tab_verts)[GL_POLYGON+2] =
  ****************************************************************************/
 
 #if (HAVE_ELTS)
-static void TAG(render_points_elts)( GLcontext *ctx,
+static void TAG(render_points_elts)( struct gl_context *ctx,
 				     GLuint start,
 				     GLuint count,
 				     GLuint flags )
@@ -712,7 +712,7 @@ static void TAG(render_points_elts)( GLcontext *ctx,
 
 
 
-static void TAG(render_lines_elts)( GLcontext *ctx,
+static void TAG(render_lines_elts)( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -749,7 +749,7 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_strip_elts)( GLcontext *ctx,
+static void TAG(render_line_strip_elts)( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 GLuint flags )
@@ -783,7 +783,7 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_line_loop_elts)( GLcontext *ctx,
+static void TAG(render_line_loop_elts)( struct gl_context *ctx,
 					GLuint start,
 					GLuint count,
 					GLuint flags )
@@ -855,7 +855,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
  * buffers.  For elts, this is probably no better (worse?) than the
  * standard path.
  */
-static void TAG(render_triangles_elts)( GLcontext *ctx,
+static void TAG(render_triangles_elts)( struct gl_context *ctx,
 					GLuint start,
 					GLuint count,
 					GLuint flags )
@@ -889,7 +889,7 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
 
 
 
-static void TAG(render_tri_strip_elts)( GLcontext *ctx,
+static void TAG(render_tri_strip_elts)( struct gl_context *ctx,
 					GLuint start,
 					GLuint count,
 					GLuint flags )
@@ -927,7 +927,7 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_tri_fan_elts)( GLcontext *ctx,
+static void TAG(render_tri_fan_elts)( struct gl_context *ctx,
 				      GLuint start,
 				      GLuint count,
 				      GLuint flags )
@@ -965,7 +965,7 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_poly_elts)( GLcontext *ctx,
+static void TAG(render_poly_elts)( struct gl_context *ctx,
 				   GLuint start,
 				   GLuint count,
 				   GLuint flags )
@@ -1003,7 +1003,7 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
    }
 }
 
-static void TAG(render_quad_strip_elts)( GLcontext *ctx,
+static void TAG(render_quad_strip_elts)( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count,
 					 GLuint flags )
@@ -1071,7 +1071,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 }
 
 
-static void TAG(render_quads_elts)( GLcontext *ctx,
+static void TAG(render_quads_elts)( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint count,
 				    GLuint flags )
@@ -1173,7 +1173,7 @@ static tnl_render_func TAG(render_tab_elts)[GL_POLYGON+2] =
 /* Pre-check the primitives in the VB to prevent the need for
  * fallbacks later on.
  */
-static GLboolean TAG(validate_render)( GLcontext *ctx,
+static GLboolean TAG(validate_render)( struct gl_context *ctx,
 				       struct vertex_buffer *VB )
 {
    GLint i;

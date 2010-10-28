@@ -1015,7 +1015,7 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 }
 
 static void
-radeon_map_unmap_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+radeon_map_unmap_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 			     GLboolean map)
 {
 	GLuint i, j;
@@ -1060,7 +1060,7 @@ radeon_map_unmap_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 	radeon_check_front_buffer_rendering(ctx);
 }
 
-static void radeonSpanRenderStart(GLcontext * ctx)
+static void radeonSpanRenderStart(struct gl_context * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
@@ -1087,7 +1087,7 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_TRUE);
 }
 
-static void radeonSpanRenderFinish(GLcontext * ctx)
+static void radeonSpanRenderFinish(struct gl_context * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
@@ -1108,7 +1108,7 @@ static void radeonSpanRenderFinish(GLcontext * ctx)
 	}
 }
 
-void radeonInitSpanFuncs(GLcontext * ctx)
+void radeonInitSpanFuncs(struct gl_context * ctx)
 {
 	struct swrast_device_driver *swdd =
 	    _swrast_GetDeviceDriverReference(ctx);

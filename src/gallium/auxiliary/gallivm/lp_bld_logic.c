@@ -462,10 +462,12 @@ lp_build_select(struct lp_build_context *bld,
       LLVMTypeRef arg_type;
       LLVMValueRef args[3];
 
-      if (type.width == 64) {
+      if (type.floating &&
+          type.width == 64) {
          intrinsic = "llvm.x86.sse41.blendvpd";
          arg_type = LLVMVectorType(LLVMDoubleType(), 2);
-      } else if (type.width == 32) {
+      } else if (type.floating &&
+                 type.width == 32) {
          intrinsic = "llvm.x86.sse41.blendvps";
          arg_type = LLVMVectorType(LLVMFloatType(), 4);
       } else {

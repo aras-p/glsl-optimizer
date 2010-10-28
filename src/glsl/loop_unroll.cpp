@@ -67,7 +67,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    /* Don't try to unroll loops that have zillions of iterations either.
     */
-   if (iterations > max_iterations)
+   if (iterations > (int) max_iterations)
       return visit_continue;
 
    if (ls->num_loop_jumps > 1)

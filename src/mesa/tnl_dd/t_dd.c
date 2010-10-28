@@ -26,7 +26,7 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba4_spec5( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    GLubyte *i810verts = (GLubyte *)imesa->verts;
@@ -37,7 +37,7 @@ static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
    dst->ui[5] = src->ui[5];
 }
 
-static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba4( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    GLubyte *i810verts = (GLubyte *)imesa->verts;
@@ -47,7 +47,7 @@ static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
    dst->ui[4] = src->ui[4];
 }
 
-static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv_rgba3( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    GLubyte *i810verts = (GLubyte *)imesa->verts;

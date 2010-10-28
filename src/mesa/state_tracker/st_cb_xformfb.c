@@ -44,7 +44,7 @@
 
 #if 0
 static struct gl_transform_feedback_object *
-st_new_transform_feedback(GLcontext *ctx, GLuint name)
+st_new_transform_feedback(struct gl_context *ctx, GLuint name)
 {
    struct gl_transform_feedback_object *obj;
    obj = CALLOC_STRUCT(gl_transform_feedback_object);
@@ -58,7 +58,7 @@ st_new_transform_feedback(GLcontext *ctx, GLuint name)
 
 #if 0
 static void
-st_delete_transform_feedback(GLcontext *ctx,
+st_delete_transform_feedback(struct gl_context *ctx,
                              struct gl_transform_feedback_object *obj)
 {
    GLuint i;
@@ -73,7 +73,7 @@ st_delete_transform_feedback(GLcontext *ctx,
 
 
 static void
-st_begin_transform_feedback(GLcontext *ctx, GLenum mode,
+st_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
                             struct gl_transform_feedback_object *obj)
 {
    /* to-do */
@@ -81,7 +81,7 @@ st_begin_transform_feedback(GLcontext *ctx, GLenum mode,
 
 
 static void
-st_end_transform_feedback(GLcontext *ctx,
+st_end_transform_feedback(struct gl_context *ctx,
                           struct gl_transform_feedback_object *obj)
 {
    /* to-do */
@@ -89,7 +89,7 @@ st_end_transform_feedback(GLcontext *ctx,
 
 
 static void
-st_pause_transform_feedback(GLcontext *ctx,
+st_pause_transform_feedback(struct gl_context *ctx,
                             struct gl_transform_feedback_object *obj)
 {
    /* to-do */
@@ -97,7 +97,7 @@ st_pause_transform_feedback(GLcontext *ctx,
 
 
 static void
-st_resume_transform_feedback(GLcontext *ctx,
+st_resume_transform_feedback(struct gl_context *ctx,
                              struct gl_transform_feedback_object *obj)
 {
    /* to-do */
@@ -105,7 +105,7 @@ st_resume_transform_feedback(GLcontext *ctx,
 
 
 static void
-st_draw_transform_feedback(GLcontext *ctx, GLenum mode,
+st_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
                            struct gl_transform_feedback_object *obj)
 {
    /* XXX to do */

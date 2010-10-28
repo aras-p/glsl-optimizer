@@ -5604,7 +5604,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
 
 
 GLboolean
-_mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
+_mesa_parse_arb_program(struct gl_context *ctx, GLenum target, const GLubyte *str,
 			GLsizei len, struct asm_parser_state *state)
 {
    struct asm_instruction *inst;

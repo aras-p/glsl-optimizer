@@ -99,11 +99,11 @@ static const struct dri_debug_control debug_control[] =
 /* Create the device specific context.
  */
 GLboolean r128CreateContext( gl_api api,
-			     const __GLcontextModes *glVisual,
+			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct dd_function_table functions;
    r128ContextPtr rmesa;
@@ -348,8 +348,8 @@ r128MakeCurrent( __DRIcontext *driContextPriv,
       newR128Ctx->driDrawable = driDrawPriv;
 
       _mesa_make_current( newR128Ctx->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+                          (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                          (struct gl_framebuffer *) driReadPriv->driverPrivate );
 
       newR128Ctx->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
    } else {

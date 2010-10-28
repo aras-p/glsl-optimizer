@@ -46,7 +46,7 @@
 
 
 static void *
-nop_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
+nop_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
 {
    (void) ctx;
    (void) rb;
@@ -73,7 +73,7 @@ delete_wrapper(struct gl_renderbuffer *rb)
  * Realloc storage for wrapper.
  */
 static GLboolean
-alloc_wrapper_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+alloc_wrapper_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                       GLenum internalFormat, GLuint width, GLuint height)
 {
    /* just pass this on to the wrapped renderbuffer */
@@ -103,7 +103,7 @@ alloc_wrapper_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 
 static void
-get_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
+get_row_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
             GLint x, GLint y, void *values)
 {
    struct gl_renderbuffer *dsrb = z24rb->Wrapped;
@@ -130,7 +130,7 @@ get_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
 }
 
 static void
-get_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
+get_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
                const GLint x[], const GLint y[], void *values)
 {
    struct gl_renderbuffer *dsrb = z24rb->Wrapped;
@@ -155,7 +155,7 @@ get_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
 }
 
 static void
-put_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
+put_row_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
             GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    struct gl_renderbuffer *dsrb = z24rb->Wrapped;
@@ -206,7 +206,7 @@ put_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
 }
 
 static void
-put_mono_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
+put_mono_row_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
                  GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    struct gl_renderbuffer *dsrb = z24rb->Wrapped;
@@ -260,7 +260,7 @@ put_mono_row_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
 }
 
 static void
-put_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
+put_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
                const GLint x[], const GLint y[],
                const void *values, const GLubyte *mask)
 {
@@ -313,7 +313,7 @@ put_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb, GLuint count,
 }
 
 static void
-put_mono_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb,
+put_mono_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb,
                     GLuint count, const GLint x[], const GLint y[],
                     const void *value, const GLubyte *mask)
 {
@@ -348,7 +348,7 @@ put_mono_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb,
  * \return new depth renderbuffer
  */
 struct gl_renderbuffer *
-_mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
+_mesa_new_z24_renderbuffer_wrapper(struct gl_context *ctx,
                                    struct gl_renderbuffer *dsrb)
 {
    struct gl_renderbuffer *z24rb;
@@ -396,7 +396,7 @@ _mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
  */
 
 static void
-get_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+get_row_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
            GLint x, GLint y, void *values)
 {
    struct gl_renderbuffer *dsrb = s8rb->Wrapped;
@@ -423,7 +423,7 @@ get_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
 }
 
 static void
-get_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+get_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
               const GLint x[], const GLint y[], void *values)
 {
    struct gl_renderbuffer *dsrb = s8rb->Wrapped;
@@ -448,7 +448,7 @@ get_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
 }
 
 static void
-put_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+put_row_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
            GLint x, GLint y, const void *values, const GLubyte *mask)
 {
    struct gl_renderbuffer *dsrb = s8rb->Wrapped;
@@ -499,7 +499,7 @@ put_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
 }
 
 static void
-put_mono_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+put_mono_row_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
                 GLint x, GLint y, const void *value, const GLubyte *mask)
 {
    struct gl_renderbuffer *dsrb = s8rb->Wrapped;
@@ -550,7 +550,7 @@ put_mono_row_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
 }
 
 static void
-put_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+put_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
               const GLint x[], const GLint y[],
               const void *values, const GLubyte *mask)
 {
@@ -603,7 +603,7 @@ put_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
 }
 
 static void
-put_mono_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
+put_mono_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
                    const GLint x[], const GLint y[],
                    const void *value, const GLubyte *mask)
 {
@@ -637,7 +637,7 @@ put_mono_values_s8(GLcontext *ctx, struct gl_renderbuffer *s8rb, GLuint count,
  * \return new stencil renderbuffer
  */
 struct gl_renderbuffer *
-_mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx, struct gl_renderbuffer *dsrb)
+_mesa_new_s8_renderbuffer_wrapper(struct gl_context *ctx, struct gl_renderbuffer *dsrb)
 {
    struct gl_renderbuffer *s8rb;
 
@@ -698,7 +698,7 @@ _mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx, struct gl_renderbuffer *dsrb)
  *                   (either 8-bit or 32-bit)
  */
 void
-_mesa_extract_stencil(GLcontext *ctx,
+_mesa_extract_stencil(struct gl_context *ctx,
                       struct gl_renderbuffer *dsRb,
                       struct gl_renderbuffer *stencilRb)
 {
@@ -747,7 +747,7 @@ _mesa_extract_stencil(GLcontext *ctx,
  * \param stencilRb  the source stencil buffer (either 8-bit or 32-bit)
  */
 void
-_mesa_insert_stencil(GLcontext *ctx,
+_mesa_insert_stencil(struct gl_context *ctx,
                      struct gl_renderbuffer *dsRb,
                      struct gl_renderbuffer *stencilRb)
 {
@@ -803,7 +803,7 @@ _mesa_insert_stencil(GLcontext *ctx,
  * \param stencilRb  the stencil renderbuffer to promote
  */
 void
-_mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb)
+_mesa_promote_stencil(struct gl_context *ctx, struct gl_renderbuffer *stencilRb)
 {
    const GLsizei width = stencilRb->Width;
    const GLsizei height = stencilRb->Height;

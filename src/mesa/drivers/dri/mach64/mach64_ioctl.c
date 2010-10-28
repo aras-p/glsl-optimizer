@@ -665,7 +665,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
  * Buffer clear
  */
 
-static void mach64DDClear( GLcontext *ctx, GLbitfield mask )
+static void mach64DDClear( struct gl_context *ctx, GLbitfield mask )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    __DRIdrawable *dPriv = mmesa->driDrawable;

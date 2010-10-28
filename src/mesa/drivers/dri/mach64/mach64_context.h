@@ -161,7 +161,7 @@ struct mach64_texture_object {
 typedef struct mach64_texture_object mach64TexObj, *mach64TexObjPtr;
 
 struct mach64_context {
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
 
    /* Driver and hardware state management
     */
@@ -274,7 +274,7 @@ struct mach64_context {
 
 
 extern GLboolean mach64CreateContext( gl_api api,
-				      const __GLcontextModes *glVisual,
+				      const struct gl_config *glVisual,
 				      __DRIcontext *driContextPriv,
                                       void *sharedContextPrivate );
 

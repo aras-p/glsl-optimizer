@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Nicolai Haehnle.
+ * Copyright 2010 Tom Stellard <tstellar@gmail.com>
  *
  * All Rights Reserved.
  *
@@ -35,6 +36,7 @@ struct rc_instruction;
 struct rc_swizzle_caps;
 struct rc_src_register;
 struct rc_pair_instruction_arg;
+struct rc_compiler;
 
 
 /**
@@ -66,6 +68,32 @@ typedef void (*rc_remap_register_fn)(void * userdata, struct rc_instruction * in
 void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, void * userdata);
 /*@}*/
 
+struct rc_reader {
+	struct rc_instruction * Inst;
+	unsigned int WriteMask;
+	struct rc_src_register * Src;
+};
+
+struct rc_reader_data {
+	unsigned int Abort;
+	unsigned int AbortOnRead;
+	unsigned int InElse;
+	struct rc_instruction * Writer;
+
+	unsigned int ReaderCount;
+	unsigned int ReadersReserved;
+	struct rc_reader * Readers;
+
+	void * CbData;
+};
+
+void rc_get_readers_normal(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	struct rc_reader_data * data,
+	/*XXX: These should be their own function types. */
+	rc_read_src_fn read_cb,
+	rc_read_write_mask_fn write_cb);
 
 /**
  * Compiler passes based on dataflow analysis.

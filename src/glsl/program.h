@@ -24,4 +24,4 @@
 #include "main/core.h"
 
 extern void
-link_shaders(GLcontext *ctx, struct gl_shader_program *prog);
+link_shaders(struct gl_context *ctx, struct gl_shader_program *prog);

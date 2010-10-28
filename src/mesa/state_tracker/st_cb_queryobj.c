@@ -35,7 +35,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/image.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -46,7 +45,7 @@
 #if FEATURE_queryobj
 
 static struct gl_query_object *
-st_NewQueryObject(GLcontext *ctx, GLuint id)
+st_NewQueryObject(struct gl_context *ctx, GLuint id)
 {
    struct st_query_object *stq = ST_CALLOC_STRUCT(st_query_object);
    if (stq) {
@@ -62,7 +61,7 @@ st_NewQueryObject(GLcontext *ctx, GLuint id)
 
 
 static void
-st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
+st_DeleteQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
@@ -77,7 +76,7 @@ st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
+st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
@@ -121,7 +120,7 @@ st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-st_EndQuery(GLcontext *ctx, struct gl_query_object *q)
+st_EndQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
@@ -131,7 +130,7 @@ st_EndQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-st_WaitQuery(GLcontext *ctx, struct gl_query_object *q)
+st_WaitQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
@@ -153,7 +152,7 @@ st_WaitQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-st_CheckQuery(GLcontext *ctx, struct gl_query_object *q)
+st_CheckQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);

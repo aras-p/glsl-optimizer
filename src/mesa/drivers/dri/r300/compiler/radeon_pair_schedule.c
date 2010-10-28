@@ -275,13 +275,112 @@ static void emit_all_tex(struct schedule_state * s, struct rc_instruction * befo
 	}
 }
 
+/* This is a helper function for destructive_merge_instructions().  It helps
+ * merge presubtract sources from two instructions and makes sure the
+ * presubtract sources end up in the correct spot.  This function assumes that
+ * dst_full is an rgb instruction, meaning that it has a vector instruction(rgb)
+ * but no scalar instruction (alpha).
+ * @return 0 if merging the presubtract sources fails.
+ * @retrun 1 if merging the presubtract sources succeeds.
+ */
+static int merge_presub_sources(
+	struct rc_pair_instruction * dst_full,
+	struct rc_pair_sub_instruction src,
+	unsigned int type)
+{
+	unsigned int srcp_src, srcp_regs, is_rgb, is_alpha;
+	struct rc_pair_sub_instruction * dst_sub;
 
+	assert(dst_full->Alpha.Opcode == RC_OPCODE_NOP);
+
+	switch(type) {
+	case RC_PAIR_SOURCE_RGB:
+		is_rgb = 1;
+		is_alpha = 0;
+		dst_sub = &dst_full->RGB;
+		break;
+	case RC_PAIR_SOURCE_ALPHA:
+		is_rgb = 0;
+		is_alpha = 1;
+		dst_sub = &dst_full->Alpha;
+		break;
+	default:
+		assert(0);
+		return 0;
+	}
+
+	const struct rc_opcode_info * info =
+					rc_get_opcode_info(dst_full->RGB.Opcode);
+	if (dst_sub->Src[RC_PAIR_PRESUB_SRC].Used)
+		return 0;
+
+	srcp_regs = rc_presubtract_src_reg_count(
+					src.Src[RC_PAIR_PRESUB_SRC].Index);
+	for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
+		unsigned int arg;
+		int free_source;
+		unsigned int one_way = 0;
+		struct rc_pair_instruction_source srcp = src.Src[srcp_src];
+		struct rc_pair_instruction_source temp;
+
+		free_source = rc_pair_alloc_source(dst_full, is_rgb, is_alpha,
+							srcp.File, srcp.Index);
+
+		/* If free_source < 0 then there are no free source
+		 * slots. */
+		if (free_source < 0)
+			return 0;
+
+		temp = dst_sub->Src[srcp_src];
+		dst_sub->Src[srcp_src] = dst_sub->Src[free_source];
+
+		/* srcp needs src0 and src1 to be the same */
+		if (free_source < srcp_src) {
+			if (!temp.Used)
+				continue;
+			free_source = rc_pair_alloc_source(dst_full, is_rgb,
+					is_alpha, temp.File, temp.Index);
+			one_way = 1;
+		} else {
+			dst_sub->Src[free_source] = temp;
+		}
+
+		/* If free_source == srcp_src, then the presubtract
+		 * source is already in the correct place. */
+		if (free_source == srcp_src)
+			continue;
+
+		/* Shuffle the sources, so we can put the
+		 * presubtract source in the correct place. */
+		for(arg = 0; arg < info->NumSrcRegs; arg++) {
+			/*If this arg does not read from an rgb source,
+			 * do nothing. */
+			if (!(rc_source_type_that_arg_reads(
+				dst_full->RGB.Arg[arg].Source,
+				dst_full->RGB.Arg[arg].Swizzle) & type)) {
+				continue;
+			}
+			if (dst_full->RGB.Arg[arg].Source == srcp_src)
+				dst_full->RGB.Arg[arg].Source = free_source;
+			/* We need to do this just in case register
+			 * is one of the sources already, but in the
+			 * wrong spot. */
+			else if(dst_full->RGB.Arg[arg].Source == free_source
+							&& !one_way) {
+				dst_full->RGB.Arg[arg].Source = srcp_src;
+			}
+		}
+	}
+	return 1;
+}
+
+
+/* This function assumes that rgb.Alpha and alpha.RGB are unused */
 static int destructive_merge_instructions(
 		struct rc_pair_instruction * rgb,
 		struct rc_pair_instruction * alpha)
 {
 	const struct rc_opcode_info * opcode;
-	const struct rc_opcode_info * rgb_info;
 
 	assert(rgb->Alpha.Opcode == RC_OPCODE_NOP);
 	assert(alpha->RGB.Opcode == RC_OPCODE_NOP);
@@ -291,129 +390,15 @@ static int destructive_merge_instructions(
 	 * src1. */
 
 	/* Merge the rgb presubtract registers. */
-	rgb_info = rc_get_opcode_info(rgb->RGB.Opcode);
 	if (alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
-		unsigned int srcp_src;
-		unsigned int srcp_regs;
-		if (rgb->RGB.Src[RC_PAIR_PRESUB_SRC].Used)
+		if (!merge_presub_sources(rgb, alpha->RGB, RC_PAIR_SOURCE_RGB)) {
 			return 0;
-		srcp_regs = rc_presubtract_src_reg_count(
-				alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Index);
-		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
-			unsigned int arg;
-			int free_source;
-			unsigned int one_way = 0;
-			struct rc_pair_instruction_source srcp =
-						alpha->RGB.Src[srcp_src];
-			struct rc_pair_instruction_source temp;
-			/* 2nd arg of 1 means this is an rgb source.
-			 * 3rd arg of 0 means this is not an alpha source. */
-			free_source = rc_pair_alloc_source(rgb, 1, 0,
-							srcp.File, srcp.Index);
-			/* If free_source < 0 then there are no free source
-			 * slots. */
-			if (free_source < 0)
-				return 0;
-
-			temp = rgb->RGB.Src[srcp_src];
-			rgb->RGB.Src[srcp_src] = rgb->RGB.Src[free_source];
-			/* srcp needs src0 and src1 to be the same */
-			if (free_source < srcp_src) {
-				if (!temp.Used)
-					continue;
-				free_source = rc_pair_alloc_source(rgb, 1, 0,
-							srcp.File, srcp.Index);
-				one_way = 1;
-			} else {
-				rgb->RGB.Src[free_source] = temp;
-			}
-			/* If free_source == srcp_src, then the presubtract
-			 * source is already in the correct place. */
-			if (free_source == srcp_src)
-				continue;
-			/* Shuffle the sources, so we can put the
-			 * presubtract source in the correct place. */
-			for (arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
-				/*If this arg does not read from an rgb source,
-				 * do nothing. */
-				if (rc_source_type_that_arg_reads(
-					rgb->RGB.Arg[arg].Source,
-					rgb->RGB.Arg[arg].Swizzle, 3)
-							!= RC_PAIR_SOURCE_RGB) {
-					continue;
-				}
-				if (rgb->RGB.Arg[arg].Source == srcp_src)
-					rgb->RGB.Arg[arg].Source = free_source;
-				/* We need to do this just in case register
-				 * is one of the sources already, but in the
-				 * wrong spot. */
-				else if(rgb->RGB.Arg[arg].Source == free_source
-								&& !one_way) {
-					rgb->RGB.Arg[arg].Source = srcp_src;
-				}
-			}
 		}
 	}
-
 	/* Merge the alpha presubtract registers */
 	if (alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
-		unsigned int srcp_src;
-		unsigned int srcp_regs;
-		if(rgb->Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
+		if(!merge_presub_sources(rgb,  alpha->Alpha, RC_PAIR_SOURCE_ALPHA)){
 			return 0;
-
-		srcp_regs = rc_presubtract_src_reg_count(
-			alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
-		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
-			unsigned int arg;
-			int free_source;
-			unsigned int one_way = 0;
-			struct rc_pair_instruction_source srcp =
-						alpha->Alpha.Src[srcp_src];
-			struct rc_pair_instruction_source temp;
-			/* 2nd arg of 0 means this is not an rgb source.
-			 * 3rd arg of 1 means this is an alpha source. */
-			free_source = rc_pair_alloc_source(rgb, 0, 1,
-							srcp.File, srcp.Index);
-			/* If free_source < 0 then there are no free source
-			 * slots. */
-			if (free_source < 0)
-				return 0;
-
-			temp = rgb->Alpha.Src[srcp_src];
-			rgb->Alpha.Src[srcp_src] = rgb->Alpha.Src[free_source];
-			/* srcp needs src0 and src1 to be the same. */
-			if (free_source < srcp_src) {
-				if (!temp.Used)
-					continue;
-				free_source = rc_pair_alloc_source(rgb, 0, 1,
-							temp.File, temp.Index);
-				one_way = 1;
-			} else {
-				rgb->Alpha.Src[free_source] = temp;
-			}
-			/* If free_source == srcp_src, then the presubtract
-			 * source is already in the correct place. */
-			if (free_source == srcp_src)
-				continue;
-			/* Shuffle the sources, so we can put the
-			 * presubtract source in the correct place. */
-			for(arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
-				/*If this arg does not read from an alpha
-				 * source, do nothing. */
-				if (rc_source_type_that_arg_reads(
-					rgb->RGB.Arg[arg].Source,
-					rgb->RGB.Arg[arg].Swizzle, 3)
-						!= RC_PAIR_SOURCE_ALPHA) {
-					continue;
-				}
-				if (rgb->RGB.Arg[arg].Source == srcp_src)
-					rgb->RGB.Arg[arg].Source = free_source;
-				else if (rgb->RGB.Arg[arg].Source == free_source
-								&& !one_way) {
-					rgb->RGB.Arg[arg].Source = srcp_src;
-				}
-			}
 		}
 	}
 

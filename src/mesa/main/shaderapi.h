@@ -39,7 +39,7 @@ _mesa_copy_string(GLchar *dst, GLsizei maxLength,
                   GLsizei *length, const GLchar *src);
 
 extern void
-_mesa_use_program(GLcontext *ctx, GLuint program);
+_mesa_use_program(struct gl_context *ctx, GLuint program);
 
 
 extern void
@@ -165,5 +165,14 @@ _mesa_ShaderBinary(GLint n, const GLuint *shaders, GLenum binaryformat,
 extern void GLAPIENTRY
 _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
                            GLint value);
+
+extern void GLAPIENTRY
+_mesa_UseShaderProgramEXT(GLenum type, GLuint program);
+
+extern void GLAPIENTRY
+_mesa_ActiveProgramEXT(GLuint program);
+
+extern GLuint GLAPIENTRY
+_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string);
 
 #endif /* SHADERAPI_H */

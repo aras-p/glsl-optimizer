@@ -33,7 +33,7 @@
 #define VIEWPORT_Z(dst,z) dst = s[10] * z + s[14]
 
 
-static void TAG(emit)( GLcontext *ctx,
+static void TAG(emit)( struct gl_context *ctx,
 		       GLuint start, GLuint end,
 		       void *dest )
 {
@@ -157,7 +157,7 @@ static void TAG(emit)( GLcontext *ctx,
 }
 
 
-static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
+static GLboolean TAG(check_tex_sizes)( struct gl_context *ctx )
 {
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
@@ -183,7 +183,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 }
 
 
-static void TAG(interp)( GLcontext *ctx,
+static void TAG(interp)( struct gl_context *ctx,
 			 GLfloat t, 
 			 GLuint edst, GLuint eout, GLuint ein,
 			 GLboolean force_boundary )

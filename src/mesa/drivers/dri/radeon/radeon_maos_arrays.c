@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_maos.h"
 #include "radeon_tcl.h"
 
-static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
+static void emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
 			GLvoid *data, int stride, int count)
 {
    int i;
@@ -121,7 +121,7 @@ static void emit_stq_vec(uint32_t *out, GLvoid *data, int stride, int count)
 
 
 
-static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
+static void emit_tex_vector(struct gl_context *ctx, struct radeon_aos *aos,
 			    GLvoid *data, int size, int stride, int count)
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -182,7 +182,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
 /* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
  */
-void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
+void radeonEmitArrays( struct gl_context *ctx, GLuint inputs )
 {
    r100ContextPtr rmesa = R100_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;

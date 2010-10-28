@@ -84,7 +84,7 @@ viewclip_point_z( const GLfloat v[] )
  * \return zero if the point was clipped, or one otherwise.
  */
 static GLuint
-userclip_point( GLcontext *ctx, const GLfloat v[] )
+userclip_point( struct gl_context *ctx, const GLfloat v[] )
 {
    GLuint p;
 
@@ -114,7 +114,7 @@ userclip_point( GLcontext *ctx, const GLfloat v[] )
  * \param Rindex returned color index
  */
 static void
-shade_rastpos(GLcontext *ctx,
+shade_rastpos(struct gl_context *ctx,
               const GLfloat vertex[4],
               const GLfloat normal[3],
               GLfloat Rcolor[4],
@@ -263,7 +263,7 @@ shade_rastpos(GLcontext *ctx,
  * \param texcoord  incoming texcoord and resulting texcoord
  */
 static void
-compute_texgen(GLcontext *ctx, const GLfloat vObj[4], const GLfloat vEye[4],
+compute_texgen(struct gl_context *ctx, const GLfloat vObj[4], const GLfloat vEye[4],
                const GLfloat normal[3], GLuint unit, GLfloat texcoord[4])
 {
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -373,7 +373,7 @@ compute_texgen(GLcontext *ctx, const GLfloat vObj[4], const GLfloat vEye[4],
  * \param vObj  vertex position in object space
  */
 void
-_tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4])
+_tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4])
 {
    if (ctx->VertexProgram._Enabled) {
       /* XXX implement this */

@@ -50,16 +50,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SWTCL_OVM_TEX(n) ((n) + 6)
 #define SWTCL_OVM_POINT_SIZE 15
 
-extern void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *InputsRead,  GLuint *OutputsWritten);
+extern void r300ChooseSwtclVertexFormat(struct gl_context *ctx, GLuint *InputsRead,  GLuint *OutputsWritten);
 
-extern void r300InitSwtcl( GLcontext *ctx );
-extern void r300DestroySwtcl( GLcontext *ctx );
+extern void r300InitSwtcl( struct gl_context *ctx );
+extern void r300DestroySwtcl( struct gl_context *ctx );
 
-extern void r300RenderStart(GLcontext *ctx);
-extern void r300RenderFinish(GLcontext *ctx);
-extern void r300RenderPrimitive(GLcontext *ctx, GLenum prim);
-extern void r300ResetLineStipple(GLcontext *ctx);
+extern void r300RenderStart(struct gl_context *ctx);
+extern void r300RenderFinish(struct gl_context *ctx);
+extern void r300RenderPrimitive(struct gl_context *ctx, GLenum prim);
+extern void r300ResetLineStipple(struct gl_context *ctx);
 
-extern void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
+extern void r300_swtcl_flush(struct gl_context *ctx, uint32_t current_offset);
 
 #endif

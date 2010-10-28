@@ -300,7 +300,7 @@ vmw_video_init(struct vmw_customizer *vmw)
         numAdaptors = 1;
         overlayAdaptors = &newAdaptor;
     } else {
-         newAdaptors = xalloc((numAdaptors + 1) *
+         newAdaptors = malloc((numAdaptors + 1) *
                               sizeof(XF86VideoAdaptorPtr*));
          if (!newAdaptors) {
             xf86XVFreeVideoAdaptorRec(newAdaptor);
@@ -320,7 +320,7 @@ vmw_video_init(struct vmw_customizer *vmw)
     }
 
     if (newAdaptors) {
-        xfree(newAdaptors);
+        free(newAdaptors);
     }
 
     debug_printf("Initialized VMware Xv extension successfully\n");
@@ -438,7 +438,7 @@ vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_customizer *vmw)
         return NULL;
     }
 
-    video = xcalloc(1, sizeof(*video));
+    video = calloc(1, sizeof(*video));
     if (!video) {
         debug_printf("Not enough memory.\n");
         xf86XVFreeVideoAdaptorRec(adaptor);
@@ -742,7 +742,7 @@ vmw_video_buffer_alloc(struct vmw_customizer *vmw, int size,
     }
 
     out->size = size;
-    out->extra_data = xcalloc(1, size);
+    out->extra_data = calloc(1, size);
 
     debug_printf("\t\t%s: allocated buffer %p of size %i\n", __func__, out, size);
 
@@ -773,7 +773,7 @@ vmw_video_buffer_free(struct vmw_customizer *vmw,
     if (out->size == 0)
 	return Success;
 
-    xfree(out->extra_data);
+    free(out->extra_data);
     vmw_ioctl_buffer_unmap(vmw, out->buf);
     vmw_ioctl_buffer_destroy(vmw, out->buf);
 

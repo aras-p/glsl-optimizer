@@ -866,7 +866,7 @@ const struct tnl_format_info _tnl_format_info[EMIT_MAX] =
  * vertices
  */
 #define EMIT5(NR, F0, F1, F2, F3, F4, NAME)				\
-static void NAME( GLcontext *ctx,					\
+static void NAME( struct gl_context *ctx,					\
 		  GLuint count,						\
 		  GLubyte *v )						\
 {									\
@@ -929,7 +929,7 @@ EMIT4(insert_4f_4, insert_4ub_4f_rgba_4, insert_2f_2, insert_2f_2, emit_xyzw4_rg
 /* Use the codegen paths to select one of a number of hardwired
  * fastpaths.
  */
-void _tnl_generate_hardwired_emit( GLcontext *ctx )
+void _tnl_generate_hardwired_emit( struct gl_context *ctx )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    tnl_emit_func func = NULL;
@@ -987,7 +987,7 @@ void _tnl_generate_hardwired_emit( GLcontext *ctx )
  * vertices
  */
 
-void _tnl_generic_emit( GLcontext *ctx,
+void _tnl_generic_emit( struct gl_context *ctx,
 			GLuint count,
 			GLubyte *v )
 {
@@ -1007,7 +1007,7 @@ void _tnl_generic_emit( GLcontext *ctx,
 }
 
 
-void _tnl_generic_interp( GLcontext *ctx,
+void _tnl_generic_interp( struct gl_context *ctx,
 			    GLfloat t,
 			    GLuint edst, GLuint eout, GLuint ein,
 			    GLboolean force_boundary )
@@ -1061,7 +1061,7 @@ void _tnl_generic_interp( GLcontext *ctx,
 /* Extract color attributes from one vertex and insert them into
  * another.  (Shortcircuit extract/insert with memcpy).
  */
-void _tnl_generic_copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
+void _tnl_generic_copy_pv( struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    GLubyte *vsrc = vtx->vertex_buf + esrc * vtx->vertex_size;
@@ -1085,7 +1085,7 @@ void _tnl_generic_copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 /* Helper functions for hardware which doesn't put back colors and/or
  * edgeflags into vertices.
  */
-void _tnl_generic_interp_extras( GLcontext *ctx,
+void _tnl_generic_interp_extras( struct gl_context *ctx,
 				   GLfloat t,
 				   GLuint dst, GLuint out, GLuint in,
 				   GLboolean force_boundary )
@@ -1128,7 +1128,7 @@ void _tnl_generic_interp_extras( GLcontext *ctx,
    _tnl_generic_interp(ctx, t, dst, out, in, force_boundary);
 }
 
-void _tnl_generic_copy_pv_extras( GLcontext *ctx, 
+void _tnl_generic_copy_pv_extras( struct gl_context *ctx, 
 				  GLuint dst, GLuint src )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

@@ -422,6 +422,20 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
    }
 }
 
+static void
+generate_ARB_shader_stencil_export_variables(exec_list *instructions,
+					     struct _mesa_glsl_parse_state *state,
+					     bool warn)
+{
+   /* gl_FragStencilRefARB is only available in the fragment shader.
+    */
+   ir_variable *const fd =
+      add_variable("gl_FragStencilRefARB", ir_var_out, FRAG_RESULT_STENCIL,
+		   glsl_type::int_type, instructions, state->symbols);
+
+   if (warn)
+      fd->warn_extension = "GL_ARB_shader_stencil_export";
+}
 
 static void
 generate_120_fs_variables(exec_list *instructions,
@@ -471,6 +485,10 @@ initialize_fs_variables(exec_list *instructions,
       generate_130_fs_variables(instructions, state);
       break;
    }
+
+   if (state->ARB_shader_stencil_export_enable)
+      generate_ARB_shader_stencil_export_variables(instructions, state,
+						   state->ARB_shader_stencil_export_warn);
 }
 
 void
@@ -485,10 +503,6 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       break;
    case fragment_shader:
       initialize_fs_variables(instructions, state);
-      break;
-   case ir_shader:
-      fprintf(stderr, "ir reader has no builtin variables");
-      exit(1);
       break;
    }
 }

@@ -86,7 +86,7 @@ struct softpipe_tile_cache
    struct softpipe_cached_tile *entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    float clear_color[4];  /**< for color bufs */
-   uint clear_val;        /**< for z+stencil, or packed color clear value */
+   uint clear_val;        /**< for z+stencil */
    boolean depth_stencil; /**< Is the surface a depth/stencil format? */
 
    struct softpipe_cached_tile *tile;  /**< scratch tile for clears */

@@ -49,7 +49,7 @@ struct brw_clip_unit_key {
 static void
 clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_CLIP_PROG */

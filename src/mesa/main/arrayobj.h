@@ -43,23 +43,23 @@
  */
 
 extern struct gl_array_object *
-_mesa_new_array_object( GLcontext *ctx, GLuint name );
+_mesa_new_array_object( struct gl_context *ctx, GLuint name );
 
 extern void
-_mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj );
+_mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj );
 
 extern void
-_mesa_reference_array_object(GLcontext *ctx,
+_mesa_reference_array_object(struct gl_context *ctx,
                              struct gl_array_object **ptr,
                              struct gl_array_object *arrayObj);
 
 extern void
-_mesa_initialize_array_object( GLcontext *ctx,
+_mesa_initialize_array_object( struct gl_context *ctx,
                                struct gl_array_object *obj, GLuint name );
 
 
 extern void
-_mesa_update_array_object_max_element(GLcontext *ctx,
+_mesa_update_array_object_max_element(struct gl_context *ctx,
                                       struct gl_array_object *arrayObj);
 
 

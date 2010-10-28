@@ -156,7 +156,7 @@ translate_logicop(GLenum logicop)
  * Figure out if colormasks are different per rt.
  */
 static GLboolean
-colormask_per_rt(GLcontext *ctx)
+colormask_per_rt(struct gl_context *ctx)
 {
    /* a bit suboptimal have to compare lots of values */
    unsigned i;
@@ -172,7 +172,7 @@ colormask_per_rt(GLcontext *ctx)
  * Figure out if blend enables are different per rt.
  */
 static GLboolean
-blend_per_rt(GLcontext *ctx)
+blend_per_rt(struct gl_context *ctx)
 {
    if (ctx->Color.BlendEnabled &&
       (ctx->Color.BlendEnabled != ((1 << ctx->Const.MaxDrawBuffers) - 1))) {

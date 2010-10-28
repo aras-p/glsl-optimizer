@@ -31,21 +31,21 @@
 #include "main/mtypes.h"
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
-GLboolean intel_check_blit_fragment_ops(GLcontext * ctx,
+GLboolean intel_check_blit_fragment_ops(struct gl_context * ctx,
 					GLboolean src_alpha_is_one);
 
 GLboolean intel_check_blit_format(struct intel_region *region,
                                   GLenum format, GLenum type);
 
 
-void intelReadPixels(GLcontext * ctx,
+void intelReadPixels(struct gl_context * ctx,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum format, GLenum type,
                      const struct gl_pixelstore_attrib *pack,
                      GLvoid * pixels);
 
-void intelDrawPixels(GLcontext * ctx,
+void intelDrawPixels(struct gl_context * ctx,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height,
                      GLenum format,
@@ -53,12 +53,12 @@ void intelDrawPixels(GLcontext * ctx,
                      const struct gl_pixelstore_attrib *unpack,
                      const GLvoid * pixels);
 
-void intelCopyPixels(GLcontext * ctx,
+void intelCopyPixels(struct gl_context * ctx,
                      GLint srcx, GLint srcy,
                      GLsizei width, GLsizei height,
                      GLint destx, GLint desty, GLenum type);
 
-void intelBitmap(GLcontext * ctx,
+void intelBitmap(struct gl_context * ctx,
 		 GLint x, GLint y,
 		 GLsizei width, GLsizei height,
 		 const struct gl_pixelstore_attrib *unpack,

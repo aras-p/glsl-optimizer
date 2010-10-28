@@ -31,7 +31,7 @@
 #include "nv10_driver.h"
 
 void
-nv10_emit_cull_face(GLcontext *ctx, int emit)
+nv10_emit_cull_face(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -47,7 +47,7 @@ nv10_emit_cull_face(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_front_face(GLcontext *ctx, int emit)
+nv10_emit_front_face(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -58,7 +58,7 @@ nv10_emit_front_face(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_line_mode(GLcontext *ctx, int emit)
+nv10_emit_line_mode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -73,12 +73,12 @@ nv10_emit_line_mode(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_line_stipple(GLcontext *ctx, int emit)
+nv10_emit_line_stipple(struct gl_context *ctx, int emit)
 {
 }
 
 void
-nv10_emit_point_mode(GLcontext *ctx, int emit)
+nv10_emit_point_mode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -91,7 +91,7 @@ nv10_emit_point_mode(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_polygon_mode(GLcontext *ctx, int emit)
+nv10_emit_polygon_mode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -105,7 +105,7 @@ nv10_emit_polygon_mode(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_polygon_offset(GLcontext *ctx, int emit)
+nv10_emit_polygon_offset(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
@@ -121,6 +121,6 @@ nv10_emit_polygon_offset(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_polygon_stipple(GLcontext *ctx, int emit)
+nv10_emit_polygon_stipple(struct gl_context *ctx, int emit)
 {
 }

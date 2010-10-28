@@ -262,7 +262,7 @@ r128DestroyScreen( __DRIscreen *sPriv )
 static GLboolean
 r128CreateBuffer( __DRIscreen *driScrnPriv,
                   __DRIdrawable *driDrawPriv,
-                  const __GLcontextModes *mesaVis,
+                  const struct gl_config *mesaVis,
                   GLboolean isPixmap )
 {
    r128ScreenPtr screen = (r128ScreenPtr) driScrnPriv->private;
@@ -349,7 +349,7 @@ r128CreateBuffer( __DRIscreen *driScrnPriv,
 static void
 r128DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -359,7 +359,7 @@ r128SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       r128ContextPtr rmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       rmesa = (r128ContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = rmesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {
@@ -400,7 +400,7 @@ r128FillInModes( __DRIscreen *psp,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
@@ -473,7 +473,7 @@ r128FillInModes( __DRIscreen *psp,
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 r128InitScreen(__DRIscreen *psp)

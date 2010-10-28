@@ -38,10 +38,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_context.h"
 
 extern void r128DDInitState( r128ContextPtr rmesa );
-extern void r128DDInitStateFuncs( GLcontext *ctx );
+extern void r128DDInitStateFuncs( struct gl_context *ctx );
 
-extern void r128DDUpdateState( GLcontext *ctx );
-extern void r128DDUpdateHWState( GLcontext *ctx );
+extern void r128DDUpdateState( struct gl_context *ctx );
+extern void r128DDUpdateHWState( struct gl_context *ctx );
 
 extern void r128EmitHwStateLocked( r128ContextPtr rmesa );
 

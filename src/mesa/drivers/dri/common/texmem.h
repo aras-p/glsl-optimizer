@@ -277,7 +277,7 @@ void driDestroyTextureObject( driTextureObject * t );
 int driAllocateTexture( driTexHeap * const * heap_array, unsigned nr_heaps,
     driTextureObject * t );
 
-GLboolean driIsTextureResident( GLcontext * ctx, 
+GLboolean driIsTextureResident( struct gl_context * ctx, 
     struct gl_texture_object * texObj );
 
 driTexHeap * driCreateTextureHeap( unsigned heap_id, void * context,
@@ -309,7 +309,7 @@ driSetTextureSwapCounterLocation( driTexHeap * heap, unsigned * counter );
 #define DRI_TEXMGR_DO_TEXTURE_CUBE  0x0008
 #define DRI_TEXMGR_DO_TEXTURE_RECT  0x0010
 
-void driInitTextureObjects( GLcontext *ctx, driTextureObject * swapped,
+void driInitTextureObjects( struct gl_context *ctx, driTextureObject * swapped,
 			    GLuint targets );
 
 GLboolean driValidateTextureHeaps( driTexHeap * const * texture_heaps,

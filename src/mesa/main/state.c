@@ -27,7 +27,7 @@
  * \file state.c
  * State management.
  * 
- * This file manages recalculation of derived values in GLcontext.
+ * This file manages recalculation of derived values in struct gl_context.
  */
 
 
@@ -51,7 +51,7 @@
 
 
 static void
-update_separate_specular(GLcontext *ctx)
+update_separate_specular(struct gl_context *ctx)
 {
    if (NEED_SECONDARY_COLOR(ctx))
       ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
@@ -107,7 +107,7 @@ update_min(GLuint min, struct gl_client_array *array)
  * Need to do this upon new array state or new buffer object state.
  */
 static void
-update_arrays( GLcontext *ctx )
+update_arrays( struct gl_context *ctx )
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i, min = ~0;
@@ -219,7 +219,7 @@ update_arrays( GLcontext *ctx )
  * This needs to be done before texture state validation.
  */
 static void
-update_program_enables(GLcontext *ctx)
+update_program_enables(struct gl_context *ctx)
 {
    /* These _Enabled flags indicate if the program is enabled AND valid. */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
@@ -245,9 +245,11 @@ update_program_enables(GLcontext *ctx)
  * or fragment program is being used.
  */
 static GLbitfield
-update_program(GLcontext *ctx)
+update_program(struct gl_context *ctx)
 {
-   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   const struct gl_shader_program *vsProg = ctx->Shader.CurrentVertexProgram;
+   const struct gl_shader_program *gsProg = ctx->Shader.CurrentGeometryProgram;
+   const struct gl_shader_program *fsProg = ctx->Shader.CurrentFragmentProgram;
    const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
    const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
    const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
@@ -269,10 +271,10 @@ update_program(GLcontext *ctx)
     * come up, or matter.
     */
 
-   if (shProg && shProg->LinkStatus && shProg->FragmentProgram) {
+   if (fsProg && fsProg->LinkStatus && fsProg->FragmentProgram) {
       /* Use shader programs */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               shProg->FragmentProgram);
+                               fsProg->FragmentProgram);
    }
    else if (ctx->FragmentProgram._Enabled) {
       /* use user-defined vertex program */
@@ -292,10 +294,10 @@ update_program(GLcontext *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    }
 
-   if (shProg && shProg->LinkStatus && shProg->GeometryProgram) {
+   if (gsProg && gsProg->LinkStatus && gsProg->GeometryProgram) {
       /* Use shader programs */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
-                               shProg->GeometryProgram);
+                               gsProg->GeometryProgram);
    } else {
       /* no fragment program */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
@@ -305,10 +307,10 @@ update_program(GLcontext *ctx)
     * _mesa_get_fixed_func_vertex_program() needs to know active
     * fragprog inputs.
     */
-   if (shProg && shProg->LinkStatus && shProg->VertexProgram) {
+   if (vsProg && vsProg->LinkStatus && vsProg->VertexProgram) {
       /* Use shader programs */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                            shProg->VertexProgram);
+                            vsProg->VertexProgram);
    }
    else if (ctx->VertexProgram._Enabled) {
       /* use user-defined vertex program */
@@ -362,7 +364,7 @@ update_program(GLcontext *ctx)
  * Examine shader constants and return either _NEW_PROGRAM_CONSTANTS or 0.
  */
 static GLbitfield
-update_program_constants(GLcontext *ctx)
+update_program_constants(struct gl_context *ctx)
 {
    GLbitfield new_state = 0x0;
 
@@ -399,7 +401,7 @@ update_program_constants(GLcontext *ctx)
 
 
 static void
-update_viewport_matrix(GLcontext *ctx)
+update_viewport_matrix(struct gl_context *ctx)
 {
    const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
 
@@ -421,7 +423,7 @@ update_viewport_matrix(GLcontext *ctx)
  * Update derived multisample state.
  */
 static void
-update_multisample(GLcontext *ctx)
+update_multisample(struct gl_context *ctx)
 {
    ctx->Multisample._Enabled = GL_FALSE;
    if (ctx->Multisample.Enabled &&
@@ -435,7 +437,7 @@ update_multisample(GLcontext *ctx)
  * Update derived color/blend/logicop state.
  */
 static void
-update_color(GLcontext *ctx)
+update_color(struct gl_context *ctx)
 {
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
@@ -449,7 +451,7 @@ update_color(GLcontext *ctx)
  * in ctx->_TriangleCaps if needed.
  */
 static void
-update_polygon(GLcontext *ctx)
+update_polygon(struct gl_context *ctx)
 {
    ctx->_TriangleCaps &= ~(DD_TRI_CULL_FRONT_BACK | DD_TRI_OFFSET);
 
@@ -471,7 +473,7 @@ update_polygon(GLcontext *ctx)
  */
 #if 0
 static void
-update_tricaps(GLcontext *ctx, GLbitfield new_state)
+update_tricaps(struct gl_context *ctx, GLbitfield new_state)
 {
    ctx->_TriangleCaps = 0;
 
@@ -540,7 +542,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
 
 /**
  * Compute derived GL state.
- * If __GLcontextRec::NewState is non-zero then this function \b must
+ * If __struct gl_contextRec::NewState is non-zero then this function \b must
  * be called before rendering anything.
  *
  * Calls dd_function_table::UpdateState to perform any internal state
@@ -551,7 +553,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
  * _mesa_update_lighting() and _mesa_update_tnl_spaces().
  */
 void
-_mesa_update_state_locked( GLcontext *ctx )
+_mesa_update_state_locked( struct gl_context *ctx )
 {
    GLbitfield new_state = ctx->NewState;
    GLbitfield prog_flags = _NEW_PROGRAM;
@@ -670,7 +672,7 @@ _mesa_update_state_locked( GLcontext *ctx )
 /* This is the usual entrypoint for state updates:
  */
 void
-_mesa_update_state( GLcontext *ctx )
+_mesa_update_state( struct gl_context *ctx )
 {
    _mesa_lock_context_textures(ctx);
    _mesa_update_state_locked(ctx);
@@ -703,7 +705,7 @@ _mesa_update_state( GLcontext *ctx )
  * Otherwise, the fp should track them as state values instead.
  */
 void
-_mesa_set_varying_vp_inputs( GLcontext *ctx,
+_mesa_set_varying_vp_inputs( struct gl_context *ctx,
                              GLbitfield varying_inputs )
 {
    if (ctx->varying_vp_inputs != varying_inputs) {
@@ -721,7 +723,7 @@ _mesa_set_varying_vp_inputs( GLcontext *ctx,
  * of ordinary varyings/inputs.
  */
 void
-_mesa_set_vp_override(GLcontext *ctx, GLboolean flag)
+_mesa_set_vp_override(struct gl_context *ctx, GLboolean flag)
 {
    if (ctx->VertexProgram._Overriden != flag) {
       ctx->VertexProgram._Overriden = flag;

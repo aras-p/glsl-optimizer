@@ -53,7 +53,7 @@ MKDEP_OPTIONS = @MKDEP_OPTIONS@
 INSTALL = @INSTALL@
 
 # Python and flags (generally only needed by the developers)
-PYTHON2 = python
+PYTHON2 = @PYTHON2@
 PYTHON_FLAGS = -t -O -O
 
 # Library names (base name)

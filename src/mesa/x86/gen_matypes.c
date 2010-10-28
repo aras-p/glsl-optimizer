@@ -84,22 +84,22 @@ int main( int argc, char **argv )
    printf( "\n" );
 
 
-   /* GLcontext offsets:
+   /* struct gl_context offsets:
     */
-   OFFSET_HEADER( "GLcontext" );
+   OFFSET_HEADER( "struct gl_context" );
 
-   OFFSET( "CTX_DRIVER_CTX              ", GLcontext, DriverCtx );
+   OFFSET( "CTX_DRIVER_CTX              ", struct gl_context, DriverCtx );
    printf( "\n" );
-   OFFSET( "CTX_LIGHT_ENABLED           ", GLcontext, Light.Enabled );
-   OFFSET( "CTX_LIGHT_SHADE_MODEL       ", GLcontext, Light.ShadeModel );
-   OFFSET( "CTX_LIGHT_COLOR_MAT_FACE    ", GLcontext, Light.ColorMaterialFace );
-   OFFSET( "CTX_LIGHT_COLOR_MAT_MODE    ", GLcontext, Light.ColorMaterialMode );
-   OFFSET( "CTX_LIGHT_COLOR_MAT_MASK    ", GLcontext, Light.ColorMaterialBitmask );
-   OFFSET( "CTX_LIGHT_COLOR_MAT_ENABLED ", GLcontext, Light.ColorMaterialEnabled );
-   OFFSET( "CTX_LIGHT_ENABLED_LIST      ", GLcontext, Light.EnabledList );
-   OFFSET( "CTX_LIGHT_NEED_VERTS        ", GLcontext, Light._NeedVertices );
-   OFFSET( "CTX_LIGHT_FLAGS             ", GLcontext, Light._Flags );
-   OFFSET( "CTX_LIGHT_BASE_COLOR        ", GLcontext, Light._BaseColor );
+   OFFSET( "CTX_LIGHT_ENABLED           ", struct gl_context, Light.Enabled );
+   OFFSET( "CTX_LIGHT_SHADE_MODEL       ", struct gl_context, Light.ShadeModel );
+   OFFSET( "CTX_LIGHT_COLOR_MAT_FACE    ", struct gl_context, Light.ColorMaterialFace );
+   OFFSET( "CTX_LIGHT_COLOR_MAT_MODE    ", struct gl_context, Light.ColorMaterialMode );
+   OFFSET( "CTX_LIGHT_COLOR_MAT_MASK    ", struct gl_context, Light.ColorMaterialBitmask );
+   OFFSET( "CTX_LIGHT_COLOR_MAT_ENABLED ", struct gl_context, Light.ColorMaterialEnabled );
+   OFFSET( "CTX_LIGHT_ENABLED_LIST      ", struct gl_context, Light.EnabledList );
+   OFFSET( "CTX_LIGHT_NEED_VERTS        ", struct gl_context, Light._NeedVertices );
+   OFFSET( "CTX_LIGHT_FLAGS             ", struct gl_context, Light._Flags );
+   OFFSET( "CTX_LIGHT_BASE_COLOR        ", struct gl_context, Light._BaseColor );
 
 
    /* struct vertex_buffer offsets:

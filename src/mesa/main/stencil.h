@@ -71,10 +71,10 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask);
 
 
 extern void
-_mesa_update_stencil(GLcontext *ctx);
+_mesa_update_stencil(struct gl_context *ctx);
 
 
 extern void 
-_mesa_init_stencil( GLcontext * ctx );
+_mesa_init_stencil( struct gl_context * ctx );
 
 #endif

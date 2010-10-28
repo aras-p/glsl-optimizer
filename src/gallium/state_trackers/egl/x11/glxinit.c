@@ -18,7 +18,7 @@
 #include "GL/glxproto.h"
 #include "GL/glxtokens.h"
 #include "GL/gl.h" /* for GL types needed by __GLcontextModes */
-#include "GL/internal/glcore.h"  /* for __GLcontextModes */
+#include "glcore.h"  /* for __GLcontextModes */
 
 #include "glxinit.h"
 

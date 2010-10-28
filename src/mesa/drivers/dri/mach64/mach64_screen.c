@@ -71,7 +71,7 @@ mach64FillInModes( __DRIscreen *psp,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
-    __GLcontextModes * m;
+    struct gl_config * m;
     GLenum fb_format;
     GLenum fb_type;
     unsigned depth_buffer_factor;
@@ -298,7 +298,7 @@ mach64DestroyScreen( __DRIscreen *driScreen )
 static GLboolean
 mach64CreateBuffer( __DRIscreen *driScrnPriv,
 		    __DRIdrawable *driDrawPriv,
-		    const __GLcontextModes *mesaVis,
+		    const struct gl_config *mesaVis,
 		    GLboolean isPixmap )
 {
    mach64ScreenPtr screen = (mach64ScreenPtr) driScrnPriv->private;
@@ -369,7 +369,7 @@ mach64CreateBuffer( __DRIscreen *driScrnPriv,
 static void
 mach64DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+   _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -379,7 +379,7 @@ mach64SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mach64ContextPtr mmesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       mmesa = (mach64ContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = mmesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {
@@ -414,7 +414,7 @@ mach64InitDriver( __DRIscreen *driScreen )
  * 
  * \todo maybe fold this into intelInitDriver
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const __DRIconfig **
 mach64InitScreen(__DRIscreen *psp)

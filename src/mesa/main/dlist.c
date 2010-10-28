@@ -53,6 +53,7 @@
 #include "image.h"
 #include "light.h"
 #include "macros.h"
+#include "pack.h"
 #include "queryobj.h"
 #include "teximage.h"
 #include "mtypes.h"
@@ -77,9 +78,9 @@
 struct gl_list_instruction
 {
    GLuint Size;
-   void (*Execute)( GLcontext *ctx, void *data );
-   void (*Destroy)( GLcontext *ctx, void *data );
-   void (*Print)( GLcontext *ctx, void *data );
+   void (*Execute)( struct gl_context *ctx, void *data );
+   void (*Destroy)( struct gl_context *ctx, void *data );
+   void (*Print)( struct gl_context *ctx, void *data );
 };
 
 
@@ -410,6 +411,16 @@ typedef enum
    OPCODE_BEGIN_TRANSFORM_FEEDBACK,
    OPCODE_END_TRANSFORM_FEEDBACK,
 
+   /* GL_EXT_texture_integer */
+   OPCODE_CLEARCOLOR_I,
+   OPCODE_CLEARCOLOR_UI,
+   OPCODE_TEXPARAMETER_I,
+   OPCODE_TEXPARAMETER_UI,
+
+   /* GL_EXT_separate_shader_objects */
+   OPCODE_ACTIVE_PROGRAM_EXT,
+   OPCODE_USE_SHADER_PROGRAM_EXT,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -496,7 +507,7 @@ make_list(GLuint name, GLuint count)
  * Lookup function to just encapsulate casting.
  */
 static INLINE struct gl_display_list *
-lookup_list(GLcontext *ctx, GLuint list)
+lookup_list(struct gl_context *ctx, GLuint list)
 {
    return (struct gl_display_list *)
       _mesa_HashLookup(ctx->Shared->DisplayList, list);
@@ -513,7 +524,7 @@ is_ext_opcode(OpCode opcode)
 
 /** Destroy an extended opcode instruction */
 static GLint
-ext_opcode_destroy(GLcontext *ctx, Node *node)
+ext_opcode_destroy(struct gl_context *ctx, Node *node)
 {
    const GLint i = node[0].opcode - OPCODE_EXT_0;
    GLint step;
@@ -525,7 +536,7 @@ ext_opcode_destroy(GLcontext *ctx, Node *node)
 
 /** Execute an extended opcode instruction */
 static GLint
-ext_opcode_execute(GLcontext *ctx, Node *node)
+ext_opcode_execute(struct gl_context *ctx, Node *node)
 {
    const GLint i = node[0].opcode - OPCODE_EXT_0;
    GLint step;
@@ -537,7 +548,7 @@ ext_opcode_execute(GLcontext *ctx, Node *node)
 
 /** Print an extended opcode instruction */
 static GLint
-ext_opcode_print(GLcontext *ctx, Node *node)
+ext_opcode_print(struct gl_context *ctx, Node *node)
 {
    const GLint i = node[0].opcode - OPCODE_EXT_0;
    GLint step;
@@ -552,7 +563,7 @@ ext_opcode_print(GLcontext *ctx, Node *node)
  * \param dlist - display list pointer
  */
 void
-_mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
+_mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
 {
    Node *n, *block;
    GLboolean done;
@@ -730,7 +741,7 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
  * \param list - display list number
  */
 static void
-destroy_list(GLcontext *ctx, GLuint list)
+destroy_list(struct gl_context *ctx, GLuint list)
 {
    struct gl_display_list *dlist;
 
@@ -814,7 +825,7 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
  * If we run out of memory, GL_OUT_OF_MEMORY will be recorded.
  */
 static GLvoid *
-unpack_image(GLcontext *ctx, GLuint dimensions,
+unpack_image(struct gl_context *ctx, GLuint dimensions,
              GLsizei width, GLsizei height, GLsizei depth,
              GLenum format, GLenum type, const GLvoid * pixels,
              const struct gl_pixelstore_attrib *unpack)
@@ -866,7 +877,7 @@ unpack_image(GLcontext *ctx, GLuint dimensions,
  * \return pointer to allocated memory (the opcode space)
  */
 static Node *
-dlist_alloc(GLcontext *ctx, OpCode opcode, GLuint bytes)
+dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes)
 {
    const GLuint numNodes = 1 + (bytes + sizeof(Node) - 1) / sizeof(Node);
    Node *n;
@@ -917,7 +928,7 @@ dlist_alloc(GLcontext *ctx, OpCode opcode, GLuint bytes)
  *         opcode).
  */
 void *
-_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
+_mesa_dlist_alloc(struct gl_context *ctx, GLuint opcode, GLuint bytes)
 {
    Node *n = dlist_alloc(ctx, (OpCode) opcode, bytes);
    if (n)
@@ -938,11 +949,11 @@ _mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
  * \return  the new opcode number or -1 if error
  */
 GLint
-_mesa_dlist_alloc_opcode(GLcontext *ctx,
+_mesa_dlist_alloc_opcode(struct gl_context *ctx,
                          GLuint size,
-                         void (*execute) (GLcontext *, void *),
-                         void (*destroy) (GLcontext *, void *),
-                         void (*print) (GLcontext *, void *))
+                         void (*execute) (struct gl_context *, void *),
+                         void (*destroy) (struct gl_context *, void *),
+                         void (*print) (struct gl_context *, void *))
 {
    if (ctx->ListExt->NumOpcodes < MAX_DLIST_EXT_OPCODES) {
       const GLuint i = ctx->ListExt->NumOpcodes++;
@@ -967,7 +978,7 @@ _mesa_dlist_alloc_opcode(GLcontext *ctx,
  * \return  pointer to start of instruction space
  */
 static INLINE Node *
-alloc_instruction(GLcontext *ctx, OpCode opcode, GLuint nparams)
+alloc_instruction(struct gl_context *ctx, OpCode opcode, GLuint nparams)
 {
    return dlist_alloc(ctx, opcode, nparams * sizeof(Node));
 }
@@ -1132,7 +1143,7 @@ save_BlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
    }
 }
 
-static void invalidate_saved_current_state( GLcontext *ctx )
+static void invalidate_saved_current_state( struct gl_context *ctx )
 {
    GLint i;
 
@@ -6786,6 +6797,137 @@ save_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
    }
 }
 
+static void GLAPIENTRY
+save_UseShaderProgramEXT(GLenum type, GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_USE_SHADER_PROGRAM_EXT, 2);
+   if (n) {
+      n[1].ui = type;
+      n[2].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_UseShaderProgramEXT(ctx->Exec, (type, program));
+   }
+}
+
+static void GLAPIENTRY
+save_ActiveProgramEXT(GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_ACTIVE_PROGRAM_EXT, 1);
+   if (n) {
+      n[1].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ActiveProgramEXT(ctx->Exec, (program));
+   }
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+save_ClearColorIi(GLint red, GLint green, GLint blue, GLint alpha)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEARCOLOR_I, 4);
+   if (n) {
+      n[1].i = red;
+      n[2].i = green;
+      n[3].i = blue;
+      n[4].i = alpha;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ClearColorIiEXT(ctx->Exec, (red, green, blue, alpha));
+   }
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+save_ClearColorIui(GLuint red, GLuint green, GLuint blue, GLuint alpha)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEARCOLOR_UI, 4);
+   if (n) {
+      n[1].ui = red;
+      n[2].ui = green;
+      n[3].ui = blue;
+      n[4].ui = alpha;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ClearColorIuiEXT(ctx->Exec, (red, green, blue, alpha));
+   }
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+save_TexParameterIiv(GLenum target, GLenum pname, const GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_TEXPARAMETER_I, 6);
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].i = params[0];
+      n[4].i = params[1];
+      n[5].i = params[2];
+      n[6].i = params[3];
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_TexParameterIivEXT(ctx->Exec, (target, pname, params));
+   }
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+save_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_TEXPARAMETER_UI, 6);
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].ui = params[0];
+      n[4].ui = params[1];
+      n[5].ui = params[2];
+      n[6].ui = params[3];
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_TexParameterIuivEXT(ctx->Exec, (target, pname, params));
+   }
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+exec_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   CALL_GetTexParameterIivEXT(ctx->Exec, (target, pname, params));
+}
+
+/** GL_EXT_texture_integer */
+static void GLAPIENTRY
+exec_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   CALL_GetTexParameterIuivEXT(ctx->Exec, (target, pname, params));
+}
+
+
+
 
 
 /**
@@ -6795,7 +6937,7 @@ save_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
  * command that provoked the error.  I don't see this as a problem.
  */
 static void
-save_error(GLcontext *ctx, GLenum error, const char *s)
+save_error(struct gl_context *ctx, GLenum error, const char *s)
 {
    Node *n;
    n = alloc_instruction(ctx, OPCODE_ERROR, 2);
@@ -6810,7 +6952,7 @@ save_error(GLcontext *ctx, GLenum error, const char *s)
  * Compile an error into current display list.
  */
 void
-_mesa_compile_error(GLcontext *ctx, GLenum error, const char *s)
+_mesa_compile_error(struct gl_context *ctx, GLenum error, const char *s)
 {
    if (ctx->CompileFlag)
       save_error(ctx, error, s);
@@ -6823,7 +6965,7 @@ _mesa_compile_error(GLcontext *ctx, GLenum error, const char *s)
  * Test if ID names a display list.
  */
 static GLboolean
-islist(GLcontext *ctx, GLuint list)
+islist(struct gl_context *ctx, GLuint list)
 {
    if (list > 0 && lookup_list(ctx, list)) {
       return GL_TRUE;
@@ -6847,7 +6989,7 @@ islist(GLcontext *ctx, GLuint list)
  * \param list - display list number
  */
 static void
-execute_list(GLcontext *ctx, GLuint list)
+execute_list(struct gl_context *ctx, GLuint list)
 {
    struct gl_display_list *dlist;
    Node *n;
@@ -7673,6 +7815,12 @@ execute_list(GLcontext *ctx, GLuint list)
 	 case OPCODE_USE_PROGRAM:
 	    CALL_UseProgramObjectARB(ctx->Exec, (n[1].ui));
 	    break;
+	 case OPCODE_USE_SHADER_PROGRAM_EXT:
+	    CALL_UseShaderProgramEXT(ctx->Exec, (n[1].ui, n[2].ui));
+	    break;
+	 case OPCODE_ACTIVE_PROGRAM_EXT:
+	    CALL_ActiveProgramEXT(ctx->Exec, (n[1].ui));
+	    break;
 	 case OPCODE_UNIFORM_1F:
 	    CALL_Uniform1fARB(ctx->Exec, (n[1].i, n[2].f));
 	    break;
@@ -7901,6 +8049,35 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_EVAL_P2:
             CALL_EvalPoint2(ctx->Exec, (n[1].i, n[2].i));
+            break;
+
+         /* GL_EXT_texture_integer */
+         case OPCODE_CLEARCOLOR_I:
+            CALL_ClearColorIiEXT(ctx->Exec, (n[1].i, n[2].i, n[3].i, n[4].i));
+            break;
+         case OPCODE_CLEARCOLOR_UI:
+            CALL_ClearColorIuiEXT(ctx->Exec,
+                                  (n[1].ui, n[2].ui, n[3].ui, n[4].ui));
+            break;
+         case OPCODE_TEXPARAMETER_I:
+            {
+               GLint params[4];
+               params[0] = n[3].i;
+               params[1] = n[4].i;
+               params[2] = n[5].i;
+               params[3] = n[6].i;
+               CALL_TexParameterIivEXT(ctx->Exec, (n[1].e, n[2].e, params));
+            }
+            break;
+         case OPCODE_TEXPARAMETER_UI:
+            {
+               GLuint params[4];
+               params[0] = n[3].ui;
+               params[1] = n[4].ui;
+               params[2] = n[5].ui;
+               params[3] = n[6].ui;
+               CALL_TexParameterIuivEXT(ctx->Exec, (n[1].e, n[2].e, params));
+            }
             break;
 
          case OPCODE_CONTINUE:
@@ -9531,6 +9708,18 @@ _mesa_create_save_table(void)
    SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
 #endif
 
+   /* GL_EXT_texture_integer */
+   SET_ClearColorIiEXT(table, save_ClearColorIi);
+   SET_ClearColorIuiEXT(table, save_ClearColorIui);
+   SET_TexParameterIivEXT(table, save_TexParameterIiv);
+   SET_TexParameterIuivEXT(table, save_TexParameterIuiv);
+   SET_GetTexParameterIivEXT(table, exec_GetTexParameterIiv);
+   SET_GetTexParameterIuivEXT(table, exec_GetTexParameterIuiv);
+
+   /* 377. GL_EXT_separate_shader_objects */
+   SET_UseShaderProgramEXT(table, save_UseShaderProgramEXT);
+   SET_ActiveProgramEXT(table, save_ActiveProgramEXT);
+
    /* GL 3.0 */
 #if 0
    SET_ClearBufferiv(table, save_ClearBufferiv);
@@ -9577,7 +9766,7 @@ enum_string(GLenum k)
  * TODO: many commands aren't handled yet.
  */
 static void GLAPIENTRY
-print_list(GLcontext *ctx, GLuint list)
+print_list(struct gl_context *ctx, GLuint list)
 {
    struct gl_display_list *dlist;
    Node *n;
@@ -9969,7 +10158,7 @@ void _mesa_init_dlist_dispatch(struct _glapi_table *disp)
  * Initialize display list state for given context.
  */
 void
-_mesa_init_display_list(GLcontext *ctx)
+_mesa_init_display_list(struct gl_context *ctx)
 {
    static GLboolean tableInitialized = GL_FALSE;
 
@@ -9999,7 +10188,7 @@ _mesa_init_display_list(GLcontext *ctx)
 
 
 void
-_mesa_free_display_list_data(GLcontext *ctx)
+_mesa_free_display_list_data(struct gl_context *ctx)
 {
    free(ctx->ListExt);
    ctx->ListExt = NULL;

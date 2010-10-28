@@ -620,14 +620,20 @@ static uint32_t r300_get_border_color(enum pipe_format format,
             }
             break;
 
+        case 16:
+            r = ((float_to_ubyte(border_swizzled[2]) & 0xff) << 0) |
+                ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
+                ((float_to_ubyte(border_swizzled[0]) & 0xff) << 16) |
+                ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+            break;
+
+        case 8:
         default:
-            /* I think the fat formats (16, 32) are specified
-             * as the 8-bit ones. I am not sure how compressed formats
-             * work here. */
             r = ((float_to_ubyte(border_swizzled[0]) & 0xff) << 0) |
                 ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
                 ((float_to_ubyte(border_swizzled[2]) & 0xff) << 16) |
                 ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+            break;
     }
 
     return r;

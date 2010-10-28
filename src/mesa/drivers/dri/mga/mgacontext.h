@@ -179,7 +179,7 @@ struct mga_hw_state {
 
 struct mga_context_t {
 
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
    unsigned int lastStamp;		/* fullscreen breaks dpriv->laststamp,
 					 * need to shadow it here. */
 

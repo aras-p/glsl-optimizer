@@ -132,29 +132,38 @@ static const struct {
    int egl_attr;
 } fbconfig_attributes[] = {
    /* table 3.1 of GLX 1.4 */
-   { GLX_BUFFER_SIZE,			EGL_BUFFER_SIZE },
-   { GLX_LEVEL,				EGL_LEVEL },
-   { GLX_RED_SIZE,			EGL_RED_SIZE },
-   { GLX_GREEN_SIZE,			EGL_GREEN_SIZE },
-   { GLX_BLUE_SIZE,			EGL_BLUE_SIZE },
-   { GLX_ALPHA_SIZE,			EGL_ALPHA_SIZE },
-   { GLX_DEPTH_SIZE,			EGL_DEPTH_SIZE },
-   { GLX_STENCIL_SIZE,			EGL_STENCIL_SIZE },
-   { GLX_SAMPLE_BUFFERS,		EGL_SAMPLE_BUFFERS },
-   { GLX_SAMPLES,			EGL_SAMPLES },
-   { GLX_RENDER_TYPE,			EGL_RENDERABLE_TYPE },
-   { GLX_X_RENDERABLE,			EGL_NATIVE_RENDERABLE },
-   { GLX_X_VISUAL_TYPE,			EGL_NATIVE_VISUAL_TYPE },
-   { GLX_CONFIG_CAVEAT,			EGL_CONFIG_CAVEAT },
-   { GLX_TRANSPARENT_TYPE,		EGL_TRANSPARENT_TYPE },
-   { GLX_TRANSPARENT_RED_VALUE,		EGL_TRANSPARENT_RED_VALUE },
-   { GLX_TRANSPARENT_GREEN_VALUE,	EGL_TRANSPARENT_GREEN_VALUE },
-   { GLX_TRANSPARENT_BLUE_VALUE,	EGL_TRANSPARENT_BLUE_VALUE },
-   { GLX_MAX_PBUFFER_WIDTH,		EGL_MAX_PBUFFER_WIDTH },
-   { GLX_MAX_PBUFFER_HEIGHT,		EGL_MAX_PBUFFER_HEIGHT },
-   { GLX_MAX_PBUFFER_PIXELS,		EGL_MAX_PBUFFER_PIXELS },
-   { GLX_VISUAL_ID,			EGL_NATIVE_VISUAL_ID },
-   { GLX_X_VISUAL_TYPE,			EGL_NATIVE_VISUAL_TYPE },
+   { GLX_FBCONFIG_ID,                  0 },
+   { GLX_BUFFER_SIZE,                  EGL_BUFFER_SIZE },
+   { GLX_LEVEL,                        EGL_LEVEL },
+   { GLX_DOUBLEBUFFER,                 0 },
+   { GLX_STEREO,                       0 },
+   { GLX_AUX_BUFFERS,                  0 },
+   { GLX_RED_SIZE,                     EGL_RED_SIZE },
+   { GLX_GREEN_SIZE,                   EGL_GREEN_SIZE },
+   { GLX_BLUE_SIZE,                    EGL_BLUE_SIZE },
+   { GLX_ALPHA_SIZE,                   EGL_ALPHA_SIZE },
+   { GLX_DEPTH_SIZE,                   EGL_DEPTH_SIZE },
+   { GLX_STENCIL_SIZE,                 EGL_STENCIL_SIZE },
+   { GLX_ACCUM_RED_SIZE,               0 },
+   { GLX_ACCUM_GREEN_SIZE,             0 },
+   { GLX_ACCUM_BLUE_SIZE,              0 },
+   { GLX_ACCUM_ALPHA_SIZE,             0 },
+   { GLX_SAMPLE_BUFFERS,               EGL_SAMPLE_BUFFERS },
+   { GLX_SAMPLES,                      EGL_SAMPLES },
+   { GLX_RENDER_TYPE,                  0 },
+   { GLX_DRAWABLE_TYPE,                EGL_SURFACE_TYPE },
+   { GLX_X_RENDERABLE,                 EGL_NATIVE_RENDERABLE },
+   { GLX_X_VISUAL_TYPE,                EGL_NATIVE_VISUAL_TYPE },
+   { GLX_CONFIG_CAVEAT,                EGL_CONFIG_CAVEAT },
+   { GLX_TRANSPARENT_TYPE,             EGL_TRANSPARENT_TYPE },
+   { GLX_TRANSPARENT_INDEX_VALUE,      0 },
+   { GLX_TRANSPARENT_RED_VALUE,        EGL_TRANSPARENT_RED_VALUE },
+   { GLX_TRANSPARENT_GREEN_VALUE,      EGL_TRANSPARENT_GREEN_VALUE },
+   { GLX_TRANSPARENT_BLUE_VALUE,       EGL_TRANSPARENT_BLUE_VALUE },
+   { GLX_MAX_PBUFFER_WIDTH,            EGL_MAX_PBUFFER_WIDTH },
+   { GLX_MAX_PBUFFER_HEIGHT,           EGL_MAX_PBUFFER_HEIGHT },
+   { GLX_MAX_PBUFFER_PIXELS,           EGL_MAX_PBUFFER_PIXELS },
+   { GLX_VISUAL_ID,                    EGL_NATIVE_VISUAL_ID }
 };
 
 
@@ -162,13 +171,31 @@ static EGLBoolean
 convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
                  struct GLX_egl_config *GLX_conf)
 {
-   int err = 0, attr, egl_attr, val;
+   int err, attr, val;
    unsigned i;
-   EGLint conformant, config_caveat, surface_type;
+
+   /* must have rgba bit */
+   err = glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &val);
+   if (err || !(val & GLX_RGBA_BIT))
+      return EGL_FALSE;
+
+   /* must know whether it is double-buffered */
+   err = glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &val);
+   if (err)
+      return EGL_FALSE;
+   GLX_conf->double_buffered = val;
+
+   GLX_conf->Base.RenderableType = EGL_OPENGL_BIT;
+   GLX_conf->Base.Conformant = EGL_OPENGL_BIT;
 
    for (i = 0; i < ARRAY_SIZE(fbconfig_attributes); i++) {
+      EGLint egl_attr, egl_val;
+
       attr = fbconfig_attributes[i].attr;
       egl_attr = fbconfig_attributes[i].egl_attr;
+      if (!egl_attr)
+         continue;
+
       err = glXGetFBConfigAttrib(dpy, fbconfig, attr, &val);
       if (err) {
          if (err == GLX_BAD_ATTRIBUTE) {
@@ -178,46 +205,70 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
          break;
       }
 
-      _eglSetConfigKey(&GLX_conf->Base, egl_attr, val);
+      switch (egl_attr) {
+      case EGL_SURFACE_TYPE:
+         egl_val = 0;
+         if (val & GLX_WINDOW_BIT)
+            egl_val |= EGL_WINDOW_BIT;
+         /* pixmap and pbuffer surfaces must be single-buffered in EGL */
+         if (!GLX_conf->double_buffered) {
+            if (val & GLX_PIXMAP_BIT)
+               egl_val |= EGL_PIXMAP_BIT;
+            if (val & GLX_PBUFFER_BIT)
+               egl_val |= EGL_PBUFFER_BIT;
+         }
+         break;
+      case EGL_NATIVE_VISUAL_TYPE:
+         switch (val) {
+         case GLX_TRUE_COLOR:
+            egl_val = TrueColor;
+            break;
+         case GLX_DIRECT_COLOR:
+            egl_val = DirectColor;
+            break;
+         case GLX_PSEUDO_COLOR:
+            egl_val = PseudoColor;
+            break;
+         case GLX_STATIC_COLOR:
+            egl_val = StaticColor;
+            break;
+         case GLX_GRAY_SCALE:
+            egl_val = GrayScale;
+            break;
+         case GLX_STATIC_GRAY:
+            egl_val = StaticGray;
+            break;
+         default:
+            egl_val = EGL_NONE;
+            break;
+         }
+         break;
+      case EGL_CONFIG_CAVEAT:
+         egl_val = EGL_NONE;
+         if (val == GLX_SLOW_CONFIG) {
+            egl_val = EGL_SLOW_CONFIG;
+         }
+         else if (val == GLX_NON_CONFORMANT_CONFIG) {
+            GLX_conf->Base.Conformant &= ~EGL_OPENGL_BIT;
+            egl_val = EGL_NONE;
+         }
+         break;
+      case EGL_TRANSPARENT_TYPE:
+         egl_val = (val == GLX_TRANSPARENT_RGB) ?
+            EGL_TRANSPARENT_RGB : EGL_NONE;
+         break;
+      default:
+         egl_val = val;
+         break;
+      }
+
+      _eglSetConfigKey(&GLX_conf->Base, egl_attr, egl_val);
    }
    if (err)
       return EGL_FALSE;
 
-   /* must have rgba bit */
-   glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &val);
-   if (!(val & GLX_RGBA_BIT))
+   if (!GLX_conf->Base.SurfaceType)
       return EGL_FALSE;
-
-   conformant = EGL_OPENGL_BIT;
-   glXGetFBConfigAttrib(dpy, fbconfig, GLX_CONFIG_CAVEAT, &val);
-   if (val == GLX_SLOW_CONFIG)
-      config_caveat = EGL_SLOW_CONFIG;
-   if (val == GLX_NON_CONFORMANT_CONFIG)
-      conformant &= ~EGL_OPENGL_BIT;
-   if (!(conformant & EGL_OPENGL_ES_BIT))
-      config_caveat = EGL_NON_CONFORMANT_CONFIG;
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_CONFIG_CAVEAT, config_caveat);
-
-   surface_type = 0;
-   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DRAWABLE_TYPE, &val);
-   if (val & GLX_WINDOW_BIT)
-      surface_type |= EGL_WINDOW_BIT;
-   if (val & GLX_PIXMAP_BIT)
-      surface_type |= EGL_PIXMAP_BIT;
-   if (val & GLX_PBUFFER_BIT)
-      surface_type |= EGL_PBUFFER_BIT;
-
-   /* pixmap and pbuffer surfaces must be single-buffered in EGL */
-   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &val);
-   GLX_conf->double_buffered = val;
-   if (GLX_conf->double_buffered) {
-      surface_type &= ~(EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
-      if (!surface_type)
-         return EGL_FALSE;
-   }
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_SURFACE_TYPE, surface_type);
 
    return EGL_TRUE;
 }
@@ -227,35 +278,69 @@ static const struct {
    int egl_attr;
 } visual_attributes[] = {
    /* table 3.7 of GLX 1.4 */
-   /* no GLX_USE_GL */
-   { GLX_BUFFER_SIZE,		EGL_BUFFER_SIZE },
-   { GLX_LEVEL,			EGL_LEVEL },
-   { GLX_RED_SIZE,		EGL_RED_SIZE },
-   { GLX_GREEN_SIZE,		EGL_GREEN_SIZE },
-   { GLX_BLUE_SIZE,		EGL_BLUE_SIZE },
-   { GLX_ALPHA_SIZE,		EGL_ALPHA_SIZE },
-   { GLX_DEPTH_SIZE,		EGL_DEPTH_SIZE },
-   { GLX_STENCIL_SIZE,		EGL_STENCIL_SIZE },
-   { GLX_SAMPLE_BUFFERS,	EGL_SAMPLE_BUFFERS },
-   { GLX_SAMPLES,		EGL_SAMPLES },
+   { GLX_USE_GL,              0 },
+   { GLX_BUFFER_SIZE,         EGL_BUFFER_SIZE },
+   { GLX_LEVEL,               EGL_LEVEL },
+   { GLX_RGBA,                0 },
+   { GLX_DOUBLEBUFFER,        0 },
+   { GLX_STEREO,              0 },
+   { GLX_AUX_BUFFERS,         0 },
+   { GLX_RED_SIZE,            EGL_RED_SIZE },
+   { GLX_GREEN_SIZE,          EGL_GREEN_SIZE },
+   { GLX_BLUE_SIZE,           EGL_BLUE_SIZE },
+   { GLX_ALPHA_SIZE,          EGL_ALPHA_SIZE },
+   { GLX_DEPTH_SIZE,          EGL_DEPTH_SIZE },
+   { GLX_STENCIL_SIZE,        EGL_STENCIL_SIZE },
+   { GLX_ACCUM_RED_SIZE,      0 },
+   { GLX_ACCUM_GREEN_SIZE,    0 },
+   { GLX_ACCUM_BLUE_SIZE,     0 },
+   { GLX_ACCUM_ALPHA_SIZE,    0 },
+   { GLX_SAMPLE_BUFFERS,      EGL_SAMPLE_BUFFERS },
+   { GLX_SAMPLES,             EGL_SAMPLES },
+   { GLX_FBCONFIG_ID,         0 },
+   /* GLX_EXT_visual_rating */
+   { GLX_VISUAL_CAVEAT_EXT,   EGL_CONFIG_CAVEAT }
 };
 
 static EGLBoolean
 convert_visual(Display *dpy, XVisualInfo *vinfo,
                struct GLX_egl_config *GLX_conf)
 {
-   int err, attr, egl_attr, val;
+   int err, attr, val;
    unsigned i;
-   EGLint conformant, config_caveat, surface_type;
 
-   /* the visual must support OpenGL */
+   /* the visual must support OpenGL and RGBA buffer */
    err = glXGetConfig(dpy, vinfo, GLX_USE_GL, &val);
+   if (!err && val)
+      err = glXGetConfig(dpy, vinfo, GLX_RGBA, &val);
    if (err || !val)
       return EGL_FALSE;
 
+   /* must know whether it is double-buffered */
+   err = glXGetConfig(dpy, vinfo, GLX_DOUBLEBUFFER, &val);
+   if (err)
+      return EGL_FALSE;
+   GLX_conf->double_buffered = val;
+
+   GLX_conf->Base.RenderableType = EGL_OPENGL_BIT;
+   GLX_conf->Base.Conformant = EGL_OPENGL_BIT;
+   GLX_conf->Base.SurfaceType = EGL_WINDOW_BIT;
+   /* pixmap surfaces must be single-buffered in EGL */
+   if (!GLX_conf->double_buffered)
+      GLX_conf->Base.SurfaceType |= EGL_PIXMAP_BIT;
+
+   GLX_conf->Base.NativeVisualID = vinfo->visualid;
+   GLX_conf->Base.NativeVisualType = vinfo->class;
+   GLX_conf->Base.NativeRenderable = EGL_TRUE;
+
    for (i = 0; i < ARRAY_SIZE(visual_attributes); i++) {
+      EGLint egl_attr, egl_val;
+
       attr = visual_attributes[i].attr;
-      egl_attr = fbconfig_attributes[i].egl_attr;
+      egl_attr = visual_attributes[i].egl_attr;
+      if (!egl_attr)
+         continue;
+
       err = glXGetConfig(dpy, vinfo, attr, &val);
       if (err) {
          if (err == GLX_BAD_ATTRIBUTE) {
@@ -265,41 +350,26 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
          break;
       }
 
-      _eglSetConfigKey(&GLX_conf->Base, egl_attr, val);
+      switch (egl_attr) {
+      case EGL_CONFIG_CAVEAT:
+         egl_val = EGL_NONE;
+         if (val == GLX_SLOW_VISUAL_EXT) {
+            egl_val = EGL_SLOW_CONFIG;
+         }
+         else if (val == GLX_NON_CONFORMANT_VISUAL_EXT) {
+            GLX_conf->Base.Conformant &= ~EGL_OPENGL_BIT;
+            egl_val = EGL_NONE;
+         }
+         break;
+         break;
+      default:
+         egl_val = val;
+         break;
+      }
+      _eglSetConfigKey(&GLX_conf->Base, egl_attr, egl_val);
    }
-   if (err)
-      return EGL_FALSE;
 
-   glXGetConfig(dpy, vinfo, GLX_RGBA, &val);
-   if (!val)
-      return EGL_FALSE;
-
-   conformant = EGL_OPENGL_BIT;
-   glXGetConfig(dpy, vinfo, GLX_VISUAL_CAVEAT_EXT, &val);
-   if (val == GLX_SLOW_CONFIG)
-      config_caveat = EGL_SLOW_CONFIG;
-   if (val == GLX_NON_CONFORMANT_CONFIG)
-      conformant &= ~EGL_OPENGL_BIT;
-   if (!(conformant & EGL_OPENGL_ES_BIT))
-      config_caveat = EGL_NON_CONFORMANT_CONFIG;
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_CONFIG_CAVEAT, config_caveat);
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_VISUAL_ID, vinfo->visualid);
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_VISUAL_TYPE, vinfo->class);
-
-   /* pixmap and pbuffer surfaces must be single-buffered in EGL */
-   glXGetConfig(dpy, vinfo, GLX_DOUBLEBUFFER, &val);
-   GLX_conf->double_buffered = val;
-   surface_type = EGL_WINDOW_BIT;
-   /* pixmap surfaces must be single-buffered in EGL */
-   if (!GLX_conf->double_buffered)
-      surface_type |= EGL_PIXMAP_BIT;
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_SURFACE_TYPE, surface_type);
-
-   _eglSetConfigKey(&GLX_conf->Base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
-
-   return EGL_TRUE;
+   return (err) ? EGL_FALSE : EGL_TRUE;
 }
 
 
@@ -307,30 +377,31 @@ static void
 fix_config(struct GLX_egl_display *GLX_dpy, struct GLX_egl_config *GLX_conf)
 {
    _EGLConfig *conf = &GLX_conf->Base;
-   EGLint surface_type, r, g, b, a;
 
-   surface_type = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
    if (!GLX_conf->double_buffered && GLX_dpy->single_buffered_quirk) {
       /* some GLX impls do not like single-buffered window surface */
-      surface_type &= ~EGL_WINDOW_BIT;
+      conf->SurfaceType &= ~EGL_WINDOW_BIT;
       /* pbuffer bit is usually not set */
       if (GLX_dpy->have_pbuffer)
-         surface_type |= EGL_PBUFFER_BIT;
-      SET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE, surface_type);
+         conf->SurfaceType |= EGL_PBUFFER_BIT;
    }
 
    /* no visual attribs unless window bit is set */
-   if (!(surface_type & EGL_WINDOW_BIT)) {
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_ID, 0);
-      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_TYPE, EGL_NONE);
+   if (!(conf->SurfaceType & EGL_WINDOW_BIT)) {
+      conf->NativeVisualID = 0;
+      conf->NativeVisualType = EGL_NONE;
+   }
+
+   if (conf->TransparentType != EGL_TRANSPARENT_RGB) {
+      /* some impls set them to -1 (GLX_DONT_CARE) */
+      conf->TransparentRedValue = 0;
+      conf->TransparentGreenValue = 0;
+      conf->TransparentBlueValue = 0;
    }
 
    /* make sure buffer size is set correctly */
-   r = GET_CONFIG_ATTRIB(conf, EGL_RED_SIZE);
-   g = GET_CONFIG_ATTRIB(conf, EGL_GREEN_SIZE);
-   b = GET_CONFIG_ATTRIB(conf, EGL_BLUE_SIZE);
-   a = GET_CONFIG_ATTRIB(conf, EGL_ALPHA_SIZE);
-   SET_CONFIG_ATTRIB(conf, EGL_BUFFER_SIZE, r + g + b + a);
+   conf->BufferSize =
+      conf->RedSize + conf->GreenSize + conf->BlueSize + conf->AlphaSize;
 }
 
 
@@ -381,7 +452,7 @@ create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
          memcpy(GLX_conf, &template, sizeof(template));
          GLX_conf->index = i;
 
-         _eglAddConfig(dpy, &GLX_conf->Base);
+         _eglLinkConfig(&GLX_conf->Base);
          id++;
       }
    }
@@ -606,14 +677,16 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct GLX_egl_surface *GLX_dsurf = GLX_egl_surface(dsurf);
    struct GLX_egl_surface *GLX_rsurf = GLX_egl_surface(rsurf);
    struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
+   _EGLContext *old_ctx;
+   _EGLSurface *old_dsurf, *old_rsurf;
    GLXDrawable ddraw, rdraw;
    GLXContext cctx;
    EGLBoolean ret = EGL_FALSE;
 
    (void) drv;
 
-   /* bind the new context and return the "orphaned" one */
-   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
+   /* make new bindings */
+   if (!_eglBindContext(ctx, dsurf, rsurf, &old_ctx, &old_dsurf, &old_rsurf))
       return EGL_FALSE;
 
    ddraw = (GLX_dsurf) ? GLX_dsurf->glx_drawable : None;
@@ -626,13 +699,27 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
       ret = glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
    if (ret) {
-      if (dsurf && !_eglIsSurfaceLinked(dsurf))
-         destroy_surface(disp, dsurf);
-      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(rsurf))
-         destroy_surface(disp, rsurf);
+      if (_eglPutSurface(old_dsurf))
+         destroy_surface(disp, old_dsurf);
+      if (_eglPutSurface(old_rsurf))
+         destroy_surface(disp, old_rsurf);
+      /* no destroy? */
+      _eglPutContext(old_ctx);
    }
    else {
-      _eglBindContext(&ctx, &dsurf, &rsurf);
+      /* undo the previous _eglBindContext */
+      _eglBindContext(old_ctx, old_dsurf, old_rsurf, &ctx, &dsurf, &rsurf);
+      assert(&GLX_ctx->Base == ctx &&
+             &GLX_dsurf->Base == dsurf &&
+             &GLX_rsurf->Base == rsurf);
+
+      _eglPutSurface(dsurf);
+      _eglPutSurface(rsurf);
+      _eglPutContext(ctx);
+
+      _eglPutSurface(old_dsurf);
+      _eglPutSurface(old_rsurf);
+      _eglPutContext(old_ctx);
    }
 
    return ret;
@@ -836,7 +923,7 @@ GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
    (void) drv;
 
-   if (!_eglIsSurfaceBound(surf))
+   if (_eglPutSurface(surf))
       destroy_surface(disp, surf);
 
    return EGL_TRUE;

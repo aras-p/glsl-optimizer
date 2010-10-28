@@ -5,11 +5,11 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
-void radeonUserClear(GLcontext *ctx, GLuint mask);
+void radeonUserClear(struct gl_context *ctx, GLuint mask);
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
-void radeonUpdateScissor( GLcontext *ctx );
-void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+void radeonUpdateScissor( struct gl_context *ctx );
+void radeonScissor(struct gl_context* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
@@ -21,18 +21,18 @@ void radeonCopySubBuffer(__DRIdrawable * dPriv,
 
 void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
-void radeonFlush(GLcontext *ctx);
-void radeonFinish(GLcontext * ctx);
+void radeonFlush(struct gl_context *ctx);
+void radeonFinish(struct gl_context * ctx);
 void radeonEmitState(radeonContextPtr radeon);
 GLuint radeonCountStateEmitSize(radeonContextPtr radeon);
 
-void radeon_clear_tris(GLcontext *ctx, GLbitfield mask);
+void radeon_clear_tris(struct gl_context *ctx, GLbitfield mask);
 
 void radeon_window_moved(radeonContextPtr radeon);
-void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
-void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
-void radeonReadBuffer( GLcontext *ctx, GLenum mode );
-void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
+void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb);
+void radeonDrawBuffer( struct gl_context *ctx, GLenum mode );
+void radeonReadBuffer( struct gl_context *ctx, GLenum mode );
+void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
 void radeon_get_cliprects(radeonContextPtr radeon,
 			  struct drm_clip_rect **cliprects,
 			  unsigned int *num_cliprects,
@@ -45,12 +45,12 @@ struct radeon_renderbuffer *
 radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv);
 
 void
-radeonReadPixels(GLcontext * ctx,
+radeonReadPixels(struct gl_context * ctx,
 				GLint x, GLint y, GLsizei width, GLsizei height,
 				GLenum format, GLenum type,
 				const struct gl_pixelstore_attrib *pack, GLvoid * pixels);
 
-void radeon_check_front_buffer_rendering(GLcontext *ctx);
+void radeon_check_front_buffer_rendering(struct gl_context *ctx);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;

@@ -82,6 +82,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	bo->handle = handle;
 	pipe_reference_init(&bo->reference, 1);
 	bo->alignment = alignment;
+	LIST_INITHEAD(&bo->fencedlist);
 
 	if (handle) {
 		struct drm_gem_open open_arg;
@@ -123,7 +124,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	if (ptr) {
 		memcpy(bo->data, ptr, size);
 	}
-	LIST_INITHEAD(&bo->fencedlist);
 	return bo;
 }
 
@@ -198,5 +198,24 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 			&args, sizeof(args));
 
 	*domain = args.domain;
+	return ret;
+}
+
+int radeon_bo_get_tiling_flags(struct radeon *radeon,
+			       struct radeon_bo *bo,
+			       uint32_t *tiling_flags,
+			       uint32_t *pitch)
+{
+	struct drm_radeon_gem_get_tiling args;
+	int ret;
+	
+	args.handle = bo->handle;
+	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_GET_TILING,
+				  &args, sizeof(args));
+	if (ret)
+		return ret;
+	
+	*tiling_flags = args.tiling_flags;
+	*pitch = args.pitch;
 	return ret;
 }

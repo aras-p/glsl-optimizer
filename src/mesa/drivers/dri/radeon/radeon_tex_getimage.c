@@ -40,7 +40,7 @@
  * then unmap it.
  */
 static void
-radeon_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
+radeon_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
              GLenum format, GLenum type, GLvoid * pixels,
              struct gl_texture_object *texObj,
              struct gl_texture_image *texImage, int compressed)
@@ -83,7 +83,7 @@ radeon_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 }
 
 void
-radeonGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+radeonGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
           GLenum format, GLenum type, GLvoid * pixels,
           struct gl_texture_object *texObj,
           struct gl_texture_image *texImage)
@@ -93,7 +93,7 @@ radeonGetTexImage(GLcontext * ctx, GLenum target, GLint level,
 }
 
 void
-radeonGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+radeonGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint level,
                 GLvoid *pixels,
                 struct gl_texture_object *texObj,
                 struct gl_texture_image *texImage)

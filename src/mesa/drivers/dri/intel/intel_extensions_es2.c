@@ -83,7 +83,7 @@ static const char *es2_extensions[] = {
  * extensions for a context.
  */
 void
-intelInitExtensionsES2(GLcontext *ctx)
+intelInitExtensionsES2(struct gl_context *ctx)
 {
    int i;
 

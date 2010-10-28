@@ -444,7 +444,7 @@ static inline void emit_draw_packet(struct r200_context *r200,
  * @param[in] height region height
  * @param[in] flip_y set if y coords of the source image need to be flipped
  */
-unsigned r200_blit(GLcontext *ctx,
+unsigned r200_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,
                    gl_format src_mesaformat,

@@ -75,6 +75,7 @@ static const struct {
    { OFF, "GL_ARB_sampler_objects",            F(ARB_sampler_objects) },
    { OFF, "GL_ARB_seamless_cube_map",          F(ARB_seamless_cube_map) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
+   { OFF, "GL_ARB_shader_stencil_export",      F(ARB_shader_stencil_export) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(ARB_shadow_ambient) },
@@ -138,6 +139,7 @@ static const struct {
    { OFF, "GL_EXT_provoking_vertex",           F(EXT_provoking_vertex) },
    { ON,  "GL_EXT_rescale_normal",             F(EXT_rescale_normal) },
    { OFF, "GL_EXT_secondary_color",            F(EXT_secondary_color) },
+   { OFF, "GL_EXT_separate_shader_objects",    F(EXT_separate_shader_objects) },
    { ON,  "GL_EXT_separate_specular_color",    F(EXT_separate_specular_color) },
    { OFF, "GL_EXT_shadow_funcs",               F(EXT_shadow_funcs) },
    { OFF, "GL_EXT_shared_texture_palette",     F(EXT_shared_texture_palette) },
@@ -227,7 +229,7 @@ static const struct {
  * This is a convenience function used by the XMesa, OSMesa, GGI drivers, etc.
  */
 void
-_mesa_enable_sw_extensions(GLcontext *ctx)
+_mesa_enable_sw_extensions(struct gl_context *ctx)
 {
    /*ctx->Extensions.ARB_copy_buffer = GL_TRUE;*/
    ctx->Extensions.ARB_depth_clamp = GL_TRUE;
@@ -259,6 +261,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
+   ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
 #endif
 #if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
@@ -387,7 +390,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
  * Enable common EXT extensions in the ARB_imaging subset.
  */
 void
-_mesa_enable_imaging_extensions(GLcontext *ctx)
+_mesa_enable_imaging_extensions(struct gl_context *ctx)
 {
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
@@ -402,7 +405,7 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
  * A convenience function to be called by drivers.
  */
 void
-_mesa_enable_1_3_extensions(GLcontext *ctx)
+_mesa_enable_1_3_extensions(struct gl_context *ctx)
 {
    /*ctx->Extensions.ARB_multisample = GL_TRUE;*/
    ctx->Extensions.ARB_multitexture = GL_TRUE;
@@ -422,7 +425,7 @@ _mesa_enable_1_3_extensions(GLcontext *ctx)
  * A convenience function to be called by drivers.
  */
 void
-_mesa_enable_1_4_extensions(GLcontext *ctx)
+_mesa_enable_1_4_extensions(struct gl_context *ctx)
 {
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
@@ -448,7 +451,7 @@ _mesa_enable_1_4_extensions(GLcontext *ctx)
  * A convenience function to be called by drivers.
  */
 void
-_mesa_enable_1_5_extensions(GLcontext *ctx)
+_mesa_enable_1_5_extensions(struct gl_context *ctx)
 {
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    /*ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;*/
@@ -461,7 +464,7 @@ _mesa_enable_1_5_extensions(GLcontext *ctx)
  * A convenience function to be called by drivers.
  */
 void
-_mesa_enable_2_0_extensions(GLcontext *ctx)
+_mesa_enable_2_0_extensions(struct gl_context *ctx)
 {
    /*ctx->Extensions.ARB_draw_buffers = GL_TRUE;*/
 #if FEATURE_ARB_fragment_shader
@@ -488,7 +491,7 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
  * A convenience function to be called by drivers.
  */
 void
-_mesa_enable_2_1_extensions(GLcontext *ctx)
+_mesa_enable_2_1_extensions(struct gl_context *ctx)
 {
 #if FEATURE_EXT_pixel_buffer_object
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
@@ -504,7 +507,7 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
  * \return GL_TRUE for success, GL_FALSE if invalid extension name
  */
 static GLboolean
-set_extension( GLcontext *ctx, const char *name, GLboolean state )
+set_extension( struct gl_context *ctx, const char *name, GLboolean state )
 {
    GLboolean *base = (GLboolean *) &ctx->Extensions;
    GLuint i;
@@ -533,7 +536,7 @@ set_extension( GLcontext *ctx, const char *name, GLboolean state )
  * Typically called by drivers.
  */
 void
-_mesa_enable_extension( GLcontext *ctx, const char *name )
+_mesa_enable_extension( struct gl_context *ctx, const char *name )
 {
    if (!set_extension(ctx, name, GL_TRUE))
       _mesa_problem(ctx, "Trying to enable unknown extension: %s", name);
@@ -545,7 +548,7 @@ _mesa_enable_extension( GLcontext *ctx, const char *name )
  * XXX is this really needed???
  */
 void
-_mesa_disable_extension( GLcontext *ctx, const char *name )
+_mesa_disable_extension( struct gl_context *ctx, const char *name )
 {
    if (!set_extension(ctx, name, GL_FALSE))
       _mesa_problem(ctx, "Trying to disable unknown extension: %s", name);
@@ -556,7 +559,7 @@ _mesa_disable_extension( GLcontext *ctx, const char *name )
  * Check if the i-th extension is enabled.
  */
 static GLboolean
-extension_enabled(GLcontext *ctx, GLuint index)
+extension_enabled(struct gl_context *ctx, GLuint index)
 {
    const GLboolean *base = (const GLboolean *) &ctx->Extensions;
    if (!default_extensions[index].flag_offset ||
@@ -573,7 +576,7 @@ extension_enabled(GLcontext *ctx, GLuint index)
  * Test if the named extension is enabled in this context.
  */
 GLboolean
-_mesa_extension_is_enabled( GLcontext *ctx, const char *name )
+_mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
 {
    GLuint i;
 
@@ -615,7 +618,7 @@ append(const char *a, const char *b)
  * Return a string of the unknown/leftover names.
  */
 static const char *
-get_extension_override( GLcontext *ctx )
+get_extension_override( struct gl_context *ctx )
 {
    const char *envExt = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
    char *extraExt = NULL;
@@ -666,7 +669,7 @@ get_extension_override( GLcontext *ctx )
  * To be called during context initialization.
  */
 void
-_mesa_init_extensions( GLcontext *ctx )
+_mesa_init_extensions( struct gl_context *ctx )
 {
    GLboolean *base = (GLboolean *) &ctx->Extensions;
    GLuint i;
@@ -685,7 +688,7 @@ _mesa_init_extensions( GLcontext *ctx )
  * glGetString(GL_EXTENSIONS) is called.
  */
 static GLubyte *
-compute_extensions( GLcontext *ctx )
+compute_extensions( struct gl_context *ctx )
 {
    const char *extraExt = get_extension_override(ctx);
    GLuint extStrLen = 0;
@@ -752,7 +755,7 @@ append_extension(GLubyte **str, const char *ext)
 
 
 static size_t
-make_extension_string_es1(const GLcontext *ctx, GLubyte *str)
+make_extension_string_es1(const struct gl_context *ctx, GLubyte *str)
 {
    size_t len = 0;
 
@@ -834,7 +837,7 @@ make_extension_string_es1(const GLcontext *ctx, GLubyte *str)
 
 
 static GLubyte *
-compute_extensions_es1(const GLcontext *ctx)
+compute_extensions_es1(const struct gl_context *ctx)
 {
    GLubyte *s;
    unsigned int len;
@@ -849,7 +852,7 @@ compute_extensions_es1(const GLcontext *ctx)
 }
 
 static size_t
-make_extension_string_es2(const GLcontext *ctx, GLubyte *str)
+make_extension_string_es2(const struct gl_context *ctx, GLubyte *str)
 {
    size_t len = 0;
 
@@ -903,7 +906,7 @@ make_extension_string_es2(const GLcontext *ctx, GLubyte *str)
 }
 
 static GLubyte *
-compute_extensions_es2(GLcontext *ctx)
+compute_extensions_es2(struct gl_context *ctx)
 {
    GLubyte *s;
    unsigned int len;
@@ -919,7 +922,7 @@ compute_extensions_es2(GLcontext *ctx)
 
 
 GLubyte *
-_mesa_make_extension_string(GLcontext *ctx)
+_mesa_make_extension_string(struct gl_context *ctx)
 {
    switch (ctx->API) {
    case API_OPENGL:
@@ -938,7 +941,7 @@ _mesa_make_extension_string(GLcontext *ctx)
  * Return number of enabled extensions.
  */
 GLuint
-_mesa_get_extension_count(GLcontext *ctx)
+_mesa_get_extension_count(struct gl_context *ctx)
 {
    GLuint i;
 
@@ -963,7 +966,7 @@ _mesa_get_extension_count(GLcontext *ctx)
  * Return name of i-th enabled extension
  */
 const GLubyte *
-_mesa_get_enabled_extension(GLcontext *ctx, GLuint index)
+_mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
 {
    GLuint i;
 

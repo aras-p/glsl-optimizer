@@ -118,6 +118,11 @@ __inline double __cdecl atan2(double val)
 #endif
 
 
+#ifndef M_SQRT2
+#define M_SQRT2 1.41421356237309504880
+#endif
+
+
 #if defined(_MSC_VER) 
 
 #if _MSC_VER < 1400 && !defined(__cplusplus) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)

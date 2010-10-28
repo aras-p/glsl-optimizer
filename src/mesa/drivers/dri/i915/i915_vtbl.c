@@ -530,7 +530,7 @@ i915_set_draw_region(struct intel_context *intel,
 		     GLuint num_regions)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
@@ -669,6 +669,7 @@ i915_assert_not_dirty( struct intel_context *intel )
    struct i915_context *i915 = i915_context(&intel->ctx);
    GLuint dirty = get_dirty(&i915->state);
    assert(!dirty);
+   (void) dirty;
 }
 
 void

@@ -983,6 +983,12 @@ enum lp_build_round_sse41_mode
 };
 
 
+/**
+ * Helper for SSE4.1's ROUNDxx instructions.
+ *
+ * NOTE: In the SSE4.1's nearest mode, if two values are equally close, the
+ * result is the even value.  That is, rounding 2.5 will be 2.0, and not 3.0.
+ */
 static INLINE LLVMValueRef
 lp_build_round_sse41(struct lp_build_context *bld,
                      LLVMValueRef a,
@@ -1053,10 +1059,58 @@ lp_build_round_sse41(struct lp_build_context *bld,
 }
 
 
+static INLINE LLVMValueRef
+lp_build_iround_nearest_sse2(struct lp_build_context *bld,
+                             LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMTypeRef ret_type = lp_build_int_vec_type(type);
+   const char *intrinsic;
+   LLVMValueRef res;
+
+   assert(type.floating);
+   /* using the double precision conversions is a bit more complicated */
+   assert(type.width == 32);
+
+   assert(lp_check_value(type, a));
+   assert(util_cpu_caps.has_sse2);
+
+   /* This is relying on MXCSR rounding mode, which should always be nearest. */
+   if (type.length == 1) {
+      LLVMTypeRef vec_type;
+      LLVMValueRef undef;
+      LLVMValueRef arg;
+      LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
+
+      vec_type = LLVMVectorType(bld->elem_type, 4);
+
+      intrinsic = "llvm.x86.sse.cvtss2si";
+
+      undef = LLVMGetUndef(vec_type);
+
+      arg = LLVMBuildInsertElement(bld->builder, undef, a, index0, "");
+
+      res = lp_build_intrinsic_unary(bld->builder, intrinsic,
+                                     ret_type, arg);
+   }
+   else {
+      assert(type.width*type.length == 128);
+
+      intrinsic = "llvm.x86.sse2.cvtps2dq";
+
+      res = lp_build_intrinsic_unary(bld->builder, intrinsic,
+                                     ret_type, a);
+   }
+
+   return res;
+}
+
+
 /**
- * Return the integer part of a float (vector) value.  The returned value is
- * a float (vector).
- * Ex: trunc(-1.5) = 1.0
+ * Return the integer part of a float (vector) value (== round toward zero).
+ * The returned value is a float (vector).
+ * Ex: trunc(-1.5) = -1.0
  */
 LLVMValueRef
 lp_build_trunc(struct lp_build_context *bld,
@@ -1181,9 +1235,9 @@ lp_build_fract(struct lp_build_context *bld,
 
 
 /**
- * Return the integer part of a float (vector) value.  The returned value is
- * an integer (vector).
- * Ex: itrunc(-1.5) = 1
+ * Return the integer part of a float (vector) value (== round toward zero).
+ * The returned value is an integer (vector).
+ * Ex: itrunc(-1.5) = -1
  */
 LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
@@ -1217,7 +1271,11 @@ lp_build_iround(struct lp_build_context *bld,
 
    assert(lp_check_value(type, a));
 
-   if (util_cpu_caps.has_sse4_1 &&
+   if (util_cpu_caps.has_sse2 &&
+       ((type.width == 32) && (type.length == 1 || type.length == 4))) {
+      return lp_build_iround_nearest_sse2(bld, a);
+   }
+   else if (util_cpu_caps.has_sse4_1 &&
        (type.length == 1 || type.width*type.length == 128)) {
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
    }
@@ -1371,8 +1429,6 @@ lp_build_ifloor_fract(struct lp_build_context *bld,
                       LLVMValueRef *out_ipart,
                       LLVMValueRef *out_fpart)
 {
-
-
    const struct lp_type type = bld->type;
    LLVMValueRef ipart;
 
@@ -2210,6 +2266,71 @@ lp_build_exp2(struct lp_build_context *bld,
 
 
 /**
+ * Extract the exponent of a IEEE-754 floating point value.
+ *
+ * Optionally apply an integer bias.
+ *
+ * Result is an integer value with
+ *
+ *   ifloor(log2(x)) + bias
+ */
+LLVMValueRef
+lp_build_extract_exponent(struct lp_build_context *bld,
+                          LLVMValueRef x,
+                          int bias)
+{
+   const struct lp_type type = bld->type;
+   unsigned mantissa = lp_mantissa(type);
+   LLVMValueRef res;
+
+   assert(type.floating);
+
+   assert(lp_check_value(bld->type, x));
+
+   x = LLVMBuildBitCast(bld->builder, x, bld->int_vec_type, "");
+
+   res = LLVMBuildLShr(bld->builder, x, lp_build_const_int_vec(type, mantissa), "");
+   res = LLVMBuildAnd(bld->builder, res, lp_build_const_int_vec(type, 255), "");
+   res = LLVMBuildSub(bld->builder, res, lp_build_const_int_vec(type, 127 - bias), "");
+
+   return res;
+}
+
+
+/**
+ * Extract the mantissa of the a floating.
+ *
+ * Result is a floating point value with
+ *
+ *   x / floor(log2(x))
+ */
+LLVMValueRef
+lp_build_extract_mantissa(struct lp_build_context *bld,
+                          LLVMValueRef x)
+{
+   const struct lp_type type = bld->type;
+   unsigned mantissa = lp_mantissa(type);
+   LLVMValueRef mantmask = lp_build_const_int_vec(type, (1ULL << mantissa) - 1);
+   LLVMValueRef one = LLVMConstBitCast(bld->one, bld->int_vec_type);
+   LLVMValueRef res;
+
+   assert(lp_check_value(bld->type, x));
+
+   assert(type.floating);
+
+   x = LLVMBuildBitCast(bld->builder, x, bld->int_vec_type, "");
+
+   /* res = x / 2**ipart */
+   res = LLVMBuildAnd(bld->builder, x, mantmask, "");
+   res = LLVMBuildOr(bld->builder, res, one, "");
+   res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+
+   return res;
+}
+
+
+
+/**
  * Minimax polynomial fit of log2(x)/(x - 1), for x in range [1, 2[
  * These coefficients can be generate with
  * http://www.boost.org/doc/libs/1_36_0/libs/math/doc/sf_and_dist/html/math_toolkit/toolkit/internals2/minimax.html
@@ -2333,7 +2454,10 @@ lp_build_log2(struct lp_build_context *bld,
 /**
  * Faster (and less accurate) log2.
  *
- *    log2(x) = floor(log2(x)) + frac(x)
+ *    log2(x) = floor(log2(x)) - 1 + x / 2**floor(log2(x))
+ *
+ * Piece-wise linear approximation, with exact results when x is a
+ * power of two.
  *
  * See http://www.flipcode.com/archives/Fast_log_Function.shtml
  */
@@ -2341,35 +2465,21 @@ LLVMValueRef
 lp_build_fast_log2(struct lp_build_context *bld,
                    LLVMValueRef x)
 {
-   const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = bld->vec_type;
-   LLVMTypeRef int_vec_type = bld->int_vec_type;
-
-   unsigned mantissa = lp_mantissa(type);
-   LLVMValueRef mantmask = lp_build_const_int_vec(type, (1ULL << mantissa) - 1);
-   LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
-
    LLVMValueRef ipart;
    LLVMValueRef fpart;
 
    assert(lp_check_value(bld->type, x));
 
-   assert(type.floating);
-
-   x = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
+   assert(bld->type.floating);
 
    /* ipart = floor(log2(x)) - 1 */
-   ipart = LLVMBuildLShr(bld->builder, x, lp_build_const_int_vec(type, mantissa), "");
-   ipart = LLVMBuildAnd(bld->builder, ipart, lp_build_const_int_vec(type, 255), "");
-   ipart = LLVMBuildSub(bld->builder, ipart, lp_build_const_int_vec(type, 128), "");
-   ipart = LLVMBuildSIToFP(bld->builder, ipart, vec_type, "");
+   ipart = lp_build_extract_exponent(bld, x, -1);
+   ipart = LLVMBuildSIToFP(bld->builder, ipart, bld->vec_type, "");
 
-   /* fpart = 1.0 + frac(x) */
-   fpart = LLVMBuildAnd(bld->builder, x, mantmask, "");
-   fpart = LLVMBuildOr(bld->builder, fpart, one, "");
-   fpart = LLVMBuildBitCast(bld->builder, fpart, vec_type, "");
+   /* fpart = x / 2**ipart */
+   fpart = lp_build_extract_mantissa(bld, x);
 
-   /* floor(log2(x)) + frac(x) */
+   /* ipart + fpart */
    return LLVMBuildFAdd(bld->builder, ipart, fpart, "");
 }
 
@@ -2383,27 +2493,18 @@ LLVMValueRef
 lp_build_ilog2(struct lp_build_context *bld,
                LLVMValueRef x)
 {
-   const struct lp_type type = bld->type;
-   LLVMTypeRef int_vec_type = bld->int_vec_type;
-
-   unsigned mantissa = lp_mantissa(type);
-   LLVMValueRef sqrt2 = lp_build_const_vec(type, 1.4142135623730951);
-
+   LLVMValueRef sqrt2 = lp_build_const_vec(bld->type, M_SQRT2);
    LLVMValueRef ipart;
 
-   assert(lp_check_value(bld->type, x));
+   assert(bld->type.floating);
 
-   assert(type.floating);
+   assert(lp_check_value(bld->type, x));
 
    /* x * 2^(0.5)   i.e., add 0.5 to the log2(x) */
    x = LLVMBuildFMul(bld->builder, x, sqrt2, "");
 
-   x = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
-
    /* ipart = floor(log2(x) + 0.5)  */
-   ipart = LLVMBuildLShr(bld->builder, x, lp_build_const_int_vec(type, mantissa), "");
-   ipart = LLVMBuildAnd(bld->builder, ipart, lp_build_const_int_vec(type, 255), "");
-   ipart = LLVMBuildSub(bld->builder, ipart, lp_build_const_int_vec(type, 127), "");
+   ipart = lp_build_extract_exponent(bld, x, 0);
 
    return ipart;
 }

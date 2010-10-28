@@ -526,14 +526,12 @@ lp_setup_set_point_state( struct lp_setup_context *setup,
 }
 
 void
-lp_setup_set_fs_inputs( struct lp_setup_context *setup,
-                        const struct lp_shader_input *input,
-                        unsigned nr )
+lp_setup_set_setup_variant( struct lp_setup_context *setup,
+			    const struct lp_setup_variant *variant)
 {
-   LP_DBG(DEBUG_SETUP, "%s %p %u\n", __FUNCTION__, (void *) input, nr);
-
-   memcpy( setup->fs.input, input, nr * sizeof input[0] );
-   setup->fs.nr_inputs = nr;
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+   
+   setup->setup.variant = variant;
 }
 
 void
@@ -921,6 +919,13 @@ lp_setup_update_state( struct lp_setup_context *setup,
       setup->psize = lp->psize_slot;
 
       assert(lp->dirty == 0);
+
+      assert(lp->setup_variant.key.size == 
+	     setup->setup.variant->key.size);
+
+      assert(memcmp(&lp->setup_variant.key,
+		    &setup->setup.variant->key,
+		    setup->setup.variant->key.size) == 0);
    }
 
    if (update_scene) {

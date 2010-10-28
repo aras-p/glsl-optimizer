@@ -178,7 +178,7 @@ i830_state_draw_region(struct intel_context *intel,
 /* i830_context.c
  */
 extern GLboolean
-i830CreateContext(const __GLcontextModes * mesaVis,
+i830CreateContext(const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate);
 
@@ -205,14 +205,14 @@ extern void i830InitStateFuncs(struct dd_function_table *functions);
 extern void i830EmitState(struct i830_context *i830);
 
 extern void i830InitState(struct i830_context *i830);
-extern void i830_update_provoking_vertex(GLcontext *ctx);
+extern void i830_update_provoking_vertex(struct gl_context *ctx);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
 static INLINE struct i830_context *
-i830_context(GLcontext * ctx)
+i830_context(struct gl_context * ctx)
 {
    return (struct i830_context *) ctx;
 }

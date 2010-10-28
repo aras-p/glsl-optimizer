@@ -473,7 +473,7 @@ end:
 
 
 static void
-pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
+pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
 {
    const GLuint curTexUnitSave = ctx->Texture.CurrentUnit;
    GLuint i;
@@ -669,7 +669,7 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
  * Pop/restore texture attribute/group state.
  */
 static void
-pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
+pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
 {
    GLuint u;
 
@@ -1323,7 +1323,7 @@ adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
  * object refcounts.
  */
 static void
-copy_pixelstore(GLcontext *ctx,
+copy_pixelstore(struct gl_context *ctx,
                 struct gl_pixelstore_attrib *dst,
                 const struct gl_pixelstore_attrib *src)
 {
@@ -1506,7 +1506,7 @@ _mesa_init_attrib_dispatch(struct _glapi_table *disp)
  * Free any attribute state data that might be attached to the context.
  */
 void
-_mesa_free_attrib_data(GLcontext *ctx)
+_mesa_free_attrib_data(struct gl_context *ctx)
 {
    while (ctx->AttribStackDepth > 0) {
       struct gl_attrib_node *attr, *next;
@@ -1538,7 +1538,7 @@ _mesa_free_attrib_data(GLcontext *ctx)
 }
 
 
-void _mesa_init_attrib( GLcontext *ctx )
+void _mesa_init_attrib( struct gl_context *ctx )
 {
    /* Renderer and client attribute stacks */
    ctx->AttribStackDepth = 0;

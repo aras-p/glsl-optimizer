@@ -52,7 +52,7 @@ struct nouveau_bo_marker {
 };
 
 struct nouveau_bo_context {
-	GLcontext *ctx;
+	struct gl_context *ctx;
 
 	struct nouveau_bo_marker *marker;
 	int allocated;
@@ -84,13 +84,13 @@ void
 nouveau_bo_context_reset(struct nouveau_bo_context *bctx);
 
 GLboolean
-nouveau_bo_state_emit(GLcontext *ctx);
+nouveau_bo_state_emit(struct gl_context *ctx);
 
 void
-nouveau_bo_state_init(GLcontext *ctx);
+nouveau_bo_state_init(struct gl_context *ctx);
 
 void
-nouveau_bo_state_destroy(GLcontext *ctx);
+nouveau_bo_state_destroy(struct gl_context *ctx);
 
 #define __context_bctx(ctx, i)						\
 	({								\

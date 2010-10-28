@@ -610,7 +610,7 @@ BOOL wmFlush(PWMC pwc, HDC hDC)
 // Support Functions
 //---------------------------------------------------------------------------
 
-static void flush(GLcontext* ctx)
+static void flush(struct gl_context* ctx)
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
 	WMesaContext *Current = GLD_GET_WMESA_DRIVER(gldCtx);
@@ -634,10 +634,10 @@ static void flush(GLcontext* ctx)
 /*
  * Set the color used to clear the color buffer.
  */
-//static void clear_color( GLcontext* ctx, const GLchan color[4] )
+//static void clear_color( struct gl_context* ctx, const GLchan color[4] )
 // Changed for Mesa 5.x. KeithH
 static void clear_color(
-	GLcontext* ctx,
+	struct gl_context* ctx,
 	const GLfloat color[4])
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
@@ -664,7 +664,7 @@ static void clear_color(
  * Otherwise, we let swrast do it.
  */
 
-static clear(GLcontext* ctx, GLbitfield mask,
+static clear(struct gl_context* ctx, GLbitfield mask,
 	     GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
@@ -787,7 +787,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
 //---------------------------------------------------------------------------
 
 
-static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
+static void enable( struct gl_context* ctx, GLenum pname, GLboolean enable )
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
 	WMesaContext *Current = GLD_GET_WMESA_DRIVER(gldCtx);
@@ -814,7 +814,7 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 
 //---------------------------------------------------------------------------
 
-static GLboolean set_draw_buffer( GLcontext* ctx, GLenum mode )
+static GLboolean set_draw_buffer( struct gl_context* ctx, GLenum mode )
 {
   /* TODO: this could be better */
   if (mode==GL_FRONT_LEFT || mode==GL_BACK_LEFT) {
@@ -828,7 +828,7 @@ static GLboolean set_draw_buffer( GLcontext* ctx, GLenum mode )
 //---------------------------------------------------------------------------
 
 
-static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+static void set_read_buffer(struct gl_context *ctx, struct gl_framebuffer *colorBuffer,
                             GLenum buffer )
 {
   /* XXX todo */
@@ -840,10 +840,10 @@ static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 
 
 /* Return characteristics of the output buffer. */
-//static void buffer_size( GLcontext* ctx, GLuint *width, GLuint *height )
+//static void buffer_size( struct gl_context* ctx, GLuint *width, GLuint *height )
 // Altered for Mesa 5.x. KeithH
 static void buffer_size(
-	GLframebuffer *buffer,
+	struct gl_framebuffer *buffer,
 	GLuint *width,
 	GLuint *height)
 {
@@ -888,28 +888,28 @@ static void buffer_size(
 
 /* Accelerated routines are not implemented in 4.0. See OSMesa for ideas. */
 
-static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
+static void fast_rgb_points( struct gl_context* ctx, GLuint first, GLuint last )
 {
 }
 
 //---------------------------------------------------------------------------
 
 /* Return pointer to accelerated points function */
-extern tnl_points_func choose_points_function( GLcontext* ctx )
+extern tnl_points_func choose_points_function( struct gl_context* ctx )
 {
   return NULL;
 }
 
 //---------------------------------------------------------------------------
 
-static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0, 
+static void fast_flat_rgb_line( struct gl_context* ctx, GLuint v0, 
 				GLuint v1, GLuint pv )
 {
 }
 
 //---------------------------------------------------------------------------
 
-static tnl_line_func choose_line_function( GLcontext* ctx )
+static tnl_line_func choose_line_function( struct gl_context* ctx )
 {
 }
 
@@ -920,7 +920,7 @@ static tnl_line_func choose_line_function( GLcontext* ctx )
 
 
 /* Write a horizontal span of 32-bit color-index pixels with a boolean mask. */
-static void write_ci32_span( const GLcontext* ctx,
+static void write_ci32_span( const struct gl_context* ctx,
                              GLuint n, GLint x, GLint y,
                              const GLuint index[],
                              const GLubyte mask[] )
@@ -939,7 +939,7 @@ static void write_ci32_span( const GLcontext* ctx,
 //---------------------------------------------------------------------------
 
 /* Write a horizontal span of 8-bit color-index pixels with a boolean mask. */
-static void write_ci8_span( const GLcontext* ctx,
+static void write_ci8_span( const struct gl_context* ctx,
                             GLuint n, GLint x, GLint y,
                             const GLubyte index[],
                             const GLubyte mask[] )
@@ -962,7 +962,7 @@ static void write_ci8_span( const GLcontext* ctx,
  * Write a horizontal span of pixels with a boolean mask.  The current
  * color index is used for all pixels.
  */
-static void write_mono_ci_span(const GLcontext* ctx,
+static void write_mono_ci_span(const struct gl_context* ctx,
                                GLuint n,GLint x,GLint y,
                                GLuint colorIndex, const GLubyte mask[])
 {
@@ -984,7 +984,7 @@ static void write_mono_ci_span(const GLcontext* ctx,
  */
 
 /* Write a horizontal span of RGBA color pixels with a boolean mask. */
-static void write_rgba_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
+static void write_rgba_span( const struct gl_context* ctx, GLuint n, GLint x, GLint y,
                              const GLubyte rgba[][4], const GLubyte mask[] )
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
@@ -1035,7 +1035,7 @@ static void write_rgba_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
 //---------------------------------------------------------------------------
 
 /* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span( const GLcontext* ctx,
+static void write_rgb_span( const struct gl_context* ctx,
                             GLuint n, GLint x, GLint y,
                             const GLubyte rgb[][3], const GLubyte mask[] )
 {
@@ -1090,7 +1090,7 @@ static void write_rgb_span( const GLcontext* ctx,
  * Write a horizontal span of pixels with a boolean mask.  The current color
  * is used for all pixels.
  */
-static void write_mono_rgba_span( const GLcontext* ctx,
+static void write_mono_rgba_span( const struct gl_context* ctx,
                                   GLuint n, GLint x, GLint y,
                                   const GLchan color[4], const GLubyte mask[])
 {
@@ -1123,7 +1123,7 @@ static void write_mono_rgba_span( const GLcontext* ctx,
 
 
 /* Write an array of 32-bit index pixels with a boolean mask. */
-static void write_ci32_pixels( const GLcontext* ctx,
+static void write_ci32_pixels( const struct gl_context* ctx,
                                GLuint n, const GLint x[], const GLint y[],
                                const GLuint index[], const GLubyte mask[] )
 {
@@ -1147,7 +1147,7 @@ static void write_ci32_pixels( const GLcontext* ctx,
  * Write an array of pixels with a boolean mask.  The current color
  * index is used for all pixels.
  */
-static void write_mono_ci_pixels( const GLcontext* ctx,
+static void write_mono_ci_pixels( const struct gl_context* ctx,
                                   GLuint n,
                                   const GLint x[], const GLint y[],
                                   GLuint colorIndex, const GLubyte mask[] )
@@ -1169,7 +1169,7 @@ static void write_mono_ci_pixels( const GLcontext* ctx,
 
 
 /* Write an array of RGBA pixels with a boolean mask. */
-static void write_rgba_pixels( const GLcontext* ctx,
+static void write_rgba_pixels( const struct gl_context* ctx,
                                GLuint n, const GLint x[], const GLint y[],
                                const GLubyte rgba[][4], const GLubyte mask[] )
 {
@@ -1194,7 +1194,7 @@ static void write_rgba_pixels( const GLcontext* ctx,
  * Write an array of pixels with a boolean mask.  The current color
  * is used for all pixels.
  */
-static void write_mono_rgba_pixels( const GLcontext* ctx,
+static void write_mono_rgba_pixels( const struct gl_context* ctx,
                                     GLuint n,
                                     const GLint x[], const GLint y[],
                                     const GLchan color[4],
@@ -1218,7 +1218,7 @@ static void write_mono_rgba_pixels( const GLcontext* ctx,
 /**********************************************************************/
 
 /* Read a horizontal span of color-index pixels. */
-static void read_ci32_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
+static void read_ci32_span( const struct gl_context* ctx, GLuint n, GLint x, GLint y,
                             GLuint index[])
 {
 	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
@@ -1233,7 +1233,7 @@ static void read_ci32_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
 //---------------------------------------------------------------------------
 
 /* Read an array of color index pixels. */
-static void read_ci32_pixels( const GLcontext* ctx,
+static void read_ci32_pixels( const struct gl_context* ctx,
                               GLuint n, const GLint x[], const GLint y[],
                               GLuint indx[], const GLubyte mask[] )
 {
@@ -1251,7 +1251,7 @@ static void read_ci32_pixels( const GLcontext* ctx,
 //---------------------------------------------------------------------------
 
 /* Read a horizontal span of color pixels. */
-static void read_rgba_span( const GLcontext* ctx,
+static void read_rgba_span( const struct gl_context* ctx,
                             GLuint n, GLint x, GLint y,
                             GLubyte rgba[][4] )
 {
@@ -1275,7 +1275,7 @@ static void read_rgba_span( const GLcontext* ctx,
 //---------------------------------------------------------------------------
 
 /* Read an array of color pixels. */
-static void read_rgba_pixels( const GLcontext* ctx,
+static void read_rgba_pixels( const struct gl_context* ctx,
                               GLuint n, const GLint x[], const GLint y[],
                               GLubyte rgba[][4], const GLubyte mask[] )
 {
@@ -1301,7 +1301,7 @@ static void read_rgba_pixels( const GLcontext* ctx,
 //---------------------------------------------------------------------------
 
 static void wmesa_update_state(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint new_state)
 {
     _swrast_InvalidateState( ctx, new_state );
@@ -1313,7 +1313,7 @@ static void wmesa_update_state(
 //---------------------------------------------------------------------------
 
 static void wmesa_viewport(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLint x,
 	GLint y,
 	GLsizei w,
@@ -1325,7 +1325,7 @@ static void wmesa_viewport(
 //---------------------------------------------------------------------------
 
 static void wmesa_update_state_first_time(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLuint new_state)
 {
 	struct swrast_device_driver	*swdd = _swrast_GetDeviceDriverReference( ctx );
@@ -1570,7 +1570,7 @@ BOOL gldBuildPixelformatList_MesaSW(void)
 BOOL gldInitialiseMesa_MesaSW(
 	DGL_ctx *gld)
 {
-	GLcontext *ctx;
+	struct gl_context *ctx;
 
 	if (gld == NULL)
 		return FALSE;

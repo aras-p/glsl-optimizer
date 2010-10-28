@@ -37,7 +37,7 @@ static void
 upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    unsigned int nr_params = vp->program.Base.Parameters->NumParameters;
@@ -88,8 +88,6 @@ upload_vs_state(struct brw_context *brw)
       drm_intel_bo_unreference(constant_bo);
    }
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_3D_VS_STATE << 16 | (6 - 2));
    OUT_RELOC(brw->vs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
@@ -103,8 +101,6 @@ upload_vs_state(struct brw_context *brw)
 	     GEN6_VS_STATISTICS_ENABLE |
 	     GEN6_VS_ENABLE);
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_vs_state = {

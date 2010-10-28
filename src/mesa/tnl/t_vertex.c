@@ -106,7 +106,7 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
 /***********************************************************************
  * Build codegen functions or return generic ones:
  */
-static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
+static void choose_emit_func( struct gl_context *ctx, GLuint count, GLubyte *dest)
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -150,7 +150,7 @@ static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
 
 
 
-static void choose_interp_func( GLcontext *ctx,
+static void choose_interp_func( struct gl_context *ctx,
 				GLfloat t,
 				GLuint edst, GLuint eout, GLuint ein,
 				GLboolean force_boundary )
@@ -168,7 +168,7 @@ static void choose_interp_func( GLcontext *ctx,
 }
 
 
-static void choose_copy_pv_func(  GLcontext *ctx, GLuint edst, GLuint esrc )
+static void choose_copy_pv_func(  struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
 
@@ -190,7 +190,7 @@ static void choose_copy_pv_func(  GLcontext *ctx, GLuint edst, GLuint esrc )
 
 /* Interpolate between two vertices to produce a third:
  */
-void _tnl_interp( GLcontext *ctx,
+void _tnl_interp( struct gl_context *ctx,
 		  GLfloat t,
 		  GLuint edst, GLuint eout, GLuint ein,
 		  GLboolean force_boundary )
@@ -201,7 +201,7 @@ void _tnl_interp( GLcontext *ctx,
 
 /* Copy colors from one vertex to another:
  */
-void _tnl_copy_pv(  GLcontext *ctx, GLuint edst, GLuint esrc )
+void _tnl_copy_pv(  struct gl_context *ctx, GLuint edst, GLuint esrc )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    vtx->copy_pv( ctx, edst, esrc );
@@ -212,7 +212,7 @@ void _tnl_copy_pv(  GLcontext *ctx, GLuint edst, GLuint esrc )
  * reverse any viewport transformation, swizzling or other conversions
  * which may have been applied:
  */
-void _tnl_get_attr( GLcontext *ctx, const void *vin,
+void _tnl_get_attr( struct gl_context *ctx, const void *vin,
 			      GLenum attr, GLfloat *dest )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -231,7 +231,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
     */
    if (attr == _TNL_ATTRIB_POINTSIZE) {
       /* If the hardware vertex doesn't have point size then use size from
-       * GLcontext.  XXX this will be wrong if drawing attenuated points!
+       * struct gl_context.  XXX this will be wrong if drawing attenuated points!
        */
       dest[0] = ctx->Point.Size;
    }
@@ -243,7 +243,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
 
 /* Complementary operation to the above.
  */
-void _tnl_set_attr( GLcontext *ctx, void *vout,
+void _tnl_set_attr( struct gl_context *ctx, void *vout,
 		    GLenum attr, const GLfloat *src )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -260,14 +260,14 @@ void _tnl_set_attr( GLcontext *ctx, void *vout,
 }
 
 
-void *_tnl_get_vertex( GLcontext *ctx, GLuint nr )
+void *_tnl_get_vertex( struct gl_context *ctx, GLuint nr )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
 
    return vtx->vertex_buf + nr * vtx->vertex_size;
 }
 
-void _tnl_invalidate_vertex_state( GLcontext *ctx, GLuint new_state )
+void _tnl_invalidate_vertex_state( struct gl_context *ctx, GLuint new_state )
 {
    if (new_state & (_DD_NEW_TRI_LIGHT_TWOSIDE|_DD_NEW_TRI_UNFILLED) ) {
       struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -285,7 +285,7 @@ static void invalidate_funcs( struct tnl_clipspace *vtx )
    vtx->new_inputs = ~0;
 }
 
-GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
+GLuint _tnl_install_attrs( struct gl_context *ctx, const struct tnl_attr_map *map,
 			   GLuint nr, const GLfloat *vp, 
 			   GLuint unpacked_size )
 {
@@ -360,7 +360,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 
 
 
-void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs )
+void _tnl_invalidate_vertices( struct gl_context *ctx, GLuint newinputs )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    vtx->new_inputs |= newinputs;
@@ -370,14 +370,14 @@ void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs )
 /* This event has broader use beyond this file - will move elsewhere
  * and probably invoke a driver callback.
  */
-void _tnl_notify_pipeline_output_change( GLcontext *ctx )
+void _tnl_notify_pipeline_output_change( struct gl_context *ctx )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    invalidate_funcs(vtx);
 }
 
 
-static void adjust_input_ptrs( GLcontext *ctx, GLint diff)
+static void adjust_input_ptrs( struct gl_context *ctx, GLint diff)
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -392,7 +392,7 @@ static void adjust_input_ptrs( GLcontext *ctx, GLint diff)
    }
 }
 
-static void update_input_ptrs( GLcontext *ctx, GLuint start )
+static void update_input_ptrs( struct gl_context *ctx, GLuint start )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
@@ -424,7 +424,7 @@ static void update_input_ptrs( GLcontext *ctx, GLuint start )
 }
 
 
-void _tnl_build_vertices( GLcontext *ctx,
+void _tnl_build_vertices( struct gl_context *ctx,
 			  GLuint start,
 			  GLuint end,
 			  GLuint newinputs )
@@ -439,7 +439,7 @@ void _tnl_build_vertices( GLcontext *ctx,
 /* Emit VB vertices start..end to dest.  Note that VB vertex at
  * postion start will be emitted to dest at position zero.
  */
-void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
+void *_tnl_emit_vertices_to_buffer( struct gl_context *ctx,
 				    GLuint start,
 				    GLuint end,
 				    void *dest )
@@ -457,7 +457,7 @@ void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
  * postion start will be emitted to dest at position zero.
  */
 
-void *_tnl_emit_indexed_vertices_to_buffer( GLcontext *ctx,
+void *_tnl_emit_indexed_vertices_to_buffer( struct gl_context *ctx,
 					    const GLuint *elts,
 					    GLuint start,
 					    GLuint end,
@@ -482,7 +482,7 @@ void *_tnl_emit_indexed_vertices_to_buffer( GLcontext *ctx,
 }
 
 
-void _tnl_init_vertices( GLcontext *ctx, 
+void _tnl_init_vertices( struct gl_context *ctx, 
 			GLuint vb_size,
 			GLuint max_vertex_size )
 {
@@ -533,7 +533,7 @@ void _tnl_init_vertices( GLcontext *ctx,
 }
 
 
-void _tnl_free_vertices( GLcontext *ctx )
+void _tnl_free_vertices( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    if (tnl) {

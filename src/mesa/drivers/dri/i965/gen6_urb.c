@@ -40,7 +40,7 @@ prepare_urb( struct brw_context *brw )
    else
       brw->urb.nr_gs_entries = 0;
    /* CACHE_NEW_VS_PROG */
-   brw->urb.vs_size = MIN2(brw->vs.prog_data->urb_entry_size, 1);
+   brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
    /* Check that the number of URB rows (8 floats each) allocated is less
     * than the URB space.
@@ -59,8 +59,6 @@ upload_urb(struct brw_context *brw)
    /* GS requirement */
    assert(!brw->gs.prog_bo || brw->urb.vs_size < 5);
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    BEGIN_BATCH(3);
    OUT_BATCH(CMD_URB << 16 | (3 - 2));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
@@ -68,8 +66,6 @@ upload_urb(struct brw_context *brw)
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
 	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_ENTRIES_SHIFT));
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_urb = {

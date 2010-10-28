@@ -57,14 +57,14 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 }
 
 GLboolean brwCreateContext( int api,
-			    const __GLcontextModes *mesaVis,
+			    const struct gl_config *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate)
 {
    struct dd_function_table functions;
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    unsigned i;
 
    if (!brw) {

@@ -44,7 +44,7 @@
  * stage is the lighting stage-private data
  * input is the vector of eye or object-space vertex coordinates
  */
-static void TAG(light_rgba_spec)( GLcontext *ctx,
+static void TAG(light_rgba_spec)( struct gl_context *ctx,
 				  struct vertex_buffer *VB,
 				  struct tnl_pipeline_stage *stage,
 				  GLvector4f *input )
@@ -232,7 +232,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 }
 
 
-static void TAG(light_rgba)( GLcontext *ctx,
+static void TAG(light_rgba)( struct gl_context *ctx,
 			     struct vertex_buffer *VB,
 			     struct tnl_pipeline_stage *stage,
 			     GLvector4f *input )
@@ -421,7 +421,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
 /* As below, but with just a single light.
  */
-static void TAG(light_fast_rgba_single)( GLcontext *ctx,
+static void TAG(light_fast_rgba_single)( struct gl_context *ctx,
 					 struct vertex_buffer *VB,
 					 struct tnl_pipeline_stage *stage,
 					 GLvector4f *input )
@@ -529,7 +529,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
 /* Light infinite lights
  */
-static void TAG(light_fast_rgba)( GLcontext *ctx,
+static void TAG(light_fast_rgba)( struct gl_context *ctx,
 				  struct vertex_buffer *VB,
 				  struct tnl_pipeline_stage *stage,
 				  GLvector4f *input )

@@ -37,7 +37,7 @@
 #define _SWRAST_SPANTEMP_ONCE
 
 static INLINE void
-PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLvoid *p )
+PUT_PIXEL( struct gl_context *glCtx, GLint x, GLint y, GLvoid *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
     __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
@@ -51,7 +51,7 @@ PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLvoid *p )
 
 
 static INLINE void
-GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
+GET_PIXEL( struct gl_context *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
     __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
@@ -63,7 +63,7 @@ GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 }
 
 static INLINE void
-PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
+PUT_ROW( struct gl_context *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
     __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
@@ -76,7 +76,7 @@ PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 }
 
 static INLINE void
-GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
+GET_ROW( struct gl_context *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
     __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
@@ -118,7 +118,7 @@ GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 
 
 static void
-NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(get_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                GLuint count, GLint x, GLint y, void *values )
 {
 #ifdef SPAN_VARS
@@ -138,7 +138,7 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(get_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[], void *values )
 {
 #ifdef SPAN_VARS
@@ -156,7 +156,7 @@ NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                GLuint count, GLint x, GLint y,
                const void *values, const GLubyte mask[] )
 {
@@ -189,7 +189,7 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_row_rgb)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                    GLuint count, GLint x, GLint y,
                    const void *values, const GLubyte mask[] )
 {
@@ -230,7 +230,7 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_mono_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                     GLuint count, GLint x, GLint y,
                     const void *value, const GLubyte mask[] )
 {
@@ -263,7 +263,7 @@ NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[],
                   const void *values, const GLubyte mask[] )
 {
@@ -286,7 +286,7 @@ NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
+NAME(put_mono_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte mask[] )
 {

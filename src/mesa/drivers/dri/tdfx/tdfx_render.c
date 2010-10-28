@@ -45,7 +45,7 @@
 
 /* Clear the color and/or depth buffers.
  */
-static void tdfxClear( GLcontext *ctx, GLbitfield mask )
+static void tdfxClear( struct gl_context *ctx, GLbitfield mask )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
    GLbitfield softwareMask = mask & (BUFFER_BIT_ACCUM);
@@ -314,7 +314,7 @@ static void tdfxClear( GLcontext *ctx, GLbitfield mask )
 
 
 
-static void tdfxFinish( GLcontext *ctx )
+static void tdfxFinish( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -325,7 +325,7 @@ static void tdfxFinish( GLcontext *ctx )
    UNLOCK_HARDWARE( fxMesa );
 }
 
-static void tdfxFlush( GLcontext *ctx )
+static void tdfxFlush( struct gl_context *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -528,7 +528,7 @@ static void uploadTextureSource( tdfxContextPtr fxMesa )
 
 static void uploadTextureImages( tdfxContextPtr fxMesa )
 {
-   GLcontext *ctx = fxMesa->glCtx;
+   struct gl_context *ctx = fxMesa->glCtx;
    int unit;
    for (unit = 0; unit < TDFX_NUM_TMU; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {

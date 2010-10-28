@@ -39,7 +39,7 @@
 /**
  * XXX This should go away someday, but still referenced by some drivers...
  */
-void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
+void _tnl_UpdateFixedFunctionProgram( struct gl_context *ctx )
 {
    const struct gl_vertex_program *prev = ctx->VertexProgram._Current;
 

@@ -46,7 +46,31 @@
 
 #include "tgsi/tgsi_exec.h"
 
-#include "lp_setup.h"
+/**
+ * Describes how to compute the interpolation coefficients (a0, dadx, dady)
+ * from the vertices passed into our triangle/line/point functions by the
+ * draw module.
+ *
+ * Vertices are treated as an array of float[4] values, indexed by
+ * src_index.
+ *
+ * LP_INTERP_COLOR is translated to either LP_INTERP_CONSTANT or
+ * LINEAR depending on flatshade state.
+ */
+enum lp_interp {
+   LP_INTERP_CONSTANT,
+   LP_INTERP_COLOR,
+   LP_INTERP_LINEAR,
+   LP_INTERP_PERSPECTIVE,
+   LP_INTERP_POSITION,
+   LP_INTERP_FACING
+};
+
+struct lp_shader_input {
+   ushort interp:4;       /* enum lp_interp */
+   ushort usage_mask:4;   /* bitmask of TGSI_WRITEMASK_x flags */
+   ushort src_index:8;    /* where to find values in incoming vertices */
+};
 
 
 struct lp_build_interp_soa_context
@@ -89,7 +113,11 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef y);
 
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
+lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
+                           int quad_index);
+
+void
+lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
                            int quad_index);
 
 

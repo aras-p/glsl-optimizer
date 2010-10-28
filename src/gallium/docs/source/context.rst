@@ -156,6 +156,15 @@ If there is an index buffer bound, and ``indexed`` field is true, all vertex
 indices will be looked up in the index buffer.  ``min_index``, ``max_index``,
 and ``index_bias`` apply after index lookup.
 
+When drawing indexed primitives, the primitive restart index can be
+used to draw disjoint primitive strips.  For example, several separate
+line strips can be drawn by designating a special index value as the
+restart index.  The ``primitive_restart`` flag enables/disables this
+feature.  The ``restart_index`` field specifies the restart index value.
+
+When primitive restart is in use, array indexes are compared to the
+restart index before adding the index_bias offset.
+
 If a given vertex element has ``instance_divisor`` set to 0, it is said
 it contains per-vertex data and effective vertex attribute address needs
 to be recalculated for every index.

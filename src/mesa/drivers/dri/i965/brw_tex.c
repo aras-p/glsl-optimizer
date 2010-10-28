@@ -45,7 +45,7 @@
  */
 void brw_validate_textures( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    int i;
 

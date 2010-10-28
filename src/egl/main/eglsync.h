@@ -28,38 +28,41 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
              const EGLint *attrib_list);
 
 
-extern _EGLSync *
-_eglCreateSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy,
-                  EGLenum type, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroySyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync);
-
-
-extern EGLint
-_eglClientWaitSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                      EGLint flags, EGLTimeKHR timeout);
-
-
-extern EGLBoolean
-_eglSignalSyncKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
-                  EGLenum mode);
-
-
 extern EGLBoolean
 _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
                      EGLint attribute, EGLint *value);
 
 
 /**
- * Link a sync to a display and return the handle of the link.
+ * Increment reference count for the sync.
+ */
+static INLINE _EGLSync *
+_eglGetSync(_EGLSync *sync)
+{
+   if (sync)
+      _eglGetResource(&sync->Resource);
+   return sync;
+}
+
+
+/**
+ * Decrement reference count for the sync.
+ */
+static INLINE EGLBoolean
+_eglPutSync(_EGLSync *sync)
+{
+   return (sync) ? _eglPutResource(&sync->Resource) : EGL_FALSE;
+}
+
+
+/**
+ * Link a sync to its display and return the handle of the link.
  * The handle can be passed to client directly.
  */
 static INLINE EGLSyncKHR
-_eglLinkSync(_EGLSync *sync, _EGLDisplay *dpy)
+_eglLinkSync(_EGLSync *sync)
 {
-   _eglLinkResource(&sync->Resource, _EGL_RESOURCE_SYNC, dpy);
+   _eglLinkResource(&sync->Resource, _EGL_RESOURCE_SYNC);
    return (EGLSyncKHR) sync;
 }
 
@@ -97,20 +100,6 @@ _eglGetSyncHandle(_EGLSync *sync)
    _EGLResource *res = (_EGLResource *) sync;
    return (res && _eglIsResourceLinked(res)) ?
       (EGLSyncKHR) sync : EGL_NO_SYNC_KHR;
-}
-
-
-/**
- * Return true if the sync is linked to a display.
- *
- * The link is considered a reference to the sync (the display is owning the
- * sync).  Drivers should not destroy a sync when it is linked.
- */
-static INLINE EGLBoolean
-_eglIsSyncLinked(_EGLSync *sync)
-{
-   _EGLResource *res = (_EGLResource *) sync;
-   return (res && _eglIsResourceLinked(res));
 }
 
 

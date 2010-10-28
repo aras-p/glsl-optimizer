@@ -173,8 +173,6 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
-   GLboolean use_const_buffer;
-
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
 };
@@ -188,6 +186,13 @@ struct brw_shader {
 
 struct brw_shader_program {
    struct gl_shader_program base;
+};
+
+enum param_conversion {
+   PARAM_NO_CONVERT,
+   PARAM_CONVERT_F2I,
+   PARAM_CONVERT_F2U,
+   PARAM_CONVERT_F2B,
 };
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -204,12 +209,16 @@ struct brw_wm_prog_data {
    GLuint total_scratch;
 
    GLuint nr_params;       /**< number of float params/constants */
+   GLuint nr_pull_params;
    GLboolean error;
 
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
     */
-   const GLfloat *param[BRW_MAX_CURBE];
+   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   enum param_conversion param_convert[MAX_UNIFORMS * 4];
+   const float *pull_param[MAX_UNIFORMS * 4];
+   enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
 };
 
 struct brw_sf_prog_data {
@@ -719,7 +728,7 @@ void brwInitVtbl( struct brw_context *brw );
  * brw_context.c
  */
 GLboolean brwCreateContext( int api,
-			    const __GLcontextModes *mesaVis,
+			    const struct gl_config *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate);
 
@@ -763,15 +772,15 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /* brw_state.c */
-void brw_enable(GLcontext * ctx, GLenum cap, GLboolean state);
-void brw_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval);
+void brw_enable(struct gl_context * ctx, GLenum cap, GLboolean state);
+void brw_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
 static INLINE struct brw_context *
-brw_context( GLcontext *ctx )
+brw_context( struct gl_context *ctx )
 {
    return (struct brw_context *)ctx;
 }
@@ -798,6 +807,35 @@ static INLINE const struct brw_fragment_program *
 brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
+}
+
+static inline
+float convert_param(enum param_conversion conversion, float param)
+{
+   union {
+      float f;
+      uint32_t u;
+      int32_t i;
+   } fi;
+
+   switch (conversion) {
+   case PARAM_NO_CONVERT:
+      return param;
+   case PARAM_CONVERT_F2I:
+      fi.i = param;
+      return fi.f;
+   case PARAM_CONVERT_F2U:
+      fi.u = param;
+      return fi.f;
+   case PARAM_CONVERT_F2B:
+      if (param != 0.0)
+	 fi.i = 1;
+      else
+	 fi.i = 0;
+      return fi.f;
+   default:
+      return param;
+   }
 }
 
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);

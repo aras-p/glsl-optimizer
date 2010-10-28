@@ -169,7 +169,7 @@ GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions(
 }
 
 GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions2(
-    GLcontext *ctx,
+    struct gl_context *ctx,
 	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp)
 {
@@ -196,7 +196,7 @@ GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions2(
     return GL_TRUE;
 }
 
-void evergreen_Map_Vertex_Program(GLcontext *ctx,
+void evergreen_Map_Vertex_Program(struct gl_context *ctx,
                         struct evergreen_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
@@ -292,7 +292,7 @@ GLboolean evergreen_Find_Instruction_Dependencies_vp(struct evergreen_vertex_pro
     return GL_TRUE;
 }
 
-struct evergreen_vertex_program* evergreenTranslateVertexShader(GLcontext *ctx,
+struct evergreen_vertex_program* evergreenTranslateVertexShader(struct gl_context *ctx,
 						      struct gl_vertex_program *mesa_vp)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -374,7 +374,7 @@ struct evergreen_vertex_program* evergreenTranslateVertexShader(GLcontext *ctx,
 	return vp;
 }
 
-void evergreenSelectVertexShader(GLcontext *ctx)
+void evergreenSelectVertexShader(struct gl_context *ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_vertex_program_cont *vpc;
@@ -448,7 +448,7 @@ int evergreen_getTypeSize(GLenum type)
     }
 }
 
-static void evergreenTranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
+static void evergreenTranslateAttrib(struct gl_context *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     
@@ -534,7 +534,7 @@ static void evergreenTranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, co
 	context->nNumActiveAos++;
 }
 
-void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
+void evergreenSetVertexFormat(struct gl_context *ctx, const struct gl_client_array *arrays[], int count)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_vertex_program *vpc
@@ -563,7 +563,7 @@ void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_array *arra
     context->radeon.tcl.aos_count = context->nNumActiveAos;
 }
 
-void * evergreenGetActiveVpShaderBo(GLcontext * ctx)
+void * evergreenGetActiveVpShaderBo(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_vertex_program *vp = context->selected_vp;;
@@ -574,7 +574,7 @@ void * evergreenGetActiveVpShaderBo(GLcontext * ctx)
 	return NULL;
 }
 
-void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx)
+void * evergreenGetActiveVpShaderConstBo(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_vertex_program *vp = context->selected_vp;;
@@ -585,7 +585,7 @@ void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx)
 	return NULL;
 }
 
-GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
+GLboolean evergreenSetupVertexProgram(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -646,7 +646,7 @@ GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
     return GL_TRUE;
 }
 
-GLboolean evergreenSetupVPconstants(GLcontext * ctx)
+GLboolean evergreenSetupVPconstants(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);

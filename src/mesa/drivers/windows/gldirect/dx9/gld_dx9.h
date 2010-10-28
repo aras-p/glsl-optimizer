@@ -259,69 +259,69 @@ typedef struct {
 //---------------------------------------------------------------------------
 
 PROC	gldGetProcAddress_DX9(LPCSTR a);
-void	gldEnableExtensions_DX9(GLcontext *ctx);
-void	gldInstallPipeline_DX9(GLcontext *ctx);
-void	gldSetupDriverPointers_DX9(GLcontext *ctx);
-//void	gldResizeBuffers_DX9(GLcontext *ctx);
-void	gldResizeBuffers_DX9(GLframebuffer *fb);
+void	gldEnableExtensions_DX9(struct gl_context *ctx);
+void	gldInstallPipeline_DX9(struct gl_context *ctx);
+void	gldSetupDriverPointers_DX9(struct gl_context *ctx);
+//void	gldResizeBuffers_DX9(struct gl_context *ctx);
+void	gldResizeBuffers_DX9(struct gl_framebuffer *fb);
 
 
 // Texture functions
 
-void	gldCopyTexImage1D_DX9(GLcontext *ctx, GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border);
-void	gldCopyTexImage2D_DX9(GLcontext *ctx, GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
-void	gldCopyTexSubImage1D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width );
-void	gldCopyTexSubImage2D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height );
-void	gldCopyTexSubImage3D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height );
+void	gldCopyTexImage1D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border);
+void	gldCopyTexImage2D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
+void	gldCopyTexSubImage1D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width );
+void	gldCopyTexSubImage2D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height );
+void	gldCopyTexSubImage3D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height );
 
-void	gld_NEW_TEXTURE_DX9(GLcontext *ctx);
-void	gld_DrawPixels_DX9(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels);
-void	gld_ReadPixels_DX9(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const struct gl_pixelstore_attrib *unpack, GLvoid *dest);
-void	gld_CopyPixels_DX9(GLcontext *ctx, GLint srcx, GLint srcy, GLsizei width, GLsizei height, GLint dstx, GLint dsty, GLenum type);
-void	gld_Bitmap_DX9(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height, const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap);
-const struct gl_texture_format* gld_ChooseTextureFormat_DX9(GLcontext *ctx, GLint internalFormat, GLenum srcFormat, GLenum srcType);
-void	gld_TexImage2D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint internalFormat, GLint width, GLint height, GLint border, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *tObj, struct gl_texture_image *texImage);
-void	gld_TexImage1D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint internalFormat, GLint width, GLint border, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage );
-void	gld_TexSubImage2D_DX9( GLcontext *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage );
-void	gld_TexSubImage1D_DX9(GLcontext *ctx, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage);
-void	gld_DeleteTexture_DX9(GLcontext *ctx, struct gl_texture_object *tObj);
-void	gld_ResetLineStipple_DX9(GLcontext *ctx);
+void	gld_NEW_TEXTURE_DX9(struct gl_context *ctx);
+void	gld_DrawPixels_DX9(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels);
+void	gld_ReadPixels_DX9(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const struct gl_pixelstore_attrib *unpack, GLvoid *dest);
+void	gld_CopyPixels_DX9(struct gl_context *ctx, GLint srcx, GLint srcy, GLsizei width, GLsizei height, GLint dstx, GLint dsty, GLenum type);
+void	gld_Bitmap_DX9(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height, const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap);
+const struct gl_texture_format* gld_ChooseTextureFormat_DX9(struct gl_context *ctx, GLint internalFormat, GLenum srcFormat, GLenum srcType);
+void	gld_TexImage2D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint internalFormat, GLint width, GLint height, GLint border, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *tObj, struct gl_texture_image *texImage);
+void	gld_TexImage1D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint internalFormat, GLint width, GLint border, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage );
+void	gld_TexSubImage2D_DX9( struct gl_context *ctx, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage );
+void	gld_TexSubImage1D_DX9(struct gl_context *ctx, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels, const struct gl_pixelstore_attrib *packing, struct gl_texture_object *texObj, struct gl_texture_image *texImage);
+void	gld_DeleteTexture_DX9(struct gl_context *ctx, struct gl_texture_object *tObj);
+void	gld_ResetLineStipple_DX9(struct gl_context *ctx);
 
 // 2D primitive functions
 
-void	gld_Points2D_DX9(GLcontext *ctx, GLuint first, GLuint last);
+void	gld_Points2D_DX9(struct gl_context *ctx, GLuint first, GLuint last);
 
-void	gld_Line2DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
-void	gld_Line2DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
+void	gld_Line2DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
+void	gld_Line2DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
 
-void	gld_Triangle2DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Triangle2DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Triangle2DFlatExtras_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Triangle2DSmoothExtras_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Triangle2DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Triangle2DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Triangle2DFlatExtras_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Triangle2DSmoothExtras_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
 
-void	gld_Quad2DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
-void	gld_Quad2DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
-void	gld_Quad2DFlatExtras_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
-void	gld_Quad2DSmoothExtras_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Quad2DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Quad2DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Quad2DFlatExtras_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Quad2DSmoothExtras_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
 
 // 3D primitive functions
 
-void	gld_Points3D_DX9(GLcontext *ctx, GLuint first, GLuint last);
-void	gld_Line3DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
-void	gld_Triangle3DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Quad3DFlat_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
-void	gld_Line3DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
-void	gld_Triangle3DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Quad3DSmooth_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Points3D_DX9(struct gl_context *ctx, GLuint first, GLuint last);
+void	gld_Line3DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
+void	gld_Triangle3DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Quad3DFlat_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Line3DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
+void	gld_Triangle3DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Quad3DSmooth_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
 
 // Primitive functions for Two-sided-lighting Vertex Shader
 
-void	gld_Points2DTwoside_DX9(GLcontext *ctx, GLuint first, GLuint last);
-void	gld_Line2DFlatTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
-void	gld_Line2DSmoothTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1);
-void	gld_Triangle2DFlatTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Triangle2DSmoothTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2);
-void	gld_Quad2DFlatTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
-void	gld_Quad2DSmoothTwoside_DX9(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Points2DTwoside_DX9(struct gl_context *ctx, GLuint first, GLuint last);
+void	gld_Line2DFlatTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
+void	gld_Line2DSmoothTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1);
+void	gld_Triangle2DFlatTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Triangle2DSmoothTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2);
+void	gld_Quad2DFlatTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+void	gld_Quad2DSmoothTwoside_DX9(struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
 
 #endif

@@ -32,7 +32,7 @@
  * Return major and minor version numbers.
  */
 static void
-compute_version(GLcontext *ctx)
+compute_version(struct gl_context *ctx)
 {
    GLuint major, minor;
    static const int max = 100;
@@ -187,7 +187,7 @@ compute_version(GLcontext *ctx)
 }
 
 static void
-compute_version_es1(GLcontext *ctx)
+compute_version_es1(struct gl_context *ctx)
 {
    static const int max = 100;
 
@@ -223,7 +223,7 @@ compute_version_es1(GLcontext *ctx)
 }
 
 static void
-compute_version_es2(GLcontext *ctx)
+compute_version_es2(struct gl_context *ctx)
 {
    static const int max = 100;
 
@@ -264,7 +264,7 @@ compute_version_es2(GLcontext *ctx)
  * or to perform version check for GLX_ARB_create_context_profile.
  */
 void
-_mesa_compute_version(GLcontext *ctx)
+_mesa_compute_version(struct gl_context *ctx)
 {
    if (ctx->VersionMajor)
       return;

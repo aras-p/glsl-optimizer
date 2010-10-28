@@ -117,7 +117,7 @@ _mesa_EndConditionalRender(void)
  * \return GL_TRUE if we should render, GL_FALSE if we should discard
  */
 GLboolean
-_mesa_check_conditional_render(GLcontext *ctx)
+_mesa_check_conditional_render(struct gl_context *ctx)
 {
    struct gl_query_object *q = ctx->Query.CondRenderQuery;
 

@@ -248,21 +248,20 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    if (double_buffer)
       return NULL;
 
-   if (depth > 0 && depth != _eglGetConfigKey(&base, EGL_BUFFER_SIZE))
+   if (depth > 0 && depth != base.BufferSize)
       return NULL;
 
-   _eglSetConfigKey(&base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   base.NativeRenderable = EGL_TRUE;
 
-   _eglSetConfigKey(&base, EGL_SURFACE_TYPE, surface_type);
+   base.SurfaceType = surface_type;
    if (surface_type & (EGL_PIXMAP_BIT | EGL_PBUFFER_BIT)) {
-      _eglSetConfigKey(&base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-      if (_eglGetConfigKey(&base, EGL_ALPHA_SIZE) > 0)
-	 _eglSetConfigKey(&base,
-			  EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+      base.BindToTextureRGB = bind_to_texture_rgb;
+      if (base.AlphaSize > 0)
+         base.BindToTextureRGBA = bind_to_texture_rgba;
    }
 
-   _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, disp->ClientAPIsMask);
-   _eglSetConfigKey(&base, EGL_CONFORMANT, disp->ClientAPIsMask);
+   base.RenderableType = disp->ClientAPIsMask;
+   base.Conformant = disp->ClientAPIsMask;
 
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
@@ -273,7 +272,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    if (conf != NULL) {
       memcpy(&conf->base, &base, sizeof base);
       conf->dri_config = dri_config;
-      _eglAddConfig(disp, &conf->base);
+      _eglLinkConfig(&conf->base);
    }
 
    return conf;
@@ -1161,7 +1160,7 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 
    (void) drv;
 
-   if (_eglIsSurfaceBound(surf))
+   if (!_eglPutSurface(surf))
       return EGL_TRUE;
 
    (*dri2_dpy->core->destroyDrawable)(dri2_surf->dri_drawable);
@@ -1188,15 +1187,17 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct dri2_egl_surface *dri2_dsurf = dri2_egl_surface(dsurf);
    struct dri2_egl_surface *dri2_rsurf = dri2_egl_surface(rsurf);
    struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   _EGLContext *old_ctx;
+   _EGLSurface *old_dsurf, *old_rsurf;
    __DRIdrawable *ddraw, *rdraw;
    __DRIcontext *cctx;
 
-   /* bind the new context and return the "orphaned" one */
-   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
+   /* make new bindings */
+   if (!_eglBindContext(ctx, dsurf, rsurf, &old_ctx, &old_dsurf, &old_rsurf))
       return EGL_FALSE;
 
    /* flush before context switch */
-   if (ctx && dri2_drv->glFlush)
+   if (old_ctx && dri2_drv->glFlush)
       dri2_drv->glFlush();
 
    ddraw = (dri2_dsurf) ? dri2_dsurf->dri_drawable : NULL;
@@ -1205,16 +1206,29 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
 
    if ((cctx == NULL && ddraw == NULL && rdraw == NULL) ||
        dri2_dpy->core->bindContext(cctx, ddraw, rdraw)) {
-      if (dsurf && !_eglIsSurfaceLinked(dsurf))
-	 dri2_destroy_surface(drv, disp, dsurf);
-      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(dsurf))
-	 dri2_destroy_surface(drv, disp, rsurf);
-      if (ctx != NULL && !_eglIsContextLinked(ctx))
-	 dri2_dpy->core->unbindContext(dri2_egl_context(ctx)->dri_context);
+      dri2_destroy_surface(drv, disp, old_dsurf);
+      dri2_destroy_surface(drv, disp, old_rsurf);
+      if (old_ctx) {
+	 dri2_dpy->core->unbindContext(dri2_egl_context(old_ctx)->dri_context);
+         /* no destroy? */
+         _eglPutContext(old_ctx);
+      }
 
       return EGL_TRUE;
    } else {
-      _eglBindContext(&ctx, &dsurf, &rsurf);
+      /* undo the previous _eglBindContext */
+      _eglBindContext(old_ctx, old_dsurf, old_rsurf, &ctx, &dsurf, &rsurf);
+      assert(&dri2_ctx->base == ctx &&
+             &dri2_dsurf->base == dsurf &&
+             &dri2_rsurf->base == rsurf);
+
+      _eglPutSurface(dsurf);
+      _eglPutSurface(rsurf);
+      _eglPutContext(ctx);
+
+      _eglPutSurface(old_dsurf);
+      _eglPutSurface(old_rsurf);
+      _eglPutContext(old_ctx);
 
       return EGL_FALSE;
    }
@@ -1251,8 +1265,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (type == EGL_PBUFFER_BIT) {
       dri2_surf->drawable = xcb_generate_id(dri2_dpy->conn);
       s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
-      xcb_create_pixmap(dri2_dpy->conn,
-			_eglGetConfigKey(conf, EGL_BUFFER_SIZE),
+      xcb_create_pixmap(dri2_dpy->conn, conf->BufferSize,
 			dri2_surf->drawable, s.data->root,
 			dri2_surf->base.Width, dri2_surf->base.Height);
    } else {
@@ -1601,7 +1614,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       free(buffers_reply);
       free(geometry_reply);
       return EGL_NO_IMAGE_KHR;
@@ -1644,7 +1657,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list))
+   if (!_eglInitImage(&dri2_img->base, disp))
       return EGL_NO_IMAGE_KHR;
 
    dri2_img->dri_image = 
@@ -1661,56 +1674,28 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img;
-   EGLint width, height, format, name, stride, pitch, i, err;
+   EGLint format, name, pitch, err;
+   _EGLImageAttribs attrs;
 
    (void) ctx;
 
    name = (EGLint) buffer;
 
-   err = EGL_SUCCESS;
-   width = 0;
-   height = 0;
-   format = 0;
-   stride = 0;
+   err = _eglParseImageAttribList(&attrs, disp, attr_list);
+   if (err != EGL_SUCCESS)
+      return NULL;
 
-   for (i = 0; attr_list[i] != EGL_NONE; i++) {
-      EGLint attr = attr_list[i++];
-      EGLint val = attr_list[i];
-
-      switch (attr) {
-      case EGL_WIDTH:
-	 width = val;
-         break;
-      case EGL_HEIGHT:
-	 height = val;
-         break;
-      case EGL_DRM_BUFFER_FORMAT_MESA:
-	 format = val;
-         break;
-      case EGL_DRM_BUFFER_STRIDE_MESA:
-	 stride = val;
-         break;
-      default:
-         err = EGL_BAD_ATTRIBUTE;
-         break;
-      }
-
-      if (err != EGL_SUCCESS) {
-         _eglLog(_EGL_WARNING, "bad image attribute 0x%04x", attr);
-	 return NULL;
-      }
-   }
-
-   if (width <= 0 || height <= 0 || stride <= 0) {
+   if (attrs.Width <= 0 || attrs.Height <= 0 ||
+       attrs.DRMBufferStrideMESA <= 0) {
       _eglError(EGL_BAD_PARAMETER,
 		"bad width, height or stride");
       return NULL;
    }
 
-   switch (format) {
+   switch (attrs.DRMBufferFormatMESA) {
    case EGL_DRM_BUFFER_FORMAT_ARGB32_MESA:
       format = __DRI_IMAGE_FORMAT_ARGB8888;
-      pitch = stride;
+      pitch = attrs.DRMBufferStrideMESA;
       break;
    default:
       _eglError(EGL_BAD_PARAMETER,
@@ -1724,15 +1709,15 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
       return NULL;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       free(dri2_img);
       return NULL;
    }
 
    dri2_img->dri_image =
       dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
-					   width,
-					   height,
+					   attrs.Width,
+					   attrs.Height,
 					   format,
 					   name,
 					   pitch,
@@ -1786,8 +1771,9 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img;
-   int width, height, format, i;
-   unsigned int use, dri_use, valid_mask;
+   _EGLImageAttribs attrs;
+   unsigned int dri_use, valid_mask;
+   int format;
    EGLint err = EGL_SUCCESS;
 
    (void) drv;
@@ -1803,74 +1789,50 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
       goto cleanup_img;
    }
 
-   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+   if (!_eglInitImage(&dri2_img->base, disp)) {
       err = EGL_BAD_PARAMETER;
       goto cleanup_img;
    }
 
-   width = 0;
-   height = 0;
-   format = 0;
-   use = 0;
-   for (i = 0; attr_list[i] != EGL_NONE; i++) {
-      EGLint attr = attr_list[i++];
-      EGLint val = attr_list[i];
+   err = _eglParseImageAttribList(&attrs, disp, attr_list);
+   if (err != EGL_SUCCESS)
+      goto cleanup_img;
 
-      switch (attr) {
-      case EGL_WIDTH:
-	 width = val;
-         break;
-      case EGL_HEIGHT:
-	 height = val;
-         break;
-      case EGL_DRM_BUFFER_FORMAT_MESA:
-	 format = val;
-         break;
-      case EGL_DRM_BUFFER_USE_MESA:
-	 use = val;
-         break;
-      default:
-         err = EGL_BAD_ATTRIBUTE;
-         break;
-      }
-
-      if (err != EGL_SUCCESS) {
-         _eglLog(_EGL_WARNING, "bad image attribute 0x%04x", attr);
-	 goto cleanup_img;
-      }
-   }
-
-   if (width <= 0 || height <= 0) {
-      _eglLog(_EGL_WARNING, "bad width or height (%dx%d)", width, height);
+   if (attrs.Width <= 0 || attrs.Height <= 0) {
+      _eglLog(_EGL_WARNING, "bad width or height (%dx%d)",
+            attrs.Width, attrs.Height);
       goto cleanup_img;
    }
 
-   switch (format) {
+   switch (attrs.DRMBufferFormatMESA) {
    case EGL_DRM_BUFFER_FORMAT_ARGB32_MESA:
       format = __DRI_IMAGE_FORMAT_ARGB8888;
       break;
    default:
-      _eglLog(_EGL_WARNING, "bad image format value 0x%04x", format);
+      _eglLog(_EGL_WARNING, "bad image format value 0x%04x",
+            attrs.DRMBufferFormatMESA);
       goto cleanup_img;
    }
 
    valid_mask =
       EGL_DRM_BUFFER_USE_SCANOUT_MESA |
       EGL_DRM_BUFFER_USE_SHARE_MESA; 
-   if (use & ~valid_mask) {
-      _eglLog(_EGL_WARNING, "bad image use bit 0x%04x", use & ~valid_mask);
+   if (attrs.DRMBufferUseMESA & ~valid_mask) {
+      _eglLog(_EGL_WARNING, "bad image use bit 0x%04x",
+            attrs.DRMBufferUseMESA & ~valid_mask);
       goto cleanup_img;
    }
 
    dri_use = 0;
-   if (use & EGL_DRM_BUFFER_USE_SHARE_MESA)
+   if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_SHARE_MESA)
       dri_use |= __DRI_IMAGE_USE_SHARE;
-   if (use & EGL_DRM_BUFFER_USE_SCANOUT_MESA)
+   if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_SCANOUT_MESA)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
 
    dri2_img->dri_image = 
       dri2_dpy->image->createImage(dri2_dpy->dri_screen,
-				   width, height, format, dri_use, dri2_img);
+				   attrs.Width, attrs.Height,
+                                   format, dri_use, dri2_img);
    if (dri2_img->dri_image == NULL) {
       err = EGL_BAD_ALLOC;
       goto cleanup_img;

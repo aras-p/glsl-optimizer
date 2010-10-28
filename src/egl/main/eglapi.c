@@ -416,7 +416,7 @@ eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_NO_CONTEXT);
 
    context = drv->API.CreateContext(drv, disp, conf, share, attrib_list);
-   ret = (context) ? _eglLinkContext(context, disp) : EGL_NO_CONTEXT;
+   ret = (context) ? _eglLinkContext(context) : EGL_NO_CONTEXT;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -515,7 +515,7 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
    surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
-   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -536,7 +536,7 @@ eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
-   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -555,7 +555,7 @@ eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
 
    surf = drv->API.CreatePbufferSurface(drv, disp, conf, attrib_list);
-   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -648,11 +648,12 @@ eglSwapInterval(EGLDisplay dpy, EGLint interval)
 
    _EGL_CHECK_DISPLAY(disp, EGL_FALSE, drv);
 
-   if (!ctx || !_eglIsContextLinked(ctx) || ctx->Resource.Display != disp)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       ctx->Resource.Display != disp)
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
 
    surf = ctx->DrawSurface;
-   if (!_eglIsSurfaceLinked(surf))
+   if (_eglGetSurfaceHandle(surf) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapInterval(drv, disp, surf, interval);
@@ -673,7 +674,8 @@ eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
    _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
 
    /* surface must be bound to current context in EGL 1.4 */
-   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       surf != ctx->DrawSurface)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapBuffers(drv, disp, surf);
@@ -714,7 +716,8 @@ eglWaitClient(void)
    _eglLockMutex(&disp->Mutex);
 
    /* let bad current context imply bad current surface */
-   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       _eglGetSurfaceHandle(ctx->DrawSurface) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
 
    /* a valid current context implies an initialized current display */
@@ -763,7 +766,8 @@ eglWaitNative(EGLint engine)
    _eglLockMutex(&disp->Mutex);
 
    /* let bad current context imply bad current surface */
-   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       _eglGetSurfaceHandle(ctx->DrawSurface) == EGL_NO_SURFACE)
       RETURN_EGL_ERROR(disp, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
 
    /* a valid current context implies an initialized current display */
@@ -1043,7 +1047,7 @@ eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
 
    surf = drv->API.CreateScreenSurfaceMESA(drv, disp, conf, attrib_list);
-   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -1235,7 +1239,7 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 
    surf = drv->API.CreatePbufferFromClientBuffer(drv, disp, buftype, buffer,
                                                  conf, attrib_list);
-   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -1298,7 +1302,7 @@ eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
 
    img = drv->API.CreateImageKHR(drv,
          disp, context, target, buffer, attr_list);
-   ret = (img) ? _eglLinkImage(img, disp) : EGL_NO_IMAGE_KHR;
+   ret = (img) ? _eglLinkImage(img) : EGL_NO_IMAGE_KHR;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -1344,7 +1348,7 @@ eglCreateSyncKHR(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list)
       RETURN_EGL_EVAL(disp, EGL_NO_SYNC_KHR);
 
    sync = drv->API.CreateSyncKHR(drv, disp, type, attrib_list);
-   ret = (sync) ? _eglLinkSync(sync, disp) : EGL_NO_SYNC_KHR;
+   ret = (sync) ? _eglLinkSync(sync) : EGL_NO_SYNC_KHR;
 
    RETURN_EGL_EVAL(disp, ret);
 }
@@ -1437,7 +1441,8 @@ eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
       RETURN_EGL_EVAL(disp, EGL_FALSE);
 
    /* surface must be bound to current context in EGL 1.4 */
-   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       surf != ctx->DrawSurface)
       RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
    ret = drv->API.SwapBuffersRegionNOK(drv, disp, surf, numRects, rects);
@@ -1463,7 +1468,7 @@ eglCreateDRMImageMESA(EGLDisplay dpy, const EGLint *attr_list)
       RETURN_EGL_EVAL(disp, EGL_NO_IMAGE_KHR);
 
    img = drv->API.CreateDRMImageMESA(drv, disp, attr_list);
-   ret = (img) ? _eglLinkImage(img, disp) : EGL_NO_IMAGE_KHR;
+   ret = (img) ? _eglLinkImage(img) : EGL_NO_IMAGE_KHR;
 
    RETURN_EGL_EVAL(disp, ret);
 }

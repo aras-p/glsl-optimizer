@@ -30,7 +30,7 @@
 
 unsigned evergreen_check_blit(gl_format mesa_format);
 
-unsigned evergreen_blit(GLcontext *ctx,
+unsigned evergreen_blit(struct gl_context *ctx,
 			struct radeon_bo *src_bo,
 			intptr_t src_offset,
 			gl_format src_mesaformat,

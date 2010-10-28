@@ -452,6 +452,7 @@ enum pipe_cap {
    PIPE_CAP_BLEND_EQUATION_SEPARATE,
    PIPE_CAP_SM3,  /*< Shader Model, supported */
    PIPE_CAP_STREAM_OUTPUT,
+   PIPE_CAP_PRIMITIVE_RESTART,
    /** Maximum texture image units accessible from vertex and fragment shaders
     * combined */
    PIPE_CAP_MAX_COMBINED_SAMPLERS,
@@ -464,7 +465,8 @@ enum pipe_cap {
    PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT,
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER,
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER,
-   PIPE_CAP_DEPTH_CLAMP
+   PIPE_CAP_DEPTH_CLAMP,
+   PIPE_CAP_SHADER_STENCIL_EXPORT,
 };
 
 /* Shader caps not specific to any single stage */

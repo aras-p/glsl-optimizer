@@ -70,7 +70,7 @@ do {						\
 } while (0)
 #endif
 
-static void r200_emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
+static void r200_emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
 			     GLvoid *data, int stride, int count)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -103,7 +103,7 @@ static void r200_emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 /* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
  */
-void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
+void r200EmitArrays( struct gl_context *ctx, GLubyte *vimap_rev )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;

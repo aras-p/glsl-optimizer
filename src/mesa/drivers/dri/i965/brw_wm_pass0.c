@@ -113,6 +113,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
       struct brw_wm_ref *ref = get_ref(c);
 
       c->prog_data.param[i] = param_ptr;
+      c->prog_data.param_convert[i] = PARAM_NO_CONVERT;
       c->nr_creg = (i+16)/16;
 
       /* Push the offsets into hw_reg.  These will be added to the

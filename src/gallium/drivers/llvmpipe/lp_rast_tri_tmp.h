@@ -82,7 +82,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
       const int dcdx = -plane[j].dcdx * 4;
       const int dcdy = plane[j].dcdy * 4;
       const int cox = plane[j].eo * 4;
-      const int cio = plane[j].ei * 4 - 1;
+      const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+      const int cio = ei * 4 - 1;
 
       build_masks(c[j] + cox,
 		  cio - cox,
@@ -156,6 +157,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
+   const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
    const int x = task->x, y = task->y;
    struct lp_rast_plane plane[NR_PLANES];
    int c[NR_PLANES];
@@ -172,7 +174,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 
    while (plane_mask) {
       int i = ffs(plane_mask) - 1;
-      plane[j] = tri->plane[i];
+      plane[j] = tri_plane[i];
       plane_mask &= ~(1 << i);
       c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
 
@@ -180,7 +182,8 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
 	 const int dcdx = -plane[j].dcdx * 16;
 	 const int dcdy = plane[j].dcdy * 16;
 	 const int cox = plane[j].eo * 16;
-	 const int cio = plane[j].ei * 16 - 1;
+         const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+         const int cio = ei * 16 - 1;
 
 	 build_masks(c[j] + cox,
 		     cio - cox,
@@ -255,7 +258,7 @@ TRI_16(struct lp_rasterizer_task *task,
        const union lp_rast_cmd_arg arg)
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
    unsigned mask = arg.triangle.plane_mask;
    unsigned outmask, partial_mask;
    unsigned j;
@@ -328,7 +331,7 @@ TRI_4(struct lp_rasterizer_task *task,
       const union lp_rast_cmd_arg arg)
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
-   const struct lp_rast_plane *plane = tri->plane;
+   const struct lp_rast_plane *plane = GET_PLANES(tri);
    unsigned mask = arg.triangle.plane_mask;
    const int x = task->x + (mask & 0xff);
    const int y = task->y + (mask >> 8);

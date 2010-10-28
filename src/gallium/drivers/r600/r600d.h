@@ -667,6 +667,9 @@
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
 #define   C_02880C_Z_EXPORT_ENABLE                     0xFFFFFFFE
+#define   S_02880C_STENCIL_REF_EXPORT_ENABLE(x)        (((x) & 0x1) << 1)
+#define   G_02880C_STENCIL_REF_EXPORT_ENABLE(x)        (((x) >> 1) & 0x1)
+#define   C_02880C_STENCIL_REF_EXPORT_ENABLE           0xFFFFFFFD
 #define   S_02880C_Z_ORDER(x)                          (((x) & 0x3) << 4)
 #define   G_02880C_Z_ORDER(x)                          (((x) >> 4) & 0x3)
 #define   C_02880C_Z_ORDER                             0xFFFFFCFF
@@ -901,6 +904,10 @@
 #define   S_038000_TILE_MODE(x)                        (((x) & 0xF) << 3)
 #define   G_038000_TILE_MODE(x)                        (((x) >> 3) & 0xF)
 #define   C_038000_TILE_MODE                           0xFFFFFF87
+#define     V_038000_ARRAY_LINEAR_GENERAL              0x00000000
+#define     V_038000_ARRAY_LINEAR_ALIGNED              0x00000001
+#define     V_038000_ARRAY_1D_TILED_THIN1              0x00000002
+#define     V_038000_ARRAY_2D_TILED_THIN1              0x00000004
 #define   S_038000_TILE_TYPE(x)                        (((x) & 0x1) << 7)
 #define   G_038000_TILE_TYPE(x)                        (((x) >> 7) & 0x1)
 #define   C_038000_TILE_TYPE                           0xFFFFFF7F
@@ -1025,45 +1032,7 @@
 #define   S_038008_DATA_FORMAT(x)                      (((x) & 0x3F) << 20)
 #define   G_038008_DATA_FORMAT(x)                      (((x) >> 20) & 0x3F)
 #define   C_038008_DATA_FORMAT                         0xFC0FFFFF
-#define     V_038008_FMT_INVALID                     0x00000000
-#define     V_038008_FMT_8                           0x00000001
-#define     V_038008_FMT_4_4                         0x00000002
-#define     V_038008_FMT_3_3_2                       0x00000003
-#define     V_038008_FMT_16                          0x00000005
-#define     V_038008_FMT_16_FLOAT                    0x00000006
-#define     V_038008_FMT_8_8                         0x00000007
-#define     V_038008_FMT_5_6_5                       0x00000008
-#define     V_038008_FMT_6_5_5                       0x00000009
-#define     V_038008_FMT_1_5_5_5                     0x0000000A
-#define     V_038008_FMT_4_4_4_4                     0x0000000B
-#define     V_038008_FMT_5_5_5_1                     0x0000000C
-#define     V_038008_FMT_32                          0x0000000D
-#define     V_038008_FMT_32_FLOAT                    0x0000000E
-#define     V_038008_FMT_16_16                       0x0000000F
-#define     V_038008_FMT_16_16_FLOAT                 0x00000010
-#define     V_038008_FMT_8_24                        0x00000011
-#define     V_038008_FMT_8_24_FLOAT                  0x00000012
-#define     V_038008_FMT_24_8                        0x00000013
-#define     V_038008_FMT_24_8_FLOAT                  0x00000014
-#define     V_038008_FMT_10_11_11                    0x00000015
-#define     V_038008_FMT_10_11_11_FLOAT              0x00000016
-#define     V_038008_FMT_11_11_10                    0x00000017
-#define     V_038008_FMT_11_11_10_FLOAT              0x00000018
-#define     V_038008_FMT_2_10_10_10                  0x00000019
-#define     V_038008_FMT_8_8_8_8                     0x0000001A
-#define     V_038008_FMT_10_10_10_2                  0x0000001B
-#define     V_038008_FMT_X24_8_32_FLOAT              0x0000001C
-#define     V_038008_FMT_32_32                       0x0000001D
-#define     V_038008_FMT_32_32_FLOAT                 0x0000001E
-#define     V_038008_FMT_16_16_16_16                 0x0000001F
-#define     V_038008_FMT_16_16_16_16_FLOAT           0x00000020
-#define     V_038008_FMT_32_32_32_32                 0x00000022
-#define     V_038008_FMT_32_32_32_32_FLOAT           0x00000023
-#define     V_038008_FMT_8_8_8                       0x0000002c
-#define     V_038008_FMT_16_16_16                    0x0000002d
-#define     V_038008_FMT_16_16_16_FLOAT              0x0000002e
-#define     V_038008_FMT_32_32_32                    0x0000002f
-#define     V_038008_FMT_32_32_32_FLOAT              0x00000030
+
 #define   S_038008_NUM_FORMAT_ALL(x)                   (((x) & 0x3) << 26)
 #define   G_038008_NUM_FORMAT_ALL(x)                   (((x) >> 26) & 0x3)
 #define   C_038008_NUM_FORMAT_ALL                      0xF3FFFFFF

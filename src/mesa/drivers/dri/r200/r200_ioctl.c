@@ -54,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
-static void r200KernelClear(GLcontext *ctx, GLuint flags)
+static void r200KernelClear(struct gl_context *ctx, GLuint flags)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
@@ -180,7 +180,7 @@ static void r200KernelClear(GLcontext *ctx, GLuint flags)
 /* ================================================================
  * Buffer clear
  */
-static void r200Clear( GLcontext *ctx, GLbitfield mask )
+static void r200Clear( struct gl_context *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);

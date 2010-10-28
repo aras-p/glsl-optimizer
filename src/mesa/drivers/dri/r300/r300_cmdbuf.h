@@ -45,7 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SCISSORS_BUFSZ         (3)
 
 void r300InitCmdBuf(r300ContextPtr r300);
-void r300_emit_scissor(GLcontext *ctx);
+void r300_emit_scissor(struct gl_context *ctx);
 
 void r300_emit_vpu(struct r300_context *ctx,
                    uint32_t *data,

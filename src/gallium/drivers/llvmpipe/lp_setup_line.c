@@ -35,6 +35,7 @@
 #include "lp_setup_context.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 
 #define NUM_CHANNELS 4
 
@@ -46,6 +47,10 @@ struct lp_line_info {
 
    const float (*v1)[4];
    const float (*v2)[4];
+
+   float (*a0)[4];
+   float (*dadx)[4];
+   float (*dady)[4];
 };
 
 
@@ -53,14 +58,14 @@ struct lp_line_info {
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  */
 static void constant_coef( struct lp_setup_context *setup,
-                           struct lp_rast_triangle *tri,
+                           struct lp_line_info *info,
                            unsigned slot,
                            const float value,
                            unsigned i )
 {
-   tri->inputs.a0[slot][i] = value;
-   tri->inputs.dadx[slot][i] = 0.0f;
-   tri->inputs.dady[slot][i] = 0.0f;
+   info->a0[slot][i] = value;
+   info->dadx[slot][i] = 0.0f;
+   info->dady[slot][i] = 0.0f;
 }
 
 
@@ -69,7 +74,6 @@ static void constant_coef( struct lp_setup_context *setup,
  * for a triangle.
  */
 static void linear_coef( struct lp_setup_context *setup,
-                         struct lp_rast_triangle *tri,
                          struct lp_line_info *info,
                          unsigned slot,
                          unsigned vert_attr,
@@ -82,10 +86,10 @@ static void linear_coef( struct lp_setup_context *setup,
    float dadx = da21 * info->dx * info->oneoverarea;
    float dady = da21 * info->dy * info->oneoverarea;
 
-   tri->inputs.dadx[slot][i] = dadx;
-   tri->inputs.dady[slot][i] = dady;  
+   info->dadx[slot][i] = dadx;
+   info->dady[slot][i] = dady;  
    
-   tri->inputs.a0[slot][i] = (a1 -
+   info->a0[slot][i] = (a1 -
                               (dadx * (info->v1[0][0] - setup->pixel_offset) +
                                dady * (info->v1[0][1] - setup->pixel_offset)));
 }
@@ -100,7 +104,6 @@ static void linear_coef( struct lp_setup_context *setup,
  * divide the interpolated value by the interpolated W at that fragment.
  */
 static void perspective_coef( struct lp_setup_context *setup,
-                              struct lp_rast_triangle *tri,
                               struct lp_line_info *info,
                               unsigned slot,
                               unsigned vert_attr,
@@ -115,43 +118,42 @@ static void perspective_coef( struct lp_setup_context *setup,
    float dadx = da21 * info->dx * info->oneoverarea;
    float dady = da21 * info->dy * info->oneoverarea;
 
-   tri->inputs.dadx[slot][i] = dadx;
-   tri->inputs.dady[slot][i] = dady;
+   info->dadx[slot][i] = dadx;
+   info->dady[slot][i] = dady;
    
-   tri->inputs.a0[slot][i] = (a1 -
-                              (dadx * (info->v1[0][0] - setup->pixel_offset) +
-                               dady * (info->v1[0][1] - setup->pixel_offset)));
+   info->a0[slot][i] = (a1 -
+                        (dadx * (info->v1[0][0] - setup->pixel_offset) +
+                         dady * (info->v1[0][1] - setup->pixel_offset)));
 }
 
 static void
 setup_fragcoord_coef( struct lp_setup_context *setup,
-                      struct lp_rast_triangle *tri,
                       struct lp_line_info *info,
                       unsigned slot,
                       unsigned usage_mask)
 {
    /*X*/
    if (usage_mask & TGSI_WRITEMASK_X) {
-      tri->inputs.a0[slot][0] = 0.0;
-      tri->inputs.dadx[slot][0] = 1.0;
-      tri->inputs.dady[slot][0] = 0.0;
+      info->a0[slot][0] = 0.0;
+      info->dadx[slot][0] = 1.0;
+      info->dady[slot][0] = 0.0;
    }
 
    /*Y*/
    if (usage_mask & TGSI_WRITEMASK_Y) {
-      tri->inputs.a0[slot][1] = 0.0;
-      tri->inputs.dadx[slot][1] = 0.0;
-      tri->inputs.dady[slot][1] = 1.0;
+      info->a0[slot][1] = 0.0;
+      info->dadx[slot][1] = 0.0;
+      info->dady[slot][1] = 1.0;
    }
 
    /*Z*/
    if (usage_mask & TGSI_WRITEMASK_Z) {
-      linear_coef(setup, tri, info, slot, 0, 2);
+      linear_coef(setup, info, slot, 0, 2);
    }
 
    /*W*/
    if (usage_mask & TGSI_WRITEMASK_W) {
-      linear_coef(setup, tri, info, slot, 0, 3);
+      linear_coef(setup, info, slot, 0, 3);
    }
 }
 
@@ -159,43 +161,43 @@ setup_fragcoord_coef( struct lp_setup_context *setup,
  * Compute the tri->coef[] array dadx, dady, a0 values.
  */
 static void setup_line_coefficients( struct lp_setup_context *setup,
-                                     struct lp_rast_triangle *tri,
                                      struct lp_line_info *info)
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
-      unsigned vert_attr = setup->fs.input[slot].src_index;
-      unsigned usage_mask = setup->fs.input[slot].usage_mask;
+   for (slot = 0; slot < key->num_inputs; slot++) {
+      unsigned vert_attr = key->inputs[slot].src_index;
+      unsigned usage_mask = key->inputs[slot].usage_mask;
       unsigned i;
            
-      switch (setup->fs.input[slot].interp) {
+      switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
-         if (setup->flatshade_first) {
+         if (key->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(setup, tri, slot+1, info->v1[vert_attr][i], i);
+                  constant_coef(setup, info, slot+1, info->v1[vert_attr][i], i);
          }
          else {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(setup, tri, slot+1, info->v2[vert_attr][i], i);
+                  constant_coef(setup, info, slot+1, info->v2[vert_attr][i], i);
          }
          break;
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               linear_coef(setup, tri, info, slot+1, vert_attr, i);
+               linear_coef(setup, info, slot+1, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               perspective_coef(setup, tri, info, slot+1, vert_attr, i);
+               perspective_coef(setup, info, slot+1, vert_attr, i);
          fragcoord_usage_mask |= TGSI_WRITEMASK_W;
          break;
 
@@ -211,7 +213,7 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
       case LP_INTERP_FACING:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               constant_coef(setup, tri, slot+1, 1.0, i);
+               constant_coef(setup, info, slot+1, 1.0, i);
          break;
 
       default:
@@ -221,7 +223,7 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   setup_fragcoord_coef(setup, tri, info, 0,
+   setup_fragcoord_coef(setup, info, 0,
                         fragcoord_usage_mask);
 }
 
@@ -241,14 +243,15 @@ print_line(struct lp_setup_context *setup,
            const float (*v1)[4],
            const float (*v2)[4])
 {
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    uint i;
 
    debug_printf("llvmpipe line\n");
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
+   for (i = 0; i < 1 + key->num_inputs; i++) {
       debug_printf("  v1[%d]:  %f %f %f %f\n", i,
                    v1[i][0], v1[i][1], v1[i][2], v1[i][3]);
    }
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
+   for (i = 0; i < 1 + key->num_inputs; i++) {
       debug_printf("  v2[%d]:  %f %f %f %f\n", i,
                    v2[i][0], v2[i][1], v2[i][2], v2[i][3]);
    }
@@ -275,7 +278,9 @@ try_setup_line( struct lp_setup_context *setup,
                const float (*v2)[4])
 {
    struct lp_scene *scene = setup->scene;
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *line;
+   struct lp_rast_plane *plane;
    struct lp_line_info info;
    float width = MAX2(1.0, setup->line_width);
    struct u_rect bbox;
@@ -475,7 +480,7 @@ try_setup_line( struct lp_setup_context *setup,
       else {
          /* do intersection test */
          float xintersect = fracf(v2[0][0]) + y2diff * dxdy;
-         draw_end = (xintersect < 1.0 && xintersect > 0.0);
+         draw_end = (xintersect < 1.0 && xintersect >= 0.0);
       }
 
       /* Are we already drawing start/end?
@@ -513,7 +518,7 @@ try_setup_line( struct lp_setup_context *setup,
             x_offset_end = y_offset_end * dxdy;
          }
       }
- 
+
       /* x/y positions in fixed point */
       x[0] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset) - fixed_width/2;
       x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) - fixed_width/2;
@@ -567,7 +572,7 @@ try_setup_line( struct lp_setup_context *setup,
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
    line = lp_setup_alloc_triangle(scene,
-                                  setup->fs.nr_inputs,
+                                  key->num_inputs,
                                   nr_planes,
                                   &tri_bytes);
    if (!line)
@@ -581,33 +586,35 @@ try_setup_line( struct lp_setup_context *setup,
 #endif
 
    /* calculate the deltas */
-   line->plane[0].dcdy = x[0] - x[1];
-   line->plane[1].dcdy = x[1] - x[2];
-   line->plane[2].dcdy = x[2] - x[3];
-   line->plane[3].dcdy = x[3] - x[0];
+   plane = GET_PLANES(line);
+   plane[0].dcdy = x[0] - x[1];
+   plane[1].dcdy = x[1] - x[2];
+   plane[2].dcdy = x[2] - x[3];
+   plane[3].dcdy = x[3] - x[0];
 
-   line->plane[0].dcdx = y[0] - y[1];
-   line->plane[1].dcdx = y[1] - y[2];
-   line->plane[2].dcdx = y[2] - y[3];
-   line->plane[3].dcdx = y[3] - y[0];
+   plane[0].dcdx = y[0] - y[1];
+   plane[1].dcdx = y[1] - y[2];
+   plane[2].dcdx = y[2] - y[3];
+   plane[3].dcdx = y[3] - y[0];
 
 
    /* Setup parameter interpolants:
     */
-   setup_line_coefficients( setup, line, &info); 
+   info.a0 = GET_A0(&line->inputs);
+   info.dadx = GET_DADX(&line->inputs);
+   info.dady = GET_DADY(&line->inputs);
+   setup_line_coefficients(setup, &info); 
 
-   line->inputs.facing = 1.0F;
-   line->inputs.state = setup->fs.stored;
+   line->inputs.frontfacing = TRUE;
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
 
    for (i = 0; i < 4; i++) {
-      struct lp_rast_plane *plane = &line->plane[i];
 
       /* half-edge constants, will be interated over the whole render
        * target.
        */
-      plane->c = plane->dcdx * x[i] - plane->dcdy * y[i];
+      plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
 
       
       /* correct for top-left vs. bottom-left fill convention.  
@@ -623,38 +630,34 @@ try_setup_line( struct lp_setup_context *setup,
        * to its usual method, in which case it will probably want
        * to use the opposite, top-left convention.
        */         
-      if (plane->dcdx < 0) {
+      if (plane[i].dcdx < 0) {
          /* both fill conventions want this - adjust for left edges */
-         plane->c++;            
+         plane[i].c++;            
       }
-      else if (plane->dcdx == 0) {
+      else if (plane[i].dcdx == 0) {
          if (setup->pixel_offset == 0) {
             /* correct for top-left fill convention:
              */
-            if (plane->dcdy > 0) plane->c++;
+            if (plane[i].dcdy > 0) plane[i].c++;
          }
          else {
             /* correct for bottom-left fill convention:
              */
-            if (plane->dcdy < 0) plane->c++;
+            if (plane[i].dcdy < 0) plane[i].c++;
          }
       }
 
-      plane->dcdx *= FIXED_ONE;
-      plane->dcdy *= FIXED_ONE;
+      plane[i].dcdx *= FIXED_ONE;
+      plane[i].dcdy *= FIXED_ONE;
 
       /* find trivial reject offsets for each edge for a single-pixel
        * sized block.  These will be scaled up at each recursive level to
        * match the active blocksize.  Scaling in this way works best if
        * the blocks are square.
        */
-      plane->eo = 0;
-      if (plane->dcdx < 0) plane->eo -= plane->dcdx;
-      if (plane->dcdy > 0) plane->eo += plane->dcdy;
-
-      /* Calculate trivial accept offsets from the above.
-       */
-      plane->ei = plane->dcdy - plane->dcdx - plane->eo;
+      plane[i].eo = 0;
+      if (plane[i].dcdx < 0) plane[i].eo -= plane[i].dcdx;
+      if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
    }
 
 
@@ -677,29 +680,25 @@ try_setup_line( struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 8) {
-      line->plane[4].dcdx = -1;
-      line->plane[4].dcdy = 0;
-      line->plane[4].c = 1-bbox.x0;
-      line->plane[4].ei = 0;
-      line->plane[4].eo = 1;
+      plane[4].dcdx = -1;
+      plane[4].dcdy = 0;
+      plane[4].c = 1-bbox.x0;
+      plane[4].eo = 1;
 
-      line->plane[5].dcdx = 1;
-      line->plane[5].dcdy = 0;
-      line->plane[5].c = bbox.x1+1;
-      line->plane[5].ei = -1;
-      line->plane[5].eo = 0;
+      plane[5].dcdx = 1;
+      plane[5].dcdy = 0;
+      plane[5].c = bbox.x1+1;
+      plane[5].eo = 0;
 
-      line->plane[6].dcdx = 0;
-      line->plane[6].dcdy = 1;
-      line->plane[6].c = 1-bbox.y0;
-      line->plane[6].ei = 0;
-      line->plane[6].eo = 1;
+      plane[6].dcdx = 0;
+      plane[6].dcdy = 1;
+      plane[6].c = 1-bbox.y0;
+      plane[6].eo = 1;
 
-      line->plane[7].dcdx = 0;
-      line->plane[7].dcdy = -1;
-      line->plane[7].c = bbox.y1+1;
-      line->plane[7].ei = -1;
-      line->plane[7].eo = 0;
+      plane[7].dcdx = 0;
+      plane[7].dcdy = -1;
+      plane[7].c = bbox.y1+1;
+      plane[7].eo = 0;
    }
 
    return lp_setup_bin_triangle(setup, line, &bbox, nr_planes);

@@ -536,8 +536,10 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
    hdtv = ((src_w >= RES_720P_X) && (src_h >= RES_720P_Y));
 
+#ifdef COMPOSITE
    REGION_TRANSLATE(pScrn->pScreen, dstRegion, -pPixmap->screen_x,
                     -pPixmap->screen_y);
+#endif
 
    dxo = dstRegion->extents.x1;
    dyo = dstRegion->extents.y1;
@@ -562,10 +564,15 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       int box_y2 = pbox->y2;
       float diff_x = (float)src_w / (float)dst_w;
       float diff_y = (float)src_h / (float)dst_h;
-      float offset_x = box_x1 - dstX + pPixmap->screen_x;
-      float offset_y = box_y1 - dstY + pPixmap->screen_y;
+      float offset_x = box_x1 - dstX;
+      float offset_y = box_y1 - dstY;
       float offset_w;
       float offset_h;
+
+#ifdef COMPOSITE
+      offset_x += pPixmap->screen_x;
+      offset_y += pPixmap->screen_y;
+#endif
 
       x = box_x1;
       y = box_y1;

@@ -294,7 +294,7 @@ static void r200SetTexBorderColor( radeonTexObjPtr t, const GLfloat color[4] )
    t->pp_border_color = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
 }
 
-static void r200TexEnv( GLcontext *ctx, GLenum target,
+static void r200TexEnv( struct gl_context *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -366,7 +366,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
  * next UpdateTextureState
  */
 
-static void r200TexParameter( GLcontext *ctx, GLenum target,
+static void r200TexParameter( struct gl_context *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
@@ -409,7 +409,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 }
 
 
-static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
+static void r200DeleteTexture(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj* t = radeon_tex_obj(texObj);
@@ -446,7 +446,7 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
  * Basically impossible to do this on the fly - just collect some
  * basic info & do the checks from ValidateState().
  */
-static void r200TexGen( GLcontext *ctx,
+static void r200TexGen( struct gl_context *ctx,
 			  GLenum coord,
 			  GLenum pname,
 			  const GLfloat *params )
@@ -464,7 +464,7 @@ static void r200TexGen( GLcontext *ctx,
  * allocate the default texture objects.
  * Fixup MaxAnisotropy according to user preference.
  */
-static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
+static struct gl_texture_object *r200NewTextureObject(struct gl_context * ctx,
 						      GLuint name,
 						      GLenum target)
 {

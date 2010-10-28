@@ -73,7 +73,7 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);
 
 
 extern void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv);
+driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv);
 
 
 #endif /* DRIRENDERBUFFER_H */

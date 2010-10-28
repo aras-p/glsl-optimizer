@@ -197,10 +197,6 @@ struct lp_build_sample_context
    struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
-   /** Unsigned integer coordinates */
-   struct lp_type uint_coord_type;
-   struct lp_build_context uint_coord_bld;
-
    /** Signed integer coordinates */
    struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
@@ -333,11 +329,27 @@ lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
 void
 lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                             LLVMValueRef ilevel,
-                            LLVMValueRef *out_width_vec,
-                            LLVMValueRef *out_height_vec,
-                            LLVMValueRef *out_depth_vec,
+                            LLVMValueRef *out_size_vec,
                             LLVMValueRef *row_stride_vec,
                             LLVMValueRef *img_stride_vec);
+
+
+void
+lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
+                             struct lp_type size_type,
+                             struct lp_type coord_type,
+                             LLVMValueRef size,
+                             LLVMValueRef *out_width,
+                             LLVMValueRef *out_height,
+                             LLVMValueRef *out_depth);
+
+
+void
+lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
+                             LLVMValueRef flt_size,
+                             LLVMValueRef *s,
+                             LLVMValueRef *t,
+                             LLVMValueRef *r);
 
 
 void

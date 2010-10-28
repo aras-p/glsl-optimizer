@@ -51,16 +51,16 @@
 #define DRIVER_AUTHOR	"Nouveau"
 
 struct nouveau_driver {
-	GLcontext *(*context_create)(struct nouveau_screen *screen,
-				     const GLvisual *visual,
-				     GLcontext *share_ctx);
-	void (*context_destroy)(GLcontext *ctx);
+	struct gl_context *(*context_create)(struct nouveau_screen *screen,
+				     const struct gl_config *visual,
+				     struct gl_context *share_ctx);
+	void (*context_destroy)(struct gl_context *ctx);
 
-	void (*surface_copy)(GLcontext *ctx,
+	void (*surface_copy)(struct gl_context *ctx,
 			     struct nouveau_surface *dst,
 			     struct nouveau_surface *src,
 			     int dx, int dy, int sx, int sy, int w, int h);
-	void (*surface_fill)(GLcontext *ctx,
+	void (*surface_fill)(struct gl_context *ctx,
 			     struct nouveau_surface *dst,
 			     unsigned mask, unsigned value,
 			     int dx, int dy, int w, int h);
@@ -73,10 +73,10 @@ struct nouveau_driver {
 	fprintf(stderr, "%s: " format, __func__, ## __VA_ARGS__)
 
 void
-nouveau_clear(GLcontext *ctx, GLbitfield buffers);
+nouveau_clear(struct gl_context *ctx, GLbitfield buffers);
 
 void
-nouveau_span_functions_init(GLcontext *ctx);
+nouveau_span_functions_init(struct gl_context *ctx);
 
 void
 nouveau_driver_functions_init(struct dd_function_table *functions);

@@ -37,7 +37,7 @@ void savageWaitEvent( savageContextPtr imesa, unsigned int event);
 void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard );
 void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard );
 
-void savageDDInitIoctlFuncs( GLcontext *ctx );
+void savageDDInitIoctlFuncs( struct gl_context *ctx );
 
 void savageSwapBuffers( __DRIdrawable *dPriv );
 

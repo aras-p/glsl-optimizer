@@ -39,6 +39,7 @@
 #include "lp_jit.h"
 #include "lp_setup.h"
 #include "lp_state_fs.h"
+#include "lp_state_setup.h"
 
 
 struct llvmpipe_vbuf_render;
@@ -48,6 +49,7 @@ struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
 struct lp_setup_context;
+struct lp_setup_variant;
 struct lp_velems_state;
 
 struct llvmpipe_context {
@@ -105,12 +107,9 @@ struct llvmpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   /** Fragment shader input interpolation info */
-   unsigned num_inputs;
-   struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
-
    /** The tiling engine */
    struct lp_setup_context *setup;
+   struct lp_setup_variant setup_variant;
 
    /** The primitive drawing context */
    struct draw_context *draw;
@@ -120,6 +119,9 @@ struct llvmpipe_context {
 
    struct lp_fs_variant_list_item fs_variants_list;
    unsigned nr_fs_variants;
+
+   struct lp_setup_variant_list_item setup_variants_list;
+   unsigned nr_setup_variants;
 };
 
 

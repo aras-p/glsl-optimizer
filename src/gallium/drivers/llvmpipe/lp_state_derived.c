@@ -50,12 +50,13 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
    struct vertex_info *vinfo = &llvmpipe->vertex_info;
-   struct lp_shader_input *inputs = llvmpipe->inputs;
    unsigned vs_index;
    uint i;
 
    /*
-    * Match FS inputs against VS outputs, emitting the necessary attributes.
+    * Match FS inputs against VS outputs, emitting the necessary
+    * attributes.  Could cache these structs and look them up with a
+    * combination of fragment shader, vertex shader ids.
     */
 
    vinfo->num_attribs = 0;
@@ -66,72 +67,18 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
 
-   for (i = 0; i < lpfs->info.num_inputs; i++) {
+   for (i = 0; i < lpfs->info.base.num_inputs; i++) {
       /*
        * Search for each input in current vs output:
        */
 
       vs_index = draw_find_shader_output(llvmpipe->draw,
-                                         lpfs->info.input_semantic_name[i],
-                                         lpfs->info.input_semantic_index[i]);
-      if (vs_index < 0) {
-         /*
-          * This can happen with sprite coordinates - the vertex
-          * shader doesn't need to provide an output as we generate
-          * them internally.  However, lets keep pretending that there
-          * is something there to not confuse other code.
-          */
-         vs_index = 0;
-      }
-
-      /* This can be pre-computed, except for flatshade:
-       */
-      inputs[i].usage_mask = lpfs->info.input_usage_mask[i];
-
-      switch (lpfs->info.input_interpolate[i]) {
-      case TGSI_INTERPOLATE_CONSTANT:
-         inputs[i].interp = LP_INTERP_CONSTANT;
-         break;
-      case TGSI_INTERPOLATE_LINEAR:
-         inputs[i].interp = LP_INTERP_LINEAR;
-         break;
-      case TGSI_INTERPOLATE_PERSPECTIVE:
-         inputs[i].interp = LP_INTERP_PERSPECTIVE;
-         break;
-      default:
-         assert(0);
-         break;
-      }
-
-      switch (lpfs->info.input_semantic_name[i]) {
-      case TGSI_SEMANTIC_FACE:
-         inputs[i].interp = LP_INTERP_FACING;
-         break;
-      case TGSI_SEMANTIC_POSITION:
-         /* Position was already emitted above
-          */
-         inputs[i].interp = LP_INTERP_POSITION;
-         inputs[i].src_index = 0;
-         continue;
-      case TGSI_SEMANTIC_COLOR:
-         /* Colors are linearly inputs[i].interpolated in the fragment shader
-          * even when flatshading is active.  This just tells the
-          * setup module to use coefficients with ddx==0 and
-          * ddy==0.
-          */
-         if (llvmpipe->rasterizer->flatshade)
-            inputs[i].interp = LP_INTERP_CONSTANT;
-         break;
-
-      default:
-         break;
-      }
+                                         lpfs->info.base.input_semantic_name[i],
+                                         lpfs->info.base.input_semantic_index[i]);
 
       /*
        * Emit the requested fs attribute for all but position.
        */
-
-      inputs[i].src_index = vinfo->num_attribs;
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
    }
 
@@ -145,15 +92,8 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    }
 
-   llvmpipe->num_inputs = lpfs->info.num_inputs;
-
    draw_compute_vertex_size(vinfo);
-
    lp_setup_set_vertex_info(llvmpipe->setup, vinfo);
-
-   lp_setup_set_fs_inputs(llvmpipe->setup,
-                          inputs,
-                          lpfs->info.num_inputs);
 }
 
 
@@ -189,6 +129,10 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_SAMPLER_VIEW |
                           LP_NEW_QUERY))
       llvmpipe_update_fs( llvmpipe );
+
+   if (llvmpipe->dirty & (LP_NEW_FS |
+			  LP_NEW_RASTERIZER))
+      llvmpipe_update_setup( llvmpipe );
 
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)
       lp_setup_set_blend_color(llvmpipe->setup,

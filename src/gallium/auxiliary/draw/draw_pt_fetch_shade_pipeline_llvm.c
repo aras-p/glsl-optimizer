@@ -175,6 +175,11 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       draw->pt.user.vs_constants[0];
    fpme->llvm->jit_context.gs_constants =
       draw->pt.user.gs_constants[0];
+   fpme->llvm->jit_context.planes =
+      (float (*) [12][4]) draw->pt.user.planes[0];
+   fpme->llvm->jit_context.viewport =
+      (float *)draw->viewport.scale;
+    
 }
 
 
@@ -217,6 +222,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    struct draw_vertex_info gs_vert_info;
    struct draw_vertex_info *vert_info;
    unsigned opt = fpme->opt;
+   unsigned clipped = 0;
 
    llvm_vert_info.count = fetch_info->count;
    llvm_vert_info.vertex_size = fpme->vertex_size;
@@ -230,7 +236,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    }
 
    if (fetch_info->linear)
-      fpme->current_variant->jit_func( &fpme->llvm->jit_context,
+      clipped = fpme->current_variant->jit_func( &fpme->llvm->jit_context,
                                        llvm_vert_info.verts,
                                        (const char **)draw->pt.user.vbuffer,
                                        fetch_info->start,
@@ -239,7 +245,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                        draw->pt.vertex_buffer,
                                        draw->instance_id);
    else
-      fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
+      clipped = fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
                                             llvm_vert_info.verts,
                                             (const char **)draw->pt.user.vbuffer,
                                             fetch_info->elts,
@@ -266,6 +272,9 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
+
+      clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info );
+
    }
 
    /* stream output needs to be done before clipping */
@@ -273,11 +282,11 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
 		    vert_info,
                     prim_info );
 
-   if (draw_pt_post_vs_run( fpme->post_vs, vert_info )) {
+   if (clipped) {
       opt |= PT_PIPELINE;
    }
 
-   /* Do we need to run the pipeline?
+   /* Do we need to run the pipeline? Now will come here if clipped
     */
    if (opt & PT_PIPELINE) {
       pipeline( fpme,

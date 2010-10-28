@@ -216,6 +216,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_ceil */
       1, /* ir_unop_floor */
       1, /* ir_unop_fract */
+      1, /* ir_unop_round_even */
 
       1, /* ir_unop_sin */
       1, /* ir_unop_cos */
@@ -288,6 +289,7 @@ static const char *const operator_strs[] = {
    "ceil",
    "floor",
    "fract",
+   "round_even",
    "sin",
    "cos",
    "dFdx",

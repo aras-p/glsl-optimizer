@@ -53,9 +53,9 @@
 #include "evergreen_fragprog.h"
 #include "evergreen_tex.h"
 
-void evergreenUpdateStateParameters(GLcontext * ctx, GLuint new_state); //same
+void evergreenUpdateStateParameters(struct gl_context * ctx, GLuint new_state); //same
 
-void evergreenUpdateShaders(GLcontext * ctx)
+void evergreenUpdateShaders(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 
@@ -73,7 +73,7 @@ void evergreenUpdateShaders(GLcontext * ctx)
     context->radeon.NewGLState = 0;
 }
 
-void evergreeUpdateShaders(GLcontext * ctx)
+void evergreeUpdateShaders(struct gl_context * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
 
@@ -94,7 +94,7 @@ void evergreeUpdateShaders(GLcontext * ctx)
 /*
  * To correctly position primitives:
  */
-void evergreenUpdateViewportOffset(GLcontext * ctx) //------------------
+void evergreenUpdateViewportOffset(struct gl_context * ctx) //------------------
 {
 	context_t *context = R700_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -120,7 +120,7 @@ void evergreenUpdateViewportOffset(GLcontext * ctx) //------------------
 	radeonUpdateScissor(ctx);
 }
 
-void evergreenUpdateStateParameters(GLcontext * ctx, GLuint new_state) //same
+void evergreenUpdateStateParameters(struct gl_context * ctx, GLuint new_state) //same
 {
 	struct evergreen_fragment_program *fp =
 		(struct evergreen_fragment_program *)ctx->FragmentProgram._Current;
@@ -144,7 +144,7 @@ void evergreenUpdateStateParameters(GLcontext * ctx, GLuint new_state) //same
 /**
  * Called by Mesa after an internal state update.
  */
-static void evergreenInvalidateState(GLcontext * ctx, GLuint new_state) //same
+static void evergreenInvalidateState(struct gl_context * ctx, GLuint new_state) //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 
@@ -212,7 +212,7 @@ static void evergreenInvalidateState(GLcontext * ctx, GLuint new_state) //same
     context->radeon.NewGLState |= new_state;
 }
 
-static void evergreenSetAlphaState(GLcontext * ctx)  //same
+static void evergreenSetAlphaState(struct gl_context * ctx)  //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -259,14 +259,14 @@ static void evergreenSetAlphaState(GLcontext * ctx)  //same
 	}
 }
 
-static void evergreenAlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref) //same
+static void evergreenAlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref) //same
 {
 	(void)func;
 	(void)ref;
 	evergreenSetAlphaState(ctx);
 }
 
-static void evergreenBlendColor(GLcontext * ctx, const GLfloat cf[4]) //same
+static void evergreenBlendColor(struct gl_context * ctx, const GLfloat cf[4]) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -334,7 +334,7 @@ static int evergreenblend_factor(GLenum factor, GLboolean is_src) //same
 	}
 }
 
-static void evergreenSetBlendState(GLcontext * ctx) //diff : CB_COLOR_CONTROL, CB_BLEND0_CONTROL bits
+static void evergreenSetBlendState(struct gl_context * ctx) //diff : CB_COLOR_CONTROL, CB_BLEND0_CONTROL bits
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -459,13 +459,13 @@ static void evergreenSetBlendState(GLcontext * ctx) //diff : CB_COLOR_CONTROL, C
     evergreen->CB_BLEND0_CONTROL.u32All = blend_reg;	
 }
 
-static void evergreenBlendEquationSeparate(GLcontext * ctx,
+static void evergreenBlendEquationSeparate(struct gl_context * ctx,
 				                      GLenum modeRGB, GLenum modeA) //same
 {
 	evergreenSetBlendState(ctx);
 }
 
-static void evergreenBlendFuncSeparate(GLcontext * ctx,
+static void evergreenBlendFuncSeparate(struct gl_context * ctx,
 				  GLenum sfactorRGB, GLenum dfactorRGB,
 				  GLenum sfactorA, GLenum dfactorA) //same
 {
@@ -513,7 +513,7 @@ static GLuint evergreen_translate_logicop(GLenum logicop) //same
 	}
 }
 
-static void evergreenSetLogicOpState(GLcontext *ctx) //diff : CB_COLOR_CONTROL.ROP3 is actually same bits.
+static void evergreenSetLogicOpState(struct gl_context *ctx) //diff : CB_COLOR_CONTROL.ROP3 is actually same bits.
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -531,7 +531,7 @@ static void evergreenSetLogicOpState(GLcontext *ctx) //diff : CB_COLOR_CONTROL.R
              EG_CB_COLOR_CONTROL__ROP3_mask);
 }
 
-static void evergreenClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq ) //same , but PA_CL_UCP_0_ offset diff 
+static void evergreenClipPlane( struct gl_context *ctx, GLenum plane, const GLfloat *eq ) //same , but PA_CL_UCP_0_ offset diff 
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -549,7 +549,7 @@ static void evergreenClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq 
 	evergreen->ucp[p].PA_CL_UCP_0_W.u32All = ip[3];
 }
 
-static void evergreenSetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state) //diff in func calls
+static void evergreenSetClipPlaneState(struct gl_context * ctx, GLenum cap, GLboolean state) //diff in func calls
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -569,7 +569,7 @@ static void evergreenSetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean st
 	}
 }
 
-static void evergreenSetDBRenderState(GLcontext * ctx)
+static void evergreenSetDBRenderState(struct gl_context * ctx)
 {    
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -629,13 +629,13 @@ static void evergreenSetDBRenderState(GLcontext * ctx)
     }    
 }
 
-void evergreenUpdateShaderStates(GLcontext * ctx)
+void evergreenUpdateShaderStates(struct gl_context * ctx)
 {
 	evergreenSetDBRenderState(ctx);
 	evergreenUpdateTextureState(ctx);
 }
 
-static void evergreenSetDepthState(GLcontext * ctx) //same
+static void evergreenSetDepthState(struct gl_context * ctx) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -701,7 +701,7 @@ static void evergreenSetDepthState(GLcontext * ctx) //same
     }
 }
 
-static void evergreenSetStencilState(GLcontext * ctx, GLboolean state)  //same
+static void evergreenSetStencilState(struct gl_context * ctx, GLboolean state)  //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -724,7 +724,7 @@ static void evergreenSetStencilState(GLcontext * ctx, GLboolean state)  //same
     }
 }
 
-static void evergreenUpdateCulling(GLcontext * ctx) //same
+static void evergreenUpdateCulling(struct gl_context * ctx) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -776,7 +776,7 @@ static void evergreenUpdateCulling(GLcontext * ctx) //same
 	    evergreen->PA_SU_SC_MODE_CNTL.u32All ^= FACE_bit;
 }
 
-static void evergreenSetPolygonOffsetState(GLcontext * ctx, GLboolean state) //same
+static void evergreenSetPolygonOffsetState(struct gl_context * ctx, GLboolean state) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -794,7 +794,7 @@ static void evergreenSetPolygonOffsetState(GLcontext * ctx, GLboolean state) //s
 	}
 }
 
-static void evergreenUpdateLineStipple(GLcontext * ctx) //diff
+static void evergreenUpdateLineStipple(struct gl_context * ctx) //diff
 {
 	/* TODO */
 }
@@ -913,7 +913,7 @@ void evergreenSetScissor(context_t *context) //diff
 	evergreen->viewport[id].enabled = GL_TRUE;
 }
 
-static void evergreenUpdateWindow(GLcontext * ctx, int id) //diff in calling evergreenSetScissor
+static void evergreenUpdateWindow(struct gl_context * ctx, int id) //diff in calling evergreenSetScissor
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -969,7 +969,7 @@ static void evergreenUpdateWindow(GLcontext * ctx, int id) //diff in calling eve
 	evergreenSetScissor(context);
 }
 
-static void evergreenEnable(GLcontext * ctx, GLenum cap, GLboolean state) //diff in func calls
+static void evergreenEnable(struct gl_context * ctx, GLenum cap, GLboolean state) //diff in func calls
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 
@@ -1030,7 +1030,7 @@ static void evergreenEnable(GLcontext * ctx, GLenum cap, GLboolean state) //diff
 
 }
 
-static void evergreenColorMask(GLcontext * ctx,
+static void evergreenColorMask(struct gl_context * ctx,
 			  GLboolean r, GLboolean g, GLboolean b, GLboolean a) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -1046,26 +1046,26 @@ static void evergreenColorMask(GLcontext * ctx,
 	}
 }
 
-static void evergreenDepthFunc(GLcontext * ctx, GLenum func) //same
+static void evergreenDepthFunc(struct gl_context * ctx, GLenum func) //same
 {
     evergreenSetDepthState(ctx);
 }
 
-static void evergreenDepthMask(GLcontext * ctx, GLboolean mask) //same
+static void evergreenDepthMask(struct gl_context * ctx, GLboolean mask) //same
 {
     evergreenSetDepthState(ctx);
 }
 
-static void evergreenCullFace(GLcontext * ctx, GLenum mode) //same
+static void evergreenCullFace(struct gl_context * ctx, GLenum mode) //same
 {
     evergreenUpdateCulling(ctx);
 }
 
-static void evergreenFogfv(GLcontext * ctx, GLenum pname, const GLfloat * param) //same
+static void evergreenFogfv(struct gl_context * ctx, GLenum pname, const GLfloat * param) //same
 {
 }
 
-static void evergreenUpdatePolygonMode(GLcontext * ctx) //same
+static void evergreenUpdatePolygonMode(struct gl_context * ctx) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1120,13 +1120,13 @@ static void evergreenUpdatePolygonMode(GLcontext * ctx) //same
 	}
 }
 
-static void evergreenFrontFace(GLcontext * ctx, GLenum mode) //same
+static void evergreenFrontFace(struct gl_context * ctx, GLenum mode) //same
 {
     evergreenUpdateCulling(ctx);
     evergreenUpdatePolygonMode(ctx);
 }
 
-static void evergreenShadeModel(GLcontext * ctx, GLenum mode) //same
+static void evergreenShadeModel(struct gl_context * ctx, GLenum mode) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1146,13 +1146,13 @@ static void evergreenShadeModel(GLcontext * ctx, GLenum mode) //same
 	}
 }
 
-static void evergreenLogicOpcode(GLcontext *ctx, GLenum logicop) //diff
+static void evergreenLogicOpcode(struct gl_context *ctx, GLenum logicop) //diff
 {
 	if (RGBA_LOGICOP_ENABLED(ctx))
 		evergreenSetLogicOpState(ctx);
 }
 
-static void evergreenPointSize(GLcontext * ctx, GLfloat size) //same
+static void evergreenPointSize(struct gl_context * ctx, GLfloat size) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1174,7 +1174,7 @@ static void evergreenPointSize(GLcontext * ctx, GLfloat size) //same
 
 }
 
-static void evergreenPointParameter(GLcontext * ctx, GLenum pname, const GLfloat * param) //same
+static void evergreenPointParameter(struct gl_context * ctx, GLenum pname, const GLfloat * param) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1225,7 +1225,7 @@ static int evergreen_translate_stencil_func(int func) //same
 	return 0;
 }
 
-static void evergreenStencilFuncSeparate(GLcontext * ctx, GLenum face,
+static void evergreenStencilFuncSeparate(struct gl_context * ctx, GLenum face,
 				    GLenum func, GLint ref, GLuint mask) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -1254,7 +1254,7 @@ static void evergreenStencilFuncSeparate(GLcontext * ctx, GLenum face,
 		 STENCILFUNC_BF_shift, STENCILFUNC_BF_mask);
 }
 
-static void evergreenStencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask) //same
+static void evergreenStencilMaskSeparate(struct gl_context * ctx, GLenum face, GLuint mask) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1298,7 +1298,7 @@ static int evergreen_translate_stencil_op(int op) //same
 	return 0;
 }
 
-static void evergreenStencilOpSeparate(GLcontext * ctx, GLenum face,
+static void evergreenStencilOpSeparate(struct gl_context * ctx, GLenum face,
 				  GLenum fail, GLenum zfail, GLenum zpass) //same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -1322,7 +1322,7 @@ static void evergreenStencilOpSeparate(GLcontext * ctx, GLenum face,
 		 STENCILZPASS_BF_shift, STENCILZPASS_BF_mask);
 }
 
-static void evergreenViewport(GLcontext * ctx,
+static void evergreenViewport(struct gl_context * ctx,
                          GLint x,
                          GLint y,
 			 GLsizei width,
@@ -1333,12 +1333,12 @@ static void evergreenViewport(GLcontext * ctx,
 	radeon_viewport(ctx, x, y, width, height);
 }
 
-static void evergreenDepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval) //diff in evergreenUpdateWindow
+static void evergreenDepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval) //diff in evergreenUpdateWindow
 {
 	evergreenUpdateWindow(ctx, 0);
 }
 
-static void evergreenLineWidth(GLcontext * ctx, GLfloat widthf) //same
+static void evergreenLineWidth(struct gl_context * ctx, GLfloat widthf) //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1352,7 +1352,7 @@ static void evergreenLineWidth(GLcontext * ctx, GLfloat widthf) //same
 	     PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
 }
 
-static void evergreenLineStipple(GLcontext *ctx, GLint factor, GLushort pattern) //same
+static void evergreenLineStipple(struct gl_context *ctx, GLint factor, GLushort pattern) //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -1364,7 +1364,7 @@ static void evergreenLineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
     SETfield(evergreen->PA_SC_LINE_STIPPLE.u32All, 1, AUTO_RESET_CNTL_shift, AUTO_RESET_CNTL_mask);
 }
 
-static void evergreenPolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //diff :
+static void evergreenPolygonOffset(struct gl_context * ctx, GLfloat factor, GLfloat units) //diff :
                                                                     //all register here offset diff, bits same
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -1395,7 +1395,7 @@ static void evergreenPolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat unit
 	evergreen->PA_SU_POLY_OFFSET_BACK_OFFSET.f32All = constant;
 }
 
-static void evergreenPolygonMode(GLcontext * ctx, GLenum face, GLenum mode) //same
+static void evergreenPolygonMode(struct gl_context * ctx, GLenum face, GLenum mode) //same
 {
 	(void)face;
 	(void)mode;
@@ -1403,12 +1403,12 @@ static void evergreenPolygonMode(GLcontext * ctx, GLenum face, GLenum mode) //sa
 	evergreenUpdatePolygonMode(ctx);
 }
 
-static void evergreenRenderMode(GLcontext * ctx, GLenum mode) //same
+static void evergreenRenderMode(struct gl_context * ctx, GLenum mode) //same
 {
 }
 
 //TODO : move to kernel.
-static void evergreenInitSQConfig(GLcontext * ctx)
+static void evergreenInitSQConfig(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context); 
@@ -1608,7 +1608,7 @@ static void evergreenInitSQConfig(GLcontext * ctx)
              NUM_CLIP_SEQ_mask);     
 }
 
-void evergreenInitState(GLcontext * ctx) //diff
+void evergreenInitState(struct gl_context * ctx) //diff
 {
     context_t *context = R700_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);

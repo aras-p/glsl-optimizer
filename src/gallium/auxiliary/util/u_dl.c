@@ -38,6 +38,7 @@
 #endif
 
 #include "u_dl.h"
+#include "u_pointer.h"
 
 
 struct util_dl_library *
@@ -58,7 +59,7 @@ util_dl_get_proc_address(struct util_dl_library *library,
                          const char *procname)
 {
 #if defined(PIPE_OS_UNIX)
-   return (util_dl_proc)dlsym((void *)library, procname);
+   return (util_dl_proc) pointer_to_func(dlsym((void *)library, procname));
 #elif defined(PIPE_OS_WINDOWS)
    return (util_dl_proc)GetProcAddress((HMODULE)library, procname);
 #else

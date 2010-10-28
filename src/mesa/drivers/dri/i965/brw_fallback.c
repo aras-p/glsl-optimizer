@@ -43,7 +43,7 @@
 
 static GLboolean do_check_fallback(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
    if (brw->intel.no_rast) {

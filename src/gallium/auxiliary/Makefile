@@ -173,6 +173,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_struct.c \
         gallivm/lp_bld_swizzle.c \
         gallivm/lp_bld_tgsi_aos.c \
+        gallivm/lp_bld_tgsi_info.c \
         gallivm/lp_bld_tgsi_soa.c \
         gallivm/lp_bld_type.c \
         draw/draw_llvm.c \
@@ -207,16 +208,16 @@ include ../Makefile.template
 
 
 indices/u_indices_gen.c: indices/u_indices_gen.py
-	python $< > $@
+	$(PYTHON2) $< > $@
 
 indices/u_unfilled_gen.c: indices/u_unfilled_gen.py
-	python $< > $@
+	$(PYTHON2) $< > $@
 
 util/u_format_srgb.c: util/u_format_srgb.py
-	python $< > $@
+	$(PYTHON2) $< > $@
 
 util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_format_parse.py util/u_format.csv
-	python util/u_format_table.py util/u_format.csv > $@
+	$(PYTHON2) util/u_format_table.py util/u_format.csv > $@
 
 util/u_half.c: util/u_half.py
-	python util/u_half.py > $@
+	$(PYTHON2) util/u_half.py > $@

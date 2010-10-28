@@ -49,8 +49,6 @@ upload_sampler_state_pointers(struct brw_context *brw)
       OUT_BATCH(0);
 
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 

@@ -54,10 +54,10 @@
 #define MACH64_MAX_SETUP      0x80
 
 static struct {
-   void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
+   void                (*emit)( struct gl_context *, GLuint, GLuint, void *, GLuint );
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean           (*check_tex_sizes)( struct gl_context *ctx );
    GLuint               vertex_size;
    GLuint               vertex_format;
 } setup_tab[MACH64_MAX_SETUP];
@@ -491,7 +491,7 @@ void mach64PrintSetupFlags( char *msg, GLuint flags )
 
 
 
-void mach64CheckTexSizes( GLcontext *ctx )
+void mach64CheckTexSizes( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
 
@@ -511,7 +511,7 @@ void mach64CheckTexSizes( GLcontext *ctx )
    }
 }
 
-void mach64BuildVertices( GLcontext *ctx,
+void mach64BuildVertices( struct gl_context *ctx,
 			GLuint start,
 			GLuint count,
 			GLuint newinputs )
@@ -557,7 +557,7 @@ void mach64BuildVertices( GLcontext *ctx,
    }
 }
 
-void mach64ChooseVertexState( GLcontext *ctx )
+void mach64ChooseVertexState( struct gl_context *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
@@ -602,7 +602,7 @@ void mach64ChooseVertexState( GLcontext *ctx )
 
 
 #if 0
-void mach64_emit_contiguous_verts( GLcontext *ctx,
+void mach64_emit_contiguous_verts( struct gl_context *ctx,
 				 GLuint start,
 				 GLuint count )
 {
@@ -614,7 +614,7 @@ void mach64_emit_contiguous_verts( GLcontext *ctx,
 #endif
 
 
-void mach64InitVB( GLcontext *ctx )
+void mach64InitVB( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
@@ -631,7 +631,7 @@ void mach64InitVB( GLcontext *ctx )
 }
 
 
-void mach64FreeVB( GLcontext *ctx )
+void mach64FreeVB( struct gl_context *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    if (mmesa->verts) {

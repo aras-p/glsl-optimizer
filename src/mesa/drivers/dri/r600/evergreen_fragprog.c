@@ -44,7 +44,7 @@
 #include "evergreen_vertprog.h"
 #include "evergreen_fragprog.h"
 
-void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+void evergreen_insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
 {
     static const gl_state_index winstate[STATE_LENGTH]
          = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
@@ -95,7 +95,7 @@ void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fpro
 //TODO : Validate FP input with VP output.
 void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 						  struct gl_fragment_program *mesa_fp,
-                          GLcontext *ctx) 
+                          struct gl_context *ctx) 
 {
 	unsigned int unBit;
     unsigned int i;
@@ -354,7 +354,7 @@ GLboolean evergreen_Find_Instruction_Dependencies_fp(struct evergreen_fragment_p
 
 GLboolean evergreenTranslateFragmentShader(struct evergreen_fragment_program *fp,
 							     struct gl_fragment_program   *mesa_fp,
-                                 GLcontext *ctx) 
+                                 struct gl_context *ctx) 
 {
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
@@ -457,7 +457,7 @@ GLboolean evergreenTranslateFragmentShader(struct evergreen_fragment_program *fp
 	return GL_TRUE;
 }
 
-void evergreenSelectFragmentShader(GLcontext *ctx)
+void evergreenSelectFragmentShader(struct gl_context *ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
@@ -471,7 +471,7 @@ void evergreenSelectFragmentShader(GLcontext *ctx)
 	    evergreenTranslateFragmentShader(fp, &(fp->mesa_program), ctx); 
 }
 
-void * evergreenGetActiveFpShaderBo(GLcontext * ctx)
+void * evergreenGetActiveFpShaderBo(struct gl_context * ctx)
 {
     struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
@@ -479,7 +479,7 @@ void * evergreenGetActiveFpShaderBo(GLcontext * ctx)
     return fp->shaderbo;
 }
 
-void * evergreenGetActiveFpShaderConstBo(GLcontext * ctx)
+void * evergreenGetActiveFpShaderConstBo(struct gl_context * ctx)
 {
     struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
@@ -487,7 +487,7 @@ void * evergreenGetActiveFpShaderConstBo(GLcontext * ctx)
     return fp->constbo0;
 }
 
-GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
+GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
@@ -737,7 +737,7 @@ GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
     return GL_TRUE;
 }
 
-GLboolean evergreenSetupFPconstants(GLcontext * ctx)
+GLboolean evergreenSetupFPconstants(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);

@@ -30,10 +30,10 @@
 
 
 extern void
-intelInitExtensions(GLcontext *ctx);
+intelInitExtensions(struct gl_context *ctx);
 
 extern void
-intelInitExtensionsES2(GLcontext *ctx);
+intelInitExtensionsES2(struct gl_context *ctx);
 
 
 #endif

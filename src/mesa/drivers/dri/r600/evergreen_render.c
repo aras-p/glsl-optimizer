@@ -148,7 +148,7 @@ static int evergreenNumVerts(int num_verts, int prim) //same
 	return num_verts - verts_off;
 }
 
-static void evergreenRunRenderPrimitive(GLcontext * ctx, int start, int end, int prim,
+static void evergreenRunRenderPrimitive(struct gl_context * ctx, int start, int end, int prim,
 					GLint basevertex) //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
@@ -219,7 +219,7 @@ static void evergreenRunRenderPrimitive(GLcontext * ctx, int start, int end, int
     COMMIT_BATCH();
 }
 
-static void evergreenRunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end, int prim) //same
+static void evergreenRunRenderPrimitiveImmediate(struct gl_context * ctx, int start, int end, int prim) //same
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
@@ -363,7 +363,7 @@ static void evergreenRunRenderPrimitiveImmediate(GLcontext * ctx, int start, int
  * Convert attribute data type to float
  * If the attribute uses named buffer object replace the bo with newly allocated bo
  */
-static void evergreenConvertAttrib(GLcontext *ctx, int count, 
+static void evergreenConvertAttrib(struct gl_context *ctx, int count, 
                               const struct gl_client_array *input, 
                               struct StreamDesc *attr)
 {
@@ -442,7 +442,7 @@ static void evergreenConvertAttrib(GLcontext *ctx, int count,
     }
 }
 
-static void evergreenFixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void evergreenFixupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     GLvoid *src_ptr;
@@ -517,7 +517,7 @@ static void evergreenFixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_b
     }
 }
 
-static GLboolean evergreen_check_fallbacks(GLcontext *ctx) //same
+static GLboolean evergreen_check_fallbacks(struct gl_context *ctx) //same
 {
 	if (ctx->RenderMode != GL_RENDER)
 		return GL_TRUE;
@@ -528,7 +528,7 @@ static GLboolean evergreen_check_fallbacks(GLcontext *ctx) //same
 /* start 3d, idle, cb/db flush */
 #define PRE_EMIT_STATE_BUFSZ 5 + 5 + 14
 
-static GLuint evergreenPredictRenderSize(GLcontext* ctx,
+static GLuint evergreenPredictRenderSize(struct gl_context* ctx,
 				    const struct _mesa_prim *prim,
 				    const struct _mesa_index_buffer *ib,
 				    GLuint nr_prims)
@@ -567,7 +567,7 @@ static GLuint evergreenPredictRenderSize(GLcontext* ctx,
 
 }
 
-static void evergreenSetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+static void evergreenSetupIndexBuffer(struct gl_context *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
 
@@ -620,7 +620,7 @@ static void evergreenSetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_b
     }
 }
 
-static void evergreenAlignDataToDword(GLcontext *ctx, 
+static void evergreenAlignDataToDword(struct gl_context *ctx, 
                                  const struct gl_client_array *input, 
                                  int count, 
                                  struct StreamDesc *attr)
@@ -662,7 +662,7 @@ static void evergreenAlignDataToDword(GLcontext *ctx,
     attr->stride = dst_stride;
 }
 
-static void evergreenSetupStreams(GLcontext *ctx, const struct gl_client_array *input[], int count)
+static void evergreenSetupStreams(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
     GLuint stride;
@@ -763,7 +763,7 @@ static void evergreenSetupStreams(GLcontext *ctx, const struct gl_client_array *
                                         RADEON_GEM_DOMAIN_GTT, 0);    
 }
 
-static void evergreenFreeData(GLcontext *ctx)
+static void evergreenFreeData(struct gl_context *ctx)
 {
     /* Need to zero tcl.aos[n].bo and tcl.elt_dma_bo
      * to prevent double unref in radeonReleaseArrays
@@ -799,7 +799,7 @@ static void evergreenFreeData(GLcontext *ctx)
     }
 }
 
-static GLboolean evergreenTryDrawPrims(GLcontext *ctx,
+static GLboolean evergreenTryDrawPrims(struct gl_context *ctx,
 				  const struct gl_client_array *arrays[],
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims,
@@ -898,7 +898,7 @@ static GLboolean evergreenTryDrawPrims(GLcontext *ctx,
     return GL_TRUE;
 }
 
-static void evergreenDrawPrims(GLcontext *ctx,
+static void evergreenDrawPrims(struct gl_context *ctx,
 			  const struct gl_client_array *arrays[],
 			  const struct _mesa_prim *prim,
 			  GLuint nr_prims,
@@ -908,6 +908,10 @@ static void evergreenDrawPrims(GLcontext *ctx,
 			  GLuint max_index)
 {
 	GLboolean retval = GL_FALSE;
+
+	context_t *context = EVERGREEN_CONTEXT(ctx);
+	radeonContextPtr radeon = &context->radeon;
+	radeon_prepare_render(radeon);
 
 	/* This check should get folded into just the places that
 	 * min/max index are really needed.
@@ -932,7 +936,7 @@ static void evergreenDrawPrims(GLcontext *ctx,
 	}
 }
 
-void evergreenInitDraw(GLcontext *ctx)
+void evergreenInitDraw(struct gl_context *ctx)
 {
 	struct vbo_context *vbo = vbo_context(ctx);
 

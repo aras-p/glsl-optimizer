@@ -52,10 +52,10 @@
 #define MGA_MAX_SETUP      0x80
 
 static struct {
-   void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
+   void                (*emit)( struct gl_context *, GLuint, GLuint, void *, GLuint );
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean           (*check_tex_sizes)( struct gl_context *ctx );
    GLuint               vertex_size;
    GLuint               vertex_format;
 } setup_tab[MGA_MAX_SETUP];
@@ -316,7 +316,7 @@ void mgaPrintSetupFlags(char *msg, GLuint flags )
 }
 
 
-void mgaCheckTexSizes( GLcontext *ctx )
+void mgaCheckTexSizes( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -339,7 +339,7 @@ void mgaCheckTexSizes( GLcontext *ctx )
 }
 
 
-void mgaBuildVertices( GLcontext *ctx, 
+void mgaBuildVertices( struct gl_context *ctx, 
 		       GLuint start, 
 		       GLuint count,
 		       GLuint newinputs )
@@ -386,7 +386,7 @@ void mgaBuildVertices( GLcontext *ctx,
 }
 
 
-void mgaChooseVertexState( GLcontext *ctx )
+void mgaChooseVertexState( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -433,7 +433,7 @@ void mgaChooseVertexState( GLcontext *ctx )
 
 
 
-void *mga_emit_contiguous_verts( GLcontext *ctx,
+void *mga_emit_contiguous_verts( struct gl_context *ctx,
 				 GLuint start,
 				 GLuint count,
 				 void *dest)
@@ -446,7 +446,7 @@ void *mga_emit_contiguous_verts( GLcontext *ctx,
 				   
 
 
-void mgaInitVB( GLcontext *ctx )
+void mgaInitVB( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
@@ -467,7 +467,7 @@ void mgaInitVB( GLcontext *ctx )
 }
 
 
-void mgaFreeVB( GLcontext *ctx )
+void mgaFreeVB( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    if (mmesa->verts) {

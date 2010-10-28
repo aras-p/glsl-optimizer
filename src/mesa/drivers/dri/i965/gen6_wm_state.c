@@ -29,6 +29,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
+#include "brw_wm.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
@@ -37,7 +38,7 @@ static void
 prepare_wm_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
@@ -62,7 +63,8 @@ prepare_wm_constants(struct brw_context *brw)
       drm_intel_gem_bo_map_gtt(brw->wm.push_const_bo);
       constants = brw->wm.push_const_bo->virtual;
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	 constants[i] = *brw->wm.prog_data->param[i];
+	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
+				      *brw->wm.prog_data->param[i]);
       }
       drm_intel_gem_bo_unmap_gtt(brw->wm.push_const_bo);
    }
@@ -81,12 +83,12 @@ static void
 upload_wm_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
-   if (fp->use_const_buffer || brw->wm.prog_data->nr_params == 0) {
+   if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 | (5 - 2));
@@ -109,14 +111,12 @@ upload_wm_state(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    dw2 = dw4 = dw5 = dw6 = 0;
    dw4 |= GEN6_WM_STATISTICS_ENABLE;
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
    dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5;
 
-   /* BRW_NEW_NR_SURFACES */
+   /* BRW_NEW_NR_WM_SURFACES */
    dw2 |= brw->wm.nr_surfaces << GEN6_WM_BINDING_TABLE_ENTRY_COUNT_SHIFT;
 
    /* CACHE_NEW_SAMPLER */
@@ -125,7 +125,6 @@ upload_wm_state(struct brw_context *brw)
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
 
    dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
-   dw5 |= GEN6_WM_DISPATCH_ENABLE;
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    if (fp->isGLSL)
@@ -151,6 +150,11 @@ upload_wm_state(struct brw_context *brw)
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
       dw5 |= GEN6_WM_KILL_ENABLE;
 
+   if (brw_color_buffer_write_enabled(brw) ||
+       dw5 & (GEN6_WM_KILL_ENABLE | GEN6_WM_COMPUTED_DEPTH)) {
+      dw5 |= GEN6_WM_DISPATCH_ENABLE;
+   }
+
    dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
 
    dw6 |= brw_count_bits(brw->fragment_program->Base.InputsRead) <<
@@ -167,13 +171,11 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(0); /* kernel 1 pointer */
    OUT_BATCH(0); /* kernel 2 pointer */
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR |
+      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
 		_NEW_PROGRAM_CONSTANTS),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |

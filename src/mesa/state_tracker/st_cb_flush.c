@@ -51,7 +51,7 @@
 static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
    return strb && strb->defined;
@@ -64,7 +64,7 @@ is_front_buffer_dirty(struct st_context *st)
 static void
 display_front_buffer(struct st_context *st)
 {
-   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 
@@ -113,7 +113,7 @@ void st_finish( struct st_context *st )
 /**
  * Called via ctx->Driver.Flush()
  */
-static void st_glFlush(GLcontext *ctx)
+static void st_glFlush(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
 
@@ -133,7 +133,7 @@ static void st_glFlush(GLcontext *ctx)
 /**
  * Called via ctx->Driver.Finish()
  */
-static void st_glFinish(GLcontext *ctx)
+static void st_glFinish(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
 

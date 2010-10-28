@@ -54,8 +54,8 @@ extern int nContextError;
 
 #define DDLOG_CRITICAL_OR_WARN	DDLOG_CRITICAL
 
-extern void _gld_mesa_warning(GLcontext *, char *);
-extern void _gld_mesa_fatal(GLcontext *, char *);
+extern void _gld_mesa_warning(struct gl_context *, char *);
+extern void _gld_mesa_fatal(struct gl_context *, char *);
 
 //---------------------------------------------------------------------------
 
@@ -233,7 +233,7 @@ void _gldDestroyPrimitiveBuffer(
 //---------------------------------------------------------------------------
 
 HRESULT _gldCreatePrimitiveBuffer(
-	GLcontext *ctx,
+	struct gl_context *ctx,
 	GLD_driver_dx8 *lpCtx,
 	GLD_pb_dx8 *gldVB)
 {

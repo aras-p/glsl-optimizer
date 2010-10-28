@@ -38,7 +38,7 @@
 
 #include "r700_shader.h"
 
-void r700ShaderInit(GLcontext * ctx)
+void r700ShaderInit(struct gl_context * ctx)
 {
 }
 

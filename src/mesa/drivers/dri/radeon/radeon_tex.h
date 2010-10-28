@@ -45,7 +45,7 @@ extern void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawabl
 extern void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_format,
 			       __DRIdrawable *dPriv);
 
-extern void radeonUpdateTextureState( GLcontext *ctx );
+extern void radeonUpdateTextureState( struct gl_context *ctx );
 
 extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,
 				  GLuint face );

@@ -46,7 +46,7 @@
 #include "intel_reg.h"
 
 static struct gl_sync_object *
-intel_new_sync_object(GLcontext *ctx, GLuint id)
+intel_new_sync_object(struct gl_context *ctx, GLuint id)
 {
    struct intel_sync_object *sync;
 
@@ -56,7 +56,7 @@ intel_new_sync_object(GLcontext *ctx, GLuint id)
 }
 
 static void
-intel_delete_sync_object(GLcontext *ctx, struct gl_sync_object *s)
+intel_delete_sync_object(struct gl_context *ctx, struct gl_sync_object *s)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
@@ -65,7 +65,7 @@ intel_delete_sync_object(GLcontext *ctx, struct gl_sync_object *s)
 }
 
 static void
-intel_fence_sync(GLcontext *ctx, struct gl_sync_object *s,
+intel_fence_sync(struct gl_context *ctx, struct gl_sync_object *s,
 	       GLenum condition, GLbitfield flags)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -87,7 +87,7 @@ intel_fence_sync(GLcontext *ctx, struct gl_sync_object *s,
  * The fix would be a new kernel function to do the GTT transition with a
  * timeout.
  */
-static void intel_client_wait_sync(GLcontext *ctx, struct gl_sync_object *s,
+static void intel_client_wait_sync(struct gl_context *ctx, struct gl_sync_object *s,
 				 GLbitfield flags, GLuint64 timeout)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
@@ -105,12 +105,12 @@ static void intel_client_wait_sync(GLcontext *ctx, struct gl_sync_object *s,
  * any batchbuffers coming after this waitsync will naturally not occur until
  * the previous one is done.
  */
-static void intel_server_wait_sync(GLcontext *ctx, struct gl_sync_object *s,
+static void intel_server_wait_sync(struct gl_context *ctx, struct gl_sync_object *s,
 				 GLbitfield flags, GLuint64 timeout)
 {
 }
 
-static void intel_check_sync(GLcontext *ctx, struct gl_sync_object *s)
+static void intel_check_sync(struct gl_context *ctx, struct gl_sync_object *s)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 

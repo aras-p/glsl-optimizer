@@ -21,24 +21,24 @@ STATE
 
 To create and destroy the module:
 
-	GLboolean _swrast_CreateContext( GLcontext *ctx );
-	void _swrast_DestroyContext( GLcontext *ctx );
+	GLboolean _swrast_CreateContext( struct gl_context *ctx );
+	void _swrast_DestroyContext( struct gl_context *ctx );
    
 This module tracks state changes internally and maintains derived
 values based on the current state.  For this to work, the driver
 ensure the following funciton is called whenever the state changes and
 the swsetup module is 'awake':
 
-	void _swrast_InvalidateState( GLcontext *ctx, GLuint new_state );
+	void _swrast_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 There is no explicit call to put the swrast module to sleep.  
 
 
 CUSTOMIZATION
 
-   void (*choose_point)( GLcontext * );
-   void (*choose_line)( GLcontext * );
-   void (*choose_triangle)( GLcontext * );
+   void (*choose_point)( struct gl_context * );
+   void (*choose_line)( struct gl_context * );
+   void (*choose_triangle)( struct gl_context * );
 
 Drivers may add additional triangle/line/point functions to swrast by
 overriding these functions.  It is necessary for the driver to be very

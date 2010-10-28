@@ -128,7 +128,7 @@ output_get_modes(xf86OutputPtr output)
     for (i = 0; i < drm_connector->count_modes; i++) {
 	drm_mode = &drm_connector->modes[i];
 	if (drm_mode) {
-	    mode = xcalloc(1, sizeof(DisplayModeRec));
+	    mode = calloc(1, sizeof(DisplayModeRec));
 	    if (!mode)
 		continue;
 	    mode->Clock = drm_mode->clock;
@@ -195,7 +195,7 @@ output_destroy(xf86OutputPtr output)
 {
     struct output_private *priv = output->driver_private;
     drmModeFreeConnector(priv->drm_connector);
-    xfree(priv);
+    free(priv);
     output->driver_private = NULL;
 }
 
@@ -262,14 +262,14 @@ xorg_output_init(ScrnInfoPtr pScrn)
 		 drm_connector->connector_type_id);
 
 
-	priv = xcalloc(sizeof(*priv), 1);
+	priv = calloc(sizeof(*priv), 1);
 	if (!priv) {
 	    continue;
 	}
 
 	output = xf86OutputCreate(pScrn, &output_funcs, name);
 	if (!output) {
-	    xfree(priv);
+	    free(priv);
 	    continue;
 	}
 

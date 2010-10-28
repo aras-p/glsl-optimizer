@@ -141,7 +141,7 @@ static const struct instruction_pattern Instructions[] = {
  * _successfully_ parsed the program text.
  */
 struct parse_state {
-   GLcontext *ctx;
+   struct gl_context *ctx;
    const GLubyte *start;              /* start of program string */
    const GLubyte *pos;                /* current position */
    const GLubyte *curLine;
@@ -1463,7 +1463,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
  * indicates the position of the error in 'str'.
  */
 void
-_mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
+_mesa_parse_nv_fragment_program(struct gl_context *ctx, GLenum dstTarget,
                                 const GLubyte *str, GLsizei len,
                                 struct gl_fragment_program *program)
 {

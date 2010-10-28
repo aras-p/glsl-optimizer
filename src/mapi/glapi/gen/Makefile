@@ -87,9 +87,12 @@ API_XML = \
 	EXT_framebuffer_object.xml \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
+	EXT_separate_shader_objects.xml \
 	EXT_texture_array.xml \
+	EXT_texture_integer.xml \
 	EXT_transform_feedback.xml \
 	NV_conditional_render.xml \
+	NV_primitive_restart.xml \
 	OES_EGL_image.xml
 
 COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py

@@ -58,8 +58,10 @@ MAIN_SOURCES = \
 	main/mm.c \
 	main/multisample.c \
 	main/nvprogram.c \
+	main/pack.c \
 	main/pixel.c \
 	main/pixelstore.c \
+	main/pixeltransfer.c \
 	main/points.c \
 	main/polygon.c \
 	main/queryobj.c \

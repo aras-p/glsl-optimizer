@@ -39,7 +39,7 @@
 
 #include "radeon_mipmap_tree.h"
 
-static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendTexState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -104,7 +104,7 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 #define SAMPLER_STRIDE                 3
 
-static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendTexSamplerState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -141,7 +141,7 @@ static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *at
 	}
 }
 
-static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendTexBorderColorState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -167,7 +167,7 @@ static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom
 }
 
 extern int getTypeSize(GLenum type);
-static void r700SetupVTXConstants(GLcontext  * ctx,
+static void r700SetupVTXConstants(struct gl_context  * ctx,
 				  void *       pAos,
 				  StreamDesc * pStreamDesc)
 {
@@ -243,7 +243,7 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 
 }
 
-static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendVTXState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t         *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vp = context->selected_vp;
@@ -599,7 +599,7 @@ static void r700SetDepthTarget(context_t *context)
     /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
 }
 
-static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendDepthTargetState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -646,7 +646,7 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 
 }
 
-static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendRenderTargetState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -724,7 +724,7 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 
 }
 
-static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendPSState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -766,7 +766,7 @@ static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 }
 
-static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendVSState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -827,7 +827,7 @@ static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 }
 
-static void r700SendFSState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendFSState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -869,7 +869,7 @@ static void r700SendFSState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 }
 
-static void r700SendViewportState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendViewportState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -903,7 +903,7 @@ static void r700SendViewportState(GLcontext *ctx, struct radeon_state_atom *atom
 
 }
 
-static void r700SendSQConfig(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendSQConfig(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -940,7 +940,7 @@ static void r700SendSQConfig(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendUCPState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendUCPState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -962,7 +962,7 @@ static void r700SendUCPState(GLcontext *ctx, struct radeon_state_atom *atom)
 	}
 }
 
-static void r700SendSPIState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendSPIState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1037,7 +1037,7 @@ static void r700SendSPIState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendVGTState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendVGTState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1083,7 +1083,7 @@ static void r700SendVGTState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendSXState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendSXState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1098,7 +1098,7 @@ static void r700SendSXState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendDBState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1124,7 +1124,7 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendStencilState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendStencilState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1138,7 +1138,7 @@ static void r700SendStencilState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendCBState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1168,7 +1168,7 @@ static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendCBCLRCMPState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendCBCLRCMPState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1184,7 +1184,7 @@ static void r700SendCBCLRCMPState(GLcontext *ctx, struct radeon_state_atom *atom
 	COMMIT_BATCH();
 }
 
-static void r700SendCBBlendState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendCBBlendState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1216,7 +1216,7 @@ static void r700SendCBBlendState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendCBBlendColorState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendCBBlendColorState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1233,7 +1233,7 @@ static void r700SendCBBlendColorState(GLcontext *ctx, struct radeon_state_atom *
 	COMMIT_BATCH();
 }
 
-static void r700SendSUState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendSUState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1251,7 +1251,7 @@ static void r700SendSUState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 }
 
-static void r700SendPolyState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendPolyState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1271,7 +1271,7 @@ static void r700SendPolyState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 }
 
-static void r700SendCLState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendCLState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1287,7 +1287,7 @@ static void r700SendCLState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendGBState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendGBState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1303,7 +1303,7 @@ static void r700SendGBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendScissorState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendScissorState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1336,7 +1336,7 @@ static void r700SendScissorState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendSCState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1353,7 +1353,7 @@ static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendAAState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendAAState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1368,7 +1368,7 @@ static void r700SendAAState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendPSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendPSConsts(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1392,7 +1392,7 @@ static void r700SendPSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendVSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendVSConsts(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -1417,7 +1417,7 @@ static void r700SendVSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
-static void r700SendQueryBegin(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendQueryBegin(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;
@@ -1443,12 +1443,12 @@ static void r700SendQueryBegin(GLcontext *ctx, struct radeon_state_atom *atom)
 	query->emitted_begin = GL_TRUE;
 }
 
-static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_always(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	return atom->cmd_size;
 }
 
-static int check_cb(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_cb(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	int count = 7;
@@ -1460,7 +1460,7 @@ static int check_cb(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_blnd(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -1485,7 +1485,7 @@ static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_ucp(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_ucp(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -1500,7 +1500,7 @@ static int check_ucp(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_vtx(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	int count = context->radeon.tcl.aos_count * 18;
@@ -1509,7 +1509,7 @@ static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_tx(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	unsigned int i, count = 0;
@@ -1526,7 +1526,7 @@ static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count * 31;
 }
 
-static int check_ps_consts(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_ps_consts(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -1539,7 +1539,7 @@ static int check_ps_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_vs_consts(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -1552,7 +1552,7 @@ static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
-static int check_queryobj(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = radeon->query.current;

@@ -37,7 +37,7 @@
 #define TX_MATRIX(i) (NV10TCL_TX0_MATRIX(0) + 64 * (i))
 
 void
-nv10_emit_tex_gen(GLcontext *ctx, int emit)
+nv10_emit_tex_gen(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_GEN0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -70,7 +70,7 @@ nv10_emit_tex_gen(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_tex_mat(GLcontext *ctx, int emit)
+nv10_emit_tex_mat(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
@@ -151,7 +151,7 @@ get_tex_format_rect(struct gl_texture_image *ti)
 }
 
 void
-nv10_emit_tex_obj(GLcontext *ctx, int emit)
+nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
 	struct nouveau_channel *chan = context_chan(ctx);

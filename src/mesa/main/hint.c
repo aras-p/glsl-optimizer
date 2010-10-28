@@ -130,7 +130,7 @@ _mesa_Hint( GLenum target, GLenum mode )
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void _mesa_init_hint( GLcontext * ctx )
+void _mesa_init_hint( struct gl_context * ctx )
 {
    /* Hint group */
    ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;

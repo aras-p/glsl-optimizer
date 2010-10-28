@@ -52,13 +52,40 @@ struct brw_wm_unit_key {
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
    GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
+   GLboolean color_write_enable;
    GLfloat offset_units, offset_factor;
 };
+
+bool
+brw_color_buffer_write_enabled(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   const struct gl_fragment_program *fp = brw->fragment_program;
+   int i;
+
+   /* _NEW_BUFFERS */
+   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+
+      /* _NEW_COLOR */
+      if (rb &&
+	  (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR) ||
+	   fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0 + i)) &&
+	  (ctx->Color.ColorMask[i][0] ||
+	   ctx->Color.ColorMask[i][1] ||
+	   ctx->Color.ColorMask[i][2] ||
+	   ctx->Color.ColorMask[i][3])) {
+	 return true;
+      }
+   }
+
+   return false;
+}
 
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    const struct brw_fragment_program *bfp = (struct brw_fragment_program *) fp;
    struct intel_context *intel = &brw->intel;
@@ -70,7 +97,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
    key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
-   key->total_scratch = ALIGN(brw->wm.prog_data->total_scratch, 1024);
+   key->total_scratch = brw->wm.prog_data->total_scratch;
 
    /* BRW_NEW_URB_FENCE */
    key->urb_size = brw->urb.vsize;
@@ -100,6 +127,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    if (brw->state.depth_region == NULL)
       key->computes_depth = 0;
 
+   /* _NEW_BUFFERS | _NEW_COLOR */
+   key->color_write_enable = brw_color_buffer_write_enabled(brw);
+
    /* _NEW_COLOR */
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
    key->is_glsl = bfp->isGLSL;
@@ -107,17 +137,12 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* If using the fragment shader backend, the program is always
     * 8-wide.
     */
-   if (ctx->Shader.CurrentProgram) {
-      int i;
+   if (ctx->Shader.CurrentFragmentProgram) {
+      struct brw_shader *shader = (struct brw_shader *)
+	 ctx->Shader.CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-      for (i = 0; i < ctx->Shader.CurrentProgram->_NumLinkedShaders; i++) {
-	 struct brw_shader *shader =
-	    (struct brw_shader *)ctx->Shader.CurrentProgram->_LinkedShaders[i];;
-
-	 if (shader->base.Type == GL_FRAGMENT_SHADER &&
-	     shader->ir != NULL) {
-	    key->is_glsl = GL_TRUE;
-	 }
+      if (shader != NULL && shader->ir != NULL) {
+	 key->is_glsl = GL_TRUE;
       }
    }
 
@@ -159,7 +184,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
 	 brw->wm.scratch_bo->offset >> 10; /* reloc */
-      wm.thread2.per_thread_scratch_space = key->total_scratch / 1024 - 1;
+      wm.thread2.per_thread_scratch_space = ffs(key->total_scratch) - 11;
    } else {
       wm.thread2.scratch_space_base_pointer = 0;
       wm.thread2.per_thread_scratch_space = 0;
@@ -193,7 +218,13 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
       wm.wm5.enable_16_pix = 1;
 
    wm.wm5.max_threads = brw->wm_max_threads - 1;
-   wm.wm5.thread_dispatch_enable = 1;	/* AKA: color_write */
+
+   if (key->color_write_enable ||
+       key->uses_kill ||
+       key->computes_depth) {
+      wm.wm5.thread_dispatch_enable = 1;
+   }
+
    wm.wm5.legacy_line_rast = 0;
    wm.wm5.legacy_global_depth_bias = 0;
    wm.wm5.early_depth_test = 1;	        /* never need to disable */
@@ -262,7 +293,6 @@ static void upload_wm_unit( struct brw_context *brw )
     * bother reducing the allocation later, since we use scratch so
     * rarely.
     */
-   assert(key.total_scratch <= 12 * 1024);
    if (key.total_scratch) {
       GLuint total = key.total_scratch * brw->wm_max_threads;
 
@@ -298,7 +328,8 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
 	       _NEW_COLOR |
-	       _NEW_DEPTH),
+	       _NEW_DEPTH |
+	       _NEW_BUFFERS),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |

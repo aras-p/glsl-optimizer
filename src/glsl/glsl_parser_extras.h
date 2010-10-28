@@ -37,14 +37,13 @@
 enum _mesa_glsl_parser_targets {
    vertex_shader,
    geometry_shader,
-   fragment_shader,
-   ir_shader
+   fragment_shader
 };
 
-struct __GLcontextRec;
+struct gl_context;
 
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct __GLcontextRec *ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *ctx, GLenum target,
 			  void *mem_ctx);
 
    /* Callers of this talloc-based new need not call delete. It's
@@ -133,6 +132,8 @@ struct _mesa_glsl_parse_state {
    unsigned ARB_texture_rectangle_warn:1;
    unsigned EXT_texture_array_enable:1;
    unsigned EXT_texture_array_warn:1;
+   unsigned ARB_shader_stencil_export_enable:1;
+   unsigned ARB_shader_stencil_export_warn:1;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

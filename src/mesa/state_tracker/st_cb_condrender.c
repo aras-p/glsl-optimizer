@@ -47,7 +47,7 @@
  * Called via ctx->Driver.BeginConditionalRender()
  */
 static void
-st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
+st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
                           GLenum mode)
 {
    struct st_query_object *stq = st_query_object(q);
@@ -80,7 +80,7 @@ st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
  * Called via ctx->Driver.BeginConditionalRender()
  */
 static void
-st_EndConditionalRender(GLcontext *ctx, struct gl_query_object *q)
+st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    (void) q;

@@ -301,7 +301,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
  *
  * Mostly this means populating the texture object's mipmap tree.
  */
-static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj)
+static GLboolean r300_validate_texture(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
@@ -320,7 +320,7 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 /**
  * Ensure all enabled and complete textures are uploaded along with any buffers being used.
  */
-GLboolean r300ValidateBuffers(GLcontext * ctx)
+GLboolean r300ValidateBuffers(struct gl_context * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;

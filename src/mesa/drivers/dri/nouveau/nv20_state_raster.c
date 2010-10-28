@@ -31,7 +31,7 @@
 #include "nv20_driver.h"
 
 void
-nv20_emit_logic_opcode(GLcontext *ctx, int emit)
+nv20_emit_logic_opcode(struct gl_context *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);

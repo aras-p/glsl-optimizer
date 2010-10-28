@@ -1448,7 +1448,7 @@ do {                                   \
  * swrast fallback.
  */
 static swrast_tri_func
-get_triangle_func(GLcontext *ctx)
+get_triangle_func(struct gl_context *ctx)
 {
 #if CHAN_BITS == 8
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1644,7 +1644,7 @@ get_triangle_func(GLcontext *ctx)
  * of our internal tri functions, otherwise fall back to the
  * standard swrast functions.
  */
-void xmesa_choose_triangle( GLcontext *ctx )
+void xmesa_choose_triangle( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 

@@ -39,7 +39,7 @@ egl_CPPFLAGS := \
 	-I$(TOP)/src/gallium/state_trackers/egl \
 	-I$(TOP)/src/egl/main \
 	-DPIPE_PREFIX=\"$(PIPE_PREFIX)\" -DST_PREFIX=\"$(ST_PREFIX)\"
-egl_SYS := -lm $(DLOPEN_LIBS) -L$(TOP)/$(LIB_DIR) -lEGL
+egl_SYS := -lm $(DLOPEN_LIBS) -lEGL
 egl_LIBS := $(TOP)/src/gallium/state_trackers/egl/libegl.a
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
@@ -134,17 +134,17 @@ GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 
 # OpenGL ES 1.x state tracker
 GLESv1_CM_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv1_CM_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
+GLESv1_CM_SYS := $(DRI_LIB_DEPS) -l$(GLESv1_CM_LIB)
 GLESv1_CM_LIBS := $(TOP)/src/mesa/libes1gallium.a
 
 # OpenGL ES 2.x state tracker
 GLESv2_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv2_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
+GLESv2_SYS := $(DRI_LIB_DEPS) -l$(GLESv2_LIB)
 GLESv2_LIBS := $(TOP)/src/mesa/libes2gallium.a
 
 # OpenVG state tracker
 OpenVG_CPPFLAGS := -I$(TOP)/src/gallium/state_trackers/vega
-OpenVG_SYS := -lm -L$(TOP)/$(LIB_DIR) -l$(VG_LIB)
+OpenVG_SYS := -lm -l$(VG_LIB)
 OpenVG_LIBS := $(TOP)/src/gallium/state_trackers/vega/libvega.a
 
 
@@ -181,14 +181,16 @@ OUTPUTS := $(addprefix $(OUTPUT_PATH)/, $(OUTPUTS))
 default: $(OUTPUTS)
 
 define mklib
-$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' \
+	-L$(TOP)/$(LIB_DIR) -ldflags '$(LDFLAGS)' \
 	-install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< \
 	-Wl,--start-group $(common_LIBS) $($(1)_LIBS) -Wl,--end-group \
 	$(common_SYS) $($(1)_SYS)
 endef
 
 define mklib-cxx
-$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CXX)' \
+	-L$(TOP)/$(LIB_DIR) -ldflags '$(LDFLAGS)' \
 	-cplusplus -install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< \
 	-Wl,--start-group $(common_LIBS) $($(1)_LIBS) -Wl,--end-group \
 	$(common_SYS) $($(1)_SYS)

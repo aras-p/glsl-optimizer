@@ -51,7 +51,7 @@
 #include "drirenderbuffer.h"
 
 
-static void updateSpecularLighting( GLcontext *ctx );
+static void updateSpecularLighting( struct gl_context *ctx );
 
 static const GLuint mgarop_NoBLK[16] = {
    DC_atype_rpl  | 0x00000000, DC_atype_rstr | 0x00080000,
@@ -68,7 +68,7 @@ static const GLuint mgarop_NoBLK[16] = {
  * Alpha blending
  */
 
-static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
+static void mgaDDAlphaFunc(struct gl_context *ctx, GLenum func, GLfloat ref)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLubyte refByte;
@@ -111,7 +111,7 @@ static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
    mmesa->hw.alpha_func = a | MGA_FIELD( AC_atref, refByte );
 }
 
-static void updateBlendLogicOp(GLcontext *ctx)
+static void updateBlendLogicOp(struct gl_context *ctx)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLboolean logicOp = RGBA_LOGICOP_ENABLED(ctx);
@@ -126,14 +126,14 @@ static void updateBlendLogicOp(GLcontext *ctx)
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
-static void mgaDDBlendEquationSeparate(GLcontext *ctx, 
+static void mgaDDBlendEquationSeparate(struct gl_context *ctx, 
 				       GLenum modeRGB, GLenum modeA)
 {
    assert( modeRGB == modeA );
    updateBlendLogicOp( ctx );
 }
 
-static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
+static void mgaDDBlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
 				    GLenum dfactorRGB, GLenum sfactorA,
 				    GLenum dfactorA )
 {
@@ -205,7 +205,7 @@ static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
  * Depth testing
  */
 
-static void mgaDDDepthFunc(GLcontext *ctx, GLenum func)
+static void mgaDDDepthFunc(struct gl_context *ctx, GLenum func)
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    int zmode;
@@ -239,7 +239,7 @@ static void mgaDDDepthFunc(GLcontext *ctx, GLenum func)
    mmesa->hw.zmode |= zmode;
 }
 
-static void mgaDDDepthMask(GLcontext *ctx, GLboolean flag)
+static void mgaDDDepthMask(struct gl_context *ctx, GLboolean flag)
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -250,7 +250,7 @@ static void mgaDDDepthMask(GLcontext *ctx, GLboolean flag)
 }
 
 
-static void mgaDDClearDepth(GLcontext *ctx, GLclampd d)
+static void mgaDDClearDepth(struct gl_context *ctx, GLclampd d)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -272,7 +272,7 @@ static void mgaDDClearDepth(GLcontext *ctx, GLclampd d)
  */
 
 
-static void mgaDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
+static void mgaDDFogfv(struct gl_context *ctx, GLenum pname, const GLfloat *param)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -292,7 +292,7 @@ static void mgaDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
  */
 
 
-void mgaUpdateClipping(const GLcontext *ctx)
+void mgaUpdateClipping(const struct gl_context *ctx)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -319,7 +319,7 @@ void mgaUpdateClipping(const GLcontext *ctx)
 }
 
 
-static void mgaDDScissor( GLcontext *ctx, GLint x, GLint y,
+static void mgaDDScissor( struct gl_context *ctx, GLint x, GLint y,
 			  GLsizei w, GLsizei h )
 {
    if ( ctx->Scissor.Enabled ) {
@@ -338,7 +338,7 @@ static void mgaDDScissor( GLcontext *ctx, GLint x, GLint y,
 #define _CULL_NEGATIVE ((1<<11)|(1<<5)|(1<<16))
 #define _CULL_POSITIVE (1<<11)
 
-static void mgaDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
+static void mgaDDCullFaceFrontFace(struct gl_context *ctx, GLenum unused)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -368,7 +368,7 @@ static void mgaDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
  * Masks
  */
 
-static void mgaDDColorMask(GLcontext *ctx, 
+static void mgaDDColorMask(struct gl_context *ctx, 
 			   GLboolean r, GLboolean g, 
 			   GLboolean b, GLboolean a )
 {
@@ -421,7 +421,7 @@ static int mgaStipples[16] = {
  * \param mask Pointer to the 32x32 stipple mask
  */
 
-static void mgaDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+static void mgaDDPolygonStipple( struct gl_context *ctx, const GLubyte *mask )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const GLubyte *m = mask;
@@ -478,7 +478,7 @@ static void mgaDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
  * sense to break them out of the core texture state update routines.
  */
 
-static void updateSpecularLighting( GLcontext *ctx )
+static void updateSpecularLighting( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    unsigned int specen;
@@ -497,7 +497,7 @@ static void updateSpecularLighting( GLcontext *ctx )
  */
 
 
-static void mgaDDLightModelfv(GLcontext *ctx, GLenum pname,
+static void mgaDDLightModelfv(struct gl_context *ctx, GLenum pname,
 			      const GLfloat *param)
 {
    if (pname == GL_LIGHT_MODEL_COLOR_CONTROL) {
@@ -513,7 +513,7 @@ static void mgaDDLightModelfv(GLcontext *ctx, GLenum pname,
 
 
 static void
-mgaDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func, GLint ref,
+mgaDDStencilFuncSeparate(struct gl_context *ctx, GLenum face, GLenum func, GLint ref,
                          GLuint mask)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -558,7 +558,7 @@ mgaDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func, GLint ref,
 }
 
 static void
-mgaDDStencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
+mgaDDStencilMaskSeparate(struct gl_context *ctx, GLenum face, GLuint mask)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -568,7 +568,7 @@ mgaDDStencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 }
 
 static void
-mgaDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail, GLenum zfail,
+mgaDDStencilOpSeparate(struct gl_context *ctx, GLenum face, GLenum fail, GLenum zfail,
                        GLenum zpass)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -676,7 +676,7 @@ mgaDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail, GLenum zfail,
  * Window position and viewport transformation
  */
 
-void mgaCalcViewport( GLcontext *ctx )
+void mgaCalcViewport( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -694,14 +694,14 @@ void mgaCalcViewport( GLcontext *ctx )
    mmesa->SetupNewInputs = ~0;
 }
 
-static void mgaViewport( GLcontext *ctx, 
+static void mgaViewport( struct gl_context *ctx, 
 			  GLint x, GLint y, 
 			  GLsizei width, GLsizei height )
 {
    mgaCalcViewport( ctx );
 }
 
-static void mgaDepthRange( GLcontext *ctx, 
+static void mgaDepthRange( struct gl_context *ctx, 
 			    GLclampd nearval, GLclampd farval )
 {
    mgaCalcViewport( ctx );
@@ -712,7 +712,7 @@ static void mgaDepthRange( GLcontext *ctx,
  * Miscellaneous
  */
 
-static void mgaDDClearColor(GLcontext *ctx, 
+static void mgaDDClearColor(struct gl_context *ctx, 
 			    const GLfloat color[4] )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -729,13 +729,13 @@ static void mgaDDClearColor(GLcontext *ctx,
 
 /* Fallback to swrast for select and feedback.
  */
-static void mgaRenderMode( GLcontext *ctx, GLenum mode )
+static void mgaRenderMode( struct gl_context *ctx, GLenum mode )
 {
    FALLBACK( ctx, MGA_FALLBACK_RENDERMODE, (mode != GL_RENDER) );
 }
 
 
-static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
+static void mgaDDLogicOp( struct gl_context *ctx, GLenum opcode )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -791,7 +791,7 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 }
 
 
-static void mgaDDDrawBuffer(GLcontext *ctx, GLenum mode )
+static void mgaDDDrawBuffer(struct gl_context *ctx, GLenum mode )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -823,7 +823,7 @@ static void mgaDDDrawBuffer(GLcontext *ctx, GLenum mode )
 }
 
 
-static void mgaDDReadBuffer(GLcontext *ctx, GLenum mode )
+static void mgaDDReadBuffer(struct gl_context *ctx, GLenum mode )
 {
    /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 }
@@ -834,7 +834,7 @@ static void mgaDDReadBuffer(GLcontext *ctx, GLenum mode )
  */
 
 
-static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
+static void mgaDDEnable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -932,7 +932,7 @@ static void mgaDDPrintDirty( const char *msg, GLuint state )
 void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 {
    drm_mga_sarea_t *sarea = mmesa->sarea;
-   GLcontext * ctx = mmesa->glCtx;
+   struct gl_context * ctx = mmesa->glCtx;
 
    if (MGA_DEBUG & DEBUG_VERBOSE_MSG)
       mgaDDPrintDirty( __FUNCTION__, mmesa->dirty );
@@ -1009,7 +1009,7 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
  */
 
 
-static void mgaDDValidateState( GLcontext *ctx )
+static void mgaDDValidateState( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -1033,7 +1033,7 @@ static void mgaDDValidateState( GLcontext *ctx )
 }
 
 
-static void mgaDDInvalidateState( GLcontext *ctx, GLuint new_state )
+static void mgaDDInvalidateState( struct gl_context *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
@@ -1043,7 +1043,7 @@ static void mgaDDInvalidateState( GLcontext *ctx, GLuint new_state )
 }
 
 
-static void mgaRunPipeline( GLcontext *ctx )
+static void mgaRunPipeline( struct gl_context *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -1062,7 +1062,7 @@ static void mgaRunPipeline( GLcontext *ctx )
 void mgaInitState( mgaContextPtr mmesa )
 {
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;
-   GLcontext *ctx = mmesa->glCtx;
+   struct gl_context *ctx = mmesa->glCtx;
 
    if (ctx->Visual.doubleBufferMode) {
       /* use back buffer by default */
@@ -1161,7 +1161,7 @@ void mgaInitState( mgaContextPtr mmesa )
 }
 
 
-void mgaDDInitStateFuncs( GLcontext *ctx )
+void mgaDDInitStateFuncs( struct gl_context *ctx )
 {
    ctx->Driver.UpdateState = mgaDDInvalidateState;
    ctx->Driver.Enable = mgaDDEnable;

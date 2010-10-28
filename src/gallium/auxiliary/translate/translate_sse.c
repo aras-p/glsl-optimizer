@@ -1495,19 +1495,19 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (!build_vertex_emit(p, &p->elt8_func, 1))
       goto fail;
 
-   p->translate.run = (void*)x86_get_func(&p->linear_func);
+   p->translate.run = (run_func) x86_get_func(&p->linear_func);
    if (p->translate.run == NULL)
       goto fail;
 
-   p->translate.run_elts = (void*)x86_get_func(&p->elt_func);
+   p->translate.run_elts = (run_elts_func) x86_get_func(&p->elt_func);
    if (p->translate.run_elts == NULL)
       goto fail;
 
-   p->translate.run_elts16 = (void*)x86_get_func(&p->elt16_func);
+   p->translate.run_elts16 = (run_elts16_func) x86_get_func(&p->elt16_func);
    if (p->translate.run_elts16 == NULL)
       goto fail;
 
-   p->translate.run_elts8 = (void*)x86_get_func(&p->elt8_func);
+   p->translate.run_elts8 = (run_elts8_func) x86_get_func(&p->elt8_func);
    if (p->translate.run_elts8 == NULL)
       goto fail;
 

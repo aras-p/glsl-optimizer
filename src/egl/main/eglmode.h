@@ -32,11 +32,6 @@ extern _EGLMode *
 _eglLookupMode(EGLModeMESA mode, _EGLDisplay *dpy);
 
 
-PUBLIC _EGLMode *
-_eglAddNewMode(_EGLScreen *screen, EGLint width, EGLint height,
-               EGLint refreshRate, const char *name);
-
-
 extern EGLBoolean
 _eglChooseModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
                    const EGLint *attrib_list, EGLModeMESA *modes,

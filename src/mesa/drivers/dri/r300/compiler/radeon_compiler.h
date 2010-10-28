@@ -30,12 +30,15 @@
 #include "radeon_program.h"
 #include "radeon_emulate_loops.h"
 
+#define RC_DBG_LOG        (1 << 0)
+#define RC_DBG_STATS      (1 << 1)
+
 struct rc_swizzle_caps;
 
 struct radeon_compiler {
 	struct memory_pool Pool;
 	struct rc_program Program;
-	unsigned Debug:1;
+	unsigned Debug:2;
 	unsigned Error:1;
 	char * ErrorMsg;
 

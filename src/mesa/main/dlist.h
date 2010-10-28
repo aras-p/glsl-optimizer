@@ -49,16 +49,16 @@ extern void GLAPIENTRY _mesa_CallList( GLuint list );
 extern void GLAPIENTRY _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
 
 
-extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
+extern void _mesa_compile_error( struct gl_context *ctx, GLenum error, const char *s );
 
-extern void *_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint sz);
+extern void *_mesa_dlist_alloc(struct gl_context *ctx, GLuint opcode, GLuint sz);
 
-extern GLint _mesa_dlist_alloc_opcode( GLcontext *ctx, GLuint sz,
-                                       void (*execute)( GLcontext *, void * ),
-                                       void (*destroy)( GLcontext *, void * ),
-                                       void (*print)( GLcontext *, void * ) );
+extern GLint _mesa_dlist_alloc_opcode( struct gl_context *ctx, GLuint sz,
+                                       void (*execute)( struct gl_context *, void * ),
+                                       void (*destroy)( struct gl_context *, void * ),
+                                       void (*print)( struct gl_context *, void * ) );
 
-extern void _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist);
+extern void _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist);
 
 extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
 
@@ -76,7 +76,7 @@ extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
 
 static INLINE void
-_mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
+_mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
 {
    /* there should be no list to delete */
    ASSERT_NO_FEATURE();
@@ -95,9 +95,9 @@ _mesa_init_dlist_dispatch(struct _glapi_table *disp)
 
 #endif /* FEATURE_dlist */
 
-extern void _mesa_init_display_list( GLcontext * ctx );
+extern void _mesa_init_display_list( struct gl_context * ctx );
 
-extern void _mesa_free_display_list_data(GLcontext *ctx);
+extern void _mesa_free_display_list_data(struct gl_context *ctx);
 
 
 #endif /* DLIST_H */

@@ -57,7 +57,7 @@ static GLuint translate_fill( GLenum mode )
 
 static void update_raster_state( struct st_context *st )
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
    struct pipe_rasterizer_state *raster = &st->state.rasterizer;
    const struct gl_vertex_program *vertProg = ctx->VertexProgram._Current;
    const struct gl_fragment_program *fragProg = ctx->FragmentProgram._Current;
@@ -96,9 +96,8 @@ static void update_raster_state( struct st_context *st )
     */
    if (ctx->VertexProgram._Current) {
       if (ctx->VertexProgram._Enabled ||
-          (ctx->Shader.CurrentProgram &&
-           ctx->Shader.CurrentProgram->VertexProgram &&
-           ctx->Shader.CurrentProgram->LinkStatus)) {
+          (ctx->Shader.CurrentVertexProgram &&
+           ctx->Shader.CurrentVertexProgram->LinkStatus)) {
          /* user-defined vertex program or shader */
          raster->light_twoside = ctx->VertexProgram.TwoSideEnabled;
       }

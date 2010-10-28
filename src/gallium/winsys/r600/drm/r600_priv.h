@@ -42,6 +42,7 @@ struct radeon {
 	enum chip_class			chip_class;
 	struct pb_manager *kman; /* kernel bo manager */
 	struct pb_manager *cman; /* cached bo manager */
+	struct r600_tiling_info tiling_info;
 };
 
 struct radeon *r600_new(int fd, unsigned device);
@@ -76,6 +77,8 @@ struct r600_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*pb;
 	unsigned			size;
+	unsigned			tiling_flags;
+	unsigned                        kernel_pitch;
 };
 
 
@@ -94,7 +97,10 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
 void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
 int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
-
+int radeon_bo_get_tiling_flags(struct radeon *radeon,
+			       struct radeon_bo *bo,
+			       uint32_t *tiling_flags,
+			       uint32_t *pitch);
 
 /* radeon_bo_pb.c */
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);

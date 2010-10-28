@@ -220,9 +220,9 @@ extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);
 
 extern void r300EmitCacheFlush(r300ContextPtr rmesa);
 
-extern GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead);
-extern GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead);
-extern GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes);
-extern GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes);
+extern GLuint r300VAPInputCntl0(struct gl_context * ctx, GLuint InputsRead);
+extern GLuint r300VAPInputCntl1(struct gl_context * ctx, GLuint InputsRead);
+extern GLuint r300VAPOutputCntl0(struct gl_context * ctx, GLuint vp_writes);
+extern GLuint r300VAPOutputCntl1(struct gl_context * ctx, GLuint vp_writes);
 
 #endif

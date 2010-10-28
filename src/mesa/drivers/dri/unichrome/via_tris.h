@@ -28,8 +28,8 @@
 #include "main/mtypes.h"
 
 extern void viaPrintRenderState(const char *msg, GLuint state);
-extern void viaInitTriFuncs(GLcontext *ctx);
-extern void viaRasterPrimitive(GLcontext *ctx, GLenum rPrim, GLuint hwPrim);
-extern void viaRasterPrimitiveFinish(GLcontext *ctx);
+extern void viaInitTriFuncs(struct gl_context *ctx);
+extern void viaRasterPrimitive(struct gl_context *ctx, GLenum rPrim, GLuint hwPrim);
+extern void viaRasterPrimitiveFinish(struct gl_context *ctx);
 
 #endif

@@ -39,29 +39,29 @@
 #if FEATURE_dlist
 
 
-typedef void (*attr_func)( GLcontext *ctx, GLint target, const GLfloat * );
+typedef void (*attr_func)( struct gl_context *ctx, GLint target, const GLfloat * );
 
 
 /* This file makes heavy use of the aliasing of NV vertex attributes
  * with the legacy attributes, and also with ARB and Material
  * attributes as currently implemented.
  */
-static void VertexAttrib1fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
+static void VertexAttrib1fvNV(struct gl_context *ctx, GLint target, const GLfloat *v)
 {
    CALL_VertexAttrib1fvNV(ctx->Exec, (target, v));
 }
 
-static void VertexAttrib2fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
+static void VertexAttrib2fvNV(struct gl_context *ctx, GLint target, const GLfloat *v)
 {
    CALL_VertexAttrib2fvNV(ctx->Exec, (target, v));
 }
 
-static void VertexAttrib3fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
+static void VertexAttrib3fvNV(struct gl_context *ctx, GLint target, const GLfloat *v)
 {
    CALL_VertexAttrib3fvNV(ctx->Exec, (target, v));
 }
 
-static void VertexAttrib4fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
+static void VertexAttrib4fvNV(struct gl_context *ctx, GLint target, const GLfloat *v)
 {
    CALL_VertexAttrib4fvNV(ctx->Exec, (target, v));
 }
@@ -83,7 +83,7 @@ struct loopback_attr {
  * wrapped vertices.  If we get here, it's probably because the
  * precalculated wrapping is wrong.
  */
-static void loopback_prim( GLcontext *ctx,
+static void loopback_prim( struct gl_context *ctx,
 			   const GLfloat *buffer,
 			   const struct _mesa_prim *prim,
 			   GLuint wrap_count,
@@ -138,7 +138,7 @@ static void loopback_prim( GLcontext *ctx,
  * normally, otherwise need to track and discard the generated
  * primitives.
  */
-static void loopback_weak_prim( GLcontext *ctx,
+static void loopback_weak_prim( struct gl_context *ctx,
 				const struct _mesa_prim *prim )
 {
    /* Use the prim_weak flag to ensure that if this primitive
@@ -155,7 +155,7 @@ static void loopback_weak_prim( GLcontext *ctx,
 }
 
 
-void vbo_loopback_vertex_list( GLcontext *ctx,
+void vbo_loopback_vertex_list( struct gl_context *ctx,
 			       const GLfloat *buffer,
 			       const GLubyte *attrsz,
 			       const struct _mesa_prim *prim,

@@ -36,52 +36,52 @@ extern void
 _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name);
 
 extern struct gl_renderbuffer *
-_mesa_new_renderbuffer(GLcontext *ctx, GLuint name);
+_mesa_new_renderbuffer(struct gl_context *ctx, GLuint name);
 
 extern void
 _mesa_delete_renderbuffer(struct gl_renderbuffer *rb);
 
 
 extern struct gl_renderbuffer *
-_mesa_new_soft_renderbuffer(GLcontext *ctx, GLuint name);
+_mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name);
 
 
 extern GLboolean
-_mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+_mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                                 GLenum internalFormat,
                                 GLuint width, GLuint height);
 
 extern GLboolean
-_mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLuint rgbBits, GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight);
 
 extern GLboolean
-_mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight);
 
 extern void
-_mesa_copy_soft_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb);
+_mesa_copy_soft_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb);
 
 extern GLboolean
-_mesa_add_depth_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                              GLuint depthBits);
 
 extern GLboolean
-_mesa_add_stencil_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                                GLuint stencilBits);
 
 
 extern GLboolean
-_mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                              GLuint redBits, GLuint greenBits,
                              GLuint blueBits, GLuint alphaBits);
 
 extern GLboolean
-_mesa_add_aux_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
+_mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                             GLuint bits, GLuint numBuffers);
 
 extern void
@@ -105,7 +105,7 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
                              struct gl_renderbuffer *rb);
 
 extern struct gl_renderbuffer *
-_mesa_new_depthstencil_renderbuffer(GLcontext *ctx, GLuint name);
+_mesa_new_depthstencil_renderbuffer(struct gl_context *ctx, GLuint name);
 
 
 #endif /* RENDERBUFFER_H */

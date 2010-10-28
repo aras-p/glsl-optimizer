@@ -53,7 +53,7 @@ struct texmat_stage_data {
 
 
 
-static GLboolean run_texmat_stage( GLcontext *ctx,
+static GLboolean run_texmat_stage( struct gl_context *ctx,
 				   struct tnl_pipeline_stage *stage )
 {
    struct texmat_stage_data *store = TEXMAT_STAGE_DATA(stage);
@@ -82,7 +82,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_texmat_data( GLcontext *ctx,
+static GLboolean alloc_texmat_data( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

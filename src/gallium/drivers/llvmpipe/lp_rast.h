@@ -78,30 +78,28 @@ struct lp_rast_state {
  * These pointers point into the bin data buffer.
  */
 struct lp_rast_shader_inputs {
-   float facing;     /** Positive for front-facing, negative for back-facing */
-   unsigned disable:1;  /** Partially binned, disable this command */
-   unsigned opaque:1;   /** Is opaque */
-
-   float (*a0)[4];
-   float (*dadx)[4];
-   float (*dady)[4];
-
-   const struct lp_rast_state *state;
+   unsigned frontfacing:1;      /** True for front-facing */
+   unsigned disable:1;          /** Partially binned, disable this command */
+   unsigned opaque:1;           /** Is opaque */
+   unsigned pad0:29;            /* wasted space */
+   unsigned stride;             /* how much to advance data between a0, dadx, dady */
+   unsigned pad2;               /* wasted space */
+   unsigned pad3;               /* wasted space */
+   /* followed by a0, dadx, dady and planes[] */
 };
 
-
+/* Note: the order of these values is important as they are loaded by
+ * sse code in rasterization:
+ */
 struct lp_rast_plane {
-   /* one-pixel sized trivial accept offsets for each plane */
-   int ei;
-
-   /* one-pixel sized trivial reject offsets for each plane */
-   int eo;
-
    /* edge function values at minx,miny ?? */
    int c;
 
    int dcdx;
    int dcdy;
+
+   /* one-pixel sized trivial reject offsets for each plane */
+   int eo;
 };
 
 /**
@@ -111,15 +109,22 @@ struct lp_rast_plane {
  * Objects of this type are put into the lp_setup_context::data buffer.
  */
 struct lp_rast_triangle {
-   /* inputs for the shader */
-   struct lp_rast_shader_inputs inputs;
-
 #ifdef DEBUG
    float v[3][2];
+   float pad0;
+   float pad1;
 #endif
 
-   struct lp_rast_plane plane[8]; /* NOTE: may allocate fewer planes */
+   /* inputs for the shader */
+   struct lp_rast_shader_inputs inputs;
+   /* planes are also allocated here */
 };
+
+
+#define GET_A0(inputs) ((float (*)[4])((inputs)+1))
+#define GET_DADX(inputs) ((float (*)[4])((char *)((inputs) + 1) + (inputs)->stride))
+#define GET_DADY(inputs) ((float (*)[4])((char *)((inputs) + 1) + 2 * (inputs)->stride))
+#define GET_PLANES(tri) ((struct lp_rast_plane *)((char *)(&(tri)->inputs + 1) + 3 * (tri)->inputs.stride))
 
 
 
@@ -152,6 +157,7 @@ union lp_rast_cmd_arg {
       uint32_t value;
       uint32_t mask;
    } clear_zstencil;
+   const struct lp_rast_state *state;
    struct lp_fence *fence;
    struct llvmpipe_query *query_obj;
 };
@@ -243,8 +249,9 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_SHADE_TILE_OPAQUE 0xe
 #define LP_RAST_OP_BEGIN_QUERY       0xf
 #define LP_RAST_OP_END_QUERY         0x10
+#define LP_RAST_OP_SET_STATE         0x11
 
-#define LP_RAST_OP_MAX               0x11
+#define LP_RAST_OP_MAX               0x12
 #define LP_RAST_OP_MASK              0xff
 
 void

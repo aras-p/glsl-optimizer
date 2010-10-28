@@ -46,32 +46,32 @@
                                _NEW_FOG)
 
 
-extern void mach64CheckTexSizes( GLcontext *ctx );
-extern void mach64ChooseVertexState( GLcontext *ctx );
+extern void mach64CheckTexSizes( struct gl_context *ctx );
+extern void mach64ChooseVertexState( struct gl_context *ctx );
 
-extern void mach64BuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+extern void mach64BuildVertices( struct gl_context *ctx, GLuint start, GLuint count,
 				   GLuint newinputs );
 
 extern void mach64PrintSetupFlags(char *msg, GLuint flags );
 
-extern void mach64InitVB( GLcontext *ctx );
-extern void mach64FreeVB( GLcontext *ctx );
+extern void mach64InitVB( struct gl_context *ctx );
+extern void mach64FreeVB( struct gl_context *ctx );
 
 #if 0
-extern void mach64_emit_contiguous_verts( GLcontext *ctx,
+extern void mach64_emit_contiguous_verts( struct gl_context *ctx,
 					    GLuint start,
 					    GLuint count );
 
-extern void mach64_emit_indexed_verts( GLcontext *ctx,
+extern void mach64_emit_indexed_verts( struct gl_context *ctx,
 					 GLuint start,
 					 GLuint count );
 #endif
 
-extern void mach64_translate_vertex( GLcontext *ctx,
+extern void mach64_translate_vertex( struct gl_context *ctx,
 				       const mach64Vertex *src,
 				       SWvertex *dst );
 
-extern void mach64_print_vertex( GLcontext *ctx, const mach64Vertex *v );
+extern void mach64_print_vertex( struct gl_context *ctx, const mach64Vertex *v );
 
 
 #endif /* __MACH64_VB_H__ */

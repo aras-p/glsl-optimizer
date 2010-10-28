@@ -32,6 +32,7 @@
  *      allows X clients to communicate with the driver.
  */
 
+#include <xorg-server.h>
 #include "dixstruct.h"
 #include "extnsionst.h"
 #include <X11/X.h>
@@ -211,7 +212,7 @@ VMwareCtrlDoSetTopology(ScrnInfoPtr pScrn,
    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
    int i;
 
-   rects = xcalloc(number, sizeof(*rects));
+   rects = calloc(number, sizeof(*rects));
    if (!rects)
       return FALSE;
 
@@ -224,7 +225,7 @@ VMwareCtrlDoSetTopology(ScrnInfoPtr pScrn,
 
    vmw_ioctl_update_layout(vmw, number, rects);
 
-   xfree(rects);
+   free(rects);
    return TRUE;
 }
 

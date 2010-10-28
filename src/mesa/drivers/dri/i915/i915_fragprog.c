@@ -1186,7 +1186,7 @@ track_params(struct i915_fragment_program *p)
 
 
 static void
-i915BindProgram(GLcontext * ctx, GLenum target, struct gl_program *prog)
+i915BindProgram(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_context *i915 = I915_CONTEXT(ctx);
@@ -1209,7 +1209,7 @@ i915BindProgram(GLcontext * ctx, GLenum target, struct gl_program *prog)
 }
 
 static struct gl_program *
-i915NewProgram(GLcontext * ctx, GLenum target, GLuint id)
+i915NewProgram(struct gl_context * ctx, GLenum target, GLuint id)
 {
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
@@ -1237,7 +1237,7 @@ i915NewProgram(GLcontext * ctx, GLenum target, GLuint id)
 }
 
 static void
-i915DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+i915DeleteProgram(struct gl_context * ctx, struct gl_program *prog)
 {
    if (prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_context *i915 = I915_CONTEXT(ctx);
@@ -1252,7 +1252,7 @@ i915DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 
 
 static GLboolean
-i915IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+i915IsProgramNative(struct gl_context * ctx, GLenum target, struct gl_program *prog)
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_fragment_program *p = (struct i915_fragment_program *) prog;
@@ -1267,7 +1267,7 @@ i915IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 }
 
 static GLboolean
-i915ProgramStringNotify(GLcontext * ctx,
+i915ProgramStringNotify(struct gl_context * ctx,
                         GLenum target, struct gl_program *prog)
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
@@ -1291,7 +1291,7 @@ i915ProgramStringNotify(GLcontext * ctx,
 }
 
 void
-i915_update_program(GLcontext *ctx)
+i915_update_program(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    struct i915_context *i915 = i915_context(&intel->ctx);
@@ -1316,7 +1316,7 @@ i915_update_program(GLcontext *ctx)
 void
 i915ValidateFragmentProgram(struct i915_context *i915)
 {
-   GLcontext *ctx = &i915->intel.ctx;
+   struct gl_context *ctx = &i915->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;

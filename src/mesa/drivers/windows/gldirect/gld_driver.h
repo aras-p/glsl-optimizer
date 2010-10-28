@@ -83,7 +83,7 @@ typedef struct {
 extern GLD_driver _gldDriver;
 
 BOOL gldInitDriverPointers(DWORD dwDriver);
-const GLubyte* _gldGetStringGeneric(GLcontext *ctx, GLenum name);
+const GLubyte* _gldGetStringGeneric(struct gl_context *ctx, GLenum name);
 
 #endif // _USE_GLD3_WGL
 

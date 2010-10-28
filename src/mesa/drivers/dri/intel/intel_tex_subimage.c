@@ -40,7 +40,7 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 static void
-intelTexSubimage(GLcontext * ctx,
+intelTexSubimage(struct gl_context * ctx,
                  GLint dims,
                  GLenum target, GLint level,
                  GLint xoffset, GLint yoffset, GLint zoffset,
@@ -189,7 +189,7 @@ intelTexSubimage(GLcontext * ctx,
 
 
 static void
-intelTexSubImage3D(GLcontext * ctx,
+intelTexSubImage3D(struct gl_context * ctx,
                    GLenum target,
                    GLint level,
                    GLint xoffset, GLint yoffset, GLint zoffset,
@@ -209,7 +209,7 @@ intelTexSubImage3D(GLcontext * ctx,
 
 
 static void
-intelTexSubImage2D(GLcontext * ctx,
+intelTexSubImage2D(struct gl_context * ctx,
                    GLenum target,
                    GLint level,
                    GLint xoffset, GLint yoffset,
@@ -229,7 +229,7 @@ intelTexSubImage2D(GLcontext * ctx,
 
 
 static void
-intelTexSubImage1D(GLcontext * ctx,
+intelTexSubImage1D(struct gl_context * ctx,
                    GLenum target,
                    GLint level,
                    GLint xoffset,
@@ -248,7 +248,7 @@ intelTexSubImage1D(GLcontext * ctx,
 }
 
 static void
-intelCompressedTexSubImage2D(GLcontext * ctx,
+intelCompressedTexSubImage2D(struct gl_context * ctx,
 			     GLenum target,
 			     GLint level,
 			     GLint xoffset, GLint yoffset,

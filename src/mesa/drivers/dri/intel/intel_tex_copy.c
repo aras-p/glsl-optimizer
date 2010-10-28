@@ -72,6 +72,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       if (irb && irb->region && irb->region->cpp == 4)
          return irb->region;
       return NULL;
+   case 4:
    case GL_RGBA:
    case GL_RGBA8:
       irb = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
@@ -82,6 +83,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       if (irb->Base._BaseFormat == GL_RGB)
 	 return NULL;
       return irb->region;
+   case 3:
    case GL_RGB:
    case GL_RGB8:
       return intel_readbuf_region(intel);
@@ -99,7 +101,7 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint dstx, GLint dsty,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
    const struct intel_region *src = get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src || !src->buffer) {
@@ -170,7 +172,7 @@ do_copy_texsubimage(struct intel_context *intel,
 
 
 static void
-intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
+intelCopyTexImage1D(struct gl_context * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLint border)
 {
@@ -218,7 +220,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
 
 
 static void
-intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
+intelCopyTexImage2D(struct gl_context * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLsizei height,
                     GLint border)
@@ -267,7 +269,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 
 static void
-intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
+intelCopyTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint x, GLint y, GLsizei width)
 {
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
@@ -293,7 +295,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
 
 
 static void
-intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
+intelCopyTexSubImage2D(struct gl_context * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint yoffset,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {

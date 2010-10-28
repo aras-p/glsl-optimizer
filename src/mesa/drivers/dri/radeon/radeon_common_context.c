@@ -105,7 +105,7 @@ static const char* get_chip_family_name(int chip_family)
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
+static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	static char buffer[128];
@@ -180,14 +180,14 @@ static void radeonInitDriverFuncs(struct dd_function_table *functions)
  */
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
-			    const __GLcontextModes * glVisual,
+			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
 	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-	GLcontext* ctx;
-	GLcontext* shareCtx;
+	struct gl_context* ctx;
+	struct gl_context* shareCtx;
 	int fthrottle_mode;
 
 	/* Fill in additional standard functions. */
@@ -521,6 +521,7 @@ void radeon_prepare_render(radeonContextPtr radeon)
     __DRIcontext *driContext = radeon->dri.context;
     __DRIdrawable *drawable;
     __DRIscreen *screen;
+    struct radeon_framebuffer *draw;
 
     screen = driContext->driScreenPriv;
     if (!screen->dri2.loader)
@@ -531,9 +532,10 @@ void radeon_prepare_render(radeonContextPtr radeon)
 	if (drawable->lastStamp != drawable->dri2.stamp)
 	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
 
-	/* Intel driver does the equivalent of this, no clue if it is needed:
-	 * radeon_draw_buffer(radeon->glCtx, &(drawable->driverPrivate)->base);
-	 */
+	/* Intel driver does the equivalent of this, no clue if it is needed:*/
+	draw = drawable->driverPrivate;
+	radeon_draw_buffer(radeon->glCtx, &draw->base);
+
 	driContext->dri2.draw_stamp = drawable->dri2.stamp;
     }
 

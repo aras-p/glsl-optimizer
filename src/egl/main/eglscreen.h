@@ -8,6 +8,9 @@
 #ifdef EGL_MESA_screen_surface
 
 
+#define _EGL_SCREEN_MAX_MODES 16
+
+
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to
@@ -19,6 +22,8 @@
  */
 struct _egl_screen
 {
+   _EGLDisplay *Display;
+
    EGLScreenMESA Handle; /* The public/opaque handle which names this object */
 
    _EGLMode *CurrentMode;
@@ -33,39 +38,33 @@ struct _egl_screen
 
 
 PUBLIC void
-_eglInitScreen(_EGLScreen *screen);
+_eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy, EGLint num_modes);
+
+
+PUBLIC EGLScreenMESA
+_eglLinkScreen(_EGLScreen *screen);
 
 
 extern _EGLScreen *
 _eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *dpy);
 
 
-PUBLIC void
-_eglAddScreen(_EGLDisplay *display, _EGLScreen *screen);
+/**
+ * Return the handle of a linked screen.
+ */
+static INLINE EGLScreenMESA
+_eglGetScreenHandle(_EGLScreen *screen)
+{
+   return (screen) ? screen->Handle : (EGLScreenMESA) 0;
+}
 
 
 extern EGLBoolean
 _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 
 
-extern _EGLSurface *
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglShowScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLSurface *surf, _EGLMode *m);
-
-
-extern EGLBoolean
-_eglScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLMode *m);
-
-
 extern EGLBoolean
 _eglScreenPositionMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, EGLint x, EGLint y);
-
-
-extern EGLBoolean
-_eglQueryDisplayMESA(_EGLDriver *drv, _EGLDisplay *dpy, EGLint attribute, EGLint *value);
 
 
 extern EGLBoolean
@@ -79,14 +78,6 @@ _eglQueryScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EG
 
 extern EGLBoolean
 _eglQueryScreenMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, EGLint attribute, EGLint *value);
-
-
-extern void
-_eglDestroyScreenModes(_EGLScreen *scrn);
-
-
-PUBLIC void
-_eglDestroyScreen(_EGLScreen *scrn);
 
 
 #endif /* EGL_MESA_screen_surface */

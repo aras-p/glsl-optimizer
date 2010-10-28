@@ -31,6 +31,6 @@
 #include "s_span.h"
 
 extern void
-_swrast_texture_span( GLcontext *ctx, SWspan *span );
+_swrast_texture_span( struct gl_context *ctx, SWspan *span );
 
 #endif

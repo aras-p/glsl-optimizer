@@ -225,7 +225,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
  */
 
 static GLuint
-choose_pixel_format(const GLvisual *v)
+choose_pixel_format(const struct gl_config *v)
 {
     int depth = v->rgbBits;
 
@@ -273,7 +273,7 @@ bytes_per_line(unsigned pitch_bits, unsigned mul)
 }
 
 static GLboolean
-swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			   GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -290,7 +290,7 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 
 static GLboolean
-swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			  GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -307,7 +307,7 @@ swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 
 static struct swrast_renderbuffer *
-swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
+swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
 {
     struct swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
     GLuint pixel_format;
@@ -370,10 +370,10 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 static GLboolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, GLboolean isPixmap)
+		  const struct gl_config * visual, GLboolean isPixmap)
 {
     struct dri_drawable *drawable = NULL;
-    GLframebuffer *fb;
+    struct gl_framebuffer *fb;
     struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
@@ -432,7 +432,7 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
 
     if (dPriv) {
 	struct dri_drawable *drawable = dri_drawable(dPriv);
-	GLframebuffer *fb;
+	struct gl_framebuffer *fb;
 
 	free(drawable->row);
 
@@ -451,7 +451,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
     GET_CURRENT_CONTEXT(ctx);
 
     struct dri_drawable *drawable = dri_drawable(dPriv);
-    GLframebuffer *fb;
+    struct gl_framebuffer *fb;
     struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
@@ -487,7 +487,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
  */
 
 static void
-get_window_size( GLframebuffer *fb, GLsizei *w, GLsizei *h )
+get_window_size( struct gl_framebuffer *fb, GLsizei *w, GLsizei *h )
 {
     __DRIdrawable *dPriv = swrast_drawable(fb)->dPriv;
     __DRIscreen *sPriv = dPriv->driScreenPriv;
@@ -499,7 +499,7 @@ get_window_size( GLframebuffer *fb, GLsizei *w, GLsizei *h )
 }
 
 static void
-swrast_check_and_update_window_size( GLcontext *ctx, GLframebuffer *fb )
+swrast_check_and_update_window_size( struct gl_context *ctx, struct gl_framebuffer *fb )
 {
     GLsizei width, height;
 
@@ -510,7 +510,7 @@ swrast_check_and_update_window_size( GLcontext *ctx, GLframebuffer *fb )
 }
 
 static const GLubyte *
-get_string(GLcontext *ctx, GLenum pname)
+get_string(struct gl_context *ctx, GLenum pname)
 {
     (void) ctx;
     switch (pname) {
@@ -524,7 +524,7 @@ get_string(GLcontext *ctx, GLenum pname)
 }
 
 static void
-update_state( GLcontext *ctx, GLuint new_state )
+update_state( struct gl_context *ctx, GLuint new_state )
 {
     /* not much to do here - pass it on */
     _swrast_InvalidateState( ctx, new_state );
@@ -534,16 +534,16 @@ update_state( GLcontext *ctx, GLuint new_state )
 }
 
 static void
-viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-    GLframebuffer *draw = ctx->WinSysDrawBuffer;
-    GLframebuffer *read = ctx->WinSysReadBuffer;
+    struct gl_framebuffer *draw = ctx->WinSysDrawBuffer;
+    struct gl_framebuffer *read = ctx->WinSysReadBuffer;
 
     swrast_check_and_update_window_size(ctx, draw);
     swrast_check_and_update_window_size(ctx, read);
 }
 
-static gl_format swrastChooseTextureFormat(GLcontext * ctx,
+static gl_format swrastChooseTextureFormat(struct gl_context * ctx,
 					   GLint internalFormat,
 					   GLenum format,
 					   GLenum type)
@@ -570,13 +570,13 @@ swrast_init_driver_functions(struct dd_function_table *driver)
 
 static GLboolean
 dri_create_context(gl_api api,
-		   const __GLcontextModes * visual,
+		   const struct gl_config * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
     struct dri_context *ctx = NULL;
     struct dri_context *share = (struct dri_context *)sharedContextPrivate;
-    GLcontext *mesaCtx = NULL;
-    GLcontext *sharedCtx = NULL;
+    struct gl_context *mesaCtx = NULL;
+    struct gl_context *sharedCtx = NULL;
     struct dd_function_table functions;
 
     TRACE;
@@ -646,7 +646,7 @@ dri_destroy_context(__DRIcontext * cPriv)
 
     if (cPriv) {
 	struct dri_context *ctx = dri_context(cPriv);
-	GLcontext *mesaCtx;
+	struct gl_context *mesaCtx;
 
 	mesaCtx = &ctx->Base;
 
@@ -664,9 +664,9 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
-    GLcontext *mesaCtx;
-    GLframebuffer *mesaDraw;
-    GLframebuffer *mesaRead;
+    struct gl_context *mesaCtx;
+    struct gl_framebuffer *mesaDraw;
+    struct gl_framebuffer *mesaRead;
     TRACE;
 
     if (cPriv) {

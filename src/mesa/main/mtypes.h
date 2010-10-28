@@ -123,10 +123,8 @@ struct gl_program_cache;
 struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
+struct gl_context;
 struct st_context;
-typedef struct __GLcontextRec GLcontext;
-typedef struct __GLcontextModesRec GLvisual;
-typedef struct gl_framebuffer GLframebuffer;
 /*@}*/
 
 
@@ -380,8 +378,9 @@ typedef enum
 typedef enum
 {
    FRAG_RESULT_DEPTH = 0,
-   FRAG_RESULT_COLOR = 1,
-   FRAG_RESULT_DATA0 = 2,
+   FRAG_RESULT_STENCIL = 1,
+   FRAG_RESULT_COLOR = 2,
+   FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
 
@@ -548,6 +547,60 @@ struct gl_shine_tab
    GLuint refcount;
 };
 
+struct gl_config {
+   GLboolean rgbMode;
+   GLboolean floatMode;
+   GLboolean colorIndexMode;
+   GLuint doubleBufferMode;
+   GLuint stereoMode;
+
+   GLboolean haveAccumBuffer;
+   GLboolean haveDepthBuffer;
+   GLboolean haveStencilBuffer;
+
+   GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
+   GLuint redMask, greenMask, blueMask, alphaMask;
+   GLint rgbBits;		/* total bits for rgb */
+   GLint indexBits;		/* total bits for colorindex */
+
+   GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
+   GLint depthBits;
+   GLint stencilBits;
+
+   GLint numAuxBuffers;
+
+   GLint level;
+
+   /* EXT_visual_rating / GLX 1.2 */
+   GLint visualRating;
+
+   /* EXT_visual_info / GLX 1.2 */
+   GLint transparentPixel;
+   /*    colors are floats scaled to ints */
+   GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
+   GLint transparentIndex;
+
+   /* ARB_multisample / SGIS_multisample */
+   GLint sampleBuffers;
+   GLint samples;
+
+   /* SGIX_pbuffer / GLX 1.3 */
+   GLint maxPbufferWidth;
+   GLint maxPbufferHeight;
+   GLint maxPbufferPixels;
+   GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
+   GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
+
+   /* OML_swap_method */
+   GLint swapMethod;
+
+   /* EXT_texture_from_pixmap */
+   GLint bindToTextureRgb;
+   GLint bindToTextureRgba;
+   GLint bindToMipmapTexture;
+   GLint bindToTextureTargets;
+   GLint yInverted;
+};
 
 /**
  * Light source state.
@@ -2064,11 +2117,12 @@ struct gl_shader_program
 
    /**
     * Per-stage shaders resulting from the first stage of linking.
+    *
+    * Set of linked shaders for this program.  The array is accessed using the
+    * \c MESA_SHADER_* defines.  Entries for non-existent stages will be
+    * \c NULL.
     */
-   /*@{*/
-   GLuint _NumLinkedShaders;
-   struct gl_shader *_LinkedShaders[2];
-   /*@}*/
+   struct gl_shader *_LinkedShaders[MESA_SHADER_TYPES];
 };   
 
 
@@ -2087,7 +2141,24 @@ struct gl_shader_program
  */
 struct gl_shader_state
 {
-   struct gl_shader_program *CurrentProgram; /**< The user-bound program */
+   /**
+    * Programs used for rendering
+    *
+    * There is a separate program set for each shader stage.  If
+    * GL_EXT_separate_shader_objects is not supported, each of these must point
+    * to \c NULL or to the same program.
+    */
+   struct gl_shader_program *CurrentVertexProgram;
+   struct gl_shader_program *CurrentGeometryProgram;
+   struct gl_shader_program *CurrentFragmentProgram;
+
+   /**
+    * Program used by glUniform calls.
+    *
+    * Explicitly set by \c glUseProgram and \c glActiveProgramEXT.
+    */
+   struct gl_shader_program *ActiveProgram;
+
    void *MemPool;
 
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
@@ -2271,38 +2342,38 @@ struct gl_renderbuffer
    void (*Delete)(struct gl_renderbuffer *rb);
 
    /* Allocate new storage for this renderbuffer */
-   GLboolean (*AllocStorage)(GLcontext *ctx, struct gl_renderbuffer *rb,
+   GLboolean (*AllocStorage)(struct gl_context *ctx, struct gl_renderbuffer *rb,
                              GLenum internalFormat,
                              GLuint width, GLuint height);
 
    /* Lock/Unlock are called before/after calling the Get/Put functions.
     * Not sure this is the right place for these yet.
-   void (*Lock)(GLcontext *ctx, struct gl_renderbuffer *rb);
-   void (*Unlock)(GLcontext *ctx, struct gl_renderbuffer *rb);
+   void (*Lock)(struct gl_context *ctx, struct gl_renderbuffer *rb);
+   void (*Unlock)(struct gl_context *ctx, struct gl_renderbuffer *rb);
     */
 
    /* Return a pointer to the element/pixel at (x,y).
     * Should return NULL if the buffer memory can't be directly addressed.
     */
-   void *(*GetPointer)(GLcontext *ctx, struct gl_renderbuffer *rb,
+   void *(*GetPointer)(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLint x, GLint y);
 
    /* Get/Read a row of values.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*GetRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*GetRow)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   GLint x, GLint y, void *values);
 
    /* Get/Read values at arbitrary locations.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*GetValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*GetValues)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      const GLint x[], const GLint y[], void *values);
 
    /* Put/Write a row of values.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*PutRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*PutRow)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   GLint x, GLint y, const void *values, const GLubyte *mask);
 
    /* Put/Write a row of RGB values.  This is a special-case routine that's
@@ -2310,26 +2381,26 @@ struct gl_renderbuffer
     * a common case for glDrawPixels and some triangle routines.
     * The values will be of format GL_RGB and type DataType.
     */
-   void (*PutRowRGB)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*PutRowRGB)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                     GLint x, GLint y, const void *values, const GLubyte *mask);
 
 
    /* Put/Write a row of identical values.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*PutMonoRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*PutMonoRow)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      GLint x, GLint y, const void *value, const GLubyte *mask);
 
    /* Put/Write values at arbitrary locations.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*PutValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+   void (*PutValues)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      const GLint x[], const GLint y[], const void *values,
                      const GLubyte *mask);
    /* Put/Write identical values at arbitrary locations.
     * The values will be of format _BaseFormat and type DataType.
     */
-   void (*PutMonoValues)(GLcontext *ctx, struct gl_renderbuffer *rb,
+   void (*PutMonoValues)(struct gl_context *ctx, struct gl_renderbuffer *rb,
                          GLuint count, const GLint x[], const GLint y[],
                          const void *value, const GLubyte *mask);
 };
@@ -2386,7 +2457,7 @@ struct gl_framebuffer
     * The framebuffer's visual. Immutable if this is a window system buffer.
     * Computed from attachments if user-made FBO.
     */
-   GLvisual Visual;
+   struct gl_config Visual;
 
    GLboolean Initialized;
 
@@ -2407,6 +2478,9 @@ struct gl_framebuffer
 
    /** One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
    GLenum _Status;
+
+   /** Integer color values */
+   GLboolean _IntegerColor;
 
    /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
@@ -2587,6 +2661,7 @@ struct gl_extensions
    GLboolean ARB_sampler_objects;
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
+   GLboolean ARB_shader_stencil_export;
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shadow;
    GLboolean ARB_shadow_ambient;
@@ -2635,6 +2710,7 @@ struct gl_extensions
    GLboolean EXT_framebuffer_object;
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
+   GLboolean EXT_gpu_shader4;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
@@ -2647,6 +2723,7 @@ struct gl_extensions
    GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
+   GLboolean EXT_separate_shader_objects;
    GLboolean EXT_separate_specular_color;
    GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
@@ -2733,7 +2810,7 @@ struct gl_matrix_stack
 
 /**
  * \name Bits for image transfer operations 
- * \sa __GLcontextRec::ImageTransferState.
+ * \sa __struct gl_contextRec::ImageTransferState.
  */
 /*@{*/
 #define IMAGE_SCALE_BIAS_BIT                      0x1
@@ -2753,34 +2830,34 @@ struct gl_matrix_stack
  * 4 unused flags.
  */
 /*@{*/
-#define _NEW_MODELVIEW		0x1        /**< __GLcontextRec::ModelView */
-#define _NEW_PROJECTION		0x2        /**< __GLcontextRec::Projection */
-#define _NEW_TEXTURE_MATRIX	0x4        /**< __GLcontextRec::TextureMatrix */
-#define _NEW_ACCUM		0x10       /**< __GLcontextRec::Accum */
-#define _NEW_COLOR		0x20       /**< __GLcontextRec::Color */
-#define _NEW_DEPTH		0x40       /**< __GLcontextRec::Depth */
-#define _NEW_EVAL		0x80       /**< __GLcontextRec::Eval, __GLcontextRec::EvalMap */
-#define _NEW_FOG		0x100      /**< __GLcontextRec::Fog */
-#define _NEW_HINT		0x200      /**< __GLcontextRec::Hint */
-#define _NEW_LIGHT		0x400      /**< __GLcontextRec::Light */
-#define _NEW_LINE		0x800      /**< __GLcontextRec::Line */
-#define _NEW_PIXEL		0x1000     /**< __GLcontextRec::Pixel */
-#define _NEW_POINT		0x2000     /**< __GLcontextRec::Point */
-#define _NEW_POLYGON		0x4000     /**< __GLcontextRec::Polygon */
-#define _NEW_POLYGONSTIPPLE	0x8000     /**< __GLcontextRec::PolygonStipple */
-#define _NEW_SCISSOR		0x10000    /**< __GLcontextRec::Scissor */
-#define _NEW_STENCIL		0x20000    /**< __GLcontextRec::Stencil */
-#define _NEW_TEXTURE		0x40000    /**< __GLcontextRec::Texture */
-#define _NEW_TRANSFORM		0x80000    /**< __GLcontextRec::Transform */
-#define _NEW_VIEWPORT		0x100000   /**< __GLcontextRec::Viewport */
-#define _NEW_PACKUNPACK		0x200000   /**< __GLcontextRec::Pack, __GLcontextRec::Unpack */
-#define _NEW_ARRAY	        0x400000   /**< __GLcontextRec::Array */
-#define _NEW_RENDERMODE		0x800000   /**< __GLcontextRec::RenderMode, __GLcontextRec::Feedback, __GLcontextRec::Select */
-#define _NEW_BUFFERS            0x1000000  /**< __GLcontextRec::Visual, __GLcontextRec::DrawBuffer, */
-#define _NEW_MULTISAMPLE        0x2000000  /**< __GLcontextRec::Multisample */
-#define _NEW_TRACK_MATRIX       0x4000000  /**< __GLcontextRec::VertexProgram */
-#define _NEW_PROGRAM            0x8000000  /**< __GLcontextRec::VertexProgram */
-#define _NEW_CURRENT_ATTRIB     0x10000000  /**< __GLcontextRec::Current */
+#define _NEW_MODELVIEW		0x1        /**< __struct gl_contextRec::ModelView */
+#define _NEW_PROJECTION		0x2        /**< __struct gl_contextRec::Projection */
+#define _NEW_TEXTURE_MATRIX	0x4        /**< __struct gl_contextRec::TextureMatrix */
+#define _NEW_ACCUM		0x10       /**< __struct gl_contextRec::Accum */
+#define _NEW_COLOR		0x20       /**< __struct gl_contextRec::Color */
+#define _NEW_DEPTH		0x40       /**< __struct gl_contextRec::Depth */
+#define _NEW_EVAL		0x80       /**< __struct gl_contextRec::Eval, __struct gl_contextRec::EvalMap */
+#define _NEW_FOG		0x100      /**< __struct gl_contextRec::Fog */
+#define _NEW_HINT		0x200      /**< __struct gl_contextRec::Hint */
+#define _NEW_LIGHT		0x400      /**< __struct gl_contextRec::Light */
+#define _NEW_LINE		0x800      /**< __struct gl_contextRec::Line */
+#define _NEW_PIXEL		0x1000     /**< __struct gl_contextRec::Pixel */
+#define _NEW_POINT		0x2000     /**< __struct gl_contextRec::Point */
+#define _NEW_POLYGON		0x4000     /**< __struct gl_contextRec::Polygon */
+#define _NEW_POLYGONSTIPPLE	0x8000     /**< __struct gl_contextRec::PolygonStipple */
+#define _NEW_SCISSOR		0x10000    /**< __struct gl_contextRec::Scissor */
+#define _NEW_STENCIL		0x20000    /**< __struct gl_contextRec::Stencil */
+#define _NEW_TEXTURE		0x40000    /**< __struct gl_contextRec::Texture */
+#define _NEW_TRANSFORM		0x80000    /**< __struct gl_contextRec::Transform */
+#define _NEW_VIEWPORT		0x100000   /**< __struct gl_contextRec::Viewport */
+#define _NEW_PACKUNPACK		0x200000   /**< __struct gl_contextRec::Pack, __struct gl_contextRec::Unpack */
+#define _NEW_ARRAY	        0x400000   /**< __struct gl_contextRec::Array */
+#define _NEW_RENDERMODE		0x800000   /**< __struct gl_contextRec::RenderMode, __struct gl_contextRec::Feedback, __struct gl_contextRec::Select */
+#define _NEW_BUFFERS            0x1000000  /**< __struct gl_contextRec::Visual, __struct gl_contextRec::DrawBuffer, */
+#define _NEW_MULTISAMPLE        0x2000000  /**< __struct gl_contextRec::Multisample */
+#define _NEW_TRACK_MATRIX       0x4000000  /**< __struct gl_contextRec::VertexProgram */
+#define _NEW_PROGRAM            0x8000000  /**< __struct gl_contextRec::VertexProgram */
+#define _NEW_CURRENT_ATTRIB     0x10000000  /**< __struct gl_contextRec::Current */
 #define _NEW_PROGRAM_CONSTANTS  0x20000000
 #define _NEW_BUFFER_OBJECT      0x40000000
 #define _NEW_ALL ~0
@@ -2823,7 +2900,7 @@ struct gl_matrix_stack
 /**
  * \name A bunch of flags that we think might be useful to drivers.
  * 
- * Set in the __GLcontextRec::_TriangleCaps bitfield.
+ * Set in the __struct gl_contextRec::_TriangleCaps bitfield.
  */
 /*@{*/
 #define DD_FLATSHADE                0x1
@@ -2886,32 +2963,6 @@ struct gl_matrix_stack
 
 /* This has to be included here. */
 #include "dd.h"
-
-
-#define NUM_VERTEX_FORMAT_ENTRIES (sizeof(GLvertexformat) / sizeof(void *))
-
-/**
- * Core Mesa's support for tnl modules:
- */
-struct gl_tnl_module
-{
-   /**
-    * Vertex format to be lazily swapped into current dispatch.
-    */
-   const GLvertexformat *Current;
-
-   /**
-    * \name Record of functions swapped out.  
-    * On restore, only need to swap these functions back in.
-    */
-   /*@{*/
-   struct {
-       _glapi_proc * location;
-       _glapi_proc function;
-   } Swapped[NUM_VERTEX_FORMAT_ENTRIES];
-   GLuint SwapCount;
-   /*@}*/
-};
 
 
 /**
@@ -2991,9 +3042,9 @@ typedef enum {
  * Think of this as a base class from which device drivers will derive
  * sub classes.
  *
- * The GLcontext typedef names this structure.
+ * The struct gl_context typedef names this structure.
  */
-struct __GLcontextRec
+struct gl_context
 {
    /** State possibly shared with other contexts in the address space */
    struct gl_shared_state *Shared;
@@ -3006,11 +3057,11 @@ struct __GLcontextRec
    struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
    /*@}*/
 
-   GLvisual Visual;
-   GLframebuffer *DrawBuffer;	/**< buffer for writing */
-   GLframebuffer *ReadBuffer;	/**< buffer for reading */
-   GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
-   GLframebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
+   struct gl_config Visual;
+   struct gl_framebuffer *DrawBuffer;	/**< buffer for writing */
+   struct gl_framebuffer *ReadBuffer;	/**< buffer for reading */
+   struct gl_framebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
+   struct gl_framebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
 
    /**
     * Device driver function pointer table
@@ -3176,9 +3227,6 @@ struct __GLcontextRec
     * transformation?
     */
    GLboolean mvp_with_dp4;
-
-   /** Core tnl module support */
-   struct gl_tnl_module TnlModule;
 
    /**
     * \name Hooks for module contexts.  

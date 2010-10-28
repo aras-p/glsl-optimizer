@@ -49,7 +49,7 @@
  * \return GL_TRUE if the triangle is to be culled, GL_FALSE otherwise.
  */
 GLboolean
-_swrast_culltriangle( GLcontext *ctx,
+_swrast_culltriangle( struct gl_context *ctx,
                       const SWvertex *v0,
                       const SWvertex *v1,
                       const SWvertex *v2 )
@@ -256,7 +256,7 @@ ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
  * texture env modes.
  */
 static INLINE void
-affine_span(GLcontext *ctx, SWspan *span,
+affine_span(struct gl_context *ctx, SWspan *span,
             struct affine_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
@@ -591,7 +591,7 @@ struct persp_info
 
 
 static INLINE void
-fast_persp_span(GLcontext *ctx, SWspan *span,
+fast_persp_span(struct gl_context *ctx, SWspan *span,
 		struct persp_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
@@ -903,7 +903,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 
 static void
-nodraw_triangle( GLcontext *ctx,
+nodraw_triangle( struct gl_context *ctx,
                  const SWvertex *v0,
                  const SWvertex *v1,
                  const SWvertex *v2 )
@@ -919,7 +919,7 @@ nodraw_triangle( GLcontext *ctx,
  * Inefficient, but seldom needed.
  */
 void
-_swrast_add_spec_terms_triangle(GLcontext *ctx, const SWvertex *v0,
+_swrast_add_spec_terms_triangle(struct gl_context *ctx, const SWvertex *v0,
                                 const SWvertex *v1, const SWvertex *v2)
 {
    SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
@@ -992,7 +992,7 @@ do {						\
  * remove tests to this code.
  */
 void
-_swrast_choose_triangle( GLcontext *ctx )
+_swrast_choose_triangle( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 

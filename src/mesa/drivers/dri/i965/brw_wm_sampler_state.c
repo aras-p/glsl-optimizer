@@ -233,7 +233,7 @@ static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
 			    struct wm_sampler_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    int unit;
    char *last_entry_end = ((char*)&key->sampler_count) + 
       sizeof(key->sampler_count);
@@ -301,7 +301,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
  */
 static void upload_wm_samplers( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct wm_sampler_key key;
    int i, sampler_key_size;
 

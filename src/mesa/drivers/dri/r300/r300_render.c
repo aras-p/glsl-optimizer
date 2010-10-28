@@ -321,7 +321,7 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 	END_BATCH();
 }
 
-void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
+void r300RunRenderPrimitive(struct gl_context * ctx, int start, int end, int prim)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&rmesa->radeon);
@@ -444,7 +444,7 @@ static const char *getFallbackString(r300ContextPtr rmesa, uint32_t bit)
 	}
 }
 
-void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
+void r300SwitchFallback(struct gl_context *ctx, uint32_t bit, GLboolean mode)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);

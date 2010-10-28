@@ -49,9 +49,9 @@ nouveau_set_texbuffer(__DRIcontext *dri_ctx,
 		      __DRIdrawable *draw);
 
 GLboolean
-nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t);
+nouveau_texture_validate(struct gl_context *ctx, struct gl_texture_object *t);
 
 void
-nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t);
+nouveau_texture_reallocate(struct gl_context *ctx, struct gl_texture_object *t);
 
 #endif

@@ -251,7 +251,7 @@ xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  * Called via gl_renderbuffer::AllocStorage()
  */
 static GLboolean
-xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+xmesa_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLenum internalFormat, GLuint width, GLuint height)
 {
    struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
@@ -278,7 +278,7 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Called via gl_renderbuffer::AllocStorage()
  */
 static GLboolean
-xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+xmesa_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                          GLenum internalFormat, GLuint width, GLuint height)
 {
    struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
@@ -323,7 +323,7 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name, const struct gl_config *visual,
                        GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);

@@ -43,7 +43,7 @@ st_destroy_generate_mipmap(struct st_context *st);
 
 
 extern void
-st_generate_mipmap(GLcontext *ctx, GLenum target,
+st_generate_mipmap(struct gl_context *ctx, GLenum target,
                    struct gl_texture_object *texObj);
 
 

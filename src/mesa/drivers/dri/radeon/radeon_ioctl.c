@@ -178,7 +178,7 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 #endif
 }
 
-void radeonFlushElts( GLcontext *ctx )
+void radeonFlushElts( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    BATCH_LOCALS(&rmesa->radeon);
@@ -432,7 +432,7 @@ void radeonEmitAOS( r100ContextPtr rmesa,
  */
 #define RADEON_MAX_CLEARS	256
 
-static void radeonKernelClear(GLcontext *ctx, GLuint flags)
+static void radeonKernelClear(struct gl_context *ctx, GLuint flags)
 {
      r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
@@ -555,7 +555,7 @@ static void radeonKernelClear(GLcontext *ctx, GLuint flags)
    UNLOCK_HARDWARE( &rmesa->radeon );
 }
 
-static void radeonClear( GLcontext *ctx, GLbitfield mask )
+static void radeonClear( struct gl_context *ctx, GLbitfield mask )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
@@ -629,7 +629,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    }
 }
 
-void radeonInitIoctlFuncs( GLcontext *ctx )
+void radeonInitIoctlFuncs( struct gl_context *ctx )
 {
     ctx->Driver.Clear = radeonClear;
     ctx->Driver.Finish = radeonFinish;

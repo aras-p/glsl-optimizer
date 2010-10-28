@@ -47,7 +47,7 @@
  * \return GL_TRUE if legal, GL_FALSE otherwise
  */
 static GLboolean 
-validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
+validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 {
    const struct gl_extensions * const e = & ctx->Extensions;
 
@@ -83,7 +83,7 @@ validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
  * Only the glGetTexLevelParameter() functions accept proxy targets.
  */
 static struct gl_texture_object *
-get_texobj(GLcontext *ctx, GLenum target, GLboolean get)
+get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
 {
    struct gl_texture_unit *texUnit;
 
@@ -178,7 +178,7 @@ set_swizzle_component(GLuint *swizzle, GLuint comp, GLuint swz)
  * per-texture derived state gets recomputed.
  */
 static INLINE void
-flush(GLcontext *ctx, struct gl_texture_object *texObj)
+flush(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    texObj->_Complete = GL_FALSE;
@@ -190,7 +190,7 @@ flush(GLcontext *ctx, struct gl_texture_object *texObj)
  * \return GL_TRUE if legal AND the value changed, GL_FALSE otherwise
  */
 static GLboolean
-set_tex_parameteri(GLcontext *ctx,
+set_tex_parameteri(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
                    GLenum pname, const GLint *params)
 {
@@ -430,7 +430,7 @@ set_tex_parameteri(GLcontext *ctx,
  * \return GL_TRUE if legal AND the value changed, GL_FALSE otherwise
  */
 static GLboolean
-set_tex_parameterf(GLcontext *ctx,
+set_tex_parameterf(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
                    GLenum pname, const GLfloat *params)
 {

@@ -37,119 +37,125 @@ enum {
 /* nv10_context.c */
 extern const struct nouveau_driver nv10_driver;
 
+GLboolean
+nv10_use_viewport_zclear(struct gl_context *ctx);
+
+float
+nv10_transform_depth(struct gl_context *ctx, float z);
+
 /* nv10_render.c */
 void
-nv10_render_init(GLcontext *ctx);
+nv10_render_init(struct gl_context *ctx);
 
 void
-nv10_render_destroy(GLcontext *ctx);
+nv10_render_destroy(struct gl_context *ctx);
 
 /* nv10_state_fb.c */
 void
-nv10_emit_framebuffer(GLcontext *ctx, int emit);
+nv10_emit_framebuffer(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_render_mode(GLcontext *ctx, int emit);
+nv10_emit_render_mode(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_scissor(GLcontext *ctx, int emit);
+nv10_emit_scissor(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_viewport(GLcontext *ctx, int emit);
+nv10_emit_viewport(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_zclear(GLcontext *ctx, int emit);
+nv10_emit_zclear(struct gl_context *ctx, int emit);
 
 /* nv10_state_polygon.c */
 void
-nv10_emit_cull_face(GLcontext *ctx, int emit);
+nv10_emit_cull_face(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_front_face(GLcontext *ctx, int emit);
+nv10_emit_front_face(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_line_mode(GLcontext *ctx, int emit);
+nv10_emit_line_mode(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_line_stipple(GLcontext *ctx, int emit);
+nv10_emit_line_stipple(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_point_mode(GLcontext *ctx, int emit);
+nv10_emit_point_mode(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_polygon_mode(GLcontext *ctx, int emit);
+nv10_emit_polygon_mode(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_polygon_offset(GLcontext *ctx, int emit);
+nv10_emit_polygon_offset(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_polygon_stipple(GLcontext *ctx, int emit);
+nv10_emit_polygon_stipple(struct gl_context *ctx, int emit);
 
 /* nv10_state_raster.c */
 void
-nv10_emit_alpha_func(GLcontext *ctx, int emit);
+nv10_emit_alpha_func(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_blend_color(GLcontext *ctx, int emit);
+nv10_emit_blend_color(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_blend_equation(GLcontext *ctx, int emit);
+nv10_emit_blend_equation(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_blend_func(GLcontext *ctx, int emit);
+nv10_emit_blend_func(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_color_mask(GLcontext *ctx, int emit);
+nv10_emit_color_mask(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_depth(GLcontext *ctx, int emit);
+nv10_emit_depth(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_dither(GLcontext *ctx, int emit);
+nv10_emit_dither(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_logic_opcode(GLcontext *ctx, int emit);
+nv10_emit_logic_opcode(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_shade_model(GLcontext *ctx, int emit);
+nv10_emit_shade_model(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_stencil_func(GLcontext *ctx, int emit);
+nv10_emit_stencil_func(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_stencil_mask(GLcontext *ctx, int emit);
+nv10_emit_stencil_mask(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_stencil_op(GLcontext *ctx, int emit);
+nv10_emit_stencil_op(struct gl_context *ctx, int emit);
 
 /* nv10_state_frag.c */
 void
-nv10_get_general_combiner(GLcontext *ctx, int i,
+nv10_get_general_combiner(struct gl_context *ctx, int i,
 			  uint32_t *a_in, uint32_t *a_out,
 			  uint32_t *c_in, uint32_t *c_out, uint32_t *k);
 
 void
-nv10_get_final_combiner(GLcontext *ctx, uint64_t *in, int *n);
+nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n);
 
 void
-nv10_emit_tex_env(GLcontext *ctx, int emit);
+nv10_emit_tex_env(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_frag(GLcontext *ctx, int emit);
+nv10_emit_frag(struct gl_context *ctx, int emit);
 
 /* nv10_state_tex.c */
 void
-nv10_emit_tex_gen(GLcontext *ctx, int emit);
+nv10_emit_tex_gen(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_tex_mat(GLcontext *ctx, int emit);
+nv10_emit_tex_mat(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_tex_obj(GLcontext *ctx, int emit);
+nv10_emit_tex_obj(struct gl_context *ctx, int emit);
 
 /* nv10_state_tnl.c */
 void
-nv10_get_fog_coeff(GLcontext *ctx, float k[3]);
+nv10_get_fog_coeff(struct gl_context *ctx, float k[3]);
 
 void
 nv10_get_spot_coeff(struct gl_light *l, float k[7]);
@@ -158,42 +164,42 @@ void
 nv10_get_shininess_coeff(float s, float k[6]);
 
 void
-nv10_emit_clip_plane(GLcontext *ctx, int emit);
+nv10_emit_clip_plane(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_color_material(GLcontext *ctx, int emit);
+nv10_emit_color_material(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_fog(GLcontext *ctx, int emit);
+nv10_emit_fog(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_light_enable(GLcontext *ctx, int emit);
+nv10_emit_light_enable(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_light_model(GLcontext *ctx, int emit);
+nv10_emit_light_model(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_light_source(GLcontext *ctx, int emit);
+nv10_emit_light_source(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_material_ambient(GLcontext *ctx, int emit);
+nv10_emit_material_ambient(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_material_diffuse(GLcontext *ctx, int emit);
+nv10_emit_material_diffuse(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_material_specular(GLcontext *ctx, int emit);
+nv10_emit_material_specular(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_material_shininess(GLcontext *ctx, int emit);
+nv10_emit_material_shininess(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_modelview(GLcontext *ctx, int emit);
+nv10_emit_modelview(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_point_parameter(GLcontext *ctx, int emit);
+nv10_emit_point_parameter(struct gl_context *ctx, int emit);
 
 void
-nv10_emit_projection(GLcontext *ctx, int emit);
+nv10_emit_projection(struct gl_context *ctx, int emit);
 
 #endif

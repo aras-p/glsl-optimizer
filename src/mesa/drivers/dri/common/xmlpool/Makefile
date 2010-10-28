@@ -62,7 +62,7 @@ clean:
 
 # Default target options.h
 options.h: t_options.h mo
-	python gen_xmlpool.py $(LANGS) > options.h
+	$(PYTHON2) $(PYTHON_FLAGS) gen_xmlpool.py $(LANGS) > options.h
 
 # Update .mo files from the corresponding .po files.
 mo:

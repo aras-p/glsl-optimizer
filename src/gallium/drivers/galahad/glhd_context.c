@@ -641,7 +641,7 @@ galahad_set_index_buffer(struct pipe_context *_pipe,
          break;
       default:
          glhd_warn("index buffer %p has unrecognized index size %d",
-               _ib->buffer, _ib->index_size);
+                   (void *) _ib->buffer, _ib->index_size);
          break;
       }
    }
@@ -1013,7 +1013,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 
    glhd_pipe->pipe = pipe;
 
-   glhd_warn("Created context %p", glhd_pipe);
+   glhd_warn("Created context %p", (void *) glhd_pipe);
 
    return &glhd_pipe->base;
 }

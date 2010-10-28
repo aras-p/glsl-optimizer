@@ -48,14 +48,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 
 
-GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl0(struct gl_context * ctx, GLuint InputsRead)
 {
 	/* No idea what this value means. I have seen other values written to
 	 * this register... */
 	return 0x5555;
 }
 
-GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl1(struct gl_context * ctx, GLuint InputsRead)
 {
 	GLuint i, vic_1 = 0;
 
@@ -76,7 +76,7 @@ GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
-GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes)
+GLuint r300VAPOutputCntl0(struct gl_context * ctx, GLuint vp_writes)
 {
 	GLuint ret = 0;
 
@@ -100,7 +100,7 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes)
 	return ret;
 }
 
-GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes)
+GLuint r300VAPOutputCntl1(struct gl_context * ctx, GLuint vp_writes)
 {
 	GLuint i, ret = 0, first_free_texcoord = 0;
 

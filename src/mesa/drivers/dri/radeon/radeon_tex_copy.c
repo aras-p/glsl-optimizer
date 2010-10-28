@@ -37,7 +37,7 @@
 #include "radeon_mipmap_tree.h"
 
 static GLboolean
-do_copy_texsubimage(GLcontext *ctx,
+do_copy_texsubimage(struct gl_context *ctx,
                     GLenum target, GLint level,
                     struct radeon_tex_obj *tobj,
                     radeon_texture_image *timg,
@@ -141,7 +141,7 @@ do_copy_texsubimage(GLcontext *ctx,
 }
 
 void
-radeonCopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+radeonCopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
                      GLenum internalFormat,
                      GLint x, GLint y, GLsizei width, GLsizei height,
                      GLint border)
@@ -196,7 +196,7 @@ fail:
 }
 
 void
-radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
                         GLint xoffset, GLint yoffset,
                         GLint x, GLint y,
                         GLsizei width, GLsizei height)

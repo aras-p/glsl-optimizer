@@ -72,4 +72,14 @@
  */
 #define LP_MAX_SHADER_VARIANTS 1024
 
+/**
+ * Max number of setup variants that will be kept around.
+ *
+ * These are determined by the combination of the fragment shader
+ * input signature and a small amount of rasterization state (eg
+ * flatshading).  It is likely that many active fragment shaders will
+ * share the same setup variant.
+ */
+#define LP_MAX_SETUP_VARIANTS 64
+
 #endif /* LP_LIMITS_H */

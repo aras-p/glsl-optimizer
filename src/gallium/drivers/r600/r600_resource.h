@@ -25,6 +25,9 @@
 
 #include "util/u_transfer.h"
 
+/* flag to indicate a resource is to be used as a transfer so should not be tiled */
+#define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
+
 /* Texture transfer. */
 struct r600_transfer {
 	/* Base class. */
@@ -49,14 +52,14 @@ struct r600_resource {
 
 struct r600_resource_texture {
 	struct r600_resource		resource;
-	unsigned long			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			layer_size[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch_override;
-	unsigned long			bpt;
-	unsigned long			size;
+	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_pixels[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_override;
+	unsigned			size;
 	unsigned			tiled;
-	unsigned			array_mode;
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty;
@@ -123,5 +126,10 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer);
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
+
+struct r600_surface {
+	struct pipe_surface base;
+	unsigned aligned_height;
+};
 
 #endif

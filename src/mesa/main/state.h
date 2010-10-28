@@ -29,21 +29,21 @@
 #include "mtypes.h"
 
 extern void
-_mesa_update_state(GLcontext *ctx);
+_mesa_update_state(struct gl_context *ctx);
 
 /* As above but can only be called between _mesa_lock_context_textures() and 
  * _mesa_unlock_context_textures().
  */
 extern void
-_mesa_update_state_locked(GLcontext *ctx);
+_mesa_update_state_locked(struct gl_context *ctx);
 
 
 extern void
-_mesa_set_varying_vp_inputs(GLcontext *ctx, GLbitfield varying_inputs);
+_mesa_set_varying_vp_inputs(struct gl_context *ctx, GLbitfield varying_inputs);
 
 
 extern void
-_mesa_set_vp_override(GLcontext *ctx, GLboolean flag);
+_mesa_set_vp_override(struct gl_context *ctx, GLboolean flag);
 
 
 #endif
