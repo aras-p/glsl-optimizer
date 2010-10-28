@@ -27,7 +27,28 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+#include <pipe/p_format.h>
 #include "va_private.h"
+
+#define NUM_FORMAT_SUPPORTED 2
+
+typedef struct  {
+	enum pipe_format;
+	VAImageFormat       va_format;
+    unsigned int        va_flags;
+} va_subpicture_formats_supported_t;
+
+static const va_subpicture_formats_supported_t va_subpicture_formats_supported[NUM_FORMAT_SUPPORTED] = 
+{
+	{ PIPE_FORMAT_B8G8R8A8_UNORM,
+      { VA_FOURCC('B','G','R','A'), VA_LSB_FIRST, 32,
+        32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+      0 },
+    { PIPE_FORMAT_R8G8B8A8_UNORM, 
+	  { VA_FOURCC('R','G','B','A'), VA_LSB_FIRST, 32,
+        32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 },
+      0 }
+};
 
 VAStatus
 vlVaQuerySubpictureFormats(		VADriverContextP ctx,
@@ -37,8 +58,19 @@ vlVaQuerySubpictureFormats(		VADriverContextP ctx,
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
+		
+	if (!(format_list && flags && num_formats))
+		return VA_STATUS_ERROR_UNKNOWN;
+		
+	int n = 0;
+	/* Query supported formats */
+	for (n = 0; n < NUM_FORMAT_SUPPORTED; n++)
+	{
+		flags[n] = va_subpicture_formats_supported[n].va_flags;
+		format_list[n] = va_subpicture_formats_supported[n].va_format;
+	}
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_SUCCESS;
 }
 
 
