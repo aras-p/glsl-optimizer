@@ -29,7 +29,7 @@
 #include <va/va_backend.h>
 #include "va_private.h"
 
-VAStatus vlVaConfigProfiles(       VADriverContextP ctx,
+VAStatus vlVaQueryConfigProfiles(       VADriverContextP ctx,
                                    VAProfile *profile_list,
                                    int *num_profiles)
 {
@@ -40,7 +40,7 @@ VAStatus vlVaConfigProfiles(       VADriverContextP ctx,
 }
 
 
-VAStatus vlVaConfigEntrypoints(       VADriverContextP ctx,
+VAStatus vlVaQueryConfigEntrypoints(       VADriverContextP ctx,
                                       VAProfile profile,
                                       VAEntrypoint *entypoint_list,
                                       int *num_entrypoints)
@@ -98,3 +98,4 @@ VAStatus vlVaQueryConfigAttributes(       VADriverContextP ctx,
 
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
+

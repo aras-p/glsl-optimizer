@@ -84,6 +84,5 @@ VAStatus vlVaTerminate(       VADriverContextP ctx)
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
-
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

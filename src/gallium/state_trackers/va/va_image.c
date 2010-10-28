@@ -66,7 +66,7 @@ VAStatus vlVaDeriveImage(	VADriverContextP ctx,
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlDestroyImage(	VADriverContextP ctx,
+VAStatus vlVaDestroyImage(	VADriverContextP ctx,
                             VAImageID image)
 {
 	if (!ctx)
@@ -76,7 +76,7 @@ VAStatus vlDestroyImage(	VADriverContextP ctx,
 	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlSetImagePalette(	VADriverContextP ctx,
+VAStatus vlVaSetImagePalette(	VADriverContextP ctx,
                             VAImageID image,
                             unsigned char *palette)
 {

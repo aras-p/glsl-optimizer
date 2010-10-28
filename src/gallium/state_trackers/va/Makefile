@@ -19,7 +19,8 @@ C_SOURCES = htab.c \
 	    va_buffer.c \
 	    va_config.c \
             va_picture.c \
-            va_surface.c
+            va_surface.c \
+	    va_display.c
 	    
 
 
