@@ -90,7 +90,7 @@ struct radeon *radeon_decref(struct radeon *radeon);
 
 /* radeon_bo.c */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, void *ptr);
+			    unsigned size, unsigned alignment);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);

@@ -69,7 +69,7 @@ static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
 }
 
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			unsigned size, unsigned alignment, void *ptr)
+			unsigned size, unsigned alignment)
 {
 	struct radeon_bo *bo;
 	int r;
@@ -120,9 +120,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		R600_ERR("failed to map bo\n");
 		radeon_bo_reference(radeon, &bo, NULL);
 		return bo;
-	}
-	if (ptr) {
-		memcpy(bo->data, ptr, size);
 	}
 	return bo;
 }
