@@ -29,9 +29,10 @@
 #include <os/os_thread.h>
 #include "va_private.h"
 
-#define VL_HANDLES
-
-typedef uint32_t vlHandle;
+boolean vlCreateHTAB(void);
+void vlDestroyHTAB(void);
+vlHandle vlAddDataHTAB(void *data);
+void* vlGetDataHTAB(vlHandle handle);
 
 #ifdef VL_HANDLES
 static struct handle_table *htab = NULL;

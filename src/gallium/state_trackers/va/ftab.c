@@ -30,6 +30,8 @@
 #include <va/va_backend.h>
 #include "va_private.h"
 
+struct VADriverVTable vlVaGetVtable();
+
 static struct VADriverVTable vtable =
 {
 	&vlVaTerminate, /* VAStatus (*vaTerminate) ( VADriverContextP ctx ); */
@@ -125,7 +127,7 @@ static struct VADriverVTable vtable =
                 unsigned int *buffer_name,
                 void **buffer); */
 	&vlVaUnlockSurface, /* VAStatus (*vaUnlockSurface) (VADriverContextP ctx,VASurfaceID surface); */
-	0x44 /* struct VADriverVTableGLX *glx; "Optional" */
+	NULL /* struct VADriverVTableGLX *glx; "Optional" */
 };
 
 struct VADriverVTable vlVaGetVtable()

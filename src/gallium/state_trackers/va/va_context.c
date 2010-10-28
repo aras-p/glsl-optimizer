@@ -27,7 +27,10 @@
 
 #include <pipe/p_compiler.h>
 #include <pipe/p_video_context.h>
+#include <pipe/p_screen.h>
+#include <vl_winsys.h>
 #include <util/u_debug.h>
+#include <util/u_memory.h>
 #include <va/va.h>
 #include <va/va_backend.h>
 #include "va_private.h"
@@ -37,19 +40,35 @@
 PUBLIC
 VAStatus __vaDriverInit_0_31 (VADriverContextP ctx)
 {
+	vlVaDriverContextPriv *driver_context = NULL;
+	
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
-
+		
+		
+	/* Create private driver context */
+	driver_context = CALLOC(1,sizeof(vlVaDriverContextPriv));
+	if (!driver_context)
+		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+		
+    driver_context->vscreen = vl_screen_create(ctx->native_dpy, ctx->x11_screen);
+	if (!driver_context->vscreen)
+	{
+		FREE(driver_context);
+		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+	}
+		
 	ctx->str_vendor = "mesa gallium vaapi";
 	ctx->vtable = vlVaGetVtable();
 	ctx->max_attributes = 1;
 	ctx->max_display_attributes = 1;
-	ctx->max_entrypoints = 1;
-	ctx->max_image_formats = 1;
+	ctx->max_entrypoints = VA_MAX_ENTRYPOINTS;
+	ctx->max_image_formats = VA_MAX_IMAGE_FORMATS_SUPPORTED;
 	ctx->max_profiles = 1;
-	ctx->max_subpic_formats = 1;
+	ctx->max_subpic_formats = VA_MAX_SUBPIC_FORMATS_SUPPORTED;
 	ctx->version_major = 3;
 	ctx->version_minor = 1;
+	ctx->pDriverData = (void *)driver_context;
 
 	VA_INFO("vl_screen_pointer %p\n",ctx->native_dpy);
 

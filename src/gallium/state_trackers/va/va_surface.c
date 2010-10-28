@@ -27,7 +27,30 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+#include <util/u_debug.h>
+#include <util/u_memory.h>
 #include "va_private.h"
+
+boolean vlCreateHTAB(void);
+void vlDestroyHTAB(void);
+vlHandle vlAddDataHTAB(void *data);
+void* vlGetDataHTAB(vlHandle handle);
+
+static enum pipe_video_chroma_format VaRTFormatToPipe(unsigned int va_type)
+{
+   switch (va_type) {
+      case VA_RT_FORMAT_YUV420:
+         return PIPE_VIDEO_CHROMA_FORMAT_420;
+      case VA_RT_FORMAT_YUV422:
+         return PIPE_VIDEO_CHROMA_FORMAT_422;
+      case VA_RT_FORMAT_YUV444:
+         return PIPE_VIDEO_CHROMA_FORMAT_444;
+      default:
+         assert(0);
+   }
+
+   return -1;
+}
 
 VAStatus vlVaCreateSurfaces(       VADriverContextP ctx,
                                    int width,
@@ -39,7 +62,31 @@ VAStatus vlVaCreateSurfaces(       VADriverContextP ctx,
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+    /* We only support one format */
+    if (VA_RT_FORMAT_YUV420 != format)
+        return VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT;
+		
+	if (!(width && height))
+		return VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
+		
+	if (!vlCreateHTAB())
+		return VA_STATUS_ERROR_UNKNOWN; 
+		
+	vlVaSurfacePriv *va_surface = (vlVaSurfacePriv *)CALLOC(num_surfaces,sizeof(vlVaSurfacePriv));
+	if (!va_surface)
+		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+		
+	int n = 0;
+	for (n = 0; n < num_surfaces; n++)
+	{
+		va_surface[n].width = width;
+		va_surface[n].height = height;
+		va_surface[n].format = VaRTFormatToPipe(format);
+		va_surface[n].ctx = ctx;
+		surfaces[n] = (VASurfaceID *)vlAddDataHTAB((void *)(va_surface + n));
+	}
+
+	return VA_STATUS_SUCCESS;
 }
 
 VAStatus vlVaDestroySurfaces(       VADriverContextP ctx,

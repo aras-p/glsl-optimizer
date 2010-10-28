@@ -30,16 +30,40 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+#include <pipe/p_format.h>
+#include <pipe/p_state.h>
+
 #define VA_DEBUG(_str,...) debug_printf("[Gallium VA backend]: " _str,__VA_ARGS__)
 #define VA_INFO(_str,...) VA_DEBUG("INFO: " _str,__VA_ARGS__)
 #define VA_WARNING(_str,...) VA_DEBUG("WARNING: " _str,__VA_ARGS__)
 #define VA_ERROR(_str,...) VA_DEBUG("ERROR: " _str,__VA_ARGS__)
+
+#define VA_MAX_IMAGE_FORMATS_SUPPORTED 2
+#define VA_MAX_SUBPIC_FORMATS_SUPPORTED 2
+#define VA_MAX_ENTRYPOINTS 1
+
+#define VL_HANDLES
+
+typedef unsigned int vlHandle;
+
+typedef struct {
+	struct vl_screen *vscreen;
+	struct pipe_surface *backbuffer;
+} vlVaDriverContextPriv;
+
+typedef struct {
+	unsigned int width;
+	unsigned int height;
+	enum pipe_video_chroma_format format;
+	VADriverContextP ctx;
+} vlVaSurfacePriv;
 
 // Public functions:
 VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
 
 // Private functions:
 struct VADriverVTable vlVaGetVtable();
+
 
 // Vtable functions:
 VAStatus vlVaTerminate (VADriverContextP ctx);

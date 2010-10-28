@@ -27,6 +27,7 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+#include <util/u_debug.h>
 #include "va_private.h"
 
 VAStatus vlVaQueryConfigProfiles(       VADriverContextP ctx,
@@ -36,19 +37,48 @@ VAStatus vlVaQueryConfigProfiles(       VADriverContextP ctx,
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+	int i = 0;
+
+    profile_list[i++] = VAProfileMPEG2Simple;
+	*num_profiles = i;
+
+	return VA_STATUS_SUCCESS;
 }
 
 
 VAStatus vlVaQueryConfigEntrypoints(       VADriverContextP ctx,
                                       VAProfile profile,
-                                      VAEntrypoint *entypoint_list,
+                                      VAEntrypoint *entrypoint_list,
                                       int *num_entrypoints)
 {
 	if (!ctx)
 		return VA_STATUS_ERROR_INVALID_CONTEXT;
+		
+	VAStatus vaStatus = VA_STATUS_SUCCESS;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+    switch (profile) {
+    case VAProfileMPEG2Simple:
+    case VAProfileMPEG2Main:
+		VA_INFO("Using profile %08x\n",profile);
+        *num_entrypoints = 1;
+        entrypoint_list[0] = VAEntrypointMoComp;
+        break;
+
+    case VAProfileH264Baseline:
+    case VAProfileH264Main:
+    case VAProfileH264High:
+        vaStatus = VA_STATUS_ERROR_UNSUPPORTED_PROFILE;
+        *num_entrypoints = 0;
+        break;
+
+    default:
+		VA_ERROR("Unsupported profile %08x\n",profile);
+        vaStatus = VA_STATUS_ERROR_UNSUPPORTED_PROFILE;
+        *num_entrypoints = 0;
+        break;
+    }
+
+    return vaStatus;
 }
 
 
