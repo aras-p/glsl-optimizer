@@ -33,6 +33,7 @@
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_intr.h"
+#include "gallivm/lp_bld_flow.h"
 #include <llvm-c/Analysis.h>	/* for LLVMVerifyFunction */
 
 #include "lp_perf.h"
@@ -74,6 +75,14 @@ struct lp_setup_args
    LLVMValueRef dy01_ooa;
    LLVMValueRef dx20_ooa;
    LLVMValueRef dx01_ooa;
+
+   /* For twoside calcs 
+    */
+   LLVMValueRef det;
+   LLVMValueRef sign;
+   LLVMValueRef bcolor_slot;
+   LLVMValueRef color_slot;
+   
 };
 
 static LLVMTypeRef type4f(void)
@@ -472,13 +481,78 @@ init_args(LLVMBuilderRef b,
    args->y0_center = vec4f_from_scalar(b, y0_center, "y0_center_4f");
 }
 
+static void
+set_args_attr(struct llvmpipe_context *lp,
+           struct lp_setup_args *args)
+{
+   args->color_slot = LLVMConstInt(LLVMInt32Type(), lp->color_slot, 0);
+   args->bcolor_slot = LLVMConstInt(LLVMInt32Type(), lp->bcolor_slot, 0);
+   args->sign =  LLVMConstReal(LLVMFloatType(), (lp->rasterizer->front_ccw ? -1.0f : 1.0f));
+}
+
+static void
+lp_twoside(LLVMBuilderRef b, 
+           struct lp_setup_args *args,
+           const struct lp_setup_variant_key *key)
+{
+   struct lp_build_if_state if_state;
+ 
+   LLVMValueRef a0_old, a1_old, a2_old;
+   LLVMValueRef a0_new, a1_new, a2_new;
+
+   LLVMValueRef idx1 = args->color_slot;
+   LLVMValueRef idx2 = args->bcolor_slot;
+
+   LLVMValueRef facing = args->facing;
+   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for loop condition */
+   
+#if 0 
+/*Probably can delete this, just tried to follow draw_pipe_twoside way of 
+  calculating det*/
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
+   LLVMValueRef e = LLVMBuildFSub(b, args->v0, args->v2, "e");
+   LLVMValueRef f = LLVMBuildFSub(b, args->v1, args->v2, "f");
+   LLVMValueRef dx02 = vert_attrib(b, e, 0, 0, "dx02");
+   LLVMValueRef dy02 = vert_attrib(b, e, 0, 1, "dy02");
+   LLVMValueRef dx12 = vert_attrib(b, f, 0, 0, "dx12");
+   LLVMValueRef dy12 = vert_attrib(b, f, 0, 1, "dy12");
+ 
+   /* det = cross(e,f).z */
+   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
+   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
+   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
+   args->det = det;
+   LLVMValueRef result = LLVMBuildFMul(b, det, args->sign, "dy02_dx12");
+#endif
+ 
+   lp_build_if(&if_state, b, front_facing);
+   {
+      /* swap the front and back attrib values */
+      a0_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx1, 1, ""), "v0a");
+      a1_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx1, 1, ""), "v1a");
+      a2_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx1, 1, ""), "v2a");
+
+      a0_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx2, 1, ""), "v0a");
+      a1_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx2, 1, ""), "v1a");
+      a2_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx2, 1, ""), "v2a");
+
+      LLVMBuildStore(b, a0_new, LLVMBuildGEP(b, args->v0, &idx1, 1, ""));
+      LLVMBuildStore(b, a1_new, LLVMBuildGEP(b, args->v1, &idx1, 1, ""));
+      LLVMBuildStore(b, a2_new, LLVMBuildGEP(b, args->v2, &idx1, 1, ""));
+   }
+   lp_build_endif(&if_state);
+   
+}
+
+
 /**
  * Generate the runtime callable function for the coefficient calculation.
  *
  */
 static struct lp_setup_variant *
 generate_setup_variant(struct llvmpipe_screen *screen,
-		       struct lp_setup_variant_key *key)
+		       struct lp_setup_variant_key *key,
+                       struct llvmpipe_context *lp)
 {
    struct lp_setup_variant *variant = NULL;
    struct lp_setup_args args;
@@ -555,6 +629,10 @@ generate_setup_variant(struct llvmpipe_screen *screen,
 
    set_noalias(builder, variant->function, arg_types, Elements(arg_types));
    init_args(builder, &args, variant);
+   if (variant->key.twoside){
+      set_args_attr(lp, &args);
+      lp_twoside(builder, &args, &variant->key);
+   }
    emit_tri_coef(builder, &variant->key, &args);
 
    lp_emit_emms(builder);
@@ -605,6 +683,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->num_inputs = fs->info.base.num_inputs;
    key->flatshade_first = lp->rasterizer->flatshade_first;
    key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
+   key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
 		      inputs[key->num_inputs]);
    key->pad = 0;
@@ -612,7 +691,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    memcpy(key->inputs, fs->inputs, key->num_inputs * sizeof key->inputs[0]);
    for (i = 0; i < key->num_inputs; i++) {
       if (key->inputs[i].interp == LP_INTERP_COLOR) {
-	 if (lp->rasterizer->flatshade)
+         if (lp->rasterizer->flatshade)
 	    key->inputs[i].interp = LP_INTERP_CONSTANT;
 	 else
 	    key->inputs[i].interp = LP_INTERP_LINEAR;
@@ -702,7 +781,7 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
 	 cull_setup_variants(lp);
       }
 
-      variant = generate_setup_variant(screen, key);
+      variant = generate_setup_variant(screen, key, lp);
       insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
       lp->nr_setup_variants++;
    }

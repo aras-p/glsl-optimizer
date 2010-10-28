@@ -75,10 +75,22 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       vs_index = draw_find_shader_output(llvmpipe->draw,
                                          lpfs->info.base.input_semantic_name[i],
                                          lpfs->info.base.input_semantic_index[i]);
-
+      if (lpfs->info.base.input_semantic_name[i]==TGSI_SEMANTIC_COLOR){
+         llvmpipe->color_slot = vinfo->num_attribs;
+      }
       /*
        * Emit the requested fs attribute for all but position.
        */
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+   }
+
+   /* Figure out if we need bcolor as well.
+    */
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_BCOLOR, 0);
+
+   if (vs_index > 0) {
+      llvmpipe->bcolor_slot = vinfo->num_attribs;
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
    }
 
