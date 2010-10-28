@@ -744,6 +744,10 @@ st_print_shaders(struct gl_context *ctx)
 	 case GL_FRAGMENT_SHADER:
 	    sh = (i != 2) ? NULL : shProg[j]->Shaders[i];
 	    break;
+	 default:
+	    assert(0);
+	    sh = NULL;
+	    break;
 	 }
 
 	 if (sh != NULL) {
