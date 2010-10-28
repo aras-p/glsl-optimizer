@@ -30,91 +30,91 @@
 #include "va_private.h"
 
 VAStatus vlVaCreateSurfaces(       VADriverContextP ctx,
-                                                        int width,
-                                                        int height,
-                                                        int format,
-                                                        int num_surfaces,
-                                                        VASurfaceID *surfaces)
+                                   int width,
+                                   int height,
+                                   int format,
+                                   int num_surfaces,
+                                   VASurfaceID *surfaces)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaDestroySurfaces(       VADriverContextP ctx,
-                                                        VASurfaceID *surface_list,
-                                                        int num_surfaces)
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+                                    VASurfaceID *surface_list,
+                                    int num_surfaces)
+{
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaSyncSurface(       VADriverContextP ctx,
-                                                        VASurfaceID render_target)
+                                VASurfaceID render_target)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaQuerySurfaceStatus(       VADriverContextP ctx,
-                                                        VASurfaceID render_target,
-                                                        VASurfaceStatus *status)
+                                       VASurfaceID render_target,
+                                       VASurfaceStatus *status)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaPutSurface(       VADriverContextP ctx,
-                                                        VASurfaceID surface,
-                                                        void* draw,
-                                                        short srcx,
-                                                        short srcy,
-                                                        unsigned short srcw,
-                                                        unsigned short srch,
-                                                        short destx,
-                                                        short desty,
-                                                        unsigned short destw,
-                                                        unsigned short desth,
-                                                        VARectangle *cliprects,
-                                                        unsigned int number_cliprects,
-                                                        unsigned int flags)
+                               VASurfaceID surface,
+                               void* draw,
+                               short srcx,
+                               short srcy,
+                               unsigned short srcw,
+                               unsigned short srch,
+                               short destx,
+                               short desty,
+                               unsigned short destw,
+                               unsigned short desth,
+                               VARectangle *cliprects,
+                               unsigned int number_cliprects,
+                               unsigned int flags)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaLockSurface(	VADriverContextP ctx,
-							VASurfaceID surface,
-							unsigned int *fourcc,
-							unsigned int *luma_stride,
-							unsigned int *chroma_u_stride,
-							unsigned int *chroma_v_stride,
-							unsigned int *luma_offset,
-							unsigned int *chroma_u_offset,
-							unsigned int *chroma_v_offset,
-							unsigned int *buffer_name,
-							void **buffer)
+                            VASurfaceID surface,
+                            unsigned int *fourcc,
+                            unsigned int *luma_stride,
+                            unsigned int *chroma_u_stride,
+                            unsigned int *chroma_v_stride,
+                            unsigned int *luma_offset,
+                            unsigned int *chroma_u_offset,
+                            unsigned int *chroma_v_offset,
+                            unsigned int *buffer_name,
+                            void **buffer)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
 VAStatus vlVaUnlockSurface(	VADriverContextP ctx,
-							VASurfaceID surface)
+                            VASurfaceID surface)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+	if (!ctx)
+		return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+	return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
-

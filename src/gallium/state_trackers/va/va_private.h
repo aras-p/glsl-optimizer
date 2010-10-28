@@ -40,6 +40,8 @@ VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
 
 // Private functions:
 struct VADriverVTable vlVaGetVtable();
+
+// Vtable functions:
 VAStatus vlVaTerminate (VADriverContextP ctx);
 VAStatus vlVaQueryConfigProfiles (VADriverContextP ctx, VAProfile *profile_list,int *num_profiles);
 VAStatus vlVaQueryConfigEntrypoints (VADriverContextP ctx, VAProfile profile, VAEntrypoint  *entrypoint_list, int *num_entrypoints);
@@ -55,7 +57,7 @@ VAStatus vlVaCreateBuffer (VADriverContextP ctx,VAContextID context,VABufferType
 VAStatus vlVaBufferSetNumElements (VADriverContextP ctx,VABufferID buf_id,unsigned int num_elements);
 VAStatus vlVaMapBuffer (VADriverContextP ctx,VABufferID buf_id,void **pbuf);
 VAStatus vlVaUnmapBuffer (VADriverContextP ctx,VABufferID buf_id);
-VAStatus vlVaDestroyBuffers (VADriverContextP ctx,VABufferID buffer_id);
+VAStatus vlVaDestroyBuffer (VADriverContextP ctx,VABufferID buffer_id);
 VAStatus vlVaBeginPicture (VADriverContextP ctx,VAContextID context,VASurfaceID render_target);
 VAStatus vlVaRenderPicture (VADriverContextP ctx,VAContextID context,VABufferID *buffers,int num_buffers);
 VAStatus vlVaEndPicture (VADriverContextP ctx,VAContextID context);

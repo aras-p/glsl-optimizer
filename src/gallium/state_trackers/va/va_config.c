@@ -42,7 +42,7 @@ VAStatus vlVaConfigProfiles(       VADriverContextP ctx,
 
 VAStatus vlVaConfigEntrypoints(       VADriverContextP ctx,
                                       VAProfile profile,
-                                      VAEntypoint *entypoint_list,
+                                      VAEntrypoint *entypoint_list,
                                       int *num_entrypoints)
 {
 	if (!ctx)
