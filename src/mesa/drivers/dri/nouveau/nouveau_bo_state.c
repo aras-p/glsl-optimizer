@@ -126,13 +126,13 @@ void
 nouveau_bo_context_reset(struct nouveau_bo_context *bctx)
 {
 	struct nouveau_bo_state *s = &to_nouveau_context(bctx->ctx)->bo;
-	int i;
+	int i, n = bctx->count;
 
-	for (i = 0; i < bctx->count; i++)
-		nouveau_bo_ref(NULL, &bctx->marker[i].bo);
-
-	s->count -= bctx->count;
+	s->count -= n;
 	bctx->count = 0;
+
+	for (i = 0; i < n; i++)
+		nouveau_bo_ref(NULL, &bctx->marker[i].bo);
 }
 
 GLboolean
