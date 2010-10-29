@@ -518,14 +518,78 @@ _mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum ty
             default:
                return GL_FALSE;
          }
+
+      /* integer-valued formats */
       case GL_RED_INTEGER_EXT:
       case GL_GREEN_INTEGER_EXT:
       case GL_BLUE_INTEGER_EXT:
       case GL_ALPHA_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+               return ctx->Extensions.EXT_texture_integer;
+            default:
+               return GL_FALSE;
+         }
+
       case GL_RGB_INTEGER_EXT:
-      case GL_RGBA_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
+               return ctx->Extensions.EXT_texture_integer;
+            default:
+               return GL_FALSE;
+         }
+
       case GL_BGR_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            /* NOTE: no packed formats w/ BGR format */
+               return ctx->Extensions.EXT_texture_integer;
+            default:
+               return GL_FALSE;
+         }
+
+      case GL_RGBA_INTEGER_EXT:
       case GL_BGRA_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+            case GL_UNSIGNED_SHORT_4_4_4_4:
+            case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+            case GL_UNSIGNED_SHORT_5_5_5_1:
+            case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+            case GL_UNSIGNED_INT_8_8_8_8:
+            case GL_UNSIGNED_INT_8_8_8_8_REV:
+            case GL_UNSIGNED_INT_10_10_10_2:
+            case GL_UNSIGNED_INT_2_10_10_10_REV:
+               return ctx->Extensions.EXT_texture_integer;
+            default:
+               return GL_FALSE;
+         }
+
       case GL_LUMINANCE_INTEGER_EXT:
       case GL_LUMINANCE_ALPHA_INTEGER_EXT:
          switch (type) {
