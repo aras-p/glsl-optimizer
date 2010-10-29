@@ -620,6 +620,10 @@ _mesa_init_constants(struct gl_context *ctx)
 
    /* GL 3.2: hard-coded for now: */
    ctx->Const.ProfileMask = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
+
+   /** GL_EXT_gpu_shader4 */
+   ctx->Const.MinProgramTexelOffset = -8;
+   ctx->Const.MaxProgramTexelOffset = 7;
 }
 
 

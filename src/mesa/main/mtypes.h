@@ -2625,6 +2625,9 @@ struct gl_constants
    GLuint MaxTransformFeedbackSeparateAttribs;
    GLuint MaxTransformFeedbackSeparateComponents;
    GLuint MaxTransformFeedbackInterleavedComponents;
+
+   /** GL_EXT_gpu_shader4 */
+   GLint MinProgramTexelOffset, MaxProgramTexelOffset;
 };
 
 

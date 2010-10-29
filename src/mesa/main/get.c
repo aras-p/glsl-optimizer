@@ -266,6 +266,11 @@ static const int extra_EXT_texture_integer[] = {
    EXTRA_END
 };
 
+static const int extra_EXT_gpu_shader4[] = {
+   EXT(EXT_gpu_shader4),
+   EXTRA_END
+};
+
 
 EXTRA_EXT(ARB_multitexture);
 EXTRA_EXT(ARB_texture_cube_map);
@@ -1197,6 +1202,14 @@ static const struct value_desc values[] = {
    { GL_MAX_VERTEX_VARYING_COMPONENTS_ARB,
      CONTEXT_INT(Const.GeometryProgram.MaxVertexVaryingComponents),
      extra_ARB_geometry_shader4 },
+
+   /* GL_EXT_gpu_shader4 / GL 3.0 */
+   { GL_MIN_PROGRAM_TEXEL_OFFSET,
+     CONTEXT_INT(Const.MinProgramTexelOffset),
+     extra_EXT_gpu_shader4 },
+   { GL_MAX_PROGRAM_TEXEL_OFFSET,
+     CONTEXT_INT(Const.MaxProgramTexelOffset),
+     extra_EXT_gpu_shader4 },
 
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },
