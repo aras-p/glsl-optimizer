@@ -315,9 +315,9 @@ make_temp_float_image(struct gl_context *ctx, GLuint dims,
                       GLint srcWidth, GLint srcHeight, GLint srcDepth,
                       GLenum srcFormat, GLenum srcType,
                       const GLvoid *srcAddr,
-                      const struct gl_pixelstore_attrib *srcPacking)
+                      const struct gl_pixelstore_attrib *srcPacking,
+                      GLbitfield transferOps)
 {
-   GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *tempImage;
    const GLint components = _mesa_components_in_format(logicalBaseFormat);
    const GLint srcStride =
@@ -2085,7 +2085,8 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2159,7 +2160,8 @@ _mesa_texstore_r16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2216,7 +2218,8 @@ _mesa_texstore_rgba_16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2282,7 +2285,8 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
       const GLuint comps = _mesa_get_format_bytes(dstFormat) / 2;
       GLint img, row, col;
@@ -2663,7 +2667,8 @@ _mesa_texstore_signed_r8(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2707,7 +2712,8 @@ _mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2751,7 +2757,8 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -2863,7 +2870,8 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
       GLint img, row, col;
       if (!tempImage)
@@ -3171,7 +3179,8 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
       GLint bytesPerRow;
       GLint img, row;
@@ -3240,7 +3249,8 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3284,8 +3294,10 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLbyte));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_BYTE) {
       /* simple memcpy path */
@@ -3303,7 +3315,7 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3347,8 +3359,10 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLshort));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_SHORT) {
       /* simple memcpy path */
@@ -3366,7 +3380,7 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3410,8 +3424,10 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLint));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_INT) {
       /* simple memcpy path */
@@ -3429,7 +3445,7 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3473,8 +3489,10 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLubyte));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_UNSIGNED_BYTE) {
       /* simple memcpy path */
@@ -3492,7 +3510,7 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3536,8 +3554,10 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLushort));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_UNSIGNED_SHORT) {
       /* simple memcpy path */
@@ -3555,7 +3575,7 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
@@ -3599,8 +3619,10 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY);
    ASSERT(texelBytes == components * sizeof(GLuint));
 
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
+   /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (!srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
        srcType == GL_UNSIGNED_INT) {
       /* simple memcpy path */
@@ -3618,7 +3640,7 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
+                                                 srcPacking, 0x0);
       const GLfloat *src = tempImage;
       GLint img, row;
       if (!tempImage)
