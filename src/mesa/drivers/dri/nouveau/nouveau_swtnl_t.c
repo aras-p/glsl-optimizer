@@ -107,7 +107,7 @@ swtnl_choose_attrs(struct gl_context *ctx)
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct tnl_clipspace *vtx = &tnl->clipspace;
 	static struct tnl_attr_map map[NUM_VERTEX_ATTRS];
-	int fields, i, n = 0;
+	int fields, attr, i, n = 0;
 
 	render->mode = VBO;
 	render->attr_count = NUM_VERTEX_ATTRS;
@@ -143,13 +143,8 @@ swtnl_choose_attrs(struct gl_context *ctx)
 
 	_tnl_install_attrs(ctx, map, n, NULL, 0);
 
-	for (i = 0; i < vtx->attr_count; i++) {
-		struct tnl_clipspace_attr *ta = &vtx->attr[i];
-		struct nouveau_array_state *a = &render->attrs[ta->attrib];
-
-		a->stride = vtx->vertex_size;
-		a->offset = ta->vertoffset;
-	}
+	FOR_EACH_BOUND_ATTR(render, i, attr)
+		render->attrs[attr].stride = vtx->vertex_size;
 
 	TAG(render_set_format)(ctx);
 }
@@ -187,15 +182,11 @@ static void
 swtnl_unbind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i;
+	int i, attr;
 
-	for (i = 0; i < render->attr_count; i++) {
-		int *attr = &render->map[i];
-
-		if (*attr >= 0) {
-			nouveau_bo_ref(NULL, &render->attrs[*attr].bo);
-			*attr = -1;
-		}
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		nouveau_bo_ref(NULL, &render->attrs[attr].bo);
+		render->map[i] = -1;
 	}
 
 	render->attr_count = 0;

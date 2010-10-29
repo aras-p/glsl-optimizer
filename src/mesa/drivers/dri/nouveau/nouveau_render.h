@@ -84,4 +84,11 @@ struct nouveau_render_state {
 
 #define to_render_state(ctx) (&to_nouveau_context(ctx)->render)
 
+#define FOR_EACH_ATTR(render, i, attr)					\
+	for (i = 0; attr = (render)->map[i], i < NUM_VERTEX_ATTRS; i++)
+
+#define FOR_EACH_BOUND_ATTR(render, i, attr)				\
+	for (i = 0; attr = (render)->map[i], i < render->attr_count; i++) \
+		if (attr >= 0)
+
 #endif

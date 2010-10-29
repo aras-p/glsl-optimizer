@@ -135,11 +135,9 @@ nv20_render_set_format(struct gl_context *ctx)
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-	int i, hw_format;
+	int i, attr, hw_format;
 
-	for (i = 0; i < NUM_VERTEX_ATTRS; i++) {
-		int attr = render->map[i];
-
+	FOR_EACH_ATTR(render, i, attr) {
 		if (attr >= 0) {
 			struct nouveau_array_state *a = &render->attrs[attr];
 
@@ -164,21 +162,17 @@ nv20_render_bind_vertices(struct gl_context *ctx)
 	struct nouveau_bo_context *bctx = context_bctx(ctx, VERTEX);
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-	int i;
+	int i, attr;
 
-	for (i = 0; i < NUM_VERTEX_ATTRS; i++) {
-		int attr = render->map[i];
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		struct nouveau_array_state *a = &render->attrs[attr];
 
-		if (attr >= 0) {
-			struct nouveau_array_state *a = &render->attrs[attr];
-
-			nouveau_bo_mark(bctx, kelvin,
-					NV20TCL_VTXBUF_ADDRESS(i),
-					a->bo, a->offset, 0,
-					0, NV20TCL_VTXBUF_ADDRESS_DMA1,
-					NOUVEAU_BO_LOW | NOUVEAU_BO_OR |
-					NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-		}
+		nouveau_bo_mark(bctx, kelvin,
+				NV20TCL_VTXBUF_ADDRESS(i),
+				a->bo, a->offset, 0,
+				0, NV20TCL_VTXBUF_ADDRESS_DMA1,
+				NOUVEAU_BO_LOW | NOUVEAU_BO_OR |
+				NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	}
 
 	BEGIN_RING(chan, kelvin, NV20TCL_VTX_CACHE_INVALIDATE, 1);

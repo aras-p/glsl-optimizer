@@ -102,44 +102,39 @@ vbo_init_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i;
+	GLboolean imm = (render->mode == IMM);
+	int i, attr;
 
 	if (ib)
 		vbo_init_array(&render->ib, 0, 0, ib->count, ib->type,
 			       ib->obj, ib->ptr, GL_TRUE);
 
-	for (i = 0; i < render->attr_count; i++) {
-		int attr = render->map[i];
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		const struct gl_client_array *array = arrays[attr];
 
-		if (attr >= 0) {
-			const struct gl_client_array *array = arrays[attr];
-
-			vbo_init_array(&render->attrs[attr], attr,
-				       get_array_stride(ctx, array),
-				       array->Size, array->Type,
-				       array->BufferObj, array->Ptr,
-				       render->mode == IMM);
-		}
+		vbo_init_array(&render->attrs[attr], attr,
+			       get_array_stride(ctx, array),
+			       array->Size, array->Type,
+			       array->BufferObj,
+			       array->Ptr, imm);
 	}
 }
 
 static void
 vbo_deinit_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
-		const struct gl_client_array **arrays)
+		  const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i;
+	int i, attr;
 
 	if (ib)
 		vbo_deinit_array(&render->ib);
 
-	for (i = 0; i < render->attr_count; i++) {
-		int *attr = &render->map[i];
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		struct nouveau_array_state *a = &render->attrs[attr];
 
-		if (*attr >= 0) {
-			vbo_deinit_array(&render->attrs[*attr]);
-			*attr = -1;
-		}
+		vbo_deinit_array(a);
+		render->map[i] = -1;
 	}
 
 	render->attr_count = 0;
@@ -164,11 +159,6 @@ vbo_choose_render_mode(struct gl_context *ctx, const struct gl_client_array **ar
 			}
 		}
 	}
-
-	if (render->mode == VBO)
-		render->attr_count = NUM_VERTEX_ATTRS;
-	else
-		render->attr_count = 0;
 }
 
 static void
@@ -199,10 +189,13 @@ vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays, int
 		if (render->mode == VBO) {
 			render->map[info->vbo_index] = attr;
 			render->vertex_size += array->_ElementSize;
+			render->attr_count = MAX2(render->attr_count,
+						  info->vbo_index + 1);
 		} else {
 			render->map[render->attr_count++] = attr;
 			render->vertex_size += 4 * info->imm_fields;
 		}
+
 	}
 }
 
@@ -216,6 +209,7 @@ vbo_choose_attrs(struct gl_context *ctx, const struct gl_client_array **arrays)
 
 	/* Reset the vertex size. */
 	render->vertex_size = 0;
+	render->attr_count = 0;
 
 	vbo_emit_attr(ctx, arrays, VERT_ATTRIB_COLOR0);
 	if (ctx->Fog.ColorSumEnabled && !ctx->Light.Enabled)
@@ -254,17 +248,13 @@ static int
 get_max_client_stride(struct gl_context *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i, s = 0;
+	int i, attr, s = 0;
 
-	for (i = 0; i < render->attr_count; i++) {
-		int attr = render->map[i];
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		const struct gl_client_array *a = arrays[attr];
 
-		if (attr >= 0) {
-			const struct gl_client_array *a = arrays[attr];
-
-			if (!_mesa_is_bufferobj(a->BufferObj))
-				s = MAX2(s, get_array_stride(ctx, a));
-		}
+		if (!_mesa_is_bufferobj(a->BufferObj))
+			s = MAX2(s, get_array_stride(ctx, a));
 	}
 
 	return s;
@@ -320,33 +310,29 @@ vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
 		  GLint basevertex, GLuint min_index, GLuint max_index)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i;
+	int i, attr;
 
-	for (i = 0; i < NUM_VERTEX_ATTRS; i++) {
-		int attr = render->map[i];
+	FOR_EACH_BOUND_ATTR(render, i, attr) {
+		const struct gl_client_array *array = arrays[attr];
+		struct nouveau_array_state *a = &render->attrs[attr];
+		unsigned delta = (basevertex + min_index)
+			* array->StrideB;
 
-		if (attr >= 0) {
-			const struct gl_client_array *array = arrays[attr];
-			struct nouveau_array_state *a = &render->attrs[attr];
-			unsigned delta = (basevertex + min_index)
-				* array->StrideB;
+		if (a->bo) {
+			/* Array in a buffer obj. */
+			a->offset = (intptr_t)array->Ptr + delta;
+		} else {
+			int j, n = max_index - min_index + 1;
+			char *sp = (char *)array->Ptr + delta;
+			char *dp = nouveau_get_scratch(
+				ctx, n * a->stride, &a->bo, &a->offset);
 
-			if (a->bo) {
-				/* Array in a buffer obj. */
-				a->offset = (intptr_t)array->Ptr + delta;
-			} else {
-				int j, n = max_index - min_index + 1;
-				char *sp = (char *)array->Ptr + delta;
-				char *dp = nouveau_get_scratch(
-					ctx, n * a->stride, &a->bo, &a->offset);
-
-				/* Array in client memory, move it to
-				 * a scratch buffer obj. */
-				for (j = 0; j < n; j++)
-					memcpy(dp + j * a->stride,
-					       sp + j * array->StrideB,
-					       a->stride);
-			}
+			/* Array in client memory, move it to
+			 * a scratch buffer obj. */
+			for (j = 0; j < n; j++)
+				memcpy(dp + j * a->stride,
+				       sp + j * array->StrideB,
+				       a->stride);
 		}
 	}
 
@@ -404,7 +390,7 @@ vbo_draw_imm(struct gl_context *ctx, const struct gl_client_array **arrays,
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_channel *chan = context_chan(ctx);
 	extract_u_t extract = ib ? render->ib.extract_u : extract_id;
-	int i, j, k;
+	int i, j, k, attr;
 	RENDER_LOCALS(ctx);
 
 	for (i = 0; i < nr_prims; i++) {
@@ -421,9 +407,8 @@ vbo_draw_imm(struct gl_context *ctx, const struct gl_client_array **arrays,
 			j = prims[i].basevertex +
 				extract(&render->ib, 0, start);
 
-			for (k = 0; k < render->attr_count; k++)
-				EMIT_IMM(ctx, &render->attrs[render->map[k]],
-					 j);
+			FOR_EACH_BOUND_ATTR(render, k, attr)
+				EMIT_IMM(ctx, &render->attrs[attr], j);
 		}
 
 		BATCH_END();
