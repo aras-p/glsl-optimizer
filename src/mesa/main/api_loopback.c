@@ -1470,25 +1470,25 @@ loopback_VertexAttribI1uiv(GLuint index, const GLuint *v)
 }
 
 static void GLAPIENTRY
-loopback_VertexAttribI4bv(uint index, const GLbyte *v)
+loopback_VertexAttribI4bv(GLuint index, const GLbyte *v)
 {
    ATTRIBI_4I(index, v[0], v[1], v[2], v[3]);
 }
 
 static void GLAPIENTRY
-loopback_VertexAttribI4sv(uint index, const GLshort *v)
+loopback_VertexAttribI4sv(GLuint index, const GLshort *v)
 {
    ATTRIBI_4I(index, v[0], v[1], v[2], v[3]);
 }
 
 static void GLAPIENTRY
-loopback_VertexAttribI4ubv(uint index, const GLubyte *v)
+loopback_VertexAttribI4ubv(GLuint index, const GLubyte *v)
 {
    ATTRIBI_4UI(index, v[0], v[1], v[2], v[3]);
 }
 
 static void GLAPIENTRY
-loopback_VertexAttribI4usv(uint index, const GLushort *v)
+loopback_VertexAttribI4usv(GLuint index, const GLushort *v)
 {
    ATTRIBI_4UI(index, v[0], v[1], v[2], v[3]);
 }
