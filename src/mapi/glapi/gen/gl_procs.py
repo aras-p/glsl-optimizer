@@ -96,7 +96,7 @@ typedef struct {
 		for func in api.functionIterateByOffset():
 			name = func.dispatch_name()
 			self.printFunctionString(func.name)
-			table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.name))
+			table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.offset))
 
 			# The length of the function's name, plus 2 for "gl",
 			# plus 1 for the NUL.
@@ -112,9 +112,9 @@ typedef struct {
 					
 					if func.has_different_protocol(n):
 						alt_name = "gl" + func.static_glx_name(n)
-						table.append((base_offset, "gl" + name, alt_name, alt_name, func.name))
+						table.append((base_offset, "gl" + name, alt_name, alt_name, func.offset))
 					else:
-						table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.name))
+						table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.offset))
 
 					base_offset += len(n) + 3
 
@@ -170,7 +170,7 @@ typedef struct {
 		print 'static const glprocs_table_t static_functions[] = {'
 
 		for info in table:
-			print '    NAME_FUNC_OFFSET(%5u, %s, %s, %s, _gloffset_%s),' % info
+			print '    NAME_FUNC_OFFSET(%5u, %s, %s, %s, %d),' % info
 
 		print '    NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)'
 		print '};'

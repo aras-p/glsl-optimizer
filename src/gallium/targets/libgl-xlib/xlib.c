@@ -195,7 +195,6 @@ extern void (*linker_foo(const unsigned char *procName))()
 #include "GL/gl.h"
 #include "glapi/glapi.h"
 #include "glapi/glapitable.h"
-#include "glapi/glapidispatch.h"
 
 #if defined(USE_MGL_NAMESPACE)
 #define NAME(func)  mgl##func
@@ -204,10 +203,10 @@ extern void (*linker_foo(const unsigned char *procName))()
 #endif
 
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   GET_DISPATCH()->FUNC ARGS
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
-   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   return GET_DISPATCH()->FUNC ARGS
 
 /* skip normal ones */
 #define _GLAPI_SKIP_NORMAL_ENTRY_POINTS

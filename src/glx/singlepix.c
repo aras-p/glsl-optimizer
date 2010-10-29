@@ -31,10 +31,8 @@
 #include "packsingle.h"
 #include "indirect.h"
 #include "glapitable.h"
-#include "glapidispatch.h"
 #include "glapi.h"
 #include "glthread.h"
-#include "glapioffsets.h"
 #include <GL/glxproto.h>
 
 void
@@ -110,19 +108,17 @@ __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
 }
 
 
-#define CONCAT(a,b) a ## b
-#define NAME(o) CONCAT(gl_dispatch_stub_, o)
-
-void NAME(_gloffset_GetSeparableFilter) (GLenum target, GLenum format,
-                                         GLenum type, GLvoid * row,
-                                         GLvoid * column, GLvoid * span)
+/* it is defined to gl_dispatch_stub_NNN in indirect.h */
+void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
+                                             GLenum type, GLvoid * row,
+                                             GLvoid * column, GLvoid * span)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->isDirect) {
-      CALL_GetSeparableFilter(GET_DISPATCH(),
-                              (target, format, type, row, column, span));
+      GET_DISPATCH()->GetSeparableFilter(target, format, type,
+                                         row, column, span);
       return;
    }
    else
