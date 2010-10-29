@@ -368,7 +368,8 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type )
  * otherwise.
  */
 GLboolean
-_mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum type )
+_mesa_is_legal_format_and_type(const struct gl_context *ctx,
+                               GLenum format, GLenum type)
 {
    switch (format) {
       case GL_COLOR_INDEX:
