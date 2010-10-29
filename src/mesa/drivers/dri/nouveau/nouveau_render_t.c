@@ -352,6 +352,7 @@ TAG(render_init)(struct gl_context *ctx)
 
 	TAG(swtnl_init)(ctx);
 	vbo_set_draw_func(ctx, TAG(render_prims));
+	vbo_use_buffer_objects(ctx);
 }
 
 void
