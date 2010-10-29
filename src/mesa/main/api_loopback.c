@@ -1718,47 +1718,6 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest )
    SET_VertexAttribI4svEXT(dest, loopback_VertexAttribI4sv);
    SET_VertexAttribI4ubvEXT(dest, loopback_VertexAttribI4ubv);
    SET_VertexAttribI4usvEXT(dest, loopback_VertexAttribI4usv);
-
-#if 0
-   SET_VertexAttribI1i(dest, loopback_VertexAttribI1i);
-   SET_VertexAttribI2i(dest, loopback_VertexAttribI2i);
-   SET_VertexAttribI3i(dest, loopback_VertexAttribI3i);
-   SET_VertexAttribI4i(dest, loopback_VertexAttribI4i);
-   SET_VertexAttribI1ui(dest, loopback_VertexAttribI1ui);
-   SET_VertexAttribI2ui(dest, loopback_VertexAttribI2ui);
-   SET_VertexAttribI3ui(dest, loopback_VertexAttribI3ui);
-   SET_VertexAttribI4ui(dest, loopback_VertexAttribI4ui);
-   SET_VertexAttribI1iv(dest, loopback_VertexAttribI1iv);
-   SET_VertexAttribI2iv(dest, loopback_VertexAttribI2iv);
-   SET_VertexAttribI3iv(dest, loopback_VertexAttribI3iv);
-   SET_VertexAttribI4iv(dest, loopback_VertexAttribI4iv);
-   SET_VertexAttribI1uiv(dest, loopback_VertexAttribI1uiv);
-   SET_VertexAttribI2uiv(dest, loopback_VertexAttribI2uiv);
-   SET_VertexAttribI3uiv(dest, loopback_VertexAttribI3uiv);
-   SET_VertexAttribI4uiv(dest, loopback_VertexAttribI4uiv);
-#endif
-#if 0
-   (void) loopback_VertexAttribI1i;
-   (void) loopback_VertexAttribI2i;
-   (void) loopback_VertexAttribI3i;
-   (void) loopback_VertexAttribI4i;
-   (void) loopback_VertexAttribI1ui;
-   (void) loopback_VertexAttribI2ui;
-   (void) loopback_VertexAttribI3ui;
-   (void) loopback_VertexAttribI4ui;
-   (void) loopback_VertexAttribI1iv;
-   (void) loopback_VertexAttribI2iv;
-   (void) loopback_VertexAttribI3iv;
-   (void) loopback_VertexAttribI4iv;
-   (void) loopback_VertexAttribI1uiv;
-   (void) loopback_VertexAttribI2uiv;
-   (void) loopback_VertexAttribI3uiv;
-   (void) loopback_VertexAttribI4uiv;
-   (void) loopback_VertexAttribI4bv;
-   (void) loopback_VertexAttribI4sv;
-   (void) loopback_VertexAttribI4ubv;
-   (void) loopback_VertexAttribI4usv;
-#endif
 }
 
 
