@@ -115,6 +115,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 	case GL_RGBA12:
 	case GL_RGBA16:
 	case GL_RGB10_A2:
+	case GL_COMPRESSED_RGBA:
 		return MESA_FORMAT_ARGB8888;
 	case GL_RGB5_A1:
 		return MESA_FORMAT_ARGB1555;
@@ -124,6 +125,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 	case GL_RGB10:
 	case GL_RGB12:
 	case GL_RGB16:
+	case GL_COMPRESSED_RGB:
 		return MESA_FORMAT_XRGB8888;
 	case 3:
 	case GL_R3_G3_B2:
@@ -139,6 +141,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 	case GL_LUMINANCE12_ALPHA12:
 	case GL_LUMINANCE16_ALPHA16:
 	case GL_LUMINANCE8_ALPHA8:
+	case GL_COMPRESSED_LUMINANCE_ALPHA:
 		return MESA_FORMAT_ARGB8888;
 
 	case 1:
@@ -147,6 +150,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 	case GL_LUMINANCE12:
 	case GL_LUMINANCE16:
 	case GL_LUMINANCE8:
+	case GL_COMPRESSED_LUMINANCE:
 		return MESA_FORMAT_L8;
 
 	case GL_ALPHA:
@@ -154,6 +158,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 	case GL_ALPHA12:
 	case GL_ALPHA16:
 	case GL_ALPHA8:
+	case GL_COMPRESSED_ALPHA:
 		return MESA_FORMAT_A8;
 
 	case GL_INTENSITY:
