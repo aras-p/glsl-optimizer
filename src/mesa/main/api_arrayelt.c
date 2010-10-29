@@ -928,10 +928,167 @@ static void GLAPIENTRY VertexAttrib4dvARB(GLuint index, const GLdouble *v)
 }
 
 
+/**
+ * Integer-valued attributes
+ */
+static void
+VertexAttribI1bv(GLuint index, const GLbyte *v)
+{
+   CALL_VertexAttribI1iEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2bv(GLuint index, const GLbyte *v)
+{
+   CALL_VertexAttribI2iEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3bv(GLuint index, const GLbyte *v)
+{
+   CALL_VertexAttribI3iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4bv(GLuint index, const GLbyte *v)
+{
+   CALL_VertexAttribI4iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+static void
+VertexAttribI1ubv(GLuint index, const GLubyte *v)
+{
+   CALL_VertexAttribI1uiEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2ubv(GLuint index, const GLubyte *v)
+{
+   CALL_VertexAttribI2uiEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3ubv(GLuint index, const GLubyte *v)
+{
+   CALL_VertexAttribI3uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4ubv(GLuint index, const GLubyte *v)
+{
+   CALL_VertexAttribI4uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+
+static void
+VertexAttribI1sv(GLuint index, const GLshort *v)
+{
+   CALL_VertexAttribI1iEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2sv(GLuint index, const GLshort *v)
+{
+   CALL_VertexAttribI2iEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3sv(GLuint index, const GLshort *v)
+{
+   CALL_VertexAttribI3iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4sv(GLuint index, const GLshort *v)
+{
+   CALL_VertexAttribI4iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+static void
+VertexAttribI1usv(GLuint index, const GLushort *v)
+{
+   CALL_VertexAttribI1uiEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2usv(GLuint index, const GLushort *v)
+{
+   CALL_VertexAttribI2uiEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3usv(GLuint index, const GLushort *v)
+{
+   CALL_VertexAttribI3uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4usv(GLuint index, const GLushort *v)
+{
+   CALL_VertexAttribI4uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+
+static void
+VertexAttribI1iv(GLuint index, const GLint *v)
+{
+   CALL_VertexAttribI1iEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2iv(GLuint index, const GLint *v)
+{
+   CALL_VertexAttribI2iEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3iv(GLuint index, const GLint *v)
+{
+   CALL_VertexAttribI3iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4iv(GLuint index, const GLint *v)
+{
+   CALL_VertexAttribI4iEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+static void
+VertexAttribI1uiv(GLuint index, const GLuint *v)
+{
+   CALL_VertexAttribI1uiEXT(GET_DISPATCH(), (index, v[0]));
+}
+
+static void
+VertexAttribI2uiv(GLuint index, const GLuint *v)
+{
+   CALL_VertexAttribI2uiEXT(GET_DISPATCH(), (index, v[0], v[1]));
+}
+
+static void
+VertexAttribI3uiv(GLuint index, const GLuint *v)
+{
+   CALL_VertexAttribI3uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2]));
+}
+
+static void
+VertexAttribI4uiv(GLuint index, const GLuint *v)
+{
+   CALL_VertexAttribI4uiEXT(GET_DISPATCH(), (index, v[0], v[1], v[2], v[3]));
+}
+
+
+
+
 /*
  * Array [size][type] of VertexAttrib functions
  */
-static attrib_func AttribFuncsARB[2][4][8] = {
+static attrib_func AttribFuncsARB[3][4][8] = {
    {
       /* non-normalized */
       {
@@ -1024,6 +1181,54 @@ static attrib_func AttribFuncsARB[2][4][8] = {
          (attrib_func) VertexAttrib4NuivARB,
          (attrib_func) VertexAttrib4fvARB,
          (attrib_func) VertexAttrib4dvARB
+      }
+   },
+
+   {
+      /* integer-valued */
+      {
+         /* size 1 */
+         (attrib_func) VertexAttribI1bv,
+         (attrib_func) VertexAttribI1ubv,
+         (attrib_func) VertexAttribI1sv,
+         (attrib_func) VertexAttribI1usv,
+         (attrib_func) VertexAttribI1iv,
+         (attrib_func) VertexAttribI1uiv,
+         NULL, /* GL_FLOAT */
+         NULL  /* GL_DOUBLE */
+      },
+      {
+         /* size 2 */
+         (attrib_func) VertexAttribI2bv,
+         (attrib_func) VertexAttribI2ubv,
+         (attrib_func) VertexAttribI2sv,
+         (attrib_func) VertexAttribI2usv,
+         (attrib_func) VertexAttribI2iv,
+         (attrib_func) VertexAttribI2uiv,
+         NULL, /* GL_FLOAT */
+         NULL  /* GL_DOUBLE */
+      },
+      {
+         /* size 3 */
+         (attrib_func) VertexAttribI3bv,
+         (attrib_func) VertexAttribI3ubv,
+         (attrib_func) VertexAttribI3sv,
+         (attrib_func) VertexAttribI3usv,
+         (attrib_func) VertexAttribI3iv,
+         (attrib_func) VertexAttribI3uiv,
+         NULL, /* GL_FLOAT */
+         NULL  /* GL_DOUBLE */
+      },
+      {
+         /* size 4 */
+         (attrib_func) VertexAttribI4bv,
+         (attrib_func) VertexAttribI4ubv,
+         (attrib_func) VertexAttribI4sv,
+         (attrib_func) VertexAttribI4usv,
+         (attrib_func) VertexAttribI4iv,
+         (attrib_func) VertexAttribI4uiv,
+         NULL, /* GL_FLOAT */
+         NULL  /* GL_DOUBLE */
       }
    }
 };
@@ -1173,7 +1378,15 @@ static void _ae_update_state( struct gl_context *ctx )
                                     [TYPE_IDX(at->array->Type)];
          }
          else {
-            at->func = AttribFuncsARB[at->array->Normalized]
+            GLint intOrNorm;
+            if (at->array->Integer)
+               intOrNorm = 2;
+            else if (at->array->Normalized)
+               intOrNorm = 1;
+            else
+               intOrNorm = 0;
+
+            at->func = AttribFuncsARB[intOrNorm]
                                      [at->array->Size-1]
                                      [TYPE_IDX(at->array->Type)];
          }
