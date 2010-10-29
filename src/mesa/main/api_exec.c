@@ -734,6 +734,11 @@ _mesa_create_exec_table(void)
    SET_TexParameterIivEXT(exec, _mesa_TexParameterIiv);
    SET_TexParameterIuivEXT(exec, _mesa_TexParameterIuiv);
 
+   /* GL_EXT_gpu_shader4 / OpenGL 3.0 */
+   SET_GetVertexAttribIivEXT(exec, _mesa_GetVertexAttribIiv);
+   SET_GetVertexAttribIuivEXT(exec, _mesa_GetVertexAttribIuiv);
+   SET_VertexAttribIPointerEXT(exec, _mesa_VertexAttribIPointer);
+
    return exec;
 }
 
