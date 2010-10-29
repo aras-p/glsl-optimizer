@@ -31,6 +31,7 @@
 #include "enable.h"
 #include "enums.h"
 #include "hash.h"
+#include "image.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "varray.h"
@@ -38,40 +39,148 @@
 #include "main/dispatch.h"
 
 
+/** Used to do error checking for GL_EXT_vertex_array_bgra */
+#define BGRA_OR_4  5
+
+
+/** Used to indicate which GL datatypes are accepted by each of the
+ * glVertex/Color/Attrib/EtcPointer() functions.
+ */
+#define BOOL_BIT             0x1
+#define BYTE_BIT             0x2
+#define UNSIGNED_BYTE_BIT    0x4
+#define SHORT_BIT            0x8
+#define UNSIGNED_SHORT_BIT   0x10
+#define INT_BIT              0x20
+#define UNSIGNED_INT_BIT     0x40
+#define HALF_BIT             0x80
+#define FLOAT_BIT            0x100
+#define DOUBLE_BIT           0x200
+#define FIXED_BIT            0x400
+
+/* These are specific to certain features/extensions */
+#if FEATURE_fixedpt
+#define EXT_FIXED_BIT        FIXED_BIT
+#else
+#define EXT_FIXED_BIT        0x0
+#endif
+#if FEATURE_vertex_array_byte
+#define EXT_BYTE_BIT         BYTE_BIT
+#else
+#define EXT_BYTE_BIT         0x0
+#endif
+
+
+/** Convert GL datatype enum into a <type>_BIT value seen above */
+static GLbitfield
+type_to_bit(const struct gl_context *ctx, GLenum type)
+{
+   switch (type) {
+   case GL_BOOL:
+      return BOOL_BIT;
+   case GL_BYTE:
+      return BYTE_BIT;
+   case GL_UNSIGNED_BYTE:
+      return UNSIGNED_BYTE_BIT;
+   case GL_SHORT:
+      return SHORT_BIT;
+   case GL_UNSIGNED_SHORT:
+      return UNSIGNED_SHORT_BIT;
+   case GL_INT:
+      return INT_BIT;
+   case GL_UNSIGNED_INT:
+      return UNSIGNED_INT_BIT;
+   case GL_HALF_FLOAT:
+      if (ctx->Extensions.ARB_half_float_vertex)
+         return HALF_BIT;
+      else
+         return 0x0;
+   case GL_FLOAT:
+      return FLOAT_BIT;
+   case GL_DOUBLE:
+      return DOUBLE_BIT;
+   case GL_FIXED:
+      return FIXED_BIT;
+   default:
+      return 0;
+   }
+}
+
+
 /**
- * Set the fields of a vertex array.
- * Also do an error check for GL_ARB_vertex_array_object: check that
- * all arrays reside in VBOs when using a vertex array object.
+ * Do error checking and update state for glVertex/Color/TexCoord/...Pointer
+ * functions.
  *
+ * \param func  name of calling function used for error reporting
  * \param array  the array to update
  * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
- * \param elementSize  size of each array element, in bytes
+ * \param legalTypes  bitmask of *_BIT above indicating legal datatypes
+ * \param sizeMin  min allowable size value
+ * \param sizeMax  max allowable size value (may also be BGRA_OR_4)
  * \param size  components per element (1, 2, 3 or 4)
  * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
- * \param format  either GL_RGBA or GL_BGRA
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
  * \param integer  integer-valued values (will not be normalized to [-1,1])
  * \param ptr  the address (or offset inside VBO) of the array data
  */
 static void
-update_array(struct gl_context *ctx, struct gl_client_array *array,
-             GLbitfield dirtyBit, GLsizei elementSize,
-             GLint size, GLenum type, GLenum format,
-             GLsizei stride, GLboolean normalized, GLboolean integer,
+update_array(struct gl_context *ctx,
+             const char *func,
+             struct gl_client_array *array,
+             GLbitfield dirtyBit, GLbitfield legalTypesMask,
+             GLint sizeMin, GLint sizeMax,
+             GLint size, GLenum type, GLsizei stride,
+             GLboolean normalized, GLboolean integer,
              const GLvoid *ptr)
 {
-   ASSERT(format == GL_RGBA || format == GL_BGRA);
+   GLbitfield typeBit;
+   GLsizei elementSize;
+   GLenum format = GL_RGBA;
+
+   typeBit = type_to_bit(ctx, type);
+   if (typeBit == 0x0 || (typeBit & legalTypesMask) == 0x0) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(type = %s)",
+                  func, _mesa_lookup_enum_by_nr(type));
+      return;
+   }
+
+   /* Do size parameter checking.
+    * If sizeMax = BGRA_OR_4 it means that size = GL_BGRA is legal and
+    * must be handled specially.
+    */
+   if (ctx->Extensions.EXT_vertex_array_bgra &&
+       sizeMax == BGRA_OR_4 &&
+       size == GL_BGRA) {
+      if (type != GL_UNSIGNED_BYTE) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s(GL_BGRA/GLubyte)", func);
+         return;
+      }
+      format = GL_BGRA;
+      size = 4;
+   }
+   else if (size < sizeMin || size > sizeMax || size > 4) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(size=%d)", func, size);
+      return;
+   }
+
+   ASSERT(size <= 4);
+
+   if (stride < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "%s(stride=%d)", func, stride );
+      return;
+   }
 
    if (ctx->Array.ArrayObj->VBOonly &&
        ctx->Array.ArrayBufferObj->Name == 0) {
       /* GL_ARB_vertex_array_object requires that all arrays reside in VBOs.
        * Generate GL_INVALID_OPERATION if that's not true.
        */
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glVertex/Normal/EtcPointer(non-VBO array)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(non-VBO array)", func);
       return;
    }
+
+   elementSize = _mesa_sizeof_type(type) * size;
 
    array->Size = size;
    array->Type = type;
@@ -93,262 +202,79 @@ update_array(struct gl_context *ctx, struct gl_client_array *array,
 void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
+   const GLbitfield legalTypes = (SHORT_BIT | INT_BIT | FLOAT_BIT |
+                                  DOUBLE_BIT | HALF_BIT |
+                                  EXT_FIXED_BIT | EXT_BYTE_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (size < 2 || size > 4) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glVertexPointer(size)" );
-      return;
-   }
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glVertexPointer(stride)" );
-      return;
-   }
-
-   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      _mesa_debug(ctx, "glVertexPointer( sz %d type %s stride %d )\n", size,
-                  _mesa_lookup_enum_by_nr( type ), stride);
-
-   /* always need to check that <type> is legal */
-   switch (type) {
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = size * sizeof(GLhalfARB);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = size * sizeof(GLfixed);
-         break;
-#endif
-#if FEATURE_vertex_array_byte
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE,
-                GL_FALSE, ptr);
+   update_array(ctx, "glVertexPointer",
+                &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
+                legalTypes, 2, 4,
+                size, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
-   GLsizei elementSize;
+   const GLbitfield legalTypes = (BYTE_BIT | SHORT_BIT | INT_BIT |
+                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                                  EXT_FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glNormalPointer(stride)" );
-      return;
-   }
-
-   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      _mesa_debug(ctx, "glNormalPointer( type %s stride %d )\n",
-                  _mesa_lookup_enum_by_nr( type ), stride);
-
-   switch (type) {
-      case GL_BYTE:
-         elementSize = 3 * sizeof(GLbyte);
-         break;
-      case GL_SHORT:
-         elementSize = 3 * sizeof(GLshort);
-         break;
-      case GL_INT:
-         elementSize = 3 * sizeof(GLint);
-         break;
-      case GL_FLOAT:
-         elementSize = 3 * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = 3 * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = 3 * sizeof(GLhalfARB);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = 3 * sizeof(GLfixed);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
-                elementSize, 3, type, GL_RGBA, stride, GL_TRUE, GL_FALSE, ptr);
+   update_array(ctx, "glNormalPointer",
+                &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
+                legalTypes, 3, 3,
+                3, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
-   GLenum format;
+   const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
+                                  SHORT_BIT | UNSIGNED_SHORT_BIT |
+                                  INT_BIT | UNSIGNED_INT_BIT |
+                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                                  EXT_FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (size < 3 || size > 4) {
-      if (!ctx->Extensions.EXT_vertex_array_bgra || size != GL_BGRA) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glColorPointer(size)");
-         return;
-      }
-   }
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
-      return;
-   }
-
-   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      _mesa_debug(ctx, "glColorPointer( sz %d type %s stride %d )\n", size,
-                  _mesa_lookup_enum_by_nr( type ), stride);
-
-   if (size == GL_BGRA) {
-      if (type != GL_UNSIGNED_BYTE) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glColorPointer(GL_BGRA/GLubyte)");
-         return;
-      }
-      format = GL_BGRA;
-      size = 4;
-   }
-   else {
-      format = GL_RGBA;
-   }
-
-   switch (type) {
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-      case GL_UNSIGNED_BYTE:
-         elementSize = size * sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_UNSIGNED_SHORT:
-         elementSize = size * sizeof(GLushort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_UNSIGNED_INT:
-         elementSize = size * sizeof(GLuint);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = size * sizeof(GLhalfARB);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = size * sizeof(GLfixed);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glColorPointer(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
-                elementSize, size, type, format, stride, GL_TRUE, GL_FALSE,
-                ptr);
+   update_array(ctx, "glColorPointer",
+                &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
+                legalTypes, 3, BGRA_OR_4,
+                size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLint elementSize;
+   const GLbitfield legalTypes = (HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
-      return;
-   }
-
-   switch (type) {
-      case GL_FLOAT:
-         elementSize = sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = sizeof(GLhalfARB);
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glFogCoordPointer(type)" );
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
-                ptr);
+   update_array(ctx, "glFogCoordPointer",
+                &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
+                legalTypes, 1, 1,
+                1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
+   const GLbitfield legalTypes = (UNSIGNED_BYTE_BIT | SHORT_BIT | INT_BIT |
+                                  FLOAT_BIT | DOUBLE_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glIndexPointer(stride)" );
-      return;
-   }
-
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-         elementSize = sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = sizeof(GLshort);
-         break;
-      case GL_INT:
-         elementSize = sizeof(GLint);
-         break;
-      case GL_FLOAT:
-         elementSize = sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = sizeof(GLdouble);
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glIndexPointer(type)" );
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
-                ptr);
+   update_array(ctx, "glIndexPointer",
+                &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
+                legalTypes, 1, 1,
+                1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
 
 
@@ -356,75 +282,17 @@ void GLAPIENTRY
 _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
-   GLenum format;
+   const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
+                                  SHORT_BIT | UNSIGNED_SHORT_BIT |
+                                  INT_BIT | UNSIGNED_INT_BIT |
+                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (size != 3 && size != 4) {
-      if (!ctx->Extensions.EXT_vertex_array_bgra || size != GL_BGRA) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glSecondaryColorPointer(size)");
-         return;
-      }
-   }
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glSecondaryColorPointer(stride)" );
-      return;
-   }
-
-   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      _mesa_debug(ctx, "glSecondaryColorPointer( sz %d type %s stride %d )\n",
-                  size, _mesa_lookup_enum_by_nr( type ), stride);
-
-   if (size == GL_BGRA) {
-      if (type != GL_UNSIGNED_BYTE) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glColorPointer(GL_BGRA/GLubyte)");
-         return;
-      }
-      format = GL_BGRA;
-      size = 4;
-   }
-   else {
-      format = GL_RGBA;
-   }
-
-   switch (type) {
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-      case GL_UNSIGNED_BYTE:
-         elementSize = size * sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_UNSIGNED_SHORT:
-         elementSize = size * sizeof(GLushort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_UNSIGNED_INT:
-         elementSize = size * sizeof(GLuint);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = size * sizeof(GLhalfARB);
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
-                elementSize, size, type, format, stride, GL_TRUE, GL_FALSE,
-                ptr);
+   update_array(ctx, "glSecondaryColorPointer",
+                &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
+                legalTypes, 3, BGRA_OR_4,
+                size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
 
 
@@ -432,62 +300,20 @@ void GLAPIENTRY
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
-   GLint elementSize;
+   const GLbitfield legalTypes = (EXT_BYTE_BIT | SHORT_BIT | INT_BIT |
+                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                                  EXT_FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (size < 1 || size > 4) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(size)" );
-      return;
-   }
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(stride)" );
-      return;
-   }
-
-   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      _mesa_debug(ctx, "glTexCoordPointer(unit %u sz %d type %s stride %d)\n",
-                  unit, size, _mesa_lookup_enum_by_nr( type ), stride);
-
-   /* always need to check that <type> is legal */
-   switch (type) {
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = size * sizeof(GLhalfARB);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = size * sizeof(GLfixed);
-         break;
-#endif
-#if FEATURE_vertex_array_byte
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
    ASSERT(unit < Elements(ctx->Array.ArrayObj->TexCoord));
 
-   update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
+   update_array(ctx, "glTexCoordPointer",
+                &ctx->Array.ArrayObj->TexCoord[unit],
                 _NEW_ARRAY_TEXCOORD(unit),
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
+                legalTypes, 1, 4,
+                size, type, stride, GL_FALSE, GL_FALSE,
                 ptr);
 }
 
@@ -495,51 +321,30 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 void GLAPIENTRY
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
+   const GLbitfield legalTypes = BOOL_BIT;
    /* see table 2.4 edits in GL_EXT_gpu_shader4 spec: */
    const GLboolean integer = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glEdgeFlagPointer(stride)" );
-      return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
-                sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
-                stride, GL_FALSE, integer, ptr);
+   update_array(ctx, "glEdgeFlagPointer",
+                &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
+                legalTypes, 1, 1,
+                1, GL_BOOL, stride, GL_FALSE, integer, ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
+   const GLbitfield legalTypes = (FLOAT_BIT | EXT_FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (stride < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glPointSizePointer(stride)" );
-      return;
-   }
-
-   switch (type) {
-      case GL_FLOAT:
-         elementSize = sizeof(GLfloat);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = sizeof(GLfixed);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glPointSizePointer(type)" );
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
-                ptr);
+   update_array(ctx, "glPointSizePointer",
+                &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
+                legalTypes, 1, 1,
+                1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
 
 
@@ -554,9 +359,9 @@ void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *ptr)
 {
+   const GLbitfield legalTypes = (UNSIGNED_BYTE_BIT | SHORT_BIT |
+                                  FLOAT_BIT | DOUBLE_BIT);
    GLboolean normalized = GL_FALSE;
-   GLsizei elementSize;
-   GLenum format;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -565,61 +370,16 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   if (size < 1 || size > 4) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(size)");
-      return;
-   }
-
-   if (stride < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(stride)");
-      return;
-   }
-
    if (type == GL_UNSIGNED_BYTE && size != 4) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(size!=4)");
       return;
    }
 
-   if (size == GL_BGRA) {
-      if (type != GL_UNSIGNED_BYTE) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glVertexAttribPointerNV(GL_BGRA/type)");
-         return;
-      }
-
-      format = GL_BGRA;
-      size = 4;
-      normalized = GL_TRUE;
-   }
-   else {
-      format = GL_RGBA;
-   }
-
-   /* check for valid 'type' and compute StrideB right away */
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-         normalized = GL_TRUE;
-         elementSize = size * sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerNV(type=%s)",
-                      _mesa_lookup_enum_by_nr(type));
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+   update_array(ctx, "glVertexAttribPointerNV",
+                &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, GL_FALSE,
-                ptr);
+                legalTypes, 1, BGRA_OR_4,
+                size, type, stride, normalized, GL_FALSE, ptr);
 }
 #endif
 
@@ -635,8 +395,11 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
                              GLsizei stride, const GLvoid *ptr)
 {
-   GLsizei elementSize;
-   GLenum format;
+   const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
+                                  SHORT_BIT | UNSIGNED_SHORT_BIT |
+                                  INT_BIT | UNSIGNED_INT_BIT |
+                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                                  EXT_FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -645,81 +408,11 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   if (size < 1 || size > 4) {
-      if (!ctx->Extensions.EXT_vertex_array_bgra || size != GL_BGRA) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(size)");
-         return;
-      }
-   }
-
-   if (stride < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(stride)");
-      return;
-   }
-
-   if (size == GL_BGRA) {
-      if (type != GL_UNSIGNED_BYTE) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glVertexAttribPointerARB(GL_BGRA/type)");
-         return;
-      }
-      if (normalized != GL_TRUE) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glVertexAttribPointerARB(GL_BGRA/normalized)");
-         return;
-      }
-
-      format = GL_BGRA;
-      size = 4;
-   }
-   else {
-      format = GL_RGBA;
-   }
-
-   /* check for valid 'type' and compute StrideB right away */
-   /* NOTE: more types are supported here than in the NV extension */
-   switch (type) {
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-      case GL_UNSIGNED_BYTE:
-         elementSize = size * sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_UNSIGNED_SHORT:
-         elementSize = size * sizeof(GLushort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_UNSIGNED_INT:
-         elementSize = size * sizeof(GLuint);
-         break;
-      case GL_FLOAT:
-         elementSize = size * sizeof(GLfloat);
-         break;
-      case GL_DOUBLE:
-         elementSize = size * sizeof(GLdouble);
-         break;
-      case GL_HALF_FLOAT:
-         elementSize = size * sizeof(GLhalfARB);
-         break;
-#if FEATURE_fixedpt
-      case GL_FIXED:
-         elementSize = size * sizeof(GLfixed);
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerARB(type)" );
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+   update_array(ctx, "glVertexAttribPointer",
+                &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, GL_FALSE,
-                ptr);
+                legalTypes, 1, BGRA_OR_4,
+                size, type, stride, normalized, GL_FALSE, ptr);
 }
 #endif
 
@@ -734,10 +427,11 @@ void GLAPIENTRY
 _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
                            GLsizei stride, const GLvoid *ptr)
 {
+   const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
+                                  SHORT_BIT | UNSIGNED_SHORT_BIT |
+                                  INT_BIT | UNSIGNED_INT_BIT);
    const GLboolean normalized = GL_FALSE;
    const GLboolean integer = GL_TRUE;
-   const GLenum format = GL_RGBA;
-   GLsizei elementSize;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -746,48 +440,11 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   if (size < 1 || size > 4) {
-      if (!ctx->Extensions.EXT_vertex_array_bgra || size != GL_BGRA) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(size)");
-         return;
-      }
-   }
-
-   if (stride < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(stride)");
-      return;
-   }
-
-   /* check for valid 'type' and compute StrideB right away */
-   /* NOTE: more types are supported here than in the NV extension */
-   switch (type) {
-      case GL_BYTE:
-         elementSize = size * sizeof(GLbyte);
-         break;
-      case GL_UNSIGNED_BYTE:
-         elementSize = size * sizeof(GLubyte);
-         break;
-      case GL_SHORT:
-         elementSize = size * sizeof(GLshort);
-         break;
-      case GL_UNSIGNED_SHORT:
-         elementSize = size * sizeof(GLushort);
-         break;
-      case GL_INT:
-         elementSize = size * sizeof(GLint);
-         break;
-      case GL_UNSIGNED_INT:
-         elementSize = size * sizeof(GLuint);
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribIPointer(type)" );
-         return;
-   }
-
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+   update_array(ctx, "glVertexAttribIPointer",
+                &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride,
-                normalized, integer, ptr);
+                legalTypes, 1, 4,
+                size, type, stride, normalized, integer, ptr);
 }
 
 
