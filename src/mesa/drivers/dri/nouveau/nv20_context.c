@@ -187,10 +187,6 @@ nv20_hwctx_init(struct gl_context *ctx)
 	OUT_RING  (chan, 2);
 
 	if (context_chipset(ctx) >= 0x25) {
-		BEGIN_RING(chan, kelvin, 0x022c, 2);
-		OUT_RING  (chan, 0x280);
-		OUT_RING  (chan, 0x07d28000);
-
 		BEGIN_RING(chan, kelvin, 0x1da4, 1);
 		OUT_RING  (chan, 0);
 	}
