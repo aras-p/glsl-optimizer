@@ -658,6 +658,24 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->VertexAttrib4fNV = vbo_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = vbo_VertexAttrib4fvNV;
 
+   /* integer-valued */
+   vfmt->VertexAttribI1i = vbo_VertexAttribI1i;
+   vfmt->VertexAttribI2i = vbo_VertexAttribI2i;
+   vfmt->VertexAttribI3i = vbo_VertexAttribI3i;
+   vfmt->VertexAttribI4i = vbo_VertexAttribI4i;
+   vfmt->VertexAttribI2iv = vbo_VertexAttribI2iv;
+   vfmt->VertexAttribI3iv = vbo_VertexAttribI3iv;
+   vfmt->VertexAttribI4iv = vbo_VertexAttribI4iv;
+
+   /* unsigned integer-valued */
+   vfmt->VertexAttribI1ui = vbo_VertexAttribI1ui;
+   vfmt->VertexAttribI2ui = vbo_VertexAttribI2ui;
+   vfmt->VertexAttribI3ui = vbo_VertexAttribI3ui;
+   vfmt->VertexAttribI4ui = vbo_VertexAttribI4ui;
+   vfmt->VertexAttribI2uiv = vbo_VertexAttribI2uiv;
+   vfmt->VertexAttribI3uiv = vbo_VertexAttribI3uiv;
+   vfmt->VertexAttribI4uiv = vbo_VertexAttribI4uiv;
+
    vfmt->Materialfv = vbo_Materialfv;
 
    vfmt->EdgeFlag = vbo_EdgeFlag;

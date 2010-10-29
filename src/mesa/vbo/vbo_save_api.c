@@ -1065,6 +1065,24 @@ static void _save_vtxfmt_init( struct gl_context *ctx )
    vfmt->VertexAttrib4fNV = _save_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = _save_VertexAttrib4fvNV;
    
+   /* integer-valued */
+   vfmt->VertexAttribI1i = _save_VertexAttribI1i;
+   vfmt->VertexAttribI2i = _save_VertexAttribI2i;
+   vfmt->VertexAttribI3i = _save_VertexAttribI3i;
+   vfmt->VertexAttribI4i = _save_VertexAttribI4i;
+   vfmt->VertexAttribI2iv = _save_VertexAttribI2iv;
+   vfmt->VertexAttribI3iv = _save_VertexAttribI3iv;
+   vfmt->VertexAttribI4iv = _save_VertexAttribI4iv;
+
+   /* unsigned integer-valued */
+   vfmt->VertexAttribI1ui = _save_VertexAttribI1ui;
+   vfmt->VertexAttribI2ui = _save_VertexAttribI2ui;
+   vfmt->VertexAttribI3ui = _save_VertexAttribI3ui;
+   vfmt->VertexAttribI4ui = _save_VertexAttribI4ui;
+   vfmt->VertexAttribI2uiv = _save_VertexAttribI2uiv;
+   vfmt->VertexAttribI3uiv = _save_VertexAttribI3uiv;
+   vfmt->VertexAttribI4uiv = _save_VertexAttribI4uiv;
+
    /* This will all require us to fallback to saving the list as opcodes:
     */ 
    _MESA_INIT_DLIST_VTXFMT(vfmt, _save_); /* inside begin/end */

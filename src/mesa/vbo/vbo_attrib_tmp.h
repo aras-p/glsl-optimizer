@@ -25,6 +25,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+/* float */
 #define ATTR1FV( A, V ) ATTR( A, 1, (V)[0], 0, 0, 1 )
 #define ATTR2FV( A, V ) ATTR( A, 2, (V)[0], (V)[1], 0, 1 )
 #define ATTR3FV( A, V ) ATTR( A, 3, (V)[0], (V)[1], (V)[2], 1 )
@@ -34,6 +35,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define ATTR2F( A, X, Y )       ATTR( A, 2, X, Y, 0, 1 )
 #define ATTR3F( A, X, Y, Z )    ATTR( A, 3, X, Y, Z, 1 )
 #define ATTR4F( A, X, Y, Z, W ) ATTR( A, 4, X, Y, Z, W )
+
+/* int */
+#define ATTR2IV( A, V ) ATTR( A, 2, (V)[0], (V)[1], 0, 1 )
+#define ATTR3IV( A, V ) ATTR( A, 3, (V)[0], (V)[1], (V)[2], 1 )
+#define ATTR4IV( A, V ) ATTR( A, 4, (V)[0], (V)[1], (V)[2], (V)[3] )
+
+#define ATTR1I( A, X )          ATTR( A, 1, X, 0, 0, 1 )
+#define ATTR2I( A, X, Y )       ATTR( A, 2, X, Y, 0, 1 )
+#define ATTR3I( A, X, Y, Z )    ATTR( A, 3, X, Y, Z, 1 )
+#define ATTR4I( A, X, Y, Z, W ) ATTR( A, 4, X, Y, Z, W )
+
+
+/* uint */
+#define ATTR2UIV( A, V ) ATTR( A, 2, (V)[0], (V)[1], 0, 1 )
+#define ATTR3UIV( A, V ) ATTR( A, 3, (V)[0], (V)[1], (V)[2], 1 )
+#define ATTR4UIV( A, V ) ATTR( A, 4, (V)[0], (V)[1], (V)[2], (V)[3] )
+
+#define ATTR1UI( A, X )          ATTR( A, 1, X, 0, 0, 1 )
+#define ATTR2UI( A, X, Y )       ATTR( A, 2, X, Y, 0, 1 )
+#define ATTR3UI( A, X, Y, Z )    ATTR( A, 3, X, Y, Z, 1 )
+#define ATTR4UI( A, X, Y, Z, W ) ATTR( A, 4, X, Y, Z, W )
 
 #define MAT_ATTR( A, N, V ) ATTR( A, N, (V)[0], (V)[1], (V)[2], (V)[3] )
 
@@ -405,6 +427,185 @@ TAG(VertexAttrib4fvARB)(GLuint index, const GLfloat * v)
    else
       ERROR();
 }
+
+
+
+/* Integer-valued generic attributes.
+ * XXX: the integers just get converted to floats at this time
+ */
+static void GLAPIENTRY
+TAG(VertexAttribI1i)(GLuint index, GLint x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR1I(0, x);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR1I(VBO_ATTRIB_GENERIC0 + index, x);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI2i)(GLuint index, GLint x, GLint y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR2I(0, x, y);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR2I(VBO_ATTRIB_GENERIC0 + index, x, y);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI3i)(GLuint index, GLint x, GLint y, GLint z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR3I(0, x, y, z);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR3I(VBO_ATTRIB_GENERIC0 + index, x, y, z);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI4i)(GLuint index, GLint x, GLint y, GLint z, GLint w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR4I(0, x, y, z, w);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR4I(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI2iv)(GLuint index, const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR2IV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR2IV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI3iv)(GLuint index, const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR3IV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR3IV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI4iv)(GLuint index, const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR4IV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR4IV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
+
+
+/* Unsigned integer-valued generic attributes.
+ * XXX: the integers just get converted to floats at this time
+ */
+static void GLAPIENTRY
+TAG(VertexAttribI1ui)(GLuint index, GLuint x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR1UI(0, x);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR1UI(VBO_ATTRIB_GENERIC0 + index, x);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI2ui)(GLuint index, GLuint x, GLuint y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR2UI(0, x, y);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR2UI(VBO_ATTRIB_GENERIC0 + index, x, y);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI3ui)(GLuint index, GLuint x, GLuint y, GLuint z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR3UI(0, x, y, z);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR3UI(VBO_ATTRIB_GENERIC0 + index, x, y, z);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI4ui)(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR4UI(0, x, y, z, w);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR4UI(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI2uiv)(GLuint index, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR2UIV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR2UIV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI3uiv)(GLuint index, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR3UIV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR3UIV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
+static void GLAPIENTRY
+TAG(VertexAttribI4uiv)(GLuint index, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index == 0)
+      ATTR4UIV(0, v);
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR4UIV(VBO_ATTRIB_GENERIC0 + index, v);
+   else
+      ERROR();
+}
+
 
 
 /* In addition to supporting NV_vertex_program, these entrypoints are
