@@ -404,6 +404,14 @@ bind_attrib_location(struct gl_context *ctx, GLuint program, GLuint index,
 }
 
 
+static void
+bind_frag_data_location(struct gl_context *ctx, GLuint program,
+                        GLuint colorNumber, const GLchar *name)
+{
+   _mesa_problem(ctx, "bind_frag_data_location() not implemented yet");
+}
+
+
 static GLuint
 create_shader(struct gl_context *ctx, GLenum type)
 {
@@ -603,6 +611,16 @@ get_attached_shaders(struct gl_context *ctx, GLuint program, GLsizei maxCount,
          *count = i;
    }
 }
+
+
+static GLint
+get_frag_data_location(struct gl_context *ctx, GLuint program,
+                       const GLchar *name)
+{
+   _mesa_problem(ctx, "get_frag_data_location() not implemented yet");
+   return -1;
+}
+
 
 
 /**
@@ -1185,6 +1203,16 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
 }
 
 
+/* GL_EXT_gpu_shader4, GL3 */
+void GLAPIENTRY
+_mesa_BindFragDataLocation(GLuint program, GLuint colorNumber,
+                           const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   bind_frag_data_location(ctx, program, colorNumber, name);
+}
+
+
 void GLAPIENTRY
 _mesa_CompileShaderARB(GLhandleARB shaderObj)
 {
@@ -1313,6 +1341,16 @@ _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
    GET_CURRENT_CONTEXT(ctx);
    return get_attrib_location(ctx, program, name);
 }
+
+
+/* GL_EXT_gpu_shader4, GL3 */
+GLint GLAPIENTRY
+_mesa_GetFragDataLocation(GLuint program, const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   return get_frag_data_location(ctx, program, name);
+}
+
 
 
 void GLAPIENTRY
@@ -1842,6 +1880,11 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
    SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
    SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);
+
+   /* GL_EXT_gpu_shader4 / GL 3.0 */
+   SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
+   SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
+
 #endif /* FEATURE_GL */
 }
 
