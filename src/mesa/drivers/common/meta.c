@@ -52,6 +52,7 @@
 #include "main/readpix.h"
 #include "main/scissor.h"
 #include "main/shaderapi.h"
+#include "main/shaderobj.h"
 #include "main/state.h"
 #include "main/stencil.h"
 #include "main/texobj.h"
@@ -143,10 +144,10 @@ struct save_state
    struct gl_vertex_program *VertexProgram;
    GLboolean FragmentProgramEnabled;
    struct gl_fragment_program *FragmentProgram;
-   GLuint VertexShader;
-   GLuint GeometryShader;
-   GLuint FragmentShader;
-   GLuint ActiveShader;
+   struct gl_shader_program *VertexShader;
+   struct gl_shader_program *GeometryShader;
+   struct gl_shader_program *FragmentShader;
+   struct gl_shader_program *ActiveShader;
 
    /** META_STENCIL_TEST */
    struct gl_stencil_attrib Stencil;
@@ -436,14 +437,14 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       }
 
       if (ctx->Extensions.ARB_shader_objects) {
-         save->VertexShader = ctx->Shader.CurrentVertexProgram ?
-            ctx->Shader.CurrentVertexProgram->Name : 0;
-         save->GeometryShader = ctx->Shader.CurrentGeometryProgram ?
-            ctx->Shader.CurrentGeometryProgram->Name : 0;
-         save->FragmentShader = ctx->Shader.CurrentFragmentProgram ?
-            ctx->Shader.CurrentFragmentProgram->Name : 0;
-         save->ActiveShader = ctx->Shader.ActiveProgram ?
-            ctx->Shader.ActiveProgram->Name : 0;
+	 _mesa_reference_shader_program(ctx, &save->VertexShader,
+					ctx->Shader.CurrentVertexProgram);
+	 _mesa_reference_shader_program(ctx, &save->GeometryShader,
+					ctx->Shader.CurrentGeometryProgram);
+	 _mesa_reference_shader_program(ctx, &save->FragmentShader,
+					ctx->Shader.CurrentFragmentProgram);
+	 _mesa_reference_shader_program(ctx, &save->ActiveShader,
+					ctx->Shader.CurrentFragmentProgram);
 
          _mesa_UseProgramObjectARB(0);
       }
@@ -675,16 +676,18 @@ _mesa_meta_end(struct gl_context *ctx)
       }
 
       if (ctx->Extensions.ARB_vertex_shader)
-	 _mesa_UseShaderProgramEXT(GL_VERTEX_SHADER, save->VertexShader);
+	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER, save->VertexShader);
 
       if (ctx->Extensions.ARB_geometry_shader4)
-	 _mesa_UseShaderProgramEXT(GL_GEOMETRY_SHADER_ARB,
-				   save->GeometryShader);
+	 _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB,
+				  save->GeometryShader);
 
       if (ctx->Extensions.ARB_fragment_shader)
-	 _mesa_UseShaderProgramEXT(GL_FRAGMENT_SHADER, save->FragmentShader);
+	 _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER,
+				  save->FragmentShader);
 
-      _mesa_ActiveProgramEXT(save->ActiveShader);
+      _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram,
+				     save->ActiveShader);
    }
 
    if (state & META_STENCIL_TEST) {

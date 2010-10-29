@@ -936,9 +936,9 @@ print_shader_info(const struct gl_shader_program *shProg)
 /**
  * Use the named shader program for subsequent glUniform calls
  */
-static void
-active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
-	       const char *caller)
+void
+_mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
+		     const char *caller)
 {
    if ((shProg != NULL) && !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1003,45 +1003,16 @@ use_shader_program(struct gl_context *ctx, GLenum type,
  * Use the named shader program for subsequent rendering.
  */
 void
-_mesa_use_program(struct gl_context *ctx, GLuint program)
+_mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
-   struct gl_shader_program *shProg;
-   struct gl_transform_feedback_object *obj =
-      ctx->TransformFeedback.CurrentObject;
    bool changed = false;
-
-   if (obj->Active) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glUseProgram(transform feedback active)");
-      return;
-   }
-
-   if (program) {
-      shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
-      if (!shProg) {
-         return;
-      }
-      if (!shProg->LinkStatus) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glUseProgram(program %u not linked)", program);
-         return;
-      }
-
-      /* debug code */
-      if (ctx->Shader.Flags & GLSL_USE_PROG) {
-         print_shader_info(shProg);
-      }
-   }
-   else {
-      shProg = NULL;
-   }
 
    changed = use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
    changed = use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg)
       || changed;
    changed = use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg)
       || changed;
-   active_program(ctx, shProg, "glUseProgram");
+   _mesa_active_program(ctx, shProg, "glUseProgram");
 
    if (changed) {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
@@ -1614,8 +1585,39 @@ void GLAPIENTRY
 _mesa_UseProgramObjectARB(GLhandleARB program)
 {
    GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+   struct gl_transform_feedback_object *obj =
+      ctx->TransformFeedback.CurrentObject;
+
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-   _mesa_use_program(ctx, program);
+
+   if (obj->Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glUseProgram(transform feedback active)");
+      return;
+   }
+
+   if (program) {
+      shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
+      if (!shProg) {
+         return;
+      }
+      if (!shProg->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUseProgram(program %u not linked)", program);
+         return;
+      }
+
+      /* debug code */
+      if (ctx->Shader.Flags & GLSL_USE_PROG) {
+         print_shader_info(shProg);
+      }
+   }
+   else {
+      shProg = NULL;
+   }
+
+   _mesa_use_program(ctx, shProg);
 }
 
 
@@ -1731,12 +1733,25 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
 
 #endif
 
+void
+_mesa_use_shader_program(struct gl_context *ctx, GLenum type,
+			 struct gl_shader_program *shProg)
+{
+   bool changed;
+
+   changed = use_shader_program(ctx, type, shProg);
+   if (changed)
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+
+   if (ctx->Driver.UseProgram)
+      ctx->Driver.UseProgram(ctx, shProg);
+}
+
 void GLAPIENTRY
 _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg = NULL;
-   bool changed = false;
 
    if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
@@ -1762,13 +1777,7 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       }
    }
 
-   changed = use_shader_program(ctx, type, shProg);
-   if (changed)
-      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
-
-   if (ctx->Driver.UseProgram)
-      ctx->Driver.UseProgram(ctx, shProg);
-   return;
+   _mesa_use_shader_program(ctx, type, shProg);
 }
 
 void GLAPIENTRY
@@ -1779,7 +1788,7 @@ _mesa_ActiveProgramEXT(GLuint program)
       ? _mesa_lookup_shader_program_err(ctx, program, "glActiveProgramEXT")
       : NULL;
 
-   active_program(ctx, shProg, "glActiveProgramEXT");
+   _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
    return;
 }
 
