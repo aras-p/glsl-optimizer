@@ -67,7 +67,7 @@ vbo_init_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		nouveau_init_array(&render->attrs[attr], attr,
 				   get_array_stride(ctx, array),
 				   array->Size, array->Type,
-				   array->BufferObj,
+				   imm ? array->BufferObj : NULL,
 				   array->Ptr, imm);
 	}
 }
@@ -85,12 +85,14 @@ vbo_deinit_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		struct nouveau_array *a = &render->attrs[attr];
 
+		if (render->mode == IMM)
+			nouveau_bo_ref(NULL, &a->bo);
+
 		nouveau_deinit_array(a);
 		render->map[i] = -1;
 	}
 
 	render->attr_count = 0;
-	context_bctx(ctx, VERTEX);
 }
 
 /* Make some rendering decisions from the GL context. */
@@ -180,7 +182,7 @@ vbo_choose_attrs(struct gl_context *ctx, const struct gl_client_array **arrays)
 	    (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS))
 		vbo_emit_attr(ctx, arrays, VERT_ATTRIB_NORMAL);
 
-	if (ctx->Light.Enabled) {
+	if (ctx->Light.Enabled && render->mode == IMM) {
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_AMBIENT));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_DIFFUSE));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_SPECULAR));
@@ -258,38 +260,94 @@ vbo_maybe_split(struct gl_context *ctx, const struct gl_client_array **arrays,
 
 /* VBO rendering path. */
 
+static GLboolean
+check_update_array(struct nouveau_array *a, unsigned offset,
+		   struct nouveau_bo *bo, int *pdelta)
+{
+	int delta = *pdelta;
+	GLboolean dirty;
+
+	if (a->bo == bo) {
+		if (delta < 0)
+			delta = (offset - (long)a->offset) / a->stride;
+
+		dirty = (delta < 0 ||
+			 offset != (a->offset + delta * a->stride));
+	} else {
+		dirty = GL_TRUE;
+	}
+
+	*pdelta = (dirty ? 0 : delta);
+	return dirty;
+}
+
 static void
 vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
-		  GLint basevertex, GLuint min_index, GLuint max_index)
+		  int base, unsigned min_index, unsigned max_index, int *pdelta)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	int i, attr;
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_bo *bo[NUM_VERTEX_ATTRS];
+	unsigned offset[NUM_VERTEX_ATTRS];
+	GLboolean dirty = GL_FALSE;
+	int i, j, attr;
+	RENDER_LOCALS(ctx);
+
+	*pdelta = -1;
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		const struct gl_client_array *array = arrays[attr];
 		struct nouveau_array *a = &render->attrs[attr];
-		unsigned delta = (basevertex + min_index)
-			* array->StrideB;
+		unsigned delta = (base + min_index) * array->StrideB;
 
-		if (a->bo) {
+		bo[i] = NULL;
+
+		if (_mesa_is_bufferobj(array->BufferObj)) {
+			struct nouveau_bufferobj *nbo =
+				to_nouveau_bufferobj(array->BufferObj);
+
 			/* Array in a buffer obj. */
-			a->offset = (intptr_t)array->Ptr + delta;
-		} else {
-			int j, n = max_index - min_index + 1;
-			char *sp = (char *)array->Ptr + delta;
-			char *dp = nouveau_get_scratch(
-				ctx, n * a->stride, &a->bo, &a->offset);
+			nouveau_bo_ref(nbo->bo, &bo[i]);
+			offset[i] = delta + (intptr_t)array->Ptr;
 
-			/* Array in client memory, move it to
-			 * a scratch buffer obj. */
+		} else {
+			int n = max_index - min_index + 1;
+			char *sp = (char *)array->Ptr + delta;
+			char *dp  = nouveau_get_scratch(ctx, n * a->stride,
+							&bo[i], &offset[i]);
+
+			/* Array in client memory, move it to a
+			 * scratch buffer obj. */
 			for (j = 0; j < n; j++)
 				memcpy(dp + j * a->stride,
 				       sp + j * array->StrideB,
 				       a->stride);
 		}
+
+		dirty |= check_update_array(a, offset[i], bo[i], pdelta);
 	}
 
-	TAG(render_bind_vertices)(ctx);
+	*pdelta -= min_index;
+
+	if (dirty) {
+		/* Buffers changed, update the attribute binding. */
+		FOR_EACH_BOUND_ATTR(render, i, attr) {
+			struct nouveau_array *a = &render->attrs[attr];
+
+			nouveau_bo_ref(NULL, &a->bo);
+			a->offset = offset[i];
+			a->bo = bo[i];
+		}
+
+		TAG(render_bind_vertices)(ctx);
+
+	} else {
+		/* Just cleanup. */
+		FOR_EACH_BOUND_ATTR(render, i, attr)
+			nouveau_bo_ref(NULL, &bo[i]);
+	}
+
+	BATCH_VALIDATE();
 }
 
 static void
@@ -300,7 +358,7 @@ vbo_draw_vbo(struct gl_context *ctx, const struct gl_client_array **arrays,
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	dispatch_t dispatch = get_array_dispatch(&to_render_state(ctx)->ib);
-	int i, delta = -min_index, basevertex = 0;
+	int i, delta = 0, basevertex = 0;
 	RENDER_LOCALS(ctx);
 
 	TAG(render_set_format)(ctx);
@@ -311,8 +369,8 @@ vbo_draw_vbo(struct gl_context *ctx, const struct gl_client_array **arrays,
 
 		if (i == 0 || basevertex != prims[i].basevertex) {
 			basevertex = prims[i].basevertex;
-			vbo_bind_vertices(ctx, arrays, basevertex,
-					  min_index, max_index);
+			vbo_bind_vertices(ctx, arrays, basevertex, min_index,
+					  max_index, &delta);
 		}
 
 		if (count > get_max_vertices(ctx, ib, AVAIL_RING(chan)))

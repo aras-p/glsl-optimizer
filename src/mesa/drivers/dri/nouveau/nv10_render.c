@@ -138,7 +138,6 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_bo_context *bctx = context_bctx(ctx, VERTEX);
-	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	int i, attr;
 
@@ -150,14 +149,15 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 				 a->bo, a->offset,
 				 NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	}
-
-	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_ARRAY_VALIDATE, 1);
-	OUT_RING(chan, 0);
 }
 
 /* Vertex array rendering defs. */
 #define RENDER_LOCALS(ctx)					\
 	struct nouveau_grobj *celsius = context_eng3d(ctx)
+
+#define BATCH_VALIDATE()						\
+	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_ARRAY_VALIDATE, 1);	\
+	OUT_RING(chan, 0)
 
 #define BATCH_BEGIN(prim)						\
 	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);	\

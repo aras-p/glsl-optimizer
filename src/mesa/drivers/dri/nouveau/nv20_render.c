@@ -160,7 +160,6 @@ nv20_render_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_bo_context *bctx = context_bctx(ctx, VERTEX);
-	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
 	int i, attr;
 
@@ -174,14 +173,15 @@ nv20_render_bind_vertices(struct gl_context *ctx)
 				NOUVEAU_BO_LOW | NOUVEAU_BO_OR |
 				NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	}
-
-	BEGIN_RING(chan, kelvin, NV20TCL_VTX_CACHE_INVALIDATE, 1);
-	OUT_RING(chan, 0);
 }
 
 /* Vertex array rendering defs. */
 #define RENDER_LOCALS(ctx)					\
 	struct nouveau_grobj *kelvin = context_eng3d(ctx)
+
+#define BATCH_VALIDATE()						\
+	BEGIN_RING(chan, kelvin, NV20TCL_VTX_CACHE_INVALIDATE, 1);	\
+	OUT_RING(chan, 0)
 
 #define BATCH_BEGIN(prim)					\
 	BEGIN_RING(chan, kelvin, NV20TCL_VERTEX_BEGIN_END, 1);	\
