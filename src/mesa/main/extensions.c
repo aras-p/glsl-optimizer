@@ -128,6 +128,7 @@ static const struct {
    { OFF, "GL_EXT_framebuffer_sRGB",           F(EXT_framebuffer_sRGB) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_gpu_program_parameters",     F(EXT_gpu_program_parameters) },
+   { OFF, "GL_EXT_gpu_shader4",                F(EXT_gpu_shader4) },
    { ON,  "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_EXT_packed_depth_stencil",       F(EXT_packed_depth_stencil) },
    { OFF, "GL_EXT_packed_float",               F(EXT_packed_float) },
