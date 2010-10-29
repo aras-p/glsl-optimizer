@@ -32,9 +32,11 @@
 #include "radeon_compiler_util.h"
 #include "radeon_swizzle.h"
 
-struct src_clobbered_data {
-	unsigned int NumSrcRegs;
-	unsigned int SrcMasks[3];
+struct src_clobbered_reads_cb_data {
+	rc_register_file File;
+	unsigned int Index;
+	unsigned int Mask;
+	struct rc_reader_data * ReaderData;
 };
 
 typedef void (*rc_presub_replace_fn)(struct rc_instruction *,
@@ -99,6 +101,25 @@ static void copy_propagate_scan_read(void * data, struct rc_instruction * inst,
 	}
 }
 
+static void src_clobbered_reads_cb(
+	void * data,
+	struct rc_instruction * inst,
+	struct rc_src_register * src)
+{
+	struct src_clobbered_reads_cb_data * sc_data = data;
+
+	if (src->File == sc_data->File
+	    && src->Index == sc_data->Index
+	    && (rc_swizzle_to_writemask(src->Swizzle) & sc_data->Mask)) {
+
+		sc_data->ReaderData->AbortOnRead = 1;
+	}
+
+	if (src->RelAddr && sc_data->File == RC_FILE_ADDRESS) {
+		sc_data->ReaderData->AbortOnRead = 1;
+	}
+}
+
 static void is_src_clobbered_scan_write(
 	void * data,
 	struct rc_instruction * inst,
@@ -106,29 +127,19 @@ static void is_src_clobbered_scan_write(
 	unsigned int index,
 	unsigned int mask)
 {
-	unsigned int i;
+	struct src_clobbered_reads_cb_data sc_data;
 	struct rc_reader_data * reader_data = data;
-	struct src_clobbered_data * d = reader_data->CbData;
-	for (i = 0; i < d->NumSrcRegs; i++) {
-		if (file == reader_data->Writer->U.I.SrcReg[i].File
-			&& index == reader_data->Writer->U.I.SrcReg[i].Index
-			&& (mask & d->SrcMasks[i])){
-
-			reader_data->AbortOnRead = 1;
-			return;
-		}
-		if (reader_data->Writer->U.I.SrcReg[i].RelAddr &&
-						file == RC_FILE_ADDRESS) {
-			reader_data->AbortOnRead = 1;
-			return;
-		}
-	}
+	sc_data.File = file;
+	sc_data.Index = index;
+	sc_data.Mask = mask;
+	sc_data.ReaderData = reader_data;
+	rc_for_all_reads_src(reader_data->Writer,
+					src_clobbered_reads_cb, &sc_data);
 }
 
 static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * inst_mov)
 {
 	struct rc_reader_data reader_data;
-	struct src_clobbered_data sc_data;
 	unsigned int i;
 
 	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY ||
@@ -136,12 +147,6 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	    inst_mov->U.I.WriteALUResult ||
 	    inst_mov->U.I.SaturateMode)
 		return;
-
-	sc_data.NumSrcRegs = 1;
-	sc_data.SrcMasks[0] = rc_swizzle_to_writemask(
-					inst_mov->U.I.SrcReg[0].Swizzle);
-
-	reader_data.CbData = &sc_data;
 
 	/* Get a list of all the readers of this MOV instruction. */
 	rc_get_readers_normal(c, inst_mov, &reader_data,
@@ -203,8 +208,8 @@ static int is_src_uniform_constant(struct rc_src_register src,
 
 static void constant_folding_mad(struct rc_instruction * inst)
 {
-	rc_swizzle swz;
-	unsigned int negate;
+	rc_swizzle swz = 0;
+	unsigned int negate= 0;
 
 	if (is_src_uniform_constant(inst->U.I.SrcReg[2], &swz, &negate)) {
 		if (swz == RC_SWIZZLE_ZERO) {
@@ -244,8 +249,8 @@ static void constant_folding_mad(struct rc_instruction * inst)
 
 static void constant_folding_mul(struct rc_instruction * inst)
 {
-	rc_swizzle swz;
-	unsigned int negate;
+	rc_swizzle swz = 0;
+	unsigned int negate = 0;
 
 	if (is_src_uniform_constant(inst->U.I.SrcReg[0], &swz, &negate)) {
 		if (swz == RC_SWIZZLE_ONE) {
@@ -277,8 +282,8 @@ static void constant_folding_mul(struct rc_instruction * inst)
 
 static void constant_folding_add(struct rc_instruction * inst)
 {
-	rc_swizzle swz;
-	unsigned int negate;
+	rc_swizzle swz = 0;
+	unsigned int negate = 0;
 
 	if (is_src_uniform_constant(inst->U.I.SrcReg[0], &swz, &negate)) {
 		if (swz == RC_SWIZZLE_ZERO) {
@@ -448,15 +453,8 @@ static int presub_helper(
 	rc_presub_replace_fn presub_replace)
 {
 	struct rc_reader_data reader_data;
-	struct src_clobbered_data sc_data;
 	unsigned int i;
 
-	sc_data.NumSrcRegs = 2;
-	sc_data.SrcMasks[0] = rc_swizzle_to_writemask(
-					inst_add->U.I.SrcReg[0].Swizzle);
-	sc_data.SrcMasks[1] = rc_swizzle_to_writemask(
-					inst_add->U.I.SrcReg[1].Swizzle);
-	reader_data.CbData = &sc_data;
 	rc_get_readers_normal(c, inst_add, &reader_data, presub_scan_read,
 						is_src_clobbered_scan_write);
 
