@@ -63,11 +63,13 @@ static void radeon_bo_pb_destroy(struct pb_buffer *_buf)
 {
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
 
-	LIST_DEL(&buf->maplist);
-
-	if (buf->bo->data != NULL) {
+	/* If this buffer is on the list of buffers to unmap,
+	 * do the unmapping now.
+	 */
+	if (!LIST_IS_EMPTY(&buf->maplist))
 		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
-	}
+
+	LIST_DEL(&buf->maplist);
 	radeon_bo_reference(buf->mgr->radeon, &buf->bo, NULL);
 	FREE(buf);
 }
