@@ -24,64 +24,28 @@
  *
  */
 
-#ifndef __NOUVEAU_RENDER_H__
-#define __NOUVEAU_RENDER_H__
+#ifndef __NOUVEAU_SCRATCH_H__
+#define __NOUVEAU_SCRATCH_H__
 
-#include "vbo/vbo_context.h"
+#define NOUVEAU_SCRATCH_COUNT 2
+#define NOUVEAU_SCRATCH_SIZE 3*1024*1024
 
-struct nouveau_array_state;
+struct nouveau_scratch_state {
+	struct nouveau_bo *bo[NOUVEAU_SCRATCH_COUNT];
 
-typedef void (*dispatch_t)(struct gl_context *, unsigned int, int, unsigned int);
-typedef unsigned (*extract_u_t)(struct nouveau_array_state *, int, int);
-typedef float (*extract_f_t)(struct nouveau_array_state *, int, int);
-
-struct nouveau_attr_info {
-	int vbo_index;
-	int imm_method;
-	int imm_fields;
-
-	void (*emit)(struct gl_context *, struct nouveau_array_state *, const void *);
-};
-
-struct nouveau_array_state {
-	int attr;
-	int stride, fields, type;
-
-	struct nouveau_bo *bo;
-	unsigned offset;
-	const void *buf;
-
-	extract_u_t extract_u;
-	extract_f_t extract_f;
-};
-
-struct nouveau_swtnl_state {
-	struct nouveau_bo *vbo;
-	unsigned offset;
+	int index;
+	int offset;
 	void *buf;
-	unsigned vertex_count;
-	GLenum primitive;
 };
 
-struct nouveau_render_state {
-	enum {
-		VBO,
-		IMM
-	} mode;
+void *
+nouveau_get_scratch(struct gl_context *ctx, unsigned size,
+		    struct nouveau_bo **bo, unsigned *offset);
 
-	struct nouveau_array_state ib;
-	struct nouveau_array_state attrs[VERT_ATTRIB_MAX];
+void
+nouveau_scratch_init(struct gl_context *ctx);
 
-	/* Maps a HW VBO index or IMM emission order to an index in
-	 * the attrs array above (or -1 if unused). */
-	int map[VERT_ATTRIB_MAX];
-
-	int attr_count;
-	int vertex_size;
-
-	struct nouveau_swtnl_state swtnl;
-};
-
-#define to_render_state(ctx) (&to_nouveau_context(ctx)->render)
+void
+nouveau_scratch_destroy(struct gl_context *ctx);
 
 #endif

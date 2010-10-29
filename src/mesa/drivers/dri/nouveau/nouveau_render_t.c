@@ -200,56 +200,6 @@ get_array_extract(struct nouveau_array_state *a,
 }
 
 /*
- * Returns a pointer to a chunk of <size> bytes long GART memory. <bo>
- * will be updated with the buffer object the memory is located in.
- *
- * If <offset> is provided, it will be updated with the offset within
- * <bo> of the allocated memory. Otherwise the returned memory will
- * always be located right at the beginning of <bo>.
- */
-static inline void *
-get_scratch_vbo(struct gl_context *ctx, unsigned size, struct nouveau_bo **bo,
-		unsigned *offset)
-{
-	struct nouveau_scratch_state *scratch = &to_render_state(ctx)->scratch;
-	void *buf;
-
-	if (scratch->buf && offset &&
-	    size <= RENDER_SCRATCH_SIZE - scratch->offset) {
-		nouveau_bo_ref(scratch->bo[scratch->index], bo);
-
-		buf = scratch->buf + scratch->offset;
-		*offset = scratch->offset;
-		scratch->offset += size;
-
-	} else if (size <= RENDER_SCRATCH_SIZE) {
-		scratch->index = (scratch->index + 1) % RENDER_SCRATCH_COUNT;
-		nouveau_bo_ref(scratch->bo[scratch->index], bo);
-
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
-		buf = scratch->buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
-
-		if (offset)
-			*offset = 0;
-		scratch->offset = size;
-
-	} else {
-		nouveau_bo_new(context_dev(ctx),
-			       NOUVEAU_BO_MAP | NOUVEAU_BO_GART, 0, size, bo);
-
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
-		buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
-
-		if (offset)
-			*offset = 0;
-	}
-
-	return buf;
-}
-
-/*
  * Returns how many vertices you can draw using <n> pushbuf dwords.
  */
 static inline unsigned
@@ -337,15 +287,7 @@ void
 TAG(render_init)(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	struct nouveau_scratch_state *scratch = &render->scratch;
-	int ret, i;
-
-	for (i = 0; i < RENDER_SCRATCH_COUNT; i++) {
-		ret = nouveau_bo_new(context_dev(ctx),
-				     NOUVEAU_BO_MAP | NOUVEAU_BO_GART,
-				     0, RENDER_SCRATCH_SIZE, &scratch->bo[i]);
-		assert(!ret);
-	}
+	int i;
 
 	for (i = 0; i < VERT_ATTRIB_MAX; i++)
 		render->map[i] = -1;

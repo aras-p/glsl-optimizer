@@ -119,6 +119,7 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 
 	nouveau_state_init(ctx);
 	nouveau_bo_state_init(ctx);
+	nouveau_scratch_init(ctx);
 	_mesa_meta_init(ctx);
 	_swrast_CreateContext(ctx);
 	_vbo_CreateContext(ctx);
@@ -163,6 +164,7 @@ nouveau_context_deinit(struct gl_context *ctx)
 	if (nctx->hw.chan)
 		nouveau_channel_free(&nctx->hw.chan);
 
+	nouveau_scratch_destroy(ctx);
 	nouveau_bo_state_destroy(ctx);
 	_mesa_free_context_data(ctx);
 }

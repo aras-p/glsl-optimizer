@@ -28,6 +28,8 @@
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
 
+#define SWTNL_VBO_SIZE 65536
+
 static enum tnl_attr_format
 swtnl_get_format(int type, int fields) {
 	switch (type) {
@@ -158,8 +160,8 @@ swtnl_alloc_vertices(struct gl_context *ctx)
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl;
 
 	nouveau_bo_ref(NULL, &swtnl->vbo);
-	swtnl->buf = get_scratch_vbo(ctx, RENDER_SCRATCH_SIZE,
-				     &swtnl->vbo, NULL);
+	swtnl->buf = nouveau_get_scratch(ctx, SWTNL_VBO_SIZE, &swtnl->vbo,
+					 &swtnl->offset);
 	swtnl->vertex_count = 0;
 }
 
@@ -260,7 +262,7 @@ swtnl_reset_stipple(struct gl_context *ctx)
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl; \
 	int vertex_len = TNL_CONTEXT(ctx)->clipspace.vertex_size;	\
 									\
-	if (swtnl->vertex_count + (n) > swtnl->vbo->size/vertex_len	\
+	if (swtnl->vertex_count + (n) > SWTNL_VBO_SIZE/vertex_len	\
 	    || (swtnl->vertex_count && swtnl->primitive != p))		\
 		swtnl_flush_vertices(ctx);				\
 									\
@@ -280,7 +282,7 @@ swtnl_points(struct gl_context *ctx, GLuint first, GLuint last)
 	while (first < last) {
 		BEGIN_PRIMITIVE(GL_POINTS, last - first);
 
-		count = MIN2(swtnl->vbo->size / vertex_len, last - first);
+		count = MIN2(SWTNL_VBO_SIZE / vertex_len, last - first);
 		for (i = 0; i < count; i++)
 			OUT_VERTEX(first + i);
 

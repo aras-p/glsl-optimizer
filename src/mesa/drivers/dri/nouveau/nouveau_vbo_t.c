@@ -295,7 +295,7 @@ vbo_maybe_split(struct gl_context *ctx, const struct gl_client_array **arrays,
 	if (render->mode == VBO &&
 	    (stride = get_max_client_stride(ctx, arrays)))
 		    vert_avail = MIN2(vert_avail,
-				      RENDER_SCRATCH_SIZE / stride);
+				      NOUVEAU_SCRATCH_SIZE / stride);
 
 	if (max_index - min_index > vert_avail ||
 	    (ib && ib->count > idx_avail)) {
@@ -337,8 +337,8 @@ vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
 			} else {
 				int j, n = max_index - min_index + 1;
 				char *sp = (char *)array->Ptr + delta;
-				char *dp = get_scratch_vbo(ctx, n * a->stride,
-							   &a->bo, &a->offset);
+				char *dp = nouveau_get_scratch(
+					ctx, n * a->stride, &a->bo, &a->offset);
 
 				/* Array in client memory, move it to
 				 * a scratch buffer obj. */

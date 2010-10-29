@@ -30,6 +30,7 @@
 #include "nouveau_screen.h"
 #include "nouveau_state.h"
 #include "nouveau_bo_state.h"
+#include "nouveau_scratch.h"
 #include "nouveau_render.h"
 
 #include "main/bitset.h"
@@ -67,6 +68,7 @@ struct nouveau_context {
 	struct nouveau_hw_state hw;
 	struct nouveau_bo_state bo;
 	struct nouveau_render_state render;
+	struct nouveau_scratch_state scratch;
 
 	struct {
 		GLboolean clear_blocked;
