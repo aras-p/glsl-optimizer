@@ -80,7 +80,7 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 	struct pipe_context *pctx = ctx;
 
 	if (flags & PB_USAGE_UNSYNCHRONIZED) {
-		if (!buf->bo->data && radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 			return NULL;
 		}
 		LIST_DELINIT(&buf->maplist);
@@ -106,18 +106,12 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		goto out;
 	}
 
-	if (buf->bo->data != NULL) {
-		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
-			return NULL;
-		}
-	} else {
-		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
-			return NULL;
-		}
-		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
-			radeon_bo_unmap(buf->mgr->radeon, buf->bo);
-			return NULL;
-		}
+	if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+		return NULL;
+	}
+	if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
+		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
+		return NULL;
 	}
 out:
 	LIST_DELINIT(&buf->maplist);
