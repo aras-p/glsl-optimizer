@@ -62,7 +62,7 @@ struct radeon_bo {
 	unsigned			handle;
 	unsigned			size;
 	unsigned			alignment;
-	unsigned			map_count;
+	int				map_count;
 	void				*data;
 	struct list_head		fencedlist;
 	unsigned			fence;
