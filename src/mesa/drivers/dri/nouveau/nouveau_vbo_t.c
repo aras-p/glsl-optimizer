@@ -31,59 +31,11 @@
 #include "main/image.h"
 
 /* Arbitrary pushbuf length we can assume we can get with a single
- * WAIT_RING. */
+ * call to WAIT_RING. */
 #define PUSHBUF_DWORDS 65536
 
-/* Functions to set up struct nouveau_array_state from something like
- * a GL array or index buffer. */
-
-static void
-vbo_init_array(struct nouveau_array_state *a, int attr, int stride,
-	       int fields, int type, struct gl_buffer_object *obj,
-	       const void *ptr, GLboolean map)
-{
-	a->attr = attr;
-	a->stride = stride;
-	a->fields = fields;
-	a->type = type;
-
-	if (_mesa_is_bufferobj(obj)) {
-		nouveau_bo_ref(to_nouveau_bufferobj(obj)->bo, &a->bo);
-		a->offset = (intptr_t)ptr;
-
-		if (map) {
-			nouveau_bo_map(a->bo, NOUVEAU_BO_RD);
-			a->buf = a->bo->map + a->offset;
-		} else {
-			a->buf = NULL;
-		}
-
-	} else {
-		nouveau_bo_ref(NULL, &a->bo);
-		a->offset = 0;
-
-		if (map)
-			a->buf = ptr;
-		else
-			a->buf = NULL;
-	}
-
-	if (a->buf)
-		get_array_extract(a, &a->extract_u, &a->extract_f);
-}
-
-static void
-vbo_deinit_array(struct nouveau_array_state *a)
-{
-	if (a->bo) {
-		if (a->bo->map)
-			nouveau_bo_unmap(a->bo);
-		nouveau_bo_ref(NULL, &a->bo);
-	}
-
-	a->buf = NULL;
-	a->fields = 0;
-}
+/* Functions to turn GL arrays or index buffers into nouveau_array
+ * structures. */
 
 static int
 get_array_stride(struct gl_context *ctx, const struct gl_client_array *a)
@@ -106,17 +58,17 @@ vbo_init_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 	int i, attr;
 
 	if (ib)
-		vbo_init_array(&render->ib, 0, 0, ib->count, ib->type,
-			       ib->obj, ib->ptr, GL_TRUE);
+		nouveau_init_array(&render->ib, 0, 0, ib->count, ib->type,
+				   ib->obj, ib->ptr, GL_TRUE);
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		const struct gl_client_array *array = arrays[attr];
 
-		vbo_init_array(&render->attrs[attr], attr,
-			       get_array_stride(ctx, array),
-			       array->Size, array->Type,
-			       array->BufferObj,
-			       array->Ptr, imm);
+		nouveau_init_array(&render->attrs[attr], attr,
+				   get_array_stride(ctx, array),
+				   array->Size, array->Type,
+				   array->BufferObj,
+				   array->Ptr, imm);
 	}
 }
 
@@ -128,12 +80,12 @@ vbo_deinit_arrays(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 	int i, attr;
 
 	if (ib)
-		vbo_deinit_array(&render->ib);
+		nouveau_cleanup_array(&render->ib);
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
-		struct nouveau_array_state *a = &render->attrs[attr];
+		struct nouveau_array *a = &render->attrs[attr];
 
-		vbo_deinit_array(a);
+		nouveau_deinit_array(a);
 		render->map[i] = -1;
 	}
 
@@ -162,12 +114,13 @@ vbo_choose_render_mode(struct gl_context *ctx, const struct gl_client_array **ar
 }
 
 static void
-vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays, int attr)
+vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays,
+	      int attr)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_render_state *render = to_render_state(ctx);
 	const struct gl_client_array *array = arrays[attr];
-	struct nouveau_array_state *a = &render->attrs[attr];
+	struct nouveau_array *a = &render->attrs[attr];
 	RENDER_LOCALS(ctx);
 
 	if (!array->StrideB) {
@@ -176,11 +129,11 @@ vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays, int
 			return;
 
 		/* Constant attribute. */
-		vbo_init_array(a, attr, array->StrideB, array->Size,
-			       array->Type, array->BufferObj, array->Ptr,
-			       GL_TRUE);
+		nouveau_init_array(a, attr, array->StrideB, array->Size,
+				   array->Type, array->BufferObj, array->Ptr,
+				   GL_TRUE);
 		EMIT_IMM(ctx, a, 0);
-		vbo_deinit_array(a);
+		nouveau_deinit_array(a);
 
 	} else {
 		/* Varying attribute. */
@@ -314,7 +267,7 @@ vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		const struct gl_client_array *array = arrays[attr];
-		struct nouveau_array_state *a = &render->attrs[attr];
+		struct nouveau_array *a = &render->attrs[attr];
 		unsigned delta = (basevertex + min_index)
 			* array->StrideB;
 
@@ -346,11 +299,9 @@ vbo_draw_vbo(struct gl_context *ctx, const struct gl_client_array **arrays,
 	     GLuint max_index)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	dispatch_t dispatch;
-	int delta = -min_index, basevertex = 0, i;
+	dispatch_t dispatch = get_array_dispatch(&to_render_state(ctx)->ib);
+	int i, delta = -min_index, basevertex = 0;
 	RENDER_LOCALS(ctx);
-
-	get_array_dispatch(&to_render_state(ctx)->ib, &dispatch);
 
 	TAG(render_set_format)(ctx);
 
@@ -376,7 +327,7 @@ vbo_draw_vbo(struct gl_context *ctx, const struct gl_client_array **arrays,
 /* Immediate rendering path. */
 
 static unsigned
-extract_id(struct nouveau_array_state *a, int i, int j)
+extract_id(struct nouveau_array *a, int i, int j)
 {
 	return j;
 }
@@ -418,7 +369,8 @@ vbo_draw_imm(struct gl_context *ctx, const struct gl_client_array **arrays,
 /* draw_prims entry point when we're doing hw-tnl. */
 
 static void
-TAG(vbo_render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
+TAG(vbo_render_prims)(struct gl_context *ctx,
+		      const struct gl_client_array **arrays,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLboolean index_bounds_valid,

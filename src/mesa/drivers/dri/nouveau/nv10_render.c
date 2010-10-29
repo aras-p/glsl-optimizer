@@ -32,7 +32,7 @@
 #define NUM_VERTEX_ATTRS 8
 
 static void
-nv10_emit_material(struct gl_context *ctx, struct nouveau_array_state *a,
+nv10_emit_material(struct gl_context *ctx, struct nouveau_array *a,
 		   const void *v);
 
 /* Vertex attribute format. */
@@ -115,7 +115,7 @@ nv10_render_set_format(struct gl_context *ctx)
 
 	FOR_EACH_ATTR(render, i, attr) {
 		if (attr >= 0) {
-			struct nouveau_array_state *a = &render->attrs[attr];
+			struct nouveau_array *a = &render->attrs[attr];
 
 			hw_format = a->stride << 8 |
 				a->fields << 4 |
@@ -143,7 +143,7 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 	int i, attr;
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
-		struct nouveau_array_state *a = &render->attrs[attr];
+		struct nouveau_array *a = &render->attrs[attr];
 
 		nouveau_bo_markl(bctx, celsius,
 				 NV10TCL_VTXBUF_ADDRESS(i),

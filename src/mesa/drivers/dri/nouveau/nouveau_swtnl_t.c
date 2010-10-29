@@ -118,7 +118,7 @@ swtnl_choose_attrs(struct gl_context *ctx)
 	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
 		struct nouveau_attr_info *ha = &TAG(vertex_attrs)[i];
 		struct swtnl_attr_info *sa = &swtnl_attrs[i];
-		struct nouveau_array_state *a = &render->attrs[i];
+		struct nouveau_array *a = &render->attrs[i];
 
 		if (!sa->fields)
 			continue; /* Unsupported attribute. */
@@ -165,14 +165,15 @@ swtnl_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_swtnl_state *swtnl = &render->swtnl;
+	struct tnl_clipspace *vtx = &TNL_CONTEXT(ctx)->clipspace;
 	int i;
 
-	for (i = 0; i < render->attr_count; i++) {
-		int attr = render->map[i];
+	for (i = 0; i < vtx->attr_count; i++) {
+		struct tnl_clipspace_attr *ta = &vtx->attr[i];
+		struct nouveau_array *a = &render->attrs[ta->attrib];
 
-		if (attr >= 0)
-			nouveau_bo_ref(swtnl->vbo,
-				       &render->attrs[attr].bo);
+		nouveau_bo_ref(swtnl->vbo, &a->bo);
+		a->offset = swtnl->offset + ta->vertoffset;
 	}
 
 	TAG(render_bind_vertices)(ctx);

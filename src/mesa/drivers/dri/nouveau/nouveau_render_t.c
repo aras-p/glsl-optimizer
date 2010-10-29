@@ -100,8 +100,8 @@
 /*
  * Select an appropriate dispatch function for the given index buffer.
  */
-static void
-get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
+static dispatch_t
+get_array_dispatch(struct nouveau_array *a)
 {
 	if (!a->fields) {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -114,7 +114,7 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(L, ctx, start, delta, n);
 		};
 
-		*dispatch = f;
+		return f;
 
 	} else if (a->type == GL_UNSIGNED_INT) {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -127,7 +127,7 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(I32, ctx, start, delta, n);
 		};
 
-		*dispatch = f;
+		return f;
 
 	} else {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -141,61 +141,7 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(I16, ctx, start, delta, n & ~1);
 		};
 
-		*dispatch = f;
-	}
-}
-
-/*
- * Select appropriate element extraction functions for the given
- * array.
- */
-static void
-get_array_extract(struct nouveau_array_state *a,
-		  extract_u_t *extract_u, extract_f_t *extract_f)
-{
-#define EXTRACT(in_t, out_t, k)						\
-	({								\
-		auto out_t f(struct nouveau_array_state *, int, int);	\
-		out_t f(struct nouveau_array_state *a, int i, int j) {	\
-			in_t x = ((in_t *)(a->buf + i * a->stride))[j];	\
-									\
-			return (out_t)x / (k);				\
-		};							\
-		f;							\
-	});
-
-	switch (a->type) {
-	case GL_BYTE:
-		*extract_u = EXTRACT(char, unsigned, 1);
-		*extract_f = EXTRACT(char, float, SCHAR_MAX);
-		break;
-	case GL_UNSIGNED_BYTE:
-		*extract_u = EXTRACT(unsigned char, unsigned, 1);
-		*extract_f = EXTRACT(unsigned char, float, UCHAR_MAX);
-		break;
-	case GL_SHORT:
-		*extract_u = EXTRACT(short, unsigned, 1);
-		*extract_f = EXTRACT(short, float, SHRT_MAX);
-		break;
-	case GL_UNSIGNED_SHORT:
-		*extract_u = EXTRACT(unsigned short, unsigned, 1);
-		*extract_f = EXTRACT(unsigned short, float, USHRT_MAX);
-		break;
-	case GL_INT:
-		*extract_u = EXTRACT(int, unsigned, 1);
-		*extract_f = EXTRACT(int, float, INT_MAX);
-		break;
-	case GL_UNSIGNED_INT:
-		*extract_u = EXTRACT(unsigned int, unsigned, 1);
-		*extract_f = EXTRACT(unsigned int, float, UINT_MAX);
-		break;
-	case GL_FLOAT:
-		*extract_u = EXTRACT(float, unsigned, 1.0 / UINT_MAX);
-		*extract_f = EXTRACT(float, float, 1);
-		break;
-
-	default:
-		assert(0);
+		return f;
 	}
 }
 
@@ -240,7 +186,7 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 #include "nouveau_swtnl_t.c"
 
 static void
-TAG(emit_material)(struct gl_context *ctx, struct nouveau_array_state *a,
+TAG(emit_material)(struct gl_context *ctx, struct nouveau_array *a,
 		   const void *v)
 {
 	const int attr = a->attr - VERT_ATTRIB_GENERIC0;
