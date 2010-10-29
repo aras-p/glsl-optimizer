@@ -51,13 +51,15 @@
  * \param format  either GL_RGBA or GL_BGRA
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
+ * \param integer  integer-valued values (will not be normalized to [-1,1])
  * \param ptr  the address (or offset inside VBO) of the array data
  */
 static void
 update_array(struct gl_context *ctx, struct gl_client_array *array,
              GLbitfield dirtyBit, GLsizei elementSize,
              GLint size, GLenum type, GLenum format,
-             GLsizei stride, GLboolean normalized, const GLvoid *ptr)
+             GLsizei stride, GLboolean normalized, GLboolean integer,
+             const GLvoid *ptr)
 {
    ASSERT(format == GL_RGBA || format == GL_BGRA);
 
@@ -142,7 +144,8 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
+                elementSize, size, type, GL_RGBA, stride, GL_FALSE,
+                GL_FALSE, ptr);
 }
 
 
@@ -193,7 +196,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
-                elementSize, 3, type, GL_RGBA, stride, GL_TRUE, ptr);
+                elementSize, 3, type, GL_RGBA, stride, GL_TRUE, GL_FALSE, ptr);
 }
 
 
@@ -272,7 +275,8 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
-                elementSize, size, type, format, stride, GL_TRUE, ptr);
+                elementSize, size, type, format, stride, GL_TRUE, GL_FALSE,
+                ptr);
 }
 
 
@@ -304,7 +308,8 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
+                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
+                ptr);
 }
 
 
@@ -342,7 +347,8 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
+                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
+                ptr);
 }
 
 
@@ -417,7 +423,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
-                elementSize, size, type, format, stride, GL_TRUE, ptr);
+                elementSize, size, type, format, stride, GL_TRUE, GL_FALSE,
+                ptr);
 }
 
 
@@ -480,13 +487,16 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
    update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
                 _NEW_ARRAY_TEXCOORD(unit),
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
+                elementSize, size, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
+                ptr);
 }
 
 
 void GLAPIENTRY
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
+   /* see table 2.4 edits in GL_EXT_gpu_shader4 spec: */
+   const GLboolean integer = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -497,7 +507,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 
    update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
                 sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
-                stride, GL_FALSE, ptr);
+                stride, GL_FALSE, integer, ptr);
 }
 
 
@@ -528,7 +538,8 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
+                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, GL_FALSE,
+                ptr);
 }
 
 
@@ -607,7 +618,8 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, GL_FALSE,
+                ptr);
 }
 #endif
 
@@ -706,13 +718,14 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, GL_FALSE,
+                ptr);
 }
 #endif
 
 
 /**
- * New in GL3:
+ * GL_EXT_gpu_shader4 / GL 3.0.
  * Set an integer-valued vertex attribute array.
  * Note that these arrays DO NOT alias the conventional GL vertex arrays
  * (position, normal, color, fog, texcoord, etc).
@@ -721,10 +734,60 @@ void GLAPIENTRY
 _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
                            GLsizei stride, const GLvoid *ptr)
 {
-   /* NOTE: until we have integer-valued vertex attributes, just
-    * route this through the regular glVertexAttribPointer() function.
-    */
-   _mesa_VertexAttribPointerARB(index, size, type, GL_FALSE, stride, ptr);
+   const GLboolean normalized = GL_FALSE;
+   const GLboolean integer = GL_TRUE;
+   const GLenum format = GL_RGBA;
+   GLsizei elementSize;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(index)");
+      return;
+   }
+
+   if (size < 1 || size > 4) {
+      if (!ctx->Extensions.EXT_vertex_array_bgra || size != GL_BGRA) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(size)");
+         return;
+      }
+   }
+
+   if (stride < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(stride)");
+      return;
+   }
+
+   /* check for valid 'type' and compute StrideB right away */
+   /* NOTE: more types are supported here than in the NV extension */
+   switch (type) {
+      case GL_BYTE:
+         elementSize = size * sizeof(GLbyte);
+         break;
+      case GL_UNSIGNED_BYTE:
+         elementSize = size * sizeof(GLubyte);
+         break;
+      case GL_SHORT:
+         elementSize = size * sizeof(GLshort);
+         break;
+      case GL_UNSIGNED_SHORT:
+         elementSize = size * sizeof(GLushort);
+         break;
+      case GL_INT:
+         elementSize = size * sizeof(GLint);
+         break;
+      case GL_UNSIGNED_INT:
+         elementSize = size * sizeof(GLuint);
+         break;
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribIPointer(type)" );
+         return;
+   }
+
+   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                _NEW_ARRAY_ATTRIB(index),
+                elementSize, size, type, format, stride,
+                normalized, integer, ptr);
 }
 
 
@@ -804,6 +867,11 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
       return array->Normalized;
    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
       return array->BufferObj->Name;
+   case GL_VERTEX_ATTRIB_ARRAY_INTEGER:
+      if (ctx->Extensions.EXT_gpu_shader4) {
+         return array->Integer;
+      }
+      /* fall-through */
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=0x%x)", caller, pname);
       return 0;
@@ -1351,6 +1419,7 @@ _mesa_copy_client_array(struct gl_context *ctx,
    dst->Ptr = src->Ptr;
    dst->Enabled = src->Enabled;
    dst->Normalized = src->Normalized;
+   dst->Integer = src->Integer;
    dst->_ElementSize = src->_ElementSize;
    _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
    dst->_MaxElement = src->_MaxElement;
