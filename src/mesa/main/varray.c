@@ -719,13 +719,12 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
  */
 void GLAPIENTRY
 _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
-                           GLboolean normalized,
                            GLsizei stride, const GLvoid *ptr)
 {
    /* NOTE: until we have integer-valued vertex attributes, just
     * route this through the regular glVertexAttribPointer() function.
     */
-   _mesa_VertexAttribPointerARB(index, size, type, normalized, stride, ptr);
+   _mesa_VertexAttribPointerARB(index, size, type, GL_FALSE, stride, ptr);
 }
 
 

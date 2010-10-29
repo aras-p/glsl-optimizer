@@ -118,7 +118,6 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 
 void GLAPIENTRY
 _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
-                           GLboolean normalized,
                            GLsizei stride, const GLvoid *ptr);
 
 
