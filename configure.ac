@@ -1706,25 +1706,51 @@ echo "        exec_prefix:     $exec_prefix"
 echo "        libdir:          $libdir"
 echo "        includedir:      $includedir"
 
+dnl API info
+echo ""
+echo "        OpenGL:          $enable_opengl (ES1: $enable_gles1 ES2: $enable_gles2)"
+echo "        GLES overlay:    $enable_gles_overlay"
+echo "        OpenVG:          $enable_openvg"
+
 dnl Driver info
 echo ""
 echo "        Driver:          $mesa_driver"
-if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
-    echo "        OSMesa:          lib$OSMESA_LIB"
-else
-    echo "        OSMesa:          no"
+if test "$mesa_driver" != no; then
+    if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
+        echo "        OSMesa:          lib$OSMESA_LIB"
+    else
+        echo "        OSMesa:          no"
+    fi
+    if test "$mesa_driver" = dri; then
+        # cleanup the drivers var
+        dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+        if test "x$DRI_DIRS" = x; then
+            echo "        DRI drivers:     no"
+        else
+            echo "        DRI drivers:     $dri_dirs"
+        fi
+        echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
+        echo "        Use XCB:         $enable_xcb"
+    fi
 fi
-if test "$mesa_driver" = dri; then
-    # cleanup the drivers var
-    dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
-if test "x$DRI_DIRS" = x; then
-    echo "        DRI drivers:     no"
-else
-    echo "        DRI drivers:     $dri_dirs"
+echo ""
+echo "        GLU:             $enable_glu"
+echo "        GLw:             $enable_glw (Motif: $enable_motif)"
+echo "        glut:            $enable_glut"
+
+dnl EGL
+echo ""
+echo "        EGL:             $enable_egl"
+if test "$enable_egl" = yes; then
+    echo "        EGL platforms:   $EGL_PLATFORMS"
+    echo "        EGL drivers:     $EGL_DRIVERS_DIRS"
+    if test "$enable_gallium" = yes -a "$HAVE_ST_EGL" = yes; then
+        echo "        EGL tracker:     yes"
+        echo "        EGL client APIs:$EGL_CLIENT_APIS"
+    else
+        echo "        EGL tracker:     no"
+    fi
 fi
-    echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
-fi
-echo "        Use XCB:         $enable_xcb"
 
 echo ""
 if test "x$MESA_LLVM" = x1; then
@@ -1754,15 +1780,6 @@ dnl Libraries
 echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
-if test "$enable_egl" = yes; then
-    echo "        EGL:             $EGL_DRIVERS_DIRS"
-    echo "        EGL platforms:   $EGL_PLATFORMS"
-else
-    echo "        EGL:             no"
-fi
-echo "        GLU:             $enable_glu"
-echo "        GLw:             $enable_glw (Motif: $enable_motif)"
-echo "        glut:            $enable_glut"
 
 dnl Compiler options
 # cleanup the CFLAGS/CXXFLAGS/DEFINES vars
