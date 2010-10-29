@@ -978,7 +978,6 @@ _mesa_UnlockArraysEXT( void )
 
 
 /* GL_EXT_multi_draw_arrays */
-/* Somebody forgot to spec the first and count parameters as const! <sigh> */
 void GLAPIENTRY
 _mesa_MultiDrawArraysEXT( GLenum mode, const GLint *first,
                           const GLsizei *count, GLsizei primcount )
