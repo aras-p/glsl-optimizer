@@ -3350,7 +3350,7 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
-       srcType == GL_INT) {
+       srcType == GL_SHORT) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
