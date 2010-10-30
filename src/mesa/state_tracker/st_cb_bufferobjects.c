@@ -279,6 +279,12 @@ st_bufferobj_map_range(struct gl_context *ctx, GLenum target,
 
    if (access & GL_MAP_FLUSH_EXPLICIT_BIT)
       flags |= PIPE_TRANSFER_FLUSH_EXPLICIT;
+
+   if (access & GL_MAP_INVALIDATE_RANGE_BIT)
+      flags |= PIPE_TRANSFER_DISCARD;
+
+   if (access & GL_MAP_INVALIDATE_BUFFER_BIT)
+      flags |= PIPE_TRANSFER_DISCARD;
    
    if (access & GL_MAP_UNSYNCHRONIZED_BIT)
       flags |= PIPE_TRANSFER_UNSYNCHRONIZED;
