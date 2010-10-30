@@ -129,6 +129,7 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
 
    /* FIXME create a non-default sampler view from the pipe_surface? */
    pipe_resource_reference(&stObj->pt, ps->texture);
+   pipe_sampler_view_reference(&stObj->sampler_view, NULL);
    pipe_resource_reference(&stImage->pt, stObj->pt);
 
    stObj->width0 = ps->width;
