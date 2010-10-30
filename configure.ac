@@ -493,6 +493,16 @@ AC_ARG_ENABLE([openvg],
     [enable_openvg="$enableval"],
     [enable_openvg=no])
 
+dnl smooth the transition; should be removed eventually
+if test "x$enable_openvg" = xno; then
+    case "x$with_state_trackers" in
+    x*vega*)
+        AC_MSG_WARN([vega state tracker is enabled without --enable-openvg])
+        enable_openvg=yes
+        ;;
+    esac
+fi
+
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
         "x$enable_gles2" = xno -a \
@@ -1397,6 +1407,11 @@ yes)
             PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
             PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
             HAVE_ST_XORG="yes"
+            ;;
+        vega)
+            if test "x$enable_openvg" != xyes; then
+                AC_MSG_ERROR([cannot build vega state tracker without --enable-openvg])
+            fi
             ;;
         esac
 
