@@ -478,7 +478,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
             _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
-            _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
+            if (ctx->Extensions.ARB_texture_cube_map)
+               _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
