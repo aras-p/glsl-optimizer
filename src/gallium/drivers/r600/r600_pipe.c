@@ -273,6 +273,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_TIMER_QUERY:
 	case PIPE_CAP_STREAM_OUTPUT:
+	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 		return 0;
 
