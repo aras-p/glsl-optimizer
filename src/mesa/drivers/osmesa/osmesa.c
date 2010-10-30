@@ -1327,10 +1327,12 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * that converts rendering from CHAN_BITS to the user-requested channel
     * size.
     */
-   osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
-   _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
-   _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
-   assert(osmesa->rb->RefCount == 2);
+   if (!osmesa->rb) {
+      osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
+      _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
+      _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+      assert(osmesa->rb->RefCount == 2);
+   }
 
    /* Set renderbuffer fields.  Set width/height = 0 to force 
     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
