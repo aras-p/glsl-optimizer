@@ -30,6 +30,21 @@
 
 #include "main/bufferobj.h"
 
+static inline char *
+get_bufferobj_map(struct gl_buffer_object *obj, unsigned flags)
+{
+	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
+	void *map = NULL;
+
+	if (nbo->bo) {
+		nouveau_bo_map(nbo->bo, flags);
+		map = nbo->bo->map;
+		nouveau_bo_unmap(nbo->bo);
+	}
+
+	return map;
+}
+
 static struct gl_buffer_object *
 nouveau_bufferobj_new(struct gl_context *ctx, GLuint buffer, GLenum target)
 {
@@ -70,11 +85,8 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 			     size, &nbo->bo);
 	assert(!ret);
 
-	if (data) {
-		nouveau_bo_map(nbo->bo, NOUVEAU_BO_WR);
-		memcpy(nbo->bo->map, data, size);
-		nouveau_bo_unmap(nbo->bo);
-	}
+	if (data)
+		memcpy(get_bufferobj_map(obj, NOUVEAU_BO_WR), data, size);
 
 	return GL_TRUE;
 }
@@ -84,11 +96,7 @@ nouveau_bufferobj_subdata(struct gl_context *ctx, GLenum target, GLintptrARB off
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj)
 {
-	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
-
-	nouveau_bo_map(nbo->bo, NOUVEAU_BO_WR);
-	memcpy(nbo->bo->map + offset, data, size);
-	nouveau_bo_unmap(nbo->bo);
+	memcpy(get_bufferobj_map(obj, NOUVEAU_BO_WR) + offset, data, size);
 }
 
 static void
@@ -96,44 +104,48 @@ nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLenum target, GLintptrARB
 			   GLsizeiptrARB size, GLvoid *data,
 			   struct gl_buffer_object *obj)
 {
-	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
-
-	nouveau_bo_map(nbo->bo, NOUVEAU_BO_RD);
-	memcpy(data, nbo->bo->map + offset, size);
-	nouveau_bo_unmap(nbo->bo);
+	memcpy(data, get_bufferobj_map(obj, NOUVEAU_BO_RD) + offset, size);
 }
 
 static void *
 nouveau_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
 		   struct gl_buffer_object *obj)
 {
-	return ctx->Driver.MapBufferRange(ctx, target, 0, obj->Size, access,
+	unsigned flags = 0;
+
+	if (access == GL_READ_ONLY_ARB ||
+	    access == GL_READ_WRITE_ARB)
+		flags |= GL_MAP_READ_BIT;
+	if (access == GL_WRITE_ONLY_ARB ||
+	    access == GL_READ_WRITE_ARB)
+		flags |= GL_MAP_WRITE_BIT;
+
+	return ctx->Driver.MapBufferRange(ctx, target, 0, obj->Size, flags,
 					  obj);
 }
 
 static void *
 nouveau_bufferobj_map_range(struct gl_context *ctx, GLenum target, GLintptr offset,
-			    GLsizeiptr length, GLenum access,
+			    GLsizeiptr length, GLbitfield access,
 			    struct gl_buffer_object *obj)
 {
-	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
-	uint32_t flags = 0;
+	unsigned flags = 0;
+	char *map;
 
 	assert(!obj->Pointer);
 
-	if (!nbo->bo)
+	if (access & GL_MAP_READ_BIT)
+		flags |= NOUVEAU_BO_RD;
+	if (access & GL_MAP_WRITE_BIT)
+		flags |= NOUVEAU_BO_WR;
+	if (access & GL_MAP_UNSYNCHRONIZED_BIT)
+		flags |= NOUVEAU_BO_NOSYNC;
+
+	map = get_bufferobj_map(obj, flags);
+	if (!map)
 		return NULL;
 
-	if (access == GL_READ_ONLY_ARB ||
-	    access == GL_READ_WRITE_ARB)
-		flags |= NOUVEAU_BO_RD;
-	if (access == GL_WRITE_ONLY_ARB ||
-	    access == GL_READ_WRITE_ARB)
-		flags |= NOUVEAU_BO_WR;
-
-	nouveau_bo_map_range(nbo->bo, offset, length, flags);
-
-	obj->Pointer = nbo->bo->map;
+	obj->Pointer = map + offset;
 	obj->Offset = offset;
 	obj->Length = length;
 	obj->AccessFlags = access;
@@ -144,11 +156,7 @@ nouveau_bufferobj_map_range(struct gl_context *ctx, GLenum target, GLintptr offs
 static GLboolean
 nouveau_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_object *obj)
 {
-	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
-
 	assert(obj->Pointer);
-
-	nouveau_bo_unmap(nbo->bo);
 
 	obj->Pointer = NULL;
 	obj->Offset = 0;
