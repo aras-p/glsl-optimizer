@@ -118,6 +118,10 @@ void rc_pair_foreach_source_that_rgb_reads(
 unsigned int rc_source_type_that_arg_reads(
 	unsigned int source,
 	unsigned int swizzle);
+
+struct rc_pair_instruction_source * rc_pair_get_src(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_arg * arg);
 /*@}*/
 
 

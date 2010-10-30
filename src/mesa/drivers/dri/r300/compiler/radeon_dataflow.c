@@ -139,7 +139,38 @@ static void pair_sub_for_all_args(
 	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
 
 	for(i = 0; i < info->NumSrcRegs; i++) {
-		cb(userdata, fullinst, &sub->Arg[i]);
+		unsigned int src_type = rc_source_type_that_arg_reads(
+				sub->Arg[i].Source, sub->Arg[i].Swizzle);
+		if (src_type == RC_PAIR_SOURCE_NONE)
+			continue;
+
+		if (sub->Arg[i].Source == RC_PAIR_PRESUB_SRC) {
+			unsigned int presub_type;
+			unsigned int presub_src_count;
+			struct rc_pair_instruction_source * src_array;
+			unsigned int j;
+			if (src_type & RC_PAIR_SOURCE_RGB) {
+				presub_type = fullinst->
+					U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index;
+				src_array = fullinst->U.P.RGB.Src;
+			} else {
+				presub_type = fullinst->
+					U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Index;
+				src_array = fullinst->U.P.Alpha.Src;
+			}
+			presub_src_count
+				= rc_presubtract_src_reg_count(presub_type);
+			for(j = 0; j < presub_src_count; j++) {
+				cb(userdata, fullinst, &sub->Arg[i],
+								&src_array[j]);
+			}
+		} else {
+			struct rc_pair_instruction_source * src =
+				rc_pair_get_src(&fullinst->U.P, &sub->Arg[i]);
+			if (src) {
+				cb(userdata, fullinst, &sub->Arg[i], src);
+			}
+		}
 	}
 }
 
@@ -430,11 +461,20 @@ static rc_opcode get_flow_control_inst(struct rc_instruction * inst)
 
 }
 
+union get_readers_read_cb {
+	rc_read_src_fn I;
+	rc_pair_read_arg_fn P;
+};
+
 struct get_readers_callback_data {
 	struct radeon_compiler * C;
 	struct rc_reader_data * ReaderData;
-	rc_read_src_fn ReadCB;
+	rc_read_src_fn ReadNormalCB;
+	rc_pair_read_arg_fn ReadPairCB;
 	rc_read_write_mask_fn WriteCB;
+	rc_register_file DstFile;
+	unsigned int DstIndex;
+	unsigned int DstMask;
 	unsigned int AliveWriteMask;
 };
 
@@ -443,7 +483,7 @@ static void add_reader(
 	struct rc_reader_data * data,
 	struct rc_instruction * inst,
 	unsigned int mask,
-	struct rc_src_register * src)
+	void * arg_or_src)
 {
 	struct rc_reader * new;
 	memory_pool_array_reserve(pool, struct rc_reader, data->Readers,
@@ -451,7 +491,74 @@ static void add_reader(
 	new = &data->Readers[data->ReaderCount++];
 	new->Inst = inst;
 	new->WriteMask = mask;
-	new->Src = src;
+	if (inst->Type == RC_INSTRUCTION_NORMAL) {
+		new->U.Src = arg_or_src;
+	} else {
+		new->U.Arg = arg_or_src;
+	}
+}
+
+static unsigned int get_readers_read_callback(
+	struct get_readers_callback_data * cb_data,
+	unsigned int has_rel_addr,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int swizzle)
+{
+	unsigned int shared_mask, read_mask;
+
+	if (has_rel_addr) {
+		cb_data->ReaderData->Abort = 1;
+		return RC_MASK_NONE;
+	}
+
+	shared_mask = rc_src_reads_dst_mask(file, index, swizzle,
+		cb_data->DstFile, cb_data->DstIndex, cb_data->AliveWriteMask);
+
+	if (shared_mask == RC_MASK_NONE)
+		return shared_mask;
+
+	/* If we make it this far, it means that this source reads from the
+	 * same register written to by d->ReaderData->Writer. */
+
+	if (cb_data->ReaderData->AbortOnRead) {
+		cb_data->ReaderData->Abort = 1;
+		return shared_mask;
+	}
+
+	read_mask = rc_swizzle_to_writemask(swizzle);
+	/* XXX The behavior in this case should be configurable. */
+	if ((read_mask & cb_data->AliveWriteMask) != read_mask) {
+		cb_data->ReaderData->Abort = 1;
+		return shared_mask;
+	}
+
+	return shared_mask;
+}
+
+static void get_readers_pair_read_callback(
+	void * userdata,
+	struct rc_instruction * inst,
+	struct rc_pair_instruction_arg * arg,
+	struct rc_pair_instruction_source * src)
+{
+	unsigned int shared_mask;
+	struct get_readers_callback_data * d = userdata;
+
+	shared_mask = get_readers_read_callback(d,
+				0 /*Pair Instructions don't use RelAddr*/,
+				src->File, src->Index, arg->Swizzle);
+
+	if (shared_mask == RC_MASK_NONE)
+		return;
+
+	if (d->ReadPairCB)
+		d->ReadPairCB(d->ReaderData, inst, arg, src);
+
+	if (d->ReaderData->Abort)
+		return;
+
+	add_reader(&d->C->Pool, d->ReaderData, inst, shared_mask, arg);
 }
 
 /**
@@ -464,37 +571,18 @@ static void get_readers_normal_read_callback(
 	struct rc_src_register * src)
 {
 	struct get_readers_callback_data * d = userdata;
-	unsigned int read_mask;
 	unsigned int shared_mask;
 
-	if (src->RelAddr)
-		d->ReaderData->Abort = 1;
-
-	shared_mask = rc_src_reads_dst_mask(src->File, src->Index,
-		src->Swizzle,
-		d->ReaderData->Writer->U.I.DstReg.File,
-		d->ReaderData->Writer->U.I.DstReg.Index,
-		d->AliveWriteMask);
+	shared_mask = get_readers_read_callback(d,
+			src->RelAddr, src->File, src->Index, src->Swizzle);
 
 	if (shared_mask == RC_MASK_NONE)
 		return;
+	/* The callback function could potentially clear d->ReaderData->Abort,
+	 * so we need to call it before we return. */
+	if (d->ReadNormalCB)
+		d->ReadNormalCB(d->ReaderData, inst, src);
 
-	/* If we make it this far, it means that this source reads from the
-	 * same register written to by d->ReaderData->Writer. */
-
-	if (d->ReaderData->AbortOnRead) {
-		d->ReaderData->Abort = 1;
-		return;
-	}
-
-	read_mask = rc_swizzle_to_writemask(src->Swizzle);
-	/* XXX The behavior in this case should be configurable. */
-	if ((read_mask & d->AliveWriteMask) != read_mask) {
-		d->ReaderData->Abort = 1;
-		return;
-	}
-
-	d->ReadCB(d->ReaderData, inst, src);
 	if (d->ReaderData->Abort)
 		return;
 
@@ -515,10 +603,8 @@ static void get_readers_write_callback(
 {
 	struct get_readers_callback_data * d = userdata;
 
-	if (index == d->ReaderData->Writer->U.I.DstReg.Index
-		&& file == d->ReaderData->Writer->U.I.DstReg.File) {
-			unsigned int shared_mask = mask
-				& d->ReaderData->Writer->U.I.DstReg.WriteMask;
+	if (index == d->DstIndex && file == d->DstFile) {
+		unsigned int shared_mask = mask & d->DstMask;
 		if (d->ReaderData->InElse) {
 			if (shared_mask & d->AliveWriteMask) {
 				/* We set AbortOnRead here because the
@@ -537,7 +623,90 @@ static void get_readers_write_callback(
 		}
 	}
 
-	d->WriteCB(d->ReaderData, inst, file, index, mask);
+	if(d->WriteCB)
+		d->WriteCB(d->ReaderData, inst, file, index, mask);
+}
+
+static void get_readers_for_single_write(
+	void * userdata,
+	struct rc_instruction * writer,
+	rc_register_file dst_file,
+	unsigned int dst_index,
+	unsigned int dst_mask)
+{
+	struct rc_instruction * tmp;
+	unsigned int branch_depth = 0;
+	struct get_readers_callback_data * d = userdata;
+
+	d->ReaderData->Writer = writer;
+	d->ReaderData->AbortOnRead = 0;
+	d->ReaderData->InElse = 0;
+	d->DstFile = dst_file;
+	d->DstIndex = dst_index;
+	d->DstMask = dst_mask;
+	d->AliveWriteMask = dst_mask;
+
+	if (!dst_mask)
+		return;
+
+	for(tmp = writer->Next; tmp != &d->C->Program.Instructions;
+							tmp = tmp->Next){
+		rc_opcode opcode = get_flow_control_inst(tmp);
+		switch(opcode) {
+		case RC_OPCODE_BGNLOOP:
+			/* XXX We can do better when we see a BGNLOOP if we
+			 * add a flag called AbortOnWrite to struct
+			 * rc_reader_data and leave it set until the next
+			 * ENDLOOP. */
+		case RC_OPCODE_ENDLOOP:
+			/* XXX We can do better when we see an ENDLOOP by
+			 * searching backwards from writer and looking for
+			 * readers of writer's destination index.  If we find a
+			 * reader before we get to the BGNLOOP, we must abort
+			 * unless there is another writer between that reader
+			 * and the BGNLOOP. */
+			d->ReaderData->Abort = 1;
+			return;
+		case RC_OPCODE_IF:
+			/* XXX We can do better here, but this will have to
+			 * do until this dataflow analysis is more mature. */
+			d->ReaderData->Abort = 1;
+			branch_depth++;
+			break;
+		case RC_OPCODE_ELSE:
+			if (branch_depth == 0)
+				d->ReaderData->InElse = 1;
+			break;
+		case RC_OPCODE_ENDIF:
+			if (branch_depth == 0) {
+				d->ReaderData->AbortOnRead = 1;
+				d->ReaderData->InElse = 0;
+			}
+			else {
+				branch_depth--;
+			}
+			break;
+		default:
+			break;
+		}
+
+		if (!d->ReaderData->InElse) {
+			if (tmp->Type == RC_INSTRUCTION_NORMAL) {
+				rc_for_all_reads_src(tmp,
+					get_readers_normal_read_callback, d);
+			} else {
+				rc_pair_for_all_reads_arg(tmp,
+					get_readers_pair_read_callback, d);
+			}
+		}
+		rc_for_all_writes_mask(tmp, get_readers_write_callback, d);
+
+		if (d->ReaderData->Abort)
+			return;
+
+		if (!d->AliveWriteMask)
+			return;
+	}
 }
 
 /**
@@ -578,83 +747,26 @@ static void get_readers_write_callback(
  * @param write_cb This function will be called for every instruction after
  * writer.
  */
-void  rc_get_readers_normal(
+void rc_get_readers(
 	struct radeon_compiler * c,
 	struct rc_instruction * writer,
 	struct rc_reader_data * data,
-	rc_read_src_fn read_cb,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
 	rc_read_write_mask_fn write_cb)
 {
-	struct rc_instruction * tmp;
 	struct get_readers_callback_data d;
-	unsigned int branch_depth = 0;
 
-	data->Writer = writer;
 	data->Abort = 0;
-	data->AbortOnRead = 0;
-	data->InElse = 0;
 	data->ReaderCount = 0;
 	data->ReadersReserved = 0;
 	data->Readers = NULL;
 
 	d.C = c;
-	d.AliveWriteMask = writer->U.I.DstReg.WriteMask;
 	d.ReaderData = data;
-	d.ReadCB = read_cb;
+	d.ReadNormalCB = read_normal_cb;
+	d.ReadPairCB = read_pair_cb;
 	d.WriteCB = write_cb;
 
-	if (!writer->U.I.DstReg.WriteMask)
-		return;
-
-	for(tmp = writer->Next; tmp != &c->Program.Instructions;
-							tmp = tmp->Next){
-		rc_opcode opcode = get_flow_control_inst(tmp);
-		switch(opcode) {
-		case RC_OPCODE_BGNLOOP:
-			/* XXX We can do better when we see a BGNLOOP if we
-			 * add a flag called AbortOnWrite to struct
-			 * rc_reader_data and leave it set until the next
-			 * ENDLOOP. */
-		case RC_OPCODE_ENDLOOP:
-			/* XXX We can do better when we see an ENDLOOP by
-			 * searching backwards from writer and looking for
-			 * readers of writer's destination index.  If we find a
-			 * reader before we get to the BGNLOOP, we must abort
-			 * unless there is another writer between that reader
-			 * and the BGNLOOP. */
-			data->Abort = 1;
-			return;
-		case RC_OPCODE_IF:
-			/* XXX We can do better here, but this will have to
-			 * do until this dataflow analysis is more mature. */
-			data->Abort = 1;
-			branch_depth++;
-			break;
-		case RC_OPCODE_ELSE:
-			if (branch_depth == 0)
-				data->InElse = 1;
-			break;
-		case RC_OPCODE_ENDIF:
-			if (branch_depth == 0) {
-				data->AbortOnRead = 1;
-				data->InElse = 0;
-			}
-			else {
-				branch_depth--;
-			}
-			break;
-		default:
-			break;
-		}
-
-		if (!data->InElse)
-			rc_for_all_reads_src(tmp, get_readers_normal_read_callback, &d);
-		rc_for_all_writes_mask(tmp, get_readers_write_callback, &d);
-
-		if (data->Abort)
-			return;
-
-		if (!d.AliveWriteMask)
-			return;
-	}
+	rc_for_all_writes_mask(writer, get_readers_for_single_write, &d);
 }

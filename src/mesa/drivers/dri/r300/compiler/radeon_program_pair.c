@@ -27,6 +27,7 @@
 
 #include "radeon_program_pair.h"
 
+#include <stdlib.h>
 
 /**
  * Return the source slot where we installed the given register access,
@@ -224,4 +225,19 @@ unsigned int rc_source_type_that_arg_reads(
 		}
 	}
 	return ret;
+}
+
+struct rc_pair_instruction_source * rc_pair_get_src(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_arg * arg)
+{
+	unsigned int type = rc_source_type_that_arg_reads(arg->Source,
+								arg->Swizzle);
+	if (type & RC_PAIR_SOURCE_RGB) {
+		return &pair_inst->RGB.Src[arg->Source];
+	} else if (type & RC_PAIR_SOURCE_ALPHA) {
+		return &pair_inst->Alpha.Src[arg->Source];
+	} else {
+		return NULL;
+	}
 }

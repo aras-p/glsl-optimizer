@@ -149,8 +149,9 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 		return;
 
 	/* Get a list of all the readers of this MOV instruction. */
-	rc_get_readers_normal(c, inst_mov, &reader_data,
-			copy_propagate_scan_read, is_src_clobbered_scan_write);
+	rc_get_readers(c, inst_mov, &reader_data,
+		       copy_propagate_scan_read, NULL,
+		       is_src_clobbered_scan_write);
 
 	if (reader_data.Abort || reader_data.ReaderCount == 0)
 		return;
@@ -158,7 +159,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	/* Propagate the MOV instruction. */
 	for (i = 0; i < reader_data.ReaderCount; i++) {
 		struct rc_instruction * inst = reader_data.Readers[i].Inst;
-		*reader_data.Readers[i].Src = chain_srcregs(*reader_data.Readers[i].Src, inst_mov->U.I.SrcReg[0]);
+		*reader_data.Readers[i].U.Src = chain_srcregs(*reader_data.Readers[i].U.Src, inst_mov->U.I.SrcReg[0]);
 
 		if (inst_mov->U.I.SrcReg[0].File == RC_FILE_PRESUB)
 			inst->U.I.PreSub = inst_mov->U.I.PreSub;
@@ -455,7 +456,7 @@ static int presub_helper(
 	struct rc_reader_data reader_data;
 	unsigned int i;
 
-	rc_get_readers_normal(c, inst_add, &reader_data, presub_scan_read,
+	rc_get_readers(c, inst_add, &reader_data, presub_scan_read, NULL,
 						is_src_clobbered_scan_write);
 
 	if (reader_data.Abort || reader_data.ReaderCount == 0)
@@ -468,7 +469,7 @@ static int presub_helper(
 				rc_get_opcode_info(reader.Inst->U.I.Opcode);
 
 		for (src_index = 0; src_index < info->NumSrcRegs; src_index++) {
-			if (&reader.Inst->U.I.SrcReg[src_index] == reader.Src)
+			if (&reader.Inst->U.I.SrcReg[src_index] == reader.U.Src)
 				presub_replace(inst_add, reader.Inst, src_index);
 		}
 	}
