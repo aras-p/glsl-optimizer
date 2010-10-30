@@ -36,7 +36,9 @@ get_bufferobj_map(struct gl_buffer_object *obj, unsigned flags)
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 	void *map = NULL;
 
-	if (nbo->bo) {
+	if (nbo->sys) {
+		map = nbo->sys;
+	} else if (nbo->bo) {
 		nouveau_bo_map(nbo->bo, flags);
 		map = nbo->bo->map;
 		nouveau_bo_unmap(nbo->bo);
@@ -65,6 +67,7 @@ nouveau_bufferobj_del(struct gl_context *ctx, struct gl_buffer_object *obj)
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 
 	nouveau_bo_ref(NULL, &nbo->bo);
+	FREE(nbo->sys);
 	FREE(nbo);
 }
 
@@ -79,11 +82,23 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 	obj->Size = size;
 	obj->Usage = usage;
 
+	/* Free previous storage */
 	nouveau_bo_ref(NULL, &nbo->bo);
-	ret = nouveau_bo_new(context_dev(ctx),
-			     NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-			     size, &nbo->bo);
-	assert(!ret);
+	FREE(nbo->sys);
+
+	if (target == GL_ELEMENT_ARRAY_BUFFER_ARB ||
+	    (size < 512 && usage == GL_DYNAMIC_DRAW_ARB) ||
+	    context_chipset(ctx) < 0x10) {
+		/* Heuristic: keep it in system ram */
+		nbo->sys = MALLOC(size);
+
+	} else {
+		/* Get a hardware BO */
+		ret = nouveau_bo_new(context_dev(ctx),
+				     NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
+				     size, &nbo->bo);
+		assert(!ret);
+	}
 
 	if (data)
 		memcpy(get_bufferobj_map(obj, NOUVEAU_BO_WR), data, size);

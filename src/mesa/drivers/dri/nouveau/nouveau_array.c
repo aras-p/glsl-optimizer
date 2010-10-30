@@ -90,7 +90,7 @@ nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 	a->buf = NULL;
 
 	if (obj) {
-		if (_mesa_is_bufferobj(obj)) {
+		if (nouveau_bufferobj_hw(obj)) {
 			struct nouveau_bufferobj *nbo =
 				to_nouveau_bufferobj(obj);
 
@@ -107,7 +107,8 @@ nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 			a->offset = 0;
 
 			if (map)
-				a->buf = ptr;
+				a->buf = ADD_POINTERS(
+					nouveau_bufferobj_sys(obj), ptr);
 		}
 	}
 

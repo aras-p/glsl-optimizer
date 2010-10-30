@@ -297,22 +297,21 @@ vbo_bind_vertices(struct gl_context *ctx, const struct gl_client_array **arrays,
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		const struct gl_client_array *array = arrays[attr];
+		struct gl_buffer_object *obj = array->BufferObj;
 		struct nouveau_array *a = &render->attrs[attr];
 		unsigned delta = (base + min_index) * array->StrideB;
 
 		bo[i] = NULL;
 
-		if (_mesa_is_bufferobj(array->BufferObj)) {
-			struct nouveau_bufferobj *nbo =
-				to_nouveau_bufferobj(array->BufferObj);
-
+		if (nouveau_bufferobj_hw(obj)) {
 			/* Array in a buffer obj. */
-			nouveau_bo_ref(nbo->bo, &bo[i]);
+			nouveau_bo_ref(to_nouveau_bufferobj(obj)->bo, &bo[i]);
 			offset[i] = delta + (intptr_t)array->Ptr;
 
 		} else {
 			int n = max_index - min_index + 1;
-			char *sp = (char *)array->Ptr + delta;
+			char *sp = (char *)ADD_POINTERS(
+				nouveau_bufferobj_sys(obj), array->Ptr) + delta;
 			char *dp  = nouveau_get_scratch(ctx, n * a->stride,
 							&bo[i], &offset[i]);
 
