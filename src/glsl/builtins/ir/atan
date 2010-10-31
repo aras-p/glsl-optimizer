@@ -1,14 +1,14 @@
 ((function atan
    (signature float
      (parameters
-       (declare (in) float x))
+       (declare (in) float y_over_x))
      ((return (call asin ((expression float *
-			   (var_ref x)
+			   (var_ref y_over_x)
 			   (expression float rsq
 			    (expression float +
 			     (expression float *
-			      (var_ref x)
-			      (var_ref x))
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
 			     (constant float (1.0))))))))))
 
    (signature vec2
