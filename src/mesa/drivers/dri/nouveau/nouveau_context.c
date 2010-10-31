@@ -327,10 +327,12 @@ nouveau_fallback(struct gl_context *ctx, enum nouveau_fallback mode)
 
 	nctx->fallback = MAX2(HWTNL, mode);
 
-	if (mode < SWRAST)
+	if (mode < SWRAST) {
 		nouveau_state_emit(ctx);
-	else
+		nouveau_bo_state_emit(ctx);
+	} else {
 		FIRE_RING(context_chan(ctx));
+	}
 }
 
 static void
