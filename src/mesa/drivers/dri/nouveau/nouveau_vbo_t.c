@@ -269,7 +269,7 @@ check_update_array(struct nouveau_array *a, unsigned offset,
 
 	if (a->bo == bo) {
 		if (delta < 0)
-			delta = (offset - (long)a->offset) / a->stride;
+			delta = ((int)offset - (int)a->offset) / a->stride;
 
 		dirty = (delta < 0 ||
 			 offset != (a->offset + delta * a->stride));
