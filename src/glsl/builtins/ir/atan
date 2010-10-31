@@ -54,30 +54,15 @@
     )
     (
       (declare () float r)
-      (declare ( ) float abs_retval)
-      (assign (constant bool (1)) (x) (var_ref abs_retval)  (call abs ((var_ref x) ))
-)
-      (if (expression bool > (var_ref abs_retval) (constant float (0.000100)) ) (
-        (declare ( ) float atan_retval)
-        (assign (constant bool (1)) (x) (var_ref atan_retval)  (call atan ((expression float / (var_ref y) (var_ref x) ) ))
-)
-        (assign (constant bool (1)) (x) (var_ref r)  (var_ref atan_retval) )
+      (if (expression bool > (expression float abs (var_ref x)) (constant float (0.000100))) (
+        (assign (constant bool (1)) (x) (var_ref r) (call atan ((expression float / (var_ref y) (var_ref x)))))
         (if (expression bool < (var_ref x) (constant float (0.000000)) ) (
-          (if (expression bool >= (var_ref y) (constant float (0.000000)) ) (
-            (declare ( ) float assignment_tmp)
-            (assign (constant bool (1)) (x) (var_ref assignment_tmp)  (expression float + (var_ref r) (constant float (3.141593)) ) )
-            (assign (constant bool (1)) (x) (var_ref r)  (var_ref assignment_tmp) )
-          )
-          (
-            (declare ( ) float assignment_tmp)
-            (assign (constant bool (1)) (x) (var_ref assignment_tmp)  (expression float - (var_ref r) (constant float (3.141593)) ) )
-            (assign (constant bool (1)) (x) (var_ref r)  (var_ref assignment_tmp) )
-          ))
-
+          (if (expression bool >= (var_ref y) (constant float (0.000000)) )
+              ((assign (constant bool (1)) (x) (var_ref r) (expression float + (var_ref r) (constant float (3.141593)))))
+              ((assign (constant bool (1)) (x) (var_ref r) (expression float - (var_ref r) (constant float (3.141593))))))
         )
         (
         ))
-
       )
       (
         (declare () float sgn)
