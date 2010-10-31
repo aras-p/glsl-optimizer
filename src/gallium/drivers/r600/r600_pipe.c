@@ -77,6 +77,8 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
 
+	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
+
 	r600_context_fini(&rctx->ctx);
 	for (int i = 0; i < R600_PIPE_NSTATES; i++) {
 		free(rctx->states[i]);
