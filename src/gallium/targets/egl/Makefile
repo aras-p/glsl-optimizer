@@ -54,9 +54,8 @@ egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
 endif
 
 # EGL_RENDERABLE_TYPE is a compile time attribute
-egl_CPPFLAGS += $(API_DEFINES)
 ifneq ($(filter $(GL_LIB), $(EGL_CLIENT_APIS)),)
-egl_CPPFLAGS += -DFEATURE_GL=1
+egl_CPPFLAGS += $(API_DEFINES)
 endif
 ifneq ($(filter $(GLESv1_CM_LIB), $(EGL_CLIENT_APIS)),)
 egl_CPPFLAGS += -DFEATURE_ES1=1
