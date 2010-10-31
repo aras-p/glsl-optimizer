@@ -431,6 +431,9 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 
 	if (rscreen == NULL)
 		return;
+
+	radeon_decref(rscreen->radeon);
+
 	FREE(rscreen);
 }
 
