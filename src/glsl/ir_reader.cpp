@@ -64,9 +64,12 @@ static ir_texture *read_texture(_mesa_glsl_parse_state *, s_list *);
 
 static ir_dereference *read_dereference(_mesa_glsl_parse_state *,
 				        s_expression *);
-static ir_dereference *read_var_ref(_mesa_glsl_parse_state *, s_list *);
-static ir_dereference *read_array_ref(_mesa_glsl_parse_state *, s_list *);
-static ir_dereference *read_record_ref(_mesa_glsl_parse_state *, s_list *);
+static ir_dereference_variable *
+read_var_ref(_mesa_glsl_parse_state *, s_list *);
+static ir_dereference_array *
+read_array_ref(_mesa_glsl_parse_state *, s_list *);
+static ir_dereference_record *
+read_record_ref(_mesa_glsl_parse_state *, s_list *);
 
 void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
@@ -930,7 +933,7 @@ read_dereference(_mesa_glsl_parse_state *st, s_expression *expr)
    return NULL;
 }
 
-static ir_dereference *
+static ir_dereference_variable *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
@@ -953,7 +956,7 @@ read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
    return new(ctx) ir_dereference_variable(var);
 }
 
-static ir_dereference *
+static ir_dereference_array *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
@@ -974,7 +977,7 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
    return new(ctx) ir_dereference_array(subject, idx);
 }
 
-static ir_dereference *
+static ir_dereference_record *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
