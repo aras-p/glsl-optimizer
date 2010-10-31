@@ -113,6 +113,12 @@ nouveau_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval)
 }
 
 static void
+nouveau_read_buffer(struct gl_context *ctx, GLenum buffer)
+{
+	nouveau_validate_framebuffer(ctx);
+}
+
+static void
 nouveau_draw_buffers(struct gl_context *ctx, GLsizei n, const GLenum *buffers)
 {
 	nouveau_validate_framebuffer(ctx);
@@ -512,6 +518,7 @@ nouveau_state_init(struct gl_context *ctx)
 	ctx->Driver.DepthFunc = nouveau_depth_func;
 	ctx->Driver.DepthMask = nouveau_depth_mask;
 	ctx->Driver.DepthRange = nouveau_depth_range;
+	ctx->Driver.ReadBuffer = nouveau_read_buffer;
 	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
 	ctx->Driver.Enable = nouveau_enable;
 	ctx->Driver.Fogfv = nouveau_fog;
