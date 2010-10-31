@@ -1758,12 +1758,17 @@ echo ""
 echo "        EGL:             $enable_egl"
 if test "$enable_egl" = yes; then
     echo "        EGL platforms:   $EGL_PLATFORMS"
-    echo "        EGL drivers:     $EGL_DRIVERS_DIRS"
+
+    egl_drivers=""
+    for d in $EGL_DRIVERS_DIRS; do
+        egl_drivers="$egl_drivers egl_$d"
+    done
+
     if test "$enable_gallium" = yes -a "$HAVE_ST_EGL" = yes; then
-        echo "        EGL tracker:     yes"
-        echo "        EGL client APIs:$EGL_CLIENT_APIS"
+        echo "        EGL drivers:    ${egl_drivers} egl_gallium"
+        echo "        EGL Gallium STs:$EGL_CLIENT_APIS"
     else
-        echo "        EGL tracker:     no"
+        echo "        EGL drivers:    $egl_drivers"
     fi
 fi
 
@@ -1784,9 +1789,6 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
-    if test "x$HAVE_ST_EGL" = xyes; then
-        echo "        EGL client APIs: $EGL_CLIENT_APIS"
-    fi
 else
     echo "        Gallium:         no"
 fi
