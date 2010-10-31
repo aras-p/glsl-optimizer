@@ -26,6 +26,7 @@
  * 
  **************************************************************************/
 
+extern "C" {
 #include "glheader.h"
 #include "imports.h"
 #include "mtypes.h"
@@ -37,7 +38,7 @@
 #include "program/prog_statevars.h"
 #include "program/programopt.h"
 #include "texenvprogram.h"
-
+}
 
 /*
  * Note on texture units:
@@ -524,7 +525,7 @@ struct ureg {
 
 static const struct ureg undef = { 
    PROGRAM_UNDEFINED,
-   ~0,
+   255,
    0,
    0,
    0
@@ -686,14 +687,15 @@ static struct ureg register_param5( struct texenv_fragment_program *p,
 				    GLint s3,
 				    GLint s4)
 {
-   gl_state_index tokens[STATE_LENGTH];
+   int tokens[STATE_LENGTH];
    GLuint idx;
    tokens[0] = s0;
    tokens[1] = s1;
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
+   idx = _mesa_add_state_reference(p->program->Base.Parameters,
+				   (gl_state_index *)tokens);
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -1586,6 +1588,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
    }
 }
 
+extern "C" {
 
 /**
  * Return a fragment program which implements the current
@@ -1615,4 +1618,6 @@ _mesa_get_fixed_func_fragment_program(struct gl_context *ctx)
    }
 
    return prog;
+}
+
 }

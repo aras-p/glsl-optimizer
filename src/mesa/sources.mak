@@ -83,7 +83,6 @@ MAIN_SOURCES = \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
-	main/texenvprogram.c \
 	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
@@ -102,6 +101,9 @@ MAIN_SOURCES = \
 	main/viewport.c \
 	main/vtxfmt.c \
 	$(MAIN_ES_SOURCES)
+
+MAIN_CXX_SOURCES = \
+	main/ff_fragment_shader.cpp
 
 MATH_SOURCES = \
 	math/m_debug_clip.c \
@@ -316,7 +318,8 @@ MESA_SOURCES = \
 	$(ASM_C_SOURCES)
 
 MESA_CXX_SOURCES = \
-	 $(SHADER_CXX_SOURCES)
+	$(MAIN_CXX_SOURCES) \
+	$(SHADER_CXX_SOURCES)
 
 # Sources for building Gallium drivers
 MESA_GALLIUM_SOURCES = \
@@ -329,7 +332,8 @@ MESA_GALLIUM_SOURCES = \
 	x86/common_x86.c
 
 MESA_GALLIUM_CXX_SOURCES = \
-	 $(SHADER_CXX_SOURCES)
+	$(MAIN_CXX_SOURCES) \
+	$(SHADER_CXX_SOURCES)
 
 # All the core C sources, for dependency checking
 ALL_SOURCES = \
