@@ -133,7 +133,8 @@ void s_list::print()
    foreach_iter(exec_list_iterator, it, this->subexpressions) {
       s_expression *expr = (s_expression*) it.get();
       expr->print();
-      printf(" ");
+      if (!expr->next->is_tail_sentinel())
+	 printf(" ");
    }
    printf(")");
 }
