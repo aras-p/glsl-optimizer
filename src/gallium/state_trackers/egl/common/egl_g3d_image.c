@@ -178,7 +178,8 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
 
    memset(&wsh, 0, sizeof(wsh));
    wsh.handle = (unsigned) name;
-   wsh.stride = attrs.DRMBufferStrideMESA;
+   wsh.stride =
+      attrs.DRMBufferStrideMESA * util_format_get_blocksize(templ.format);
 
    return screen->resource_from_handle(screen, &templ, &wsh);
 }
