@@ -611,7 +611,9 @@ void r600_context_fini(struct r600_context *ctx)
 		}
 		free(ctx->range[i].blocks);
 	}
+	free(ctx->blocks);
 	free(ctx->reloc);
+	free(ctx->bo);
 	free(ctx->pm4);
 	if (ctx->fence_bo) {
 		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
