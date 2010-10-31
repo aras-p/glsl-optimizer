@@ -236,6 +236,8 @@ void st_destroy_context( struct st_context *st )
    }
    pipe_surface_reference(&st->state.framebuffer.zsbuf, NULL);
 
+   pipe->set_index_buffer(pipe, NULL);
+
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
    _vbo_DestroyContext(st->ctx);
