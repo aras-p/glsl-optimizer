@@ -4,7 +4,7 @@
 
 #include "egltypedefs.h"
 #include "eglapi.h"
-
+#include <stddef.h>
 
 /**
  * Define an inline driver typecast function.
