@@ -7,6 +7,9 @@ if env['toolchain'] == 'crossmingw':
     # Cross-compilation not supported
     Return()
 
+if not env.Detect(['swig']):
+    Return()
+
 env = env.Clone()
 
 env.Tool('python')
