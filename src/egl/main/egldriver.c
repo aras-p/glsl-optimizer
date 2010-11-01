@@ -395,35 +395,62 @@ _eglPreloadForEach(const char *search_path,
 static const char *
 _eglGetSearchPath(void)
 {
-   static const char *search_path;
+   static char search_path[1024];
 
 #if defined(_EGL_OS_UNIX) || defined(_EGL_OS_WINDOWS)
-   if (!search_path) {
-      static char buffer[1024];
-      const char *p;
+   if (search_path[0] == '\0') {
+      char *buf = search_path;
+      size_t len = sizeof(search_path);
+      EGLBoolean use_env;
+      char dir_sep;
       int ret;
 
-      p = getenv("EGL_DRIVERS_PATH");
 #if defined(_EGL_OS_UNIX)
-      if (p && (geteuid() != getuid() || getegid() != getgid())) {
+      use_env = (geteuid() == getuid() && getegid() == getgid());
+      dir_sep = '/';
+#else
+      use_env = EGL_TRUE;
+      dir_sep = '\\';
+#endif
+
+      if (use_env) {
+         char *p;
+
+         /* extract the dirname from EGL_DRIVER */
+         p = getenv("EGL_DRIVER");
+         if (p && strchr(p, dir_sep)) {
+            ret = _eglsnprintf(buf, len, "%s", p);
+            if (ret > 0 && ret < len) {
+               p = strrchr(buf, dir_sep);
+               *p++ = ':';
+
+               len -= p - buf;
+               buf = p;
+            }
+         }
+
+         /* append EGL_DRIVERS_PATH */
+         p = getenv("EGL_DRIVERS_PATH");
+         if (p) {
+            ret = _eglsnprintf(buf, len, "%s:", p);
+            if (ret > 0 && ret < len) {
+               buf += ret;
+               len -= ret;
+            }
+         }
+      }
+      else {
          _eglLog(_EGL_DEBUG,
                "ignore EGL_DRIVERS_PATH for setuid/setgid binaries");
-         p = NULL;
       }
-#endif /* _EGL_OS_UNIX */
 
-      if (p) {
-         ret = _eglsnprintf(buffer, sizeof(buffer),
-               "%s:%s", p, _EGL_DRIVER_SEARCH_DIR);
-         if (ret > 0 && ret < sizeof(buffer))
-            search_path = buffer;
-      }
+      ret = _eglsnprintf(buf, len, "%s", _EGL_DRIVER_SEARCH_DIR);
+      if (ret < 0 || ret >= len)
+         search_path[0] = '\0';
+
+      _eglLog(_EGL_DEBUG, "EGL search path is %s", search_path);
    }
-   if (!search_path)
-      search_path = _EGL_DRIVER_SEARCH_DIR;
-#else
-   search_path = "";
-#endif
+#endif /* defined(_EGL_OS_UNIX) || defined(_EGL_OS_WINDOWS) */
 
    return search_path;
 }
