@@ -14,15 +14,20 @@ SConscript([
     'drivers/failover/SConscript', 
     'drivers/galahad/SConscript',
     'drivers/i915/SConscript', 
-    'drivers/i965/SConscript', 
     'drivers/identity/SConscript', 
     'drivers/llvmpipe/SConscript', 
     'drivers/rbug/SConscript',
-    'drivers/r300/SConscript', 
     'drivers/softpipe/SConscript',
     'drivers/svga/SConscript', 
     'drivers/trace/SConscript', 
 ])
+
+if not env['msvc']:
+    # These drivers do not build on MSVC compilers
+    SConscript([
+        'drivers/i965/SConscript',
+        'drivers/r300/SConscript',
+    ])
 
 if env['dri']:
     # These drivers depend on drm headers
