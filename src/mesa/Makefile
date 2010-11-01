@@ -35,8 +35,8 @@ ES2_CPPFLAGS := -DFEATURE_ES2=1 $(DEFINES)
 
 # append include dirs
 MESA_CPPFLAGS += $(INCLUDE_DIRS) $(TALLOC_CFLAGS)
-ES1_CPPFLAGS += -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
-ES2_CPPFLAGS += -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
+ES1_CPPFLAGS += -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS) $(TALLOC_CFLAGS)
+ES2_CPPFLAGS += -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS) $(TALLOC_CFLAGS)
 
 # tidy compiler flags
 CFLAGS := $(filter-out $(DEFINES), $(CFLAGS))
