@@ -260,10 +260,11 @@ update_program(struct gl_context *ctx)
    }
    else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       /* Use fragment program generated from fixed-function state */
+      struct gl_shader_program *f = _mesa_get_fixed_func_fragment_program(ctx);
+
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               _mesa_get_fixed_func_fragment_program(ctx));
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-                               ctx->FragmentProgram._Current);
+			       (struct gl_fragment_program *)
+                               f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
    }
    else {
       /* No fragment program */
