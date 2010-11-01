@@ -8,9 +8,8 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nv20_3d.xml    (  21073 bytes, from 2010-11-15 02:24:38)
+- nv10_3d.xml    (  18437 bytes, from 2010-11-15 15:30:21)
 - copyright.xml  (   6452 bytes, from 2010-11-15 15:10:58)
-- nv10_3d.xml    (  18449 bytes, from 2010-11-15 02:24:38)
 - nv_defs.xml    (   4437 bytes, from 2010-11-01 00:28:46)
 - nv_3ddefs.xml  (  16394 bytes, from 2010-11-01 00:28:46)
 - nv_object.xml  (  11547 bytes, from 2010-11-13 23:32:57)
@@ -549,7 +548,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV10_3D_VTXBUF_FMT_FIELDS__SHIFT			4
 #define NV10_3D_VTXBUF_FMT_STRIDE__MASK				0x0000ff00
 #define NV10_3D_VTXBUF_FMT_STRIDE__SHIFT			8
-#define NV10_3D_VTXBUF_FMT_POS_HOMOGENEOUS			0x01000000
+#define NV10_3D_VTXBUF_FMT_HOMOGENEOUS				0x01000000
 
 #define NV10_3D_VERTEX_BEGIN_END				0x00000dfc
 #define NV10_3D_VERTEX_BEGIN_END_STOP				0x00000000

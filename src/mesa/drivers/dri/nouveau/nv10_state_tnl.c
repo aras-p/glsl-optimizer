@@ -28,7 +28,7 @@
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
 #include "nouveau_util.h"
-#include "nouveau_class.h"
+#include "nv10_3d.xml.h"
 #include "nv10_driver.h"
 
 void
@@ -42,13 +42,13 @@ get_material_bitmask(unsigned m)
 	unsigned ret = 0;
 
 	if (m & MAT_BIT_FRONT_EMISSION)
-		ret |= NV10TCL_COLOR_MATERIAL_EMISSION;
+		ret |= NV10_3D_COLOR_MATERIAL_EMISSION;
 	if (m & MAT_BIT_FRONT_AMBIENT)
-		ret |= NV10TCL_COLOR_MATERIAL_AMBIENT;
+		ret |= NV10_3D_COLOR_MATERIAL_AMBIENT;
 	if (m & MAT_BIT_FRONT_DIFFUSE)
-		ret |= NV10TCL_COLOR_MATERIAL_DIFFUSE;
+		ret |= NV10_3D_COLOR_MATERIAL_DIFFUSE;
 	if (m & MAT_BIT_FRONT_SPECULAR)
-		ret |= NV10TCL_COLOR_MATERIAL_SPECULAR;
+		ret |= NV10_3D_COLOR_MATERIAL_SPECULAR;
 
 	return ret;
 }
@@ -60,7 +60,7 @@ nv10_emit_color_material(struct gl_context *ctx, int emit)
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	unsigned mask = get_material_bitmask(ctx->Light.ColorMaterialBitmask);
 
-	BEGIN_RING(chan, celsius, NV10TCL_COLOR_MATERIAL, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_COLOR_MATERIAL, 1);
 	OUT_RING(chan, ctx->Light.ColorMaterialEnabled ? mask : 0);
 }
 
@@ -69,11 +69,11 @@ get_fog_mode(unsigned mode)
 {
 	switch (mode) {
 	case GL_LINEAR:
-		return NV10TCL_FOG_MODE_LINEAR;
+		return NV10_3D_FOG_MODE_LINEAR;
 	case GL_EXP:
-		return NV10TCL_FOG_MODE_EXP;
+		return NV10_3D_FOG_MODE_EXP;
 	case GL_EXP2:
-		return NV10TCL_FOG_MODE_EXP2;
+		return NV10_3D_FOG_MODE_EXP2;
 	default:
 		assert(0);
 	}
@@ -84,9 +84,9 @@ get_fog_source(unsigned source)
 {
 	switch (source) {
 	case GL_FOG_COORDINATE_EXT:
-		return NV10TCL_FOG_COORD_FOG;
+		return NV10_3D_FOG_COORD_FOG;
 	case GL_FRAGMENT_DEPTH_EXT:
-		return NV10TCL_FOG_COORD_DIST_ORTHOGONAL_ABS;
+		return NV10_3D_FOG_COORD_DIST_ORTHOGONAL_ABS;
 	default:
 		assert(0);
 	}
@@ -133,13 +133,13 @@ nv10_emit_fog(struct gl_context *ctx, int emit)
 
 	nv10_get_fog_coeff(ctx, k);
 
-	BEGIN_RING(chan, celsius, NV10TCL_FOG_MODE, 4);
+	BEGIN_RING(chan, celsius, NV10_3D_FOG_MODE, 4);
 	OUT_RING(chan, get_fog_mode(f->Mode));
 	OUT_RING(chan, get_fog_source(source));
 	OUT_RING(chan, f->Enabled ? 1 : 0);
 	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
 
-	BEGIN_RING(chan, celsius, NV10TCL_FOG_EQUATION_CONSTANT, 3);
+	BEGIN_RING(chan, celsius, NV10_3D_FOG_COEFF(0), 3);
 	OUT_RINGp(chan, k, 3);
 
 	context_dirty(ctx, FRAG);
@@ -150,13 +150,13 @@ get_light_mode(struct gl_light *l)
 {
 	if (l->Enabled) {
 		if (l->_Flags & LIGHT_SPOT)
-			return NV10TCL_ENABLED_LIGHTS_0_DIRECTIONAL;
+			return NV10_3D_ENABLED_LIGHTS_0_DIRECTIONAL;
 		else if (l->_Flags & LIGHT_POSITIONAL)
-			return NV10TCL_ENABLED_LIGHTS_0_POSITIONAL;
+			return NV10_3D_ENABLED_LIGHTS_0_POSITIONAL;
 		else
-			return NV10TCL_ENABLED_LIGHTS_0_NONPOSITIONAL;
+			return NV10_3D_ENABLED_LIGHTS_0_NONPOSITIONAL;
 	} else {
-		return NV10TCL_ENABLED_LIGHTS_0_DISABLED;
+		return NV10_3D_ENABLED_LIGHTS_0_DISABLED;
 	}
 }
 
@@ -170,7 +170,7 @@ nv10_emit_light_enable(struct gl_context *ctx, int emit)
 	int i;
 
 	if (nctx->fallback != HWTNL) {
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHTING_ENABLE, 1);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHTING_ENABLE, 1);
 		OUT_RING(chan, 0);
 		return;
 	}
@@ -178,11 +178,11 @@ nv10_emit_light_enable(struct gl_context *ctx, int emit)
 	for (i = 0; i < MAX_LIGHTS; i++)
 		en_lights |= get_light_mode(&ctx->Light.Light[i]) << 2 * i;
 
-	BEGIN_RING(chan, celsius, NV10TCL_ENABLED_LIGHTS, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_ENABLED_LIGHTS, 1);
 	OUT_RING(chan, en_lights);
-	BEGIN_RING(chan, celsius, NV10TCL_LIGHTING_ENABLE, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_LIGHTING_ENABLE, 1);
 	OUT_RING(chan, ctx->Light.Enabled ? 1 : 0);
-	BEGIN_RING(chan, celsius, NV10TCL_NORMALIZE_ENABLE, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_NORMALIZE_ENABLE, 1);
 	OUT_RING(chan, ctx->Transform.Normalize ? 1 : 0);
 }
 
@@ -193,16 +193,16 @@ nv10_emit_light_model(struct gl_context *ctx, int emit)
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	struct gl_lightmodel *m = &ctx->Light.Model;
 
-	BEGIN_RING(chan, celsius, NV10TCL_SEPARATE_SPECULAR_ENABLE, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_SEPARATE_SPECULAR_ENABLE, 1);
 	OUT_RING(chan, m->ColorControl == GL_SEPARATE_SPECULAR_COLOR ? 1 : 0);
 
-	BEGIN_RING(chan, celsius, NV10TCL_LIGHT_MODEL, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_LIGHT_MODEL, 1);
 	OUT_RING(chan, ((m->LocalViewer ?
-			 NV10TCL_LIGHT_MODEL_LOCAL_VIEWER : 0) |
+			 NV10_3D_LIGHT_MODEL_LOCAL_VIEWER : 0) |
 			(NEED_SECONDARY_COLOR(ctx) ?
-			 NV10TCL_LIGHT_MODEL_SEPARATE_SPECULAR : 0) |
+			 NV10_3D_LIGHT_MODEL_SEPARATE_SPECULAR : 0) |
 			(!ctx->Light.Enabled && ctx->Fog.ColorSumEnabled ?
-			 NV10TCL_LIGHT_MODEL_VERTEX_SPECULAR : 0)));
+			 NV10_3D_LIGHT_MODEL_VERTEX_SPECULAR : 0)));
 }
 
 static float
@@ -281,20 +281,20 @@ nv10_emit_light_source(struct gl_context *ctx, int emit)
 	struct gl_light *l = &ctx->Light.Light[i];
 
 	if (l->_Flags & LIGHT_POSITIONAL) {
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_POSITION_X(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_POSITION_X(i), 3);
 		OUT_RINGp(chan, l->_Position, 3);
 
 		BEGIN_RING(chan, celsius,
-			   NV10TCL_LIGHT_ATTENUATION_CONSTANT(i), 3);
+			   NV10_3D_LIGHT_ATTENUATION_CONSTANT(i), 3);
 		OUT_RINGf(chan, l->ConstantAttenuation);
 		OUT_RINGf(chan, l->LinearAttenuation);
 		OUT_RINGf(chan, l->QuadraticAttenuation);
 
 	} else {
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_DIRECTION_X(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_DIRECTION_X(i), 3);
 		OUT_RINGp(chan, l->_VP_inf_norm, 3);
 
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_HALF_VECTOR_X(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_HALF_VECTOR_X(i), 3);
 		OUT_RINGp(chan, l->_h_inf_norm, 3);
 	}
 
@@ -303,7 +303,7 @@ nv10_emit_light_source(struct gl_context *ctx, int emit)
 
 		nv10_get_spot_coeff(l, k);
 
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_SPOT_CUTOFF_A(i), 7);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_SPOT_CUTOFF(i, 0), 7);
 		OUT_RINGp(chan, k, 7);
 	}
 }
@@ -335,11 +335,11 @@ nv10_emit_material_ambient(struct gl_context *ctx, int emit)
 		ZERO_3V(c_factor);
 	}
 
-	BEGIN_RING(chan, celsius, NV10TCL_LIGHT_MODEL_AMBIENT_R, 3);
+	BEGIN_RING(chan, celsius, NV10_3D_LIGHT_MODEL_AMBIENT_R, 3);
 	OUT_RINGp(chan, c_scene, 3);
 
 	if (ctx->Light.ColorMaterialEnabled) {
-		BEGIN_RING(chan, celsius, NV10TCL_MATERIAL_FACTOR_R, 3);
+		BEGIN_RING(chan, celsius, NV10_3D_MATERIAL_FACTOR_R, 3);
 		OUT_RINGp(chan, c_factor, 3);
 	}
 
@@ -349,7 +349,7 @@ nv10_emit_material_ambient(struct gl_context *ctx, int emit)
 				  l->Ambient :
 				  l->_MatAmbient[0]);
 
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_AMBIENT_R(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_AMBIENT_R(i), 3);
 		OUT_RINGp(chan, c_light, 3);
 	}
 }
@@ -362,7 +362,7 @@ nv10_emit_material_diffuse(struct gl_context *ctx, int emit)
 	GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 	struct gl_light *l;
 
-	BEGIN_RING(chan, celsius, NV10TCL_MATERIAL_FACTOR_A, 1);
+	BEGIN_RING(chan, celsius, NV10_3D_MATERIAL_FACTOR_A, 1);
 	OUT_RINGf(chan, mat[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 
 	foreach(l, &ctx->Light.EnabledList) {
@@ -371,7 +371,7 @@ nv10_emit_material_diffuse(struct gl_context *ctx, int emit)
 				  l->Diffuse :
 				  l->_MatDiffuse[0]);
 
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_DIFFUSE_R(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_DIFFUSE_R(i), 3);
 		OUT_RINGp(chan, c_light, 3);
 	}
 }
@@ -389,7 +389,7 @@ nv10_emit_material_specular(struct gl_context *ctx, int emit)
 				  l->Specular :
 				  l->_MatSpecular[0]);
 
-		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_SPECULAR_R(i), 3);
+		BEGIN_RING(chan, celsius, NV10_3D_LIGHT_SPECULAR_R(i), 3);
 		OUT_RINGp(chan, c_light, 3);
 	}
 }
@@ -430,7 +430,7 @@ nv10_emit_material_shininess(struct gl_context *ctx, int emit)
 		CLAMP(mat[MAT_ATTRIB_FRONT_SHININESS][0], 0, 1024),
 		k);
 
-	BEGIN_RING(chan, celsius, NV10TCL_MATERIAL_SHININESS(0), 6);
+	BEGIN_RING(chan, celsius, NV10_3D_MATERIAL_SHININESS(0), 6);
 	OUT_RINGp(chan, k, 6);
 }
 
@@ -447,7 +447,7 @@ nv10_emit_modelview(struct gl_context *ctx, int emit)
 
 	if (ctx->Light._NeedEyeCoords || ctx->Fog.Enabled ||
 	    (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)) {
-		BEGIN_RING(chan, celsius, NV10TCL_MODELVIEW0_MATRIX(0), 16);
+		BEGIN_RING(chan, celsius, NV10_3D_MODELVIEW_MATRIX(0, 0), 16);
 		OUT_RINGm(chan, m->m);
 	}
 
@@ -456,7 +456,7 @@ nv10_emit_modelview(struct gl_context *ctx, int emit)
 		int i, j;
 
 		BEGIN_RING(chan, celsius,
-			   NV10TCL_INVERSE_MODELVIEW0_MATRIX(0), 12);
+			   NV10_3D_INVERSE_MODELVIEW_MATRIX(0, 0), 12);
 		for (i = 0; i < 3; i++)
 			for (j = 0; j < 4; j++)
 				OUT_RINGf(chan, m->inv[4*i + j]);
@@ -485,7 +485,7 @@ nv10_emit_projection(struct gl_context *ctx, int emit)
 	if (nctx->fallback == HWTNL)
 		_math_matrix_mul_matrix(&m, &m, &ctx->_ModelProjectMatrix);
 
-	BEGIN_RING(chan, celsius, NV10TCL_PROJECTION_MATRIX(0), 16);
+	BEGIN_RING(chan, celsius, NV10_3D_PROJECTION_MATRIX(0), 16);
 	OUT_RINGm(chan, m.m);
 
 	_math_matrix_dtr(&m);
