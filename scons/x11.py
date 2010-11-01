@@ -29,24 +29,12 @@ Tool-specific initialization for X11
 
 
 def generate(env):
-    env.Append(CPPPATH = ['/usr/X11R6/include'])
-    env.Append(LIBPATH = ['/usr/X11R6/lib'])
-
-    env.Append(LIBS = [
-        'X11',
-        'Xext',
-        'Xxf86vm',
-        'Xdamage',
-        'Xfixes',
-    ])
+    # XXX: backwards compatability only
+    pass
 
 
 def exists(env):
-    # TODO: actually detect the presence of the headers
-    if env['platform'] in ('linux', 'freebsd', 'darwin'):
-        return True
-    else:
-        return False
+    return True
 
 
 # vim:set ts=4 sw=4 et:

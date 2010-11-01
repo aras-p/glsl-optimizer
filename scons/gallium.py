@@ -98,6 +98,38 @@ def num_jobs():
     return 1
 
 
+def pkg_config_modules(env, name, modules):
+    '''Simple wrapper for pkg-config.'''
+
+    env[name] = False
+
+    if env['platform'] == 'windows':
+        return
+
+    if not env.Detect('pkg-config'):
+        return
+
+    # Put -I and -L flags directly into the environment, as these don't affect
+    # the compilation of targets that do not use them
+    try:
+        env.ParseConfig('pkg-config --cflags-only-I --libs-only-L ' + ' '.join(modules))
+    except OSError:
+        return
+
+    # Other flags may affect the compilation of unrelated targets, so store
+    # them with a prefix, (e.g., XXX_CFLAGS, XXX_LIBS, etc)
+    try:
+        flags = env.ParseFlags('!pkg-config --cflags-only-other --libs-only-l --libs-only-other ' + ' '.join(modules))
+    except OSError:
+        return
+    prefix = name.upper() + '_'
+    for flag_name, flag_value in flags.iteritems():
+        env[prefix + flag_name] = flag_value
+
+    env[name] = True
+
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -110,21 +142,27 @@ def generate(env):
             env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
 
-    if env['platform'] == 'embedded':
-        # Allow overriding compiler from environment
-        if os.environ.has_key('CC'):
-            env['CC'] = os.environ['CC']
-            # Update CCVERSION to match
-            pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
-                                         stdin = 'devnull',
-                                         stderr = 'devnull',
-                                         stdout = subprocess.PIPE)
-            if pipe.wait() == 0:
-                line = pipe.stdout.readline()
-                match = re.search(r'[0-9]+(\.[0-9]+)+', line)
-                if match:
-                    env['CCVERSION'] = match.group(0)
-            
+    # Allow override compiler and specify additional flags from environment
+    if os.environ.has_key('CC'):
+        env['CC'] = os.environ['CC']
+        # Update CCVERSION to match
+        pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                     stdin = 'devnull',
+                                     stderr = 'devnull',
+                                     stdout = subprocess.PIPE)
+        if pipe.wait() == 0:
+            line = pipe.stdout.readline()
+            match = re.search(r'[0-9]+(\.[0-9]+)+', line)
+            if match:
+                env['CCVERSION'] = match.group(0)
+    if os.environ.has_key('CFLAGS'):
+        env['CCFLAGS'] += SCons.Util.CLVar(os.environ['CFLAGS'])
+    if os.environ.has_key('CXX'):
+        env['CXX'] = os.environ['CXX']
+    if os.environ.has_key('CXXFLAGS'):
+        env['CXXFLAGS'] += SCons.Util.CLVar(os.environ['CXXFLAGS'])
+    if os.environ.has_key('LDFLAGS'):
+        env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
@@ -140,10 +178,16 @@ def generate(env):
     # Backwards compatability with the debug= profile= options
     if env['build'] == 'debug':
         if not env['debug']:
-            print 'scons: debug option is deprecated: use instead build=release'
+            print 'scons: warning: debug option is deprecated and will be removed eventually; use instead'
+            print
+            print ' scons build=release'
+            print
             env['build'] = 'release'
         if env['profile']:
-            print 'scons: profile option is deprecated: use instead build=profile'
+            print 'scons: warning: profile option is deprecated and will be removed eventually; use instead'
+            print
+            print ' scons build=profile'
+            print
             env['build'] = 'profile'
     if False:
         # Enforce SConscripts to use the new build variable
@@ -183,6 +227,9 @@ def generate(env):
     # Parallel build
     if env.GetOption('num_jobs') <= 1:
         env.SetOption('num_jobs', num_jobs())
+
+    env.Decider('MD5-timestamp')
+    env.SetOption('max_drift', 60)
 
     # C preprocessor options
     cppdefines = []
@@ -499,9 +546,14 @@ def generate(env):
     # Default libs
     env.Append(LIBS = [])
 
-    # Load LLVM
+    # Load tools
     if env['llvm']:
         env.Tool('llvm')
+        env.Tool('udis86')
+    
+    pkg_config_modules(env, 'x11', ['x11', 'xext'])
+    pkg_config_modules(env, 'dri', ['libdrm'])
+    pkg_config_modules(env, 'xorg', ['xorg-server'])
 
     # Custom builders and methods
     env.Tool('custom')

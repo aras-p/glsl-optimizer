@@ -37,4 +37,6 @@ softpipe = env.ConvenienceLibrary(
 		'sp_tile_cache.c',
 	])
 
+env.Alias('softpipe', softpipe)
+
 Export('softpipe')

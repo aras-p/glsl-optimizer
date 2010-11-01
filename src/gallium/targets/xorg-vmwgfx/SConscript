@@ -2,62 +2,58 @@ import os.path
 
 Import('*')
 
-if not 'svga' in env['drivers']:
-    print 'warning: svga pipe driver not built skipping vmwgfx_drv.so'
-    Return()
+env = env.Clone()
 
-if env['platform'] == 'linux':
+env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
 
-	env = env.Clone()
+env.Prepend(CPPPATH = [
+    '#/include',
+    '#/src/gallium',
+    '#/src/mesa',
+    '#/src/gallium/drivers/svga',
+    '#/src/gallium/drivers/svga/include',
+])
 
-	env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
+env.Append(CPPDEFINES = [
+])
 
-	env.Prepend(CPPPATH = [
-		'#/include',
-		'#/src/gallium',
-		'#/src/mesa',
-		'#/src/gallium/drivers/svga',
-		'#/src/gallium/drivers/svga/include',
-	])
+if env['gcc']:
+    env.Append(CPPDEFINES = [
+        'HAVE_STDINT_H',
+        'HAVE_SYS_TYPES_H',
+    ])
 
-	env.Append(CPPDEFINES = [
-	])
+env.Append(CFLAGS = [
+    '-std=gnu99',
+    '-D_FILE_OFFSET_BITS=64',
+])
 
-	if env['gcc']:
-		env.Append(CPPDEFINES = [
-			'HAVE_STDINT_H',
-			'HAVE_SYS_TYPES_H',
-		])
+env.Prepend(LIBPATH = [
+])
 
-	env.Append(CFLAGS = [
-		'-std=gnu99',
-		'-D_FILE_OFFSET_BITS=64',
-	])
+env.Prepend(LIBS = [
+    trace,
+    rbug,
+    st_xorg,
+    svgadrm,
+    svga,
+            gallium,
+])
 
-	env.Prepend(LIBPATH = [
-	])
+sources = [
+    'vmw_ioctl.c',
+    'vmw_ctrl.c',
+    'vmw_screen.c',
+    'vmw_video.c',
+    'vmw_xorg.c',
+]
 
-	env.Prepend(LIBS = [
-		trace,
-		rbug,
-		st_xorg,
-		svgadrm,
-		svga,
-                gallium,
-	])
+# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+module = env.LoadableModule(
+    target ='vmwgfx_drv.so',
+    source = sources,
+    LIBS = env['LIBS'],
+    SHLIBPREFIX = '',
+)
 
-	sources = [
-		'vmw_ioctl.c',
-		'vmw_ctrl.c',
-		'vmw_screen.c',
-		'vmw_video.c',
-		'vmw_xorg.c',
-	]
-
-	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
-	env.LoadableModule(
-		target ='vmwgfx_drv.so',
-		source = sources,
-		LIBS = env['LIBS'],
-		SHLIBPREFIX = '',
-	)
+env.Alias('xorg-vmwgfx', module)

@@ -7,22 +7,7 @@ This directory contains a Gallium3D trace debugger pipe driver.
 It can traces all incoming calls.
 
 
-= Build Instructions =
-
-To build, invoke scons on the top dir as
- 
- scons dri=no statetrackers=mesa winsys=xlib
-
-
 = Usage =
-
-To use do
-
- export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib
-
-ensure the right libGL.so is being picked by doing
-
- ldd progs/trivial/tri 
 
 == Tracing ==
 
@@ -39,6 +24,7 @@ Firefox or Internet Explorer.
 For remote debugging see:
 
   src/gallium/drivers/rbug/README
+
 
 = Integrating =
 
@@ -60,5 +46,5 @@ are automatically wrapped by trace_screen.
 
 
 --
-Jose Fonseca <jrfonseca@tungstengraphics.com>
+Jose Fonseca <jfonseca@vmware.com>
 Jakob Bornecrantz <jakob@vmware.com>

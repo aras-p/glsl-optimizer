@@ -6,77 +6,78 @@ Import('*')
 
 if env['platform'] != 'winddk':
 
-	env = env.Clone()
-	
-	env.Append(CPPDEFINES = [
-		'MAPI_GLAPI_CURRENT',
-	])
+    env = env.Clone()
+    
+    env.Append(CPPDEFINES = [
+        'MAPI_GLAPI_CURRENT',
+    ])
 
-	if env['platform'] == 'windows':
-		env.Append(CPPDEFINES = [
-			'_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
-			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
-			'WIN32_THREADS', # use Win32 thread API
-		])
+    if env['platform'] == 'windows':
+        env.Append(CPPDEFINES = [
+            '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
+            'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
+            'WIN32_THREADS', # use Win32 thread API
+        ])
 
-	env.Append(CPPPATH = [
-		'#/src/mapi',
-		'#/src/mesa',
-	])
-	
-	glapi_sources = [
-		'glapi_dispatch.c',
-		'glapi_entrypoint.c',
-		'glapi_getproc.c',
-		'glapi_nop.c',
-		'glthread.c',
-	]
-	
-	mapi_sources = [
-		'u_current.c',
-		'u_execmem.c',
-		'u_thread.c',
-	]
-	for s in mapi_sources:
-		o = env.SharedObject(s[:-2], '../mapi/' + s)
-		glapi_sources.append(o)
+    env.Append(CPPPATH = [
+        '#/src/mapi',
+        '#/src/mesa',
+    ])
+    
+    glapi_sources = [
+        'glapi_dispatch.c',
+        'glapi_entrypoint.c',
+        'glapi_getproc.c',
+        'glapi_nop.c',
+        'glthread.c',
+    ]
+    
+    mapi_sources = [
+        'u_current.c',
+        'u_execmem.c',
+        'u_thread.c',
+    ]
+    for s in mapi_sources:
+        o = env.SharedObject(s[:-2], '../mapi/' + s)
+        glapi_sources.append(o)
 
-	#
-	# Assembly sources
-	#
-	if gcc and env['machine'] == 'x86':
-		env.Append(CPPDEFINES = [
-			'USE_X86_ASM', 
-			'USE_MMX_ASM',
-			'USE_3DNOW_ASM',
-			'USE_SSE_ASM',
-		])
-		glapi_sources += [
-			'glapi_x86.S',
-		]
-	elif gcc and env['machine'] == 'x86_64':
-		env.Append(CPPDEFINES = [
-			'USE_X86_64_ASM', 
-		])
-		glapi_sources += [
-			'glapi_x86-64.S'
-		]
-	elif gcc and env['machine'] == 'ppc':
-		env.Append(CPPDEFINES = [
-			'USE_PPC_ASM', 
-			'USE_VMX_ASM', 
-		])
-		glapi_sources += [
-		]
-	elif gcc and env['machine'] == 'sparc':
-		glapi_sources += [
-			'glapi_sparc.S'
-		]
-	else:
-		pass
-	
-	glapi = env.ConvenienceLibrary(
-		target = 'glapi',
-		source = glapi_sources,
-	)
-	Export('glapi')
+    #
+    # Assembly sources
+    #
+    if env['gcc'] and env['platform'] != 'windows':
+        if env['machine'] == 'x86':
+            env.Append(CPPDEFINES = [
+                'USE_X86_ASM', 
+                'USE_MMX_ASM',
+                'USE_3DNOW_ASM',
+                'USE_SSE_ASM',
+            ])
+            glapi_sources += [
+                'glapi_x86.S',
+            ]
+        elif env['machine'] == 'x86_64':
+            env.Append(CPPDEFINES = [
+                'USE_X86_64_ASM', 
+            ])
+            glapi_sources += [
+                'glapi_x86-64.S'
+            ]
+        elif env['machine'] == 'ppc':
+            env.Append(CPPDEFINES = [
+                'USE_PPC_ASM', 
+                'USE_VMX_ASM', 
+            ])
+            glapi_sources += [
+            ]
+        elif env['machine'] == 'sparc':
+            glapi_sources += [
+                'glapi_sparc.S'
+            ]
+        else:
+            pass
+    
+    glapi = env.ConvenienceLibrary(
+        target = 'glapi',
+        source = glapi_sources,
+    )
+    Export('glapi')

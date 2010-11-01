@@ -31,8 +31,10 @@ def generate(env):
     conf = env.Configure()
 
     if conf.CheckHeader('udis86.h'): # and conf.CheckLib('udis86'):
-        env.Append(CPPDEFINES = [('HAVE_UDIS86', '1')])
+        env['UDIS86'] = True
         env.Prepend(LIBS = ['udis86'])
+    else:
+        env['UDIS86'] = False
 
     conf.Finish()
 

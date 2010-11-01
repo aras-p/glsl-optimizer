@@ -1,9 +1,5 @@
 Import('*')
 
-if not 'svga' in env['drivers']:
-    print 'warning: svga pipe driver not built skipping vmwgfx_dri.so'
-    Return()
-
 env = drienv.Clone()
 
 env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
@@ -20,8 +16,10 @@ env.Prepend(LIBS = [
     COMMON_DRI_DRM_OBJECTS
 ])
 
-env.LoadableModule(
+module = env.LoadableModule(
     target = 'vmwgfx_dri.so',
     source = 'target.c',
     SHLIBPREFIX = '',
 )
+
+env.Alias('dri-vmwgfx', module)

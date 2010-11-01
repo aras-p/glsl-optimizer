@@ -9,8 +9,6 @@ if not env['llvm']:
 
 env = env.Clone()
 
-env.Tool('udis86')
-
 env.Append(CPPPATH = ['.'])
 
 env.CodeGenerate(
@@ -78,6 +76,8 @@ llvmpipe = env.ConvenienceLibrary(
         lp_tile_soa_os,
 	])
 
+env.Alias('llvmpipe', llvmpipe)
+
 
 if env['platform'] != 'embedded':
     env = env.Clone()
@@ -92,7 +92,7 @@ if env['platform'] != 'embedded':
 	'sincos',
     ]
 
-    if not msvc:
+    if not env['msvc']:
         tests.append('round')
 
     for test in tests:

@@ -3,6 +3,9 @@
 
 Import('*')
 
+if not env['dri']:
+    Return()
+
 drienv = env.Clone()
 
 drienv.Replace(CPPPATH = [
@@ -77,32 +80,3 @@ Export([
 	'COMMON_DRI_SW_OBJECTS',
 	'COMMON_DRI_DRM_OBJECTS',
 ])
-
-SConscript([
-	'dri-swrast/SConscript',
-])
-
-if 'vmware' in env['winsys']:
-	SConscript([
-		'dri-vmwgfx/SConscript',
-	])
-
-if 'i915' in env['winsys']:
-	SConscript([
-		'dri-i915/SConscript',
-	])
-
-if 'i965' in env['winsys']:
-	SConscript([
-		'dri-i965/SConscript',
-	])
-
-if 'radeon' in env['winsys']:
-	SConscript([
-		'dri-radeong/SConscript',
-	])
-
-if 'r600' in env['winsys']:
-	SConscript([
-		'dri-r600/SConscript',
-	])

@@ -1,9 +1,5 @@
 Import('*')
 
-if not 'r300' in env['drivers']:
-    print 'warning: r300 pipe driver not built skipping r300_dri.so'
-    Return()
-
 env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
@@ -23,8 +19,10 @@ env.Prepend(LIBS = [
     COMMON_DRI_DRM_OBJECTS
 ])
 
-env.SharedLibrary(
+module = env.SharedLibrary(
     target ='r300_dri.so',
     source = 'target.c',
     SHLIBPREFIX = '',
 )
+
+env.Alias('dri-r300', module)

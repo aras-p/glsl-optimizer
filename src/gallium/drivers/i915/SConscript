@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-if msvc:
+if env['msvc']:
 	print 'warning: not building i915g'
 	Return()
 

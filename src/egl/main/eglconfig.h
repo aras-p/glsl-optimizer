@@ -3,6 +3,7 @@
 
 
 #include <assert.h>
+#include <stddef.h>
 #include "egltypedefs.h"
 
 

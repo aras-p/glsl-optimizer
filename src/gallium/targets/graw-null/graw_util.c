@@ -9,8 +9,9 @@
 
 /* Helper functions.  These are the same for all graw implementations.
  */
-void *graw_parse_geometry_shader(struct pipe_context *pipe,
-                                 const char *text)
+PUBLIC void *
+graw_parse_geometry_shader(struct pipe_context *pipe,
+                           const char *text)
 {
    struct tgsi_token tokens[1024];
    struct pipe_shader_state state;
@@ -22,8 +23,9 @@ void *graw_parse_geometry_shader(struct pipe_context *pipe,
    return pipe->create_gs_state(pipe, &state);
 }
 
-void *graw_parse_vertex_shader(struct pipe_context *pipe,
-                               const char *text)
+PUBLIC void *
+graw_parse_vertex_shader(struct pipe_context *pipe,
+                         const char *text)
 {
    struct tgsi_token tokens[1024];
    struct pipe_shader_state state;
@@ -35,8 +37,9 @@ void *graw_parse_vertex_shader(struct pipe_context *pipe,
    return pipe->create_vs_state(pipe, &state);
 }
 
-void *graw_parse_fragment_shader(struct pipe_context *pipe,
-                                 const char *text)
+PUBLIC void *
+graw_parse_fragment_shader(struct pipe_context *pipe,
+                           const char *text)
 {
    struct tgsi_token tokens[1024];
    struct pipe_shader_state state;

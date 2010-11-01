@@ -3,17 +3,6 @@
 
 Import('*')
 
-if env['platform'] != 'linux':
-    Return()
-
-if 'mesa' not in env['statetrackers']:
-    print 'warning: Mesa state tracker disabled: skipping build of xlib libGL.so'
-    Return()
-
-if env['dri']:
-    print 'warning: DRI enabled: skipping build of xlib libGL.so'
-    Return()
-
 env = env.Clone()
 
 env.Append(CPPPATH = [
@@ -24,6 +13,8 @@ env.Append(CPPPATH = [
 ])
 
 env.Append(CPPDEFINES = ['USE_XSHM'])
+
+env.Prepend(LIBS = env['X11_LIBS'])
 
 env.Prepend(LIBS = [
     st_xlib,
@@ -42,8 +33,6 @@ sources = [
     'xlib.c',
 ]
 
-env.Tool('x11')
-
 if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
@@ -54,10 +43,10 @@ if True:
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
-    env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])
     
-if 'cell' in env['drivers']:
+if False:
+    # TODO: Detect Cell SDK
     env.Append(CPPDEFINES = 'GALLIUM_CELL')
     env.Prepend(LIBS = [cell])
 
@@ -67,6 +56,8 @@ libgl = env.SharedLibrary(
     source = sources,
 )
 
-if not env['dri']:
-    # Only install this libGL.so if DRI not enabled
-    env.InstallSharedLibrary(libgl, version=(1, 5))
+if True:
+    # XXX: Only install this libGL.so if DRI not enabled
+    libgl = env.InstallSharedLibrary(libgl, version=(1, 5))
+
+env.Alias('libgl-xlib', libgl)
