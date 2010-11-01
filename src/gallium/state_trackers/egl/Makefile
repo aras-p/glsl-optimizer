@@ -17,7 +17,7 @@ x11_INCLUDES = \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	$(X11_CFLAGS) \
-	$(shell pkg-config --cflags-only-I libdrm)
+	$(shell pkg-config --cflags-only-I libdrm dri2proto)
 
 x11_SOURCES = $(wildcard x11/*.c) \
 	      $(TOP)/src/glx/dri2.c
