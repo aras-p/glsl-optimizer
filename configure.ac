@@ -1340,6 +1340,27 @@ AC_SUBST([LLVM_VERSION])
 dnl
 dnl Gallium state trackers configuration
 dnl
+
+AC_ARG_ENABLE([gallium-egl],
+    [AS_HELP_STRING([--enable-gallium-egl],
+        [enable gallium EGL state tracker @<:@default=auto@:>@])],
+    [enable_gallium_egl="$enableval"],
+    [enable_gallium_egl=auto])
+if test "x$enable_gallium_egl" = xauto; then
+    case "$mesa_driver" in
+    dri|no)
+        enable_gallium_egl=$enable_egl
+        ;;
+    *)
+        enable_gallium_egl=no
+        ;;
+    esac
+fi
+case "x$enable_egl$enable_gallium_egl" in
+xnoyes)
+    AC_MSG_ERROR([cannot build Gallium EGL state tracker without EGL])
+esac
+
 AC_ARG_WITH([state-trackers],
     [AS_HELP_STRING([--with-state-trackers@<:@=DIRS...@:>@],
         [comma delimited state_trackers list, e.g.
@@ -1352,8 +1373,6 @@ no)
     GALLIUM_STATE_TRACKERS_DIRS=""
     ;;
 yes)
-    st_egl="no"
-
     # look at what else is built
     case "$mesa_driver" in
     xlib)
@@ -1362,14 +1381,11 @@ yes)
     dri)
         GALLIUM_STATE_TRACKERS_DIRS="dri"
         HAVE_ST_DRI="yes"
-        st_egl="yes"
         # Have only tested st/xorg on 1.6.0 servers
         PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0 libdrm >= $LIBDRM_XORG_REQUIRED libkms >= $LIBKMS_XORG_REQUIRED],
             HAVE_ST_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
             HAVE_ST_XORG="no")
         ;;
-    no)
-        st_egl="yes"
     esac
 
     if test "x$enable_egl" = xyes; then
@@ -1378,7 +1394,7 @@ yes)
             st_egl="yes"
         fi
 
-        if test "$st_egl" = yes; then
+        if test "$enable_gallium_egl" = yes; then
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
             HAVE_ST_EGL="yes"
         fi
