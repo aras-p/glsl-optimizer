@@ -27,7 +27,8 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_util.h"
-#include "nouveau_class.h"
+#include "nv_object.xml.h"
+#include "nv04_3d.xml.h"
 #include "nv04_driver.h"
 
 static unsigned
@@ -142,7 +143,7 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 		int cull_mode = ctx->Polygon.CullFaceMode;
 		int front_face = ctx->Polygon.FrontFace;
 		uint32_t ctrl0 = 1 << 30 |
-			NV04_MULTITEX_TRIANGLE_CONTROL0_ORIGIN;
+			NV04_MULTITEX_TRIANGLE_CONTROL0_ORIGIN_CORNER;
 		uint32_t ctrl1 = 0, ctrl2 = 0;
 
 		/* Color mask. */
@@ -210,7 +211,7 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 		int cull_mode = ctx->Polygon.CullFaceMode;
 		int front_face = ctx->Polygon.FrontFace;
 		uint32_t ctrl = 1 << 30 |
-			NV04_TEXTURED_TRIANGLE_CONTROL_ORIGIN;
+			NV04_TEXTURED_TRIANGLE_CONTROL_ORIGIN_CORNER;
 
 		/* Dithering. */
 		if (ctx->Color.DitherFlag)

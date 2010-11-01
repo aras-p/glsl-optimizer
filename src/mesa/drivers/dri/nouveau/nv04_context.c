@@ -28,7 +28,7 @@
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
 #include "nouveau_util.h"
-#include "nouveau_class.h"
+#include "nv04_3d.xml.h"
 #include "nv04_driver.h"
 
 static GLboolean

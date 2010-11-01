@@ -27,7 +27,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_util.h"
-#include "nouveau_class.h"
+#include "nv04_3d.xml.h"
 #include "nv04_driver.h"
 
 #include "tnl/tnl.h"

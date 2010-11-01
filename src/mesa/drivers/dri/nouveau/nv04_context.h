@@ -28,6 +28,7 @@
 #define __NV04_CONTEXT_H__
 
 #include "nouveau_context.h"
+#include "nv_object.xml.h"
 
 struct nv04_context {
 	struct nouveau_context base;
