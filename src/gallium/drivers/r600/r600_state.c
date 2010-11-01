@@ -469,7 +469,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX, 0x80000000, 0xFFFFFFFF, NULL);
 
-	tmp = (unsigned)(state->line_width * 8.0);
+	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL);
 
 	r600_pipe_state_add_reg(rstate, R_028A0C_PA_SC_LINE_STIPPLE, 0x00000005, 0xFFFFFFFF, NULL);

@@ -1636,6 +1636,9 @@
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
 #define R_028A04_PA_SU_POINT_MINMAX                  0x00028A04
 #define R_028A08_PA_SU_LINE_CNTL                     0x00028A08
+#define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)
+#define   G_028A08_WIDTH(x)                            (((x) >> 0) & 0xFFFF)
+#define   C_028A08_WIDTH                               0xFFFF0000
 #define R_028A10_VGT_OUTPUT_PATH_CNTL                0x00028A10
 #define R_028A14_VGT_HOS_CNTL                        0x00028A14
 #define R_028A18_VGT_HOS_MAX_TESS_LEVEL              0x00028A18
