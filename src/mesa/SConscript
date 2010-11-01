@@ -240,77 +240,78 @@ mesa_sources = (
 #
 # Assembly sources
 #
-if env['gcc'] and env['machine'] == 'x86':
-    env.Append(CPPDEFINES = [
-        'USE_X86_ASM',
-        'USE_MMX_ASM',
-        'USE_3DNOW_ASM',
-        'USE_SSE_ASM',
-    ])
-    mesa_sources += [
-        'x86/common_x86.c',
-        'x86/x86_xform.c',
-        'x86/3dnow.c',
-        'x86/sse.c',
-        'x86/common_x86_asm.S',
-        'x86/x86_xform2.S',
-        'x86/x86_xform3.S',
-        'x86/x86_xform4.S',
-        'x86/x86_cliptest.S',
-        'x86/mmx_blend.S',
-        'x86/3dnow_xform1.S',
-        'x86/3dnow_xform2.S',
-        'x86/3dnow_xform3.S',
-        'x86/3dnow_xform4.S',
-        'x86/3dnow_normal.S',
-        'x86/sse_xform1.S',
-        'x86/sse_xform2.S',
-        'x86/sse_xform3.S',
-        'x86/sse_xform4.S',
-        'x86/sse_normal.S',
-        'x86/read_rgba_span_x86.S',
-    ]
-elif env['gcc'] and env['machine'] == 'x86_64':
-    env.Append(CPPDEFINES = [
-        'USE_X86_64_ASM',
-    ])
-    mesa_sources += [
-        'x86-64/x86-64.c',
-        'x86-64/xform4.S',
-    ]
-elif env['gcc'] and env['machine'] == 'ppc':
-    env.Append(CPPDEFINES = [
-        'USE_PPC_ASM',
-        'USE_VMX_ASM',
-    ])
-    mesa_sources += [
-        'ppc/common_ppc.c',
-    ]
-elif env['gcc'] and env['machine'] == 'sparc':
-    mesa_sources += [
-        'sparc/sparc.c',
-        'sparc/clip.S',
-        'sparc/norm.S',
-        'sparc/xform.S',
-    ]
-else:
-    pass
+if env['gcc'] and env['platform'] != 'windows':
+    if env['machine'] == 'x86':
+        env.Append(CPPDEFINES = [
+            'USE_X86_ASM',
+            'USE_MMX_ASM',
+            'USE_3DNOW_ASM',
+            'USE_SSE_ASM',
+        ])
+        mesa_sources += [
+            'x86/common_x86.c',
+            'x86/x86_xform.c',
+            'x86/3dnow.c',
+            'x86/sse.c',
+            'x86/common_x86_asm.S',
+            'x86/x86_xform2.S',
+            'x86/x86_xform3.S',
+            'x86/x86_xform4.S',
+            'x86/x86_cliptest.S',
+            'x86/mmx_blend.S',
+            'x86/3dnow_xform1.S',
+            'x86/3dnow_xform2.S',
+            'x86/3dnow_xform3.S',
+            'x86/3dnow_xform4.S',
+            'x86/3dnow_normal.S',
+            'x86/sse_xform1.S',
+            'x86/sse_xform2.S',
+            'x86/sse_xform3.S',
+            'x86/sse_xform4.S',
+            'x86/sse_normal.S',
+            'x86/read_rgba_span_x86.S',
+        ]
+    elif env['machine'] == 'x86_64':
+        env.Append(CPPDEFINES = [
+            'USE_X86_64_ASM',
+        ])
+        mesa_sources += [
+            'x86-64/x86-64.c',
+            'x86-64/xform4.S',
+        ]
+    elif env['machine'] == 'ppc':
+        env.Append(CPPDEFINES = [
+            'USE_PPC_ASM',
+            'USE_VMX_ASM',
+        ])
+        mesa_sources += [
+            'ppc/common_ppc.c',
+        ]
+    elif env['machine'] == 'sparc':
+        mesa_sources += [
+            'sparc/sparc.c',
+            'sparc/clip.S',
+            'sparc/norm.S',
+            'sparc/xform.S',
+        ]
+    else:
+        pass
 
-# Generate matypes.h
-if env['gcc'] and env['machine'] in ('x86', 'x86_64'):
-    # See http://www.scons.org/wiki/UsingCodeGenerators
-    gen_matypes = env.Program(
-        target = 'gen_matypes',
-        source = 'x86/gen_matypes.c',
-    )
-    matypes = env.Command(
-        'matypes.h',
-        gen_matypes,
-        gen_matypes[0].abspath + ' > $TARGET',
-    )
-    # Add the dir containing the generated header (somewhere inside  the
-    # build dir) to the include path
-    env.Append(CPPPATH = [matypes[0].dir])
+    # Generate matypes.h
+    if env['machine'] in ('x86', 'x86_64'):
+        # See http://www.scons.org/wiki/UsingCodeGenerators
+        gen_matypes = env.Program(
+            target = 'gen_matypes',
+            source = 'x86/gen_matypes.c',
+        )
+        matypes = env.Command(
+            'matypes.h',
+            gen_matypes,
+            gen_matypes[0].abspath + ' > $TARGET',
+        )
+        # Add the dir containing the generated header (somewhere inside  the
+        # build dir) to the include path
+        env.Append(CPPPATH = [matypes[0].dir])
 
 #
 # Libraries
