@@ -624,6 +624,9 @@ void  rc_get_readers_normal(
 			data->Abort = 1;
 			return;
 		case RC_OPCODE_IF:
+			/* XXX We can do better here, but this will have to
+			 * do until this dataflow analysis is more mature. */
+			data->Abort = 1;
 			branch_depth++;
 			break;
 		case RC_OPCODE_ELSE:
