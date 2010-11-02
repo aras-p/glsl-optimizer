@@ -1062,7 +1062,7 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    draw_flush(llvmpipe->draw);
 
-   llvmpipe->fs = fs;
+   llvmpipe->fs = (struct lp_fragment_shader *) fs;
 
    draw_bind_fragment_shader(llvmpipe->draw,
                              (llvmpipe->fs ? llvmpipe->fs->draw_data : NULL));
