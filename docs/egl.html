@@ -28,17 +28,16 @@ cards.</p>
 
 <ol>
 <li>
-<p>Run <code>configure</code> with the desired state trackers and enable
-the Gallium driver for your hardware.  For example</p>
+<p>Run <code>configure</code> with the desired client APIs and enable
+the driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --enable-gles-overlay --enable-openvg --enable-gallium-intel
+  $ ./configure --enable-gles2 --enable-openvg --enable-gallium-nouveau
 </pre>
 
-<p>The main library and OpenGL is enabled by default.  The first option enables
-<a href="opengles.html">OpenGL ES 1.x and 2.x</a>.  The second option enables
-<a href="openvg.html">OpenVG</a>.
-</p>
+<p>The main library and OpenGL is enabled by default.  The first option above
+enables <a href="opengles.html">OpenGL ES 2.x</a>.  The second option enables
+<a href="openvg.html">OpenVG</a>.</p>
 
 </li>
 
@@ -80,28 +79,35 @@ types such as <code>EGLNativeDisplayType</code> or
 
 <p>The available platforms are <code>x11</code>, <code>drm</code>,
 <code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> platform can
-only be built with SCons.</p>
-
-</li>
-
-<li><code>--enable-gles-overlay</code>
-
-<p>OpenGL is built by default.  To build OpenGL ES, this option must be
-explicitly given.</p>
+only be built with SCons.  Unless for special needs, the build system should
+select the right platforms automatically.</p>
 
 </li>
 
 <li><code>--enable-gles1</code> and <code>--enable-gles2</code>
 
-<p>Unlike <code>--enable-gles-overlay</code>, which builds one library for each
-rendering API, these options enable OpenGL ES support in OpenGL.  The result is
+<p>These options enable OpenGL ES support in OpenGL.  The result is
 one big library that supports multiple APIs.</p>
+
+</li>
+
+<li><code>--enable-gles-overlay</code>
+
+<p>This option enables OpenGL ES as separate libraries.  This is an alternative
+approach to enable OpenGL ES.  It is only supported by
+<code>egl_gallium</code>.</p>
 
 </li>
 
 <li><code>--enable-openvg</code>
 
 <p>OpenVG must be explicitly enabled by this option.</p>
+
+</li>
+
+<li><code>--enable-gallium-egl</code>
+
+<p>Explicitly enable or disable <code>egl_gallium</code>.</p>
 
 </li>
 
@@ -143,7 +149,12 @@ specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 <p>This variable specifies the native platform.  The valid values are the same
 as those for <code>--with-egl-platforms</code>.  When the variable is not set,
 the main library uses the first platform listed in
-<code>--with-egl-platforms</code> as the native platform</p>
+<code>--with-egl-platforms</code> as the native platform.</p>
+
+<p>Extensions like <code>EGL_MESA_drm_display</code> define new functions to
+create displays for non-native platforms.  These extensions are usually used by
+applications that support non-native platforms.  Setting this variable is
+probably required only for some of the demos found in mesa/demo repository.</p>
 
 </li>
 
@@ -166,6 +177,14 @@ variable to true forces the use of software rendering.</p>
 <h2>EGL Drivers</h2>
 
 <ul>
+<li><code>egl_dri2</code>
+
+<p>This driver supports both <code>x11</code> and <code>drm</code> platforms.
+It functions as a DRI2 driver loader.  For <code>x11</code> support, it talks
+to the X server directly using (XCB-)DRI2 protocol.</p>
+
+</li>
+
 <li><code>egl_gallium</code>
 
 <p>This driver is based on Gallium3D.  It supports all rendering APIs and
@@ -180,15 +199,6 @@ The supported platforms are X11, DRM, FBDEV, and GDI.</p>
 the EGL API.  It supports both direct and indirect rendering when the GLX does.
 It is accelerated when the GLX is.  As such, it cannot provide functions that
 is not available in GLX or GLX extensions.</p>
-</li>
-
-<li><code>egl_dri2</code>
-
-<p>This driver supports the X Window System as its window system.  It functions
-as a DRI2 driver loader.  Unlike <code>egl_glx</code>, it has no dependency on
-<code>libGL</code>.  It talks to the X server directly using (XCB-)DRI2
-protocol.</p>
-
 </li>
 </ul>
 
