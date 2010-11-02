@@ -50,29 +50,34 @@ def symlink(target, source, env):
 
 def install(env, source, subdir):
     target_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build_dir'], subdir)
-    env.Install(target_dir, source)
+    return env.Install(target_dir, source)
 
 def install_program(env, source):
-    install(env, source, 'bin')
+    return install(env, source, 'bin')
 
 def install_shared_library(env, sources, version = ()):
+    targets = []
     install_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build_dir'])
     version = tuple(map(str, version))
     if env['SHLIBSUFFIX'] == '.dll':
         dlls = env.FindIxes(sources, 'SHLIBPREFIX', 'SHLIBSUFFIX')
-        install(env, dlls, 'bin')
+        targets += install(env, dlls, 'bin')
         libs = env.FindIxes(sources, 'LIBPREFIX', 'LIBSUFFIX')
-        install(env, libs, 'lib')
+        targets += install(env, libs, 'lib')
     else:
         for source in sources:
             target_dir =  os.path.join(install_dir, 'lib')
             target_name = '.'.join((str(source),) + version)
             last = env.InstallAs(os.path.join(target_dir, target_name), source)
+            targets += last
             while len(version):
                 version = version[:-1]
                 target_name = '.'.join((str(source),) + version)
                 action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
                 last = env.Command(os.path.join(target_dir, target_name), last, action) 
+                targets += last
+    return targets
+
 
 def createInstallMethods(env):
     env.AddMethod(install_program, 'InstallProgram')
