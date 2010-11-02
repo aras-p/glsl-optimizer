@@ -192,7 +192,7 @@ GLuint translate_tex_format(gl_format mesa_format,
 			    GLenum srgb_decode);
 
 /* brw_wm_sampler_state.c */
-GLuint translate_wrap_mode(GLenum wrap);
+uint32_t translate_wrap_mode(GLenum wrap, bool using_nearest);
 void upload_default_color(struct brw_context *brw,
 			  struct gl_sampler_object *sampler,
 			  int unit);

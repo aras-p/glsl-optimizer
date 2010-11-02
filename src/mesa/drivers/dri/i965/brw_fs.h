@@ -512,9 +512,12 @@ public:
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
-   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate);
-   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
-   fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate);
+   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
+   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
+   fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);

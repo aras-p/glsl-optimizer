@@ -325,42 +325,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 	    return GL_TRUE;
    }
 
-   /* BRW hardware doesn't handle GL_CLAMP texturing correctly;
-    * brw_wm_sampler_state:translate_wrap_mode() treats GL_CLAMP
-    * as GL_CLAMP_TO_EDGE instead.  If we're using GL_CLAMP, and
-    * we want strict conformance, force the fallback.
-    * Right now, we only do this for 2D textures.
-    */
-   {
-      int u;
-      for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
-
-         if (texUnit->Enabled) {
-	    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, u);
-
-            if (texUnit->Enabled & TEXTURE_1D_BIT) {
-               if (sampler->WrapS == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_2D_BIT) {
-               if (sampler->WrapS == GL_CLAMP ||
-                   sampler->WrapT == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_3D_BIT) {
-               if (sampler->WrapS == GL_CLAMP ||
-                   sampler->WrapT == GL_CLAMP ||
-                   sampler->WrapR == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-         }
-      }
-   }
-      
    /* Nothing stopping us from the fast path now */
    return GL_FALSE;
 }

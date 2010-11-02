@@ -410,6 +410,16 @@ static void brw_wm_populate_key( struct brw_context *brw,
 			  swizzles[GET_SWZ(t->_Swizzle, 1)],
 			  swizzles[GET_SWZ(t->_Swizzle, 2)],
 			  swizzles[GET_SWZ(t->_Swizzle, 3)]);
+
+	 if (sampler->MinFilter != GL_NEAREST &&
+	     sampler->MagFilter != GL_NEAREST) {
+	    if (sampler->WrapS == GL_CLAMP)
+	       key->gl_clamp_mask[0] |= 1 << i;
+	    if (sampler->WrapT == GL_CLAMP)
+	       key->gl_clamp_mask[1] |= 1 << i;
+	    if (sampler->WrapR == GL_CLAMP)
+	       key->gl_clamp_mask[2] |= 1 << i;
+	 }
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;

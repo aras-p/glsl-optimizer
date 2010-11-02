@@ -44,20 +44,28 @@
 
 
 
-/* The brw (and related graphics cores) do not support GL_CLAMP.  The
- * Intel drivers for "other operating systems" implement GL_CLAMP as
- * GL_CLAMP_TO_EDGE, so the same is done here.
- */
-GLuint
-translate_wrap_mode(GLenum wrap)
+uint32_t
+translate_wrap_mode(GLenum wrap, bool using_nearest)
 {
    switch( wrap ) {
    case GL_REPEAT: 
       return BRW_TEXCOORDMODE_WRAP;
-   case GL_CLAMP:  
-      return BRW_TEXCOORDMODE_CLAMP;
+   case GL_CLAMP:
+      /* GL_CLAMP is the weird mode where coordinates are clamped to
+       * [0.0, 1.0], so linear filtering of coordinates outside of
+       * [0.0, 1.0] give you half edge texel value and half border
+       * color.  The fragment shader will clamp the coordinates, and
+       * we set clamp_border here, which gets the result desired.  We
+       * just use clamp(_to_edge) for nearest, because for nearest
+       * clamping to 1.0 gives border color instead of the desired
+       * edge texels.
+       */
+      if (using_nearest)
+	 return BRW_TEXCOORDMODE_CLAMP;
+      else
+	 return BRW_TEXCOORDMODE_CLAMP_BORDER;
    case GL_CLAMP_TO_EDGE: 
-      return BRW_TEXCOORDMODE_CLAMP; /* conform likes it this way */
+      return BRW_TEXCOORDMODE_CLAMP;
    case GL_CLAMP_TO_BORDER: 
       return BRW_TEXCOORDMODE_CLAMP_BORDER;
    case GL_MIRRORED_REPEAT: 
@@ -155,11 +163,13 @@ static void brw_update_sampler_state(struct brw_context *brw,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
+   bool using_nearest = false;
 
    switch (gl_sampler->MinFilter) {
    case GL_NEAREST:
       sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
       sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
+      using_nearest = true;
       break;
    case GL_LINEAR:
       sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
@@ -200,6 +210,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
       switch (gl_sampler->MagFilter) {
       case GL_NEAREST:
 	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
+	 using_nearest = true;
 	 break;
       case GL_LINEAR:
 	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
@@ -209,9 +220,12 @@ static void brw_update_sampler_state(struct brw_context *brw,
       }  
    }
 
-   sampler->ss1.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR);
-   sampler->ss1.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS);
-   sampler->ss1.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT);
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR,
+						  using_nearest);
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS,
+						  using_nearest);
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT,
+						  using_nearest);
 
    if (intel->gen >= 6 &&
        sampler->ss0.min_filter != sampler->ss0.mag_filter)

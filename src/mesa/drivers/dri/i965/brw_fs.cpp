@@ -1172,7 +1172,8 @@ fs_visitor::visit(ir_assignment *ir)
 }
 
 fs_inst *
-fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
 {
    int mlen;
    int base_mrf = 1;
@@ -1184,7 +1185,11 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 
    if (ir->shadow_comparitor) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV,
+			      fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -1212,7 +1217,10 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       mlen++;
    } else if (ir->op == ir_tex) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -1226,7 +1234,11 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       assert(ir->op == ir_txb || ir->op == ir_txl);
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * 2), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF,
+						     base_mrf + mlen + i * 2),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
 	 coordinate.reg_offset++;
       }
 
@@ -1298,15 +1310,19 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
  * surprising in the disassembly.
  */
 fs_inst *
-fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
 {
    int mlen = 1; /* g0 header always present. */
    int base_mrf = 1;
    int reg_width = c->dispatch_width / 8;
 
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * reg_width),
-	   coordinate);
+      fs_inst *inst = emit(BRW_OPCODE_MOV,
+			   fs_reg(MRF, base_mrf + mlen + i * reg_width),
+			   coordinate);
+      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	 inst->saturate = true;
       coordinate.reg_offset++;
    }
    mlen += ir->coordinate->type->vector_elements * reg_width;
@@ -1357,7 +1373,8 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 }
 
 fs_inst *
-fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
 {
    int mlen = 1; /* g0 header always present. */
    int base_mrf = 1;
@@ -1391,8 +1408,10 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 
    /* Set up the coordinate */
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
-	   coordinate);
+      fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			   coordinate);
+      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	 inst->saturate = true;
       coordinate.reg_offset++;
       mlen += reg_width;
    }
@@ -1517,11 +1536,11 @@ fs_visitor::visit(ir_texture *ir)
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
 
    if (intel->gen >= 7) {
-      inst = emit_texture_gen7(ir, dst, coordinate);
+      inst = emit_texture_gen7(ir, dst, coordinate, sampler);
    } else if (intel->gen >= 5) {
-      inst = emit_texture_gen5(ir, dst, coordinate);
+      inst = emit_texture_gen5(ir, dst, coordinate, sampler);
    } else {
-      inst = emit_texture_gen4(ir, dst, coordinate);
+      inst = emit_texture_gen4(ir, dst, coordinate, sampler);
    }
 
    /* If there's an offset, we already set up m1.  To avoid the implied move,

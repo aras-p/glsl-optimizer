@@ -41,11 +41,13 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
+   bool using_nearest = false;
 
    switch (gl_sampler->MinFilter) {
    case GL_NEAREST:
       sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
       sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
+      using_nearest = true;
       break;
    case GL_LINEAR:
       sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
@@ -85,6 +87,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
       switch (gl_sampler->MagFilter) {
       case GL_NEAREST:
 	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
+	 using_nearest = true;
 	 break;
       case GL_LINEAR:
 	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
@@ -94,9 +97,12 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
       }
    }
 
-   sampler->ss3.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR);
-   sampler->ss3.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS);
-   sampler->ss3.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT);
+   sampler->ss3.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR,
+						  using_nearest);
+   sampler->ss3.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS,
+						  using_nearest);
+   sampler->ss3.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT,
+						  using_nearest);
 
    /* Cube-maps on 965 and later must use the same wrap mode for all 3
     * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
