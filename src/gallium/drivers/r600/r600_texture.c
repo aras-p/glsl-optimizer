@@ -40,8 +40,8 @@
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
-/* Copy from a tiled texture to a detiled one. */
-static void r600_copy_from_tiled_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+/* Copy from a full GPU texture to a transfer's staging one. */
+static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
@@ -49,15 +49,15 @@ static void r600_copy_from_tiled_texture(struct pipe_context *ctx, struct r600_t
 
 	subdst.face = 0;
 	subdst.level = 0;
-	ctx->resource_copy_region(ctx, rtransfer->linear_texture,
+	ctx->resource_copy_region(ctx, rtransfer->staging_texture,
 				subdst, 0, 0, 0, texture, transfer->sr,
 				transfer->box.x, transfer->box.y, transfer->box.z,
 				transfer->box.width, transfer->box.height);
 }
 
 
-/* Copy from a detiled texture to a tiled one. */
-static void r600_copy_into_tiled_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+/* Copy from a transfer's staging texture to a full GPU one. */
+static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
@@ -67,7 +67,7 @@ static void r600_copy_into_tiled_texture(struct pipe_context *ctx, struct r600_t
 	subsrc.level = 0;
 	ctx->resource_copy_region(ctx, texture, transfer->sr,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  rtransfer->linear_texture, subsrc,
+				  rtransfer->staging_texture, subsrc,
 				  0, 0, 0,
 				  transfer->box.width, transfer->box.height);
 
@@ -435,9 +435,19 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	}
 
 out:
+	/* XXX: only do this if the depth texture has actually changed:
+	 */
 	r600_blit_uncompress_depth_ptr(ctx, rtex);
 	return 0;
 }
+
+/* Needs adjustment for pixelformat:
+ */
+static INLINE unsigned u_box_volume( const struct pipe_box *box )
+{
+        return box->width * box->depth * box->height;
+};
+
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
@@ -449,6 +459,35 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
 	int r;
+	boolean use_staging_texture = FALSE;
+	boolean discard = FALSE;
+
+	if (!(usage & PIPE_TRANSFER_READ) && (usage & PIPE_TRANSFER_DISCARD))
+		discard = TRUE;
+
+	/* We cannot map a tiled texture directly because the data is
+	 * in a different order, therefore we do detiling using a blit.
+	 *
+	 * Also, use a temporary in GTT memory for read transfers, as
+	 * the CPU is much happier reading out of cached system memory
+	 * than uncached VRAM.
+	 */
+	if (rtex->tiled)
+		use_staging_texture = TRUE;
+
+        if (usage & PIPE_TRANSFER_READ &&
+            u_box_volume(box) > 1024)
+                use_staging_texture = TRUE;
+
+        /* XXX: Use a staging texture for uploads if the underlying BO
+         * is busy.  No interface for checking that currently? so do
+         * it eagerly whenever the transfer doesn't require a readback
+         * and might block.
+         */
+        if ((usage & PIPE_TRANSFER_WRITE) &&
+            discard &&
+            !(usage & (PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_UNSYNCHRONIZED)))
+                use_staging_texture = TRUE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
@@ -458,6 +497,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
 	if (rtex->depth) {
+                /* XXX: only readback the rectangle which is being mapped?
+                 */
+                /* XXX: when discard is true, no need to read back from depth texture
+                 */
 		r = r600_texture_depth_flush(ctx, texture);
 		if (r < 0) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
@@ -465,7 +508,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			FREE(trans);
 			return NULL;
 		}
-	} else if (rtex->tiled) {
+	} else if (use_staging_texture) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
 		resource.width0 = box->width;
@@ -473,7 +516,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		resource.depth0 = 1;
 		resource.last_level = 0;
 		resource.nr_samples = 0;
-		resource.usage = PIPE_USAGE_DYNAMIC;
+		resource.usage = PIPE_USAGE_STAGING;
 		resource.bind = 0;
 		resource.flags = R600_RESOURCE_FLAG_TRANSFER;
 		/* For texture reading, the temporary (detiled) texture is used as
@@ -487,8 +530,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			resource.bind |= PIPE_BIND_SAMPLER_VIEW;
 		}
 		/* Create the temporary texture. */
-		trans->linear_texture = ctx->screen->resource_create(ctx->screen, &resource);
-		if (trans->linear_texture == NULL) {
+		trans->staging_texture = ctx->screen->resource_create(ctx->screen, &resource);
+		if (trans->staging_texture == NULL) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
@@ -496,11 +539,9 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-		  ((struct r600_resource_texture *)trans->linear_texture)->pitch_in_bytes[0];
-		if (usage & PIPE_TRANSFER_READ) {
-			/* We cannot map a tiled texture directly because the data is
-			 * in a different order, therefore we do detiling using a blit. */
-			r600_copy_from_tiled_texture(ctx, trans);
+                        ((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
+		if (!discard) {
+			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
 			ctx->flush(ctx, 0, NULL);
 		}
@@ -517,11 +558,11 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
-	if (rtransfer->linear_texture) {
+	if (rtransfer->staging_texture) {
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
-			r600_copy_into_tiled_texture(ctx, rtransfer);
+			r600_copy_from_staging_texture(ctx, rtransfer);
 		}
-		pipe_resource_reference(&rtransfer->linear_texture, NULL);
+		pipe_resource_reference(&rtransfer->staging_texture, NULL);
 	}
 	if (rtex->flushed_depth_texture) {
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
@@ -541,8 +582,8 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	unsigned usage = 0;
 	char *map;
 
-	if (rtransfer->linear_texture) {
-		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
+	if (rtransfer->staging_texture) {
+		bo = ((struct r600_resource *)rtransfer->staging_texture)->bo;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
@@ -593,8 +634,8 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
 	struct r600_bo *bo;
 
-	if (rtransfer->linear_texture) {
-		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
+	if (rtransfer->staging_texture) {
+		bo = ((struct r600_resource *)rtransfer->staging_texture)->bo;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 

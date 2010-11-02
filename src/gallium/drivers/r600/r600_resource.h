@@ -35,7 +35,7 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
-	struct pipe_resource		*linear_texture;
+	struct pipe_resource		*staging_texture;
 };
 
 /* This gets further specialized into either buffer or texture
