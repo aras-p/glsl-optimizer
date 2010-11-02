@@ -295,7 +295,12 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return TRUE;
    }
 
-   u_rect_find_intersection(&setup->draw_region, &bbox);
+   /* Can safely discard negative regions, but need to keep hold of
+    * information about when the triangle extends past screen
+    * boundaries.  See trimmed_box in lp_setup_bin_triangle().
+    */
+   bbox.x0 = MAX2(bbox.x0, 0);
+   bbox.y0 = MAX2(bbox.y0, 0);
 
    tri = lp_setup_alloc_triangle(scene,
                                  key->num_inputs,
@@ -501,24 +506,26 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
+      const struct u_rect *scissor = &setup->scissor;
+
       plane[3].dcdx = -1;
       plane[3].dcdy = 0;
-      plane[3].c = 1-bbox.x0;
+      plane[3].c = 1-scissor->x0;
       plane[3].eo = 1;
 
       plane[4].dcdx = 1;
       plane[4].dcdy = 0;
-      plane[4].c = bbox.x1+1;
+      plane[4].c = scissor->x1+1;
       plane[4].eo = 0;
 
       plane[5].dcdx = 0;
       plane[5].dcdy = 1;
-      plane[5].c = 1-bbox.y0;
+      plane[5].c = 1-scissor->y0;
       plane[5].eo = 1;
 
       plane[6].dcdx = 0;
       plane[6].dcdy = -1;
-      plane[6].c = bbox.y1+1;
+      plane[6].c = scissor->y1+1;
       plane[6].eo = 0;
    }
 
@@ -559,6 +566,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                        int nr_planes )
 {
    struct lp_scene *scene = setup->scene;
+   struct u_rect trimmed_box = *bbox;   
    int i;
 
    /* What is the largest power-of-two boundary this triangle crosses:
@@ -571,6 +579,13 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
     */
    int sz = floor_pot((bbox->x1 - (bbox->x0 & ~3)) |
 		      (bbox->y1 - (bbox->y0 & ~3)));
+
+   /* Now apply scissor, etc to the bounding box.  Could do this
+    * earlier, but it confuses the logic for tri-16 and would force
+    * the rasterizer to also respect scissor, etc, just for the rare
+    * cases where a small triangle extends beyond the scissor.
+    */
+   u_rect_find_intersection(&setup->draw_region, &trimmed_box);
 
    /* Determine which tile(s) intersect the triangle's bounding box
     */
@@ -626,15 +641,16 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       struct lp_rast_plane *plane = GET_PLANES(tri);
       int c[MAX_PLANES];
       int ei[MAX_PLANES];
+
       int eo[MAX_PLANES];
       int xstep[MAX_PLANES];
       int ystep[MAX_PLANES];
       int x, y;
 
-      int ix0 = bbox->x0 / TILE_SIZE;
-      int iy0 = bbox->y0 / TILE_SIZE;
-      int ix1 = bbox->x1 / TILE_SIZE;
-      int iy1 = bbox->y1 / TILE_SIZE;
+      int ix0 = trimmed_box.x0 / TILE_SIZE;
+      int iy0 = trimmed_box.y0 / TILE_SIZE;
+      int ix1 = trimmed_box.x1 / TILE_SIZE;
+      int iy1 = trimmed_box.y1 / TILE_SIZE;
       
       for (i = 0; i < nr_planes; i++) {
          c[i] = (plane[i].c + 

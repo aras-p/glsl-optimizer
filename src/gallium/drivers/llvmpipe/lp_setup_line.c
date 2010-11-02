@@ -569,7 +569,10 @@ try_setup_line( struct lp_setup_context *setup,
       return TRUE;
    }
 
-   u_rect_find_intersection(&setup->draw_region, &bbox);
+   /* Can safely discard negative regions:
+    */
+   bbox.x0 = MAX2(bbox.x0, 0);
+   bbox.y0 = MAX2(bbox.y0, 0);
 
    line = lp_setup_alloc_triangle(scene,
                                   key->num_inputs,
@@ -680,24 +683,26 @@ try_setup_line( struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 8) {
+      const struct u_rect *scissor = &setup->scissor;
+
       plane[4].dcdx = -1;
       plane[4].dcdy = 0;
-      plane[4].c = 1-bbox.x0;
+      plane[4].c = 1-scissor->x0;
       plane[4].eo = 1;
 
       plane[5].dcdx = 1;
       plane[5].dcdy = 0;
-      plane[5].c = bbox.x1+1;
+      plane[5].c = scissor->x1+1;
       plane[5].eo = 0;
 
       plane[6].dcdx = 0;
       plane[6].dcdy = 1;
-      plane[6].c = 1-bbox.y0;
+      plane[6].c = 1-scissor->y0;
       plane[6].eo = 1;
 
       plane[7].dcdx = 0;
       plane[7].dcdy = -1;
-      plane[7].c = bbox.y1+1;
+      plane[7].c = scissor->y1+1;
       plane[7].eo = 0;
    }
 
