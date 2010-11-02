@@ -454,6 +454,68 @@ typedef enum
 
 
 /**
+ * Framebuffer configuration (aka visual / pixelformat)
+ * Note: some of these fields should be boolean, but it appears that
+ * code in drivers/dri/common/util.c requires int-sized fields.
+ */
+struct gl_config
+{
+   GLboolean rgbMode;
+   GLboolean floatMode;
+   GLboolean colorIndexMode;  /* XXX is this used anywhere? */
+   GLuint doubleBufferMode;
+   GLuint stereoMode;
+
+   GLboolean haveAccumBuffer;
+   GLboolean haveDepthBuffer;
+   GLboolean haveStencilBuffer;
+
+   GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
+   GLuint redMask, greenMask, blueMask, alphaMask;
+   GLint rgbBits;		/* total bits for rgb */
+   GLint indexBits;		/* total bits for colorindex */
+
+   GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
+   GLint depthBits;
+   GLint stencilBits;
+
+   GLint numAuxBuffers;
+
+   GLint level;
+
+   /* EXT_visual_rating / GLX 1.2 */
+   GLint visualRating;
+
+   /* EXT_visual_info / GLX 1.2 */
+   GLint transparentPixel;
+   /*    colors are floats scaled to ints */
+   GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
+   GLint transparentIndex;
+
+   /* ARB_multisample / SGIS_multisample */
+   GLint sampleBuffers;
+   GLint samples;
+
+   /* SGIX_pbuffer / GLX 1.3 */
+   GLint maxPbufferWidth;
+   GLint maxPbufferHeight;
+   GLint maxPbufferPixels;
+   GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
+   GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
+
+   /* OML_swap_method */
+   GLint swapMethod;
+
+   /* EXT_texture_from_pixmap */
+   GLint bindToTextureRgb;
+   GLint bindToTextureRgba;
+   GLint bindToMipmapTexture;
+   GLint bindToTextureTargets;
+   GLint yInverted;
+};
+
+
+/**
  * Data structure for color tables
  */
 struct gl_color_table
@@ -547,60 +609,6 @@ struct gl_shine_tab
    GLuint refcount;
 };
 
-struct gl_config {
-   GLboolean rgbMode;
-   GLboolean floatMode;
-   GLboolean colorIndexMode;
-   GLuint doubleBufferMode;
-   GLuint stereoMode;
-
-   GLboolean haveAccumBuffer;
-   GLboolean haveDepthBuffer;
-   GLboolean haveStencilBuffer;
-
-   GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
-   GLuint redMask, greenMask, blueMask, alphaMask;
-   GLint rgbBits;		/* total bits for rgb */
-   GLint indexBits;		/* total bits for colorindex */
-
-   GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
-   GLint depthBits;
-   GLint stencilBits;
-
-   GLint numAuxBuffers;
-
-   GLint level;
-
-   /* EXT_visual_rating / GLX 1.2 */
-   GLint visualRating;
-
-   /* EXT_visual_info / GLX 1.2 */
-   GLint transparentPixel;
-   /*    colors are floats scaled to ints */
-   GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
-   GLint transparentIndex;
-
-   /* ARB_multisample / SGIS_multisample */
-   GLint sampleBuffers;
-   GLint samples;
-
-   /* SGIX_pbuffer / GLX 1.3 */
-   GLint maxPbufferWidth;
-   GLint maxPbufferHeight;
-   GLint maxPbufferPixels;
-   GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
-   GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
-
-   /* OML_swap_method */
-   GLint swapMethod;
-
-   /* EXT_texture_from_pixmap */
-   GLint bindToTextureRgb;
-   GLint bindToTextureRgba;
-   GLint bindToMipmapTexture;
-   GLint bindToTextureTargets;
-   GLint yInverted;
-};
 
 /**
  * Light source state.
