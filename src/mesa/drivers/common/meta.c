@@ -1980,13 +1980,39 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
    _mesa_meta_end(ctx);
 }
 
+static GLboolean
+alpha_test_raster_color(struct gl_context *ctx)
+{
+   GLfloat alpha = ctx->Current.RasterColor[ACOMP];
+   GLfloat ref = ctx->Color.AlphaRef;
+
+   switch (ctx->Color.AlphaFunc) {
+      case GL_NEVER:
+	 return GL_FALSE;
+      case GL_LESS:
+	 return alpha < ref;
+      case GL_EQUAL:
+	 return alpha == ref;
+      case GL_LEQUAL:
+	 return alpha <= ref;
+      case GL_GREATER:
+	 return alpha > ref;
+      case GL_NOTEQUAL:
+	 return alpha != ref;
+      case GL_GEQUAL:
+	 return alpha >= ref;
+      case GL_ALWAYS:
+	 return GL_TRUE;
+      default:
+	 assert(0);
+	 return GL_FALSE;
+   }
+}
 
 /**
- * Do glBitmap with a alpha texture quad.  Use the alpha test to
- * cull the 'off' bits.  If alpha test is already enabled, fall back
- * to swrast (should be a rare case).
- * A bitmap cache as in the gallium/mesa state tracker would
- * improve performance a lot.
+ * Do glBitmap with a alpha texture quad.  Use the alpha test to cull
+ * the 'off' bits.  A bitmap cache as in the gallium/mesa state
+ * tracker would improve performance a lot.
  */
 void
 _mesa_meta_Bitmap(struct gl_context *ctx,
@@ -2010,7 +2036,7 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
     * Check if swrast fallback is needed.
     */
    if (ctx->_ImageTransferState ||
-       ctx->Color.AlphaEnabled ||
+       ctx->FragmentProgram._Enabled ||
        ctx->Fog.Enabled ||
        ctx->Texture._EnabledUnits ||
        width > tex->MaxSize ||
@@ -2018,6 +2044,9 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       _swrast_Bitmap(ctx, x, y, width, height, unpack, bitmap1);
       return;
    }
+
+   if (ctx->Color.AlphaEnabled && !alpha_test_raster_color(ctx))
+      return;
 
    /* Most GL state applies to glBitmap (like blending, stencil, etc),
     * but a there's a few things we need to override:
