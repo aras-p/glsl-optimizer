@@ -44,7 +44,7 @@
 int r600_context_init_fence(struct r600_context *ctx)
 {
 	ctx->fence = 1;
-	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0);
+	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0, 0);
 	if (ctx->fence_bo == NULL) {
 		return -ENOMEM;
 	}
@@ -787,8 +787,8 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 	bo->reloc = &ctx->reloc[ctx->creloc];
 	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
 	ctx->reloc[ctx->creloc].handle = bo->handle;
-	ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
-	ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	ctx->reloc[ctx->creloc].read_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
+	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
 	ctx->reloc[ctx->creloc].flags = 0;
 	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
 	ctx->creloc++;
@@ -1306,7 +1306,12 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	query->type = query_type;
 	query->buffer_size = 4096;
 
-	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0);
+	/* As of GL4, query buffers are normally read by the CPU after
+	 * being written by the gpu, hence staging is probably a good
+	 * usage pattern.
+	 */
+	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0,
+				PIPE_USAGE_STAGING);
 	if (!query->buffer) {
 		free(query);
 		return NULL;

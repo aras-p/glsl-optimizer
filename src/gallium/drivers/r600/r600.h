@@ -112,7 +112,8 @@ struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon);
 /* r600_bo.c */
 struct r600_bo;
 struct r600_bo *r600_bo(struct radeon *radeon,
-				  unsigned size, unsigned alignment, unsigned usage);
+                        unsigned size, unsigned alignment,
+                        unsigned binding, unsigned usage);
 struct r600_bo *r600_bo_handle(struct radeon *radeon,
 			       unsigned handle, unsigned *array_mode);
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);

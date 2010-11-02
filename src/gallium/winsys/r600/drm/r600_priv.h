@@ -79,6 +79,7 @@ struct r600_bo {
 	unsigned			size;
 	unsigned			tiling_flags;
 	unsigned                        kernel_pitch;
+	unsigned			domains;
 };
 
 

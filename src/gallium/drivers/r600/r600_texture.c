@@ -294,7 +294,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->size = rtex->size;
 
 	if (!resource->bo) {
-		resource->bo = r600_bo(radeon, rtex->size, 4096, 0);
+		resource->bo = r600_bo(radeon, rtex->size, 4096, base->bind, base->usage);
 		if (!resource->bo) {
 			FREE(rtex);
 			return NULL;

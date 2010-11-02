@@ -218,7 +218,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 	/* copy new shader */
 	if (shader->bo == NULL) {
-		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0);
+		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0, 0);
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
