@@ -284,7 +284,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
 	resource->bo = bo;
-	resource->domain = r600_domain_from_usage(resource->base.b.bind);
 	rtex->pitch_override = pitch_in_bytes_override;
 
 	if (array_mode)
