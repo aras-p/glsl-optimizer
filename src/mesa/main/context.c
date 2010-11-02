@@ -1292,9 +1292,6 @@ check_compatible(const struct gl_context *ctx, const struct gl_framebuffer *buff
    const struct gl_config *ctxvis = &ctx->Visual;
    const struct gl_config *bufvis = &buffer->Visual;
 
-   if (ctxvis == bufvis)
-      return GL_TRUE;
-
    if (buffer == _mesa_get_incomplete_framebuffer())
       return GL_TRUE;
 
