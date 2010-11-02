@@ -14,33 +14,7 @@
 static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;
 
 
-#ifdef GLX_USE_TLS
-static __thread const _EGLThreadInfo *_egl_TSD
-   __attribute__ ((tls_model("initial-exec")));
-
-static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
-{
-   _egl_TSD = t;
-}
-
-static INLINE _EGLThreadInfo *_eglGetTSD(void)
-{
-   return (_EGLThreadInfo *) _egl_TSD;
-}
-
-static INLINE void _eglFiniTSD(void)
-{
-}
-
-static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
-{
-   /* TODO destroy TSD */
-   (void) dtor;
-   (void) _eglFiniTSD;
-   return EGL_TRUE;
-}
-
-#elif PTHREADS
+#if PTHREADS
 #include <pthread.h>
 
 static _EGL_DECLARE_MUTEX(_egl_TSDMutex);
@@ -48,14 +22,26 @@ static EGLBoolean _egl_TSDInitialized;
 static pthread_key_t _egl_TSD;
 static void (*_egl_FreeTSD)(_EGLThreadInfo *);
 
+#ifdef GLX_USE_TLS
+static __thread const _EGLThreadInfo *_egl_TLS
+   __attribute__ ((tls_model("initial-exec")));
+#endif
+
 static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
 {
    pthread_setspecific(_egl_TSD, (const void *) t);
+#ifdef GLX_USE_TLS
+   _egl_TLS = t;
+#endif
 }
 
 static INLINE _EGLThreadInfo *_eglGetTSD(void)
 {
+#ifdef GLX_USE_TLS
+   return (_EGLThreadInfo *) _egl_TLS;
+#else
    return (_EGLThreadInfo *) pthread_getspecific(_egl_TSD);
+#endif
 }
 
 static INLINE void _eglFiniTSD(void)
