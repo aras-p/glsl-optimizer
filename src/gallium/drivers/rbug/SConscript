@@ -11,4 +11,6 @@ rbug = env.ConvenienceLibrary(
 		'rbug_screen.c',
 	])
 
+env.Alias('rbug', rbug)
+
 Export('rbug')

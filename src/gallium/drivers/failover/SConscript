@@ -10,4 +10,6 @@ failover = env.ConvenienceLibrary(
 		'fo_context.c',
 	])
 
+env.Alias('failover', failover)
+
 Export('failover')

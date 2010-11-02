@@ -12,4 +12,6 @@ trace = env.ConvenienceLibrary(
         'tr_texture.c',
     ])
 
+env.Alias('trace', trace)
+
 Export('trace')

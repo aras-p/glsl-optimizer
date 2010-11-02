@@ -10,4 +10,6 @@ galahad = env.ConvenienceLibrary(
 		'glhd_screen.c',
 	])
 
+env.Alias('galahad', galahad)
+
 Export('galahad')

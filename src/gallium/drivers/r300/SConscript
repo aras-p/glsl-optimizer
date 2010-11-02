@@ -39,5 +39,7 @@ r300 = env.ConvenienceLibrary(
         'r300_transfer.c',
     ] + r300compiler) + r300compiler
 
+env.Alias('r300', r300)
+
 Export('r300')
 

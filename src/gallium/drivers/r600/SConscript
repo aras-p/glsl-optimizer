@@ -33,4 +33,6 @@ r600 = env.ConvenienceLibrary(
         'eg_asm.c',
     ])
 
+env.Alias('r600', r600)
+
 Export('r600')
