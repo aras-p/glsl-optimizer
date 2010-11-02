@@ -321,7 +321,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 void GLAPIENTRY
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
-   const GLbitfield legalTypes = BOOL_BIT;
+   const GLbitfield legalTypes = UNSIGNED_BYTE_BIT;
    /* see table 2.4 edits in GL_EXT_gpu_shader4 spec: */
    const GLboolean integer = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
@@ -330,7 +330,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
    update_array(ctx, "glEdgeFlagPointer",
                 &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
                 legalTypes, 1, 1,
-                1, GL_BOOL, stride, GL_FALSE, integer, ptr);
+                1, GL_UNSIGNED_BYTE, stride, GL_FALSE, integer, ptr);
 }
 
 
