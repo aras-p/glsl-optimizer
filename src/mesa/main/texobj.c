@@ -380,10 +380,10 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
  *
  * \note For debug purposes only.
  */
-#if 0
 static void
 incomplete(const struct gl_texture_object *t, const char *fmt, ...)
 {
+#if 0
    va_list args;
    char s[100];
 
@@ -392,10 +392,8 @@ incomplete(const struct gl_texture_object *t, const char *fmt, ...)
    va_end(args);
 
    printf("Texture Obj %d incomplete because: %s\n", t->Name, s);
-}
-#else
-#define incomplete(t, why, ...)
 #endif
+}
 
 
 /**
