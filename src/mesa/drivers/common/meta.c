@@ -104,6 +104,8 @@ struct save_state
 
    /** META_ALPHA_TEST */
    GLboolean AlphaEnabled;
+   GLenum AlphaFunc;
+   GLclampf AlphaRef;
 
    /** META_BLEND */
    GLbitfield BlendEnabled;
@@ -328,6 +330,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 
    if (state & META_ALPHA_TEST) {
       save->AlphaEnabled = ctx->Color.AlphaEnabled;
+      save->AlphaFunc = ctx->Color.AlphaFunc;
+      save->AlphaRef = ctx->Color.AlphaRef;
       if (ctx->Color.AlphaEnabled)
          _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_FALSE);
    }
@@ -576,6 +580,7 @@ _mesa_meta_end(struct gl_context *ctx)
    if (state & META_ALPHA_TEST) {
       if (ctx->Color.AlphaEnabled != save->AlphaEnabled)
          _mesa_set_enable(ctx, GL_ALPHA_TEST, save->AlphaEnabled);
+      _mesa_AlphaFunc(save->AlphaFunc, save->AlphaRef);
    }
 
    if (state & META_BLEND) {
