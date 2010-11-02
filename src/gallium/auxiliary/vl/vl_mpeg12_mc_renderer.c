@@ -294,7 +294,7 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_src sampler[4];
    struct ureg_dst texel, ref, tmp;
    struct ureg_dst fragment;
-   unsigned i, label;
+   unsigned i;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -322,16 +322,6 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[i], sampler[i]);
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_X));
    }
-
-   /*
-   ureg_MOD(shader, tmp, ureg_scalar(tc[4], TGSI_SWIZZLE_Y), ureg_scalar(ureg_imm1f(shader, 2), TGSI_SWIZZLE_Y));
-   ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), &label);
-   ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[3], sampler[3]);
-   ureg_ELSE(shader, &label);
-   ureg_MOV(shader, ref, ureg_scalar(ureg_imm1f(shader, 0xFF), TGSI_SWIZZLE_X));
-   ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[4], sampler[3]);
-   ureg_ENDIF(shader);
-   */
 
    ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[4], sampler[3]);
    ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
@@ -886,11 +876,15 @@ get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
 }
 
 static void
-gen_block_verts(struct vert_stream_0 *vb, unsigned cbp, unsigned mbx, unsigned mby,
+gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
                 const struct vertex2f *unit, const struct vertex2f *half, const struct vertex2f *offset,
                 unsigned luma_mask, unsigned cb_mask, unsigned cr_mask,
                 bool use_zeroblocks, struct vertex2f *zero_blocks)
 {
+   unsigned cbp = mb->cbp;
+   unsigned mbx = mb->mbx;
+   unsigned mby = mb->mby;
+
    struct vertex2f v;
 
    assert(vb);
@@ -918,7 +912,7 @@ gen_block_verts(struct vert_stream_0 *vb, unsigned cbp, unsigned mbx, unsigned m
       or if zero blocks are being used, to the zero block if the appropriate CBP bits aren't set (i.e. no data
       for this channel is defined for this block) */
 
-   if (!use_zeroblocks || cbp & luma_mask) {
+   if (!use_zeroblocks || cbp & luma_mask || mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD) {
       v.x = mbx * unit->x + offset->x;
       v.y = mby * unit->y + offset->y;
    }
@@ -1104,19 +1098,19 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
 
          struct vert_stream_0 *vb = ycbcr_vb + pos * 24;
 
-         gen_block_verts(vb, mb->cbp, mb->mbx, mb->mby,
+         gen_block_verts(vb, mb,
                          &unit, &half, &offsets[0][0],
                          32, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 6, mb->cbp, mb->mbx, mb->mby,
+         gen_block_verts(vb + 6, mb,
                          &unit, &half, &offsets[1][0],
                          16, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 12, mb->cbp, mb->mbx, mb->mby,
+         gen_block_verts(vb + 12, mb,
                          &unit, &half, &offsets[0][1],
                          8, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 18, mb->cbp, mb->mbx, mb->mby,
+         gen_block_verts(vb + 18, mb,
                          &unit, &half, &offsets[1][1],
                          4, 2, 1, use_zb, r->zero_block);
 
@@ -1383,7 +1377,7 @@ grab_field_coded_block(short *src, short *dst, unsigned dst_pitch)
 }
 
 static void
-fill_zero_block(short *dst, unsigned dst_pitch)
+fill_frame_zero_block(short *dst, unsigned dst_pitch)
 {
    unsigned y;
 
@@ -1391,6 +1385,17 @@ fill_zero_block(short *dst, unsigned dst_pitch)
 
    for (y = 0; y < BLOCK_HEIGHT; ++y)
       memset(dst + y * dst_pitch, 0, BLOCK_WIDTH * 2);
+}
+
+static void
+fill_field_zero_block(short *dst, unsigned dst_pitch)
+{
+   unsigned y;
+
+   assert(dst);
+
+   for (y = 0; y < BLOCK_HEIGHT; ++y)
+      memset(dst + y * dst_pitch * 2, 0, BLOCK_WIDTH * 2);
 }
 
 static void
@@ -1414,7 +1419,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
          if ((cbp >> (5 - tb)) & 1) {
             if (dct_type == PIPE_MPEG12_DCT_TYPE_FRAME) {
                grab_frame_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT,
-                                      texels + y * tex_pitch * BLOCK_WIDTH +
+                                      texels + y * tex_pitch * BLOCK_HEIGHT +
                                       x * BLOCK_WIDTH, tex_pitch);
             }
             else {
@@ -1426,13 +1431,21 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
             ++sb;
          }
          else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
-            if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
-                ZERO_BLOCK_IS_NIL(r->zero_block[0])) {
-               fill_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
-               if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-                  r->zero_block[0].x = (mbpx + x * 8) * r->surface_tex_inv_size.x;
-                  r->zero_block[0].y = (mbpy + y * 8) * r->surface_tex_inv_size.y;
+            if(dct_type == PIPE_MPEG12_DCT_TYPE_FRAME) {
+
+               if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
+                   ZERO_BLOCK_IS_NIL(r->zero_block[0])) {
+
+                  fill_frame_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
+                  if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
+                     r->zero_block[0].x = (mbpx + x * 8) * r->surface_tex_inv_size.x;
+                     r->zero_block[0].y = (mbpy + y * 8) * r->surface_tex_inv_size.y;
+                  }
                }
+            }
+            else {
+
+               fill_field_zero_block(texels + y * tex_pitch + x * BLOCK_WIDTH, tex_pitch);
             }
          }
       }
@@ -1455,7 +1468,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
       else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
          if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
              ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1])) {
-            fill_zero_block(texels, tex_pitch);
+            fill_frame_zero_block(texels, tex_pitch);
             if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
                r->zero_block[tb + 1].x = (mbpx << 1) * r->surface_tex_inv_size.x;
                r->zero_block[tb + 1].y = (mbpy << 1) * r->surface_tex_inv_size.y;
