@@ -10,7 +10,7 @@ env.Prepend(LIBS = [
     trace,
     rbug,
     identity,
-#    gallium,
+    gallium,
 ])
 
 env.Prepend(LIBS = env['X11_LIBS'])
@@ -33,12 +33,6 @@ if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Prepend(LIBS = [llvmpipe])
 
-# Need this for trace, identity drivers referenced by
-# gallium_wrap_screen().
-#
-env.Prepend(LIBS = [gallium])
-
-# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 graw = env.SharedLibrary(
     target ='graw',
     source = sources,
