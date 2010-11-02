@@ -485,8 +485,11 @@ static void
 lp_rast_end_query(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg)
 {
-   task->query->count[task->thread_index] += task->vis_counter;
-   task->query = NULL;
+   assert(task->query);
+   if (task->query) {
+      task->query->count[task->thread_index] += task->vis_counter;
+      task->query = NULL;
+   }
 }
 
 
