@@ -343,21 +343,6 @@ intelTexImage(struct gl_context * ctx,
       texImage->Data = NULL;
    }
 
-   /* If this is the only texture image in the tree, could call
-    * bmBufferData with NULL data to free the old block and avoid
-    * waiting on any outstanding fences.
-    */
-   if (intelObj->mt &&
-       intelObj->mt->first_level == level &&
-       intelObj->mt->last_level == level &&
-       intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
-
-      DBG("release it\n");
-      intel_miptree_release(intel, &intelObj->mt);
-      assert(!intelObj->mt);
-   }
-
    if (!intelObj->mt) {
       guess_and_alloc_mipmap_tree(intel, intelObj, intelImage, pixels == NULL);
       if (!intelObj->mt) {
