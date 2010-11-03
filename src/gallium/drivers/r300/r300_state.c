@@ -1789,7 +1789,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
-    uint32_t *mapped = r300_buffer(buf)->user_buffer;
+    uint32_t *mapped;
 
     switch (shader) {
         case PIPE_SHADER_VERTEX:
