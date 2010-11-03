@@ -54,7 +54,17 @@ enum native_param_type {
     * Return TRUE if window/pixmap surfaces use the buffers of the native
     * types.
     */
-   NATIVE_PARAM_USE_NATIVE_BUFFER
+   NATIVE_PARAM_USE_NATIVE_BUFFER,
+
+   /**
+    * Return TRUE if native_surface::present can preserve the buffer.
+    */
+   NATIVE_PARAM_PRESERVE_BUFFER,
+
+   /**
+    * Return the maximum supported swap interval.
+    */
+   NATIVE_PARAM_MAX_SWAP_INTERVAL
 };
 
 struct native_surface {
@@ -77,6 +87,14 @@ struct native_surface {
     * front buffer might not be visible immediately and require manual flush.
     */
    boolean (*flush_frontbuffer)(struct native_surface *nsurf);
+
+   /**
+    * Present the given buffer to the native engine.
+    */
+   boolean (*present)(struct native_surface *nsurf,
+                      enum native_attachment natt,
+                      boolean preserve,
+                      uint swap_interval);
 
    /**
     * Validate the buffers of the surface.  textures, if not NULL, points to an

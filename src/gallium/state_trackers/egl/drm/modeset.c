@@ -167,6 +167,32 @@ drm_surface_swap_buffers(struct native_surface *nsurf)
    return TRUE;
 }
 
+static boolean
+drm_surface_present(struct native_surface *nsurf,
+                    enum native_attachment natt,
+                    boolean preserve,
+                    uint swap_interval)
+{
+   boolean ret;
+
+   if (preserve || swap_interval)
+      return FALSE;
+
+   switch (natt) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+      ret = drm_surface_flush_frontbuffer(nsurf);
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+      ret = drm_surface_swap_buffers(nsurf);
+      break;
+   default:
+      ret = FALSE;
+      break;
+   }
+
+   return ret;
+}
+
 static void
 drm_surface_wait(struct native_surface *nsurf)
 {
@@ -227,6 +253,7 @@ drm_display_create_surface(struct native_display *ndpy,
    drmsurf->base.destroy = drm_surface_destroy;
    drmsurf->base.swap_buffers = drm_surface_swap_buffers;
    drmsurf->base.flush_frontbuffer = drm_surface_flush_frontbuffer;
+   drmsurf->base.present = drm_surface_present;
    drmsurf->base.validate = drm_surface_validate;
    drmsurf->base.wait = drm_surface_wait;
 
