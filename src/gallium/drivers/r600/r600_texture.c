@@ -306,8 +306,14 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
 	unsigned array_mode = 0;
+        static int force_tiling = -1;
 
-	if (debug_get_bool_option("R600_FORCE_TILING", FALSE)) {
+        /* Would like some magic "get_bool_option_once" routine.
+	 */
+	if (force_tiling == -1)
+                force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
+
+	if (force_tiling) {
 		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 		    !(templ->bind & PIPE_BIND_SCANOUT)) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
