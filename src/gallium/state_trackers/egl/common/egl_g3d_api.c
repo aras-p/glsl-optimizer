@@ -539,7 +539,8 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
-   return gsurf->native->swap_buffers(gsurf->native);
+   return gsurf->native->present(gsurf->native,
+         NATIVE_ATTACHMENT_BACK_LEFT, FALSE, 0);
 }
 
 /**
@@ -607,8 +608,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
       if (psrc) {
          gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, subdst, 0, 0, 0,
                gsurf->render_texture, subsrc, 0, 0, 0, ptex->width0, ptex->height0);
-
-         nsurf->flush_frontbuffer(nsurf);
+         nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
       }
 
       pipe_resource_reference(&ptex, NULL);
