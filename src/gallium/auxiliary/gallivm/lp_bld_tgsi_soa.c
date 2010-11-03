@@ -457,7 +457,7 @@ build_gather(struct lp_build_tgsi_soa_context *bld,
       LLVMValueRef index = LLVMBuildExtractElement(bld->base.builder,
                                                    indexes, ii, "");
       LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, base_ptr,
-                                             &index, 1, "");
+                                             &index, 1, "gather_ptr");
       LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
 
       res = LLVMBuildInsertElement(bld->base.builder, res, scalar, ii, "");
@@ -1103,32 +1103,32 @@ emit_declaration(
             LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
                                                    last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
-                                                     vec_type, array_size, "");
+                                                     vec_type, array_size, "temparray");
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
-                                                    vec_type, "");
+                                                    vec_type, "temp");
          }
          break;
 
       case TGSI_FILE_OUTPUT:
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->outputs[idx][i] = lp_build_alloca(bld->base.builder,
-                                                   vec_type, "");
+                                                   vec_type, "output");
          break;
 
       case TGSI_FILE_ADDRESS:
          assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(bld->base.builder,
-                                                vec_type, "");
+                                                vec_type, "addr");
          break;
 
       case TGSI_FILE_PREDICATE:
          assert(idx < LP_MAX_TGSI_PREDS);
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->preds[idx][i] = lp_build_alloca(bld->base.builder,
-                                                 vec_type, "");
+                                                 vec_type, "predicate");
          break;
 
       default:
