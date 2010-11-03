@@ -21,8 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdarg>
-
 extern "C" {
 #include <talloc.h>
 }
@@ -43,7 +41,7 @@ static void scan_for_prototypes(_mesa_glsl_parse_state *, exec_list *,
 static ir_function *read_function(_mesa_glsl_parse_state *, s_list *,
 				  bool skip_body);
 static void read_function_sig(_mesa_glsl_parse_state *, ir_function *,
-			      s_list *, bool skip_body);
+			      s_expression *, bool skip_body);
 
 static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
 			      s_expression *, ir_loop *);
@@ -124,47 +122,23 @@ ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
 static const glsl_type *
 read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 {
-   s_list *list = SX_AS_LIST(expr);
-   if (list != NULL) {
-      s_symbol *type_sym = SX_AS_SYMBOL(list->subexpressions.get_head());
-      if (type_sym == NULL) {
-	 ir_read_error(st, expr, "expected type (array ...) or (struct ...)");
+   s_expression *s_base_type;
+   s_int *s_size;
+
+   s_pattern pat[] = { "array", s_base_type, s_size };
+   if (MATCH(expr, pat)) {
+      const glsl_type *base_type = read_type(st, s_base_type);
+      if (base_type == NULL) {
+	 ir_read_error(st, NULL, "when reading base type of array type");
 	 return NULL;
       }
-      if (strcmp(type_sym->value(), "array") == 0) {
-	 if (list->length() != 3) {
-	    ir_read_error(st, expr, "expected type (array <type> <int>)");
-	    return NULL;
-	 }
 
-	 // Read base type
-	 s_expression *base_expr = (s_expression*) type_sym->next;
-	 const glsl_type *base_type = read_type(st, base_expr);
-	 if (base_type == NULL) {
-	    ir_read_error(st, NULL, "when reading base type of array");
-	    return NULL;
-	 }
-
-	 // Read array size
-	 s_int *size = SX_AS_INT(base_expr->next);
-	 if (size == NULL) {
-	    ir_read_error(st, expr, "found non-integer array size");
-	    return NULL;
-	 }
-
-	 return glsl_type::get_array_instance(base_type, size->value());
-      } else if (strcmp(type_sym->value(), "struct") == 0) {
-	 assert(false); // FINISHME
-      } else {
-	 ir_read_error(st, expr, "expected (array ...) or (struct ...); "
-				 "found (%s ...)", type_sym->value());
-	 return NULL;
-      }
+      return glsl_type::get_array_instance(base_type, s_size->value());
    }
    
    s_symbol *type_sym = SX_AS_SYMBOL(expr);
    if (type_sym == NULL) {
-      ir_read_error(st, expr, "expected <type> (symbol or list)");
+      ir_read_error(st, expr, "expected <type>");
       return NULL;
    }
 
@@ -207,14 +181,11 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 {
    void *ctx = st;
    bool added = false;
-   if (list->length() < 3) {
-      ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
-      return NULL;
-   }
+   s_symbol *name;
 
-   s_symbol *name = SX_AS_SYMBOL(list->subexpressions.head->next);
-   if (name == NULL) {
-      ir_read_error(st, list, "Expected (function <name> ...)");
+   s_pattern pat[] = { "function", name };
+   if (!PARTIAL_MATCH(list, pat)) {
+      ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
       return NULL;
    }
 
@@ -229,46 +200,32 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
    it.next(); // skip "function" tag
    it.next(); // skip function name
    for (/* nothing */; it.has_next(); it.next()) {
-      s_list *siglist = SX_AS_LIST(it.get());
-      if (siglist == NULL) {
-	 ir_read_error(st, list, "Expected (function (signature ...) ...)");
-	 return NULL;
-      }
-
-      s_symbol *tag = SX_AS_SYMBOL(siglist->subexpressions.get_head());
-      if (tag == NULL || strcmp(tag->value(), "signature") != 0) {
-	 ir_read_error(st, siglist, "Expected (signature ...)");
-	 return NULL;
-      }
-
-      read_function_sig(st, f, siglist, skip_body);
+      s_expression *s_sig = (s_expression *) it.get();
+      read_function_sig(st, f, s_sig, skip_body);
    }
    return added ? f : NULL;
 }
 
 static void
-read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
-		  bool skip_body)
+read_function_sig(_mesa_glsl_parse_state *st, ir_function *f,
+		  s_expression *expr, bool skip_body)
 {
    void *ctx = st;
-   if (list->length() != 4) {
-      ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
+   s_expression *type_expr;
+   s_list *paramlist;
+   s_list *body_list;
+
+   s_pattern pat[] = { "signature", type_expr, paramlist, body_list };
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
       return;
    }
 
-   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
    const glsl_type *return_type = read_type(st, type_expr);
    if (return_type == NULL)
       return;
 
-   s_list *paramlist = SX_AS_LIST(type_expr->next);
-   s_list *body_list = SX_AS_LIST(type_expr->next->next);
-   if (paramlist == NULL || body_list == NULL) {
-      ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
-			      "(<instruction> ...))");
-      return;
-   }
    s_symbol *paramtag = SX_AS_SYMBOL(paramlist->subexpressions.get_head());
    if (paramtag == NULL || strcmp(paramtag->value(), "parameters") != 0) {
       ir_read_error(st, paramlist, "Expected (parameters ...)");
@@ -298,13 +255,13 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
    } else if (sig != NULL) {
       const char *badvar = sig->qualifiers_match(&hir_parameters);
       if (badvar != NULL) {
-	 ir_read_error(st, list, "function `%s' parameter `%s' qualifiers "
+	 ir_read_error(st, expr, "function `%s' parameter `%s' qualifiers "
 		       "don't match prototype", f->name, badvar);
 	 return;
       }
 
       if (sig->return_type != return_type) {
-	 ir_read_error(st, list, "function `%s' return type doesn't "
+	 ir_read_error(st, expr, "function `%s' return type doesn't "
 		       "match prototype", f->name);
 	 return;
       }
@@ -319,7 +276,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 
    if (!skip_body && !body_list->subexpressions.is_empty()) {
       if (sig->is_defined) {
-	 ir_read_error(st, list, "function %s redefined", f->name);
+	 ir_read_error(st, expr, "function %s redefined", f->name);
 	 return;
       }
       st->current_function = sig;
@@ -406,42 +363,30 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    return inst;
 }
 
-
 static ir_variable *
 read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = st;
-   if (list->length() != 4) {
+   s_list *s_quals;
+   s_expression *s_type;
+   s_symbol *s_name;
+
+   s_pattern pat[] = { "declare", s_quals, s_type, s_name };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (declare (<qualifiers>) <type> "
 			      "<name>)");
       return NULL;
    }
 
-   s_list *quals = SX_AS_LIST(list->subexpressions.head->next);
-   if (quals == NULL) {
-      ir_read_error(st, list, "expected a list of variable qualifiers");
-      return NULL;
-   }
-
-   s_expression *type_expr = (s_expression*) quals->next;
-   const glsl_type *type = read_type(st, type_expr);
+   const glsl_type *type = read_type(st, s_type);
    if (type == NULL)
       return NULL;
 
-   s_symbol *var_name = SX_AS_SYMBOL(type_expr->next);
-   if (var_name == NULL) {
-      ir_read_error(st, list, "expected variable name, found non-symbol");
-      return NULL;
-   }
+   ir_variable *var = new(st) ir_variable(type, s_name->value(), ir_var_auto);
 
-   ir_variable *var = new(ctx) ir_variable(type, var_name->value(),
-					   ir_var_auto);
-
-   foreach_iter(exec_list_iterator, it, quals->subexpressions) {
+   foreach_iter(exec_list_iterator, it, s_quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());
       if (qualifier == NULL) {
 	 ir_read_error(st, list, "qualifier list must contain only symbols");
-	 delete var;
 	 return NULL;
       }
 
@@ -468,7 +413,6 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 	 var->interpolation = ir_var_noperspective;
       } else {
 	 ir_read_error(st, list, "unknown qualifier: %s", qualifier->value());
-	 delete var;
 	 return NULL;
       }
    }
@@ -483,27 +427,27 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 static ir_if *
 read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 {
-   void *ctx = st;
-   if (list->length() != 4) {
+   s_expression *s_cond;
+   s_expression *s_then;
+   s_expression *s_else;
+
+   s_pattern pat[] = { "if", s_cond, s_then, s_else };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (if <condition> (<then> ...) "
-                          "(<else> ...))");
+			      "(<else> ...))");
       return NULL;
    }
 
-   s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
-   ir_rvalue *condition = read_rvalue(st, cond_expr);
+   ir_rvalue *condition = read_rvalue(st, s_cond);
    if (condition == NULL) {
       ir_read_error(st, NULL, "when reading condition of (if ...)");
       return NULL;
    }
 
-   s_expression *then_expr = (s_expression*) cond_expr->next;
-   s_expression *else_expr = (s_expression*) then_expr->next;
+   ir_if *iff = new(st) ir_if(condition);
 
-   ir_if *iff = new(ctx) ir_if(condition);
-
-   read_instructions(st, &iff->then_instructions, then_expr, loop_ctx);
-   read_instructions(st, &iff->else_instructions, else_expr, loop_ctx);
+   read_instructions(st, &iff->then_instructions, s_then, loop_ctx);
+   read_instructions(st, &iff->else_instructions, s_else, loop_ctx);
    if (st->error) {
       delete iff;
       iff = NULL;
@@ -515,23 +459,19 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 static ir_loop *
 read_loop(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = st;
-   if (list->length() != 6) {
+   s_expression *s_counter, *s_from, *s_to, *s_inc, *s_body;
+
+   s_pattern pat[] = { "loop", s_counter, s_from, s_to, s_inc, s_body };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (loop <counter> <from> <to> "
 			      "<increment> <body>)");
       return NULL;
    }
 
-   s_expression *count_expr = (s_expression*) list->subexpressions.head->next;
-   s_expression *from_expr  = (s_expression*) count_expr->next;
-   s_expression *to_expr    = (s_expression*) from_expr->next;
-   s_expression *inc_expr   = (s_expression*) to_expr->next;
-   s_expression *body_expr  = (s_expression*) inc_expr->next;
-
    // FINISHME: actually read the count/from/to fields.
 
-   ir_loop *loop = new(ctx) ir_loop;
-   read_instructions(st, &loop->body_instructions, body_expr, loop);
+   ir_loop *loop = new(st) ir_loop;
+   read_instructions(st, &loop->body_instructions, s_body, loop);
    if (st->error) {
       delete loop;
       loop = NULL;
@@ -543,13 +483,13 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
 static ir_return *
 read_return(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = st;
-   if (list->length() != 2) {
+   s_expression *expr;
+
+   s_pattern pat[] = { "return", expr };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (return <rvalue>)");
       return NULL;
    }
-
-   s_expression *expr = (s_expression*) list->subexpressions.head->next;
 
    ir_rvalue *retval = read_rvalue(st, expr);
    if (retval == NULL) {
@@ -557,7 +497,7 @@ read_return(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new(ctx) ir_return(retval);
+   return new(st) ir_return(retval);
 }
 
 
@@ -597,17 +537,15 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = st;
-   if (list->length() != 5) {
+   s_expression *cond_expr, *lhs_expr, *rhs_expr;
+   s_list       *mask_list;
+
+   s_pattern pat[] = { "assign", cond_expr, mask_list, lhs_expr, rhs_expr };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (assign <condition> (<write mask>) "
 			      "<lhs> <rhs>)");
       return NULL;
    }
-
-   s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
-   s_list       *mask_list = SX_AS_LIST(cond_expr->next);
-   s_expression *lhs_expr  = (s_expression*) cond_expr->next->next;
-   s_expression *rhs_expr  = (s_expression*) lhs_expr->next;
 
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
@@ -615,19 +553,11 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   if (mask_list == NULL || mask_list->length() > 1) {
-      ir_read_error(st, mask_list, "expected () or (<write mask>)");
-      return NULL;
-   }
-
    unsigned mask = 0;
-   if (mask_list->length() == 1) {
-      s_symbol *mask_symbol = SX_AS_SYMBOL(mask_list->subexpressions.head);
-      if (mask_symbol == NULL) {
-	 ir_read_error(st, list, "expected a write mask; found non-symbol");
-	 return NULL;
-      }
 
+   s_symbol *mask_symbol;
+   s_pattern mask_pat[] = { mask_symbol };
+   if (MATCH(mask_list, mask_pat)) {
       const char *mask_str = mask_symbol->value();
       unsigned mask_length = strlen(mask_str);
       if (mask_length > 4) {
@@ -645,6 +575,9 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 	 }
 	 mask |= 1 << idx_map[mask_str[i] - 'w'];
       }
+   } else if (!mask_list->subexpressions.is_empty()) {
+      ir_read_error(st, mask_list, "expected () or (<write mask>)");
+      return NULL;
    }
 
    ir_dereference *lhs = read_dereference(st, lhs_expr);
@@ -664,21 +597,18 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new(ctx) ir_assignment(lhs, rhs, condition, mask);
+   return new(st) ir_assignment(lhs, rhs, condition, mask);
 }
 
 static ir_call *
 read_call(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 3) {
-      ir_read_error(st, list, "expected (call <name> (<param> ...))");
-      return NULL;
-   }
+   s_symbol *name;
+   s_list *params;
 
-   s_symbol *name = SX_AS_SYMBOL(list->subexpressions.head->next);
-   s_list *params = SX_AS_LIST(list->subexpressions.head->next->next);
-   if (name == NULL || params == NULL) {
+   s_pattern pat[] = { "call", name, params };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (call <name> (<param> ...))");
       return NULL;
    }
@@ -716,61 +646,54 @@ static ir_expression *
 read_expression(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   const unsigned list_length = list->length();
-   if (list_length < 4) {
+   s_expression *s_type;
+   s_symbol *s_op;
+   s_expression *s_arg1;
+
+   s_pattern pat[] = { "expression", s_type, s_op, s_arg1 };
+   if (!PARTIAL_MATCH(list, pat)) {
       ir_read_error(st, list, "expected (expression <type> <operator> "
 			      "<operand> [<operand>])");
       return NULL;
    }
+   s_expression *s_arg2 = (s_expression *) s_arg1->next; // may be tail sentinel
 
-   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
-   const glsl_type *type = read_type(st, type_expr);
+   const glsl_type *type = read_type(st, s_type);
    if (type == NULL)
       return NULL;
 
    /* Read the operator */
-   s_symbol *op_sym = SX_AS_SYMBOL(type_expr->next);
-   if (op_sym == NULL) {
-      ir_read_error(st, list, "expected operator, found non-symbol");
-      return NULL;
-   }
-
-   ir_expression_operation op = ir_expression::get_operator(op_sym->value());
+   ir_expression_operation op = ir_expression::get_operator(s_op->value());
    if (op == (ir_expression_operation) -1) {
-      ir_read_error(st, list, "invalid operator: %s", op_sym->value());
+      ir_read_error(st, list, "invalid operator: %s", s_op->value());
       return NULL;
    }
     
-   /* Now that we know the operator, check for the right number of operands */ 
-   if (ir_expression::get_num_operands(op) == 2) {
-      if (list_length != 5) {
-	 ir_read_error(st, list, "expected (expression <type> %s <operand> "
-				 " <operand>)", op_sym->value());
-	 return NULL;
-      }
-   } else {
-      if (list_length != 4) {
-	 ir_read_error(st, list, "expected (expression <type> %s <operand>)",
-		       op_sym->value());
-	 return NULL;
-      }
-   }
-
-   s_expression *exp1 = (s_expression*) (op_sym->next);
-   ir_rvalue *arg1 = read_rvalue(st, exp1);
-   if (arg1 == NULL) {
-      ir_read_error(st, NULL, "when reading first operand of %s",
-		    op_sym->value());
+   unsigned num_operands = ir_expression::get_num_operands(op);
+   if (num_operands == 1 && !s_arg1->next->is_tail_sentinel()) {
+      ir_read_error(st, list, "expected (expression <type> %s <operand>)",
+		    s_op->value());
       return NULL;
    }
 
+   ir_rvalue *arg1 = read_rvalue(st, s_arg1);
    ir_rvalue *arg2 = NULL;
-   if (ir_expression::get_num_operands(op) == 2) {
-      s_expression *exp2 = (s_expression*) (exp1->next);
-      arg2 = read_rvalue(st, exp2);
+   if (arg1 == NULL) {
+      ir_read_error(st, NULL, "when reading first operand of %s",
+		    s_op->value());
+      return NULL;
+   }
+
+   if (num_operands == 2) {
+      if (s_arg2->is_tail_sentinel() || !s_arg2->next->is_tail_sentinel()) {
+	 ir_read_error(st, list, "expected (expression <type> %s <operand> "
+				 "<operand>)", s_op->value());
+	 return NULL;
+      }
+      arg2 = read_rvalue(st, s_arg2);
       if (arg2 == NULL) {
 	 ir_read_error(st, NULL, "when reading second operand of %s",
-		       op_sym->value());
+		       s_op->value());
 	 return NULL;
       }
    }
@@ -781,14 +704,12 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
 static ir_swizzle *
 read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
 {
-   if (list->length() != 3) {
-      ir_read_error(st, list, "expected (swiz <swizzle> <rvalue>)");
-      return NULL;
-   }
+   s_symbol *swiz;
+   s_expression *sub;
 
-   s_symbol *swiz = SX_AS_SYMBOL(list->subexpressions.head->next);
-   if (swiz == NULL) {
-      ir_read_error(st, list, "expected a valid swizzle; found non-symbol");
+   s_pattern pat[] = { "swiz", swiz, sub };
+   if (!MATCH(list, pat)) {
+      ir_read_error(st, list, "expected (swiz <swizzle> <rvalue>)");
       return NULL;
    }
 
@@ -798,7 +719,6 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   s_expression *sub = (s_expression*) swiz->next;
    ir_rvalue *rvalue = read_rvalue(st, sub);
    if (rvalue == NULL)
       return NULL;
@@ -815,17 +735,19 @@ static ir_constant *
 read_constant(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 3) {
+   s_expression *type_expr;
+   s_list *values;
+
+   s_pattern pat[] = { "constant", type_expr, values };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (constant <type> (...))");
       return NULL;
    }
 
-   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
    const glsl_type *type = read_type(st, type_expr);
    if (type == NULL)
       return NULL;
 
-   s_list *values = SX_AS_LIST(type_expr->next);
    if (values == NULL) {
       ir_read_error(st, list, "expected (constant <type> (...))");
       return NULL;
@@ -931,12 +853,10 @@ static ir_dereference_variable *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 2) {
-      ir_read_error(st, list, "expected (var_ref <variable name>)");
-      return NULL;
-   }
-   s_symbol *var_name = SX_AS_SYMBOL(list->subexpressions.head->next);
-   if (var_name == NULL) {
+   s_symbol *var_name;
+
+   s_pattern pat[] = { "var_ref", var_name };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (var_ref <variable name>)");
       return NULL;
    }
@@ -954,19 +874,21 @@ static ir_dereference_array *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 3) {
+   s_expression *subj_expr;
+   s_expression *idx_expr;
+
+   s_pattern pat[] = { "array_ref", subj_expr, idx_expr };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (array_ref <rvalue> <index>)");
       return NULL;
    }
 
-   s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
    ir_rvalue *subject = read_rvalue(st, subj_expr);
    if (subject == NULL) {
       ir_read_error(st, NULL, "when reading the subject of an array_ref");
       return NULL;
    }
 
-   s_expression *idx_expr = (s_expression*) subj_expr->next;
    ir_rvalue *idx = read_rvalue(st, idx_expr);
    return new(ctx) ir_dereference_array(subject, idx);
 }
@@ -975,169 +897,149 @@ static ir_dereference_record *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
-   if (list->length() != 3) {
+   s_expression *subj_expr;
+   s_symbol *field;
+
+   s_pattern pat[] = { "record_ref", subj_expr, field };
+   if (!MATCH(list, pat)) {
       ir_read_error(st, list, "expected (record_ref <rvalue> <field>)");
       return NULL;
    }
 
-   s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
    ir_rvalue *subject = read_rvalue(st, subj_expr);
    if (subject == NULL) {
       ir_read_error(st, NULL, "when reading the subject of a record_ref");
       return NULL;
    }
-
-   s_symbol *field = SX_AS_SYMBOL(subj_expr->next);
-   if (field == NULL) {
-      ir_read_error(st, list, "expected (record_ref ... <field name>)");
-      return NULL;
-   }
    return new(ctx) ir_dereference_record(subject, field->value());
-}
-
-static bool
-valid_texture_list_length(ir_texture_opcode op, s_list *list)
-{
-   unsigned required_length = 7;
-   if (op == ir_txf)
-      required_length = 5;
-   else if (op == ir_tex)
-      required_length = 6;
-
-   return list->length() == required_length;
 }
 
 static ir_texture *
 read_texture(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = st;
-   s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
-   assert(tag != NULL);
+   s_symbol *tag = NULL;
+   s_expression *s_sampler = NULL;
+   s_expression *s_coord = NULL;
+   s_list *s_offset = NULL;
+   s_expression *s_proj = NULL;
+   s_list *s_shadow = NULL;
+   s_expression *s_lod = NULL;
 
-   ir_texture_opcode op = ir_texture::get_opcode(tag->value());
-   if (op == (ir_texture_opcode) -1)
-      return NULL;
+   ir_texture_opcode op;
 
-   if (!valid_texture_list_length(op, list)) {
-      ir_read_error(st, NULL, "invalid list size in (%s ...)", tag->value());
-      return NULL;
+   s_pattern tex_pattern[] =
+      { "tex", s_sampler, s_coord, s_offset, s_proj, s_shadow };
+   s_pattern txf_pattern[] =
+      { "txf", s_sampler, s_coord, s_offset, s_lod };
+   s_pattern other_pattern[] =
+      { tag, s_sampler, s_coord, s_offset, s_proj, s_shadow, s_lod };
+
+   if (MATCH(list, tex_pattern)) {
+      op = ir_tex;
+   } else if (MATCH(list, txf_pattern)) {
+      op = ir_txf;
+   } else if (MATCH(list, other_pattern)) {
+      op = ir_texture::get_opcode(tag->value());
+      if (op == -1)
+	 return NULL;
    }
 
-   ir_texture *tex = new(ctx) ir_texture(op);
+   ir_texture *tex = new(st) ir_texture(op);
 
    // Read sampler (must be a deref)
-   s_expression *sampler_expr = (s_expression *) tag->next;
-   ir_dereference *sampler = read_dereference(st, sampler_expr);
+   ir_dereference *sampler = read_dereference(st, s_sampler);
    if (sampler == NULL) {
-      ir_read_error(st, NULL, "when reading sampler in (%s ...)", tag->value());
+      ir_read_error(st, NULL, "when reading sampler in (%s ...)",
+		    tex->opcode_string());
       return NULL;
    }
    tex->set_sampler(sampler);
 
    // Read coordinate (any rvalue)
-   s_expression *coordinate_expr = (s_expression *) sampler_expr->next;
-   tex->coordinate = read_rvalue(st, coordinate_expr);
+   tex->coordinate = read_rvalue(st, s_coord);
    if (tex->coordinate == NULL) {
       ir_read_error(st, NULL, "when reading coordinate in (%s ...)",
-		    tag->value());
+		    tex->opcode_string());
       return NULL;
    }
 
    // Read texel offset, i.e. (0 0 0)
-   s_list *offset_list = SX_AS_LIST(coordinate_expr->next);
-   if (offset_list == NULL || offset_list->length() != 3) {
-      ir_read_error(st, offset_list, "expected (<int> <int> <int>)");
-      return NULL;
-   }
-   s_int *offset_x = SX_AS_INT(offset_list->subexpressions.head);
-   s_int *offset_y = SX_AS_INT(offset_list->subexpressions.head->next);
-   s_int *offset_z = SX_AS_INT(offset_list->subexpressions.head->next->next);
-   if (offset_x == NULL || offset_y == NULL || offset_z == NULL) {
-      ir_read_error(st, offset_list, "expected (<int> <int> <int>)");
+   s_int *offset_x;
+   s_int *offset_y;
+   s_int *offset_z;
+   s_pattern offset_pat[] = { offset_x, offset_y, offset_z };
+   if (!MATCH(s_offset, offset_pat)) {
+      ir_read_error(st, s_offset, "expected (<int> <int> <int>)");
       return NULL;
    }
    tex->offsets[0] = offset_x->value();
    tex->offsets[1] = offset_y->value();
    tex->offsets[2] = offset_z->value();
 
-   if (op == ir_txf) {
-      s_expression *lod_expr = (s_expression *) offset_list->next;
-      tex->lod_info.lod = read_rvalue(st, lod_expr);
-      if (tex->lod_info.lod == NULL) {
-	 ir_read_error(st, NULL, "when reading LOD in (txf ...)");
-	 return NULL;
-      }
-   } else {
-      s_expression *proj_expr = (s_expression *) offset_list->next;
-      s_int *proj_as_int = SX_AS_INT(proj_expr);
+   if (op != ir_txf) {
+      s_int *proj_as_int = SX_AS_INT(s_proj);
       if (proj_as_int && proj_as_int->value() == 1) {
 	 tex->projector = NULL;
       } else {
-	 tex->projector = read_rvalue(st, proj_expr);
+	 tex->projector = read_rvalue(st, s_proj);
 	 if (tex->projector == NULL) {
 	    ir_read_error(st, NULL, "when reading projective divide in (%s ..)",
-	                  tag->value());
+	                  tex->opcode_string());
 	    return NULL;
 	 }
       }
 
-      s_list *shadow_list = SX_AS_LIST(proj_expr->next);
-      if (shadow_list == NULL) {
-	 ir_read_error(st, NULL, "shadow comparitor must be a list");
-	 return NULL;
-      }
-      if (shadow_list->subexpressions.is_empty()) {
-	 tex->shadow_comparitor= NULL;
+      if (s_shadow->subexpressions.is_empty()) {
+	 tex->shadow_comparitor = NULL;
       } else {
-	 tex->shadow_comparitor = read_rvalue(st, shadow_list);
+	 tex->shadow_comparitor = read_rvalue(st, s_shadow);
 	 if (tex->shadow_comparitor == NULL) {
 	    ir_read_error(st, NULL, "when reading shadow comparitor in (%s ..)",
-			  tag->value());
+			  tex->opcode_string());
 	    return NULL;
 	 }
       }
-      s_expression *lod_expr = (s_expression *) shadow_list->next;
-
-      switch (op) {
-      case ir_txb:
-	 tex->lod_info.bias = read_rvalue(st, lod_expr);
-	 if (tex->lod_info.bias == NULL) {
-	    ir_read_error(st, NULL, "when reading LOD bias in (txb ...)");
-	    return NULL;
-	 }
-	 break;
-      case ir_txl:
-	 tex->lod_info.lod = read_rvalue(st, lod_expr);
-	 if (tex->lod_info.lod == NULL) {
-	    ir_read_error(st, NULL, "when reading LOD in (txl ...)");
-	    return NULL;
-	 }
-	 break;
-      case ir_txd: {
-	 s_list *lod_list = SX_AS_LIST(lod_expr);
-	 if (lod_list->length() != 2) {
-	    ir_read_error(st, lod_expr, "expected (dPdx dPdy) in (txd ...)");
-	    return NULL;
-	 }
-	 s_expression *dx_expr = (s_expression *) lod_list->subexpressions.head;
-	 s_expression *dy_expr = (s_expression *) dx_expr->next;
-
-	 tex->lod_info.grad.dPdx = read_rvalue(st, dx_expr);
-	 if (tex->lod_info.grad.dPdx == NULL) {
-	    ir_read_error(st, NULL, "when reading dPdx in (txd ...)");
-	    return NULL;
-	 }
-	 tex->lod_info.grad.dPdy = read_rvalue(st, dy_expr);
-	 if (tex->lod_info.grad.dPdy == NULL) {
-	    ir_read_error(st, NULL, "when reading dPdy in (txd ...)");
-	    return NULL;
-	 }
-	 break;
-      }
-      default:
-	 // tex doesn't have any extra parameters and txf was handled earlier.
-	 break;
-      };
    }
+
+   switch (op) {
+   case ir_txb:
+      tex->lod_info.bias = read_rvalue(st, s_lod);
+      if (tex->lod_info.bias == NULL) {
+	 ir_read_error(st, NULL, "when reading LOD bias in (txb ...)");
+	 return NULL;
+      }
+      break;
+   case ir_txl:
+   case ir_txf:
+      tex->lod_info.lod = read_rvalue(st, s_lod);
+      if (tex->lod_info.lod == NULL) {
+	 ir_read_error(st, NULL, "when reading LOD in (%s ...)",
+		       tex->opcode_string());
+	 return NULL;
+      }
+      break;
+   case ir_txd: {
+      s_expression *s_dx, *s_dy;
+      s_pattern dxdy_pat[] = { s_dx, s_dy };
+      if (!MATCH(s_lod, dxdy_pat)) {
+	 ir_read_error(st, s_lod, "expected (dPdx dPdy) in (txd ...)");
+	 return NULL;
+      }
+      tex->lod_info.grad.dPdx = read_rvalue(st, s_dx);
+      if (tex->lod_info.grad.dPdx == NULL) {
+	 ir_read_error(st, NULL, "when reading dPdx in (txd ...)");
+	 return NULL;
+      }
+      tex->lod_info.grad.dPdy = read_rvalue(st, s_dy);
+      if (tex->lod_info.grad.dPdy == NULL) {
+	 ir_read_error(st, NULL, "when reading dPdy in (txd ...)");
+	 return NULL;
+      }
+      break;
+   }
+   default:
+      // tex doesn't have any extra parameters.
+      break;
+   };
    return tex;
 }

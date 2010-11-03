@@ -139,3 +139,49 @@ void s_list::print()
    printf(")");
 }
 
+// --------------------------------------------------
+
+bool
+s_pattern::match(s_expression *expr)
+{
+   switch (type)
+   {
+   case EXPR:   *p_expr = expr; break;
+   case LIST:   if (expr->is_list())   *p_list   = (s_list *)   expr; break;
+   case SYMBOL: if (expr->is_symbol()) *p_symbol = (s_symbol *) expr; break;
+   case NUMBER: if (expr->is_number()) *p_number = (s_number *) expr; break;
+   case INT:    if (expr->is_int())    *p_int    = (s_int *)    expr; break;
+   case STRING:
+      s_symbol *sym = SX_AS_SYMBOL(expr);
+      if (sym != NULL && strcmp(sym->value(), literal) == 0)
+	 return true;
+      return false;
+   };
+
+   return *p_expr == expr;
+}
+
+bool
+s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial)
+{
+   s_list *list = SX_AS_LIST(top);
+   if (list == NULL)
+      return false;
+
+   unsigned i = 0;
+   foreach_iter(exec_list_iterator, it, list->subexpressions) {
+      if (i >= n)
+	 return partial; /* More actual items than the pattern expected */
+
+      s_expression *expr = (s_expression *) it.get();
+      if (expr == NULL || !pattern[i].match(expr))
+	 return false;
+
+      i++;
+   }
+
+   if (i < n)
+      return false; /* Less actual items than the pattern expected */
+
+   return true;
+}
