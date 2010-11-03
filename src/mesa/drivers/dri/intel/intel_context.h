@@ -190,9 +190,6 @@ struct intel_context
    } prim;
 
    GLuint stats_wm;
-   GLboolean locked;
-   char *prevLockFile;
-   int prevLockLine;
 
    /* Offsets of fields within the current vertex:
     */
