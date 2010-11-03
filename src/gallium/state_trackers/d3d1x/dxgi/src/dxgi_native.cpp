@@ -1101,6 +1101,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		struct pipe_resource* dst;
 		struct pipe_resource* src;
 		struct pipe_surface* dst_surface;
+		enum native_attachment att;
 
 		void* present_cookie;
 		hr = parent->backend->BeginPresent(desc.OutputWindow, &present_cookie, &cur_window, &rect, &rgndata, &preserve_aspect_ratio);
@@ -1221,16 +1222,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 		pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, 0);
 
-		if(db)
-		{
-			if(!surface->swap_buffers(surface))
-				return DXGI_ERROR_DEVICE_REMOVED;
-		}
-		else
-		{
-			if(!surface->flush_frontbuffer(surface))
-				return DXGI_ERROR_DEVICE_REMOVED;
-		}
+		att = (db) ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT;
+		if(!surface->present(surface, att, FALSE, 0))
+			return DXGI_ERROR_DEVICE_REMOVED;
 
 end_present:
 		parent->backend->EndPresent(desc.OutputWindow, present_cookie);
