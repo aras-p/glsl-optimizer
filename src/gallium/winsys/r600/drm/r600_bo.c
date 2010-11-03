@@ -26,9 +26,10 @@
 #include <pipe/p_compiler.h>
 #include <pipe/p_screen.h>
 #include <pipebuffer/pb_bufmgr.h>
-#include "radeon_drm.h"
+#include "state_tracker/drm_driver.h"
 #include "r600_priv.h"
 #include "r600d.h"
+#include "drm.h"
 #include "radeon_drm.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,
@@ -153,4 +154,29 @@ unsigned r600_bo_get_size(struct r600_bo *pb_bo)
 		return 0;
 
 	return bo->size;
+}
+
+boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
+				unsigned stride, struct winsys_handle *whandle)
+{
+	struct radeon_bo *bo;
+
+	bo = radeon_bo_pb_get_bo(pb_bo->pb);
+	if (!bo)
+		return FALSE;
+
+	whandle->stride = stride;
+	switch(whandle->type) {
+	case DRM_API_HANDLE_TYPE_KMS:
+		whandle->handle = r600_bo_get_handle(pb_bo);
+		break;
+	case DRM_API_HANDLE_TYPE_SHARED:
+		if (radeon_bo_get_name(radeon, bo, &whandle->handle))
+			return FALSE;
+		break;
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }

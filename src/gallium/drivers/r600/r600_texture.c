@@ -341,6 +341,18 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	FREE(rtex);
 }
 
+static boolean r600_texture_get_handle(struct pipe_screen* screen,
+                                       struct pipe_resource *ptex,
+                                       struct winsys_handle *whandle)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_resource *resource = &rtex->resource;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+
+	return r600_bo_get_winsys_handle(radeon, resource->bo,
+			rtex->pitch_in_bytes[0], whandle);
+}
+
 static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
 						struct pipe_resource *texture,
 						unsigned face, unsigned level,
@@ -655,7 +667,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 
 struct u_resource_vtbl r600_texture_vtbl =
 {
-	u_default_resource_get_handle,	/* get_handle */
+	r600_texture_get_handle,	/* get_handle */
 	r600_texture_destroy,		/* resource_destroy */
 	r600_texture_is_referenced,	/* is_resource_referenced */
 	r600_texture_get_transfer,	/* get_transfer */

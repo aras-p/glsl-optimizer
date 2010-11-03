@@ -102,6 +102,9 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
 			       uint32_t *tiling_flags,
 			       uint32_t *pitch);
+int radeon_bo_get_name(struct radeon *radeon,
+		       struct radeon_bo *bo,
+		       uint32_t *name);
 
 /* radeon_bo_pb.c */
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);

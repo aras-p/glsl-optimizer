@@ -43,6 +43,7 @@ typedef uint16_t		u16;
 typedef uint8_t			u8;
 
 struct radeon;
+struct winsys_handle;
 
 enum radeon_family {
 	CHIP_UNKNOWN,
@@ -120,6 +121,8 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
 			    struct r600_bo *src);
+boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
+				unsigned stride, struct winsys_handle *whandle);
 static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 {
 	return 0;
