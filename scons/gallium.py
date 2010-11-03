@@ -559,6 +559,7 @@ def generate(env):
     pkg_config_modules(env, 'x11', ['x11', 'xext'])
     pkg_config_modules(env, 'dri', ['libdrm'])
     pkg_config_modules(env, 'xorg', ['xorg-server'])
+    pkg_config_modules(env, 'kms', ['libkms'])
 
     # Custom builders and methods
     env.Tool('custom')
