@@ -468,8 +468,34 @@ build_gather(struct lp_build_tgsi_soa_context *bld,
 
 
 /**
+ * Scatter/store vector.
+ */
+static void
+build_scatter(struct lp_build_tgsi_soa_context *bld,
+              LLVMValueRef base_ptr,
+              LLVMValueRef indexes,
+              LLVMValueRef values)
+{
+   LLVMBuilderRef builder = bld->base.builder;
+   unsigned i;
+
+   /*
+    * Loop over elements of index_vec, store scalar value.
+    */
+   for (i = 0; i < bld->base.type.length; i++) {
+      LLVMValueRef ii = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef index = LLVMBuildExtractElement(builder, indexes, ii, "");
+      LLVMValueRef scalar_ptr = LLVMBuildGEP(builder, base_ptr, &index, 1, "scatter_ptr");
+      LLVMValueRef val = LLVMBuildExtractElement(builder, values, ii, "scatter_val");
+
+      LLVMBuildStore(builder, val, scalar_ptr);
+   }
+}
+
+
+/**
  * Read the current value of the ADDR register, convert the floats to
- * ints, multiply by four and return the vector of offsets.
+ * ints, add the base index and return the vector of offsets.
  * The offsets will be used to index into the constant buffer or
  * temporary register file.
  */
@@ -748,6 +774,7 @@ emit_store(
    LLVMValueRef value)
 {
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
+   struct lp_build_context *uint_bld = &bld->uint_bld;
    LLVMValueRef indirect_index = NULL;
 
    switch( inst->Instruction.Saturate ) {
@@ -785,9 +812,25 @@ emit_store(
 
    case TGSI_FILE_TEMPORARY:
       if (reg->Register.Indirect) {
-         /* XXX not done yet */
-         debug_printf("WARNING: LLVM scatter store of temp regs"
-                      " not implemented\n");
+         LLVMValueRef chan_vec =
+            lp_build_const_int_vec(uint_bld->type, chan_index);
+         LLVMValueRef length_vec =
+            lp_build_const_int_vec(uint_bld->type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* indexes into the temp registers */
+         LLVMValueRef temps_array;
+         LLVMTypeRef float_ptr_type;
+
+         /* index_vec = (indirect_index * 4 + chan_index) * length */
+         index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+         index_vec = lp_build_add(uint_bld, index_vec, chan_vec);
+         index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+
+         float_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         temps_array = LLVMBuildBitCast(bld->base.builder, bld->temps_array,
+                                        float_ptr_type, "");
+
+         /* Scatter store values into temp registers */
+         build_scatter(bld, temps_array, index_vec, value);
       }
       else {
          LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
