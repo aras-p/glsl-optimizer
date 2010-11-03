@@ -447,7 +447,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 
     if (!drv_init_resource_management(pScrn)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
-					       "Gallium3D or libKMS.");
+					       "Gallium3D or libKMS.\n");
 	return FALSE;
     }
 
