@@ -98,6 +98,16 @@ extern void intelFallback(struct intel_context *intel, GLbitfield bit,
 
 #define INTEL_MAX_FIXUP 64
 
+#ifndef likely
+#ifdef __GNUC__
+#define likely(expr) (__builtin_expect(expr, 1))
+#define unlikely(expr) (__builtin_expect(expr, 0))
+#else
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
+#endif
+#endif
+
 struct intel_sync_object {
    struct gl_sync_object Base;
 
@@ -359,8 +369,13 @@ extern int INTEL_DEBUG;
 #define DEBUG_CLIP      0x8000000
 
 #define DBG(...) do {						\
-	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\
+	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
 		printf(__VA_ARGS__);			\
+} while(0)
+
+#define fallback_debug(...) do {				\
+	if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))		\
+		printf(__VA_ARGS__);				\
 } while(0)
 
 #define PCI_CHIP_845_G			0x2562

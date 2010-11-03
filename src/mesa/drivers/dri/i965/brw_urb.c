@@ -190,12 +190,12 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	    exit(1);
 	 }
 	 
-	 if (INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS))
+	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS)))
 	    printf("URB CONSTRAINED\n");
       }
 
 done:
-      if (INTEL_DEBUG & DEBUG_URB)
+      if (unlikely(INTEL_DEBUG & DEBUG_URB))
 	 printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
 		      brw->urb.vs_start,
 		      brw->urb.gs_start,

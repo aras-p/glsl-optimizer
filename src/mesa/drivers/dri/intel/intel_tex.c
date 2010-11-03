@@ -158,8 +158,7 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
       struct intel_context *intel = intel_context(ctx);
       struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
+      fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
 
       intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
       _mesa_generate_mipmap(ctx, target, texObj);

@@ -3129,7 +3129,7 @@ fs_visitor::generate_code()
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("Native code for fragment shader %d:\n",
 	     ctx->Shader.CurrentFragmentProgram->Name);
    }
@@ -3141,7 +3141,7 @@ fs_visitor::generate_code()
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
 
-      if (INTEL_DEBUG & DEBUG_WM) {
+      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
 	 if (last_annotation_ir != inst->ir) {
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
@@ -3335,7 +3335,7 @@ fs_visitor::generate_code()
 	 this->fail = true;
       }
 
-      if (INTEL_DEBUG & DEBUG_WM) {
+      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
 	 for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
 	    if (0) {
 	       printf("0x%08x 0x%08x 0x%08x 0x%08x ",
@@ -3376,7 +3376,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
     */
    c->dispatch_width = 8;
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("GLSL IR for native fragment shader %d:\n", prog->Name);
       _mesa_print_ir(shader->ir, NULL);
       printf("\n");

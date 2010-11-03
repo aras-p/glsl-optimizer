@@ -97,7 +97,7 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
 			(x_off & 0xffff) | (y_off << 16));
    }
 
-   if (INTEL_DEBUG & DEBUG_BATCH) {
+   if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
       drm_intel_bo_map(batch->buf, GL_FALSE);
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
 		   intel->intelScreen->deviceID, GL_TRUE);
@@ -128,7 +128,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (used == 0)
       return;
 
-   if (INTEL_DEBUG & DEBUG_BATCH)
+   if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
 
@@ -172,7 +172,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    do_flush_locked(batch, used);
 
-   if (INTEL_DEBUG & DEBUG_SYNC) {
+   if (unlikely(INTEL_DEBUG & DEBUG_SYNC)) {
       fprintf(stderr, "waiting for idle\n");
       drm_intel_bo_map(batch->buf, GL_TRUE);
       drm_intel_bo_unmap(batch->buf);

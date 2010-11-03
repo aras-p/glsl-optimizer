@@ -249,7 +249,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.wm5.line_stipple = key->line_stipple;
 
-   if (INTEL_DEBUG & DEBUG_STATS || key->stats_wm)
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS) || key->stats_wm)
       wm.wm4.stats_enable = 1;
 
    bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,

@@ -210,10 +210,10 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+   if (unlikely(INTEL_DEBUG & DEBUG_SINGLE_THREAD))
       sf.thread4.max_threads = 0;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       sf.thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */

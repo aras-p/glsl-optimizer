@@ -42,6 +42,8 @@
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
 
+#define FILE_DEBUG_FLAG DEBUG_PIXEL
+
 /* For many applications, the new ability to pull the source buffers
  * back out of the GTT and then do the packing/conversion operations
  * in software will be as much of an improvement as trying to get the
@@ -79,8 +81,7 @@ do_blit_readpixels(struct gl_context * ctx,
    GLboolean all;
    GLint dst_x, dst_y;
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s\n", __FUNCTION__);
+   DBG("%s\n", __FUNCTION__);
 
    if (!src)
       return GL_FALSE;
@@ -88,22 +89,19 @@ do_blit_readpixels(struct gl_context * ctx,
    if (!_mesa_is_bufferobj(pack->BufferObj)) {
       /* PBO only for now:
        */
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         printf("%s - not PBO\n", __FUNCTION__);
+      DBG("%s - not PBO\n", __FUNCTION__);
       return GL_FALSE;
    }
 
 
    if (ctx->_ImageTransferState ||
        !intel_check_blit_format(src, format, type)) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         printf("%s - bad format for blit\n", __FUNCTION__);
+      DBG("%s - bad format for blit\n", __FUNCTION__);
       return GL_FALSE;
    }
 
    if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         printf("%s: bad packing params\n", __FUNCTION__);
+      DBG("%s: bad packing params\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -113,8 +111,7 @@ do_blit_readpixels(struct gl_context * ctx,
       rowLength = width;
 
    if (pack->Invert) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         printf("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
+      DBG("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
       return GL_FALSE;
    }
    else {
@@ -158,8 +155,7 @@ do_blit_readpixels(struct gl_context * ctx,
       return GL_FALSE;
    }
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s - DONE\n", __FUNCTION__);
+   DBG("%s - DONE\n", __FUNCTION__);
 
    return GL_TRUE;
 }
@@ -173,8 +169,7 @@ intelReadPixels(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    GLboolean dirty;
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+   DBG("%s\n", __FUNCTION__);
 
    intel_flush(ctx);
 
@@ -188,8 +183,7 @@ intelReadPixels(struct gl_context * ctx,
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s: fallback to swrast\n", __FUNCTION__);
+   fallback_debug("%s: fallback to swrast\n", __FUNCTION__);
 
    /* Update Mesa state before calling down into _swrast_ReadPixels, as
     * the spans code requires the computed buffer states to be up to date,

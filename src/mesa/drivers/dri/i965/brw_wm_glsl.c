@@ -19,7 +19,7 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
 
-    if (INTEL_DEBUG & DEBUG_GLSL_FORCE)
+    if (unlikely(INTEL_DEBUG & DEBUG_GLSL_FORCE))
        return GL_TRUE;
 
     for (i = 0; i < fp->Base.NumInstructions; i++) {
@@ -1002,7 +1002,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     }
     post_wm_emit(c);
 
-    if (INTEL_DEBUG & DEBUG_WM) {
+    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
 	 brw_disasm(stdout, &p->store[i], intel->gen);
@@ -1016,7 +1016,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
  */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
-    if (INTEL_DEBUG & DEBUG_WM) {
+    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
         printf("brw_wm_glsl_emit:\n");
     }
 
@@ -1026,7 +1026,7 @@ void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
     /* actual code generation */
     brw_wm_emit_glsl(brw, c);
 
-    if (INTEL_DEBUG & DEBUG_WM) {
+    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
         brw_wm_print_program(c, "brw_wm_glsl_emit done");
     }
 

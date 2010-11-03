@@ -1920,7 +1920,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	brw_remove_grf_to_mrf_moves(p);
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       int i;
 
      printf("wm-native:\n");

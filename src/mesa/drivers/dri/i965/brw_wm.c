@@ -198,7 +198,7 @@ static void do_wm_prog( struct brw_context *brw,
       c->prog_data.total_scratch = 0;
    }
 
-   if (INTEL_DEBUG & DEBUG_WM)
+   if (unlikely(INTEL_DEBUG & DEBUG_WM))
       fprintf(stderr, "\n");
 
    /* get the program

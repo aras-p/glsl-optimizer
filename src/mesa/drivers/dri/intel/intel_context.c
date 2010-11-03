@@ -249,7 +249,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
     * thus ignore the invalidate. */
    drawable->lastStamp = drawable->dri2.stamp;
 
-   if (INTEL_DEBUG & DEBUG_DRI)
+   if (unlikely(INTEL_DEBUG & DEBUG_DRI))
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
    screen = intel->intelScreen->driScrnPriv;
@@ -378,14 +378,14 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        if (rb->region && rb->region->name == buffers[i].name)
 	     continue;
 
-       if (INTEL_DEBUG & DEBUG_DRI)
+       if (unlikely(INTEL_DEBUG & DEBUG_DRI))
 	  fprintf(stderr,
 		  "attaching buffer %d, at %d, cpp %d, pitch %d\n",
 		  buffers[i].name, buffers[i].attachment,
 		  buffers[i].cpp, buffers[i].pitch);
        
        if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_region) {
-	  if (INTEL_DEBUG & DEBUG_DRI)
+	  if (unlikely(INTEL_DEBUG & DEBUG_DRI))
 	     fprintf(stderr, "(reusing depth buffer as stencil)\n");
 	  intel_region_reference(&region, depth_region);
        }

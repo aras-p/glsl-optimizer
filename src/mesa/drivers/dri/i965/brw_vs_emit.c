@@ -394,7 +394,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    c->prog_data.total_grf = reg;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
       printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
       printf("%s reg = %d\n", __FUNCTION__, reg);
@@ -1678,7 +1678,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint index;
    GLuint file;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       printf("vs-mesa:\n");
       _mesa_fprint_program_opt(stdout, &c->vp->program.Base, PROG_PRINT_DEBUG,
 			       GL_TRUE);
@@ -2048,7 +2048,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    brw_optimize(p);
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       int i;
 
       printf("vs-native:\n");

@@ -42,7 +42,7 @@
 
 #include "intel_batchbuffer.h"
 
-#define FILE_DEBUG_FLAG DEBUG_BATCH
+#define FILE_DEBUG_FLAG DEBUG_PRIMS
 
 static GLuint prim_to_hw_prim[GL_POLYGON+1] = {
    _3DPRIM_POINTLIST,
@@ -83,8 +83,7 @@ static GLuint brw_set_prim(struct brw_context *brw,
    struct gl_context *ctx = &brw->intel.ctx;
    GLenum mode = prim->mode;
 
-   if (INTEL_DEBUG & DEBUG_PRIMS)
-      printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
+   DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
    /* Slight optimization to avoid the GS program when not needed:
     */
@@ -133,9 +132,8 @@ static void brw_emit_prim(struct brw_context *brw,
    struct brw_3d_primitive prim_packet;
    struct intel_context *intel = &brw->intel;
 
-   if (INTEL_DEBUG & DEBUG_PRIMS)
-      printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
-		   prim->start, prim->count);
+   DBG("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode),
+       prim->start, prim->count);
 
    prim_packet.header.opcode = CMD_3D_PRIM;
    prim_packet.header.length = sizeof(prim_packet)/4 - 2;

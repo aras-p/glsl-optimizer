@@ -113,9 +113,8 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLint incr;
    GLuint count = 0;
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
-		   __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
+   DBG("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
+       __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
       first = h-1;
@@ -285,7 +284,7 @@ do_blit_bitmap( struct gl_context *ctx,
    }
 out:
 
-   if (INTEL_DEBUG & DEBUG_SYNC)
+   if (unlikely(INTEL_DEBUG & DEBUG_SYNC))
       intel_batchbuffer_flush(intel->batch);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
@@ -298,6 +297,7 @@ out:
 
    return GL_TRUE;
 }
+
 
 /* There are a large number of possible ways to implement bitmap on
  * this hardware, most of them have some sort of drawback.  Here are a

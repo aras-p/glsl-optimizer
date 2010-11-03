@@ -154,7 +154,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.vs5.sampler_count = 0;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       vs.thread4.stats_enable = 1;
 
    /* Vertex program always enabled:

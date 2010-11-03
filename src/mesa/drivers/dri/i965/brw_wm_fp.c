@@ -1058,7 +1058,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    struct brw_fragment_program *fp = c->fp;
    GLuint insn;
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pre-fp:\n");
       _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
 			       GL_TRUE);
@@ -1174,7 +1174,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       }
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pass_fp:\n");
       print_insns( c->prog_instructions, c->nr_fp_insns );
       printf("\n");
