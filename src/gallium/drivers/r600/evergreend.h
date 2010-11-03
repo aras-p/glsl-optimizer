@@ -1690,6 +1690,9 @@
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00
 #define R_028C04_PA_SC_AA_CONFIG                     0x00028C04
 #define R_028C08_PA_SU_VTX_CNTL                      0x00028C08
+#define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
+#define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
+#define   C_028C08_PIX_CENTER_HALF                     0xFFFFFFFE
 #define R_028C0C_PA_CL_GB_VERT_CLIP_ADJ              0x00028C0C
 #define R_028C10_PA_CL_GB_VERT_DISC_ADJ              0x00028C10
 #define R_028C14_PA_CL_GB_HORZ_CLIP_ADJ              0x00028C14

@@ -291,7 +291,11 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, 0x0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL, 0x00000005, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
+				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
+				0xFFFFFFFF, NULL);
+
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL);
 	return rstate;
 }
