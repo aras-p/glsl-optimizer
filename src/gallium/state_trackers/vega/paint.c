@@ -26,7 +26,6 @@
 
 #include "paint.h"
 
-#include "shaders_cache.h"
 #include "matrix.h"
 #include "image.h"
 #include "st_inlines.h"
@@ -34,7 +33,6 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 
-#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_sampler.h"

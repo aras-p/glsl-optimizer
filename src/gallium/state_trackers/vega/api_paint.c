@@ -28,7 +28,6 @@
 
 #include "vg_context.h"
 #include "paint.h"
-#include "image.h"
 #include "api.h"
 
 VGPaint vegaCreatePaint(void)

@@ -32,13 +32,11 @@
 #include "renderer.h"
 #include "util_array.h"
 #include "api_consts.h"
-#include "shaders_cache.h"
 #include "shader.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
-#include "util/u_blit.h"
 #include "util/u_format.h"
 #include "util/u_tile.h"
 #include "util/u_memory.h"
