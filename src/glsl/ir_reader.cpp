@@ -263,7 +263,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
       return;
 
    s_list *paramlist = SX_AS_LIST(type_expr->next);
-   s_list *body_list = SX_AS_LIST(paramlist->next);
+   s_list *body_list = SX_AS_LIST(type_expr->next->next);
    if (paramlist == NULL || body_list == NULL) {
       ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
@@ -677,7 +677,7 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_symbol *name = SX_AS_SYMBOL(list->subexpressions.head->next);
-   s_list *params = SX_AS_LIST(name->next);
+   s_list *params = SX_AS_LIST(list->subexpressions.head->next->next);
    if (name == NULL || params == NULL) {
       ir_read_error(st, list, "expected (call <name> (<param> ...))");
       return NULL;
@@ -1050,8 +1050,8 @@ read_texture(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
    s_int *offset_x = SX_AS_INT(offset_list->subexpressions.head);
-   s_int *offset_y = SX_AS_INT(offset_x->next);
-   s_int *offset_z = SX_AS_INT(offset_y->next);
+   s_int *offset_y = SX_AS_INT(offset_list->subexpressions.head->next);
+   s_int *offset_z = SX_AS_INT(offset_list->subexpressions.head->next->next);
    if (offset_x == NULL || offset_y == NULL || offset_z == NULL) {
       ir_read_error(st, offset_list, "expected (<int> <int> <int>)");
       return NULL;
