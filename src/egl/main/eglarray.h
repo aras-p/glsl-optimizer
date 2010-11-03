@@ -37,7 +37,7 @@ void *
 _eglFindArray(_EGLArray *array, void *elem);
 
 
-void **
+PUBLIC void **
 _eglFilterArray(_EGLArray *array, EGLint *size,
                 _EGLArrayForEach filter, void *filter_data);
 

@@ -97,6 +97,70 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
    return stapi;
 }
 
+static int
+egl_g3d_compare_config(const _EGLConfig *conf1, const _EGLConfig *conf2,
+                       void *priv_data)
+{
+   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
+
+   /* EGL_NATIVE_VISUAL_TYPE ignored? */
+   return _eglCompareConfigs(conf1, conf2, criteria, EGL_TRUE);
+}
+
+static EGLBoolean
+egl_g3d_match_config(const _EGLConfig *conf, const _EGLConfig *criteria)
+{
+   if (!_eglMatchConfig(conf, criteria))
+      return EGL_FALSE;
+
+   if (criteria->MatchNativePixmap != EGL_NONE &&
+       criteria->MatchNativePixmap != EGL_DONT_CARE) {
+      struct egl_g3d_display *gdpy = egl_g3d_display(conf->Display);
+      struct egl_g3d_config *gconf = egl_g3d_config(conf);
+      EGLNativePixmapType pix =
+         (EGLNativePixmapType) criteria->MatchNativePixmap;
+
+      if (!gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
+         return EGL_FALSE;
+   }
+
+   return EGL_TRUE;
+}
+
+static EGLBoolean
+egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
+                      EGLConfig *configs, EGLint size, EGLint *num_configs)
+{
+   _EGLConfig **tmp_configs, criteria;
+   EGLint tmp_size, i;
+
+   if (!num_configs)
+      return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
+
+   if (!_eglParseConfigAttribList(&criteria, dpy, attribs))
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
+
+   tmp_configs = (_EGLConfig **) _eglFilterArray(dpy->Configs, &tmp_size,
+         (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
+   if (!tmp_configs)
+      return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
+
+   /* perform sorting of configs */
+   if (tmp_configs && tmp_size) {
+      _eglSortConfigs((const _EGLConfig **) tmp_configs, tmp_size,
+            egl_g3d_compare_config, (void *) &criteria);
+      size = MIN2(tmp_size, size);
+      for (i = 0; i < size; i++)
+         configs[i] = _eglGetConfigHandle(tmp_configs[i]);
+   }
+
+   free(tmp_configs);
+
+   *num_configs = size;
+
+   return EGL_TRUE;
+}
+
 static _EGLContext *
 egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                        _EGLContext *share, const EGLint *attribs)
@@ -839,6 +903,8 @@ void
 egl_g3d_init_driver_api(_EGLDriver *drv)
 {
    _eglInitDriverFallbacks(drv);
+
+   drv->API.ChooseConfig = egl_g3d_choose_config;
 
    drv->API.CreateContext = egl_g3d_create_context;
    drv->API.DestroyContext = egl_g3d_destroy_context;
