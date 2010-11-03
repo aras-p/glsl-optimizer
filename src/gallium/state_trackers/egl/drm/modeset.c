@@ -251,8 +251,6 @@ drm_display_create_surface(struct native_display *ndpy,
    resource_surface_set_size(drmsurf->rsurf, drmsurf->width, drmsurf->height);
 
    drmsurf->base.destroy = drm_surface_destroy;
-   drmsurf->base.swap_buffers = drm_surface_swap_buffers;
-   drmsurf->base.flush_frontbuffer = drm_surface_flush_frontbuffer;
    drmsurf->base.present = drm_surface_present;
    drmsurf->base.validate = drm_surface_validate;
    drmsurf->base.wait = drm_surface_wait;

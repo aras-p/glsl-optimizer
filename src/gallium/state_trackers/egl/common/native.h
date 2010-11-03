@@ -76,19 +76,6 @@ struct native_surface {
    void (*destroy)(struct native_surface *nsurf);
 
    /**
-    * Swap the front and back buffers so that the back buffer is visible.  It
-    * is no-op if the surface is single-buffered.  The contents of the back
-    * buffer after swapping may or may not be preserved.
-    */
-   boolean (*swap_buffers)(struct native_surface *nsurf);
-
-   /**
-    * Make the front buffer visible.  In some native displays, changes to the
-    * front buffer might not be visible immediately and require manual flush.
-    */
-   boolean (*flush_frontbuffer)(struct native_surface *nsurf);
-
-   /**
     * Present the given buffer to the native engine.
     */
    boolean (*present)(struct native_surface *nsurf,

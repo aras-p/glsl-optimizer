@@ -456,8 +456,6 @@ dri2_display_create_surface(struct native_display *ndpy,
    dri2surf->color_format = dri2conf->base.color_format;
 
    dri2surf->base.destroy = dri2_surface_destroy;
-   dri2surf->base.swap_buffers = dri2_surface_swap_buffers;
-   dri2surf->base.flush_frontbuffer = dri2_surface_flush_frontbuffer;
    dri2surf->base.present = dri2_surface_present;
    dri2surf->base.validate = dri2_surface_validate;
    dri2surf->base.wait = dri2_surface_wait;

@@ -283,8 +283,6 @@ ximage_display_create_surface(struct native_display *ndpy,
    xsurf->xdraw.drawable = xsurf->drawable;
 
    xsurf->base.destroy = ximage_surface_destroy;
-   xsurf->base.swap_buffers = ximage_surface_swap_buffers;
-   xsurf->base.flush_frontbuffer = ximage_surface_flush_frontbuffer;
    xsurf->base.present = ximage_surface_present;
    xsurf->base.validate = ximage_surface_validate;
    xsurf->base.wait = ximage_surface_wait;

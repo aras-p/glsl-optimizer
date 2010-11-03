@@ -207,8 +207,6 @@ fbdev_display_create_scanout_surface(struct native_display *ndpy,
    resource_surface_set_size(fbsurf->rsurf, fbsurf->width, fbsurf->height);
 
    fbsurf->base.destroy = fbdev_surface_destroy;
-   fbsurf->base.swap_buffers = fbdev_surface_swap_buffers;
-   fbsurf->base.flush_frontbuffer = fbdev_surface_flush_frontbuffer;
    fbsurf->base.present = fbdev_surface_present;
    fbsurf->base.validate = fbdev_surface_validate;
    fbsurf->base.wait = fbdev_surface_wait;
