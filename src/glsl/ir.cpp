@@ -231,6 +231,108 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
    this->operands[3] = op3;
 }
 
+ir_expression::ir_expression(int op, ir_rvalue *op0)
+{
+   this->ir_type = ir_type_expression;
+
+   this->operation = ir_expression_operation(op);
+   this->operands[0] = op0;
+   this->operands[1] = NULL;
+   this->operands[2] = NULL;
+   this->operands[3] = NULL;
+
+   assert(op <= ir_last_unop);
+
+   switch (this->operation) {
+   case ir_unop_bit_not:
+   case ir_unop_logic_not:
+   case ir_unop_neg:
+   case ir_unop_abs:
+   case ir_unop_sign:
+   case ir_unop_rcp:
+   case ir_unop_rsq:
+   case ir_unop_sqrt:
+   case ir_unop_exp:
+   case ir_unop_log:
+   case ir_unop_exp2:
+   case ir_unop_log2:
+   case ir_unop_trunc:
+   case ir_unop_ceil:
+   case ir_unop_floor:
+   case ir_unop_fract:
+   case ir_unop_round_even:
+   case ir_unop_cos:
+   case ir_unop_dFdx:
+   case ir_unop_dFdy:
+      this->type = op0->type;
+      break;
+
+   case ir_unop_any:
+      this->type = glsl_type::bool_type;
+      break;
+
+   default:
+      assert(!"not reached: missing automatic type setup for ir_expression");
+      this->type = op0->type;
+      break;
+   }
+}
+
+ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
+{
+   this->ir_type = ir_type_expression;
+
+   this->operation = ir_expression_operation(op);
+   this->operands[0] = op0;
+   this->operands[1] = op1;
+   this->operands[2] = NULL;
+   this->operands[3] = NULL;
+
+   assert(op > ir_last_unop);
+
+   switch (this->operation) {
+   case ir_binop_all_equal:
+   case ir_binop_any_nequal:
+      this->type = glsl_type::bool_type;
+      break;
+
+   case ir_binop_add:
+   case ir_binop_sub:
+   case ir_binop_min:
+   case ir_binop_max:
+   case ir_binop_pow:
+   case ir_binop_mul:
+      if (op0->type->is_scalar()) {
+	 this->type = op1->type;
+      } else if (op1->type->is_scalar()) {
+	 this->type = op0->type;
+      } else {
+	 /* FINISHME: matrix types */
+	 assert(!op0->type->is_matrix() && !op1->type->is_matrix());
+	 assert(op0->type == op1->type);
+	 this->type = op0->type;
+      }
+      break;
+
+   case ir_binop_logic_and:
+   case ir_binop_logic_or:
+      if (op0->type->is_scalar()) {
+	 this->type = op1->type;
+      } else if (op1->type->is_scalar()) {
+	 this->type = op0->type;
+      }
+      break;
+
+   case ir_binop_dot:
+      this->type = glsl_type::float_type;
+      break;
+
+   default:
+      assert(!"not reached: missing automatic type setup for ir_expression");
+      this->type = glsl_type::float_type;
+   }
+}
+
 unsigned int
 ir_expression::get_num_operands(ir_expression_operation op)
 {
