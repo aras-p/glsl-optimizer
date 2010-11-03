@@ -540,7 +540,9 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    }
 
    return gsurf->native->present(gsurf->native,
-         NATIVE_ATTACHMENT_BACK_LEFT, FALSE, 0);
+         NATIVE_ATTACHMENT_BACK_LEFT,
+         gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED,
+         gsurf->base.SwapInterval);
 }
 
 /**
