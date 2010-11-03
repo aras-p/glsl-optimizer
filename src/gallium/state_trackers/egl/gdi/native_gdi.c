@@ -257,7 +257,7 @@ gdi_display_create_window_surface(struct native_display *ndpy,
    gdi_surface_update_geometry(&gsurf->base);
 
    gsurf->base.destroy = gdi_surface_destroy;
-   xsurf->base.present = gdi_surface_present;
+   gsurf->base.present = gdi_surface_present;
    gsurf->base.validate = gdi_surface_validate;
    gsurf->base.wait = gdi_surface_wait;
 
