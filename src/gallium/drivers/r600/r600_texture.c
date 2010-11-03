@@ -806,7 +806,7 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			result = FMT_24_8;
 			goto out_word4;
 		case PIPE_FORMAT_S8_USCALED:
-			result = V_0280A0_COLOR_8;
+			result = FMT_8;
 			word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
 			goto out_word4;
 		default:
@@ -835,7 +835,20 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-		goto out_unknown;
+		switch (format) {
+		case PIPE_FORMAT_DXT1_RGB:
+		case PIPE_FORMAT_DXT1_RGBA:
+                        result = FMT_BC1;
+                        goto out_word4;
+		case PIPE_FORMAT_DXT3_RGBA:
+                        result = FMT_BC2;
+                        goto out_word4;
+		case PIPE_FORMAT_DXT5_RGBA:
+                        result = FMT_BC3;
+                        goto out_word4;
+                default:
+                        goto out_unknown;
+                }
 	}
 
 
