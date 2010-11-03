@@ -799,12 +799,6 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_expression *sub = (s_expression*) swiz->next;
-   if (sub == NULL) {
-      ir_read_error(st, list, "expected rvalue: (swizzle %s <rvalue>)",
-		    swiz->value());
-      return NULL;
-   }
-
    ir_rvalue *rvalue = read_rvalue(st, sub);
    if (rvalue == NULL)
       return NULL;
