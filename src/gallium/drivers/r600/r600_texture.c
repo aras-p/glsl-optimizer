@@ -466,6 +466,36 @@ static INLINE unsigned u_box_volume( const struct pipe_box *box )
 };
 
 
+/* Figure out whether u_blitter will fallback to a transfer operation.
+ * If so, don't use a staging resource.
+ */
+static boolean permit_hardware_blit(struct pipe_screen *screen,
+                                    struct pipe_resource *res)
+{
+        unsigned bind;
+
+        if (util_format_is_depth_or_stencil(res->format))
+                bind = PIPE_BIND_DEPTH_STENCIL;
+        else
+                bind = PIPE_BIND_RENDER_TARGET;
+
+        if (!screen->is_format_supported(screen,
+                                         res->format,
+                                         res->target,
+                                         res->nr_samples,
+                                         bind, 0))
+                return FALSE;
+
+        if (!screen->is_format_supported(screen,
+                                         res->format,
+                                         res->target,
+                                         res->nr_samples,
+                                         PIPE_BIND_SAMPLER_VIEW, 0))
+                return FALSE;
+
+        return TRUE;
+}
+
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
 						struct pipe_subresource sr,
@@ -505,6 +535,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
             discard &&
             !(usage & (PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_UNSYNCHRONIZED)))
                 use_staging_texture = TRUE;
+
+        if (!permit_hardware_blit(ctx->screen, texture) ||
+            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+                use_staging_texture = FALSE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
