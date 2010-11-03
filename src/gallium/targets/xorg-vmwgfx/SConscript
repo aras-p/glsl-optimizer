@@ -6,6 +6,9 @@ env = env.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
 
+if env['kms']:
+    env.ParseConfig('pkg-config --cflags --libs libkms')
+
 env.Prepend(CPPPATH = [
     '#/include',
     '#/src/gallium',
