@@ -68,6 +68,8 @@ graw_create_window_and_screen(int x,
    struct sw_winsys *winsys = NULL;
    struct pipe_screen *screen = NULL;
    WNDCLASSEX wc = {sizeof(wc)};
+   UINT style = WS_VISIBLE | WS_TILEDWINDOW;
+   RECT rect;
    HWND hWnd = NULL;
    HDC hDC = NULL;
 
@@ -91,14 +93,17 @@ graw_create_window_and_screen(int x,
    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
    RegisterClassEx(&wc);
 
+   SetRect(&rect, 0, 0, width, height);
+   AdjustWindowRectEx(&rect, style, FALSE, 0);
+
    hWnd = CreateWindowEx(0,
                          wc.lpszClassName,
                          wc.lpszClassName,
-                         WS_VISIBLE | WS_TILEDWINDOW,
+                         style,
                          x,
                          y,
-                         width,
-                         height,
+                         rect.right - rect.left,
+                         rect.bottom - rect.top,
                          NULL,
                          NULL,
                          wc.hInstance,
