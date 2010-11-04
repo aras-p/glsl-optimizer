@@ -64,25 +64,14 @@ header_bodysize_grow( struct tgsi_header *header )
 }
 
 struct tgsi_processor
-tgsi_default_processor( void )
-{
-   struct tgsi_processor processor;
-
-   processor.Processor = TGSI_PROCESSOR_FRAGMENT;
-   processor.Padding = 0;
-
-   return processor;
-}
-
-struct tgsi_processor
 tgsi_build_processor(
    unsigned type,
    struct tgsi_header *header )
 {
    struct tgsi_processor processor;
 
-   processor = tgsi_default_processor();
    processor.Processor = type;
+   processor.Padding = 0;
 
    header_headersize_grow( header );
 
@@ -93,7 +82,19 @@ tgsi_build_processor(
  * declaration
  */
 
-struct tgsi_declaration
+static void
+declaration_grow(
+   struct tgsi_declaration *declaration,
+   struct tgsi_header *header )
+{
+   assert( declaration->NrTokens < 0xFF );
+
+   declaration->NrTokens++;
+
+   header_bodysize_grow( header );
+}
+
+static struct tgsi_declaration
 tgsi_default_declaration( void )
 {
    struct tgsi_declaration declaration;
@@ -112,7 +113,7 @@ tgsi_default_declaration( void )
    return declaration;
 }
 
-struct tgsi_declaration
+static struct tgsi_declaration
 tgsi_build_declaration(
    unsigned file,
    unsigned usage_mask,
@@ -144,16 +145,96 @@ tgsi_build_declaration(
    return declaration;
 }
 
-static void
-declaration_grow(
+static struct tgsi_declaration_range
+tgsi_default_declaration_range( void )
+{
+   struct tgsi_declaration_range dr;
+
+   dr.First = 0;
+   dr.Last = 0;
+
+   return dr;
+}
+
+static struct tgsi_declaration_range
+tgsi_build_declaration_range(
+   unsigned first,
+   unsigned last,
    struct tgsi_declaration *declaration,
    struct tgsi_header *header )
 {
-   assert( declaration->NrTokens < 0xFF );
+   struct tgsi_declaration_range declaration_range;
 
-   declaration->NrTokens++;
+   assert( last >= first );
+   assert( last <= 0xFFFF );
 
-   header_bodysize_grow( header );
+   declaration_range.First = first;
+   declaration_range.Last = last;
+
+   declaration_grow( declaration, header );
+
+   return declaration_range;
+}
+
+static struct tgsi_declaration_dimension
+tgsi_default_declaration_dimension(void)
+{
+   struct tgsi_declaration_dimension dd;
+
+   dd.Index2D = 0;
+   dd.Padding = 0;
+
+   return dd;
+}
+
+static struct tgsi_declaration_dimension
+tgsi_build_declaration_dimension(unsigned index_2d,
+                                 struct tgsi_declaration *declaration,
+                                 struct tgsi_header *header)
+{
+   struct tgsi_declaration_dimension dd;
+
+   assert(index_2d <= 0xFFFF);
+
+   dd.Index2D = index_2d;
+   dd.Padding = 0;
+
+   declaration_grow(declaration, header);
+
+   return dd;
+}
+
+static struct tgsi_declaration_semantic
+tgsi_default_declaration_semantic( void )
+{
+   struct tgsi_declaration_semantic ds;
+
+   ds.Name = TGSI_SEMANTIC_POSITION;
+   ds.Index = 0;
+   ds.Padding = 0;
+
+   return ds;
+}
+
+static struct tgsi_declaration_semantic
+tgsi_build_declaration_semantic(
+   unsigned semantic_name,
+   unsigned semantic_index,
+   struct tgsi_declaration *declaration,
+   struct tgsi_header *header )
+{
+   struct tgsi_declaration_semantic ds;
+
+   assert( semantic_name <= TGSI_SEMANTIC_COUNT );
+   assert( semantic_index <= 0xFFFF );
+
+   ds.Name = semantic_name;
+   ds.Index = semantic_index;
+   ds.Padding = 0;
+
+   declaration_grow( declaration, header );
+
+   return ds;
 }
 
 struct tgsi_full_declaration
@@ -257,104 +338,11 @@ tgsi_build_full_declaration(
    return size;
 }
 
-struct tgsi_declaration_range
-tgsi_default_declaration_range( void )
-{
-   struct tgsi_declaration_range dr;
-
-   dr.First = 0;
-   dr.Last = 0;
-
-   return dr;
-}
-
-struct tgsi_declaration_range
-tgsi_build_declaration_range(
-   unsigned first,
-   unsigned last,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header )
-{
-   struct tgsi_declaration_range declaration_range;
-
-   assert( last >= first );
-   assert( last <= 0xFFFF );
-
-   declaration_range = tgsi_default_declaration_range();
-   declaration_range.First = first;
-   declaration_range.Last = last;
-
-   declaration_grow( declaration, header );
-
-   return declaration_range;
-}
-
-struct tgsi_declaration_dimension
-tgsi_default_declaration_dimension(void)
-{
-   struct tgsi_declaration_dimension dd;
-
-   dd.Index2D = 0;
-   dd.Padding = 0;
-
-   return dd;
-}
-
-struct tgsi_declaration_dimension
-tgsi_build_declaration_dimension(unsigned index_2d,
-                                 struct tgsi_declaration *declaration,
-                                 struct tgsi_header *header)
-{
-   struct tgsi_declaration_dimension dd;
-
-   assert(index_2d <= 0xFFFF);
-
-   dd = tgsi_default_declaration_dimension();
-   dd.Index2D = index_2d;
-
-   declaration_grow(declaration, header);
-
-   return dd;
-}
-
-struct tgsi_declaration_semantic
-tgsi_default_declaration_semantic( void )
-{
-   struct tgsi_declaration_semantic ds;
-
-   ds.Name = TGSI_SEMANTIC_POSITION;
-   ds.Index = 0;
-   ds.Padding = 0;
-
-   return ds;
-}
-
-struct tgsi_declaration_semantic
-tgsi_build_declaration_semantic(
-   unsigned semantic_name,
-   unsigned semantic_index,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header )
-{
-   struct tgsi_declaration_semantic ds;
-
-   assert( semantic_name <= TGSI_SEMANTIC_COUNT );
-   assert( semantic_index <= 0xFFFF );
-
-   ds = tgsi_default_declaration_semantic();
-   ds.Name = semantic_name;
-   ds.Index = semantic_index;
-
-   declaration_grow( declaration, header );
-
-   return ds;
-}
-
 /*
  * immediate
  */
 
-struct tgsi_immediate
+static struct tgsi_immediate
 tgsi_default_immediate( void )
 {
    struct tgsi_immediate immediate;
@@ -367,7 +355,7 @@ tgsi_default_immediate( void )
    return immediate;
 }
 
-struct tgsi_immediate
+static struct tgsi_immediate
 tgsi_build_immediate(
    struct tgsi_header *header )
 {
@@ -406,7 +394,7 @@ immediate_grow(
    header_bodysize_grow( header );
 }
 
-union tgsi_immediate_data
+static union tgsi_immediate_data
 tgsi_build_immediate_float32(
    float value,
    struct tgsi_immediate *immediate,
@@ -480,7 +468,7 @@ tgsi_default_instruction( void )
    return instruction;
 }
 
-struct tgsi_instruction
+static struct tgsi_instruction
 tgsi_build_instruction(unsigned opcode,
                        unsigned saturate,
                        unsigned predicate,
@@ -517,6 +505,266 @@ instruction_grow(
    instruction->NrTokens++;
 
    header_bodysize_grow( header );
+}
+
+struct tgsi_instruction_predicate
+tgsi_default_instruction_predicate(void)
+{
+   struct tgsi_instruction_predicate instruction_predicate;
+
+   instruction_predicate.SwizzleX = TGSI_SWIZZLE_X;
+   instruction_predicate.SwizzleY = TGSI_SWIZZLE_Y;
+   instruction_predicate.SwizzleZ = TGSI_SWIZZLE_Z;
+   instruction_predicate.SwizzleW = TGSI_SWIZZLE_W;
+   instruction_predicate.Negate = 0;
+   instruction_predicate.Index = 0;
+   instruction_predicate.Padding = 0;
+
+   return instruction_predicate;
+}
+
+static struct tgsi_instruction_predicate
+tgsi_build_instruction_predicate(int index,
+                                 unsigned negate,
+                                 unsigned swizzleX,
+                                 unsigned swizzleY,
+                                 unsigned swizzleZ,
+                                 unsigned swizzleW,
+                                 struct tgsi_instruction *instruction,
+                                 struct tgsi_header *header)
+{
+   struct tgsi_instruction_predicate instruction_predicate;
+
+   instruction_predicate = tgsi_default_instruction_predicate();
+   instruction_predicate.SwizzleX = swizzleX;
+   instruction_predicate.SwizzleY = swizzleY;
+   instruction_predicate.SwizzleZ = swizzleZ;
+   instruction_predicate.SwizzleW = swizzleW;
+   instruction_predicate.Negate = negate;
+   instruction_predicate.Index = index;
+
+   instruction_grow(instruction, header);
+
+   return instruction_predicate;
+}
+
+static struct tgsi_instruction_label
+tgsi_default_instruction_label( void )
+{
+   struct tgsi_instruction_label instruction_label;
+
+   instruction_label.Label = 0;
+   instruction_label.Padding = 0;
+
+   return instruction_label;
+}
+
+static struct tgsi_instruction_label
+tgsi_build_instruction_label(
+   unsigned label,
+   struct tgsi_token  *prev_token,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_instruction_label instruction_label;
+
+   instruction_label.Label = label;
+   instruction_label.Padding = 0;
+   instruction->Label = 1;
+
+   instruction_grow( instruction, header );
+
+   return instruction_label;
+}
+
+static struct tgsi_instruction_texture
+tgsi_default_instruction_texture( void )
+{
+   struct tgsi_instruction_texture instruction_texture;
+
+   instruction_texture.Texture = TGSI_TEXTURE_UNKNOWN;
+   instruction_texture.Padding = 0;
+
+   return instruction_texture;
+}
+
+static struct tgsi_instruction_texture
+tgsi_build_instruction_texture(
+   unsigned texture,
+   struct tgsi_token *prev_token,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_instruction_texture instruction_texture;
+
+   instruction_texture.Texture = texture;
+   instruction_texture.Padding = 0;
+   instruction->Texture = 1;
+
+   instruction_grow( instruction, header );
+
+   return instruction_texture;
+}
+
+static struct tgsi_src_register
+tgsi_default_src_register( void )
+{
+   struct tgsi_src_register src_register;
+
+   src_register.File = TGSI_FILE_NULL;
+   src_register.SwizzleX = TGSI_SWIZZLE_X;
+   src_register.SwizzleY = TGSI_SWIZZLE_Y;
+   src_register.SwizzleZ = TGSI_SWIZZLE_Z;
+   src_register.SwizzleW = TGSI_SWIZZLE_W;
+   src_register.Negate = 0;
+   src_register.Absolute = 0;
+   src_register.Indirect = 0;
+   src_register.Dimension = 0;
+   src_register.Index = 0;
+
+   return src_register;
+}
+
+static struct tgsi_src_register
+tgsi_build_src_register(
+   unsigned file,
+   unsigned swizzle_x,
+   unsigned swizzle_y,
+   unsigned swizzle_z,
+   unsigned swizzle_w,
+   unsigned negate,
+   unsigned absolute,
+   unsigned indirect,
+   unsigned dimension,
+   int index,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_src_register   src_register;
+
+   assert( file < TGSI_FILE_COUNT );
+   assert( swizzle_x <= TGSI_SWIZZLE_W );
+   assert( swizzle_y <= TGSI_SWIZZLE_W );
+   assert( swizzle_z <= TGSI_SWIZZLE_W );
+   assert( swizzle_w <= TGSI_SWIZZLE_W );
+   assert( negate <= 1 );
+   assert( index >= -0x8000 && index <= 0x7FFF );
+
+   src_register.File = file;
+   src_register.SwizzleX = swizzle_x;
+   src_register.SwizzleY = swizzle_y;
+   src_register.SwizzleZ = swizzle_z;
+   src_register.SwizzleW = swizzle_w;
+   src_register.Negate = negate;
+   src_register.Absolute = absolute;
+   src_register.Indirect = indirect;
+   src_register.Dimension = dimension;
+   src_register.Index = index;
+
+   instruction_grow( instruction, header );
+
+   return src_register;
+}
+
+static struct tgsi_dimension
+tgsi_default_dimension( void )
+{
+   struct tgsi_dimension dimension;
+
+   dimension.Indirect = 0;
+   dimension.Dimension = 0;
+   dimension.Padding = 0;
+   dimension.Index = 0;
+
+   return dimension;
+}
+
+static struct tgsi_full_src_register
+tgsi_default_full_src_register( void )
+{
+   struct tgsi_full_src_register full_src_register;
+
+   full_src_register.Register = tgsi_default_src_register();
+   full_src_register.Indirect = tgsi_default_src_register();
+   full_src_register.Dimension = tgsi_default_dimension();
+   full_src_register.DimIndirect = tgsi_default_src_register();
+
+   return full_src_register;
+}
+
+static struct tgsi_dimension
+tgsi_build_dimension(
+   unsigned indirect,
+   unsigned index,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_dimension dimension;
+
+   dimension.Indirect = indirect;
+   dimension.Dimension = 0;
+   dimension.Padding = 0;
+   dimension.Index = index;
+
+   instruction_grow( instruction, header );
+
+   return dimension;
+}
+
+static struct tgsi_dst_register
+tgsi_default_dst_register( void )
+{
+   struct tgsi_dst_register dst_register;
+
+   dst_register.File = TGSI_FILE_NULL;
+   dst_register.WriteMask = TGSI_WRITEMASK_XYZW;
+   dst_register.Indirect = 0;
+   dst_register.Dimension = 0;
+   dst_register.Index = 0;
+   dst_register.Padding = 0;
+
+   return dst_register;
+}
+
+static struct tgsi_dst_register
+tgsi_build_dst_register(
+   unsigned file,
+   unsigned mask,
+   unsigned indirect,
+   unsigned dimension,
+   int index,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_dst_register dst_register;
+
+   assert( file < TGSI_FILE_COUNT );
+   assert( mask <= TGSI_WRITEMASK_XYZW );
+   assert( index >= -32768 && index <= 32767 );
+
+   dst_register.File = file;
+   dst_register.WriteMask = mask;
+   dst_register.Indirect = indirect;
+   dst_register.Dimension = dimension;
+   dst_register.Index = index;
+   dst_register.Padding = 0;
+
+   instruction_grow( instruction, header );
+
+   return dst_register;
+}
+
+static struct tgsi_full_dst_register
+tgsi_default_full_dst_register( void )
+{
+   struct tgsi_full_dst_register full_dst_register;
+
+   full_dst_register.Register = tgsi_default_dst_register();
+   full_dst_register.Indirect = tgsi_default_src_register();
+   full_dst_register.Dimension = tgsi_default_dimension();
+   full_dst_register.DimIndirect = tgsi_default_src_register();
+
+   return full_dst_register;
 }
 
 struct tgsi_full_instruction
@@ -794,268 +1042,7 @@ tgsi_build_full_instruction(
    return size;
 }
 
-struct tgsi_instruction_predicate
-tgsi_default_instruction_predicate(void)
-{
-   struct tgsi_instruction_predicate instruction_predicate;
-
-   instruction_predicate.SwizzleX = TGSI_SWIZZLE_X;
-   instruction_predicate.SwizzleY = TGSI_SWIZZLE_Y;
-   instruction_predicate.SwizzleZ = TGSI_SWIZZLE_Z;
-   instruction_predicate.SwizzleW = TGSI_SWIZZLE_W;
-   instruction_predicate.Negate = 0;
-   instruction_predicate.Index = 0;
-   instruction_predicate.Padding = 0;
-
-   return instruction_predicate;
-}
-
-struct tgsi_instruction_predicate
-tgsi_build_instruction_predicate(int index,
-                                 unsigned negate,
-                                 unsigned swizzleX,
-                                 unsigned swizzleY,
-                                 unsigned swizzleZ,
-                                 unsigned swizzleW,
-                                 struct tgsi_instruction *instruction,
-                                 struct tgsi_header *header)
-{
-   struct tgsi_instruction_predicate instruction_predicate;
-
-   instruction_predicate = tgsi_default_instruction_predicate();
-   instruction_predicate.SwizzleX = swizzleX;
-   instruction_predicate.SwizzleY = swizzleY;
-   instruction_predicate.SwizzleZ = swizzleZ;
-   instruction_predicate.SwizzleW = swizzleW;
-   instruction_predicate.Negate = negate;
-   instruction_predicate.Index = index;
-
-   instruction_grow(instruction, header);
-
-   return instruction_predicate;
-}
-
-struct tgsi_instruction_label
-tgsi_default_instruction_label( void )
-{
-   struct tgsi_instruction_label instruction_label;
-
-   instruction_label.Label = 0;
-   instruction_label.Padding = 0;
-
-   return instruction_label;
-}
-
-struct tgsi_instruction_label
-tgsi_build_instruction_label(
-   unsigned label,
-   struct tgsi_token  *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_instruction_label instruction_label;
-
-   instruction_label = tgsi_default_instruction_label();
-   instruction_label.Label = label;
-   instruction->Label = 1;
-
-   instruction_grow( instruction, header );
-
-   return instruction_label;
-}
-
-struct tgsi_instruction_texture
-tgsi_default_instruction_texture( void )
-{
-   struct tgsi_instruction_texture instruction_texture;
-
-   instruction_texture.Texture = TGSI_TEXTURE_UNKNOWN;
-   instruction_texture.Padding = 0;
-
-   return instruction_texture;
-}
-
-struct tgsi_instruction_texture
-tgsi_build_instruction_texture(
-   unsigned texture,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_instruction_texture instruction_texture;
-
-   instruction_texture = tgsi_default_instruction_texture();
-   instruction_texture.Texture = texture;
-   instruction->Texture = 1;
-
-   instruction_grow( instruction, header );
-
-   return instruction_texture;
-}
-
-struct tgsi_src_register
-tgsi_default_src_register( void )
-{
-   struct tgsi_src_register src_register;
-
-   src_register.File = TGSI_FILE_NULL;
-   src_register.SwizzleX = TGSI_SWIZZLE_X;
-   src_register.SwizzleY = TGSI_SWIZZLE_Y;
-   src_register.SwizzleZ = TGSI_SWIZZLE_Z;
-   src_register.SwizzleW = TGSI_SWIZZLE_W;
-   src_register.Negate = 0;
-   src_register.Absolute = 0;
-   src_register.Indirect = 0;
-   src_register.Dimension = 0;
-   src_register.Index = 0;
-
-   return src_register;
-}
-
-struct tgsi_src_register
-tgsi_build_src_register(
-   unsigned file,
-   unsigned swizzle_x,
-   unsigned swizzle_y,
-   unsigned swizzle_z,
-   unsigned swizzle_w,
-   unsigned negate,
-   unsigned absolute,
-   unsigned indirect,
-   unsigned dimension,
-   int index,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_src_register   src_register;
-
-   assert( file < TGSI_FILE_COUNT );
-   assert( swizzle_x <= TGSI_SWIZZLE_W );
-   assert( swizzle_y <= TGSI_SWIZZLE_W );
-   assert( swizzle_z <= TGSI_SWIZZLE_W );
-   assert( swizzle_w <= TGSI_SWIZZLE_W );
-   assert( negate <= 1 );
-   assert( index >= -0x8000 && index <= 0x7FFF );
-
-   src_register = tgsi_default_src_register();
-   src_register.File = file;
-   src_register.SwizzleX = swizzle_x;
-   src_register.SwizzleY = swizzle_y;
-   src_register.SwizzleZ = swizzle_z;
-   src_register.SwizzleW = swizzle_w;
-   src_register.Negate = negate;
-   src_register.Absolute = absolute;
-   src_register.Indirect = indirect;
-   src_register.Dimension = dimension;
-   src_register.Index = index;
-
-   instruction_grow( instruction, header );
-
-   return src_register;
-}
-
-struct tgsi_full_src_register
-tgsi_default_full_src_register( void )
-{
-   struct tgsi_full_src_register full_src_register;
-
-   full_src_register.Register = tgsi_default_src_register();
-   full_src_register.Indirect = tgsi_default_src_register();
-   full_src_register.Dimension = tgsi_default_dimension();
-   full_src_register.DimIndirect = tgsi_default_src_register();
-
-   return full_src_register;
-}
-
-
-struct tgsi_dimension
-tgsi_default_dimension( void )
-{
-   struct tgsi_dimension dimension;
-
-   dimension.Indirect = 0;
-   dimension.Dimension = 0;
-   dimension.Padding = 0;
-   dimension.Index = 0;
-
-   return dimension;
-}
-
-struct tgsi_dimension
-tgsi_build_dimension(
-   unsigned indirect,
-   unsigned index,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_dimension dimension;
-
-   dimension = tgsi_default_dimension();
-   dimension.Indirect = indirect;
-   dimension.Index = index;
-
-   instruction_grow( instruction, header );
-
-   return dimension;
-}
-
-struct tgsi_dst_register
-tgsi_default_dst_register( void )
-{
-   struct tgsi_dst_register dst_register;
-
-   dst_register.File = TGSI_FILE_NULL;
-   dst_register.WriteMask = TGSI_WRITEMASK_XYZW;
-   dst_register.Indirect = 0;
-   dst_register.Dimension = 0;
-   dst_register.Index = 0;
-   dst_register.Padding = 0;
-
-   return dst_register;
-}
-
-struct tgsi_dst_register
-tgsi_build_dst_register(
-   unsigned file,
-   unsigned mask,
-   unsigned indirect,
-   unsigned dimension,
-   int index,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_dst_register dst_register;
-
-   assert( file < TGSI_FILE_COUNT );
-   assert( mask <= TGSI_WRITEMASK_XYZW );
-   assert( index >= -32768 && index <= 32767 );
-
-   dst_register = tgsi_default_dst_register();
-   dst_register.File = file;
-   dst_register.WriteMask = mask;
-   dst_register.Index = index;
-   dst_register.Indirect = indirect;
-   dst_register.Dimension = dimension;
-
-   instruction_grow( instruction, header );
-
-   return dst_register;
-}
-
-struct tgsi_full_dst_register
-tgsi_default_full_dst_register( void )
-{
-   struct tgsi_full_dst_register full_dst_register;
-
-   full_dst_register.Register = tgsi_default_dst_register();
-   full_dst_register.Indirect = tgsi_default_src_register();
-   full_dst_register.Dimension = tgsi_default_dimension();
-   full_dst_register.DimIndirect = tgsi_default_src_register();
-
-   return full_dst_register;
-}
-
-struct tgsi_property
+static struct tgsi_property
 tgsi_default_property( void )
 {
    struct tgsi_property property;
@@ -1068,7 +1055,7 @@ tgsi_default_property( void )
    return property;
 }
 
-struct tgsi_property
+static struct tgsi_property
 tgsi_build_property(unsigned property_name,
                     struct tgsi_header *header)
 {
@@ -1107,7 +1094,7 @@ property_grow(
    header_bodysize_grow( header );
 }
 
-struct tgsi_property_data
+static struct tgsi_property_data
 tgsi_build_property_data(
    unsigned value,
    struct tgsi_property *property,
