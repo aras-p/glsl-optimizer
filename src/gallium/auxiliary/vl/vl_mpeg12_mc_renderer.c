@@ -48,7 +48,7 @@
 
 struct vertex_shader_consts
 {
-   struct vertex4f denorm;
+   struct vertex4f norm;
 };
 
 struct fragment_shader_consts
@@ -82,13 +82,18 @@ static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
 {
    struct ureg_program *shader;
+   struct ureg_src norm;
    struct ureg_src vpos, vtex[3], vmv[4];
+   struct ureg_dst temp;
    struct ureg_dst o_vpos, o_vtex[3], o_vmv[4];
    unsigned i, j, count;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return NULL;
+
+   norm = ureg_DECL_constant(shader, 0);
+   temp = ureg_DECL_temporary(shader);
 
    vpos = ureg_DECL_vs_input(shader, 0);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
@@ -113,16 +118,24 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    }
 
    /*
-    * o_vpos = vpos
-    * o_vtex[0..2] = vtex[0..2]
-    * o_vmv[0..count] = vpos + vmv[0..4] // Apply motion vector
+    * o_vpos = vpos * norm
+    * o_vtex[0..2] = vtex[0..2] * norm
+    * o_vmv[0..count] = o_vpos + vmv[0..4] * 0.5 // Apply motion vector
     */
-   ureg_MOV(shader, o_vpos, vpos);
-   for (i = 0; i < 3; ++i)
-      ureg_MOV(shader, o_vtex[i], vtex[i]);
-   for (i = 0; i < count; ++i)
-      ureg_ADD(shader, o_vmv[i], vpos, vmv[i]);
+   ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), vpos, norm);
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
+   for (i = 0; i < 3; ++i) {
+      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), vtex[i], norm);
+      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_ZW), vtex[i]);
+   }
+   for (i = 0; i < count; ++i) {
+      ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), vmv[i], 
+         ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
+      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(temp), norm, ureg_src(o_vpos));
+      ureg_MOV(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_ZW), vmv[i]);
+   }
 
+   ureg_release_temporary(shader, temp);
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, r->pipe);
@@ -842,8 +855,8 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
 
          vb = ref_vb[1] + pos * 2 * 24;
 
-         mo_vec[0].x = mb->pmv[0][1][0] * 0.5f * r->surface_tex_inv_size.x;
-         mo_vec[0].y = mb->pmv[0][1][1] * 0.5f * r->surface_tex_inv_size.y;
+         mo_vec[0].x = mb->pmv[0][1][0];
+         mo_vec[0].y = mb->pmv[0][1][1];
 
          if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
             for (i = 0; i < 24 * 2; i += 2) {
@@ -852,8 +865,8 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
             }
          }
          else {
-            mo_vec[1].x = mb->pmv[1][1][0] * 0.5f * r->surface_tex_inv_size.x;
-            mo_vec[1].y = mb->pmv[1][1][1] * 0.5f * r->surface_tex_inv_size.y;
+            mo_vec[1].x = mb->pmv[1][1][0];
+            mo_vec[1].y = mb->pmv[1][1][1];
 
             for (i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
@@ -875,21 +888,21 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
          vb = ref_vb[0] + pos * 2 * 24;
 
          if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
-             mo_vec[0].x = mb->pmv[0][1][0] * 0.5f * r->surface_tex_inv_size.x;
-             mo_vec[0].y = mb->pmv[0][1][1] * 0.5f * r->surface_tex_inv_size.y;
+             mo_vec[0].x = mb->pmv[0][1][0];
+             mo_vec[0].y = mb->pmv[0][1][1];
 
              if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
-                mo_vec[1].x = mb->pmv[1][1][0] * 0.5f * r->surface_tex_inv_size.x;
-                mo_vec[1].y = mb->pmv[1][1][1] * 0.5f * r->surface_tex_inv_size.y;
+                mo_vec[1].x = mb->pmv[1][1][0];
+                mo_vec[1].y = mb->pmv[1][1][1];
              }
          }
          else {
-            mo_vec[0].x = mb->pmv[0][0][0] * 0.5f * r->surface_tex_inv_size.x;
-            mo_vec[0].y = mb->pmv[0][0][1] * 0.5f * r->surface_tex_inv_size.y;
+            mo_vec[0].x = mb->pmv[0][0][0];
+            mo_vec[0].y = mb->pmv[0][0][1];
 
             if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
-               mo_vec[1].x = mb->pmv[1][0][0] * 0.5f * r->surface_tex_inv_size.x;
-               mo_vec[1].y = mb->pmv[1][0][1] * 0.5f * r->surface_tex_inv_size.y;
+               mo_vec[1].x = mb->pmv[1][0][0];
+               mo_vec[1].y = mb->pmv[1][0][1];
             }
          }
 
@@ -914,13 +927,13 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
       {
          const struct vertex2f unit =
          {
-            r->surface_tex_inv_size.x * MACROBLOCK_WIDTH,
-            r->surface_tex_inv_size.y * MACROBLOCK_HEIGHT
+            MACROBLOCK_WIDTH,
+            MACROBLOCK_HEIGHT
          };
          const struct vertex2f half =
          {
-            r->surface_tex_inv_size.x * (MACROBLOCK_WIDTH / 2),
-            r->surface_tex_inv_size.y * (MACROBLOCK_HEIGHT / 2)
+            (MACROBLOCK_WIDTH / 2),
+            (MACROBLOCK_HEIGHT / 2)
          };
          const struct vertex2f offsets[2][2] =
          {
@@ -1065,8 +1078,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       &buf_transfer
    );
 
-   vs_consts->denorm.x = r->surface->width;
-   vs_consts->denorm.y = r->surface->height;
+   vs_consts->norm.x = 1.0f / r->surface->width;
+   vs_consts->norm.y = 1.0f / r->surface->height;
 
    pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
 
@@ -1275,8 +1288,8 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
                   fill_frame_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
                   if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-                     r->zero_block[0].x = (mbpx + x * 8) * r->surface_tex_inv_size.x;
-                     r->zero_block[0].y = (mbpy + y * 8) * r->surface_tex_inv_size.y;
+                     r->zero_block[0].x = (mbpx + x * 8);
+                     r->zero_block[0].y = (mbpy + y * 8);
                   }
                }
             }
@@ -1307,8 +1320,8 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
              ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1])) {
             fill_frame_zero_block(texels, tex_pitch);
             if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-               r->zero_block[tb + 1].x = (mbpx << 1) * r->surface_tex_inv_size.x;
-               r->zero_block[tb + 1].y = (mbpy << 1) * r->surface_tex_inv_size.y;
+               r->zero_block[tb + 1].x = (mbpx << 1);
+               r->zero_block[tb + 1].y = (mbpy << 1);
             }
          }
       }
@@ -1469,8 +1482,6 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       pipe_surface_reference(&renderer->past, past);
       pipe_surface_reference(&renderer->future, future);
       renderer->fence = fence;
-      renderer->surface_tex_inv_size.x = 1.0f / surface->width;
-      renderer->surface_tex_inv_size.y = 1.0f / surface->height;
    }
 
    while (num_macroblocks) {

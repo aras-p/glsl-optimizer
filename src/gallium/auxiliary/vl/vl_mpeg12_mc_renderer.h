@@ -104,7 +104,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_mpeg12_macroblock *macroblock_buf;
    struct pipe_transfer *tex_transfer[3];
    short *texels[3];
-   struct vertex2f surface_tex_inv_size;
    struct vertex2f zero_block[3];
 
    struct keymap *texview_map;
