@@ -81,6 +81,7 @@ if env['x11']:
 
 if env['platform'] == 'windows':
     SConscript([
+        'targets/graw-gdi/SConscript',
         'targets/libgl-gdi/SConscript',
         #'egl-gdi/SConscript',
     ])
