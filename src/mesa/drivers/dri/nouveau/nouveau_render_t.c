@@ -173,6 +173,11 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 			case GL_UNSIGNED_BYTE:
 				max_out = MAX_OUT_I16;
 				break;
+
+			default:
+				assert(0);
+				max_out = 0;
+				break;
 			}
 		} else {
 			max_out = MAX_OUT_L;
