@@ -1,0 +1,41 @@
+#######################################################################
+# SConscript for graw-gdi
+
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#src/gallium/winsys/sw',
+])
+
+env.Prepend(LIBS = [
+    gallium,
+    'gdi32',
+    identity,
+    rbug,
+    trace,
+    'user32',
+    'ws2_32',
+])
+
+sources = [
+    'graw_gdi.c',
+    graw_util,
+]
+
+env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+env.Prepend(LIBS = [softpipe])
+
+graw = env.SharedLibrary(
+    target = 'graw',
+    source = sources,
+    LIBS = ws_gdi + env['LIBS'],
+)
+
+if env['platform'] == 'windows':
+    graw = env.FindIxes(graw, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    graw = env.FindIxes(graw, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+
+env.Alias('graw-gdi', graw)
