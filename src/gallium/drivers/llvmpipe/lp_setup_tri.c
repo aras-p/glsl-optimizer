@@ -815,6 +815,16 @@ static void triangle_both( struct lp_setup_context *setup,
 {
    float area = calc_area(v0, v1, v2);
 
+   if (0) {
+      assert(!util_is_inf_or_nan(v0[0][0]));
+      assert(!util_is_inf_or_nan(v0[0][1]));
+      assert(!util_is_inf_or_nan(v1[0][0]));
+      assert(!util_is_inf_or_nan(v1[0][1]));
+      assert(!util_is_inf_or_nan(v2[0][0]));
+      assert(!util_is_inf_or_nan(v2[0][1]));
+      assert(!util_is_inf_or_nan(area));
+   }
+
    if (area > 0.0f) 
       retry_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
    else if (area < 0.0f)
