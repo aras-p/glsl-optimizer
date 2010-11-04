@@ -489,6 +489,10 @@ build_scatter(struct lp_build_tgsi_soa_context *bld,
       LLVMValueRef scalar_ptr = LLVMBuildGEP(builder, base_ptr, &index, 1, "scatter_ptr");
       LLVMValueRef val = LLVMBuildExtractElement(builder, values, ii, "scatter_val");
 
+      if (0)
+         lp_build_printf(builder, "scatter %d: val %f at %d %p\n",
+                         ii, val, index, scalar_ptr);
+
       LLVMBuildStore(builder, val, scalar_ptr);
    }
 }
@@ -813,21 +817,33 @@ emit_store(
 
    case TGSI_FILE_TEMPORARY:
       if (reg->Register.Indirect) {
+         LLVMBuilderRef builder = bld->base.builder;
          LLVMValueRef chan_vec =
             lp_build_const_int_vec(uint_bld->type, chan_index);
          LLVMValueRef length_vec =
             lp_build_const_int_vec(uint_bld->type, bld->base.type.length);
          LLVMValueRef index_vec;  /* indexes into the temp registers */
          LLVMValueRef temps_array;
+         LLVMValueRef pixel_offsets;
          LLVMTypeRef float_ptr_type;
+         int i;
 
-         /* index_vec = (indirect_index * 4 + chan_index) * length */
+         /* build pixel offset vector: {0, 1, 2, 3, ...} */
+         pixel_offsets = uint_bld->undef; 
+         for (i = 0; i < bld->base.type.length; i++) {
+            LLVMValueRef ii = lp_build_const_int32(i);
+            pixel_offsets = LLVMBuildInsertElement(builder, pixel_offsets,
+                                                   ii, ii, "");
+         }
+
+         /* index_vec = (indirect_index * 4 + chan_index) * length + offsets */
          index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
          index_vec = lp_build_add(uint_bld, index_vec, chan_vec);
          index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+         index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
 
          float_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
-         temps_array = LLVMBuildBitCast(bld->base.builder, bld->temps_array,
+         temps_array = LLVMBuildBitCast(builder, bld->temps_array,
                                         float_ptr_type, "");
 
          /* Scatter store values into temp registers */
