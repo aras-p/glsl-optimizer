@@ -477,8 +477,6 @@ enum tgsi_exec_datatype {
 #define TEMP_OUTPUT_C      TGSI_EXEC_TEMP_OUTPUT_C
 #define TEMP_PRIMITIVE_I   TGSI_EXEC_TEMP_PRIMITIVE_I
 #define TEMP_PRIMITIVE_C   TGSI_EXEC_TEMP_PRIMITIVE_C
-#define TEMP_CC_I          TGSI_EXEC_TEMP_CC_I
-#define TEMP_CC_C          TGSI_EXEC_TEMP_CC_C
 
 
 /** The execution mask depends on the conditional mask and the loop mask */
@@ -3717,14 +3715,6 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    if( mach->Processor == TGSI_PROCESSOR_GEOMETRY ) {
       mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0] = 0;
       mach->Primitives[0] = 0;
-   }
-
-   for (i = 0; i < QUAD_SIZE; i++) {
-      mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C].u[i] =
-         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_X_SHIFT) |
-         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Y_SHIFT) |
-         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Z_SHIFT) |
-         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_W_SHIFT);
    }
 
    /* execute declarations (interpolants) */
