@@ -30,10 +30,12 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "os/os_time.h"
+#include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_flow.h"
+#include "gallivm/lp_bld_type.h"
 #include <llvm-c/Analysis.h>	/* for LLVMVerifyFunction */
 
 #include "lp_perf.h"
@@ -74,15 +76,7 @@ struct lp_setup_args
    LLVMValueRef dy20_ooa;
    LLVMValueRef dy01_ooa;
    LLVMValueRef dx20_ooa;
-   LLVMValueRef dx01_ooa;
-
-   /* For twoside calcs 
-    */
-   LLVMValueRef det;
-   LLVMValueRef sign;
-   LLVMValueRef bcolor_slot;
-   LLVMValueRef color_slot;
-   
+   LLVMValueRef dx01_ooa;   
 };
 
 static LLVMTypeRef type4f(void)
@@ -204,7 +198,34 @@ vert_attrib(LLVMBuilderRef b,
    return LLVMBuildLoad(b, LLVMBuildGEP(b, vert, idx, 2, ""), name);
 }
 
-
+static LLVMValueRef
+vert_clamp(LLVMBuilderRef b,
+           LLVMValueRef x,
+           LLVMValueRef min,
+           LLVMValueRef max,
+           LLVMValueRef clamp_ptr)
+{
+   struct lp_build_if_state if_state;
+   LLVMValueRef min_result = LLVMBuildFCmp(b, LLVMRealUGT, min, x, "");
+   LLVMValueRef max_result = LLVMBuildFCmp(b, LLVMRealUGT, x, max, "");
+   
+   lp_build_if(&if_state, b, min_result);
+   {
+      LLVMBuildStore(b, min, clamp_ptr);
+   }   
+   lp_build_endif(&if_state);
+   lp_build_if(&if_state, b, max_result);
+   {
+      LLVMBuildStore(b, max, clamp_ptr);
+   }      
+   lp_build_else(&if_state);
+   {
+      LLVMBuildStore(b, x, clamp_ptr);
+   }
+   lp_build_endif(&if_state);
+   
+   return LLVMBuildLoad(b, clamp_ptr,"");
+}
 
 static void 
 emit_coef4( LLVMBuilderRef b,
@@ -482,15 +503,6 @@ init_args(LLVMBuilderRef b,
 }
 
 static void
-set_args_attr(struct llvmpipe_context *lp,
-           struct lp_setup_args *args)
-{
-   args->color_slot = LLVMConstInt(LLVMInt32Type(), lp->color_slot, 0);
-   args->bcolor_slot = LLVMConstInt(LLVMInt32Type(), lp->bcolor_slot, 0);
-   args->sign =  LLVMConstReal(LLVMFloatType(), (lp->rasterizer->front_ccw ? -1.0f : 1.0f));
-}
-
-static void
 lp_twoside(LLVMBuilderRef b, 
            struct lp_setup_args *args,
            const struct lp_setup_variant_key *key)
@@ -499,32 +511,13 @@ lp_twoside(LLVMBuilderRef b,
  
    LLVMValueRef a0_old, a1_old, a2_old;
    LLVMValueRef a0_new, a1_new, a2_new;
-
-   LLVMValueRef idx1 = args->color_slot;
-   LLVMValueRef idx2 = args->bcolor_slot;
+   
+   LLVMValueRef idx1 = LLVMConstInt(LLVMInt32Type(), key->color_slot, 0);
+   LLVMValueRef idx2 = LLVMConstInt(LLVMInt32Type(), key->bcolor_slot, 0);
 
    LLVMValueRef facing = args->facing;
-   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for loop condition */
+   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for if condition */
    
-#if 0 
-/*Probably can delete this, just tried to follow draw_pipe_twoside way of 
-  calculating det*/
-   /* edge vectors: e = v0 - v2, f = v1 - v2 */
-   LLVMValueRef e = LLVMBuildFSub(b, args->v0, args->v2, "e");
-   LLVMValueRef f = LLVMBuildFSub(b, args->v1, args->v2, "f");
-   LLVMValueRef dx02 = vert_attrib(b, e, 0, 0, "dx02");
-   LLVMValueRef dy02 = vert_attrib(b, e, 0, 1, "dy02");
-   LLVMValueRef dx12 = vert_attrib(b, f, 0, 0, "dx12");
-   LLVMValueRef dy12 = vert_attrib(b, f, 0, 1, "dy12");
- 
-   /* det = cross(e,f).z */
-   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
-   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
-   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
-   args->det = det;
-   LLVMValueRef result = LLVMBuildFMul(b, det, args->sign, "dy02_dx12");
-#endif
- 
    lp_build_if(&if_state, b, front_facing);
    {
       /* swap the front and back attrib values */
@@ -542,6 +535,97 @@ lp_twoside(LLVMBuilderRef b,
    }
    lp_build_endif(&if_state);
    
+}
+
+static void
+lp_do_offset_tri(LLVMBuilderRef b, 
+                 struct lp_setup_args *args,
+                 const struct lp_setup_variant_key *key)
+{
+   struct lp_build_if_state if_state;
+   struct lp_build_context bld;
+   LLVMValueRef zoffset, mult;
+   LLVMValueRef z0_new, z1_new, z2_new;
+   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy, max;
+
+   LLVMValueRef idx[2];
+   LLVMValueRef one  = LLVMConstReal(LLVMFloatType(), 1.0);
+   LLVMValueRef zero  = LLVMConstReal(LLVMFloatType(), 0.0);
+
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
+   LLVMValueRef v0_x = vert_attrib(b, args->v0, 0, 0, "v0_x");
+   LLVMValueRef v1_x = vert_attrib(b, args->v1, 0, 0, "v1_x");
+   LLVMValueRef v2_x = vert_attrib(b, args->v2, 0, 0, "v2_x");
+   LLVMValueRef v0_y = vert_attrib(b, args->v0, 0, 1, "v0_y");
+   LLVMValueRef v1_y = vert_attrib(b, args->v1, 0, 1, "v1_y");
+   LLVMValueRef v2_y = vert_attrib(b, args->v2, 0, 1, "v2_y");
+   LLVMValueRef v0_z = vert_attrib(b, args->v0, 0, 2, "v0_z");
+   LLVMValueRef v1_z = vert_attrib(b, args->v1, 0, 2, "v1_z");
+   LLVMValueRef v2_z = vert_attrib(b, args->v2, 0, 2, "v2_z");
+ 
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
+   LLVMValueRef dx02 = LLVMBuildFSub(b, v0_x, v2_x, "dx02");
+   LLVMValueRef dy02 = LLVMBuildFSub(b, v0_y, v2_y, "dy02");
+   LLVMValueRef dz02 = LLVMBuildFSub(b, v0_z, v2_z, "dz02");
+   LLVMValueRef dx12 = LLVMBuildFSub(b, v1_x, v2_x, "dx12"); 
+   LLVMValueRef dy12 = LLVMBuildFSub(b, v1_y, v2_y, "dy12");
+   LLVMValueRef dz12 = LLVMBuildFSub(b, v1_z, v2_z, "dz12");
+ 
+   /* det = cross(e,f).z */
+   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
+   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
+   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
+   LLVMValueRef inv_det = LLVMBuildFDiv(b, one, det, "inv_det"); 
+   
+   /* (res1,res2) = cross(e,f).xy */
+   LLVMValueRef dy02_dz12    = LLVMBuildFMul(b, dy02, dz12, "dy02_dz12");
+   LLVMValueRef dz02_dy12    = LLVMBuildFMul(b, dz02, dy12, "dz02_dy12");
+   LLVMValueRef dz02_dx12    = LLVMBuildFMul(b, dz02, dx12, "dz02_dx12");
+   LLVMValueRef dx02_dz12    = LLVMBuildFMul(b, dx02, dz12, "dx02_dz12");
+   LLVMValueRef res1  = LLVMBuildFSub(b, dy02_dz12, dz02_dy12, "res1");
+   LLVMValueRef res2  = LLVMBuildFSub(b, dz02_dx12, dx02_dz12, "res2");
+
+   /* for the if-else functions phi's */
+   LLVMValueRef zoffset_ptr = lp_build_alloca(b, LLVMFloatType(), "");
+   LLVMValueRef clamp_ptr = lp_build_alloca(b, LLVMFloatType(), "");
+ 
+   /* dzdx = fabsf(res1 * inv_det), dydx = fabsf(res2 * inv_det)*/
+   lp_build_context_init(&bld, b, lp_type_float(32));
+   dzdx0 = LLVMBuildFMul(b, res1, inv_det, "dzdx");
+   dzdx  = lp_build_abs(&bld, dzdx0);
+   dzdy0 = LLVMBuildFMul(b, res2, inv_det, "dzdy");
+   dzdy  = lp_build_abs(&bld, dzdy0);
+
+   /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
+   max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
+   lp_build_if(&if_state, b, max);
+   {
+      mult = LLVMBuildFMul(b, dzdx, LLVMConstReal(LLVMFloatType(), key->scale), "");
+      zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");
+      LLVMBuildStore(b, zoffset, zoffset_ptr);
+   }   
+   lp_build_else(&if_state);
+   {
+      mult = LLVMBuildFMul(b, dzdy, LLVMConstReal(LLVMFloatType(), key->scale), "");
+      zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");     
+      LLVMBuildStore(b, zoffset, zoffset_ptr);
+   }
+   lp_build_endif(&if_state);
+
+   zoffset = LLVMBuildLoad(b, zoffset_ptr,"");
+
+   /* clamp and do offset */
+   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one, clamp_ptr);
+   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one, clamp_ptr);
+   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one, clamp_ptr);
+   
+   /* store back new offsetted z values */
+   idx[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   idx[1] = LLVMConstInt(LLVMInt32Type(), 2, 0);
+   LLVMBuildStore(b, z0_new, LLVMBuildGEP(b, args->v0, idx, 2, ""));
+   LLVMBuildStore(b, z1_new, LLVMBuildGEP(b, args->v1, idx, 2, ""));
+   LLVMBuildStore(b, z2_new, LLVMBuildGEP(b, args->v2, idx, 2, ""));
+                                          
 }
 
 
@@ -630,8 +714,10 @@ generate_setup_variant(struct llvmpipe_screen *screen,
    set_noalias(builder, variant->function, arg_types, Elements(arg_types));
    init_args(builder, &args, variant);
    if (variant->key.twoside){
-      set_args_attr(lp, &args);
       lp_twoside(builder, &args, &variant->key);
+   }
+   if (variant->key.scale){
+      lp_do_offset_tri(builder, &args, &variant->key);
    }
    emit_tri_coef(builder, &variant->key, &args);
 
@@ -685,9 +771,12 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
-		      inputs[key->num_inputs]);
+		      inputs[key->num_inputs]);   
+   key->color_slot = lp->color_slot;
+   key->bcolor_slot = lp->bcolor_slot;
+   key->units = (float) (lp->rasterizer->offset_units * lp->mrd);
+   key->scale = lp->rasterizer->offset_scale;
    key->pad = 0;
-
    memcpy(key->inputs, fs->inputs, key->num_inputs * sizeof key->inputs[0]);
    for (i = 0; i < key->num_inputs; i++) {
       if (key->inputs[i].interp == LP_INTERP_COLOR) {

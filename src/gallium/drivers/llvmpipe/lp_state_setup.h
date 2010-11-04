@@ -19,8 +19,12 @@ struct lp_setup_variant_key {
    unsigned flatshade_first:1;
    unsigned pixel_center_half:1;
    unsigned twoside:1;
-   unsigned pad:6;
+   unsigned color_slot:8;
+   unsigned bcolor_slot:8;
    unsigned size:16;
+   unsigned pad:21;
+   float units;
+   float scale;      
    struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 };
 

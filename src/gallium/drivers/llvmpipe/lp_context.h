@@ -113,6 +113,9 @@ struct llvmpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
+   /**< minimum resolvable depth value, for polygon offset */   
+   double mrd;
+   
    /** The tiling engine */
    struct lp_setup_context *setup;
    struct lp_setup_variant setup_variant;
