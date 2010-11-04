@@ -177,17 +177,6 @@ tgsi_build_declaration_range(
 }
 
 static struct tgsi_declaration_dimension
-tgsi_default_declaration_dimension(void)
-{
-   struct tgsi_declaration_dimension dd;
-
-   dd.Index2D = 0;
-   dd.Padding = 0;
-
-   return dd;
-}
-
-static struct tgsi_declaration_dimension
 tgsi_build_declaration_dimension(unsigned index_2d,
                                  struct tgsi_declaration *declaration,
                                  struct tgsi_header *header)
