@@ -114,6 +114,9 @@ def pkg_config_modules(env, name, modules):
     if not env.Detect('pkg-config'):
         return
 
+    if subprocess.call(["pkg-config", "--exists", ' '.join(modules)]) != 0:
+        return
+
     # Put -I and -L flags directly into the environment, as these don't affect
     # the compilation of targets that do not use them
     try:
