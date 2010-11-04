@@ -188,6 +188,22 @@ lp_build_int32_vec4_type(void)
 
 
 /**
+ * Create element of vector type
+ */
+struct lp_type
+lp_elem_type(struct lp_type type)
+{
+   struct lp_type res_type;
+
+   assert(type.length > 1);
+   res_type = type;
+   res_type.length = 1;
+
+   return res_type;
+}
+
+
+/**
  * Create unsigned integer type variation of given type.
  */
 struct lp_type
