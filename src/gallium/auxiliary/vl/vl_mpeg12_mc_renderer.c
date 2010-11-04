@@ -82,7 +82,7 @@ static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
 {
    struct ureg_program *shader;
-   struct ureg_src norm;
+   struct ureg_src norm, mbs;
    struct ureg_src vpos, vtex[3], vmv[4];
    struct ureg_dst temp;
    struct ureg_dst o_vpos, o_vtex[3], o_vmv[4];
@@ -93,6 +93,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
       return NULL;
 
    norm = ureg_DECL_constant(shader, 0);
+   mbs = ureg_imm2f(shader, MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT);
    temp = ureg_DECL_temporary(shader);
 
    vpos = ureg_DECL_vs_input(shader, 0);
@@ -118,14 +119,16 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    }
 
    /*
-    * o_vpos = vpos * norm
-    * o_vtex[0..2] = vtex[0..2] * norm
+    * o_vpos = vpos * norm * mbs
+    * o_vtex[0..2] = vtex[0..2] * norm * mbs
     * o_vmv[0..count] = o_vpos + vmv[0..4] * 0.5 // Apply motion vector
     */
-   ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), vpos, norm);
+   ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), vpos, mbs);
+   ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(temp), norm);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
    for (i = 0; i < 3; ++i) {
-      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), vtex[i], norm);
+      ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), vtex[i], mbs);
+      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), ureg_src(temp), norm);
       ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_ZW), vtex[i]);
    }
    for (i = 0; i < count; ++i) {
@@ -727,7 +730,7 @@ get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
 
 static void
 gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
-                const struct vertex2f *unit, const struct vertex2f *half, const struct vertex2f *offset,
+                const struct vertex2f *offset,
                 unsigned luma_mask, unsigned cb_mask, unsigned cr_mask,
                 bool use_zeroblocks, struct vertex2f *zero_blocks)
 {
@@ -735,36 +738,41 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
    unsigned mbx = mb->mbx;
    unsigned mby = mb->mby;
 
+   const struct vertex2f half =
+   {
+      0.5f,
+      0.5f
+   };
    struct vertex2f v;
 
    assert(vb);
-   assert(unit && half && offset);
+   assert(offset);
    assert(zero_blocks || !use_zeroblocks);
 
    /* Generate vertices for two triangles covering a block */
-   v.x = mbx * unit->x + offset->x;
-   v.y = mby * unit->y + offset->y;
+   v.x = mbx + offset->x;
+   v.y = mby + offset->y;
 
    vb[0].pos.x = v.x;
    vb[0].pos.y = v.y;
    vb[1].pos.x = v.x;
-   vb[1].pos.y = v.y + half->y;
-   vb[2].pos.x = v.x + half->x;
+   vb[1].pos.y = v.y + half.y;
+   vb[2].pos.x = v.x + half.x;
    vb[2].pos.y = v.y;
-   vb[3].pos.x = v.x + half->x;
+   vb[3].pos.x = v.x + half.x;
    vb[3].pos.y = v.y;
    vb[4].pos.x = v.x;
-   vb[4].pos.y = v.y + half->y;
-   vb[5].pos.x = v.x + half->x;
-   vb[5].pos.y = v.y + half->y;
+   vb[4].pos.y = v.y + half.y;
+   vb[5].pos.x = v.x + half.x;
+   vb[5].pos.y = v.y + half.y;
 
    /* Generate texcoords for the triangles, either pointing to the correct area on the luma/chroma texture
       or if zero blocks are being used, to the zero block if the appropriate CBP bits aren't set (i.e. no data
       for this channel is defined for this block) */
 
    if (!use_zeroblocks || cbp & luma_mask || mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD) {
-      v.x = mbx * unit->x + offset->x;
-      v.y = mby * unit->y + offset->y;
+      v.x = mbx + offset->x;
+      v.y = mby + offset->y;
    }
    else {
       v.x = zero_blocks[0].x;
@@ -774,19 +782,19 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
    vb[0].luma_tc.x = v.x;
    vb[0].luma_tc.y = v.y;
    vb[1].luma_tc.x = v.x;
-   vb[1].luma_tc.y = v.y + half->y;
-   vb[2].luma_tc.x = v.x + half->x;
+   vb[1].luma_tc.y = v.y + half.y;
+   vb[2].luma_tc.x = v.x + half.x;
    vb[2].luma_tc.y = v.y;
-   vb[3].luma_tc.x = v.x + half->x;
+   vb[3].luma_tc.x = v.x + half.x;
    vb[3].luma_tc.y = v.y;
    vb[4].luma_tc.x = v.x;
-   vb[4].luma_tc.y = v.y + half->y;
-   vb[5].luma_tc.x = v.x + half->x;
-   vb[5].luma_tc.y = v.y + half->y;
+   vb[4].luma_tc.y = v.y + half.y;
+   vb[5].luma_tc.x = v.x + half.x;
+   vb[5].luma_tc.y = v.y + half.y;
 
    if (!use_zeroblocks || cbp & cb_mask) {
-      v.x = mbx * unit->x + offset->x;
-      v.y = mby * unit->y + offset->y;
+      v.x = mbx + offset->x;
+      v.y = mby + offset->y;
    }
    else {
       v.x = zero_blocks[1].x;
@@ -796,19 +804,19 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
    vb[0].cb_tc.x = v.x;
    vb[0].cb_tc.y = v.y;
    vb[1].cb_tc.x = v.x;
-   vb[1].cb_tc.y = v.y + half->y;
-   vb[2].cb_tc.x = v.x + half->x;
+   vb[1].cb_tc.y = v.y + half.y;
+   vb[2].cb_tc.x = v.x + half.x;
    vb[2].cb_tc.y = v.y;
-   vb[3].cb_tc.x = v.x + half->x;
+   vb[3].cb_tc.x = v.x + half.x;
    vb[3].cb_tc.y = v.y;
    vb[4].cb_tc.x = v.x;
-   vb[4].cb_tc.y = v.y + half->y;
-   vb[5].cb_tc.x = v.x + half->x;
-   vb[5].cb_tc.y = v.y + half->y;
+   vb[4].cb_tc.y = v.y + half.y;
+   vb[5].cb_tc.x = v.x + half.x;
+   vb[5].cb_tc.y = v.y + half.y;
 
    if (!use_zeroblocks || cbp & cr_mask) {
-      v.x = mbx * unit->x + offset->x;
-      v.y = mby * unit->y + offset->y;
+      v.x = mbx + offset->x;
+      v.y = mby + offset->y;
    }
    else {
       v.x = zero_blocks[2].x;
@@ -818,15 +826,15 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
    vb[0].cr_tc.x = v.x;
    vb[0].cr_tc.y = v.y;
    vb[1].cr_tc.x = v.x;
-   vb[1].cr_tc.y = v.y + half->y;
-   vb[2].cr_tc.x = v.x + half->x;
+   vb[1].cr_tc.y = v.y + half.y;
+   vb[2].cr_tc.x = v.x + half.x;
    vb[2].cr_tc.y = v.y;
-   vb[3].cr_tc.x = v.x + half->x;
+   vb[3].cr_tc.x = v.x + half.x;
    vb[3].cr_tc.y = v.y;
    vb[4].cr_tc.x = v.x;
-   vb[4].cr_tc.y = v.y + half->y;
-   vb[5].cr_tc.x = v.x + half->x;
-   vb[5].cr_tc.y = v.y + half->y;
+   vb[4].cr_tc.y = v.y + half.y;
+   vb[5].cr_tc.x = v.x + half.x;
+   vb[5].cr_tc.y = v.y + half.y;
 }
 
 static void
@@ -925,43 +933,29 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
       }
       case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
       {
-         const struct vertex2f unit =
-         {
-            MACROBLOCK_WIDTH,
-            MACROBLOCK_HEIGHT
-         };
-         const struct vertex2f half =
-         {
-            (MACROBLOCK_WIDTH / 2),
-            (MACROBLOCK_HEIGHT / 2)
-         };
          const struct vertex2f offsets[2][2] =
          {
             {
-               {0, 0}, {0, half.y}
+               {0, 0}, {0, 0.5f}
             },
             {
-               {half.x, 0}, {half.x, half.y}
+               {0.5f, 0}, {0.5f, 0.5f}
             }
          };
          const bool use_zb = r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE;
 
          struct vert_stream_0 *vb = ycbcr_vb + pos * 24;
 
-         gen_block_verts(vb, mb,
-                         &unit, &half, &offsets[0][0],
+         gen_block_verts(vb, mb, &offsets[0][0],
                          32, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 6, mb,
-                         &unit, &half, &offsets[1][0],
+         gen_block_verts(vb + 6, mb, &offsets[1][0],
                          16, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 12, mb,
-                         &unit, &half, &offsets[0][1],
+         gen_block_verts(vb + 12, mb, &offsets[0][1],
                          8, 2, 1, use_zb, r->zero_block);
 
-         gen_block_verts(vb + 18, mb,
-                         &unit, &half, &offsets[1][1],
+         gen_block_verts(vb + 18, mb, &offsets[1][1],
                          4, 2, 1, use_zb, r->zero_block);
 
          break;
@@ -1288,8 +1282,8 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
                   fill_frame_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
                   if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-                     r->zero_block[0].x = (mbpx + x * 8);
-                     r->zero_block[0].y = (mbpy + y * 8);
+                     r->zero_block[0].x = (mbx + x * 0.5f);
+                     r->zero_block[0].y = (mby + y * 0.5f);
                   }
                }
             }
@@ -1320,8 +1314,8 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
              ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1])) {
             fill_frame_zero_block(texels, tex_pitch);
             if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-               r->zero_block[tb + 1].x = (mbpx << 1);
-               r->zero_block[tb + 1].y = (mbpy << 1);
+               r->zero_block[tb + 1].x = mbx;
+               r->zero_block[tb + 1].y = mby;
             }
          }
       }
