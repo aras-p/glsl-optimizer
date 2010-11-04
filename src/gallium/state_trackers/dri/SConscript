@@ -1,6 +1,6 @@
 Import('*')
 
 SConscript([
-	'sw/SConscript',
-	'drm/SConscript',
+    'sw/SConscript',
+    'drm/SConscript',
 ])

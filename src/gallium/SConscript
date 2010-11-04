@@ -50,14 +50,14 @@ SConscript('winsys/sw/null/SConscript')
 
 SConscript('state_trackers/python/SConscript')
 if env['platform'] != 'embedded':
-	SConscript('state_trackers/glx/xlib/SConscript')
-	SConscript('state_trackers/dri/SConscript')
-	SConscript('state_trackers/xorg/SConscript')
-	SConscript('state_trackers/egl/SConscript')
-	SConscript('state_trackers/vega/SConscript')
+    SConscript('state_trackers/glx/xlib/SConscript')
+    SConscript('state_trackers/dri/SConscript')
+    SConscript('state_trackers/xorg/SConscript')
+    SConscript('state_trackers/egl/SConscript')
+    SConscript('state_trackers/vega/SConscript')
 
 if env['platform'] == 'windows':
-	SConscript('state_trackers/wgl/SConscript')
+    SConscript('state_trackers/wgl/SConscript')
 
 #
 # Winsys
@@ -89,13 +89,13 @@ if env['platform'] == 'windows':
 if env['dri']:
     SConscript([
         'targets/SConscript.dri',
-	    'targets/dri-i915/SConscript',
-	    'targets/dri-i965/SConscript',
-	    #'targets/dri-nouveau/SConscript',
-	    'targets/dri-r300/SConscript',
+        'targets/dri-i915/SConscript',
+        'targets/dri-i965/SConscript',
+        #'targets/dri-nouveau/SConscript',
+        'targets/dri-r300/SConscript',
         'targets/dri-r600/SConscript',
-	    'targets/dri-swrast/SConscript',
-	    'targets/dri-vmwgfx/SConscript',
+        'targets/dri-swrast/SConscript',
+        'targets/dri-vmwgfx/SConscript',
     ])
 
 if env['xorg']:
@@ -113,6 +113,5 @@ if env['xorg']:
 #
 
 if env['platform'] != 'embedded':
-	SConscript('tests/unit/SConscript')
-	SConscript('tests/graw/SConscript')
-
+    SConscript('tests/unit/SConscript')
+    SConscript('tests/graw/SConscript')
