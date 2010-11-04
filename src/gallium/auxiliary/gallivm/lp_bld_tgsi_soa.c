@@ -58,6 +58,7 @@
 #include "lp_bld_tgsi.h"
 #include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
+#include "lp_bld_printf.h"
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -1083,6 +1084,52 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
       lp_build_mask_check(bld->mask);
 }
 
+
+/**
+ * Emit code which will dump the value of all the temporary registers
+ * to stdout.
+ */
+static void
+emit_dump_temps(struct lp_build_tgsi_soa_context *bld)
+{
+   LLVMBuilderRef builder = bld->base.builder;
+   LLVMValueRef temp_ptr;
+   LLVMValueRef i0 = lp_build_const_int32(0);
+   LLVMValueRef i1 = lp_build_const_int32(1);
+   LLVMValueRef i2 = lp_build_const_int32(2);
+   LLVMValueRef i3 = lp_build_const_int32(3);
+   int index;
+   int n = bld->info->file_max[TGSI_FILE_TEMPORARY];
+
+   for (index = 0; index < n; index++) {
+      LLVMValueRef idx = lp_build_const_int32(index);
+      LLVMValueRef v[4][4], res;
+      int chan;
+
+      lp_build_printf(builder, "TEMP[%d]:\n", idx);
+
+      for (chan = 0; chan < 4; chan++) {
+         temp_ptr = get_temp_ptr(bld, index, chan);
+         res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
+         v[chan][0] = LLVMBuildExtractElement(builder, res, i0, "");
+         v[chan][1] = LLVMBuildExtractElement(builder, res, i1, "");
+         v[chan][2] = LLVMBuildExtractElement(builder, res, i2, "");
+         v[chan][3] = LLVMBuildExtractElement(builder, res, i3, "");
+      }
+
+      lp_build_printf(builder, "  X: %f %f %f %f\n",
+                      v[0][0], v[0][1], v[0][2], v[0][3]);
+      lp_build_printf(builder, "  Y: %f %f %f %f\n",
+                      v[1][0], v[1][1], v[1][2], v[1][3]);
+      lp_build_printf(builder, "  Z: %f %f %f %f\n",
+                      v[2][0], v[2][1], v[2][2], v[2][3]);
+      lp_build_printf(builder, "  W: %f %f %f %f\n",
+                      v[3][0], v[3][1], v[3][2], v[3][3]);
+   }
+}
+
+
+
 static void
 emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
@@ -1783,6 +1830,10 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_END:
+      if (0) {
+         /* for debugging */
+         emit_dump_temps(bld);
+      }
       *pc = -1;
       break;
 
