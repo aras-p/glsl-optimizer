@@ -78,43 +78,57 @@ enum MACROBLOCK_TYPE
    NUM_MACROBLOCK_TYPES
 };
 
-static bool
-create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
+static void *
+create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
 {
    struct ureg_program *shader;
-   struct ureg_src vpos, vtex[3];
-   struct ureg_dst o_vpos, o_vtex[3];
-   unsigned i;
+   struct ureg_src vpos, vtex[3], vmv[4];
+   struct ureg_dst o_vpos, o_vtex[3], o_vmv[4];
+   unsigned i, j, count;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
-      return false;
+      return NULL;
 
    vpos = ureg_DECL_vs_input(shader, 0);
-   for (i = 0; i < 3; ++i)
-      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   for (i = 0; i < 3; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
+
+   for (i = 0; i < 3; ++i) {
+      vtex[i] = ureg_DECL_vs_input(shader, 1 + i);
+      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 1 + i);
+   }
+   
+   count=0;
+   for (i = 0; i < ref_frames; ++i) {
+      for (j = 0; j < 2; ++j) {        
+        if(j < mv_per_frame) {
+           vmv[count] = ureg_DECL_vs_input(shader, 4 + i * 2 + j);
+           o_vmv[count] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 4 + count);
+           count++;
+        }
+        /* workaround for r600g */
+        else if(ref_frames == 2)
+           ureg_DECL_vs_input(shader, 4 + i * 2 + j);
+      }
+   }
 
    /*
     * o_vpos = vpos
     * o_vtex[0..2] = vtex[0..2]
+    * o_vmv[0..count] = vpos + vmv[0..4] // Apply motion vector
     */
    ureg_MOV(shader, o_vpos, vpos);
    for (i = 0; i < 3; ++i)
       ureg_MOV(shader, o_vtex[i], vtex[i]);
+   for (i = 0; i < count; ++i)
+      ureg_ADD(shader, o_vmv[i], vpos, vmv[i]);
 
    ureg_END(shader);
 
-   r->i_vs = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->i_vs)
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static bool
+static void *
 create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
@@ -126,7 +140,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
-      return false;
+      return NULL;
 
    for (i = 0; i < 3; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
@@ -153,92 +167,10 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_release_temporary(shader, temp);
    ureg_END(shader);
 
-   r->i_fs = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->i_fs)
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static bool
-create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src vpos, vtex[4];
-   struct ureg_dst o_vpos, o_vtex[4];
-   unsigned i;
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
-   if (!shader)
-      return false;
-
-   vpos = ureg_DECL_vs_input(shader, 0);
-   for (i = 0; i < 4; ++i)
-      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   for (i = 0; i < 4; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
-
-   /*
-    * o_vpos = vpos
-    * o_vtex[0..2] = vtex[0..2]
-    * o_vtex[3] = vpos + vtex[3] // Apply motion vector
-    */
-   ureg_MOV(shader, o_vpos, vpos);
-   for (i = 0; i < 3; ++i)
-      ureg_MOV(shader, o_vtex[i], vtex[i]);
-   ureg_ADD(shader, o_vtex[3], vpos, vtex[3]);
-
-   ureg_END(shader);
-
-   r->p_vs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->p_vs[0])
-      return false;
-
-   return true;
-}
-
-static bool
-create_field_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src vpos, vtex[5];
-   struct ureg_dst o_vpos, o_vtex[5];
-   unsigned i;
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
-   if (!shader)
-      return false;
-
-   vpos = ureg_DECL_vs_input(shader, 0);
-   for (i = 0; i < 5; ++i)
-      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   for (i = 0; i < 5; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
-
-   /*
-    * o_vpos = vpos
-    * o_vtex[0..2] = vtex[0..2]
-    * o_vtex[3] = vpos + vtex[3] // Apply motion vector
-    * o_vtex[4] = vpos + vtex[4] // Apply motion vector
-    */
-   ureg_MOV(shader, o_vpos, vpos);
-   for (i = 0; i < 3; ++i)
-      ureg_MOV(shader, o_vtex[i], vtex[i]);
-   ureg_ADD(shader, o_vtex[3], vpos, vtex[3]);
-   ureg_ADD(shader, o_vtex[4], vpos, vtex[4]);
-
-   ureg_END(shader);
-
-   r->p_vs[1] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->p_vs[1])
-      return false;
-
-   return true;
-}
-
-static bool
+static void *
 create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
@@ -250,7 +182,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
-      return false;
+      return NULL;
 
    for (i = 0; i < 4; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
@@ -279,14 +211,10 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_release_temporary(shader, ref);
    ureg_END(shader);
 
-   r->p_fs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->p_fs[0])
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static bool
+static void *
 create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
@@ -298,7 +226,7 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
-      return false;
+      return NULL;
 
    for (i = 0; i < 5; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
@@ -331,95 +259,10 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_release_temporary(shader, ref);
    ureg_END(shader);
 
-   r->p_fs[1] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->p_fs[1])
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static bool
-create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src vpos, vtex[5];
-   struct ureg_dst o_vpos, o_vtex[5];
-   unsigned i;
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
-   if (!shader)
-      return false;
-
-   vpos = ureg_DECL_vs_input(shader, 0);
-   for (i = 0; i < 4; ++i)
-      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
-   /* Skip input 5 */
-   ureg_DECL_vs_input(shader, 5);
-   vtex[4] = ureg_DECL_vs_input(shader, 6);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   for (i = 0; i < 5; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
-
-   /*
-    * o_vpos = vpos
-    * o_vtex[0..2] = vtex[0..2]
-    * o_vtex[3..4] = vpos + vtex[3..4] // Apply motion vector
-    */
-   ureg_MOV(shader, o_vpos, vpos);
-   for (i = 0; i < 3; ++i)
-      ureg_MOV(shader, o_vtex[i], vtex[i]);
-   for (i = 3; i < 5; ++i)
-      ureg_ADD(shader, o_vtex[i], vpos, vtex[i]);
-
-   ureg_END(shader);
-
-   r->b_vs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->b_vs[0])
-      return false;
-
-   return true;
-}
-
-static bool
-create_field_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src vpos, vtex[7];
-   struct ureg_dst o_vpos, o_vtex[7];
-   unsigned i;
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
-   if (!shader)
-      return false;
-
-   vpos = ureg_DECL_vs_input(shader, 0);
-   for (i = 0; i < 7; ++i)
-      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   for (i = 0; i < 7; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
-
-   /*
-    * o_vpos = vpos
-    * o_vtex[0..2] = vtex[0..2]
-    * o_vtex[3..6] = vpos + vtex[3..6] // Apply motion vector
-    */
-   ureg_MOV(shader, o_vpos, vpos);
-   for (i = 0; i < 3; ++i)
-      ureg_MOV(shader, o_vtex[i], vtex[i]);
-   for (i = 3; i < 7; ++i)
-      ureg_ADD(shader, o_vtex[i], vpos, vtex[i]);
-
-   ureg_END(shader);
-
-   r->b_vs[1] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->b_vs[1])
-      return false;
-
-   return true;
-}
-
-static bool
+static void *
 create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
@@ -431,7 +274,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
-      return false;
+      return NULL;
 
    for (i = 0; i < 5; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
@@ -466,14 +309,10 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_release_temporary(shader, ref[1]);
    ureg_END(shader);
 
-   r->b_fs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->b_fs[0])
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static bool
+static void *
 create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
@@ -485,7 +324,7 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
-      return false;
+      return NULL;
 
    for (i = 0; i < 5; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
@@ -520,11 +359,7 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_release_temporary(shader, ref[1]);
    ureg_END(shader);
 
-   r->b_fs[1] = ureg_create_shader_and_destroy(shader, r->pipe);
-   if (!r->b_fs[1])
-      return false;
-
-   return true;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
 static void
@@ -650,16 +485,18 @@ init_shaders(struct vl_mpeg12_mc_renderer *r)
 {
    assert(r);
 
-   create_intra_vert_shader(r);
-   create_intra_frag_shader(r);
-   create_frame_pred_vert_shader(r);
-   create_field_pred_vert_shader(r);
-   create_frame_pred_frag_shader(r);
-   create_field_pred_frag_shader(r);
-   create_frame_bi_pred_vert_shader(r);
-   create_field_bi_pred_vert_shader(r);
-   create_frame_bi_pred_frag_shader(r);
-   create_field_bi_pred_frag_shader(r);
+   assert(r->i_vs = create_vert_shader(r, 0, 0));
+   assert(r->i_fs = create_intra_frag_shader(r));
+   
+   assert(r->p_vs[0] = create_vert_shader(r, 1, 1));
+   assert(r->p_vs[1] = create_vert_shader(r, 1, 2));
+   assert(r->p_fs[0] = create_frame_pred_frag_shader(r));
+   assert(r->p_fs[1] = create_field_pred_frag_shader(r));
+
+   assert(r->b_vs[0] = create_vert_shader(r, 2, 1));
+   assert(r->b_vs[1] = create_vert_shader(r, 2, 2));
+   assert(r->b_fs[0] = create_frame_bi_pred_frag_shader(r));
+   assert(r->b_fs[1] = create_field_bi_pred_frag_shader(r));
 
    return true;
 }
