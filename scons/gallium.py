@@ -560,9 +560,13 @@ def generate(env):
         env.Tool('udis86')
     
     pkg_config_modules(env, 'x11', ['x11', 'xext'])
-    pkg_config_modules(env, 'dri', ['libdrm'])
+    pkg_config_modules(env, 'drm', ['libdrm'])
+    pkg_config_modules(env, 'drm_intel', ['libdrm_intel'])
+    pkg_config_modules(env, 'drm_radeon', ['libdrm_radeon'])
     pkg_config_modules(env, 'xorg', ['xorg-server'])
     pkg_config_modules(env, 'kms', ['libkms'])
+
+    env['dri'] = env['x11'] and env['drm']
 
     # Custom builders and methods
     env.Tool('custom')

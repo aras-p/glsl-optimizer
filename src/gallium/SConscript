@@ -29,17 +29,21 @@ if not env['msvc']:
         'drivers/r300/SConscript',
     ])
 
-if env['dri']:
+if env['drm']:
     # These drivers depend on drm headers
-    SConscript([
-        # XXX: nouveau drivers have a tight dependency on libdrm, so to enable
-        # we need some version logic before we enable them. Also, ATM there is
-        # no nouveau target in scons
-        #'drivers/nouveau/SConscript', 
-        #'drivers/nv50/SConscript', 
-        #'drivers/nvfx/SConscript',
-        'drivers/r600/SConscript', 
-    ])
+    if env['drm_radeon']:
+        SConscript([
+            'drivers/r600/SConscript',
+        ])
+    # XXX: nouveau drivers have a tight dependency on libdrm, so to enable
+    # we need some version logic before we enable them. Also, ATM there is
+    # no nouveau target in scons
+    # if env['drm_nouveau']:
+    #     SConscript([
+    #         'drivers/nouveau/SConscript', 
+    #         'drivers/nv50/SConscript', 
+    #         'drivers/nvfx/SConscript',
+    #     ])
 
 #
 # State trackers
@@ -89,14 +93,20 @@ if env['platform'] == 'windows':
 if env['dri']:
     SConscript([
         'targets/SConscript.dri',
-        'targets/dri-i915/SConscript',
-        'targets/dri-i965/SConscript',
-        #'targets/dri-nouveau/SConscript',
-        'targets/dri-r300/SConscript',
-        'targets/dri-r600/SConscript',
         'targets/dri-swrast/SConscript',
         'targets/dri-vmwgfx/SConscript',
+        #'targets/dri-nouveau/SConscript',
     ])
+    if env['drm_intel']:
+        SConscript([
+            'targets/dri-i915/SConscript',
+            'targets/dri-i965/SConscript',
+        ])
+    if env['drm_radeon']:
+        SConscript([
+            'targets/dri-r300/SConscript',
+            'targets/dri-r600/SConscript',
+        ])
 
 if env['xorg']:
     SConscript([
