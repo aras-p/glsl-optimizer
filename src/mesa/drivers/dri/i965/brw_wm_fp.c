@@ -663,7 +663,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 const struct prog_instruction *inst )
 {
    struct prog_src_register coord;
-   struct prog_dst_register tmpcoord;
+   struct prog_dst_register tmpcoord = { 0 };
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
    assert(unit < BRW_MAX_TEX_UNIT);
