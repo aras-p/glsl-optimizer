@@ -64,7 +64,7 @@ public:
 
 	 /* Add the new function to the symbol table.
 	  */
-	 this->symbols->add_function(this->function->name, this->function);
+	 this->symbols->add_function(this->function);
       }
       return visit_continue;
    }

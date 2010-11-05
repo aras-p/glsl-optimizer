@@ -99,7 +99,7 @@ public:
    /*@{*/
    bool add_variable(const char *name, ir_variable *v);
    bool add_type(const char *name, const glsl_type *t);
-   bool add_function(const char *name, ir_function *f);
+   bool add_function(ir_function *f);
    /*@}*/
 
    /**

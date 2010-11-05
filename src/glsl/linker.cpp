@@ -546,7 +546,7 @@ populate_symbol_table(gl_shader *sh)
       ir_function *func;
 
       if ((func = inst->as_function()) != NULL) {
-	 sh->symbols->add_function(func->name, func);
+	 sh->symbols->add_function(func);
       } else if ((var = inst->as_variable()) != NULL) {
 	 sh->symbols->add_variable(var->name, var);
       }

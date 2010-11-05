@@ -121,18 +121,18 @@ bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
-bool glsl_symbol_table::add_function(const char *name, ir_function *f)
+bool glsl_symbol_table::add_function(ir_function *f)
 {
-   if (this->language_version == 110 && name_declared_this_scope(name)) {
+   if (this->language_version == 110 && name_declared_this_scope(f->name)) {
       /* In 1.10, functions and variables have separate namespaces. */
-      symbol_table_entry *existing = get_entry(name);
+      symbol_table_entry *existing = get_entry(f->name);
       if ((existing->f == NULL) && (existing->t == NULL)) {
 	 existing->f = f;
 	 return true;
       }
    }
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
-   return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
+   return _mesa_symbol_table_add_symbol(table, -1, f->name, entry) == 0;
 }
 
 ir_variable *glsl_symbol_table::get_variable(const char *name)

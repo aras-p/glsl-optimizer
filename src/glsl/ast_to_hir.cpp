@@ -2495,7 +2495,7 @@ ast_function::hir(exec_list *instructions,
       }
    } else {
       f = new(ctx) ir_function(name);
-      if (!state->symbols->add_function(f->name, f)) {
+      if (!state->symbols->add_function(f)) {
 	 /* This function name shadows a non-function use of the same name. */
 	 YYLTYPE loc = this->get_location();
 
