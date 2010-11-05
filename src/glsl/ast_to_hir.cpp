@@ -2253,7 +2253,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *     after the initializer if present or immediately after the name
        *     being declared if not."
        */
-      if (!state->symbols->add_variable(var->name, var)) {
+      if (!state->symbols->add_variable(var)) {
 	 YYLTYPE loc = this->get_location();
 	 _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
 			  "current scope", decl->identifier);
@@ -2587,7 +2587,7 @@ ast_function_definition::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state, "parameter `%s' redeclared", var->name);
       } else {
-	 state->symbols->add_variable(var->name, var);
+	 state->symbols->add_variable(var);
       }
    }
 

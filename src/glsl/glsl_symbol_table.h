@@ -97,7 +97,7 @@ public:
     * reduces the clarity of the intention of code that uses these methods.
     */
    /*@{*/
-   bool add_variable(const char *name, ir_variable *v);
+   bool add_variable(ir_variable *v);
    bool add_type(const char *name, const glsl_type *t);
    bool add_function(ir_function *f);
    /*@}*/

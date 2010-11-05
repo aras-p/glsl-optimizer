@@ -474,7 +474,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    // Add the variable to the symbol table
-   st->symbols->add_variable(var->name, var);
+   st->symbols->add_variable(var);
 
    return var;
 }

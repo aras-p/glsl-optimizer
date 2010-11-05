@@ -412,7 +412,7 @@ cross_validate_globals(struct gl_shader_program *prog,
 		     var->constant_value->clone(talloc_parent(existing), NULL);
 	    }
 	 } else
-	    variables.add_variable(var->name, var);
+	    variables.add_variable(var);
       }
    }
 
@@ -454,7 +454,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if ((var == NULL) || (var->mode != ir_var_out))
 	 continue;
 
-      parameters.add_variable(var->name, var);
+      parameters.add_variable(var);
    }
 
 
@@ -548,7 +548,7 @@ populate_symbol_table(gl_shader *sh)
       if ((func = inst->as_function()) != NULL) {
 	 sh->symbols->add_function(func);
       } else if ((var = inst->as_variable()) != NULL) {
-	 sh->symbols->add_variable(var->name, var);
+	 sh->symbols->add_variable(var);
       }
    }
 }
@@ -605,7 +605,7 @@ remap_variables(ir_instruction *inst, struct gl_shader *target,
 	 else {
 	    ir_variable *copy = ir->var->clone(this->target, NULL);
 
-	    this->symbols->add_variable(copy->name, copy);
+	    this->symbols->add_variable(copy);
 	    this->instructions->push_head(copy);
 	    ir->var = copy;
 	 }
