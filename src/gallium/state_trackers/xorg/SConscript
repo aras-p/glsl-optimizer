@@ -21,9 +21,8 @@ if conf.CheckHeader('X11/extensions/dpmsconst.h'):
 
 conf.Finish()
 
-st_xorg = env.ConvenienceLibrary(
-target = 'st_xorg',
-source = [ 'xorg_composite.c',
+sources = [
+    'xorg_composite.c',
     'xorg_crtc.c',
     'xorg_dri2.c',
     'xorg_driver.c',
@@ -32,6 +31,10 @@ source = [ 'xorg_composite.c',
     'xorg_output.c',
     'xorg_renderer.c',
     'xorg_xv.c',
-    ]
+]
+
+st_xorg = env.ConvenienceLibrary(
+    target = 'st_xorg',
+    source = sources,
 )
 Export('st_xorg')

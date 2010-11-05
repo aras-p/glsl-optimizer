@@ -14,13 +14,15 @@ env.Append(CPPPATH = [
     '#/src/mesa/drivers/dri/common',
 ])
 
+sources = [
+    'dri_context.c',
+    'dri_drawable.c',
+    'dri_screen.c',
+    'dri2.c',
+]
+
 st_dri = env.ConvenienceLibrary(
     target = 'st_dri',
-    source = [ 'dri_context.c',
-               'dri_drawable.c',
-               'dri_screen.c',
-               'dri2.c',
-        ]
-    )
-
+    source = sources,
+)
 Export('st_dri')
