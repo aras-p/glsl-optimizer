@@ -54,14 +54,22 @@ SConscript('winsys/sw/null/SConscript')
 
 SConscript('state_trackers/python/SConscript')
 if env['platform'] != 'embedded':
-    SConscript('state_trackers/glx/xlib/SConscript')
-    SConscript('state_trackers/dri/SConscript')
-    SConscript('state_trackers/xorg/SConscript')
-    SConscript('state_trackers/egl/SConscript')
     SConscript('state_trackers/vega/SConscript')
 
+    if env['x11']:
+        SConscript('state_trackers/glx/xlib/SConscript')
+
+    if env['dri']:
+        SConscript('state_trackers/dri/SConscript')
+
+    if env['dri'] and env['xorg']:
+        SConscript('state_trackers/xorg/SConscript')
+
 if env['platform'] == 'windows':
-    SConscript('state_trackers/wgl/SConscript')
+    SConscript([
+        'state_trackers/egl/SConscript',
+        'state_trackers/wgl/SConscript',
+    ])
 
 #
 # Winsys

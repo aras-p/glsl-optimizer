@@ -3,9 +3,6 @@
 
 Import('*')
 
-if not env['x11'] or not env['dri'] or not env['xorg']:
-    Return()
-
 env = env.Clone()
 
 env.Append(CPPPATH = [

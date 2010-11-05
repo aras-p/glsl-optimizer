@@ -3,20 +3,18 @@
 
 Import('*')
 
-if env['dri']:
+env = env.Clone()
 
-    env = env.Clone()
+env.ParseConfig('pkg-config --cflags --libs libdrm')
 
-    env.ParseConfig('pkg-config --cflags --libs libdrm')
+env.Append(CPPPATH = [
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/gallium/state_trackers/dri/common',
+    '#/src/mesa/drivers/dri/common',
+])
 
-    env.Append(CPPPATH = [
-        '#/src/mapi',
-        '#/src/mesa',
-        '#/src/gallium/state_trackers/dri/common',
-        '#/src/mesa/drivers/dri/common',
-    ])
-
-    st_dri = env.ConvenienceLibrary(
+st_dri = env.ConvenienceLibrary(
     target = 'st_dri',
     source = [ 'dri_context.c',
                'dri_drawable.c',
@@ -24,4 +22,5 @@ if env['dri']:
                'dri2.c',
         ]
     )
-    Export('st_dri')
+
+Export('st_dri')
