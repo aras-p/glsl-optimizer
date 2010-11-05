@@ -85,7 +85,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    struct ureg_src norm, mbs;
    struct ureg_src vpos, vtex[3], vmv[4];
    struct ureg_dst temp;
-   struct ureg_dst o_vpos, o_vtex[3], o_vmv[4];
+   struct ureg_dst o_vpos, o_vtex[3], o_vmv[4], o_frc;
    unsigned i, j, count;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -118,10 +118,13 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
       }
    }
 
+   o_frc = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 4 + count);
+
    /*
     * o_vpos = vpos * norm * mbs
     * o_vtex[0..2] = vtex[0..2] * norm * mbs
     * o_vmv[0..count] = o_vpos + vmv[0..4] * 0.5 // Apply motion vector
+    * o_frc = fract(vpos) * mbs
     */
    ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), vpos, mbs);
    ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(temp), norm);
@@ -136,6 +139,13 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
          ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
       ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(temp), norm, ureg_src(o_vpos));
       ureg_MOV(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_ZW), vmv[i]);
+   }
+   if (mv_per_frame == 2) {
+      ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), vpos, ureg_imm1f(shader, 0.5f));
+      ureg_FRC(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), ureg_src(temp));
+      ureg_MUL(shader, ureg_writemask(temp, TGSI_WRITEMASK_XY), ureg_src(temp), ureg_imm1f(shader, 2.0f));
+      ureg_MUL(shader, ureg_writemask(o_frc, TGSI_WRITEMASK_XY), ureg_src(temp), mbs);
+      ureg_MOV(shader, ureg_writemask(o_frc, TGSI_WRITEMASK_ZW), vpos);
    }
 
    ureg_release_temporary(shader, temp);
@@ -234,11 +244,11 @@ static void *
 create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src tc[5];
+   struct ureg_src tc[5], fract;
    struct ureg_src sampler[4];
    struct ureg_dst texel, ref, tmp;
    struct ureg_dst fragment;
-   unsigned i;
+   unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -246,6 +256,7 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 5; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
+   fract = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 6, TGSI_INTERPOLATE_LINEAR);
    for (i = 0; i < 4; ++i)
       sampler[i] = ureg_DECL_sampler(shader, i);
 
@@ -258,16 +269,27 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * texel.r = tex(tc[0], sampler[0])
     * texel.g = tex(tc[1], sampler[1])
     * texel.b = tex(tc[2], sampler[2])
-    * ref = tex(tc[3], sampler[3])
+    * if(fract & 1)
+    *    ref = tex(tc[3], sampler[3])
+    * else
+    *    ref = tex(tc[4], sampler[3])
     * fragment = texel * scale + ref
     */
    for (i = 0; i < 3; ++i) {
       /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
-      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[i], sampler[i]);
-      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_X));
+      ureg_TEX(shader, tmp, TGSI_TEXTURE_2D, tc[i], sampler[i]);
+      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
    }
 
-   ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[4], sampler[3]);
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), fract, ureg_imm1f(shader, 0.5f));
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp));
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
+   ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), &label);
+      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[3], sampler[3]);
+   ureg_ELSE(shader, &label);
+      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[4], sampler[3]);
+   ureg_ENDIF(shader);
+
    ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
 
    ureg_release_temporary(shader, tmp);
@@ -284,7 +306,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_program *shader;
    struct ureg_src tc[5];
    struct ureg_src sampler[5];
-   struct ureg_dst texel, ref[2];
+   struct ureg_dst texel, ref[2], tmp;
    struct ureg_dst fragment;
    unsigned i;
 
@@ -299,6 +321,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    texel = ureg_DECL_temporary(shader);
    ref[0] = ureg_DECL_temporary(shader);
    ref[1] = ureg_DECL_temporary(shader);
+   tmp = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
@@ -311,8 +334,8 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     */
    for (i = 0; i < 3; ++i) {
       /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
-      ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[i], sampler[i]);
-      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref[0]), TGSI_SWIZZLE_X));
+      ureg_TEX(shader, tmp, TGSI_TEXTURE_2D, tc[i], sampler[i]);
+      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
    }
    ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[3], sampler[3]);
    ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[4], sampler[4]);
@@ -320,6 +343,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref[0]));
 
+   ureg_release_temporary(shader, tmp);
    ureg_release_temporary(shader, texel);
    ureg_release_temporary(shader, ref[0]);
    ureg_release_temporary(shader, ref[1]);
@@ -332,23 +356,26 @@ static void *
 create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src tc[5];
+   struct ureg_src tc[7], fract;
    struct ureg_src sampler[5];
-   struct ureg_dst texel, ref[2];
+   struct ureg_dst texel, ref[2], tmp;
    struct ureg_dst fragment;
-   unsigned i;
+   unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
 
-   for (i = 0; i < 5; ++i)  {
+   for (i = 0; i < 7; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
+   fract = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 8, TGSI_INTERPOLATE_LINEAR);
+   for (i = 0; i < 5; ++i)
       sampler[i] = ureg_DECL_sampler(shader, i);
-   }
+
    texel = ureg_DECL_temporary(shader);
    ref[0] = ureg_DECL_temporary(shader);
    ref[1] = ureg_DECL_temporary(shader);
+   tmp = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
@@ -364,12 +391,23 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[i], sampler[i]);
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref[0]), TGSI_SWIZZLE_X));
    }
-   ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[3], sampler[3]);
-   ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[4], sampler[4]);
+
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), fract, ureg_imm1f(shader, 0.5f));
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp));
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
+   ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), &label);
+     ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[3], sampler[3]);
+     ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[4], sampler[4]);
+   ureg_ELSE(shader, &label);
+     ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[5], sampler[3]);
+     ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[6], sampler[4]);
+   ureg_ENDIF(shader);
+
    ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
 
    ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref[0]));
 
+   ureg_release_temporary(shader, tmp);
    ureg_release_temporary(shader, texel);
    ureg_release_temporary(shader, ref[0]);
    ureg_release_temporary(shader, ref[1]);
