@@ -8,7 +8,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_memory.h"      /* Offset() */
 #include "util/u_draw_quad.h"
 

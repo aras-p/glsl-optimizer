@@ -8,8 +8,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "util/u_debug.h"       /* debug_dump_surface_bmp() */
-
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
    PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -31,17 +29,7 @@ static void draw( void )
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-#if 0
-   /* At the moment, libgraw leaks out/makes available some of the
-    * symbols from gallium/auxiliary, including these debug helpers.
-    * Will eventually want to bless some of these paths, and lock the
-    * others down so they aren't accessible from test programs.
-    *
-    * This currently just happens to work on debug builds - a release
-    * build will probably fail to link here:
-    */
-   debug_dump_surface_bmp(ctx, "result.bmp", surf);
-#endif
+   graw_save_surface_to_file(ctx, surf, NULL);
 
    screen->flush_frontbuffer(screen, surf, window);
 }
@@ -103,10 +91,21 @@ static void init( void )
    ctx->set_framebuffer_state(ctx, &fb);
 }
 
+static void args(int argc, char *argv[])
+{
+   int i;
 
+   for (i = 1; i < argc;) {
+      if (graw_parse_args(&i, argc, argv)) {
+         continue;
+      }
+      exit(1);
+   }
+}
 
 int main( int argc, char *argv[] )
 {
+   args(argc, argv);
    init();
 
    graw_set_display_func( draw );
