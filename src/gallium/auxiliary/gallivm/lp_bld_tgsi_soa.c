@@ -1189,10 +1189,12 @@ emit_declaration(
       case TGSI_FILE_TEMPORARY:
          assert(idx < LP_MAX_TGSI_TEMPS);
          if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+            /* ignore 'first' - we want to index into a 0-based array */
             LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
                                                    last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
                                                      vec_type, array_size, "temparray");
+            idx = last;
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
