@@ -465,15 +465,16 @@ static void get_readers_normal_read_callback(
 {
 	struct get_readers_callback_data * d = userdata;
 	unsigned int read_mask;
+	unsigned int shared_mask;
 
 	if (src->RelAddr)
 		d->ReaderData->Abort = 1;
 
-	unsigned int shared_mask = rc_src_reads_dst_mask(src->File, src->Index,
-				src->Swizzle,
-				d->ReaderData->Writer->U.I.DstReg.File,
-				d->ReaderData->Writer->U.I.DstReg.Index,
-				d->AliveWriteMask);
+	shared_mask = rc_src_reads_dst_mask(src->File, src->Index,
+		src->Swizzle,
+		d->ReaderData->Writer->U.I.DstReg.File,
+		d->ReaderData->Writer->U.I.DstReg.Index,
+		d->AliveWriteMask);
 
 	if (shared_mask == RC_MASK_NONE)
 		return;
