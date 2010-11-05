@@ -1178,9 +1178,8 @@ emit_declaration(
    const struct tgsi_full_declaration *decl)
 {
    LLVMTypeRef vec_type = bld->base.vec_type;
-
-   unsigned first = decl->Range.First;
-   unsigned last = decl->Range.Last;
+   const unsigned first = decl->Range.First;
+   const unsigned last = decl->Range.Last;
    unsigned idx, i;
 
    for (idx = first; idx <= last; ++idx) {
@@ -1193,7 +1192,8 @@ emit_declaration(
             LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
                                                    last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
-                                                     vec_type, array_size, "temparray");
+                                                     vec_type, array_size,
+                                                     "temporary");
             idx = last;
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
