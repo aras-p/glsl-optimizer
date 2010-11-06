@@ -72,14 +72,14 @@ static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
    return -1;
 }
 
-static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_dct_type)
+static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned int xvmc_picture_structure)
 {
    switch (xvmc_motion_type) {
       case XVMC_PREDICTION_FRAME:
-         if (xvmc_dct_type == XVMC_DCT_TYPE_FIELD)
-            return PIPE_MPEG12_MOTION_TYPE_16x8;
-         else if (xvmc_dct_type == XVMC_DCT_TYPE_FRAME)
+         if (xvmc_picture_structure == XVMC_FRAME_PICTURE)
             return PIPE_MPEG12_MOTION_TYPE_FRAME;
+         else
+            return PIPE_MPEG12_MOTION_TYPE_16x8;
          break;
       case XVMC_PREDICTION_FIELD:
          return PIPE_MPEG12_MOTION_TYPE_FIELD;
@@ -89,7 +89,7 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_
          assert(0);
    }
 
-   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized motion type 0x%08X (with DCT type 0x%08X).\n", xvmc_motion_type, xvmc_dct_type);
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized motion type 0x%08X (with picture structure 0x%08X).\n", xvmc_motion_type, xvmc_picture_structure);
 
    return -1;
 }
@@ -146,6 +146,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
 
 static void
 MacroBlocksToPipe(struct pipe_screen *screen,
+                  unsigned int xvmc_picture_structure,
                   const XvMCMacroBlockArray *xvmc_macroblocks,
                   const XvMCBlockArray *xvmc_blocks,
                   unsigned int first_macroblock,
@@ -168,7 +169,7 @@ MacroBlocksToPipe(struct pipe_screen *screen,
       pipe_macroblocks->mby = xvmc_mb->y;
       pipe_macroblocks->mb_type = TypeToPipe(xvmc_mb->macroblock_type);
       if (pipe_macroblocks->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA)
-         pipe_macroblocks->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_mb->dct_type);
+         pipe_macroblocks->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
       /* Get rid of Valgrind 'undefined' warnings */
       else
          pipe_macroblocks->mo_type = -1;
@@ -327,7 +328,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    p_vsfc = past_surface ? past_surface_priv->pipe_vsfc : NULL;
    f_vsfc = future_surface ? future_surface_priv->pipe_vsfc : NULL;
 
-   MacroBlocksToPipe(vpipe->screen, macroblocks, blocks, first_macroblock,
+   MacroBlocksToPipe(vpipe->screen, picture_structure, macroblocks, blocks, first_macroblock,
                      num_macroblocks, pipe_macroblocks);
 
    vpipe->set_decode_target(vpipe, t_vsfc);
