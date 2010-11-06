@@ -483,8 +483,11 @@ intel_emit_linear_blit(struct intel_context *intel,
    /* Blits are in a different ringbuffer so we don't use them. */
    assert(intel->gen < 6);
 
-   /* The pitch is a signed value. */
-   pitch = MIN2(size, (1 << 15) - 1);
+   /* The pitch hits the GPU as a is a signed value, IN DWORDs.
+    * But we want width to match pitch. Max width is (1 << 15 - 1),
+    * rounding that down to the nearest DWORD is 1 << 15 - 4
+    */
+   pitch = MIN2(size, (1 << 15) - 4);
    height = size / pitch;
    ok = intelEmitCopyBlit(intel, 1,
 			  pitch, src_bo, src_offset, I915_TILING_NONE,
