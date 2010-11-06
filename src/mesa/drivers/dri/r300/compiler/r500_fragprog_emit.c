@@ -45,9 +45,6 @@
 
 #include "radeon_program_pair.h"
 
-#define MAX_BRANCH_DEPTH_FULL 32
-#define MAX_BRANCH_DEPTH_PARTIAL 4
-
 #define PROG_CODE \
 	struct r500_fragment_program_code *code = &c->code->code.r500
 
@@ -509,7 +506,7 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 		break;
 	}
 	case RC_OPCODE_IF:
-		if ( s->CurrentBranchDepth >= MAX_BRANCH_DEPTH_FULL) {
+		if ( s->CurrentBranchDepth >= R500_PFS_MAX_BRANCH_DEPTH_FULL) {
 			rc_error(s->C, "Branch depth exceeds hardware limit");
 			return;
 		}

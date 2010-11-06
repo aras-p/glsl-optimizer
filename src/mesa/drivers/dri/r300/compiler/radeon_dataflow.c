@@ -461,6 +461,12 @@ static rc_opcode get_flow_control_inst(struct rc_instruction * inst)
 
 }
 
+struct branch_write_mask {
+	unsigned int IfWriteMask:4;
+	unsigned int ElseWriteMask:4;
+	unsigned int HasElse:1;
+};
+
 union get_readers_read_cb {
 	rc_read_src_fn I;
 	rc_pair_read_arg_fn P;
@@ -476,6 +482,8 @@ struct get_readers_callback_data {
 	unsigned int DstIndex;
 	unsigned int DstMask;
 	unsigned int AliveWriteMask;
+	/*  For convenience, this is indexed starting at 1 */
+	struct branch_write_mask BranchMasks[R500_PFS_MAX_BRANCH_DEPTH_FULL + 1];
 };
 
 static void add_reader(
@@ -521,12 +529,12 @@ static unsigned int get_readers_read_callback(
 	/* If we make it this far, it means that this source reads from the
 	 * same register written to by d->ReaderData->Writer. */
 
-	if (cb_data->ReaderData->AbortOnRead) {
+	read_mask = rc_swizzle_to_writemask(swizzle);
+	if (cb_data->ReaderData->AbortOnRead & read_mask) {
 		cb_data->ReaderData->Abort = 1;
 		return shared_mask;
 	}
 
-	read_mask = rc_swizzle_to_writemask(swizzle);
 	/* XXX The behavior in this case should be configurable. */
 	if ((read_mask & cb_data->AliveWriteMask) != read_mask) {
 		cb_data->ReaderData->Abort = 1;
@@ -605,22 +613,8 @@ static void get_readers_write_callback(
 
 	if (index == d->DstIndex && file == d->DstFile) {
 		unsigned int shared_mask = mask & d->DstMask;
-		if (d->ReaderData->InElse) {
-			if (shared_mask & d->AliveWriteMask) {
-				/* We set AbortOnRead here because the
-				 * destination register of d->ReaderData->Writer
-				 * is written to in both the IF and the
-				 * ELSE block of this IF/ELSE statement.
-				 * This means that readers of this
-				 * destination register that follow this IF/ELSE
-				 * statement use the value of different
-				 * instructions depending on the control flow
-				 * decisions made by the program. */
-				d->ReaderData->AbortOnRead = 1;
-			}
-		} else {
-			d->AliveWriteMask &= ~shared_mask;
-		}
+		d->ReaderData->AbortOnRead &= ~shared_mask;
+		d->AliveWriteMask &= ~shared_mask;
 	}
 
 	if(d->WriteCB)
@@ -645,6 +639,7 @@ static void get_readers_for_single_write(
 	d->DstIndex = dst_index;
 	d->DstMask = dst_mask;
 	d->AliveWriteMask = dst_mask;
+	memset(d->BranchMasks, 0, sizeof(d->BranchMasks));
 
 	if (!dst_mask)
 		return;
@@ -670,21 +665,53 @@ static void get_readers_for_single_write(
 			d->ReaderData->Abort = 1;
 			return;
 		case RC_OPCODE_IF:
-			/* XXX We can do better here, but this will have to
-			 * do until this dataflow analysis is more mature. */
-			d->ReaderData->Abort = 1;
 			branch_depth++;
+			if (branch_depth > R500_PFS_MAX_BRANCH_DEPTH_FULL) {
+				d->ReaderData->Abort = 1;
+				return;
+			}
+			d->BranchMasks[branch_depth].IfWriteMask =
+							d->AliveWriteMask;
 			break;
 		case RC_OPCODE_ELSE:
-			if (branch_depth == 0)
+			if (branch_depth == 0) {
 				d->ReaderData->InElse = 1;
+			} else {
+				unsigned int temp_mask = d->AliveWriteMask;
+				d->AliveWriteMask =
+					d->BranchMasks[branch_depth].IfWriteMask;
+				d->BranchMasks[branch_depth].ElseWriteMask =
+								temp_mask;
+				d->BranchMasks[branch_depth].HasElse = 1;
+			}
 			break;
 		case RC_OPCODE_ENDIF:
 			if (branch_depth == 0) {
-				d->ReaderData->AbortOnRead = 1;
+				d->ReaderData->AbortOnRead = d->AliveWriteMask;
 				d->ReaderData->InElse = 0;
 			}
 			else {
+				struct branch_write_mask * masks =
+					&d->BranchMasks[branch_depth];
+
+				if (masks->HasElse) {
+					d->ReaderData->AbortOnRead |=
+						masks->IfWriteMask
+							& ~masks->ElseWriteMask;
+					d->AliveWriteMask = masks->IfWriteMask
+						^ ((masks->IfWriteMask ^
+							masks->ElseWriteMask)
+						& (masks->IfWriteMask
+							^ d->AliveWriteMask));
+				} else {
+					d->ReaderData->AbortOnRead |=
+						masks->IfWriteMask
+							& ~d->AliveWriteMask;
+					d->AliveWriteMask = masks->IfWriteMask;
+
+				}
+				memset(masks, 0,
+					sizeof(struct branch_write_mask));
 				branch_depth--;
 			}
 			break;
@@ -692,21 +719,22 @@ static void get_readers_for_single_write(
 			break;
 		}
 
-		if (!d->ReaderData->InElse) {
-			if (tmp->Type == RC_INSTRUCTION_NORMAL) {
-				rc_for_all_reads_src(tmp,
-					get_readers_normal_read_callback, d);
-			} else {
-				rc_pair_for_all_reads_arg(tmp,
-					get_readers_pair_read_callback, d);
-			}
+		if (d->ReaderData->InElse)
+			continue;
+
+		if (tmp->Type == RC_INSTRUCTION_NORMAL) {
+			rc_for_all_reads_src(tmp,
+				get_readers_normal_read_callback, d);
+		} else {
+			rc_pair_for_all_reads_arg(tmp,
+				get_readers_pair_read_callback, d);
 		}
 		rc_for_all_writes_mask(tmp, get_readers_write_callback, d);
 
 		if (d->ReaderData->Abort)
 			return;
 
-		if (!d->AliveWriteMask)
+		if (branch_depth == 0 && !d->AliveWriteMask)
 			return;
 	}
 }

@@ -112,11 +112,11 @@ static void src_clobbered_reads_cb(
 	    && src->Index == sc_data->Index
 	    && (rc_swizzle_to_writemask(src->Swizzle) & sc_data->Mask)) {
 
-		sc_data->ReaderData->AbortOnRead = 1;
+		sc_data->ReaderData->AbortOnRead = RC_MASK_XYZW;
 	}
 
 	if (src->RelAddr && sc_data->File == RC_FILE_ADDRESS) {
-		sc_data->ReaderData->AbortOnRead = 1;
+		sc_data->ReaderData->AbortOnRead = RC_MASK_XYZW;
 	}
 }
 
