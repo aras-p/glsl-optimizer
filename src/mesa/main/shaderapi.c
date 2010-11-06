@@ -992,6 +992,7 @@ use_shader_program(struct gl_context *ctx, GLenum type,
    }
 
    if (*target != shProg) {
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
       _mesa_reference_shader_program(ctx, target, shProg);
       return true;
    }
@@ -1005,18 +1006,10 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 void
 _mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
-   bool changed = false;
-
-   changed = use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
-   changed = use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg)
-      || changed;
-   changed = use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg)
-      || changed;
+   use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
+   use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg);
+   use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg);
    _mesa_active_program(ctx, shProg, "glUseProgram");
-
-   if (changed) {
-      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
-   }
 
    if (ctx->Driver.UseProgram)
       ctx->Driver.UseProgram(ctx, shProg);
@@ -1589,8 +1582,6 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
    struct gl_transform_feedback_object *obj =
       ctx->TransformFeedback.CurrentObject;
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
@@ -1737,11 +1728,7 @@ void
 _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
 			 struct gl_shader_program *shProg)
 {
-   bool changed;
-
-   changed = use_shader_program(ctx, type, shProg);
-   if (changed)
-      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+   use_shader_program(ctx, type, shProg);
 
    if (ctx->Driver.UseProgram)
       ctx->Driver.UseProgram(ctx, shProg);
