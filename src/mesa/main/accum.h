@@ -37,8 +37,11 @@
 #ifndef ACCUM_H
 #define ACCUM_H
 
+#include "main/glheader.h"
+#include "main/mfeatures.h"
 
-#include "main/mtypes.h"
+struct _glapi_table;
+struct gl_context;
 
 #if FEATURE_accum
 
