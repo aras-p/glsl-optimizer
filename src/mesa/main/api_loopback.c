@@ -36,6 +36,7 @@
 #include "glapi/glapi.h"
 #include "glapi/glthread.h"
 #include "main/dispatch.h"
+#include "mfeatures.h"
 
 /* KW: A set of functions to convert unusual Color/Normal/Vertex/etc
  * calls to a smaller set of driver-provided formats.  Currently just
