@@ -121,6 +121,17 @@ typedef struct radeon_screen {
    GLint r7xx_bank_op;
 } radeonScreenRec, *radeonScreenPtr;
 
+struct __DRIimageRec {
+   struct radeon_bo *bo;
+   GLenum internal_format;
+   GLuint format;
+   GLenum data_type;
+   int width, height;  /* in pixels */
+   int pitch;          /* in pixels */
+   int cpp;
+   void *data;
+};
+
 #define IS_R100_CLASS(screen) \
 	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R100)
 #define IS_R200_CLASS(screen) \
