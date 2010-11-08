@@ -335,6 +335,104 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
 }
 
 
+/**
+ * Get indexes of color components for a basic color format, such as
+ * GL_RGBA, GL_RED, GL_LUMINANCE_ALPHA, etc.  Return -1 for indexes
+ * that do not apply.
+ */
+static void
+get_component_indexes(GLenum format,
+                      GLint *redIndex,
+                      GLint *greenIndex,
+                      GLint *blueIndex,
+                      GLint *alphaIndex,
+                      GLint *luminanceIndex,
+                      GLint *intensityIndex)
+{
+   *redIndex = -1;
+   *greenIndex = -1;
+   *blueIndex = -1;
+   *alphaIndex = -1;
+   *luminanceIndex = -1;
+   *intensityIndex = -1;
+
+   switch (format) {
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_INTEGER_EXT:
+      *luminanceIndex = 0;
+      break;
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      *luminanceIndex = 0;
+      *alphaIndex = 1;
+      break;
+   case GL_INTENSITY:
+      *intensityIndex = 0;
+      break;
+   case GL_RED:
+   case GL_RED_INTEGER_EXT:
+      *redIndex = 0;
+      break;
+   case GL_GREEN:
+   case GL_GREEN_INTEGER_EXT:
+      *greenIndex = 0;
+      break;
+   case GL_BLUE:
+   case GL_BLUE_INTEGER_EXT:
+      *blueIndex = 0;
+      break;
+   case GL_ALPHA:
+   case GL_ALPHA_INTEGER_EXT:
+      *alphaIndex = 0;
+      break;
+   case GL_RG:
+   case GL_RG_INTEGER:
+      *redIndex = 0;
+      *greenIndex = 1;
+      break;
+   case GL_RGB:
+   case GL_RGB_INTEGER_EXT:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = 2;
+      break;
+   case GL_BGR:
+   case GL_BGR_INTEGER_EXT:
+      *blueIndex = 0;
+      *greenIndex = 1;
+      *redIndex = 2;
+      break;
+   case GL_RGBA:
+   case GL_RGBA_INTEGER_EXT:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = 2;
+      *alphaIndex = 3;
+      break;
+   case GL_BGRA:
+   case GL_BGRA_INTEGER:
+      *redIndex = 2;
+      *greenIndex = 1;
+      *blueIndex = 0;
+      *alphaIndex = 3;
+      break;
+   case GL_ABGR_EXT:
+      *redIndex = 3;
+      *greenIndex = 2;
+      *blueIndex = 1;
+      *alphaIndex = 0;
+      break;
+   case GL_DU8DV8_ATI:
+   case GL_DUDV_ATI:
+      *redIndex = 0;
+      *greenIndex = 1;
+      break;
+   default:
+      assert(0 && "bad format in get_component_indexes()");
+   }
+}
+
+
 
 /**
  * For small integer types, return the min and max possible values.
@@ -2028,6 +2126,133 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
 }
 
 
+/**
+ * Return source/dest RGBA indexes for unpacking pixels.
+ */
+static void
+get_component_mapping(GLenum format,
+                      GLint *redIndex,
+                      GLint *greenIndex,
+                      GLint *blueIndex,
+                      GLint *alphaIndex,
+                      GLint *rComp,
+                      GLint *gComp,
+                      GLint *bComp,
+                      GLint *aComp)
+{
+   switch (format) {
+   case GL_RED:
+   case GL_RED_INTEGER_EXT:
+      *redIndex = 0;
+      *greenIndex = *blueIndex = *alphaIndex = -1;
+      break;
+   case GL_GREEN:
+   case GL_GREEN_INTEGER_EXT:
+      *greenIndex = 0;
+      *redIndex = *blueIndex = *alphaIndex = -1;
+      break;
+      case GL_BLUE:
+   case GL_BLUE_INTEGER_EXT:
+      *blueIndex = 0;
+      *redIndex = *greenIndex = *alphaIndex = -1;
+      break;
+   case GL_ALPHA:
+   case GL_ALPHA_INTEGER_EXT:
+      *redIndex = *greenIndex = *blueIndex = -1;
+      *alphaIndex = 0;
+      break;
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_INTEGER_EXT:
+      *redIndex = *greenIndex = *blueIndex = 0;
+      *alphaIndex = -1;
+      break;
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      *redIndex = *greenIndex = *blueIndex = 0;
+      *alphaIndex = 1;
+      break;
+   case GL_INTENSITY:
+      *redIndex = *greenIndex = *blueIndex = *alphaIndex = 0;
+      break;
+   case GL_RG:
+   case GL_RG_INTEGER:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = -1;
+      *alphaIndex = -1;
+      *rComp = 0;
+      *gComp = 1;
+      *bComp = 2;
+      *aComp = 3;
+      break;
+   case GL_RGB:
+   case GL_RGB_INTEGER:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = 2;
+      *alphaIndex = -1;
+      *rComp = 0;
+      *gComp = 1;
+      *bComp = 2;
+      *aComp = 3;
+      break;
+   case GL_BGR:
+      *redIndex = 2;
+      *greenIndex = 1;
+      *blueIndex = 0;
+      *alphaIndex = -1;
+      *rComp = 2;
+      *gComp = 1;
+      *bComp = 0;
+      *aComp = 3;
+      break;
+   case GL_RGBA:
+   case GL_RGBA_INTEGER:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = 2;
+      *alphaIndex = 3;
+      *rComp = 0;
+      *gComp = 1;
+      *bComp = 2;
+      *aComp = 3;
+      break;
+   case GL_BGRA:
+      *redIndex = 2;
+      *greenIndex = 1;
+      *blueIndex = 0;
+      *alphaIndex = 3;
+      *rComp = 2;
+      *gComp = 1;
+      *bComp = 0;
+      *aComp = 3;
+      break;
+   case GL_ABGR_EXT:
+      *redIndex = 3;
+      *greenIndex = 2;
+      *blueIndex = 1;
+      *alphaIndex = 0;
+      *rComp = 3;
+      *gComp = 2;
+      *bComp = 1;
+      *aComp = 0;
+      break;
+   case GL_DU8DV8_ATI:
+   case GL_DUDV_ATI:
+      *redIndex = 0;
+      *greenIndex = 1;
+      *blueIndex = -1;
+      *alphaIndex = -1;
+      break;
+   default:
+      _mesa_problem(NULL, "bad srcFormat %s in get_component_mapping",
+                    _mesa_lookup_enum_by_nr(format));
+      return;
+   }
+}
+
+
+
 /*
  * This function extracts floating point RGBA values from arbitrary
  * image data.  srcFormat and srcType are the format and type parameters
@@ -2102,131 +2327,11 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
-   rComp = gComp = bComp = aComp = -1;
+   get_component_mapping(srcFormat,
+                         &redIndex, &greenIndex, &blueIndex, &alphaIndex,
+                         &rComp, &gComp, &bComp, &aComp);
 
-   switch (srcFormat) {
-      case GL_RED:
-      case GL_RED_INTEGER_EXT:
-         redIndex = 0;
-         greenIndex = blueIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_GREEN:
-      case GL_GREEN_INTEGER_EXT:
-         greenIndex = 0;
-         redIndex = blueIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_BLUE:
-      case GL_BLUE_INTEGER_EXT:
-         blueIndex = 0;
-         redIndex = greenIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_ALPHA:
-      case GL_ALPHA_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = -1;
-         alphaIndex = 0;
-         stride = 1;
-         break;
-      case GL_LUMINANCE:
-      case GL_LUMINANCE_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = 0;
-         alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_LUMINANCE_ALPHA:
-      case GL_LUMINANCE_ALPHA_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = 0;
-         alphaIndex = 1;
-         stride = 2;
-         break;
-      case GL_INTENSITY:
-         redIndex = greenIndex = blueIndex = alphaIndex = 0;
-         stride = 1;
-         break;
-      case GL_RG:
-      case GL_RG_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = -1;
-         alphaIndex = -1;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 2;
-         break;
-      case GL_RGB:
-      case GL_RGB_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = 2;
-         alphaIndex = -1;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 3;
-         break;
-      case GL_BGR:
-         redIndex = 2;
-         greenIndex = 1;
-         blueIndex = 0;
-         alphaIndex = -1;
-         rComp = 2;
-         gComp = 1;
-         bComp = 0;
-         aComp = 3;
-         stride = 3;
-         break;
-      case GL_RGBA:
-      case GL_RGBA_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = 2;
-         alphaIndex = 3;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 4;
-         break;
-      case GL_BGRA:
-         redIndex = 2;
-         greenIndex = 1;
-         blueIndex = 0;
-         alphaIndex = 3;
-         rComp = 2;
-         gComp = 1;
-         bComp = 0;
-         aComp = 3;
-         stride = 4;
-         break;
-      case GL_ABGR_EXT:
-         redIndex = 3;
-         greenIndex = 2;
-         blueIndex = 1;
-         alphaIndex = 0;
-         rComp = 3;
-         gComp = 2;
-         bComp = 1;
-         aComp = 0;
-         stride = 4;
-         break;
-      case GL_DU8DV8_ATI:
-      case GL_DUDV_ATI:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = -1;
-         alphaIndex = -1;
-         stride = 2;
-         break;
-      default:
-         _mesa_problem(NULL, "bad srcFormat %s in extract float data",
-                       _mesa_lookup_enum_by_nr(srcFormat));
-         return;
-   }
+   stride = _mesa_components_in_format(srcFormat);
 
    intFormat = _mesa_is_integer_format(srcFormat);
 
@@ -2794,123 +2899,11 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
-   rComp = gComp = bComp = aComp = -1;
+   get_component_mapping(srcFormat,
+                         &redIndex, &greenIndex, &blueIndex, &alphaIndex,
+                         &rComp, &gComp, &bComp, &aComp);
 
-   switch (srcFormat) {
-      case GL_RED:
-      case GL_RED_INTEGER_EXT:
-         redIndex = 0;
-         greenIndex = blueIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_GREEN:
-      case GL_GREEN_INTEGER_EXT:
-         greenIndex = 0;
-         redIndex = blueIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_BLUE:
-      case GL_BLUE_INTEGER_EXT:
-         blueIndex = 0;
-         redIndex = greenIndex = alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_ALPHA:
-      case GL_ALPHA_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = -1;
-         alphaIndex = 0;
-         stride = 1;
-         break;
-      case GL_LUMINANCE:
-      case GL_LUMINANCE_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = 0;
-         alphaIndex = -1;
-         stride = 1;
-         break;
-      case GL_LUMINANCE_ALPHA:
-      case GL_LUMINANCE_ALPHA_INTEGER_EXT:
-         redIndex = greenIndex = blueIndex = 0;
-         alphaIndex = 1;
-         stride = 2;
-         break;
-      case GL_INTENSITY:
-         redIndex = greenIndex = blueIndex = alphaIndex = 0;
-         stride = 1;
-         break;
-      case GL_RG:
-      case GL_RG_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = -1;
-         alphaIndex = -1;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 2;
-         break;
-      case GL_RGB:
-      case GL_RGB_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = 2;
-         alphaIndex = -1;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 3;
-         break;
-      case GL_BGR:
-         redIndex = 2;
-         greenIndex = 1;
-         blueIndex = 0;
-         alphaIndex = -1;
-         rComp = 2;
-         gComp = 1;
-         bComp = 0;
-         aComp = 3;
-         stride = 3;
-         break;
-      case GL_RGBA:
-      case GL_RGBA_INTEGER:
-         redIndex = 0;
-         greenIndex = 1;
-         blueIndex = 2;
-         alphaIndex = 3;
-         rComp = 0;
-         gComp = 1;
-         bComp = 2;
-         aComp = 3;
-         stride = 4;
-         break;
-      case GL_BGRA:
-         redIndex = 2;
-         greenIndex = 1;
-         blueIndex = 0;
-         alphaIndex = 3;
-         rComp = 2;
-         gComp = 1;
-         bComp = 0;
-         aComp = 3;
-         stride = 4;
-         break;
-      case GL_ABGR_EXT:
-         redIndex = 3;
-         greenIndex = 2;
-         blueIndex = 1;
-         alphaIndex = 0;
-         rComp = 3;
-         gComp = 2;
-         bComp = 1;
-         aComp = 0;
-         stride = 4;
-         break;
-      default:
-         _mesa_problem(NULL, "bad srcFormat %s in extract float data",
-                       _mesa_lookup_enum_by_nr(srcFormat));
-         return;
-   }
+   stride = _mesa_components_in_format(srcFormat);
 
    intFormat = _mesa_is_integer_format(srcFormat);
 
@@ -3522,63 +3515,11 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
       }
 
-      /* Now determine which color channels we need to produce.
-       * And determine the dest index (offset) within each color tuple.
-       */
-      switch (dstFormat) {
-         case GL_ALPHA:
-            dstAlphaIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
-            dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_LUMINANCE:
-            dstLuminanceIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
-            dstIntensityIndex = -1;
-            break;
-         case GL_LUMINANCE_ALPHA:
-            dstLuminanceIndex = 0;
-            dstAlphaIndex = 1;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
-            dstIntensityIndex = -1;
-            break;
-         case GL_INTENSITY:
-            dstIntensityIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
-            dstLuminanceIndex = -1;
-            break;
-         case GL_RED:
-            dstRedIndex = 0;
-            dstGreenIndex = dstBlueIndex = -1;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RG:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = -1;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RGB:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = 2;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RGBA:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = 2;
-            dstAlphaIndex = 3;
-            dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         default:
-            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_chan_span()");
-            return;
-      }
-
+      get_component_indexes(dstFormat, &dstRedIndex, &dstGreenIndex,
+                            &dstBlueIndex, &dstAlphaIndex, &dstLuminanceIndex,
+                            &dstIntensityIndex);
 
       /* Now return the GLchan data in the requested dstFormat */
-
       if (dstRedIndex >= 0) {
          GLchan *dst = dest;
          GLuint i;
@@ -3761,59 +3702,9 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
       }
 
-      /* Now determine which color channels we need to produce.
-       * And determine the dest index (offset) within each color tuple.
-       */
-      switch (dstFormat) {
-         case GL_ALPHA:
-            dstAlphaIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
-            dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_LUMINANCE:
-            dstLuminanceIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
-            dstIntensityIndex = -1;
-            break;
-         case GL_LUMINANCE_ALPHA:
-            dstLuminanceIndex = 0;
-            dstAlphaIndex = 1;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
-            dstIntensityIndex = -1;
-            break;
-         case GL_INTENSITY:
-            dstIntensityIndex = 0;
-            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
-            dstLuminanceIndex = -1;
-            break;
-         case GL_RED:
-            dstRedIndex = 0;
-            dstGreenIndex = dstBlueIndex = -1;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RG:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = -1;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RGB:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = 2;
-            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         case GL_RGBA:
-            dstRedIndex = 0;
-            dstGreenIndex = 1;
-            dstBlueIndex = 2;
-            dstAlphaIndex = 3;
-            dstLuminanceIndex = dstIntensityIndex = -1;
-            break;
-         default:
-            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_color_span_float()");
-            return;
-      }
+      get_component_indexes(dstFormat, &dstRedIndex, &dstGreenIndex,
+                            &dstBlueIndex, &dstAlphaIndex, &dstLuminanceIndex,
+                            &dstIntensityIndex);
 
       /* Now pack results in the requested dstFormat */
       if (dstRedIndex >= 0) {
@@ -3875,9 +3766,6 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
       }
    }
 }
-
-
-
 
 
 /**
@@ -3961,56 +3849,15 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
    }
    else {
       /* general case */
-      GLint dstRedIndex = -1;
-      GLint dstGreenIndex = -1;
-      GLint dstBlueIndex = -1;
-      GLint dstAlphaIndex = -1;
-      GLint dstLuminanceIndex = -1;
-      GLint dstIntensityIndex = -1;
+      GLint dstRedIndex, dstGreenIndex, dstBlueIndex, dstAlphaIndex;
+      GLint dstLuminanceIndex, dstIntensityIndex;
       GLint dstComponents = _mesa_components_in_format( dstFormat );
 
       assert(dstComponents > 0);
 
-      /* Now determine which color channels we need to produce.
-       * And determine the dest index (offset) within each color tuple.
-       */
-      switch (dstFormat) {
-      case GL_ALPHA:
-         dstAlphaIndex = 0;
-         break;
-      case GL_LUMINANCE:
-         dstLuminanceIndex = 0;
-         break;
-      case GL_LUMINANCE_ALPHA:
-         dstLuminanceIndex = 0;
-         dstAlphaIndex = 1;
-         break;
-      case GL_INTENSITY:
-         dstIntensityIndex = 0;
-         break;
-      case GL_RED:
-         dstRedIndex = 0;
-         break;
-      case GL_RG:
-         dstRedIndex = 0;
-         dstGreenIndex = 1;
-         break;
-      case GL_RGB:
-         dstRedIndex = 0;
-         dstGreenIndex = 1;
-         dstBlueIndex = 2;
-         break;
-      case GL_RGBA:
-         dstRedIndex = 0;
-         dstGreenIndex = 1;
-         dstBlueIndex = 2;
-         dstAlphaIndex = 3;
-         break;
-      default:
-         _mesa_problem(ctx,
-                       "bad dstFormat in _mesa_unpack_color_span_uint()");
-         return;
-      }
+      get_component_indexes(dstFormat, &dstRedIndex, &dstGreenIndex,
+                            &dstBlueIndex, &dstAlphaIndex, &dstLuminanceIndex,
+                            &dstIntensityIndex);
 
       /* Now pack values in the requested dest format */
       if (dstRedIndex >= 0) {
