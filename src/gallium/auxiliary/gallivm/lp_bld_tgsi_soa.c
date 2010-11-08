@@ -144,6 +144,12 @@ struct lp_build_tgsi_soa_context
     */
    LLVMValueRef temps_array;
 
+   /* We allocate/use this array of output if (1 << TGSI_FILE_OUTPUT) is
+    * set in the indirect_files field.
+    * The outputs[] array above is unused then.
+    */
+   LLVMValueRef outputs_array;
+
    const struct tgsi_shader_info *info;
    /** bitmask indicating which register files are accessed indirectly */
    unsigned indirect_files;
@@ -438,6 +444,28 @@ get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
       return bld->temps[index][chan];
    }
 }
+
+/**
+ * Return pointer to a output register channel (src or dest).
+ * Note that indirect addressing cannot be handled here.
+ * \param index  which output register
+ * \param chan  which channel of the output register.
+ */
+static LLVMValueRef
+get_output_ptr(struct lp_build_tgsi_soa_context *bld,
+               unsigned index,
+               unsigned chan)
+{
+   assert(chan < 4);
+   if (bld->indirect_files & (1 << TGSI_FILE_OUTPUT)) {
+      LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
+      return LLVMBuildGEP(bld->base.builder, bld->outputs_array, &lindex, 1, "");
+   }
+   else {
+      return bld->outputs[index][chan];
+   }
+}
+
 
 
 /**
@@ -836,8 +864,45 @@ emit_store(
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      lp_exec_mask_store(&bld->exec_mask, pred, value,
-                         bld->outputs[reg->Register.Index][chan_index]);
+      if (reg->Register.Indirect) {
+         LLVMBuilderRef builder = bld->base.builder;
+         LLVMValueRef chan_vec =
+            lp_build_const_int_vec(uint_bld->type, chan_index);
+         LLVMValueRef length_vec =
+            lp_build_const_int_vec(uint_bld->type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* indexes into the temp registers */
+         LLVMValueRef outputs_array;
+         LLVMValueRef pixel_offsets;
+         LLVMTypeRef float_ptr_type;
+         int i;
+
+         /* build pixel offset vector: {0, 1, 2, 3, ...} */
+         pixel_offsets = uint_bld->undef;
+         for (i = 0; i < bld->base.type.length; i++) {
+            LLVMValueRef ii = lp_build_const_int32(i);
+            pixel_offsets = LLVMBuildInsertElement(builder, pixel_offsets,
+                                                   ii, ii, "");
+         }
+
+         /* index_vec = (indirect_index * 4 + chan_index) * length + offsets */
+         index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+         index_vec = lp_build_add(uint_bld, index_vec, chan_vec);
+         index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+         index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
+
+         float_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         outputs_array = LLVMBuildBitCast(builder, bld->outputs_array,
+                                          float_ptr_type, "");
+
+         /* Scatter store values into temp registers */
+         emit_mask_scatter(bld, outputs_array, index_vec, value,
+                           &bld->exec_mask, pred);
+      }
+      else {
+         LLVMValueRef out_ptr = get_output_ptr(bld, reg->Register.Index,
+                                               chan_index);
+         lp_exec_mask_store(&bld->exec_mask, pred, value, out_ptr);
+      }
       break;
 
    case TGSI_FILE_TEMPORARY:
@@ -1203,9 +1268,19 @@ emit_declaration(
          break;
 
       case TGSI_FILE_OUTPUT:
-         for (i = 0; i < NUM_CHANNELS; i++)
-            bld->outputs[idx][i] = lp_build_alloca(bld->base.builder,
-                                                   vec_type, "output");
+         if (bld->indirect_files & (1 << TGSI_FILE_OUTPUT)) {
+            /* ignore 'first' - we want to index into a 0-based array */
+            LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                                   last*4 + 4, 0);
+            bld->outputs_array = lp_build_array_alloca(bld->base.builder,
+                                                       vec_type, array_size,
+                                                       "outputs_array");
+            idx = last;
+         } else {
+            for (i = 0; i < NUM_CHANNELS; i++)
+               bld->outputs[idx][i] = lp_build_alloca(bld->base.builder,
+                                                      vec_type, "output");
+         }
          break;
 
       case TGSI_FILE_ADDRESS:
@@ -2306,6 +2381,31 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       if (!emit_instruction( &bld, instr, opcode_info, &pc ))
          _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
                        opcode_info->mnemonic);
+   }
+
+   /* If we have indirect addressing in outputs we need to copy our alloca array
+    * to the outputs slots specified by the called */
+   if (bld.indirect_files & (1 << TGSI_FILE_OUTPUT)) {
+      tgsi_parse_init(&parse, tokens);
+      while( !tgsi_parse_end_of_tokens( &parse ) ) {
+         tgsi_parse_token( &parse );
+
+         switch( parse.FullToken.Token.Type ) {
+         case TGSI_TOKEN_TYPE_DECLARATION: {
+            const struct tgsi_full_declaration *decl = &parse.FullToken.FullDeclaration;
+            /* Inputs already interpolated */
+            if (decl->Declaration.File == TGSI_FILE_OUTPUT) {
+               unsigned idx = decl->Range.Last;
+               const unsigned first = decl->Range.First;
+               const unsigned last = decl->Range.Last;
+               for (idx = first; idx <= last; ++idx)
+                  for (i = 0; i < NUM_CHANNELS; i++)
+                     bld.outputs[idx][i] = get_output_ptr(&bld, idx, i);
+            }
+            break;
+         }
+         }
+      }
    }
 
    if (0) {
