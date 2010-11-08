@@ -27,7 +27,12 @@
 #define COLORTAB_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct _glapi_table;
+struct gl_color_table;
 
 #if FEATURE_colortable
 
@@ -45,8 +50,6 @@ extern void
 _mesa_init_colortable_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_colortable */
-
-#include "main/compiler.h"
 
 static INLINE void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalformat,
