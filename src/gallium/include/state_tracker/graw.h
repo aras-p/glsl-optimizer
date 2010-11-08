@@ -44,8 +44,9 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
-struct pipe_screen;
 struct pipe_context;
+struct pipe_screen;
+struct pipe_surface;
 
 /* Returns a handle to be used with flush_frontbuffer()/present().
  *
