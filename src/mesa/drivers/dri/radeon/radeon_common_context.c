@@ -251,9 +251,9 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			radeon->texture_rect_row_align = 512;
 			radeon->texture_compressed_row_align = 512;
 		} else {
-			radeon->texture_row_align = 256;
-			radeon->texture_rect_row_align = 256;
-			radeon->texture_compressed_row_align = 256;
+			radeon->texture_row_align = radeon->radeonScreen->group_bytes;
+			radeon->texture_rect_row_align = radeon->radeonScreen->group_bytes;
+			radeon->texture_compressed_row_align = radeon->radeonScreen->group_bytes;
 		}
 	} else if (IS_R200_CLASS(radeon->radeonScreen) ||
 		   IS_R100_CLASS(radeon->radeonScreen)) {
