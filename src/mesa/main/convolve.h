@@ -28,7 +28,10 @@
 #define CONVOLVE_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "mfeatures.h"
+
+struct _glapi_table;
 
 
 #if FEATURE_convolve
@@ -37,8 +40,6 @@ extern void
 _mesa_init_convolve_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_convolve */
-
-#include "main/compiler.h"
 
 static INLINE void
 _mesa_init_convolve_dispatch(struct _glapi_table *disp)
