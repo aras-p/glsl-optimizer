@@ -54,11 +54,6 @@ _mesa_LineWidth( GLfloat width )
    FLUSH_VERTICES(ctx, _NEW_LINE);
    ctx->Line.Width = width;
 
-   if (width != 1.0F)
-      ctx->_TriangleCaps |= DD_LINE_WIDTH;
-   else
-      ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
-
    if (ctx->Driver.LineWidth)
       ctx->Driver.LineWidth(ctx, width);
 }

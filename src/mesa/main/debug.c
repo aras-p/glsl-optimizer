@@ -133,9 +133,7 @@ _mesa_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_TRI_SMOOTH)          ? "tri-smooth, " : "",
 	   (flags & DD_LINE_SMOOTH)         ? "line-smooth, " : "",
 	   (flags & DD_LINE_STIPPLE)        ? "line-stipple, " : "",
-	   (flags & DD_LINE_WIDTH)          ? "line-wide, " : "",
 	   (flags & DD_POINT_SMOOTH)        ? "point-smooth, " : "",
-	   (flags & DD_POINT_SIZE)          ? "point-size, " : "",
 	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : "",
 	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : ""
       );

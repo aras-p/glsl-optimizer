@@ -2925,11 +2925,9 @@ struct gl_matrix_stack
 #define DD_TRI_OFFSET               0x80
 #define DD_LINE_SMOOTH              0x100
 #define DD_LINE_STIPPLE             0x200
-#define DD_LINE_WIDTH               0x400
-#define DD_POINT_SMOOTH             0x800
-#define DD_POINT_SIZE               0x1000
-#define DD_POINT_ATTEN              0x2000
-#define DD_TRI_TWOSTENCIL           0x4000
+#define DD_POINT_SMOOTH             0x400
+#define DD_POINT_ATTEN              0x800
+#define DD_TRI_TWOSTENCIL           0x1000
 /*@}*/
 
 
