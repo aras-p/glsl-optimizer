@@ -26,7 +26,10 @@
 #define DRAWPIX_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "mfeatures.h"
+
+struct _glapi_table;
 
 
 #if FEATURE_drawpix
