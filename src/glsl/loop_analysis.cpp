@@ -44,6 +44,7 @@ loop_state::loop_state()
 loop_state::~loop_state()
 {
    hash_table_dtor(this->ht);
+   talloc_free(this->mem_ctx);
 }
 
 
