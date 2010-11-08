@@ -137,4 +137,11 @@ void radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
 
 unsigned radeonIsFormatRenderable(gl_format mesa_format);
 
+#if FEATURE_OES_EGL_image
+void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
+				    struct gl_texture_object *texObj,
+				    struct gl_texture_image *texImage,
+				    GLeglImageOES image_handle);
+#endif
+
 #endif

@@ -94,6 +94,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_stencil_two_side
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_vertex_program
+#define need_GL_OES_EGL_image
 
 #include "main/remap_helper.h"
 
@@ -148,6 +149,9 @@ static const struct dri_extension card_extensions[] = {
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_ARB_pixel_buffer_object",        NULL},
   {"GL_ARB_draw_elements_base_vertex",	GL_ARB_draw_elements_base_vertex_functions },
+#if FEATURE_OES_EGL_image
+  {"GL_OES_EGL_image",			GL_OES_EGL_image_functions},
+#endif
   {NULL,				NULL}
   /* *INDENT-ON* */
 };

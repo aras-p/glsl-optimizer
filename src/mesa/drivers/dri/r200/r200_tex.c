@@ -537,6 +537,10 @@ void r200InitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *fu
    functions->MapTexture = radeonMapTexture;
    functions->UnmapTexture = radeonUnmapTexture;
 
+#if FEATURE_OES_EGL_image
+   functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
+#endif
+
    driInitTextureFormats();
 
 }

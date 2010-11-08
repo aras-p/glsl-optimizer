@@ -382,5 +382,9 @@ void r300InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *fun
 
 	functions->GenerateMipmap = radeonGenerateMipmap;
 
+#if FEATURE_OES_EGL_image
+	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
+#endif
+
 	driInitTextureFormats();
 }

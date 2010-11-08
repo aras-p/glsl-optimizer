@@ -1007,3 +1007,67 @@ unsigned radeonIsFormatRenderable(gl_format mesa_format)
 			return 0;
 	}
 }
+
+#if FEATURE_OES_EGL_image
+void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
+				    struct gl_texture_object *texObj,
+				    struct gl_texture_image *texImage,
+				    GLeglImageOES image_handle)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	radeonTexObj *t = radeon_tex_obj(texObj);
+	radeon_texture_image *radeonImage = get_radeon_texture_image(texImage);
+	__DRIscreen *screen;
+	__DRIimage *image;
+
+	screen = radeon->dri.screen;
+	image = screen->dri2.image->lookupEGLImage(screen, image_handle,
+						   screen->loaderPrivate);
+	if (image == NULL)
+		return;
+
+	radeonFreeTexImageData(ctx, texImage);
+
+	texImage->Width = image->width;
+	texImage->Height = image->height;
+	texImage->Depth = 1;
+	texImage->_BaseFormat = GL_RGBA;
+	texImage->TexFormat = image->format;
+	texImage->RowStride = image->pitch;
+	texImage->InternalFormat = image->internal_format;
+
+	if(t->mt)
+	{
+		radeon_miptree_unreference(&t->mt);
+		t->mt = NULL;
+	}
+
+	/* NOTE: The following is *very* ugly and will probably break. But
+	   I don't know how to deal with it, without creating a whole new
+	   function like radeon_miptree_from_bo() so I'm going with the
+	   easy but error-prone way. */
+
+	radeon_try_alloc_miptree(radeon, t);
+
+	radeonImage->mtface = _mesa_tex_target_to_face(target);
+	radeonImage->mtlevel = 0;
+	radeon_miptree_reference(t->mt, &radeonImage->mt);
+
+	if (t->mt == NULL)
+	{
+		radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+			     "%s Failed to allocate miptree.\n", __func__);
+		return;
+	}
+
+	/* Particularly ugly: this is guaranteed to break, if image->bo is
+	   not of the required size for a miptree. */
+	radeon_bo_unref(t->mt->bo);
+	radeon_bo_ref(image->bo);
+	t->mt->bo = image->bo;
+
+	if (!radeon_miptree_matches_image(t->mt, &radeonImage->base,
+					  radeonImage->mtface, 0))
+		fprintf(stderr, "miptree doesn't match image\n");
+}
+#endif
