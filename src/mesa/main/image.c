@@ -581,7 +581,6 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-            case GL_FLOAT:
             case GL_UNSIGNED_SHORT_4_4_4_4:
             case GL_UNSIGNED_SHORT_4_4_4_4_REV:
             case GL_UNSIGNED_SHORT_5_5_5_1:
