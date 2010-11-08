@@ -58,17 +58,6 @@
 #define DOUBLE_BIT           0x200
 #define FIXED_BIT            0x400
 
-/* These are specific to certain features/extensions */
-#if FEATURE_fixedpt
-#define EXT_FIXED_BIT        FIXED_BIT
-#else
-#define EXT_FIXED_BIT        0x0
-#endif
-#if FEATURE_vertex_array_byte
-#define EXT_BYTE_BIT         BYTE_BIT
-#else
-#define EXT_BYTE_BIT         0x0
-#endif
 
 
 /** Convert GL datatype enum into a <type>_BIT value seen above */
@@ -138,6 +127,11 @@ update_array(struct gl_context *ctx,
    GLsizei elementSize;
    GLenum format = GL_RGBA;
 
+   if (ctx->API != API_OPENGLES) {
+      /* fixed point arrays / data is only allowed with OpenGL ES 1.x */
+      legalTypesMask &= ~FIXED_BIT;
+   }
+
    typeBit = type_to_bit(ctx, type);
    if (typeBit == 0x0 || (typeBit & legalTypesMask) == 0x0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(type = %s)",
@@ -202,11 +196,13 @@ update_array(struct gl_context *ctx,
 void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   const GLbitfield legalTypes = (SHORT_BIT | INT_BIT | FLOAT_BIT |
-                                  DOUBLE_BIT | HALF_BIT |
-                                  EXT_FIXED_BIT | EXT_BYTE_BIT);
+   GLbitfield legalTypes = (SHORT_BIT | INT_BIT | FLOAT_BIT |
+                            DOUBLE_BIT | HALF_BIT | FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->API == API_OPENGLES)
+      legalTypes |= BYTE_BIT;
 
    update_array(ctx, "glVertexPointer",
                 &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
@@ -220,7 +216,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    const GLbitfield legalTypes = (BYTE_BIT | SHORT_BIT | INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  EXT_FIXED_BIT);
+                                  FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -238,7 +234,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
                                   SHORT_BIT | UNSIGNED_SHORT_BIT |
                                   INT_BIT | UNSIGNED_INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  EXT_FIXED_BIT);
+                                  FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -300,12 +296,14 @@ void GLAPIENTRY
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
-   const GLbitfield legalTypes = (EXT_BYTE_BIT | SHORT_BIT | INT_BIT |
-                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  EXT_FIXED_BIT);
+   GLbitfield legalTypes = (SHORT_BIT | INT_BIT |
+                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->API == API_OPENGLES)
+      legalTypes |= BYTE_BIT;
 
    ASSERT(unit < Elements(ctx->Array.ArrayObj->TexCoord));
 
@@ -337,10 +335,16 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 void GLAPIENTRY
 _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   const GLbitfield legalTypes = (FLOAT_BIT | EXT_FIXED_BIT);
+   const GLbitfield legalTypes = (FLOAT_BIT | FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (ctx->API != API_OPENGLES) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glPointSizePointer(ES 1.x only)");
+      return;
+   }
+      
    update_array(ctx, "glPointSizePointer",
                 &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
                 legalTypes, 1, 1,
@@ -399,7 +403,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                                   SHORT_BIT | UNSIGNED_SHORT_BIT |
                                   INT_BIT | UNSIGNED_INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  EXT_FIXED_BIT);
+                                  FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
