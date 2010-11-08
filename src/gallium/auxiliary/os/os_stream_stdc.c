@@ -106,7 +106,7 @@ os_file_stream_create(const char *filename)
    stream->base.flush = &os_stdc_stream_flush;
    stream->base.vprintf = &os_stdc_stream_vprintf;
 
-   stream->file = fopen(filename, "w");
+   stream->file = fopen(filename, "wb");
    if(!stream->file)
       goto no_file;
 
