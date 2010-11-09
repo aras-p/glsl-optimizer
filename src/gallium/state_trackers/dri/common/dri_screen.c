@@ -231,6 +231,9 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
 {
    memset(stvis, 0, sizeof(*stvis));
 
+   if (!mode)
+      return;
+
    stvis->samples = mode->samples;
    stvis->render_buffer = ST_ATTACHMENT_INVALID;
 
