@@ -911,8 +911,13 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
             }
          }
          else {
+            mo_vec[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
             mo_vec[1].x = mb->pmv[1][1][0];
-            mo_vec[1].y = mb->pmv[1][1][1];
+            mo_vec[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+            if(mb->mvfs[0][1]) mo_vec[0].y += 2;
+            if(!mb->mvfs[1][1]) mo_vec[1].y -= 2;
 
             for (i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
@@ -934,21 +939,31 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
          vb = ref_vb[0] + pos * 2 * 24;
 
          if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
-             mo_vec[0].x = mb->pmv[0][1][0];
-             mo_vec[0].y = mb->pmv[0][1][1];
+            mo_vec[0].x = mb->pmv[0][1][0];
+            mo_vec[0].y = mb->pmv[0][1][1];
 
-             if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
-                mo_vec[1].x = mb->pmv[1][1][0];
-                mo_vec[1].y = mb->pmv[1][1][1];
-             }
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
+               mo_vec[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
+               mo_vec[1].x = mb->pmv[1][1][0];
+               mo_vec[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+               if(mb->mvfs[0][1]) mo_vec[0].y += 2;
+               if(!mb->mvfs[1][1]) mo_vec[1].y -= 2;
+            }
          }
          else {
             mo_vec[0].x = mb->pmv[0][0][0];
             mo_vec[0].y = mb->pmv[0][0][1];
 
             if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
+               mo_vec[0].y = mb->pmv[0][0][1] - (mb->pmv[0][0][1] % 4);
+
                mo_vec[1].x = mb->pmv[1][0][0];
-               mo_vec[1].y = mb->pmv[1][0][1];
+               mo_vec[1].y = mb->pmv[1][0][1] - (mb->pmv[1][0][1] % 4);
+
+               if(mb->mvfs[0][0]) mo_vec[0].y += 2;
+               if(!mb->mvfs[1][0]) mo_vec[1].y -= 2;
             }
          }
 
