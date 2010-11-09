@@ -36,8 +36,10 @@
 #ifndef HINT_H
 #define HINT_H
 
+#include "glheader.h"
+#include "mfeatures.h"
 
-#include "mtypes.h"
+struct gl_context;
 
 #if _HAVE_FULL_GL
 
