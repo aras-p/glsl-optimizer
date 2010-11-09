@@ -860,6 +860,7 @@ choose_depth_test(struct quad_stage *qs,
    /* look for special cases */
    if (!alpha &&
        !depth &&
+       !occlusion &&
        !stencil) {
       qs->run = depth_noop;
    }
