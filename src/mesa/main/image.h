@@ -27,8 +27,10 @@
 #define IMAGE_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 
+struct gl_context;
+struct gl_pixelstore_attrib;
 
 extern void
 _mesa_swap2( GLushort *p, GLuint n );
