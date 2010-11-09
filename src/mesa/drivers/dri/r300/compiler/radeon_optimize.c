@@ -71,12 +71,13 @@ static void copy_propagate_scan_read(void * data, struct rc_instruction * inst,
 {
 	rc_register_file file = src->File;
 	struct rc_reader_data * reader_data = data;
-	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
 
-	/* It is possible to do copy propigation in this situation,
-	 * just not right now, see peephole_add_presub_inv() */
-	if (reader_data->Writer->U.I.PreSub.Opcode != RC_PRESUB_NONE &&
-			(info->NumSrcRegs > 2 || info->HasTexture)) {
+	if(!rc_inst_can_use_presub(inst,
+				reader_data->Writer->U.I.PreSub.Opcode,
+				rc_swizzle_to_writemask(src->Swizzle),
+				*src,
+				reader_data->Writer->U.I.PreSub.SrcReg[0],
+				reader_data->Writer->U.I.PreSub.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -424,24 +425,13 @@ static void presub_scan_read(
 	struct rc_src_register * src)
 {
 	struct rc_reader_data * reader_data = data;
-	const struct rc_opcode_info * info =
-					rc_get_opcode_info(inst->U.I.Opcode);
-	/* XXX: There are some situations where instructions
-	 * with more than 2 src registers can use the
-	 * presubtract select, but to keep things simple we
-	 * will disable presubtract on these instructions for
-	 * now. */
-	if (info->NumSrcRegs > 2 || info->HasTexture) {
-		reader_data->Abort = 1;
-		return;
-	}
+	rc_presubtract_op * presub_opcode = reader_data->CbData;
 
-	/* We can't use more than one presubtract value in an
-	 * instruction, unless the two prsubtract operations
-	 * are the same and read from the same registers.
-	 * XXX For now we will limit instructions to only one presubtract
-	 * value.*/
-	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+	if (!rc_inst_can_use_presub(inst, *presub_opcode,
+			reader_data->Writer->U.I.DstReg.WriteMask,
+			*src,
+			reader_data->Writer->U.I.SrcReg[0],
+			reader_data->Writer->U.I.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -455,7 +445,9 @@ static int presub_helper(
 {
 	struct rc_reader_data reader_data;
 	unsigned int i;
+	rc_presubtract_op cb_op = presub_opcode;
 
+	reader_data.CbData = &cb_op;
 	rc_get_readers(c, inst_add, &reader_data, presub_scan_read, NULL,
 						is_src_clobbered_scan_write);
 

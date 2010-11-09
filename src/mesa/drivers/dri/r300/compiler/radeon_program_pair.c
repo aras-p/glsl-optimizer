@@ -27,6 +27,8 @@
 
 #include "radeon_program_pair.h"
 
+#include "radeon_compiler_util.h"
+
 #include <stdlib.h>
 
 /**
@@ -205,37 +207,35 @@ void rc_pair_foreach_source_that_rgb_reads(
 	}
 }
 
-/*return 0 for rgb, 1 for alpha -1 for error. */
-
-unsigned int rc_source_type_that_arg_reads(
-	unsigned int source,
-	unsigned int swizzle)
-{
-	unsigned int chan;
-	unsigned int swz = RC_SWIZZLE_UNUSED;
-	unsigned int ret = RC_PAIR_SOURCE_NONE;
-
-	for(chan = 0; chan < 3; chan++) {
-		swz = GET_SWZ(swizzle, chan);
-		if (swz == RC_SWIZZLE_W) {
-			ret |= RC_PAIR_SOURCE_ALPHA;
-		} else if (swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y
-						|| swz == RC_SWIZZLE_Z) {
-			ret |= RC_PAIR_SOURCE_RGB;
-		}
-	}
-	return ret;
-}
-
 struct rc_pair_instruction_source * rc_pair_get_src(
 	struct rc_pair_instruction * pair_inst,
 	struct rc_pair_instruction_arg * arg)
 {
-	unsigned int type = rc_source_type_that_arg_reads(arg->Source,
-								arg->Swizzle);
-	if (type & RC_PAIR_SOURCE_RGB) {
+	unsigned int i, type;
+	unsigned int channels = 0;
+
+	for(i = 0; i < 3; i++) {
+		if (arg == pair_inst->RGB.Arg + i) {
+			channels = 3;
+			break;
+		}
+	}
+
+	if (channels == 0) {
+		for (i = 0; i < 3; i++) {
+			if (arg == pair_inst->Alpha.Arg + i) {
+				channels = 1;
+				break;
+			}
+		}
+	}
+
+	assert(channels > 0);
+	type = rc_source_type_swz(arg->Swizzle, channels);
+
+	if (type & RC_SOURCE_RGB) {
 		return &pair_inst->RGB.Src[arg->Source];
-	} else if (type & RC_PAIR_SOURCE_ALPHA) {
+	} else if (type & RC_SOURCE_ALPHA) {
 		return &pair_inst->Alpha.Src[arg->Source];
 	} else {
 		return NULL;

@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 
 
@@ -301,12 +302,12 @@ static int merge_presub_sources(
 	assert(dst_full->Alpha.Opcode == RC_OPCODE_NOP);
 
 	switch(type) {
-	case RC_PAIR_SOURCE_RGB:
+	case RC_SOURCE_RGB:
 		is_rgb = 1;
 		is_alpha = 0;
 		dst_sub = &dst_full->RGB;
 		break;
-	case RC_PAIR_SOURCE_ALPHA:
+	case RC_SOURCE_ALPHA:
 		is_rgb = 0;
 		is_alpha = 1;
 		dst_sub = &dst_full->Alpha;
@@ -347,6 +348,8 @@ static int merge_presub_sources(
 				continue;
 			free_source = rc_pair_alloc_source(dst_full, is_rgb,
 					is_alpha, temp.File, temp.Index);
+			if (free_source < 0)
+				return 0;
 			one_way = 1;
 		} else {
 			dst_sub->Src[free_source] = temp;
@@ -362,11 +365,11 @@ static int merge_presub_sources(
 		for(arg = 0; arg < info->NumSrcRegs; arg++) {
 			/*If this arg does not read from an rgb source,
 			 * do nothing. */
-			if (!(rc_source_type_that_arg_reads(
-				dst_full->RGB.Arg[arg].Source,
-				dst_full->RGB.Arg[arg].Swizzle) & type)) {
+			if (!(rc_source_type_swz(dst_full->RGB.Arg[arg].Swizzle,
+								3) & type)) {
 				continue;
 			}
+
 			if (dst_full->RGB.Arg[arg].Source == srcp_src)
 				dst_full->RGB.Arg[arg].Source = free_source;
 			/* We need to do this just in case register
@@ -398,13 +401,13 @@ static int destructive_merge_instructions(
 
 	/* Merge the rgb presubtract registers. */
 	if (alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
-		if (!merge_presub_sources(rgb, alpha->RGB, RC_PAIR_SOURCE_RGB)) {
+		if (!merge_presub_sources(rgb, alpha->RGB, RC_SOURCE_RGB)) {
 			return 0;
 		}
 	}
 	/* Merge the alpha presubtract registers */
 	if (alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
-		if(!merge_presub_sources(rgb,  alpha->Alpha, RC_PAIR_SOURCE_ALPHA)){
+		if(!merge_presub_sources(rgb,  alpha->Alpha, RC_SOURCE_ALPHA)){
 			return 0;
 		}
 	}

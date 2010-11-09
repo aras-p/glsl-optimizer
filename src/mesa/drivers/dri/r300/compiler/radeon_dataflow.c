@@ -139,9 +139,17 @@ static void pair_sub_for_all_args(
 	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
 
 	for(i = 0; i < info->NumSrcRegs; i++) {
-		unsigned int src_type = rc_source_type_that_arg_reads(
-				sub->Arg[i].Source, sub->Arg[i].Swizzle);
-		if (src_type == RC_PAIR_SOURCE_NONE)
+		unsigned int src_type;
+		unsigned int channels = 0;
+		if (&fullinst->U.P.RGB == sub)
+			channels = 3;
+		else if (&fullinst->U.P.Alpha == sub)
+			channels = 1;
+
+		assert(channels > 0);
+		src_type = rc_source_type_swz(sub->Arg[i].Swizzle, channels);
+
+		if (src_type == RC_SOURCE_NONE)
 			continue;
 
 		if (sub->Arg[i].Source == RC_PAIR_PRESUB_SRC) {
@@ -149,7 +157,7 @@ static void pair_sub_for_all_args(
 			unsigned int presub_src_count;
 			struct rc_pair_instruction_source * src_array;
 			unsigned int j;
-			if (src_type & RC_PAIR_SOURCE_RGB) {
+			if (src_type & RC_SOURCE_RGB) {
 				presub_type = fullinst->
 					U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index;
 				src_array = fullinst->U.P.RGB.Src;

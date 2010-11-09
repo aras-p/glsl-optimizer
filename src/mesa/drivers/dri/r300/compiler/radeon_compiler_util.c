@@ -31,6 +31,8 @@
 
 #include "radeon_compiler_util.h"
 
+#include "radeon_compiler.h"
+#include "radeon_dataflow.h"
 /**
  */
 unsigned int rc_swizzle_to_writemask(unsigned int swz)
@@ -59,3 +61,123 @@ unsigned int rc_src_reads_dst_mask(
 	}
 	return dst_mask & rc_swizzle_to_writemask(src_swz);
 }
+
+unsigned int rc_source_type_swz(unsigned int swizzle, unsigned int channels)
+{
+	unsigned int chan;
+	unsigned int swz = RC_SWIZZLE_UNUSED;
+	unsigned int ret = RC_SOURCE_NONE;
+
+	for(chan = 0; chan < channels; chan++) {
+		swz = GET_SWZ(swizzle, chan);
+		if (swz == RC_SWIZZLE_W) {
+			ret |= RC_SOURCE_ALPHA;
+		} else if (swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y
+						|| swz == RC_SWIZZLE_Z) {
+			ret |= RC_SOURCE_RGB;
+		}
+	}
+	return ret;
+}
+
+unsigned int rc_source_type_mask(unsigned int mask)
+{
+	unsigned int ret = RC_SOURCE_NONE;
+
+	if (mask & RC_MASK_XYZ)
+		ret |= RC_SOURCE_RGB;
+
+	if (mask & RC_MASK_W)
+		ret |= RC_SOURCE_ALPHA;
+
+	return ret;
+}
+
+struct can_use_presub_data {
+	struct rc_src_register RemoveSrcs[3];
+	unsigned int RGBCount;
+	unsigned int AlphaCount;
+};
+
+static void can_use_presub_read_cb(
+	void * userdata,
+	struct rc_instruction * inst,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int mask)
+{
+	struct can_use_presub_data * d = userdata;
+	unsigned int src_type = rc_source_type_mask(mask);
+	unsigned int i;
+
+	if (file == RC_FILE_NONE)
+		return;
+
+	for(i = 0; i < 3; i++) {
+		if (d->RemoveSrcs[i].File == file
+		    && d->RemoveSrcs[i].Index == index) {
+			src_type &=
+				~rc_source_type_swz(d->RemoveSrcs[i].Swizzle, 4);
+		}
+	}
+
+	if (src_type & RC_SOURCE_RGB)
+		d->RGBCount++;
+
+	if (src_type & RC_SOURCE_ALPHA)
+		d->AlphaCount++;
+}
+
+unsigned int rc_inst_can_use_presub(
+	struct rc_instruction * inst,
+	rc_presubtract_op presub_op,
+	unsigned int presub_writemask,
+	struct rc_src_register replace_reg,
+	struct rc_src_register presub_src0,
+	struct rc_src_register presub_src1)
+{
+	struct can_use_presub_data d;
+	unsigned int num_presub_srcs;
+	unsigned int presub_src_type = rc_source_type_mask(presub_writemask);
+	const struct rc_opcode_info * info =
+					rc_get_opcode_info(inst->U.I.Opcode);
+
+	if (presub_op == RC_PRESUB_NONE) {
+		return 1;
+	}
+
+	if (info->HasTexture) {
+		return 0;
+	}
+
+	/* We can't use more than one presubtract value in an
+	 * instruction, unless the two prsubtract operations
+	 * are the same and read from the same registers.
+	 * XXX For now we will limit instructions to only one presubtract
+	 * value.*/
+	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+		return 0;
+	}
+
+	memset(&d, 0, sizeof(d));
+	d.RemoveSrcs[0] = replace_reg;
+	d.RemoveSrcs[1] = presub_src0;
+	d.RemoveSrcs[2] = presub_src1;
+
+	rc_for_all_reads_mask(inst, can_use_presub_read_cb, &d);
+
+	num_presub_srcs = rc_presubtract_src_reg_count(presub_op);
+
+	if ((presub_src_type & RC_SOURCE_RGB)
+					&& d.RGBCount + num_presub_srcs > 3) {
+		return 0;
+	}
+
+	if ((presub_src_type & RC_SOURCE_ALPHA)
+					&& d.AlphaCount + num_presub_srcs > 3) {
+		return 0;
+	}
+
+	return 1;
+}
+
