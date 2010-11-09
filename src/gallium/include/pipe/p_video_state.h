@@ -89,6 +89,7 @@ struct pipe_mpeg12_macroblock
    enum pipe_mpeg12_motion_type mo_type;
    enum pipe_mpeg12_dct_type dct_type;
    signed pmv[2][2][2];
+   bool mvfs[2][2];
    unsigned cbp;
    short *blocks;
 };

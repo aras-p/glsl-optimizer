@@ -181,6 +181,11 @@ MacroBlocksToPipe(struct pipe_screen *screen,
             for (l = 0; l < 2; ++l)
                pipe_macroblocks->pmv[j][k][l] = xvmc_mb->PMV[j][k][l];
 
+      pipe_macroblocks->mvfs[0][0] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_FORWARD;
+      pipe_macroblocks->mvfs[0][1] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_BACKWARD;
+      pipe_macroblocks->mvfs[1][0] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_FORWARD;
+      pipe_macroblocks->mvfs[1][1] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_BACKWARD;
+
       pipe_macroblocks->cbp = xvmc_mb->coded_block_pattern;
       pipe_macroblocks->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
 
