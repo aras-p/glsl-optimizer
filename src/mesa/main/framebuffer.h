@@ -26,7 +26,10 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
-#include "mtypes.h"
+#include "glheader.h"
+
+struct gl_config;
+struct gl_context;
 
 extern struct gl_framebuffer *
 _mesa_create_framebuffer(const struct gl_config *visual);
