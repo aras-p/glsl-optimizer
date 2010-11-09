@@ -1252,15 +1252,7 @@ emit_declaration(
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
          assert(idx < LP_MAX_TGSI_TEMPS);
-         if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
-            /* ignore 'first' - we want to index into a 0-based array */
-            LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
-                                                   last*4 + 4, 0);
-            bld->temps_array = lp_build_array_alloca(bld->base.builder,
-                                                     vec_type, array_size,
-                                                     "temporary");
-            idx = last;
-         } else {
+         if (!(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY))) {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
                                                     vec_type, "temp");
@@ -1268,15 +1260,7 @@ emit_declaration(
          break;
 
       case TGSI_FILE_OUTPUT:
-         if (bld->indirect_files & (1 << TGSI_FILE_OUTPUT)) {
-            /* ignore 'first' - we want to index into a 0-based array */
-            LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
-                                                   last*4 + 4, 0);
-            bld->outputs_array = lp_build_array_alloca(bld->base.builder,
-                                                       vec_type, array_size,
-                                                       "outputs_array");
-            idx = last;
-         } else {
+         if (!(bld->indirect_files & (1 << TGSI_FILE_OUTPUT))) {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->outputs[idx][i] = lp_build_alloca(bld->base.builder,
                                                       vec_type, "output");
@@ -2314,6 +2298,22 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
    lp_exec_mask_init(&bld.exec_mask, &bld.base);
 
+   if (bld.indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+      LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                             info->file_max[TGSI_FILE_TEMPORARY]*4 + 4, 0);
+      bld.temps_array = lp_build_array_alloca(bld.base.builder,
+                                              bld.base.vec_type, array_size,
+                                              "temp_array");
+   }
+
+   if (bld.indirect_files & (1 << TGSI_FILE_OUTPUT)) {
+      LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                             info->file_max[TGSI_FILE_OUTPUT]*4 + 4, 0);
+      bld.outputs_array = lp_build_array_alloca(bld.base.builder,
+                                                bld.base.vec_type, array_size,
+                                                "output_array");
+   }
+
    tgsi_parse_init( &parse, tokens );
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
@@ -2386,24 +2386,11 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    /* If we have indirect addressing in outputs we need to copy our alloca array
     * to the outputs slots specified by the called */
    if (bld.indirect_files & (1 << TGSI_FILE_OUTPUT)) {
-      tgsi_parse_init(&parse, tokens);
-      while( !tgsi_parse_end_of_tokens( &parse ) ) {
-         tgsi_parse_token( &parse );
-
-         switch( parse.FullToken.Token.Type ) {
-         case TGSI_TOKEN_TYPE_DECLARATION: {
-            const struct tgsi_full_declaration *decl = &parse.FullToken.FullDeclaration;
-            /* Inputs already interpolated */
-            if (decl->Declaration.File == TGSI_FILE_OUTPUT) {
-               unsigned idx = decl->Range.Last;
-               const unsigned first = decl->Range.First;
-               const unsigned last = decl->Range.Last;
-               for (idx = first; idx <= last; ++idx)
-                  for (i = 0; i < NUM_CHANNELS; i++)
-                     bld.outputs[idx][i] = get_output_ptr(&bld, idx, i);
-            }
-            break;
-         }
+      unsigned index, chan;
+      assert(info->num_outputs <= info->file_max[TGSI_FILE_OUTPUT] + 1);
+      for (index = 0; index < info->num_outputs; ++index) {
+         for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+            bld.outputs[index][chan] = get_output_ptr(&bld, index, chan);
          }
       }
    }
