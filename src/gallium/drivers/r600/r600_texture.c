@@ -507,10 +507,6 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	struct r600_transfer *trans;
 	int r;
 	boolean use_staging_texture = FALSE;
-	boolean discard = FALSE;
-
-	if (!(usage & PIPE_TRANSFER_READ) && (usage & PIPE_TRANSFER_DISCARD))
-		discard = TRUE;
 
 	/* We cannot map a tiled texture directly because the data is
 	 * in a different order, therefore we do detiling using a blit.
@@ -522,7 +518,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if (rtex->tiled)
 		use_staging_texture = TRUE;
 
-        if (usage & PIPE_TRANSFER_READ &&
+	if ((usage & PIPE_TRANSFER_READ) &&
             u_box_volume(box) > 1024)
                 use_staging_texture = TRUE;
 
@@ -532,8 +528,9 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
          * and might block.
          */
         if ((usage & PIPE_TRANSFER_WRITE) &&
-            discard &&
-            !(usage & (PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_UNSYNCHRONIZED)))
+            !(usage & (PIPE_TRANSFER_READ |
+                       PIPE_TRANSFER_DONTBLOCK |
+                       PIPE_TRANSFER_UNSYNCHRONIZED)))
                 use_staging_texture = TRUE;
 
         if (!permit_hardware_blit(ctx->screen, texture) ||
@@ -591,7 +588,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 
 		trans->transfer.stride =
                         ((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
-		if (!discard) {
+		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
 			ctx->flush(ctx, 0, NULL);
