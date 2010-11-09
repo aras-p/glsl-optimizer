@@ -1189,6 +1189,9 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
       return;
    }
 
+   if (size == 0)
+      return;
+
    bufObj->Written = GL_TRUE;
 
    ASSERT(ctx->Driver.BufferSubData);
