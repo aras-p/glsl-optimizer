@@ -101,9 +101,6 @@ process_call(exec_list *instructions, ir_function *f,
 
    ir_function_signature *sig = f->matching_signature(actual_parameters);
 
-   /* The instructions param will be used when the FINISHMEs below are done */
-   (void) instructions;
-
    if (sig != NULL) {
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
        * isn't done in ir_function::matching_signature because that function
