@@ -33,8 +33,20 @@
 
 /* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
-struct gl_pixelstore_attrib;
+#include "glheader.h"
+
+struct gl_buffer_object;
+struct gl_context;
 struct gl_display_list;
+struct gl_framebuffer;
+struct gl_pixelstore_attrib;
+struct gl_program;
+struct gl_renderbuffer;
+struct gl_renderbuffer_attachment;
+struct gl_shader;
+struct gl_shader_program;
+struct gl_texture_image;
+struct gl_texture_object;
 
 /* GL_ARB_vertex_buffer_object */
 /* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
