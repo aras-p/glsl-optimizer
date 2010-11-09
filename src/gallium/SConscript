@@ -116,7 +116,7 @@ if env['dri']:
             'targets/dri-r600/SConscript',
         ])
 
-if env['xorg']:
+if env['xorg'] and env['drm']:
     SConscript([
         #'targets/xorg-i915/SConscript',
         #'targets/xorg-i965/SConscript',
