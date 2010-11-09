@@ -150,6 +150,12 @@ struct lp_build_tgsi_soa_context
     */
    LLVMValueRef outputs_array;
 
+   /* We allocate/use this array of inputs if (1 << TGSI_FILE_INPUT) is
+    * set in the indirect_files field.
+    * The inputs[] array above is unused then.
+    */
+   LLVMValueRef inputs_array;
+
    const struct tgsi_shader_info *info;
    /** bitmask indicating which register files are accessed indirectly */
    unsigned indirect_files;
@@ -466,8 +472,6 @@ get_output_ptr(struct lp_build_tgsi_soa_context *bld,
    }
 }
 
-
-
 /**
  * Gather vector.
  * XXX the lp_build_gather() function should be capable of doing this
@@ -661,7 +665,38 @@ emit_fetch(
       break;
 
    case TGSI_FILE_INPUT:
-      res = bld->inputs[reg->Register.Index][swizzle];
+      if (reg->Register.Indirect) {
+         LLVMValueRef swizzle_vec =
+            lp_build_const_int_vec(uint_bld->type, swizzle);
+         LLVMValueRef length_vec =
+            lp_build_const_int_vec(uint_bld->type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* index into the const buffer */
+         LLVMValueRef inputs_array;
+         LLVMTypeRef float4_ptr_type;
+
+         /* index_vec = (indirect_index * 4 + swizzle) * length */
+         index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+         index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
+         index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+
+         /* cast inputs_array pointer to float* */
+         float4_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         inputs_array = LLVMBuildBitCast(uint_bld->builder, bld->inputs_array,
+                                        float4_ptr_type, "");
+
+         /* Gather values from the temporary register array */
+         res = build_gather(bld, inputs_array, index_vec);
+      } else {
+         if (bld->indirect_files & (1 << TGSI_FILE_INPUT)) {
+            LLVMValueRef lindex = lp_build_const_int32(reg->Register.Index * 4 + swizzle);
+            LLVMValueRef input_ptr =  LLVMBuildGEP(bld->base.builder,
+                                                   bld->inputs_array, &lindex, 1, "");
+            res = LLVMBuildLoad(bld->base.builder, input_ptr, "");
+         }
+         else {
+            res = bld->inputs[reg->Register.Index][swizzle];
+         }
+      }
       assert(res);
       break;
 
@@ -2312,6 +2347,32 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       bld.outputs_array = lp_build_array_alloca(bld.base.builder,
                                                 bld.base.vec_type, array_size,
                                                 "output_array");
+   }
+
+   /* If we have indirect addressing in inputs we need to copy them into
+    * our alloca array to be able to iterate over them */
+   if (bld.indirect_files & (1 << TGSI_FILE_INPUT)) {
+      unsigned index, chan;
+      LLVMTypeRef vec_type = bld.base.vec_type;
+      LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                             info->file_max[TGSI_FILE_INPUT]*4 + 4, 0);
+      bld.inputs_array = lp_build_array_alloca(bld.base.builder,
+                                               vec_type, array_size,
+                                               "input_array");
+
+      assert(info->num_inputs <= info->file_max[TGSI_FILE_INPUT] + 1);
+
+      for (index = 0; index < info->num_inputs; ++index) {
+         for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+            LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
+            LLVMValueRef input_ptr =
+               LLVMBuildGEP(bld.base.builder, bld.inputs_array,
+                            &lindex, 1, "");
+            LLVMValueRef value = bld.inputs[index][chan];
+            if (value)
+               LLVMBuildStore(bld.base.builder, value, input_ptr);
+         }
+      }
    }
 
    tgsi_parse_init( &parse, tokens );
