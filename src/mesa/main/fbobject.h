@@ -26,7 +26,10 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
-#include "mtypes.h"
+#include "glheader.h"
+
+struct gl_context;
+struct gl_texture_object;
 
 extern void
 _mesa_init_fbobjects(struct gl_context *ctx);
