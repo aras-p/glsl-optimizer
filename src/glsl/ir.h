@@ -832,6 +832,14 @@ enum ir_expression_operation {
 
 class ir_expression : public ir_rvalue {
 public:
+   /**
+    * Constructor for unary operation expressions
+    */
+   ir_expression(int op, const struct glsl_type *type, ir_rvalue *);
+
+   /**
+    * Constructor for binary operation expressions
+    */
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
 
