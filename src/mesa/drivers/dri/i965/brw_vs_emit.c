@@ -1685,10 +1685,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
       printf("\n");
    }
 
-   /* FIXME Need to fix conditional instruction to remove this */
-   if (intel->gen >= 6)
-       p->single_program_flow = GL_TRUE;
-
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    if_depth_in_loop[loop_depth] = 0;
