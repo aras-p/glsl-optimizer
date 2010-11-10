@@ -84,9 +84,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    struct ureg_program *shader;
    struct ureg_src norm, mbs;
    struct ureg_src vpos, vtex[3], vmv[4];
-   struct ureg_dst tmp;
+   struct ureg_dst t_vpos, scale;
    struct ureg_dst o_vpos, o_vtex[3], o_vmv[4], o_line;
    unsigned i, j, count;
+   bool interlaced = mv_per_frame == 2;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -94,7 +95,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 
    norm = ureg_DECL_constant(shader, 0);
    mbs = ureg_imm2f(shader, MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT);
-   tmp = ureg_DECL_temporary(shader);
+
+   t_vpos = ureg_DECL_temporary(shader);
+   scale = ureg_DECL_temporary(shader);
 
    vpos = ureg_DECL_vs_input(shader, 0);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
@@ -121,33 +124,47 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 4 + count);
 
    /*
-    * o_vpos = vpos * norm * mbs
-    * o_vtex[0..2] = vtex[0..2] * norm * mbs
-    * o_vmv[0..count] = o_vpos + vmv[0..4] * norm * 0.5 // Apply motion vector
-    * o_line.x = 1
-    * o_line.y = vpos.y * 8
+    * scale = norm * mbs;
+    *
+    * t_vpos = vpos * scale
+    * o_vpos = t_vpos
+    *
+    * o_vtex[0..2] = vtex[0..2] * scale
+    *
+    * if(count > 0) { // Apply motion vectors
+    *    scale = norm * 0.5;
+    *    o_vmv[0..count] = t_vpos + vmv[0..4] * scale
+    * }
+    *
+    * if(interlaced) {
+    *    o_line.x = 1
+    *    o_line.y = vpos.y * 8
+    * }
     */
-   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), vpos, mbs);
-   ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(tmp), norm);
+   ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, mbs);
+
+   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, ureg_src(scale));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
    for (i = 0; i < 3; ++i) {
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), vtex[i], mbs);
-      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), ureg_src(tmp), norm);
+      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), vtex[i], ureg_src(scale));
    }
 
-   for (i = 0; i < count; ++i) {
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), vmv[i], 
-         ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
-      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(tmp), norm, ureg_src(o_vpos));
+   if(count > 0) {
+      ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
+      for (i = 0; i < count; ++i)
+         ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(scale), vmv[i], ureg_src(t_vpos));
    }
 
-   if (mv_per_frame == 2) {
+   if (interlaced) {
       ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f));
       ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), vpos, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
    }
 
-   ureg_release_temporary(shader, tmp);
+   ureg_release_temporary(shader, t_vpos);
+   ureg_release_temporary(shader, scale);
+
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, r->pipe);
