@@ -750,7 +750,7 @@ dri2_create_screen(_EGLDisplay *disp)
    if (dri2_dpy->dri2->base.version >= 2)
       api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
    else
-      api_mask = __DRI_API_OPENGL;
+      api_mask = 1 << __DRI_API_OPENGL;
 
    disp->ClientAPIsMask = 0;
    if (api_mask & (1 <<__DRI_API_OPENGL))
