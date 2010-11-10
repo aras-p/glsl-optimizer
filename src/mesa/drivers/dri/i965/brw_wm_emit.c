@@ -83,6 +83,7 @@ brw_wm_arg_can_be_immediate(enum prog_opcode opcode, int arg)
       [OPCODE_SLE] = 2,
       [OPCODE_SLT] = 2,
       [OPCODE_SNE] = 2,
+      [OPCODE_SWZ] = 1,
       [OPCODE_XPD] = 2,
    };
 
