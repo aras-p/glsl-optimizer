@@ -456,3 +456,44 @@ TAG(vbo_render_prims)(struct gl_context *ctx,
 
 	vbo_deinit_arrays(ctx, ib, arrays);
 }
+
+/* VBO rendering entry points. */
+
+static void
+TAG(vbo_check_render_prims)(struct gl_context *ctx,
+			    const struct gl_client_array **arrays,
+			    const struct _mesa_prim *prims, GLuint nr_prims,
+			    const struct _mesa_index_buffer *ib,
+			    GLboolean index_bounds_valid,
+			    GLuint min_index, GLuint max_index)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+
+	nouveau_validate_framebuffer(ctx);
+
+	if (nctx->fallback == HWTNL)
+		TAG(vbo_render_prims)(ctx, arrays, prims, nr_prims, ib,
+				      index_bounds_valid, min_index, max_index);
+
+	if (nctx->fallback == SWTNL)
+		_tnl_vbo_draw_prims(ctx, arrays, prims, nr_prims, ib,
+				    index_bounds_valid, min_index, max_index);
+}
+
+void
+TAG(vbo_init)(struct gl_context *ctx)
+{
+	struct nouveau_render_state *render = to_render_state(ctx);
+	int i;
+
+	for (i = 0; i < VERT_ATTRIB_MAX; i++)
+		render->map[i] = -1;
+
+	vbo_set_draw_func(ctx, TAG(vbo_check_render_prims));
+	vbo_use_buffer_objects(ctx);
+}
+
+void
+TAG(vbo_destroy)(struct gl_context *ctx)
+{
+}

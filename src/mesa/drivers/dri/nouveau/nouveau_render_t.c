@@ -187,69 +187,26 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 	}
 }
 
-#include "nouveau_vbo_t.c"
-#include "nouveau_swtnl_t.c"
-
 static void
 TAG(emit_material)(struct gl_context *ctx, struct nouveau_array *a,
 		   const void *v)
 {
-	const int attr = a->attr - VERT_ATTRIB_GENERIC0;
-	const int state = ((int []) {
-				NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE,
-				NOUVEAU_STATE_MATERIAL_BACK_DIFFUSE,
-				NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR,
-				NOUVEAU_STATE_MATERIAL_BACK_SPECULAR,
-				NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_FRONT_SHININESS,
-				NOUVEAU_STATE_MATERIAL_BACK_SHININESS
-			}) [attr];
+	int attr = a->attr - VERT_ATTRIB_GENERIC0;
+	int state = ((int []) {
+			NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE,
+			NOUVEAU_STATE_MATERIAL_BACK_DIFFUSE,
+			NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR,
+			NOUVEAU_STATE_MATERIAL_BACK_SPECULAR,
+			NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_FRONT_SHININESS,
+			NOUVEAU_STATE_MATERIAL_BACK_SHININESS
+		}) [attr];
 
 	COPY_4V(ctx->Light.Material.Attrib[attr], (float *)v);
 	_mesa_update_material(ctx, 1 << attr);
 
 	context_drv(ctx)->emit[state](ctx, state);
-}
-
-static void
-TAG(render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
-		  const struct _mesa_prim *prims, GLuint nr_prims,
-		  const struct _mesa_index_buffer *ib,
-		  GLboolean index_bounds_valid,
-		  GLuint min_index, GLuint max_index)
-{
-	struct nouveau_context *nctx = to_nouveau_context(ctx);
-
-	nouveau_validate_framebuffer(ctx);
-
-	if (nctx->fallback == HWTNL)
-		TAG(vbo_render_prims)(ctx, arrays, prims, nr_prims, ib,
-				      index_bounds_valid, min_index, max_index);
-
-	if (nctx->fallback == SWTNL)
-		_tnl_vbo_draw_prims(ctx, arrays, prims, nr_prims, ib,
-				    index_bounds_valid, min_index, max_index);
-}
-
-void
-TAG(render_init)(struct gl_context *ctx)
-{
-	struct nouveau_render_state *render = to_render_state(ctx);
-	int i;
-
-	for (i = 0; i < VERT_ATTRIB_MAX; i++)
-		render->map[i] = -1;
-
-	TAG(swtnl_init)(ctx);
-	vbo_set_draw_func(ctx, TAG(render_prims));
-	vbo_use_buffer_objects(ctx);
-}
-
-void
-TAG(render_destroy)(struct gl_context *ctx)
-{
-	TAG(swtnl_destroy)(ctx);
 }

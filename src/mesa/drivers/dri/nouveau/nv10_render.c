@@ -193,3 +193,5 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 
 #define TAG(x) nv10_##x
 #include "nouveau_render_t.c"
+#include "nouveau_vbo_t.c"
+#include "nouveau_swtnl_t.c"

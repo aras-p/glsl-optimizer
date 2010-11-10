@@ -310,7 +310,7 @@ swtnl_quad(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
 }
 
 /* TnL initialization. */
-static void
+void
 TAG(swtnl_init)(struct gl_context *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -341,7 +341,7 @@ TAG(swtnl_init)(struct gl_context *ctx)
 	swtnl_alloc_vertices(ctx);
 }
 
-static void
+void
 TAG(swtnl_destroy)(struct gl_context *ctx)
 {
 	nouveau_bo_ref(NULL, &to_render_state(ctx)->swtnl.vbo);

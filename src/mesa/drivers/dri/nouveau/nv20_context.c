@@ -425,7 +425,8 @@ nv20_context_destroy(struct gl_context *ctx)
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
 	nv04_surface_takedown(ctx);
-	nv20_render_destroy(ctx);
+	nv20_swtnl_destroy(ctx);
+	nv20_vbo_destroy(ctx);
 
 	nouveau_grobj_free(&nctx->hw.eng3d);
 
@@ -478,7 +479,8 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 		goto fail;
 
 	nv20_hwctx_init(ctx);
-	nv20_render_init(ctx);
+	nv20_vbo_init(ctx);
+	nv20_swtnl_init(ctx);
 
 	return ctx;
 

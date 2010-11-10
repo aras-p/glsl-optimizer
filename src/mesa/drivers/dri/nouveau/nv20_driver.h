@@ -39,10 +39,16 @@ extern const struct nouveau_driver nv20_driver;
 
 /* nv20_render.c */
 void
-nv20_render_init(struct gl_context *ctx);
+nv20_vbo_init(struct gl_context *ctx);
 
 void
-nv20_render_destroy(struct gl_context *ctx);
+nv20_vbo_destroy(struct gl_context *ctx);
+
+void
+nv20_swtnl_init(struct gl_context *ctx);
+
+void
+nv20_swtnl_destroy(struct gl_context *ctx);
 
 /* nv20_state_fb.c */
 void
