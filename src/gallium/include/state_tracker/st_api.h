@@ -349,6 +349,12 @@ struct st_context_iface
                 struct st_context_iface *stsrci, unsigned mask);
 
    /**
+    * Used to implement wglShareLists.
+    */
+   boolean (*share)(struct st_context_iface *stctxi,
+                    struct st_context_iface *stsrci);
+
+   /**
     * Look up and return the info of a resource for EGLImage.
     *
     * This function is optional.

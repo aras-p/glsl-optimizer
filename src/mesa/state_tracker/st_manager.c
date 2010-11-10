@@ -611,6 +611,26 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
 }
 
 static void
+st_context_copy(struct st_context_iface *stctxi,
+                struct st_context_iface *stsrci, unsigned mask)
+{
+   struct st_context *st = (struct st_context *) stctxi;
+   struct st_context *src = (struct st_context *) stsrci;
+
+   _mesa_copy_context(src->ctx, st->ctx, mask);
+}
+
+static boolean
+st_context_share(struct st_context_iface *stctxi,
+                 struct st_context_iface *stsrci)
+{
+   struct st_context *st = (struct st_context *) stctxi;
+   struct st_context *src = (struct st_context *) stsrci;
+
+   return _mesa_share_state(st->ctx, src->ctx);
+}
+
+static void
 st_context_destroy(struct st_context_iface *stctxi)
 {
    struct st_context *st = (struct st_context *) stctxi;
@@ -677,7 +697,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       st_context_notify_invalid_framebuffer;
    st->iface.flush = st_context_flush;
    st->iface.teximage = st_context_teximage;
-   st->iface.copy = NULL;
+   st->iface.copy = st_context_copy;
+   st->iface.share = st_context_share;
    st->iface.st_context_private = (void *) smapi;
 
    return &st->iface;
