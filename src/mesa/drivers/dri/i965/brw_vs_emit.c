@@ -589,12 +589,11 @@ static void emit_min( struct brw_compile *p,
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
-
-static void emit_math1( struct brw_vs_compile *c,
-			GLuint function,
-			struct brw_reg dst,
-			struct brw_reg arg0,
-			GLuint precision)
+static void emit_math1_gen4(struct brw_vs_compile *c,
+			    GLuint function,
+			    struct brw_reg dst,
+			    struct brw_reg arg0,
+			    GLuint precision)
 {
    /* There are various odd behaviours with SEND on the simulator.  In
     * addition there are documented issues with the fact that the GEN4
@@ -604,14 +603,11 @@ static void emit_math1( struct brw_vs_compile *c,
     * whether that turns out to be a simulator bug or not:
     */
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
    GLboolean need_tmp = GL_FALSE;
 
-   if (dst.file != BRW_GENERAL_REGISTER_FILE)
-      need_tmp = GL_TRUE;
-
-   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+   if (dst.file != BRW_GENERAL_REGISTER_FILE ||
+       dst.dw1.bits.writemask != 0xf)
       need_tmp = GL_TRUE;
 
    if (need_tmp)
@@ -632,6 +628,57 @@ static void emit_math1( struct brw_vs_compile *c,
    }
 }
 
+static void
+emit_math1_gen6(struct brw_vs_compile *c,
+		GLuint function,
+		struct brw_reg dst,
+		struct brw_reg arg0,
+		GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg tmp_src, tmp_dst;
+
+   /* Something is strange on gen6 math in 16-wide mode, though the
+    * docs say it's supposed to work.  Punt to using align1 mode,
+    * which doesn't do writemasking and swizzles.
+    */
+   tmp_src = get_tmp(c);
+   tmp_dst = get_tmp(c);
+
+   brw_MOV(p, tmp_src, arg0);
+
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math(p,
+	    tmp_dst,
+	    function,
+	    BRW_MATH_SATURATE_NONE,
+	    2,
+	    tmp_src,
+	    BRW_MATH_DATA_SCALAR,
+	    precision);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+
+   brw_MOV(p, dst, tmp_dst);
+
+   release_tmp(c, tmp_src);
+   release_tmp(c, tmp_dst);
+}
+
+static void
+emit_math1(struct brw_vs_compile *c,
+	   GLuint function,
+	   struct brw_reg dst,
+	   struct brw_reg arg0,
+	   GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6)
+      emit_math1_gen6(c, function, dst, arg0, precision);
+   else
+      emit_math1_gen4(c, function, dst, arg0, precision);
+}
 
 static void emit_math2( struct brw_vs_compile *c, 
 			GLuint function,
