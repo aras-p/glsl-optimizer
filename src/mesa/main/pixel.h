@@ -33,7 +33,12 @@
 #define PIXEL_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct _glapi_table;
+struct gl_context;
 
 
 #if FEATURE_pixel_transfer
