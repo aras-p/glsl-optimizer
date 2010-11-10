@@ -969,7 +969,7 @@ void brw_ENDIF(struct brw_compile *p,
 	 brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
 	 brw_set_src1(insn, brw_imm_d(0x0));
       } else {
-	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_W));
+	 brw_set_dest(insn, brw_imm_w(0));
 	 brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 	 brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       }
