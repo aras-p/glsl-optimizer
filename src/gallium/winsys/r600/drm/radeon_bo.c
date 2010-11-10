@@ -153,14 +153,15 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
 
-	if (!bo->fence && !bo->shared)
-		return 0;
-
-	if (bo->fence <= *bo->ctx->cfence) {
-		LIST_DELINIT(&bo->fencedlist);
-		bo->fence = 0;
-		return 0;
-	}
+        if (!bo->shared) {
+                if (!bo->fence)
+			return 0;
+		if (bo->fence <= *bo->ctx->cfence) {
+			LIST_DELINIT(&bo->fencedlist);
+			bo->fence = 0;
+			return 0;
+		}
+        }
 
 	/* Zero out args to make valgrind happy */
 	memset(&args, 0, sizeof(args));
