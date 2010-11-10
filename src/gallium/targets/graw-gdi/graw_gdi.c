@@ -28,10 +28,9 @@
 
 #include "gdi/gdi_sw_winsys.h"
 #include "pipe/p_screen.h"
-#include "softpipe/sp_public.h"
 #include "state_tracker/graw.h"
-#include "sw/sw_public.h"
 #include "target-helpers/wrap_screen.h"
+#include "target-helpers/inline_sw_helper.h"
 #include <windows.h>
 
 
@@ -80,7 +79,7 @@ graw_create_window_and_screen(int x,
    if (winsys == NULL)
       goto fail;
 
-   screen = softpipe_create_screen(winsys);
+   screen = sw_screen_create(winsys);
    if (screen == NULL)
       goto fail;
 
