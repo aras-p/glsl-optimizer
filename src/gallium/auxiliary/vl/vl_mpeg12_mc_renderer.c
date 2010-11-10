@@ -148,7 +148,8 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
    for (i = 0; i < 3; ++i) {
-      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XYZ), vtex[i], ureg_src(scale));
+      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), vpos, ureg_src(scale));
+      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), ureg_scalar(vtex[i], TGSI_SWIZZLE_X));
    }
 
    if(count > 0) {
@@ -816,70 +817,70 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
       for this channel is defined for this block) */
 
    if (!use_zeroblocks || cbp & luma_mask || mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD) {
-      v.x = mbx + offset->x;
-      v.y = mby + offset->y;
+      v.x = 0.0f;
+      v.y = 0.0f;
    }
    else {
-      v.x = zero_blocks[0].x;
-      v.y = zero_blocks[0].y;
+      v.x = -1.0f;
+      v.y = 0.0f;
    }
 
    vb[0].luma_tc.x = v.x;
    vb[0].luma_tc.y = v.y;
    vb[1].luma_tc.x = v.x;
-   vb[1].luma_tc.y = v.y + half.y;
-   vb[2].luma_tc.x = v.x + half.x;
+   vb[1].luma_tc.y = v.y;// + half.y;
+   vb[2].luma_tc.x = v.x;// + half.x;
    vb[2].luma_tc.y = v.y;
-   vb[3].luma_tc.x = v.x + half.x;
+   vb[3].luma_tc.x = v.x;// + half.x;
    vb[3].luma_tc.y = v.y;
    vb[4].luma_tc.x = v.x;
-   vb[4].luma_tc.y = v.y + half.y;
-   vb[5].luma_tc.x = v.x + half.x;
-   vb[5].luma_tc.y = v.y + half.y;
+   vb[4].luma_tc.y = v.y;// + half.y;
+   vb[5].luma_tc.x = v.x;// + half.x;
+   vb[5].luma_tc.y = v.y;// + half.y;
 
    if (!use_zeroblocks || cbp & cb_mask) {
-      v.x = mbx + offset->x;
-      v.y = mby + offset->y;
+      v.x = 0.0f;
+      v.y = 0.0f;
    }
    else {
-      v.x = zero_blocks[1].x;
-      v.y = zero_blocks[1].y;
+      v.x = -1.0f;
+      v.y = 0.0f;
    }
 
    vb[0].cb_tc.x = v.x;
    vb[0].cb_tc.y = v.y;
    vb[1].cb_tc.x = v.x;
-   vb[1].cb_tc.y = v.y + half.y;
-   vb[2].cb_tc.x = v.x + half.x;
+   vb[1].cb_tc.y = v.y;// + half.y;
+   vb[2].cb_tc.x = v.x;// + half.x;
    vb[2].cb_tc.y = v.y;
-   vb[3].cb_tc.x = v.x + half.x;
+   vb[3].cb_tc.x = v.x;// + half.x;
    vb[3].cb_tc.y = v.y;
    vb[4].cb_tc.x = v.x;
-   vb[4].cb_tc.y = v.y + half.y;
-   vb[5].cb_tc.x = v.x + half.x;
-   vb[5].cb_tc.y = v.y + half.y;
+   vb[4].cb_tc.y = v.y;// + half.y;
+   vb[5].cb_tc.x = v.x;// + half.x;
+   vb[5].cb_tc.y = v.y;// + half.y;
 
    if (!use_zeroblocks || cbp & cr_mask) {
-      v.x = mbx + offset->x;
-      v.y = mby + offset->y;
+      v.x = 0.0f;
+      v.y = 0.0f;
    }
    else {
-      v.x = zero_blocks[2].x;
-      v.y = zero_blocks[2].y;
+      v.x = -1.0f;
+      v.y = 0.0f;
    }
 
    vb[0].cr_tc.x = v.x;
    vb[0].cr_tc.y = v.y;
    vb[1].cr_tc.x = v.x;
-   vb[1].cr_tc.y = v.y + half.y;
-   vb[2].cr_tc.x = v.x + half.x;
+   vb[1].cr_tc.y = v.y; // + half.y;
+   vb[2].cr_tc.x = v.x; // + half.x;
    vb[2].cr_tc.y = v.y;
-   vb[3].cr_tc.x = v.x + half.x;
+   vb[3].cr_tc.x = v.x; // + half.x;
    vb[3].cr_tc.y = v.y;
    vb[4].cr_tc.x = v.x;
-   vb[4].cr_tc.y = v.y + half.y;
-   vb[5].cr_tc.x = v.x + half.x;
-   vb[5].cr_tc.y = v.y + half.y;
+   vb[4].cr_tc.y = v.y; // + half.y;
+   vb[5].cr_tc.x = v.x; // + half.x;
+   vb[5].cr_tc.y = v.y; // + half.y;
 }
 
 static void
