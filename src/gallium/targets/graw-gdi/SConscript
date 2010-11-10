@@ -9,12 +9,15 @@ env.Append(CPPPATH = [
     '#src/gallium/winsys/sw',
 ])
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
+
 env.Prepend(LIBS = [
     gallium,
     'gdi32',
     identity,
     rbug,
     trace,
+    galahad,
     'user32',
     'ws2_32',
 ])
