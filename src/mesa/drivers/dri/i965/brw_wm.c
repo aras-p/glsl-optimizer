@@ -134,7 +134,7 @@ brw_wm_payload_setup(struct brw_context *brw,
       /* R3-4: perspective pixel location barycentric */
       c->nr_payload_regs += 2;
       /* R5-6: perspective pixel location bary for dispatch width != 8 */
-      if (!c->fp->isGLSL) { /* dispatch_width != 8 */
+      if (c->dispatch_width == 16) {
 	 c->nr_payload_regs += 2;
       }
       /* R7-10: perspective centroid barycentric */
@@ -147,7 +147,7 @@ brw_wm_payload_setup(struct brw_context *brw,
       if (uses_depth) {
 	 c->source_depth_reg = c->nr_payload_regs;
 	 c->nr_payload_regs++;
-	 if (!c->fp->isGLSL) { /* dispatch_width != 8 */
+	 if (c->dispatch_width == 16) {
 	    /* R28: interpolated depth if not 8-wide. */
 	    c->nr_payload_regs++;
 	 }
@@ -157,7 +157,7 @@ brw_wm_payload_setup(struct brw_context *brw,
       if (uses_depth) {
 	 c->source_w_reg = c->nr_payload_regs;
 	 c->nr_payload_regs++;
-	 if (!c->fp->isGLSL) { /* dispatch_width != 8 */
+	 if (c->dispatch_width == 16) {
 	    /* R30: interpolated W if not 8-wide. */
 	    c->nr_payload_regs++;
 	 }
@@ -225,23 +225,16 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_wm_payload_setup(brw, c);
 
-   /* temporary sanity check assertion */
-   ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
-
    if (!brw_wm_fs_emit(brw, c)) {
       /*
        * Shader which use GLSL features such as flow control are handled
        * differently from "simple" shaders.
        */
-      if (fp->isGLSL) {
-	 c->dispatch_width = 8;
-	 brw_wm_glsl_emit(brw, c);
-      }
-      else {
-	 c->dispatch_width = 16;
-	 brw_wm_non_glsl_emit(brw, c);
-      }
+      c->dispatch_width = 16;
+      brw_wm_payload_setup(brw, c);
+      brw_wm_non_glsl_emit(brw, c);
    }
+   c->prog_data.dispatch_width = c->dispatch_width;
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {

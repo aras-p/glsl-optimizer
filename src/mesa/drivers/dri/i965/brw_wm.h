@@ -313,8 +313,6 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 void brw_wm_lookup_iz(struct intel_context *intel,
 		      struct brw_wm_compile *c);
 
-GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
-void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */

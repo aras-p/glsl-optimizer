@@ -128,8 +128,8 @@ upload_wm_state(struct brw_context *brw)
 
    dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   if (fp->isGLSL)
+   /* CACHE_NEW_WM_PROG */
+   if (brw->wm.prog_data->dispatch_width == 8)
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
    else
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
