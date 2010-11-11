@@ -479,6 +479,15 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
         else
                 bind = PIPE_BIND_RENDER_TARGET;
 
+	/* See r600_resource_copy_region: there is something wrong
+         * with depth resource copies at the moment so avoid them for
+         * now.
+         */
+	if (util_format_get_component_bits(res->format,
+                                           UTIL_FORMAT_COLORSPACE_ZS,
+                                           0) != 0)
+                return FALSE;
+
         if (!screen->is_format_supported(screen,
                                          res->format,
                                          res->target,
