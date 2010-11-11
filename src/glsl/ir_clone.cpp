@@ -276,22 +276,9 @@ ir_function::clone(void *mem_ctx, struct hash_table *ht) const
 ir_function_signature *
 ir_function_signature::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   ir_function_signature *copy =
-      new(mem_ctx) ir_function_signature(this->return_type);
+   ir_function_signature *copy = this->clone_prototype(mem_ctx, ht);
 
    copy->is_defined = this->is_defined;
-   copy->is_builtin = this->is_builtin;
-
-   /* Clone the parameter list.
-    */
-   foreach_list_const(node, &this->parameters) {
-      const ir_variable *const param = (const ir_variable *) node;
-
-      assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
-
-      ir_variable *const param_copy = param->clone(mem_ctx, ht);
-      copy->parameters.push_tail(param_copy);
-   }
 
    /* Clone the instruction list.
     */
@@ -300,6 +287,29 @@ ir_function_signature::clone(void *mem_ctx, struct hash_table *ht) const
 
       ir_instruction *const inst_copy = inst->clone(mem_ctx, ht);
       copy->body.push_tail(inst_copy);
+   }
+
+   return copy;
+}
+
+ir_function_signature *
+ir_function_signature::clone_prototype(void *mem_ctx, struct hash_table *ht) const
+{
+   ir_function_signature *copy =
+      new(mem_ctx) ir_function_signature(this->return_type);
+
+   copy->is_defined = false;
+   copy->is_builtin = this->is_builtin;
+
+   /* Clone the parameter list, but NOT the body.
+    */
+   foreach_list_const(node, &this->parameters) {
+      const ir_variable *const param = (const ir_variable *) node;
+
+      assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
+
+      ir_variable *const param_copy = param->clone(mem_ctx, ht);
+      copy->parameters.push_tail(param_copy);
    }
 
    return copy;

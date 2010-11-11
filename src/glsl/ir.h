@@ -376,6 +376,8 @@ public:
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
+   ir_function_signature *clone_prototype(void *mem_ctx,
+					  struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
