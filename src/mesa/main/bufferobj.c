@@ -998,7 +998,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
          GLuint j;
 
-         ASSERT(bufObj->Name == ids[i]);
+         ASSERT(bufObj->Name == ids[i] || bufObj == &DummyBufferObject);
 
          if (_mesa_bufferobj_mapped(bufObj)) {
             /* if mapped, unmap it now */
@@ -1039,7 +1039,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          }
 
          /* The ID is immediately freed for re-use */
-         _mesa_HashRemove(ctx->Shared->BufferObjects, bufObj->Name);
+         _mesa_HashRemove(ctx->Shared->BufferObjects, ids[i]);
          _mesa_reference_buffer_object(ctx, &bufObj, NULL);
       }
    }
