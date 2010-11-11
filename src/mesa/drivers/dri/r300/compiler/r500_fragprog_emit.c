@@ -200,6 +200,9 @@ static void use_temporary(struct r500_fragment_program_code* code, unsigned int 
 
 static unsigned int use_source(struct r500_fragment_program_code* code, struct rc_pair_instruction_source src)
 {
+	if (!src.Used)
+		return 0;
+
 	if (src.File == RC_FILE_CONSTANT) {
 		return src.Index | 0x100;
 	} else if (src.File == RC_FILE_TEMPORARY) {
