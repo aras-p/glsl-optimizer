@@ -505,7 +505,9 @@ static void presub_replace_add(
 	inst_reader->U.I.SrcReg[src_index].Index = presub_opcode;
 }
 
-static int is_presub_candidate(struct rc_instruction * inst)
+static int is_presub_candidate(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst)
 {
 	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int i;
@@ -514,7 +516,12 @@ static int is_presub_candidate(struct rc_instruction * inst)
 		return 0;
 
 	for(i = 0; i < info->NumSrcRegs; i++) {
-		if (src_reads_dst_mask(inst->U.I.SrcReg[i], inst->U.I.DstReg))
+		struct rc_src_register src = inst->U.I.SrcReg[i];
+		if (src_reads_dst_mask(src, inst->U.I.DstReg))
+			return 0;
+
+		src.File = RC_FILE_PRESUB;
+		if (!c->SwizzleCaps->IsNative(inst->U.I.Opcode, src))
 			return 0;
 	}
 	return 1;
@@ -528,7 +535,7 @@ static int peephole_add_presub_add(
 	struct rc_src_register * src1 = NULL;
 	unsigned int i;
 
-	if (!is_presub_candidate(inst_add))
+	if (!is_presub_candidate(c, inst_add))
 		return 0;
 
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
@@ -592,7 +599,7 @@ static int peephole_add_presub_inv(
 {
 	unsigned int i, swz, mask;
 
-	if (!is_presub_candidate(inst_add))
+	if (!is_presub_candidate(c, inst_add))
 		return 0;
 
 	mask = inst_add->U.I.DstReg.WriteMask;
