@@ -55,6 +55,13 @@
 
 
 /**
+ * Used as a placeholder for buffer objects between glGenBuffers() and
+ * glBindBuffer() so that glIsBuffer() can work correctly.
+ */
+static struct gl_buffer_object DummyBufferObject;
+
+
+/**
  * Return pointer to address of a buffer object target.
  * \param ctx  the GL context
  * \param target  the buffer object target to be retrieved.
@@ -548,6 +555,9 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
 void
 _mesa_init_buffer_objects( struct gl_context *ctx )
 {
+   memset(&DummyBufferObject, 0, sizeof(DummyBufferObject));
+   DummyBufferObject.RefCount = 1000*1000*1000; /* never delete */
+
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
                                  ctx->Shared->NullBufferObj);
    _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj,
@@ -605,8 +615,10 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    else {
       /* non-default buffer object */
       newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
-      if (!newBufObj) {
-         /* if this is a new buffer object id, allocate a buffer object now */
+      if (!newBufObj || newBufObj == &DummyBufferObject) {
+         /* If this is a new buffer object id, or one which was generated but
+          * never used before, allocate a buffer object now.
+          */
          ASSERT(ctx->Driver.NewBufferObject);
          newBufObj = ctx->Driver.NewBufferObject(ctx, buffer, target);
          if (!newBufObj) {
@@ -1066,18 +1078,10 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->BufferObjects, n);
 
-   /* Allocate new, empty buffer objects and return identifiers */
+   /* Insert the ID and pointer to dummy buffer object into hash table */
    for (i = 0; i < n; i++) {
-      struct gl_buffer_object *bufObj;
-      GLuint name = first + i;
-      GLenum target = 0;
-      bufObj = ctx->Driver.NewBufferObject( ctx, name, target );
-      if (!bufObj) {
-         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenBuffersARB");
-         return;
-      }
-      _mesa_HashInsert(ctx->Shared->BufferObjects, first + i, bufObj);
+      _mesa_HashInsert(ctx->Shared->BufferObjects, first + i,
+                       &DummyBufferObject);
       buffer[i] = first + i;
    }
 
@@ -1103,7 +1107,7 @@ _mesa_IsBufferARB(GLuint id)
    bufObj = _mesa_lookup_bufferobj(ctx, id);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-   return bufObj ? GL_TRUE : GL_FALSE;
+   return bufObj && bufObj != &DummyBufferObject;
 }
 
 
