@@ -58,6 +58,21 @@ static const char *buffer_names[] = {
    [BUFFER_COLOR7] = "color7",
 };
 
+static void
+debug_mask(const char *name, GLbitfield mask)
+{
+   GLuint i;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_BLIT)) {
+      DBG("%s clear:", name);
+      for (i = 0; i < BUFFER_COUNT; i++) {
+	 if (mask & (1 << i))
+	    DBG(" %s", buffer_names[i]);
+      }
+      DBG("\n");
+   }
+}
+
 /**
  * Called by ctx->Driver.Clear.
  */
@@ -70,7 +85,6 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   GLuint i;
 
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
       intel->front_buffer_dirty = GL_TRUE;
@@ -162,39 +176,17 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    }
 
    if (blit_mask) {
-      if (INTEL_DEBUG & DEBUG_BLIT) {
-	 DBG("blit clear:");
-	 for (i = 0; i < BUFFER_COUNT; i++) {
-	    if (blit_mask & (1 << i))
-	       DBG(" %s", buffer_names[i]);
-	 }
-	 DBG("\n");
-      }
+      debug_mask("blit", blit_mask);
       intelClearWithBlit(ctx, blit_mask);
    }
 
    if (tri_mask) {
-      if (INTEL_DEBUG & DEBUG_BLIT) {
-	 DBG("tri clear:");
-	 for (i = 0; i < BUFFER_COUNT; i++) {
-	    if (tri_mask & (1 << i))
-	       DBG(" %s", buffer_names[i]);
-	 }
-	 DBG("\n");
-      }
-
+      debug_mask("tri", tri_mask);
       _mesa_meta_Clear(&intel->ctx, tri_mask);
    }
 
    if (swrast_mask) {
-      if (INTEL_DEBUG & DEBUG_BLIT) {
-	 DBG("swrast clear:");
-	 for (i = 0; i < BUFFER_COUNT; i++) {
-	    if (swrast_mask & (1 << i))
-	       DBG(" %s", buffer_names[i]);
-	 }
-	 DBG("\n");
-      }
+      debug_mask("swrast", swrast_mask);
       _swrast_Clear(ctx, swrast_mask);
    }
 }

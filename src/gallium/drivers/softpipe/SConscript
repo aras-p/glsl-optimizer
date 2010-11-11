@@ -38,4 +38,6 @@ softpipe = env.ConvenienceLibrary(
 		'sp_video_context.c',
 	])
 
+env.Alias('softpipe', softpipe)
+
 Export('softpipe')

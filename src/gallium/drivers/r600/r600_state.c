@@ -469,12 +469,17 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX, 0x80000000, 0xFFFFFFFF, NULL);
 
-	tmp = (unsigned)(state->line_width * 8.0);
+	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL);
 
 	r600_pipe_state_add_reg(rstate, R_028A0C_PA_SC_LINE_STIPPLE, 0x00000005, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MPASS_PS_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
+        
+	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
+				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
+				0xFFFFFFFF, NULL);
+
 	r600_pipe_state_add_reg(rstate, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
@@ -1017,6 +1022,13 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
+
+	/* Note that the state tracker can unbind constant buffers by
+	 * passing NULL here.
+	 */
+	if (buffer == NULL) {
+		return;
+	}
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:

@@ -28,13 +28,9 @@
 
 #include "vg_context.h"
 #include "path.h"
-#include "polygon.h"
-#include "paint.h"
 #include "api.h"
 
 #include "pipe/p_context.h"
-#include "util/u_inlines.h"
-#include "util/u_draw_quad.h"
 
 VGPath vegaCreatePath(VGint pathFormat,
                       VGPathDatatype datatype,

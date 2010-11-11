@@ -45,10 +45,16 @@ nv10_transform_depth(struct gl_context *ctx, float z);
 
 /* nv10_render.c */
 void
-nv10_render_init(struct gl_context *ctx);
+nv10_vbo_init(struct gl_context *ctx);
 
 void
-nv10_render_destroy(struct gl_context *ctx);
+nv10_vbo_destroy(struct gl_context *ctx);
+
+void
+nv10_swtnl_init(struct gl_context *ctx);
+
+void
+nv10_swtnl_destroy(struct gl_context *ctx);
 
 /* nv10_state_fb.c */
 void

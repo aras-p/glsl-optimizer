@@ -25,10 +25,14 @@ r600 = env.ConvenienceLibrary(
         'r600_resource.c',
         'r600_shader.c',
         'r600_state.c',
+        'r600_state_common.c',
         'r600_texture.c',
+        'r600_translate.c',
         'r700_asm.c',
         'evergreen_state.c',
         'eg_asm.c',
     ])
+
+env.Alias('r600', r600)
 
 Export('r600')

@@ -319,10 +319,9 @@ static INLINE GLuint reduced_hw_prim( struct gl_context *ctx, GLuint prim)
 {
    switch (prim) {
    case GL_POINTS:
-      return (ctx->Point.PointSprite ||
-	 ((ctx->_TriangleCaps & (DD_POINT_SIZE | DD_POINT_ATTEN)) &&
-	 !(ctx->_TriangleCaps & (DD_POINT_SMOOTH)))) ?
-	 R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS;
+      return (((R200_CONTEXT(ctx))->radeon.radeonScreen->drmSupportsPointSprites &&
+              !(ctx->_TriangleCaps & DD_POINT_SMOOTH)) ?
+	 R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS);
    case GL_LINES:
    /* fallthrough */
    case GL_LINE_LOOP:

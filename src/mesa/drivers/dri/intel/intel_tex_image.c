@@ -66,7 +66,6 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    GLuint width = intelImage->base.Width;
    GLuint height = intelImage->base.Height;
    GLuint depth = intelImage->base.Depth;
-   GLuint l2width, l2height, l2depth;
    GLuint i, comp_byte = 0;
    GLuint texelBytes;
 
@@ -114,10 +113,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
       lastLevel = firstLevel;
    }
    else {
-      l2width = logbase2(width);
-      l2height = logbase2(height);
-      l2depth = logbase2(depth);
-      lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
+      lastLevel = firstLevel + logbase2(MAX2(MAX2(width, height), depth));
    }
 
    assert(!intelObj->mt);
@@ -345,21 +341,6 @@ intelTexImage(struct gl_context * ctx,
    else if (texImage->Data) {
       _mesa_free_texmemory(texImage->Data);
       texImage->Data = NULL;
-   }
-
-   /* If this is the only texture image in the tree, could call
-    * bmBufferData with NULL data to free the old block and avoid
-    * waiting on any outstanding fences.
-    */
-   if (intelObj->mt &&
-       intelObj->mt->first_level == level &&
-       intelObj->mt->last_level == level &&
-       intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
-
-      DBG("release it\n");
-      intel_miptree_release(intel, &intelObj->mt);
-      assert(!intelObj->mt);
    }
 
    if (!intelObj->mt) {

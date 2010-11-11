@@ -37,7 +37,10 @@
 #define _DEBUG_H
 
 #include "glheader.h"
-#include "mtypes.h"
+#include "mfeatures.h"
+
+struct gl_context;
+struct gl_texture_image;
 
 #if _HAVE_FULL_GL
 

@@ -12,6 +12,7 @@ PIPE_DRIVERS = \
 
 C_SOURCES = \
 	target.c \
+	vmw_powf.c \
 	$(COMMON_GALLIUM_SOURCES)
 
 DRIVER_DEFINES = \

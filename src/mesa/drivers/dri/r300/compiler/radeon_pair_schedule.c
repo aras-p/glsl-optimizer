@@ -290,6 +290,7 @@ static int merge_presub_sources(
 {
 	unsigned int srcp_src, srcp_regs, is_rgb, is_alpha;
 	struct rc_pair_sub_instruction * dst_sub;
+	const struct rc_opcode_info * info;
 
 	assert(dst_full->Alpha.Opcode == RC_OPCODE_NOP);
 
@@ -309,8 +310,8 @@ static int merge_presub_sources(
 		return 0;
 	}
 
-	const struct rc_opcode_info * info =
-					rc_get_opcode_info(dst_full->RGB.Opcode);
+	info = rc_get_opcode_info(dst_full->RGB.Opcode);
+
 	if (dst_sub->Src[RC_PAIR_PRESUB_SRC].Used)
 		return 0;
 

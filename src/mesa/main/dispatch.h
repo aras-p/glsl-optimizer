@@ -26,12 +26,12 @@
 #ifndef _DISPATCH_H
 #define _DISPATCH_H
 
-#ifdef IN_DRI_DRIVER
+#include "main/mfeatures.h"
+
+#if FEATURE_remap_table
 #define _GLAPI_USE_REMAP_TABLE
 #endif
 
-#include "glapi/glapitable.h"
-#include "glapi/glapioffsets.h"
-#include "glapi/glapidispatch.h"
+#include "main/glapidispatch.h"
 
 #endif /* _DISPATCH_H */

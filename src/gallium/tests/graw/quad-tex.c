@@ -9,7 +9,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_inlines.h"
 #include "util/u_memory.h"      /* Offset() */
 #include "util/u_draw_quad.h"
@@ -150,17 +149,7 @@ static void draw( void )
    util_draw_arrays(ctx, PIPE_PRIM_QUADS, 0, 4);
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-#if 0
-   /* At the moment, libgraw leaks out/makes available some of the
-    * symbols from gallium/auxiliary, including these debug helpers.
-    * Will eventually want to bless some of these paths, and lock the
-    * others down so they aren't accessible from test programs.
-    *
-    * This currently just happens to work on debug builds - a release
-    * build will probably fail to link here:
-    */
-   debug_dump_surface_bmp(ctx, "result.bmp", surf);
-#endif
+   graw_save_surface_to_file(ctx, surf, NULL);
 
    screen->flush_frontbuffer(screen, surf, window);
 }
@@ -392,9 +381,21 @@ static void init( void )
    set_fragment_shader();
 }
 
+static void args(int argc, char *argv[])
+{
+   int i;
+
+   for (i = 1; i < argc;) {
+      if (graw_parse_args(&i, argc, argv)) {
+         continue;
+      }
+      exit(1);
+   }
+}
 
 int main( int argc, char *argv[] )
 {
+   args(argc, argv);
    init();
 
    graw_set_display_func( draw );

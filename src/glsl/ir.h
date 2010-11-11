@@ -37,10 +37,6 @@ extern "C" {
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif
-
 /**
  * \defgroup IR Intermediate representation nodes
  *

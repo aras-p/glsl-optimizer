@@ -1636,6 +1636,9 @@
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
 #define R_028A04_PA_SU_POINT_MINMAX                  0x00028A04
 #define R_028A08_PA_SU_LINE_CNTL                     0x00028A08
+#define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)
+#define   G_028A08_WIDTH(x)                            (((x) >> 0) & 0xFFFF)
+#define   C_028A08_WIDTH                               0xFFFF0000
 #define R_028A10_VGT_OUTPUT_PATH_CNTL                0x00028A10
 #define R_028A14_VGT_HOS_CNTL                        0x00028A14
 #define R_028A18_VGT_HOS_MAX_TESS_LEVEL              0x00028A18
@@ -1687,6 +1690,9 @@
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00
 #define R_028C04_PA_SC_AA_CONFIG                     0x00028C04
 #define R_028C08_PA_SU_VTX_CNTL                      0x00028C08
+#define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
+#define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
+#define   C_028C08_PIX_CENTER_HALF                     0xFFFFFFFE
 #define R_028C0C_PA_CL_GB_VERT_CLIP_ADJ              0x00028C0C
 #define R_028C10_PA_CL_GB_VERT_DISC_ADJ              0x00028C10
 #define R_028C14_PA_CL_GB_HORZ_CLIP_ADJ              0x00028C14

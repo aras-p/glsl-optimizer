@@ -39,6 +39,9 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
    uint32_t *map;
    unsigned count, start;
 
+   if (buf == NULL)
+      return;
+
    map = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &transfer);
    if (!map)
       return;

@@ -199,6 +199,48 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    
 }
 
+#if FEATURE_OES_EGL_image
+static void
+radeon_image_target_renderbuffer_storage(struct gl_context *ctx,
+                                         struct gl_renderbuffer *rb,
+                                         void *image_handle)
+{
+   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+   struct radeon_renderbuffer *rrb;
+   __DRIscreen *screen;
+   __DRIimage *image;
+
+   screen = radeon->radeonScreen->driScreen;
+   image = screen->dri2.image->lookupEGLImage(screen, image_handle,
+					      screen->loaderPrivate);
+   if (image == NULL)
+      return;
+
+   rrb = radeon_renderbuffer(rb);
+
+   if (ctx->Driver.Flush)
+      ctx->Driver.Flush(ctx); /* +r6/r7 */
+
+   if (rrb->bo)
+      radeon_bo_unref(rrb->bo);
+   rrb->bo = image->bo;
+   radeon_bo_ref(rrb->bo);
+   fprintf(stderr, "image->bo: %p, name: %d, rbs: w %d -> p %d\n", image->bo, image->bo->handle,
+           image->width, image->pitch);
+
+   rrb->cpp = image->cpp;
+   rrb->pitch = image->pitch * image->cpp;
+
+   rb->Format = image->format;
+   rb->InternalFormat = image->internal_format;
+   rb->Width = image->width;
+   rb->Height = image->height;
+   rb->Format = image->format;
+   rb->DataType = image->data_type;
+   rb->_BaseFormat = _mesa_base_fbo_format(radeon->glCtx,
+                                           image->internal_format);
+}
+#endif
 
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
@@ -621,6 +663,10 @@ void radeon_fbo_init(struct radeon_context *radeon)
 #endif
 #if FEATURE_EXT_framebuffer_blit
   radeon->glCtx->Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+#endif
+#if FEATURE_OES_EGL_image
+  radeon->glCtx->Driver.EGLImageTargetRenderbufferStorage =
+	  radeon_image_target_renderbuffer_storage;
 #endif
 }
 

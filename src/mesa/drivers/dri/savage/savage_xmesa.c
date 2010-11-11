@@ -50,7 +50,6 @@
 #include "savagespan.h"
 #include "savagetris.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 
 #include "savage_dri.h"
 

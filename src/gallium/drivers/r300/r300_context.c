@@ -184,7 +184,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     boolean has_tcl = r300->screen->caps.has_tcl;
     boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
-    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
 
     /* Create the actual atom list.
@@ -240,7 +240,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     /* TX. */
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
-    if (has_hyperz) {
+    if (can_hyperz) {
         /* HiZ Clear */
         if (has_hiz_ram)
             R300_INIT_ATOM(hiz_clear, 0);

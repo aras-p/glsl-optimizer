@@ -63,11 +63,13 @@ static void radeon_bo_pb_destroy(struct pb_buffer *_buf)
 {
 	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
 
-	LIST_DEL(&buf->maplist);
-
-	if (buf->bo->data != NULL) {
+	/* If this buffer is on the list of buffers to unmap,
+	 * do the unmapping now.
+	 */
+	if (!LIST_IS_EMPTY(&buf->maplist))
 		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
-	}
+
+	LIST_DEL(&buf->maplist);
 	radeon_bo_reference(buf->mgr->radeon, &buf->bo, NULL);
 	FREE(buf);
 }
@@ -80,7 +82,7 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 	struct pipe_context *pctx = ctx;
 
 	if (flags & PB_USAGE_UNSYNCHRONIZED) {
-		if (!buf->bo->data && radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 			return NULL;
 		}
 		LIST_DELINIT(&buf->maplist);
@@ -106,18 +108,12 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		goto out;
 	}
 
-	if (buf->bo->data != NULL) {
-		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
-			return NULL;
-		}
-	} else {
-		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
-			return NULL;
-		}
-		if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
-			radeon_bo_unmap(buf->mgr->radeon, buf->bo);
-			return NULL;
-		}
+	if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
+		return NULL;
+	}
+	if (radeon_bo_wait(buf->mgr->radeon, buf->bo)) {
+		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
+		return NULL;
 	}
 out:
 	LIST_DELINIT(&buf->maplist);
@@ -172,7 +168,7 @@ radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
 	struct radeon_bo_pb *bo;
 	struct radeon_bo *hw_bo;
 
-	hw_bo = radeon_bo(radeon, handle, 0, 0, NULL);
+	hw_bo = radeon_bo(radeon, handle, 0, 0);
 	if (hw_bo == NULL)
 		return NULL;
 
@@ -217,8 +213,7 @@ radeon_bo_pb_create_buffer(struct pb_manager *_mgr,
 
 	LIST_INITHEAD(&bo->maplist);
 
-	bo->bo = radeon_bo(radeon, 0, size,
-			   desc->alignment, NULL);
+	bo->bo = radeon_bo(radeon, 0, size, desc->alignment);
 	if (bo->bo == NULL)
 		goto error2;
 	return &bo->b;

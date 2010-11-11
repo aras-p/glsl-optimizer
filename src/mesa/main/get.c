@@ -266,6 +266,11 @@ static const int extra_EXT_texture_integer[] = {
    EXTRA_END
 };
 
+static const int extra_EXT_gpu_shader4[] = {
+   EXT(EXT_gpu_shader4),
+   EXTRA_END
+};
+
 
 EXTRA_EXT(ARB_multitexture);
 EXTRA_EXT(ARB_texture_cube_map);
@@ -292,7 +297,7 @@ EXTRA_EXT(ARB_shader_objects);
 EXTRA_EXT(EXT_provoking_vertex);
 EXTRA_EXT(ARB_fragment_shader);
 EXTRA_EXT(ARB_fragment_program);
-EXTRA_EXT(ARB_framebuffer_object);
+EXTRA_EXT2(ARB_framebuffer_object, EXT_framebuffer_multisample);
 EXTRA_EXT(EXT_framebuffer_object);
 EXTRA_EXT(APPLE_vertex_array_object);
 EXTRA_EXT(ARB_seamless_cube_map);
@@ -1137,7 +1142,7 @@ static const struct value_desc values[] = {
 
    /* GL_ARB_framebuffer_object */
    { GL_MAX_SAMPLES, CONTEXT_INT(Const.MaxSamples),
-     extra_ARB_framebuffer_object },
+     extra_ARB_framebuffer_object_EXT_framebuffer_multisample },
 
    /* GL_APPLE_vertex_array_object */
    { GL_VERTEX_ARRAY_BINDING_APPLE, ARRAY_INT(Name),
@@ -1197,6 +1202,14 @@ static const struct value_desc values[] = {
    { GL_MAX_VERTEX_VARYING_COMPONENTS_ARB,
      CONTEXT_INT(Const.GeometryProgram.MaxVertexVaryingComponents),
      extra_ARB_geometry_shader4 },
+
+   /* GL_EXT_gpu_shader4 / GL 3.0 */
+   { GL_MIN_PROGRAM_TEXEL_OFFSET,
+     CONTEXT_INT(Const.MinProgramTexelOffset),
+     extra_EXT_gpu_shader4 },
+   { GL_MAX_PROGRAM_TEXEL_OFFSET,
+     CONTEXT_INT(Const.MaxProgramTexelOffset),
+     extra_EXT_gpu_shader4 },
 
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },

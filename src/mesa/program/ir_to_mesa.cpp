@@ -260,6 +260,17 @@ public:
 					       ir_to_mesa_src_reg src1,
 					       ir_to_mesa_src_reg src2);
 
+   /**
+    * Emit the correct dot-product instruction for the type of arguments
+    *
+    * \sa ir_to_mesa_emit_op2
+    */
+   void ir_to_mesa_emit_dp(ir_instruction *ir,
+			   ir_to_mesa_dst_reg dst,
+			   ir_to_mesa_src_reg src0,
+			   ir_to_mesa_src_reg src1,
+			   unsigned elements);
+
    void ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
 				   enum prog_opcode op,
 				   ir_to_mesa_dst_reg dst,
@@ -391,6 +402,21 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
 			      ir_to_mesa_undef,
 			      ir_to_mesa_undef,
 			      ir_to_mesa_undef);
+}
+
+void
+ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
+				       ir_to_mesa_dst_reg dst,
+				       ir_to_mesa_src_reg src0,
+				       ir_to_mesa_src_reg src1,
+				       unsigned elements)
+{
+   static const gl_inst_opcode dot_opcodes[] = {
+      OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
+   };
+
+   ir_to_mesa_emit_op3(ir, dot_opcodes[elements - 2],
+		       dst, src0, src1, ir_to_mesa_undef);
 }
 
 inline ir_to_mesa_dst_reg
@@ -832,9 +858,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    struct ir_to_mesa_src_reg op[2];
    struct ir_to_mesa_src_reg result_src;
    struct ir_to_mesa_dst_reg result_dst;
-   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
-   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
-   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
 
    /* Quick peephole: Emit OPCODE_MAD(a, b, c) instead of ADD(MUL(a, b), c)
     */
@@ -976,12 +999,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
-	 if (vector_elements == 4)
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
-	 else if (vector_elements == 3)
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, temp, temp);
-	 else
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, temp, temp);
+	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ,
 			     result_dst, result_src, src_reg_for_float(0.0));
       } else {
@@ -995,12 +1013,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
-	 if (vector_elements == 4)
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
-	 else if (vector_elements == 3)
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, temp, temp);
-	 else
-	    ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, temp, temp);
+	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     result_dst, result_src, src_reg_for_float(0.0));
       } else {
@@ -1009,20 +1022,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_any:
-      switch (ir->operands[0]->type->vector_elements) {
-      case 4:
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, op[0], op[0]);
-	 break;
-      case 3:
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, op[0], op[0]);
-	 break;
-      case 2:
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, op[0], op[0]);
-	 break;
-      default:
-	 assert(!"unreached: ir_unop_any of non-bvec");
-	 break;
-      }
+      assert(ir->operands[0]->type->is_vector());
+      ir_to_mesa_emit_dp(ir, result_dst, op[0], op[0],
+			 ir->operands[0]->type->vector_elements);
       ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			  result_dst, result_src, src_reg_for_float(0.0));
       break;
@@ -1050,22 +1052,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_dot:
-      if (ir->operands[0]->type == vec4_type) {
-	 assert(ir->operands[1]->type == vec4_type);
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP4,
-			     result_dst,
-			     op[0], op[1]);
-      } else if (ir->operands[0]->type == vec3_type) {
-	 assert(ir->operands[1]->type == vec3_type);
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP3,
-			     result_dst,
-			     op[0], op[1]);
-      } else if (ir->operands[0]->type == vec2_type) {
-	 assert(ir->operands[1]->type == vec2_type);
-	 ir_to_mesa_emit_op2(ir, OPCODE_DP2,
-			     result_dst,
-			     op[0], op[1]);
-      }
+      assert(ir->operands[0]->type->is_vector());
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      ir_to_mesa_emit_dp(ir, result_dst, op[0], op[1],
+			 ir->operands[0]->type->vector_elements);
       break;
 
    case ir_binop_cross:

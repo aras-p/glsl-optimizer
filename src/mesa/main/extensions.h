@@ -36,7 +36,10 @@
 #ifndef _EXTENSIONS_H_
 #define _EXTENSIONS_H_
 
-#include "mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_context;
 
 #if _HAVE_FULL_GL
 

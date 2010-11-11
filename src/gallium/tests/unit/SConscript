@@ -4,10 +4,10 @@ env = env.Clone()
 
 env.Prepend(LIBS = [gallium])
 
-if platform in ('freebsd8', 'sunos5'):
+if env['platform'] in ('freebsd8', 'sunos5'):
     env.Append(LIBS = ['m'])
 
-if platform == 'freebsd8':
+if env['platform'] == 'freebsd8':
     env.Append(LIBS = ['pthread'])
 
 progs = [

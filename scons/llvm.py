@@ -38,6 +38,8 @@ import SCons.Util
 
 
 def generate(env):
+    env['llvm'] = False
+
     try:
         llvm_dir = os.environ['LLVM']
     except KeyError:
@@ -64,13 +66,13 @@ def generate(env):
         # XXX: There is no llvm-config on Windows, so assume a standard layout
         if llvm_dir is None:
             print 'scons: LLVM environment variable must be specified when building for windows'
-            env.Exit(1)
+            return
 
         # Try to determine the LLVM version from llvm/Config/config.h
         llvm_config = os.path.join(llvm_dir, 'include/llvm/Config/config.h')
         if not os.path.exists(llvm_config):
             print 'scons: could not find %s' % llvm_config
-            env.Exit(1)
+            return
         llvm_version_re = re.compile(r'^#define PACKAGE_VERSION "([^"]*)"')
         llvm_version = None
         for line in open(llvm_config, 'rt'):
@@ -81,7 +83,7 @@ def generate(env):
                 break
         if llvm_version is None:
             print 'scons: could not determine the LLVM version from %s' % llvm_config
-            env.Exit(1)
+            return
 
         env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
         env.AppendUnique(CPPDEFINES = [
@@ -133,7 +135,7 @@ def generate(env):
     else:
         if not env.Detect('llvm-config'):
             print 'scons: llvm-config script not found' % llvm_version
-            env.Exit(1)
+            return
 
         llvm_version = env.backtick('llvm-config --version').rstrip()
         llvm_version = distutils.version.LooseVersion(llvm_version)
@@ -144,11 +146,12 @@ def generate(env):
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version
-            env.Exit(1)
+            return
         else:
             env['LINK'] = env['CXX']
 
     assert llvm_version is not None
+    env['llvm'] = True
 
     print 'scons: Found LLVM version %s' % llvm_version
     env['LLVM_VERSION'] = llvm_version

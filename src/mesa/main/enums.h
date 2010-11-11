@@ -36,6 +36,7 @@
 #ifndef _ENUMS_H_
 #define _ENUMS_H_
 
+#include "mfeatures.h"
 
 #if defined(_HAVE_FULL_GL) && _HAVE_FULL_GL
 

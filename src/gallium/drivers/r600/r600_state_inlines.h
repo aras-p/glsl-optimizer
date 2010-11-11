@@ -472,7 +472,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_UYVY:
 	case PIPE_FORMAT_YUYV:
 	default:
-		R600_ERR("unsupported color format %d %s\n", format, util_format_name(format));
+		//R600_ERR("unsupported color format %d %s\n", format, util_format_name(format));
 		return ~0; /* Unsupported. */
 	}
 }

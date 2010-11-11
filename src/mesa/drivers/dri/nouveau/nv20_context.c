@@ -26,6 +26,8 @@
 
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
+#include "nouveau_fbo.h"
+#include "nouveau_util.h"
 #include "nouveau_class.h"
 #include "nv04_driver.h"
 #include "nv10_driver.h"
@@ -38,6 +40,57 @@ static const struct dri_extension nv20_extensions[] = {
 	{ "GL_ARB_texture_env_dot3",    NULL },
 	{ NULL,				NULL }
 };
+
+static void
+nv20_clear(struct gl_context *ctx, GLbitfield buffers)
+{
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	uint32_t clear = 0;
+
+	nouveau_validate_framebuffer(ctx);
+
+	if (buffers & BUFFER_BITS_COLOR) {
+		struct nouveau_surface *s = &to_nouveau_renderbuffer(
+			fb->_ColorDrawBuffers[0])->surface;
+
+		if (ctx->Color.ColorMask[0][RCOMP])
+			clear |= NV20TCL_CLEAR_BUFFERS_COLOR_R;
+		if (ctx->Color.ColorMask[0][GCOMP])
+			clear |= NV20TCL_CLEAR_BUFFERS_COLOR_G;
+		if (ctx->Color.ColorMask[0][BCOMP])
+			clear |= NV20TCL_CLEAR_BUFFERS_COLOR_B;
+		if (ctx->Color.ColorMask[0][ACOMP])
+			clear |= NV20TCL_CLEAR_BUFFERS_COLOR_A;
+
+		BEGIN_RING(chan, kelvin, NV20TCL_CLEAR_VALUE, 1);
+		OUT_RING(chan, pack_rgba_f(s->format, ctx->Color.ClearColor));
+
+		buffers &= ~BUFFER_BITS_COLOR;
+	}
+
+	if (buffers & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
+		struct nouveau_surface *s = &to_nouveau_renderbuffer(
+			fb->_DepthBuffer->Wrapped)->surface;
+
+		if (buffers & BUFFER_BIT_DEPTH && ctx->Depth.Mask)
+			clear |= NV20TCL_CLEAR_BUFFERS_DEPTH;
+		if (buffers & BUFFER_BIT_STENCIL && ctx->Stencil.WriteMask[0])
+			clear |= NV20TCL_CLEAR_BUFFERS_STENCIL;
+
+		BEGIN_RING(chan, kelvin, NV20TCL_CLEAR_DEPTH_VALUE, 1);
+		OUT_RING(chan, pack_zs_f(s->format, ctx->Depth.Clear,
+					 ctx->Stencil.Clear));
+
+		buffers &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
+	}
+
+	BEGIN_RING(chan, kelvin, NV20TCL_CLEAR_BUFFERS, 1);
+	OUT_RING(chan, clear);
+
+	nouveau_clear(ctx, buffers);
+}
 
 static void
 nv20_hwctx_init(struct gl_context *ctx)
@@ -134,10 +187,6 @@ nv20_hwctx_init(struct gl_context *ctx)
 	OUT_RING  (chan, 2);
 
 	if (context_chipset(ctx) >= 0x25) {
-		BEGIN_RING(chan, kelvin, 0x022c, 2);
-		OUT_RING  (chan, 0x280);
-		OUT_RING  (chan, 0x07d28000);
-
 		BEGIN_RING(chan, kelvin, 0x1da4, 1);
 		OUT_RING  (chan, 0);
 	}
@@ -376,7 +425,8 @@ nv20_context_destroy(struct gl_context *ctx)
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
 	nv04_surface_takedown(ctx);
-	nv20_render_destroy(ctx);
+	nv20_swtnl_destroy(ctx);
+	nv20_vbo_destroy(ctx);
 
 	nouveau_grobj_free(&nctx->hw.eng3d);
 
@@ -410,6 +460,7 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	ctx->Const.MaxTextureUnits = NV20_TEXTURE_UNITS;
 	ctx->Const.MaxTextureMaxAnisotropy = 8;
 	ctx->Const.MaxTextureLodBias = 15;
+	ctx->Driver.Clear = nv20_clear;
 
 	/* 2D engine. */
 	ret = nv04_surface_init(ctx);
@@ -428,7 +479,8 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 		goto fail;
 
 	nv20_hwctx_init(ctx);
-	nv20_render_init(ctx);
+	nv20_vbo_init(ctx);
+	nv20_swtnl_init(ctx);
 
 	return ctx;
 

@@ -100,8 +100,8 @@
 /*
  * Select an appropriate dispatch function for the given index buffer.
  */
-static void
-get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
+static dispatch_t
+get_array_dispatch(struct nouveau_array *a)
 {
 	if (!a->fields) {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -114,7 +114,7 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(L, ctx, start, delta, n);
 		};
 
-		*dispatch = f;
+		return f;
 
 	} else if (a->type == GL_UNSIGNED_INT) {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -127,7 +127,7 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(I32, ctx, start, delta, n);
 		};
 
-		*dispatch = f;
+		return f;
 
 	} else {
 		auto void f(struct gl_context *, unsigned int, int, unsigned int);
@@ -141,112 +141,8 @@ get_array_dispatch(struct nouveau_array_state *a, dispatch_t *dispatch)
 			EMIT_VBO(I16, ctx, start, delta, n & ~1);
 		};
 
-		*dispatch = f;
+		return f;
 	}
-}
-
-/*
- * Select appropriate element extraction functions for the given
- * array.
- */
-static void
-get_array_extract(struct nouveau_array_state *a,
-		  extract_u_t *extract_u, extract_f_t *extract_f)
-{
-#define EXTRACT(in_t, out_t, k)						\
-	({								\
-		auto out_t f(struct nouveau_array_state *, int, int);	\
-		out_t f(struct nouveau_array_state *a, int i, int j) {	\
-			in_t x = ((in_t *)(a->buf + i * a->stride))[j];	\
-									\
-			return (out_t)x / (k);				\
-		};							\
-		f;							\
-	});
-
-	switch (a->type) {
-	case GL_BYTE:
-		*extract_u = EXTRACT(char, unsigned, 1);
-		*extract_f = EXTRACT(char, float, SCHAR_MAX);
-		break;
-	case GL_UNSIGNED_BYTE:
-		*extract_u = EXTRACT(unsigned char, unsigned, 1);
-		*extract_f = EXTRACT(unsigned char, float, UCHAR_MAX);
-		break;
-	case GL_SHORT:
-		*extract_u = EXTRACT(short, unsigned, 1);
-		*extract_f = EXTRACT(short, float, SHRT_MAX);
-		break;
-	case GL_UNSIGNED_SHORT:
-		*extract_u = EXTRACT(unsigned short, unsigned, 1);
-		*extract_f = EXTRACT(unsigned short, float, USHRT_MAX);
-		break;
-	case GL_INT:
-		*extract_u = EXTRACT(int, unsigned, 1);
-		*extract_f = EXTRACT(int, float, INT_MAX);
-		break;
-	case GL_UNSIGNED_INT:
-		*extract_u = EXTRACT(unsigned int, unsigned, 1);
-		*extract_f = EXTRACT(unsigned int, float, UINT_MAX);
-		break;
-	case GL_FLOAT:
-		*extract_u = EXTRACT(float, unsigned, 1.0 / UINT_MAX);
-		*extract_f = EXTRACT(float, float, 1);
-		break;
-
-	default:
-		assert(0);
-	}
-}
-
-/*
- * Returns a pointer to a chunk of <size> bytes long GART memory. <bo>
- * will be updated with the buffer object the memory is located in.
- *
- * If <offset> is provided, it will be updated with the offset within
- * <bo> of the allocated memory. Otherwise the returned memory will
- * always be located right at the beginning of <bo>.
- */
-static inline void *
-get_scratch_vbo(struct gl_context *ctx, unsigned size, struct nouveau_bo **bo,
-		unsigned *offset)
-{
-	struct nouveau_scratch_state *scratch = &to_render_state(ctx)->scratch;
-	void *buf;
-
-	if (scratch->buf && offset &&
-	    size <= RENDER_SCRATCH_SIZE - scratch->offset) {
-		nouveau_bo_ref(scratch->bo[scratch->index], bo);
-
-		buf = scratch->buf + scratch->offset;
-		*offset = scratch->offset;
-		scratch->offset += size;
-
-	} else if (size <= RENDER_SCRATCH_SIZE) {
-		scratch->index = (scratch->index + 1) % RENDER_SCRATCH_COUNT;
-		nouveau_bo_ref(scratch->bo[scratch->index], bo);
-
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
-		buf = scratch->buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
-
-		if (offset)
-			*offset = 0;
-		scratch->offset = size;
-
-	} else {
-		nouveau_bo_new(context_dev(ctx),
-			       NOUVEAU_BO_MAP | NOUVEAU_BO_GART, 0, size, bo);
-
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
-		buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
-
-		if (offset)
-			*offset = 0;
-	}
-
-	return buf;
 }
 
 /*
@@ -277,6 +173,11 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 			case GL_UNSIGNED_BYTE:
 				max_out = MAX_OUT_I16;
 				break;
+
+			default:
+				assert(0);
+				max_out = 0;
+				break;
 			}
 		} else {
 			max_out = MAX_OUT_L;
@@ -286,76 +187,26 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 	}
 }
 
-#include "nouveau_vbo_t.c"
-#include "nouveau_swtnl_t.c"
-
 static void
-TAG(emit_material)(struct gl_context *ctx, struct nouveau_array_state *a,
+TAG(emit_material)(struct gl_context *ctx, struct nouveau_array *a,
 		   const void *v)
 {
-	const int attr = a->attr - VERT_ATTRIB_GENERIC0;
-	const int state = ((int []) {
-				NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE,
-				NOUVEAU_STATE_MATERIAL_BACK_DIFFUSE,
-				NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR,
-				NOUVEAU_STATE_MATERIAL_BACK_SPECULAR,
-				NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
-				NOUVEAU_STATE_MATERIAL_FRONT_SHININESS,
-				NOUVEAU_STATE_MATERIAL_BACK_SHININESS
-			}) [attr];
+	int attr = a->attr - VERT_ATTRIB_GENERIC0;
+	int state = ((int []) {
+			NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE,
+			NOUVEAU_STATE_MATERIAL_BACK_DIFFUSE,
+			NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR,
+			NOUVEAU_STATE_MATERIAL_BACK_SPECULAR,
+			NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,
+			NOUVEAU_STATE_MATERIAL_FRONT_SHININESS,
+			NOUVEAU_STATE_MATERIAL_BACK_SHININESS
+		}) [attr];
 
 	COPY_4V(ctx->Light.Material.Attrib[attr], (float *)v);
 	_mesa_update_material(ctx, 1 << attr);
 
 	context_drv(ctx)->emit[state](ctx, state);
-}
-
-static void
-TAG(render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
-		  const struct _mesa_prim *prims, GLuint nr_prims,
-		  const struct _mesa_index_buffer *ib,
-		  GLboolean index_bounds_valid,
-		  GLuint min_index, GLuint max_index)
-{
-	struct nouveau_context *nctx = to_nouveau_context(ctx);
-
-	nouveau_validate_framebuffer(ctx);
-
-	if (nctx->fallback == HWTNL)
-		TAG(vbo_render_prims)(ctx, arrays, prims, nr_prims, ib,
-				      index_bounds_valid, min_index, max_index);
-
-	if (nctx->fallback == SWTNL)
-		_tnl_vbo_draw_prims(ctx, arrays, prims, nr_prims, ib,
-				    index_bounds_valid, min_index, max_index);
-}
-
-void
-TAG(render_init)(struct gl_context *ctx)
-{
-	struct nouveau_render_state *render = to_render_state(ctx);
-	struct nouveau_scratch_state *scratch = &render->scratch;
-	int ret, i;
-
-	for (i = 0; i < RENDER_SCRATCH_COUNT; i++) {
-		ret = nouveau_bo_new(context_dev(ctx),
-				     NOUVEAU_BO_MAP | NOUVEAU_BO_GART,
-				     0, RENDER_SCRATCH_SIZE, &scratch->bo[i]);
-		assert(!ret);
-	}
-
-	for (i = 0; i < VERT_ATTRIB_MAX; i++)
-		render->map[i] = -1;
-
-	TAG(swtnl_init)(ctx);
-	vbo_set_draw_func(ctx, TAG(render_prims));
-}
-
-void
-TAG(render_destroy)(struct gl_context *ctx)
-{
-	TAG(swtnl_destroy)(ctx);
 }

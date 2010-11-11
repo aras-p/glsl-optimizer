@@ -663,7 +663,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 const struct prog_instruction *inst )
 {
    struct prog_src_register coord;
-   struct prog_dst_register tmpcoord;
+   struct prog_dst_register tmpcoord = { 0 };
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
    assert(unit < BRW_MAX_TEX_UNIT);
@@ -963,7 +963,7 @@ static void emit_render_target_writes( struct brw_wm_compile *c )
    struct prog_src_register outcolor;
    GLuint i;
 
-   struct prog_instruction *inst, *last_inst;
+   struct prog_instruction *inst, *last_inst = NULL;
 
    /* The inst->Aux field is used for FB write target and the EOT marker */
 
@@ -1058,7 +1058,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    struct brw_fragment_program *fp = c->fp;
    GLuint insn;
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pre-fp:\n");
       _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
 			       GL_TRUE);
@@ -1174,7 +1174,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       }
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pass_fp:\n");
       print_insns( c->prog_instructions, c->nr_fp_insns );
       printf("\n");

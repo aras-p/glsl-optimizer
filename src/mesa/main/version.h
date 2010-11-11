@@ -28,7 +28,7 @@
 #define VERSION_H
 
 
-#include "mtypes.h"
+struct gl_context;
 
 
 /* Mesa version */

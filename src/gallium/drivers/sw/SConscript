@@ -20,7 +20,6 @@ if True:
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
-    env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])
     extra.append(llvmpipe)
 

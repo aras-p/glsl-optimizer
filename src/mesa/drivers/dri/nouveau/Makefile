@@ -19,6 +19,8 @@ DRIVER_SOURCES = \
 	nouveau_bo_state.c \
 	nouveau_texture.c \
 	nouveau_surface.c \
+	nouveau_scratch.c \
+	nouveau_array.c \
 	nv04_context.c \
 	nv04_render.c \
 	nv04_state_fb.c \

@@ -35,7 +35,7 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
-	struct pipe_resource		*linear_texture;
+	struct pipe_resource		*staging_texture;
 };
 
 /* This gets further specialized into either buffer or texture
@@ -45,8 +45,6 @@ struct r600_transfer {
 struct r600_resource {
 	struct u_resource		base;
 	struct r600_bo			*bo;
-	u32				domain;
-	u32				flink;
 	u32				size;
 };
 
@@ -67,9 +65,6 @@ struct r600_resource_texture {
 };
 
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
-
-/* r600_buffer */
-u32 r600_domain_from_usage(unsigned usage);
 
 /* r600_texture */
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,

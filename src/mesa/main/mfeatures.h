@@ -78,7 +78,7 @@
 #define FEATURE_GL !FEATURE_ES
 #endif
 
-#ifdef IN_DRI_DRIVER
+#if defined(IN_DRI_DRIVER) || (FEATURE_GL + FEATURE_ES1 + FEATURE_ES2 > 1)
 #define FEATURE_remap_table               1
 #else
 #define FEATURE_remap_table               0
@@ -107,9 +107,7 @@
 #define FEATURE_texture_s3tc              FEATURE_GL
 
 #define FEATURE_extra_context_init        FEATURE_ES
-#define FEATURE_fixedpt                   FEATURE_ES
 #define FEATURE_point_size_array          FEATURE_ES
-#define FEATURE_vertex_array_byte         FEATURE_ES
 
 #define FEATURE_es2_glsl                  FEATURE_ES2
 

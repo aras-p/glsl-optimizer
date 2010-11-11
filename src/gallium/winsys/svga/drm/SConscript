@@ -5,37 +5,37 @@ env = env.Clone()
 env.ParseConfig('pkg-config --cflags libdrm')
 
 if env['gcc']:
-	env.Append(CCFLAGS = ['-fvisibility=hidden'])
-	env.Append(CPPDEFINES = [
-		'HAVE_STDINT_H', 
-		'HAVE_SYS_TYPES_H',
-                '-D_FILE_OFFSET_BITS=64',
-	])
-	
+    env.Append(CCFLAGS = ['-fvisibility=hidden'])
+    env.Append(CPPDEFINES = [
+        'HAVE_STDINT_H', 
+        'HAVE_SYS_TYPES_H',
+        '-D_FILE_OFFSET_BITS=64',
+    ])
+    
 env.Prepend(CPPPATH = [
-	'include',
-        '#/src/gallium/drivers/svga',
-        '#/src/gallium/drivers/svga/include',
+    'include',
+    '#/src/gallium/drivers/svga',
+    '#/src/gallium/drivers/svga/include',
 ])
 
 env.Append(CPPDEFINES = [
 ])
 
 sources = [
-        'vmw_buffer.c',
-        'vmw_context.c',
-        'vmw_fence.c',
-        'vmw_screen.c',
-        'vmw_screen_dri.c',
-        'vmw_screen_ioctl.c',
-        'vmw_screen_pools.c',
-        'vmw_screen_svga.c',
-        'vmw_surface.c',
+    'vmw_buffer.c',
+    'vmw_context.c',
+    'vmw_fence.c',
+    'vmw_screen.c',
+    'vmw_screen_dri.c',
+    'vmw_screen_ioctl.c',
+    'vmw_screen_pools.c',
+    'vmw_screen_svga.c',
+    'vmw_surface.c',
 ]
 
 svgadrm = env.ConvenienceLibrary(
-	target = 'svgadrm',
-	source = sources,
+    target = 'svgadrm',
+    source = sources,
 )
 
 Export('svgadrm')

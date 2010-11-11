@@ -4,7 +4,7 @@
 
 Import('*')
 
-if env['platform'] == 'linux':
+if env['platform'] in ('cygwin', 'linux'):
 
     env = env.Clone()
 

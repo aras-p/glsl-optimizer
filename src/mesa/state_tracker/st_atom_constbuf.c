@@ -90,8 +90,11 @@ void st_upload_constants( struct st_context *st,
 
       st->pipe->set_constant_buffer(st->pipe, shader_type, 0, *cbuf);
    }
-   else {
+   else if (*cbuf) {
       st->constants.tracked_state[shader_type].dirty.mesa = 0x0;
+
+      pipe_resource_reference(cbuf, NULL);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, NULL);
    }
 }
 

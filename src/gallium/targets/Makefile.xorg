@@ -42,7 +42,7 @@ endif
 default: depend $(TOP)/$(LIB_DIR)/gallium $(LIBNAME) $(LIBNAME_STAGING)
 
 $(LIBNAME): $(OBJECTS) Makefile ../Makefile.xorg $(LIBS) $(DRIVER_PIPES)
-	$(MKLIB) -linker $(CC) -noprefix -o $@ $(LDFLAGS) $(OBJECTS) $(DRIVER_PIPES) $(GALLIUM_AUXILIARIES) $(DRIVER_LINKS)
+	$(MKLIB) -linker '$(CC)' -noprefix -o $@ $(LDFLAGS) $(OBJECTS) $(DRIVER_PIPES) $(GALLIUM_AUXILIARIES) $(DRIVER_LINKS)
 
 depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS) $(GENERATED_SOURCES)
 	rm -f depend

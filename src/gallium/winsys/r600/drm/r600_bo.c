@@ -26,25 +26,40 @@
 #include <pipe/p_compiler.h>
 #include <pipe/p_screen.h>
 #include <pipebuffer/pb_bufmgr.h>
-#include "radeon_drm.h"
+#include "state_tracker/drm_driver.h"
 #include "r600_priv.h"
 #include "r600d.h"
+#include "drm.h"
+#include "radeon_drm.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,
-				  unsigned size, unsigned alignment, unsigned usage)
+			unsigned size, unsigned alignment,
+			unsigned binding, unsigned usage)
 {
 	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
 	struct pb_desc desc;
 	struct pb_manager *man;
 
 	desc.alignment = alignment;
-	desc.usage = usage;
+	desc.usage = (PB_USAGE_CPU_READ_WRITE | PB_USAGE_GPU_READ_WRITE);
 	ws_bo->size = size;
 
-	if (usage & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
 		man = radeon->cman;
 	else
 		man = radeon->kman;
+
+	/* Staging resources particpate in transfers and blits only
+	 * and are used for uploads and downloads from regular
+	 * resources.  We generate them internally for some transfers.
+	 */
+	if (usage == PIPE_USAGE_STAGING)
+                ws_bo->domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
+        else
+                ws_bo->domains = (RADEON_GEM_DOMAIN_CPU |
+                                  RADEON_GEM_DOMAIN_GTT |
+                                  RADEON_GEM_DOMAIN_VRAM);
+
 
 	ws_bo->pb = man->create_buffer(man, size, &desc);
 	if (ws_bo->pb == NULL) {
@@ -69,6 +84,10 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 	}
 	bo = radeon_bo_pb_get_bo(ws_bo->pb);
 	ws_bo->size = bo->size;
+	ws_bo->domains = (RADEON_GEM_DOMAIN_CPU |
+			  RADEON_GEM_DOMAIN_GTT |
+			  RADEON_GEM_DOMAIN_VRAM);
+
 	pipe_reference_init(&ws_bo->reference, 1);
 
 	radeon_bo_get_tiling_flags(radeon, bo, &ws_bo->tiling_flags,
@@ -135,4 +154,29 @@ unsigned r600_bo_get_size(struct r600_bo *pb_bo)
 		return 0;
 
 	return bo->size;
+}
+
+boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
+				unsigned stride, struct winsys_handle *whandle)
+{
+	struct radeon_bo *bo;
+
+	bo = radeon_bo_pb_get_bo(pb_bo->pb);
+	if (!bo)
+		return FALSE;
+
+	whandle->stride = stride;
+	switch(whandle->type) {
+	case DRM_API_HANDLE_TYPE_KMS:
+		whandle->handle = r600_bo_get_handle(pb_bo);
+		break;
+	case DRM_API_HANDLE_TYPE_SHARED:
+		if (radeon_bo_get_name(radeon, bo, &whandle->handle))
+			return FALSE;
+		break;
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }

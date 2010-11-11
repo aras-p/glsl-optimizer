@@ -17,8 +17,6 @@ struct intel_batchbuffer
 
    drm_intel_bo *buf;
 
-   GLubyte *buffer;
-
    GLubyte *map;
    GLubyte *ptr;
 

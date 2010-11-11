@@ -435,7 +435,7 @@ void brw_upload_state(struct brw_context *brw)
 
    brw_clear_validated_bos(brw);
 
-   if (INTEL_DEBUG) {
+   if (unlikely(INTEL_DEBUG)) {
       /* Debug version which enforces various sanity checks on the
        * state flags which are generated and checked to help ensure
        * state atoms are ordered correctly in the list.
@@ -487,7 +487,7 @@ void brw_upload_state(struct brw_context *brw)
       }
    }
 
-   if (INTEL_DEBUG & DEBUG_STATE) {
+   if (unlikely(INTEL_DEBUG & DEBUG_STATE)) {
       brw_update_dirty_count(mesa_bits, state->mesa);
       brw_update_dirty_count(brw_bits, state->brw);
       brw_update_dirty_count(cache_bits, state->cache);

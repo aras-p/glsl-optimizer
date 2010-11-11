@@ -27,8 +27,10 @@
 #define IMAGE_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 
+struct gl_context;
+struct gl_pixelstore_attrib;
 
 extern void
 _mesa_swap2( GLushort *p, GLuint n );
@@ -52,7 +54,8 @@ extern GLint
 _mesa_bytes_per_pixel( GLenum format, GLenum type );
 
 extern GLboolean
-_mesa_is_legal_format_and_type( struct gl_context *ctx, GLenum format, GLenum type );
+_mesa_is_legal_format_and_type(const struct gl_context *ctx,
+                               GLenum format, GLenum type);
 
 extern GLboolean
 _mesa_is_color_format(GLenum format);

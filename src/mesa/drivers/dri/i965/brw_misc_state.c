@@ -555,7 +555,7 @@ static void upload_invarient_state( struct brw_context *brw )
       memset(&vfs, 0, sizeof(vfs));
 
       vfs.opcode = brw->CMD_VF_STATISTICS;
-      if (INTEL_DEBUG & DEBUG_STATS)
+      if (unlikely(INTEL_DEBUG & DEBUG_STATS))
 	 vfs.statistics_enable = 1; 
 
       BRW_BATCH_STRUCT(brw, &vfs);

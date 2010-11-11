@@ -119,6 +119,7 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 
 	nouveau_state_init(ctx);
 	nouveau_bo_state_init(ctx);
+	nouveau_scratch_init(ctx);
 	_mesa_meta_init(ctx);
 	_swrast_CreateContext(ctx);
 	_vbo_CreateContext(ctx);
@@ -163,6 +164,7 @@ nouveau_context_deinit(struct gl_context *ctx)
 	if (nctx->hw.chan)
 		nouveau_channel_free(&nctx->hw.chan);
 
+	nouveau_scratch_destroy(ctx);
 	nouveau_bo_state_destroy(ctx);
 	_mesa_free_context_data(ctx);
 }
@@ -325,10 +327,12 @@ nouveau_fallback(struct gl_context *ctx, enum nouveau_fallback mode)
 
 	nctx->fallback = MAX2(HWTNL, mode);
 
-	if (mode < SWRAST)
+	if (mode < SWRAST) {
 		nouveau_state_emit(ctx);
-	else
+		nouveau_bo_state_emit(ctx);
+	} else {
 		FIRE_RING(context_chan(ctx));
+	}
 }
 
 static void
@@ -365,5 +369,6 @@ nouveau_validate_framebuffer(struct gl_context *ctx)
 		validate_framebuffer(dri_ctx, dri_read,
 				     &dri_ctx->dri2.read_stamp);
 
-	nouveau_state_emit(ctx);
+	if (ctx->NewState & _NEW_BUFFERS)
+		_mesa_update_state(ctx);
 }

@@ -148,6 +148,9 @@ _mesa_GetUniformfvARB(GLhandleARB, GLint, GLfloat *);
 extern void GLAPIENTRY
 _mesa_GetUniformivARB(GLhandleARB, GLint, GLint *);
 
+extern void GLAPIENTRY
+_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params);
+
 extern GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);
 

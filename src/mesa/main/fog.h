@@ -37,7 +37,10 @@
 #define FOG_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_context;
 
 
 #if _HAVE_FULL_GL

@@ -54,7 +54,6 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "x86/assyntax.h"'
-		print '#include "glapi/glapioffsets.h"'
 		print ''
 		print '#if defined(STDCALL_API)'
 		print '# if defined(USE_MGL_NAMESPACE)'
@@ -215,7 +214,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 			stack = self.get_stack_size(f)
 			alt = "%s@%u" % (name, stack)
 
-			print '\tGL_STUB(%s, _gloffset_%s, %s)' % (name, f.name, alt)
+			print '\tGL_STUB(%s, %d, %s)' % (name, f.offset, alt)
 
 			if not f.is_static_entry_point(f.name):
 				print '\tHIDDEN(GL_PREFIX(%s, %s))' % (name, alt)
@@ -230,7 +229,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 				if f.is_static_entry_point(n):
 					if n != f.name:
 						alt2 = "%s@%u" % (n, stack)
-						text = '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % (n, f.name, alt2, name, alt)
+						text = '\tGL_STUB_ALIAS(%s, %d, %s, %s, %s)' % (n, f.offset, alt2, name, alt)
 
 						if f.has_different_protocol(n):
 							print '#ifndef GLX_INDIRECT_RENDERING'

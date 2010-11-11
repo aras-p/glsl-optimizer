@@ -30,8 +30,15 @@
 struct nouveau_bufferobj {
 	struct gl_buffer_object base;
 	struct nouveau_bo *bo;
+	void *sys;
 };
 #define to_nouveau_bufferobj(x) ((struct nouveau_bufferobj *)(x))
+
+#define nouveau_bufferobj_hw(x) \
+	(_mesa_is_bufferobj(x) ? to_nouveau_bufferobj(x)->bo : NULL)
+
+#define nouveau_bufferobj_sys(x) \
+	(_mesa_is_bufferobj(x) ? to_nouveau_bufferobj(x)->sys : NULL)
 
 void
 nouveau_bufferobj_functions_init(struct dd_function_table *functions);

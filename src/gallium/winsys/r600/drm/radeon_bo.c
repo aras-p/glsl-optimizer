@@ -69,7 +69,7 @@ static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
 }
 
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			unsigned size, unsigned alignment, void *ptr)
+			unsigned size, unsigned alignment)
 {
 	struct radeon_bo *bo;
 	int r;
@@ -121,9 +121,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		radeon_bo_reference(radeon, &bo, NULL);
 		return bo;
 	}
-	if (ptr) {
-		memcpy(bo->data, ptr, size);
-	}
 	return bo;
 }
 
@@ -156,14 +153,15 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
 
-	if (!bo->fence && !bo->shared)
-		return 0;
-
-	if (bo->fence <= *bo->ctx->cfence) {
-		LIST_DELINIT(&bo->fencedlist);
-		bo->fence = 0;
-		return 0;
-	}
+        if (!bo->shared) {
+                if (!bo->fence)
+			return 0;
+		if (bo->fence <= *bo->ctx->cfence) {
+			LIST_DELINIT(&bo->fencedlist);
+			bo->fence = 0;
+			return 0;
+		}
+        }
 
 	/* Zero out args to make valgrind happy */
 	memset(&args, 0, sizeof(args));
@@ -217,5 +215,21 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 	
 	*tiling_flags = args.tiling_flags;
 	*pitch = args.pitch;
+	return ret;
+}
+
+int radeon_bo_get_name(struct radeon *radeon,
+		       struct radeon_bo *bo,
+		       uint32_t *name)
+{
+	struct drm_gem_flink flink;
+	int ret;
+
+	flink.handle = bo->handle;
+	ret = drmIoctl(radeon->fd, DRM_IOCTL_GEM_FLINK, &flink);
+	if (ret)
+		return ret;
+
+	*name = flink.name;
 	return ret;
 }

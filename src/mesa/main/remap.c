@@ -44,10 +44,15 @@
 #include "imports.h"
 #include "glapi/glapi.h"
 
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MAX_ENTRY_POINTS 16
 
-static const char *_mesa_function_pool;
+#define need_MESA_remap_table
+#include "main/remap_helper.h"
+
+
+/* this is global for quick access */
+int driDispatchRemapTable[driDispatchRemapTable_size];
+
 
 /**
  * Return the spec string associated with the given function index.
@@ -60,7 +65,10 @@ static const char *_mesa_function_pool;
 const char *
 _mesa_get_function_spec(GLint func_index)
 {
-   return _mesa_function_pool + func_index;
+   if (func_index < Elements(_mesa_function_pool))
+      return _mesa_function_pool + func_index;
+   else
+      return NULL;
 }
 
 
@@ -152,11 +160,31 @@ _mesa_map_function_array(const struct gl_function_remap *func_array)
 
 
 /**
+ * Map the functions which are already static.
+ *
+ * When a extension function are incorporated into the ABI, the
+ * extension suffix is usually stripped.  Mapping such functions
+ * makes sure the alternative names are available.
+ *
+ * Note that functions mapped by _mesa_init_remap_table() are
+ * excluded.
+ */
+void
+_mesa_map_static_functions(void)
+{
+   /* Remap static functions which have alternative names and are in the ABI.
+    * This is to be on the safe side.  glapi should have defined those names.
+    */
+   _mesa_map_function_array(MESA_alt_functions);
+}
+
+
+/**
  * Initialize the remap table.  This is called in one_time_init().
  * The remap table needs to be initialized before calling the
  * CALL/GET/SET macros defined in main/dispatch.h.
  */
-void
+static void
 _mesa_do_init_remap_table(const char *pool,
 			  int size,
 			  const struct gl_function_pool_remap *remap)
@@ -167,7 +195,6 @@ _mesa_do_init_remap_table(const char *pool,
    if (initialized)
       return;
    initialized = GL_TRUE;
-   _mesa_function_pool = pool;
 
    /* initialize the remap table */
    for (i = 0; i < size; i++) {
@@ -184,6 +211,15 @@ _mesa_do_init_remap_table(const char *pool,
       if (offset < 0)
          _mesa_warning(NULL, "failed to remap index %d", i);
    }
+}
+
+
+void
+_mesa_init_remap_table(void)
+{
+   _mesa_do_init_remap_table(_mesa_function_pool,
+			     driDispatchRemapTable_size,
+			     MESA_remap_table_functions);
 }
 
 

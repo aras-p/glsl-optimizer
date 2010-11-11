@@ -165,13 +165,20 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* User clip planes from curbe: 
     */
    if (c->key.nr_userclip) {
-      for (i = 0; i < c->key.nr_userclip; i++) {
-	 c->userplane[i] = stride( brw_vec4_grf(reg+3+i/2, (i%2) * 4), 0, 4, 1);
-      }     
+      if (intel->gen >= 6) {
+	 for (i = 0; i < c->key.nr_userclip; i++) {
+	    c->userplane[i] = stride(brw_vec4_grf(reg + i / 2,
+						  (i % 2) * 4), 0, 4, 1);
+	 }
+	 reg += ALIGN(c->key.nr_userclip, 2) / 2;
+      } else {
+	 for (i = 0; i < c->key.nr_userclip; i++) {
+	    c->userplane[i] = stride(brw_vec4_grf(reg + (6 + i) / 2,
+						  (i % 2) * 4), 0, 4, 1);
+	 }
+	 reg += (ALIGN(6 + c->key.nr_userclip, 4) / 4) * 2;
+      }
 
-      /* Deal with curbe alignment:
-       */
-      reg += ((6 + c->key.nr_userclip + 3) / 4) * 2;
    }
 
    /* Vertex program parameters from curbe:
@@ -253,9 +260,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_output = reg;
    c->first_overflow_output = 0;
 
-   if (intel->gen >= 6)
-      mrf = 3; /* no more pos store in attribute */
-   else if (intel->gen == 5)
+   if (intel->gen >= 6) {
+      mrf = 3;
+      if (c->key.nr_userclip)
+	 mrf += 2;
+   } else if (intel->gen == 5)
       mrf = 8;
    else
       mrf = 4;
@@ -372,16 +381,20 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* See emit_vertex_write() for where the VUE's overhead on top of the
     * attributes comes from.
     */
-   if (intel->gen >= 6)
-      c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 7) / 8;
-   else if (intel->gen == 5)
+   if (intel->gen >= 6) {
+      int header_regs = 2;
+      if (c->key.nr_userclip)
+	 header_regs += 2;
+
+      c->prog_data.urb_entry_size = (attributes_in_vue + header_regs + 7) / 8;
+   } else if (intel->gen == 5)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
 
    c->prog_data.total_grf = reg;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
       printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
       printf("%s reg = %d\n", __FUNCTION__, reg);
@@ -576,12 +589,11 @@ static void emit_min( struct brw_compile *p,
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
-
-static void emit_math1( struct brw_vs_compile *c,
-			GLuint function,
-			struct brw_reg dst,
-			struct brw_reg arg0,
-			GLuint precision)
+static void emit_math1_gen4(struct brw_vs_compile *c,
+			    GLuint function,
+			    struct brw_reg dst,
+			    struct brw_reg arg0,
+			    GLuint precision)
 {
    /* There are various odd behaviours with SEND on the simulator.  In
     * addition there are documented issues with the fact that the GEN4
@@ -591,14 +603,11 @@ static void emit_math1( struct brw_vs_compile *c,
     * whether that turns out to be a simulator bug or not:
     */
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
    GLboolean need_tmp = GL_FALSE;
 
-   if (dst.file != BRW_GENERAL_REGISTER_FILE)
-      need_tmp = GL_TRUE;
-
-   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+   if (dst.file != BRW_GENERAL_REGISTER_FILE ||
+       dst.dw1.bits.writemask != 0xf)
       need_tmp = GL_TRUE;
 
    if (need_tmp)
@@ -619,6 +628,57 @@ static void emit_math1( struct brw_vs_compile *c,
    }
 }
 
+static void
+emit_math1_gen6(struct brw_vs_compile *c,
+		GLuint function,
+		struct brw_reg dst,
+		struct brw_reg arg0,
+		GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg tmp_src, tmp_dst;
+
+   /* Something is strange on gen6 math in 16-wide mode, though the
+    * docs say it's supposed to work.  Punt to using align1 mode,
+    * which doesn't do writemasking and swizzles.
+    */
+   tmp_src = get_tmp(c);
+   tmp_dst = get_tmp(c);
+
+   brw_MOV(p, tmp_src, arg0);
+
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math(p,
+	    tmp_dst,
+	    function,
+	    BRW_MATH_SATURATE_NONE,
+	    2,
+	    tmp_src,
+	    BRW_MATH_DATA_SCALAR,
+	    precision);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+
+   brw_MOV(p, dst, tmp_dst);
+
+   release_tmp(c, tmp_src);
+   release_tmp(c, tmp_dst);
+}
+
+static void
+emit_math1(struct brw_vs_compile *c,
+	   GLuint function,
+	   struct brw_reg dst,
+	   struct brw_reg arg0,
+	   GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6)
+      emit_math1_gen6(c, function, dst, arg0, precision);
+   else
+      emit_math1_gen4(c, function, dst, arg0, precision);
+}
 
 static void emit_math2( struct brw_vs_compile *c, 
 			GLuint function,
@@ -1392,9 +1452,33 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
     */
-   if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip || brw->has_negative_rhw_bug)
-   {
+   if (intel->gen >= 6) {
+      struct brw_reg m1 = brw_message_reg(1);
+
+      /* On gen6, m1 has each value in a separate dword, so we never
+       * need to mess with a temporary for computing the m1 value.
+       */
+      brw_MOV(p, retype(m1, BRW_REGISTER_TYPE_UD), brw_imm_ud(0));
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
+	 brw_MOV(p, brw_writemask(m1, WRITEMASK_W),
+		 brw_swizzle1(c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ], 0));
+      }
+
+      /* Set the user clip distances in dword 8-15. (m3-4)*/
+      if (c->key.nr_userclip) {
+	 for (i = 0; i < c->key.nr_userclip; i++) {
+	    struct brw_reg m;
+	    if (i < 4)
+	       m = brw_message_reg(3);
+	    else
+	       m = brw_message_reg(4);
+
+	    brw_DP4(p, brw_writemask(m, (1 << (i & 7))),pos, c->userplane[i]);
+	 }
+      }
+   } else if ((c->prog_data.outputs_written &
+	       BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
+	      c->key.nr_userclip || brw->has_negative_rhw_bug) {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
 
@@ -1404,11 +1488,10 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
-	 if (intel->gen < 6) {
-	     brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
-	     brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
-	 } else
-	     brw_MOV(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0));
+	 brw_MUL(p, brw_writemask(header1, WRITEMASK_W),
+		 brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
+	 brw_AND(p, brw_writemask(header1, WRITEMASK_W),
+		 header1, brw_imm_ud(0x7ff<<8));
       }
 
       for (i = 0; i < c->key.nr_userclip; i++) {
@@ -1461,12 +1544,14 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
        * dword 4-7 (m2) is the 4D space position
        * dword 8-15 (m3,m4) of the vertex header is the user clip distance if
-       * enabled.  We don't use it, so skip it.
-       * m3 is the first vertex element data we fill, which is the vertex
-       * position.
+       * enabled.
+       * m3 or 5 is the first vertex element data we fill, which is
+       * the vertex position.
        */
       brw_MOV(p, brw_message_reg(2), pos);
       len_vertex_header = 1;
+      if (c->key.nr_userclip > 0)
+	 len_vertex_header += 2;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
@@ -1640,16 +1725,12 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint index;
    GLuint file;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       printf("vs-mesa:\n");
       _mesa_fprint_program_opt(stdout, &c->vp->program.Base, PROG_PRINT_DEBUG,
 			       GL_TRUE);
       printf("\n");
    }
-
-   /* FIXME Need to fix conditional instruction to remove this */
-   if (intel->gen >= 6)
-       p->single_program_flow = GL_TRUE;
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
@@ -2010,7 +2091,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    brw_optimize(p);
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       int i;
 
       printf("vs-native:\n");

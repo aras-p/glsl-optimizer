@@ -29,7 +29,6 @@
 #include "matrix.h" /*for floatsEqual*/
 #include "vg_context.h"
 #include "vg_state.h"
-#include "paint.h"
 #include "renderer.h"
 #include "util_array.h"
 #include "VG/openvg.h"

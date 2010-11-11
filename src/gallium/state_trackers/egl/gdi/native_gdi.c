@@ -160,6 +160,32 @@ gdi_surface_swap_buffers(struct native_surface *nsurf)
 }
 
 static boolean
+gdi_surface_present(struct native_surface *nsurf,
+                    enum native_attachment natt,
+                    boolean preserve,
+                    uint swap_interval)
+{
+   boolean ret;
+
+   if (preserve || swap_interval)
+      return FALSE;
+
+   switch (natt) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+      ret = gdi_surface_flush_frontbuffer(nsurf);
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+      ret = gdi_surface_swap_buffers(nsurf);
+      break;
+   default:
+      ret = FALSE;
+      break;
+   }
+
+   return ret;
+}
+
+static boolean
 gdi_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                         unsigned int *seq_num, struct pipe_resource **textures,
                         int *width, int *height)
@@ -231,8 +257,7 @@ gdi_display_create_window_surface(struct native_display *ndpy,
    gdi_surface_update_geometry(&gsurf->base);
 
    gsurf->base.destroy = gdi_surface_destroy;
-   gsurf->base.swap_buffers = gdi_surface_swap_buffers;
-   gsurf->base.flush_frontbuffer = gdi_surface_flush_frontbuffer;
+   gsurf->base.present = gdi_surface_present;
    gsurf->base.validate = gdi_surface_validate;
    gsurf->base.wait = gdi_surface_wait;
 
@@ -321,6 +346,8 @@ gdi_display_get_param(struct native_display *ndpy,
       /* private buffers are allocated */
       val = FALSE;
       break;
+   case NATIVE_PARAM_PRESERVE_BUFFER:
+   case NATIVE_PARAM_MAX_SWAP_INTERVAL:
    default:
       val = 0;
       break;

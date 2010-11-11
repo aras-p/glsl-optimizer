@@ -338,6 +338,32 @@ dri2_surface_swap_buffers(struct native_surface *nsurf)
 }
 
 static boolean
+dri2_surface_present(struct native_surface *nsurf,
+                     enum native_attachment natt,
+                     boolean preserve,
+                     uint swap_interval)
+{
+   boolean ret;
+
+   if (swap_interval)
+      return FALSE;
+
+   switch (natt) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+      ret = dri2_surface_flush_frontbuffer(nsurf);
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+      ret = dri2_surface_swap_buffers(nsurf);
+      break;
+   default:
+      ret = FALSE;
+      break;
+   }
+
+   return ret;
+}
+
+static boolean
 dri2_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                       unsigned int *seq_num, struct pipe_resource **textures,
                       int *width, int *height)
@@ -430,8 +456,7 @@ dri2_display_create_surface(struct native_display *ndpy,
    dri2surf->color_format = dri2conf->base.color_format;
 
    dri2surf->base.destroy = dri2_surface_destroy;
-   dri2surf->base.swap_buffers = dri2_surface_swap_buffers;
-   dri2surf->base.flush_frontbuffer = dri2_surface_flush_frontbuffer;
+   dri2surf->base.present = dri2_surface_present;
    dri2surf->base.validate = dri2_surface_validate;
    dri2surf->base.wait = dri2_surface_wait;
 
@@ -630,9 +655,14 @@ dri2_display_get_param(struct native_display *ndpy,
 
    switch (param) {
    case NATIVE_PARAM_USE_NATIVE_BUFFER:
-      /* DRI2GetBuffers use the native buffers */
+      /* DRI2GetBuffers uses the native buffers */
       val = TRUE;
       break;
+   case NATIVE_PARAM_PRESERVE_BUFFER:
+      /* DRI2CopyRegion is used */
+      val = TRUE;
+      break;
+   case NATIVE_PARAM_MAX_SWAP_INTERVAL:
    default:
       val = 0;
       break;

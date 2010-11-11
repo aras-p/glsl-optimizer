@@ -26,8 +26,12 @@
 #define ATTRIB_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+#include "mfeatures.h"
 
+struct _glapi_table;
+struct gl_context;
 
 #if FEATURE_attrib_stack
 
@@ -47,8 +51,6 @@ extern void
 _mesa_init_attrib_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_attrib_stack */
-
-#include "main/compiler.h"
 
 static INLINE void
 _mesa_PushClientAttrib( GLbitfield mask )

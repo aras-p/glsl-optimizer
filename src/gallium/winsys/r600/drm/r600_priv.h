@@ -62,7 +62,7 @@ struct radeon_bo {
 	unsigned			handle;
 	unsigned			size;
 	unsigned			alignment;
-	unsigned			map_count;
+	int				map_count;
 	void				*data;
 	struct list_head		fencedlist;
 	unsigned			fence;
@@ -79,6 +79,7 @@ struct r600_bo {
 	unsigned			size;
 	unsigned			tiling_flags;
 	unsigned                        kernel_pitch;
+	unsigned			domains;
 };
 
 
@@ -90,7 +91,7 @@ struct radeon *radeon_decref(struct radeon *radeon);
 
 /* radeon_bo.c */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, void *ptr);
+			    unsigned size, unsigned alignment);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
@@ -101,6 +102,9 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
 			       uint32_t *tiling_flags,
 			       uint32_t *pitch);
+int radeon_bo_get_name(struct radeon *radeon,
+		       struct radeon_bo *bo,
+		       uint32_t *name);
 
 /* radeon_bo_pb.c */
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);

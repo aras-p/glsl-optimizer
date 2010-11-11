@@ -254,7 +254,7 @@ prepare_color_calc_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_color_calc_state = {
    .dirty = {
-      .mesa = _NEW_COLOR,
+      .mesa = _NEW_COLOR | _NEW_STENCIL,
       .brw = 0,
       .cache = 0,
    },

@@ -119,8 +119,7 @@ do_blit_copypixels(struct gl_context * ctx,
    GLboolean flip = GL_FALSE;
 
    if (type == GL_DEPTH || type == GL_STENCIL) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glCopyPixels() fallback: GL_DEPTH || GL_STENCIL\n");
+      fallback_debug("glCopyPixels() fallback: GL_DEPTH || GL_STENCIL\n");
       return GL_FALSE;
    }
 
@@ -203,8 +202,7 @@ intelCopyPixels(struct gl_context * ctx,
                 GLsizei width, GLsizei height,
                 GLint destx, GLint desty, GLenum type)
 {
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+   DBG("%s\n", __FUNCTION__);
 
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;

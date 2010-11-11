@@ -41,12 +41,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mtypes.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/fbobject.h"
 
 #define STANDALONE_MMIO
 #include "radeon_chipset.h"
 #include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_common.h"
+#include "radeon_common_context.h"
 #if defined(RADEON_R100)
 #include "radeon_context.h"
 #include "radeon_tex.h"
@@ -396,6 +398,188 @@ static const struct __DRI2flushExtensionRec radeonFlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     radeonDRI2Flush,
     dri2InvalidateDrawable,
+};
+
+static __DRIimage *
+radeon_create_image_from_name(__DRIcontext *context,
+                              int width, int height, int format,
+                              int name, int pitch, void *loaderPrivate)
+{
+   __DRIimage *image;
+   radeonContextPtr radeon = context->driverPrivate;
+
+   if (name == 0)
+      return NULL;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      image->format = MESA_FORMAT_RGB565;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      image->format = MESA_FORMAT_XRGB8888;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      image->format = MESA_FORMAT_ARGB8888;
+      image->internal_format = GL_RGBA;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      free(image);
+      return NULL;
+   }
+
+   image->data = loaderPrivate;
+   image->cpp = _mesa_get_format_bytes(image->format);
+   image->width = width;
+   image->pitch = pitch;
+   image->height = height;
+
+   image->bo = radeon_bo_open(radeon->radeonScreen->bom,
+                              (uint32_t)name,
+                              image->pitch * image->height * image->cpp,
+                              0,
+                              RADEON_GEM_DOMAIN_VRAM,
+                              0);
+
+   if (image->bo == NULL) {
+      FREE(image);
+      return NULL;
+   }
+
+   return image;
+}
+
+static __DRIimage *
+radeon_create_image_from_renderbuffer(__DRIcontext *context,
+                                      int renderbuffer, void *loaderPrivate)
+{
+   __DRIimage *image;
+   radeonContextPtr radeon = context->driverPrivate;
+   struct gl_renderbuffer *rb;
+   struct radeon_renderbuffer *rrb;
+
+   rb = _mesa_lookup_renderbuffer(radeon->glCtx, renderbuffer);
+   if (!rb) {
+      _mesa_error(radeon->glCtx,
+                  GL_INVALID_OPERATION, "glRenderbufferExternalMESA");
+      return NULL;
+   }
+
+   rrb = radeon_renderbuffer(rb);
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   image->internal_format = rb->InternalFormat;
+   image->format = rb->Format;
+   image->cpp = rrb->cpp;
+   image->data_type = rb->DataType;
+   image->data = loaderPrivate;
+   radeon_bo_ref(rrb->bo);
+   image->bo = rrb->bo;
+
+   image->width = rb->Width;
+   image->height = rb->Height;
+   image->pitch = rrb->pitch / image->cpp;
+
+   return image;
+}
+
+static void
+radeon_destroy_image(__DRIimage *image)
+{
+   radeon_bo_unref(image->bo);
+   FREE(image);
+}
+
+static __DRIimage *
+radeon_create_image(__DRIscreen *screen,
+                    int width, int height, int format,
+                    unsigned int use,
+                    void *loaderPrivate)
+{
+   __DRIimage *image;
+   radeonScreenPtr radeonScreen = screen->private;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      image->format = MESA_FORMAT_RGB565;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      image->format = MESA_FORMAT_XRGB8888;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      image->format = MESA_FORMAT_ARGB8888;
+      image->internal_format = GL_RGBA;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      free(image);
+      return NULL;
+   }
+
+   image->data = loaderPrivate;
+   image->cpp = _mesa_get_format_bytes(image->format);
+   image->width = width;
+   image->height = height;
+   image->pitch = ((image->cpp * image->width + 255) & ~255) / image->cpp;
+
+   image->bo = radeon_bo_open(radeonScreen->bom,
+                              0,
+                              image->pitch * image->height * image->cpp,
+                              0,
+                              RADEON_GEM_DOMAIN_VRAM,
+                              0);
+
+   if (image->bo == NULL) {
+      FREE(image);
+      return NULL;
+   }
+
+   return image;
+}
+
+static GLboolean
+radeon_query_image(__DRIimage *image, int attrib, int *value)
+{
+   switch (attrib) {
+   case __DRI_IMAGE_ATTRIB_STRIDE:
+      *value = image->pitch * image->cpp;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HANDLE:
+      *value = image->bo->handle;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_NAME:
+      radeon_gem_get_kernel_name(image->bo, (uint32_t *) value);
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+static struct __DRIimageExtensionRec radeonImageExtension = {
+    { __DRI_IMAGE, __DRI_IMAGE_VERSION },
+   radeon_create_image_from_name,
+   radeon_create_image_from_renderbuffer,
+   radeon_destroy_image,
+   radeon_create_image,
+   radeon_query_image
 };
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
@@ -1138,6 +1322,8 @@ radeonCreateScreen( __DRIscreen *sPriv )
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
+   /* set group bytes for r6xx+ */
+   screen->group_bytes = 256;
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
 
@@ -1382,7 +1568,8 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
-   /* r6xx+ tiling */
+   /* r6xx+ tiling, default to 256 group bytes */
+   screen->group_bytes = 256;
    if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6)) {
 	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
 	   if (ret)
@@ -1507,6 +1694,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #endif
 
    screen->extensions[i++] = &radeonFlushExtension.base;
+   screen->extensions[i++] = &radeonImageExtension.base;
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;

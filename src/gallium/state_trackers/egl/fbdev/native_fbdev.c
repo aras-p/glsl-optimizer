@@ -137,6 +137,32 @@ fbdev_surface_swap_buffers(struct native_surface *nsurf)
    return ret;
 }
 
+static boolean
+fbdev_surface_present(struct native_surface *nsurf,
+                      enum native_attachment natt,
+                      boolean preserve,
+                      uint swap_interval)
+{
+   boolean ret;
+
+   if (preserve || swap_interval)
+      return FALSE;
+
+   switch (natt) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+      ret = fbdev_surface_flush_frontbuffer(nsurf);
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+      ret = fbdev_surface_swap_buffers(nsurf);
+      break;
+   default:
+      ret = FALSE;
+      break;
+   }
+
+   return ret;
+}
+
 static void
 fbdev_surface_wait(struct native_surface *nsurf)
 {
@@ -181,8 +207,7 @@ fbdev_display_create_scanout_surface(struct native_display *ndpy,
    resource_surface_set_size(fbsurf->rsurf, fbsurf->width, fbsurf->height);
 
    fbsurf->base.destroy = fbdev_surface_destroy;
-   fbsurf->base.swap_buffers = fbdev_surface_swap_buffers;
-   fbsurf->base.flush_frontbuffer = fbdev_surface_flush_frontbuffer;
+   fbsurf->base.present = fbdev_surface_present;
    fbsurf->base.validate = fbdev_surface_validate;
    fbsurf->base.wait = fbdev_surface_wait;
 
@@ -279,6 +304,9 @@ fbdev_display_get_param(struct native_display *ndpy,
    int val;
 
    switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+   case NATIVE_PARAM_PRESERVE_BUFFER:
+   case NATIVE_PARAM_MAX_SWAP_INTERVAL:
    default:
       val = 0;
       break;

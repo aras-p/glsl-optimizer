@@ -3,14 +3,13 @@ GLAPI = ../gen
 include $(TOP)/configs/current
 
 OUTPUTS :=			\
-	glapi/glapidispatch.h	\
-	glapi/glapioffsets.h	\
 	glapi/glapitable.h	\
 	glapi/glapitemp.h	\
 	glapi/glprocs.h		\
 	glapi/glapi_sparc.S	\
 	glapi/glapi_x86-64.S	\
 	glapi/glapi_x86.S	\
+	main/glapidispatch.h	\
 	main/remap_helper.h
 
 COMMON = gl_XML.py glX_XML.py license.py typeexpr.py
@@ -46,9 +45,6 @@ endef
 
 %/glapidispatch.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c -m remap_table)
-
-%/glapioffsets.h: $(GLAPI)/gl_offsets.py $(COMMON)
-	$(call gen-glapi,-c)
 
 %/glapitable.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c)

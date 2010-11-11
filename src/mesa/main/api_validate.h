@@ -28,7 +28,10 @@
 #define API_VALIDATE_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
+
+struct gl_buffer_object;
+struct gl_context;
 
 
 extern GLuint

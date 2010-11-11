@@ -51,11 +51,11 @@ get_rt_format(gl_format format)
 }
 
 static void
-setup_lma_buffer(struct gl_context *ctx)
+setup_hierz_buffer(struct gl_context *ctx)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, LMA_DEPTH);
+	struct nouveau_bo_context *bctx = context_bctx(ctx, HIERZ);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	unsigned pitch = align(fb->Width, 128),
@@ -135,7 +135,7 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 				 s->bo, 0, bo_flags);
 
 		if (context_chipset(ctx) >= 0x17) {
-			setup_lma_buffer(ctx);
+			setup_hierz_buffer(ctx);
 			context_dirty(ctx, ZCLEAR);
 		}
 	}

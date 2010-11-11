@@ -5,54 +5,28 @@ Import('*')
 
 env = env.Clone()
 
-env.Prepend(LIBS = [
-    ws_null,
-    trace,
-    rbug,
-    identity,
-#    gallium,
-])
+graw_util = env.SharedObject(
+    source = ['graw_util.c'],
+)
 
-env.Append(CPPPATH = [
-    '#src/gallium/drivers',
-])
-
-if env['platform'] == 'windows':
-    # For trace
-    env.Append(LIBS = [
-        'ws2_32',
-    ])
+env = env.Clone()
 
 sources = [
     'graw_null.c',
-    '../graw-xlib/graw_util.c',
+    graw_util,
 ]
 
-if True:
-    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    env.Prepend(LIBS = [softpipe])
-
-if env['llvm']:
-    env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
-    env.Tool('udis86')
-    env.Prepend(LIBS = [llvmpipe])
-
-# Need this for trace, identity drivers referenced by
-# gallium_wrap_screen().
-#
 env.Prepend(LIBS = [gallium])
 
 # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 graw = env.SharedLibrary(
-    target ='graw',
+    target = 'graw',
     source = sources,
 )
-
-env.InstallSharedLibrary(graw, version=(1, 0))
 
 if env['platform'] == 'windows':
     graw = env.FindIxes(graw, 'LIBPREFIX', 'LIBSUFFIX')
 else:
     graw = env.FindIxes(graw, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
-Export('graw')
+Export('graw_util', 'graw')

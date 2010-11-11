@@ -40,7 +40,7 @@
 #if FEATURE_beginend
 
 /**
- * Use the per-vertex functions found in <vfmt> to initialze the given
+ * Use the per-vertex functions found in <vfmt> to initialoze the given
  * API dispatch table.
  */
 static void
@@ -88,7 +88,7 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_Vertex4f(tab, vfmt->Vertex4f);
    SET_Vertex4fv(tab, vfmt->Vertex4fv);
 
-   _mesa_install_dlist_vtxfmt(tab, vfmt);
+   _mesa_install_dlist_vtxfmt(tab, vfmt);   /* glCallList / glCallLists */
 
    SET_Begin(tab, vfmt->Begin);
    SET_End(tab, vfmt->End);
@@ -125,17 +125,43 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_VertexAttrib4fARB(tab, vfmt->VertexAttrib4fARB);
    SET_VertexAttrib4fvARB(tab, vfmt->VertexAttrib4fvARB);
 #endif
+
+   /* GL_EXT_gpu_shader4 / OpenGL 3.0 */
+   SET_VertexAttribI1iEXT(tab, vfmt->VertexAttribI1i);
+   SET_VertexAttribI2iEXT(tab, vfmt->VertexAttribI2i);
+   SET_VertexAttribI3iEXT(tab, vfmt->VertexAttribI3i);
+   SET_VertexAttribI4iEXT(tab, vfmt->VertexAttribI4i);
+   SET_VertexAttribI2ivEXT(tab, vfmt->VertexAttribI2iv);
+   SET_VertexAttribI3ivEXT(tab, vfmt->VertexAttribI3iv);
+   SET_VertexAttribI4ivEXT(tab, vfmt->VertexAttribI4iv);
+
+   SET_VertexAttribI1uiEXT(tab, vfmt->VertexAttribI1ui);
+   SET_VertexAttribI2uiEXT(tab, vfmt->VertexAttribI2ui);
+   SET_VertexAttribI3uiEXT(tab, vfmt->VertexAttribI3ui);
+   SET_VertexAttribI4uiEXT(tab, vfmt->VertexAttribI4ui);
+   SET_VertexAttribI2uivEXT(tab, vfmt->VertexAttribI2uiv);
+   SET_VertexAttribI3uivEXT(tab, vfmt->VertexAttribI3uiv);
+   SET_VertexAttribI4uivEXT(tab, vfmt->VertexAttribI4uiv);
 }
 
 
-void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
+/**
+ * Install per-vertex functions into the API dispatch table for execution.
+ */
+void
+_mesa_install_exec_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
    if (ctx->API == API_OPENGL)
       install_vtxfmt( ctx->Exec, vfmt );
 }
 
 
-void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
+/**
+ * Install per-vertex functions into the API dispatch table for display
+ * list compilation.
+ */
+void
+_mesa_install_save_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
    if (ctx->API == API_OPENGL)
       install_vtxfmt( ctx->Save, vfmt );

@@ -131,34 +131,15 @@ struct tgsi_sampler
 #define TGSI_EXEC_TEMP_PRIMITIVE_I  (TGSI_EXEC_NUM_TEMPS + 2)
 #define TGSI_EXEC_TEMP_PRIMITIVE_C  2
 
-/* NVIDIA condition code (CC) vector
- */
-#define TGSI_EXEC_CC_GT       0x01
-#define TGSI_EXEC_CC_EQ       0x02
-#define TGSI_EXEC_CC_LT       0x04
-#define TGSI_EXEC_CC_UN       0x08
-
-#define TGSI_EXEC_CC_X_MASK   0x000000ff
-#define TGSI_EXEC_CC_X_SHIFT  0
-#define TGSI_EXEC_CC_Y_MASK   0x0000ff00
-#define TGSI_EXEC_CC_Y_SHIFT  8
-#define TGSI_EXEC_CC_Z_MASK   0x00ff0000
-#define TGSI_EXEC_CC_Z_SHIFT  16
-#define TGSI_EXEC_CC_W_MASK   0xff000000
-#define TGSI_EXEC_CC_W_SHIFT  24
-
-#define TGSI_EXEC_TEMP_CC_I         (TGSI_EXEC_NUM_TEMPS + 2)
-#define TGSI_EXEC_TEMP_CC_C         3
-
-#define TGSI_EXEC_TEMP_THREE_I      (TGSI_EXEC_NUM_TEMPS + 3)
-#define TGSI_EXEC_TEMP_THREE_C      0
+#define TGSI_EXEC_TEMP_THREE_I      (TGSI_EXEC_NUM_TEMPS + 2)
+#define TGSI_EXEC_TEMP_THREE_C      3
 
 #define TGSI_EXEC_TEMP_HALF_I       (TGSI_EXEC_NUM_TEMPS + 3)
-#define TGSI_EXEC_TEMP_HALF_C       1
+#define TGSI_EXEC_TEMP_HALF_C       0
 
 /* execution mask, each value is either 0 or ~0 */
 #define TGSI_EXEC_MASK_I            (TGSI_EXEC_NUM_TEMPS + 3)
-#define TGSI_EXEC_MASK_C            2
+#define TGSI_EXEC_MASK_C            1
 
 /* 4 register buffer for various purposes */
 #define TGSI_EXEC_TEMP_R0           (TGSI_EXEC_NUM_TEMPS + 4)

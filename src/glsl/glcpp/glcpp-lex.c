@@ -795,10 +795,6 @@ int glcpp_get_lineno (yyscan_t yyscanner );
 
 void glcpp_set_lineno (int line_number ,yyscan_t yyscanner );
 
-int glcpp_get_column  (yyscan_t yyscanner );
-
-void glcpp_set_column (int column_no ,yyscan_t yyscanner );
-
 YYSTYPE * glcpp_get_lval (yyscan_t yyscanner );
 
 void glcpp_set_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
@@ -958,7 +954,7 @@ YY_DECL
 
 
 	/* Single-line comments */
-#line 962 "glcpp/glcpp-lex.c"
+#line 958 "glcpp/glcpp-lex.c"
 
     yylval = yylval_param;
 
@@ -1475,7 +1471,7 @@ YY_RULE_SETUP
 #line 319 "glcpp/glcpp-lex.l"
 ECHO;
 	YY_BREAK
-#line 1479 "glcpp/glcpp-lex.c"
+#line 1475 "glcpp/glcpp-lex.c"
 			case YY_STATE_EOF(DONE):
 			case YY_STATE_EOF(COMMENT):
 			case YY_STATE_EOF(UNREACHABLE):

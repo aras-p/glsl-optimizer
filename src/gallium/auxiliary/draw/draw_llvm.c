@@ -1164,11 +1164,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    sampler->destroy(sampler);
 
-#ifdef PIPE_ARCH_X86
-   /* Avoid corrupting the FPU stack on 32bit OSes. */
-   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
-#endif
-
    ret = LLVMBuildLoad(builder, ret_ptr,"");
    LLVMBuildRet(builder, ret);
       
@@ -1377,11 +1372,6 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    lp_build_loop_end_cond(builder, fetch_count, step, LLVMIntUGE, &lp_loop);
 
    sampler->destroy(sampler);
-
-#ifdef PIPE_ARCH_X86
-   /* Avoid corrupting the FPU stack on 32bit OSes. */
-   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
-#endif
 
    ret = LLVMBuildLoad(builder, ret_ptr,"");   
    LLVMBuildRet(builder, ret);

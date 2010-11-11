@@ -761,11 +761,6 @@ generate_fragment(struct llvmpipe_screen *screen,
       }
    }
 
-#ifdef PIPE_ARCH_X86
-   /* Avoid corrupting the FPU stack on 32bit OSes. */
-   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
-#endif
-
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -1067,10 +1062,10 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    draw_flush(llvmpipe->draw);
 
+   llvmpipe->fs = (struct lp_fragment_shader *) fs;
+
    draw_bind_fragment_shader(llvmpipe->draw,
                              (llvmpipe->fs ? llvmpipe->fs->draw_data : NULL));
-
-   llvmpipe->fs = fs;
 
    llvmpipe->dirty |= LP_NEW_FS;
 }

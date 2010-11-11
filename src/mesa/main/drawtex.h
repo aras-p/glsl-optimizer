@@ -25,7 +25,8 @@
 #define DRAWTEX_H
 
 
-#include "main/mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
 
 
 #if FEATURE_OES_draw_texture

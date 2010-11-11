@@ -33,7 +33,8 @@
 
 
 #include "glheader.h"
-#include "mtypes.h"
+
+struct gl_context;
 
 
 extern void GLAPIENTRY

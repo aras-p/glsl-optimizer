@@ -28,7 +28,12 @@
 #define LIGHT_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_context;
+struct gl_light;
+struct gl_material;
 
 extern void GLAPIENTRY
 _mesa_ShadeModel( GLenum mode );

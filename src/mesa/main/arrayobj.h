@@ -28,7 +28,9 @@
 #ifndef ARRAYOBJ_H
 #define ARRAYOBJ_H
 
-#include "mtypes.h"
+#include "glheader.h"
+
+struct gl_context;
 
 /**
  * \file arrayobj.h

@@ -7,24 +7,10 @@ This directory contains a Gallium3D remote debugger pipe driver.
 It provides remote debugging functionality.
 
 
-= Build Instructions =
-
-To build, invoke scons on the top dir as
- 
- scons dri=no statetrackers=mesa winsys=xlib
-
-
 = Usage =
 
-To use do
+Do
 
-   export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib
-
-ensure the right libGL.so is being picked by doing
-
-   ldd progs/trivial/tri 
-
-   export XMESA_TRACE=y
    GALLIUM_RBUG=true progs/trivial/tri
 
 which should open gallium remote debugging session. While the program is running

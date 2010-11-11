@@ -9116,7 +9116,7 @@ _mesa_create_save_table(void)
 {
    struct _glapi_table *table;
 
-   table = _mesa_alloc_dispatch_table(sizeof *table);
+   table = _mesa_alloc_dispatch_table(_gloffset_COUNT);
    if (table == NULL)
       return NULL;
 

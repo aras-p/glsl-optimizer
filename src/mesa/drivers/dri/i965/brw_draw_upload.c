@@ -168,7 +168,7 @@ static GLuint byte_types_scale[5] = {
 static GLuint get_surface_type( GLenum type, GLuint size,
                                 GLenum format, GLboolean normalized )
 {
-   if (INTEL_DEBUG & DEBUG_VERTS)
+   if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
       printf("type %s size %d normalized %d\n", 
 		   _mesa_lookup_enum_by_nr(type), size, normalized);
 

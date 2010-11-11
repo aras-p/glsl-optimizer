@@ -3,49 +3,48 @@
 
 Import('*')
 
-if 'egl' in env['statetrackers']:
+env = env.Clone()
 
-    env = env.Clone()
+env.Append(CPPPATH = [
+    '#/src/mapi',
+])
 
-    env.Append(CPPPATH = [
-	'#/src/mapi',
-    ])
+vega_sources = [
+    'api.c',
+    'api_context.c',
+    'api_filters.c',
+    'api_images.c',
+    'api_masks.c',
+    'api_misc.c',
+    'api_paint.c',
+    'api_params.c',
+    'api_path.c',
+    'api_text.c',
+    'api_transform.c',
+    'vgu.c',
+    'vg_context.c',
+    'vg_manager.c',
+    'vg_state.c',
+    'vg_translate.c',
+    'polygon.c',
+    'bezier.c',
+    'path.c',
+    'paint.c',
+    'arc.c',
+    'image.c',
+    'renderer.c',
+    'stroker.c',
+    'mask.c',
+    'shader.c',
+    'shaders_cache.c',
+]
 
-    vega_sources = [
-       'api.c',
-       'api_context.c',
-       'api_filters.c',
-       'api_images.c',
-       'api_masks.c',
-       'api_misc.c',
-       'api_paint.c',
-       'api_params.c',
-       'api_path.c',
-       'api_text.c',
-       'api_transform.c',
-       'vgu.c',
-       'vg_context.c',
-       'vg_manager.c',
-       'vg_state.c',
-       'vg_translate.c',
-       'polygon.c',
-       'bezier.c',
-       'path.c',
-       'paint.c',
-       'arc.c',
-       'image.c',
-       'renderer.c',
-       'stroker.c',
-       'mask.c',
-       'shader.c',
-       'shaders_cache.c',
-    ]
+# vgapi_header must be generated first
+env.Depends(vega_sources, vgapi_header)
 
-    # vgapi_header must be generated first
-    env.Depends(vega_sources, vgapi_header)
+st_vega = env.ConvenienceLibrary(
+    target = 'st_vega',
+    source = vega_sources,
+)
 
-    st_vega = env.ConvenienceLibrary(
-	target = 'st_vega',
-	source = vega_sources,
-    )
-    Export('st_vega')
+Export('st_vega')

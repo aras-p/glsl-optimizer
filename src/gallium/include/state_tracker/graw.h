@@ -44,8 +44,9 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
-struct pipe_screen;
 struct pipe_context;
+struct pipe_screen;
+struct pipe_surface;
 
 /* Returns a handle to be used with flush_frontbuffer()/present().
  *
@@ -70,5 +71,26 @@ PUBLIC void *graw_parse_vertex_shader( struct pipe_context *pipe,
 
 PUBLIC void *graw_parse_fragment_shader( struct pipe_context *pipe,
                                          const char *text );
+
+/* Parse a single command-line option, if any. Options include:
+ *
+ * -o <filename>
+ *
+ * If an option has been successfully parsed, argi is updated
+ * to point just after the option and return TRUE.
+ */
+PUBLIC boolean graw_parse_args(int *argi, int argc, char *argv[]);
+
+/* Saves surface contents to a file.
+ *
+ * If filename is NULL, the filename provided with the `-o' option
+ * is used. If the option has not been specified, the surface
+ * will not be saved.
+ *
+ * Returns TRUE if the surface has been saved.
+ */
+PUBLIC boolean graw_save_surface_to_file(struct pipe_context *pipe,
+                                         struct pipe_surface *surface,
+                                         const char *filename);
 
 #endif

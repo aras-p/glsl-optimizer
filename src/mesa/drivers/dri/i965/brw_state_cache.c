@@ -61,6 +61,7 @@
 #include "intel_batchbuffer.h"
 #include "brw_wm.h"
 
+#define FILE_DEBUG_FLAG DEBUG_STATE
 
 static GLuint
 hash_key(struct brw_cache_item *item)
@@ -265,10 +266,9 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
       *(void **)aux_return = (void *)((char *)item->key + item->key_size);
    }
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      printf("upload %s: %d bytes to cache id %d\n",
-		   cache->name[cache_id],
-		   data_size, cache_id);
+   DBG("upload %s: %d bytes to cache id %d\n",
+       cache->name[cache_id],
+       data_size, cache_id);
 
    /* Copy data to the buffer */
    drm_intel_bo_subdata(bo, 0, data_size, data);
@@ -407,8 +407,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    struct brw_cache_item *c, *next;
    GLuint i;
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      printf("%s\n", __FUNCTION__);
+   DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
@@ -434,8 +433,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
-   if (INTEL_DEBUG & DEBUG_STATE)
-      printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
+   DBG("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
 
    /* un-tuned guess.  Each object is generally a page, so 1000 of them is 4 MB of
     * state cache.
@@ -450,8 +448,7 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 {
    GLuint i;
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      printf("%s\n", __FUNCTION__);
+   DBG("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {

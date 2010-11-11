@@ -171,6 +171,10 @@ void radeonSetCliprects(radeonContextPtr radeon)
 {
 	__DRIdrawable *const drawable = radeon_get_drawable(radeon);
 	__DRIdrawable *const readable = radeon_get_readable(radeon);
+
+	if(drawable == NULL && readable == NULL)
+		return;
+
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 	int x_off, y_off;

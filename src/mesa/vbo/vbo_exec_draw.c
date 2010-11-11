@@ -160,7 +160,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
    struct vbo_exec_context *exec = &vbo->exec;
    struct gl_client_array *arrays = exec->vtx.arrays;
    const GLuint count = exec->vtx.vert_count;
-   const GLubyte *data = (GLubyte *) exec->vtx.buffer_map;
    const GLuint *map;
    GLuint attr;
    GLbitfield varying_inputs = 0x0;
@@ -215,6 +214,9 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
       const GLuint src = map[attr];
 
       if (exec->vtx.attrsz[src]) {
+	 GLsizeiptr offset = (GLbyte *)exec->vtx.attrptr[src] -
+	    (GLbyte *)exec->vtx.vertex;
+
          /* override the default array set above */
          ASSERT(attr < Elements(exec->vtx.inputs));
          ASSERT(attr < Elements(exec->vtx.arrays)); /* arrays[] */
@@ -222,17 +224,13 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 
          if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
             /* a real buffer obj: Ptr is an offset, not a pointer*/
-            GLsizeiptr offset;
             assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
-            offset = (GLbyte *) data -
-	       (GLbyte *) exec->vtx.bufferobj->Pointer +
-	       exec->vtx.bufferobj->Offset;
             assert(offset >= 0);
-            arrays[attr].Ptr = (void *) offset;
+            arrays[attr].Ptr = (GLubyte *)exec->vtx.bufferobj->Offset + offset;
          }
          else {
             /* Ptr into ordinary app memory */
-            arrays[attr].Ptr = (void *) data;
+            arrays[attr].Ptr = (GLubyte *)exec->vtx.buffer_map + offset;
          }
 	 arrays[attr].Size = exec->vtx.attrsz[src];
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
@@ -245,7 +243,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
                                        exec->vtx.bufferobj);
 	 arrays[attr]._MaxElement = count; /* ??? */
 
-	 data += exec->vtx.attrsz[src] * sizeof(GLfloat);
          varying_inputs |= 1 << attr;
       }
    }

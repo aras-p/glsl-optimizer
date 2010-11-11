@@ -34,6 +34,11 @@
 #include "pipe/p_state.h"
 #include "state_tracker/sw_winsys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "native_buffer.h"
 #include "native_modeset.h"
 
 /**
@@ -54,7 +59,17 @@ enum native_param_type {
     * Return TRUE if window/pixmap surfaces use the buffers of the native
     * types.
     */
-   NATIVE_PARAM_USE_NATIVE_BUFFER
+   NATIVE_PARAM_USE_NATIVE_BUFFER,
+
+   /**
+    * Return TRUE if native_surface::present can preserve the buffer.
+    */
+   NATIVE_PARAM_PRESERVE_BUFFER,
+
+   /**
+    * Return the maximum supported swap interval.
+    */
+   NATIVE_PARAM_MAX_SWAP_INTERVAL
 };
 
 struct native_surface {
@@ -66,17 +81,12 @@ struct native_surface {
    void (*destroy)(struct native_surface *nsurf);
 
    /**
-    * Swap the front and back buffers so that the back buffer is visible.  It
-    * is no-op if the surface is single-buffered.  The contents of the back
-    * buffer after swapping may or may not be preserved.
+    * Present the given buffer to the native engine.
     */
-   boolean (*swap_buffers)(struct native_surface *nsurf);
-
-   /**
-    * Make the front buffer visible.  In some native displays, changes to the
-    * front buffer might not be visible immediately and require manual flush.
-    */
-   boolean (*flush_frontbuffer)(struct native_surface *nsurf);
+   boolean (*present)(struct native_surface *nsurf,
+                      enum native_attachment natt,
+                      boolean preserve,
+                      uint swap_interval);
 
    /**
     * Validate the buffers of the surface.  textures, if not NULL, points to an
@@ -181,6 +191,7 @@ struct native_display {
                                                    EGLNativePixmapType pix,
                                                    const struct native_config *nconf);
 
+   const struct native_display_buffer *buffer;
    const struct native_display_modeset *modeset;
 };
 
@@ -231,5 +242,9 @@ native_get_drm_platform(void);
 
 const struct native_platform *
 native_get_fbdev_platform(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NATIVE_H_ */

@@ -70,7 +70,8 @@ struct dri_drawable
 static INLINE struct dri_drawable *
 dri_drawable(__DRIdrawable * driDrawPriv)
 {
-   return (struct dri_drawable *)driDrawPriv->driverPrivate;
+   return (struct dri_drawable *) (driDrawPriv)
+      ? driDrawPriv->driverPrivate : NULL;
 }
 
 /***********************************************************************

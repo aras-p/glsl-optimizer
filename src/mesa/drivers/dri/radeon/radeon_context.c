@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_framebuffer_object
+#define need_GL_OES_EGL_image
 #include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20061018"
@@ -101,6 +102,9 @@ static const struct dri_extension card_extensions[] =
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
+#if FEATURE_OES_EGL_image
+    { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
+#endif
     { NULL,                                NULL }
 };
 

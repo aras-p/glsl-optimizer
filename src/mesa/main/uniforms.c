@@ -682,6 +682,40 @@ _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
 
 
 /**
+ * Called via glGetUniformuiv().
+ * New in GL_EXT_gpu_shader4, OpenGL 3.0
+ * \sa _mesa_get_uniformfv, only difference is a cast.
+ */
+static void
+_mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
+                     GLuint *params)
+{
+   struct gl_program *prog;
+   GLint paramPos;
+   GLint offset;
+
+   split_location_offset(&location, &offset);
+
+   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
+
+   if (prog) {
+      const struct gl_program_parameter *p =
+         &prog->Parameters->Parameters[paramPos];
+      GLint rows, cols, i, j, k;
+
+      get_uniform_rows_cols(p, &rows, &cols);
+
+      k = 0;
+      for (i = 0; i < rows; i++) {
+         for (j = 0; j < cols; j++ ) {
+            params[k++] = (GLuint) prog->Parameters->ParameterValues[paramPos+i][j];
+         }
+      }
+   }
+}
+
+
+/**
  * Called via glGetUniformLocation().
  *
  * The return value will encode two values, the uniform location and an
@@ -1534,6 +1568,16 @@ _mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint *params)
 }
 
 
+/* GL3 */
+void GLAPIENTRY
+_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_get_uniformuiv(ctx, program, location, params);
+}
+
+
+
 GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 {
@@ -1603,13 +1647,16 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
 
    /* OpenGL 3.0 */
    /* XXX finish dispatch */
-   (void) _mesa_Uniform1ui;
-   (void) _mesa_Uniform2ui;
-   (void) _mesa_Uniform3ui;
-   (void) _mesa_Uniform4ui;
-   (void) _mesa_Uniform1uiv;
-   (void) _mesa_Uniform2uiv;
-   (void) _mesa_Uniform3uiv;
-   (void) _mesa_Uniform4uiv;
+   SET_Uniform1uiEXT(exec, _mesa_Uniform1ui);
+   SET_Uniform2uiEXT(exec, _mesa_Uniform2ui);
+   SET_Uniform3uiEXT(exec, _mesa_Uniform3ui);
+   SET_Uniform4uiEXT(exec, _mesa_Uniform4ui);
+   SET_Uniform1uivEXT(exec, _mesa_Uniform1uiv);
+   SET_Uniform2uivEXT(exec, _mesa_Uniform2uiv);
+   SET_Uniform3uivEXT(exec, _mesa_Uniform3uiv);
+   SET_Uniform4uivEXT(exec, _mesa_Uniform4uiv);
+   SET_GetUniformuivEXT(exec, _mesa_GetUniformuiv);
+
+
 #endif /* FEATURE_GL */
 }

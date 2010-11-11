@@ -192,7 +192,8 @@ egl_g3d_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
 
-   return gsurf->native->flush_frontbuffer(gsurf->native);
+   return gsurf->native->present(gsurf->native,
+         NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
 }
 
 static boolean 

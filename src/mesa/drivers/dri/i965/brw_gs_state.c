@@ -101,7 +101,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    if (intel->gen == 5)
       gs.thread4.rendering_enable = 1;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       gs.thread4.stats_enable = 1;
 
    bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,

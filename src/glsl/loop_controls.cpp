@@ -85,6 +85,9 @@ int
 calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
 		     enum ir_expression_operation op)
 {
+   if (from == NULL || to == NULL || increment == NULL)
+      return -1;
+
    void *mem_ctx = talloc_init("%s", __func__);
 
    ir_expression *const sub =

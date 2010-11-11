@@ -1766,7 +1766,7 @@ _mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 
 
 /**
- * Add a software-based accumulation renderbuffer to the given framebuffer.
+ * Add a software-based aux renderbuffer to the given framebuffer.
  * This is a helper routine for device drivers when creating a
  * window system framebuffer (not a user-created render/framebuffer).
  * Once this function is called, you can basically forget about this
@@ -1795,7 +1795,7 @@ _mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
       assert(fb->Attachment[BUFFER_AUX0 + i].Renderbuffer == NULL);
 
       if (!rb) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating accum buffer");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating aux buffer");
          return GL_FALSE;
       }
 

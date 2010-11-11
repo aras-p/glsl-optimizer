@@ -73,7 +73,7 @@ prepare_wm_constants(struct brw_context *brw)
 const struct brw_tracked_state gen6_wm_constants = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
-      .brw   = 0,
+      .brw   = BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0,
    },
    .prepare = prepare_wm_constants,

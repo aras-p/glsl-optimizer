@@ -220,8 +220,9 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
    struct gl_context *ctx = exec->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    GLint lastcount = exec->vtx.vert_count;
-   GLfloat *tmp;
-   GLuint oldsz;
+   GLfloat *old_attrptr[VBO_ATTRIB_MAX];
+   GLuint old_vtx_size = exec->vtx.vertex_size;
+   GLuint oldsz = exec->vtx.attrsz[attr];
    GLuint i;
 
    /* Run pipeline on current vertices, copy wrapped vertices
@@ -229,86 +230,103 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
     */
    vbo_exec_wrap_buffers( exec );
 
+   if (unlikely(exec->vtx.copied.nr)) {
+      /* We're in the middle of a primitive, keep the old vertex
+       * format around to be able to translate the copied vertices to
+       * the new format.
+       */
+      memcpy(old_attrptr, exec->vtx.attrptr, sizeof(old_attrptr));
+   }
 
-   /* Do a COPY_TO_CURRENT to ensure back-copying works for the case
-    * when the attribute already exists in the vertex and is having
-    * its size increased.  
-    */
-   vbo_exec_copy_to_current( exec );
-
+   if (unlikely(oldsz)) {
+      /* Do a COPY_TO_CURRENT to ensure back-copying works for the
+       * case when the attribute already exists in the vertex and is
+       * having its size increased.
+       */
+      vbo_exec_copy_to_current( exec );
+   }
 
    /* Heuristic: Attempt to isolate attributes received outside
     * begin/end so that they don't bloat the vertices.
     */
    if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END &&
-       exec->vtx.attrsz[attr] == 0 && 
-       lastcount > 8 &&
-       exec->vtx.vertex_size) {
+       !oldsz && lastcount > 8 && exec->vtx.vertex_size) {
+      vbo_exec_copy_to_current( exec );
       reset_attrfv( exec );
    }
 
    /* Fix up sizes:
     */
-   oldsz = exec->vtx.attrsz[attr];
    exec->vtx.attrsz[attr] = newsz;
-
    exec->vtx.vertex_size += newsz - oldsz;
    exec->vtx.max_vert = ((VBO_VERT_BUFFER_SIZE - exec->vtx.buffer_used) / 
                          (exec->vtx.vertex_size * sizeof(GLfloat)));
    exec->vtx.vert_count = 0;
    exec->vtx.buffer_ptr = exec->vtx.buffer_map;
-   
 
-   /* Recalculate all the attrptr[] values
-    */
-   for (i = 0, tmp = exec->vtx.vertex ; i < VBO_ATTRIB_MAX ; i++) {
-      if (exec->vtx.attrsz[i]) {
-	 exec->vtx.attrptr[i] = tmp;
-	 tmp += exec->vtx.attrsz[i];
+   if (unlikely(oldsz)) {
+      /* Size changed, recalculate all the attrptr[] values
+       */
+      GLfloat *tmp = exec->vtx.vertex;
+
+      for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
+	 if (exec->vtx.attrsz[i]) {
+	    exec->vtx.attrptr[i] = tmp;
+	    tmp += exec->vtx.attrsz[i];
+	 }
+	 else
+	    exec->vtx.attrptr[i] = NULL; /* will not be dereferenced */
       }
-      else 
-	 exec->vtx.attrptr[i] = NULL; /* will not be dereferenced */
-   }
 
-   /* Copy from current to repopulate the vertex with correct values.
-    */
-   vbo_exec_copy_from_current( exec );
+      /* Copy from current to repopulate the vertex with correct
+       * values.
+       */
+      vbo_exec_copy_from_current( exec );
+
+   } else {
+      /* Just have to append the new attribute at the end */
+      exec->vtx.attrptr[attr] = exec->vtx.vertex +
+	 exec->vtx.vertex_size - newsz;
+   }
 
    /* Replay stored vertices to translate them
     * to new format here.
     *
     * -- No need to replay - just copy piecewise
     */
-   if (exec->vtx.copied.nr)
-   {
+   if (unlikely(exec->vtx.copied.nr)) {
       GLfloat *data = exec->vtx.copied.buffer;
       GLfloat *dest = exec->vtx.buffer_ptr;
       GLuint j;
 
       assert(exec->vtx.buffer_ptr == exec->vtx.buffer_map);
-      
+
       for (i = 0 ; i < exec->vtx.copied.nr ; i++) {
 	 for (j = 0 ; j < VBO_ATTRIB_MAX ; j++) {
-	    if (exec->vtx.attrsz[j]) {
+	    GLuint sz = exec->vtx.attrsz[j];
+
+	    if (sz) {
+	       GLint old_offset = old_attrptr[j] - exec->vtx.vertex;
+	       GLint new_offset = exec->vtx.attrptr[j] - exec->vtx.vertex;
+
 	       if (j == attr) {
 		  if (oldsz) {
-		     COPY_CLEAN_4V( dest, oldsz, data );
-		     data += oldsz;
-		     dest += newsz;
+		     GLfloat tmp[4];
+		     COPY_CLEAN_4V(tmp, oldsz, data + old_offset);
+		     COPY_SZ_4V(dest + new_offset, newsz, tmp);
 		  } else {
-		     const GLfloat *current = (const GLfloat *)vbo->currval[j].Ptr;
-		     COPY_SZ_4V( dest, newsz, current );
-		     dest += newsz;
+		     GLfloat *current = (GLfloat *)vbo->currval[j].Ptr;
+		     COPY_SZ_4V(dest + new_offset, sz, current);
 		  }
 	       }
 	       else {
-		  GLuint sz = exec->vtx.attrsz[j];
-		  COPY_SZ_4V( dest, sz, data );
-		  dest += sz;
-		  data += sz;
+		  COPY_SZ_4V(dest + new_offset, sz, data + old_offset);
 	       }
 	    }
 	 }
+
+	 data += old_vtx_size;
+	 dest += exec->vtx.vertex_size;
       }
 
       exec->vtx.buffer_ptr = dest;
@@ -657,6 +675,24 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->VertexAttrib3fvNV = vbo_VertexAttrib3fvNV;
    vfmt->VertexAttrib4fNV = vbo_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = vbo_VertexAttrib4fvNV;
+
+   /* integer-valued */
+   vfmt->VertexAttribI1i = vbo_VertexAttribI1i;
+   vfmt->VertexAttribI2i = vbo_VertexAttribI2i;
+   vfmt->VertexAttribI3i = vbo_VertexAttribI3i;
+   vfmt->VertexAttribI4i = vbo_VertexAttribI4i;
+   vfmt->VertexAttribI2iv = vbo_VertexAttribI2iv;
+   vfmt->VertexAttribI3iv = vbo_VertexAttribI3iv;
+   vfmt->VertexAttribI4iv = vbo_VertexAttribI4iv;
+
+   /* unsigned integer-valued */
+   vfmt->VertexAttribI1ui = vbo_VertexAttribI1ui;
+   vfmt->VertexAttribI2ui = vbo_VertexAttribI2ui;
+   vfmt->VertexAttribI3ui = vbo_VertexAttribI3ui;
+   vfmt->VertexAttribI4ui = vbo_VertexAttribI4ui;
+   vfmt->VertexAttribI2uiv = vbo_VertexAttribI2uiv;
+   vfmt->VertexAttribI3uiv = vbo_VertexAttribI3uiv;
+   vfmt->VertexAttribI4uiv = vbo_VertexAttribI4uiv;
 
    vfmt->Materialfv = vbo_Materialfv;
 

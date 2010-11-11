@@ -191,6 +191,8 @@ print """
 #include "%s"
 #include "%s"
 #include "main/mfeatures.h"
+#include "main/compiler.h"
+#include "main/api_exec.h"
 
 #if FEATURE_%s
 """ % (versionHeader, versionExtHeader, shortname.upper())
@@ -206,50 +208,7 @@ typedef double GLclampd;
 /* Mesa error handling requires these */
 extern void *_mesa_get_current_context(void);
 extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
-
-#include "main/compiler.h"
-#include "main/api_exec.h"
-#include "main/remap.h"
-
-/* cannot include main/dispatch.h here */
-#ifdef IN_DRI_DRIVER
-#define _GLAPI_USE_REMAP_TABLE
-#endif
-/* glapi uses GLAPIENTRY while GLES headers define GL_APIENTRY */
-#ifndef GLAPIENTRY
-#define GLAPIENTRY GL_APIENTRY
-#endif
-#include "%sapi/glapi/glapitable.h"
-#include "%sapi/glapi/glapioffsets.h"
-#include "%sapi/glapi/glapidispatch.h"
-
-#if FEATURE_remap_table
-
-#if !FEATURE_GL
-int driDispatchRemapTable[driDispatchRemapTable_size];
-#endif
-
-#define need_MESA_remap_table
-
-#include "%sapi/main/remap_helper.h"
-
-void
-_mesa_init_remap_table_%s(void)
-{
-   _mesa_do_init_remap_table(_mesa_function_pool,
-                             driDispatchRemapTable_size,
-                             MESA_remap_table_functions);
-}
-
-void
-_mesa_map_static_functions_%s(void)
-{
-}
-
-#endif
-
-typedef void (*_glapi_proc)(void); /* generic function pointer */
-""" % (shortname, shortname, shortname, shortname, shortname, shortname);
+"""
 
 # Finally we get to the all-important functions
 print """/*************************************************************
@@ -713,15 +672,73 @@ for funcName in keys:
 # end for each function
 
 print """
+#include "glapi/glapi.h"
+
+#if FEATURE_remap_table
+
+/* cannot include main/dispatch.h here */
+#define _GLAPI_USE_REMAP_TABLE
+#include "%sapi/main/glapidispatch.h"
+
+#define need_MESA_remap_table
+#include "%sapi/main/remap_helper.h"
+
+/* force SET_* macros to use the local remap table */
+#define driDispatchRemapTable remap_table
+static int remap_table[driDispatchRemapTable_size];
+
+static void
+init_remap_table(void)
+{
+   _glthread_DECLARE_STATIC_MUTEX(mutex);
+   static GLboolean initialized = GL_FALSE;
+   const struct gl_function_pool_remap *remap = MESA_remap_table_functions;
+   int i;
+
+   _glthread_LOCK_MUTEX(mutex);
+   if (initialized) {
+      _glthread_UNLOCK_MUTEX(mutex);
+      return;
+   }
+
+   for (i = 0; i < driDispatchRemapTable_size; i++) {
+      GLint offset;
+      const char *spec;
+
+      /* sanity check */
+      ASSERT(i == remap[i].remap_index);
+      spec = _mesa_function_pool + remap[i].pool_index;
+
+      offset = _mesa_map_function_spec(spec);
+      remap_table[i] = offset;
+   }
+   initialized = GL_TRUE;
+   _glthread_UNLOCK_MUTEX(mutex);
+}
+
+#else /* FEATURE_remap_table */
+
+/* cannot include main/dispatch.h here */
+#include "%sapi/main/glapidispatch.h"
+
+static INLINE void
+init_remap_table(void)
+{
+}
+
+#endif /* FEATURE_remap_table */
+
 struct _glapi_table *
 _mesa_create_exec_table_%s(void)
 {
    struct _glapi_table *exec;
-   exec = _mesa_alloc_dispatch_table(sizeof *exec);
+
+   exec = _mesa_alloc_dispatch_table(_gloffset_COUNT);
    if (exec == NULL)
       return NULL;
 
-""" % shortname
+   init_remap_table();
+""" % (shortname, shortname, shortname, shortname)
 
 for func in keys:
     prefix = "_es_" if func not in allSpecials else "_check_"

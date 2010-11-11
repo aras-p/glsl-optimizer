@@ -28,46 +28,22 @@
 #define __NOUVEAU_RENDER_H__
 
 #include "vbo/vbo_context.h"
-
-struct nouveau_array_state;
+#include "nouveau_array.h"
 
 typedef void (*dispatch_t)(struct gl_context *, unsigned int, int, unsigned int);
-typedef unsigned (*extract_u_t)(struct nouveau_array_state *, int, int);
-typedef float (*extract_f_t)(struct nouveau_array_state *, int, int);
+typedef void (*emit_t)(struct gl_context *, struct nouveau_array *, const void *);
 
 struct nouveau_attr_info {
 	int vbo_index;
 	int imm_method;
 	int imm_fields;
 
-	void (*emit)(struct gl_context *, struct nouveau_array_state *, const void *);
-};
-
-struct nouveau_array_state {
-	int attr;
-	int stride, fields, type;
-
-	struct nouveau_bo *bo;
-	unsigned offset;
-	const void *buf;
-
-	extract_u_t extract_u;
-	extract_f_t extract_f;
-};
-
-#define RENDER_SCRATCH_COUNT 2
-#define RENDER_SCRATCH_SIZE 2*1024*1024
-
-struct nouveau_scratch_state {
-	struct nouveau_bo *bo[RENDER_SCRATCH_COUNT];
-
-	int index;
-	int offset;
-	void *buf;
+	emit_t emit;
 };
 
 struct nouveau_swtnl_state {
 	struct nouveau_bo *vbo;
+	unsigned offset;
 	void *buf;
 	unsigned vertex_count;
 	GLenum primitive;
@@ -79,8 +55,8 @@ struct nouveau_render_state {
 		IMM
 	} mode;
 
-	struct nouveau_array_state ib;
-	struct nouveau_array_state attrs[VERT_ATTRIB_MAX];
+	struct nouveau_array ib;
+	struct nouveau_array attrs[VERT_ATTRIB_MAX];
 
 	/* Maps a HW VBO index or IMM emission order to an index in
 	 * the attrs array above (or -1 if unused). */
@@ -89,10 +65,16 @@ struct nouveau_render_state {
 	int attr_count;
 	int vertex_size;
 
-	struct nouveau_scratch_state scratch;
 	struct nouveau_swtnl_state swtnl;
 };
 
 #define to_render_state(ctx) (&to_nouveau_context(ctx)->render)
+
+#define FOR_EACH_ATTR(render, i, attr)					\
+	for (i = 0; attr = (render)->map[i], i < NUM_VERTEX_ATTRS; i++)
+
+#define FOR_EACH_BOUND_ATTR(render, i, attr)				\
+	for (i = 0; attr = (render)->map[i], i < render->attr_count; i++) \
+		if (attr >= 0)
 
 #endif

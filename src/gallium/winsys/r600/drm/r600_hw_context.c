@@ -44,7 +44,7 @@
 int r600_context_init_fence(struct r600_context *ctx)
 {
 	ctx->fence = 1;
-	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0);
+	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0, 0);
 	if (ctx->fence_bo == NULL) {
 		return -ENOMEM;
 	}
@@ -384,6 +384,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028A0C_PA_SC_LINE_STIPPLE, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028A48_PA_SC_MPASS_PS_CNTL, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C00_PA_SC_LINE_CNTL, 0, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C08_PA_SU_VTX_CNTL, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0, 0, 0},
@@ -611,7 +612,9 @@ void r600_context_fini(struct r600_context *ctx)
 		}
 		free(ctx->range[i].blocks);
 	}
+	free(ctx->blocks);
 	free(ctx->reloc);
+	free(ctx->bo);
 	free(ctx->pm4);
 	if (ctx->fence_bo) {
 		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
@@ -785,8 +788,8 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 	bo->reloc = &ctx->reloc[ctx->creloc];
 	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
 	ctx->reloc[ctx->creloc].handle = bo->handle;
-	ctx->reloc[ctx->creloc].read_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
-	ctx->reloc[ctx->creloc].write_domain = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	ctx->reloc[ctx->creloc].read_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
+	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
 	ctx->reloc[ctx->creloc].flags = 0;
 	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
 	ctx->creloc++;
@@ -1106,6 +1109,8 @@ void r600_context_flush(struct r600_context *ctx)
 	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
 	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
 				sizeof(struct drm_radeon_cs));
+#else
+	*ctx->cfence = ctx->fence;
 #endif
 
 	r600_context_update_fenced_list(ctx);
@@ -1304,7 +1309,12 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	query->type = query_type;
 	query->buffer_size = 4096;
 
-	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0);
+	/* As of GL4, query buffers are normally read by the CPU after
+	 * being written by the gpu, hence staging is probably a good
+	 * usage pattern.
+	 */
+	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0,
+				PIPE_USAGE_STAGING);
 	if (!query->buffer) {
 		free(query);
 		return NULL;

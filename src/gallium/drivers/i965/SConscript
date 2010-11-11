@@ -2,10 +2,6 @@ Import('*')
 
 env = env.Clone()
 
-if msvc:
-	print 'warning: not building i965g'
-	Return();
-
 i965 = env.ConvenienceLibrary(
 	target = 'i965',
 	source = [

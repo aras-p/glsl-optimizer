@@ -204,7 +204,7 @@ static void upload_cc_unit(struct brw_context *brw)
       cc.cc2.depth_write_enable = ctx->Depth.Mask;
    }
 
-   if (intel->stats_wm || (INTEL_DEBUG & DEBUG_STATS))
+   if (intel->stats_wm || unlikely(INTEL_DEBUG & DEBUG_STATS))
       cc.cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */

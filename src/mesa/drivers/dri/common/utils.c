@@ -738,12 +738,18 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
+
+/**
+ * Return the value of a configuration attribute.  The attribute is
+ * indicated by the index.
+ */
 static int
 driGetConfigAttribIndex(const __DRIconfig *config,
 			unsigned int index, unsigned int *value)
 {
     switch (attribMap[index].attrib) {
     case __DRI_ATTRIB_RENDER_TYPE:
+        /* no support for color index mode */
 	*value = __DRI_ATTRIB_RGBA_BIT;
 	break;
     case __DRI_ATTRIB_CONFIG_CAVEAT:
@@ -755,13 +761,16 @@ driGetConfigAttribIndex(const __DRIconfig *config,
 	    *value = 0;
 	break;
     case __DRI_ATTRIB_SWAP_METHOD:
+        /* XXX no return value??? */
 	break;
 
     case __DRI_ATTRIB_FLOAT_MODE:
+        /* this field is not int-sized */
         *value = config->modes.floatMode;
         break;
 
     default:
+        /* any other int-sized field */
 	*value = *(unsigned int *)
 	    ((char *) &config->modes + attribMap[index].offset);
 	
@@ -771,6 +780,13 @@ driGetConfigAttribIndex(const __DRIconfig *config,
     return GL_TRUE;
 }
 
+
+/**
+ * Get the value of a configuration attribute.
+ * \param attrib  the attribute (one of the _DRI_ATTRIB_x tokens)
+ * \param value  returns the attribute's value
+ * \return 1 for success, 0 for failure
+ */
 int
 driGetConfigAttrib(const __DRIconfig *config,
 		   unsigned int attrib, unsigned int *value)
@@ -784,6 +800,14 @@ driGetConfigAttrib(const __DRIconfig *config,
     return GL_FALSE;
 }
 
+
+/**
+ * Get a configuration attribute name and value, given an index.
+ * \param index  which field of the __DRIconfig to query
+ * \param attrib  returns the attribute name (one of the _DRI_ATTRIB_x tokens)
+ * \param value  returns the attribute's value
+ * \return 1 for success, 0 for failure
+ */
 int
 driIndexConfigAttrib(const __DRIconfig *config, int index,
 		     unsigned int *attrib, unsigned int *value)

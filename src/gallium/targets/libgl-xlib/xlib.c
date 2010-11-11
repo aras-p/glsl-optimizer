@@ -33,91 +33,16 @@
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
 #include "target-helpers/wrap_screen.h"
+#include "target-helpers/inline_sw_helper.h"
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
 #include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
 
-/* Helper function to choose and instantiate one of the software rasterizers:
- * cell, llvmpipe, softpipe.
- *
- * This function could be shared, but currently causes headaches for
- * the build systems, particularly scons if we try.  Long term, want
- * to avoid having global #defines for things like GALLIUM_LLVMPIPE,
- * GALLIUM_CELL, etc.  Scons already eliminates those #defines, so
- * things that are painful for it now are likely to be painful for
- * other build systems in the future.
- *
- * Copies (full or partial):
- *    targets/libgl-xlib
- *    targets/graw-xlib
- *    targets/dri-swrast
- *    winsys/sw/drm
- *    drivers/sw
- *
- */
-
-#ifdef GALLIUM_SOFTPIPE
-#include "softpipe/sp_public.h"
-#endif
-
-#ifdef GALLIUM_LLVMPIPE
-#include "llvmpipe/lp_public.h"
-#endif
-
-#ifdef GALLIUM_CELL
-#include "cell/ppu/cell_public.h"
-#endif
-
-#ifdef GALLIUM_GALAHAD
+#if defined(GALLIUM_GALAHAD)
 #include "galahad/glhd_public.h"
 #endif
-
-static struct pipe_screen *
-swrast_create_screen(struct sw_winsys *winsys)
-{
-   const char *default_driver;
-   const char *driver;
-   struct pipe_screen *screen = NULL;
-
-#if defined(GALLIUM_CELL)
-   default_driver = "cell";
-#elif defined(GALLIUM_LLVMPIPE)
-   default_driver = "llvmpipe";
-#elif defined(GALLIUM_SOFTPIPE)
-   default_driver = "softpipe";
-#else
-   default_driver = "";
-#endif
-
-   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
-
-#if defined(GALLIUM_CELL)
-   if (screen == NULL && strcmp(driver, "cell") == 0)
-      screen = cell_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_LLVMPIPE)
-   if (screen == NULL && strcmp(driver, "llvmpipe") == 0)
-      screen = llvmpipe_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_SOFTPIPE)
-   if (screen == NULL)
-      screen = softpipe_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_GALAHAD)
-   if (screen) {
-      struct pipe_screen *galahad_screen = galahad_screen_create(screen);
-      if (galahad_screen)
-         screen = galahad_screen;
-   }
-#endif
-
-   return screen;
-}
 
 /* Helper function to build a subset of a driver stack consisting of
  * one of the software rasterizers (cell, llvmpipe, softpipe) and the
@@ -138,9 +63,18 @@ swrast_xlib_create_screen( Display *display )
 
    /* Create a software rasterizer on top of that winsys:
     */
-   screen = swrast_create_screen( winsys );
+   screen = sw_screen_create( winsys );
    if (screen == NULL)
       goto fail;
+
+   /* XXX will fix soon */
+#if defined(GALLIUM_GALAHAD)
+   if (screen) {
+      struct pipe_screen *galahad_screen = galahad_screen_create( screen );
+      if (galahad_screen)
+         screen = galahad_screen;
+   }
+#endif
 
    /* Inject any wrapping layers we want to here:
     */
@@ -195,7 +129,6 @@ extern void (*linker_foo(const unsigned char *procName))()
 #include "GL/gl.h"
 #include "glapi/glapi.h"
 #include "glapi/glapitable.h"
-#include "glapi/glapidispatch.h"
 
 #if defined(USE_MGL_NAMESPACE)
 #define NAME(func)  mgl##func
@@ -204,10 +137,10 @@ extern void (*linker_foo(const unsigned char *procName))()
 #endif
 
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   GET_DISPATCH()->FUNC ARGS
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
-   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+   return GET_DISPATCH()->FUNC ARGS
 
 /* skip normal ones */
 #define _GLAPI_SKIP_NORMAL_ENTRY_POINTS

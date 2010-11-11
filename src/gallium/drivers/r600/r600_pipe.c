@@ -78,12 +78,15 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
 
+	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
+
 	r600_context_fini(&rctx->ctx);
+
+	util_blitter_destroy(rctx->blitter);
+
 	for (int i = 0; i < R600_PIPE_NSTATES; i++) {
 		free(rctx->states[i]);
 	}
-
-	util_blitter_destroy(rctx->blitter);
 
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
@@ -219,24 +222,24 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 static const char *r600_get_family_name(enum radeon_family family)
 {
 	switch(family) {
-	case CHIP_R600: return "R600";
-	case CHIP_RV610: return "RV610";
-	case CHIP_RV630: return "RV630";
-	case CHIP_RV670: return "RV670";
-	case CHIP_RV620: return "RV620";
-	case CHIP_RV635: return "RV635";
-	case CHIP_RS780: return "RS780";
-	case CHIP_RS880: return "RS880";
-	case CHIP_RV770: return "RV770";
-	case CHIP_RV730: return "RV730";
-	case CHIP_RV710: return "RV710";
-	case CHIP_RV740: return "RV740";
-	case CHIP_CEDAR: return "CEDAR";
-	case CHIP_REDWOOD: return "REDWOOD";
-	case CHIP_JUNIPER: return "JUNIPER";
-	case CHIP_CYPRESS: return "CYPRESS";
-	case CHIP_HEMLOCK: return "HEMLOCK";
-	default: return "unknown";
+	case CHIP_R600: return "AMD R600";
+	case CHIP_RV610: return "AMD RV610";
+	case CHIP_RV630: return "AMD RV630";
+	case CHIP_RV670: return "AMD RV670";
+	case CHIP_RV620: return "AMD RV620";
+	case CHIP_RV635: return "AMD RV635";
+	case CHIP_RS780: return "AMD RS780";
+	case CHIP_RS880: return "AMD RS880";
+	case CHIP_RV770: return "AMD RV770";
+	case CHIP_RV730: return "AMD RV730";
+	case CHIP_RV710: return "AMD RV710";
+	case CHIP_RV740: return "AMD RV740";
+	case CHIP_CEDAR: return "AMD CEDAR";
+	case CHIP_REDWOOD: return "AMD REDWOOD";
+	case CHIP_JUNIPER: return "AMD JUNIPER";
+	case CHIP_CYPRESS: return "AMD CYPRESS";
+	case CHIP_HEMLOCK: return "AMD HEMLOCK";
+	default: return "AMD unknown";
 	}
 }
 
@@ -274,6 +277,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_TIMER_QUERY:
 	case PIPE_CAP_STREAM_OUTPUT:
+	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 		return 0;
 
@@ -429,6 +433,9 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 
 	if (rscreen == NULL)
 		return;
+
+	radeon_decref(rscreen->radeon);
+
 	FREE(rscreen);
 }
 

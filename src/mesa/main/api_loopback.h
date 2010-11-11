@@ -27,7 +27,10 @@
 #ifndef API_LOOPBACK_H
 #define API_LOOPBACK_H
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+#include "main/mfeatures.h"
+
+struct _glapi_table;
 
 #if FEATURE_beginend
 

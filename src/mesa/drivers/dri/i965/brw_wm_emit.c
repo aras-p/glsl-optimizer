@@ -83,6 +83,7 @@ brw_wm_arg_can_be_immediate(enum prog_opcode opcode, int arg)
       [OPCODE_SLE] = 2,
       [OPCODE_SLT] = 2,
       [OPCODE_SNE] = 2,
+      [OPCODE_SWZ] = 1,
       [OPCODE_XPD] = 2,
    };
 
@@ -895,11 +896,12 @@ void emit_math1(struct brw_wm_compile *c,
 		      BRW_MATH_SATURATE_NONE);
    struct brw_reg src;
 
-   if (intel->gen >= 6 && arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-      /* Gen6 math requires that source and dst horizontal stride be 1.
-       *
+   if (intel->gen >= 6 && (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
+			   arg0[0].file != BRW_GENERAL_REGISTER_FILE)) {
+      /* Gen6 math requires that source and dst horizontal stride be 1,
+       * and that the argument be in the GRF.
        */
-      src = *dst;
+      src = dst[dst_chan];
       brw_MOV(p, src, arg0[0]);
    } else {
       src = arg0[0];
@@ -1920,7 +1922,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	brw_remove_grf_to_mrf_moves(p);
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       int i;
 
      printf("wm-native:\n");

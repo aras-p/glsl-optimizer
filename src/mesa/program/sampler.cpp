@@ -23,15 +23,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdio.h>
+#include <cstdio>
+#include "ir.h"
+#include "glsl_types.h"
+#include "ir_visitor.h"
 
 extern "C" {
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
-#include "ir.h"
-#include "ir_visitor.h"
-#include "glsl_types.h"
 }
 
 static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);

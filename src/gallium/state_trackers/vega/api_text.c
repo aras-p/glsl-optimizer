@@ -27,7 +27,6 @@
 #include "VG/openvg.h"
 
 #include "vg_context.h"
-#include "api.h"
 
 #include "util/u_memory.h"
 

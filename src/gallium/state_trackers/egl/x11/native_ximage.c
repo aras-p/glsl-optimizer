@@ -175,6 +175,32 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
 }
 
 static boolean
+ximage_surface_present(struct native_surface *nsurf,
+                       enum native_attachment natt,
+                       boolean preserve,
+                       uint swap_interval)
+{
+   boolean ret;
+
+   if (preserve || swap_interval)
+      return FALSE;
+
+   switch (natt) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+      ret = ximage_surface_flush_frontbuffer(nsurf);
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+      ret = ximage_surface_swap_buffers(nsurf);
+      break;
+   default:
+      ret = FALSE;
+      break;
+   }
+
+   return ret;
+}
+
+static boolean
 ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                         unsigned int *seq_num, struct pipe_resource **textures,
                         int *width, int *height)
@@ -257,8 +283,7 @@ ximage_display_create_surface(struct native_display *ndpy,
    xsurf->xdraw.drawable = xsurf->drawable;
 
    xsurf->base.destroy = ximage_surface_destroy;
-   xsurf->base.swap_buffers = ximage_surface_swap_buffers;
-   xsurf->base.flush_frontbuffer = ximage_surface_flush_frontbuffer;
+   xsurf->base.present = ximage_surface_present;
    xsurf->base.validate = ximage_surface_validate;
    xsurf->base.wait = ximage_surface_wait;
 
@@ -416,6 +441,8 @@ ximage_display_get_param(struct native_display *ndpy,
       /* private buffers are allocated */
       val = FALSE;
       break;
+   case NATIVE_PARAM_PRESERVE_BUFFER:
+   case NATIVE_PARAM_MAX_SWAP_INTERVAL:
    default:
       val = 0;
       break;

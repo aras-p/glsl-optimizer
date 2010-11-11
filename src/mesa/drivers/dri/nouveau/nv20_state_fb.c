@@ -51,6 +51,31 @@ get_rt_format(gl_format format)
 	}
 }
 
+static void
+setup_hierz_buffer(struct gl_context *ctx)
+{
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_bo_context *bctx = context_bctx(ctx, HIERZ);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
+	unsigned pitch = align(fb->Width, 128),
+		height = align(fb->Height, 2),
+		size = pitch * height;
+
+	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
+		nouveau_bo_ref(NULL, &nfb->hierz.bo);
+		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
+			       &nfb->hierz.bo);
+	}
+
+	BEGIN_RING(chan, kelvin, NV25TCL_HIERZ_PITCH, 1);
+	OUT_RING(chan, pitch);
+
+	nouveau_bo_markl(bctx, kelvin, NV25TCL_HIERZ_OFFSET, nfb->hierz.bo,
+			 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+}
+
 void
 nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 {
@@ -88,6 +113,9 @@ nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 
 		nouveau_bo_markl(bctx, kelvin, NV20TCL_ZETA_OFFSET,
 				 s->bo, 0, bo_flags);
+
+		if (context_chipset(ctx) >= 0x25)
+			setup_hierz_buffer(ctx);
 	} else {
 		rt_format |= get_rt_format(MESA_FORMAT_Z24_S8);
 		zeta_pitch = rt_pitch;

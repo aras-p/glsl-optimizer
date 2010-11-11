@@ -27,7 +27,6 @@
 #include "VG/openvg.h"
 
 #include "mask.h"
-#include "renderer.h"
 #include "api.h"
 
 #include "vg_context.h"
@@ -36,7 +35,6 @@
 
 #include "util/u_pack_color.h"
 #include "util/u_draw_quad.h"
-#include "util/u_memory.h"
 
 #define DISABLE_1_1_MASKING 1
 

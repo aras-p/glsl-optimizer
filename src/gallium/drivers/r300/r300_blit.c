@@ -176,12 +176,12 @@ static void r300_clear(struct pipe_context* pipe,
             fb->zsbuf ? r300_texture(fb->zsbuf->texture) : NULL;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
-    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
-    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && has_hyperz) {
+    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && can_hyperz) {
         hyperz_dcv = hyperz->zb_depthclearvalue =
             r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 

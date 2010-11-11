@@ -54,6 +54,9 @@ dot(ir_constant *op0, ir_constant *op1)
 ir_constant *
 ir_expression::constant_expression_value()
 {
+   if (this->type->is_error())
+      return NULL;
+
    ir_constant *op[2] = { NULL, NULL };
    ir_constant_data data;
 

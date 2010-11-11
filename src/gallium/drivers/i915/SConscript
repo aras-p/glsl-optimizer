@@ -2,10 +2,6 @@ Import('*')
 
 env = env.Clone()
 
-if msvc:
-	print 'warning: not building i915g'
-	Return()
-
 i915 = env.ConvenienceLibrary(
 	target = 'i915',
 	source = [
@@ -33,5 +29,7 @@ i915 = env.ConvenienceLibrary(
 		'i915_resource.c',
 		'i915_resource_texture.c',
 	])
+
+env.Alias('i915', i915)
 
 Export('i915')

@@ -717,6 +717,10 @@ static void r300DrawPrims(struct gl_context *ctx,
 			 GLuint max_index)
 {
 	GLboolean retval;
+	struct r300_context *r300 = R300_CONTEXT(ctx);
+	radeonContextPtr radeon = &r300->radeon;
+
+	radeon_prepare_render(radeon);
 
 	/* This check should get folded into just the places that
 	 * min/max index are really needed.

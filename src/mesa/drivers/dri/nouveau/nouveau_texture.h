@@ -30,6 +30,10 @@
 struct nouveau_teximage {
 	struct gl_texture_image base;
 	struct nouveau_surface surface;
+	struct {
+		struct nouveau_surface surface;
+		int x, y;
+	} transfer;
 };
 #define to_nouveau_teximage(x) ((struct nouveau_teximage *)(x))
 

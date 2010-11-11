@@ -7,8 +7,6 @@ env.Append(CPPPATH = [
     'util',
 ])
 
-env.Tool('udis86')
-
 env.CodeGenerate(
     target = 'indices/u_indices_gen.c', 
     script = 'indices/u_indices_gen.py', 
@@ -200,44 +198,49 @@ source = [
 ]
 
 if env['llvm']:
+    if env['UDIS86']:
+        env.Append(CPPDEFINES = [('HAVE_UDIS86', '1')])
+
     source += [
-    'gallivm/lp_bld_arit.c',
-    'gallivm/lp_bld_assert.c',
-    'gallivm/lp_bld_bitarit.c',
-    'gallivm/lp_bld_const.c',
-    'gallivm/lp_bld_conv.c',
-    'gallivm/lp_bld_debug.c',
-    'gallivm/lp_bld_flow.c',
-    'gallivm/lp_bld_format_aos.c',
-    'gallivm/lp_bld_format_soa.c',
-    'gallivm/lp_bld_format_yuv.c',
-    'gallivm/lp_bld_gather.c',
-    'gallivm/lp_bld_init.c',
-    'gallivm/lp_bld_intr.c',
-    'gallivm/lp_bld_logic.c',
-    'gallivm/lp_bld_misc.cpp',
-    'gallivm/lp_bld_pack.c',
-    'gallivm/lp_bld_printf.c',
-    'gallivm/lp_bld_quad.c',
-    'gallivm/lp_bld_sample.c',
-    'gallivm/lp_bld_sample_aos.c',
-    'gallivm/lp_bld_sample_soa.c',
-    'gallivm/lp_bld_struct.c',
-    'gallivm/lp_bld_swizzle.c',
-    'gallivm/lp_bld_tgsi_aos.c',
-    'gallivm/lp_bld_tgsi_info.c',
-    'gallivm/lp_bld_tgsi_soa.c',
-    'gallivm/lp_bld_type.c',
-    'draw/draw_llvm.c',
-    'draw/draw_llvm_sample.c',
-    'draw/draw_llvm_translate.c',
-    'draw/draw_pt_fetch_shade_pipeline_llvm.c',
-    'draw/draw_vs_llvm.c'
+        'gallivm/lp_bld_arit.c',
+        'gallivm/lp_bld_assert.c',
+        'gallivm/lp_bld_bitarit.c',
+        'gallivm/lp_bld_const.c',
+        'gallivm/lp_bld_conv.c',
+        'gallivm/lp_bld_debug.c',
+        'gallivm/lp_bld_flow.c',
+        'gallivm/lp_bld_format_aos.c',
+        'gallivm/lp_bld_format_soa.c',
+        'gallivm/lp_bld_format_yuv.c',
+        'gallivm/lp_bld_gather.c',
+        'gallivm/lp_bld_init.c',
+        'gallivm/lp_bld_intr.c',
+        'gallivm/lp_bld_logic.c',
+        'gallivm/lp_bld_misc.cpp',
+        'gallivm/lp_bld_pack.c',
+        'gallivm/lp_bld_printf.c',
+        'gallivm/lp_bld_quad.c',
+        'gallivm/lp_bld_sample.c',
+        'gallivm/lp_bld_sample_aos.c',
+        'gallivm/lp_bld_sample_soa.c',
+        'gallivm/lp_bld_struct.c',
+        'gallivm/lp_bld_swizzle.c',
+        'gallivm/lp_bld_tgsi_aos.c',
+        'gallivm/lp_bld_tgsi_info.c',
+        'gallivm/lp_bld_tgsi_soa.c',
+        'gallivm/lp_bld_type.c',
+        'draw/draw_llvm.c',
+        'draw/draw_llvm_sample.c',
+        'draw/draw_llvm_translate.c',
+        'draw/draw_pt_fetch_shade_pipeline_llvm.c',
+        'draw/draw_vs_llvm.c'
     ]
 
 gallium = env.ConvenienceLibrary(
     target = 'gallium',
     source = source,
 )
+
+env.Alias('gallium', gallium)
 
 Export('gallium')
