@@ -519,7 +519,6 @@ static const struct dri_debug_control debug_control[] = {
    { "sing",  DEBUG_SINGLE_THREAD },
    { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
-   { "glsl_force", DEBUG_GLSL_FORCE },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },
    { "clip",  DEBUG_CLIP },
@@ -799,11 +798,6 @@ intelInitContext(struct intel_context *intel,
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
-
-   /* XXX force SIMD8 kernel for Sandybridge before we fixed
-      SIMD16 interpolation. */
-   if (intel->gen == 6)
-       INTEL_DEBUG |= DEBUG_GLSL_FORCE;
 
    intel->batch = intel_batchbuffer_alloc(intel);
 
