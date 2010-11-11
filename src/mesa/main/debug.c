@@ -120,7 +120,7 @@ void
 _mesa_print_tri_caps( const char *name, GLuint flags )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
 	   (flags & DD_FLATSHADE)           ? "flat-shade, " : "",
