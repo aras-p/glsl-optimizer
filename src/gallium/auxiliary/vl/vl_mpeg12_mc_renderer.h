@@ -44,13 +44,6 @@ enum VL_MPEG12_MC_RENDERER_BUFFER_MODE
    VL_MPEG12_MC_RENDERER_BUFFER_PICTURE /* Larger batches, more memory */
 };
 
-enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK
-{
-   VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL, /* Waste of memory bandwidth */
-   VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE, /* Can only do point-filtering when interpolating subsampled chroma channels */
-   VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE /* Needs conditional texel fetch! */
-};
-
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
@@ -58,7 +51,6 @@ struct vl_mpeg12_mc_renderer
    unsigned picture_height;
    enum pipe_video_chroma_format chroma_format;
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
-   enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling;
    bool pot_buffers;
    unsigned macroblocks_per_batch;
 
@@ -104,7 +96,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_mpeg12_macroblock *macroblock_buf;
    struct pipe_transfer *tex_transfer[3];
    short *texels[3];
-   struct vertex2f zero_block[3];
 
    struct keymap *texview_map;
 };
@@ -115,7 +106,6 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 unsigned picture_height,
                                 enum pipe_video_chroma_format chroma_format,
                                 enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                                enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                                 bool pot_buffers);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);

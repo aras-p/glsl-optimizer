@@ -43,6 +43,5 @@ nv40_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
 
    return sp_video_create_ex(pipe, profile, chroma_format, width, height,
                              VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
-                             VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
                              true);
 }

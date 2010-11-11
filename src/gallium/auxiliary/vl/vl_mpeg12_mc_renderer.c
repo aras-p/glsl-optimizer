@@ -42,8 +42,6 @@
 #define MACROBLOCK_HEIGHT 16
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
-#define ZERO_BLOCK_NIL -1.0f
-#define ZERO_BLOCK_IS_NIL(zb) ((zb).x < 0.0f)
 #define SCALE_FACTOR_16_TO_9 (32767.0f / 255.0f)
 
 struct vertex_shader_consts
@@ -512,8 +510,7 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    /* Luma filter */
    filters[0] = PIPE_TEX_FILTER_NEAREST;
    /* Chroma filters */
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 ||
-       r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
+   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 || true) { //TODO
       filters[1] = PIPE_TEX_FILTER_NEAREST;
       filters[2] = PIPE_TEX_FILTER_NEAREST;
    }
@@ -1199,10 +1196,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
 
-   if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE)
-      for (i = 0; i < 3; ++i)
-         r->zero_block[i].x = ZERO_BLOCK_NIL;
-
    r->num_macroblocks = 0;
 }
 
@@ -1228,17 +1221,6 @@ grab_field_coded_block(short *src, short *dst, unsigned dst_pitch)
 
    for (y = 0; y < BLOCK_HEIGHT; ++y)
       memcpy(dst + y * dst_pitch * 2, src + y * BLOCK_WIDTH, BLOCK_WIDTH * 2);
-}
-
-static void
-fill_frame_zero_block(short *dst, unsigned dst_pitch)
-{
-   //unsigned y;
-   //
-   //assert(dst);
-
-   //for (y = 0; y < BLOCK_HEIGHT; ++y)
-   //   memset(dst + y * dst_pitch, 0, BLOCK_WIDTH * 2);
 }
 
 static void
@@ -1284,23 +1266,8 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
             ++sb;
          }
-         else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
-            if(dct_type == PIPE_MPEG12_DCT_TYPE_FRAME) {
-
-               if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
-                   ZERO_BLOCK_IS_NIL(r->zero_block[0])) {
-
-                  fill_frame_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
-                  if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-                     r->zero_block[0].x = (mbx + x * 0.5f);
-                     r->zero_block[0].y = (mby + y * 0.5f);
-                  }
-               }
-            }
-            else {
-
-               fill_field_zero_block(texels + y * tex_pitch + x * BLOCK_WIDTH, tex_pitch);
-            }
+         else if(dct_type == PIPE_MPEG12_DCT_TYPE_FIELD) {
+            fill_field_zero_block(texels + y * tex_pitch + x * BLOCK_WIDTH, tex_pitch);
          }
       }
    }
@@ -1318,16 +1285,6 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
       if ((cbp >> (1 - tb)) & 1) {
          grab_frame_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT, texels, tex_pitch);
          ++sb;
-      }
-      else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
-         if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
-             ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1])) {
-            fill_frame_zero_block(texels, tex_pitch);
-            if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
-               r->zero_block[tb + 1].x = mbx;
-               r->zero_block[tb + 1].y = mby;
-            }
-         }
       }
    }
 }
@@ -1371,18 +1328,12 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            unsigned picture_height,
                            enum pipe_video_chroma_format chroma_format,
                            enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                           enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                            bool pot_buffers)
 {
-   unsigned i;
-
    assert(renderer);
    assert(pipe);
    /* TODO: Implement other policies */
    assert(bufmode == VL_MPEG12_MC_RENDERER_BUFFER_PICTURE);
-   /* TODO: Implement this */
-   /* XXX: XFER_ALL sampling issue at block edges when using bilinear filtering */
-   assert(eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE);
    /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
    assert(pot_buffers);
 
@@ -1393,7 +1344,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->picture_height = picture_height;
    renderer->chroma_format = chroma_format;
    renderer->bufmode = bufmode;
-   renderer->eb_handling = eb_handling;
    renderer->pot_buffers = pot_buffers;
 
    renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
@@ -1420,8 +1370,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->surface = NULL;
    renderer->past = NULL;
    renderer->future = NULL;
-   for (i = 0; i < 3; ++i)
-      renderer->zero_block[i].x = ZERO_BLOCK_NIL;
    renderer->num_macroblocks = 0;
 
    xfer_buffers_map(renderer);

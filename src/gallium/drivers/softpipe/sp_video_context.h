@@ -62,7 +62,6 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    enum pipe_video_chroma_format chroma_format,
                    unsigned width, unsigned height,
                    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                   enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                    bool pot_buffers,
                    enum pipe_format decode_format);
 

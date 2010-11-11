@@ -267,7 +267,6 @@ r300_mpeg12_context_create(struct pipe_screen *screen,
     if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    width, height, chroma_format,
                                    VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
-                                   VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
                                    true))
     {
         ctx->pipe->destroy(ctx->pipe);

@@ -423,7 +423,6 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  enum pipe_video_chroma_format chroma_format,
                  unsigned width, unsigned height,
                  enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                 enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                  bool pot_buffers,
                  enum pipe_format decode_format)
 {
@@ -466,7 +465,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    width, height, chroma_format,
-                                   bufmode, eb_handling, pot_buffers)) {
+                                   bufmode, pot_buffers)) {
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -505,12 +504,10 @@ sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
       return NULL;
 
    /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
-   /* TODO: Use XFER_NONE when implemented */
    return sp_video_create_ex(pipe, profile,
                              chroma_format,
                              width, height,
                              VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
-                             VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
                              true,
                              PIPE_FORMAT_XYUV);
 }
@@ -520,7 +517,6 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    enum pipe_video_chroma_format chroma_format,
                    unsigned width, unsigned height,
                    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                   enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                    bool pot_buffers,
                    enum pipe_format decode_format)
 {
@@ -532,7 +528,7 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
          return sp_mpeg12_create(pipe, profile,
                                  chroma_format,
                                  width, height,
-                                 bufmode, eb_handling,
+                                 bufmode,
                                  pot_buffers,
                                  decode_format);
       default:
