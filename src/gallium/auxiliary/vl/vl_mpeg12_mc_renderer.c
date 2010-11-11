@@ -1071,6 +1071,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    assert(r);
    assert(r->num_macroblocks == r->macroblocks_per_batch);
 
+   xfer_buffers_unmap(r);
    gen_macroblock_stream(r, num_macroblocks);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
@@ -1183,6 +1184,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
 
    r->num_macroblocks = 0;
+   xfer_buffers_map(r);
 }
 
 static void
@@ -1436,7 +1438,6 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
    if (renderer->surface) {
       if (surface != renderer->surface) {
          if (renderer->num_macroblocks > 0) {
-            xfer_buffers_unmap(renderer);
             flush(renderer);
          }
 
@@ -1471,9 +1472,7 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       num_macroblocks -= num_to_submit;
 
       if (renderer->num_macroblocks == renderer->macroblocks_per_batch) {
-         xfer_buffers_unmap(renderer);
          flush(renderer);
-         xfer_buffers_map(renderer);
          /* Next time we get this surface it may have new ref frames */
          pipe_surface_reference(&renderer->surface, NULL);
          pipe_surface_reference(&renderer->past, NULL);
