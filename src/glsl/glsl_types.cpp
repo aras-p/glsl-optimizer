@@ -46,7 +46,7 @@ glsl_type::init_talloc_type_ctx(void)
 }
 
 glsl_type::glsl_type(GLenum gl_type,
-		     unsigned base_type, unsigned vector_elements,
+		     glsl_base_type base_type, unsigned vector_elements,
 		     unsigned matrix_columns, const char *name) :
    gl_type(gl_type),
    base_type(base_type),
