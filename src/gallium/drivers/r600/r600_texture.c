@@ -832,6 +832,15 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+                static int r600_enable_s3tc = -1;
+
+                if (r600_enable_s3tc == -1)
+                        r600_enable_s3tc = 
+                                debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
+
+                if (!r600_enable_s3tc)
+                        goto out_unknown;
+
 		switch (format) {
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
