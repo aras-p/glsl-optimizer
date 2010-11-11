@@ -50,9 +50,8 @@ _mesa_glsl_release_types(void);
 #define GLSL_TYPE_SAMPLER       4
 #define GLSL_TYPE_STRUCT        5
 #define GLSL_TYPE_ARRAY         6
-#define GLSL_TYPE_FUNCTION      7
-#define GLSL_TYPE_VOID          8
-#define GLSL_TYPE_ERROR         9
+#define GLSL_TYPE_VOID          7
+#define GLSL_TYPE_ERROR         8
 
 enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_1D = 0,
@@ -123,11 +122,6 @@ struct glsl_type {
     * For \c GLSL_TYPE_ARRAY, this is the length of the array.  For
     * \c GLSL_TYPE_STRUCT, it is the number of elements in the structure and
     * the number of values pointed to by \c fields.structure (below).
-    *
-    * For \c GLSL_TYPE_FUNCTION, it is the number of parameters to the
-    * function.  The return value from a function is implicitly the first
-    * parameter.  The types of the parameters are stored in
-    * \c fields.parameters (below).
     */
    unsigned length;
 
