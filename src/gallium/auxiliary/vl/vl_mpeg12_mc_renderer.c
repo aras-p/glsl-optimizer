@@ -100,7 +100,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 {
    struct ureg_program *shader;
    struct ureg_src norm, mbs;
-   struct ureg_src vrect, vpos, vtex[3], vmv[4];
+   struct ureg_src vrect, vpos, vtex, vmv[4];
    struct ureg_dst t_vpos, scale;
    struct ureg_dst o_vpos, o_vtex[3], o_vmv[4], o_line;
    unsigned i, j, count;
@@ -118,24 +118,23 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 
    vrect = ureg_DECL_vs_input(shader, 0);
    vpos = ureg_DECL_vs_input(shader, 1);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   vtex = ureg_DECL_vs_input(shader, 2);
 
-   for (i = 0; i < 3; ++i) {
-      vtex[i] = ureg_DECL_vs_input(shader, 2 + i);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   for (i = 0; i < 3; ++i)
       o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 1 + i);
-   }
    
    count=0;
    for (i = 0; i < ref_frames; ++i) {
       for (j = 0; j < 2; ++j) {        
         if(j < mv_per_frame) {
-           vmv[count] = ureg_DECL_vs_input(shader, 5 + i * 2 + j);
+           vmv[count] = ureg_DECL_vs_input(shader, 3 + i * 2 + j);
            o_vmv[count] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 4 + count);
            count++;
         }
         /* workaround for r600g */
         else if(ref_frames == 2)
-           ureg_DECL_vs_input(shader, 5 + i * 2 + j);
+           ureg_DECL_vs_input(shader, 3 + i * 2 + j);
       }
    }
 
@@ -149,7 +148,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     * o_vpos.zw = vpos
     *
     * o_vtex[0..2].xy = t_vpos
-    * o_vtex[0..2].z = vtex[0..2].z
+    * o_vtex[0..2].z = vtex[0..2].[xyz]
     *
     * if(count > 0) { // Apply motion vectors
     *    scale = norm * 0.5;
@@ -170,7 +169,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 
    for (i = 0; i < 3; ++i) {
       ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), ureg_scalar(vtex[i], TGSI_SWIZZLE_X));
+      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), ureg_scalar(vtex, TGSI_SWIZZLE_X + i));
    }
 
    if(count > 0) {
@@ -605,7 +604,7 @@ static bool
 init_buffers(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_resource template;
-   struct pipe_vertex_element vertex_elems[9];
+   struct pipe_vertex_element vertex_elems[7];
    struct pipe_sampler_view sampler_view;
 
    const unsigned mbw =
@@ -711,51 +710,39 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    vertex_elems[1].vertex_buffer_index = 1;
    vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   /* Luma, texcoord element */
+   /* y, cr, cb z-coordinate element */
    vertex_elems[2].src_offset = sizeof(struct vertex2f);
    vertex_elems[2].instance_divisor = 0;
    vertex_elems[2].vertex_buffer_index = 1;
-   vertex_elems[2].src_format = PIPE_FORMAT_R32_FLOAT;
-
-   /* Chroma Cr texcoord element */
-   vertex_elems[3].src_offset = sizeof(struct vertex2f) + sizeof(float);
-   vertex_elems[3].instance_divisor = 0;
-   vertex_elems[3].vertex_buffer_index = 1;
-   vertex_elems[3].src_format = PIPE_FORMAT_R32_FLOAT;
-
-   /* Chroma Cb texcoord element */
-   vertex_elems[4].src_offset = sizeof(struct vertex2f) + sizeof(float) * 2;
-   vertex_elems[4].instance_divisor = 0;
-   vertex_elems[4].vertex_buffer_index = 1;
-   vertex_elems[4].src_format = PIPE_FORMAT_R32_FLOAT;
+   vertex_elems[2].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* First ref surface top field texcoord element */
-   vertex_elems[5].src_offset = 0;
-   vertex_elems[5].instance_divisor = 0;
-   vertex_elems[5].vertex_buffer_index = 2;
-   vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[3].src_offset = 0;
+   vertex_elems[3].instance_divisor = 0;
+   vertex_elems[3].vertex_buffer_index = 2;
+   vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
-   vertex_elems[6].src_offset = sizeof(struct vertex2f);
-   vertex_elems[6].instance_divisor = 0;
-   vertex_elems[6].vertex_buffer_index = 2;
-   vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[4].src_offset = sizeof(struct vertex2f);
+   vertex_elems[4].instance_divisor = 0;
+   vertex_elems[4].vertex_buffer_index = 2;
+   vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
-   vertex_elems[7].src_offset = 0;
-   vertex_elems[7].instance_divisor = 0;
-   vertex_elems[7].vertex_buffer_index = 3;
-   vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[5].src_offset = 0;
+   vertex_elems[5].instance_divisor = 0;
+   vertex_elems[5].vertex_buffer_index = 3;
+   vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
-   vertex_elems[8].src_offset = sizeof(struct vertex2f);
-   vertex_elems[8].instance_divisor = 0;
-   vertex_elems[8].vertex_buffer_index = 3;
-   vertex_elems[8].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[6].src_offset = sizeof(struct vertex2f);
+   vertex_elems[6].instance_divisor = 0;
+   vertex_elems[6].vertex_buffer_index = 3;
+   vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 5, vertex_elems);
-   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 7, vertex_elems);
-   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 9, vertex_elems);
+   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 3, vertex_elems);
+   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 5, vertex_elems);
+   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 7, vertex_elems);
 
    r->vs_const_buf = pipe_buffer_create
    (
