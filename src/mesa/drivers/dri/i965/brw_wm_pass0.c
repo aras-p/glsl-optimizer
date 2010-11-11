@@ -380,7 +380,7 @@ static void pass0_init_payload( struct brw_wm_compile *c )
    GLuint i;
 
    for (i = 0; i < 4; i++) {
-      GLuint j = i >= (c->key.nr_payload_regs + 1) / 2 ? 0 : i;
+      GLuint j = i >= (c->nr_payload_regs + 1) / 2 ? 0 : i;
       pass0_set_fpreg_value( c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, 
 			     &c->payload.depth[j] );
    }

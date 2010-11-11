@@ -290,15 +290,15 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->first_free_grf = 0;
 
     for (i = 0; i < 4; i++) {
-	if (i < (c->key.nr_payload_regs + 1) / 2)
+	if (i < (c->nr_payload_regs + 1) / 2)
             reg = brw_vec8_grf(i * 2, 0);
         else
             reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
     set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_W, 0,
-	    brw_vec8_grf(c->key.source_w_reg, 0));
-    reg_index += c->key.nr_payload_regs;
+	    brw_vec8_grf(c->source_w_reg, 0));
+    reg_index += c->nr_payload_regs;
 
     /* constants */
     {
@@ -384,7 +384,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
        }
     }
 
-    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+    c->prog_data.first_curbe_grf = c->nr_payload_regs;
     c->prog_data.urb_read_length = urb_read_length;
     c->prog_data.curb_read_length = c->nr_creg;
     c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, reg_index, 0);

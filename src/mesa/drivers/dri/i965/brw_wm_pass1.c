@@ -128,8 +128,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       if (inst->opcode == WM_FB_WRITE) {
 	 track_arg(c, inst, 0, WRITEMASK_XYZW); 
 	 track_arg(c, inst, 1, WRITEMASK_XYZW); 
-	 if (c->key.source_depth_to_render_target &&
-	     c->key.computes_depth)
+	 if (c->source_depth_to_render_target && c->computes_depth)
 	    track_arg(c, inst, 2, WRITEMASK_Z); 
 	 else
 	    track_arg(c, inst, 2, 0); 

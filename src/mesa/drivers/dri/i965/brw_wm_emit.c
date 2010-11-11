@@ -1387,8 +1387,8 @@ static void emit_aa( struct brw_wm_compile *c,
 		     GLuint reg )
 {
    struct brw_compile *p = &c->func;
-   GLuint comp = c->key.aa_dest_stencil_reg / 2;
-   GLuint off = c->key.aa_dest_stencil_reg % 2;
+   GLuint comp = c->aa_dest_stencil_reg / 2;
+   GLuint off = c->aa_dest_stencil_reg % 2;
    struct brw_reg aa = offset(arg1[comp], off);
 
    brw_push_insn_state(p);
@@ -1420,7 +1420,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 
    /* Reserve a space for AA - may not be needed:
     */
-   if (c->key.aa_dest_stencil_reg)
+   if (c->aa_dest_stencil_reg)
       nr += 1;
 
    /* I don't really understand how this achieves the color interleave
@@ -1493,9 +1493,9 @@ void emit_fb_write(struct brw_wm_compile *c,
 
    brw_pop_insn_state(p);
 
-   if (c->key.source_depth_to_render_target)
+   if (c->source_depth_to_render_target)
    {
-      if (c->key.computes_depth) 
+      if (c->computes_depth)
 	 brw_MOV(p, brw_message_reg(nr), arg2[2]);
       else 
 	 brw_MOV(p, brw_message_reg(nr), arg1[1]); /* ? */
@@ -1503,10 +1503,10 @@ void emit_fb_write(struct brw_wm_compile *c,
       nr += 2;
    }
 
-   if (c->key.dest_depth_reg)
+   if (c->dest_depth_reg)
    {
-      GLuint comp = c->key.dest_depth_reg / 2;
-      GLuint off = c->key.dest_depth_reg % 2;
+      GLuint comp = c->dest_depth_reg / 2;
+      GLuint off = c->dest_depth_reg % 2;
 
       if (off != 0) {
          brw_push_insn_state(p);
@@ -1528,8 +1528,8 @@ void emit_fb_write(struct brw_wm_compile *c,
       nr -= 2;
    }
 
-   if (!c->key.runtime_check_aads_emit) {
-      if (c->key.aa_dest_stencil_reg)
+   if (!c->runtime_check_aads_emit) {
+      if (c->aa_dest_stencil_reg)
 	 emit_aa(c, arg1, 2);
 
       fire_fb_write(c, base_reg, nr, target, eot);

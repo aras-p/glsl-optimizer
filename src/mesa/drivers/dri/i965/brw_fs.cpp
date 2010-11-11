@@ -1955,7 +1955,7 @@ fs_visitor::emit_interpolation_setup_gen6()
    emit(fs_inst(BRW_OPCODE_MOV, this->pixel_y, int_pixel_y));
 
    this->current_annotation = "compute 1/pos.w";
-   this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
+   this->wpos_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
 
@@ -1983,17 +1983,17 @@ fs_visitor::emit_fb_writes()
       nr += 2;
    }
 
-   if (c->key.aa_dest_stencil_reg) {
+   if (c->aa_dest_stencil_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.aa_dest_stencil_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0))));
    }
 
    /* Reserve space for color. It'll be filled in per MRT below. */
    int color_mrf = nr;
    nr += 4;
 
-   if (c->key.source_depth_to_render_target) {
-      if (c->key.computes_depth) {
+   if (c->source_depth_to_render_target) {
+      if (c->computes_depth) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth);
 	 fs_reg depth = *(variable_storage(this->frag_depth));
@@ -2002,13 +2002,13 @@ fs_visitor::emit_fb_writes()
       } else {
 	 /* Pass through the payload depth. */
 	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		      fs_reg(brw_vec8_grf(c->key.source_depth_reg, 0))));
+		      fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
       }
    }
 
-   if (c->key.dest_depth_reg) {
+   if (c->dest_depth_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.dest_depth_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->dest_depth_reg, 0))));
    }
 
    fs_reg color = reg_undef;
@@ -2458,7 +2458,7 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
 void
 fs_visitor::assign_curb_setup()
 {
-   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+   c->prog_data.first_curbe_grf = c->nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */

@@ -76,7 +76,7 @@ static void init_registers( struct brw_wm_compile *c )
    for (j = 0; j < c->grf_limit; j++) 
       c->pass2_grf[j].nextuse = BRW_WM_MAX_INSN;
 
-   for (j = 0; j < (c->key.nr_payload_regs + 1) / 2; j++)
+   for (j = 0; j < (c->nr_payload_regs + 1) / 2; j++)
       prealloc_reg(c, &c->payload.depth[j], i++);
 
    for (j = 0; j < c->nr_creg; j++) 
@@ -101,7 +101,7 @@ static void init_registers( struct brw_wm_compile *c )
 
    assert(nr_interp_regs >= 1);
 
-   c->prog_data.first_curbe_grf = ALIGN(c->key.nr_payload_regs, 2);
+   c->prog_data.first_curbe_grf = ALIGN(c->nr_payload_regs, 2);
    c->prog_data.urb_read_length = nr_interp_regs * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 
