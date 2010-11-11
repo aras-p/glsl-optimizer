@@ -169,6 +169,10 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 	stride = util_format_get_stride(ptex->format, width);
 	if (chipc == EVERGREEN)
 		stride = align(stride, 512);
+
+        if (ptex->bind & PIPE_BIND_RENDER_TARGET)
+		stride = align(stride, 512);
+
 	return stride;
 }
 
