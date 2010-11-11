@@ -1428,7 +1428,8 @@ _mesa_format_to_type_and_comps(gl_format format,
 
 
    default:
-      _mesa_problem(NULL, "bad format in _mesa_format_to_type_and_comps");
+      _mesa_problem(NULL, "bad format %s in _mesa_format_to_type_and_comps",
+                    _mesa_get_format_name(format));
       *datatype = 0;
       *comps = 1;
    }
