@@ -57,7 +57,7 @@ ir_expression::constant_expression_value()
    if (this->type->is_error())
       return NULL;
 
-   ir_constant *op[2] = { NULL, NULL };
+   ir_constant *op[Elements(this->operands)] = { NULL, };
    ir_constant_data data;
 
    memset(&data, 0, sizeof(data));

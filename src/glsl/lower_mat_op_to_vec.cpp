@@ -366,6 +366,8 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
    if (!has_matrix_operand(orig_expr, matrix_columns))
       return visit_continue;
 
+   assert(orig_expr->get_num_operands() <= 2);
+
    mem_ctx = talloc_parent(orig_assign);
 
    ir_dereference_variable *lhs_deref =

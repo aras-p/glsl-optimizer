@@ -708,6 +708,7 @@ fs_visitor::visit(ir_expression *ir)
    fs_reg op[2], temp;
    fs_inst *inst;
 
+   assert(ir->get_num_operands() <= 2);
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
@@ -1387,6 +1388,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       fs_reg op[2];
       fs_inst *inst;
 
+      assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 assert(expr->operands[i]->type->is_scalar());
 
@@ -1494,6 +1496,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
       fs_inst *inst;
       fs_reg temp;
 
+      assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 assert(expr->operands[i]->type->is_scalar());
 

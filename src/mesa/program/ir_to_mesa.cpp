@@ -961,7 +961,7 @@ void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
-   struct ir_to_mesa_src_reg op[2];
+   struct ir_to_mesa_src_reg op[Elements(ir->operands)];
    struct ir_to_mesa_src_reg result_src;
    struct ir_to_mesa_dst_reg result_dst;
 
