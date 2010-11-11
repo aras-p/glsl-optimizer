@@ -751,6 +751,29 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
+static bool
+init_const_buffers(struct vl_mpeg12_mc_renderer *r)
+{
+   struct pipe_transfer *buf_transfer;
+   struct vertex2f *rect;
+   unsigned i;
+
+   rect = pipe_buffer_map
+   (
+      r->pipe,
+      r->vertex_bufs.individual.rect.buffer,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buf_transfer
+   );
+
+   for ( i = 0; i < r->macroblocks_per_batch; ++i)
+     memcpy(rect + i * 24, &const_rectangle, sizeof(const_rectangle));
+
+   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.rect.buffer, buf_transfer);
+   
+   return true;
+}
+
 static void
 cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 {
@@ -1044,48 +1067,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
 {
    unsigned num_macroblocks[NUM_MACROBLOCK_TYPES] = { 0 };
    unsigned vb_start = 0;
-   struct vertex_shader_consts *vs_consts;
-   struct pipe_transfer *buf_transfer;
-   struct vertex2f *rect;
-   unsigned i;
 
    assert(r);
    assert(r->num_macroblocks == r->macroblocks_per_batch);
 
-   rect = pipe_buffer_map
-   (
-      r->pipe,
-      r->vertex_bufs.individual.rect.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   for ( i = 0; i < r->macroblocks_per_batch; ++i)
-     memcpy(rect + i * 24, &const_rectangle, sizeof(const_rectangle));
-   
-   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.rect.buffer, buf_transfer);
-
    gen_macroblock_stream(r, num_macroblocks);
-
-   r->fb_state.cbufs[0] = r->surface;
-
-   r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
-   r->pipe->set_viewport_state(r->pipe, &r->viewport);
-
-   vs_consts = pipe_buffer_map
-   (
-      r->pipe, r->vs_const_buf,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   vs_consts->norm.x = 1.0f / r->surface->width;
-   vs_consts->norm.y = 1.0f / r->surface->height;
-
-   pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
-
-   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
-                                r->vs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
@@ -1197,6 +1183,33 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
 
    r->num_macroblocks = 0;
+}
+
+static void
+update_render_target(struct vl_mpeg12_mc_renderer *r)
+{
+   struct pipe_transfer *buf_transfer;
+   struct vertex_shader_consts *vs_consts;
+
+   vs_consts = pipe_buffer_map
+   (
+      r->pipe, r->vs_const_buf,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buf_transfer
+   );
+
+   vs_consts->norm.x = 1.0f / r->surface->width;
+   vs_consts->norm.y = 1.0f / r->surface->height;
+
+   pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
+
+   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
+                                r->vs_const_buf);
+
+   r->fb_state.cbufs[0] = r->surface;
+
+   r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
+   r->pipe->set_viewport_state(r->pipe, &r->viewport);
 }
 
 static void
@@ -1367,6 +1380,14 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
       return false;
    }
 
+   if (!init_const_buffers(renderer)) {
+      util_delete_keymap(renderer->texview_map, renderer->pipe);
+      cleanup_pipe_state(renderer);
+      cleanup_shaders(renderer);
+      cleanup_buffers(renderer);
+      return false;
+   }
+
    renderer->surface = NULL;
    renderer->past = NULL;
    renderer->future = NULL;
@@ -1434,6 +1455,7 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       pipe_surface_reference(&renderer->past, past);
       pipe_surface_reference(&renderer->future, future);
       renderer->fence = fence;
+      update_render_target(renderer);
    }
 
    while (num_macroblocks) {
