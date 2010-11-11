@@ -69,7 +69,7 @@ enum VS_OUTPUT
    VS_O_LINE,
    VS_O_TEX0,
    VS_O_TEX1,
-   VS_O_TEX2,
+   VS_O_INFO,
    VS_O_MV0,
    VS_O_MV1,
    VS_O_MV2,
@@ -113,7 +113,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    struct ureg_src norm, mbs;
    struct ureg_src vrect, vpos, vtex, vmv[4];
    struct ureg_dst t_vpos, scale;
-   struct ureg_dst o_vpos, o_vtex[3], o_vmv[4], o_line;
+   struct ureg_dst o_vpos, o_vtex[2], o_info, o_vmv[4], o_line;
    unsigned i, j, count;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -132,8 +132,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
-   for (i = 0; i < 3; ++i)
-      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0 + i);
+   o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0);
+   o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1);
+   o_info = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO);
    
    count=0;
    for (i = 0; i < ref_frames; ++i) {
@@ -179,10 +180,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f));
    ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
-   for (i = 0; i < 3; ++i) {
+   for (i = 0; i < 2; ++i) {
       ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), ureg_scalar(vtex, TGSI_SWIZZLE_X + i));
    }
+   ureg_MOV(shader, o_info, vtex);
 
    if(count > 0) {
       ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
@@ -222,7 +223,7 @@ calc_field(struct ureg_program *shader)
 static struct ureg_dst
 fetch_ycbcr(struct ureg_program *shader)
 {
-   struct ureg_src tc[3];
+   struct ureg_src tc[2], info;
    struct ureg_src sampler[3];
    struct ureg_dst texel, tmp;
    unsigned i;
@@ -230,8 +231,10 @@ fetch_ycbcr(struct ureg_program *shader)
    texel = ureg_DECL_temporary(shader);
    tmp = ureg_DECL_temporary(shader);
 
+   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0, TGSI_INTERPOLATE_LINEAR);
+   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1, TGSI_INTERPOLATE_LINEAR);
+   info = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO, TGSI_INTERPOLATE_LINEAR);
    for (i = 0; i < 3; ++i)  {
-      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0 + i, TGSI_INTERPOLATE_LINEAR);
       sampler[i] = ureg_DECL_sampler(shader, i);
    }
 
@@ -241,8 +244,11 @@ fetch_ycbcr(struct ureg_program *shader)
     * texel.cr = tex(tc[2], sampler[2])
     */
    for (i = 0; i < 3; ++i) {
+      ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), tc[0]);
+      ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(info, TGSI_SWIZZLE_X + i));
+
       /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
-      ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, tc[i], sampler[i]);
+      ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, ureg_src(tmp), sampler[i]);
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
    }
 
