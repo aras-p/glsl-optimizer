@@ -72,8 +72,8 @@ enum VS_INPUT
 {
    VS_I_RECT,
    VS_I_VPOS,
-   VS_I_FIELD0,
-   VS_I_FIELD1,
+   VS_I_EB0,
+   VS_I_EB1,
    VS_I_INTERLACED,
    VS_I_MV0,
    VS_I_MV1,
@@ -90,8 +90,8 @@ enum VS_OUTPUT
    VS_O_TEX0,
    VS_O_TEX1,
    VS_O_TEX2,
-   VS_O_INFO0,
-   VS_O_INFO1,
+   VS_O_EB0,
+   VS_O_EB1,
    VS_O_MV0,
    VS_O_MV1,
    VS_O_MV2,
@@ -133,9 +133,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 {
    struct ureg_program *shader;
    struct ureg_src norm, mbs;
-   struct ureg_src vrect, vpos, field[2], interlaced, vmv[4];
-   struct ureg_dst t_vpos, scale, tmp;
-   struct ureg_dst o_vpos, o_vtex[3], o_info[2], o_vmv[4], o_line;
+   struct ureg_src vrect, vpos, eb[2], interlaced, vmv[4];
+   struct ureg_dst scale, t_vpos, t_vtex;
+   struct ureg_dst o_vpos, o_vtex[3], o_eb[2], o_vmv[4], o_line;
    unsigned i, j, count, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -145,14 +145,14 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    norm = ureg_DECL_constant(shader, 0);
    mbs = ureg_imm2f(shader, MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT);
 
-   t_vpos = ureg_DECL_temporary(shader);
    scale = ureg_DECL_temporary(shader);
-   tmp = ureg_DECL_temporary(shader);
+   t_vpos = ureg_DECL_temporary(shader);
+   t_vtex = ureg_DECL_temporary(shader);
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
-   field[0] = ureg_DECL_vs_input(shader, VS_I_FIELD0);
-   field[1] = ureg_DECL_vs_input(shader, VS_I_FIELD1);
+   eb[0] = ureg_DECL_vs_input(shader, VS_I_EB0);
+   eb[1] = ureg_DECL_vs_input(shader, VS_I_EB1);
    interlaced = ureg_DECL_vs_input(shader, VS_I_INTERLACED);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
@@ -160,8 +160,8 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0);
    o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1);
    o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);
-   o_info[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO0);
-   o_info[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO1);
+   o_eb[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB0);
+   o_eb[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB1);
    
    count=0;
    for (i = 0; i < ref_frames; ++i) {
@@ -184,18 +184,28 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     * o_vpos.xy = t_vpos
     * o_vpos.zw = vpos
     *
-    * o_vtex[0..2].xy = t_vpos
-    * o_vtex[0..2].z = vtex[0..2].[xyz]
+    * o_line.x = 1
+    * o_line.y = vpos.y * 8
+    *
+    * if(interlaced) {
+    *    t_vtex.x = vrect.x
+    *    t_vtex.y = vrect.y * 0.5
+    *    t_vtex += vpos
+    *
+    *    o_vtex[0].xy = t_vtex * scale
+    *
+    *    t_vtex.y += 0.5
+    *    o_vtex[1].xy = t_vtex * scale
+    * } else {
+    *    o_vtex[0..1].xy = t_vpos
+    * }
+    * o_vtex[2].xy = t_vpos
     *
     * if(count > 0) { // Apply motion vectors
     *    scale = norm * 0.5;
     *    o_vmv[0..count] = t_vpos + vmv[0..4] * scale
     * }
     *
-    * if(interlaced) {
-    *    o_line.x = 1
-    *    o_line.y = vpos.y * 8
-    * }
     */
    ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, mbs);
 
@@ -207,22 +217,14 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f));
    ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
-   ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-
    ureg_IF(shader, interlaced, &label);
 
-      ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), vrect);
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
-      ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), vpos, ureg_src(tmp));
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), ureg_src(tmp), ureg_src(scale));
-      ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(tmp));
-
-      ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), vrect);
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
-      ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
-      ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), vpos, ureg_src(tmp));
-      ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), ureg_src(tmp), ureg_src(scale));
-      ureg_MOV(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(tmp));
+      ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
+      ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
+      ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_XY), vpos, ureg_src(t_vtex));
+      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), ureg_src(scale));
+      ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
+      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), ureg_src(scale));
 
    ureg_ELSE(shader, &label);
 
@@ -230,9 +232,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
       ureg_MOV(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
    ureg_ENDIF(shader);
+   ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
-   ureg_MOV(shader, o_info[1], field[1]);
-   ureg_MOV(shader, o_info[0], field[0]);
+   ureg_MOV(shader, o_eb[0], eb[0]);
+   ureg_MOV(shader, o_eb[1], eb[1]);
 
    if(count > 0) {
       ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
@@ -240,7 +243,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
          ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(scale), vmv[i], ureg_src(t_vpos));
    }
 
-   ureg_release_temporary(shader, tmp);
+   ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
    ureg_release_temporary(shader, scale);
 
@@ -271,9 +274,9 @@ calc_field(struct ureg_program *shader)
 }
 
 static struct ureg_dst
-fetch_ycbcr(struct ureg_program *shader, struct ureg_dst field)
+fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
 {
-   struct ureg_src tc[2], info[2];
+   struct ureg_src tc[3], eb[2];
    struct ureg_src sampler[3];
    struct ureg_dst texel, tmp;
    unsigned i, label;
@@ -284,29 +287,31 @@ fetch_ycbcr(struct ureg_program *shader, struct ureg_dst field)
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1, TGSI_INTERPOLATE_LINEAR);
    tc[2] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2, TGSI_INTERPOLATE_LINEAR);
-   info[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO0, TGSI_INTERPOLATE_LINEAR);
-   info[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO1, TGSI_INTERPOLATE_LINEAR);
+
+   eb[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB0, TGSI_INTERPOLATE_LINEAR);
+   eb[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB1, TGSI_INTERPOLATE_LINEAR);
+
    for (i = 0; i < 3; ++i)  {
       sampler[i] = ureg_DECL_sampler(shader, i);
    }
 
    /*
-    * texel.y  = tex(tc[0], sampler[0])
-    * texel.cb = tex(tc[1], sampler[1])
+    * texel.y  = tex(field ? tc[1] : tc[0], sampler[0])
+    * texel.cb = tex(tc[2], sampler[1])
     * texel.cr = tex(tc[2], sampler[2])
     */
    for (i = 0; i < 3; ++i) {
-      if(i==0) {
+      if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
          ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
             ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), tc[1]);
-            ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(info[1], TGSI_SWIZZLE_X + i));
+            ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(eb[1], TGSI_SWIZZLE_X + i));
          ureg_ELSE(shader, &label);
             ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), tc[0]);
-            ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(info[0], TGSI_SWIZZLE_X + i));
+            ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(eb[0], TGSI_SWIZZLE_X + i));
          ureg_ENDIF(shader);
       } else {
          ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), tc[2]);
-         ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(info[0], TGSI_SWIZZLE_X + i));
+         ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(eb[0], TGSI_SWIZZLE_X + i));
       }
 
       /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
@@ -337,7 +342,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * fragment = texel * scale
     */
    field = calc_field(shader);
-   texel = fetch_ycbcr(shader, field);
+   texel = fetch_ycbcr(r, shader, field);
    ureg_MUL(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X));
 
    ureg_release_temporary(shader, field);
@@ -372,7 +377,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * fragment = texel * scale + ref
     */
    field = calc_field(shader);
-   texel = fetch_ycbcr(shader, field);
+   texel = fetch_ycbcr(r, shader, field);
    ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc, sampler);
    ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
 
@@ -415,7 +420,7 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * fragment = texel * scale + ref
     */
    field = calc_field(shader);
-   texel = fetch_ycbcr(shader, field);
+   texel = fetch_ycbcr(r, shader, field);
 
    ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
       ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[1], sampler);
@@ -463,7 +468,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * fragment = texel * scale + ref[0]
     */
    field = calc_field(shader);
-   texel = fetch_ycbcr(shader, field);
+   texel = fetch_ycbcr(r, shader, field);
    ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
    ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[1], sampler[1]);
    ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
@@ -505,15 +510,15 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    /*
     * texel = fetch_ycbcr()
-    * if(line % 2)
-    *    ref[0..1] = tex(tc[4|6], sampler[3..4])
+    * if(field == 1)
+    *    ref[0..1] = tex(tc[1|3], sampler[0..1])
     * else
-    *    ref[0..1] = tex(tc[3|5], sampler[3..4])
+    *    ref[0..1] = tex(tc[0|2], sampler[0..1])
     * ref[0] = lerp(ref[0], ref[1], 0.5)
     * fragment = texel * scale + ref[0]
     */
    field = calc_field(shader);
-   texel = fetch_ycbcr(shader, field);
+   texel = fetch_ycbcr(r, shader, field);
 
    ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
       ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
@@ -805,18 +810,18 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* y, cr, cb z-coordinate element top field */
-   vertex_elems[VS_I_FIELD0].src_offset = sizeof(struct vertex2f);
-   vertex_elems[VS_I_FIELD0].instance_divisor = 0;
-   vertex_elems[VS_I_FIELD0].vertex_buffer_index = 1;
-   vertex_elems[VS_I_FIELD0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+   vertex_elems[VS_I_EB0].src_offset = sizeof(struct vertex2f);
+   vertex_elems[VS_I_EB0].instance_divisor = 0;
+   vertex_elems[VS_I_EB0].vertex_buffer_index = 1;
+   vertex_elems[VS_I_EB0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* y, cr, cb z-coordinate element bottom field */
-   vertex_elems[VS_I_FIELD1].src_offset = sizeof(struct vertex2f) + sizeof(float) * 3;
-   vertex_elems[VS_I_FIELD1].instance_divisor = 0;
-   vertex_elems[VS_I_FIELD1].vertex_buffer_index = 1;
-   vertex_elems[VS_I_FIELD1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+   vertex_elems[VS_I_EB1].src_offset = sizeof(struct vertex2f) + sizeof(float) * 3;
+   vertex_elems[VS_I_EB1].instance_divisor = 0;
+   vertex_elems[VS_I_EB1].vertex_buffer_index = 1;
+   vertex_elems[VS_I_EB1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
-   /* temporary workaound */
+   /* progressive=1.0f interlaced=0.0f */
    vertex_elems[VS_I_INTERLACED].src_offset = sizeof(struct vertex2f) + sizeof(float) * 6;
    vertex_elems[VS_I_INTERLACED].instance_divisor = 0;
    vertex_elems[VS_I_INTERLACED].vertex_buffer_index = 1;
