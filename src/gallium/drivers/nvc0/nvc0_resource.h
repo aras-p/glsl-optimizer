@@ -1,0 +1,109 @@
+
+#ifndef __NVC0_RESOURCE_H__
+#define __NVC0_RESOURCE_H__
+
+#include "util/u_transfer.h"
+#include "util/u_double_list.h"
+#define NOUVEAU_NVC0
+#include "nouveau/nouveau_winsys.h"
+#undef NOUVEAU_NVC0
+
+#include "nvc0_fence.h"
+
+struct pipe_resource;
+struct nouveau_bo;
+
+/* Resources, if mapped into the GPU's address space, are guaranteed to
+ * have constant virtual addresses.
+ * The address of a resource will lie within the nouveau_bo referenced,
+ * and this bo should be added to the memory manager's validation list.
+ */
+struct nvc0_resource {
+   struct pipe_resource base;
+   const struct u_resource_vtbl *vtbl;
+   uint64_t address;
+
+   uint8_t *data;
+   struct nouveau_bo *bo;
+   uint32_t offset;
+
+   uint8_t status;
+   uint8_t domain;
+   struct nvc0_fence *fence;
+   struct list_head list;
+};
+
+#define NVC0_TILE_H(m) (8 << ((m >> 4) & 0xf))
+#define NVC0_TILE_D(m) (1 << (m >> 8))
+
+struct nvc0_miptree_level {
+   int *image_offset;
+   uint32_t pitch;
+   uint32_t tile_mode;
+};
+
+#define NVC0_MAX_TEXTURE_LEVELS 16
+
+struct nvc0_miptree {
+   struct nvc0_resource base;
+   struct nvc0_miptree_level level[NVC0_MAX_TEXTURE_LEVELS];
+   int image_nr;
+   int total_size;
+};
+
+static INLINE struct nvc0_miptree *
+nvc0_miptree(struct pipe_resource *pt)
+{
+   return (struct nvc0_miptree *)pt;
+}
+
+static INLINE struct nvc0_resource *
+nvc0_resource(struct pipe_resource *resource)
+{
+   return (struct nvc0_resource *)resource;
+}
+
+/* is resource mapped into the GPU's address space (i.e. VRAM or GART) ? */
+static INLINE boolean
+nvc0_resource_mapped_by_gpu(struct pipe_resource *resource)
+{
+   return nvc0_resource(resource)->bo->offset != 0ULL;
+}
+
+void
+nvc0_init_resource_functions(struct pipe_context *pcontext);
+
+void
+nvc0_screen_init_resource_functions(struct pipe_screen *pscreen);
+
+/* Internal functions:
+ */
+struct pipe_resource *
+nvc0_miptree_create(struct pipe_screen *pscreen,
+                    const struct pipe_resource *tmp);
+
+struct pipe_resource *
+nvc0_miptree_from_handle(struct pipe_screen *pscreen,
+                         const struct pipe_resource *template,
+                         struct winsys_handle *whandle);
+
+struct pipe_resource *
+nvc0_buffer_create(struct pipe_screen *pscreen,
+                   const struct pipe_resource *templ);
+
+struct pipe_resource *
+nvc0_user_buffer_create(struct pipe_screen *screen,
+                        void *ptr,
+                        unsigned bytes,
+                        unsigned usage);
+
+
+struct pipe_surface *
+nvc0_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
+                         unsigned face, unsigned level, unsigned zslice,
+                         unsigned flags);
+
+void
+nvc0_miptree_surface_del(struct pipe_surface *ps);
+
+#endif

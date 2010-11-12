@@ -1,0 +1,220 @@
+
+#ifndef __NVC0_PGRAPH_MACROS_H__
+#define __NVC0_PGRAPH_MACROS_H__
+
+static const uint32_t nvc0_9097_blend_enables[] =
+{
+   0x05360021, /* maddr [0x1360, increment = 0x4] */
+   0x00404042, /* sendbf $r1 0 0x1 */
+   0x00424042, /* sendbf $r1 1 0x1 */
+   0x00444042, /* sendbf $r1 2 0x1 */
+   0x00464042, /* sendbf $r1 3 0x1 */
+   0x00484042, /* sendbf $r1 4 0x1 */
+   0x004a4042, /* sendbf $r1 5 0x1 */
+   0x004c4042, /* sendbf $r1 6 0x1 */
+   0x004e4042, /* sendbf $r1 7 0x1 */
+   0x01534215, /* read $r2 0x1534 */
+   0x03428021, /* maddr [0x3428] */
+   0x00000841, /* send $r1 */
+   0x00d9c021, /* maddr [0x0d9c] */
+   0x00014807, /* braz $r1 0x5 */
+   0x00000311, /* mov $r3 0 */
+   0x00009027, /* braz annul $r2 0x2 */
+   0x0342c315, /* read $r3 [0x342c] */
+   0x00000011, /* mov $r0 0 */
+   0x000018c1, /* exit send $r3 */
+   0x00000011  /* mov $r0 0, delay slot */
+};
+
+/*
+ * if (limit == 0) {
+ *    LIMIT = 0;
+ *    START = 1;
+ * } else {
+ *    LIMIT = limit - 1;
+ *    START = start;
+ * }
+ */
+static const uint32_t nvc0_9097_vertex_array_select[] =
+{
+   0x00000301,
+   0x00000401,
+   0x00000701,
+   0x00131d10,
+   0x0001a807,
+   0x00000601,
+   0x00004211,
+   0x0004a410,
+   0x0000c007,
+   0x00061b10,
+   0x00004611,
+   0x11004512,
+   0x01c06d11,
+   0x00004211,
+   0x6180a822,
+   0x0201c042,
+   0x00003041,
+   0x09004512,
+   0x01f02d11,
+   0x6180a822,
+   0x0200c0c2,
+   0x00002041
+};
+
+static const uint32_t nvc0_9097_color_mask_brdc[] =
+{
+   0x05a00021, /* maddr [0x1680] */
+   0x00000841, /* send $r1 */
+   0x00000841, /* send $r1 */
+   0x00000841, /* send $r1 */
+   0x00000841, /* send $r1 */
+   0x00000841, /* send $r1 */
+   0x00000841, /* send $r1 */
+   0x000008c1, /* exit send $r1 */
+   0x00000841, /* send $r1 */
+};
+
+static const uint32_t nvc0_9097_poly_mode_front[] =
+{
+   0x03410615,
+   0x00db0515,
+   0x22018312,
+   0x02100415,
+   0x00dac021,
+   0x00000841,
+   0x06c04211,
+   0x0004aa10,
+   0x00009037,
+   0x22118312,
+   0x020c0515,
+   0x06c04211,
+   0x00048a10,
+   0x00009037,
+   0x22118312,
+   0x007f8612,
+   0x0000f037,
+   0x01a24021,
+   0x1cd4c041,
+   0x00104211,
+   0x0004a210,
+   0x00009037,
+   0x00000311,
+   0x000c4211,
+   0x0004aa10,
+   0x00009037,
+   0x00000311,
+   0x002ec0a1,
+   0x00001841
+};
+
+static const uint32_t nvc0_9097_poly_mode_back[] =
+{
+   0x03410615,
+   0x00dac515,
+   0x22018312,
+   0x02100415,
+   0x00db0021,
+   0x00000841,
+   0x06c04211,
+   0x0004aa10,
+   0x00009037,
+   0x22118312,
+   0x020c0515,
+   0x06c04211,
+   0x00048a10,
+   0x00009037,
+   0x22118312,
+   0x007f8612,
+   0x0000f037,
+   0x01a24021,
+   0x1cd4c041,
+   0x00104211,
+   0x0004a210,
+   0x00009037,
+   0x00000311,
+   0x000c4211,
+   0x0004aa10,
+   0x00009037,
+   0x00000311,
+   0x002ec0a1,
+   0x00001841
+};
+
+static const uint32_t nvc0_9097_gp_select[] = /* 0x0f */
+{
+   0x03410615, /* 0x00: read $r6 [0x3410] */
+   0x00dac515, /* 0x01: read $r5 [NVC0_3D_POLYGON_MODE_FRONT] */
+   0x22018312, /* 0x02: mov $r3 extrinsrt 0 $r6 0 0x8 0x4 */
+   0x00db0415, /* 0x03: read $r4 [NVC0_3D_POLYGON_MODE_BACK] */
+   0x02100021, /* 0x04: maddr [NVC0_3D_SP_SELECT(4)] */
+   0x00000841, /* 0x05: send $r1 */
+   0x06c04211, /* 0x06: mov $r2 GL_POLYGON_MODE_LINE */
+   0x0004aa10, /* 0x07: mov $r2 sub $r5 $r2 */
+   0x00009037, /* 0x08: branz annul $r2 0xa */
+   0x22118312, /* 0x09: mov $r3 extrinsrt 0 $r6 0x8 0x8 0x4 */
+   0x020c0515, /* 0x0a: read $r5 [NVC0_3D_SP_SELECT(3)] */
+   0x06c04211, /* 0x0b: mov $r2 GL_POLYGON_MODE_LINE */
+   0x0004a210, /* 0x0c: mov $r2 sub $r4 $r2 */
+   0x00009037, /* 0x0d: branz annul $r2 0xf */
+   0x22118312, /* 0x0e: mov $r3 extrinsrt 0 $r6 0x8 0x8 0x4 */
+   0x007f8612, /* 0x0f: mov $r6 extrinsrt 0 $r6 0x1f 0x1 0 */
+   0x0000f037, /* 0x10: branz annul $r6 0x13 */
+   0x01a24021, /* 0x11: maddr [0x1a24] */
+   0x1cd4c041, /* 0x12: send 0x7353 */
+   0x00104211, /* 0x13: mov $r2 0x41 */
+   0x00048a10, /* 0x14: mov $r2 sub $r1 $r2 */
+   0x00009037, /* 0x15: branz annul $r2 0x17 */
+   0x00000311, /* 0x16: mov $r3 0 */
+   0x000c4211, /* 0x17: mov $r2 0x31 */
+   0x0004aa10, /* 0x18: mov $r2 sub $r5 $r2 */
+   0x00009037, /* 0x19: branz annul $r2 0x1b */
+   0x00000311, /* 0x1a: mov $r3 0 */
+   0x002ec0a1, /* 0x1b: exit maddr [0x02ec] */
+   0x00001841  /* 0x1c: send $r3 */
+};
+
+static const uint32_t nvc0_9097_tep_select[] = /* 0x10 */
+{
+   0x03410615, /* 0x00: read $r6 [0x3410] */
+   0x00dac515, /* 0x01: read $r5 [NVC0_3D_POLYGON_MODE_FRONT] */
+   0x22018312, /* 0x02: mov $r3 extrinsrt 0 $r6 0 0x8 0x4 */
+   0x00db0415, /* 0x03: read $r4 [NVC0_3D_POLYGON_MODE_BACK] */
+   0x020c0021, /* 0x04: maddr [NVC0_3D_SP_SELECT(3), increment = 0] */
+   0x00000841, /* 0x05: send $r1 */
+   0x06c04211, /* 0x06: mov $r2 GL_POLYGON_MODE_LINE */
+   0x0004aa10, /* 0x07: mov $r2 sub $r5 $r2 */
+   0x00009037, /* 0x08: branz annul $r2 0xa */
+   0x22118312, /* 0x09: mov $r3 extrinsrt 0 $r6 0x8 0x8 0x4 */
+   0x02100515, /* 0x0a: read $r5 [NVC0_3D_SP_SELECT(4)] */
+   0x06c04211, /* 0x0b: mov $r2 GL_POLYGON_MODE_LINE */
+   0x0004a210, /* 0x0c: mov $r2 sub $r4 $r2 */
+   0x00009037, /* 0x0d: branz annul $r2 0xf */
+   0x22118312, /* 0x0e: mov $r3 extrinsrt 0 $r6 0x8 0x8 0x4 */
+   0x007f8612, /* 0x0f: mov $r6 extrinsrt 0 $r6 0x1f 0x1 0 */
+   0x0000f037, /* 0x10: branz annul $r6 */
+   0x01a24021, /* 0x11: maddr [0x1a24] */
+   0x1cd4c041, /* 0x12: send 0x7353 */
+   0x00104211, /* 0x13: mov $r2 0x41 */
+   0x0004aa10, /* 0x14: mov $r2 sub $r5 $r2 */
+   0x00009037, /* 0x15: branz annul $r2 0x17 */
+   0x00000311, /* 0x16: mov $r3 0 */
+   0x000c4211, /* 0x17: mov $r2 0x31 */
+   0x00048a10, /* 0x18: mov $r2 sub $r1 $r2 */
+   0x00035037, /* 0x19: branz annul $r2 0x26 */
+   0x00000311, /* 0x1a: mov $r3 0 */
+   0x03430415, /* 0x1b: read $r4 [0x3430] */
+   0x00450512, /* 0x1c: mov $r5 extrinsrt 0 $r4 0x2 0x1 0 */
+   0x00004211, /* 0x1d: mov $r2 0x1 */
+   0x0004aa10, /* 0x1e: mov $r2 sub $r5 $r2 */
+   0x00019037, /* 0x1f: branz annul $r2 0x25 */
+   0x0003c211, /* 0x20: mov $r2 0xf */
+   0x01a2c021, /* 0x21: maddr [0x1a2c] */
+   0xffffd211, /* 0x22: mov $r2 add $r2 -0x1 */
+   0xffff9017, /* 0x23: branz $r2 add $r2 */
+   0x00000041, /* 0x24: send 0 */
+   0x00000011, /* 0x25: nop */
+   0x002ec0a1, /* 0x26: exit maddr [0x02ec] */
+   0x00001841  /* 0x27: send $r3 */
+};
+
+#endif

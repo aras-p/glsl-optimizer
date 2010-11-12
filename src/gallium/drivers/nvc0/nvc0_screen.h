@@ -1,0 +1,110 @@
+#ifndef __NVC0_SCREEN_H__
+#define __NVC0_SCREEN_H__
+
+#define NOUVEAU_NVC0
+#include "nouveau/nouveau_screen.h"
+#undef NOUVEAU_NVC0
+#include "nvc0_winsys.h"
+#include "nvc0_stateobj.h"
+
+#define NVC0_TIC_MAX_ENTRIES 2048
+#define NVC0_TSC_MAX_ENTRIES 2048
+
+struct nvc0_context;
+struct nvc0_fence;
+
+struct nvc0_screen {
+   struct nouveau_screen base;
+   struct nouveau_winsys *nvws;
+
+   struct nvc0_context *cur_ctx;
+
+   struct nouveau_bo *text;
+   struct nouveau_bo *uniforms;
+   struct nouveau_bo *tls;
+   struct nouveau_bo *txc; /* TIC (offset 0) and TSC (65536) */
+   struct nouveau_bo *mp_stack_bo;
+
+   uint64_t tls_size;
+
+   struct nouveau_resource *text_heap;
+
+   struct {
+      void **entries;
+      int next;
+      uint32_t lock[NVC0_TIC_MAX_ENTRIES / 32];
+   } tic;
+   
+   struct {
+      void **entries;
+      int next;
+      uint32_t lock[NVC0_TSC_MAX_ENTRIES / 32];
+   } tsc;
+
+   struct {
+      uint32_t *map;
+      struct nvc0_fence *head;
+      struct nvc0_fence *tail;
+      struct nvc0_fence *current;
+      uint32_t sequence;
+      uint32_t sequence_ack;
+      struct nouveau_bo *bo;
+   } fence;
+};
+
+static INLINE struct nvc0_screen *
+nvc0_screen(struct pipe_screen *screen)
+{
+   return (struct nvc0_screen *)screen;
+}
+
+void nvc0_screen_make_buffers_resident(struct nvc0_screen *);
+
+int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
+int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
+
+boolean
+nvc0_screen_fence_new(struct nvc0_screen *, struct nvc0_fence **, boolean emit);
+
+struct nvc0_format {
+   uint32_t rt;
+   uint32_t tic;
+   uint32_t vtx;
+   uint32_t usage;
+};
+
+extern const struct nvc0_format nvc0_format_table[];
+
+static INLINE void
+nvc0_screen_tic_unlock(struct nvc0_screen *screen, struct nvc0_tic_entry *tic)
+{
+   if (tic->id >= 0)
+      screen->tic.lock[tic->id / 32] &= ~(1 << (tic->id % 32));
+}
+
+static INLINE void
+nvc0_screen_tsc_unlock(struct nvc0_screen *screen, struct nvc0_tsc_entry *tsc)
+{
+   if (tsc->id >= 0)
+      screen->tsc.lock[tsc->id / 32] &= ~(1 << (tsc->id % 32));
+}
+
+static INLINE void
+nvc0_screen_tic_free(struct nvc0_screen *screen, struct nvc0_tic_entry *tic)
+{
+   if (tic->id >= 0) {
+      screen->tic.entries[tic->id] = NULL;
+      screen->tic.lock[tic->id / 32] &= ~(1 << (tic->id % 32));
+   }
+}
+
+static INLINE void
+nvc0_screen_tsc_free(struct nvc0_screen *screen, struct nvc0_tsc_entry *tsc)
+{
+   if (tsc->id >= 0) {
+      screen->tsc.entries[tsc->id] = NULL;
+      screen->tsc.lock[tsc->id / 32] &= ~(1 << (tsc->id % 32));
+   }
+}
+
+#endif
