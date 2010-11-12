@@ -58,9 +58,29 @@ struct fragment_shader_consts
 struct vert_stream_0
 {
    struct vertex2f pos;
-   float luma_eb;
-   float cb_eb;
-   float cr_eb;
+
+   struct {
+      float luma_eb;
+      float cb_eb;
+      float cr_eb;
+   } field[2];
+
+   float interlaced;
+};
+
+enum VS_INPUT
+{
+   VS_I_RECT,
+   VS_I_VPOS,
+   VS_I_FIELD0,
+   VS_I_FIELD1,
+   VS_I_INTERLACED,
+   VS_I_MV0,
+   VS_I_MV1,
+   VS_I_MV2,
+   VS_I_MV3,
+
+   NUM_VS_INPUTS
 };
 
 enum VS_OUTPUT
@@ -111,7 +131,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 {
    struct ureg_program *shader;
    struct ureg_src norm, mbs;
-   struct ureg_src vrect, vpos, vtex, vmv[4];
+   struct ureg_src vrect, vpos, field[2], interlaced, vmv[4];
    struct ureg_dst t_vpos, scale;
    struct ureg_dst o_vpos, o_vtex[2], o_info, o_vmv[4], o_line;
    unsigned i, j, count;
@@ -126,9 +146,11 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    t_vpos = ureg_DECL_temporary(shader);
    scale = ureg_DECL_temporary(shader);
 
-   vrect = ureg_DECL_vs_input(shader, 0);
-   vpos = ureg_DECL_vs_input(shader, 1);
-   vtex = ureg_DECL_vs_input(shader, 2);
+   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
+   vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+   field[0] = ureg_DECL_vs_input(shader, VS_I_FIELD0);
+   field[1] = ureg_DECL_vs_input(shader, VS_I_FIELD1);
+   interlaced = ureg_DECL_vs_input(shader, VS_I_INTERLACED);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
@@ -140,13 +162,13 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    for (i = 0; i < ref_frames; ++i) {
       for (j = 0; j < 2; ++j) {        
         if(j < mv_per_frame) {
-           vmv[count] = ureg_DECL_vs_input(shader, 3 + i * 2 + j);
+           vmv[count] = ureg_DECL_vs_input(shader, VS_I_MV0 + i * 2 + j);
            o_vmv[count] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + count);
            count++;
         }
         /* workaround for r600g */
         else if(ref_frames == 2)
-           ureg_DECL_vs_input(shader, 3 + i * 2 + j);
+           ureg_DECL_vs_input(shader, VS_I_MV0 + i * 2 + j);
       }
    }
 
@@ -183,7 +205,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    for (i = 0; i < 2; ++i) {
       ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    }
-   ureg_MOV(shader, o_info, vtex);
+   ureg_MOV(shader, o_info, field[0]);
 
    if(count > 0) {
       ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
@@ -630,7 +652,7 @@ static bool
 init_buffers(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_resource template;
-   struct pipe_vertex_element vertex_elems[7];
+   struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
    struct pipe_sampler_view sampler_view;
 
    const unsigned mbw =
@@ -724,51 +746,64 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    memset(&vertex_elems, 0, sizeof(vertex_elems));
 
+
    /* Rectangle element */
-   vertex_elems[0].src_offset = 0;
-   vertex_elems[0].instance_divisor = 0;
-   vertex_elems[0].vertex_buffer_index = 0;
-   vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_RECT].src_offset = 0;
+   vertex_elems[VS_I_RECT].instance_divisor = 0;
+   vertex_elems[VS_I_RECT].vertex_buffer_index = 0;
+   vertex_elems[VS_I_RECT].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Position element */
-   vertex_elems[1].src_offset = 0;
-   vertex_elems[1].instance_divisor = 0;
-   vertex_elems[1].vertex_buffer_index = 1;
-   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_VPOS].src_offset = 0;
+   vertex_elems[VS_I_VPOS].instance_divisor = 0;
+   vertex_elems[VS_I_VPOS].vertex_buffer_index = 1;
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   /* y, cr, cb z-coordinate element */
-   vertex_elems[2].src_offset = sizeof(struct vertex2f);
-   vertex_elems[2].instance_divisor = 0;
-   vertex_elems[2].vertex_buffer_index = 1;
-   vertex_elems[2].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+   /* y, cr, cb z-coordinate element top field */
+   vertex_elems[VS_I_FIELD0].src_offset = sizeof(struct vertex2f);
+   vertex_elems[VS_I_FIELD0].instance_divisor = 0;
+   vertex_elems[VS_I_FIELD0].vertex_buffer_index = 1;
+   vertex_elems[VS_I_FIELD0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* y, cr, cb z-coordinate element bottom field */
+   vertex_elems[VS_I_FIELD1].src_offset = sizeof(struct vertex2f) + sizeof(float) * 3;
+   vertex_elems[VS_I_FIELD1].instance_divisor = 0;
+   vertex_elems[VS_I_FIELD1].vertex_buffer_index = 1;
+   vertex_elems[VS_I_FIELD1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* temporary workaound */
+   vertex_elems[VS_I_INTERLACED].src_offset = sizeof(struct vertex2f) + sizeof(float) * 6;
+   vertex_elems[VS_I_INTERLACED].instance_divisor = 0;
+   vertex_elems[VS_I_INTERLACED].vertex_buffer_index = 1;
+   vertex_elems[VS_I_INTERLACED].src_format = PIPE_FORMAT_R32_FLOAT;
 
    /* First ref surface top field texcoord element */
-   vertex_elems[3].src_offset = 0;
-   vertex_elems[3].instance_divisor = 0;
-   vertex_elems[3].vertex_buffer_index = 2;
-   vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_MV0].src_offset = 0;
+   vertex_elems[VS_I_MV0].instance_divisor = 0;
+   vertex_elems[VS_I_MV0].vertex_buffer_index = 2;
+   vertex_elems[VS_I_MV0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
-   vertex_elems[4].src_offset = sizeof(struct vertex2f);
-   vertex_elems[4].instance_divisor = 0;
-   vertex_elems[4].vertex_buffer_index = 2;
-   vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_MV1].src_offset = sizeof(struct vertex2f);
+   vertex_elems[VS_I_MV1].instance_divisor = 0;
+   vertex_elems[VS_I_MV1].vertex_buffer_index = 2;
+   vertex_elems[VS_I_MV1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
-   vertex_elems[5].src_offset = 0;
-   vertex_elems[5].instance_divisor = 0;
-   vertex_elems[5].vertex_buffer_index = 3;
-   vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_MV2].src_offset = 0;
+   vertex_elems[VS_I_MV2].instance_divisor = 0;
+   vertex_elems[VS_I_MV2].vertex_buffer_index = 3;
+   vertex_elems[VS_I_MV2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
-   vertex_elems[6].src_offset = sizeof(struct vertex2f);
-   vertex_elems[6].instance_divisor = 0;
-   vertex_elems[6].vertex_buffer_index = 3;
-   vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_MV3].src_offset = sizeof(struct vertex2f);
+   vertex_elems[VS_I_MV3].instance_divisor = 0;
+   vertex_elems[VS_I_MV3].vertex_buffer_index = 3;
+   vertex_elems[VS_I_MV3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 3, vertex_elems);
-   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 5, vertex_elems);
-   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 7, vertex_elems);
+   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 5, vertex_elems);
+   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 7, vertex_elems);
+   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 9, vertex_elems);
 
    r->vs_const_buf = pipe_buffer_create
    (
@@ -861,24 +896,24 @@ gen_block_verts(struct vert_stream_0 *vb, struct pipe_mpeg12_macroblock *mb,
    v.pos.y = mb->mby;
 
    if (cbp & luma_mask || mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD) {
-      v.luma_eb = 0.0f;
+      v.field[0].luma_eb = 0.0f;
    }
    else {
-      v.luma_eb = -1.0f;
+      v.field[0].luma_eb = -1.0f;
    }
 
    if (cbp & cb_mask) {
-      v.cb_eb = 0.0f;
+      v.field[0].cb_eb = 0.0f;
    }
    else {
-      v.cb_eb = -1.0f;
+      v.field[0].cb_eb = -1.0f;
    }
 
    if (cbp & cr_mask) {
-      v.cr_eb = 0.0f;
+      v.field[0].cr_eb = 0.0f;
    }
    else {
-      v.cr_eb = -1.0f;
+      v.field[0].cr_eb = -1.0f;
    }
 
    for ( i = 0; i < 6; ++i )
