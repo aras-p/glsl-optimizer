@@ -101,5 +101,9 @@ static const builtin_variable builtin_110_deprecated_uniforms[] = {
    { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose" },
    { ir_var_uniform, -1, "float", "gl_NormalScale" },
    { ir_var_uniform, -1, "gl_LightModelParameters", "gl_LightModel"},
+
+   /* Mesa-internal ATI_envmap_bumpmap state. */
+   { ir_var_uniform, -1, "vec2", "gl_MESABumpRotMatrix0"},
+   { ir_var_uniform, -1, "vec2", "gl_MESABumpRotMatrix1"},
 };
 
