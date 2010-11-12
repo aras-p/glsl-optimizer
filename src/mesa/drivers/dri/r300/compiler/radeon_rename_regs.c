@@ -33,6 +33,7 @@
 
 #include "radeon_compiler.h"
 #include "radeon_dataflow.h"
+#include "radeon_program.h"
 
 /**
  * This function renames registers in an attempt to get the code close to
@@ -44,10 +45,17 @@
  */
 void rc_rename_regs(struct radeon_compiler *c, void *user)
 {
-	unsigned int new_index, i;
+	unsigned int i, used_length;
+	int new_index;
 	struct rc_instruction * inst;
 	struct rc_reader_data reader_data;
+	unsigned char * used;
 
+	used_length = 2 * rc_recompute_ips(c);
+	used = memory_pool_malloc(&c->Pool, sizeof(unsigned char) * used_length);
+	memset(used, 0, sizeof(unsigned char) * used_length);
+
+	rc_get_used_temporaries(c, used, used_length);
 	for(inst = c->Program.Instructions.Next;
 					inst != &c->Program.Instructions;
 					inst = inst->Next) {
@@ -60,7 +68,13 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 		if (reader_data.Abort || reader_data.ReaderCount == 0)
 			continue;
 
-		new_index = rc_find_free_temporary(c);
+		new_index = rc_find_free_temporary_list(c, used, used_length,
+						RC_MASK_XYZW);
+		if (new_index < 0) {
+			rc_error(c, "Ran out of temporary registers\n");
+			return;
+		}
+
 		reader_data.Writer->U.I.DstReg.Index = new_index;
 		for(i = 0; i < reader_data.ReaderCount; i++) {
 			reader_data.Readers[i].U.Src->Index = new_index;

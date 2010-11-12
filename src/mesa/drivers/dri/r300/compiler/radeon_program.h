@@ -236,6 +236,17 @@ void rc_local_transform(
 	struct radeon_compiler *c,
 	void *user);
 
+void rc_get_used_temporaries(
+	struct radeon_compiler * c,
+	unsigned char * used,
+	unsigned int used_length);
+
+int rc_find_free_temporary_list(
+	struct radeon_compiler * c,
+	unsigned char * used,
+	unsigned int used_length,
+	unsigned int mask);
+
 unsigned int rc_find_free_temporary(struct radeon_compiler * c);
 
 struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
