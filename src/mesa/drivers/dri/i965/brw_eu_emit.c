@@ -1949,6 +1949,7 @@ void brw_SAMPLE(struct brw_compile *p,
       if (intel->gen >= 6) {
 	  brw_push_insn_state(p);
 	  brw_set_mask_control( p, BRW_MASK_DISABLE );
+	  brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	  /* m1 contains header? */
 	  brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
 	  brw_pop_insn_state(p);
