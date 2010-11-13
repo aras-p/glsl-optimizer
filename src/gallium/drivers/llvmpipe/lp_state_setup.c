@@ -202,29 +202,16 @@ static LLVMValueRef
 vert_clamp(LLVMBuilderRef b,
            LLVMValueRef x,
            LLVMValueRef min,
-           LLVMValueRef max,
-           LLVMValueRef clamp_ptr)
+           LLVMValueRef max)
 {
-   struct lp_build_if_state if_state;
    LLVMValueRef min_result = LLVMBuildFCmp(b, LLVMRealUGT, min, x, "");
    LLVMValueRef max_result = LLVMBuildFCmp(b, LLVMRealUGT, x, max, "");
-   
-   lp_build_if(&if_state, b, min_result);
-   {
-      LLVMBuildStore(b, min, clamp_ptr);
-   }   
-   lp_build_endif(&if_state);
-   lp_build_if(&if_state, b, max_result);
-   {
-      LLVMBuildStore(b, max, clamp_ptr);
-   }      
-   lp_build_else(&if_state);
-   {
-      LLVMBuildStore(b, x, clamp_ptr);
-   }
-   lp_build_endif(&if_state);
-   
-   return LLVMBuildLoad(b, clamp_ptr,"");
+   LLVMValueRef clamp_value;
+
+   clamp_value = LLVMBuildSelect(b, min_result, min, x, "");
+   clamp_value = LLVMBuildSelect(b, max_result, max, x, "");
+
+   return clamp_value;
 }
 
 static void 
@@ -542,11 +529,11 @@ lp_do_offset_tri(LLVMBuilderRef b,
                  struct lp_setup_args *args,
                  const struct lp_setup_variant_key *key)
 {
-   struct lp_build_if_state if_state;
    struct lp_build_context bld;
    LLVMValueRef zoffset, mult;
    LLVMValueRef z0_new, z1_new, z2_new;
-   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy, max;
+   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy;
+   LLVMValueRef max, max_value;
 
    LLVMValueRef idx[2];
    LLVMValueRef one  = LLVMConstReal(LLVMFloatType(), 1.0);
@@ -584,10 +571,6 @@ lp_do_offset_tri(LLVMBuilderRef b,
    LLVMValueRef dx02_dz12    = LLVMBuildFMul(b, dx02, dz12, "dx02_dz12");
    LLVMValueRef res1  = LLVMBuildFSub(b, dy02_dz12, dz02_dy12, "res1");
    LLVMValueRef res2  = LLVMBuildFSub(b, dz02_dx12, dx02_dz12, "res2");
-
-   /* for the if-else functions phi's */
-   LLVMValueRef zoffset_ptr = lp_build_alloca(b, LLVMFloatType(), "");
-   LLVMValueRef clamp_ptr = lp_build_alloca(b, LLVMFloatType(), "");
  
    /* dzdx = fabsf(res1 * inv_det), dydx = fabsf(res2 * inv_det)*/
    lp_build_context_init(&bld, b, lp_type_float(32));
@@ -598,26 +581,15 @@ lp_do_offset_tri(LLVMBuilderRef b,
 
    /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
    max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
-   lp_build_if(&if_state, b, max);
-   {
-      mult = LLVMBuildFMul(b, dzdx, LLVMConstReal(LLVMFloatType(), key->scale), "");
-      zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");
-      LLVMBuildStore(b, zoffset, zoffset_ptr);
-   }   
-   lp_build_else(&if_state);
-   {
-      mult = LLVMBuildFMul(b, dzdy, LLVMConstReal(LLVMFloatType(), key->scale), "");
-      zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");     
-      LLVMBuildStore(b, zoffset, zoffset_ptr);
-   }
-   lp_build_endif(&if_state);
+   max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
 
-   zoffset = LLVMBuildLoad(b, zoffset_ptr,"");
+   mult = LLVMBuildFMul(b, max_value, LLVMConstReal(LLVMFloatType(), key->scale), "");
+   zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");     
 
    /* clamp and do offset */
-   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one, clamp_ptr);
-   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one, clamp_ptr);
-   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one, clamp_ptr);
+   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one);
+   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one);
+   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one);
    
    /* store back new offsetted z values */
    idx[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
@@ -716,7 +688,7 @@ generate_setup_variant(struct llvmpipe_screen *screen,
    if (variant->key.twoside){
       lp_twoside(builder, &args, &variant->key);
    }
-   if (variant->key.scale){
+   if (variant->key.scale || variant->key.units){
       lp_do_offset_tri(builder, &args, &variant->key);
    }
    emit_tri_coef(builder, &variant->key, &args);
