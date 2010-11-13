@@ -338,11 +338,13 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
 
 static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
 {
-   /* This is only called for producing 1/w in pre-gen6 interp.  for
-    * gen6, the interp opcodes don't use this argument.
+   /* This is called for producing 1/w in pre-gen6 interp.  for gen6,
+    * the interp opcodes don't use this argument.  But to keep the
+    * nr_args = 3 expectations of pinterp happy, just stuff delta_xy
+    * into the slot.
     */
    if (c->func.brw->intel.gen >= 6)
-      return src_undef();
+      return c->delta_xy;
 
    if (src_is_undef(c->pixel_w)) {
       struct prog_dst_register pixel_w = get_temp(c);
@@ -373,11 +375,7 @@ static void emit_interp( struct brw_wm_compile *c,
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
    struct prog_src_register deltas;
 
-   if (c->func.brw->intel.gen < 6) {
-      deltas = get_delta_xy(c);
-   } else {
-      deltas = src_undef();
-   }
+   deltas = get_delta_xy(c);
 
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
