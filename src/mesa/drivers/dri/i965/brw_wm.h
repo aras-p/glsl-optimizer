@@ -70,7 +70,8 @@ struct brw_wm_prog_key {
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint runtime_check_aads_emit:1;
    GLuint nr_color_regions:5;
-   
+   GLuint render_to_fbo:1;
+
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;

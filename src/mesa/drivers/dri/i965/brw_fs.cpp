@@ -400,6 +400,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    fs_reg wpos = *reg;
    fs_reg neg_y = this->pixel_y;
    neg_y.negate = true;
+   bool flip = !ir->origin_upper_left ^ c->key.render_to_fbo;
 
    /* gl_FragCoord.x */
    if (ir->pixel_center_integer) {
@@ -410,13 +411,13 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.y */
-   if (ir->origin_upper_left && ir->pixel_center_integer) {
+   if (!flip && ir->pixel_center_integer) {
       emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_y));
    } else {
       fs_reg pixel_y = this->pixel_y;
       float offset = (ir->pixel_center_integer ? 0.0 : 0.5);
 
-      if (!ir->origin_upper_left) {
+      if (flip) {
 	 pixel_y.negate = true;
 	 offset += c->key.drawable_height - 1.0;
       }
