@@ -665,6 +665,8 @@ static void get_readers_for_single_write(
 			 * reader before we get to the BGNLOOP, we must abort
 			 * unless there is another writer between that reader
 			 * and the BGNLOOP. */
+		case RC_OPCODE_BRK:
+		case RC_OPCODE_CONT:
 			d->ReaderData->Abort = 1;
 			return;
 		case RC_OPCODE_IF:
