@@ -480,6 +480,10 @@ struct r300_context {
      * dummy texture there. */
     struct r300_sampler_view *texkill_sampler;
 
+    /* When no vertex buffer is set, this one is used instead to prevent
+     * hardlocks. */
+    struct pipe_resource *dummy_vb;
+
     /* The currently active query. */
     struct r300_query *query_current;
     /* The saved query for blitter operations. */

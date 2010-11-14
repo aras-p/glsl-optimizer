@@ -643,10 +643,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         return;
     }
 
-    if (!r300->velems->count || !r300->vertex_buffer_count) {
-        return;
-    }
-
     /* Index buffer range checking. */
     if (indexed) {
         assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
