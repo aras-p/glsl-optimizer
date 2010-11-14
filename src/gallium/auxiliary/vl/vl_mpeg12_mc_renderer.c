@@ -572,47 +572,6 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static void
-xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
-{
-   unsigned i;
-
-   assert(r);
-
-   for (i = 0; i < 3; ++i) {
-      struct pipe_box rect =
-      {
-         0, 0, 0,
-         r->textures.all[i]->width0,
-         r->textures.all[i]->height0,
-         1
-      };
-
-      r->tex_transfer[i] = r->pipe->get_transfer
-      (
-         r->pipe, r->textures.all[i],
-         u_subresource(0, 0),
-         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-         &rect
-      );
-
-      r->texels[i] = r->pipe->transfer_map(r->pipe, r->tex_transfer[i]);
-   }
-}
-
-static void
-xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
-{
-   unsigned i;
-
-   assert(r);
-
-   for (i = 0; i < 3; ++i) {
-      r->pipe->transfer_unmap(r->pipe, r->tex_transfer[i]);
-      r->pipe->transfer_destroy(r->pipe, r->tex_transfer[i]);
-   }
-}
-
 static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
@@ -1209,7 +1168,10 @@ flush(struct vl_mpeg12_mc_renderer *r)
    assert(r);
    assert(r->num_macroblocks == r->macroblocks_per_batch);
 
-   xfer_buffers_unmap(r);
+   vl_idct_flush(&r->idct_y);
+   vl_idct_flush(&r->idct_cr);
+   vl_idct_flush(&r->idct_cb);
+
    gen_macroblock_stream(r, num_macroblocks);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
@@ -1322,7 +1284,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
 
    r->num_macroblocks = 0;
-   xfer_buffers_map(r);
 }
 
 static void
@@ -1353,39 +1314,19 @@ update_render_target(struct vl_mpeg12_mc_renderer *r)
 }
 
 static void
-grab_coded_block(short *src, short *dst, unsigned dst_pitch)
-{
-   unsigned y;
-
-   assert(src);
-   assert(dst);
-
-   for (y = 0; y < BLOCK_HEIGHT; ++y)
-      memcpy(dst + y * dst_pitch, src + y * BLOCK_WIDTH, BLOCK_WIDTH * 2);
-}
-
-static void
 grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
             enum pipe_mpeg12_dct_type dct_type, unsigned cbp, short *blocks)
 {
-   unsigned tex_pitch;
-   short *texels;
    unsigned tb = 0, sb = 0;
-   unsigned mbpx = mbx * MACROBLOCK_WIDTH, mbpy = mby * MACROBLOCK_HEIGHT;
    unsigned x, y;
 
    assert(r);
    assert(blocks);
 
-   tex_pitch = r->tex_transfer[0]->stride / util_format_get_blocksize(r->tex_transfer[0]->resource->format);
-   texels = r->texels[0] + mbpy * tex_pitch + mbpx;
-
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
          if ((cbp >> (5 - tb)) & 1) {
-            grab_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT,
-                             texels + y * tex_pitch * BLOCK_HEIGHT +
-                             x * BLOCK_WIDTH, tex_pitch);
+            vl_idct_add_block(&r->idct_y, mbx * 2 + x, mby * 2 + y, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
             ++sb;
          }
       }
@@ -1394,15 +1335,12 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    /* TODO: Implement 422, 444 */
    assert(r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
-   mbpx /= 2;
-   mbpy /= 2;
-
    for (tb = 0; tb < 2; ++tb) {
-      tex_pitch = r->tex_transfer[tb + 1]->stride / util_format_get_blocksize(r->tex_transfer[tb + 1]->resource->format);
-      texels = r->texels[tb + 1] + mbpy * tex_pitch + mbpx;
-
       if ((cbp >> (1 - tb)) & 1) {
-         grab_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT, texels, tex_pitch);
+         if(tb == 0)
+            vl_idct_add_block(&r->idct_cb, mbx, mby, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
+         else
+            vl_idct_add_block(&r->idct_cr, mbx, mby, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
          ++sb;
       }
    }
@@ -1499,7 +1437,9 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->future = NULL;
    renderer->num_macroblocks = 0;
 
-   xfer_buffers_map(renderer);
+   vl_idct_init(&renderer->idct_y, pipe, renderer->textures.individual.y);
+   vl_idct_init(&renderer->idct_cr, pipe, renderer->textures.individual.cr);
+   vl_idct_init(&renderer->idct_cb, pipe, renderer->textures.individual.cb);
 
    return true;
 }
@@ -1509,7 +1449,9 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
    assert(renderer);
 
-   xfer_buffers_unmap(renderer);
+   vl_idct_cleanup(&renderer->idct_y);
+   vl_idct_cleanup(&renderer->idct_cr);
+   vl_idct_cleanup(&renderer->idct_cb);
 
    util_delete_keymap(renderer->texview_map, renderer->pipe);
    cleanup_pipe_state(renderer);

@@ -147,7 +147,8 @@ C_SOURCES = \
 	vl/vl_bitstream_parser.c \
 	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_compositor.c \
-	vl/vl_csc.c
+	vl/vl_csc.c \
+        vl/vl_idct.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_arit.c \

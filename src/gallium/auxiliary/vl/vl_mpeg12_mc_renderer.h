@@ -32,6 +32,7 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 #include "vl_types.h"
+#include "vl_idct.h"
 
 struct pipe_context;
 struct pipe_macroblock;
@@ -57,6 +58,9 @@ struct vl_mpeg12_mc_renderer
    struct pipe_viewport_state viewport;
    struct pipe_resource *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
+
+   struct vl_idct idct_y, idct_cb, idct_cr;
+
    union
    {
       void *all[3];
@@ -94,8 +98,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_fence_handle **fence;
    unsigned num_macroblocks;
    struct pipe_mpeg12_macroblock *macroblock_buf;
-   struct pipe_transfer *tex_transfer[3];
-   short *texels[3];
 
    struct keymap *texview_map;
 };
