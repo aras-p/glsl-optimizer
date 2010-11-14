@@ -341,7 +341,7 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
          ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_scalar(eb[0][0], TGSI_SWIZZLE_X + i));
       }
 
-      /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
+      /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
       ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
    }
@@ -368,11 +368,13 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    /*
     * texel = fetch_ycbcr()
-    * fragment = texel * scale
+    * fragment = texel * scale + 0.5
     */
    field = calc_field(shader);
    texel = fetch_ycbcr(r, shader, field);
-   ureg_MUL(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X));
+   ureg_MAD(shader, fragment, ureg_src(texel), 
+            ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), 
+            ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
