@@ -535,28 +535,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
-    boolean translate = FALSE;
     unsigned new_offset;
-
-    if (r300->skip_rendering) {
-        return;
-    }
-
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    /* Index buffer range checking. */
-    if ((start + count) * indexSize > indexBuffer->width0) {
-        fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
-        return;
-    }
-
-    /* Set up fallback for incompatible vertex layout if needed. */
-    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
-        r300_begin_vertex_translate(r300);
-        translate = TRUE;
-    }
 
     if (indexBias && !r500_index_bias_supported(r300)) {
         r300_split_index_bias(r300, indexBias, &buffer_offset, &index_offset);
@@ -603,10 +582,6 @@ done:
     if (indexBuffer != orgIndexBuffer) {
         pipe_resource_reference( &indexBuffer, NULL );
     }
-
-    if (translate) {
-        r300_end_vertex_translate(r300);
-    }
 }
 
 static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
@@ -617,21 +592,6 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                             count > 65536 &&
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
-    boolean translate = FALSE;
-
-    if (r300->skip_rendering) {
-        return;
-    }
-
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    /* Set up fallback for incompatible vertex layout if needed. */
-    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
-        r300_begin_vertex_translate(r300);
-        translate = TRUE;
-    }
 
     r300_update_derived_state(r300);
 
@@ -642,7 +602,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         if (!r300_prepare_for_rendering(r300,
                 PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
                 NULL, 9, start, 0))
-            goto done;
+            return;
 
         if (alt_num_verts || count <= 65535) {
             r300_emit_draw_arrays(r300, mode, count);
@@ -659,15 +619,10 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                     if (!r300_prepare_for_rendering(r300,
                             PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
                             start, 0))
-                        goto done;
+                        return;
                 }
             } while (count);
         }
-    }
-
-done:
-    if (translate) {
-        r300_end_vertex_translate(r300);
     }
 }
 
@@ -675,16 +630,46 @@ static void r300_draw_vbo(struct pipe_context* pipe,
                           const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
+    unsigned count = info->count;
+    boolean translate = FALSE;
+    boolean indexed = info->indexed && r300->index_buffer.buffer;
+    unsigned start_indexed = 0;
 
-    if (!r300->velems->count || !r300->vertex_buffer_count)
-	    return;
+    if (r300->skip_rendering) {
+        return;
+    }
 
-    if (info->indexed && r300->index_buffer.buffer) {
-        unsigned offset;
+    if (!u_trim_pipe_prim(info->mode, &count)) {
+        return;
+    }
 
+    if (!r300->velems->count || !r300->vertex_buffer_count) {
+        return;
+    }
+
+    /* Index buffer range checking. */
+    if (indexed) {
         assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
-        offset = r300->index_buffer.offset / r300->index_buffer.index_size;
 
+        /* Compute start for draw_elements, taking the offset into account. */
+        start_indexed =
+            info->start +
+            (r300->index_buffer.offset / r300->index_buffer.index_size);
+
+        if ((start_indexed + count) * r300->index_buffer.index_size >
+            r300->index_buffer.buffer->width0) {
+            fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
+            return;
+        }
+    }
+
+    /* Set up fallback for incompatible vertex layout if needed. */
+    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
+        r300_begin_vertex_translate(r300);
+        translate = TRUE;
+    }
+
+    if (indexed) {
         r300_draw_range_elements(pipe,
                                  r300->index_buffer.buffer,
                                  r300->index_buffer.index_size,
@@ -692,14 +677,17 @@ static void r300_draw_vbo(struct pipe_context* pipe,
                                  info->min_index,
                                  info->max_index,
                                  info->mode,
-                                 info->start + offset,
-                                 info->count);
-    }
-    else {
+                                 start_indexed,
+                                 count);
+    } else {
         r300_draw_arrays(pipe,
                          info->mode,
                          info->start,
-                         info->count);
+                         count);
+    }
+
+    if (translate) {
+        r300_end_vertex_translate(r300);
     }
 }
 
