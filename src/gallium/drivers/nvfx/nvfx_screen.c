@@ -123,6 +123,8 @@ nvfx_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum 
 		case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
 		case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
 			return 0;
+		case PIPE_SHADER_CAP_SUBROUTINES:
+			return screen->use_nv4x ? 1 : 0;
 		default:
 			break;
 		}
@@ -160,6 +162,8 @@ nvfx_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum 
 		case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
 			return 0;
 		case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
+			return 1;
+		case PIPE_SHADER_CAP_SUBROUTINES:
 			return 1;
 		default:
 			break;

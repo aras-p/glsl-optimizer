@@ -237,6 +237,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
          return 0;
+      case PIPE_SHADER_CAP_SUBROUTINES:
+         return 0;
       }
       break;
    case PIPE_SHADER_VERTEX:
@@ -276,6 +278,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 0;
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
          return 1;
+      case PIPE_SHADER_CAP_SUBROUTINES:
+         return 0;
       default:
          break;
       }

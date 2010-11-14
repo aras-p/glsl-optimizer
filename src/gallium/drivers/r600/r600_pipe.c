@@ -375,6 +375,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
 	case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
 		return 1;
+	case PIPE_SHADER_CAP_SUBROUTINES:
+		return 0;
 	default:
 		return 0;
 	}
