@@ -126,15 +126,6 @@ static struct reg_value ** get_reg_valuep(struct schedule_state * s,
 	return &s->Temporary[index].Values[chan];
 }
 
-static struct reg_value * get_reg_value(struct schedule_state * s,
-		rc_register_file file, unsigned int index, unsigned int chan)
-{
-	struct reg_value ** pv = get_reg_valuep(s, file, index, chan);
-	if (!pv)
-		return 0;
-	return *pv;
-}
-
 static void add_inst_to_list(struct schedule_instruction ** list, struct schedule_instruction * inst)
 {
 	inst->NextReady = *list;
@@ -591,13 +582,13 @@ static void scan_read(void * data, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int chan)
 {
 	struct schedule_state * s = data;
-	struct reg_value * v = get_reg_value(s, file, index, chan);
+	struct reg_value ** v = get_reg_valuep(s, file, index, chan);
 	struct reg_value_reader * reader;
 
 	if (!v)
 		return;
 
-	if (v->Writer == s->Current) {
+	if (*v && (*v)->Writer == s->Current) {
 		/* The instruction reads and writes to a register component.
 		 * In this case, we only want to increment dependencies by one.
 		 */
@@ -608,16 +599,28 @@ static void scan_read(void * data, struct rc_instruction * inst,
 
 	reader = memory_pool_malloc(&s->C->Pool, sizeof(*reader));
 	reader->Reader = s->Current;
-	reader->Next = v->Readers;
-	v->Readers = reader;
-	v->NumReaders++;
-
-	s->Current->NumDependencies++;
+	if (!*v) {
+		/* In this situation, the instruction reads from a register
+		 * that hasn't been written to or read from in the current
+		 * block. */
+		*v = memory_pool_malloc(&s->C->Pool, sizeof(struct reg_value));
+		memset(*v, 0, sizeof(struct reg_value));
+		(*v)->Readers = reader;
+	} else {
+		reader->Next = (*v)->Readers;
+		(*v)->Readers = reader;
+		/* Only update the current instruction's dependencies if the
+		 * register it reads from has been written to in this block. */
+		if ((*v)->Writer) {
+			s->Current->NumDependencies++;
+		}
+	}
+	(*v)->NumReaders++;
 
 	if (s->Current->NumReadValues >= 12) {
 		rc_error(s->C, "%s: NumReadValues overflow\n", __FUNCTION__);
 	} else {
-		s->Current->ReadValues[s->Current->NumReadValues++] = v;
+		s->Current->ReadValues[s->Current->NumReadValues++] = *v;
 	}
 }
 
