@@ -213,8 +213,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Non-MPEG2/Mocomp acceleration unsupported.\n");
       return BadImplementation;
    }
-   if (!(surface_flags & XVMC_INTRA_UNSIGNED)) {
-      XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Signed intra unsupported.\n");
+   if (surface_flags & XVMC_INTRA_UNSIGNED) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Unsigned intra unsupported.\n");
       return BadImplementation;
    }
 
