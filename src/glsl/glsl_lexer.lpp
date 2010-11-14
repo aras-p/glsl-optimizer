@@ -36,6 +36,8 @@
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
 
+#define IS_UINT (yytext[yyleng - 1] == 'u' || yytext[yyleng - 1] == 'U')
+
 /* A macro for handling reserved words and keywords across language versions.
  *
  * Certain words start out as identifiers, become reserved words in
@@ -277,17 +279,17 @@ layout		{
 \|=		return OR_ASSIGN;
 -=		return SUB_ASSIGN;
 
-[1-9][0-9]*		{
+[1-9][0-9]*[uU]?	{
 			    yylval->n = strtol(yytext, NULL, 10);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
-0[xX][0-9a-fA-F]+	{
+0[xX][0-9a-fA-F]+[uU]?	{
 			    yylval->n = strtol(yytext + 2, NULL, 16);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
-0[0-7]*			{
+0[0-7]*[uU]?		{
 			    yylval->n = strtol(yytext, NULL, 8);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
