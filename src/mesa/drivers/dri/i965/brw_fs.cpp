@@ -2515,6 +2515,7 @@ fs_visitor::split_virtual_grfs()
 	 for (int j = 2; j < this->virtual_grf_sizes[i]; j++) {
 	    int reg = virtual_grf_alloc(1);
 	    assert(reg == new_virtual_grf[i] + j - 1);
+	    (void) reg;
 	 }
 	 this->virtual_grf_sizes[i] = 1;
       }
