@@ -42,7 +42,7 @@
 #define MACROBLOCK_HEIGHT 16
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
-#define SCALE_FACTOR_16_TO_9 (32767.0f / 255.0f)
+#define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
 struct vertex_shader_consts
 {
