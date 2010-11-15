@@ -150,7 +150,6 @@ vbo_emit_attr(struct gl_context *ctx, const struct gl_client_array **arrays,
 			render->map[render->attr_count++] = attr;
 			render->vertex_size += 4 * info->imm_fields;
 		}
-
 	}
 }
 
