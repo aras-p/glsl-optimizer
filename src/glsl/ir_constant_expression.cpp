@@ -990,10 +990,18 @@ ir_call::constant_expression_value()
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = acosf(op[0]->value.f[c]);
+   } else if (strcmp(callee, "acosh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = acoshf(op[0]->value.f[c]);
    } else if (strcmp(callee, "asin") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = asinf(op[0]->value.f[c]);
+   } else if (strcmp(callee, "asinh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = asinhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "atan") == 0) {
       assert(op[0]->type->is_float());
       if (num_parameters == 2) {
@@ -1004,6 +1012,10 @@ ir_call::constant_expression_value()
 	 for (unsigned c = 0; c < op[0]->type->components(); c++)
 	    data.f[c] = atanf(op[0]->value.f[c]);
       }
+   } else if (strcmp(callee, "atanh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = atanhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
       return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "ceil") == 0) {
