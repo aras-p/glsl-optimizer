@@ -30,55 +30,55 @@ CXX_SOURCES = \
 	glsl_types.cpp \
 	glsl_symbol_table.cpp \
 	hir_field_selection.cpp \
-	ir_algebraic.cpp \
 	ir_basic_block.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
-	ir_constant_folding.cpp \
-	ir_constant_propagation.cpp \
-	ir_constant_variable.cpp \
-	ir_copy_propagation.cpp \
 	ir.cpp \
-	ir_dead_code.cpp \
-	ir_dead_code_local.cpp \
-	ir_dead_functions.cpp \
-	ir_div_to_mul_rcp.cpp \
-	ir_explog_to_explog2.cpp \
 	ir_expression_flattening.cpp \
 	ir_function_can_inline.cpp \
 	ir_function.cpp \
-	ir_function_inlining.cpp \
 	ir_hierarchical_visitor.cpp \
 	ir_hv_accept.cpp \
-	ir_if_simplification.cpp \
-	ir_if_to_cond_assign.cpp \
 	ir_import_prototypes.cpp \
-	ir_lower_jumps.cpp \
-	ir_mat_op_to_vec.cpp \
-	ir_mod_to_fract.cpp \
-	ir_noop_swizzle.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
 	ir_rvalue_visitor.cpp \
 	ir_set_program_inouts.cpp \
-	ir_structure_splitting.cpp \
-	ir_sub_to_add_neg.cpp \
-	ir_swizzle_swizzle.cpp \
-	ir_tree_grafting.cpp \
 	ir_validate.cpp \
 	ir_variable.cpp \
 	ir_variable_refcount.cpp \
-	ir_vec_index_to_cond_assign.cpp \
-	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
 	link_functions.cpp \
 	loop_analysis.cpp \
 	loop_controls.cpp \
 	loop_unroll.cpp \
+	lower_div_to_mul_rcp.cpp \
+	lower_explog_to_explog2.cpp \
+	lower_if_to_cond_assign.cpp \
+	lower_jumps.cpp \
+	lower_mat_op_to_vec.cpp \
+	lower_mod_to_fract.cpp \
 	lower_noise.cpp \
+	lower_sub_to_add_neg.cpp \
 	lower_texture_projection.cpp \
 	lower_variable_index_to_cond_assign.cpp \
+	lower_vec_index_to_cond_assign.cpp \
+	lower_vec_index_to_swizzle.cpp \
+	opt_algebraic.cpp \
+	opt_constant_folding.cpp \
+	opt_constant_propagation.cpp \
+	opt_constant_variable.cpp \
+	opt_copy_propagation.cpp \
+	opt_dead_code.cpp \
+	opt_dead_code_local.cpp \
+	opt_dead_functions.cpp \
+	opt_function_inlining.cpp \
+	opt_if_simplification.cpp \
+	opt_noop_swizzle.cpp \
 	opt_redundant_jumps.cpp \
+	opt_structure_splitting.cpp \
+	opt_swizzle_swizzle.cpp \
+	opt_tree_grafting.cpp \
 	s_expression.cpp
 
 LIBS = \
