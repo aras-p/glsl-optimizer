@@ -741,10 +741,9 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 						buffers[i].flags);
 
 			if (bo == NULL) {
-
 				fprintf(stderr, "failed to attach %s %d\n",
 					regname, buffers[i].name);
-
+				continue;
 			}
 
 			ret = radeon_bo_get_tiling(bo, &tiling_flags, &pitch);
