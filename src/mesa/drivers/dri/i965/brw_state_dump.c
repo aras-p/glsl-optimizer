@@ -147,6 +147,7 @@ static void dump_wm_sampler_state(struct brw_context *brw)
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       unsigned int offset;
       struct brw_sampler_state *samp;
+      struct brw_sampler_default_color *sdc;
       char name[20];
 
       if (!ctx->Texture.Unit[i]._ReallyEnabled) {
@@ -164,6 +165,16 @@ static void dump_wm_sampler_state(struct brw_context *brw)
       state_out(name, samp, offset, 1, "wrapping, lod\n");
       state_out(name, samp, offset, 2, "default color pointer\n");
       state_out(name, samp, offset, 3, "chroma key, aniso\n");
+
+      sprintf(name, " WM SDC%d", i);
+
+      drm_intel_bo_map(brw->wm.sdc_bo[i], GL_FALSE);
+      sdc = (struct brw_sampler_default_color *)(brw->wm.sdc_bo[i]->virtual);
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 0, "r\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 1, "g\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 2, "b\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 3, "a\n");
+      drm_intel_bo_unmap(brw->wm.sdc_bo[i]);
    }
    drm_intel_bo_unmap(brw->wm.sampler_bo);
 }
