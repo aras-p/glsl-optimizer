@@ -574,9 +574,18 @@ static void emit_max( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
-   brw_SEL(p, dst, arg0, arg1);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_GE);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   } else {
+      brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   }
 }
 
 static void emit_min( struct brw_compile *p, 
@@ -584,9 +593,18 @@ static void emit_min( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
-   brw_SEL(p, dst, arg0, arg1);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   } else {
+      brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   }
 }
 
 static void emit_math1_gen4(struct brw_vs_compile *c,
