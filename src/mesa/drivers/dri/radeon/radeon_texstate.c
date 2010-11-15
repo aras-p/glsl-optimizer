@@ -705,18 +705,24 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	t->override_offset = 0;
 	switch (rb->cpp) {
 	case 4:
-		if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
+		if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
 			t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
-		else
+			texImage->TexFormat = MESA_FORMAT_RGB888;
+		}
+		else {
 			t->pp_txformat = tx_table[MESA_FORMAT_ARGB8888].format;
+			texImage->TexFormat = MESA_FORMAT_ARGB8888;
+		}
 		t->pp_txfilter |= tx_table[MESA_FORMAT_ARGB8888].filter;
 		break;
 	case 3:
 	default:
+		texImage->TexFormat = MESA_FORMAT_RGB888;
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB888].filter;
 		break;
 	case 2:
+		texImage->TexFormat = MESA_FORMAT_RGB565;
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB565].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
