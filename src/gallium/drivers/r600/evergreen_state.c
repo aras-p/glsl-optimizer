@@ -323,11 +323,11 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
 	/* FIXME LOD it depends on texture base level ... */
 	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
-			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
-			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)),
+			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 8)) |
+			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 8)),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
-				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6)) |
+				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
 
