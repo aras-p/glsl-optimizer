@@ -481,18 +481,24 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
+		if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
+			texImage->TexFormat = MESA_FORMAT_RGB888;
 			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-		else
+		}
+		else {
+			texImage->TexFormat = MESA_FORMAT_ARGB8888;
 			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		}
 		pitch_val /= 4;
 		break;
 	case 3:
 	default:
+		texImage->TexFormat = MESA_FORMAT_RGB888;
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
 		pitch_val /= 4;
 		break;
 	case 2:
+		texImage->TexFormat = MESA_FORMAT_RGB565;
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
 		pitch_val /= 2;
 		break;
