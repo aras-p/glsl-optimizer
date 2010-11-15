@@ -1205,6 +1205,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	switch (rb->cpp) {
 	case 4:
 		if (glx_texture_format == __DRI_TEXTURE_FORMAT_RGB) {
+			texImage->TexFormat = MESA_FORMAT_RGB888;
 			SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 				     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                      EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1218,6 +1219,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 			SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_1,
 				 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		} else {
+			texImage->TexFormat = MESA_FORMAT_ARGB8888;
 			SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 				     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                      EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1236,6 +1238,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	case 3:
 	default:
 		// FMT_8_8_8 ???
+		texImage->TexFormat = MESA_FORMAT_RGB888;
 		SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 			     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                  EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1251,6 +1254,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 		pitch_val /= 4;
 		break;
 	case 2:
+		texImage->TexFormat = MESA_FORMAT_RGB565;
 		SETfield(t->SQ_TEX_RESOURCE7, FMT_5_6_5,
 			     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                  EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
