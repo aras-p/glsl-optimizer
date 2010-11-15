@@ -157,7 +157,7 @@ nv20_emit_fog(struct gl_context *ctx, int emit)
 			get_fog_mode_signed(f->Mode) :
 			get_fog_mode_unsigned(f->Mode)));
 	OUT_RING(chan, get_fog_source(source));
-	OUT_RING(chan, f->Enabled ? 1 : 0);
+	OUT_RINGb(chan, f->Enabled);
 	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
 
 	BEGIN_RING(chan, kelvin, NV20_3D_FOG_COEFF(0), 3);
@@ -172,7 +172,7 @@ nv20_emit_light_model(struct gl_context *ctx, int emit)
 	struct gl_lightmodel *m = &ctx->Light.Model;
 
 	BEGIN_RING(chan, kelvin, NV20_3D_SEPARATE_SPECULAR_ENABLE, 1);
-	OUT_RING(chan, m->ColorControl == GL_SEPARATE_SPECULAR_COLOR ? 1 : 0);
+	OUT_RINGb(chan, m->ColorControl == GL_SEPARATE_SPECULAR_COLOR);
 
 	BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_MODEL, 1);
 	OUT_RING(chan, ((m->LocalViewer ?
@@ -183,7 +183,7 @@ nv20_emit_light_model(struct gl_context *ctx, int emit)
 			 0)));
 
 	BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_MODEL_TWO_SIDE_ENABLE, 1);
-	OUT_RING(chan, ctx->Light.Model.TwoSide ? 1 : 0);
+	OUT_RINGb(chan, ctx->Light.Model.TwoSide);
 }
 
 void

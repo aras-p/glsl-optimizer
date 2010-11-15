@@ -164,6 +164,12 @@ get_viewport_translate(struct gl_context *ctx, float a[4])
 }
 
 static inline void
+OUT_RINGb(struct nouveau_channel *chan, GLboolean x)
+{
+	OUT_RING(chan, x ? 1 : 0);
+}
+
+static inline void
 OUT_RINGm(struct nouveau_channel *chan, float m[16])
 {
 	int i, j;

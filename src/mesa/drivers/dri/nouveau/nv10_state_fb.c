@@ -27,9 +27,9 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
+#include "nouveau_util.h"
 #include "nv_object.xml.h"
 #include "nv10_3d.xml.h"
-#include "nouveau_util.h"
 #include "nv10_driver.h"
 
 static inline unsigned
@@ -205,7 +205,7 @@ nv10_emit_zclear(struct gl_context *ctx, int emit)
 
 	if (nfb->hierz.bo) {
 		BEGIN_RING(chan, celsius, NV17_3D_ZCLEAR_ENABLE, 2);
-		OUT_RING(chan, nctx->hierz.clear_blocked ? 0 : 1);
+		OUT_RINGb(chan, !nctx->hierz.clear_blocked);
 		OUT_RING(chan, nfb->hierz.clear_value |
 			 (nctx->hierz.clear_seq & 0xff));
 	} else {
