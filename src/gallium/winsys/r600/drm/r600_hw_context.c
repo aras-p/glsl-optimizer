@@ -593,6 +593,17 @@ static int r600_loop_const_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg);
 }
 
+static void r600_context_clear_fenced_bo(struct r600_context *ctx)
+{
+	struct radeon_bo *bo, *tmp;
+
+	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
+		LIST_DELINIT(&bo->fencedlist);
+		bo->fence = 0;
+		bo->ctx = NULL;
+	}
+}
+
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -616,6 +627,8 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->reloc);
 	free(ctx->bo);
 	free(ctx->pm4);
+
+	r600_context_clear_fenced_bo(ctx);
 	if (ctx->fence_bo) {
 		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
 	}
