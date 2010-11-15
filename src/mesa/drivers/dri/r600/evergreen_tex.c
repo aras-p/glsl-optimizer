@@ -1024,15 +1024,15 @@ static GLboolean evergreen_setup_hardware_state(struct gl_context * ctx, struct 
 	SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
     
 	SETfield(t->SQ_TEX_SAMPLER1,
-		     EG_S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 6),
+		     EG_S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 8),
 		     EG_SQ_TEX_SAMPLER_WORD1_0__MIN_LOD_shift, 
              EG_SQ_TEX_SAMPLER_WORD1_0__MIN_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER1,
-		     EG_S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 6),
+		     EG_S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 8),
 		     EG_SQ_TEX_SAMPLER_WORD1_0__MAX_LOD_shift, 
              EG_SQ_TEX_SAMPLER_WORD1_0__MAX_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER2,
-		     EG_S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 6),
+		     EG_S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 8),
 		     EG_SQ_TEX_SAMPLER_WORD2_0__LOD_BIAS_shift, 
              EG_SQ_TEX_SAMPLER_WORD2_0__LOD_BIAS_mask);
 
