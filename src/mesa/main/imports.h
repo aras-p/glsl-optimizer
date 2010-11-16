@@ -141,6 +141,9 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define sqrtf(f) ((float) sqrt(f))
 #define tanf(f) ((float) tan(f))
 #define tanhf(f) ((float) tanh(f))
+#define acoshf(f) ((float) acosh(f))
+#define asinhf(f) ((float) asinh(f))
+#define atanhf(f) ((float) atanh(f))
 #endif
 
 #if defined(_MSC_VER)
