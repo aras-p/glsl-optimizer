@@ -596,7 +596,8 @@ _mesa_free_texture_image_data(struct gl_context *ctx,
  * Free the texture image structure and the associated image data.
  */
 void
-_mesa_delete_texture_image( struct gl_context *ctx, struct gl_texture_image *texImage )
+_mesa_delete_texture_image(struct gl_context *ctx,
+                           struct gl_texture_image *texImage)
 {
    /* Free texImage->Data and/or any other driver-specific texture
     * image storage.
@@ -635,7 +636,8 @@ _mesa_is_proxy_texture(GLenum target)
 
 
 /**
- * Get the texture object that corresponds to the target of the given texture unit.
+ * Get the texture object that corresponds to the target of the given
+ * texture unit.
  *
  * \param ctx GL context.
  * \param texUnit texture unit.
@@ -646,7 +648,8 @@ _mesa_is_proxy_texture(GLenum target)
  * \sa gl_texture_unit.
  */
 struct gl_texture_object *
-_mesa_select_tex_object(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(struct gl_context *ctx,
+                        const struct gl_texture_unit *texUnit,
                         GLenum target)
 {
    switch (target) {
@@ -723,7 +726,8 @@ _mesa_get_current_tex_object(struct gl_context *ctx, GLenum target)
  * \return pointer to the texture image structure, or NULL on failure.
  */
 struct gl_texture_image *
-_mesa_select_tex_image(struct gl_context *ctx, const struct gl_texture_object *texObj,
+_mesa_select_tex_image(struct gl_context *ctx,
+                       const struct gl_texture_object *texObj,
 		       GLenum target, GLint level)
 {
    const GLuint face = _mesa_tex_target_to_face(target);
@@ -1084,7 +1088,8 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
  * fields are cleared so that its parent object will test incomplete.
  */
 void
-_mesa_clear_texture_image(struct gl_context *ctx, struct gl_texture_image *texImage)
+_mesa_clear_texture_image(struct gl_context *ctx,
+                          struct gl_texture_image *texImage)
 {
    ctx->Driver.FreeTexImageData(ctx, texImage);
    clear_teximage_fields(texImage);
@@ -1269,8 +1274,8 @@ target_can_be_compressed(struct gl_context *ctx, GLenum target)
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  *
  * Verifies each of the parameters against the constants specified in
- * __struct gl_contextRec::Const and the supported extensions, and according to the
- * OpenGL specification.
+ * __struct gl_contextRec::Const and the supported extensions, and according
+ * to the OpenGL specification.
  */
 static GLboolean
 texture_error_check( struct gl_context *ctx, GLenum target,
@@ -1532,8 +1537,8 @@ texture_error_check( struct gl_context *ctx, GLenum target,
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  *
  * Verifies each of the parameters against the constants specified in
- * __struct gl_contextRec::Const and the supported extensions, and according to the
- * OpenGL specification.
+ * __struct gl_contextRec::Const and the supported extensions, and according
+ * to the OpenGL specification.
  */
 static GLboolean
 subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
@@ -1732,8 +1737,8 @@ subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
  * 
  * Verifies each of the parameters against the constants specified in
- * __struct gl_contextRec::Const and the supported extensions, and according to the
- * OpenGL specification.
+ * __struct gl_contextRec::Const and the supported extensions, and according
+ * to the OpenGL specification.
  */
 static GLboolean
 copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
@@ -3860,5 +3865,3 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    compressed_tex_sub_image(3, target, level, xoffset, yoffset, zoffset,
                             width, height, depth, format, imageSize, data);
 }
-
-
