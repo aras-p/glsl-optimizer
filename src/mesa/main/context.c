@@ -219,7 +219,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint accumAlphaBits,
                      GLint numSamples )
 {
-   struct gl_config *vis = (struct gl_config *) calloc(1, sizeof(struct gl_config));
+   struct gl_config *vis = CALLOC_STRUCT(gl_config);
    if (vis) {
       if (!_mesa_initialize_visual(vis, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
@@ -234,11 +234,13 @@ _mesa_create_visual( GLboolean dbFlag,
    return vis;
 }
 
+
 /**
- * Makes some sanity checks and fills in the fields of the
- * struct gl_config object with the given parameters.  If the caller needs
- * to set additional fields, he should just probably init the whole struct gl_config
- * object himself.
+ * Makes some sanity checks and fills in the fields of the struct
+ * gl_config object with the given parameters.  If the caller needs to
+ * set additional fields, he should just probably init the whole
+ * gl_config object himself.
+ *
  * \return GL_TRUE on success, or GL_FALSE on failure.
  *
  * \sa _mesa_create_visual() above for the parameter description.
@@ -367,6 +369,8 @@ dummy_enum_func(void)
  * \sa Used by one_time_init().
  */
 _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
+
+
 
 /**
  * Calls all the various one-time-init functions in Mesa.
@@ -988,6 +992,10 @@ _mesa_initialize_context_for_api(struct gl_context *ctx,
    return GL_TRUE;
 }
 
+
+/**
+ * Initialize an OpenGL context.
+ */
 GLboolean
 _mesa_initialize_context(struct gl_context *ctx,
                          const struct gl_config *visual,
@@ -1002,6 +1010,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 					   driverFunctions,
 					   driverContext);
 }
+
 
 /**
  * Allocate and initialize a struct gl_context structure.
@@ -1044,6 +1053,10 @@ _mesa_create_context_for_api(gl_api api,
    }
 }
 
+
+/**
+ * Create an OpenGL context.
+ */
 struct gl_context *
 _mesa_create_context(const struct gl_config *visual,
 		     struct gl_context *share_list,
@@ -1055,6 +1068,7 @@ _mesa_create_context(const struct gl_config *visual,
 				       driverFunctions,
 				       driverContext);
 }
+
 
 /**
  * Free the data associated with the given context.
@@ -1142,7 +1156,7 @@ _mesa_free_context_data( struct gl_context *ctx )
  *
  * \param ctx GL context.
  * 
- * Calls _mesa_free_context_data() and frees the struct gl_context structure itself.
+ * Calls _mesa_free_context_data() and frees the gl_context object itself.
  */
 void
 _mesa_destroy_context( struct gl_context *ctx )
@@ -1287,7 +1301,8 @@ _mesa_copy_context( const struct gl_context *src, struct gl_context *dst, GLuint
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
 static GLboolean 
-check_compatible(const struct gl_context *ctx, const struct gl_framebuffer *buffer)
+check_compatible(const struct gl_context *ctx,
+                 const struct gl_framebuffer *buffer)
 {
    const struct gl_config *ctxvis = &ctx->Visual;
    const struct gl_config *bufvis = &buffer->Visual;
@@ -1378,7 +1393,8 @@ _mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
  * \param readBuffer  the reading framebuffer
  */
 GLboolean
-_mesa_make_current( struct gl_context *newCtx, struct gl_framebuffer *drawBuffer,
+_mesa_make_current( struct gl_context *newCtx,
+                    struct gl_framebuffer *drawBuffer,
                     struct gl_framebuffer *readBuffer )
 {
    if (MESA_VERBOSE & VERBOSE_API)
@@ -1439,7 +1455,8 @@ _mesa_make_current( struct gl_context *newCtx, struct gl_framebuffer *drawBuffer
                buffers[i] = newCtx->Color.DrawBuffer[i];
             }
 
-            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
+            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers,
+                              buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
