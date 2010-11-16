@@ -29,6 +29,7 @@ sources = [
     'hir_field_selection.cpp',
     'ir_basic_block.cpp',
     'ir_clone.cpp',
+    'ir_constant_expression.cpp',
     'ir.cpp',
     'ir_expression_flattening.cpp',
     'ir_function_can_inline.cpp',
