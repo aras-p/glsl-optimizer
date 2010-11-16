@@ -1276,7 +1276,10 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 		word2 = format | S_030008_STRIDE(vertex_buffer->stride);
 
-		word3 = r600_translate_vertex_data_swizzle(rctx->vertex_elements->hw_format[i]);
+		word3 = S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
+			S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
+			S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
+			S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W);
 
 		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);

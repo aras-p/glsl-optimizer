@@ -636,38 +636,4 @@ out_unknown:
 	return ~0;
 }
 
-static INLINE uint32_t r600_translate_vertex_data_swizzle(enum pipe_format format)
-{
-	const struct util_format_description *desc = util_format_description(format);
-	unsigned i;
-	uint32_t word3;
-
-	assert(format);
-
-	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-		fprintf(stderr, "r600: Bad format %s in %s:%d\n",
-				util_format_short_name(format), __FUNCTION__, __LINE__);
-		return 0;
-	}
-
-	word3 = 0;
-	for (i = 0; i < desc->nr_channels; i++) {
-		switch (i) {
-		case 0:
-			word3 |= S_03000C_DST_SEL_X(desc->swizzle[0]);
-			break;
-		case 1:
-			word3 |= S_03000C_DST_SEL_Y(desc->swizzle[1]);
-			break;
-		case 2:
-			word3 |= S_03000C_DST_SEL_Z(desc->swizzle[2]);
-			break;
-		case 3:
-			word3 |= S_03000C_DST_SEL_W(desc->swizzle[3]);
-			break;
-		}
-	}
-	return word3;
-}
-
 #endif
