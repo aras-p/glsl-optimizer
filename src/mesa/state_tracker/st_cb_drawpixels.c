@@ -591,7 +591,6 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    assert(width <= maxSize);
    assert(height <= maxSize);
 
-   cso_save_depth_stencil_alpha(cso);
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
    cso_save_samplers(cso);
@@ -599,6 +598,10 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
    cso_save_vertex_elements(cso);
+   if (write_stencil) {
+      cso_save_depth_stencil_alpha(cso);
+      cso_save_blend(cso);
+   }
 
    /* rasterizer state: just scissor */
    {
@@ -609,22 +612,30 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       cso_set_rasterizer(cso, &rasterizer);
    }
 
-   if (write_depth || write_stencil)
-   {
+   if (write_stencil) {
+      /* Stencil writing bypasses the normal fragment pipeline to
+       * disable color writing and set stencil test to always pass.
+       */
       struct pipe_depth_stencil_alpha_state dsa;
+      struct pipe_blend_state blend;
+
+      /* depth/stencil */
       memset(&dsa, 0, sizeof(dsa));
+      dsa.stencil[0].enabled = 1;
+      dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
+      dsa.stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
+      dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
       if (write_depth) {
-	 dsa.depth.enabled = 1;
-	 dsa.depth.func = PIPE_FUNC_ALWAYS;
-	 dsa.depth.writemask = 1;
-      }
-      if (write_stencil) {
-	 dsa.stencil[0].enabled = 1;
-	 dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-	 dsa.stencil[0].writemask = 0xff;
-	 dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
+         /* writing depth+stencil: depth test always passes */
+         dsa.depth.enabled = 1;
+         dsa.depth.writemask = ctx->Depth.Mask;
+         dsa.depth.func = PIPE_FUNC_ALWAYS;
       }
       cso_set_depth_stencil_alpha(cso, &dsa);
+
+      /* blend (colormask) */
+      memset(&blend, 0, sizeof(blend));
+      cso_set_blend(cso, &blend);
    }
 
    /* fragment shader state: TEX lookup program */
@@ -696,7 +707,6 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
              normalized ? ((GLfloat) height / sv[0]->texture->height0) : (GLfloat)height);
 
    /* restore state */
-   cso_restore_depth_stencil_alpha(cso);
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
@@ -704,6 +714,10 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_vertex_elements(cso);
+   if (write_stencil) {
+      cso_restore_depth_stencil_alpha(cso);
+      cso_restore_blend(cso);
+   }
 }
 
 
@@ -993,6 +1007,18 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    st_read_stencil_pixels(ctx, srcx, srcy, width, height,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
+
+   if (0) {
+      /* debug code: dump stencil values */
+      GLint row, col;
+      for (row = 0; row < height; row++) {
+         printf("%3d: ", row);
+         for (col = 0; col < width; col++) {
+            printf("%02x ", buffer[col + row * width]);
+         }
+         printf("\n");
+      }
+   }
 
    if (util_format_get_component_bits(rbDraw->format,
                                      UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
