@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
 
 /**
  * @file
- * LLVMpipe support.
+ * Softpipe/LLVMpipe support.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -36,24 +36,56 @@
 
 #include <windows.h>
 
+#include "util/u_debug.h"
 #include "stw_winsys.h"
 #include "gdi/gdi_sw_winsys.h"
+
 #include "softpipe/sp_texture.h"
 #include "softpipe/sp_screen.h"
 #include "softpipe/sp_public.h"
 
+#ifdef HAVE_LLVMPIPE
+#include "llvmpipe/lp_texture.h"
+#include "llvmpipe/lp_screen.h"
+#include "llvmpipe/lp_public.h"
+#endif
+
+
+static boolean use_llvmpipe = FALSE;
+
 
 static struct pipe_screen *
-gdi_softpipe_screen_create(void)
+gdi_screen_create(void)
 {
-   static struct sw_winsys *winsys;
-   struct pipe_screen *screen;
+   const char *default_driver;
+   const char *driver;
+   struct pipe_screen *screen = NULL;
+   struct sw_winsys *winsys;
 
    winsys = gdi_create_sw_winsys();
    if(!winsys)
       goto no_winsys;
 
-   screen = softpipe_create_screen(winsys);
+#ifdef HAVE_LLVMPIPE
+   default_driver = "llvmpipe";
+#else
+   default_driver = "softpipe";
+#endif
+
+   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+
+#ifdef HAVE_LLVMPIPE
+   if (strcmp(driver, "llvmpipe") == 0) {
+      screen = llvmpipe_create_screen( winsys );
+   }
+#endif
+
+   if (screen == NULL) {
+      screen = softpipe_create_screen( winsys );
+   } else {
+      use_llvmpipe = TRUE;
+   }
+
    if(!screen)
       goto no_screen;
 
@@ -66,15 +98,13 @@ no_winsys:
 }
 
 
-
-
 static void
-gdi_softpipe_present(struct pipe_screen *screen,
-                     struct pipe_surface *surface,
-                     HDC hDC)
+gdi_present(struct pipe_screen *screen,
+            struct pipe_surface *surface,
+            HDC hDC)
 {
    /* This will fail if any interposing layer (trace, debug, etc) has
-    * been introduced between the state-trackers and softpipe.
+    * been introduced between the state-trackers and the pipe driver.
     *
     * Ideally this would get replaced with a call to
     * pipe_screen::flush_frontbuffer().
@@ -82,15 +112,28 @@ gdi_softpipe_present(struct pipe_screen *screen,
     * Failing that, it may be necessary for intervening layers to wrap
     * other structs such as this stw_winsys as well...
     */
-   gdi_sw_display(softpipe_screen(screen)->winsys,
-                  softpipe_resource(surface->texture)->dt,
-                  hDC);
+
+   struct sw_winsys *winsys = NULL;
+   struct sw_displaytarget *dt = NULL;
+
+#ifdef HAVE_LLVMPIPE
+   if (use_llvmpipe) {
+      winsys = llvmpipe_screen(screen)->winsys;
+      dt = llvmpipe_resource(surface->texture)->dt;
+      gdi_sw_display(winsys, dt, hDC);
+      return;
+   }
+#endif
+
+   winsys = softpipe_screen(screen)->winsys,
+   dt = softpipe_resource(surface->texture)->dt,
+   gdi_sw_display(winsys, dt, hDC);
 }
 
 
 static const struct stw_winsys stw_winsys = {
-   &gdi_softpipe_screen_create,
-   &gdi_softpipe_present,
+   &gdi_screen_create,
+   &gdi_present,
    NULL, /* get_adapter_luid */
    NULL, /* shared_surface_open */
    NULL, /* shared_surface_close */
