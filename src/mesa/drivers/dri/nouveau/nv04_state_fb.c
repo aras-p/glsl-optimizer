@@ -36,11 +36,11 @@ get_rt_format(gl_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_XRGB8888:
-		return 0x05;
+		return NV04_CONTEXT_SURFACES_3D_FORMAT_COLOR_X8R8G8B8_X8R8G8B8;
 	case MESA_FORMAT_ARGB8888:
-		return 0x08;
+		return NV04_CONTEXT_SURFACES_3D_FORMAT_COLOR_A8R8G8B8;
 	case MESA_FORMAT_RGB565:
-		return 0x03;
+		return NV04_CONTEXT_SURFACES_3D_FORMAT_COLOR_R5G6B5;
 	default:
 		assert(0);
 	}

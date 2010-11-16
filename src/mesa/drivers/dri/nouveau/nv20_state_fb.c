@@ -37,15 +37,15 @@ get_rt_format(gl_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_XRGB8888:
-		return 0x05;
+		return NV20_3D_RT_FORMAT_COLOR_X8R8G8B8;
 	case MESA_FORMAT_ARGB8888:
-		return 0x08;
+		return NV20_3D_RT_FORMAT_COLOR_A8R8G8B8;
 	case MESA_FORMAT_RGB565:
-		return 0x03;
+		return NV20_3D_RT_FORMAT_COLOR_R5G6B5;
 	case MESA_FORMAT_Z16:
-		return 0x10;
+		return NV20_3D_RT_FORMAT_DEPTH_Z16;
 	case MESA_FORMAT_Z24_S8:
-		return 0x20;
+		return NV20_3D_RT_FORMAT_DEPTH_Z24S8;
 	default:
 		assert(0);
 	}
