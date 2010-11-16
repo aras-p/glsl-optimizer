@@ -41,6 +41,11 @@ bool ir_rvalue::is_one() const
    return false;
 }
 
+bool ir_rvalue::is_negative_one() const
+{
+   return false;
+}
+
 /**
  * Modify the swizzle make to move one component to another
  *
@@ -755,6 +760,42 @@ ir_constant::is_one() const
 	 /* The only other base types are structures, arrays, and samplers.
 	  * Samplers cannot be constants, and the others should have been
 	  * filtered out above.
+	  */
+	 assert(!"Should not get here.");
+	 return false;
+      }
+   }
+
+   return true;
+}
+
+bool
+ir_constant::is_negative_one() const
+{
+   if (!this->type->is_scalar() && !this->type->is_vector())
+      return false;
+
+   if (this->type->is_boolean())
+      return false;
+
+   for (unsigned c = 0; c < this->type->vector_elements; c++) {
+      switch (this->type->base_type) {
+      case GLSL_TYPE_FLOAT:
+	 if (this->value.f[c] != -1.0)
+	    return false;
+	 break;
+      case GLSL_TYPE_INT:
+	 if (this->value.i[c] != -1)
+	    return false;
+	 break;
+      case GLSL_TYPE_UINT:
+	 if (int(this->value.u[c]) != -1)
+	    return false;
+	 break;
+      default:
+	 /* The only other base types are structures, arrays, samplers, and
+	  * booleans.  Samplers cannot be constants, and the others should
+	  * have been filtered out above.
 	  */
 	 assert(!"Should not get here.");
 	 return false;

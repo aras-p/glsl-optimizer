@@ -179,7 +179,7 @@ public:
     * for vector and scalar types that have all elements set to the value
     * zero (or \c false for booleans).
     *
-    * \sa ir_constant::has_value, ir_rvalue::is_one
+    * \sa ir_constant::has_value, ir_rvalue::is_one, ir_rvalue::is_negative_one
     */
    virtual bool is_zero() const;
 
@@ -191,9 +191,21 @@ public:
     * for vector and scalar types that have all elements set to the value
     * one (or \c true for booleans).
     *
-    * \sa ir_constant::has_value, ir_rvalue::is_zero
+    * \sa ir_constant::has_value, ir_rvalue::is_zero, ir_rvalue::is_negative_one
     */
    virtual bool is_one() const;
+
+   /**
+    * Determine if an r-value has the value negative one
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * negative one.  For boolean times, the result is always \c false.
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_zero, ir_rvalue::is_one
+    */
+   virtual bool is_negative_one() const;
 
 protected:
    ir_rvalue();
@@ -1482,12 +1494,14 @@ public:
    /**
     * Determine whether a constant has the same value as another constant
     *
-    * \sa ir_constant::is_zero, ir_constant::is_one
+    * \sa ir_constant::is_zero, ir_constant::is_one,
+    * ir_constant::is_negative_one
     */
    bool has_value(const ir_constant *) const;
 
    virtual bool is_zero() const;
    virtual bool is_one() const;
+   virtual bool is_negative_one() const;
 
    /**
     * Value of the constant.
