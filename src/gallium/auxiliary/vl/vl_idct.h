@@ -46,7 +46,7 @@ struct vl_idct
    {
       void *all[4];
       struct {
-         void *matrix, *transpose;
+         void *transpose, *matrix;
          void *source, *intermediate;
       } individual;
    } samplers;
@@ -55,7 +55,7 @@ struct vl_idct
    {
       struct pipe_sampler_view *all[4];
       struct {
-         struct pipe_sampler_view *matrix, *transpose;
+         struct pipe_sampler_view *transpose, *matrix;
          struct pipe_sampler_view *source, *intermediate;
       } individual;
    } sampler_views;
@@ -67,16 +67,28 @@ struct vl_idct
    {
       struct pipe_resource *all[4];
       struct {
-         struct pipe_resource *matrix, *transpose;
+         struct pipe_resource *transpose, *matrix;
          struct pipe_resource *source, *intermediate;
       } individual;
    } textures;
 
-   struct pipe_vertex_buffer quad;
-   struct pipe_vertex_buffer pos;
+   union
+   {
+      struct pipe_vertex_buffer all[2];
+      struct { struct pipe_vertex_buffer quad, pos; } individual;
+   } vertex_bufs;
+
+   unsigned num_blocks;
 
    struct pipe_transfer *tex_transfer;
    short *texels;
+
+   struct pipe_transfer *vec_transfer;
+   struct vertex2f *vectors;
+
+   struct {
+      struct pipe_surface *intermediate, *destination;
+   } surfaces;
 };
 
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst);

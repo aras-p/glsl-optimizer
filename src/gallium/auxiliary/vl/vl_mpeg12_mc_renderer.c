@@ -116,7 +116,7 @@ enum MACROBLOCK_TYPE
    NUM_MACROBLOCK_TYPES
 };
 
-/* vertices for four quads covering the blocks */
+/* vertices for a quad covering a macroblock */
 static const struct vertex2f const_quad[4] = {
    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
 };
@@ -1174,6 +1174,10 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    gen_macroblock_stream(r, num_macroblocks);
 
+   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0, r->vs_const_buf);
+   r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
+   r->pipe->set_viewport_state(r->pipe, &r->viewport);
+
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.i);
@@ -1304,13 +1308,7 @@ update_render_target(struct vl_mpeg12_mc_renderer *r)
 
    pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
 
-   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
-                                r->vs_const_buf);
-
    r->fb_state.cbufs[0] = r->surface;
-
-   r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
-   r->pipe->set_viewport_state(r->pipe, &r->viewport);
 }
 
 static void
