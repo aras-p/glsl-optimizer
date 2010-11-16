@@ -64,6 +64,7 @@ CXX_SOURCES = \
 	lower_variable_index_to_cond_assign.cpp \
 	lower_vec_index_to_cond_assign.cpp \
 	lower_vec_index_to_swizzle.cpp \
+	lower_vector.cpp \
 	opt_algebraic.cpp \
 	opt_constant_folding.cpp \
 	opt_constant_propagation.cpp \

@@ -289,6 +289,8 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
+   void emit_swz(ir_expression *ir);
+
    bool process_move_condition(ir_rvalue *ir);
 
    void *mem_ctx;
@@ -958,6 +960,123 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
 }
 
 void
+ir_to_mesa_visitor::emit_swz(ir_expression *ir)
+{
+   /* Assume that the vector operator is in a form compatible with OPCODE_SWZ.
+    * This means that each of the operands is either an immediate value of -1,
+    * 0, or 1, or is a component from one source register (possibly with
+    * negation).
+    */
+   uint8_t components[4] = { 0 };
+   bool negate[4] = { false };
+   ir_variable *var = NULL;
+
+   for (unsigned i = 0; i < ir->type->vector_elements; i++) {
+      ir_rvalue *op = ir->operands[i];
+
+      assert(op->type->is_scalar());
+
+      while (op != NULL) {
+	 switch (op->ir_type) {
+	 case ir_type_constant: {
+
+	    assert(op->type->is_scalar());
+
+	    const ir_constant *const c = op->as_constant();
+	    if (c->is_one()) {
+	       components[i] = SWIZZLE_ONE;
+	    } else if (c->is_zero()) {
+	       components[i] = SWIZZLE_ZERO;
+	    } else if (c->is_negative_one()) {
+	       components[i] = SWIZZLE_ONE;
+	       negate[i] = true;
+	    } else {
+	       assert(!"SWZ constant must be 0.0 or 1.0.");
+	    }
+
+	    op = NULL;
+	    break;
+	 }
+
+	 case ir_type_dereference_variable: {
+	    ir_dereference_variable *const deref =
+	       (ir_dereference_variable *) op;
+
+	    assert((var == NULL) || (deref->var == var));
+	    components[i] = SWIZZLE_X;
+	    var = deref->var;
+	    op = NULL;
+	    break;
+	 }
+
+	 case ir_type_expression: {
+	    ir_expression *const expr = (ir_expression *) op;
+
+	    assert(expr->operation == ir_unop_neg);
+	    negate[i] = true;
+
+	    op = expr->operands[0];
+	    break;
+	 }
+
+	 case ir_type_swizzle: {
+	    ir_swizzle *const swiz = (ir_swizzle *) op;
+
+	    components[i] = swiz->mask.x;
+	    op = swiz->val;
+	    break;
+	 }
+
+	 default:
+	    assert(!"Should not get here.");
+	    return;
+	 }
+      }
+   }
+
+   assert(var != NULL);
+
+   ir_dereference_variable *const deref =
+      new(mem_ctx) ir_dereference_variable(var);
+
+   this->result.file = PROGRAM_UNDEFINED;
+   deref->accept(this);
+   if (this->result.file == PROGRAM_UNDEFINED) {
+      ir_print_visitor v;
+      printf("Failed to get tree for expression operand:\n");
+      deref->accept(&v);
+      exit(1);
+   }
+
+   ir_to_mesa_src_reg src;
+
+   src = this->result;
+   src.swizzle = MAKE_SWIZZLE4(components[0],
+			       components[1],
+			       components[2],
+			       components[3]);
+   src.negate = ((unsigned(negate[0]) << 0)
+		 | (unsigned(negate[1]) << 1)
+		 | (unsigned(negate[2]) << 2)
+		 | (unsigned(negate[3]) << 3));
+
+   /* Storage for our result.  Ideally for an assignment we'd be using the
+    * actual storage for the result here, instead.
+    */
+   const ir_to_mesa_src_reg result_src = get_temp(ir->type);
+   ir_to_mesa_dst_reg result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+
+   /* Limit writes to the channels that will be used by result_src later.
+    * This does limit this temp's use as a temporary for multi-instruction
+    * sequences.
+    */
+   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
+
+   ir_to_mesa_emit_op1(ir, OPCODE_SWZ, result_dst, src);
+   this->result = result_src;
+}
+
+void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
@@ -972,6 +1091,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 return;
       if (try_emit_mad(ir, 0))
 	 return;
+   }
+
+   if (ir->operation == ir_quadop_vector) {
+      this->emit_swz(ir);
+      return;
    }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
@@ -1230,6 +1354,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_or:
    case ir_unop_round_even:
       assert(!"GLSL 1.30 features unsupported");
+      break;
+
+   case ir_quadop_vector:
+      /* This operation should have already been handled.
+       */
+      assert(!"Should not get here.");
       break;
    }
 
@@ -2675,6 +2805,8 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
 
 	 progress = do_common_optimization(ir, true, options->MaxUnrollIterations) || progress;
+
+	 progress = lower_quadop_vector(ir, true) || progress;
 
 	 if (options->EmitNoIfs)
 	    progress = do_if_to_cond_assign(ir) || progress;

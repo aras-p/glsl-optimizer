@@ -168,7 +168,8 @@ ir_expression::clone(void *mem_ctx, struct hash_table *ht) const
       op[i] = this->operands[i]->clone(mem_ctx, ht);
    }
 
-   return new(mem_ctx) ir_expression(this->operation, this->type, op[0], op[1]);
+   return new(mem_ctx) ir_expression(this->operation, this->type,
+				     op[0], op[1], op[2], op[3]);
 }
 
 ir_dereference_variable *

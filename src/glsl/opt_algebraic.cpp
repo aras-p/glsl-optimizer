@@ -394,7 +394,7 @@ ir_algebraic_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_expression *expr = (*rvalue)->as_expression();
-   if (!expr)
+   if (!expr || expr->operation == ir_quadop_vector)
       return;
 
    *rvalue = handle_expression(expr);

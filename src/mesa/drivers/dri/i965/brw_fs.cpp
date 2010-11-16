@@ -130,6 +130,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 						GL_TRUE, /* temp */
 						GL_TRUE /* uniform */
 						) || progress;
+	 progress = lower_quadop_vector(shader->ir, false) || progress;
       } while (progress);
 
       validate_ir_tree(shader->ir);

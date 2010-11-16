@@ -33,6 +33,7 @@ extern "C" {
 #include <talloc.h>
 }
 
+#include "glsl_types.h"
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
@@ -824,6 +825,8 @@ enum ir_expression_operation {
     */
    ir_last_binop = ir_binop_pow,
 
+   ir_quadop_vector,
+
    /**
     * A sentinel marking the last of all operations.
     */
@@ -842,6 +845,12 @@ public:
     */
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
+
+   /**
+    * Constructor for quad operator expressions
+    */
+   ir_expression(int op, const struct glsl_type *type,
+		 ir_rvalue *, ir_rvalue *, ir_rvalue *, ir_rvalue *);
 
    virtual ir_expression *as_expression()
    {
@@ -868,7 +877,8 @@ public:
     */
    unsigned int get_num_operands() const
    {
-      return get_num_operands(operation);
+      return (this->operation == ir_quadop_vector)
+	 ? this->type->vector_elements : get_num_operands(operation);
    }
 
    /**
@@ -895,7 +905,7 @@ public:
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    ir_expression_operation operation;
-   ir_rvalue *operands[2];
+   ir_rvalue *operands[4];
 };
 
 

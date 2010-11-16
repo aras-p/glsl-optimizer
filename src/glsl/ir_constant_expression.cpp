@@ -788,6 +788,24 @@ ir_expression::constant_expression_value()
       }
       break;
 
+   case ir_quadop_vector:
+      for (unsigned c = 0; c < this->type->vector_elements; c++) {
+	 switch (this->type->base_type) {
+	 case GLSL_TYPE_INT:
+	    data.i[c] = op[c]->value.i[0];
+	    break;
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = op[c]->value.u[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = op[c]->value.f[0];
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+      break;
+
    default:
       /* FINISHME: Should handle all expression types. */
       return NULL;
