@@ -127,31 +127,31 @@ ir_expression::constant_expression_value()
    case ir_unop_f2i:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.i[c] = op[0]->value.f[c];
+	 data.i[c] = (int) op[0]->value.f[c];
       }
       break;
    case ir_unop_i2f:
       assert(op[0]->type->base_type == GLSL_TYPE_INT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.i[c];
+	 data.f[c] = (float) op[0]->value.i[c];
       }
       break;
    case ir_unop_u2f:
       assert(op[0]->type->base_type == GLSL_TYPE_UINT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.u[c];
+	 data.f[c] = (float) op[0]->value.u[c];
       }
       break;
    case ir_unop_b2f:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.b[c] ? 1.0 : 0.0;
+	 data.f[c] = op[0]->value.b[c] ? 1.0F : 0.0F;
       }
       break;
    case ir_unop_f2b:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.b[c] = bool(op[0]->value.f[c]);
+	 data.b[c] = op[0]->value.f[c] != 0.0F ? true : false;
       }
       break;
    case ir_unop_b2i:
@@ -163,7 +163,7 @@ ir_expression::constant_expression_value()
    case ir_unop_i2b:
       assert(op[0]->type->is_integer());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.b[c] = bool(op[0]->value.u[c]);
+	 data.b[c] = op[0]->value.u[c] ? true : false;
       }
       break;
 
@@ -233,7 +233,7 @@ ir_expression::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    data.u[c] = -op[0]->value.u[c];
+	    data.u[c] = -((int) op[0]->value.u[c]);
 	    break;
 	 case GLSL_TYPE_INT:
 	    data.i[c] = -op[0]->value.i[c];
@@ -299,7 +299,7 @@ ir_expression::constant_expression_value()
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    if (op[0]->value.f[c] != 0.0)
-	       data.f[c] = 1.0 / op[0]->value.f[c];
+	       data.f[c] = 1.0F / op[0]->value.f[c];
 	    break;
 	 default:
 	    assert(0);
@@ -310,7 +310,7 @@ ir_expression::constant_expression_value()
    case ir_unop_rsq:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = 1.0 / sqrtf(op[0]->value.f[c]);
+	 data.f[c] = 1.0F / sqrtf(op[0]->value.f[c]);
       }
       break;
 
@@ -1056,7 +1056,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "degrees") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
-	 data.f[c] = 180.0/M_PI * op[0]->value.f[c];
+	 data.f[c] = 180.0F / M_PI * op[0]->value.f[c];
    } else if (strcmp(callee, "distance") == 0) {
       assert(op[0]->type->is_float() && op[1]->type->is_float());
       float length_squared = 0.0;
@@ -1247,7 +1247,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "radians") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
-	 data.f[c] = M_PI/180.0 * op[0]->value.f[c];
+	 data.f[c] = M_PI / 180.0F * op[0]->value.f[c];
    } else if (strcmp(callee, "reflect") == 0) {
       assert(op[0]->type->is_float());
       float dot_NI = dot(op[1], op[0]);
@@ -1256,7 +1256,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "refract") == 0) {
       const float eta = op[2]->value.f[0];
       const float dot_NI = dot(op[1], op[0]);
-      const float k = 1.0 - eta * eta * (1.0 - dot_NI * dot_NI);
+      const float k = 1.0F - eta * eta * (1.0F - dot_NI * dot_NI);
       if (k < 0.0) {
 	 return ir_constant::zero(mem_ctx, this->type);
       } else {
@@ -1296,7 +1296,7 @@ ir_call::constant_expression_value()
       /* op[0] (edge) may be either a scalar or a vector */
       const unsigned c0_inc = op[0]->type->is_scalar() ? 0 : 1;
       for (unsigned c = 0, c0 = 0; c < type->components(); c0 += c0_inc, c++)
-	 data.f[c] = (op[1]->value.f[c] < op[0]->value.f[c0]) ? 0.0 : 1.0;
+	 data.f[c] = (op[1]->value.f[c] < op[0]->value.f[c0]) ? 0.0F : 1.0F;
    } else if (strcmp(callee, "tan") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
