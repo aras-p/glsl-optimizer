@@ -3241,6 +3241,10 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_DO:
+	 /* FINISHME: We need to write the loop instruction support still. */
+	 if (intel->gen >= 6)
+	    this->fail = true;
+
 	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
 	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
