@@ -146,15 +146,6 @@ load_text_file(void *ctx, const char *file_name)
 	return text;
 }
 
-
-void
-usage_fail(const char *name)
-{
-      printf("%s <filename.frag|filename.vert>\n", name);
-      exit(EXIT_FAILURE);
-}
-
-
 int glsl_es = 0;
 int dump_ast = 0;
 int dump_hir = 0;
@@ -169,6 +160,25 @@ const struct option compiler_opts[] = {
    { "link",     0, &do_link,  1 },
    { NULL, 0, NULL, 0 }
 };
+
+/**
+ * \brief Print proper usage and exit with failure.
+ */
+void
+usage_fail(const char *name)
+{
+
+   const char *header =
+      "usage: %s [options] <file.vert | file.geom | file.frag>\n"
+      "\n"
+      "Possible options are:\n";
+   printf(header, name, name);
+   for (const struct option *o = compiler_opts; o->name != 0; ++o) {
+      printf("    --%s\n", o->name);
+   }
+   exit(EXIT_FAILURE);
+}
+
 
 void
 compile_shader(struct gl_context *ctx, struct gl_shader *shader)
