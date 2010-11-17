@@ -299,6 +299,10 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 	 case GLSL_TYPE_BOOL:
 	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
 	    break;
+	 default:
+	    assert(!"not reached");
+	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
+	    break;
 	 }
 
 	 c->prog_data.param[param] = &vec_values[i];
