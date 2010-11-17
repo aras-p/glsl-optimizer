@@ -1323,7 +1323,11 @@ radeonCreateScreen( __DRIscreen *sPriv )
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
    /* set group bytes for r6xx+ */
-   screen->group_bytes = 256;
+   if (screen->chip_family >= CHIP_FAMILY_CEDAR)
+	   screen->group_bytes = 512;
+   else
+	   screen->group_bytes = 256;
+
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
 
@@ -1568,9 +1572,13 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
-   /* r6xx+ tiling, default to 256 group bytes */
-   screen->group_bytes = 256;
-   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6)) {
+   /* r6xx+ tiling, default group bytes */
+   if (screen->chip_family >= CHIP_FAMILY_CEDAR)
+	   screen->group_bytes = 512;
+   else
+	   screen->group_bytes = 256;
+   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6) &&
+       (screen->chip_family < CHIP_FAMILY_CEDAR)) {
 	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
 	   if (ret)
 		   fprintf(stderr, "failed to get tiling info\n");
