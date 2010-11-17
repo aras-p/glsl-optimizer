@@ -717,6 +717,11 @@ enum ir_expression_operation {
 
    ir_unop_noise,
 
+   /**
+    * A sentinel marking the last of the unary operations.
+    */
+   ir_last_unop = ir_unop_noise,
+
    ir_binop_add,
    ir_binop_sub,
    ir_binop_mul,
@@ -774,7 +779,17 @@ enum ir_expression_operation {
    ir_binop_min,
    ir_binop_max,
 
-   ir_binop_pow
+   ir_binop_pow,
+
+   /**
+    * A sentinel marking the last of the binary operations.
+    */
+   ir_last_binop = ir_binop_pow,
+
+   /**
+    * A sentinel marking the last of all operations.
+    */
+   ir_last_opcode = ir_last_binop
 };
 
 class ir_expression : public ir_rvalue {

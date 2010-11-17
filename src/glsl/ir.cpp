@@ -189,78 +189,13 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
 unsigned int
 ir_expression::get_num_operands(ir_expression_operation op)
 {
-/* Update ir_print_visitor.cpp when updating this list. */
-   const int num_operands[] = {
-      1, /* ir_unop_bit_not */
-      1, /* ir_unop_logic_not */
-      1, /* ir_unop_neg */
-      1, /* ir_unop_abs */
-      1, /* ir_unop_sign */
-      1, /* ir_unop_rcp */
-      1, /* ir_unop_rsq */
-      1, /* ir_unop_sqrt */
-      1, /* ir_unop_exp */
-      1, /* ir_unop_log */
-      1, /* ir_unop_exp2 */
-      1, /* ir_unop_log2 */
-      1, /* ir_unop_f2i */
-      1, /* ir_unop_i2f */
-      1, /* ir_unop_f2b */
-      1, /* ir_unop_b2f */
-      1, /* ir_unop_i2b */
-      1, /* ir_unop_b2i */
-      1, /* ir_unop_u2f */
-      1, /* ir_unop_any */
+   assert(op <= ir_last_opcode);
 
-      1, /* ir_unop_trunc */
-      1, /* ir_unop_ceil */
-      1, /* ir_unop_floor */
-      1, /* ir_unop_fract */
-      1, /* ir_unop_round_even */
+   if (op <= ir_last_unop)
+      return 1;
 
-      1, /* ir_unop_sin */
-      1, /* ir_unop_cos */
-
-      1, /* ir_unop_dFdx */
-      1, /* ir_unop_dFdy */
-
-      1, /* ir_unop_noise */
-
-      2, /* ir_binop_add */
-      2, /* ir_binop_sub */
-      2, /* ir_binop_mul */
-      2, /* ir_binop_div */
-      2, /* ir_binop_mod */
-
-      2, /* ir_binop_less */
-      2, /* ir_binop_greater */
-      2, /* ir_binop_lequal */
-      2, /* ir_binop_gequal */
-      2, /* ir_binop_equal */
-      2, /* ir_binop_nequal */
-      2, /* ir_binop_all_equal */
-      2, /* ir_binop_any_nequal */
-
-      2, /* ir_binop_lshift */
-      2, /* ir_binop_rshift */
-      2, /* ir_binop_bit_and */
-      2, /* ir_binop_bit_xor */
-      2, /* ir_binop_bit_or */
-
-      2, /* ir_binop_logic_and */
-      2, /* ir_binop_logic_xor */
-      2, /* ir_binop_logic_or */
-
-      2, /* ir_binop_dot */
-      2, /* ir_binop_min */
-      2, /* ir_binop_max */
-
-      2, /* ir_binop_pow */
-   };
-
-   assert(sizeof(num_operands) / sizeof(num_operands[0]) == ir_binop_pow + 1);
-
-   return num_operands[op];
+   if (op <= ir_last_binop)
+      return 2;
 }
 
 static const char *const operator_strs[] = {
