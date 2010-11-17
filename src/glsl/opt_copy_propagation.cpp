@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_copy_propagation.cpp
+ * \file opt_copy_propagation.cpp
  *
  * Moves usage of recently-copied variables to the previous copy of
  * the variable.

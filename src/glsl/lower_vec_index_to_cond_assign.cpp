@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_vec_index_to_cond_assign.cpp
+ * \file lower_vec_index_to_cond_assign.cpp
  *
  * Turns indexing into vector types to a series of conditional moves
  * of each channel's swizzle into a temporary.

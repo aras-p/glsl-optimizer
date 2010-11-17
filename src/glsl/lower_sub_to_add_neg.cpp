@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_sub_to_add_neg.cpp
+ * \file lower_sub_to_add_neg.cpp
  *
  * Breaks an ir_binop_sub expression down to add(op0, neg(op1))
  *

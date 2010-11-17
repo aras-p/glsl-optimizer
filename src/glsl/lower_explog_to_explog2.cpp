@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_explog_to_explog2.cpp
+ * \file lower_explog_to_explog2.cpp
  *
  * Many GPUs don't have a base e log or exponent instruction, but they
  * do have base 2 versions, so this pass converts exp and log to exp2

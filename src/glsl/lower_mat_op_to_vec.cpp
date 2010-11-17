@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_mat_op_to_vec.cpp
+ * \file lower_mat_op_to_vec.cpp
  *
  * Breaks matrix operation expressions down to a series of vector operations.
  *

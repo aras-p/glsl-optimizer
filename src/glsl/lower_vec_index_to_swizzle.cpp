@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_vec_index_to_swizzle.cpp
+ * \file lower_vec_index_to_swizzle.cpp
  *
  * Turns constant indexing into vector types to swizzles.  This will
  * let other swizzle-aware optimization passes catch these constructs,

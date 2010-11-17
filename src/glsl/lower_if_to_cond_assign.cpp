@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_if_to_cond_assign.cpp
+ * \file lower_if_to_cond_assign.cpp
  *
  * This attempts to flatten all if statements to conditional
  * assignments for GPUs that don't do control flow.

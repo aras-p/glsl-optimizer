@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_lower_jumps.cpp
+ * \file lower_jumps.cpp
  */
 
 #include "glsl_types.h"

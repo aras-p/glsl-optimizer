@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_dead_code_local.cpp
+ * \file opt_dead_code_local.cpp
  *
  * Eliminates local dead assignments from the code.
  *

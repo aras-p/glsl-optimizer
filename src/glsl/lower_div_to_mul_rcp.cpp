@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_div_to_mul_rcp.cpp
+ * \file lower_div_to_mul_rcp.cpp
  *
  * Breaks an ir_unop_div expression down to op0 * (rcp(op1)).
  *

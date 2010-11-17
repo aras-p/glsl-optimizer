@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_tree_grafting.cpp
+ * \file opt_tree_grafting.cpp
  *
  * Takes assignments to variables that are dereferenced only once and
  * pastes the RHS expression into where the variable is dereferenced.

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_algebraic.cpp
+ * \file opt_algebraic.cpp
  *
  * Takes advantage of association, commutivity, and other algebraic
  * properties to simplify expressions.
