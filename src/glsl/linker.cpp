@@ -726,7 +726,8 @@ get_main_function_signature(gl_shader *sh)
  * shader is returned.
  */
 static struct gl_shader *
-link_intrastage_shaders(struct gl_context *ctx,
+link_intrastage_shaders(void *mem_ctx,
+			struct gl_context *ctx,
 			struct gl_shader_program *prog,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
@@ -802,7 +803,7 @@ link_intrastage_shaders(struct gl_context *ctx,
 
    gl_shader *linked = ctx->Driver.NewShader(NULL, 0, main->Type);
    linked->ir = new(linked) exec_list;
-   clone_ir_list(linked, linked->ir, main->ir);
+   clone_ir_list(mem_ctx, linked->ir, main->ir);
 
    populate_symbol_table(linked);
 
@@ -1407,6 +1408,8 @@ assign_varying_locations(struct gl_shader_program *prog,
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
+   void *mem_ctx = talloc_init("temporary linker context");
+
    prog->LinkStatus = false;
    prog->Validated = false;
    prog->_Used = false;
@@ -1475,7 +1478,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     */
    if (num_vert_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(ctx, prog, vert_shader_list, num_vert_shaders);
+	 link_intrastage_shaders(mem_ctx, ctx, prog, vert_shader_list,
+				 num_vert_shaders);
 
       if (sh == NULL)
 	 goto done;
@@ -1489,7 +1493,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (num_frag_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(ctx, prog, frag_shader_list, num_frag_shaders);
+	 link_intrastage_shaders(mem_ctx, ctx, prog, frag_shader_list,
+				 num_frag_shaders);
 
       if (sh == NULL)
 	 goto done;
@@ -1598,4 +1603,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
 done:
    free(vert_shader_list);
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+      /* Retain any live IR, but trash the rest. */
+      reparent_ir(prog->_LinkedShaders[i]->ir, prog->_LinkedShaders[i]->ir);
+   }
+
+   talloc_free(mem_ctx);
 }
