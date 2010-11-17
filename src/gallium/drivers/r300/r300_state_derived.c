@@ -434,6 +434,8 @@ static void r300_update_rs_block(struct r300_context *r300)
         fp_offset++;
         col_count++;
         DBG(r300, DBG_RS, "r300: Rasterized FACE written to FS.\n");
+    } else if (fs_inputs->face != ATTR_UNUSED) {
+        fprintf(stderr, "r300: ERROR: FS input FACE unassigned.\n");
     }
 
     /* Rasterize texture coordinates. */
@@ -485,12 +487,10 @@ static void r300_update_rs_block(struct r300_context *r300)
         }
     }
 
-    if (DBG_ON(r300, DBG_RS)) {
-        for (; i < ATTR_GENERIC_COUNT; i++) {
-            if (fs_inputs->generic[i] != ATTR_UNUSED) {
-                DBG(r300, DBG_RS,
-                    "r300: FS input generic %i unassigned.\n", i);
-            }
+    for (; i < ATTR_GENERIC_COUNT; i++) {
+        if (fs_inputs->generic[i] != ATTR_UNUSED) {
+            fprintf(stderr, "r300: ERROR: FS input generic %i unassigned, "
+                    "not enough hardware slots.\n", i);
         }
     }
 
@@ -521,7 +521,12 @@ static void r300_update_rs_block(struct r300_context *r300)
         if (fs_inputs->fog != ATTR_UNUSED) {
             fp_offset++;
 
-            DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
+            if (tex_count < 8) {
+                DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
+            } else {
+                fprintf(stderr, "r300: ERROR: FS input fog unassigned, "
+                        "not enough hardware slots.\n");
+            }
         }
     }
 
@@ -544,6 +549,11 @@ static void r300_update_rs_block(struct r300_context *r300)
         fp_offset++;
         tex_count++;
         tex_ptr += 4;
+    } else {
+        if (fs_inputs->wpos != ATTR_UNUSED && tex_count >= 8) {
+            fprintf(stderr, "r300: ERROR: FS input WPOS unassigned, "
+                    "not enough hardware slots.\n");
+        }
     }
 
     /* Invalidate the rest of the no-TCL (GA) stream locations. */
