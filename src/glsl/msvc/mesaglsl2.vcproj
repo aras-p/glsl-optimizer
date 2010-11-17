@@ -286,10 +286,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_algebraic.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_basic_block.cpp"
 					>
 				</File>
@@ -303,38 +299,6 @@
 				</File>
 				<File
 					RelativePath="..\ir_constant_expression.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_constant_folding.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_constant_propagation.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_constant_variable.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_copy_propagation.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_dead_code.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_dead_code_local.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_dead_functions.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_div_to_mul_rcp.cpp"
 					>
 				</File>
 				<File
@@ -354,10 +318,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_function_inlining.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_function_inlining.h"
 					>
 				</File>
@@ -374,31 +334,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_if_simplification.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_if_to_cond_assign.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_import_prototypes.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_lower_jumps.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_mat_op_to_vec.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_mod_to_fract.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_noop_swizzle.cpp"
 					>
 				</File>
 				<File
@@ -438,22 +374,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_structure_splitting.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_sub_to_add_neg.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_swizzle_swizzle.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_tree_grafting.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_unused_structs.cpp"
 					>
 				</File>
@@ -475,14 +395,6 @@
 				</File>
 				<File
 					RelativePath="..\ir_variable_refcount.h"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_vec_index_to_cond_assign.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_vec_index_to_swizzle.cpp"
 					>
 				</File>
 				<File
@@ -522,11 +434,47 @@
 					>
 				</File>
 				<File
+					RelativePath="..\lower_div_to_mul_rcp.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_explog_to_explog2.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_if_to_cond_assign.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_jumps.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_mat_op_to_vec.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_mod_to_fract.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\lower_noise.cpp"
 					>
 				</File>
 				<File
+					RelativePath="..\lower_sub_to_add_neg.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\lower_variable_index_to_cond_assign.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_vec_index_to_cond_assign.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_vec_index_to_swizzle.cpp"
 					>
 				</File>
 				<File
@@ -550,7 +498,63 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\opt_algebraic.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_constant_folding.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_constant_propagation.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_constant_variable.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_copy_propagation.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_dead_code.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_dead_code_local.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_dead_functions.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_function_inlining.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_if_simplification.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_noop_swizzle.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\opt_redundant_jumps.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_structure_splitting.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_swizzle_swizzle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\opt_tree_grafting.cpp"
 					>
 				</File>
 				<File
