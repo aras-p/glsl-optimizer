@@ -444,7 +444,7 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 		if (ctx->shader->input[input].centroid)
 			ij_index++;
 	}
-		
+
 	/* work out gpr and base_chan from index */
 	gpr = ij_index / 2;
 	base_chan = (2 * (ij_index % 2)) + 1;
@@ -477,9 +477,9 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 			return r;
 	}
 	return 0;
-}	
-		
-			
+}
+
+
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_declaration *d = &ctx->parse.FullToken.FullDeclaration;
@@ -549,7 +549,7 @@ static int r600_get_temp(struct r600_shader_ctx *ctx)
 	return ctx->temp_reg + ctx->max_driver_temp_used++;
 }
 
-/* 
+/*
  * for evergreen we need to scan the shader to find the number of GPRs we need to
  * reserve for interpolation.
  *
@@ -1001,7 +1001,7 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap)
 		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 		if (r)
 			return r;
-		
+
 		alu.inst = ctx->inst_info->r600_opcode;
 		if (!swap) {
 			for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
@@ -1046,7 +1046,7 @@ static int tgsi_op2_swap(struct r600_shader_ctx *ctx)
 	return tgsi_op2_s(ctx, 1);
 }
 
-/* 
+/*
  * r600 - trunc to -PI..PI range
  * r700 - normalize by dividing by 2PI
  * see fdo bug 27901
@@ -1058,7 +1058,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	int r;
 	uint32_t lit_vals[4];
 	struct r600_bc_alu alu;
-	
+
 	memset(lit_vals, 0, 4*4);
 	r = tgsi_split_constant(ctx, r600_src);
 	if (r)
@@ -1084,7 +1084,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 
 	alu.src[0] = r600_src[0];
 	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
-		
+
 	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
 	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
@@ -1099,7 +1099,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT);
-		
+
 	alu.dst.chan = 0;
 	alu.dst.sel = ctx->temp_reg;
 	alu.dst.write = 1;
@@ -1129,7 +1129,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 
 	alu.src[0].sel = ctx->temp_reg;
 	alu.src[0].chan = 0;
-		
+
 	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
 	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
@@ -1908,10 +1908,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-		
+
 		/* MULADD R0.x,  R0.x,  PS1,  (0x3FC00000, 1.5f).x
 		 * MULADD R0.y,  R0.y,  PS1,  (0x3FC00000, 1.5f).x
-		 * muladd has no writemask, have to use another temp 
+		 * muladd has no writemask, have to use another temp
 		 */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD);
@@ -1921,7 +1921,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		alu.src[0].chan = 0;
 		alu.src[1].sel = ctx->temp_reg;
 		alu.src[1].chan = 2;
-		
+
 		alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 		alu.src[2].chan = 0;
 
@@ -1941,7 +1941,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		alu.src[0].chan = 1;
 		alu.src[1].sel = ctx->temp_reg;
 		alu.src[1].chan = 2;
-		
+
 		alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 		alu.src[2].chan = 0;
 
@@ -1980,7 +1980,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 		src_gpr = ctx->temp_reg;
 	}
-	
+
 	opcode = ctx->inst_info->r600_opcode;
 	if (opcode == SQ_TEX_INST_SAMPLE &&
 	    (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D))
@@ -2026,7 +2026,6 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	/* add shadow ambient support  - gallium doesn't do it yet */
 	return 0;
-	
 }
 
 static int tgsi_lrp(struct r600_shader_ctx *ctx)
@@ -2156,7 +2155,7 @@ static int tgsi_cmp(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-	}       
+	}
 	if (use_temp)
 		return tgsi_helper_copy(ctx, inst);
 	return 0;
@@ -2342,7 +2341,7 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 	}
-		
+
 	/* result.y = tmp - floor(tmp); */
 	if ((inst->Dst[0].Register.WriteMask >> 1) & 1) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -2627,7 +2626,7 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu alu;
 	int r;
-	
+
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 
 	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR;
@@ -2663,18 +2662,18 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 	int r;
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 
-        switch (inst->Instruction.Opcode) {
-        case TGSI_OPCODE_ARL:
-           alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR;
-           break;
-        case TGSI_OPCODE_ARR:
-           alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA;
-           break;
-        default:
-           assert(0);
-           return -1;
-        }
-        
+	switch (inst->Instruction.Opcode) {
+	case TGSI_OPCODE_ARL:
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR;
+		break;
+	case TGSI_OPCODE_ARR:
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA;
+		break;
+	default:
+		assert(0);
+		return -1;
+	}
+
 
 	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
 	if (r)
@@ -2703,8 +2702,8 @@ static int tgsi_opdst(struct r600_shader_ctx *ctx)
 		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 		if (r)
 			return r;
-	
-	        if (i == 0 || i == 3) {
+
+		if (i == 0 || i == 3) {
 			alu.src[0].sel = V_SQ_ALU_SRC_1;
 		} else {
 			r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
@@ -2750,7 +2749,7 @@ static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
 	alu.src[1].sel = V_SQ_ALU_SRC_0;
 	alu.src[1].chan = 0;
-	
+
 	alu.last = 1;
 
 	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE));
@@ -2804,7 +2803,7 @@ static inline void callstack_check_depth(struct r600_shader_ctx *ctx, unsigned r
 				ctx->bc->callstack[ctx->bc->call_sp].current + diff;
 		}
 		return;
-	}					
+	}
 	switch (reason) {
 	case FC_PUSH_VPM:
 		ctx->bc->callstack[ctx->bc->call_sp].current++;
@@ -2878,7 +2877,7 @@ static int emit_setret_in_loop_flag(struct r600_shader_ctx *ctx, unsigned flag_v
 
 static void emit_testflag(struct r600_shader_ctx *ctx)
 {
-	
+
 }
 
 static void emit_return_on_flag(struct r600_shader_ctx *ctx, unsigned ifidx)

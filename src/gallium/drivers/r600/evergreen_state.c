@@ -660,7 +660,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_BLEND_CLAMP(1) |
 		S_028C70_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
 		color_info |= S_028C70_SOURCE_FORMAT(1);
 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
@@ -1467,8 +1467,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 				  S_0286E0_PERSP_CENTROID_ENA(have_centroid);
 	if (have_linear)
 		spi_baryc_cntl |= S_0286E0_LINEAR_CENTER_ENA(1) |
-			          S_0286E0_LINEAR_CENTROID_ENA(have_centroid);
-				
+				  S_0286E0_LINEAR_CENTROID_ENA(have_centroid);
+
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0,
 				spi_ps_in_control_0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1,

@@ -186,7 +186,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		FREE(rctx);
 		return NULL;
 	}
-	
+
 	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
 	if (!rctx->vs_resource) {
 		FREE(rctx);
@@ -406,7 +406,7 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
                   PIPE_BIND_DISPLAY_TARGET |
                   PIPE_BIND_SCANOUT |
                   PIPE_BIND_SHARED)) &&
-	    r600_is_colorbuffer_format_supported(format)) {
+			r600_is_colorbuffer_format_supported(format)) {
 		retval |= usage &
 			(PIPE_BIND_RENDER_TARGET |
 			 PIPE_BIND_DISPLAY_TARGET |

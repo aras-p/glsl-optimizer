@@ -27,9 +27,9 @@
 
 enum r600_blitter_op /* bitmask */
 {
-    R600_CLEAR         = 1,
-    R600_CLEAR_SURFACE = 2,
-    R600_COPY          = 4
+	R600_CLEAR         = 1,
+	R600_CLEAR_SURFACE = 2,
+	R600_COPY          = 4
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -189,7 +189,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	else
 		r600_hw_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
 				    src, subsrc, srcx, srcy, srcz, width, height);
-
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)

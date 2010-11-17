@@ -55,8 +55,8 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
-		return 2;  
-		
+		return 2;
+
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV: 
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
@@ -74,7 +74,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	default: R600_ERR(
 		"Need instruction operand number for 0x%x.\n", alu->inst); 
 	};
-	
+
 	return 3;
 }
 
@@ -199,9 +199,9 @@ const unsigned bank_swizzle_vec[8] = {SQ_ALU_VEC_210,  //000
 				      SQ_ALU_VEC_012}; //111
 
 const unsigned bank_swizzle_scl[8] = {SQ_ALU_SCL_210,  //000
-				      SQ_ALU_SCL_122,  //001 
+				      SQ_ALU_SCL_122,  //001
 				      SQ_ALU_SCL_122,  //010
-				      
+
 				      SQ_ALU_SCL_221,  //011
 				      SQ_ALU_SCL_212,  //100
 				      SQ_ALU_SCL_122,  //101
@@ -678,8 +678,8 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
-			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
-		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
+					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
+					S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}
 	if (alu->last) {
 		if (alu->nliteral && !alu->literal_added) {
@@ -766,7 +766,7 @@ int r600_bc_build(struct r600_bc *bc)
 	int r;
 
 	if (bc->callstack[0].max > 0)
-	    bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
+		bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
 
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */

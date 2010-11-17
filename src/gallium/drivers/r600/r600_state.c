@@ -296,7 +296,7 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 		unsigned eqRGB = state->rt[i].rgb_func;
 		unsigned srcRGB = state->rt[i].rgb_src_factor;
 		unsigned dstRGB = state->rt[i].rgb_dst_factor;
-		
+
 		unsigned eqA = state->rt[i].alpha_func;
 		unsigned srcA = state->rt[i].alpha_src_factor;
 		unsigned dstA = state->rt[i].alpha_dst_factor;
@@ -475,7 +475,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028A0C_PA_SC_LINE_STIPPLE, 0x00000005, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MPASS_PS_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
-        
+
 	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
 				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
 				0xFFFFFFFF, NULL);
@@ -852,7 +852,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
 		color_info |= S_0280A0_SOURCE_FORMAT(1);
 
 	r600_pipe_state_add_reg(rstate,
@@ -933,7 +933,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
-	
+
 	rctx->pframebuffer = &rctx->framebuffer;
 
 	/* build states */
