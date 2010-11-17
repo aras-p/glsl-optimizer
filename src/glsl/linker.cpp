@@ -411,6 +411,13 @@ cross_validate_globals(struct gl_shader_program *prog,
 		  existing->constant_value =
 		     var->constant_value->clone(talloc_parent(existing), NULL);
 	    }
+
+	    if (existing->invariant != var->invariant) {
+	       linker_error_printf(prog, "declarations for %s `%s' have "
+	                           "mismatching invariant qualifiers\n",
+	                           mode_string(var), var->name);
+	       return false;
+	    }
 	 } else
 	    variables.add_variable(var);
       }
