@@ -320,7 +320,12 @@ control_line:
 		if ($2 == 100)
 			add_builtin_define (parser, "GL_ES", 1);
 
-		if ($2 >= 130)
+		/* Currently, all ES2 implementations support highp in the
+		 * fragment shader, so we always define this macro in ES2.
+		 * If we ever get a driver that doesn't support highp, we'll
+		 * need to add a flag to the gl_context and check that here.
+		 */
+		if ($2 >= 130 || $2 == 100)
 			add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
 
 		glcpp_printf(parser->output, "#version %" PRIiMAX, $2);
