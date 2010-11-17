@@ -402,6 +402,11 @@ struct st_manager
 struct st_api
 {
    /**
+    * The name of the rendering API.  This is informative.
+    */
+   const char *name;
+
+   /**
     * The supported rendering API.
     */
    enum st_api_type api;

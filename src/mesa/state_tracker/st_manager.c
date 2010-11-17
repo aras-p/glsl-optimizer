@@ -865,6 +865,7 @@ st_manager_add_color_renderbuffer(struct st_context *st, struct gl_framebuffer *
 }
 
 static const struct st_api st_gl_api = {
+   "Mesa " MESA_VERSION_STRING,
    ST_API_OPENGL,
 #if FEATURE_GL
    ST_PROFILE_DEFAULT_MASK |
