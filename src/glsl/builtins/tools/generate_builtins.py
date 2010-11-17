@@ -25,13 +25,25 @@ def get_builtin_definitions():
     return fs
 
 def stringify(s):
+    # Work around MSVC's 65535 byte limit by outputting an array of characters
+    # rather than actual string literals.
+    if len(s) >= 65535:
+        #t = "/* Warning: length " + repr(len(s)) + " too large */\n"
+        t = ""
+        for c in re.sub('\s\s+', ' ', s):
+            if c == '\n':
+                t += '\n'
+            else:
+                t += "'" + c + "',"
+        return '{' + t[:-1] + '}'
+
     t = s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n"\n   "')
     return '   "' + t + '"\n'
 
 def write_function_definitions():
     fs = get_builtin_definitions()
     for k, v in sorted(fs.iteritems()):
-        print 'static const char *builtin_' + k + ' ='
+        print 'static const char builtin_' + k + '[] ='
         print stringify(v), ';'
 
 def run_compiler(args):
@@ -64,7 +76,7 @@ def write_profile(filename, profile):
     # clutter the diff output.
     proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir);
 
-    print 'static const char *prototypes_for_' + profile + ' ='
+    print 'static const char prototypes_for_' + profile + '[] ='
     print stringify(proto_ir), ';'
 
     # Print a table of all the functions (not signatures) referenced.

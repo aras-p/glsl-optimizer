@@ -275,9 +275,9 @@ const glsl_type glsl_type::builtin_ARB_texture_rectangle_types[] = {
 const glsl_type glsl_type::builtin_EXT_texture_array_types[] = {
    glsl_type(GL_SAMPLER_1D_ARRAY,
 	     GLSL_SAMPLER_DIM_1D, 0, 1, GLSL_TYPE_FLOAT, "sampler1DArray"),
-   glsl_type(GL_SAMPLER_1D_ARRAY_SHADOW,
-	     GLSL_SAMPLER_DIM_2D, 0, 1, GLSL_TYPE_FLOAT, "sampler2DArray"),
    glsl_type(GL_SAMPLER_2D_ARRAY,
+	     GLSL_SAMPLER_DIM_2D, 0, 1, GLSL_TYPE_FLOAT, "sampler2DArray"),
+   glsl_type(GL_SAMPLER_1D_ARRAY_SHADOW,
 	     GLSL_SAMPLER_DIM_1D, 1, 1, GLSL_TYPE_FLOAT, "sampler1DArrayShadow"),
    glsl_type(GL_SAMPLER_2D_ARRAY_SHADOW,
 	     GLSL_SAMPLER_DIM_2D, 1, 1, GLSL_TYPE_FLOAT, "sampler2DArrayShadow"),

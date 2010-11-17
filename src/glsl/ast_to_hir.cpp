@@ -2225,7 +2225,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	    earlier->type = var->type;
 	    delete var;
 	    var = NULL;
-	 } else if (state->extensions->ARB_fragment_coord_conventions
+	 } else if (state->ARB_fragment_coord_conventions_enable
 		    && strcmp(var->name, "gl_FragCoord") == 0
 		    && earlier->type == var->type
 		    && earlier->mode == var->mode) {

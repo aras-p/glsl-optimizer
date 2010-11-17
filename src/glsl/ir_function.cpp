@@ -70,7 +70,6 @@ type_compare(const glsl_type *a, const glsl_type *b)
        */
       return (type_compare(a->fields.array, b->fields.array) == 0) ? 0 : -1;
 
-   case GLSL_TYPE_FUNCTION:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    default:

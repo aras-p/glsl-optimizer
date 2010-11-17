@@ -768,6 +768,79 @@ ir_constant::has_value(const ir_constant *c) const
    return true;
 }
 
+bool
+ir_constant::is_zero() const
+{
+   if (!this->type->is_scalar() && !this->type->is_vector())
+      return false;
+
+   for (unsigned c = 0; c < this->type->vector_elements; c++) {
+      switch (this->type->base_type) {
+      case GLSL_TYPE_FLOAT:
+	 if (this->value.f[c] != 0.0)
+	    return false;
+	 break;
+      case GLSL_TYPE_INT:
+	 if (this->value.i[c] != 0)
+	    return false;
+	 break;
+      case GLSL_TYPE_UINT:
+	 if (this->value.u[c] != 0)
+	    return false;
+	 break;
+      case GLSL_TYPE_BOOL:
+	 if (this->value.b[c] != false)
+	    return false;
+	 break;
+      default:
+	 /* The only other base types are structures, arrays, and samplers.
+	  * Samplers cannot be constants, and the others should have been
+	  * filtered out above.
+	  */
+	 assert(!"Should not get here.");
+	 return false;
+      }
+   }
+
+   return true;
+}
+
+bool
+ir_constant::is_one() const
+{
+   if (!this->type->is_scalar() && !this->type->is_vector())
+      return false;
+
+   for (unsigned c = 0; c < this->type->vector_elements; c++) {
+      switch (this->type->base_type) {
+      case GLSL_TYPE_FLOAT:
+	 if (this->value.f[c] != 1.0)
+	    return false;
+	 break;
+      case GLSL_TYPE_INT:
+	 if (this->value.i[c] != 1)
+	    return false;
+	 break;
+      case GLSL_TYPE_UINT:
+	 if (this->value.u[c] != 1)
+	    return false;
+	 break;
+      case GLSL_TYPE_BOOL:
+	 if (this->value.b[c] != true)
+	    return false;
+	 break;
+      default:
+	 /* The only other base types are structures, arrays, and samplers.
+	  * Samplers cannot be constants, and the others should have been
+	  * filtered out above.
+	  */
+	 assert(!"Should not get here.");
+	 return false;
+      }
+   }
+
+   return true;
+}
 
 ir_loop::ir_loop()
 {

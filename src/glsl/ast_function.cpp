@@ -101,9 +101,6 @@ process_call(exec_list *instructions, ir_function *f,
 
    ir_function_signature *sig = f->matching_signature(actual_parameters);
 
-   /* The instructions param will be used when the FINISHMEs below are done */
-   (void) instructions;
-
    if (sig != NULL) {
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
        * isn't done in ir_function::matching_signature because that function
@@ -545,7 +542,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 	    /* Mask of fields to be written in the assignment.
 	     */
 	    constant_mask |= ((1U << rhs_components) - 1) << base_lhs_component;
-	    constant_components++;
+	    constant_components += rhs_components;
 
 	    base_component += rhs_components;
 	 }
@@ -580,18 +577,17 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 
 	 const ir_constant *const c = param->as_constant();
 	 if (c == NULL) {
-	    /* Generate a swizzle in case rhs_components != rhs->type->vector_elements. */
-	    unsigned swiz[4] = { 0, 0, 0, 0 };
-	    for (unsigned i = 0; i < rhs_components; i++)
-	       swiz[i] = i;
-
 	    /* Mask of fields to be written in the assignment.
 	     */
 	    const unsigned write_mask = ((1U << rhs_components) - 1)
 	       << base_component;
 
 	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, rhs_components);
+
+	    /* Generate a swizzle so that LHS and RHS sizes match.
+	     */
+	    ir_rvalue *rhs =
+	       new(ctx) ir_swizzle(param, 0, 1, 2, 3, rhs_components);
 
 	    ir_instruction *inst =
 	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);

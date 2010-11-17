@@ -454,6 +454,68 @@ typedef enum
 
 
 /**
+ * Framebuffer configuration (aka visual / pixelformat)
+ * Note: some of these fields should be boolean, but it appears that
+ * code in drivers/dri/common/util.c requires int-sized fields.
+ */
+struct gl_config
+{
+   GLboolean rgbMode;
+   GLboolean floatMode;
+   GLboolean colorIndexMode;  /* XXX is this used anywhere? */
+   GLuint doubleBufferMode;
+   GLuint stereoMode;
+
+   GLboolean haveAccumBuffer;
+   GLboolean haveDepthBuffer;
+   GLboolean haveStencilBuffer;
+
+   GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
+   GLuint redMask, greenMask, blueMask, alphaMask;
+   GLint rgbBits;		/* total bits for rgb */
+   GLint indexBits;		/* total bits for colorindex */
+
+   GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
+   GLint depthBits;
+   GLint stencilBits;
+
+   GLint numAuxBuffers;
+
+   GLint level;
+
+   /* EXT_visual_rating / GLX 1.2 */
+   GLint visualRating;
+
+   /* EXT_visual_info / GLX 1.2 */
+   GLint transparentPixel;
+   /*    colors are floats scaled to ints */
+   GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
+   GLint transparentIndex;
+
+   /* ARB_multisample / SGIS_multisample */
+   GLint sampleBuffers;
+   GLint samples;
+
+   /* SGIX_pbuffer / GLX 1.3 */
+   GLint maxPbufferWidth;
+   GLint maxPbufferHeight;
+   GLint maxPbufferPixels;
+   GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
+   GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
+
+   /* OML_swap_method */
+   GLint swapMethod;
+
+   /* EXT_texture_from_pixmap */
+   GLint bindToTextureRgb;
+   GLint bindToTextureRgba;
+   GLint bindToMipmapTexture;
+   GLint bindToTextureTargets;
+   GLint yInverted;
+};
+
+
+/**
  * Data structure for color tables
  */
 struct gl_color_table
@@ -547,60 +609,6 @@ struct gl_shine_tab
    GLuint refcount;
 };
 
-struct gl_config {
-   GLboolean rgbMode;
-   GLboolean floatMode;
-   GLboolean colorIndexMode;
-   GLuint doubleBufferMode;
-   GLuint stereoMode;
-
-   GLboolean haveAccumBuffer;
-   GLboolean haveDepthBuffer;
-   GLboolean haveStencilBuffer;
-
-   GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
-   GLuint redMask, greenMask, blueMask, alphaMask;
-   GLint rgbBits;		/* total bits for rgb */
-   GLint indexBits;		/* total bits for colorindex */
-
-   GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
-   GLint depthBits;
-   GLint stencilBits;
-
-   GLint numAuxBuffers;
-
-   GLint level;
-
-   /* EXT_visual_rating / GLX 1.2 */
-   GLint visualRating;
-
-   /* EXT_visual_info / GLX 1.2 */
-   GLint transparentPixel;
-   /*    colors are floats scaled to ints */
-   GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
-   GLint transparentIndex;
-
-   /* ARB_multisample / SGIS_multisample */
-   GLint sampleBuffers;
-   GLint samples;
-
-   /* SGIX_pbuffer / GLX 1.3 */
-   GLint maxPbufferWidth;
-   GLint maxPbufferHeight;
-   GLint maxPbufferPixels;
-   GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
-   GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
-
-   /* OML_swap_method */
-   GLint swapMethod;
-
-   /* EXT_texture_from_pixmap */
-   GLint bindToTextureRgb;
-   GLint bindToTextureRgba;
-   GLint bindToMipmapTexture;
-   GLint bindToTextureTargets;
-   GLint yInverted;
-};
 
 /**
  * Light source state.
@@ -1530,6 +1538,7 @@ struct gl_client_array
    const GLubyte *Ptr;          /**< Points to array data */
    GLboolean Enabled;		/**< Enabled flag is a boolean */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
+   GLboolean Integer;           /**< Integer-valued? */
    GLuint _ElementSize;         /**< size of each element in bytes */
 
    struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
@@ -2141,7 +2150,24 @@ struct gl_shader_program
  */
 struct gl_shader_state
 {
-   struct gl_shader_program *CurrentProgram; /**< The user-bound program */
+   /**
+    * Programs used for rendering
+    *
+    * There is a separate program set for each shader stage.  If
+    * GL_EXT_separate_shader_objects is not supported, each of these must point
+    * to \c NULL or to the same program.
+    */
+   struct gl_shader_program *CurrentVertexProgram;
+   struct gl_shader_program *CurrentGeometryProgram;
+   struct gl_shader_program *CurrentFragmentProgram;
+
+   /**
+    * Program used by glUniform calls.
+    *
+    * Explicitly set by \c glUseProgram and \c glActiveProgramEXT.
+    */
+   struct gl_shader_program *ActiveProgram;
+
    void *MemPool;
 
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
@@ -2462,6 +2488,9 @@ struct gl_framebuffer
    /** One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
    GLenum _Status;
 
+   /** Integer color values */
+   GLboolean _IntegerColor;
+
    /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
 
@@ -2604,6 +2633,9 @@ struct gl_constants
    GLuint MaxTransformFeedbackSeparateAttribs;
    GLuint MaxTransformFeedbackSeparateComponents;
    GLuint MaxTransformFeedbackInterleavedComponents;
+
+   /** GL_EXT_gpu_shader4 */
+   GLint MinProgramTexelOffset, MaxProgramTexelOffset;
 };
 
 
@@ -2690,6 +2722,7 @@ struct gl_extensions
    GLboolean EXT_framebuffer_object;
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
+   GLboolean EXT_gpu_shader4;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
@@ -2702,6 +2735,7 @@ struct gl_extensions
    GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
+   GLboolean EXT_separate_shader_objects;
    GLboolean EXT_separate_specular_color;
    GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
@@ -2891,11 +2925,9 @@ struct gl_matrix_stack
 #define DD_TRI_OFFSET               0x80
 #define DD_LINE_SMOOTH              0x100
 #define DD_LINE_STIPPLE             0x200
-#define DD_LINE_WIDTH               0x400
-#define DD_POINT_SMOOTH             0x800
-#define DD_POINT_SIZE               0x1000
-#define DD_POINT_ATTEN              0x2000
-#define DD_TRI_TWOSTENCIL           0x4000
+#define DD_POINT_SMOOTH             0x400
+#define DD_POINT_ATTEN              0x800
+#define DD_TRI_TWOSTENCIL           0x1000
 /*@}*/
 
 

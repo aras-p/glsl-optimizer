@@ -320,6 +320,9 @@ control_line:
 		if ($2 == 100)
 			add_builtin_define (parser, "GL_ES", 1);
 
+		if ($2 >= 130)
+			add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
+
 		glcpp_printf(parser->output, "#version %" PRIiMAX, $2);
 	}
 |	HASH NEWLINE

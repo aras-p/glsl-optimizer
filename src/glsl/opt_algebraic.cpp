@@ -68,80 +68,16 @@ public:
    bool progress;
 };
 
-static bool
+static inline bool
 is_vec_zero(ir_constant *ir)
 {
-   int c;
-
-   if (!ir)
-      return false;
-   if (!ir->type->is_scalar() &&
-       !ir->type->is_vector())
-      return false;
-
-   for (c = 0; c < ir->type->vector_elements; c++) {
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 if (ir->value.f[c] != 0.0)
-	    return false;
-	 break;
-      case GLSL_TYPE_INT:
-	 if (ir->value.i[c] != 0)
-	    return false;
-	 break;
-      case GLSL_TYPE_UINT:
-	 if (ir->value.u[c] != 0)
-	    return false;
-	 break;
-      case GLSL_TYPE_BOOL:
-	 if (ir->value.b[c] != false)
-	    return false;
-	 break;
-      default:
-	 assert(!"bad base type");
-	 return false;
-      }
-   }
-
-   return true;
+   return (ir == NULL) ? false : ir->is_zero();
 }
 
-static bool
+static inline bool
 is_vec_one(ir_constant *ir)
 {
-   int c;
-
-   if (!ir)
-      return false;
-   if (!ir->type->is_scalar() &&
-       !ir->type->is_vector())
-      return false;
-
-   for (c = 0; c < ir->type->vector_elements; c++) {
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 if (ir->value.f[c] != 1.0)
-	    return false;
-	 break;
-      case GLSL_TYPE_INT:
-	 if (ir->value.i[c] != 1)
-	    return false;
-	 break;
-      case GLSL_TYPE_UINT:
-	 if (ir->value.u[c] != 1)
-	    return false;
-	 break;
-      case GLSL_TYPE_BOOL:
-	 if (ir->value.b[c] != true)
-	    return false;
-	 break;
-      default:
-	 assert(!"bad base type");
-	 return false;
-      }
-   }
-
-   return true;
+   return (ir == NULL) ? false : ir->is_one();
 }
 
 static void

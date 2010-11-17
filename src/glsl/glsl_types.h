@@ -43,16 +43,17 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 extern "C" void
 _mesa_glsl_release_types(void);
 
-#define GLSL_TYPE_UINT          0
-#define GLSL_TYPE_INT           1
-#define GLSL_TYPE_FLOAT         2
-#define GLSL_TYPE_BOOL          3
-#define GLSL_TYPE_SAMPLER       4
-#define GLSL_TYPE_STRUCT        5
-#define GLSL_TYPE_ARRAY         6
-#define GLSL_TYPE_FUNCTION      7
-#define GLSL_TYPE_VOID          8
-#define GLSL_TYPE_ERROR         9
+enum glsl_base_type {
+   GLSL_TYPE_UINT = 0,
+   GLSL_TYPE_INT,
+   GLSL_TYPE_FLOAT,
+   GLSL_TYPE_BOOL,
+   GLSL_TYPE_SAMPLER,
+   GLSL_TYPE_STRUCT,
+   GLSL_TYPE_ARRAY,
+   GLSL_TYPE_VOID,
+   GLSL_TYPE_ERROR
+};
 
 enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_1D = 0,
@@ -72,7 +73,7 @@ enum glsl_precision {
 
 struct glsl_type {
    GLenum gl_type;
-   unsigned base_type:4;
+   glsl_base_type base_type;
 
    unsigned sampler_dimensionality:3;
    unsigned sampler_shadow:1;
@@ -129,11 +130,6 @@ struct glsl_type {
     * For \c GLSL_TYPE_ARRAY, this is the length of the array.  For
     * \c GLSL_TYPE_STRUCT, it is the number of elements in the structure and
     * the number of values pointed to by \c fields.structure (below).
-    *
-    * For \c GLSL_TYPE_FUNCTION, it is the number of parameters to the
-    * function.  The return value from a function is implicitly the first
-    * parameter.  The types of the parameters are stored in
-    * \c fields.parameters (below).
     */
    unsigned length;
 
@@ -407,7 +403,7 @@ private:
 
    /** Constructor for vector and matrix types */
    glsl_type(GLenum gl_type,
-	     unsigned base_type, unsigned vector_elements,
+	     glsl_base_type base_type, unsigned vector_elements,
 	     unsigned matrix_columns, const char *name);
 
    /** Constructor for sampler types */

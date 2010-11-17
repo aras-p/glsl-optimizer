@@ -225,7 +225,9 @@
      IMAGEBUFFER = 442,
      IIMAGEBUFFER = 443,
      UIMAGEBUFFER = 444,
-     ROW_MAJOR = 445
+     IMAGE1DARRAYSHADOW = 445,
+     IMAGE2DARRAYSHADOW = 446,
+     ROW_MAJOR = 447
    };
 #endif
 
@@ -269,7 +271,7 @@ typedef union YYSTYPE
 
 
 /* Line 1685 of yacc.c  */
-#line 273 "glsl_parser.h"
+#line 275 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -125,6 +125,7 @@ do_dead_functions(exec_list *instructions)
 
       if (!entry->used) {
 	 entry->signature->remove();
+	 delete entry->signature;
 	 progress = true;
       }
       delete(entry);
@@ -143,6 +144,7 @@ do_dead_functions(exec_list *instructions)
 	  * symbol table should be OK.
 	  */
 	 func->remove();
+	 delete func;
 	 progress = true;
       }
    }

@@ -38,10 +38,6 @@ extern "C" {
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif
-
 /**
  * \defgroup IR Intermediate representation nodes
  *
@@ -1457,8 +1453,32 @@ public:
 
    /**
     * Determine whether a constant has the same value as another constant
+    *
+    * \sa ir_constant::is_zero, ir_constant::is_one
     */
    bool has_value(const ir_constant *) const;
+
+   /**
+    * Determine if a constant has the value zero
+    *
+    * \note
+    * This function always returns \c false for constants that are not
+    * scalars or vectors.
+    *
+    * \sa ir_constant::has_value, ir_constant::is_one
+    */
+   bool is_zero() const;
+
+   /**
+    * Determine if a constant has the value one
+    *
+    * \note
+    * This function always returns \c false for constants that are not
+    * scalars or vectors.
+    *
+    * \sa ir_constant::has_value, ir_constant::is_zero
+    */
+   bool is_one() const;
 
    /**
     * Value of the constant.
