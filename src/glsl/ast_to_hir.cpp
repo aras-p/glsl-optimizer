@@ -2636,8 +2636,7 @@ ast_jump_statement::hir(exec_list *instructions,
 			     state->current_function->function_name());
 	 }
 
-	 ir_expression *const ret = (ir_expression *)
-	    opt_return_value->hir(instructions, state);
+	 ir_rvalue *const ret = opt_return_value->hir(instructions, state);
 	 assert(ret != NULL);
 
 	 /* Implicit conversions are not allowed for return values. */
