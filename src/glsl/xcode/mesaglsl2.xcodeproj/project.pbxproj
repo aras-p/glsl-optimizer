@@ -7,24 +7,42 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2B28CBB8120BEB6E00AE3749 /* ir_dead_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */; };
-		2B28CBB9120BEB6E00AE3749 /* ir_structure_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */; };
+		2B38545D1293BE5000F3E692 /* lower_div_to_mul_rcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */; };
+		2B38545E1293BE5000F3E692 /* lower_explog_to_explog2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */; };
+		2B38545F1293BE5000F3E692 /* lower_if_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */; };
+		2B3854601293BE5000F3E692 /* lower_jumps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854491293BE5000F3E692 /* lower_jumps.cpp */; };
+		2B3854611293BE5000F3E692 /* lower_mat_op_to_vec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */; };
+		2B3854621293BE5000F3E692 /* lower_mod_to_fract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */; };
+		2B3854631293BE5000F3E692 /* lower_sub_to_add_neg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */; };
+		2B3854641293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */; };
+		2B3854651293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */; };
+		2B3854661293BE5000F3E692 /* opt_algebraic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */; };
+		2B3854671293BE5000F3E692 /* opt_constant_folding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854501293BE5000F3E692 /* opt_constant_folding.cpp */; };
+		2B3854681293BE5000F3E692 /* opt_constant_propagation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854511293BE5000F3E692 /* opt_constant_propagation.cpp */; };
+		2B3854691293BE5000F3E692 /* opt_constant_variable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854521293BE5000F3E692 /* opt_constant_variable.cpp */; };
+		2B38546A1293BE5000F3E692 /* opt_copy_propagation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854531293BE5000F3E692 /* opt_copy_propagation.cpp */; };
+		2B38546B1293BE5000F3E692 /* opt_dead_code_local.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854541293BE5000F3E692 /* opt_dead_code_local.cpp */; };
+		2B38546C1293BE5000F3E692 /* opt_dead_code.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854551293BE5000F3E692 /* opt_dead_code.cpp */; };
+		2B38546D1293BE5000F3E692 /* opt_dead_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854561293BE5000F3E692 /* opt_dead_functions.cpp */; };
+		2B38546E1293BE5000F3E692 /* opt_function_inlining.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854571293BE5000F3E692 /* opt_function_inlining.cpp */; };
+		2B38546F1293BE5000F3E692 /* opt_if_simplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854581293BE5000F3E692 /* opt_if_simplification.cpp */; };
+		2B3854701293BE5000F3E692 /* opt_noop_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854591293BE5000F3E692 /* opt_noop_swizzle.cpp */; };
+		2B3854711293BE5000F3E692 /* opt_structure_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38545A1293BE5000F3E692 /* opt_structure_splitting.cpp */; };
+		2B3854721293BE5000F3E692 /* opt_swizzle_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38545B1293BE5000F3E692 /* opt_swizzle_swizzle.cpp */; };
+		2B3854731293BE5000F3E692 /* opt_tree_grafting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38545C1293BE5000F3E692 /* opt_tree_grafting.cpp */; };
 		2B47DA011209C87B00937F2C /* hash_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B47D9FD1209C87B00937F2C /* hash_table.c */; };
 		2B47DA021209C87B00937F2C /* hash_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B47D9FE1209C87B00937F2C /* hash_table.h */; };
 		2B47DA031209C87B00937F2C /* symbol_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B47D9FF1209C87B00937F2C /* symbol_table.c */; };
 		2B47DA041209C87B00937F2C /* symbol_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B47DA001209C87B00937F2C /* symbol_table.h */; };
 		2B62490812191313003F6EEE /* talloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B62490612191313003F6EEE /* talloc.c */; };
 		2B62490912191313003F6EEE /* talloc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B62490712191313003F6EEE /* talloc.h */; };
-		2B62491012191339003F6EEE /* ir_noop_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B62490C12191339003F6EEE /* ir_noop_swizzle.cpp */; };
 		2B62491112191339003F6EEE /* ir_rvalue_visitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */; };
 		2B62491212191339003F6EEE /* ir_rvalue_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */; };
-		2B62491312191339003F6EEE /* ir_sub_to_add_neg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B62490F12191339003F6EEE /* ir_sub_to_add_neg.cpp */; };
 		2B6A99F41223B1670059FBED /* glcpp-lex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99EC1223B1670059FBED /* glcpp-lex.c */; };
 		2B6A99F61223B1670059FBED /* glcpp-parse.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99EE1223B1670059FBED /* glcpp-parse.c */; };
 		2B6A99F71223B1670059FBED /* glcpp-parse.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6A99EF1223B1670059FBED /* glcpp-parse.h */; };
 		2B6A99FA1223B1670059FBED /* glcpp.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6A99F21223B1670059FBED /* glcpp.h */; };
 		2B6A99FB1223B1670059FBED /* pp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99F31223B1670059FBED /* pp.c */; };
-		2B8F278B1211EA7C0014CC3C /* ir_constant_propagation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8F278A1211EA7C0014CC3C /* ir_constant_propagation.cpp */; };
 		2BA55A9C1207FEA6002DC82D /* ast_expr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A511207FEA6002DC82D /* ast_expr.cpp */; };
 		2BA55A9D1207FEA6002DC82D /* ast_function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A521207FEA6002DC82D /* ast_function.cpp */; };
 		2BA55A9E1207FEA6002DC82D /* ast_to_hir.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A531207FEA6002DC82D /* ast_to_hir.cpp */; };
@@ -44,31 +62,19 @@
 		2BA55AAE1207FEA6002DC82D /* glsl_types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A631207FEA6002DC82D /* glsl_types.cpp */; };
 		2BA55AAF1207FEA6002DC82D /* glsl_types.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A641207FEA6002DC82D /* glsl_types.h */; };
 		2BA55AB01207FEA6002DC82D /* hir_field_selection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A651207FEA6002DC82D /* hir_field_selection.cpp */; };
-		2BA55AB11207FEA6002DC82D /* ir_algebraic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A661207FEA6002DC82D /* ir_algebraic.cpp */; };
 		2BA55AB21207FEA6002DC82D /* ir_basic_block.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A671207FEA6002DC82D /* ir_basic_block.cpp */; };
 		2BA55AB31207FEA6002DC82D /* ir_basic_block.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A681207FEA6002DC82D /* ir_basic_block.h */; };
 		2BA55AB41207FEA6002DC82D /* ir_clone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A691207FEA6002DC82D /* ir_clone.cpp */; };
 		2BA55AB51207FEA6002DC82D /* ir_constant_expression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6A1207FEA6002DC82D /* ir_constant_expression.cpp */; };
-		2BA55AB61207FEA6002DC82D /* ir_constant_folding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6B1207FEA6002DC82D /* ir_constant_folding.cpp */; };
-		2BA55AB71207FEA6002DC82D /* ir_constant_variable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6C1207FEA6002DC82D /* ir_constant_variable.cpp */; };
-		2BA55AB81207FEA6002DC82D /* ir_copy_propagation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6D1207FEA6002DC82D /* ir_copy_propagation.cpp */; };
-		2BA55AB91207FEA6002DC82D /* ir_dead_code_local.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6E1207FEA6002DC82D /* ir_dead_code_local.cpp */; };
-		2BA55ABA1207FEA6002DC82D /* ir_dead_code.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A6F1207FEA6002DC82D /* ir_dead_code.cpp */; };
-		2BA55ABB1207FEA6002DC82D /* ir_div_to_mul_rcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A701207FEA6002DC82D /* ir_div_to_mul_rcp.cpp */; };
 		2BA55ABC1207FEA6002DC82D /* ir_expression_flattening.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */; };
 		2BA55ABD1207FEA6002DC82D /* ir_expression_flattening.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */; };
 		2BA55ABE1207FEA6002DC82D /* ir_function_can_inline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A731207FEA6002DC82D /* ir_function_can_inline.cpp */; };
-		2BA55ABF1207FEA6002DC82D /* ir_function_inlining.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A741207FEA6002DC82D /* ir_function_inlining.cpp */; };
 		2BA55AC01207FEA6002DC82D /* ir_function_inlining.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A751207FEA6002DC82D /* ir_function_inlining.h */; };
 		2BA55AC11207FEA6002DC82D /* ir_function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A761207FEA6002DC82D /* ir_function.cpp */; };
 		2BA55AC21207FEA6002DC82D /* ir_hierarchical_visitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A771207FEA6002DC82D /* ir_hierarchical_visitor.cpp */; };
 		2BA55AC31207FEA6002DC82D /* ir_hierarchical_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A781207FEA6002DC82D /* ir_hierarchical_visitor.h */; };
 		2BA55AC41207FEA6002DC82D /* ir_hv_accept.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A791207FEA6002DC82D /* ir_hv_accept.cpp */; };
-		2BA55AC61207FEA6002DC82D /* ir_if_simplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A7B1207FEA6002DC82D /* ir_if_simplification.cpp */; };
-		2BA55AC71207FEA6002DC82D /* ir_if_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A7C1207FEA6002DC82D /* ir_if_to_cond_assign.cpp */; };
 		2BA55AC81207FEA6002DC82D /* ir_import_prototypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A7D1207FEA6002DC82D /* ir_import_prototypes.cpp */; };
-		2BA55AC91207FEA6002DC82D /* ir_mat_op_to_vec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A7E1207FEA6002DC82D /* ir_mat_op_to_vec.cpp */; };
-		2BA55ACA1207FEA6002DC82D /* ir_mod_to_fract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A7F1207FEA6002DC82D /* ir_mod_to_fract.cpp */; };
 		2BA55ACB1207FEA6002DC82D /* ir_optimization.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A801207FEA6002DC82D /* ir_optimization.h */; };
 		2BA55ACC1207FEA6002DC82D /* ir_print_glsl_visitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A811207FEA6002DC82D /* ir_print_glsl_visitor.cpp */; };
 		2BA55ACD1207FEA6002DC82D /* ir_print_glsl_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A821207FEA6002DC82D /* ir_print_glsl_visitor.h */; };
@@ -76,16 +82,12 @@
 		2BA55ACF1207FEA6002DC82D /* ir_print_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A841207FEA6002DC82D /* ir_print_visitor.h */; };
 		2BA55AD01207FEA6002DC82D /* ir_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A851207FEA6002DC82D /* ir_reader.cpp */; };
 		2BA55AD11207FEA6002DC82D /* ir_reader.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A861207FEA6002DC82D /* ir_reader.h */; };
-		2BA55AD21207FEA6002DC82D /* ir_swizzle_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */; };
-		2BA55AD31207FEA6002DC82D /* ir_tree_grafting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */; };
 		2BA55AD51207FEA6002DC82D /* ir_unused_structs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */; };
 		2BA55AD61207FEA6002DC82D /* ir_unused_structs.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */; };
 		2BA55AD71207FEA6002DC82D /* ir_validate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */; };
 		2BA55AD81207FEA6002DC82D /* ir_variable_refcount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8D1207FEA6002DC82D /* ir_variable_refcount.cpp */; };
 		2BA55AD91207FEA6002DC82D /* ir_variable_refcount.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A8E1207FEA6002DC82D /* ir_variable_refcount.h */; };
 		2BA55ADA1207FEA6002DC82D /* ir_variable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8F1207FEA6002DC82D /* ir_variable.cpp */; };
-		2BA55ADB1207FEA6002DC82D /* ir_vec_index_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A901207FEA6002DC82D /* ir_vec_index_to_cond_assign.cpp */; };
-		2BA55ADC1207FEA6002DC82D /* ir_vec_index_to_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A911207FEA6002DC82D /* ir_vec_index_to_swizzle.cpp */; };
 		2BA55ADD1207FEA6002DC82D /* ir_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A921207FEA6002DC82D /* ir_visitor.h */; };
 		2BA55ADE1207FEA6002DC82D /* ir.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A931207FEA6002DC82D /* ir.cpp */; };
 		2BA55ADF1207FEA6002DC82D /* ir.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A941207FEA6002DC82D /* ir.h */; };
@@ -97,7 +99,6 @@
 		2BA55AE51207FEA6002DC82D /* s_expression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A9A1207FEA6002DC82D /* s_expression.cpp */; };
 		2BA55AE61207FEA6002DC82D /* s_expression.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A9B1207FEA6002DC82D /* s_expression.h */; };
 		2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */; };
-		2BBA49291254706A00D42573 /* ir_lower_jumps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA49201254706A00D42573 /* ir_lower_jumps.cpp */; };
 		2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA49211254706A00D42573 /* loop_analysis.cpp */; };
 		2BBA492B1254706A00D42573 /* loop_analysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BBA49221254706A00D42573 /* loop_analysis.h */; };
 		2BBA492C1254706A00D42573 /* loop_controls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA49231254706A00D42573 /* loop_controls.cpp */; };
@@ -108,18 +109,37 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_dead_functions.cpp; path = ../ir_dead_functions.cpp; sourceTree = SOURCE_ROOT; };
-		2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_structure_splitting.cpp; path = ../ir_structure_splitting.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_div_to_mul_rcp.cpp; path = ../lower_div_to_mul_rcp.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_explog_to_explog2.cpp; path = ../lower_explog_to_explog2.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_if_to_cond_assign.cpp; path = ../lower_if_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854491293BE5000F3E692 /* lower_jumps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_jumps.cpp; path = ../lower_jumps.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_mat_op_to_vec.cpp; path = ../lower_mat_op_to_vec.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_mod_to_fract.cpp; path = ../lower_mod_to_fract.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_sub_to_add_neg.cpp; path = ../lower_sub_to_add_neg.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vec_index_to_cond_assign.cpp; path = ../lower_vec_index_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vec_index_to_swizzle.cpp; path = ../lower_vec_index_to_swizzle.cpp; sourceTree = SOURCE_ROOT; };
+		2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_algebraic.cpp; path = ../opt_algebraic.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854501293BE5000F3E692 /* opt_constant_folding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_constant_folding.cpp; path = ../opt_constant_folding.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854511293BE5000F3E692 /* opt_constant_propagation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_constant_propagation.cpp; path = ../opt_constant_propagation.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854521293BE5000F3E692 /* opt_constant_variable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_constant_variable.cpp; path = ../opt_constant_variable.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854531293BE5000F3E692 /* opt_copy_propagation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_copy_propagation.cpp; path = ../opt_copy_propagation.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854541293BE5000F3E692 /* opt_dead_code_local.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_dead_code_local.cpp; path = ../opt_dead_code_local.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854551293BE5000F3E692 /* opt_dead_code.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_dead_code.cpp; path = ../opt_dead_code.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854561293BE5000F3E692 /* opt_dead_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_dead_functions.cpp; path = ../opt_dead_functions.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854571293BE5000F3E692 /* opt_function_inlining.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_function_inlining.cpp; path = ../opt_function_inlining.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854581293BE5000F3E692 /* opt_if_simplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_if_simplification.cpp; path = ../opt_if_simplification.cpp; sourceTree = SOURCE_ROOT; };
+		2B3854591293BE5000F3E692 /* opt_noop_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_noop_swizzle.cpp; path = ../opt_noop_swizzle.cpp; sourceTree = SOURCE_ROOT; };
+		2B38545A1293BE5000F3E692 /* opt_structure_splitting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_structure_splitting.cpp; path = ../opt_structure_splitting.cpp; sourceTree = SOURCE_ROOT; };
+		2B38545B1293BE5000F3E692 /* opt_swizzle_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_swizzle_swizzle.cpp; path = ../opt_swizzle_swizzle.cpp; sourceTree = SOURCE_ROOT; };
+		2B38545C1293BE5000F3E692 /* opt_tree_grafting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_tree_grafting.cpp; path = ../opt_tree_grafting.cpp; sourceTree = SOURCE_ROOT; };
 		2B47D9FD1209C87B00937F2C /* hash_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hash_table.c; path = ../../mesa/program/hash_table.c; sourceTree = SOURCE_ROOT; };
 		2B47D9FE1209C87B00937F2C /* hash_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hash_table.h; path = ../../mesa/program/hash_table.h; sourceTree = SOURCE_ROOT; };
 		2B47D9FF1209C87B00937F2C /* symbol_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = symbol_table.c; path = ../../mesa/program/symbol_table.c; sourceTree = SOURCE_ROOT; };
 		2B47DA001209C87B00937F2C /* symbol_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = symbol_table.h; path = ../../mesa/program/symbol_table.h; sourceTree = SOURCE_ROOT; };
 		2B62490612191313003F6EEE /* talloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = talloc.c; path = ../../talloc/talloc.c; sourceTree = SOURCE_ROOT; };
 		2B62490712191313003F6EEE /* talloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = talloc.h; path = ../../talloc/talloc.h; sourceTree = SOURCE_ROOT; };
-		2B62490C12191339003F6EEE /* ir_noop_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_noop_swizzle.cpp; path = ../ir_noop_swizzle.cpp; sourceTree = SOURCE_ROOT; };
 		2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_rvalue_visitor.cpp; path = ../ir_rvalue_visitor.cpp; sourceTree = SOURCE_ROOT; };
 		2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_rvalue_visitor.h; path = ../ir_rvalue_visitor.h; sourceTree = SOURCE_ROOT; };
-		2B62490F12191339003F6EEE /* ir_sub_to_add_neg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_sub_to_add_neg.cpp; path = ../ir_sub_to_add_neg.cpp; sourceTree = SOURCE_ROOT; };
 		2B6A99EC1223B1670059FBED /* glcpp-lex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "glcpp-lex.c"; path = "../glcpp/glcpp-lex.c"; sourceTree = SOURCE_ROOT; };
 		2B6A99ED1223B1670059FBED /* glcpp-lex.l */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; name = "glcpp-lex.l"; path = "../glcpp/glcpp-lex.l"; sourceTree = SOURCE_ROOT; };
 		2B6A99EE1223B1670059FBED /* glcpp-parse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "glcpp-parse.c"; path = "../glcpp/glcpp-parse.c"; sourceTree = SOURCE_ROOT; };
@@ -128,7 +148,6 @@
 		2B6A99F11223B1670059FBED /* glcpp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glcpp.c; path = ../glcpp/glcpp.c; sourceTree = SOURCE_ROOT; };
 		2B6A99F21223B1670059FBED /* glcpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glcpp.h; path = ../glcpp/glcpp.h; sourceTree = SOURCE_ROOT; };
 		2B6A99F31223B1670059FBED /* pp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pp.c; path = ../glcpp/pp.c; sourceTree = SOURCE_ROOT; };
-		2B8F278A1211EA7C0014CC3C /* ir_constant_propagation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_constant_propagation.cpp; path = ../ir_constant_propagation.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A511207FEA6002DC82D /* ast_expr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_expr.cpp; path = ../ast_expr.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A521207FEA6002DC82D /* ast_function.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_function.cpp; path = ../ast_function.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A531207FEA6002DC82D /* ast_to_hir.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_to_hir.cpp; path = ../ast_to_hir.cpp; sourceTree = SOURCE_ROOT; };
@@ -150,31 +169,19 @@
 		2BA55A631207FEA6002DC82D /* glsl_types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_types.cpp; path = ../glsl_types.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A641207FEA6002DC82D /* glsl_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glsl_types.h; path = ../glsl_types.h; sourceTree = SOURCE_ROOT; };
 		2BA55A651207FEA6002DC82D /* hir_field_selection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hir_field_selection.cpp; path = ../hir_field_selection.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A661207FEA6002DC82D /* ir_algebraic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_algebraic.cpp; path = ../ir_algebraic.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A671207FEA6002DC82D /* ir_basic_block.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_basic_block.cpp; path = ../ir_basic_block.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A681207FEA6002DC82D /* ir_basic_block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_basic_block.h; path = ../ir_basic_block.h; sourceTree = SOURCE_ROOT; };
 		2BA55A691207FEA6002DC82D /* ir_clone.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_clone.cpp; path = ../ir_clone.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A6A1207FEA6002DC82D /* ir_constant_expression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_constant_expression.cpp; path = ../ir_constant_expression.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A6B1207FEA6002DC82D /* ir_constant_folding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_constant_folding.cpp; path = ../ir_constant_folding.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A6C1207FEA6002DC82D /* ir_constant_variable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_constant_variable.cpp; path = ../ir_constant_variable.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A6D1207FEA6002DC82D /* ir_copy_propagation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_copy_propagation.cpp; path = ../ir_copy_propagation.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A6E1207FEA6002DC82D /* ir_dead_code_local.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_dead_code_local.cpp; path = ../ir_dead_code_local.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A6F1207FEA6002DC82D /* ir_dead_code.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_dead_code.cpp; path = ../ir_dead_code.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A701207FEA6002DC82D /* ir_div_to_mul_rcp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_div_to_mul_rcp.cpp; path = ../ir_div_to_mul_rcp.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_expression_flattening.cpp; path = ../ir_expression_flattening.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_expression_flattening.h; path = ../ir_expression_flattening.h; sourceTree = SOURCE_ROOT; };
 		2BA55A731207FEA6002DC82D /* ir_function_can_inline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_function_can_inline.cpp; path = ../ir_function_can_inline.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A741207FEA6002DC82D /* ir_function_inlining.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_function_inlining.cpp; path = ../ir_function_inlining.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A751207FEA6002DC82D /* ir_function_inlining.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_function_inlining.h; path = ../ir_function_inlining.h; sourceTree = SOURCE_ROOT; };
 		2BA55A761207FEA6002DC82D /* ir_function.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_function.cpp; path = ../ir_function.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A771207FEA6002DC82D /* ir_hierarchical_visitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_hierarchical_visitor.cpp; path = ../ir_hierarchical_visitor.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A781207FEA6002DC82D /* ir_hierarchical_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_hierarchical_visitor.h; path = ../ir_hierarchical_visitor.h; sourceTree = SOURCE_ROOT; };
 		2BA55A791207FEA6002DC82D /* ir_hv_accept.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_hv_accept.cpp; path = ../ir_hv_accept.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A7B1207FEA6002DC82D /* ir_if_simplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_if_simplification.cpp; path = ../ir_if_simplification.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A7C1207FEA6002DC82D /* ir_if_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_if_to_cond_assign.cpp; path = ../ir_if_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A7D1207FEA6002DC82D /* ir_import_prototypes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_import_prototypes.cpp; path = ../ir_import_prototypes.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A7E1207FEA6002DC82D /* ir_mat_op_to_vec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_mat_op_to_vec.cpp; path = ../ir_mat_op_to_vec.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A7F1207FEA6002DC82D /* ir_mod_to_fract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_mod_to_fract.cpp; path = ../ir_mod_to_fract.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A801207FEA6002DC82D /* ir_optimization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_optimization.h; path = ../ir_optimization.h; sourceTree = SOURCE_ROOT; };
 		2BA55A811207FEA6002DC82D /* ir_print_glsl_visitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_print_glsl_visitor.cpp; path = ../ir_print_glsl_visitor.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A821207FEA6002DC82D /* ir_print_glsl_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_print_glsl_visitor.h; path = ../ir_print_glsl_visitor.h; sourceTree = SOURCE_ROOT; };
@@ -182,16 +189,12 @@
 		2BA55A841207FEA6002DC82D /* ir_print_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_print_visitor.h; path = ../ir_print_visitor.h; sourceTree = SOURCE_ROOT; };
 		2BA55A851207FEA6002DC82D /* ir_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_reader.cpp; path = ../ir_reader.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A861207FEA6002DC82D /* ir_reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_reader.h; path = ../ir_reader.h; sourceTree = SOURCE_ROOT; };
-		2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_swizzle_swizzle.cpp; path = ../ir_swizzle_swizzle.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_tree_grafting.cpp; path = ../ir_tree_grafting.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_unused_structs.cpp; path = ../ir_unused_structs.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_unused_structs.h; path = ../ir_unused_structs.h; sourceTree = SOURCE_ROOT; };
 		2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_validate.cpp; path = ../ir_validate.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8D1207FEA6002DC82D /* ir_variable_refcount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_variable_refcount.cpp; path = ../ir_variable_refcount.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8E1207FEA6002DC82D /* ir_variable_refcount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_variable_refcount.h; path = ../ir_variable_refcount.h; sourceTree = SOURCE_ROOT; };
 		2BA55A8F1207FEA6002DC82D /* ir_variable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_variable.cpp; path = ../ir_variable.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A901207FEA6002DC82D /* ir_vec_index_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_vec_index_to_cond_assign.cpp; path = ../ir_vec_index_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A911207FEA6002DC82D /* ir_vec_index_to_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_vec_index_to_swizzle.cpp; path = ../ir_vec_index_to_swizzle.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A921207FEA6002DC82D /* ir_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_visitor.h; path = ../ir_visitor.h; sourceTree = SOURCE_ROOT; };
 		2BA55A931207FEA6002DC82D /* ir.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir.cpp; path = ../ir.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A941207FEA6002DC82D /* ir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir.h; path = ../ir.h; sourceTree = SOURCE_ROOT; };
@@ -203,7 +206,6 @@
 		2BA55A9A1207FEA6002DC82D /* s_expression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = s_expression.cpp; path = ../s_expression.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A9B1207FEA6002DC82D /* s_expression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = s_expression.h; path = ../s_expression.h; sourceTree = SOURCE_ROOT; };
 		2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_symbol_table.cpp; path = ../glsl_symbol_table.cpp; sourceTree = SOURCE_ROOT; };
-		2BBA49201254706A00D42573 /* ir_lower_jumps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_lower_jumps.cpp; path = ../ir_lower_jumps.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49211254706A00D42573 /* loop_analysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loop_analysis.cpp; path = ../loop_analysis.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49221254706A00D42573 /* loop_analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loop_analysis.h; path = ../loop_analysis.h; sourceTree = SOURCE_ROOT; };
 		2BBA49231254706A00D42573 /* loop_controls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loop_controls.cpp; path = ../loop_controls.cpp; sourceTree = SOURCE_ROOT; };
@@ -304,35 +306,19 @@
 				2BA55A631207FEA6002DC82D /* glsl_types.cpp */,
 				2BA55A641207FEA6002DC82D /* glsl_types.h */,
 				2BA55A651207FEA6002DC82D /* hir_field_selection.cpp */,
-				2BA55A661207FEA6002DC82D /* ir_algebraic.cpp */,
 				2BA55A671207FEA6002DC82D /* ir_basic_block.cpp */,
 				2BA55A681207FEA6002DC82D /* ir_basic_block.h */,
 				2BA55A691207FEA6002DC82D /* ir_clone.cpp */,
 				2BA55A6A1207FEA6002DC82D /* ir_constant_expression.cpp */,
-				2BA55A6B1207FEA6002DC82D /* ir_constant_folding.cpp */,
-				2B8F278A1211EA7C0014CC3C /* ir_constant_propagation.cpp */,
-				2BA55A6C1207FEA6002DC82D /* ir_constant_variable.cpp */,
-				2BA55A6D1207FEA6002DC82D /* ir_copy_propagation.cpp */,
-				2BA55A6E1207FEA6002DC82D /* ir_dead_code_local.cpp */,
-				2BA55A6F1207FEA6002DC82D /* ir_dead_code.cpp */,
-				2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */,
-				2BA55A701207FEA6002DC82D /* ir_div_to_mul_rcp.cpp */,
 				2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */,
 				2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */,
 				2BA55A731207FEA6002DC82D /* ir_function_can_inline.cpp */,
-				2BA55A741207FEA6002DC82D /* ir_function_inlining.cpp */,
 				2BA55A751207FEA6002DC82D /* ir_function_inlining.h */,
 				2BA55A761207FEA6002DC82D /* ir_function.cpp */,
 				2BA55A771207FEA6002DC82D /* ir_hierarchical_visitor.cpp */,
 				2BA55A781207FEA6002DC82D /* ir_hierarchical_visitor.h */,
 				2BA55A791207FEA6002DC82D /* ir_hv_accept.cpp */,
-				2BA55A7B1207FEA6002DC82D /* ir_if_simplification.cpp */,
-				2BA55A7C1207FEA6002DC82D /* ir_if_to_cond_assign.cpp */,
 				2BA55A7D1207FEA6002DC82D /* ir_import_prototypes.cpp */,
-				2BBA49201254706A00D42573 /* ir_lower_jumps.cpp */,
-				2BA55A7E1207FEA6002DC82D /* ir_mat_op_to_vec.cpp */,
-				2BA55A7F1207FEA6002DC82D /* ir_mod_to_fract.cpp */,
-				2B62490C12191339003F6EEE /* ir_noop_swizzle.cpp */,
 				2BA55A801207FEA6002DC82D /* ir_optimization.h */,
 				2BA55A811207FEA6002DC82D /* ir_print_glsl_visitor.cpp */,
 				2BA55A821207FEA6002DC82D /* ir_print_glsl_visitor.h */,
@@ -342,18 +328,12 @@
 				2BA55A861207FEA6002DC82D /* ir_reader.h */,
 				2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */,
 				2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */,
-				2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */,
-				2B62490F12191339003F6EEE /* ir_sub_to_add_neg.cpp */,
-				2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */,
-				2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */,
 				2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */,
 				2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */,
 				2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */,
 				2BA55A8D1207FEA6002DC82D /* ir_variable_refcount.cpp */,
 				2BA55A8E1207FEA6002DC82D /* ir_variable_refcount.h */,
 				2BA55A8F1207FEA6002DC82D /* ir_variable.cpp */,
-				2BA55A901207FEA6002DC82D /* ir_vec_index_to_cond_assign.cpp */,
-				2BA55A911207FEA6002DC82D /* ir_vec_index_to_swizzle.cpp */,
 				2BA55A921207FEA6002DC82D /* ir_visitor.h */,
 				2BA55A931207FEA6002DC82D /* ir.cpp */,
 				2BA55A941207FEA6002DC82D /* ir.h */,
@@ -365,9 +345,32 @@
 				2BBA49221254706A00D42573 /* loop_analysis.h */,
 				2BBA49231254706A00D42573 /* loop_controls.cpp */,
 				2BBA49241254706A00D42573 /* loop_unroll.cpp */,
+				2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */,
+				2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */,
+				2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */,
+				2B3854491293BE5000F3E692 /* lower_jumps.cpp */,
+				2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */,
+				2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */,
 				2BBA49251254706A00D42573 /* lower_noise.cpp */,
+				2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */,
 				2BBA49261254706A00D42573 /* lower_variable_index_to_cond_assign.cpp */,
+				2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */,
+				2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */,
+				2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */,
+				2B3854501293BE5000F3E692 /* opt_constant_folding.cpp */,
+				2B3854511293BE5000F3E692 /* opt_constant_propagation.cpp */,
+				2B3854521293BE5000F3E692 /* opt_constant_variable.cpp */,
+				2B3854531293BE5000F3E692 /* opt_copy_propagation.cpp */,
+				2B3854541293BE5000F3E692 /* opt_dead_code_local.cpp */,
+				2B3854551293BE5000F3E692 /* opt_dead_code.cpp */,
+				2B3854561293BE5000F3E692 /* opt_dead_functions.cpp */,
+				2B3854571293BE5000F3E692 /* opt_function_inlining.cpp */,
+				2B3854581293BE5000F3E692 /* opt_if_simplification.cpp */,
+				2B3854591293BE5000F3E692 /* opt_noop_swizzle.cpp */,
 				2BBA49271254706A00D42573 /* opt_redundant_jumps.cpp */,
+				2B38545A1293BE5000F3E692 /* opt_structure_splitting.cpp */,
+				2B38545B1293BE5000F3E692 /* opt_swizzle_swizzle.cpp */,
+				2B38545C1293BE5000F3E692 /* opt_tree_grafting.cpp */,
 				2BA55A991207FEA6002DC82D /* program.h */,
 				2BA55A9A1207FEA6002DC82D /* s_expression.cpp */,
 				2BA55A9B1207FEA6002DC82D /* s_expression.h */,
@@ -452,7 +455,14 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "mesaglsl2" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* mesaglsl2 */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -478,62 +488,63 @@
 				2BA55AAA1207FEA6002DC82D /* glsl_parser.cpp in Sources */,
 				2BA55AAE1207FEA6002DC82D /* glsl_types.cpp in Sources */,
 				2BA55AB01207FEA6002DC82D /* hir_field_selection.cpp in Sources */,
-				2BA55AB11207FEA6002DC82D /* ir_algebraic.cpp in Sources */,
 				2BA55AB21207FEA6002DC82D /* ir_basic_block.cpp in Sources */,
 				2BA55AB41207FEA6002DC82D /* ir_clone.cpp in Sources */,
 				2BA55AB51207FEA6002DC82D /* ir_constant_expression.cpp in Sources */,
-				2BA55AB61207FEA6002DC82D /* ir_constant_folding.cpp in Sources */,
-				2BA55AB71207FEA6002DC82D /* ir_constant_variable.cpp in Sources */,
-				2BA55AB81207FEA6002DC82D /* ir_copy_propagation.cpp in Sources */,
-				2BA55AB91207FEA6002DC82D /* ir_dead_code_local.cpp in Sources */,
-				2BA55ABA1207FEA6002DC82D /* ir_dead_code.cpp in Sources */,
-				2BA55ABB1207FEA6002DC82D /* ir_div_to_mul_rcp.cpp in Sources */,
 				2BA55ABC1207FEA6002DC82D /* ir_expression_flattening.cpp in Sources */,
 				2BA55ABE1207FEA6002DC82D /* ir_function_can_inline.cpp in Sources */,
-				2BA55ABF1207FEA6002DC82D /* ir_function_inlining.cpp in Sources */,
 				2BA55AC11207FEA6002DC82D /* ir_function.cpp in Sources */,
 				2BA55AC21207FEA6002DC82D /* ir_hierarchical_visitor.cpp in Sources */,
 				2BA55AC41207FEA6002DC82D /* ir_hv_accept.cpp in Sources */,
-				2BA55AC61207FEA6002DC82D /* ir_if_simplification.cpp in Sources */,
-				2BA55AC71207FEA6002DC82D /* ir_if_to_cond_assign.cpp in Sources */,
 				2BA55AC81207FEA6002DC82D /* ir_import_prototypes.cpp in Sources */,
-				2BA55AC91207FEA6002DC82D /* ir_mat_op_to_vec.cpp in Sources */,
-				2BA55ACA1207FEA6002DC82D /* ir_mod_to_fract.cpp in Sources */,
 				2BA55ACC1207FEA6002DC82D /* ir_print_glsl_visitor.cpp in Sources */,
 				2BA55ACE1207FEA6002DC82D /* ir_print_visitor.cpp in Sources */,
 				2BA55AD01207FEA6002DC82D /* ir_reader.cpp in Sources */,
-				2BA55AD21207FEA6002DC82D /* ir_swizzle_swizzle.cpp in Sources */,
-				2BA55AD31207FEA6002DC82D /* ir_tree_grafting.cpp in Sources */,
 				2BA55AD51207FEA6002DC82D /* ir_unused_structs.cpp in Sources */,
 				2BA55AD71207FEA6002DC82D /* ir_validate.cpp in Sources */,
 				2BA55AD81207FEA6002DC82D /* ir_variable_refcount.cpp in Sources */,
 				2BA55ADA1207FEA6002DC82D /* ir_variable.cpp in Sources */,
-				2BA55ADB1207FEA6002DC82D /* ir_vec_index_to_cond_assign.cpp in Sources */,
-				2BA55ADC1207FEA6002DC82D /* ir_vec_index_to_swizzle.cpp in Sources */,
 				2BA55ADE1207FEA6002DC82D /* ir.cpp in Sources */,
 				2BA55AE01207FEA6002DC82D /* link_functions.cpp in Sources */,
 				2BA55AE11207FEA6002DC82D /* linker.cpp in Sources */,
 				2BA55AE51207FEA6002DC82D /* s_expression.cpp in Sources */,
 				2B47DA011209C87B00937F2C /* hash_table.c in Sources */,
 				2B47DA031209C87B00937F2C /* symbol_table.c in Sources */,
-				2B28CBB8120BEB6E00AE3749 /* ir_dead_functions.cpp in Sources */,
-				2B28CBB9120BEB6E00AE3749 /* ir_structure_splitting.cpp in Sources */,
-				2B8F278B1211EA7C0014CC3C /* ir_constant_propagation.cpp in Sources */,
 				2B62490812191313003F6EEE /* talloc.c in Sources */,
-				2B62491012191339003F6EEE /* ir_noop_swizzle.cpp in Sources */,
 				2B62491112191339003F6EEE /* ir_rvalue_visitor.cpp in Sources */,
-				2B62491312191339003F6EEE /* ir_sub_to_add_neg.cpp in Sources */,
 				2B6A99F41223B1670059FBED /* glcpp-lex.c in Sources */,
 				2B6A99F61223B1670059FBED /* glcpp-parse.c in Sources */,
 				2B6A99FB1223B1670059FBED /* pp.c in Sources */,
 				2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */,
-				2BBA49291254706A00D42573 /* ir_lower_jumps.cpp in Sources */,
 				2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */,
 				2BBA492C1254706A00D42573 /* loop_controls.cpp in Sources */,
 				2BBA492D1254706A00D42573 /* loop_unroll.cpp in Sources */,
 				2BBA492E1254706A00D42573 /* lower_noise.cpp in Sources */,
 				2BBA492F1254706A00D42573 /* lower_variable_index_to_cond_assign.cpp in Sources */,
 				2BBA49301254706A00D42573 /* opt_redundant_jumps.cpp in Sources */,
+				2B38545D1293BE5000F3E692 /* lower_div_to_mul_rcp.cpp in Sources */,
+				2B38545E1293BE5000F3E692 /* lower_explog_to_explog2.cpp in Sources */,
+				2B38545F1293BE5000F3E692 /* lower_if_to_cond_assign.cpp in Sources */,
+				2B3854601293BE5000F3E692 /* lower_jumps.cpp in Sources */,
+				2B3854611293BE5000F3E692 /* lower_mat_op_to_vec.cpp in Sources */,
+				2B3854621293BE5000F3E692 /* lower_mod_to_fract.cpp in Sources */,
+				2B3854631293BE5000F3E692 /* lower_sub_to_add_neg.cpp in Sources */,
+				2B3854641293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp in Sources */,
+				2B3854651293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp in Sources */,
+				2B3854661293BE5000F3E692 /* opt_algebraic.cpp in Sources */,
+				2B3854671293BE5000F3E692 /* opt_constant_folding.cpp in Sources */,
+				2B3854681293BE5000F3E692 /* opt_constant_propagation.cpp in Sources */,
+				2B3854691293BE5000F3E692 /* opt_constant_variable.cpp in Sources */,
+				2B38546A1293BE5000F3E692 /* opt_copy_propagation.cpp in Sources */,
+				2B38546B1293BE5000F3E692 /* opt_dead_code_local.cpp in Sources */,
+				2B38546C1293BE5000F3E692 /* opt_dead_code.cpp in Sources */,
+				2B38546D1293BE5000F3E692 /* opt_dead_functions.cpp in Sources */,
+				2B38546E1293BE5000F3E692 /* opt_function_inlining.cpp in Sources */,
+				2B38546F1293BE5000F3E692 /* opt_if_simplification.cpp in Sources */,
+				2B3854701293BE5000F3E692 /* opt_noop_swizzle.cpp in Sources */,
+				2B3854711293BE5000F3E692 /* opt_structure_splitting.cpp in Sources */,
+				2B3854721293BE5000F3E692 /* opt_swizzle_swizzle.cpp in Sources */,
+				2B3854731293BE5000F3E692 /* opt_tree_grafting.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
