@@ -372,12 +372,6 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type->is_vector());
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
-
-   case ir_binop_cross:
-      assert(ir->operands[0]->type == glsl_type::vec3_type);
-      assert(ir->operands[1]->type == glsl_type::vec3_type);
-      assert(ir->type == glsl_type::vec3_type);
-      break;
    }
 
    return visit_continue;

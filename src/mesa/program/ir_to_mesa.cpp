@@ -1058,10 +1058,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 			 ir->operands[0]->type->vector_elements);
       break;
 
-   case ir_binop_cross:
-      ir_to_mesa_emit_op2(ir, OPCODE_XPD, result_dst, op[0], op[1]);
-      break;
-
    case ir_unop_sqrt:
       /* sqrt(x) = x * rsq(x). */
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);

@@ -850,7 +850,6 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_dot:
-   case ir_binop_cross:
    case ir_unop_any:
       assert(!"not reached: should be handled by brw_fs_channel_expressions");
       break;

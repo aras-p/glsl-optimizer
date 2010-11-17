@@ -412,17 +412,6 @@ ir_expression::constant_expression_value()
       }
       break;
 
-   case ir_binop_cross:
-      assert(op[0]->type == glsl_type::vec3_type);
-      assert(op[1]->type == glsl_type::vec3_type);
-      data.f[0] = (op[0]->value.f[1] * op[1]->value.f[2] -
-		   op[1]->value.f[1] * op[0]->value.f[2]);
-      data.f[1] = (op[0]->value.f[2] * op[1]->value.f[0] -
-		   op[1]->value.f[2] * op[0]->value.f[0]);
-      data.f[2] = (op[0]->value.f[0] * op[1]->value.f[1] -
-		   op[1]->value.f[0] * op[0]->value.f[1]);
-      break;
-
    case ir_binop_add:
       assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
       for (unsigned c = 0, c0 = 0, c1 = 0;
@@ -1064,7 +1053,14 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = coshf(op[0]->value.f[c]);
    } else if (strcmp(callee, "cross") == 0) {
-      expr = new(mem_ctx) ir_expression(ir_binop_cross, type, op[0], op[1]);
+      assert(op[0]->type == glsl_type::vec3_type);
+      assert(op[1]->type == glsl_type::vec3_type);
+      data.f[0] = (op[0]->value.f[1] * op[1]->value.f[2] -
+		   op[1]->value.f[1] * op[0]->value.f[2]);
+      data.f[1] = (op[0]->value.f[2] * op[1]->value.f[0] -
+		   op[1]->value.f[2] * op[0]->value.f[0]);
+      data.f[2] = (op[0]->value.f[0] * op[1]->value.f[1] -
+		   op[1]->value.f[0] * op[0]->value.f[1]);
    } else if (strcmp(callee, "degrees") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
