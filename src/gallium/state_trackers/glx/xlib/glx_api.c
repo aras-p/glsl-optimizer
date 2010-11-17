@@ -46,9 +46,6 @@
 #define SERVER_MAJOR_VERSION 1
 #define SERVER_MINOR_VERSION 4
 
-/* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa " MESA_VERSION_STRING
-
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"
 
@@ -1672,7 +1669,7 @@ glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char version[1000];
    sprintf(version, "%d.%d %s",
-	   SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
+	   SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, xmesa_get_name());
 
    (void) dpy;
    (void) screen;
@@ -1697,7 +1694,7 @@ glXGetClientString( Display *dpy, int name )
 {
    static char version[1000];
    sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
-	   CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
+	   CLIENT_MINOR_VERSION, xmesa_get_name());
 
    (void) dpy;
 
