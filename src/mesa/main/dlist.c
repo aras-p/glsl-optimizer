@@ -4784,9 +4784,9 @@ save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 
 static void GLAPIENTRY
 save_ProgramParameters4dvNV(GLenum target, GLuint index,
-                            GLuint num, const GLdouble *params)
+                            GLsizei num, const GLdouble *params)
 {
-   GLuint i;
+   GLint i;
    for (i = 0; i < num; i++) {
       save_ProgramEnvParameter4dvARB(target, index + i, params + 4 * i);
    }
@@ -4795,9 +4795,9 @@ save_ProgramParameters4dvNV(GLenum target, GLuint index,
 
 static void GLAPIENTRY
 save_ProgramParameters4fvNV(GLenum target, GLuint index,
-                            GLuint num, const GLfloat *params)
+                            GLsizei num, const GLfloat *params)
 {
-   GLuint i;
+   GLint i;
    for (i = 0; i < num; i++) {
       save_ProgramEnvParameter4fvARB(target, index + i, params + 4 * i);
    }

@@ -4949,12 +4949,12 @@ KEYWORD1 void KEYWORD2 NAME(LoadProgramNV)(GLenum target, GLuint id, GLsizei len
    DISPATCH(LoadProgramNV, (target, id, len, program), (F, "glLoadProgramNV(0x%x, %d, %d, %p);\n", target, id, len, (const void *) program));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ProgramParameters4dvNV)(GLenum target, GLuint index, GLuint num, const GLdouble * params)
+KEYWORD1 void KEYWORD2 NAME(ProgramParameters4dvNV)(GLenum target, GLuint index, GLsizei num, const GLdouble * params)
 {
    DISPATCH(ProgramParameters4dvNV, (target, index, num, params), (F, "glProgramParameters4dvNV(0x%x, %d, %d, %p);\n", target, index, num, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ProgramParameters4fvNV)(GLenum target, GLuint index, GLuint num, const GLfloat * params)
+KEYWORD1 void KEYWORD2 NAME(ProgramParameters4fvNV)(GLenum target, GLuint index, GLsizei num, const GLfloat * params)
 {
    DISPATCH(ProgramParameters4fvNV, (target, index, num, params), (F, "glProgramParameters4fvNV(0x%x, %d, %d, %p);\n", target, index, num, (const void *) params));
 }

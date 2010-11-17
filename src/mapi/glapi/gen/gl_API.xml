@@ -11383,7 +11383,7 @@
     <function name="ProgramParameters4dvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="num" type="GLuint" counter="true"/>
+        <param name="num" type="GLsizei" counter="true"/>
         <param name="params" type="const GLdouble *" count="num" count_scale="4"/>
         <glx rop="4187"/>
     </function>
@@ -11391,7 +11391,7 @@
     <function name="ProgramParameters4fvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="num" type="GLuint" counter="true"/>
+        <param name="num" type="GLsizei" counter="true"/>
         <param name="params" type="const GLfloat *" count="num" count_scale="4"/>
         <glx rop="4186"/>
     </function>
