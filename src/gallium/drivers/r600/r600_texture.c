@@ -109,11 +109,11 @@ static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
 	case V_038000_ARRAY_2D_TILED_THIN1:
 		p_align = MAX2(rscreen->tiling_info->num_banks,
 			       (((rscreen->tiling_info->group_bytes / 8 / pixsize)) *
-				rscreen->tiling_info->num_banks));
+				rscreen->tiling_info->num_banks)) * 8;
 		break;
-	case 0:
+	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
-		p_align = 64;
+		p_align = rscreen->tiling_info->group_bytes / pixsize;
 		break;
 	}
 	return p_align;
@@ -139,6 +139,29 @@ static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 	return h_align;
 }
 
+static unsigned r600_get_base_alignment(struct pipe_screen *screen,
+					enum pipe_format format,
+					unsigned array_mode)
+{
+	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	unsigned pixsize = util_format_get_blocksize(format);
+	int p_align = r600_get_pixel_alignment(screen, format, array_mode);
+	int h_align = r600_get_height_alignment(screen, array_mode);
+	int b_align;
+
+	switch (array_mode) {
+	case V_038000_ARRAY_2D_TILED_THIN1:
+		b_align = MAX2(rscreen->tiling_info->num_banks * rscreen->tiling_info->num_channels * 8 * 8 * pixsize,
+			       p_align * pixsize * h_align);
+		break;
+	case V_038000_ARRAY_1D_TILED_THIN1:
+	default:
+		b_align = rscreen->tiling_info->group_bytes;
+		break;
+	}
+	return b_align;
+}
+
 static unsigned mip_minify(unsigned size, unsigned level)
 {
 	unsigned val;
@@ -152,11 +175,12 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level)
 {
+	struct r600_screen* rscreen = (struct r600_screen *)screen;
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned width, stride, tile_width;
-	
+
 	if (rtex->pitch_override)
 		return rtex->pitch_override;
 
@@ -167,11 +191,6 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 		width = align(width, tile_width);
 	}
 	stride = util_format_get_stride(ptex->format, width);
-	if (chipc == EVERGREEN)
-		stride = align(stride, 512);
-
-        if (ptex->bind & PIPE_BIND_RENDER_TARGET)
-		stride = align(stride, 512);
 
 	return stride;
 }
@@ -257,6 +276,9 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 		}
 		else
 			size = layer_size * u_minify(ptex->depth0, i);
+		/* align base image and start of miptree */
+		if ((i == 0) || (i == 1))
+			offset = align(offset, r600_get_base_alignment(screen, ptex->format, array_mode));
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch_in_bytes[i] = pitch;
@@ -297,7 +319,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->size = rtex->size;
 
 	if (!resource->bo) {
-		resource->bo = r600_bo(radeon, rtex->size, 4096, base->bind, base->usage);
+		struct pipe_resource *ptex = &rtex->resource.base.b;
+		int base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
+
+		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);
 		if (!resource->bo) {
 			FREE(rtex);
 			return NULL;
