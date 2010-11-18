@@ -273,6 +273,8 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_fract:
    case ir_unop_sin:
    case ir_unop_cos:
+   case ir_unop_sin_reduced:
+   case ir_unop_cos_reduced:
    case ir_unop_dFdx:
    case ir_unop_dFdy:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);

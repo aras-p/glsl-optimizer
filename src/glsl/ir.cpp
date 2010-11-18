@@ -239,6 +239,8 @@ static const char *const operator_strs[] = {
    "round_even",
    "sin",
    "cos",
+   "sin_reduced",
+   "cos_reduced",
    "dFdx",
    "dFdy",
    "noise",

@@ -778,9 +778,11 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_sin:
+   case ir_unop_sin_reduced:
       emit_math(FS_OPCODE_SIN, this->result, op[0]);
       break;
    case ir_unop_cos:
+   case ir_unop_cos_reduced:
       emit_math(FS_OPCODE_COS, this->result, op[0]);
       break;
 

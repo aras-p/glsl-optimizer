@@ -729,6 +729,8 @@ enum ir_expression_operation {
    /*@{*/
    ir_unop_sin,
    ir_unop_cos,
+   ir_unop_sin_reduced,    /**< Reduced range sin. [-pi, pi] */
+   ir_unop_cos_reduced,    /**< Reduced range cos. [-pi, pi] */
    /*@}*/
 
    /**
