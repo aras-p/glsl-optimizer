@@ -3346,7 +3346,6 @@ fs_visitor::generate_code()
 		      ((uint32_t *)&p->store[i])[0]);
 	    }
 	    brw_disasm(stdout, &p->store[i], intel->gen);
-	    printf("\n");
 	 }
       }
 
