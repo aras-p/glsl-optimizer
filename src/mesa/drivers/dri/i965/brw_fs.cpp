@@ -2801,26 +2801,17 @@ bool
 fs_visitor::dead_code_eliminate()
 {
    bool progress = false;
-   int num_vars = this->virtual_grf_next;
-   bool dead[num_vars];
-
-   for (int i = 0; i < num_vars; i++) {
-      dead[i] = this->virtual_grf_def[i] >= this->virtual_grf_use[i];
-
-      if (dead[i]) {
-	 /* Mark off its interval so it won't interfere with anything. */
-	 this->virtual_grf_def[i] = -1;
-	 this->virtual_grf_use[i] = -1;
-      }
-   }
+   int pc = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      if (inst->dst.file == GRF && dead[inst->dst.reg]) {
+      if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
 	 inst->remove();
 	 progress = true;
       }
+
+      pc++;
    }
 
    return progress;
