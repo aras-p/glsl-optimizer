@@ -1001,6 +1001,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
 	uint32_t internalFormat, type, format;
+        gl_format texFormat;
 
 	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
@@ -1046,10 +1047,6 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	radeon_miptree_unreference(&t->mt);
 	radeon_miptree_unreference(&rImage->mt);
 
-	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
-	texImage->RowStride = rb->pitch / rb->cpp;
-
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;
@@ -1060,7 +1057,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	switch (rb->cpp) {
 	case 4:
 		if (glx_texture_format == __DRI_TEXTURE_FORMAT_RGB) {
-			texImage->TexFormat = MESA_FORMAT_RGB888;
+			texFormat = MESA_FORMAT_RGB888;
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -1073,7 +1070,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 			SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_1,
 				 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		} else {
-			texImage->TexFormat = MESA_FORMAT_ARGB8888;
+			texFormat = MESA_FORMAT_ARGB8888;
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -1091,7 +1088,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	case 3:
 	default:
 		// FMT_8_8_8 ???
-		texImage->TexFormat = MESA_FORMAT_RGB888;
+		texFormat = MESA_FORMAT_RGB888;
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -1106,7 +1103,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		pitch_val /= 4;
 		break;
 	case 2:
-		texImage->TexFormat = MESA_FORMAT_RGB565;
+		texFormat = MESA_FORMAT_RGB565;
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_5_6_5,
 			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -1121,6 +1118,11 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		pitch_val /= 2;
 		break;
 	}
+
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->base.Width, rb->base.Height, 1, 0,
+				   rb->cpp, texFormat);
+	texImage->RowStride = rb->pitch / rb->cpp;
 
 	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;

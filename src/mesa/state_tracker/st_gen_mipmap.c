@@ -400,9 +400,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->InternalFormat);
-
-      dstImage->TexFormat = srcImage->TexFormat;
+                                 dstDepth, border, srcImage->InternalFormat,
+                                 srcImage->TexFormat);
 
       stImage = st_texture_image(dstImage);
       stImage->level = dstLevel;

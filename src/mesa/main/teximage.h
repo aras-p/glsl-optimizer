@@ -33,6 +33,7 @@
 
 
 #include "mtypes.h"
+#include "formats.h"
 
 
 extern void *
@@ -69,13 +70,13 @@ extern void
 _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
                            struct gl_texture_image *img,
                            GLsizei width, GLsizei height, GLsizei depth,
-                           GLint border, GLenum internalFormat);
+                           GLint border, GLenum internalFormat,
+                           gl_format format);
 
 
-extern void
+extern gl_format
 _mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage,
                             GLenum target, GLint level,
                             GLenum internalFormat, GLenum format, GLenum type);
 

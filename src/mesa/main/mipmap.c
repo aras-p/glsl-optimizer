@@ -1790,9 +1790,9 @@ _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->InternalFormat);
+                                 dstDepth, border, srcImage->InternalFormat,
+                                 srcImage->TexFormat);
       dstImage->DriverData = NULL;
-      dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexelc = srcImage->FetchTexelc;
       dstImage->FetchTexelf = srcImage->FetchTexelf;
 

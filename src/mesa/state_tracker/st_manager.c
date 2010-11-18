@@ -556,6 +556,8 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
+      gl_format texFormat;
+
       /*
        * XXX When internal_format and tex->format differ, st_finalize_texture
        * needs to allocate a new texture with internal_format and copy the
@@ -573,11 +575,13 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
          internalFormat = GL_RGBA;
       else
          internalFormat = GL_RGB;
+
+      texFormat = st_ChooseTextureFormat(ctx, internalFormat,
+                                         GL_RGBA, GL_UNSIGNED_BYTE);
+
       _mesa_init_teximage_fields(ctx, target, texImage,
-            tex->width0, tex->height0, 1, 0, internalFormat);
-      texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
-            GL_RGBA, GL_UNSIGNED_BYTE);
-      _mesa_set_fetch_functions(texImage, 2);
+                                 tex->width0, tex->height0, 1, 0,
+                                 internalFormat, texFormat);
 
       width = tex->width0;
       height = tex->height0;

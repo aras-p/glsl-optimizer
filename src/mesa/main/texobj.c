@@ -719,6 +719,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       static GLubyte texels[8 * 8][4];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
+      gl_format texFormat;
       GLuint i;
 
       for (i = 0; i < 8 * 8; i++) {
@@ -737,12 +738,13 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       /* create level[0] texture image */
       texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, 0);
 
+      texFormat = ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA,
+                                                  GL_UNSIGNED_BYTE);
+
       /* init the image fields */
       _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
-                                    8, 8, 1, 0, GL_RGBA); 
+                                 8, 8, 1, 0, GL_RGBA, texFormat); 
 
-      texImage->TexFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
       ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
       /* set image data */
