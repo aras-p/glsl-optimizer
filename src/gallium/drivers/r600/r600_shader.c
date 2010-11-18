@@ -80,7 +80,7 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 			R_028894_SQ_PGM_START_FS,
-			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+			r600_bo_offset(shader->bo_fetch) >> 8, 0xFFFFFFFF, shader->bo_fetch);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
@@ -217,6 +217,15 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	void *ptr;
 
 	/* copy new shader */
+	if (rshader->processor_type == TGSI_PROCESSOR_VERTEX && shader->bo_fetch == NULL) {
+		shader->bo_fetch = r600_bo(rctx->radeon, rshader->bc_fetch.ndw * 4, 4096, 0, 0);
+		if (shader->bo_fetch == NULL) {
+			return -ENOMEM;
+		}
+		ptr = r600_bo_map(rctx->radeon, shader->bo_fetch, 0, NULL);
+		memcpy(ptr, rshader->bc_fetch.bytecode, rshader->bc_fetch.ndw * 4);
+		r600_bo_unmap(rctx->radeon, shader->bo_fetch);
+	}
 	if (shader->bo == NULL) {
 		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0, 0);
 		if (shader->bo == NULL) {
@@ -257,7 +266,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	const struct util_format_description *desc;
 	enum pipe_format resource_format[160];
 	unsigned i, nresources = 0;
-	struct r600_bc *bc = &shader->bc;
+	struct r600_bc *bc = &shader->bc_fetch;
 	struct r600_bc_cf *cf;
 	struct r600_bc_vtx *vtx;
 
@@ -272,7 +281,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 	for (i = 0; i < rctx->vertex_elements->count; i++) {
 		resource_format[nresources++] = rctx->vertex_elements->hw_format[i];
 	}
-	r600_bo_reference(rctx->radeon, &rshader->bo, NULL);
+	r600_bo_reference(rctx->radeon, &rshader->bo_fetch, NULL);
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		switch (cf->inst) {
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
@@ -293,7 +302,7 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 			break;
 		}
 	}
-	return r600_bc_build(&shader->bc);
+	return r600_bc_build(&shader->bc_fetch);
 }
 
 int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -334,6 +343,13 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
+	if (shader->shader.processor_type == TGSI_PROCESSOR_VERTEX) {
+		r = r600_bc_build(&shader->shader.bc_fetch);
+		if (r) {
+			R600_ERR("building bytecode failed !\n");
+			return r;
+		}
+	}
 //fprintf(stderr, "______________________________________________________________\n");
 	return 0;
 }
@@ -364,6 +380,7 @@ struct r600_shader_ctx {
 	unsigned				temp_reg;
 	struct r600_shader_tgsi_instruction	*inst_info;
 	struct r600_bc				*bc;
+	struct r600_bc				*bc_fetch;
 	struct r600_shader			*shader;
 	u32					value[4];
 	u32					*literals;
@@ -511,7 +528,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			vtx.dst_sel_z = 2;
 			vtx.dst_sel_w = 3;
 			vtx.use_const_fields = 1;
-			r = r600_bc_add_vtx(ctx->bc, &vtx);
+			r = r600_bc_add_vtx(ctx->bc_fetch, &vtx);
 			if (r)
 				return r;
 		}
@@ -606,6 +623,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	int i, r = 0, pos0;
 
 	ctx.bc = &shader->bc;
+	ctx.bc_fetch = &shader->bc_fetch;
 	ctx.shader = shader;
 	r = r600_bc_init(ctx.bc, shader->family);
 	if (r)
@@ -615,6 +633,13 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	tgsi_parse_init(&ctx.parse, tokens);
 	ctx.type = ctx.parse.FullHeader.Processor.Processor;
 	shader->processor_type = ctx.type;
+	if (shader->processor_type == TGSI_PROCESSOR_VERTEX) {
+		r = r600_bc_init(ctx.bc_fetch, shader->family);
+		if (r)
+			return r;
+		ctx.bc_fetch->type = -1;
+	}
+	ctx.bc->type = shader->processor_type;
 
 	/* register allocations */
 	/* Values [0,127] correspond to GPR[0..127].
@@ -640,6 +665,11 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	}
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
+		if (ctx.bc->chiprev == 2) {
+			r600_bc_add_cfinst(ctx.bc, EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
+		} else {
+			r600_bc_add_cfinst(ctx.bc, V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
+		}
 	}
 	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == 2) {
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
@@ -807,6 +837,14 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		if (!(output_done & (1 << output[i].type))) {
 			output_done |= (1 << output[i].type);
 			output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE);
+		}
+	}
+	/* add return to fetch shader */
+	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
+		if (ctx.bc->chiprev == 2) {
+			r600_bc_add_cfinst(ctx.bc_fetch, EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
+		} else {
+			r600_bc_add_cfinst(ctx.bc_fetch, V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
 		}
 	}
 	/* add output to bytecode */

@@ -706,6 +706,12 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
+	/* FS RESOURCE */
+	for (int j = 0, offset = 0x2300; j < 16; j++, offset += 0x1C) {
+		r = r600_state_resource_init(ctx, offset);
+		if (r)
+			goto out_err;
+	}
 
 	/* PS loop const */
 	r600_loop_const_init(ctx, 0);
@@ -889,6 +895,13 @@ void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r6
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1180 + 0x1C * rid;
+
+	r600_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x2300 + 0x1C * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }

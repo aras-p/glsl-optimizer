@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "util/u_memory.h"
+#include "pipe/p_shader_tokens.h"
 #include "r600_pipe.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
@@ -592,10 +593,34 @@ int r600_bc_add_cfinst(struct r600_bc *bc, int inst)
 /* common to all 3 families */
 static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
 {
-	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id) |
-				S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
-				S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
-				S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
+	unsigned fetch_resource_start = 0;
+
+	/* check if we are fetch shader */
+			/* fetch shader can also access vertex resource,
+			 * first fetch shader resource is at 160
+			 */
+	if (bc->type == -1) {
+		switch (bc->chiprev) {
+		/* r600 */
+		case 0:
+		/* r700 */
+		case 1:
+			fetch_resource_start = 160;
+			break;
+		/* evergreen */
+		case 2:
+			fetch_resource_start = 0;
+			break;
+		default:
+			fprintf(stderr,  "%s:%s:%d unknown chiprev %d\n",
+				__FILE__, __func__, __LINE__, bc->chiprev);
+			break;
+		}
+	}
+	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id + fetch_resource_start) |
+			S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
+			S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
+			S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
 	bc->bytecode[id++] = S_SQ_VTX_WORD1_DST_SEL_X(vtx->dst_sel_x) |
 				S_SQ_VTX_WORD1_DST_SEL_Y(vtx->dst_sel_y) |
 				S_SQ_VTX_WORD1_DST_SEL_Z(vtx->dst_sel_z) |
@@ -742,6 +767,8 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+	case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+	case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |
@@ -767,6 +794,9 @@ int r600_bc_build(struct r600_bc *bc)
 
 	if (bc->callstack[0].max > 0)
 		bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
+	if (bc->type == TGSI_PROCESSOR_VERTEX && !bc->nstack) {
+		bc->nstack = 1;
+	}
 
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
@@ -795,6 +825,8 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -868,6 +900,8 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);

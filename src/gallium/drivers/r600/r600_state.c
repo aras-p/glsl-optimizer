@@ -109,7 +109,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6, 0xC0000000, 0xFFFFFFFF, NULL);
-		r600_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, i);
+		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 	}
 
 	mask = 0;

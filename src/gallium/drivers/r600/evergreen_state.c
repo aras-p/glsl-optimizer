@@ -1289,7 +1289,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7, 0xC0000000, 0xFFFFFFFF, NULL);
-		evergreen_vs_resource_set(&rctx->ctx, rstate, i);
+		evergreen_fs_resource_set(&rctx->ctx, rstate, i);
 	}
 
 	mask = 0;
@@ -1554,7 +1554,7 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 			R_0288A4_SQ_PGM_START_FS,
-			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
+			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo_fetch);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,

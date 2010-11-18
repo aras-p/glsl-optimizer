@@ -170,6 +170,7 @@ struct r600_cf_callstack {
 struct r600_bc {
 	enum radeon_family		family;
 	int				chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
+	int				type;
 	struct list_head		cf;
 	struct r600_bc_cf		*cf_last;
 	unsigned			ndw;
