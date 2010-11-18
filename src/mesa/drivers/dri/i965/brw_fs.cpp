@@ -2963,11 +2963,60 @@ fs_visitor::compute_to_mrf()
       /* Found a move of a GRF to a MRF.  Let's see if we can go
        * rewrite the thing that made this GRF to write into the MRF.
        */
-      bool found = false;
       fs_inst *scan_inst;
       for (scan_inst = (fs_inst *)inst->prev;
 	   scan_inst->prev != NULL;
 	   scan_inst = (fs_inst *)scan_inst->prev) {
+	 if (scan_inst->dst.file == GRF &&
+	     scan_inst->dst.reg == inst->src[0].reg) {
+	    /* Found the last thing to write our reg we want to turn
+	     * into a compute-to-MRF.
+	     */
+
+	    if (scan_inst->opcode == FS_OPCODE_TEX) {
+	       /* texturing writes several continuous regs, so we can't
+		* compute-to-mrf that.
+		*/
+	       break;
+	    }
+
+	    /* If it's predicated, it (probably) didn't populate all
+	     * the channels.
+	     */
+	    if (scan_inst->predicated)
+	       break;
+
+	    /* SEND instructions can't have MRF as a destination. */
+	    if (scan_inst->mlen)
+	       break;
+
+	    if (intel->gen >= 6) {
+	       /* gen6 math instructions must have the destination be
+		* GRF, so no compute-to-MRF for them.
+		*/
+	       if (scan_inst->opcode == FS_OPCODE_RCP ||
+		   scan_inst->opcode == FS_OPCODE_RSQ ||
+		   scan_inst->opcode == FS_OPCODE_SQRT ||
+		   scan_inst->opcode == FS_OPCODE_EXP2 ||
+		   scan_inst->opcode == FS_OPCODE_LOG2 ||
+		   scan_inst->opcode == FS_OPCODE_SIN ||
+		   scan_inst->opcode == FS_OPCODE_COS ||
+		   scan_inst->opcode == FS_OPCODE_POW) {
+		  break;
+	       }
+	    }
+
+	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+	       /* Found the creator of our MRF's source value. */
+	       scan_inst->dst.file = MRF;
+	       scan_inst->dst.hw_reg = inst->dst.hw_reg;
+	       scan_inst->saturate |= inst->saturate;
+	       inst->remove();
+	       progress = true;
+	    }
+	    break;
+	 }
+
 	 /* We don't handle flow control here.  Most computation of
 	  * values that end up in MRFs are shortly before the MRF
 	  * write anyway.
@@ -3011,59 +3060,6 @@ fs_visitor::compute_to_mrf()
 	       break;
 	    }
 	 }
-
-	 if (scan_inst->dst.file == GRF &&
-	     scan_inst->dst.reg == inst->src[0].reg) {
-	    /* Found the last thing to write our reg we want to turn
-	     * into a compute-to-MRF.
-	     */
-
-	    if (scan_inst->opcode == FS_OPCODE_TEX) {
-	       /* texturing writes several continuous regs, so we can't
-		* compute-to-mrf that.
-		*/
-	       break;
-	    }
-
-	    /* If it's predicated, it (probably) didn't populate all
-	     * the channels.
-	     */
-	    if (scan_inst->predicated)
-	       break;
-
-	    /* SEND instructions can't have MRF as a destination. */
-	    if (scan_inst->mlen)
-	       break;
-
-	    if (intel->gen >= 6) {
-	       /* gen6 math instructions must have the destination be
-		* GRF, so no compute-to-MRF for them.
-		*/
-	       if (scan_inst->opcode == FS_OPCODE_RCP ||
-		   scan_inst->opcode == FS_OPCODE_RSQ ||
-		   scan_inst->opcode == FS_OPCODE_SQRT ||
-		   scan_inst->opcode == FS_OPCODE_EXP2 ||
-		   scan_inst->opcode == FS_OPCODE_LOG2 ||
-		   scan_inst->opcode == FS_OPCODE_SIN ||
-		   scan_inst->opcode == FS_OPCODE_COS ||
-		   scan_inst->opcode == FS_OPCODE_POW) {
-		  break;
-	       }
-	    }
-
-	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
-	       /* Found the creator of our MRF's source value. */
-	       found = true;
-	       break;
-	    }
-	 }
-      }
-      if (found) {
-	 scan_inst->dst.file = MRF;
-	 scan_inst->dst.hw_reg = inst->dst.hw_reg;
-	 scan_inst->saturate |= inst->saturate;
-	 inst->remove();
-	 progress = true;
       }
    }
 
