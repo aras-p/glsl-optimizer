@@ -9,15 +9,9 @@ env.Append(CPPPATH = [
     '#src/gallium/winsys/sw',
 ])
 
-env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
-
 env.Prepend(LIBS = [
     gallium,
     'gdi32',
-    identity,
-    rbug,
-    trace,
-    galahad,
     'user32',
     'ws2_32',
 ])
@@ -27,8 +21,13 @@ sources = [
     graw_util,
 ]
 
-env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-env.Prepend(LIBS = [softpipe])
+if True:
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
+    env.Prepend(LIBS = [trace, rbug, galahad, softpipe])
+
+if env['llvm']:
+    env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+    env.Prepend(LIBS = [llvmpipe])
 
 graw = env.SharedLibrary(
     target = 'graw',

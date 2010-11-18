@@ -7,9 +7,6 @@ env = env.Clone()
 
 env.Prepend(LIBS = [
     ws_xlib,
-    trace,
-    rbug,
-    galahad,
     gallium,
 ])
 
@@ -28,8 +25,8 @@ sources = [
 ]
 
 if True:
-    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    env.Prepend(LIBS = [softpipe])
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
+    env.Prepend(LIBS = [trace, rbug, galahad, softpipe])
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
