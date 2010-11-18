@@ -196,6 +196,9 @@ ir_expression::get_num_operands(ir_expression_operation op)
 
    if (op <= ir_last_binop)
       return 2;
+
+   assert(false);
+   return 0;
 }
 
 static const char *const operator_strs[] = {
