@@ -426,6 +426,9 @@ static void upload_line_stipple(struct brw_context *brw)
    GLfloat tmp;
    GLint tmpi;
 
+   if (!ctx->Line.StippleFlag)
+      return;
+
    memset(&bls, 0, sizeof(bls));
    bls.header.opcode = CMD_LINE_STIPPLE_PATTERN;
    bls.header.length = sizeof(bls)/4 - 2;
