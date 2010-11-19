@@ -2975,15 +2975,13 @@ fs_visitor::compute_to_mrf()
 	 }
 
 	 if (scan_inst->mlen > 0) {
-	    /* Found a SEND instruction, which will do some amount of
-	     * implied write that may overwrite our MRF that we were
-	     * hoping to compute-to-MRF somewhere above it.  Nothing
-	     * we have implied-writes more than 2 MRFs from base_mrf,
-	     * though.
+	    /* Found a SEND instruction, which means that there are
+	     * live values in MRFs from base_mrf to base_mrf +
+	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
+	     * above it.
 	     */
-	    int implied_write_len = MIN2(scan_inst->mlen, 2);
 	    if (inst->dst.hw_reg >= scan_inst->base_mrf &&
-		inst->dst.hw_reg < scan_inst->base_mrf + implied_write_len) {
+		inst->dst.hw_reg < scan_inst->base_mrf + scan_inst->mlen) {
 	       break;
 	    }
 	 }
