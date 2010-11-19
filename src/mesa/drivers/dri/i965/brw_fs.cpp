@@ -101,10 +101,12 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
       do_mat_op_to_vec(shader->ir);
-      do_mod_to_fract(shader->ir);
-      do_div_to_mul_rcp(shader->ir);
-      do_sub_to_add_neg(shader->ir);
-      do_explog_to_explog2(shader->ir);
+      lower_instructions(shader->ir,
+			 MOD_TO_FRACT |
+			 DIV_TO_MUL_RCP |
+			 SUB_TO_ADD_NEG |
+			 EXP_TO_EXP2 |
+			 LOG_TO_LOG2);
       do_lower_texture_projection(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
 
