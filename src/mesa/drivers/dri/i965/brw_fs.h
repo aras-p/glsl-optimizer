@@ -148,6 +148,21 @@ public:
    fs_reg(enum register_file file, int hw_reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
+   bool equals(fs_reg *r)
+   {
+      return (file == r->file &&
+	      reg == r->reg &&
+	      reg_offset == r->reg_offset &&
+	      hw_reg == r->hw_reg &&
+	      type == r->type &&
+	      negate == r->negate &&
+	      abs == r->abs &&
+	      memcmp(&fixed_hw_reg, &r->fixed_hw_reg,
+		     sizeof(fixed_hw_reg)) == 0 &&
+	      smear == r->smear &&
+	      imm.u == r->imm.u);
+   }
+
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
    /** virtual register number.  0 = fixed hw reg */
@@ -270,6 +285,26 @@ public:
 	 assert(src[2].reg_offset >= 0);
    }
 
+   bool equals(fs_inst *inst)
+   {
+      return (opcode == inst->opcode &&
+	      dst.equals(&inst->dst) &&
+	      src[0].equals(&inst->src[0]) &&
+	      src[1].equals(&inst->src[1]) &&
+	      src[2].equals(&inst->src[2]) &&
+	      saturate == inst->saturate &&
+	      predicated == inst->predicated &&
+	      conditional_mod == inst->conditional_mod &&
+	      mlen == inst->mlen &&
+	      base_mrf == inst->base_mrf &&
+	      sampler == inst->sampler &&
+	      target == inst->target &&
+	      eot == inst->eot &&
+	      header_present == inst->header_present &&
+	      shadow_compare == inst->shadow_compare &&
+	      offset == inst->offset);
+   }
+
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[3];
@@ -372,6 +407,7 @@ public:
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
+   bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
    void generate_fb_write(fs_inst *inst);
@@ -409,6 +445,7 @@ public:
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
    void setup_builtin_uniform_values(ir_variable *ir);
+   int implied_mrf_writes(fs_inst *inst);
 
    struct brw_context *brw;
    const struct gl_fragment_program *fp;

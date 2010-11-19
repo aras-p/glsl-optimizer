@@ -177,6 +177,46 @@ type_size(const struct glsl_type *type)
    }
 }
 
+/**
+ * Returns how many MRFs an FS opcode will write over.
+ *
+ * Note that this is not the 0 or 1 implied writes in an actual gen
+ * instruction -- the FS opcodes often generate MOVs in addition.
+ */
+int
+fs_visitor::implied_mrf_writes(fs_inst *inst)
+{
+   if (inst->mlen == 0)
+      return 0;
+
+   switch (inst->opcode) {
+   case FS_OPCODE_RCP:
+   case FS_OPCODE_RSQ:
+   case FS_OPCODE_SQRT:
+   case FS_OPCODE_EXP2:
+   case FS_OPCODE_LOG2:
+   case FS_OPCODE_SIN:
+   case FS_OPCODE_COS:
+      return 1;
+   case FS_OPCODE_POW:
+      return 2;
+   case FS_OPCODE_TEX:
+   case FS_OPCODE_TXB:
+   case FS_OPCODE_TXL:
+      return 1;
+   case FS_OPCODE_FB_WRITE:
+      return 2;
+   case FS_OPCODE_PULL_CONSTANT_LOAD:
+   case FS_OPCODE_UNSPILL:
+      return 1;
+   case FS_OPCODE_SPILL:
+      return 2;
+   default:
+      assert(!"not reached");
+      return inst->mlen;
+   }
+}
+
 int
 fs_visitor::virtual_grf_alloc(int size)
 {
@@ -3066,6 +3106,78 @@ fs_visitor::compute_to_mrf()
    return progress;
 }
 
+/**
+ * Walks through basic blocks, locking for repeated MRF writes and
+ * removing the later ones.
+ */
+bool
+fs_visitor::remove_duplicate_mrf_writes()
+{
+   fs_inst *last_mrf_move[16];
+   bool progress = false;
+
+   memset(last_mrf_move, 0, sizeof(last_mrf_move));
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+      case BRW_OPCODE_WHILE:
+      case BRW_OPCODE_IF:
+      case BRW_OPCODE_ELSE:
+      case BRW_OPCODE_ENDIF:
+	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
+	 continue;
+      default:
+	 break;
+      }
+
+      if (inst->opcode == BRW_OPCODE_MOV &&
+	  inst->dst.file == MRF) {
+	 fs_inst *prev_inst = last_mrf_move[inst->dst.hw_reg];
+	 if (prev_inst && inst->equals(prev_inst)) {
+	    inst->remove();
+	    progress = true;
+	    continue;
+	 }
+      }
+
+      /* Clear out the last-write records for MRFs that were overwritten. */
+      if (inst->dst.file == MRF) {
+	 last_mrf_move[inst->dst.hw_reg] = NULL;
+      }
+
+      if (inst->mlen > 0) {
+	 /* Found a SEND instruction, which will include two of fewer
+	  * implied MRF writes.  We could do better here.
+	  */
+	 for (int i = 0; i < implied_mrf_writes(inst); i++) {
+	    last_mrf_move[inst->base_mrf + i] = NULL;
+	 }
+      }
+
+      /* Clear out any MRF move records whose sources got overwritten. */
+      if (inst->dst.file == GRF) {
+	 for (unsigned int i = 0; i < Elements(last_mrf_move); i++) {
+	    if (last_mrf_move[i] &&
+		last_mrf_move[i]->src[0].reg == inst->dst.reg) {
+	       last_mrf_move[i] = NULL;
+	    }
+	 }
+      }
+
+      if (inst->opcode == BRW_OPCODE_MOV &&
+	  inst->dst.file == MRF &&
+	  inst->src[0].file == GRF &&
+	  !inst->predicated) {
+	 last_mrf_move[inst->dst.hw_reg] = inst;
+      }
+   }
+
+   return progress;
+}
+
 bool
 fs_visitor::virtual_grf_interferes(int a, int b)
 {
@@ -3438,6 +3550,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       bool progress;
       do {
 	 progress = false;
+
+	 progress = v.remove_duplicate_mrf_writes() || progress;
+
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;
