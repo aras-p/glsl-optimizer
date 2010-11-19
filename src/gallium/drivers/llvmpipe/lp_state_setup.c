@@ -76,7 +76,13 @@ struct lp_setup_args
    LLVMValueRef dy20_ooa;
    LLVMValueRef dy01_ooa;
    LLVMValueRef dx20_ooa;
-   LLVMValueRef dx01_ooa;   
+   LLVMValueRef dx01_ooa;
+
+   /* Temporary, per-attribute:
+    */
+   LLVMValueRef v0a;
+   LLVMValueRef v1a;
+   LLVMValueRef v2a;
 };
 
 static LLVMTypeRef type4f(void)
@@ -152,16 +158,11 @@ static void
 emit_constant_coef4( LLVMBuilderRef builder,
 		     struct lp_setup_args *args,
 		     unsigned slot,
-		     LLVMValueRef vert,
-		     unsigned attr)
+		     LLVMValueRef vert)
 {
    LLVMValueRef zero      = LLVMConstReal(LLVMFloatType(), 0.0);
    LLVMValueRef zerovec   = vec4f_from_scalar(builder, zero, "zero");
-   LLVMValueRef idx       = LLVMConstInt(LLVMInt32Type(), attr, 0);
-   LLVMValueRef attr_ptr  = LLVMBuildGEP(builder, vert, &idx, 1, "attr_ptr");
-   LLVMValueRef vert_attr = LLVMBuildLoad(builder, attr_ptr, "vert_attr");
-
-   store_coef(builder, args, slot, vert_attr, zerovec, zerovec);
+   store_coef(builder, args, slot, vert, zerovec, zerovec);
 }
 
 
@@ -214,6 +215,132 @@ vert_clamp(LLVMBuilderRef b,
    return clamp_value;
 }
 
+static void
+lp_twoside(LLVMBuilderRef b, 
+           struct lp_setup_args *args,
+           const struct lp_setup_variant_key *key)
+{
+   LLVMValueRef a0_back, a1_back, a2_back;
+   LLVMValueRef idx2 = LLVMConstInt(LLVMInt32Type(), key->bcolor_slot, 0);
+
+   LLVMValueRef facing = args->facing;
+   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for if condition */
+   
+   a0_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx2, 1, ""), "v0a_back");
+   a1_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx2, 1, ""), "v1a_back");
+   a2_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx2, 1, ""), "v2a_back");
+
+   /* Possibly swap the front and back attrib values,
+    *
+    * Prefer select to if so we don't have to worry about phis or
+    * allocas.
+    */
+   args->v0a = LLVMBuildSelect(b, front_facing, args->v0a, a0_back, "");
+   args->v1a = LLVMBuildSelect(b, front_facing, args->v1a, a1_back, "");
+   args->v2a = LLVMBuildSelect(b, front_facing, args->v2a, a2_back, "");
+
+}
+
+static void
+lp_do_offset_tri(LLVMBuilderRef b, 
+                 struct lp_setup_args *args,
+                 const struct lp_setup_variant_key *key)
+{
+   struct lp_build_context bld;
+   LLVMValueRef zoffset, mult;
+   LLVMValueRef z0_new, z1_new, z2_new;
+   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy;
+   LLVMValueRef max, max_value;
+   
+   LLVMValueRef one  = LLVMConstReal(LLVMFloatType(), 1.0);
+   LLVMValueRef zero  = LLVMConstReal(LLVMFloatType(), 0.0);
+
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
+   LLVMValueRef v0_x = vert_attrib(b, args->v0, 0, 0, "v0_x");
+   LLVMValueRef v1_x = vert_attrib(b, args->v1, 0, 0, "v1_x");
+   LLVMValueRef v2_x = vert_attrib(b, args->v2, 0, 0, "v2_x");
+   LLVMValueRef v0_y = vert_attrib(b, args->v0, 0, 1, "v0_y");
+   LLVMValueRef v1_y = vert_attrib(b, args->v1, 0, 1, "v1_y");
+   LLVMValueRef v2_y = vert_attrib(b, args->v2, 0, 1, "v2_y");
+   LLVMValueRef v0_z = vert_attrib(b, args->v0, 0, 2, "v0_z");
+   LLVMValueRef v1_z = vert_attrib(b, args->v1, 0, 2, "v1_z");
+   LLVMValueRef v2_z = vert_attrib(b, args->v2, 0, 2, "v2_z");
+ 
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
+   LLVMValueRef dx02 = LLVMBuildFSub(b, v0_x, v2_x, "dx02");
+   LLVMValueRef dy02 = LLVMBuildFSub(b, v0_y, v2_y, "dy02");
+   LLVMValueRef dz02 = LLVMBuildFSub(b, v0_z, v2_z, "dz02");
+   LLVMValueRef dx12 = LLVMBuildFSub(b, v1_x, v2_x, "dx12"); 
+   LLVMValueRef dy12 = LLVMBuildFSub(b, v1_y, v2_y, "dy12");
+   LLVMValueRef dz12 = LLVMBuildFSub(b, v1_z, v2_z, "dz12");
+ 
+   /* det = cross(e,f).z */
+   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
+   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
+   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
+   LLVMValueRef inv_det = LLVMBuildFDiv(b, one, det, "inv_det"); 
+   
+   /* (res1,res2) = cross(e,f).xy */
+   LLVMValueRef dy02_dz12    = LLVMBuildFMul(b, dy02, dz12, "dy02_dz12");
+   LLVMValueRef dz02_dy12    = LLVMBuildFMul(b, dz02, dy12, "dz02_dy12");
+   LLVMValueRef dz02_dx12    = LLVMBuildFMul(b, dz02, dx12, "dz02_dx12");
+   LLVMValueRef dx02_dz12    = LLVMBuildFMul(b, dx02, dz12, "dx02_dz12");
+   LLVMValueRef res1  = LLVMBuildFSub(b, dy02_dz12, dz02_dy12, "res1");
+   LLVMValueRef res2  = LLVMBuildFSub(b, dz02_dx12, dx02_dz12, "res2");
+
+   /* dzdx = fabsf(res1 * inv_det), dydx = fabsf(res2 * inv_det)*/
+   lp_build_context_init(&bld, b, lp_type_float(32));
+   dzdx0 = LLVMBuildFMul(b, res1, inv_det, "dzdx");
+   dzdx  = lp_build_abs(&bld, dzdx0);
+   dzdy0 = LLVMBuildFMul(b, res2, inv_det, "dzdy");
+   dzdy  = lp_build_abs(&bld, dzdy0);
+
+   /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
+   max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
+   max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
+
+   mult = LLVMBuildFMul(b, max_value, LLVMConstReal(LLVMFloatType(), key->scale), "");
+   zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");
+
+   /* clamp and do offset */
+   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one);
+   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one);
+   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one);
+
+   /* insert into args->a0.z, a1.z, a2.z:
+    */   
+   args->v0a = LLVMBuildInsertElement(b, args->v0a, z0_new, LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+   args->v1a = LLVMBuildInsertElement(b, args->v1a, z1_new, LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+   args->v2a = LLVMBuildInsertElement(b, args->v2a, z2_new, LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+}
+
+static void
+load_attribute(LLVMBuilderRef b, 
+               struct lp_setup_args *args,
+               const struct lp_setup_variant_key *key,
+               unsigned slot,
+               unsigned vert_attr)
+{
+   LLVMValueRef idx = LLVMConstInt(LLVMInt32Type(), vert_attr, 0);
+
+   /* Load the vertex data
+    */
+   args->v0a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx, 1, ""), "v0a");
+   args->v1a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx, 1, ""), "v1a");
+   args->v2a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx, 1, ""), "v2a");
+
+
+   /* Potentially modify it according to twoside, offset, etc:
+    */
+   if (slot == 0 && (key->scale != 0.0f || key->units != 0.0f)) {
+      lp_do_offset_tri(b, args, key);
+   }
+
+   if (key->twoside && slot == key->color_slot) {
+      lp_twoside(b, args, key);
+   }
+}
+
 static void 
 emit_coef4( LLVMBuilderRef b,
 	    struct lp_setup_args *args,
@@ -260,18 +387,15 @@ emit_coef4( LLVMBuilderRef b,
 static void 
 emit_linear_coef( LLVMBuilderRef b,
 		  struct lp_setup_args *args,
-		  unsigned slot,
-		  unsigned vert_attr)
+		  unsigned slot)
 {
-   LLVMValueRef idx = LLVMConstInt(LLVMInt32Type(), vert_attr, 0);
-
-   LLVMValueRef a0 = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx, 1, ""), "v0a");
-   LLVMValueRef a1 = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx, 1, ""), "v1a");
-   LLVMValueRef a2 = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx, 1, ""), "v2a");
-
-   emit_coef4(b, args, slot, a0, a1, a2);
+   /* nothing to do anymore */
+   emit_coef4(b,
+              args, slot, 
+              args->v0a,
+              args->v1a,
+              args->v2a);
 }
-
 
 
 /**
@@ -285,24 +409,17 @@ emit_linear_coef( LLVMBuilderRef b,
 static void 
 emit_perspective_coef( LLVMBuilderRef b,
 		       struct lp_setup_args *args,
-		       unsigned slot,
-		       unsigned vert_attr)
+		       unsigned slot)
 {
    /* premultiply by 1/w  (v[0][3] is always 1/w):
     */
-   LLVMValueRef idx = LLVMConstInt(LLVMInt32Type(), vert_attr, 0);
-
-   LLVMValueRef v0a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx, 1, ""), "v0a");
-   LLVMValueRef v1a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx, 1, ""), "v1a");
-   LLVMValueRef v2a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx, 1, ""), "v2a");
-
    LLVMValueRef v0_oow = vec4f_from_scalar(b, vert_attrib(b, args->v0, 0, 3, ""), "v0_oow");
    LLVMValueRef v1_oow = vec4f_from_scalar(b, vert_attrib(b, args->v1, 0, 3, ""), "v1_oow");
    LLVMValueRef v2_oow = vec4f_from_scalar(b, vert_attrib(b, args->v2, 0, 3, ""), "v2_oow");
 
-   LLVMValueRef v0_oow_v0a = LLVMBuildFMul(b, v0a, v0_oow, "v0_oow_v0a");
-   LLVMValueRef v1_oow_v1a = LLVMBuildFMul(b, v1a, v1_oow, "v1_oow_v1a");
-   LLVMValueRef v2_oow_v2a = LLVMBuildFMul(b, v2a, v2_oow, "v2_oow_v2a");
+   LLVMValueRef v0_oow_v0a = LLVMBuildFMul(b, args->v0a, v0_oow, "v0_oow_v0a");
+   LLVMValueRef v1_oow_v1a = LLVMBuildFMul(b, args->v1a, v1_oow, "v1_oow_v1a");
+   LLVMValueRef v2_oow_v2a = LLVMBuildFMul(b, args->v2a, v2_oow, "v2_oow_v2a");
 
    emit_coef4(b, args, slot, v0_oow_v0a, v1_oow_v1a, v2_oow_v2a);
 }
@@ -311,9 +428,9 @@ emit_perspective_coef( LLVMBuilderRef b,
 static void
 emit_position_coef( LLVMBuilderRef builder,
 		    struct lp_setup_args *args,
-		    int slot, int attrib )
+		    int slot )
 {
-   emit_linear_coef(builder, args, slot, attrib);
+   emit_linear_coef(builder, args, slot);
 }
 
 
@@ -331,29 +448,34 @@ emit_tri_coef( LLVMBuilderRef builder,
 
    /* The internal position input is in slot zero:
     */
-   emit_position_coef(builder, args, 0, 0);
+   load_attribute(builder, args, key, 0, 0);
+   emit_position_coef(builder, args, 0);
 
    /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < key->num_inputs; slot++) {
-      unsigned vert_attr = key->inputs[slot].src_index;
+
+      if (key->inputs[slot].interp == LP_INTERP_CONSTANT ||
+          key->inputs[slot].interp == LP_INTERP_LINEAR ||
+          key->inputs[slot].interp == LP_INTERP_PERSPECTIVE)
+         load_attribute(builder, args, key, slot, key->inputs[slot].src_index);
 
       switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
 	 if (key->flatshade_first) {
-	    emit_constant_coef4(builder, args, slot+1, args->v0, vert_attr);
+	    emit_constant_coef4(builder, args, slot+1, args->v0a);
 	 }
 	 else {
-	    emit_constant_coef4(builder, args, slot+1, args->v2, vert_attr);
+	    emit_constant_coef4(builder, args, slot+1, args->v2a);
 	 }
 	 break;
 
       case LP_INTERP_LINEAR:
-	 emit_linear_coef(builder, args, slot+1, vert_attr);
+	 emit_linear_coef(builder, args, slot+1);
          break;
 
       case LP_INTERP_PERSPECTIVE:
-	 emit_perspective_coef(builder, args, slot+1, vert_attr);
+	 emit_perspective_coef(builder, args, slot+1);
          break;
 
       case LP_INTERP_POSITION:
@@ -489,118 +611,6 @@ init_args(LLVMBuilderRef b,
    args->y0_center = vec4f_from_scalar(b, y0_center, "y0_center_4f");
 }
 
-static void
-lp_twoside(LLVMBuilderRef b, 
-           struct lp_setup_args *args,
-           const struct lp_setup_variant_key *key)
-{
-   struct lp_build_if_state if_state;
- 
-   LLVMValueRef a0_old, a1_old, a2_old;
-   LLVMValueRef a0_new, a1_new, a2_new;
-   
-   LLVMValueRef idx1 = LLVMConstInt(LLVMInt32Type(), key->color_slot, 0);
-   LLVMValueRef idx2 = LLVMConstInt(LLVMInt32Type(), key->bcolor_slot, 0);
-
-   LLVMValueRef facing = args->facing;
-   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for if condition */
-   
-   lp_build_if(&if_state, b, front_facing);
-   {
-      /* swap the front and back attrib values */
-      a0_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx1, 1, ""), "v0a");
-      a1_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx1, 1, ""), "v1a");
-      a2_old = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx1, 1, ""), "v2a");
-
-      a0_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx2, 1, ""), "v0a");
-      a1_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx2, 1, ""), "v1a");
-      a2_new = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx2, 1, ""), "v2a");
-
-      LLVMBuildStore(b, a0_new, LLVMBuildGEP(b, args->v0, &idx1, 1, ""));
-      LLVMBuildStore(b, a1_new, LLVMBuildGEP(b, args->v1, &idx1, 1, ""));
-      LLVMBuildStore(b, a2_new, LLVMBuildGEP(b, args->v2, &idx1, 1, ""));
-   }
-   lp_build_endif(&if_state);
-   
-}
-
-static void
-lp_do_offset_tri(LLVMBuilderRef b, 
-                 struct lp_setup_args *args,
-                 const struct lp_setup_variant_key *key)
-{
-   struct lp_build_context bld;
-   LLVMValueRef zoffset, mult;
-   LLVMValueRef z0_new, z1_new, z2_new;
-   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy;
-   LLVMValueRef max, max_value;
-
-   LLVMValueRef idx[2];
-   LLVMValueRef one  = LLVMConstReal(LLVMFloatType(), 1.0);
-   LLVMValueRef zero  = LLVMConstReal(LLVMFloatType(), 0.0);
-
-   /* edge vectors: e = v0 - v2, f = v1 - v2 */
-   LLVMValueRef v0_x = vert_attrib(b, args->v0, 0, 0, "v0_x");
-   LLVMValueRef v1_x = vert_attrib(b, args->v1, 0, 0, "v1_x");
-   LLVMValueRef v2_x = vert_attrib(b, args->v2, 0, 0, "v2_x");
-   LLVMValueRef v0_y = vert_attrib(b, args->v0, 0, 1, "v0_y");
-   LLVMValueRef v1_y = vert_attrib(b, args->v1, 0, 1, "v1_y");
-   LLVMValueRef v2_y = vert_attrib(b, args->v2, 0, 1, "v2_y");
-   LLVMValueRef v0_z = vert_attrib(b, args->v0, 0, 2, "v0_z");
-   LLVMValueRef v1_z = vert_attrib(b, args->v1, 0, 2, "v1_z");
-   LLVMValueRef v2_z = vert_attrib(b, args->v2, 0, 2, "v2_z");
- 
-   /* edge vectors: e = v0 - v2, f = v1 - v2 */
-   LLVMValueRef dx02 = LLVMBuildFSub(b, v0_x, v2_x, "dx02");
-   LLVMValueRef dy02 = LLVMBuildFSub(b, v0_y, v2_y, "dy02");
-   LLVMValueRef dz02 = LLVMBuildFSub(b, v0_z, v2_z, "dz02");
-   LLVMValueRef dx12 = LLVMBuildFSub(b, v1_x, v2_x, "dx12"); 
-   LLVMValueRef dy12 = LLVMBuildFSub(b, v1_y, v2_y, "dy12");
-   LLVMValueRef dz12 = LLVMBuildFSub(b, v1_z, v2_z, "dz12");
- 
-   /* det = cross(e,f).z */
-   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
-   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
-   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
-   LLVMValueRef inv_det = LLVMBuildFDiv(b, one, det, "inv_det"); 
-   
-   /* (res1,res2) = cross(e,f).xy */
-   LLVMValueRef dy02_dz12    = LLVMBuildFMul(b, dy02, dz12, "dy02_dz12");
-   LLVMValueRef dz02_dy12    = LLVMBuildFMul(b, dz02, dy12, "dz02_dy12");
-   LLVMValueRef dz02_dx12    = LLVMBuildFMul(b, dz02, dx12, "dz02_dx12");
-   LLVMValueRef dx02_dz12    = LLVMBuildFMul(b, dx02, dz12, "dx02_dz12");
-   LLVMValueRef res1  = LLVMBuildFSub(b, dy02_dz12, dz02_dy12, "res1");
-   LLVMValueRef res2  = LLVMBuildFSub(b, dz02_dx12, dx02_dz12, "res2");
- 
-   /* dzdx = fabsf(res1 * inv_det), dydx = fabsf(res2 * inv_det)*/
-   lp_build_context_init(&bld, b, lp_type_float(32));
-   dzdx0 = LLVMBuildFMul(b, res1, inv_det, "dzdx");
-   dzdx  = lp_build_abs(&bld, dzdx0);
-   dzdy0 = LLVMBuildFMul(b, res2, inv_det, "dzdy");
-   dzdy  = lp_build_abs(&bld, dzdy0);
-
-   /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
-   max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
-   max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
-
-   mult = LLVMBuildFMul(b, max_value, LLVMConstReal(LLVMFloatType(), key->scale), "");
-   zoffset = LLVMBuildFAdd(b, LLVMConstReal(LLVMFloatType(), key->units), mult, "zoffset");     
-
-   /* clamp and do offset */
-   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one);
-   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one);
-   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one);
-   
-   /* store back new offsetted z values */
-   idx[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   idx[1] = LLVMConstInt(LLVMInt32Type(), 2, 0);
-   LLVMBuildStore(b, z0_new, LLVMBuildGEP(b, args->v0, idx, 2, ""));
-   LLVMBuildStore(b, z1_new, LLVMBuildGEP(b, args->v1, idx, 2, ""));
-   LLVMBuildStore(b, z2_new, LLVMBuildGEP(b, args->v2, idx, 2, ""));
-                                          
-}
-
-
 /**
  * Generate the runtime callable function for the coefficient calculation.
  *
@@ -685,12 +695,6 @@ generate_setup_variant(struct llvmpipe_screen *screen,
 
    set_noalias(builder, variant->function, arg_types, Elements(arg_types));
    init_args(builder, &args, variant);
-   if (variant->key.twoside){
-      lp_twoside(builder, &args, &variant->key);
-   }
-   if (variant->key.scale || variant->key.units){
-      lp_do_offset_tri(builder, &args, &variant->key);
-   }
    emit_tri_coef(builder, &variant->key, &args);
 
    lp_emit_emms(builder);
