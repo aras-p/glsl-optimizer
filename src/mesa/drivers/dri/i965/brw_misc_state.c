@@ -305,6 +305,9 @@ static void upload_polygon_stipple(struct brw_context *brw)
    struct brw_polygon_stipple bps;
    GLuint i;
 
+   if (!ctx->Polygon.StippleFlag)
+      return;
+
    memset(&bps, 0, sizeof(bps));
    bps.header.opcode = CMD_POLY_STIPPLE_PATTERN;
    bps.header.length = sizeof(bps)/4-2;
@@ -347,6 +350,9 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple_offset bpso;
 
+   if (!ctx->Polygon.StippleFlag)
+      return;
+
    memset(&bpso, 0, sizeof(bpso));
    bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
    bpso.header.length = sizeof(bpso)/4-2;
@@ -375,7 +381,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
 
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
-      .mesa = _NEW_WINDOW_POS,
+      .mesa = _NEW_WINDOW_POS | _NEW_POLYGONSTIPPLE,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
