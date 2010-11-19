@@ -123,6 +123,7 @@ public:
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
+   bool saturate;
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
@@ -288,6 +289,7 @@ public:
 
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
+   GLboolean try_emit_sat(ir_expression *ir);
 
    void emit_swz(ir_expression *ir);
 
@@ -939,6 +941,32 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    return true;
 }
 
+GLboolean
+ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
+{
+   /* Saturates were only introduced to vertex programs in
+    * NV_vertex_program3, so don't give them to drivers in the VP.
+    */
+   if (this->prog->Target == GL_VERTEX_PROGRAM_ARB)
+      return false;
+
+   ir_rvalue *sat_src = ir->as_rvalue_to_saturate();
+   if (!sat_src)
+      return false;
+
+   sat_src->accept(this);
+   ir_to_mesa_src_reg src = this->result;
+
+   this->result = get_temp(ir->type);
+   ir_to_mesa_instruction *inst;
+   inst = ir_to_mesa_emit_op1(ir, OPCODE_MOV,
+			      ir_to_mesa_dst_reg_from_src(this->result),
+			      src);
+   inst->saturate = true;
+
+   return true;
+}
+
 void
 ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
 				    ir_to_mesa_src_reg *reg, int *num_reladdr)
@@ -1092,6 +1120,8 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       if (try_emit_mad(ir, 0))
 	 return;
    }
+   if (try_emit_sat(ir))
+      return;
 
    if (ir->operation == ir_quadop_vector) {
       this->emit_swz(ir);
@@ -2678,6 +2708,8 @@ get_mesa_program(struct gl_context *ctx, struct gl_shader_program *shader_progra
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;
+      if (inst->saturate)
+	 mesa_inst->SaturateMode = SATURATE_ZERO_ONE;
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
       mesa_inst->DstReg.CondMask = inst->dst_reg.cond_mask;
