@@ -54,7 +54,6 @@ struct i915_drm_buffer {
 
    void *ptr;
    unsigned map_count;
-   boolean map_gtt;
 
    boolean flinked;
    unsigned flink;
