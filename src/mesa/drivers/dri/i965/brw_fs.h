@@ -397,6 +397,7 @@ public:
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
+   bool try_emit_saturate(ir_expression *ir);
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);

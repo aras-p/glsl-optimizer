@@ -704,6 +704,27 @@ fs_visitor::visit(ir_dereference_array *ir)
    }
 }
 
+/* Instruction selection: Produce a MOV.sat instead of
+ * MIN(MAX(val, 0), 1) when possible.
+ */
+bool
+fs_visitor::try_emit_saturate(ir_expression *ir)
+{
+   ir_rvalue *sat_val = ir->as_rvalue_to_saturate();
+
+   if (!sat_val)
+      return false;
+
+   sat_val->accept(this);
+   fs_reg src = this->result;
+
+   this->result = fs_reg(this, ir->type);
+   fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, src));
+   inst->saturate = true;
+
+   return true;
+}
+
 void
 fs_visitor::visit(ir_expression *ir)
 {
@@ -712,6 +733,10 @@ fs_visitor::visit(ir_expression *ir)
    fs_inst *inst;
 
    assert(ir->get_num_operands() <= 2);
+
+   if (try_emit_saturate(ir))
+      return;
+
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
@@ -3162,6 +3187,7 @@ fs_visitor::generate_code()
 
       brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicated);
+      brw_set_saturate(p, inst->saturate);
 
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:
