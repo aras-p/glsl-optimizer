@@ -973,6 +973,8 @@
 #define PCI_CHIP_G33_G			0x29C2
 #define PCI_CHIP_Q35_G			0x29B2
 #define PCI_CHIP_Q33_G			0x29D2
+#define PCI_CHIP_PINEVIEW_G		0xA001
+#define PCI_CHIP_PINEVIEW_M		0xA011
 
 
 #endif

@@ -83,6 +83,12 @@ i915_get_name(struct pipe_screen *screen)
    case PCI_CHIP_Q33_G:
       chipset = "Q33";
       break;
+   case PCI_CHIP_PINEVIEW_G:
+      chipset = "Pineview G";
+      break;
+   case PCI_CHIP_PINEVIEW_M:
+      chipset = "Pineview M";
+      break;
    default:
       chipset = "unknown";
       break;
@@ -351,6 +357,8 @@ i915_screen_create(struct i915_winsys *iws)
    case PCI_CHIP_G33_G:
    case PCI_CHIP_Q33_G:
    case PCI_CHIP_Q35_G:
+   case PCI_CHIP_PINEVIEW_G:
+   case PCI_CHIP_PINEVIEW_M:
       is->is_i945 = TRUE;
       break;
 
