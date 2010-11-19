@@ -393,9 +393,10 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
  */
 static void upload_aa_line_parameters(struct brw_context *brw)
 {
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_aa_line_parameters balp;
 
-   if (!brw->has_aa_line_parameters)
+   if (!ctx->Line.SmoothFlag || !brw->has_aa_line_parameters)
       return;
 
    /* use legacy aa line coverage computation */
@@ -408,7 +409,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 
 const struct brw_tracked_state brw_aa_line_parameters = {
    .dirty = {
-      .mesa = 0,
+      .mesa = _NEW_LINE,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
