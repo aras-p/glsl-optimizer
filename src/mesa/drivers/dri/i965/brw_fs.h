@@ -96,10 +96,7 @@ public:
 
    void init()
    {
-      this->reg = 0;
-      this->reg_offset = 0;
-      this->negate = 0;
-      this->abs = 0;
+      memset(this, 0, sizeof(*this));
       this->hw_reg = -1;
       this->smear = -1;
    }
@@ -174,6 +171,10 @@ public:
    } imm;
 };
 
+static const fs_reg reg_undef;
+static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
+static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
+
 class fs_inst : public exec_node {
 public:
    /* Callers of this talloc-based new need not call delete. It's
@@ -190,18 +191,14 @@ public:
 
    void init()
    {
+      memset(this, 0, sizeof(*this));
       this->opcode = BRW_OPCODE_NOP;
-      this->saturate = false;
       this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
-      this->sampler = 0;
-      this->target = 0;
-      this->eot = false;
-      this->header_present = false;
-      this->shadow_compare = false;
-      this->mlen = 0;
-      this->base_mrf = 0;
-      this->offset = 0;
+
+      this->dst = reg_undef;
+      this->src[0] = reg_undef;
+      this->src[1] = reg_undef;
+      this->src[2] = reg_undef;
    }
 
    fs_inst()
@@ -453,10 +450,6 @@ public:
 
    int grf_used;
 };
-
-static const fs_reg reg_undef;
-static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
-static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);
 GLboolean brw_do_vector_splitting(struct exec_list *instructions);
