@@ -31,6 +31,16 @@ ir_rvalue::ir_rvalue()
    this->type = glsl_type::error_type;
 }
 
+bool ir_rvalue::is_zero() const
+{
+   return false;
+}
+
+bool ir_rvalue::is_one() const
+{
+   return false;
+}
+
 /**
  * Modify the swizzle make to move one component to another
  *

@@ -171,6 +171,30 @@ public:
       return NULL;
    }
 
+   /**
+    * Determine if an r-value has the value zero
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * zero (or \c false for booleans).
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_one
+    */
+   virtual bool is_zero() const;
+
+   /**
+    * Determine if an r-value has the value one
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * one (or \c true for booleans).
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_zero
+    */
+   virtual bool is_one() const;
+
 protected:
    ir_rvalue();
 };
@@ -1460,27 +1484,8 @@ public:
     */
    bool has_value(const ir_constant *) const;
 
-   /**
-    * Determine if a constant has the value zero
-    *
-    * \note
-    * This function always returns \c false for constants that are not
-    * scalars or vectors.
-    *
-    * \sa ir_constant::has_value, ir_constant::is_one
-    */
-   bool is_zero() const;
-
-   /**
-    * Determine if a constant has the value one
-    *
-    * \note
-    * This function always returns \c false for constants that are not
-    * scalars or vectors.
-    *
-    * \sa ir_constant::has_value, ir_constant::is_zero
-    */
-   bool is_one() const;
+   virtual bool is_zero() const;
+   virtual bool is_one() const;
 
    /**
     * Value of the constant.
