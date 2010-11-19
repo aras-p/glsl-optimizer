@@ -40,7 +40,7 @@ i915_drm_winsys_destroy(struct i915_winsys *iws)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
 
-   drm_intel_bufmgr_destroy(idws->pools.gem);
+   drm_intel_bufmgr_destroy(idws->gem_manager);
 
    FREE(idws);
 }
@@ -67,8 +67,8 @@ i915_drm_winsys_create(int drmFD)
 
    idws->base.destroy = i915_drm_winsys_destroy;
 
-   idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
-   drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
+   idws->gem_manager = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
+   drm_intel_bufmgr_gem_enable_reuse(idws->gem_manager);
 
    idws->dump_cmd = debug_get_bool_option("I915_DUMP_CMD", FALSE);
    idws->send_cmd = !debug_get_bool_option("I915_NO_HW", FALSE);

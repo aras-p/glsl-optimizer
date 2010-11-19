@@ -12,7 +12,6 @@ i915_drm_buffer_create(struct i915_winsys *iws,
 {
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
-   drm_intel_bufmgr *pool;
    char *name;
 
    if (!buf)
@@ -24,20 +23,16 @@ i915_drm_buffer_create(struct i915_winsys *iws,
 
    if (type == I915_NEW_TEXTURE) {
       name = "gallium3d_texture";
-      pool = idws->pools.gem;
    } else if (type == I915_NEW_VERTEX) {
       name = "gallium3d_vertex";
-      pool = idws->pools.gem;
    } else if (type == I915_NEW_SCANOUT) {
       name = "gallium3d_scanout";
-      pool = idws->pools.gem;
    } else {
       assert(0);
       name = "gallium3d_unknown";
-      pool = idws->pools.gem;
    }
 
-   buf->bo = drm_intel_bo_alloc(pool, name, size, alignment);
+   buf->bo = drm_intel_bo_alloc(idws->gem_manager, name, size, alignment);
 
    if (!buf->bo)
       goto err;
@@ -63,7 +58,7 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       return NULL;
 
    buf->magic = 0xDEAD1337;
-   buf->bo = drm_intel_bo_gem_create_from_name(idws->pools.gem, "gallium3d_from_handle", whandle->handle);
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem_manager, "gallium3d_from_handle", whandle->handle);
    buf->flinked = TRUE;
    buf->flink = whandle->handle;
 
