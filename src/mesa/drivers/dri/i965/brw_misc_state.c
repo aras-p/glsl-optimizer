@@ -38,40 +38,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-
-
-
-
-/***********************************************************************
- * Blend color
- */
-
-static void upload_blend_constant_color(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct brw_blend_constant_color bcc;
-
-   memset(&bcc, 0, sizeof(bcc));      
-   bcc.header.opcode = CMD_BLEND_CONSTANT_COLOR;
-   bcc.header.length = sizeof(bcc)/4-2;
-   bcc.blend_constant_color[0] = ctx->Color.BlendColor[0];
-   bcc.blend_constant_color[1] = ctx->Color.BlendColor[1];
-   bcc.blend_constant_color[2] = ctx->Color.BlendColor[2];
-   bcc.blend_constant_color[3] = ctx->Color.BlendColor[3];
-
-   BRW_CACHED_BATCH_STRUCT(brw, &bcc);
-}
-
-
-const struct brw_tracked_state brw_blend_constant_color = {
-   .dirty = {
-      .mesa = _NEW_COLOR,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0
-   },
-   .emit = upload_blend_constant_color
-};
-
 /* Constant single cliprect for framebuffer object or DRI2 drawing */
 static void upload_drawing_rect(struct brw_context *brw)
 {
