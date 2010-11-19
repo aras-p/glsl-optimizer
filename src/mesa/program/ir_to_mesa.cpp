@@ -285,6 +285,8 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
+   bool process_move_condition(ir_rvalue *ir);
+
    void *mem_ctx;
 };
 
@@ -1326,6 +1328,93 @@ get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v)
    return ir_to_mesa_dst_reg_from_src(v->result);
 }
 
+/**
+ * Process the condition of a conditional assignment
+ *
+ * Examines the condition of a conditional assignment to generate the optimal
+ * first operand of a \c CMP instruction.  If the condition is a relational
+ * operator with 0 (e.g., \c ir_binop_less), the value being compared will be
+ * used as the source for the \c CMP instruction.  Otherwise the comparison
+ * is processed to a boolean result, and the boolean result is used as the
+ * operand to the CMP instruction.
+ */
+bool
+ir_to_mesa_visitor::process_move_condition(ir_rvalue *ir)
+{
+   ir_rvalue *src_ir = ir;
+   bool negate = true;
+   bool switch_order = false;
+
+   ir_expression *const expr = ir->as_expression();
+   if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+      bool zero_on_left = false;
+
+      if (expr->operands[0]->is_zero()) {
+	 src_ir = expr->operands[1];
+	 zero_on_left = true;
+      } else if (expr->operands[1]->is_zero()) {
+	 src_ir = expr->operands[0];
+	 zero_on_left = false;
+      }
+
+      /*      a is -  0  +            -  0  +
+       * (a <  0)  T  F  F  ( a < 0)  T  F  F
+       * (0 <  a)  F  F  T  (-a < 0)  F  F  T
+       * (a <= 0)  T  T  F  (-a < 0)  F  F  T  (swap order of other operands)
+       * (0 <= a)  F  T  T  ( a < 0)  T  F  F  (swap order of other operands)
+       * (a >  0)  F  F  T  (-a < 0)  F  F  T
+       * (0 >  a)  T  F  F  ( a < 0)  T  F  F
+       * (a >= 0)  F  T  T  ( a < 0)  T  F  F  (swap order of other operands)
+       * (0 >= a)  T  T  F  (-a < 0)  F  F  T  (swap order of other operands)
+       *
+       * Note that exchanging the order of 0 and 'a' in the comparison simply
+       * means that the value of 'a' should be negated.
+       */
+      if (src_ir != ir) {
+	 switch (expr->operation) {
+	 case ir_binop_less:
+	    switch_order = false;
+	    negate = zero_on_left;
+	    break;
+
+	 case ir_binop_greater:
+	    switch_order = false;
+	    negate = !zero_on_left;
+	    break;
+
+	 case ir_binop_lequal:
+	    switch_order = true;
+	    negate = !zero_on_left;
+	    break;
+
+	 case ir_binop_gequal:
+	    switch_order = true;
+	    negate = zero_on_left;
+	    break;
+
+	 default:
+	    /* This isn't the right kind of comparison afterall, so make sure
+	     * the whole condition is visited.
+	     */
+	    src_ir = ir;
+	    break;
+	 }
+      }
+   }
+
+   src_ir->accept(this);
+
+   /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves, and the
+    * condition we produced is 0.0 or 1.0.  By flipping the sign, we can
+    * choose which value OPCODE_CMP produces without an extra instruction
+    * computing the condition.
+    */
+   if (negate)
+      this->result.negate = ~this->result.negate;
+
+   return switch_order;
+}
+
 void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
@@ -1385,20 +1474,18 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    assert(r.file != PROGRAM_UNDEFINED);
 
    if (ir->condition) {
-      ir_to_mesa_src_reg condition;
+      const bool switch_order = this->process_move_condition(ir->condition);
+      ir_to_mesa_src_reg condition = this->result;
 
-      ir->condition->accept(this);
-      condition = this->result;
-
-      /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves,
-       * and the condition we produced is 0.0 or 1.0.  By flipping the
-       * sign, we can choose which value OPCODE_CMP produces without
-       * an extra computing the condition.
-       */
-      condition.negate = ~condition.negate;
       for (i = 0; i < type_size(ir->lhs->type); i++) {
-	 ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
-			     condition, r, ir_to_mesa_src_reg_from_dst(l));
+	 if (switch_order) {
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+				condition, ir_to_mesa_src_reg_from_dst(l), r);
+	 } else {
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+				condition, r, ir_to_mesa_src_reg_from_dst(l));
+	 }
+
 	 l.index++;
 	 r.index++;
       }
