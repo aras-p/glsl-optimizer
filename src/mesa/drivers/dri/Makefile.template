@@ -86,11 +86,12 @@ subdirs:
 symlinks:
 
 
-depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+depend: $(C_SOURCES) $(CXX_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend
 	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) \
+		$(C_SOURCES) $(CXX_SOURCES) \
 		$(ASM_SOURCES) > /dev/null 2>/dev/null
 
 
