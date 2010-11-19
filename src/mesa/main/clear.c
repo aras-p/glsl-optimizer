@@ -404,7 +404,7 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
       {
          const GLbitfield mask = make_color_buffer_mask(ctx, drawbuffer);
          if (mask == INVALID_MASK) {
-            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferuiv(drawbuffer=%d)",
                         drawbuffer);
             return;
          }
