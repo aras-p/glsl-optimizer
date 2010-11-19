@@ -218,10 +218,11 @@ vert_clamp(LLVMBuilderRef b,
 static void
 lp_twoside(LLVMBuilderRef b, 
            struct lp_setup_args *args,
-           const struct lp_setup_variant_key *key)
+           const struct lp_setup_variant_key *key,
+           int bcolor_slot)
 {
    LLVMValueRef a0_back, a1_back, a2_back;
-   LLVMValueRef idx2 = LLVMConstInt(LLVMInt32Type(), key->bcolor_slot, 0);
+   LLVMValueRef idx2 = LLVMConstInt(LLVMInt32Type(), bcolor_slot, 0);
 
    LLVMValueRef facing = args->facing;
    LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, LLVMConstInt(LLVMInt32Type(), 0, 0), ""); /** need i1 for if condition */
@@ -335,8 +336,11 @@ load_attribute(LLVMBuilderRef b,
       lp_do_offset_tri(b, args, key);
    }
 
-   if (key->twoside && vert_attr == key->color_slot) {
-      lp_twoside(b, args, key);
+   if (key->twoside) {
+      if (vert_attr == key->color_slot && key->bcolor_slot != ~0)
+         lp_twoside(b, args, key, key->bcolor_slot);
+      else if (vert_attr == key->spec_slot && key->bspec_slot != ~0)
+         lp_twoside(b, args, key, key->bspec_slot);
    }
 }
 
@@ -746,9 +750,11 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
-		      inputs[key->num_inputs]);   
-   key->color_slot = lp->color_slot;
-   key->bcolor_slot = lp->bcolor_slot;
+		      inputs[key->num_inputs]);
+   key->color_slot = lp->color_slot[0];
+   key->bcolor_slot = lp->bcolor_slot[0];
+   key->spec_slot = lp->color_slot[1];
+   key->bspec_slot = lp->bcolor_slot[1];
    key->units = (float) (lp->rasterizer->offset_units * lp->mrd);
    key->scale = lp->rasterizer->offset_scale;
    key->pad = 0;

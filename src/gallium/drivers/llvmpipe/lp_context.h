@@ -105,10 +105,10 @@ struct llvmpipe_context {
    struct vertex_info vertex_info;
    
    /** Which vertex shader output slot contains color */
-   int color_slot;
+   int color_slot[2];
 
    /** Which vertex shader output slot contains bcolor */
-   int bcolor_slot;
+   int bcolor_slot[2];
 
    /** Which vertex shader output slot contains point size */
    int psize_slot;

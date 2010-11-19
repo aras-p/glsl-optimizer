@@ -53,6 +53,11 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
    unsigned vs_index;
    uint i;
 
+   llvmpipe->color_slot[0] = ~0;
+   llvmpipe->color_slot[1] = ~0;
+   llvmpipe->bcolor_slot[0] = ~0;
+   llvmpipe->bcolor_slot[1] = ~0;
+
    /*
     * Match FS inputs against VS outputs, emitting the necessary
     * attributes.  Could cache these structs and look them up with a
@@ -75,9 +80,13 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       vs_index = draw_find_shader_output(llvmpipe->draw,
                                          lpfs->info.base.input_semantic_name[i],
                                          lpfs->info.base.input_semantic_index[i]);
-      if (lpfs->info.base.input_semantic_name[i]==TGSI_SEMANTIC_COLOR){
-         llvmpipe->color_slot = vinfo->num_attribs;
+
+      if (lpfs->info.base.input_semantic_name[i] == TGSI_SEMANTIC_COLOR &&
+          lpfs->info.base.input_semantic_index[i] < 2) {
+         int idx = lpfs->info.base.input_semantic_index[i];
+         llvmpipe->color_slot[idx] = vinfo->num_attribs;
       }
+
       /*
        * Emit the requested fs attribute for all but position.
        */
@@ -86,13 +95,16 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
    /* Figure out if we need bcolor as well.
     */
-   vs_index = draw_find_shader_output(llvmpipe->draw,
-                                      TGSI_SEMANTIC_BCOLOR, 0);
+   for (i = 0; i < 2; i++) {
+      vs_index = draw_find_shader_output(llvmpipe->draw,
+                                         TGSI_SEMANTIC_BCOLOR, i);
 
-   if (vs_index > 0) {
-      llvmpipe->bcolor_slot = vinfo->num_attribs;
-      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+      if (vs_index > 0) {
+         llvmpipe->bcolor_slot[i] = vinfo->num_attribs;
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+      }
    }
+
 
    /* Figure out if we need pointsize as well.
     */
