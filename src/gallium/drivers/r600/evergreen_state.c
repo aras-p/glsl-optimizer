@@ -431,7 +431,7 @@ static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned cou
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i + PIPE_MAX_ATTRIBS);
+			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i);
 		}
 	}
 }
