@@ -32,6 +32,7 @@ struct i915_screen;
 
 #include "util/u_transfer.h"
 #include "util/u_debug.h"
+#include "i915_winsys.h"
 
 
 struct i915_context;
@@ -52,11 +53,11 @@ struct i915_buffer {
 struct i915_texture {
    struct u_resource b;
 
+   /* tiling flags */
+   enum i915_winsys_buffer_tile tiling;
    unsigned stride;
    unsigned depth_stride;          /* per-image on i945? */
    unsigned total_nblocksy;
-
-   unsigned hw_tiled; /**< tiled with hardware fences */
 
    unsigned nr_images[I915_MAX_TEXTURE_2D_LEVELS];
 

@@ -165,7 +165,7 @@ i9x5_scanout_layout(struct i915_texture *tex)
    if (pt->width0 >= 240) {
       tex->stride = get_pot_stride(pt->format, pt->width0);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
-      tex->hw_tiled = I915_TILE_X;
+      tex->tiling = I915_TILE_X;
    } else if (pt->width0 == 64 && pt->height0 == 64) {
       tex->stride = get_pot_stride(pt->format, pt->width0);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
@@ -202,7 +202,7 @@ i9x5_display_target_layout(struct i915_texture *tex)
 
    tex->stride = get_pot_stride(pt->format, pt->width0);
    tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
-   tex->hw_tiled = I915_TILE_X;
+   tex->tiling = I915_TILE_X;
 
 #if DEBUG_TEXTURE
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
@@ -790,8 +790,8 @@ i915_texture_create(struct pipe_screen *screen,
       goto fail;
 
    /* setup any hw fences */
-   if (tex->hw_tiled) {
-      iws->buffer_set_fence_reg(iws, tex->buffer, tex->stride, tex->hw_tiled);
+   if (tex->tiling) {
+      iws->buffer_set_fence_reg(iws, tex->buffer, tex->stride, tex->tiling);
    }
 
    
