@@ -94,6 +94,7 @@
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT 0x14
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
+#define EG_EVENT_INDEX(x)               ((x) << 8)
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_TYPE_G(x)                   (((x) >> 30) & 0x3)

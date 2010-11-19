@@ -1279,7 +1279,11 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	if (ctx->radeon->chip_class == EVERGREEN) {
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE | EG_EVENT_INDEX(1);
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	}
 	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
@@ -1295,7 +1299,11 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	if (ctx->radeon->chip_class == EVERGREEN) {
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE | EG_EVENT_INDEX(1);
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	}
 	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8 + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
