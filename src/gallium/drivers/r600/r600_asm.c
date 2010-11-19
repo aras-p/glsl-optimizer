@@ -138,20 +138,20 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 	case CHIP_RV635:
 	case CHIP_RS780:
 	case CHIP_RS880:
-		bc->chiprev = 0;
+		bc->chiprev = CHIPREV_R600;
 		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		bc->chiprev = 1;
+		bc->chiprev = CHIPREV_R700;
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
-		bc->chiprev = 2;
+		bc->chiprev = CHIPREV_EVERGREEN;
 		break;
 	default:
 		R600_ERR("unknown family %d\n", bc->family);
@@ -602,13 +602,13 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 	if (bc->type == -1) {
 		switch (bc->chiprev) {
 		/* r600 */
-		case 0:
+		case CHIPREV_R600:
 		/* r700 */
-		case 1:
+		case CHIPREV_R700:
 			fetch_resource_start = 160;
 			break;
 		/* evergreen */
-		case 2:
+		case CHIPREV_EVERGREEN:
 			fetch_resource_start = 0;
 			break;
 		default:
@@ -735,7 +735,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
-					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == 0 ? cf->r6xx_uses_waterfall : 0) |
+					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == CHIPREV_R600 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
@@ -842,7 +842,7 @@ int r600_bc_build(struct r600_bc *bc)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		addr = cf->addr;
-		if (bc->chiprev == 2)
+		if (bc->chiprev == CHIPREV_EVERGREEN)
 			r = eg_bc_cf_build(bc, cf);
 		else
 			r = r600_bc_cf_build(bc, cf);
@@ -853,11 +853,11 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				switch(bc->chiprev) {
-				case 0:
+				case CHIPREV_R600:
 					r = r600_bc_alu_build(bc, alu, addr);
 					break;
-				case 1:
-				case 2: /* eg alu is same encoding as r700 */
+				case CHIPREV_R700:
+				case CHIPREV_EVERGREEN: /* eg alu is same encoding as r700 */
 					r = r700_bc_alu_build(bc, alu, addr);
 					break;
 				default:

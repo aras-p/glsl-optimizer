@@ -532,7 +532,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			if (r)
 				return r;
 		}
-		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev == 2) {
+		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev == CHIPREV_EVERGREEN) {
 			/* turn input into interpolate on EG */
 			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
 				if (ctx->shader->input[i].interpolate > 0) {
@@ -665,13 +665,13 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	}
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
-		if (ctx.bc->chiprev == 2) {
+		if (ctx.bc->chiprev == CHIPREV_EVERGREEN) {
 			r600_bc_add_cfinst(ctx.bc, EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
 		} else {
 			r600_bc_add_cfinst(ctx.bc, V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
 		}
 	}
-	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == 2) {
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev == CHIPREV_EVERGREEN) {
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
@@ -717,7 +717,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			/* reserve first tmp for everyone */
 			r600_get_temp(&ctx);
 			opcode = ctx.parse.FullToken.FullInstruction.Instruction.Opcode;
-			if (ctx.bc->chiprev == 2)
+			if (ctx.bc->chiprev == CHIPREV_EVERGREEN)
 				ctx.inst_info = &eg_shader_tgsi_instruction[opcode];
 			else
 				ctx.inst_info = &r600_shader_tgsi_instruction[opcode];
@@ -841,7 +841,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	}
 	/* add return to fetch shader */
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
-		if (ctx.bc->chiprev == 2) {
+		if (ctx.bc->chiprev == CHIPREV_EVERGREEN) {
 			r600_bc_add_cfinst(ctx.bc_fetch, EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
 		} else {
 			r600_bc_add_cfinst(ctx.bc_fetch, V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
@@ -1149,7 +1149,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	if (r)
 		return r;
 
-	if (ctx->bc->chiprev == 0) {
+	if (ctx->bc->chiprev == CHIPREV_R600) {
 		lit_vals[0] = fui(3.1415926535897f * 2.0f);
 		lit_vals[1] = fui(-3.1415926535897f);
 	} else {

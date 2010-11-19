@@ -385,8 +385,13 @@
 #define     EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_EXPORT_COMBINED 0x0000005B
 #define     EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_RAT_COMBINED_CACHELESS  0x0000005C
 
-#define BC_INST(bc, x) ((bc)->chiprev == 2 ? EG_##x : x)
 
-#define CTX_INST(x) (ctx->bc->chiprev == 2 ? EG_##x : x)
+#define CHIPREV_R600      0
+#define CHIPREV_R700      1
+#define CHIPREV_EVERGREEN 2
+
+#define BC_INST(bc, x) ((bc)->chiprev == CHIPREV_EVERGREEN ? EG_##x : x)
+
+#define CTX_INST(x) (ctx->bc->chiprev == CHIPREV_EVERGREEN ? EG_##x : x)
 
 #endif
