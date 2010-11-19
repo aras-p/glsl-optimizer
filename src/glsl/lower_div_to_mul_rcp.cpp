@@ -62,8 +62,7 @@ ir_div_to_mul_rcp_visitor::visit_leave(ir_expression *ir)
    if (ir->operation != ir_binop_div)
       return visit_continue;
 
-   if (ir->operands[1]->type->base_type != GLSL_TYPE_INT &&
-       ir->operands[1]->type->base_type != GLSL_TYPE_UINT) {
+   if (!ir->operands[1]->type->is_integer()) {
       /* New expression for the 1.0 / op1 */
       ir_rvalue *expr;
       expr = new(ir) ir_expression(ir_unop_rcp,
