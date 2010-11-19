@@ -235,9 +235,9 @@ lp_twoside(LLVMBuilderRef b,
     * Prefer select to if so we don't have to worry about phis or
     * allocas.
     */
-   args->v0a = LLVMBuildSelect(b, front_facing, args->v0a, a0_back, "");
-   args->v1a = LLVMBuildSelect(b, front_facing, args->v1a, a1_back, "");
-   args->v2a = LLVMBuildSelect(b, front_facing, args->v2a, a2_back, "");
+   args->v0a = LLVMBuildSelect(b, front_facing, a0_back, args->v0a, "");
+   args->v1a = LLVMBuildSelect(b, front_facing, a1_back, args->v1a, "");
+   args->v2a = LLVMBuildSelect(b, front_facing, a2_back, args->v2a, "");
 
 }
 
@@ -318,7 +318,6 @@ static void
 load_attribute(LLVMBuilderRef b, 
                struct lp_setup_args *args,
                const struct lp_setup_variant_key *key,
-               unsigned slot,
                unsigned vert_attr)
 {
    LLVMValueRef idx = LLVMConstInt(LLVMInt32Type(), vert_attr, 0);
@@ -332,11 +331,11 @@ load_attribute(LLVMBuilderRef b,
 
    /* Potentially modify it according to twoside, offset, etc:
     */
-   if (slot == 0 && (key->scale != 0.0f || key->units != 0.0f)) {
+   if (vert_attr == 0 && (key->scale != 0.0f || key->units != 0.0f)) {
       lp_do_offset_tri(b, args, key);
    }
 
-   if (key->twoside && slot == key->color_slot) {
+   if (key->twoside && vert_attr == key->color_slot) {
       lp_twoside(b, args, key);
    }
 }
@@ -448,7 +447,7 @@ emit_tri_coef( LLVMBuilderRef builder,
 
    /* The internal position input is in slot zero:
     */
-   load_attribute(builder, args, key, 0, 0);
+   load_attribute(builder, args, key, 0);
    emit_position_coef(builder, args, 0);
 
    /* setup interpolation for all the remaining attributes:
@@ -458,7 +457,7 @@ emit_tri_coef( LLVMBuilderRef builder,
       if (key->inputs[slot].interp == LP_INTERP_CONSTANT ||
           key->inputs[slot].interp == LP_INTERP_LINEAR ||
           key->inputs[slot].interp == LP_INTERP_PERSPECTIVE)
-         load_attribute(builder, args, key, slot, key->inputs[slot].src_index);
+         load_attribute(builder, args, key, key->inputs[slot].src_index);
 
       switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
