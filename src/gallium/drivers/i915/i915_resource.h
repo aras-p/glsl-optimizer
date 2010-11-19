@@ -56,7 +56,6 @@ struct i915_texture {
    unsigned depth_stride;          /* per-image on i945? */
    unsigned total_nblocksy;
 
-   unsigned sw_tiled; /**< tiled with software flags */
    unsigned hw_tiled; /**< tiled with hardware fences */
 
    unsigned nr_images[I915_MAX_TEXTURE_2D_LEVELS];

@@ -791,7 +791,6 @@ i915_texture_create(struct pipe_screen *screen,
 
    /* setup any hw fences */
    if (tex->hw_tiled) {
-      assert(tex->sw_tiled == I915_TILE_NONE);
       iws->buffer_set_fence_reg(iws, tex->buffer, tex->stride, tex->hw_tiled);
    }
 

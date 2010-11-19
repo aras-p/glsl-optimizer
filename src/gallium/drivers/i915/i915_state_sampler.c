@@ -267,11 +267,6 @@ static void update_map(struct i915_context *i915,
    assert(format);
    assert(pitch);
 
-   if (tex->sw_tiled) {
-      assert(!((pitch - 1) & pitch));
-      tiled = MS3_TILED_SURFACE;
-   }
-
    /* MS3 state */
    state[0] =
       (((height - 1) << MS3_HEIGHT_SHIFT)
