@@ -1106,10 +1106,6 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	if (r)
 		return r;
 
-	r = tgsi_split_literal_constant(ctx, r600_src);
-	if (r)
-		return r;
-
 	lit_vals[0] = fui(1.0 /(3.1415926535 * 2));
 	lit_vals[1] = fui(0.5f);
 
