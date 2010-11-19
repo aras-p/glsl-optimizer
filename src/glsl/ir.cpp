@@ -1335,3 +1335,59 @@ reparent_ir(exec_list *list, void *mem_ctx)
       visit_tree((ir_instruction *) node, steal_memory, mem_ctx);
    }
 }
+
+
+static ir_rvalue *
+try_min_one(ir_rvalue *ir)
+{
+   ir_expression *expr = ir->as_expression();
+
+   if (!expr || expr->operation != ir_binop_min)
+      return NULL;
+
+   if (expr->operands[0]->is_one())
+      return expr->operands[1];
+
+   if (expr->operands[1]->is_one())
+      return expr->operands[0];
+
+   return NULL;
+}
+
+static ir_rvalue *
+try_max_zero(ir_rvalue *ir)
+{
+   ir_expression *expr = ir->as_expression();
+
+   if (!expr || expr->operation != ir_binop_max)
+      return NULL;
+
+   if (expr->operands[0]->is_zero())
+      return expr->operands[1];
+
+   if (expr->operands[1]->is_zero())
+      return expr->operands[0];
+
+   return NULL;
+}
+
+ir_rvalue *
+ir_rvalue::as_rvalue_to_saturate()
+{
+   ir_expression *expr = this->as_expression();
+
+   if (!expr)
+      return NULL;
+
+   ir_rvalue *max_zero = try_max_zero(expr);
+   if (max_zero) {
+      return try_min_one(max_zero);
+   } else {
+      ir_rvalue *min_one = try_min_one(expr);
+      if (min_one) {
+	 return try_max_zero(min_one);
+      }
+   }
+
+   return NULL;
+}

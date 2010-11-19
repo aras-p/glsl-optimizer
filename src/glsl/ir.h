@@ -144,6 +144,8 @@ public:
       return this;
    }
 
+   ir_rvalue *as_rvalue_to_saturate();
+
    virtual bool is_lvalue()
    {
       return false;
