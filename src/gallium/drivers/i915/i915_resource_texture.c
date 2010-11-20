@@ -175,9 +175,10 @@ i9x5_scanout_layout(struct i915_texture *tex)
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    if (pt->width0 >= 240) {
-      tex->stride = get_pot_stride(pt->format, pt->width0);
+      tex->stride = align(util_format_get_stride(pt->format, pt->width0), 64);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
       tex->tiling = I915_TILE_X;
+   /* special case for cursors */
    } else if (pt->width0 == 64 && pt->height0 == 64) {
       tex->stride = get_pot_stride(pt->format, pt->width0);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
@@ -212,7 +213,7 @@ i9x5_display_target_layout(struct i915_texture *tex)
    i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
-   tex->stride = get_pot_stride(pt->format, pt->width0);
+   tex->stride = align(util_format_get_stride(pt->format, pt->width0), 64);
    tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
    tex->tiling = I915_TILE_X;
 
