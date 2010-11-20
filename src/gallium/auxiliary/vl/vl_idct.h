@@ -34,6 +34,8 @@ struct vl_idct
 {
    struct pipe_context *pipe;
 
+   unsigned max_blocks;
+
    struct pipe_viewport_state viewport;
    struct pipe_resource *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
@@ -61,7 +63,7 @@ struct vl_idct
    } sampler_views;
 
    void *vs;
-   void *transpose_fs, *matrix_fs;
+   void *transpose_fs, *matrix_fs, *eb_fs;
 
    union
    {
@@ -79,6 +81,7 @@ struct vl_idct
    } vertex_bufs;
 
    unsigned num_blocks;
+   unsigned num_empty_blocks;
 
    struct pipe_transfer *tex_transfer;
    short *texels;

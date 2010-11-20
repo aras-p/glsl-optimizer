@@ -260,7 +260,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    struct ureg_program *shader;
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
-   struct ureg_dst tmp, fragment;
+   struct ureg_dst fragment;
    float scale[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
@@ -287,6 +287,25 @@ create_matrix_frag_shader(struct vl_idct *idct)
    //matrix_mul(shader, tmp, tc, sampler, start, step, scale);
 
    ureg_TEX(shader, fragment, TGSI_TEXTURE_2D, tc[0], sampler[0]);
+
+   ureg_END(shader);
+
+   return ureg_create_shader_and_destroy(shader, idct->pipe);
+}
+
+static void *
+create_empty_block_frag_shader(struct vl_idct *idct)
+{
+   struct ureg_program *shader;
+   struct ureg_dst fragment;
+
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return NULL;
+
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   ureg_MOV(shader, fragment, ureg_imm1f(shader, 0.0f));
 
    ureg_END(shader);
 
@@ -340,6 +359,7 @@ init_shaders(struct vl_idct *idct)
    assert(idct->vs = create_vert_shader(idct));
    assert(idct->transpose_fs = create_transpose_frag_shader(idct));
    assert(idct->matrix_fs = create_matrix_frag_shader(idct));
+   assert(idct->eb_fs = create_empty_block_frag_shader(idct));
 
    return true;
 }
@@ -352,6 +372,7 @@ cleanup_shaders(struct vl_idct *idct)
    idct->pipe->delete_vs_state(idct->pipe, idct->vs);
    idct->pipe->delete_fs_state(idct->pipe, idct->transpose_fs);
    idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
+   idct->pipe->delete_fs_state(idct->pipe, idct->eb_fs);
 }
 
 static bool
@@ -361,7 +382,7 @@ init_buffers(struct vl_idct *idct)
    struct pipe_sampler_view sampler_view;
    struct pipe_vertex_element vertex_elems[2];
 
-   const unsigned max_blocks =
+   idct->max_blocks =
       align(idct->destination->width0, BLOCK_WIDTH) / BLOCK_WIDTH *
       align(idct->destination->height0, BLOCK_HEIGHT) / BLOCK_HEIGHT *
       idct->destination->depth0;
@@ -398,23 +419,23 @@ init_buffers(struct vl_idct *idct)
    }
 
    idct->vertex_bufs.individual.quad.stride = sizeof(struct vertex2f);
-   idct->vertex_bufs.individual.quad.max_index = 4 * max_blocks - 1;
+   idct->vertex_bufs.individual.quad.max_index = 4 * idct->max_blocks - 1;
    idct->vertex_bufs.individual.quad.buffer_offset = 0;
    idct->vertex_bufs.individual.quad.buffer = pipe_buffer_create
    (
       idct->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex2f) * 4 * max_blocks
+      sizeof(struct vertex2f) * 4 * idct->max_blocks
    );
 
    idct->vertex_bufs.individual.pos.stride = sizeof(struct vertex2f);
-   idct->vertex_bufs.individual.pos.max_index = 4 * max_blocks - 1;
+   idct->vertex_bufs.individual.pos.max_index = 4 * idct->max_blocks - 1;
    idct->vertex_bufs.individual.pos.buffer_offset = 0;
    idct->vertex_bufs.individual.pos.buffer = pipe_buffer_create
    (
       idct->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex2f) * 4 * max_blocks
+      sizeof(struct vertex2f) * 4 * idct->max_blocks
    );
 
    /* Rect element */
@@ -477,8 +498,8 @@ init_constants(struct vl_idct *idct)
       &buf_transfer
    );
 
-   for ( i = 0; i <= idct->vertex_bufs.individual.quad.max_index; i += 4)
-     memcpy(v + i, &const_quad, sizeof(const_quad));
+   for ( i = 0; i < idct->max_blocks; ++i)
+     memcpy(v + i * 4, &const_quad, sizeof(const_quad));
 
    pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.quad.buffer, buf_transfer);
 
@@ -527,6 +548,7 @@ init_state(struct vl_idct *idct)
    unsigned i;
 
    idct->num_blocks = 0;
+   idct->num_empty_blocks = 0;
 
    idct->viewport.scale[0] = idct->destination->width0;
    idct->viewport.scale[1] = idct->destination->height0;
@@ -621,7 +643,7 @@ vl_idct_cleanup(struct vl_idct *idct)
 void
 vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 {
-   struct vertex2f v;
+   struct vertex2f v, *v_dst;
 
    unsigned tex_pitch;
    short *texels;
@@ -630,24 +652,31 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 
    assert(idct);
 
-   tex_pitch = idct->tex_transfer->stride / util_format_get_blocksize(idct->tex_transfer->resource->format);
-   texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
-
    if(block) {
-      v.x = x;
-      v.y = y;
-
-      for (i = 0; i < 4; ++i) {
-         idct->vectors[idct->num_blocks * 4 + i] = v;
-      }
+      tex_pitch = idct->tex_transfer->stride / util_format_get_blocksize(idct->tex_transfer->resource->format);
+      texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
 
       for (i = 0; i < BLOCK_HEIGHT; ++i)
          memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * 2);
 
+      /* non empty blocks fills the vector buffer from left to right */
+      v_dst = idct->vectors + idct->num_blocks * 4;
+
       idct->num_blocks++;
+
    } else {
-      for (i = 0; i < BLOCK_HEIGHT; ++i)
-         memset(texels + i * tex_pitch, 0, BLOCK_WIDTH * 2);      
+
+      /* while empty blocks fills the vector buffer from right to left */
+      v_dst = idct->vectors + (idct->max_blocks - idct->num_empty_blocks) * 4 - 4;
+
+      idct->num_empty_blocks++;
+   }
+
+   v.x = x;
+   v.y = y;
+
+   for (i = 0; i < 4; ++i) {
+      v_dst[i] = v;
    }
 }
 
@@ -689,10 +718,30 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
-
-      idct->pipe->flush(idct->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    }
 
+   if(idct->num_empty_blocks > 0) {
+
+      /* empty block handling */
+      idct->fb_state.cbufs[0] = idct->surfaces.destination;
+      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state);
+      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport);
+
+      idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
+      idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
+      idct->pipe->set_fragment_sampler_views(idct->pipe, 4, idct->sampler_views.all);
+      idct->pipe->bind_fragment_sampler_states(idct->pipe, 4, idct->samplers.all);
+      idct->pipe->bind_vs_state(idct->pipe, idct->vs);
+      idct->pipe->bind_fs_state(idct->pipe, idct->eb_fs);
+
+      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS,
+         (idct->max_blocks - idct->num_empty_blocks) * 4,
+         idct->num_empty_blocks * 4);
+   }
+
+   idct->pipe->flush(idct->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
    idct->num_blocks = 0;
+   idct->num_empty_blocks = 0;
    xfer_buffers_map(idct);
 }
