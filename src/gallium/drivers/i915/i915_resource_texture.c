@@ -154,6 +154,26 @@ i915_texture_set_image_offset(struct i915_texture *tex,
 #endif
 }
 
+static enum i915_winsys_buffer_tile
+i915_texture_tiling(struct pipe_resource *pt)
+{
+   if (!i915_tiling)
+      return I915_TILE_NONE;
+
+   if (pt->target == PIPE_TEXTURE_1D)
+      return I915_TILE_NONE;
+
+   if (util_format_is_s3tc(pt->format))
+      /* XXX X-tiling might make sense */
+      return I915_TILE_NONE;
+
+   if ((pt->bind & PIPE_BIND_RENDER_TARGET))
+      /* XXX We can't render properly into mipmap'ed textures */
+      return I915_TILE_NONE;
+
+   return I915_TILE_X;
+}
+
 
 /*
  * Shared layout functions
@@ -369,6 +389,8 @@ static boolean
 i915_texture_layout(struct i915_texture * tex)
 {
    struct pipe_resource *pt = &tex->b.b;
+
+   tex->tiling = i915_texture_tiling(pt);
 
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
@@ -615,6 +637,8 @@ static boolean
 i945_texture_layout(struct i915_texture * tex)
 {
    struct pipe_resource *pt = &tex->b.b;
+
+   tex->tiling = i915_texture_tiling(pt);
 
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
