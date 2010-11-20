@@ -42,7 +42,6 @@
 #define MACROBLOCK_HEIGHT 16
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
-#define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
 struct vertex_shader_consts
 {
@@ -372,9 +371,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
     */
    field = calc_field(shader);
    texel = fetch_ycbcr(r, shader, field);
-   ureg_MAD(shader, fragment, ureg_src(texel), 
-            ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), 
-            ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -410,7 +407,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    field = calc_field(shader);
    texel = fetch_ycbcr(r, shader, field);
    ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc, sampler);
-   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -459,7 +456,7 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[0], sampler);
    ureg_ENDIF(shader);
 
-   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -504,7 +501,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[1], sampler[1]);
    ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
 
-   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref[0]));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref[0]));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -561,7 +558,7 @@ create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
 
-   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref[0]));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref[0]));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -1315,7 +1312,7 @@ static void
 grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
             enum pipe_mpeg12_dct_type dct_type, unsigned cbp, short *blocks)
 {
-   unsigned tb = 0, sb = 0;
+   unsigned tb = 0;
    unsigned x, y;
 
    assert(r);
@@ -1323,10 +1320,9 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
-         if ((cbp >> (5 - tb)) & 1) {
-            vl_idct_add_block(&r->idct_y, mbx * 2 + x, mby * 2 + y, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
-            ++sb;
-         }
+         bool eb = !(cbp  & (1 << (5 - tb)));
+         vl_idct_add_block(&r->idct_y, mbx * 2 + x, mby * 2 + y, eb ? NULL : blocks);
+         blocks += eb ? 0 : BLOCK_WIDTH * BLOCK_HEIGHT;
       }
    }
 
@@ -1334,13 +1330,12 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    assert(r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
    for (tb = 0; tb < 2; ++tb) {
-      if ((cbp >> (1 - tb)) & 1) {
-         if(tb == 0)
-            vl_idct_add_block(&r->idct_cb, mbx, mby, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
-         else
-            vl_idct_add_block(&r->idct_cr, mbx, mby, blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT);
-         ++sb;
-      }
+      bool eb = !(cbp & (1 << (1 - tb)));
+      if(tb == 0)
+         vl_idct_add_block(&r->idct_cb, mbx, mby, eb ? NULL : blocks);
+      else
+         vl_idct_add_block(&r->idct_cr, mbx, mby, eb ? NULL : blocks);
+      blocks += eb ? 0 : BLOCK_WIDTH * BLOCK_HEIGHT;
    }
 }
 
