@@ -120,25 +120,37 @@ i915_texture_set_level_info(struct i915_texture *tex,
    assert(!tex->image_offset[level]);
 
    tex->nr_images[level] = nr_images;
-   tex->image_offset[level] = (unsigned *) MALLOC(nr_images * sizeof(unsigned));
-   tex->image_offset[level][0] = 0;
+   tex->image_offset[level] = MALLOC(nr_images * sizeof(struct offset_pair));
+   tex->image_offset[level][0].nblocksx = 0;
+   tex->image_offset[level][0].nblocksy = 0;
+}
+
+inline unsigned i915_texture_offset(struct i915_texture *tex,
+			            unsigned level, unsigned face)
+{
+	unsigned x, y;
+	x = tex->image_offset[level][face].nblocksx
+               * util_format_get_blocksize(tex->b.b.format);
+	y = tex->image_offset[level][face].nblocksy;
+
+	return y * tex->stride + x;
 }
 
 static void
 i915_texture_set_image_offset(struct i915_texture *tex,
                               unsigned level, unsigned img,
-                              unsigned x, unsigned y)
+                              unsigned nblocksx, unsigned nblocksy)
 {
    /* for the first image and level make sure offset is zero */
-   assert(!(img == 0 && level == 0) || (x == 0 && y == 0));
+   assert(!(img == 0 && level == 0) || (nblocksx == 0 && nblocksy == 0));
    assert(img < tex->nr_images[level]);
 
-   tex->image_offset[level][img] = y * tex->stride + x * util_format_get_blocksize(tex->b.b.format);
+   tex->image_offset[level][img].nblocksx = nblocksx;
+   tex->image_offset[level][img].nblocksy = nblocksy;
 
 #if DEBUG_TEXTURES
-   debug_printf("%s: %p level %u, img %u (%u, %u) %p\n", __FUNCTION__,
-                tex, level, img, x, y,
-                (void*)(uintptr_t)tex->image_offset[level][img]);
+   debug_printf("%s: %p level %u, img %u (%u, %u)\n", __FUNCTION__,
+                tex, level, img, x, y);
 #endif
 }
 
@@ -686,7 +698,6 @@ i915_texture_get_transfer(struct pipe_context *context,
    return transfer;
 }
 
-
 static void *
 i915_texture_transfer_map(struct pipe_context *pipe,
 			  struct pipe_transfer *transfer)
@@ -701,11 +712,11 @@ i915_texture_transfer_map(struct pipe_context *pipe,
    char *map;
 
    if (resource->target == PIPE_TEXTURE_CUBE) {
-      offset = tex->image_offset[sr.level][sr.face];
+      offset = i915_texture_offset(tex, sr.level, sr.face);
    } else if (resource->target == PIPE_TEXTURE_3D) {
-      offset = tex->image_offset[sr.level][box->z];
+      offset = i915_texture_offset(tex, sr.level, box->z);
    } else {
-      offset = tex->image_offset[sr.level][0];
+      offset = i915_texture_offset(tex, sr.level, 0);
       assert(sr.face == 0);
       assert(box->z == 0);
    }
@@ -754,7 +765,6 @@ i915_texture_create(struct pipe_screen *screen,
    struct i915_screen *is = i915_screen(screen);
    struct i915_winsys *iws = is->iws;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
-   size_t tex_size;
    unsigned buf_usage = 0;
 
    if (!tex)
@@ -773,8 +783,6 @@ i915_texture_create(struct pipe_screen *screen,
          goto fail;
    }
 
-   tex_size = tex->stride * tex->total_nblocksy;
-
    /* for scanouts and cursors, cursors arn't scanouts */
 
    /* XXX: use a custom flag for cursors, don't rely on magically
@@ -790,8 +798,8 @@ i915_texture_create(struct pipe_screen *screen,
    if (!tex->buffer)
       goto fail;
 
-   I915_DBG(DBG_TEXTURE, "%s: %p size %u, stride %u, blocks (%u, %u)\n", __func__,
-            tex, (unsigned int)tex_size, tex->stride,
+   I915_DBG(DBG_TEXTURE, "%s: %p stride %u, blocks (%u, %u)\n", __func__,
+            tex, tex->stride,
             tex->stride / util_format_get_blocksize(tex->b.b.format),
             tex->total_nblocksy);
 

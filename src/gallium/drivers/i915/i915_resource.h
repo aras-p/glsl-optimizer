@@ -49,6 +49,10 @@ struct i915_buffer {
 #define I915_MAX_TEXTURE_3D_LEVELS  8  /* max 128x128x128 */
 
 
+struct offset_pair {
+	unsigned short nblocksx;
+	unsigned short nblocksy;
+};
 
 struct i915_texture {
    struct u_resource b;
@@ -63,14 +67,18 @@ struct i915_texture {
 
    /* Explicitly store the offset of each image for each cube face or
     * depth value.
+    *
+    * Array [depth] off offsets.
     */
-   unsigned *image_offset[I915_MAX_TEXTURE_2D_LEVELS];   /**< array [depth] of offsets */
+   struct offset_pair *image_offset[I915_MAX_TEXTURE_2D_LEVELS];
 
    /* The data is held here:
     */
    struct i915_winsys_buffer *buffer;
 };
 
+unsigned i915_texture_offset(struct i915_texture *tex,
+	                     unsigned level, unsigned face);
 void i915_init_screen_resource_functions(struct i915_screen *is);
 void i915_init_resource_functions(struct i915_context *i915);
 

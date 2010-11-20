@@ -56,24 +56,24 @@ i915_surface_copy(struct pipe_context *pipe,
    unsigned dst_offset, src_offset;  /* in bytes */
 
    if (dst->target == PIPE_TEXTURE_CUBE) {
-      dst_offset = dst_tex->image_offset[subdst.level][subdst.face];
+      dst_offset = i915_texture_offset(dst_tex, subdst.level, subdst.face);
    }
    else if (dst->target == PIPE_TEXTURE_3D) {
-      dst_offset = dst_tex->image_offset[subdst.level][dstz];
+      dst_offset = i915_texture_offset(dst_tex, subdst.level, dstz);
    }
    else {
-      dst_offset = dst_tex->image_offset[subdst.level][0];
+      dst_offset = i915_texture_offset(dst_tex, subdst.level, 0);
       assert(subdst.face == 0);
       assert(dstz == 0);
    }
    if (src->target == PIPE_TEXTURE_CUBE) {
-      src_offset = src_tex->image_offset[subsrc.level][subsrc.face];
+      src_offset = i915_texture_offset(src_tex, subsrc.level, subsrc.face);
    }
    else if (src->target == PIPE_TEXTURE_3D) {
-      src_offset = src_tex->image_offset[subsrc.level][srcz];
+      src_offset = i915_texture_offset(src_tex, subsrc.level, srcz);
    }
    else {
-      src_offset = src_tex->image_offset[subsrc.level][0];
+      src_offset = i915_texture_offset(src_tex, subsrc.level, 0);
       assert(subsrc.face == 0);
       assert(srcz == 0);
    }
@@ -173,13 +173,13 @@ i915_get_tex_surface(struct pipe_screen *screen,
    unsigned offset;  /* in bytes */
 
    if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset = tex->image_offset[level][face];
+      offset = i915_texture_offset(tex, level, face);
    }
    else if (pt->target == PIPE_TEXTURE_3D) {
-      offset = tex->image_offset[level][zslice];
+      offset = i915_texture_offset(tex, level, zslice);
    }
    else {
-      offset = tex->image_offset[level][0];
+      offset = i915_texture_offset(tex, level, 0);
       assert(face == 0);
       assert(zslice == 0);
    }
