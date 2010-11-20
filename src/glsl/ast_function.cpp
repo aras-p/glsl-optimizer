@@ -627,21 +627,21 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
    assert(column_ref->type->components() >= (row_base + count));
    assert(src->type->components() >= (src_base + count));
 
-   /* Generate a swizzle that puts the first element of the source at the
-    * location of the first element of the destination.
+   /* Generate a swizzle that extracts the number of components from the source
+    * that are to be assigned to the column of the matrix.
     */
-   unsigned swiz[4] = { src_base, src_base, src_base, src_base };
-   for (unsigned i = 0; i < count; i++)
-      swiz[i + row_base] = i;
-
-   ir_rvalue *const rhs =
-      new(mem_ctx) ir_swizzle(src, swiz, count);
+   if (count < src->type->vector_elements) {
+      src = new(mem_ctx) ir_swizzle(src,
+				    src_base + 0, src_base + 1,
+				    src_base + 2, src_base + 3,
+				    count);
+   }
 
    /* Mask of fields to be written in the assignment.
     */
    const unsigned write_mask = ((1U << count) - 1) << row_base;
 
-   return new(mem_ctx) ir_assignment(column_ref, rhs, NULL, write_mask);
+   return new(mem_ctx) ir_assignment(column_ref, src, NULL, write_mask);
 }
 
 
