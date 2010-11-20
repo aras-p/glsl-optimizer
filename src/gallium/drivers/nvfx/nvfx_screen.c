@@ -37,7 +37,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_POINT_SPRITE:
 		return 1;
 	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return screen->use_nv4x ? 4 : 2;
+		return screen->use_nv4x ? 4 : 1;
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
         case PIPE_CAP_TIMER_QUERY:
