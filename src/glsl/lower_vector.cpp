@@ -169,7 +169,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
       case GLSL_TYPE_INT:   d.i[assigned] = c->value.i[0]; break;
       case GLSL_TYPE_FLOAT: d.f[assigned] = c->value.f[0]; break;
       case GLSL_TYPE_BOOL:  d.b[assigned] = c->value.b[0]; break;
-      defatul:              assert(!"Should not get here."); break;
+      default:              assert(!"Should not get here."); break;
       }
 
       write_mask |= (1U << i);
