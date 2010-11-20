@@ -844,6 +844,17 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_0280A0_NUMBER_SRGB;
+        else if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
+		switch(desc->channel[0].type) {
+		case UTIL_FORMAT_TYPE_UNSIGNED:
+			ntype = V_0280A0_NUMBER_UNORM;
+			break;
+
+		case UTIL_FORMAT_TYPE_SIGNED:
+			ntype = V_0280A0_NUMBER_SNORM;
+			break;
+		}
+	}
 
 	format = r600_translate_colorformat(rtex->resource.base.b.format);
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
