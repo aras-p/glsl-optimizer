@@ -146,7 +146,6 @@ PIPE_FORMAT_R8G8_B8G8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz
 PIPE_FORMAT_G8R8_G8B8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, rgb
 
 # some special formats not fitting anywhere else
-PIPE_FORMAT_R10G10B10A2_USCALED   , plain,      1,  1, u10 , u10 , u10 , u2  , xyzw, rgb
 PIPE_FORMAT_R11G11B10_FLOAT       , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_R9G9B9E5_FLOAT        , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_R1_UNORM              , other,      8,  1, x8  ,     ,     ,     , x001, rgb
@@ -271,3 +270,11 @@ PIPE_FORMAT_R4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , y00x, r
 PIPE_FORMAT_A4R4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , x00y, rgb
 PIPE_FORMAT_R8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , x00y, rgb
 PIPE_FORMAT_A8R8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , y00x, rgb
+
+# ARB_vertex_type_10_10_10_2_REV
+PIPE_FORMAT_R10G10B10A2_USCALED     , plain, 1, 1, u10, u10, u10, u2, xyzw, rgb
+PIPE_FORMAT_R10G10B10A2_SSCALED     , plain, 1, 1, s10, s10, s10, s2, xyzw, rgb
+PIPE_FORMAT_R10G10B10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, xyzw, rgb
+PIPE_FORMAT_B10G10R10A2_USCALED     , plain, 1, 1, u10, u10, u10, u2, zyxw, rgb
+PIPE_FORMAT_B10G10R10A2_SSCALED     , plain, 1, 1, s10, s10, s10, s2, zyxw, rgb
+PIPE_FORMAT_B10G10R10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, zyxw, rgb
