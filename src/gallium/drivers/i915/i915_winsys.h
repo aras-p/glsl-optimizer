@@ -168,15 +168,6 @@ struct i915_winsys {
                                 unsigned stride);
 
    /**
-    * Fence a buffer with a fence reg.
-    * Not to be confused with pipe_fence_handle.
-    */
-   int (*buffer_set_fence_reg)(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile);
-
-   /**
     * Map a buffer.
     */
    void *(*buffer_map)(struct i915_winsys *iws,

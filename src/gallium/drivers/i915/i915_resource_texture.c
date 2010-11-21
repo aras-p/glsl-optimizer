@@ -785,22 +785,10 @@ i915_texture_create(struct pipe_screen *screen,
    else
       buf_usage = I915_NEW_TEXTURE;
 
-   tex->buffer = iws->buffer_create(iws, tex_size, buf_usage);
+   tex->buffer = iws->buffer_create_tiled(iws, &tex->stride, tex->total_nblocksy,
+		   			  &tex->tiling, buf_usage);
    if (!tex->buffer)
       goto fail;
-
-   /* setup any hw fences */
-   if (tex->tiling) {
-      iws->buffer_set_fence_reg(iws, tex->buffer, tex->stride, tex->tiling);
-   }
-
-   
-#if 0
-   void *ptr = ws->buffer_map(ws, tex->buffer,
-      PIPE_BUFFER_USAGE_CPU_WRITE);
-   memset(ptr, 0x80, tex_size);
-   ws->buffer_unmap(ws, tex->buffer);
-#endif
 
    I915_DBG(DBG_TEXTURE, "%s: %p size %u, stride %u, blocks (%u, %u)\n", __func__,
             tex, (unsigned int)tex_size, tex->stride,

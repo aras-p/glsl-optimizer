@@ -146,24 +146,6 @@ i915_drm_buffer_get_handle(struct i915_winsys *iws,
    return TRUE;
 }
 
-static int
-i915_drm_buffer_set_fence_reg(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile)
-{
-   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
-   assert(I915_TILING_NONE == I915_TILE_NONE);
-   assert(I915_TILING_X == I915_TILE_X);
-   assert(I915_TILING_Y == I915_TILE_Y);
-
-   if (tile != I915_TILE_NONE) {
-      assert(buf->map_count == 0);
-   }
-
-   return drm_intel_bo_set_tiling(buf->bo, &tile, stride);
-}
-
 static void *
 i915_drm_buffer_map(struct i915_winsys *iws,
                      struct i915_winsys_buffer *buffer,
@@ -236,7 +218,6 @@ i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
    idws->base.buffer_create_tiled = i915_drm_buffer_create_tiled;
    idws->base.buffer_from_handle = i915_drm_buffer_from_handle;
    idws->base.buffer_get_handle = i915_drm_buffer_get_handle;
-   idws->base.buffer_set_fence_reg = i915_drm_buffer_set_fence_reg;
    idws->base.buffer_map = i915_drm_buffer_map;
    idws->base.buffer_unmap = i915_drm_buffer_unmap;
    idws->base.buffer_write = i915_drm_buffer_write;

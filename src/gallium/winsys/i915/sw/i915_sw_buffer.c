@@ -55,23 +55,6 @@ err:
    return NULL;
 }
 
-static int
-i915_sw_buffer_set_fence_reg(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile)
-{
-   struct i915_sw_buffer *buf = i915_sw_buffer(buffer);
-
-   if (tile != I915_TILE_NONE) {
-      assert(buf->map_count == 0);
-   }
-
-   buf->tiling = tile;
-
-   return 0;
-}
-
 static void *
 i915_sw_buffer_map(struct i915_winsys *iws,
                    struct i915_winsys_buffer *buffer,
@@ -124,7 +107,6 @@ i915_sw_winsys_init_buffer_functions(struct i915_sw_winsys *isws)
 {
    isws->base.buffer_create = i915_sw_buffer_create;
    isws->base.buffer_create_tiled = i915_sw_buffer_create_tiled;
-   isws->base.buffer_set_fence_reg = i915_sw_buffer_set_fence_reg;
    isws->base.buffer_map = i915_sw_buffer_map;
    isws->base.buffer_unmap = i915_sw_buffer_unmap;
    isws->base.buffer_write = i915_sw_buffer_write;
