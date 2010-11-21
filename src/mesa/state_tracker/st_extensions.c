@@ -298,6 +298,8 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
       ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
+      ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
+      ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {
