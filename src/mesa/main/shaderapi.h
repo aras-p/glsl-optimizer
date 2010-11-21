@@ -28,8 +28,10 @@
 
 
 #include "glheader.h"
-#include "mtypes.h"
 
+struct _glapi_table;
+struct gl_context;
+struct gl_shader_program;
 
 extern GLint
 _mesa_sizeof_glsl_type(GLenum type);
