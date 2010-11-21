@@ -812,10 +812,11 @@ i915_texture_from_handle(struct pipe_screen * screen,
    struct i915_winsys *iws = is->iws;
    struct i915_winsys_buffer *buffer;
    unsigned stride;
+   enum i915_winsys_buffer_tile tiling;
 
    assert(screen);
 
-   buffer = iws->buffer_from_handle(iws, whandle, &stride);
+   buffer = iws->buffer_from_handle(iws, whandle, &tiling, &stride);
 
    /* Only supports one type */
    if ((template->target != PIPE_TEXTURE_2D &&
@@ -835,6 +836,7 @@ i915_texture_from_handle(struct pipe_screen * screen,
    tex->b.b.screen = screen;
 
    tex->stride = stride;
+   tex->tiling = tiling;
    tex->total_nblocksy = align_nblocksy(tex->b.b.format, tex->b.b.height0, 8);
 
    i915_texture_set_level_info(tex, 0, 1);

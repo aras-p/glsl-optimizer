@@ -90,8 +90,9 @@ err:
 
 static struct i915_winsys_buffer *
 i915_drm_buffer_from_handle(struct i915_winsys *iws,
-                             struct winsys_handle *whandle,
-                             unsigned *stride)
+                            struct winsys_handle *whandle,
+                            enum i915_winsys_buffer_tile *tiling,
+                            unsigned *stride)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
@@ -111,6 +112,7 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
    drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
 
    *stride = whandle->stride;
+   *tiling = tile;
 
    return (struct i915_winsys_buffer *)buf;
 

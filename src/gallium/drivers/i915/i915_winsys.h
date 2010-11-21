@@ -53,6 +53,7 @@ enum i915_winsys_buffer_type
    I915_NEW_VERTEX
 };
 
+/* These need to be in sync with the definitions of libdrm-intel! */
 enum i915_winsys_buffer_tile
 {
    I915_TILE_NONE,
@@ -156,6 +157,7 @@ struct i915_winsys {
    struct i915_winsys_buffer *
       (*buffer_from_handle)(struct i915_winsys *iws,
                             struct winsys_handle *whandle,
+                            enum i915_winsys_buffer_tile *tiling,
                             unsigned *stride);
 
    /**
