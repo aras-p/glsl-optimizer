@@ -29,7 +29,6 @@
 #include "main/imports.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
-#include "main/texformat.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
