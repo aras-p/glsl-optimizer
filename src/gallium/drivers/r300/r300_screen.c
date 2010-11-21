@@ -283,6 +283,13 @@ static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
             return 16.0f;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
+        case PIPE_CAP_GUARD_BAND_LEFT:
+        case PIPE_CAP_GUARD_BAND_TOP:
+        case PIPE_CAP_GUARD_BAND_RIGHT:
+        case PIPE_CAP_GUARD_BAND_BOTTOM:
+            /* XXX I don't know what these should be but the least we can do is
+             * silence the potential error message */
+            return 0.0f;
         default:
             debug_printf("r300: Warning: Unknown CAP %d in get_paramf.\n",
                          param);
