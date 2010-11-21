@@ -796,6 +796,8 @@ void vegaLookupSingle(VGImage dst, VGImage src,
       return;
    }
 
+   vg_validate_state(ctx);
+
    for (i = 0; i < 256; ++i) {
       VGuint rgba = lookupTable[i];
       VGubyte blue, green, red, alpha;
