@@ -48,7 +48,6 @@
 #include "utils.h"
 
 #include "main/teximage.h"
-#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstate.h"
 
