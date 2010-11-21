@@ -37,6 +37,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
 #include "util/u_tile.h"
+#include "util/u_math.h"
 
 static INLINE VGboolean supported_image_format(VGImageFormat format)
 {
@@ -402,7 +403,6 @@ void vegaReadPixels(void * data, VGint dataStride,
 
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
-   VGint y = (fb->height - sy) - 1, yStep = -1;
    VGint i;
    VGubyte *dst = (VGubyte *)data;
    VGint xoffset = 0, yoffset = 0;
@@ -430,18 +430,26 @@ void vegaReadPixels(void * data, VGint dataStride,
    }
    if (sy < 0) {
       yoffset = -sy;
+      yoffset *= dataStride;
       height += sy;
       sy = 0;
-      y = (fb->height - sy) - 1;
-      yoffset *= dataStride;
+   }
+
+   if (sx + width > fb->width || sy + height > fb->height) {
+      width = fb->width - sx;
+      height = fb->height - sy;
+      /* nothing to read */
+      if (width <= 0 || height <= 0)
+         return;
    }
 
    {
+      VGint y = (fb->height - sy) - 1, yStep = -1;
       struct pipe_transfer *transfer;
 
       transfer = pipe_get_transfer(pipe, strb->texture,  0, 0, 0,
 				   PIPE_TRANSFER_READ,
-				   0, 0, width, height);
+				   0, 0, sx + width, fb->height - sy);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
