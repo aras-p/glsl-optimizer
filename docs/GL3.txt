@@ -94,6 +94,18 @@ GL_ARB_texture_buffer_object_rgb32                   not started
 GL_ARB_texture_cube_map_array                        not started
 GL_ARB_texture_gather                                not started
 GL_ARB_transform_feedback2                           not started
+GL_ARB_transform_feedback3                           not started
+
+
+GL 4.1:
+
+GLSL 4.1                                             not started
+GL_ARB_ES2_compatibility                             not started
+GL_ARB_get_program_binary                            not started
+GL_ARB_separate_shader_objects                       some infrastructure done
+GL_ARB_shader_precision                              not started
+GL_ARB_vertex_attrib_64bit                           not started
+GL_ARB_viewport_array                                not started
 
 
 
