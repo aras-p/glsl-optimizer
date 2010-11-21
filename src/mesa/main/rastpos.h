@@ -32,8 +32,11 @@
 #define RASTPOS_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "mfeatures.h"
 
+struct _glapi_table;
+struct gl_context;
 
 #if FEATURE_rastpos
 
