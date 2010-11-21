@@ -27,8 +27,9 @@
 #define SCISSOR_H
 
 
-#include "main/mtypes.h"
+#include "glheader.h"
 
+struct gl_context;
 
 extern void GLAPIENTRY
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
