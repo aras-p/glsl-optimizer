@@ -38,7 +38,7 @@
 
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
-#define SCALE_FACTOR_16_TO_12 (32768.0f / 2048.0f)
+
 #define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
 struct vertex_shader_consts
@@ -63,7 +63,6 @@ enum VS_OUTPUT
    VS_O_STEP
 };
 
-
 static const float const_matrix[8][8] = {
    {  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.353553f,  0.3535530f },
    {  0.4903930f,  0.4157350f,  0.2777850f,  0.0975451f, -0.0975452f, -0.2777850f, -0.415735f, -0.4903930f },
@@ -73,17 +72,6 @@ static const float const_matrix[8][8] = {
    {  0.2777850f, -0.4903930f,  0.0975452f,  0.4157350f, -0.4157350f, -0.0975451f,  0.490393f, -0.2777850f },
    {  0.1913420f, -0.4619400f,  0.4619400f, -0.1913420f, -0.1913410f,  0.4619400f, -0.461940f,  0.1913420f },
    {  0.0975451f, -0.2777850f,  0.4157350f, -0.4903930f,  0.4903930f, -0.4157350f,  0.277786f, -0.0975458f }
-};
-
-static const float const_transpose[8][8] = {
-   {  0.3535530f,  0.4903930f,  0.4619400f,  0.4157350f,  0.3535530f,  0.2777850f,  0.191342f,  0.0975451f },
-   {  0.3535530f,  0.4157350f,  0.1913420f, -0.0975452f, -0.3535530f, -0.4903930f, -0.461940f, -0.2777850f },
-   {  0.3535530f,  0.2777850f, -0.1913420f, -0.4903930f, -0.3535530f,  0.0975452f,  0.461940f,  0.4157350f },
-   {  0.3535530f,  0.0975451f, -0.4619400f, -0.2777850f,  0.3535540f,  0.4157350f, -0.191342f, -0.4903930f },
-   {  0.3535530f, -0.0975452f, -0.4619400f,  0.2777850f,  0.3535530f, -0.4157350f, -0.191341f,  0.4903930f },
-   {  0.3535530f, -0.2777850f, -0.1913420f,  0.4903930f, -0.3535540f, -0.0975451f,  0.461940f, -0.4157350f },
-   {  0.3535530f, -0.4157350f,  0.1913420f,  0.0975450f, -0.3535530f,  0.4903930f, -0.461940f,  0.2777860f },
-   {  0.3535530f, -0.4903930f,  0.4619400f, -0.4157350f,  0.3535530f, -0.2777850f,  0.191342f, -0.0975458f }
 };
 
 /* vertices for a quad covering a block */
@@ -217,14 +205,12 @@ create_transpose_frag_shader(struct vl_idct *idct)
    struct ureg_program *shader;
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
-   struct ureg_dst tmp, fragment;
+   struct ureg_dst fragment;
    float scale[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
-
-   tmp = ureg_DECL_temporary(shader);
 
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX, TGSI_INTERPOLATE_LINEAR);
@@ -239,15 +225,11 @@ create_transpose_frag_shader(struct vl_idct *idct)
    sampler[1] = ureg_DECL_sampler(shader, 2);
 
    scale[0] = 1.0f;
-   scale[1] = SCALE_FACTOR_16_TO_12;
+   scale[1] = SCALE_FACTOR_16_TO_9;
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   //matrix_mul(shader, fragment, tc, sampler, start, step, scale);
-   //ureg_MOV(shader, fragment, ureg_imm1f(shader, 0.0f));
-
-   ureg_TEX(shader, tmp, TGSI_TEXTURE_2D, tc[1], sampler[1]);
-   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, SCALE_FACTOR_16_TO_9));
+   matrix_mul(shader, fragment, tc, sampler, start, step, scale);
 
    ureg_END(shader);
 
@@ -284,9 +266,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   //matrix_mul(shader, tmp, tc, sampler, start, step, scale);
-
-   ureg_TEX(shader, fragment, TGSI_TEXTURE_2D, tc[0], sampler[0]);
+   matrix_mul(shader, fragment, tc, sampler, start, step, scale);
 
    ureg_END(shader);
 
@@ -325,7 +305,11 @@ xfer_buffers_map(struct vl_idct *idct)
 
    idct->tex_transfer = idct->pipe->get_transfer
    (
+#if 1
       idct->pipe, idct->textures.individual.source,
+#else
+      idct->pipe, idct->destination,
+#endif
       u_subresource(0, 0),
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
@@ -391,7 +375,7 @@ init_buffers(struct vl_idct *idct)
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R32_FLOAT;
+   template.format = PIPE_FORMAT_R16_SNORM;
    template.last_level = 0;
    template.width0 = 8;
    template.height0 = 8;
@@ -487,9 +471,19 @@ init_constants(struct vl_idct *idct)
    struct pipe_transfer *buf_transfer;
    struct vertex_shader_consts *vs_consts;
    struct vertex2f *v;
+   short *s;
 
-   unsigned i;
+   struct pipe_box rect =
+   {
+      0, 0, 0,
+      BLOCK_WIDTH,
+      BLOCK_HEIGHT,
+      1
+   };
 
+   unsigned i, j, pitch;
+
+   /* quad vectors */
    v = pipe_buffer_map
    (
       idct->pipe,
@@ -497,37 +491,47 @@ init_constants(struct vl_idct *idct)
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &buf_transfer
    );
-
    for ( i = 0; i < idct->max_blocks; ++i)
      memcpy(v + i * 4, &const_quad, sizeof(const_quad));
-
    pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.quad.buffer, buf_transfer);
 
-
-   v = pipe_buffer_map
+   /* transposed matrix */
+   buf_transfer = idct->pipe->get_transfer
    (
-      idct->pipe,
-      idct->textures.individual.matrix,
+      idct->pipe, idct->textures.individual.transpose,
+      u_subresource(0, 0),
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
+      &rect
    );
+   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
 
-   memcpy(v, &const_matrix, sizeof(const_matrix));
+   s = idct->pipe->transfer_map(idct->pipe, buf_transfer);
+   for(i = 0; i < BLOCK_HEIGHT; ++i)
+      for(j = 0; j < BLOCK_WIDTH; ++j)
+         s[i * pitch + j] = const_matrix[j][i] * (1 << 15); // transpose
 
-   pipe_buffer_unmap(idct->pipe, idct->textures.individual.matrix, buf_transfer);
+   idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
+   idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
 
-   v = pipe_buffer_map
+   /* matrix */
+   buf_transfer = idct->pipe->get_transfer
    (
-      idct->pipe,
-      idct->textures.individual.transpose,
+      idct->pipe, idct->textures.individual.matrix,
+      u_subresource(0, 0),
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
+      &rect
    );
+   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
 
-   memcpy(v, &const_transpose, sizeof(const_transpose));
+   s = idct->pipe->transfer_map(idct->pipe, buf_transfer);
+   for(i = 0; i < BLOCK_HEIGHT; ++i)
+      for(j = 0; j < BLOCK_WIDTH; ++j)
+         s[i * pitch + j] = const_matrix[i][j] * (1 << 15);
 
-   pipe_buffer_unmap(idct->pipe, idct->textures.individual.transpose, buf_transfer);
+   idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
+   idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
 
+   /* normalisation constants */
    vs_consts = pipe_buffer_map
    (
       idct->pipe, idct->vs_const_buf,
