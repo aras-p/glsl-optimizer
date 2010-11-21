@@ -38,7 +38,10 @@
    i915_winsys_batchbuffer_dword(i915->batch, dword)
 
 #define OUT_RELOC(buf, usage, offset) \
-   i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset)
+   i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset, false)
+
+#define OUT_RELOC_FENCED(buf, usage, offset) \
+   i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset, true)
 
 #define FLUSH_BATCH(fence) \
    i915_flush(i915, fence)

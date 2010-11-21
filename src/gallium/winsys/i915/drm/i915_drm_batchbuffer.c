@@ -94,7 +94,7 @@ static int
 i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                             struct i915_winsys_buffer *buffer,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned pre_add)
+                            unsigned pre_add, bool fenced)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned write_domain = 0;
@@ -104,37 +104,44 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
 
    assert(batch->base.relocs < batch->base.max_relocs);
 
-   if (usage == I915_USAGE_SAMPLER) {
+   switch (usage) {
+   case I915_USAGE_SAMPLER:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_SAMPLER;
-
-   } else if (usage == I915_USAGE_RENDER) {
+      break;
+   case I915_USAGE_RENDER:
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_2D_TARGET) {
+      break;
+   case I915_USAGE_2D_TARGET:
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_2D_SOURCE) {
+      break;
+   case I915_USAGE_2D_SOURCE:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_VERTEX) {
+      break;
+   case I915_USAGE_VERTEX:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_VERTEX;
-
-   } else {
+      break;
+   default:
       assert(0);
       return -1;
    }
 
    offset = (unsigned)(batch->base.ptr - batch->base.map);
 
-   ret = drm_intel_bo_emit_reloc(batch->bo, offset,
-                                 intel_bo(buffer), pre_add,
-                                 read_domain,
-                                 write_domain);
+   if (fenced)
+      ret = drm_intel_bo_emit_reloc_fence(batch->bo, offset,
+				    intel_bo(buffer), pre_add,
+				    read_domain,
+				    write_domain);
+   else
+      ret = drm_intel_bo_emit_reloc(batch->bo, offset,
+				    intel_bo(buffer), pre_add,
+				    read_domain,
+				    write_domain);
 
    ((uint32_t*)batch->base.ptr)[0] = intel_bo(buffer)->offset + pre_add;
    batch->base.ptr += 4;

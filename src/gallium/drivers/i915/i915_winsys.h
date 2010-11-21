@@ -106,7 +106,7 @@ struct i915_winsys {
    int (*batchbuffer_reloc)(struct i915_winsys_batchbuffer *batch,
                             struct i915_winsys_buffer *reloc,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned offset);
+                            unsigned offset, bool fenced);
 
    /**
     * Flush a bufferbatch.

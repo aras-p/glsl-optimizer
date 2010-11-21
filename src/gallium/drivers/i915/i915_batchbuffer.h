@@ -74,9 +74,9 @@ static INLINE int
 i915_winsys_batchbuffer_reloc(struct i915_winsys_batchbuffer *batch,
                               struct i915_winsys_buffer *buffer,
                               enum i915_winsys_buffer_usage usage,
-                              size_t offset)
+                              size_t offset, bool fenced)
 {
-   return batch->iws->batchbuffer_reloc(batch, buffer, usage, offset);
+   return batch->iws->batchbuffer_reloc(batch, buffer, usage, offset, fenced);
 }
 
 #endif

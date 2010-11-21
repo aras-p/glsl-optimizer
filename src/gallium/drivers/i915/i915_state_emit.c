@@ -230,7 +230,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                    ctile);
 
-         OUT_RELOC(tex->buffer,
+         OUT_RELOC_FENCED(tex->buffer,
                    I915_USAGE_RENDER,
                    cbuf_surface->offset);
       }
@@ -249,7 +249,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                    ztile);
 
-         OUT_RELOC(tex->buffer,
+         OUT_RELOC_FENCED(tex->buffer,
                    I915_USAGE_RENDER,
                    depth_surface->offset);
       }
@@ -298,7 +298,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
                   count++;
 
-                  OUT_RELOC(buf, I915_USAGE_SAMPLER, offset);
+                  OUT_RELOC_FENCED(buf, I915_USAGE_SAMPLER, offset);
                   OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
                   OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
                }
