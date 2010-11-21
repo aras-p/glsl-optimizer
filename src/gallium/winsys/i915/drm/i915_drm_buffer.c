@@ -7,7 +7,7 @@
 
 static struct i915_winsys_buffer *
 i915_drm_buffer_create(struct i915_winsys *iws,
-                        unsigned size, unsigned alignment,
+                        unsigned size,
                         enum i915_winsys_buffer_type type)
 {
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
@@ -32,7 +32,7 @@ i915_drm_buffer_create(struct i915_winsys *iws,
       name = "gallium3d_unknown";
    }
 
-   buf->bo = drm_intel_bo_alloc(idws->gem_manager, name, size, alignment);
+   buf->bo = drm_intel_bo_alloc(idws->gem_manager, name, size, 0);
 
    if (!buf->bo)
       goto err;

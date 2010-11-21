@@ -4,28 +4,15 @@
 
 static struct i915_winsys_buffer *
 i915_sw_buffer_create(struct i915_winsys *iws,
-                      unsigned size, unsigned alignment,
+                      unsigned size,
                       enum i915_winsys_buffer_type type)
 {
    struct i915_sw_buffer *buf = CALLOC_STRUCT(i915_sw_buffer);
-   char *name;
 
    if (!buf)
       return NULL;
 
-   if (type == I915_NEW_TEXTURE) {
-      name = "gallium3d_texture";
-   } else if (type == I915_NEW_VERTEX) {
-      name = "gallium3d_vertex";
-   } else if (type == I915_NEW_SCANOUT) {
-      name = "gallium3d_scanout";
-   } else {
-      assert(0);
-      name = "gallium3d_unknown";
-   }
-
    buf->magic = 0xDEAD1337;
-   buf->name = name;
    buf->type = type;
    buf->ptr = CALLOC(size, 1);
 

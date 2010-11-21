@@ -198,7 +198,7 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
 #endif
 
    i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size,
-                                         64, I915_NEW_VERTEX);
+                                         I915_NEW_VERTEX);
 }
 
 /**
@@ -726,7 +726,7 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->pool_fifo = u_fifo_create(6);
    for (i = 0; i < 6; i++)
       u_fifo_add(i915_render->pool_fifo,
-                 iws->buffer_create(iws, i915_render->pool_buffer_size, 64,
+                 iws->buffer_create(iws, i915_render->pool_buffer_size,
                                     I915_NEW_VERTEX));
 #else
    (void)i;

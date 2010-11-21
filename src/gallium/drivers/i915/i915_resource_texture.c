@@ -785,7 +785,7 @@ i915_texture_create(struct pipe_screen *screen,
    else
       buf_usage = I915_NEW_TEXTURE;
 
-   tex->buffer = iws->buffer_create(iws, tex_size, 64, buf_usage);
+   tex->buffer = iws->buffer_create(iws, tex_size, buf_usage);
    if (!tex->buffer)
       goto fail;
 

@@ -44,7 +44,6 @@ struct i915_sw_buffer {
    unsigned map_count;
    enum i915_winsys_buffer_type type;
    enum i915_winsys_buffer_tile tile;
-   const char *name;
 };
 
 static INLINE struct i915_sw_buffer *

@@ -130,7 +130,7 @@ struct i915_winsys {
     */
    struct i915_winsys_buffer *
       (*buffer_create)(struct i915_winsys *iws,
-                       unsigned size, unsigned alignment,
+                       unsigned size,
                        enum i915_winsys_buffer_type type);
 
    /**
