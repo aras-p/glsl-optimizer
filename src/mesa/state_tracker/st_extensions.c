@@ -164,6 +164,7 @@ void st_init_limits(struct st_context *st)
       pc->MaxNativeTemps           = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_TEMPS);
       pc->MaxNativeAddressRegs     = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_ADDRS);
       pc->MaxNativeParameters      = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONSTS);
+      pc->MaxUniformComponents     = 4 * MIN2(pc->MaxNativeParameters, MAX_UNIFORMS);
 
       options->EmitNoNoise = TRUE;
 
