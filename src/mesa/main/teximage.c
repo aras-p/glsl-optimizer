@@ -888,23 +888,19 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
 
 
 /**
- * Return number of dimenions per image for the given texture target.
+ * Return number of dimensions per mipmap level for the given texture target.
  */
 static GLint
 get_texture_dimensions(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
-   case GL_TEXTURE_1D_ARRAY:
    case GL_PROXY_TEXTURE_1D:
-   case GL_PROXY_TEXTURE_1D_ARRAY:
       return 1;
    case GL_TEXTURE_2D:
-   case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_RECTANGLE:
    case GL_TEXTURE_CUBE_MAP:
    case GL_PROXY_TEXTURE_2D:
-   case GL_PROXY_TEXTURE_2D_ARRAY:
    case GL_PROXY_TEXTURE_RECTANGLE:
    case GL_PROXY_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
@@ -913,9 +909,13 @@ get_texture_dimensions(GLenum target)
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
    case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_PROXY_TEXTURE_1D_ARRAY:
       return 2;
    case GL_TEXTURE_3D:
    case GL_PROXY_TEXTURE_3D:
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D_ARRAY:
       return 3;
    default:
       _mesa_problem(NULL, "invalid target 0x%x in get_texture_dimensions()",
