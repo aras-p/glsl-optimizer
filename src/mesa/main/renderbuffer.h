@@ -27,8 +27,8 @@
 #define RENDERBUFFER_H
 
 #include "glheader.h"
-#include "mtypes.h"
 
+struct gl_context;
 struct gl_framebuffer;
 struct gl_renderbuffer;
 
