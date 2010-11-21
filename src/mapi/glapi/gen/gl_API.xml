@@ -12519,5 +12519,7 @@
 <xi:include href="EXT_texture_integer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="EXT_gpu_shader4.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="GL3x.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 
 </OpenGLAPI>
